@@ -15,7 +15,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { combineLatest, merge, Observable, Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, map, startWith, tap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, startWith, tap, throttleTime } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -399,7 +399,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         if (this.removedFromProjectSub != null) {
           this.removedFromProjectSub.unsubscribe();
         }
-        this.removedFromProjectSub = this.selectedProjectDoc.remoteChanges$.subscribe(() => {
+        // TODO Find a better solution than merely throttling remote changes
+        this.removedFromProjectSub = this.selectedProjectDoc.remoteChanges$.pipe(throttleTime(1000)).subscribe(() => {
           if (
             this.selectedProjectDoc != null &&
             this.selectedProjectDoc.data != null &&

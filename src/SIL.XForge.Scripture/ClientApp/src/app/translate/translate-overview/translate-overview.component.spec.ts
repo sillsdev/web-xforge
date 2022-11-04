@@ -264,6 +264,12 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  // Some project doc changes are throttled by 1000 ms, so we have to wait for them
+  waitForProjectDocChanges(): void {
+    tick(1000);
+    this.wait();
+  }
+
   expectContainsTextProgress(index: number, primary: string, secondary: string): void {
     const items = this.progressTextList.querySelectorAll('mdc-list-item');
     const item = items.item(index);
@@ -384,7 +390,7 @@ class TestEnvironment {
     const textIndex = projectDoc.data!.texts.findIndex(t => t.bookNum === bookNum);
     const chapterIndex = projectDoc.data!.texts[textIndex].chapters.findIndex(c => c.number === chapter);
     projectDoc.submitJson0Op(ops => ops.remove(p => p.texts[textIndex].chapters, chapterIndex), false);
-    this.wait();
+    this.waitForProjectDocChanges();
   }
 
   simulateTranslateSuggestionsEnabled(enabled: boolean = true) {
@@ -393,7 +399,7 @@ class TestEnvironment {
       op => op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, enabled),
       false
     );
-    this.wait();
+    this.waitForProjectDocChanges();
   }
 
   private addTextDoc(id: TextDocId): void {

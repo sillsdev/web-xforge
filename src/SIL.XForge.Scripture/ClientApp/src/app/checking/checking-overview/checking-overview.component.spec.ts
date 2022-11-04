@@ -894,8 +894,7 @@ class TestEnvironment {
   waitForQuestions(): void {
     this.realtimeService.updateAllSubscribeQueries();
     this.fixture.detectChanges();
-    tick();
-    this.fixture.detectChanges();
+    this.waitForProjectDocChanges();
   }
 
   setSeeOtherUserResponses(isEnabled: boolean): void {
@@ -904,8 +903,7 @@ class TestEnvironment {
       op => op.set<boolean>(p => p.checkingConfig.usersSeeEachOthersResponses, isEnabled),
       false
     );
-    tick();
-    this.fixture.detectChanges();
+    this.waitForProjectDocChanges();
   }
 
   setCheckingEnabled(isEnabled: boolean): void {
@@ -913,7 +911,12 @@ class TestEnvironment {
       const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
       projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
     });
-    tick();
+    this.waitForProjectDocChanges();
+  }
+
+  // Project doc changes are throttled by 1000 ms, so we have to wait for them
+  waitForProjectDocChanges(): void {
+    tick(1000);
     this.fixture.detectChanges();
   }
 
