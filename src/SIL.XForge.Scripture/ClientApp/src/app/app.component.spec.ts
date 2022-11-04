@@ -171,7 +171,7 @@ describe('AppComponent', () => {
     expect(env.menuLength).toEqual(5);
     const projectDoc = env.component.projectDocs![0];
     projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, false));
-    env.waitForProjectDocChanges();
+    env.wait();
     // Expect: Translate | Overview | Matthew | Mark | Synchronize | Settings | Users
     expect(env.menuLength).toEqual(7);
     // No affect when clicking Translate
@@ -251,7 +251,7 @@ describe('AppComponent', () => {
     env.init();
 
     expect(env.selectedProjectId).toEqual('project01');
-    env.removesUserFromProject('project01');
+    env.removeUserFromProject('project01');
     verify(mockedMdcDialog.open(ProjectDeletedDialogComponent, anything())).once();
     env.confirmProjectDeletedDialog();
     // Get past setTimeout to navigation
@@ -511,7 +511,7 @@ describe('AppComponent', () => {
 
       const projectId = 'project01';
       expect(env.selectedProjectId).toEqual(projectId);
-      env.removesUserFromProject(projectId);
+      env.removeUserFromProject(projectId);
       verify(mockedSFProjectService.localDelete(projectId)).once();
     }));
   });
@@ -564,10 +564,9 @@ class TestEnvironment {
 
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, []);
     when(mockedSFProjectService.queryQuestions(anything(), anything())).thenCall((_projectId, options) => {
-      const parameters: QueryParameters = {
-        [obj<Question>().pathStr(q => q.verseRef.bookNum)]: options.bookNum,
-        [obj<Question>().pathStr(q => q.isArchived)]: false
-      };
+      const parameters: QueryParameters = {};
+      if (options.bookNum != null) parameters[obj<Question>().pathStr(q => q.verseRef.bookNum)] = options.bookNum;
+      if (options.activeOnly) parameters[obj<Question>().pathStr(q => q.isArchived)] = false;
       return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, parameters);
     });
 
@@ -819,12 +818,6 @@ class TestEnvironment {
     flush(70);
   }
 
-  // Project doc changes are throttled by 1000 ms, so we have to wait for them
-  waitForProjectDocChanges(): void {
-    tick(1000);
-    this.wait();
-  }
-
   deleteProject(projectId: string, isLocal: boolean): void {
     if (isLocal) {
       when(mockedUserService.currentProjectId(anything())).thenReturn(undefined);
@@ -836,23 +829,22 @@ class TestEnvironment {
     this.wait();
   }
 
-  removesUserFromProject(projectId: string): void {
+  removeUserFromProject(projectId: string): void {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles['user01']), false);
-    this.waitForProjectDocChanges();
+    this.wait();
   }
 
   setLastSyncSuccessful(projectId: string, lastSyncSuccessful: boolean): void {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.set<boolean>(p => p.sync.lastSyncSuccessful!, lastSyncSuccessful));
-    this.waitForProjectDocChanges();
+    this.wait();
   }
 
   addUserToProject(projectId: string): void {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
     this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
-    this.waitForProjectDocChanges();
   }
 
   confirmProjectDeletedDialog() {
