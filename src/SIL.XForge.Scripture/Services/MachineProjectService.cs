@@ -225,7 +225,6 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            // TODO: Unit Tests for this method
             // We will return whether the corpus was updated
             bool corpusUpdated = false;
 
@@ -382,16 +381,18 @@ namespace SIL.XForge.Scripture.Services
                     {
                         uploadText = true;
                     }
-                    else if (
-                        serverCorpusFiles.Any(c => c.Id == previousCorpusFile.FileId)
-                        && previousCorpusFile.FileChecksum != checksum
-                    )
+                    else if (previousCorpusFile.FileChecksum != checksum)
                     {
-                        await _machineCorporaService.DeleteCorpusFileAsync(
-                            corpusId,
-                            previousCorpusFile.FileId,
-                            cancellationToken
-                        );
+                        // Only delete the file if it is present in the Machine API
+                        if (serverCorpusFiles.Any(c => c.Id == previousCorpusFile.FileId))
+                        {
+                            await _machineCorporaService.DeleteCorpusFileAsync(
+                                corpusId,
+                                previousCorpusFile.FileId,
+                                cancellationToken
+                            );
+                        }
+
                         uploadText = true;
                     }
 
@@ -406,32 +407,59 @@ namespace SIL.XForge.Scripture.Services
                             cancellationToken
                         );
 
-                        // Record the fileId and checksum
-                        int? index = projectSecret.MachineData?.Files?.FindIndex(f => f.FileId == fileId);
-                        if (previousCorpusFile is null || index is null)
+                        // Record the fileId and checksum, matching the text id
+                        int? index = projectSecret.MachineData?.Files?.FindIndex(f => f.TextId == textId);
+                        if (previousCorpusFile is null || index is null or -1)
                         {
-                            await _projectSecrets.UpdateAsync(
-                                projectSecret,
-                                u =>
-                                    u.Add(
-                                        p => p.MachineData.Files,
-                                        new MachineCorpusFile
-                                        {
-                                            FileChecksum = checksum,
-                                            FileId = fileId,
-                                            LanguageTag = languageTag,
-                                            TextId = textId,
-                                        }
-                                    )
-                            );
+                            // If the index is null, the files collection does not exist
+                            if (index is null)
+                            {
+                                // Create the files collection with the file information
+                                await _projectSecrets.UpdateAsync(
+                                    projectSecret,
+                                    u =>
+                                        u.Set(
+                                            p => p.MachineData.Files,
+                                            new List<MachineCorpusFile>
+                                            {
+                                                new MachineCorpusFile
+                                                {
+                                                    FileChecksum = checksum,
+                                                    FileId = fileId,
+                                                    LanguageTag = languageTag,
+                                                    TextId = textId,
+                                                },
+                                            }
+                                        )
+                                );
+                            }
+                            else
+                            {
+                                // Add the file information to the project secret
+                                await _projectSecrets.UpdateAsync(
+                                    projectSecret,
+                                    u =>
+                                        u.Add(
+                                            p => p.MachineData.Files,
+                                            new MachineCorpusFile
+                                            {
+                                                FileChecksum = checksum,
+                                                FileId = fileId,
+                                                LanguageTag = languageTag,
+                                                TextId = textId,
+                                            }
+                                        )
+                                );
+                            }
                         }
                         else
                         {
-                            // Update the
+                            // Update the file information in the project secret
                             await _projectSecrets.UpdateAsync(
                                 projectSecret,
                                 u =>
                                     u.Set(p => p.MachineData.Files[index.Value].FileChecksum, checksum)
+                                        .Set(p => p.MachineData.Files[index.Value].FileId, fileId)
                                         .Set(p => p.MachineData.Files[index.Value].LanguageTag, languageTag)
                             );
                         }
