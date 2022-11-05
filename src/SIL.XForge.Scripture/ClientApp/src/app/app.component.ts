@@ -14,7 +14,7 @@ import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/mode
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
-import { combineLatest, Observable, Subscription } from 'rxjs';
+import { combineLatest, Observable, of, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -319,7 +319,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       // retrieve the projectId from the current route. Since the nav menu is outside of the router outlet, it cannot
       // use ActivatedRoute to get the params. Instead the nav menu, listens to router events and traverses the route
       // tree to find the currently activated route
-      const projectId$ = this.router.events.pipe(
+      const projectId$: Observable<string | undefined> = this.router.events.pipe(
         filter(e => e instanceof NavigationEnd),
         startWith(null),
         map(() => {
@@ -342,18 +342,21 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
             }
           }
         }),
-        map(r => r.params['projectId'] as string),
+        map(r => r.params['projectId'] as string | undefined),
         distinctUntilChanged(),
         tap(projectId => {
-          this.canSeeSettings$ = this.settingsAuthGuard.allowTransition(projectId);
-          this.canSeeUsers$ = this.usersAuthGuard.allowTransition(projectId);
-          this.canSync$ = this.syncAuthGuard.allowTransition(projectId);
+          this.canSeeSettings$ = projectId == null ? of(false) : this.settingsAuthGuard.allowTransition(projectId);
+          this.canSeeUsers$ = projectId == null ? of(false) : this.usersAuthGuard.allowTransition(projectId);
+          this.canSync$ = projectId == null ? of(false) : this.syncAuthGuard.allowTransition(projectId);
           this.canSeeAdminPages$ = combineLatest([this.canSeeSettings$, this.canSeeUsers$, this.canSync$]).pipe(
             map(([settings, users, sync]) => settings || users || sync)
           );
           // the project deleted dialog should be closed by now, so we can reset its ref to null
           if (projectId == null) {
             this.projectDeletedDialogRef = null;
+          } else {
+            this.userService.setCurrentProjectId(this.currentUserDoc!, projectId);
+            this.refreshQuestionsQuery(projectId);
           }
         })
       );
@@ -423,11 +426,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
 
         this.checkDeviceStorage();
-      });
-
-      this.subscribe(projectId$.pipe(filter(id => id != null)), projectId => {
-        this.refreshQuestionsQuery(projectId);
-        this.userService.setCurrentProjectId(this.currentUserDoc!, projectId);
       });
     }
     this.loadingFinished();
