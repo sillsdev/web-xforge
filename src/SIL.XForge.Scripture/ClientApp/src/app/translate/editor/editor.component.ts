@@ -1158,7 +1158,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private async loadNoteThreadDocs(projectId: string): Promise<void> {
     this.noteThreadQuery?.dispose();
-    this.noteThreadQuery = await this.projectService.queryNoteThreads(projectId);
+    const sfNotesOnly: boolean =
+      this.projectDoc?.data?.userRoles[this.userService.currentUserId] === SFProjectRole.Reviewer;
+
+    this.noteThreadQuery = await this.projectService.queryNoteThreads(projectId, sfNotesOnly);
     this.toggleNoteThreadSub?.unsubscribe();
     this.toggleNoteThreadSub = this.subscribe(
       merge(this.toggleNoteThreadVerseRefs$, this.noteThreadQuery.ready$, this.noteThreadQuery.remoteChanges$),
