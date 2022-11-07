@@ -13,7 +13,8 @@ import {
   NoteConflictType,
   NoteStatus,
   NoteThread,
-  NoteType
+  NoteType,
+  SF_NOTE_THREAD_PREFIX
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -41,7 +42,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { getTextDoc, paratextUsersFromRoles } from '../../../shared/test-utils';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { NoteDialogComponent, NoteDialogData, SF_NOTE_THREAD_PREFIX } from './note-dialog.component';
+import { NoteDialogComponent, NoteDialogData } from './note-dialog.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedCookieService = mock(CookieService);

@@ -12,6 +12,7 @@ import {
   clientConnect,
   createDoc,
   deleteDoc,
+  fetchDoc,
   flushPromises,
   hasDoc,
   submitJson0Op
@@ -30,7 +31,8 @@ import {
   NOTE_THREAD_COLLECTION,
   NoteStatus,
   NoteType,
-  NoteConflictType
+  NoteConflictType,
+  SF_NOTE_THREAD_PREFIX
 } from '../models/note-thread';
 import { Note } from '../models/note';
 import { VerseRefData } from '../models/verse-ref-data';
@@ -103,6 +105,31 @@ describe('NoteThreadService', () => {
     expect(checkerProjectUserConfig.noteRefsRead).not.toContain('noteThread01note03');
     // This have-read should not have been removed because the note was not removed.
     expect(checkerProjectUserConfig.noteRefsRead).toContain('noteThread01note04');
+  });
+
+  it('allows user to read note thread', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn: Connection = clientConnect(env.server, 'projectAdmin');
+    const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'));
+    expect(doc).not.toBeNull();
+  });
+
+  it('prohibits reviewer user to read note threads not created in Scripture Forge', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn: Connection = clientConnect(env.server, 'reviewer');
+
+    const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread01');
+    await expect(async () =>
+      fetchDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'))
+    ).rejects.toEqual(
+      new Error(`403: Permission denied (read), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
+    );
+
+    const threadId: string = SF_NOTE_THREAD_PREFIX + 'noteThread03';
+    const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', threadId));
+    expect(doc).not.toBeNull();
   });
 
   it('removes have-read note refs when thread deleted', async () => {
@@ -228,6 +255,36 @@ class TestEnvironment {
       }
     );
 
+    await createDoc<User>(conn, USERS_COLLECTION, 'reviewer', {
+      name: 'User 03',
+      email: 'user03@example.com',
+      role: SystemRole.User,
+      isDisplayNameConfirmed: true,
+      authId: 'auth03',
+      displayName: 'User 03',
+      avatarUrl: '',
+      sites: {}
+    });
+
+    await createDoc<SFProjectUserConfig>(
+      conn,
+      SF_PROJECT_USER_CONFIGS_COLLECTION,
+      getSFProjectUserConfigDocId('project01', 'reviewer'),
+      {
+        projectRef: 'project01',
+        ownerRef: 'reviewer',
+        isTargetTextRight: false,
+        confidenceThreshold: 0.2,
+        translationSuggestionsEnabled: false,
+        numSuggestions: 1,
+        selectedSegment: '',
+        questionRefsRead: [],
+        answerRefsRead: [],
+        commentRefsRead: [],
+        noteRefsRead: []
+      }
+    );
+
     await createDoc<SFProject>(conn, SF_PROJECTS_COLLECTION, 'project01', {
       name: 'Project 01',
       shortName: 'PT01',
@@ -249,7 +306,8 @@ class TestEnvironment {
       sync: { queuedCount: 0 },
       userRoles: {
         projectAdmin: SFProjectRole.ParatextAdministrator,
-        checker: SFProjectRole.CommunityChecker
+        checker: SFProjectRole.CommunityChecker,
+        reviewer: SFProjectRole.Reviewer
       },
       userPermissions: {},
       paratextUsers: []
@@ -338,6 +396,34 @@ class TestEnvironment {
           type,
           conflictType,
           threadId: 'noteThread02',
+          extUserId: 'some-ext-user-id',
+          deleted: false,
+          status,
+          dateModified: '',
+          dateCreated: '',
+          ownerRef: 'some-owner-id'
+        }
+      ],
+      originalSelectedText: '',
+      originalContextBefore: '',
+      originalContextAfter: '',
+      position,
+      status,
+      tagIcon: ''
+    });
+
+    const noteThreadId: string = SF_NOTE_THREAD_PREFIX + 'noteThread03';
+    await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', noteThreadId), {
+      projectRef: 'project01',
+      ownerRef: 'some-owner',
+      dataId: noteThreadId,
+      verseRef,
+      notes: [
+        {
+          dataId: noteThreadId + 'note01',
+          type,
+          conflictType,
+          threadId: noteThreadId,
           extUserId: 'some-ext-user-id',
           deleted: false,
           status,

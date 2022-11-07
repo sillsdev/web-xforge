@@ -1,7 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { NoteThread, NoteStatus, getNoteThreadDocId } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import {
+  NoteThread,
+  NoteStatus,
+  getNoteThreadDocId,
+  SF_NOTE_THREAD_PREFIX
+} from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
@@ -150,11 +155,14 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     await this.realtimeService.create<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId, noteThread);
   }
 
-  queryNoteThreads(id: string): Promise<RealtimeQuery<NoteThreadDoc>> {
+  queryNoteThreads(id: string, sfNotesOnly: boolean): Promise<RealtimeQuery<NoteThreadDoc>> {
     const queryParams: QueryParameters = {
       [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
       [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo
     };
+    if (sfNotesOnly) {
+      queryParams[obj<NoteThread>().pathStr(t => t.dataId)] = { $regex: SF_NOTE_THREAD_PREFIX };
+    }
     return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, queryParams);
   }
 
