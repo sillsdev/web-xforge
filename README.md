@@ -52,6 +52,7 @@ The rest of this document discusses the development of the underlying software.
   - [Run processes to attach to](#run-processes-to-attach-to)
   - [Attach debugger](#attach-debugger)
 - [Linting and Formatting](#linting-and-formatting)
+- [Cleaning](#cleaning)
 - [Database](#database)
 - [USX Validation](#usx-validation)
 - [.NET Performance Profiling](#net-performance-profiling)
@@ -618,6 +619,28 @@ C# can be formatted from the repo root by running
 ```bash
 dotnet tool install csharpier
 dotnet csharpier .
+```
+
+## Cleaning
+
+After updating or switching branches, some of these cleaning steps may be helpful. Run from the repo root directory.
+
+```bash
+# Delete obj directories left over from old .NET versions.
+find test src -name obj -print0 | xargs -0 xargs rm -vrf
+# Clean .NET backend.
+dotnet clean
+# Install package-lock versions of rts and frontend dependencies.
+cd src/RealtimeServer &&
+  npm ci &&
+  cd ../SIL.XForge.Scripture/ClientApp &&
+  npm ci
+```
+
+On Windows, replace the `find` command above with:
+
+```cmd
+FOR /F "tokens=*" %G IN ('DIR /B /AD /S obj') DO RMDIR /S /Q "%G"
 ```
 
 ## Database
