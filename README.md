@@ -49,6 +49,7 @@ The rest of this document discusses the development of the underlying software.
   - [Model Changes](#model-changes)
 - [Debugging](#debugging)
 - [Linting and Formatting](#linting-and-formatting)
+- [Cleaning](#cleaning)
 - [Database](#database)
 - [USX Validation](#usx-validation)
 - [.NET Performance Profiling](#net-performance-profiling)
@@ -568,6 +569,24 @@ C# can be formatted from the repo root by running
 ```bash
 dotnet tool install csharpier
 dotnet csharpier .
+```
+
+## Cleaning
+
+After updating or swiching branches, some of these cleaning steps may be helpful.
+
+```bash
+# Delete obj directories left over from old .NET versions.
+cd ~/src/web-xforge &&
+  find test src -name obj -print0 | xargs -0 xargs rm -vrf
+# Clean .NET backend.
+cd ~/src/web-xforge &&
+  dotnet clean
+# Install package-lock versions of rts and frontend dependencies.
+cd ~/src/web-xforge/src/RealtimeServer &&
+  npm ci &&
+  cd ~/src/web-xforge/src/SIL.XForge.Scripture/ClientApp &&
+  npm ci
 ```
 
 ## Database
