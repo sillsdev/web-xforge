@@ -1,12 +1,20 @@
 import { Connection, Doc } from 'sharedb/lib/client';
+import { SFProjectRole } from '../models/sf-project-role';
 import { createFetchQuery, docSubmitJson0Op } from '../../common/utils/sharedb-utils';
 import { OwnedData } from '../../common/models/owned-data';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { ANY_INDEX } from '../../common/utils/obj-path';
-import { NoteThread, NOTE_THREAD_COLLECTION, NOTE_THREAD_INDEX_PATHS } from '../models/note-thread';
+import {
+  NoteThread,
+  NOTE_THREAD_COLLECTION,
+  NOTE_THREAD_INDEX_PATHS,
+  SF_NOTE_THREAD_PREFIX
+} from '../models/note-thread';
 import { SFProjectDomain } from '../models/sf-project-rights';
 import { SFProjectUserConfig, SF_PROJECT_USER_CONFIGS_COLLECTION } from '../models/sf-project-user-config';
 import { Note } from '../models/note';
+import { Project } from '../../common/models/project';
+import { ConnectSession } from '../../common/connect-session';
 import { NOTE_THREAD_MIGRATIONS } from './note-thread-migrations';
 import { SFProjectDataService } from './sf-project-data-service';
 
@@ -55,6 +63,23 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
       this.removeEntityHaveReadRefs(userId, docId, projectDomain, entity);
     }
     return Promise.resolve();
+  }
+
+  protected async allowRead(_docId: string, doc: NoteThread, session: ConnectSession): Promise<boolean> {
+    if (await super.allowRead(_docId, doc, session)) {
+      if (session.isServer || Object.keys(doc).length === 0) return true;
+
+      if (this.server == null) {
+        throw new Error('The doc service has not been initialized.');
+      }
+
+      const project: Project | undefined = await this.server.getProject(doc.projectRef);
+      if (project == null) return false;
+      const isReviewer: boolean = project.userRoles[session.userId] === SFProjectRole.Reviewer;
+      if (isReviewer && !doc.dataId.startsWith(SF_NOTE_THREAD_PREFIX)) return false;
+      return true;
+    }
+    return false;
   }
 
   private async removeEntityHaveReadRefs(
