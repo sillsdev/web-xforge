@@ -254,14 +254,13 @@ Delete the PR branch after merge.
 You can do a production build of the backend and frontend locally by running the following in the repository root:
 
 ```bash
-dotnet publish src/SIL.XForge.Scripture/SIL.XForge.Scripture.csproj -c Release \
-  -r linux-x64 /p:Version=9.9.9 /p:AngularConfig=production --self-contained
+scripts/build-production
 ```
 
 Then you can attempt to run it with:
 
 ```bash
-cd src/SIL.XForge.Scripture/bin/Release/net6.0/linux-x64/publish
+cd artifacts/app
 ./SIL.XForge.Scripture
 ```
 
