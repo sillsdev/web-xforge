@@ -29,7 +29,8 @@ import {
   NoteConflictType,
   NoteStatus,
   NoteThread,
-  NoteType
+  NoteType,
+  SF_NOTE_THREAD_PREFIX
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -2422,6 +2423,21 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('shows only note threads created in Scripture Forge', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.setCurrentUser('user05');
+      const threadId: string = SF_NOTE_THREAD_PREFIX + 'thread06';
+      env.addParatextNoteThread(threadId, 'MAT 1:4', 'Paragraph break.', { start: 0, length: 0 }, ['user05']);
+      env.wait();
+
+      const noteThreadElem: HTMLElement | null = env.getNoteThreadIconElement('verse_1_1', 'thread01');
+      expect(noteThreadElem).toBeNull();
+      const sfNoteElem: HTMLElement | null = env.getNoteThreadIconElement('verse_1_4', threadId);
+      expect(sfNoteElem).toBeTruthy();
+      env.dispose();
+    }));
+
     it('shows insert note button for users with permission', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
@@ -3019,10 +3035,18 @@ class TestEnvironment {
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
     when(mockedSFProjectService.isProjectAdmin('project01', 'user04')).thenResolve(true);
-    when(mockedSFProjectService.queryNoteThreads(anything())).thenCall(id =>
+    when(mockedSFProjectService.queryNoteThreads(anything(), false)).thenCall((id, _) =>
       this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
         [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
         [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo
+      })
+    );
+
+    when(mockedSFProjectService.queryNoteThreads('project01', true)).thenCall((id, _) =>
+      this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
+        [obj<NoteThread>().pathStr(t => t.dataId)]: { $regex: SF_NOTE_THREAD_PREFIX },
+        [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
+        [obj<NoteThread>().pathStr(t => t.projectRef)]: id
       })
     );
     when(mockedPwaService.isOnline).thenReturn(true);
@@ -3518,7 +3542,7 @@ class TestEnvironment {
   }
 
   addParatextNoteThread(
-    threadNum: number,
+    threadNum: number | string,
     verseStr: string,
     selectedText: string,
     position: TextAnchor,
@@ -3526,7 +3550,7 @@ class TestEnvironment {
     status: NoteStatus = NoteStatus.Todo,
     assignedSFUserRef?: string
   ): void {
-    const threadId: string = `thread0${threadNum}`;
+    const threadId: string = typeof threadNum === 'string' ? threadNum : `thread0${threadNum}`;
     const assignedUser: ParatextUserProfile | undefined = this.paratextUsersOnProject.find(
       u => u.sfUserId === assignedSFUserRef
     );

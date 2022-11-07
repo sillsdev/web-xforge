@@ -9,7 +9,8 @@ import {
   NoteConflictType,
   NoteStatus,
   NoteThread,
-  NoteType
+  NoteType,
+  SF_NOTE_THREAD_PREFIX
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
@@ -33,8 +34,6 @@ export interface NoteDialogData {
   projectId: string;
   verseRef?: VerseRef;
 }
-
-export const SF_NOTE_THREAD_PREFIX = 'SFNOTETHREAD_';
 
 // TODO: Implement a diff - there is an accepted solution here that might be a good starting point:
 // https://codereview.stackexchange.com/questions/133586/a-string-prototype-diff-implementation-text-diff
