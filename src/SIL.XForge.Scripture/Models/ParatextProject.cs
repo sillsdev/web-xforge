@@ -12,7 +12,7 @@ namespace SIL.XForge.Scripture.Models
         public string LanguageTag { get; set; }
 
         /// <summary> Id of corresponding SF project. </summary>
-        public string ProjectId { get; set; }
+        public string? ProjectId { get; set; }
 
         /// <summary>
         /// If the requesting user has access to the PT project, but not yet to a corresponding SF project, and has
@@ -30,7 +30,7 @@ namespace SIL.XForge.Scripture.Models
         {
             StringBuilder message = new StringBuilder();
             foreach (
-                string item in new string[]
+                string? item in new string?[]
                 {
                     ParatextId,
                     Name,

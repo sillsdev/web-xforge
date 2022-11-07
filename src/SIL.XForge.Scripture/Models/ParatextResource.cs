@@ -50,7 +50,7 @@ namespace SIL.XForge.Scripture.Models
         /// <remarks>
         /// This is used solely for synchronization, and can be null if not appropriate.
         /// </remarks>
-        internal SFInstallableDblResource InstallableResource { get; set; }
+        internal SFInstallableDblResource? InstallableResource { get; set; }
 
         /// <summary>
         /// Gets or sets the created timestamp.
@@ -90,7 +90,7 @@ namespace SIL.XForge.Scripture.Models
         {
             StringBuilder message = new StringBuilder();
             foreach (
-                string item in new string[]
+                string? item in new string?[]
                 {
                     ParatextId,
                     Name,
