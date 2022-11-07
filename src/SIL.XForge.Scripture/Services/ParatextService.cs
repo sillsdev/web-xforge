@@ -939,13 +939,15 @@ namespace SIL.XForge.Scripture.Services
             using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             if (scrText == null)
                 return null;
+            CommentTags commentTags = CommentTags.Get(scrText);
             return new ParatextSettings
             {
                 FullName = scrText.FullName,
                 IsRightToLeft = scrText.RightToLeft,
                 Editable = scrText.Settings.Editable,
                 DefaultFontSize = scrText.Settings.DefaultFontSize,
-                DefaultFont = scrText.Settings.DefaultFont
+                DefaultFont = scrText.Settings.DefaultFont,
+                TagIcon = commentTags.Get(CommentTag.toDoTagId).Icon
             };
         }
 

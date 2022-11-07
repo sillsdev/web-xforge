@@ -2111,6 +2111,17 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void GetParatextSettings_RetrievesTagIcons()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            ParatextSettings settings = env.Service.GetParatextSettings(userSecret, ptProjectId);
+            Assert.That(settings.TagIcon, Is.EqualTo("icon1"));
+        }
+
+        [Test]
         public void SendReceiveAsync_BadArguments()
         {
             var env = new TestEnvironment();

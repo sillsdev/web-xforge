@@ -21,11 +21,11 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { TextDoc, TextDocId } from '../../../core/models/text-doc';
-import { SFProjectService } from '../../../core/sf-project.service';
-import { NoteThreadDoc, defaultNoteThreadIcon } from '../../../core/models/note-thread-doc';
+import { NoteThreadDoc, defaultNoteThreadIcon, DEFAULT_TAG_ICON } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { SFProjectService } from '../../../core/sf-project.service';
+import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { canInsertNote } from '../../../shared/utils';
 
 export interface NoteDialogData {
@@ -95,7 +95,7 @@ export class NoteDialogComponent implements OnInit {
 
   get flagIcon(): string {
     if (this.threadDoc?.data == null) {
-      return defaultNoteThreadIcon().url;
+      return defaultNoteThreadIcon(this.projectProfileDoc?.data?.tagIcon).url;
     }
     return this.isAssignedToOtherUser ? this.threadDoc.iconGrayed.url : this.threadDoc.icon.url;
   }
@@ -385,7 +385,7 @@ export class NoteDialogComponent implements OnInit {
         originalContextBefore: '',
         originalSelectedText: this.segmentText,
         originalContextAfter: '',
-        tagIcon: '01flag1',
+        tagIcon: this.projectProfileDoc!.data!.tagIcon ?? DEFAULT_TAG_ICON,
         status: NoteStatus.Todo
       };
       await this.projectService.createNoteThread(this.projectId, noteThread);

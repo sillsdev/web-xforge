@@ -30,7 +30,8 @@ const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   checkingConfig: true,
   texts: true,
   syncDisabled: true,
-  sync: true
+  sync: true,
+  tagIcon: true
 };
 
 /**

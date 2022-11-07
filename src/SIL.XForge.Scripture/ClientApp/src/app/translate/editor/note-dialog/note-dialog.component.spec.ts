@@ -454,7 +454,7 @@ describe('NoteDialogComponent', () => {
   it('show insert note dialog content', fakeAsync(() => {
     env = new TestEnvironment({ verseRef: VerseRef.parse('MAT 1:1') });
     expect(env.noteInputElement).toBeTruthy();
-    expect(env.flagIcon).toEqual('/assets/icons/TagIcons/01flag1.png');
+    expect(env.flagIcon).toEqual('/assets/icons/TagIcons/defaultIcon.png');
     expect(env.verseRef).toEqual('Matthew 1:1');
     expect(env.noteText.nativeElement.innerText).toEqual('target: chapter 1, verse 1.');
     expect(env.threadAssignedUser.nativeElement.textContent).toContain('Unassigned');
@@ -478,6 +478,7 @@ describe('NoteDialogComponent', () => {
     expect(noteThread.notes[0].ownerRef).toEqual('user01');
     expect(noteThread.notes[0].content).toEqual('Enter note content');
     expect(noteThread.notes[0].threadId).toContain(SF_NOTE_THREAD_PREFIX);
+    expect(noteThread.tagIcon).toEqual('defaultIcon');
   }));
 
   it('does not save note if textarea is empty', fakeAsync(() => {
@@ -648,7 +649,8 @@ class TestEnvironment {
     texts: [TestEnvironment.matthewText],
     sync: { queuedCount: 0 },
     editable: true,
-    userRoles: TestEnvironment.userRoles
+    userRoles: TestEnvironment.userRoles,
+    tagIcon: 'defaultIcon'
   };
   static paratextUsers: ParatextUserProfile[] = paratextUsersFromRoles(TestEnvironment.userRoles);
   static testProject: SFProject = {
