@@ -148,7 +148,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
   private toggleNoteThreadSub?: Subscription;
   private shouldNoteThreadsRespondToEdits: boolean = false;
-  private showFabOnClick: boolean = false;
+  private isNoteDialogOpen: boolean = false;
   private reviewerSelectedVerseRef?: VerseRef;
 
   constructor(
@@ -240,6 +240,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   set chapter(value: number | undefined) {
     if (this._chapter !== value) {
       this.showSuggestions = false;
+      this.showInsertNoteFab = false;
+      this.reviewerSelectedVerseRef = undefined;
       this.toggleNoteThreadVerses(false);
       this._chapter = value;
       this.changeText();
@@ -385,12 +387,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get isInsertNoteFabEnabled(): boolean {
-    return this.isAddNotesEnabled && this.showFabOnClick;
+    return this.isAddNotesEnabled && this.canShowInsertNoteFab;
   }
 
   set showInsertNoteFab(value: boolean) {
     if (this.insertNoteFab == null) return;
     this.insertNoteFab.nativeElement.style.visibility = value ? 'visible' : 'hidden';
+  }
+
+  get isReviewer(): boolean {
+    return this.userRole === SFProjectRole.Reviewer;
   }
 
   private get userRole(): string | undefined {
@@ -409,6 +415,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private get isAddNotesEnabled(): boolean {
     return this.featureFlags.allowAddingNotes.enabled;
+  }
+
+  private get canShowInsertNoteFab(): boolean {
+    return this.targetLoaded && !this.isNoteDialogOpen;
   }
 
   ngAfterViewInit(): void {
@@ -667,8 +677,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.targetLoaded = true;
         this.toggleNoteThreadVerseRefs$.next();
         this.shouldNoteThreadsRespondToEdits = true;
-        this.showFabOnClick = true;
-        if (this.isAddNotesEnabled) this.setupInsertNoteFab();
         break;
     }
     if ((!this.hasSource || this.sourceLoaded) && this.targetLoaded) {
@@ -772,7 +780,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     if (this.userRole === SFProjectRole.Reviewer) {
       let verseRef: VerseRef | undefined = this.reviewerSelectedVerseRef;
-      if (this.reviewerSelectedVerseRef == null) {
+      if (verseRef == null) {
         const defaultSegmentRef: string | undefined = this.target.firstVerseSegment;
         if (defaultSegmentRef == null) return;
         verseRef = getVerseRefFromSegmentRef(this.bookNum, defaultSegmentRef);
@@ -785,7 +793,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.showNoteThread(undefined, verseRef);
     }
     this.showInsertNoteFab = false;
-    this.showFabOnClick = false;
   }
 
   removeEmbeddedElements(): void {
@@ -858,11 +865,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         data: noteDialogData
       }
     );
+    this.isNoteDialogOpen = true;
     const result: boolean | undefined = await dialogRef.afterClosed().toPromise();
+    this.isNoteDialogOpen = false;
     if (result === true) {
       this.toggleNoteThreadVerses(true);
     }
-    this.showFabOnClick = true;
   }
 
   private updateReadNotes(threadId: string) {
@@ -1194,7 +1202,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private subscribeReviewerSelectionEvents(): void {
-    if (this.target == null) return;
+    if (this.target == null || this.userRole == null || !this.isReviewer) return;
     this.selectionClickSubs.forEach(s => s.unsubscribe());
 
     for (const [segment] of this.target.segments) {
@@ -1208,10 +1216,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           if (verseRef == null) return;
 
           this.showInsertNoteFab = this.target.toggleVerseSelection(verseRef);
+          this.positionInsertNoteFab(segmentElement);
           if (this.reviewerSelectedVerseRef != null) {
             if (verseRef.equals(this.reviewerSelectedVerseRef)) {
               this.reviewerSelectedVerseRef = undefined;
             } else {
+              // un-select previously selected verses since a note can apply to only one verse.
               this.target.toggleVerseSelection(this.reviewerSelectedVerseRef);
               this.reviewerSelectedVerseRef = verseRef;
             }
@@ -1232,7 +1242,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       () => {
         this.toggleNoteThreadVerses(false);
         this.toggleNoteThreadVerses(true);
-        this.subscribeReviewerSelectionEvents();
+        if (this.userRole != null && this.isReviewer) {
+          this.subscribeReviewerSelectionEvents();
+        }
       }
     );
   }
@@ -1369,23 +1381,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private setupInsertNoteFab(): void {
-    if (this.userRole !== SFProjectRole.Reviewer) return;
-    document.addEventListener('click', () => {
-      if (this.insertNoteFab == null || this.target == null || !this.isInsertNoteFabEnabled) return;
-      const selection: RangeStatic | null | undefined = this.target.editor?.getSelection();
-      if (selection != null && this.showFabOnClick) {
-        const position: HTMLElement | undefined = document.querySelector(
-          'usx-segment.reviewer-selection'
-        ) as HTMLElement;
-        if (position != null) {
-          this.insertNoteFab.nativeElement.style.top = `${position.getBoundingClientRect().top}px`;
-        }
-      } else {
-        // hide the insert note FAB when the user clicks outside of the editor
-        this.showInsertNoteFab = false;
-      }
-    });
+  private positionInsertNoteFab(segmentElement: Element): void {
+    if (this.insertNoteFab == null || this.target == null || !this.isInsertNoteFabEnabled) return;
+    const selection: RangeStatic | null | undefined = this.target.editor?.getSelection();
+    if (selection != null) {
+      this.insertNoteFab.nativeElement.style.top = `${segmentElement.getBoundingClientRect().top}px`;
+    } else {
+      // hide the insert note FAB when the user clicks outside of the editor
+      this.showInsertNoteFab = false;
+    }
   }
 
   /** Determine the number of embeds that are within an anchoring.

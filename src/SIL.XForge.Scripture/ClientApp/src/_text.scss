@@ -22,6 +22,10 @@ quill-editor {
   border: 1px solid $border-color;
 }
 
+.read-only-editor.selectable-verses usx-segment {
+  cursor: pointer;
+}
+
 .read-only-editor > .ql-container {
   > .ql-editor {
     usx-segment {
@@ -32,14 +36,17 @@ quill-editor {
       background-color: #ffeb3b;
     }
 
-    .question-segment {
+    .question-segment,
+    usx-segment.reviewer-selection {
       background-image: linear-gradient(to right, gray 75%, transparent 75%);
       background-position: bottom 0.2em left;
       background-repeat: repeat-x;
       background-size: 7px 1px;
       position: relative;
       cursor: pointer;
+    }
 
+    .question-segment {
       &[data-question-count] {
         &:before {
           content: '?';
@@ -136,15 +143,6 @@ quill-editor.rtl {
     background-size: 7px 1px;
     position: relative;
   }
-}
-
-.ql-editor .reviewer-selection {
-  background-image: linear-gradient(to right, gray 75%, transparent 75%);
-  background-position: bottom 0.2em left;
-  background-repeat: repeat-x;
-  background-size: 7px 1px;
-  position: relative;
-  cursor: pointer;
 }
 
 .template-editor > .ql-container {
