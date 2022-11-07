@@ -1471,9 +1471,9 @@ namespace SIL.XForge.Scripture.Services
         public void AddUserAsync_SourceProjectUnavailable_SkipProject()
         {
             var env = new TestEnvironment();
-            Assert.DoesNotThrowAsync(() => env.Service.AddUserAsync(User01, Project04, SFProjectRole.Translator));
+            Assert.DoesNotThrowAsync(() => env.Service.AddUserAsync(User03, Project04, SFProjectRole.Translator));
             var project = env.GetProject(Project04);
-            Assert.That(project.UserRoles[User01], Is.EqualTo(SFProjectRole.Translator));
+            Assert.That(project.UserRoles[User03], Is.EqualTo(SFProjectRole.Translator));
         }
 
         [Test]
@@ -2855,6 +2855,11 @@ namespace SIL.XForge.Scripture.Services
                             new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project02, User02) },
                             new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User01) },
                             new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User02) },
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project04, User01) },
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project04, User02) },
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project05, User01) },
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project05, User02) },
+                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project06, User01) },
                             new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(SourceOnly, User01) }
                         }
                     )
