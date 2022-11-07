@@ -21,7 +21,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { NoteThreadDoc, defaultNoteThreadIcon, DEFAULT_NOTE_ICON } from '../../../core/models/note-thread-doc';
+import { NoteThreadDoc, defaultNoteThreadIcon, DEFAULT_TAG_ICON } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -385,7 +385,7 @@ export class NoteDialogComponent implements OnInit {
         originalContextBefore: '',
         originalSelectedText: this.segmentText,
         originalContextAfter: '',
-        tagIcon: this.projectProfileDoc!.data!.tagIcon ?? DEFAULT_NOTE_ICON,
+        tagIcon: this.projectProfileDoc!.data!.tagIcon ?? DEFAULT_TAG_ICON,
         status: NoteStatus.Todo
       };
       await this.projectService.createNoteThread(this.projectId, noteThread);
