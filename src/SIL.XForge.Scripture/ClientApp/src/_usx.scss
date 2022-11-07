@@ -1,3 +1,5 @@
+@import 'src/variables';
+
 .ql-editor {
   counter-reset: note;
 }
@@ -374,6 +376,13 @@ usx-verse {
       top: -0.5em;
       position: relative;
     }
+  }
+}
+
+span.reviewer-selection > usx-verse {
+  span > span > span {
+    color: white;
+    background-color: $purpleLight;
   }
 }
 

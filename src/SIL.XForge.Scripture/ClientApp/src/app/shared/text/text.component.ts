@@ -112,6 +112,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   @Input() markInvalid: boolean = false;
   @Input() multiSegmentSelection = false;
   @Input() subscribeToUpdates = true;
+  @Input() selectableVerses: boolean = false;
   @Output() updated = new EventEmitter<TextUpdatedEvent>(true);
   @Output() segmentRefChange = new EventEmitter<string>();
   @Output() loaded = new EventEmitter(true);
@@ -425,7 +426,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   get firstVerseSegment(): string | undefined {
-    for (const [segmentRef] of this.viewModel.segments) {
+    for (const [segmentRef] of this.segments) {
       if (getBaseVerse(segmentRef) != null) {
         return segmentRef;
       }
@@ -696,11 +697,16 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       selectionValue = formats['reviewer-selection'] ? null : true;
     }
 
-    const format: any = { ['reviewer-selection']: selectionValue };
+    const format: StringMap = { ['reviewer-selection']: selectionValue };
+    let verseEmbedFormatted: boolean = false;
     for (const segment of verseSegments) {
       const range: RangeStatic | undefined = this.getSegmentRange(segment);
       if (range != null) {
-        this.editor?.formatText(range.index, range.length, format, 'api');
+        if (!verseEmbedFormatted) {
+          this.editor.formatText(range.index - 1, 1, format, 'api');
+          verseEmbedFormatted = true;
+        }
+        this.editor.formatText(range.index, range.length, format, 'api');
       }
     }
     return selectionValue === true;
