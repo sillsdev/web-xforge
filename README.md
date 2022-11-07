@@ -51,6 +51,10 @@ The rest of this document discusses the development of the underlying software.
 - [Linting and Formatting](#linting-and-formatting)
 - [Database](#database)
 - [USX Validation](#usx-validation)
+- [.NET Performance Profiling](#net-performance-profiling)
+  - [In Linux](#in-linux)
+    - [perf](#perf)
+    - [dotnet-trace](#dotnet-trace)
 - [Architecture and design](#architecture-and-design)
 
 ## Sites
@@ -584,6 +588,55 @@ Convert the schema to XML Schema format by running
 cd src/SIL.XForge.Scripture
 trang usx-sf.rnc usx-sf.xsd
 ```
+
+## .NET Performance Profiling
+
+### In Linux
+
+Install tools:
+
+```bash
+sudo apt-get update && sudo apt-get --assume-yes install \
+  lttng-tools \
+  lttng-modules-dkms \
+  liblttng-ust-dev \
+  linux-tools-$(uname -r)
+dotnet tool install --global dotnet-trace
+```
+
+Run program to profile, with environment variable set:
+
+```bash
+cd src/SIL.XForge.Scripture
+DOTNET_PerfMapEnabled=1 dotnet run
+```
+
+#### perf
+
+Profile with perf. When viewing the report, press `h` for help. `e` to expand and collapse.
+
+```bash
+sudo perf record --pid=$(pgrep SIL.XForge) -g --timestamp-filename # Then press Ctrl+C when done. Optionally also use --output perf.data-my-report-filename
+sudo perf report --input=$(ls -tr1 perf.data* | tail -1)
+```
+
+#### dotnet-trace
+
+Profile with dotnet-trace. This can be done with a format of chromium or speedscope. The Chromium formatted file can
+be dragged into the Performance area of the Chromium dev tools. This is processed and displays information, but may
+not be very easy to use. The speedscope file can be dragged into the app at https://www.speedscope.app/ , but may not
+contain much information.
+
+```bash
+dotnet-trace collect --process-id $(pgrep SIL.XForge) --format chromium
+```
+
+Further reading
+
+- https://codeblog.dotsandbrackets.com/profiling-net-core-app-linux/
+- https://docs.microsoft.com/en-us/dotnet/core/runtime-config/debugging-profiling
+- https://docs.microsoft.com/en-us/dotnet/core/diagnostics/trace-perfcollect-lttng
+- https://docs.microsoft.com/en-us/dotnet/core/diagnostics/dotnet-trace
 
 ## Architecture and design
 
