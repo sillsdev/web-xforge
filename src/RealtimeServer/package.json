@@ -5,13 +5,15 @@
   "license": "MIT",
   "scripts": {
     "test": "jest",
-    "test:tc": "jest --ci --coverage",
+    "test:tc": "npm run test:ci",
+    "test:ci": "jest --ci --coverage",
     "build": "tsc -b tsconfig.build.json && tsc -b tsconfig.build-esm.json",
     "clean": "tsc -b tsconfig.build.json --clean && tsc -b tsconfig.build-esm.json --clean",
     "lint": "eslint . --ext .ts",
     "prepare": "npm run build",
     "prettier": "prettier --write \"**/*.{ts,js,json,css,scss,less,html,md,yml}\"",
-    "prettier:tc": "prettier --list-different \"**/*.{ts,js,json,css,scss,less,html,md,yml}\""
+    "prettier:tc": "npm run prettier:ci",
+    "prettier:ci": "prettier --list-different \"**/*.{ts,js,json,css,scss,less,html,md,yml}\""
   },
   "author": "SIL",
   "repository": "github:sillsdev/web-xforge",

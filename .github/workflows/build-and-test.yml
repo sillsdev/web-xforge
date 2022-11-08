@@ -70,11 +70,11 @@ jobs:
       - name: "Lint: RealtimeServer ng"
         run: cd src/RealtimeServer && npm run lint
       - name: "Lint: RealtimeServer Prettier"
-        run: cd src/RealtimeServer && npm run prettier:tc
+        run: cd src/RealtimeServer && npm run prettier:ci
       - name: "Lint: Frontend ng"
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run lint
       - name: "Lint: Frontend Prettier"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run prettier:tc
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run prettier:ci
 
       - name: "Build: Backend, RealtimeServer"
         run: dotnet build xForge.sln
@@ -82,7 +82,7 @@ jobs:
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
 
       - name: "Test: RealtimeServer"
-        run: cd src/RealtimeServer && npm run test:tc
+        run: cd src/RealtimeServer && npm run test:ci
       - name: "Test: Backend"
         run: |
           dotnet test xForge.sln \
@@ -90,7 +90,7 @@ jobs:
             -p:CoverletOutputFormat=opencover \
             -p:Exclude=\"[NUnit3.TestAdapter]*,[SIL.XForge.*.Views]*,[SIL.XForge.Tests]*\"
       - name: "Test: Frontend"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:tc
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:gha
 
       - name: "Coverage: Backend"
         run: |
@@ -152,6 +152,6 @@ jobs:
       - name: "Test: Backend"
         run: dotnet test xForge.sln
       - name: "Test: RealtimeServer"
-        run: cd src/RealtimeServer && npm run test:tc
+        run: cd src/RealtimeServer && npm run test:ci
       - name: "Test: Frontend"
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:tc
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:gha
