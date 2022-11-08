@@ -227,7 +227,6 @@ namespace SIL.XForge.Scripture.Services
             if (!canWritePTNoteOnProject)
                 commentElem.Add(new XAttribute("extUser", comment.OwnerRef));
             commentElem.Add(new XAttribute("date", FormatCommentDate(comment.DateCreated)));
-            // commentElem.Add(new XAttribute("deleted", "false"));
             var contentElem = new XElement("content");
             // Responses that have empty texts will show in Paratext notes that it is audio-only
             string responseText = string.IsNullOrEmpty(comment.Text)
