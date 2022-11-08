@@ -16,21 +16,21 @@ import {
   hasDoc,
   submitJson0Op
 } from '../../common/utils/test-utils';
-import { CheckingShareLevel } from '../models/checking-config';
-import { SFProject, SF_PROJECTS_COLLECTION } from '../models/sf-project';
+import { CheckingAnswerExport, CheckingShareLevel } from '../models/checking-config';
+import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
-  SFProjectUserConfig,
-  SF_PROJECT_USER_CONFIGS_COLLECTION
+  SF_PROJECT_USER_CONFIGS_COLLECTION,
+  SFProjectUserConfig
 } from '../models/sf-project-user-config';
 import {
   getNoteThreadDocId,
-  NoteThread,
   NOTE_THREAD_COLLECTION,
+  NoteConflictType,
   NoteStatus,
-  NoteType,
-  NoteConflictType
+  NoteThread,
+  NoteType
 } from '../models/note-thread';
 import { Note } from '../models/note';
 import { VerseRefData } from '../models/verse-ref-data';
@@ -242,7 +242,8 @@ class TestEnvironment {
         checkingEnabled: false,
         usersSeeEachOthersResponses: true,
         shareEnabled: true,
-        shareLevel: CheckingShareLevel.Specific
+        shareLevel: CheckingShareLevel.Specific,
+        answerExport: CheckingAnswerExport.MarkedForExport
       },
       texts: [],
       editable: true,
