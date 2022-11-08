@@ -270,7 +270,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.action.emit({ action: 'archive' });
   }
 
-  deleteAnswer(answer: Answer) {
+  async deleteAnswerClicked(answer: Answer): Promise<void> {
+    const confirmation = await this.dialogService.confirm('checking_answers.confirm_delete', 'checking_answers.delete');
+    if (!confirmation) return;
+
     this.action.emit({
       action: 'delete',
       answer
