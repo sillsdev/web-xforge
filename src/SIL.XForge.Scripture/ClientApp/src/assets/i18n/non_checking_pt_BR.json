@@ -116,7 +116,7 @@
     "filter_questions": "Filtrar perguntas",
     "help_options": "Se você precisar de ajuda com algum destes métodos de importação, faça uma pergunta no { 1 } site de apoio da comunidade{ 2 }, ou entre em contato com a equipe em { 3 }{ 4 }.",
     "import_count_questions": "Importar {{ count }} Perguntas Selecionadas",
-    "import_from_csv_file": "Importar de um arquivo CSV",
+    "import_from_csv_file": "Importar da planilha",
     "import_from_spreadsheet": "Importar da planilha",
     "import_from_transcelerator": "Importar perguntas do Transcelerator",
     "import_progress": "Importação de {{ completed }} das {{ total }} perguntas...",
@@ -206,7 +206,12 @@
     "pt_translator": "Membro da Equipe",
     "sf_community_checker": "Verificador da Comunidade",
     "sf_reviewer": "Revisor",
-    "sf_observer": "Visualizar Tradução"
+    "sf_observer": "Observador"
+  },
+  "role_descriptions": {
+    "sf_community_checker": "Answer questions, Comment on answers",
+    "sf_reviewer": "View translation, Add notes",
+    "sf_observer": "View translation"
   },
   "settings": {
     "anyone_with_a_link": "Qualquer pessoa com um link",
@@ -260,7 +265,7 @@
     "synchronize_project": "Sincronizar {{ projectName }} com o Paratext",
     "your_project_is_being_synchronized": "Seu projeto está sendo sincronizado...",
     "sync_is_disabled": "A sincronização para este projeto deveria ter sido desativada, por isso não está disponível no momento. Por favor, entre em contato com {{ email }} para discutir o que precisa ser feito para que a sincronização do projeto possa ser ativada novamente.",
-    "sync_failure_support_message": "Algo deu errado na última vez que o Scripture Forge tentou sincronizar o projeto com o Paratext. Se não funcionar mesmo depois de tentar novamente, por favor, envie um relatório de problemas escrevendo para {{{email}}."
+    "sync_failure_support_message": "Algo deu errado na última vez que o Scripture Forge tentou sincronizar o projeto com o Paratext. Se não funcionar mesmo depois de tentar novamente, por favor, envie um relatório de problemas escrevendo para {{email}}."
   },
   "text": {
     "book_does_not_exist": "Este livro não existe.",

@@ -65,7 +65,7 @@
     "proceed": "Continuar",
     "project_settings": "Configuración del proyecto",
     "select_project_or_resource": "Seleccione el proyecto Paratext o el recurso de la Biblioteca Bíblica Digital en el que se basa su proyecto. Si su proyecto se basa en un proyecto Paratext, lo mejor es configurarlo como un proyecto hijo en Paratext.",
-    "source_text_placeholder": "Texto de original (opcional)",
+    "source_text_placeholder": "Texto original (opcional)",
     "translation_suggestions_require_source_text": "Nota: Las sugerencias de traducción sólo están disponibles si se selecciona un texto de origen.",
     "you_can_change_later": "Puede cambiarlo más tarde.",
     "you_must_be_logged_in_to_paratext": "Debe iniciar sesión con su cuenta de Paratext para conectarse a un proyecto."
@@ -91,7 +91,7 @@
     "project_text_not_editable": "El texto de este proyecto no es editable. Esta configuración se puede cambiar en Paratext.",
     "swap_source_and_target": "Intercambio de origen y destino",
     "text_doc_corrupted": "Este capítulo no se puede editar porque los datos se han corrompido.",
-    "text_has_been_deleted": "El libro ha sido eliminado o ya no es disponible.",
+    "text_has_been_deleted": "El libro ha sido eliminado o ya no está disponible.",
     "to_report_issue_email": "Para informar de un problema, envíe un correo electrónico {{ issueEmailLink }}.",
     "training_completed_successfully": "Entrenamiento completado con éxito",
     "training": "Entrenamiento",
@@ -116,7 +116,7 @@
     "filter_questions": "Filtrar las preguntas",
     "help_options": "Si necesitas ayuda con cualquiera de estos métodos de importación, haz una pregunta en { 1 }el sitio de soporte de la comunidad{ 2 }, o ponte en contacto con el equipo en { 3 }{ 4 }.",
     "import_count_questions": "Importar {{ count }} preguntas seleccionadas",
-    "import_from_csv_file": "Importar desde un archivo CSV",
+    "import_from_csv_file": "Importar desde una hoja de cálculo",
     "import_from_spreadsheet": "Importar desde una hoja de cálculo",
     "import_from_transcelerator": "Importar preguntas del Transcelerator",
     "import_progress": "Importación {{ completed }} del {{ total }} de preguntas...",
@@ -206,7 +206,12 @@
     "pt_translator": "Traductor",
     "sf_community_checker": "Revisor de la comunidad",
     "sf_reviewer": "Revisor",
-    "sf_observer": "Ver traducción"
+    "sf_observer": "Observador"
+  },
+  "role_descriptions": {
+    "sf_community_checker": "Answer questions, Comment on answers",
+    "sf_reviewer": "View translation, Add notes",
+    "sf_observer": "View translation"
   },
   "settings": {
     "anyone_with_a_link": "Cualquiera con un enlace",
@@ -229,8 +234,8 @@
     "share": "Permitir a los usuarios invitar a otros al proyecto",
     "sharing": "Compartir",
     "source_projects_cannot_be_deleted": "Otro proyecto está basado en este proyecto y por lo tanto no puede ser eliminado.",
-    "source_text_placeholder": "Texto de original (opcional)",
-    "translate": "Configuraciones de Traducción",
+    "source_text_placeholder": "Texto original (opcional)",
+    "translate": "Configuración de traducción",
     "translation_suggestions_require_source_text": "Nota: Las sugerencias de traducción sólo están disponibles si se selecciona un texto de origen.",
     "translation_suggestions": "Habilitar las sugerencias de traducción",
     "translations_will_be_suggested": "Las traducciones de las palabras y frases se sugerirán a medida que edite las Escrituras basadas en el proyecto o recurso seleccionado anteriormente.",

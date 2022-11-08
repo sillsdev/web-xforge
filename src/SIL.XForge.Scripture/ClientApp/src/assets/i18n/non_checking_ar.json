@@ -116,7 +116,7 @@
     "filter_questions": "تصفية الأسئلة",
     "help_options": "إن كنتَ بحاجة إلى مساعدة في أي من طرق الجلب هذه، فارفع سؤال في { 1 } موقع دعم المجتمع { 2 }، أو تواصل مع الفريق على عنوان البريد الإلكتروني{ 3 }{ 4 }.",
     "import_count_questions": "جلب {{ count }} أسئلة مختارة",
-    "import_from_csv_file": "جلب من ملف بصيغة CSV",
+    "import_from_csv_file": "جلب من جدول البيانات",
     "import_from_spreadsheet": "جلب من جدول البيانات",
     "import_from_transcelerator": "جلب من الترجمة السريعة",
     "import_progress": "جلب {{ completed }} أسئلة من بين {{ total }} أسئلة...",
@@ -206,7 +206,12 @@
     "pt_translator": "المترجم",
     "sf_community_checker": "تحقُّق المجتمع",
     "sf_reviewer": "المراجِع",
-    "sf_observer": "أظهر الترجمة"
+    "sf_observer": "المراقب"
+  },
+  "role_descriptions": {
+    "sf_community_checker": "Answer questions, Comment on answers",
+    "sf_reviewer": "View translation, Add notes",
+    "sf_observer": "View translation"
   },
   "settings": {
     "anyone_with_a_link": "أي شخص لديه الرابط",
