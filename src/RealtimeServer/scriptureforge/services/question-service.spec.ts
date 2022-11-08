@@ -7,14 +7,14 @@ import { User, USERS_COLLECTION } from '../../common/models/user';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { allowAll, clientConnect, createDoc, flushPromises, submitJson0Op } from '../../common/utils/test-utils';
-import { CheckingShareLevel } from '../models/checking-config';
+import { CheckingAnswerExport, CheckingShareLevel } from '../models/checking-config';
 import { getQuestionDocId, Question, QUESTIONS_COLLECTION } from '../models/question';
-import { SFProject, SF_PROJECTS_COLLECTION } from '../models/sf-project';
+import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
-  SFProjectUserConfig,
-  SF_PROJECT_USER_CONFIGS_COLLECTION
+  SF_PROJECT_USER_CONFIGS_COLLECTION,
+  SFProjectUserConfig
 } from '../models/sf-project-user-config';
 import { QuestionService } from './question-service';
 
@@ -163,7 +163,8 @@ class TestEnvironment {
         checkingEnabled: false,
         usersSeeEachOthersResponses: true,
         shareEnabled: true,
-        shareLevel: CheckingShareLevel.Specific
+        shareLevel: CheckingShareLevel.Specific,
+        answerExport: CheckingAnswerExport.MarkedForExport
       },
       texts: [],
       sync: { queuedCount: 0 },
