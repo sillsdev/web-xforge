@@ -42,7 +42,7 @@
                 </mdc-menu>
                 <button mdc-icon-button class="collapse-question-menu" (click)="collapseDrawer()" icon="clear"></button>
                 <div *ngIf="isQuestionFilterApplied" class="active-question-filter">
-                  Filter: {{ appliedQuestionFilterLabel }}
+                  {{ t("filter") }}: {{ appliedQuestionFilterLabel }}
                 </div>
               </div>
               <div class="panel-content">

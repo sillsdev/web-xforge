@@ -15,7 +15,10 @@ import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import {
+  CheckingAnswerExport,
+  CheckingShareLevel
+} from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -29,7 +32,6 @@ import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/mode
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -74,7 +76,7 @@ import {
   AudioAttachment,
   CheckingAudioRecorderComponent
 } from './checking-audio-recorder/checking-audio-recorder.component';
-import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
+import { CheckingQuestionsComponent, QuestionFilter } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
 import { CheckingComponent } from './checking.component';
 import { FontSizeComponent } from './font-size/font-size.component';
@@ -505,6 +507,83 @@ describe('CheckingComponent', () => {
       expect(env.location.path()).toEqual('/projects/project01/checking/MAT');
       env.activateQuestion('q1Id');
       expect(env.location.path()).toEqual('/projects/project01/checking/JHN');
+    }));
+
+    it('admin can see appropriate filter options', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      expect(env.component.questionFilters.has(QuestionFilter.All)).withContext('All').toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.HasAnswers)).withContext('HasAnswers').toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.NoAnswers)).withContext('NoAnswers').toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.StatusExport)).withContext('StatusExport').toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.StatusResolved))
+        .withContext('StatusResolved')
+        .toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.StatusNone)).withContext('StatusNone').toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasAnswered))
+        .withContext('CurrentUserHasAnswered')
+        .toEqual(false);
+      expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasNotAnswered))
+        .withContext('CurrentUserHasNotAnswered')
+        .toEqual(false);
+    }));
+
+    it('non-admin can see appropriate filter options', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      expect(env.component.questionFilters.has(QuestionFilter.All)).withContext('All').toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.HasAnswers)).withContext('HasAnswers').toEqual(false);
+      expect(env.component.questionFilters.has(QuestionFilter.NoAnswers)).withContext('NoAnswers').toEqual(false);
+      expect(env.component.questionFilters.has(QuestionFilter.StatusExport)).withContext('StatusExport').toEqual(false);
+      expect(env.component.questionFilters.has(QuestionFilter.StatusResolved))
+        .withContext('StatusResolved')
+        .toEqual(false);
+      expect(env.component.questionFilters.has(QuestionFilter.StatusNone)).withContext('StatusNone').toEqual(false);
+      expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasAnswered))
+        .withContext('CurrentUserHasAnswered')
+        .toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasNotAnswered))
+        .withContext('CurrentUserHasNotAnswered')
+        .toEqual(true);
+    }));
+
+    it('can filter questions', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      const totalQuestions = env.questions.length;
+      const expectedQuestionCounts: { filter: QuestionFilter; total: number }[] = [
+        { filter: QuestionFilter.All, total: 15 },
+        { filter: QuestionFilter.HasAnswers, total: 4 },
+        { filter: QuestionFilter.NoAnswers, total: 11 },
+        { filter: QuestionFilter.StatusExport, total: 2 },
+        { filter: QuestionFilter.StatusResolved, total: 1 },
+        { filter: QuestionFilter.StatusNone, total: 2 },
+        { filter: QuestionFilter.CurrentUserHasAnswered, total: 2 },
+        { filter: QuestionFilter.CurrentUserHasNotAnswered, total: 13 }
+      ];
+      expectedQuestionCounts.forEach(expected => {
+        env.setQuestionFilter(expected.filter);
+        expect(env.questions.length)
+          .withContext(env.component.appliedQuestionFilterLabel ?? '')
+          .toEqual(expected.total);
+        const expectedVisibleQuestionTotal =
+          expected.total + (expected.total < totalQuestions ? '/' + totalQuestions : '');
+        expect(env.questionFilterTotal)
+          .withContext(env.component.appliedQuestionFilterLabel ?? '')
+          .toEqual(`(${expectedVisibleQuestionTotal})`);
+      });
+    }));
+
+    it('show applied filter label', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      expect(env.questionFilterLabel).toBeUndefined();
+      env.setQuestionFilter(QuestionFilter.HasAnswers);
+      expect(env.questionFilterLabel).toEqual('Filter: Has Answers');
+    }));
+
+    it('show no filters questions response', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER, 'MAT');
+      expect(env.questions.length).toEqual(1);
+      env.setQuestionFilter(QuestionFilter.StatusExport);
+      expect(env.questions.length).toEqual(0);
+      expect(env.noQuestionsFound).not.toBeNull();
     }));
   });
 
@@ -1729,6 +1808,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#project-navigation .next-question'));
   }
 
+  get noQuestionsFound(): DebugElement {
+    return this.fixture.debugElement.query(By.css('app-checking-questions .no-questions-found'));
+  }
+
   set onlineStatus(hasConnection: boolean) {
     when(mockedPwaService.isOnline).thenReturn(hasConnection);
     this.isOnline.next(hasConnection);
@@ -1740,8 +1823,18 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#project-navigation .prev-question'));
   }
 
+  get questionFilterLabel(): string | undefined {
+    return this.fixture.debugElement.query(By.css('.active-question-filter'))?.nativeElement.textContent.trim();
+  }
+
+  get questionFilterTotal(): string {
+    return this.fixture.debugElement
+      .query(By.css('#questions-panel .panel-heading h2 span'))
+      .nativeElement.textContent.trim();
+  }
+
   get questions(): DebugElement[] {
-    return this.fixture.debugElement.queryAll(By.css('#questions-panel .mdc-list-item'));
+    return this.fixture.debugElement.queryAll(By.css('app-checking-questions .mdc-list-item'));
   }
 
   get quillEditor(): HTMLElement {
@@ -1966,7 +2059,7 @@ class TestEnvironment {
 
   selectQuestion(/** indexed starting at 1 */ questionNumber: number, includeReadTimer: boolean = true): DebugElement {
     const question = this.fixture.debugElement.query(
-      By.css('#questions-panel .mdc-list-item:nth-child(' + questionNumber + ')')
+      By.css('app-checking-questions .mdc-list-item:nth-child(' + questionNumber + ')')
     );
     question.nativeElement.click();
     tick(1);
@@ -2092,6 +2185,13 @@ class TestEnvironment {
     flush();
   }
 
+  setQuestionFilter(filter: QuestionFilter) {
+    this.component.questionFilterSelected = filter;
+    this.fixture.detectChanges();
+    tick();
+    this.fixture.detectChanges();
+  }
+
   simulateNewRemoteAnswer(dataId: string = 'newAnswer1', text: string = 'new answer from another user') {
     // Another user on another computer adds a new answer.
     const date = new Date();
@@ -2178,6 +2278,9 @@ class TestEnvironment {
     ]);
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
+    );
+    when(mockedProjectService.isProjectAdmin(anything(), anything())).thenResolve(
+      user.role === SFProjectRole.ParatextAdministrator
     );
 
     this.realtimeService.addSnapshots<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, [
@@ -2325,7 +2428,8 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateCreated,
       dateModified: dateCreated,
-      comments: a8Comments
+      comments: a8Comments,
+      status: AnswerStatus.Exportable
     });
     johnQuestions[8].data!.answers.push({
       dataId: 'a0Id',
@@ -2337,7 +2441,8 @@ class TestEnvironment {
       dateCreated: dateCreated,
       dateModified: dateCreated,
       audioUrl: '/audio.mp3',
-      comments: []
+      comments: [],
+      status: AnswerStatus.Exportable
     });
     johnQuestions[8].data!.answers.push({
       dataId: 'a1Id',
@@ -2349,11 +2454,14 @@ class TestEnvironment {
       dateCreated: dateCreated,
       dateModified: dateCreated,
       audioUrl: '/audio.mp3',
-      comments: []
+      comments: [],
+      status: AnswerStatus.Resolved
     });
 
     if (this.projectBookRoute === 'JHN') {
       questions = johnQuestions;
+    } else if (this.projectBookRoute === 'MAT') {
+      questions = matthewQuestions;
     } else if (this.projectBookRoute === 'ALL') {
       questions = johnQuestions.concat(matthewQuestions);
     }
