@@ -1,5 +1,5 @@
-import { Delta } from 'rich-text';
 import * as RichText from 'rich-text';
+import { Delta } from 'rich-text';
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
@@ -8,8 +8,8 @@ import { User, USERS_COLLECTION } from '../../common/models/user';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { allowAll, clientConnect, createDoc, fetchDoc, submitOp } from '../../common/utils/test-utils';
-import { CheckingShareLevel } from '../models/checking-config';
-import { SFProject, SF_PROJECTS_COLLECTION } from '../models/sf-project';
+import { CheckingAnswerExport, CheckingShareLevel } from '../models/checking-config';
+import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { getTextDocId, TextData, TEXTS_COLLECTION } from '../models/text-data';
 import { TranslateShareLevel } from '../models/translate-config';
@@ -124,7 +124,8 @@ class TestEnvironment {
         checkingEnabled: false,
         usersSeeEachOthersResponses: true,
         shareEnabled: true,
-        shareLevel: CheckingShareLevel.Specific
+        shareLevel: CheckingShareLevel.Specific,
+        answerExport: CheckingAnswerExport.MarkedForExport
       },
       texts: [],
       sync: { queuedCount: 0 },
