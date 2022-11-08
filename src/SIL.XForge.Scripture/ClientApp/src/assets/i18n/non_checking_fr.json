@@ -116,7 +116,7 @@
     "filter_questions": "Filtrer les questions",
     "help_options": "Si vous avez besoin d'aide avec l'une ou l'autre de ces méthodes d'importation, posez une question sur { 1 }le site de support de la communauté{ 2 }, ou contactez l'équipe sur { 3 }{ 4 }.",
     "import_count_questions": "Importer {{ count }} questions sélectionnées",
-    "import_from_csv_file": "Importer à partir du fichier CSV",
+    "import_from_csv_file": "Importer à partir d'une feuille de calcul",
     "import_from_spreadsheet": "Importer à partir d'une feuille de calcul",
     "import_from_transcelerator": "Importer des questions depuis Transcelerator",
     "import_progress": "{{ completed }} questions importées sur {{ total }}...",
@@ -206,7 +206,12 @@
     "pt_translator": "Traducteur",
     "sf_community_checker": "Vérificateur de la communauté",
     "sf_reviewer": "Réviseur",
-    "sf_observer": "Afficher la traduction"
+    "sf_observer": "Observateur"
+  },
+  "role_descriptions": {
+    "sf_community_checker": "Answer questions, Comment on answers",
+    "sf_reviewer": "View translation, Add notes",
+    "sf_observer": "View translation"
   },
   "settings": {
     "anyone_with_a_link": "Toute personne ayant le lien",
