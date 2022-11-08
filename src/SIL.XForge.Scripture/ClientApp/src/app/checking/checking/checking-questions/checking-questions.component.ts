@@ -62,7 +62,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   questionDocs: Readonly<QuestionDoc[]> = [];
   activeQuestionDoc?: QuestionDoc;
   activeQuestionDoc$ = new Subject<QuestionDoc>();
-  @ViewChild(MdcList, { static: true }) mdcList!: MdcList;
+  @ViewChild(MdcList, { static: true }) mdcList?: MdcList;
   @Output() totalVisibleQuestions = new EventEmitter<number>();
   visibleQuestions: QuestionDoc[] = [];
 
@@ -368,7 +368,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   private scrollToActiveQuestion() {
-    const element = (this.mdcList.elementRef.nativeElement as HTMLElement).querySelector('.mdc-list-item--activated');
+    const element = (this.mdcList?.elementRef.nativeElement as HTMLElement)?.querySelector('.mdc-list-item--activated');
     if (element != null) {
       element.scrollIntoView({ block: 'nearest' });
     }
