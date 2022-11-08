@@ -1060,7 +1060,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         .set(QuestionFilter.StatusNone, translate('checking.question_filter_not_reviewed'));
     } else {
       this.questionFilters
-        .set(QuestionFilter.CurrentUserHasAnswered, translate('checking.question_filter_have_answered'))
+        .set(QuestionFilter.CurrentUserHasAnswered, translate('checking.question_filter_answered'))
         .set(QuestionFilter.CurrentUserHasNotAnswered, translate('checking.question_filter_not_answered'));
     }
   }

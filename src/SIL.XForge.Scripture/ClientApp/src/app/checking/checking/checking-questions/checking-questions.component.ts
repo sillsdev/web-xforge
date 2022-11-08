@@ -29,8 +29,8 @@ import { CheckingUtils } from '../../checking.utils';
 
 export enum QuestionFilter {
   All,
-  CurrentUserHasNotAnswered,
   CurrentUserHasAnswered,
+  CurrentUserHasNotAnswered,
   HasAnswers,
   NoAnswers,
   StatusNone,
