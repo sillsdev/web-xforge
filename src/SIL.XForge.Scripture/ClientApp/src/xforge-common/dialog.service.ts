@@ -38,15 +38,16 @@ export class DialogService {
   }
 
   async confirm(
-    question: Observable<string>,
-    affirmative: Observable<string>,
-    negative?: Observable<string>
+    question: string | Observable<string>,
+    affirmative: string | Observable<string>,
+    negative?: string | Observable<string>
   ): Promise<boolean> {
+    negative = negative == null ? this.i18n.translate('edit_name_dialog.cancel') : this.ensureLocalized(negative);
     const result: boolean | undefined = await this.openGenericDialog({
-      title: question,
+      title: this.ensureLocalized(question),
       options: [
-        { label: negative ?? this.i18n.translate('edit_name_dialog.cancel'), value: false },
-        { label: affirmative, value: true, highlight: true }
+        { label: negative, value: false },
+        { label: this.ensureLocalized(affirmative), value: true, highlight: true }
       ]
     });
     return result === true;
@@ -63,12 +64,20 @@ export class DialogService {
   async message(message: string | Observable<string>, close?: string | Observable<string>): Promise<void> {
     const closeText = close instanceof Observable ? close : this.i18n.translate(close ?? 'dialog.close');
     await this.openGenericDialog({
-      title: typeof message === 'string' ? this.i18n.translate(message) : message,
+      title: this.ensureLocalized(message),
       options: [{ label: closeText, value: undefined, highlight: true }]
     });
   }
 
   get openDialogCount(): number {
     return this.mdcDialog.openDialogs.length + this.matDialog.openDialogs.length;
+  }
+
+  /**
+   * @param value A string that is a translation key, or an Observable<string>
+   * @returns value if it is an Observable, or an Observable for a translation with value as the localization key.
+   */
+  private ensureLocalized(value: string | Observable<string>): Observable<string> {
+    return typeof value === 'string' ? this.i18n.translate(value) : value;
   }
 }

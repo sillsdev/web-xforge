@@ -169,6 +169,7 @@
     "cancel": "Cancel",
     "cannot_like_own_answer": "You cannot like your own answer.",
     "delete": "Delete",
+    "confirm_delete": "Are you sure you want to delete this answer?",
     "edit": "Edit",
     "no_scripture_selected": "No scripture selected yet.",
     "record_upload": "Record/Upload",

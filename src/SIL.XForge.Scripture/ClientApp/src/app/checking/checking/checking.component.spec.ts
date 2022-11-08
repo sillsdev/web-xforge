@@ -2027,7 +2027,7 @@ class TestEnvironment {
     const usersAnswer = this.component.answersPanel!.questionDoc!.data!.answers.filter(
       answer => answer.ownerRef === userId
     )[0];
-    this.component.answersPanel!.deleteAnswer(usersAnswer);
+    this.component.answersPanel!.deleteAnswerClicked(usersAnswer);
     this.fixture.detectChanges();
     flush();
   }
@@ -2360,6 +2360,7 @@ class TestEnvironment {
     when(mockedDialogService.openMatDialog(TextChooserDialogComponent, anything())).thenReturn(
       instance(this.mockedTextChooserDialogComponent)
     );
+    when(mockedDialogService.confirm('checking_answers.confirm_delete', 'checking_answers.delete')).thenResolve(true);
   }
 
   private createTextDataForChapter(chapter: number): TextData {
