@@ -638,7 +638,7 @@ describe('CheckingComponent', () => {
       verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
     }));
 
-    it('s the last visited question in all question context', fakeAsync(() => {
+    it('saves the last visited question in all question context', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER, 'ALL');
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
       verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
