@@ -29,8 +29,8 @@ jobs:
       - name: Realtime Server Lint check
         run: cd src/RealtimeServer && npm ci && npm run lint
       - name: Realtime Server Prettier format check
-        run: cd src/RealtimeServer && npm run prettier:tc
+        run: cd src/RealtimeServer && npm run prettier:ci
       - name: Angular Frontend Lint check
         run: cd src/SIL.XForge.Scripture/ClientApp && npm ci && npm run lint
       - name: Angular Frontend Prettier format check
-        run: cd src/SIL.XForge.Scripture/ClientApp && npm run prettier:tc
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run prettier:ci

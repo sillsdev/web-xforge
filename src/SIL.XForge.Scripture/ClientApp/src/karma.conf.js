@@ -2,8 +2,14 @@
 // https://karma-runner.github.io/1.0/config/configuration-file.html
 
 module.exports = function (config) {
-  const isTC =
+  const isRunningInTeamCity =
     config.browsers && config.browsers.length === 1 && config.browsers[0] === 'xForgeChromiumHeadless' && !config.watch;
+
+  let karmaReporters = ['progress', 'kjhtml'];
+  if (isRunningInTeamCity) karmaReporters = ['teamcity', 'coverage-istanbul'];
+  // Override reporters with a comma-delimited list of reporters in environment variable KARMA_REPORTERS.
+  // For example, KARMA_REPORTERS="mocha,coverage-istanbul" ng test --code-coverage
+  if (process.env.KARMA_REPORTERS != null) karmaReporters = process.env.KARMA_REPORTERS.split(',');
 
   config.set({
     basePath: '',
@@ -14,13 +20,14 @@ module.exports = function (config) {
       require('karma-jasmine-html-reporter'),
       require('karma-coverage-istanbul-reporter'),
       require('karma-teamcity-reporter'),
+      require('karma-mocha-reporter'),
       require('@angular-devkit/build-angular/plugins/karma')
     ],
     client: {
       clearContext: false, // leave Jasmine Spec Runner output visible in browser
       jasmine: {
         random: true,
-        seed: isTC ? '12345' : null
+        seed: isRunningInTeamCity ? '12345' : null
       }
     },
     coverageIstanbulReporter: {
@@ -44,7 +51,8 @@ module.exports = function (config) {
       '/assets/audio/audio.mp3': '',
       '/assets/audio/': '/base/app/checking/checking/checking-audio-player/'
     },
-    reporters: isTC ? ['teamcity', 'coverage-istanbul'] : ['progress', 'kjhtml'],
+    reporters: karmaReporters,
+
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,
