@@ -111,12 +111,12 @@
     "canceling_import": "Anularea importului...",
     "close": "Închide",
     "continue_import": "Continue import",
-    "csv_instructions": "Create a spreadsheet with a column for the reference and a column for the question, as shown below:\nExport or save the spreadsheet as a CSV file.\nClick {{ boldStart }}{{ importFromCsvFile }}{{ boldEnd }} below and select the file.",
+    "csv_instructions": "Create a spreadsheet with a column for the reference and a column for the question, as shown below:\nExport or save the spreadsheet as a CSV or TSV file.\nClick {{ boldStart }}{{ importFromCsvFile }}{{ boldEnd }} below and select the file.",
     "csv_questions_duplicates": "Note: Some of the selected questions are exact duplicates of questions that are already part of your project. They will not be re-imported.",
     "filter_questions": "Filtrează întrebările",
     "help_options": "If you need help with either of these import methods, ask a question on { 1 }the community support site{ 2 }, or reach out to the team at { 3 }{ 4 }.",
     "import_count_questions": "Importă {{ count }} întrebările selectate",
-    "import_from_csv_file": "Import from CSV file",
+    "import_from_csv_file": "Import from spreadsheet",
     "import_from_spreadsheet": "Import from spreadsheet",
     "import_from_transcelerator": "Importă întrebări din Transcelerator",
     "import_progress": "Au fost importate {{ completed }} din {{ total }} întrebări...",
@@ -206,7 +206,12 @@
     "pt_translator": "Traducător",
     "sf_community_checker": "Verificator din comunitate",
     "sf_reviewer": "Corector",
-    "sf_observer": "Vizualizarea traducerii"
+    "sf_observer": "Observator"
+  },
+  "role_descriptions": {
+    "sf_community_checker": "Answer questions, Comment on answers",
+    "sf_reviewer": "View translation, Add notes",
+    "sf_observer": "View translation"
   },
   "settings": {
     "anyone_with_a_link": "Oricine cu un link",

@@ -111,12 +111,12 @@
     "canceling_import": "إلغاء الاستجلاب...",
     "close": "إغلاق",
     "continue_import": "مواصلة الاستجلاب",
-    "csv_instructions": "إنشاء جدول بيانات فيه عمود للشاهد الكتابي وعمود للسؤال، كما يظهر أدناه: \nصدِّد أو احفظ الجدول بصيغة ملف CSV. \nانقر على {{ boldStart }}{{ importFromCsvFile }}{{ boldEnd }} في الأسفل، وحدِّد الملف.",
+    "csv_instructions": "Create a spreadsheet with a column for the reference and a column for the question, as shown below:\nExport or save the spreadsheet as a CSV or TSV file.\nClick {{ boldStart }}{{ importFromCsvFile }}{{ boldEnd }} below and select the file.",
     "csv_questions_duplicates": "ملاحظة: بعض الأسئلة المحددة هي نسخ دقيقة للأسئلة التي هي جزء من مشروعك. لن يتم جلبها ثانيةً.",
     "filter_questions": "تصفية الأسئلة",
     "help_options": "إن كنتَ بحاجة إلى مساعدة في أي من طرق الجلب هذه، فارفع سؤال في { 1 } موقع دعم المجتمع { 2 }، أو تواصل مع الفريق على عنوان البريد الإلكتروني{ 3 }{ 4 }.",
     "import_count_questions": "جلب {{ count }} أسئلة مختارة",
-    "import_from_csv_file": "جلب من ملف بصيغة CSV",
+    "import_from_csv_file": "جلب من جدول البيانات",
     "import_from_spreadsheet": "جلب من جدول البيانات",
     "import_from_transcelerator": "جلب من الترجمة السريعة",
     "import_progress": "جلب {{ completed }} أسئلة من بين {{ total }} أسئلة...",
@@ -206,7 +206,12 @@
     "pt_translator": "المترجم",
     "sf_community_checker": "تحقُّق المجتمع",
     "sf_reviewer": "المراجِع",
-    "sf_observer": "أظهر الترجمة"
+    "sf_observer": "المراقب"
+  },
+  "role_descriptions": {
+    "sf_community_checker": "Answer questions, Comment on answers",
+    "sf_reviewer": "View translation, Add notes",
+    "sf_observer": "View translation"
   },
   "settings": {
     "anyone_with_a_link": "أي شخص لديه الرابط",
