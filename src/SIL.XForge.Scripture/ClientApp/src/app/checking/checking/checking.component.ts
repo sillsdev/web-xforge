@@ -27,6 +27,7 @@ import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { DialogService } from 'xforge-common/dialog.service';
+import { translate } from '@ngneat/transloco';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SF_DEFAULT_SHARE_ROLE } from '../../core/models/sf-project-role-info';
@@ -1049,18 +1050,18 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   private initQuestionFilters() {
     this.questionFilters.clear();
-    this.questionFilters.set(QuestionFilter.All, 'All');
+    this.questionFilters.set(QuestionFilter.All, translate('checking.question_filter_all'));
     if (this.isProjectAdmin) {
       this.questionFilters
-        .set(QuestionFilter.HasAnswers, 'Has Answers')
-        .set(QuestionFilter.NoAnswers, 'No Answers')
-        .set(QuestionFilter.StatusExport, 'Exportable')
-        .set(QuestionFilter.StatusResolved, 'Resolved')
-        .set(QuestionFilter.StatusNone, 'Not Reviewed');
+        .set(QuestionFilter.HasAnswers, translate('checking.question_filter_has_answers'))
+        .set(QuestionFilter.NoAnswers, translate('checking.question_filter_no_answers'))
+        .set(QuestionFilter.StatusExport, translate('checking.question_filter_exportable'))
+        .set(QuestionFilter.StatusResolved, translate('checking.question_filter_resolved'))
+        .set(QuestionFilter.StatusNone, translate('checking.question_filter_not_reviewed'));
     } else {
       this.questionFilters
-        .set(QuestionFilter.CurrentUserHasAnswered, 'Have Answered')
-        .set(QuestionFilter.CurrentUserHasNotAnswered, 'Not Answered');
+        .set(QuestionFilter.CurrentUserHasAnswered, translate('checking.question_filter_have_answered'))
+        .set(QuestionFilter.CurrentUserHasNotAnswered, translate('checking.question_filter_not_answered'));
     }
   }
 }
