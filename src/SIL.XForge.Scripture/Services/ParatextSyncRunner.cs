@@ -741,7 +741,7 @@ namespace SIL.XForge.Scripture.Services
                 oldNotesElem,
                 questionDocs,
                 _currentPtSyncUsers,
-                _projectDoc.Data.CheckingConfig.AnswerExport
+                _projectDoc.Data.CheckingConfig.AnswerExportMethod
             );
             if (notesElem.Elements("thread").Any())
             {

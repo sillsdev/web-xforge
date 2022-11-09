@@ -263,7 +263,7 @@ describe('ShareControlComponent', () => {
       shareEnabled: true,
       shareLevel: CheckingShareLevel.Anyone,
       usersSeeEachOthersResponses: false,
-      answerExport: CheckingAnswerExport.MarkedForExport
+      answerExportMethod: CheckingAnswerExport.MarkedForExport
     };
     env.updateCheckingProperties(checkingConfig);
     env.wait();
@@ -289,7 +289,7 @@ describe('ShareControlComponent', () => {
       shareEnabled: false,
       shareLevel: CheckingShareLevel.Anyone,
       usersSeeEachOthersResponses: false,
-      answerExport: CheckingAnswerExport.MarkedForExport
+      answerExportMethod: CheckingAnswerExport.MarkedForExport
     };
     env.updateCheckingProperties(checkingConfig);
     env.wait();

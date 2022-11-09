@@ -164,7 +164,7 @@ class TestEnvironment {
         usersSeeEachOthersResponses: true,
         shareEnabled: true,
         shareLevel: CheckingShareLevel.Specific,
-        answerExport: CheckingAnswerExport.MarkedForExport
+        answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
       texts: [],
       sync: { queuedCount: 0 },

@@ -103,7 +103,7 @@ class TestEnvironment {
         shareEnabled: false,
         shareLevel: CheckingShareLevel.Specific,
         usersSeeEachOthersResponses: false,
-        answerExport: CheckingAnswerExport.MarkedForExport
+        answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
       translateConfig: {
         translationSuggestionsEnabled: false,
