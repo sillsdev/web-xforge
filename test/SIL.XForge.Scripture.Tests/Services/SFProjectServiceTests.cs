@@ -1471,6 +1471,9 @@ namespace SIL.XForge.Scripture.Services
         public void AddUserAsync_SourceProjectUnavailable_SkipProject()
         {
             var env = new TestEnvironment();
+            env.ParatextService
+                .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
+                .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
             Assert.DoesNotThrowAsync(() => env.Service.AddUserAsync(User03, Project04, SFProjectRole.Translator));
             var project = env.GetProject(Project04);
             Assert.That(project.UserRoles[User03], Is.EqualTo(SFProjectRole.Translator));
@@ -1623,7 +1626,7 @@ namespace SIL.XForge.Scripture.Services
             User user = env.GetUser(User03);
             Assert.That(user.Sites[SiteId].Projects, Is.Empty);
             env.ParatextService
-                .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), "pt_source_no_suggestions", CancellationToken.None)
+                .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
                 .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
 
             await env.Service.AddUserAsync(User03, Project03, SFProjectRole.Translator);
@@ -2504,6 +2507,7 @@ namespace SIL.XForge.Scripture.Services
                                 Id = User01,
                                 Email = "user01@example.com",
                                 ParatextId = "pt-user01",
+                                Role = SystemRole.User,
                                 Sites = new Dictionary<string, Site>
                                 {
                                     {
@@ -2517,6 +2521,7 @@ namespace SIL.XForge.Scripture.Services
                                 Id = User02,
                                 Email = "user02@example.com",
                                 ParatextId = "pt-user02",
+                                Role = SystemRole.User,
                                 Sites = new Dictionary<string, Site>
                                 {
                                     {
@@ -2530,6 +2535,7 @@ namespace SIL.XForge.Scripture.Services
                                 Id = User03,
                                 Email = "user03@example.com",
                                 ParatextId = "pt-user03",
+                                Role = SystemRole.User,
                                 Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
                             },
                             new User
@@ -2543,6 +2549,7 @@ namespace SIL.XForge.Scripture.Services
                             {
                                 Id = LinkExpiredUser,
                                 Email = "expired@example.com",
+                                Role = SystemRole.User,
                                 Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
                             },
                             new User
@@ -2550,6 +2557,7 @@ namespace SIL.XForge.Scripture.Services
                                 Id = User05,
                                 Email = "user05@example.com",
                                 ParatextId = "pt-user05",
+                                Role = SystemRole.User,
                                 Sites = new Dictionary<string, Site>
                                 {
                                     {
@@ -2562,6 +2570,7 @@ namespace SIL.XForge.Scripture.Services
                             {
                                 Id = User06,
                                 Email = "user06@example.com",
+                                Role = SystemRole.User,
                                 Sites = new Dictionary<string, Site>
                                 {
                                     {
