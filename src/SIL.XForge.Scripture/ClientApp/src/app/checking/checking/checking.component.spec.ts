@@ -578,7 +578,7 @@ describe('CheckingComponent', () => {
       expect(env.questionFilterLabel).toEqual('Filter: Has Answers');
     }));
 
-    it('show no filters questions response', fakeAsync(() => {
+    it('show no questions message for filter', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER, 'MAT');
       expect(env.questions.length).toEqual(1);
       env.setQuestionFilter(QuestionFilter.StatusExport);
@@ -1491,6 +1491,7 @@ describe('CheckingComponent', () => {
       env.selectQuestion(6);
       const buttonIndex = 0;
 
+      expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBeUndefined();
       env.clickButton(env.getExportAnswerButton(buttonIndex));
       expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBe(true);
       const questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
@@ -1502,10 +1503,38 @@ describe('CheckingComponent', () => {
       env.selectQuestion(6);
       const buttonIndex = 0;
 
+      expect(env.getResolveAnswerButton(buttonIndex).classes['status-resolved']).toBeUndefined();
       env.clickButton(env.getResolveAnswerButton(buttonIndex));
       expect(env.getResolveAnswerButton(buttonIndex).classes['status-resolved']).toBe(true);
       const questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
       expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Resolved);
+    }));
+
+    it('can change between different answer statuses', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      env.selectQuestion(6);
+      const buttonIndex = 0;
+
+      expect(env.getResolveAnswerButton(buttonIndex).classes['status-resolved']).toBeUndefined();
+      expect(env.getResolveAnswerButton(buttonIndex).classes['status-exportable']).toBeUndefined();
+
+      env.clickButton(env.getResolveAnswerButton(buttonIndex));
+      expect(env.getResolveAnswerButton(buttonIndex).classes['status-resolved']).toBe(true);
+      expect(env.getResolveAnswerButton(buttonIndex).classes['status-exportable']).toBeUndefined();
+      let questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Resolved);
+
+      env.clickButton(env.getExportAnswerButton(buttonIndex));
+      expect(env.getExportAnswerButton(buttonIndex).classes['status-resolved']).toBeUndefined();
+      expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBe(true);
+      questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Exportable);
+
+      env.clickButton(env.getExportAnswerButton(buttonIndex));
+      expect(env.getExportAnswerButton(buttonIndex).classes['status-resolved']).toBeUndefined();
+      expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBeUndefined();
+      questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.None);
     }));
   });
 
@@ -1661,7 +1690,7 @@ class TestEnvironment {
       checkingEnabled: true,
       shareEnabled: true,
       shareLevel: CheckingShareLevel.Anyone,
-      answerExport: CheckingAnswerExport.MarkedForExport
+      answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     translateConfig: {
       translationSuggestionsEnabled: true,

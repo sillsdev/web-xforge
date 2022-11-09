@@ -117,7 +117,7 @@ export function getSFProject(id: string): SFProjectProfile {
       usersSeeEachOthersResponses: true,
       shareEnabled: true,
       shareLevel: CheckingShareLevel.Specific,
-      answerExport: CheckingAnswerExport.MarkedForExport
+      answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     sync: { queuedCount: 0 },
     editable: true,

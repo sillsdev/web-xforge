@@ -409,7 +409,7 @@ describe('SettingsComponent', () => {
           usersSeeEachOthersResponses: false,
           shareEnabled: true,
           shareLevel: CheckingShareLevel.Anyone,
-          answerExport: CheckingAnswerExport.MarkedForExport
+          answerExportMethod: CheckingAnswerExport.MarkedForExport
         });
         env.wait();
 
@@ -431,7 +431,7 @@ describe('SettingsComponent', () => {
             usersSeeEachOthersResponses: false,
             shareEnabled: true,
             shareLevel: CheckingShareLevel.Specific,
-            answerExport: CheckingAnswerExport.MarkedForExport
+            answerExportMethod: CheckingAnswerExport.MarkedForExport
           }
         );
         env.wait();
@@ -763,7 +763,7 @@ class TestEnvironment {
       usersSeeEachOthersResponses: false,
       shareEnabled: false,
       shareLevel: CheckingShareLevel.Specific,
-      answerExport: CheckingAnswerExport.MarkedForExport
+      answerExportMethod: CheckingAnswerExport.MarkedForExport
     }
   ) {
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {

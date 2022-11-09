@@ -14,5 +14,5 @@ export interface CheckingConfig {
   usersSeeEachOthersResponses: boolean;
   shareEnabled: boolean;
   shareLevel: CheckingShareLevel;
-  answerExport: CheckingAnswerExport;
+  answerExportMethod: CheckingAnswerExport;
 }

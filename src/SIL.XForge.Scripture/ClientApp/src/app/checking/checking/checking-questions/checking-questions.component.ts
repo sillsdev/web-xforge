@@ -99,29 +99,17 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
         q.data.answers.filter((a: Answer) => a.status === AnswerStatus.Resolved).length > 0;
       const hasExportableAnswers: boolean =
         q.data.answers.filter((a: Answer) => a.status === AnswerStatus.Exportable).length > 0;
-      if (this._filter === QuestionFilter.All) {
-        return true;
-      } else if (this._filter === QuestionFilter.CurrentUserHasNotAnswered && !currentUserAnswers) {
-        return true;
-      } else if (this._filter === QuestionFilter.CurrentUserHasAnswered && currentUserAnswers) {
-        return true;
-      } else if (this._filter === QuestionFilter.HasAnswers && hasAnswers) {
-        return true;
-      } else if (this._filter === QuestionFilter.NoAnswers && !hasAnswers) {
-        return true;
-      } else if (
-        this._filter === QuestionFilter.StatusNone &&
-        hasAnswers &&
-        !hasExportableAnswers &&
-        !hasResolvedAnswers
-      ) {
-        return true;
-      } else if (this._filter === QuestionFilter.StatusExport && hasExportableAnswers) {
-        return true;
-      } else if (this._filter === QuestionFilter.StatusResolved && hasResolvedAnswers) {
-        return true;
-      }
-      return;
+
+      const filterMatch: Map<QuestionFilter, boolean> = new Map<QuestionFilter, boolean>()
+        .set(QuestionFilter.All, true)
+        .set(QuestionFilter.CurrentUserHasNotAnswered, !currentUserAnswers)
+        .set(QuestionFilter.CurrentUserHasAnswered, currentUserAnswers)
+        .set(QuestionFilter.HasAnswers, hasAnswers)
+        .set(QuestionFilter.NoAnswers, !hasAnswers)
+        .set(QuestionFilter.StatusNone, hasAnswers && !hasExportableAnswers && !hasResolvedAnswers)
+        .set(QuestionFilter.StatusExport, hasExportableAnswers)
+        .set(QuestionFilter.StatusResolved, hasResolvedAnswers);
+      return filterMatch.get(this._filter);
     });
     this.totalVisibleQuestions.emit(visible.length);
     this.visibleQuestions = visible;

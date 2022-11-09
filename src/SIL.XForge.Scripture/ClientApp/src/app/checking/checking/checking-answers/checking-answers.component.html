@@ -157,13 +157,13 @@
                     *ngIf="canChangeAnswerStatus(answer)"
                     mdc-button
                     type="button"
-                    (click)="markAnswerAsExportable(answer)"
+                    (click)="markAnswerForExport(answer)"
                     class="answer-status answer-export"
-                    [class.status-exportable]="isAnswerExportable(answer)"
+                    [class.status-exportable]="isMarkedForExport(answer)"
                     [matTooltip]="t('tooltip_status_export')"
                     matTooltipPosition="above"
                   >
-                    {{ t(isAnswerExportable(answer) ? "marked_for_export" : "mark_for_export") }}
+                    {{ t(isMarkedForExport(answer) ? "marked_for_export" : "mark_for_export") }}
                   </button>
                   <button
                     *ngIf="canChangeAnswerStatus(answer)"

@@ -192,6 +192,10 @@
         }
         .delete-divider {
           padding: 0 20px;
+          display: none;
+        }
+        button + .delete-divider {
+          display: inline;
         }
       }
 
