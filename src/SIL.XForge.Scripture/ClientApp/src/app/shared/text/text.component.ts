@@ -32,7 +32,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
-import { attributeFromMouseEvent, getBaseVerse } from '../utils';
+import { attributeFromMouseEvent, getBaseVerse, VERSE_REGEX } from '../utils';
 import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
 import { getAttributesAtPosition, registerScripture } from './quill-scripture';
 import { Segment } from './segment';
@@ -700,9 +700,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     const format: StringMap = { ['reviewer-selection']: selectionValue };
     let verseEmbedFormatted: boolean = false;
     for (const segment of verseSegments) {
+      // only underline the selection if it is part of the verse text i.e. not a section heading
+      if (!VERSE_REGEX.test(segment)) continue;
       const range: RangeStatic | undefined = this.getSegmentRange(segment);
       if (range != null) {
         if (!verseEmbedFormatted) {
+          // add the formatting to the verse embed on the first iteration
           this.editor.formatText(range.index - 1, 1, format, 'api');
           verseEmbedFormatted = true;
         }
