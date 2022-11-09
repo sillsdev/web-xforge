@@ -269,7 +269,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     // whitespace is trimmed), or negative (when the selection is expanded to a word boundary, rather than trimmed).
     // Start by trimming any white space from the left side (Specifically, trim from the start of the string, which
     // would be the right side of a rtl language).
-    let startTrimLength = startText.length - startText.trimLeft().length;
+    let startTrimLength = startText.length - startText.trimStart().length;
     // If there was no white space to be trimmed, and more than zero characters were selected in the segment, then the
     // selection should be expanded to the nearest word boundary.
     if (startTrimLength === 0 && startText !== '') {
@@ -296,7 +296,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
         startOffset;
     }
     // Trim any whitespace from the right side of the selection
-    let endTrimLength = endText.length - endText.trimRight().length;
+    let endTrimLength = endText.length - endText.trimEnd().length;
     // If there was no whitespace to trim, and more than zero characters were selected in the segment, then the
     // selection should be expanded to the first word boundary after the end of the selection.
     if (endTrimLength === 0 && endText !== '') {
@@ -331,9 +331,9 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     // beginning or end at the end of a verse. First determine whether the selection, after being trimmed/expanded,
     // includes the entirety of the first and last segments of the selection. If only whitespace is missed, consider
     // that the segment was fully selected.
-    const startSegmentLeadingWhitespaceLength = startNodeText.length - startNodeText.trimLeft().length;
+    const startSegmentLeadingWhitespaceLength = startNodeText.length - startNodeText.trimStart().length;
     const startSegmentClipped = startOffset + startTrimLength > startSegmentLeadingWhitespaceLength;
-    const endSegmentLengthWithoutTrailingWhitespace = endNodeText.trimRight().length;
+    const endSegmentLengthWithoutTrailingWhitespace = endNodeText.trimEnd().length;
     const endSegmentClipped = endOffset - endTrimLength < endSegmentLengthWithoutTrailingWhitespace;
 
     // Even if the entirety of the first or last segment was selected, it's possible that segment isn't the only segment
