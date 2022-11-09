@@ -75,7 +75,8 @@ export function verseRefFromMouseEvent(event: MouseEvent, bookNum: number): Vers
     return;
   }
   const segmentParts = clickSegment.split('_', 3);
-  return new VerseRef(bookNum, segmentParts[1], segmentParts[2]);
+  const versePart = segmentParts[2].split('/')[0];
+  return new VerseRef(bookNum, segmentParts[1], versePart);
 }
 
 export function threadIdFromMouseEvent(event: MouseEvent): string | undefined {
