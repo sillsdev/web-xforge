@@ -193,7 +193,7 @@ class TestEnvironment {
       checkingEnabled: true,
       shareEnabled: true,
       shareLevel: CheckingShareLevel.Anyone,
-      answerExport: CheckingAnswerExport.MarkedForExport
+      answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     texts: [this.matthewText],
     sync: { queuedCount: 0 },

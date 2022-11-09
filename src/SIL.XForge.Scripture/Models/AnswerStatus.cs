@@ -9,7 +9,7 @@ namespace SIL.XForge.Scripture.Models
         /// <summary>Answer has been resolved.</summary>
         public const string Resolved = "resolve";
 
-        /// <summary>Answer can be exported during a sync if allowed.</summary>
+        /// <summary>Answer can be exported during a sync if configured on the project.</summary>
         public const string Exportable = "export";
     }
 }

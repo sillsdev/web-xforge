@@ -765,7 +765,7 @@ namespace SIL.XForge.Scripture.Services
                                         DataId = "answer04",
                                         OwnerRef = "user04",
                                         SyncUserRef = answerSyncUserId2,
-                                        DateCreated = new DateTime(2019, 1, 2, 8, 0, 0, DateTimeKind.Utc),
+                                        DateCreated = new DateTime(2019, 1, 4, 8, 0, 0, DateTimeKind.Utc),
                                         Text = "Test answer 4 is marked for export",
                                         VerseRef = new VerseRefData(40, 1, "2-3"),
                                         Status = AnswerStatus.Exportable
@@ -775,7 +775,7 @@ namespace SIL.XForge.Scripture.Services
                                         DataId = "answer05",
                                         OwnerRef = "user04",
                                         SyncUserRef = answerSyncUserId2,
-                                        DateCreated = new DateTime(2019, 1, 2, 8, 0, 0, DateTimeKind.Utc),
+                                        DateCreated = new DateTime(2019, 1, 5, 8, 0, 0, DateTimeKind.Utc),
                                         Text = "Test answer 5 is resolved",
                                         VerseRef = new VerseRefData(40, 1, "2-3"),
                                         Status = AnswerStatus.Resolved

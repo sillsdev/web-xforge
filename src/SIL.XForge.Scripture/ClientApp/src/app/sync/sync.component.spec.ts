@@ -272,7 +272,7 @@ class TestEnvironment {
           usersSeeEachOthersResponses: true,
           shareEnabled: true,
           shareLevel: CheckingShareLevel.Specific,
-          answerExport: CheckingAnswerExport.MarkedForExport
+          answerExportMethod: CheckingAnswerExport.MarkedForExport
         },
         sync: {
           queuedCount: isInProgress ? 1 : 0,

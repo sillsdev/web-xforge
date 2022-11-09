@@ -422,7 +422,7 @@ describe('CollaboratorsComponent', () => {
       shareEnabled: true,
       shareLevel: CheckingShareLevel.Anyone,
       usersSeeEachOthersResponses: false,
-      answerExport: CheckingAnswerExport.MarkedForExport
+      answerExportMethod: CheckingAnswerExport.MarkedForExport
     };
     env.updateCheckingProperties(checkingConfig);
     tick();
@@ -675,7 +675,7 @@ class TestEnvironment {
         usersSeeEachOthersResponses: false,
         shareEnabled: false,
         shareLevel: CheckingShareLevel.Specific,
-        answerExport: CheckingAnswerExport.MarkedForExport
+        answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
       editable: true,
       userRoles,
