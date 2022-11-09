@@ -64,7 +64,8 @@ import {
   formatFontSizeToRems,
   getVerseRefFromSegmentRef,
   threadIdFromMouseEvent,
-  verseRefFromMouseEvent
+  verseRefFromMouseEvent,
+  VERSE_REGEX
 } from '../../shared/utils';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
@@ -108,7 +109,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   showTrainingProgress: boolean = false;
   textHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
-  targetSegment?: Element;
+  insertNoteFabLeft: string = '0px';
 
   @ViewChild('targetContainer') targetContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
@@ -148,7 +149,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
   private toggleNoteThreadSub?: Subscription;
   private shouldNoteThreadsRespondToEdits: boolean = false;
-  private isNoteDialogOpen: boolean = false;
   private reviewerSelectedVerseRef?: VerseRef;
 
   constructor(
@@ -240,8 +240,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   set chapter(value: number | undefined) {
     if (this._chapter !== value) {
       this.showSuggestions = false;
-      this.showInsertNoteFab = false;
-      this.reviewerSelectedVerseRef = undefined;
       this.toggleNoteThreadVerses(false);
       this._chapter = value;
       this.changeText();
@@ -418,11 +416,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private get canShowInsertNoteFab(): boolean {
-    return this.targetLoaded && !this.isNoteDialogOpen;
+    return this.targetLoaded && this.dialogService.openDialogCount < 1;
   }
 
   ngAfterViewInit(): void {
-    this.subscribe(fromEvent(window, 'resize'), () => this.setTextHeight());
+    this.subscribe(fromEvent(window, 'resize'), () => {
+      this.resetInsertNoteFab();
+      this.setTextHeight();
+    });
     this.subscribe(
       this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
       async params => {
@@ -865,9 +866,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         data: noteDialogData
       }
     );
-    this.isNoteDialogOpen = true;
     const result: boolean | undefined = await dialogRef.afterClosed().toPromise();
-    this.isNoteDialogOpen = false;
     if (result === true) {
       this.toggleNoteThreadVerses(true);
     }
@@ -1035,6 +1034,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.router.navigateByUrl('/projects/' + this.projectDoc!.id + '/translate', { replaceUrl: true });
       });
     });
+    this.reviewerSelectedVerseRef = undefined;
+    this.resetInsertNoteFab();
     setTimeout(() => this.setTextHeight());
   }
 
@@ -1206,6 +1207,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.selectionClickSubs.forEach(s => s.unsubscribe());
 
     for (const [segment] of this.target.segments) {
+      if (!VERSE_REGEX.test(segment)) continue;
       const segmentElement: Element | null = this.target.getSegmentElement(segment);
       if (segmentElement == null) continue;
 
@@ -1242,7 +1244,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       () => {
         this.toggleNoteThreadVerses(false);
         this.toggleNoteThreadVerses(true);
-        if (this.userRole != null && this.isReviewer) {
+        if (this.userRole != null && this.isReviewer && this.isAddNotesEnabled) {
           this.subscribeReviewerSelectionEvents();
         }
       }
@@ -1264,6 +1266,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this._chapter = chapter;
     this.changeText();
     this.toggleNoteThreadVerses(true);
+  }
+
+  private resetInsertNoteFab(): void {
+    this.showInsertNoteFab = false;
+    const targetRect: DOMRect | undefined = this.targetContainer?.nativeElement.getBoundingClientRect();
+    if (targetRect != null) {
+      const xsAdjustment: number = this.mediaObserver.isActive('xs') ? 15 : 0;
+      const adjustment: number = this.isTargetRightToLeft ? 20 - xsAdjustment : -60 + xsAdjustment;
+      const leftCoordinate: number = (this.isTargetRightToLeft ? targetRect.left : targetRect.right) + adjustment;
+      this.insertNoteFabLeft = `${leftCoordinate}px`;
+    }
   }
 
   /** Gets the information needed to format a particular featured verse. */

@@ -2442,18 +2442,55 @@ describe('EditorComponent', () => {
       verseElem.click();
       env.wait();
       expect(verseElem.classList).toContain('reviewer-selection');
-      const verseTwoElem: HTMLElement = env.getSegmentElement('verse_1_2')!;
+      let verse2Elem: HTMLElement = env.getSegmentElement('verse_1_2')!;
 
       // select verse 2, deselect verse one
-      verseTwoElem.click();
+      verse2Elem.click();
       env.wait();
-      expect(verseTwoElem.classList).toContain('reviewer-selection');
+      expect(verse2Elem.classList).toContain('reviewer-selection');
       expect(verseElem.classList).not.toContain('reviewer-selection');
 
       // deselect verse 2
-      verseTwoElem.click();
+      verse2Elem.click();
       env.wait();
-      expect(verseTwoElem.classList).not.toContain('reviewer-selection');
+      expect(verse2Elem.classList).not.toContain('reviewer-selection');
+
+      verse2Elem.click();
+      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.wait();
+      const verse3Elem: HTMLElement = env.getSegmentElement('verse_1_3')!;
+      verse3Elem.click();
+      expect(verse3Elem.classList).toContain('reviewer-selection');
+      verse2Elem = env.getSegmentElement('verse_1_2')!;
+      expect(verse2Elem.classList).not.toContain('reviewer-selection');
+      env.dispose();
+    }));
+
+    it('does not allow selecting section headings', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.setCurrentUser('user05');
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+
+      let elem: HTMLElement = env.getSegmentElement('s_1')!;
+      expect(elem.classList).not.toContain('reviewer-selection');
+      elem.click();
+      env.wait();
+      expect(elem.classList).not.toContain('reviewer-selection');
+
+      elem = env.getSegmentElement('s_2')!;
+      expect(elem.classList).not.toContain('reviewer-selection');
+      elem.click();
+      env.wait();
+      expect(elem.classList).not.toContain('reviewer-selection');
+
+      const verseElem: HTMLElement = env.getSegmentElement('verse_1_2-3')!;
+      expect(verseElem.classList).not.toContain('reviewer-selection');
+      verseElem.click();
+      env.wait();
+      expect(verseElem.classList).toContain('reviewer-selection');
+      expect(elem.classList).not.toContain('reviewer-selection');
       env.dispose();
     }));
 
