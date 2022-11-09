@@ -354,7 +354,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
       checkingShareEnabled: this.projectDoc.data.checkingConfig.shareEnabled,
       checkingShareLevel: this.projectDoc.data.checkingConfig.shareLevel,
-      checkingAnswerExport: this.projectDoc.data.checkingConfig.answerExport ?? CheckingAnswerExport.MarkedForExport
+      checkingAnswerExport:
+        this.projectDoc.data.checkingConfig.answerExportMethod ?? CheckingAnswerExport.MarkedForExport
     };
     this.form.reset(this.previousFormValues);
     this.setIndividualControlDisabledStates();
