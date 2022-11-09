@@ -406,7 +406,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.refreshAnswersHighlightStatus();
   }
 
-  isAnswerExportable(answer: Answer): boolean {
+  isMarkedForExport(answer: Answer): boolean {
     return answer.status === AnswerStatus.Exportable;
   }
 
@@ -428,7 +428,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
   }
 
-  markAnswerAsExportable(answer: Answer) {
+  markAnswerForExport(answer: Answer) {
     this.toggleAnswerStatus(answer, AnswerStatus.Exportable);
   }
 

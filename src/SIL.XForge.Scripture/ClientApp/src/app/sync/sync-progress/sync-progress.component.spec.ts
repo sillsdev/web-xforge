@@ -161,7 +161,7 @@ class TestEnvironment {
           usersSeeEachOthersResponses: true,
           shareEnabled: true,
           shareLevel: CheckingShareLevel.Specific,
-          answerExport: CheckingAnswerExport.MarkedForExport
+          answerExportMethod: CheckingAnswerExport.MarkedForExport
         },
         sync: {
           queuedCount: args.isInProgress === true ? 1 : 0,
@@ -197,7 +197,7 @@ class TestEnvironment {
             usersSeeEachOthersResponses: true,
             shareEnabled: true,
             shareLevel: CheckingShareLevel.Specific,
-            answerExport: CheckingAnswerExport.MarkedForExport
+            answerExportMethod: CheckingAnswerExport.MarkedForExport
           },
           sync: {
             queuedCount: 0,
