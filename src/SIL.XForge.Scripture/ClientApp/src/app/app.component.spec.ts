@@ -872,7 +872,7 @@ class TestEnvironment {
           shareEnabled: true,
           shareLevel: CheckingShareLevel.Specific,
           usersSeeEachOthersResponses: true,
-          answerExport: CheckingAnswerExport.MarkedForExport
+          answerExportMethod: CheckingAnswerExport.MarkedForExport
         },
         sync: { queuedCount: 0, lastSyncSuccessful: true },
         editable: true,
