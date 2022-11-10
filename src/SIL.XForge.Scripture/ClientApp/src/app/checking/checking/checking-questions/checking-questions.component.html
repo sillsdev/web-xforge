@@ -15,7 +15,7 @@
       <span class="question-text" *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
     </div>
     <a class="view-answers" mdcListItemMeta title="{{ 'checking.view_questions' | transloco }}">
-      <i mdcIcon>forum</i> <span>{{ getUnreadAnswers(questionDoc) }}</span>
+      <i mdcIcon class="mirror-rtl">forum</i> <span>{{ getUnreadAnswers(questionDoc) }}</span>
     </a>
   </mdc-list-item>
 </mdc-list>

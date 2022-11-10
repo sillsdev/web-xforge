@@ -132,7 +132,7 @@
             <div *ngIf="canSeeOtherUserResponses" class="like">
               <button
                 mdc-icon-button
-                class="like-answer"
+                class="like-answer mirror-rtl"
                 icon="thumb_up"
                 (click)="likeAnswer(answer)"
                 [ngClass]="{ liked: hasUserLikedAnswer(answer) }"

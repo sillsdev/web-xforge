@@ -38,7 +38,7 @@
             <div class="panel-heading">
               <div class="panel-nav">
                 <div class="heading-with-icon">
-                  <mdc-icon fxHide.lt-md>library_books</mdc-icon>
+                  <mdc-icon fxHide.lt-md class="mirror-rtl">library_books</mdc-icon>
                   <div #textNameAnchor mdcMenuSurfaceAnchor>
                     <h2
                       class="chapter-select"
@@ -84,7 +84,7 @@
                       (click)="questionDialog()"
                       class="add-question-button"
                     >
-                      <mdc-icon>post_add</mdc-icon> <span>{{ t("add_question") }}</span>
+                      <mdc-icon class="mirror-rtl">post_add</mdc-icon> <span>{{ t("add_question") }}</span>
                     </button>
                   </ng-container>
                   <app-font-size (apply)="applyFontChange($event)"></app-font-size>

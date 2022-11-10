@@ -22,7 +22,7 @@
           *ngFor="let textProgress of texts; trackBy: trackTextByBookNum"
           [appRouterLink]="['./', getBookId(textProgress.text)]"
         >
-          <mat-icon mdcListItemGraphic>book</mat-icon>
+          <mat-icon mdcListItemGraphic class="mirror-rtl">book</mat-icon>
           <mdc-list-item-text
             [secondaryText]="
               t('translated_segments', { translatedSegments: textProgress.translated, total: textProgress.total })
