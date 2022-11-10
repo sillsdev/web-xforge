@@ -84,7 +84,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                         <thread id=""ANSWER_answer04"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 4 is marked for export</p>
@@ -93,7 +93,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                         <thread id=""ANSWER_answer05"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 5 is resolved</p>
@@ -179,7 +179,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                         <thread id=""ANSWER_answer04"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">- xForge audio-only question -</span></p>
                                     <p>Test answer 4 is marked for export</p>
@@ -188,7 +188,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                         <thread id=""ANSWER_answer05"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">- xForge audio-only question -</span></p>
                                     <p>Test answer 5 is resolved</p>
@@ -279,7 +279,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                         <thread id=""ANSWER_answer04"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 4 is marked for export</p>
@@ -288,7 +288,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                         <thread id=""ANSWER_answer05"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 5 is resolved</p>
@@ -380,7 +380,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                         <thread id=""ANSWER_answer04"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 4 is marked for export</p>
@@ -389,7 +389,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                         <thread id=""ANSWER_answer05"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 5 is resolved</p>
@@ -473,7 +473,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                         <thread id=""ANSWER_answer04"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 4 is marked for export</p>
@@ -482,7 +482,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                         <thread id=""ANSWER_answer05"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 5 is resolved</p>
@@ -560,7 +560,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                         <thread id=""ANSWER_answer04"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 4 is marked for export</p>
@@ -569,7 +569,7 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                         <thread id=""ANSWER_answer05"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 5 is resolved</p>
@@ -633,7 +633,7 @@ namespace SIL.XForge.Scripture.Services
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer04"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p>Test answer 4 is marked for export</p>
