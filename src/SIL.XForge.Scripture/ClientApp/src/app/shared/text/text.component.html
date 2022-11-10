@@ -19,7 +19,8 @@
   [dir]="$any(textDirection)"
   [lang]="lang"
   [attr.data-browser-engine]="browserEngine"
-  (focusout)="focused.emit(false)"
-  (onFocus)="focused.emit(true)"
+  (focusout)="toggleFocus(false)"
+  (onBlur)="toggleFocus(false)"
+  (onFocus)="toggleFocus(true)"
 >
 </quill-editor>

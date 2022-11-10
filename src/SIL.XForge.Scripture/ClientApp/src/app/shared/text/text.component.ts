@@ -797,6 +797,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return true;
   }
 
+  /**
+   * Both onBlur and focusout are used as sometimes touch devices can trigger one but not the other with Quill
+   */
+  toggleFocus(focus: boolean) {
+    this.focused.emit(focus);
+  }
+
   private applyEditorStyles() {
     if (this._editor != null) {
       const container = this._editor.container as HTMLElement;
