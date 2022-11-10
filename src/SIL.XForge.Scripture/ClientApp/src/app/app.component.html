@@ -198,7 +198,7 @@
             [appRouterLink]="getRouterLink('translate', getBookId(text))"
             (click)="itemSelected()"
           >
-            <mat-icon matListIcon>book</mat-icon>
+            <mat-icon matListIcon class="mirror-rtl">book</mat-icon>
             {{ getBookName(text) }}
           </a>
         </div>
@@ -209,7 +209,7 @@
           *ngIf="isCheckingEnabled"
           (click)="checkingVisible = !checkingVisible"
         >
-          <mat-icon mat-list-icon>question_answer</mat-icon>
+          <mat-icon mat-list-icon class="mirror-rtl">question_answer</mat-icon>
           {{ t("community_checking") }}
           <mat-icon *ngIf="!hasSingleAppEnabled" [class.fix-rtl-arrow-placement]="i18n.isRtl">
             keyboard_arrow_{{ checkingVisible ? "down" : i18n.forwardDirectionWord }}
@@ -226,7 +226,7 @@
             [appRouterLink]="getRouterLink('checking', 'ALL')"
             (click)="itemSelected()"
           >
-            <mat-icon mat-list-icon>bookmarks</mat-icon>
+            <mat-icon mat-list-icon class="mirror-rtl">bookmarks</mat-icon>
             {{ t("all_questions") }}
           </a>
           <ng-container *ngFor="let text of texts">
@@ -236,7 +236,7 @@
               [appRouterLink]="getRouterLink('checking', getBookId(text))"
               (click)="itemSelected()"
             >
-              <mat-icon mat-list-icon>book</mat-icon>
+              <mat-icon mat-list-icon class="mirror-rtl">book</mat-icon>
               {{ getBookName(text) }}
             </a>
           </ng-container>
@@ -262,7 +262,7 @@
             [class.list-item-disabled]="!isAppOnline"
             (click)="itemSelected()"
           >
-            <mat-icon mat-list-icon>people</mat-icon>
+            <mat-icon mat-list-icon class="mirror-rtl">people</mat-icon>
             {{ t("users") }}
           </a>
         </div>

@@ -22,7 +22,7 @@
           *ngFor="let textProgress of texts; trackBy: trackTextByBookNum"
           [appRouterLink]="['./', getBookId(textProgress.text)]"
         >
-          <mat-icon mdcListItemGraphic>book</mat-icon>
+          <mat-icon mdcListItemGraphic class="mirror-rtl">book</mat-icon>
           <mdc-list-item-text
             [secondaryText]="
               t('translated_segments', { translatedSegments: textProgress.translated, total: textProgress.total })
@@ -54,7 +54,7 @@
       </mat-card-header>
       <mat-card-content class="engine-card-content">
         <div class="engine-card-quality">
-          <div class="engine-card-quality-stars" [class.rtl-stars]="i18n.isRtl" [title]="engineConfidence + ' BLEU'">
+          <div class="engine-card-quality-stars mirror-rtl" [title]="engineConfidence + ' BLEU'">
             <mat-icon *ngFor="let star of engineQualityStars">{{
               engineQuality >= star + 1 ? "star" : engineQuality === star + 0.5 ? "star_half" : "star_border"
             }}</mat-icon>

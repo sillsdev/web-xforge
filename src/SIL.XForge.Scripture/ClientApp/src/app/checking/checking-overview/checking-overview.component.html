@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'checking_overview'">
   <div [ngClass]="{ 'reviewer-panels': !canCreateQuestion }" class="header">
-    <mat-icon>library_books</mat-icon>
+    <mat-icon class="mirror-rtl">library_books</mat-icon>
     <h2>{{ t(canCreateQuestion ? "manage_questions" : "my_progress") }}</h2>
     <ng-container *ngIf="canCreateQuestion; else overallProgressChart" class="primary-actions">
       <button mdc-button type="button" *ngIf="showImportButton" (click)="importDialog()" id="import-btn">
@@ -14,7 +14,7 @@
         (click)="questionDialog()"
         id="add-question-button"
       >
-        <mat-icon>post_add</mat-icon> <span fxHide.xs>{{ t("add_question") }}</span>
+        <mat-icon class="mirror-rtl">post_add</mat-icon> <span fxHide.xs>{{ t("add_question") }}</span>
       </button>
     </ng-container>
     <ng-template #overallProgressChart>
@@ -164,14 +164,14 @@
         <div class="stat-total">{{ myAnswerCount }}</div>
         <div class="stat-label">{{ t("answers") }}</div>
       </span>
-      <span fxLayoutAlign="start center"> <mat-icon>question_answer</mat-icon> </span>
+      <span fxLayoutAlign="start center"> <mat-icon class="mirror-rtl">question_answer</mat-icon> </span>
     </mat-card>
     <mat-card class="card card-content-comment">
       <span fxFlex>
         <div class="stat-total">{{ myCommentCount }}</div>
         <div class="stat-label">{{ t("comments") }}</div>
       </span>
-      <span fxLayoutAlign="start center"> <mat-icon>comment</mat-icon> </span>
+      <span fxLayoutAlign="start center"> <mat-icon class="mirror-rtl">comment</mat-icon> </span>
     </mat-card>
     <mat-card *ngIf="canSeeOtherUserResponses" class="card card-content-like">
       <span fxFlex>

@@ -86,9 +86,6 @@ mat-card {
 
         // the half star icon doesn't render reversed in RTL, so render the stars LTR and then rotate them
         direction: ltr;
-        &.rtl-stars {
-          transform: rotateY(180deg);
-        }
       }
 
       .engine-card-quality-subtitle {
