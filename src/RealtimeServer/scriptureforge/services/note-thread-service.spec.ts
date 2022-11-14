@@ -121,9 +121,7 @@ describe('NoteThreadService', () => {
     const conn: Connection = clientConnect(env.server, 'reviewer');
 
     const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread01');
-    await expect(async () =>
-      fetchDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'))
-    ).rejects.toEqual(
+    await expect(async () => fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId)).rejects.toEqual(
       new Error(`403: Permission denied (read), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
     );
 
