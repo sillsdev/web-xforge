@@ -5,7 +5,7 @@ export enum CheckingShareLevel {
 
 export enum CheckingAnswerExport {
   All = 'all',
-  MarkedForExport = 'export',
+  MarkedForExport = 'marked_for_export',
   None = 'none'
 }
 
