@@ -75,8 +75,9 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
 
       const project: Project | undefined = await this.server.getProject(doc.projectRef);
       if (project == null) return false;
-      const isReviewer: boolean = project.userRoles[session.userId] === SFProjectRole.Reviewer;
-      if (isReviewer && !doc.dataId.startsWith(SF_NOTE_THREAD_PREFIX)) return false;
+      const userRole = project.userRoles[session.userId];
+      if (userRole == null) return false;
+      if (userRole === SFProjectRole.Reviewer && !doc.dataId.startsWith(SF_NOTE_THREAD_PREFIX)) return false;
       return true;
     }
     return false;
