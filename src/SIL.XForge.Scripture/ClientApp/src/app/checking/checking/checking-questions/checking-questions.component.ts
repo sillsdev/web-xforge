@@ -28,7 +28,7 @@ import { TranslationEngineService } from '../../../core/translation-engine.servi
 import { CheckingUtils } from '../../checking.utils';
 
 export enum QuestionFilter {
-  All,
+  None,
   CurrentUserHasAnswered,
   CurrentUserHasNotAnswered,
   HasAnswers,
@@ -66,7 +66,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   @Output() totalVisibleQuestions = new EventEmitter<number>();
   visibleQuestions: QuestionDoc[] = [];
 
-  private _filter: QuestionFilter = QuestionFilter.All;
+  private _filter: QuestionFilter = QuestionFilter.None;
   private project?: SFProjectProfile;
   private _projectUserConfigDoc?: SFProjectUserConfigDoc;
 
@@ -101,7 +101,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
         q.data.answers.filter((a: Answer) => a.status === AnswerStatus.Exportable).length > 0;
 
       const filterMatch: Map<QuestionFilter, boolean> = new Map<QuestionFilter, boolean>()
-        .set(QuestionFilter.All, true)
+        .set(QuestionFilter.None, true)
         .set(QuestionFilter.CurrentUserHasNotAnswered, !currentUserAnswers)
         .set(QuestionFilter.CurrentUserHasAnswered, currentUserAnswers)
         .set(QuestionFilter.HasAnswers, hasAnswers)
@@ -162,7 +162,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   get isFilterApplied(): boolean {
-    return this._filter !== QuestionFilter.All;
+    return this._filter !== QuestionFilter.None;
   }
 
   @Input()
