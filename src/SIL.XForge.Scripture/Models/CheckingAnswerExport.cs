@@ -7,7 +7,7 @@ namespace SIL.XForge.Scripture.Models
         public const string All = "all";
 
         /// <summary>Export only answers with status set to export.</summary>
-        public const string MarkedForExport = "export";
+        public const string MarkedForExport = "marked_for_export";
 
         /// <summary>Do not export any answers.</summary>
         public const string None = "none";
