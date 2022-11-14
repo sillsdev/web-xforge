@@ -83,7 +83,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     answered: 0
   };
   questionFilters: Map<QuestionFilter, string> = new Map<QuestionFilter, string>();
-  questionFilterSelected: QuestionFilter = QuestionFilter.All;
+  questionFilterSelected: QuestionFilter = QuestionFilter.None;
   questionVerseRefs: VerseRef[] = [];
   answersPanelContainerElement?: ElementRef;
   projectDoc?: SFProjectProfileDoc;
@@ -166,7 +166,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get isQuestionFilterApplied(): boolean {
-    return this.questionFilterSelected !== QuestionFilter.All;
+    return this.questionFilterSelected !== QuestionFilter.None;
   }
 
   get canCreateQuestions(): boolean {
@@ -1050,7 +1050,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   private initQuestionFilters() {
     this.questionFilters.clear();
-    this.questionFilters.set(QuestionFilter.All, translate('checking.question_filter_all'));
+    this.questionFilters.set(QuestionFilter.None, translate('checking.question_filter_none'));
     if (this.isProjectAdmin) {
       this.questionFilters
         .set(QuestionFilter.HasAnswers, translate('checking.question_filter_has_answers'))
