@@ -160,7 +160,7 @@
     "next": "Next",
     "previous": "Previous",
     "questions": "Questions",
-    "question_filter_all": "All",
+    "question_filter_none": "Show All",
     "question_filter_exportable": "Marked for export",
     "question_filter_has_answers": "Has Answers",
     "question_filter_answered": "Answered",

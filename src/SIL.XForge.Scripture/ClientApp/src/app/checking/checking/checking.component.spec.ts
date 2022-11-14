@@ -511,7 +511,7 @@ describe('CheckingComponent', () => {
 
     it('admin can see appropriate filter options', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
-      expect(env.component.questionFilters.has(QuestionFilter.All)).withContext('All').toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.None)).withContext('All').toEqual(true);
       expect(env.component.questionFilters.has(QuestionFilter.HasAnswers)).withContext('HasAnswers').toEqual(true);
       expect(env.component.questionFilters.has(QuestionFilter.NoAnswers)).withContext('NoAnswers').toEqual(true);
       expect(env.component.questionFilters.has(QuestionFilter.StatusExport)).withContext('StatusExport').toEqual(true);
@@ -529,7 +529,7 @@ describe('CheckingComponent', () => {
 
     it('non-admin can see appropriate filter options', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
-      expect(env.component.questionFilters.has(QuestionFilter.All)).withContext('All').toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.None)).withContext('All').toEqual(true);
       expect(env.component.questionFilters.has(QuestionFilter.HasAnswers)).withContext('HasAnswers').toEqual(false);
       expect(env.component.questionFilters.has(QuestionFilter.NoAnswers)).withContext('NoAnswers').toEqual(false);
       expect(env.component.questionFilters.has(QuestionFilter.StatusExport)).withContext('StatusExport').toEqual(false);
@@ -549,7 +549,7 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment(ADMIN_USER);
       const totalQuestions = env.questions.length;
       const expectedQuestionCounts: { filter: QuestionFilter; total: number }[] = [
-        { filter: QuestionFilter.All, total: 15 },
+        { filter: QuestionFilter.None, total: 15 },
         { filter: QuestionFilter.HasAnswers, total: 4 },
         { filter: QuestionFilter.NoAnswers, total: 11 },
         { filter: QuestionFilter.StatusExport, total: 2 },
