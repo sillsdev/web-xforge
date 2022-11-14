@@ -206,6 +206,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   set isTargetTextRight(value: boolean) {
     if (this.projectUserConfigDoc != null && this.isTargetTextRight !== value) {
       this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.isTargetTextRight, value));
+      this.resetInsertNoteFab();
     }
   }
 
@@ -421,8 +422,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   ngAfterViewInit(): void {
     this.subscribe(fromEvent(window, 'resize'), () => {
-      this.resetInsertNoteFab();
       this.setTextHeight();
+      // Note: this does not appear to get triggered when the window changes by opening dev tools
+      this.resetInsertNoteFab();
     });
     this.subscribe(
       this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
@@ -1035,8 +1037,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       });
     });
     this.reviewerSelectedVerseRef = undefined;
-    this.resetInsertNoteFab();
     setTimeout(() => this.setTextHeight());
+    this.resetInsertNoteFab();
   }
 
   private onStartTranslating(): void {
@@ -1270,13 +1272,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private resetInsertNoteFab(): void {
     this.showInsertNoteFab = false;
-    const targetRect: DOMRect | undefined = this.targetContainer?.nativeElement.getBoundingClientRect();
-    if (targetRect != null) {
-      const xsAdjustment: number = this.mediaObserver.isActive('xs') ? 15 : 0;
-      const adjustment: number = this.isTargetRightToLeft ? 20 - xsAdjustment : -60 + xsAdjustment;
-      const leftCoordinate: number = (this.isTargetRightToLeft ? targetRect.left : targetRect.right) + adjustment;
-      this.insertNoteFabLeft = `${leftCoordinate}px`;
-    }
+    // set a 10ms time out so the layout is drawn before calculating the target contain coordinates
+    setTimeout(() => {
+      const targetRect: DOMRect | undefined = this.targetContainer?.nativeElement.getBoundingClientRect();
+      if (targetRect != null) {
+        const adjustment: number = this.isTargetRightToLeft ? 20 : -60;
+        const leftCoordinate: number = (this.isTargetRightToLeft ? targetRect.left : targetRect.right) + adjustment;
+        this.insertNoteFabLeft = `${leftCoordinate}px`;
+      }
+    }, 10);
   }
 
   /** Gets the information needed to format a particular featured verse. */

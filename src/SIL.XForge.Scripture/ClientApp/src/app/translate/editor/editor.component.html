@@ -123,7 +123,9 @@
             (showChange)="showSuggestions = $event"
           ></app-suggestions>
           <div #fabButton class="insert-note-fab" [style.left]="insertNoteFabLeft">
-            <button mat-mini-fab (click)="insertNote()"><mat-icon>add_comment</mat-icon></button>
+            <button mat-mini-fab title="{{ t('insert_note') }}" (click)="insertNote()">
+              <mat-icon>add_comment</mat-icon>
+            </button>
           </div>
         </div>
       </div>

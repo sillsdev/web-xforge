@@ -2455,13 +2455,15 @@ describe('EditorComponent', () => {
       env.wait();
       expect(verse2Elem.classList).not.toContain('reviewer-selection');
 
+      // reselect verse 2, check that it is not selected when moving to a new book
       verse2Elem.click();
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
+      verse2Elem = env.getSegmentElement('verse_1_2')!;
+      expect(verse2Elem.classList).not.toContain('reviewer-selection');
       const verse3Elem: HTMLElement = env.getSegmentElement('verse_1_3')!;
       verse3Elem.click();
       expect(verse3Elem.classList).toContain('reviewer-selection');
-      verse2Elem = env.getSegmentElement('verse_1_2')!;
       expect(verse2Elem.classList).not.toContain('reviewer-selection');
       env.dispose();
     }));
