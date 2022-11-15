@@ -25,9 +25,14 @@
           width: 100%;
         }
 
-        // Override styles spilling from mdc-drawer to mdc-select (both mdc-drawer and mdc-select can contain
-        // mdc-list-item and it appears the styles applied for the drawer's list items are now styling the select menu).
         .mdc-list-item {
+          // Fix overflow in Firefox when a project name uses the Khmer script. As of 2022-11-11, the DBL resource
+          // KHSV05 is one example that will cause overflow, which looks particularly bad in RTL mode because it
+          // overflows to the left in a menu that is layed out in LTR.
+          overflow-wrap: anywhere;
+
+          // Override styles spilling from mdc-drawer to mdc-select (both mdc-drawer and mdc-select can contain
+          // mdc-list-item and it appears the styles applied for the drawer's list items are now styling the select menu).
           @include typography.typography(subtitle1);
           margin: 0;
           border-radius: 0;
