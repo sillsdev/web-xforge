@@ -1,10 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { SwUpdate, UpdateAvailableEvent } from '@angular/service-worker';
-import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
+import { BehaviorSubject, fromEvent, interval, merge, Observable, of, timer } from 'rxjs';
 import { filter, mapTo, take } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { LocationService } from './location.service';
+
+export const PWA_CHECK_FOR_UPDATES = 30000;
 
 @Injectable({
   providedIn: 'root'
@@ -40,6 +42,8 @@ export class PwaService extends SubscriptionDisposable {
       //    the web socket hasn't yet had a chance to connect i.e. (null) when the app first loads
       this.appOnlineStatus.next(this.windowOnLineStatus.getValue() && this.webSocketStatus.getValue() !== false);
     });
+    // Check for updates periodically
+    this.subscribe(interval(PWA_CHECK_FOR_UPDATES), () => this.updates.checkForUpdate());
   }
 
   get isBrowserOnline(): boolean {
@@ -58,8 +62,10 @@ export class PwaService extends SubscriptionDisposable {
     return this.appOnlineStatus.asObservable();
   }
 
-  get hasUpdate(): Observable<UpdateAvailableEvent> {
-    return this.updates.available;
+  get hasUpdate(): Observable<VersionReadyEvent> {
+    // Note that this isn't consistent on localhost unless port forwarding to another device
+    // An event is triggered but VersionInstallationFailedEvent is emitted instead - refreshing loads the latest version
+    return this.updates.versionUpdates.pipe(filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'));
   }
 
   set webSocketResponse(status: boolean) {
