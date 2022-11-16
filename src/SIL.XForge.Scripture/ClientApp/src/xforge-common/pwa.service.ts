@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
-import { BehaviorSubject, fromEvent, interval, merge, Observable, of, timer } from 'rxjs';
+import { BehaviorSubject, fromEvent, interval, merge, Observable, of } from 'rxjs';
 import { filter, mapTo, take } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { LocationService } from './location.service';
