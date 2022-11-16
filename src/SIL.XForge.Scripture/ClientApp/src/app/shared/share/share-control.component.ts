@@ -7,6 +7,7 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, combineLatest } from 'rxjs';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { ProjectRoleInfo } from 'xforge-common/models/project-role-info';
@@ -16,7 +17,11 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { SF_DEFAULT_SHARE_ROLE, SF_PROJECT_ROLES } from '../../core/models/sf-project-role-info';
+import {
+  SF_DEFAULT_SHARE_ROLE,
+  SF_DEFAULT_TRANSLATE_SHARE_ROLE,
+  SF_PROJECT_ROLES
+} from '../../core/models/sf-project-role-info';
 import { SFProjectService } from '../../core/sf-project.service';
 
 /** UI to share project access with new users, such as by sending an invitation email. */
@@ -52,7 +57,8 @@ export class ShareControlComponent extends SubscriptionDisposable {
     private readonly locationService: LocationService,
     private readonly pwaService: PwaService,
     private readonly changeDetector: ChangeDetectorRef,
-    private readonly userService: UserService
+    private readonly userService: UserService,
+    private readonly featureFlags: FeatureFlagService
   ) {
     super();
     this.subscribe(combineLatest([this.projectId$, this.pwaService.onlineStatus]), async ([projectId]) => {
@@ -79,14 +85,6 @@ export class ShareControlComponent extends SubscriptionDisposable {
     }
     this._projectId = id;
     this.projectId$.next(id);
-  }
-
-  get defaultShareRole(): string | undefined {
-    const roles = this.userShareableRoles;
-    if (this.defaultRole != null && roles.some(role => role === this.defaultRole)) {
-      return this.defaultRole;
-    }
-    return roles.some(role => role === SF_DEFAULT_SHARE_ROLE) ? SF_DEFAULT_SHARE_ROLE : roles[0];
   }
 
   get availableRolesInfo(): ProjectRoleInfo[] {
@@ -119,6 +117,8 @@ export class ShareControlComponent extends SubscriptionDisposable {
       [SFProjectRole.CommunityChecker]:
         project.checkingConfig.shareEnabled && project.checkingConfig.shareLevel === CheckingShareLevel.Anyone,
       [SFProjectRole.Observer]:
+        project.translateConfig.shareEnabled && project.translateConfig.shareLevel === TranslateShareLevel.Anyone,
+      [SFProjectRole.Reviewer]:
         project.translateConfig.shareEnabled && project.translateConfig.shareLevel === TranslateShareLevel.Anyone
     };
     return linkSharingSettings[this.shareRole] === true && this.userShareableRoles.includes(this.shareRole);
@@ -149,10 +149,26 @@ export class ShareControlComponent extends SubscriptionDisposable {
           project.translateConfig.shareEnabled &&
           SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View) &&
           userRole !== SFProjectRole.CommunityChecker
+      },
+      {
+        role: SFProjectRole.Reviewer,
+        available: this.featureFlags.allowAddingNotes.enabled,
+        permission: this.isProjectAdmin
       }
     ]
       .filter(info => info.available && (info.permission || this.isProjectAdmin))
       .map(info => info.role as string);
+  }
+
+  private get defaultShareRole(): string | undefined {
+    const roles = this.userShareableRoles;
+    if (this.defaultRole != null && roles.some(role => role === this.defaultRole)) {
+      return this.defaultRole;
+    }
+    if (roles.some(role => role === SF_DEFAULT_SHARE_ROLE)) {
+      return SF_DEFAULT_SHARE_ROLE;
+    }
+    return roles.some(role => role === SF_DEFAULT_TRANSLATE_SHARE_ROLE) ? SF_DEFAULT_TRANSLATE_SHARE_ROLE : roles[0];
   }
 
   copyShareLink(): void {

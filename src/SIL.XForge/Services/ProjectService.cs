@@ -51,7 +51,7 @@ namespace SIL.XForge.Services
 
                 IDocument<User> userDoc = await GetUserDocAsync(curUserId, conn);
 
-                if (userDoc.Data.Role == SystemRole.User || projectRole == null)
+                if (userDoc.Data.Role != SystemRole.SystemAdmin || projectRole == null)
                 {
                     Attempt<string> attempt = await TryGetProjectRoleAsync(projectDoc.Data, curUserId);
                     if (!attempt.TryResult(out projectRole))
