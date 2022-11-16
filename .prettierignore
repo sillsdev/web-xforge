@@ -2,4 +2,4 @@
 *.min.*
 
 # mostly 3rd-party code
-src/SIL.XForge*/wwwroot/lib/**/*
+/src/SIL.XForge*/wwwroot/lib
