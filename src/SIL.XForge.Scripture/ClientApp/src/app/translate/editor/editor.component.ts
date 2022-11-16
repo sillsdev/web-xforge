@@ -1036,7 +1036,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.router.navigateByUrl('/projects/' + this.projectDoc!.id + '/translate', { replaceUrl: true });
       });
     });
-    this.reviewerSelectedVerseRef = undefined;
     setTimeout(() => this.setTextHeight());
     this.resetInsertNoteFab();
   }
@@ -1272,6 +1271,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private resetInsertNoteFab(): void {
     this.showInsertNoteFab = false;
+    if (this.target != null && this.reviewerSelectedVerseRef != null) {
+      this.target.toggleVerseSelection(this.reviewerSelectedVerseRef);
+      this.reviewerSelectedVerseRef = undefined;
+    }
     // set a 10ms time out so the layout is drawn before calculating the target contain coordinates
     setTimeout(() => {
       const targetRect: DOMRect | undefined = this.targetContainer?.nativeElement.getBoundingClientRect();
