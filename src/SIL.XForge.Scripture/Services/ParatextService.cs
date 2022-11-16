@@ -293,7 +293,7 @@ namespace SIL.XForge.Scripture.Services
         /// registry.paratext.org.
         /// False if there is a problem with authorization or connecting to the PT Registry.
         /// </returns>
-        public async Task<bool> CanUserAuthenticateToPTRegistryAsync(UserSecret userSecret)
+        public async Task<bool> CanUserAuthenticateToPTRegistryAsync(UserSecret? userSecret)
         {
             if (userSecret == null)
             {
@@ -822,11 +822,19 @@ namespace SIL.XForge.Scripture.Services
                     null,
                     token
                 );
-                var members = JArray.Parse(response);
+                JArray? members = JArray.Parse(response);
+                if (members == null)
+                {
+                    throw new DataNotFoundException(
+                        $"Got a null list of members when parsing registry members list, for project SF id {project.Id}, using user secret id {userSecret.Id}."
+                    );
+                }
                 return members
                     .OfType<JObject>()
-                    .Where(m => !string.IsNullOrEmpty((string)m["userId"]) && !string.IsNullOrEmpty((string)m["role"]))
-                    .ToDictionary(m => (string)m["userId"], m => (string)m["role"]);
+                    .Where(
+                        m => !string.IsNullOrEmpty((string?)m["userId"]) && !string.IsNullOrEmpty((string?)m["role"])
+                    )
+                    .ToDictionary(m => (string)m["userId"]!, m => (string)m["role"]!);
             }
             else
             {
@@ -836,7 +844,7 @@ namespace SIL.XForge.Scripture.Services
                     CancellationToken.None
                 );
 
-                bool hasRole = project.UserRoles.TryGetValue(userSecret.Id, out string userRole);
+                bool hasRole = project.UserRoles.TryGetValue(userSecret.Id, out string? userRole);
                 string moreInformation =
                     $"SF user id '{userSecret.Id}', "
                     + $"while interested in unregistered PT project id '{project.ParatextId}' "
@@ -847,7 +855,7 @@ namespace SIL.XForge.Scripture.Services
                     ptRepoSource,
                     $"For {moreInformation}"
                 );
-                SharedRepository remotePtProject = remotePtProjects.SingleOrDefault(
+                SharedRepository? remotePtProject = remotePtProjects.SingleOrDefault(
                     p => p.SendReceiveId.Id == project.ParatextId
                 );
                 if (remotePtProject == null)
@@ -1706,7 +1714,7 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret,
             SharedRepository sharedRepository,
             IEnumerable<ProjectMetadata> metadata,
-            out ParatextProject ptProject
+            out ParatextProject? ptProject
         )
         {
             if (sharedRepository != null)
@@ -1991,9 +1999,12 @@ namespace SIL.XForge.Scripture.Services
             return syncMetricInfo;
         }
 
-        private CommentTags GetCommentTags(UserSecret userSecret, string projectId)
+        private CommentTags? GetCommentTags(UserSecret userSecret, string projectId)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
+            string? ptUsername = GetParatextUsername(userSecret);
+            if (ptUsername == null)
+                return null;
+            ScrText? scrText = ScrTextCollection.FindById(ptUsername, projectId);
             return scrText == null ? null : CommentTags.Get(scrText);
         }
 
@@ -2001,7 +2012,7 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret,
             HttpMethod method,
             string url,
-            string content = null,
+            string? content = null,
             CancellationToken token = default
         )
         {
