@@ -21,6 +21,7 @@ export {
 } from './common';
 
 export class Connection {
+  state: 'connecting' | 'connected' | 'disconnected' | 'closed' | 'stopped';
   constructor(ws: WebSocket | WS);
   get(collectionName: string, documentID: string): Doc;
   createFetchQuery(
