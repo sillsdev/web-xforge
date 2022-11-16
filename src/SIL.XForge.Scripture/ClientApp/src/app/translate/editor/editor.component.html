@@ -84,9 +84,14 @@
           <mat-icon>info</mat-icon> {{ t("project_text_not_editable") }}
         </div>
         <div *ngIf="userHasGeneralEditRight && !hasChapterEditPermission" class="no-edit-permission-message">
-          <mat-icon>info</mat-icon> {{ t("no_permission_edit_chapter", { userRole: userRole }) }}
+          <mat-icon>info</mat-icon> {{ t("no_permission_edit_chapter", { userRole: userRoleStr }) }}
         </div>
-        <div #targetContainer class="text-container" [style.height]="textHeight">
+        <div
+          #targetContainer
+          class="text-container"
+          [style.height]="textHeight"
+          [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'"
+        >
           <app-text
             #target
             [isReadOnly]="!canEdit"
@@ -107,6 +112,7 @@
             [markInvalid]="true"
             [isRightToLeft]="isTargetRightToLeft"
             [fontSize]="fontSize"
+            [selectableVerses]="isReviewer"
           ></app-text>
           <app-suggestions
             [mdcElevation]="2"
@@ -116,6 +122,11 @@
             (selected)="insertSuggestion($event.suggestionIndex, $event.wordIndex, $event.event)"
             (showChange)="showSuggestions = $event"
           ></app-suggestions>
+          <div #fabButton class="insert-note-fab" [style.left]="insertNoteFabLeft">
+            <button mat-mini-fab title="{{ t('insert_note') }}" (click)="insertNote()">
+              <mat-icon>add_comment</mat-icon>
+            </button>
+          </div>
         </div>
       </div>
     </div>

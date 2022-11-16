@@ -645,7 +645,12 @@ export function registerScripture(): string[] {
   const NoteThreadHighlightClass = new ClassAttributor('note-thread-highlight', 'note-thread-highlight', {
     scope: Parchment.Scope.INLINE
   });
+
   formats.push(NoteThreadHighlightClass);
+  const ReviewerSelectedSegmentClass = new ClassAttributor('reviewer-selection', 'reviewer-selection', {
+    scope: Parchment.Scope.INLINE
+  });
+  formats.push(ReviewerSelectedSegmentClass);
 
   const InvalidBlockClass = new ClassAttributor('invalid-block', 'invalid-block', {
     scope: Parchment.Scope.BLOCK

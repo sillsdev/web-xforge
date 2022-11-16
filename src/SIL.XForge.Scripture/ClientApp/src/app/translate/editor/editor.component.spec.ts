@@ -2427,6 +2427,94 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('reviewers can click to select verse', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.setCurrentUser('user05');
+      env.wait();
+
+      const hasSelectionAnchors = env.getSegmentElement('verse_1_1')!.querySelector('display-text-anchor');
+      expect(hasSelectionAnchors).toBeNull();
+      const verseElem: HTMLElement = env.getSegmentElement('verse_1_1')!;
+      expect(verseElem.classList).not.toContain('reviewer-selection');
+
+      // select verse 1
+      verseElem.click();
+      env.wait();
+      expect(verseElem.classList).toContain('reviewer-selection');
+      let verse2Elem: HTMLElement = env.getSegmentElement('verse_1_2')!;
+
+      // select verse 2, deselect verse one
+      verse2Elem.click();
+      env.wait();
+      expect(verse2Elem.classList).toContain('reviewer-selection');
+      expect(verseElem.classList).not.toContain('reviewer-selection');
+
+      // deselect verse 2
+      verse2Elem.click();
+      env.wait();
+      expect(verse2Elem.classList).not.toContain('reviewer-selection');
+
+      // reselect verse 2, check that it is not selected when moving to a new book
+      verse2Elem.click();
+      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
+      env.wait();
+      verse2Elem = env.getSegmentElement('verse_1_2')!;
+      expect(verse2Elem.classList).not.toContain('reviewer-selection');
+      const verse3Elem: HTMLElement = env.getSegmentElement('verse_1_3')!;
+      verse3Elem.click();
+      expect(verse3Elem.classList).toContain('reviewer-selection');
+      expect(verse2Elem.classList).not.toContain('reviewer-selection');
+      env.dispose();
+    }));
+
+    it('does not allow selecting section headings', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.setCurrentUser('user05');
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+
+      let elem: HTMLElement = env.getSegmentElement('s_1')!;
+      expect(elem.classList).not.toContain('reviewer-selection');
+      elem.click();
+      env.wait();
+      expect(elem.classList).not.toContain('reviewer-selection');
+
+      elem = env.getSegmentElement('s_2')!;
+      expect(elem.classList).not.toContain('reviewer-selection');
+      elem.click();
+      env.wait();
+      expect(elem.classList).not.toContain('reviewer-selection');
+
+      const verseElem: HTMLElement = env.getSegmentElement('verse_1_2-3')!;
+      expect(verseElem.classList).not.toContain('reviewer-selection');
+      verseElem.click();
+      env.wait();
+      expect(verseElem.classList).toContain('reviewer-selection');
+      expect(elem.classList).not.toContain('reviewer-selection');
+      env.dispose();
+    }));
+
+    it('reviewers can create note on selected verse with FAB', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.setCurrentUser('user05');
+      env.wait();
+
+      const verseSegment: HTMLElement = env.getSegmentElement('verse_1_5')!;
+      verseSegment.click();
+      env.wait();
+      expect(verseSegment.classList).toContain('reviewer-selection');
+      env.insertNoteFab.nativeElement.click();
+      env.wait();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      const [, arg2] = capture(mockedMatDialog.open).last();
+      const verseRef: VerseRef = (arg2 as MatDialogConfig).data.verseRef!;
+      expect(verseRef.toString()).toEqual('MAT 1:5');
+      env.dispose();
+    }));
+
     it('should remove resolved notes after a remote update', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
@@ -2900,8 +2988,16 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#settings-btn'));
   }
 
+  get floatingNoteButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.floating-note-button'));
+  }
+
   get insertNoteButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#create-note-btn'));
+  }
+
+  get insertNoteFab(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.insert-note-fab > button'));
   }
 
   get sharingButton(): DebugElement {
@@ -3146,12 +3242,16 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  selectSegment(segmentRef: string): void {
+    const range: RangeStatic = this.component.target!.getSegmentRange(segmentRef)!;
+    this.targetEditor.setSelection(range.index, 'user');
+    this.wait();
+    this.fixture.detectChanges();
+  }
+
   setSelectionAndInsertNote(segmentRef: string | undefined): void {
     if (segmentRef != null) {
-      const range: RangeStatic = this.component.target!.getSegmentRange(segmentRef)!;
-      this.targetEditor.setSelection(range.index, 'user');
-      this.wait();
-      this.fixture.detectChanges();
+      this.selectSegment(segmentRef);
     }
     this.insertNoteButton.nativeElement.click();
     tick();

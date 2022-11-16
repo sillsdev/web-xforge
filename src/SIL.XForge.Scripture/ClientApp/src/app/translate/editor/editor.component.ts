@@ -63,7 +63,9 @@ import {
   canInsertNote,
   formatFontSizeToRems,
   getVerseRefFromSegmentRef,
-  threadIdFromMouseEvent
+  threadIdFromMouseEvent,
+  verseRefFromMouseEvent,
+  VERSE_REGEX
 } from '../../shared/utils';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
@@ -107,10 +109,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   showTrainingProgress: boolean = false;
   textHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
+  insertNoteFabLeft: string = '0px';
 
   @ViewChild('targetContainer') targetContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
   @ViewChild('target') target?: TextComponent;
+  @ViewChild('fabButton') insertNoteFab?: ElementRef<HTMLElement>;
 
   private translationEngine?: RemoteTranslationEngine;
   private isTranslating: boolean = false;
@@ -140,10 +144,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private trainingProgressClosed: boolean = false;
   private trainingCompletedTimeout: any;
   private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
+  private selectionClickSubs: Subscription[] = [];
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
   private toggleNoteThreadSub?: Subscription;
   private shouldNoteThreadsRespondToEdits: boolean = false;
+  private reviewerSelectedVerseRef?: VerseRef;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -200,6 +206,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   set isTargetTextRight(value: boolean) {
     if (this.projectUserConfigDoc != null && this.isTargetTextRight !== value) {
       this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.isTargetTextRight, value));
+      this.resetInsertNoteFab();
     }
   }
 
@@ -286,8 +293,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return chapter?.permissions?.[this.userService.currentUserId] === TextInfoPermission.Write;
   }
 
-  get userRole(): string {
-    return this.i18n.localizeRole(this.projectDoc?.data?.userRoles[this.userService.currentUserId] || '');
+  get userRoleStr(): string {
+    return this.i18n.localizeRole(this.userRole || '');
   }
 
   get hasSourceViewRight(): boolean {
@@ -378,8 +385,21 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.pwaService.isOnline && this.multiCursorViewers.length > 0;
   }
 
-  get isAddNoteEnabled(): boolean {
-    return this.featureFlags.allowAddingNotes.enabled;
+  get isInsertNoteFabEnabled(): boolean {
+    return this.isAddNotesEnabled && this.canShowInsertNoteFab;
+  }
+
+  set showInsertNoteFab(value: boolean) {
+    if (this.insertNoteFab == null) return;
+    this.insertNoteFab.nativeElement.style.visibility = value ? 'visible' : 'hidden';
+  }
+
+  get isReviewer(): boolean {
+    return this.userRole === SFProjectRole.Reviewer;
+  }
+
+  private get userRole(): string | undefined {
+    return this.projectDoc?.data?.userRoles[this.userService.currentUserId];
   }
 
   private get hasSource(): boolean {
@@ -396,8 +416,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.featureFlags.allowAddingNotes.enabled;
   }
 
+  private get canShowInsertNoteFab(): boolean {
+    return this.targetLoaded && this.dialogService.openDialogCount < 1;
+  }
+
   ngAfterViewInit(): void {
-    this.subscribe(fromEvent(window, 'resize'), () => this.setTextHeight());
+    this.subscribe(fromEvent(window, 'resize'), () => {
+      this.setTextHeight();
+      // Note: this does not appear to get triggered when the window changes by opening dev tools
+      this.resetInsertNoteFab();
+    });
     this.subscribe(
       this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
       async params => {
@@ -497,6 +525,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       }
     );
+
     setTimeout(() => this.setTextHeight());
   }
 
@@ -749,14 +778,24 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   insertNote(): void {
-    if (this.target == null) {
+    if (this.target == null || this.bookNum == null) {
       return;
     }
-    const segmentRef: string | undefined = this.target.currentSegmentOrDefault;
-    if (segmentRef != null && this.bookNum != null) {
+    if (this.userRole === SFProjectRole.Reviewer) {
+      let verseRef: VerseRef | undefined = this.reviewerSelectedVerseRef;
+      if (verseRef == null) {
+        const defaultSegmentRef: string | undefined = this.target.firstVerseSegment;
+        if (defaultSegmentRef == null) return;
+        verseRef = getVerseRefFromSegmentRef(this.bookNum, defaultSegmentRef);
+      }
+      this.showNoteThread(undefined, verseRef);
+    } else {
+      const segmentRef: string | undefined = this.target.currentSegmentOrDefault;
+      if (segmentRef == null || this.bookNum == null) return;
       const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
       this.showNoteThread(undefined, verseRef);
     }
+    this.showInsertNoteFab = false;
   }
 
   removeEmbeddedElements(): void {
@@ -772,20 +811,27 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   /** Insert or remove note thread embeds into the quill editor. */
   private toggleNoteThreadVerses(toggleOn: boolean): void {
-    if (this.target?.editor == null || this.noteThreadQuery == null || this.bookNum == null || this._chapter == null) {
+    if (
+      this.target?.editor == null ||
+      this.noteThreadQuery == null ||
+      this.bookNum == null ||
+      this._chapter == null ||
+      this.projectDoc?.data == null
+    ) {
       return;
     }
     if (!toggleOn) {
       this.removeEmbeddedElements();
       return;
     }
+    const role: string = this.projectDoc.data.userRoles[this.userService.currentUserId];
 
     const chapterNoteThreadDocs: NoteThreadDoc[] = this.currentChapterNoteThreadDocs();
     const noteThreadVerseRefs: Set<VerseRef> = new Set<VerseRef>();
     for (const noteThreadDoc of chapterNoteThreadDocs) {
       const featured: FeaturedVerseRefInfo | undefined = this.getFeaturedVerseRefInfo(noteThreadDoc);
       if (featured != null && !this.target.embeddedElements.has(featured.id)) {
-        this.embedNoteThread(featured);
+        this.embedNoteThread(featured, role);
         noteThreadVerseRefs.add(featured.verseRef);
       }
     }
@@ -991,6 +1037,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       });
     });
     setTimeout(() => this.setTextHeight());
+    this.resetInsertNoteFab();
   }
 
   private onStartTranslating(): void {
@@ -1156,6 +1203,39 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
+  private subscribeReviewerSelectionEvents(): void {
+    if (this.target == null || this.userRole == null || !this.isReviewer) return;
+    this.selectionClickSubs.forEach(s => s.unsubscribe());
+
+    for (const [segment] of this.target.segments) {
+      if (!VERSE_REGEX.test(segment)) continue;
+      const segmentElement: Element | null = this.target.getSegmentElement(segment);
+      if (segmentElement == null) continue;
+
+      this.selectionClickSubs.push(
+        this.subscribe(fromEvent<MouseEvent>(segmentElement, 'click'), event => {
+          if (this.bookNum == null || this.target == null) return;
+          const verseRef: VerseRef | undefined = verseRefFromMouseEvent(event, this.bookNum);
+          if (verseRef == null) return;
+
+          this.showInsertNoteFab = this.target.toggleVerseSelection(verseRef);
+          this.positionInsertNoteFab(segmentElement);
+          if (this.reviewerSelectedVerseRef != null) {
+            if (verseRef.equals(this.reviewerSelectedVerseRef)) {
+              this.reviewerSelectedVerseRef = undefined;
+            } else {
+              // un-select previously selected verses since a note can apply to only one verse.
+              this.target.toggleVerseSelection(this.reviewerSelectedVerseRef);
+              this.reviewerSelectedVerseRef = verseRef;
+            }
+          } else {
+            this.reviewerSelectedVerseRef = verseRef;
+          }
+        })
+      );
+    }
+  }
+
   private async loadNoteThreadDocs(projectId: string): Promise<void> {
     this.noteThreadQuery?.dispose();
     this.noteThreadQuery = await this.projectService.queryNoteThreads(projectId);
@@ -1165,6 +1245,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       () => {
         this.toggleNoteThreadVerses(false);
         this.toggleNoteThreadVerses(true);
+        if (this.userRole != null && this.isReviewer && this.isAddNotesEnabled) {
+          this.subscribeReviewerSelectionEvents();
+        }
       }
     );
   }
@@ -1184,6 +1267,23 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this._chapter = chapter;
     this.changeText();
     this.toggleNoteThreadVerses(true);
+  }
+
+  private resetInsertNoteFab(): void {
+    this.showInsertNoteFab = false;
+    if (this.target != null && this.reviewerSelectedVerseRef != null) {
+      this.target.toggleVerseSelection(this.reviewerSelectedVerseRef);
+      this.reviewerSelectedVerseRef = undefined;
+    }
+    // set a 10ms time out so the layout is drawn before calculating the target contain coordinates
+    setTimeout(() => {
+      const targetRect: DOMRect | undefined = this.targetContainer?.nativeElement.getBoundingClientRect();
+      if (targetRect != null) {
+        const adjustment: number = this.isTargetRightToLeft ? 20 : -60;
+        const leftCoordinate: number = (this.isTargetRightToLeft ? targetRect.left : targetRect.right) + adjustment;
+        this.insertNoteFabLeft = `${leftCoordinate}px`;
+      }
+    }, 10);
   }
 
   /** Gets the information needed to format a particular featured verse. */
@@ -1298,6 +1398,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.target.editor?.formatText(position, 1, 'text-anchor', 'true', 'api');
         }
       }
+    }
+  }
+
+  private positionInsertNoteFab(segmentElement: Element): void {
+    if (this.insertNoteFab == null || this.target == null || !this.isInsertNoteFabEnabled) return;
+    const selection: RangeStatic | null | undefined = this.target.editor?.getSelection();
+    if (selection != null) {
+      this.insertNoteFab.nativeElement.style.top = `${segmentElement.getBoundingClientRect().top}px`;
+    } else {
+      // hide the insert note FAB when the user clicks outside of the editor
+      this.showInsertNoteFab = false;
     }
   }
 
@@ -1489,7 +1600,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
-  private embedNoteThread(featured: FeaturedVerseRefInfo): string | undefined {
+  private embedNoteThread(featured: FeaturedVerseRefInfo, role: string): string | undefined {
     if (this.target == null) {
       return;
     }
@@ -1501,6 +1612,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.target.embedElementInline(
       featured.verseRef,
       featured.id,
+      role,
       featured.textAnchor ?? { start: 0, length: 0 },
       'note-thread-embed',
       format
