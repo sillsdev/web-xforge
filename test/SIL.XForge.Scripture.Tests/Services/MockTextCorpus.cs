@@ -12,8 +12,8 @@ namespace SIL.XForge.Scripture.Services
             throw new NotImplementedException();
         }
 
-        public IEnumerable<IText> Texts { get; set; }
+        public IEnumerable<IText>? Texts { get; set; }
 
-        public IText this[string id] => Texts.FirstOrDefault(t => t.Id == id);
+        public IText? this[string id] => Texts?.FirstOrDefault(t => t.Id == id);
     }
 }
