@@ -63,8 +63,8 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   activeQuestionDoc?: QuestionDoc;
   activeQuestionDoc$ = new Subject<QuestionDoc>();
   @ViewChild(MdcList, { static: true }) mdcList?: MdcList;
-  @Output() totalVisibleQuestions = new EventEmitter<number>();
-  visibleQuestions: QuestionDoc[] = [];
+  @Output() totalVisibleQuestions = new Subject<number>();
+  visibleQuestions: Readonly<QuestionDoc[]> = [];
 
   private _filter: QuestionFilter = QuestionFilter.None;
   private project?: SFProjectProfile;
@@ -73,6 +73,19 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   private projectProfileDocChangesSubscription?: Subscription;
   private projectUserConfigDocChangesSubscription?: Subscription;
   private questionDocsSubscription?: Subscription;
+
+  private questionFilterFunctions: Record<QuestionFilter, (answers: Answer[]) => boolean> = {
+    [QuestionFilter.None]: () => true,
+    [QuestionFilter.CurrentUserHasNotAnswered]: answers =>
+      !answers.some(a => a.ownerRef === this.userService.currentUserId),
+    [QuestionFilter.CurrentUserHasAnswered]: answers =>
+      answers.some(a => a.ownerRef === this.userService.currentUserId),
+    [QuestionFilter.HasAnswers]: answers => answers.length > 0,
+    [QuestionFilter.NoAnswers]: answers => answers.length === 0,
+    [QuestionFilter.StatusNone]: answers => answers.some(a => a.status === AnswerStatus.None || a.status == null),
+    [QuestionFilter.StatusExport]: answers => answers.some(a => a.status === AnswerStatus.Exportable),
+    [QuestionFilter.StatusResolved]: answers => answers.some(a => a.status === AnswerStatus.Resolved)
+  };
 
   constructor(
     private readonly userService: UserService,
@@ -88,31 +101,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
 
   @Input() set filter(filter: QuestionFilter) {
     this._filter = filter;
-    const visible = this.questionDocs.filter(q => {
-      if (q.data == null) {
-        return;
-      }
-      const currentUserAnswers: boolean =
-        q.data.answers.filter((a: Answer) => a.ownerRef === this.userService.currentUserId).length > 0;
-      const hasAnswers: boolean = q.data.answers.length > 0;
-      const hasResolvedAnswers: boolean =
-        q.data.answers.filter((a: Answer) => a.status === AnswerStatus.Resolved).length > 0;
-      const hasExportableAnswers: boolean =
-        q.data.answers.filter((a: Answer) => a.status === AnswerStatus.Exportable).length > 0;
-
-      const filterMatch: Map<QuestionFilter, boolean> = new Map<QuestionFilter, boolean>()
-        .set(QuestionFilter.None, true)
-        .set(QuestionFilter.CurrentUserHasNotAnswered, !currentUserAnswers)
-        .set(QuestionFilter.CurrentUserHasAnswered, currentUserAnswers)
-        .set(QuestionFilter.HasAnswers, hasAnswers)
-        .set(QuestionFilter.NoAnswers, !hasAnswers)
-        .set(QuestionFilter.StatusNone, hasAnswers && !hasExportableAnswers && !hasResolvedAnswers)
-        .set(QuestionFilter.StatusExport, hasExportableAnswers)
-        .set(QuestionFilter.StatusResolved, hasResolvedAnswers);
-      return filterMatch.get(this._filter);
-    });
-    this.totalVisibleQuestions.emit(visible.length);
-    this.visibleQuestions = visible;
+    this.updateFilteredQuestions();
   }
 
   @Input()
@@ -175,7 +164,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
         this.activeQuestionDoc = undefined;
       }
       this.questionDocs = docs;
-      this.filter = this._filter;
+      this.updateFilteredQuestions();
       this.changeDetector.markForCheck();
     });
   }
@@ -205,6 +194,18 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
       this.project != null &&
       SF_PROJECT_RIGHTS.hasRight(this.project, userId, SFProjectDomain.Answers, Operation.Create)
     );
+  }
+
+  private updateFilteredQuestions(): void {
+    let matchingQuestions: Readonly<QuestionDoc[]>;
+    // If there is no filter applied, avoid allocating a new array of questions
+    if (this._filter === QuestionFilter.None) matchingQuestions = this.questionDocs;
+    else {
+      const filterFunction = this.questionFilterFunctions[this._filter];
+      matchingQuestions = this.questionDocs.filter(q => (q.data == null ? false : filterFunction(q.data.answers)));
+    }
+    this.totalVisibleQuestions.next(matchingQuestions.length);
+    this.visibleQuestions = matchingQuestions;
   }
 
   getAnswers(questionDoc: QuestionDoc): Answer[] {
