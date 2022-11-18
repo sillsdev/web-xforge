@@ -16,6 +16,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 using SIL.XForge.Configuration;
 
 namespace SIL.XForge.Scripture
@@ -129,6 +130,8 @@ namespace SIL.XForge.Scripture
             services.AddExceptionReporting(Configuration);
 
             services.AddConfiguration(Configuration);
+
+            services.AddFeatureManagement();
 
             string? nodeOptions = Configuration.GetValue<string>("node-options");
             services.AddSFRealtimeServer(LoggerFactory, Configuration, nodeOptions);
