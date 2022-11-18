@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.FeatureManagement;
 using NSubstitute;
 using NUnit.Framework;
 using SIL.Machine.Corpora;
@@ -50,10 +51,31 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task AddProjectAsync_DoesNotCallMachineApiIfFeatureDisabled()
+        {
+            // Set up a mock Machine API
+            string translationEngineId = "633711040935fe633f927c80";
+            var response =
+                $"{{\"id\": \"{translationEngineId}\",\"href\":\"/translation-engines/{translationEngineId}\"}}";
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+
+            // SUT
+            await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
+
+            await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
+            Assert.Zero(handler.NumberOfCalls);
+        }
+
+        [Test]
         public async Task BuildProjectAsync_CallsMachineApiIfTranslationEngineIdPresent()
         {
             // Set up a mock Machine API
-            var response = $"{{\"id\": \"633711040935fe633f927c80\",\"state\":\"pending\"}}";
+            var response = "{\"id\": \"633711040935fe633f927c80\",\"state\":\"pending\"}";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
             var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
 
@@ -95,10 +117,31 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task BuildProjectAsync_DoesNotCallMachineApiIfFeatureDisabled()
+        {
+            // Set up a mock Machine API
+            var response = "{\"id\": \"633711040935fe633f927c80\",\"state\":\"pending\"}";
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+
+            // SUT
+            await env.Service.BuildProjectAsync(User01, Project02, true, CancellationToken.None);
+
+            await env.MachineCorporaService
+                .DidNotReceiveWithAnyArgs()
+                .GetCorpusFilesAsync(Corpus01, CancellationToken.None);
+            Assert.Zero(handler.NumberOfCalls);
+        }
+
+        [Test]
         public async Task BuildProjectAsync_DoesNotCallMachineApiIfNoTextChanges()
         {
             // Set up a mock Machine API
-            var response = $"{{\"id\": \"633711040935fe633f927c80\",\"state\":\"pending\"}}";
+            var response = "{\"id\": \"633711040935fe633f927c80\",\"state\":\"pending\"}";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
             var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
 
@@ -164,11 +207,38 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
 
-            // Ensure the the web API was called one, and the corpus and any files are deleted
+            // Ensure the the web API was called once, and the corpus and any files are deleted
             Assert.AreEqual(1, handler.NumberOfCalls);
             await env.MachineCorporaService.Received(1).DeleteCorpusAsync(Corpus01, CancellationToken.None);
             await env.MachineCorporaService.Received(1).DeleteCorpusFileAsync(Corpus01, File01, CancellationToken.None);
             await env.MachineCorporaService.Received(1).DeleteCorpusFileAsync(Corpus01, File02, CancellationToken.None);
+        }
+
+        [Test]
+        public async Task RemoveProjectAsync_DoesNotCallMachineApiIfFeatureDisabled()
+        {
+            // Set up a mock Machine API
+            var handler = new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+
+            // SUT
+            await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
+
+            // Ensure the the web API and corpora server were not called
+            Assert.Zero(handler.NumberOfCalls);
+            await env.MachineCorporaService
+                .DidNotReceiveWithAnyArgs()
+                .DeleteCorpusAsync(Corpus01, CancellationToken.None);
+            await env.MachineCorporaService
+                .DidNotReceiveWithAnyArgs()
+                .DeleteCorpusFileAsync(Corpus01, File01, CancellationToken.None);
+            await env.MachineCorporaService
+                .DidNotReceiveWithAnyArgs()
+                .DeleteCorpusFileAsync(Corpus01, File02, CancellationToken.None);
         }
 
         [Test]
@@ -200,7 +270,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SyncProjectAsync_CreatesCorpusIfMissing()
+        public async Task SyncProjectCorporaAsync_CreatesCorpusIfMissing()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -250,7 +320,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SyncProjectAsync_CreatesCorpusTextIfTextDoesNotExistInProjectSecretOrMachineApi()
+        public async Task SyncProjectCorporaAsync_CreatesCorpusTextIfTextDoesNotExistInProjectSecretOrMachineApi()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -297,7 +367,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SyncProjectAsync_CreatesCorpusTextIfTextExistsInProjectServerButNotMachineApi()
+        public async Task SyncProjectCorporaAsync_CreatesCorpusTextIfTextExistsInProjectServerButNotMachineApi()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -361,7 +431,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SyncProjectAsync_DoesNotUpdateIfNoChanges()
+        public async Task SyncProjectCorporaAsync_DoesNotUpdateIfNoChanges()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -422,7 +492,22 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SyncProjectAsync_DoesNotUpdateIfNoText()
+        public async Task SyncProjectCorporaAsync_DoesNotCallMachineApiIfFeatureDisabled()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+
+            // SUT
+            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+            Assert.IsFalse(actual);
+            await env.MachineCorporaService
+                .DidNotReceiveWithAnyArgs()
+                .GetCorpusFilesAsync(Corpus01, CancellationToken.None);
+        }
+
+        [Test]
+        public async Task SyncProjectCorporaAsync_DoesNotUpdateIfNoText()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -439,7 +524,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SyncProjectAsync_UpdatesCorpusIfTextExists()
+        public async Task SyncProjectCorporaAsync_UpdatesCorpusIfTextExists()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -516,7 +601,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SyncProjectAsync_UpdatesSourceAndTargetTexts()
+        public async Task SyncProjectCorporaAsync_UpdatesSourceAndTargetTexts()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -628,6 +713,9 @@ namespace SIL.XForge.Scripture.Services
                 MachineCorporaService = Substitute.For<IMachineCorporaService>();
                 TextCorpusFactory = Substitute.For<ITextCorpusFactory>();
 
+                FeatureManager = Substitute.For<IFeatureManager>();
+                FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(true));
+
                 ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                     new[]
                     {
@@ -702,6 +790,7 @@ namespace SIL.XForge.Scripture.Services
 
                 Service = new MachineProjectService(
                     EngineService,
+                    FeatureManager,
                     httpClientFactory,
                     logger,
                     MachineCorporaService,
@@ -713,6 +802,7 @@ namespace SIL.XForge.Scripture.Services
 
             public MachineProjectService Service { get; }
             public IEngineService EngineService { get; }
+            public IFeatureManager FeatureManager { get; }
             public IMachineCorporaService MachineCorporaService { get; }
             public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
             public ITextCorpusFactory TextCorpusFactory { get; }
