@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.FeatureManagement;
 using Newtonsoft.Json;
 using SIL.Machine.Corpora;
 using SIL.Machine.WebApi.Services;
@@ -26,6 +27,7 @@ namespace SIL.XForge.Scripture.Services
         public const string ClientName = "machine_api";
 
         private readonly IEngineService _engineService;
+        private readonly IFeatureManager _featureManager;
         private readonly ILogger<MachineProjectService> _logger;
         private readonly HttpClient _machineClient;
         private readonly IMachineCorporaService _machineCorporaService;
@@ -35,6 +37,7 @@ namespace SIL.XForge.Scripture.Services
 
         public MachineProjectService(
             IEngineService engineService,
+            IFeatureManager featureManager,
             IHttpClientFactory httpClientFactory,
             ILogger<MachineProjectService> logger,
             IMachineCorporaService machineCorporaService,
@@ -44,6 +47,7 @@ namespace SIL.XForge.Scripture.Services
         )
         {
             _engineService = engineService;
+            _featureManager = featureManager;
             _logger = logger;
             _machineClient = httpClientFactory.CreateClient(ClientName);
             _machineCorporaService = machineCorporaService;
@@ -71,7 +75,12 @@ namespace SIL.XForge.Scripture.Services
             };
             await _engineService.AddProjectAsync(machineProject);
 
-            // Ensure that the Machine API is configured
+            // Ensure that the Machine API feature flag is enabled
+            if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+            {
+                _logger.LogInformation("Machine API feature flag is not enabled");
+                return;
+            }
 
             // Add the project to the Machine API
             const string requestUri = "translation-engines";
@@ -122,6 +131,13 @@ namespace SIL.XForge.Scripture.Services
                 await _engineService.StartBuildByProjectIdAsync(projectId);
             }
 
+            // Ensure that the Machine API feature flag is enabled
+            if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+            {
+                _logger.LogInformation("Machine API feature flag is not enabled");
+                return;
+            }
+
             // Load the target project secrets, so we can get the translation engine ID
             if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
             {
@@ -155,6 +171,13 @@ namespace SIL.XForge.Scripture.Services
         {
             // Remove the project from the in-memory Machine instance
             await _engineService.RemoveProjectAsync(projectId);
+
+            // Ensure that the Machine API feature flag is enabled
+            if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+            {
+                _logger.LogInformation("Machine API feature flag is not enabled");
+                return;
+            }
 
             // Load the target project secrets, so we can get the translation engine ID
             if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
@@ -233,6 +256,13 @@ namespace SIL.XForge.Scripture.Services
         {
             // We will return whether the corpus was updated
             bool corpusUpdated = false;
+
+            // Ensure that the Machine API feature flag is enabled
+            if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+            {
+                _logger.LogInformation("Machine API feature flag is not enabled");
+                return false;
+            }
 
             // Load the project from the realtime service
             using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
