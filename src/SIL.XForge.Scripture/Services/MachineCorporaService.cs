@@ -1,5 +1,3 @@
-#nullable enable
-
 using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
@@ -18,6 +16,13 @@ using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services
 {
+    /// <summary>
+    /// The Machine Corpora service.
+    /// </summary>
+    /// <remarks>
+    /// This should only be called from <see cref="MachineProjectService"/>,
+    /// and exists to allow proper unit testing of the Machine API integration.
+    /// </remarks>
     public class MachineCorporaService : DisposableBase, IMachineCorporaService
     {
         private readonly IFileSystemService _fileSystemService;

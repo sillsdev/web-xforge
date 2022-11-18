@@ -294,7 +294,7 @@ namespace SIL.XForge.Scripture.Services
 
         private class TestEnvironment
         {
-            public TestEnvironment(HttpClient httpClient = default)
+            public TestEnvironment(HttpClient? httpClient = default)
             {
                 FileSystemService = Substitute.For<IFileSystemService>();
                 var httpClientFactory = Substitute.For<IHttpClientFactory>();

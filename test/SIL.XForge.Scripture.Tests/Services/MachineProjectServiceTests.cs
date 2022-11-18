@@ -45,7 +45,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
 
             await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
-            Assert.AreEqual(translationEngineId, env.ProjectSecrets.Get(Project01).MachineData.TranslationEngineId);
+            Assert.AreEqual(translationEngineId, env.ProjectSecrets.Get(Project01).MachineData?.TranslationEngineId);
             Assert.AreEqual(1, handler.NumberOfCalls);
         }
 
@@ -246,7 +246,7 @@ namespace SIL.XForge.Scripture.Services
             await env.MachineCorporaService
                 .ReceivedWithAnyArgs(1)
                 .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
-            Assert.AreEqual(1, env.ProjectSecrets.Get(Project01).MachineData.Files.Count);
+            Assert.AreEqual(1, env.ProjectSecrets.Get(Project01).MachineData?.Files.Count);
         }
 
         [Test]
@@ -284,7 +284,7 @@ namespace SIL.XForge.Scripture.Services
                 );
 
             // SUT
-            Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).MachineData.Files.Count);
+            Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).MachineData?.Files.Count);
             bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
             Assert.IsTrue(actual);
             await env.MachineCorporaService
@@ -293,7 +293,7 @@ namespace SIL.XForge.Scripture.Services
             await env.MachineCorporaService
                 .ReceivedWithAnyArgs(1)
                 .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
-            Assert.AreEqual(3, env.ProjectSecrets.Get(Project02).MachineData.Files.Count);
+            Assert.AreEqual(3, env.ProjectSecrets.Get(Project02).MachineData?.Files.Count);
         }
 
         [Test]
@@ -619,7 +619,7 @@ namespace SIL.XForge.Scripture.Services
 
         private class TestEnvironment
         {
-            public TestEnvironment(HttpClient httpClient = default)
+            public TestEnvironment(HttpClient? httpClient = default)
             {
                 EngineService = Substitute.For<IEngineService>();
                 var httpClientFactory = Substitute.For<IHttpClientFactory>();
