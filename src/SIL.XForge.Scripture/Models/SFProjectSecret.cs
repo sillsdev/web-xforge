@@ -12,7 +12,7 @@ namespace SIL.XForge.Scripture.Models
         /// The Hangfire Job Ids.
         /// </value>
         /// <remarks>
-        /// The <see cref="List{T}.Count">Count</see> should correspond to <see cref="QueuedCount" />.
+        /// The <see cref="List{T}.Count">Count</see> should correspond to <see cref="Sync.QueuedCount" />.
         /// </remarks>
         public List<string> JobIds { get; set; } = new List<string>();
 
@@ -32,6 +32,6 @@ namespace SIL.XForge.Scripture.Models
         /// Gets or sets the Machine API data.
         /// </summary>
         /// <value>The Machine API data.</value>
-        public MachineData MachineData { get; set; }
+        public MachineData? MachineData { get; set; }
     }
 }
