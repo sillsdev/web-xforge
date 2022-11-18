@@ -1,5 +1,3 @@
-#nullable enable
-
 using SIL.XForge.Scripture.Models;
 using System.Collections.Generic;
 using System.Threading;
