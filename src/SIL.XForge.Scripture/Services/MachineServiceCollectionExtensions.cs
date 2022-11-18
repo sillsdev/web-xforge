@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Polly;
+using Polly.Extensions.Http;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
 using SIL.XForge.Scripture.Services;
@@ -72,9 +74,22 @@ namespace Microsoft.Extensions.DependencyInjection
 
                     return handler;
                 });
+            services
+                .AddHttpClient(MachineProjectService.ClientName)
+                .SetHandlerLifetime(TimeSpan.FromMinutes(5))
+                .AddPolicyHandler(GetRetryPolicy())
+                .AddPolicyHandler(GetCircuitBreakerPolicy());
             services.AddSingleton<IMachineProjectService, MachineProjectService>();
             services.AddSingleton<IMachineCorporaService, MachineCorporaService>();
             return services;
         }
+
+        private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy() =>
+            HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+
+        private static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy() =>
+            HttpPolicyExtensions.HandleTransientHttpError().CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
     }
 }
