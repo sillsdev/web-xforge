@@ -30,6 +30,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly IFeatureManager _featureManager;
         private readonly ILogger<MachineProjectService> _logger;
         private readonly HttpClient _machineClient;
+        private readonly IMachineBuildService _machineBuildService;
         private readonly IMachineCorporaService _machineCorporaService;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
         private readonly IRealtimeService _realtimeService;
@@ -40,6 +41,7 @@ namespace SIL.XForge.Scripture.Services
             IFeatureManager featureManager,
             IHttpClientFactory httpClientFactory,
             ILogger<MachineProjectService> logger,
+            IMachineBuildService machineBuildService,
             IMachineCorporaService machineCorporaService,
             IRepository<SFProjectSecret> projectSecrets,
             IRealtimeService realtimeService,
@@ -50,6 +52,7 @@ namespace SIL.XForge.Scripture.Services
             _featureManager = featureManager;
             _logger = logger;
             _machineClient = httpClientFactory.CreateClient(ClientName);
+            _machineBuildService = machineBuildService;
             _machineCorporaService = machineCorporaService;
             _projectSecrets = projectSecrets;
             _realtimeService = realtimeService;
@@ -151,19 +154,15 @@ namespace SIL.XForge.Scripture.Services
                 return;
             }
 
-            // TODO: Run the below in another thread
             // Sync the corpus
             if (await SyncProjectCorporaAsync(curUserId, projectId, cancellationToken))
             {
                 // If the corpus was updated, start the build
-                string requestUri = $"translation-engines/{projectSecret.MachineData.TranslationEngineId}/builds";
-                using var response = await _machineClient.PostAsync(requestUri, null, cancellationToken);
-
-                // TODO: Use the response body to track the build
-                if (!response.IsSuccessStatusCode)
-                {
-                    throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
-                }
+                // We do not need the build ID for tracking as we use GetCurrentBuildAsync for that
+                _ = await _machineBuildService.StartBuildAsync(
+                    projectSecret.MachineData.TranslationEngineId,
+                    cancellationToken
+                );
             }
         }
 
@@ -288,7 +287,7 @@ namespace SIL.XForge.Scripture.Services
             string corpusId;
             if (string.IsNullOrWhiteSpace(projectSecret.MachineData.CorpusId))
             {
-                corpusId = await _machineCorporaService.AddCorpusAsync(projectId, false, cancellationToken);
+                corpusId = await _machineCorporaService.AddCorpusAsync(projectId, paratext: false, cancellationToken);
                 await _machineCorporaService.AddCorpusToTranslationEngineAsync(
                     projectSecret.MachineData.TranslationEngineId,
                     corpusId,
@@ -312,7 +311,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Reuse the SFTextCorpusFactory implementation
             ITextCorpus? textCorpus = await _textCorpusFactory.CreateAsync(new[] { projectId }, TextCorpusType.Source);
-            corpusUpdated |= await SyncTextCorpus(
+            corpusUpdated |= await SyncTextCorpusAsync(
                 corpusId,
                 projectDoc.Data,
                 projectSecret,
@@ -323,7 +322,7 @@ namespace SIL.XForge.Scripture.Services
             );
 
             textCorpus = await _textCorpusFactory.CreateAsync(new[] { projectId }, TextCorpusType.Target);
-            corpusUpdated |= await SyncTextCorpus(
+            corpusUpdated |= await SyncTextCorpusAsync(
                 corpusId,
                 projectDoc.Data,
                 projectSecret,
@@ -336,7 +335,7 @@ namespace SIL.XForge.Scripture.Services
             return corpusUpdated;
         }
 
-        private async Task<bool> SyncTextCorpus(
+        private async Task<bool> SyncTextCorpusAsync(
             string corpusId,
             SFProject project,
             SFProjectSecret projectSecret,
