@@ -561,12 +561,12 @@ describe('CheckingComponent', () => {
       expectedQuestionCounts.forEach(expected => {
         env.setQuestionFilter(expected.filter);
         expect(env.questions.length)
-          .withContext(env.component.appliedQuestionFilterLabel ?? '')
+          .withContext(env.component.appliedQuestionFilterKey ?? '')
           .toEqual(expected.total);
         const expectedVisibleQuestionTotal =
           expected.total + (expected.total < totalQuestions ? '/' + totalQuestions : '');
         expect(env.questionFilterTotal)
-          .withContext(env.component.appliedQuestionFilterLabel ?? '')
+          .withContext(env.component.appliedQuestionFilterKey ?? '')
           .toEqual(`(${expectedVisibleQuestionTotal})`);
       });
     }));

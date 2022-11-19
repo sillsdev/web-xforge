@@ -27,7 +27,6 @@ import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { DialogService } from 'xforge-common/dialog.service';
-import { translate } from '@ngneat/transloco';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SF_DEFAULT_SHARE_ROLE } from '../../core/models/sf-project-role-info';
@@ -126,8 +125,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return undefined;
   }
 
-  get appliedQuestionFilterLabel(): string | undefined {
-    return this.questionFilters.get(this.questionFilterSelected);
+  get appliedQuestionFilterKey(): string {
+    return this.questionFilters.get(this.questionFilterSelected)!;
   }
 
   get bookName(): string {
@@ -1050,18 +1049,18 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   private initQuestionFilters() {
     this.questionFilters.clear();
-    this.questionFilters.set(QuestionFilter.None, translate('checking.question_filter_none'));
+    this.questionFilters.set(QuestionFilter.None, 'question_filter_none');
     if (this.isProjectAdmin) {
       this.questionFilters
-        .set(QuestionFilter.HasAnswers, translate('checking.question_filter_has_answers'))
-        .set(QuestionFilter.NoAnswers, translate('checking.question_filter_no_answers'))
-        .set(QuestionFilter.StatusExport, translate('checking.question_filter_exportable'))
-        .set(QuestionFilter.StatusResolved, translate('checking.question_filter_resolved'))
-        .set(QuestionFilter.StatusNone, translate('checking.question_filter_not_reviewed'));
+        .set(QuestionFilter.HasAnswers, 'question_filter_has_answers')
+        .set(QuestionFilter.NoAnswers, 'question_filter_no_answers')
+        .set(QuestionFilter.StatusExport, 'question_filter_exportable')
+        .set(QuestionFilter.StatusResolved, 'question_filter_resolved')
+        .set(QuestionFilter.StatusNone, 'question_filter_not_reviewed');
     } else {
       this.questionFilters
-        .set(QuestionFilter.CurrentUserHasAnswered, translate('checking.question_filter_answered'))
-        .set(QuestionFilter.CurrentUserHasNotAnswered, translate('checking.question_filter_not_answered'));
+        .set(QuestionFilter.CurrentUserHasAnswered, 'question_filter_answered')
+        .set(QuestionFilter.CurrentUserHasNotAnswered, 'question_filter_not_answered');
     }
   }
 }

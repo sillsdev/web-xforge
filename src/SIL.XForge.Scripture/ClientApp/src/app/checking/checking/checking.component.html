@@ -36,13 +36,13 @@
                       *ngFor="let f of questionFilters | keyvalue"
                       [value]="f.key"
                       [selected]="f.key === questionFilterSelected"
-                      >{{ f.value }}</mdc-list-item
+                      >{{ t(f.value) }}</mdc-list-item
                     >
                   </mdc-list>
                 </mdc-menu>
                 <button mdc-icon-button class="collapse-question-menu" (click)="collapseDrawer()" icon="clear"></button>
                 <div *ngIf="isQuestionFilterApplied" class="active-question-filter">
-                  {{ t("filter") }}: {{ appliedQuestionFilterLabel }}
+                  {{ t("filter") }}: {{ t(appliedQuestionFilterKey) }}
                 </div>
               </div>
               <div class="panel-content">
