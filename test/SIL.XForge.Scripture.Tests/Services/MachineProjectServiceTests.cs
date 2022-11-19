@@ -74,13 +74,8 @@ namespace SIL.XForge.Scripture.Services
         [Test]
         public async Task BuildProjectAsync_CallsMachineApiIfTranslationEngineIdPresent()
         {
-            // Set up a mock Machine API
-            var response = "{\"id\": \"633711040935fe633f927c80\",\"state\":\"pending\"}";
-            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
-
             // Set up test environment
-            var env = new TestEnvironment(httpClient);
+            var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
                 .Returns(
@@ -113,19 +108,14 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             await env.Service.BuildProjectAsync(User01, Project02, true, CancellationToken.None);
 
-            Assert.AreEqual(1, handler.NumberOfCalls);
+            await env.MachineBuildService.Received().StartBuildAsync(Project02, CancellationToken.None);
         }
 
         [Test]
         public async Task BuildProjectAsync_DoesNotCallMachineApiIfFeatureDisabled()
         {
-            // Set up a mock Machine API
-            var response = "{\"id\": \"633711040935fe633f927c80\",\"state\":\"pending\"}";
-            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
-
             // Set up test environment
-            var env = new TestEnvironment(httpClient);
+            var env = new TestEnvironment();
             env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
 
             // SUT
@@ -134,40 +124,31 @@ namespace SIL.XForge.Scripture.Services
             await env.MachineCorporaService
                 .DidNotReceiveWithAnyArgs()
                 .GetCorpusFilesAsync(Corpus01, CancellationToken.None);
-            Assert.Zero(handler.NumberOfCalls);
+            await env.MachineBuildService.DidNotReceiveWithAnyArgs().StartBuildAsync(Project02, CancellationToken.None);
         }
 
         [Test]
-        public async Task BuildProjectAsync_DoesNotCallMachineApiIfNoTextChanges()
+        public async Task BuildProjectAsync_DoesNotBuildMachineApiIfNoTextChanges()
         {
-            // Set up a mock Machine API
-            var response = "{\"id\": \"633711040935fe633f927c80\",\"state\":\"pending\"}";
-            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
-
             // Set up test environment
-            var env = new TestEnvironment(httpClient);
+            var env = new TestEnvironment();
 
             // SUT
             await env.Service.BuildProjectAsync(User01, Project02, true, CancellationToken.None);
 
-            Assert.Zero(handler.NumberOfCalls);
+            await env.MachineBuildService.DidNotReceiveWithAnyArgs().StartBuildAsync(Project02, CancellationToken.None);
         }
 
         [Test]
-        public async Task BuildProjectAsync_DoesNotCallMachineApiIfNoTranslationEngineId()
+        public async Task BuildProjectAsync_DoesNotBuildMachineApiIfNoTranslationEngineId()
         {
-            // Set up a mock Machine API
-            var handler = new MockHttpMessageHandler(string.Empty, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
-
             // Set up test environment
-            var env = new TestEnvironment(httpClient);
+            var env = new TestEnvironment();
 
             // SUT
             await env.Service.BuildProjectAsync(User01, Project01, true, CancellationToken.None);
 
-            Assert.Zero(handler.NumberOfCalls);
+            await env.MachineBuildService.DidNotReceiveWithAnyArgs().StartBuildAsync(Project02, CancellationToken.None);
         }
 
         [Test]
@@ -710,6 +691,7 @@ namespace SIL.XForge.Scripture.Services
                 var httpClientFactory = Substitute.For<IHttpClientFactory>();
                 httpClientFactory.CreateClient(Arg.Any<string>()).Returns(httpClient);
                 var logger = new MockLogger<MachineProjectService>();
+                MachineBuildService = Substitute.For<IMachineBuildService>();
                 MachineCorporaService = Substitute.For<IMachineCorporaService>();
                 TextCorpusFactory = Substitute.For<ITextCorpusFactory>();
 
@@ -793,6 +775,7 @@ namespace SIL.XForge.Scripture.Services
                     FeatureManager,
                     httpClientFactory,
                     logger,
+                    MachineBuildService,
                     MachineCorporaService,
                     ProjectSecrets,
                     realtimeService,
@@ -803,6 +786,7 @@ namespace SIL.XForge.Scripture.Services
             public MachineProjectService Service { get; }
             public IEngineService EngineService { get; }
             public IFeatureManager FeatureManager { get; }
+            public IMachineBuildService MachineBuildService { get; }
             public IMachineCorporaService MachineCorporaService { get; }
             public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
             public ITextCorpusFactory TextCorpusFactory { get; }
