@@ -9,27 +9,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
-using Newtonsoft.Json;
 using SIL.Machine.Corpora;
+using SIL.Machine.WebApi.Models;
 using SIL.Machine.WebApi.Services;
-using SIL.ObjectModel;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
-using MachineProject = SIL.Machine.WebApi.Models.Project;
 
 namespace SIL.XForge.Scripture.Services
 {
-    public class MachineProjectService : DisposableBase, IMachineProjectService
+    public class MachineProjectService : MachineServiceBase, IMachineProjectService
     {
-        public const string ClientName = "machine_api";
-
         private readonly IEngineService _engineService;
+        private readonly IExceptionHandler _exceptionHandler;
         private readonly IFeatureManager _featureManager;
         private readonly ILogger<MachineProjectService> _logger;
-        private readonly HttpClient _machineClient;
         private readonly IMachineBuildService _machineBuildService;
         private readonly IMachineCorporaService _machineCorporaService;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
@@ -38,6 +34,7 @@ namespace SIL.XForge.Scripture.Services
 
         public MachineProjectService(
             IEngineService engineService,
+            IExceptionHandler exceptionHandler,
             IFeatureManager featureManager,
             IHttpClientFactory httpClientFactory,
             ILogger<MachineProjectService> logger,
@@ -46,12 +43,12 @@ namespace SIL.XForge.Scripture.Services
             IRepository<SFProjectSecret> projectSecrets,
             IRealtimeService realtimeService,
             ITextCorpusFactory textCorpusFactory
-        )
+        ) : base(httpClientFactory)
         {
             _engineService = engineService;
+            _exceptionHandler = exceptionHandler;
             _featureManager = featureManager;
             _logger = logger;
-            _machineClient = httpClientFactory.CreateClient(ClientName);
             _machineBuildService = machineBuildService;
             _machineCorporaService = machineCorporaService;
             _projectSecrets = projectSecrets;
@@ -70,7 +67,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Add the project to the in-memory Machine instance
-            var machineProject = new MachineProject
+            var machineProject = new Project
             {
                 Id = projectId,
                 SourceLanguageTag = projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag,
@@ -86,29 +83,12 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Add the project to the Machine API
-            const string requestUri = "translation-engines";
-            using var response = await _machineClient.PostAsJsonAsync(
-                requestUri,
-                new
-                {
-                    name = projectId,
-                    sourceLanguageTag = machineProject.SourceLanguageTag,
-                    targetLanguageTag = machineProject.TargetLanguageTag,
-                    type = "SmtTransfer",
-                },
+            string translationEngineId = await AddTranslationEngineAsync(
+                projectId,
+                machineProject.SourceLanguageTag,
+                machineProject.TargetLanguageTag,
                 cancellationToken
             );
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
-            }
-
-            string data = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogInformation($"Response from {requestUri}: {data}");
-
-            // Get the ID from the API response
-            dynamic? translationEngine = JsonConvert.DeserializeObject<dynamic>(data);
-            string? translationEngineId = translationEngine?.id;
             if (string.IsNullOrWhiteSpace(translationEngineId))
             {
                 throw new ArgumentException("Translation Engine ID from the Machine API is missing.");
@@ -193,7 +173,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Remove the project from the Machine API
             string requestUri = $"translation-engines/{projectSecret.MachineData.TranslationEngineId}";
-            using var response = await _machineClient.DeleteAsync(requestUri, cancellationToken);
+            using var response = await MachineClient.DeleteAsync(requestUri, cancellationToken);
 
             // There is no response body - just check the status code
             if (!response.IsSuccessStatusCode)
@@ -333,6 +313,38 @@ namespace SIL.XForge.Scripture.Services
             );
 
             return corpusUpdated;
+        }
+
+        private async Task<string> AddTranslationEngineAsync(
+            string name,
+            string sourceLanguageTag,
+            string targetLanguageTag,
+            CancellationToken cancellationToken
+        )
+        {
+            // TODO: When Machine >= 2.5.12, change anonymous object to TranslationEngineDto
+            const string requestUri = "translation-engines";
+            using var response = await MachineClient.PostAsJsonAsync(
+                requestUri,
+                new { name, sourceLanguageTag, targetLanguageTag, type = "SmtTransfer", },
+                cancellationToken
+            );
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
+
+            try
+            {
+                var translationEngine = await ReadAnonymousObjectFromJsonAsync(
+                    response,
+                    new { id = string.Empty },
+                    Options,
+                    cancellationToken
+                );
+                return translationEngine?.id ?? string.Empty;
+            }
+            catch (Exception e)
+            {
+                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response), e);
+            }
         }
 
         private async Task<bool> SyncTextCorpusAsync(
@@ -505,11 +517,6 @@ namespace SIL.XForge.Scripture.Services
             }
 
             return corpusUpdated;
-        }
-
-        protected override void DisposeManagedResources()
-        {
-            _machineClient.Dispose();
         }
     }
 }
