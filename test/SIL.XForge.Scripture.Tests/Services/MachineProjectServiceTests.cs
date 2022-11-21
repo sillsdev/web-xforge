@@ -14,6 +14,7 @@ using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
+using SIL.XForge.Utils;
 using MachineProject = SIL.Machine.WebApi.Models.Project;
 
 namespace SIL.XForge.Scripture.Services
@@ -447,6 +448,7 @@ namespace SIL.XForge.Scripture.Services
             env.MachineCorporaService
                 .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None)
                 .Returns(Task.FromResult("File03"));
+            string checksum = StringUtils.ComputeMd5Hash($"segRef\tsegment01{Environment.NewLine}");
             await env.ProjectSecrets.UpdateAsync(
                 Project02,
                 u =>
@@ -454,7 +456,7 @@ namespace SIL.XForge.Scripture.Services
                         p => p.MachineData.Files,
                         new MachineCorpusFile
                         {
-                            FileChecksum = "0a0870185e709743e3435b6552601dbd",
+                            FileChecksum = checksum,
                             FileId = "File03",
                             TextId = "textId_source",
                         }
