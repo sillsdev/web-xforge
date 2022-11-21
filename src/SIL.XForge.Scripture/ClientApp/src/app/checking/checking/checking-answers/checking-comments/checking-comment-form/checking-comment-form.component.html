@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'checking_comment_form'">
-  <form [formGroup]="commentForm" (ngSubmit)="submit()" autocomplete="off" id="comment-form" appScrollIntoView>
+  <form [formGroup]="commentForm" (ngSubmit)="submit()" autocomplete="off" appScrollIntoView>
     <mdc-form-field [fluid]="true">
       <mdc-text-field
         appAutofocus
@@ -12,7 +12,7 @@
     </mdc-form-field>
     <div class="form-actions">
       <button mdc-button type="button" (click)="submitCancel()" class="cancel-comment">{{ t("cancel") }}</button>
-      <button mdc-button [unelevated]="true" form="comment-form" type="submit" class="save-comment">
+      <button mdc-button [unelevated]="true" type="submit" class="save-comment">
         {{ t("save_comment") }}
       </button>
     </div>
