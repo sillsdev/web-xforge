@@ -115,6 +115,20 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void GetWordGraphAsync_InvalidId()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            var translationEngineId = "../../An-Injection-Attack?this=is~invalid!!";
+            var segment = new[] { "Test", "Data" };
+
+            // SUT
+            Assert.ThrowsAsync<ArgumentException>(
+                () => env.Service.GetWordGraphAsync(translationEngineId, segment, CancellationToken.None)
+            );
+        }
+
+        [Test]
         public async Task TrainSegmentAsync_Success()
         {
             // Set up a mock Machine API
@@ -321,11 +335,11 @@ namespace SIL.XForge.Scripture.Services
         {
             public TestEnvironment(HttpClient? httpClient = default)
             {
+                var exceptionHandler = new MockExceptionHandler();
                 var httpClientFactory = Substitute.For<IHttpClientFactory>();
                 httpClientFactory.CreateClient(Arg.Any<string>()).Returns(httpClient);
-                var logger = new MockLogger<MachineTranslationService>();
 
-                Service = new MachineTranslationService(httpClientFactory, logger);
+                Service = new MachineTranslationService(exceptionHandler, httpClientFactory);
             }
 
             public MachineTranslationService Service { get; }

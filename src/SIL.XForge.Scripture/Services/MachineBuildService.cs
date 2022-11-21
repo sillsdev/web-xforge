@@ -1,83 +1,85 @@
+using System;
+using System.Net;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using SIL.ObjectModel;
-using SIL.XForge.Scripture.Models;
+using SIL.Machine.WebApi;
 
 namespace SIL.XForge.Scripture.Services
 {
-    public class MachineBuildService : DisposableBase, IMachineBuildService
+    public class MachineBuildService : MachineServiceBase, IMachineBuildService
     {
-        private readonly ILogger<MachineBuildService> _logger;
-        private readonly HttpClient _machineClient;
+        private readonly IExceptionHandler _exceptionHandler;
 
-        public MachineBuildService(IHttpClientFactory httpClientFactory, ILogger<MachineBuildService> logger)
+        public MachineBuildService(IExceptionHandler exceptionHandler, IHttpClientFactory httpClientFactory)
+            : base(httpClientFactory)
         {
-            _logger = logger;
-            _machineClient = httpClientFactory.CreateClient(MachineProjectService.ClientName);
+            _exceptionHandler = exceptionHandler;
         }
 
         public async Task CancelCurrentBuildAsync(string translationEngineId, CancellationToken cancellationToken)
         {
-            string requestUri = $"translation-engines/{translationEngineId}/current-build/cancel";
-            using var response = await _machineClient.PostAsync(requestUri, content: null, cancellationToken);
+            ValidateId(translationEngineId);
 
-            // A 200 is returned whether there is a job currently running or not
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
-            }
+            string requestUri = $"translation-engines/{translationEngineId}/current-build/cancel";
+            using var response = await MachineClient.PostAsync(requestUri, content: null, cancellationToken);
+
+            // A 200 HTTP status code is returned whether there is a job currently running or not
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
         }
 
-        public async Task<MachineBuildJob?> GetCurrentBuildAsync(
+        public async Task<BuildDto?> GetCurrentBuildAsync(
             string translationEngineId,
             long? minRevision,
             CancellationToken cancellationToken
         )
         {
+            ValidateId(translationEngineId);
+
             string requestUri = $"translation-engines/{translationEngineId}/current-build";
             if (minRevision.HasValue)
             {
                 requestUri += $"?minRevision={minRevision}";
             }
 
-            using var response = await _machineClient.GetAsync(requestUri, cancellationToken);
-            if (!response.IsSuccessStatusCode)
+            using var response = await MachineClient.GetAsync(requestUri, cancellationToken);
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
+
+            // No body is returned on a 204 HTTP status code
+            if (response.StatusCode == HttpStatusCode.NoContent)
             {
-                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+                return null;
             }
 
             // Return the build job information
-            string data = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogInformation($"Response from {requestUri}: {data}");
-
-            return JsonConvert.DeserializeObject<MachineBuildJob>(data);
+            try
+            {
+                return await response.Content.ReadFromJsonAsync<BuildDto>(Options, cancellationToken);
+            }
+            catch (Exception e)
+            {
+                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response), e);
+            }
         }
 
-        public async Task<MachineBuildJob> StartBuildAsync(
-            string translationEngineId,
-            CancellationToken cancellationToken
-        )
+        public async Task<BuildDto> StartBuildAsync(string translationEngineId, CancellationToken cancellationToken)
         {
+            ValidateId(translationEngineId);
+
             string requestUri = $"translation-engines/{translationEngineId}/builds";
-            using var response = await _machineClient.PostAsync(requestUri, content: null, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
-            }
+            using var response = await MachineClient.PostAsync(requestUri, content: null, cancellationToken);
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
 
             // Return the build job information
-            string data = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogInformation($"Response from {requestUri}: {data}");
-
-            return JsonConvert.DeserializeObject<MachineBuildJob>(data) ?? new MachineBuildJob();
-        }
-
-        protected override void DisposeManagedResources()
-        {
-            _machineClient.Dispose();
+            try
+            {
+                return (await response.Content.ReadFromJsonAsync<BuildDto>(Options, cancellationToken))!;
+            }
+            catch (Exception e)
+            {
+                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response), e);
+            }
         }
     }
 }
