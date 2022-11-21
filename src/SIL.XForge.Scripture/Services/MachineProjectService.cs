@@ -376,9 +376,10 @@ namespace SIL.XForge.Scripture.Services
                 projectSecret.MachineData?.Files ?? new List<MachineCorpusFile>();
 
             // Sync each text
+            var sb = new StringBuilder();
             foreach (IText text in textCorpus?.Texts ?? Array.Empty<IText>())
             {
-                var sb = new StringBuilder();
+                sb.Clear();
                 foreach (TextSegment segment in text.GetSegments())
                 {
                     if (!segment.IsEmpty)
