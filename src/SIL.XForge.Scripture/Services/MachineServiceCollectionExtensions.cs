@@ -45,7 +45,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddAccessTokenManagement(options =>
             {
                 options.Client.Clients.Add(
-                    MachineProjectService.ClientName,
+                    MachineServiceBase.ClientName,
                     new ClientCredentialsTokenRequest
                     {
                         Address = machineOptions.TokenUrl,
@@ -57,7 +57,7 @@ namespace Microsoft.Extensions.DependencyInjection
             });
             services
                 .AddClientAccessTokenHttpClient(
-                    MachineProjectService.ClientName,
+                    MachineServiceBase.ClientName,
                     configureClient: client =>
                     {
                         client.BaseAddress = new Uri(machineOptions.ApiServer);
@@ -75,12 +75,14 @@ namespace Microsoft.Extensions.DependencyInjection
                     return handler;
                 });
             services
-                .AddHttpClient(MachineProjectService.ClientName)
+                .AddHttpClient(MachineServiceBase.ClientName)
                 .SetHandlerLifetime(TimeSpan.FromMinutes(5))
                 .AddPolicyHandler(GetRetryPolicy())
                 .AddPolicyHandler(GetCircuitBreakerPolicy());
-            services.AddSingleton<IMachineProjectService, MachineProjectService>();
+            services.AddSingleton<IMachineBuildService, MachineBuildService>();
             services.AddSingleton<IMachineCorporaService, MachineCorporaService>();
+            services.AddSingleton<IMachineProjectService, MachineProjectService>();
+            services.AddSingleton<IMachineTranslationService, MachineTranslationService>();
             return services;
         }
 

@@ -1,17 +1,17 @@
 using System.Threading.Tasks;
 using System.Threading;
-using SIL.XForge.Scripture.Models;
+using SIL.Machine.WebApi;
 
 namespace SIL.XForge.Scripture.Services
 {
     public interface IMachineBuildService
     {
         Task CancelCurrentBuildAsync(string translationEngineId, CancellationToken cancellationToken);
-        Task<MachineBuildJob?> GetCurrentBuildAsync(
+        Task<BuildDto?> GetCurrentBuildAsync(
             string translationEngineId,
             long? minRevision,
             CancellationToken cancellationToken
         );
-        Task<MachineBuildJob> StartBuildAsync(string translationEngineId, CancellationToken cancellationToken);
+        Task<BuildDto> StartBuildAsync(string translationEngineId, CancellationToken cancellationToken);
     }
 }
