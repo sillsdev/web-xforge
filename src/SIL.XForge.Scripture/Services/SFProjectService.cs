@@ -247,25 +247,28 @@ namespace SIL.XForge.Scripture.Services
                 // Get the source - any creation or permission updates are handled in GetTranslateSourceAsync
                 TranslateSource source = null;
                 bool unsetSourceProject = settings.SourceParatextId == ProjectSettingValueUnset;
-                string writingSystemTag = projectDoc.Data.WritingSystem?.Tag;
-                if (settings.SourceParatextId != null && !unsetSourceProject)
+                string writingSystemTag = projectDoc.Data.WritingSystem.Tag;
+                if ((writingSystemTag == null || settings.SourceParatextId != null) && !unsetSourceProject)
                 {
                     Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
                     if (!userSecretAttempt.TryResult(out UserSecret userSecret))
                         throw new DataNotFoundException("The user does not exist.");
 
                     IReadOnlyList<ParatextProject> ptProjects = await _paratextService.GetProjectsAsync(userSecret);
-                    source = await GetTranslateSourceAsync(
-                        curUserId,
-                        userSecret,
-                        settings.SourceParatextId,
-                        ptProjects,
-                        projectDoc.Data.UserRoles
-                    );
-                    if (source.ProjectRef == projectId)
+                    if (settings.SourceParatextId != null)
                     {
-                        // A project cannot reference itself
-                        source = null;
+                        source = await GetTranslateSourceAsync(
+                            curUserId,
+                            userSecret,
+                            settings.SourceParatextId,
+                            ptProjects,
+                            projectDoc.Data.UserRoles
+                        );
+                        if (source.ProjectRef == projectId)
+                        {
+                            // A project cannot reference itself
+                            source = null;
+                        }
                     }
 
                     // Update the writing system tag, if it is null

@@ -5,7 +5,7 @@ using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using SIL.XForge.Scripture.Models;
+using SIL.Machine.WebApi;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -55,7 +55,6 @@ namespace SIL.XForge.Scripture.Services
             string buildId = "633fdb281a2e7ac760f7193a";
             string state = "Active";
             string message = "Finalizing";
-            int step = 540;
             int revision = 553;
             double percentCompleted = 0.95;
             string response =
@@ -65,7 +64,7 @@ namespace SIL.XForge.Scripture.Services
                         ""id"": ""{TranslationEngine01}"",
                         ""href"": ""/translation-engines/{TranslationEngine01}""
                     }},
-                    ""step"": {step},
+                    ""step"": 540,
                     ""percentCompleted"": {percentCompleted},
                     ""message"": ""{message}"",
                     ""state"": ""{state}"",
@@ -79,7 +78,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(httpClient);
 
             // SUT
-            MachineBuildJob? actual = await env.Service.GetCurrentBuildAsync(
+            BuildDto? actual = await env.Service.GetCurrentBuildAsync(
                 TranslationEngine01,
                 minRevision: null,
                 CancellationToken.None
@@ -89,8 +88,6 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(buildId, actual.Id);
             Assert.AreEqual(percentCompleted, actual.PercentCompleted);
             Assert.AreEqual(message, actual.Message);
-            Assert.Null(actual.DateFinished);
-            Assert.AreEqual(step, actual.Step);
             Assert.AreEqual(revision, actual.Revision);
             Assert.AreEqual(state, actual.State);
             Assert.AreEqual(1, handler.NumberOfCalls);
@@ -104,7 +101,6 @@ namespace SIL.XForge.Scripture.Services
             string buildId = "633fdb281a2e7ac760f7193a";
             string state = "Active";
             string message = "Finalizing";
-            int step = 540;
             int revision = minRevision + 1;
             double percentCompleted = 0.95;
             string response =
@@ -114,7 +110,7 @@ namespace SIL.XForge.Scripture.Services
                         ""id"": ""{TranslationEngine01}"",
                         ""href"": ""/translation-engines/{TranslationEngine01}""
                     }},
-                    ""step"": {step},
+                    ""step"": 540,
                     ""percentCompleted"": {percentCompleted},
                     ""message"": ""{message}"",
                     ""state"": ""{state}"",
@@ -128,7 +124,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(httpClient);
 
             // SUT
-            MachineBuildJob actual = await env.Service.GetCurrentBuildAsync(
+            BuildDto? actual = await env.Service.GetCurrentBuildAsync(
                 TranslationEngine01,
                 minRevision,
                 CancellationToken.None
@@ -138,8 +134,6 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(buildId, actual.Id);
             Assert.AreEqual(percentCompleted, actual.PercentCompleted);
             Assert.AreEqual(message, actual.Message);
-            Assert.Null(actual.DateFinished);
-            Assert.AreEqual(step, actual.Step);
             Assert.AreEqual(revision, actual.Revision);
             Assert.AreEqual(state, actual.State);
             Assert.AreEqual(1, handler.NumberOfCalls);
@@ -157,7 +151,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(httpClient);
 
             // SUT
-            MachineBuildJob? actual = await env.Service.GetCurrentBuildAsync(
+            BuildDto? actual = await env.Service.GetCurrentBuildAsync(
                 TranslationEngine01,
                 minRevision: null,
                 CancellationToken.None
@@ -190,7 +184,6 @@ namespace SIL.XForge.Scripture.Services
             // Set up a mock Machine API
             string buildId = "633fdb281a2e7ac760f7193a";
             string state = "Pending";
-            int step = 1;
             int revision = 2;
             string response =
                 @$"{{
@@ -199,7 +192,7 @@ namespace SIL.XForge.Scripture.Services
                         ""id"": ""{TranslationEngine01}"",
                         ""href"": ""/translation-engines/{TranslationEngine01}""
                     }},
-                    ""step"": {step},
+                    ""step"": 1,
                     ""state"": ""{state}"",
                     ""id"": ""{buildId}"",
                     ""href"": ""/translation-engines/{TranslationEngine01}/builds/{buildId}""
@@ -211,13 +204,11 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(httpClient);
 
             // SUT
-            MachineBuildJob actual = await env.Service.StartBuildAsync(TranslationEngine01, CancellationToken.None);
+            BuildDto actual = await env.Service.StartBuildAsync(TranslationEngine01, CancellationToken.None);
 
             Assert.AreEqual(buildId, actual.Id);
             Assert.Zero(actual.PercentCompleted);
             Assert.Null(actual.Message);
-            Assert.Null(actual.DateFinished);
-            Assert.AreEqual(step, actual.Step);
             Assert.AreEqual(revision, actual.Revision);
             Assert.AreEqual(state, actual.State);
             Assert.AreEqual(1, handler.NumberOfCalls);
@@ -244,11 +235,11 @@ namespace SIL.XForge.Scripture.Services
         {
             public TestEnvironment(HttpClient? httpClient = default)
             {
+                var exceptionHandler = new MockExceptionHandler();
                 var httpClientFactory = Substitute.For<IHttpClientFactory>();
                 httpClientFactory.CreateClient(Arg.Any<string>()).Returns(httpClient);
-                var logger = new MockLogger<MachineBuildService>();
 
-                Service = new MachineBuildService(httpClientFactory, logger);
+                Service = new MachineBuildService(exceptionHandler, httpClientFactory);
             }
 
             public MachineBuildService Service { get; }
