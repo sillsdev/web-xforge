@@ -296,12 +296,12 @@ namespace SIL.XForge.Scripture.Services
         {
             public TestEnvironment(HttpClient? httpClient = default)
             {
+                var exceptionHandler = new MockExceptionHandler();
                 FileSystemService = Substitute.For<IFileSystemService>();
                 var httpClientFactory = Substitute.For<IHttpClientFactory>();
                 httpClientFactory.CreateClient(Arg.Any<string>()).Returns(httpClient);
-                var logger = new MockLogger<MachineProjectService>();
 
-                Service = new MachineCorporaService(FileSystemService, httpClientFactory, logger);
+                Service = new MachineCorporaService(exceptionHandler, FileSystemService, httpClientFactory);
             }
 
             public IFileSystemService FileSystemService { get; }

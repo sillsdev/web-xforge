@@ -688,6 +688,7 @@ namespace SIL.XForge.Scripture.Services
             public TestEnvironment(HttpClient? httpClient = default)
             {
                 EngineService = Substitute.For<IEngineService>();
+                var exceptionHandler = new MockExceptionHandler();
                 var httpClientFactory = Substitute.For<IHttpClientFactory>();
                 httpClientFactory.CreateClient(Arg.Any<string>()).Returns(httpClient);
                 var logger = new MockLogger<MachineProjectService>();
@@ -772,6 +773,7 @@ namespace SIL.XForge.Scripture.Services
 
                 Service = new MachineProjectService(
                     EngineService,
+                    exceptionHandler,
                     FeatureManager,
                     httpClientFactory,
                     logger,
