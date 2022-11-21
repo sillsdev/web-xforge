@@ -1,18 +1,15 @@
 using System;
 using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
-using SIL.ObjectModel;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
 using System.IO;
-using System.Net.Http.Headers;
-using System.Threading;
 using System.IO.Compression;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text;
-using SIL.XForge.Services;
+using System.Threading;
+using System.Threading.Tasks;
 using SIL.XForge.Scripture.Models;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -22,44 +19,48 @@ namespace SIL.XForge.Scripture.Services
     /// <remarks>
     /// This should only be called from <see cref="MachineProjectService"/>,
     /// and exists to allow proper unit testing of the Machine API integration.
+    /// TODO: When Machine >= 2.5.12, change all object usage to the appropriate corpus DTO
     /// </remarks>
-    public class MachineCorporaService : DisposableBase, IMachineCorporaService
+    public class MachineCorporaService : MachineServiceBase, IMachineCorporaService
     {
+        private readonly IExceptionHandler _exceptionHandler;
         private readonly IFileSystemService _fileSystemService;
-        private readonly ILogger<MachineProjectService> _logger;
-        private readonly HttpClient _machineClient;
 
         public MachineCorporaService(
+            IExceptionHandler exceptionHandler,
             IFileSystemService fileSystemService,
-            IHttpClientFactory httpClientFactory,
-            ILogger<MachineProjectService> logger
-        )
+            IHttpClientFactory httpClientFactory
+        ) : base(httpClientFactory)
         {
+            _exceptionHandler = exceptionHandler;
             _fileSystemService = fileSystemService;
-            _logger = logger;
-            _machineClient = httpClientFactory.CreateClient(MachineProjectService.ClientName);
         }
 
         public async Task<string> AddCorpusAsync(string name, bool paratext, CancellationToken cancellationToken)
         {
             // Add the corpus to the Machine API
             const string requestUri = "corpora";
-            using var response = await _machineClient.PostAsJsonAsync(
+            using var response = await MachineClient.PostAsJsonAsync(
                 requestUri,
                 new { name, format = paratext ? "Paratext" : "Text", type = "Text" },
                 cancellationToken
             );
-            if (!response.IsSuccessStatusCode)
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
+
+            try
             {
-                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+                var corpus = await ReadAnonymousObjectFromJsonAsync(
+                    response,
+                    new { id = string.Empty },
+                    Options,
+                    cancellationToken
+                );
+                return corpus?.id ?? string.Empty;
             }
-
-            string data = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogInformation($"Response from {requestUri}: {data}");
-
-            // Get the ID from the API response
-            dynamic? corpus = JsonConvert.DeserializeObject<dynamic>(data);
-            return corpus?.id ?? string.Empty;
+            catch (Exception e)
+            {
+                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response), e);
+            }
         }
 
         public async Task<bool> AddCorpusToTranslationEngineAsync(
@@ -70,45 +71,49 @@ namespace SIL.XForge.Scripture.Services
         )
         {
             // Add the corpora to the Machine API
+            ValidateId(translationEngineId);
+            ValidateId(corpusId);
             string requestUri = $"translation-engines/{translationEngineId}/corpora";
-            using var response = await _machineClient.PostAsJsonAsync(
+            using var response = await MachineClient.PostAsJsonAsync(
                 requestUri,
                 new { corpusId, pretranslate },
                 cancellationToken
             );
-            if (!response.IsSuccessStatusCode)
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
+
+            try
             {
-                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+                var corpus = await ReadAnonymousObjectFromJsonAsync(
+                    response,
+                    new { corpus = new { id = string.Empty } },
+                    Options,
+                    cancellationToken
+                );
+                return corpus?.corpus.id == corpusId;
             }
-
-            string data = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogInformation($"Response from {requestUri}: {data}");
-
-            // Verify the corpus ID from the API response
-            dynamic? corpus = JsonConvert.DeserializeObject<dynamic>(data);
-            return corpus?.corpus?.id == corpusId;
+            catch (Exception e)
+            {
+                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response), e);
+            }
         }
 
         public async Task DeleteCorpusAsync(string corpusId, CancellationToken cancellationToken)
         {
             // Delete the corpus from the Machine API
+            ValidateId(corpusId);
             string requestUri = $"corpora/{corpusId}";
-            using var response = await _machineClient.DeleteAsync(requestUri, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
-            }
+            using var response = await MachineClient.DeleteAsync(requestUri, cancellationToken);
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
         }
 
         public async Task DeleteCorpusFileAsync(string corpusId, string fileId, CancellationToken cancellationToken)
         {
             // Delete the corpus file from the Machine API
+            ValidateId(corpusId);
+            ValidateId(fileId);
             string requestUri = $"corpora/{corpusId}/files/{fileId}";
-            using var response = await _machineClient.DeleteAsync(requestUri, cancellationToken);
-            if (!response.IsSuccessStatusCode)
-            {
-                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
-            }
+            using var response = await MachineClient.DeleteAsync(requestUri, cancellationToken);
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
         }
 
         public async Task<IList<MachineApiCorpusFile>> GetCorpusFilesAsync(
@@ -117,19 +122,20 @@ namespace SIL.XForge.Scripture.Services
         )
         {
             // Get the corpus files from the Machine API
+            ValidateId(corpusId);
             string requestUri = $"corpora/{corpusId}/files";
-            using var response = await _machineClient.GetAsync(requestUri, cancellationToken);
-            if (!response.IsSuccessStatusCode)
+            using var response = await MachineClient.GetAsync(requestUri, cancellationToken);
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
+
+            try
             {
-                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+                return await response.Content.ReadFromJsonAsync<MachineApiCorpusFile[]>(Options, cancellationToken)
+                    ?? Array.Empty<MachineApiCorpusFile>();
             }
-
-            string data = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogInformation($"Response from {requestUri}: {data}");
-
-            // Retrieve the API response
-            MachineApiCorpusFile[]? files = JsonConvert.DeserializeObject<MachineApiCorpusFile[]>(data);
-            return files ?? Array.Empty<MachineApiCorpusFile>();
+            catch (Exception e)
+            {
+                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response), e);
+            }
         }
 
         public async Task<string> UploadCorpusTextAsync(
@@ -140,6 +146,9 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
+            // Validate input
+            ValidateId(corpusId);
+
             // Upload the text file
             using var content = new MultipartFormDataContent();
             byte[] byteArray = Encoding.UTF8.GetBytes(text);
@@ -155,18 +164,23 @@ namespace SIL.XForge.Scripture.Services
             content.Add(new StringContent(textId), "textId");
 
             string requestUri = $"corpora/{corpusId}/files";
-            var response = await _machineClient.PostAsync(requestUri, content, cancellationToken);
-            if (!response.IsSuccessStatusCode)
+            var response = await MachineClient.PostAsync(requestUri, content, cancellationToken);
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
+
+            try
             {
-                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+                var file = await ReadAnonymousObjectFromJsonAsync(
+                    response,
+                    new { id = string.Empty },
+                    Options,
+                    cancellationToken
+                );
+                return file?.id ?? string.Empty;
             }
-
-            string data = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogInformation($"Response from {requestUri}: {data}");
-
-            // Return the file ID from the API response
-            dynamic? file = JsonConvert.DeserializeObject<dynamic>(data);
-            return file?.id ?? string.Empty;
+            catch (Exception e)
+            {
+                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response), e);
+            }
         }
 
         public async Task<string> UploadParatextCorpusAsync(
@@ -176,6 +190,9 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
+            // Validate input
+            ValidateId(corpusId);
+
             // Ensure that the path exists
             if (!_fileSystemService.DirectoryExists(path))
             {
@@ -205,23 +222,23 @@ namespace SIL.XForge.Scripture.Services
             content.Add(new StringContent(languageTag), "languageTag");
 
             string requestUri = $"corpora/{corpusId}/files";
-            var response = await _machineClient.PostAsync(requestUri, content, cancellationToken);
-            if (!response.IsSuccessStatusCode)
+            var response = await MachineClient.PostAsync(requestUri, content, cancellationToken);
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
+
+            try
             {
-                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+                var file = await ReadAnonymousObjectFromJsonAsync(
+                    response,
+                    new { id = string.Empty },
+                    Options,
+                    cancellationToken
+                );
+                return file?.id ?? string.Empty;
             }
-
-            string data = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogInformation($"Response from {requestUri}: {data}");
-
-            // Return the file ID from the API response
-            dynamic? file = JsonConvert.DeserializeObject<dynamic>(data);
-            return file?.id ?? string.Empty;
-        }
-
-        protected override void DisposeManagedResources()
-        {
-            _machineClient.Dispose();
+            catch (Exception e)
+            {
+                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response), e);
+            }
         }
     }
 }
