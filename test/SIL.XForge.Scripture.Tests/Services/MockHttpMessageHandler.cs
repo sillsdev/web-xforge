@@ -24,7 +24,6 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            // TODO: Allow different responses and statuses per request type
             NumberOfCalls++;
             if (request.Content is not null)
             {
