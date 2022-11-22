@@ -15,7 +15,7 @@ jobs:
       matrix:
         # Environments in which to run, such as those used in development and production, or which are candidates to
         # move to.
-        os: ["ubuntu-20.04", "ubuntu-22.04"]
+        os: ["ubuntu-20.04"]
         dotnet_version: ["6.0.x"]
         node_version: ["16.15.0"]
         npm_version: ["8.10.0"]
@@ -105,7 +105,7 @@ jobs:
     name: "Production build and test"
     strategy:
       matrix:
-        os: ["ubuntu-20.04", "ubuntu-22.04"]
+        os: ["ubuntu-20.04"]
         dotnet_version: ["6.0.x"]
         node_version: ["16.15.0"]
         npm_version: ["8.10.0"]
