@@ -29,6 +29,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddMachine(config =>
                 {
                     config.AuthenticationSchemes = new[] { JwtBearerDefaults.AuthenticationScheme };
+                    config.Namespace = "machine-api/v1";
                 })
                 .AddEngineOptions(o => o.EnginesDir = Path.Combine(siteOptions.SiteDir, "engines"))
                 .AddMongoDataAccess(o =>
