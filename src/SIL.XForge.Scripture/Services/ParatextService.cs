@@ -324,15 +324,15 @@ namespace SIL.XForge.Scripture.Services
         /// "the Send and Receive server".
         /// False if there is a problem with authorization or connecting to the PT Archives.
         /// </returns>
-        public async Task<bool> CanUserAuthenticateToPTArchivesAsync(string userSFId)
+        public async Task<bool> CanUserAuthenticateToPTArchivesAsync(string sfUserId)
         {
-            if (string.IsNullOrWhiteSpace(userSFId))
+            if (string.IsNullOrWhiteSpace(sfUserId))
             {
-                throw new ArgumentException(nameof(userSFId));
+                throw new ArgumentException(nameof(sfUserId));
             }
 
             IInternetSharedRepositorySource ptRepoSource = await GetInternetSharedRepositorySource(
-                userSFId,
+                sfUserId,
                 CancellationToken.None
             );
             return ptRepoSource.CanUserAuthenticateToPTArchives();
@@ -492,14 +492,18 @@ namespace SIL.XForge.Scripture.Services
         /// Gets the permission a user has to access a resource, according to a DBL server.
         /// </summary>
         /// <param name="paratextId">The paratext resource identifier.</param>
-        /// <param name="userId">The user identifier.</param>
+        /// <param name="sfUserId">The user SF identifier.</param>
         /// <returns>
         /// Read or None.
         /// </returns>
         /// <remarks>
         /// See <see cref="TextInfoPermission" /> for permission values.
         /// </remarks>
-        public async Task<string> GetResourcePermissionAsync(string paratextId, string userId, CancellationToken token)
+        public async Task<string> GetResourcePermissionAsync(
+            string paratextId,
+            string sfUserId,
+            CancellationToken token
+        )
         {
             // See if the source is even a resource
             if (!IsResource(paratextId))
@@ -507,7 +511,7 @@ namespace SIL.XForge.Scripture.Services
                 // Default to no permissions for projects used as sources
                 return TextInfoPermission.None;
             }
-            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId, token))
+            using (ParatextAccessLock accessLock = await GetParatextAccessLock(sfUserId, token))
             {
                 bool canRead = SFInstallableDblResource.CheckResourcePermission(
                     paratextId,
@@ -598,7 +602,7 @@ namespace SIL.XForge.Scripture.Services
                 IQueryable<User> relevantUsers = this._realtimeService
                     .QuerySnapshots<User>()
                     .Where(u => paratextMapping.Keys.Contains(u.ParatextId));
-                string userSFIdToUserPTIdMap = string.Join(
+                string sfUserIdToPTUserIdMap = string.Join(
                     ", ",
                     relevantUsers.Select((User userItem) => userItem.Id + ": " + userItem.ParatextId).ToArray<string>()
                 );
@@ -612,8 +616,8 @@ namespace SIL.XForge.Scripture.Services
                     $"This occurred while SF user id '{userSecret.Id}' was querying registered PT project id "
                         + $"'{project.ParatextId}' (SF project id '{project.Id}').\n"
                         + $"The project-member json info returned from the server was: {response}\n"
-                        + "The records of user sf ids and their corresponding user paratext ids that was taken from "
-                        + $"realtimeservice to further consider was: {userSFIdToUserPTIdMap}"
+                        + "The records of SF user ids and their corresponding user paratext ids that was taken from "
+                        + $"realtimeservice to further consider was: {sfUserIdToPTUserIdMap}"
                 );
                 return userMapping;
             }
@@ -670,7 +674,7 @@ namespace SIL.XForge.Scripture.Services
         /// Gets the permissions for a project or resource.
         /// </summary>
         /// <param name="userSecret">The user secret.</param>
-        /// <param name="project">The project - the UserRoles and ParatextId are used.</param>
+        /// <param name="sfProject">The project - the UserRoles and ParatextId are used.</param>
         /// <param name="ptUsernameMapping">A mapping of user ID to Paratext username.</param>
         /// <param name="book">The book number. Set to zero to check for all books.</param>
         /// <param name="chapter">The chapter number. Set to zero to check for all books.</param>
@@ -683,7 +687,7 @@ namespace SIL.XForge.Scripture.Services
         /// </remarks>
         public async Task<Dictionary<string, string>> GetPermissionsAsync(
             UserSecret userSecret,
-            SFProject project,
+            SFProject sfProject,
             IReadOnlyDictionary<string, string> ptUsernameMapping,
             int book = 0,
             int chapter = 0,
@@ -692,20 +696,26 @@ namespace SIL.XForge.Scripture.Services
         {
             var permissions = new Dictionary<string, string>();
 
-            if (IsResource(project.ParatextId))
+            if (IsResource(sfProject.ParatextId))
             {
-                foreach (string uid in project.UserRoles.Keys)
+                foreach (string sfUserId in sfProject.UserRoles.Keys)
                 {
-                    permissions.Add(uid, await this.GetResourcePermissionAsync(project.ParatextId, uid, token));
+                    permissions.Add(
+                        sfUserId,
+                        await this.GetResourcePermissionAsync(sfProject.ParatextId, sfUserId, token)
+                    );
                 }
             }
             else
             {
                 // Get the scripture text so we can retrieve the permissions from the XML
-                using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), project.ParatextId);
+                using ScrText scrText = ScrTextCollection.FindById(
+                    GetParatextUsername(userSecret),
+                    sfProject.ParatextId
+                );
 
                 // Calculate the project and resource permissions
-                foreach (string uid in project.UserRoles.Keys)
+                foreach (string uid in sfProject.UserRoles.Keys)
                 {
                     // See if the user is in the project members list
                     if (
@@ -901,13 +911,13 @@ namespace SIL.XForge.Scripture.Services
                     if (remotePtProject.SourceUsers is null)
                     {
                         throw new InvalidDataException(
-                            $"Unexpected null SourceUsers when working with project PT id {remotePtProject.SendReceiveId}."
+                            $"Unexpected null SourceUsers when working with PT project id {remotePtProject.SendReceiveId}."
                         );
                     }
                     if (remotePtProject.SourceUsers.Users is null)
                     {
                         throw new InvalidDataException(
-                            $"Unexpected null SourceUsers.Users when working with project PT id {remotePtProject.SendReceiveId}."
+                            $"Unexpected null SourceUsers.Users when working with PT project id {remotePtProject.SendReceiveId}."
                         );
                     }
                     string role = ConvertFromUserRole(
@@ -917,7 +927,7 @@ namespace SIL.XForge.Scripture.Services
                                 if (u is null)
                                 {
                                     _logger.LogWarning(
-                                        $"An element of SourceUsers.Users was null when working with project PT id {remotePtProject.SendReceiveId}."
+                                        $"An element of SourceUsers.Users was null when working with PT project id {remotePtProject.SendReceiveId}."
                                     );
                                 }
                                 return u?.UserName == projectUserName;
@@ -982,24 +992,24 @@ namespace SIL.XForge.Scripture.Services
         /// <remarks> It is up to the caller to determine whether the project text is editable. </remarks>
         public async Task<int> PutBookText(
             UserSecret userSecret,
-            string projectPTId,
+            string ptProjectId,
             int bookNum,
             string usx,
-            Dictionary<int, string> chapNumToAuthorUserSFIdMap = null
+            Dictionary<int, string> chapNumToAuthorSFUserIdMap = null
         )
         {
             if (userSecret == null)
             {
                 throw new ArgumentNullException(nameof(userSecret));
             }
-            if (String.IsNullOrWhiteSpace(projectPTId))
+            if (String.IsNullOrWhiteSpace(ptProjectId))
             {
-                throw new ArgumentException(nameof(projectPTId));
+                throw new ArgumentException(nameof(ptProjectId));
             }
 
             int booksUpdated = 0;
             StringBuilder log = new StringBuilder(
-                $"ParatextService.PutBookText(userSecret, projectPTId {projectPTId}, bookNum {bookNum}, usx {usx}, chapterAuthors: {(chapNumToAuthorUserSFIdMap == null ? "null" : ($"count {chapNumToAuthorUserSFIdMap.Count}"))})"
+                $"ParatextService.PutBookText(userSecret, ptProjectId {ptProjectId}, bookNum {bookNum}, usx {usx}, chapterAuthors: {(chapNumToAuthorSFUserIdMap == null ? "null" : ($"count {chapNumToAuthorSFUserIdMap.Count}"))})"
             );
             Dictionary<string, ScrText> scrTexts = new Dictionary<string, ScrText>();
             try
@@ -1011,7 +1021,7 @@ namespace SIL.XForge.Scripture.Services
                 log.AppendLine(
                     $"Acquired username: {(username == null ? "is null" : (username.Length == 0 ? "zero length" : "yes"))}"
                 );
-                using ScrText scrText = ScrTextCollection.FindById(username, projectPTId);
+                using ScrText scrText = ScrTextCollection.FindById(username, ptProjectId);
 
                 // We add this here so we can dispose in the finally
                 scrTexts.Add(userSecret.Id, scrText);
@@ -1034,7 +1044,7 @@ namespace SIL.XForge.Scripture.Services
                 );
                 log.AppendLine($"Normalized usfm to {usfm}");
 
-                if (chapNumToAuthorUserSFIdMap == null || chapNumToAuthorUserSFIdMap.Count == 0)
+                if (chapNumToAuthorSFUserIdMap == null || chapNumToAuthorSFUserIdMap.Count == 0)
                 {
                     log.AppendLine($"Using current user ({userSecret.Id}) to write book {bookNum} to {scrText.Name}.");
                     // If we don't have chapter authors, update book as current user
@@ -1044,13 +1054,13 @@ namespace SIL.XForge.Scripture.Services
                 else
                 {
                     // As we have a list of chapter authors, build a dictionary of ScrTexts for each of them
-                    foreach (string userSFId in chapNumToAuthorUserSFIdMap.Values.Distinct())
+                    foreach (string sfUserId in chapNumToAuthorSFUserIdMap.Values.Distinct())
                     {
-                        if (userSFId != userSecret.Id)
+                        if (sfUserId != userSecret.Id)
                         {
                             // Get their user secret, so we can get their username, and create their ScrText
-                            log.AppendLine($"Fetching user secret for user SF id '{userSFId}'.");
-                            UserSecret authorUserSecret = await _userSecretRepository.GetAsync(userSFId);
+                            log.AppendLine($"Fetching user secret for SF user id '{sfUserId}'.");
+                            UserSecret authorUserSecret = await _userSecretRepository.GetAsync(sfUserId);
                             log.AppendLine(
                                 $"Received user secret: {(authorUserSecret == null ? "null" : (authorUserSecret.ParatextTokens == null ? "with null tokens" : "with tokens"))}"
                             );
@@ -1060,11 +1070,11 @@ namespace SIL.XForge.Scripture.Services
                                 $"Received username: {(authorUserName == null ? "null" : (authorUserName.Length == 0 ? "empty" : "non-empty"))}"
                             );
                             log.AppendLine($"Fetching scrtext using this authorUserName for PT project.");
-                            ScrText scrTextForUser = ScrTextCollection.FindById(authorUserName, projectPTId);
+                            ScrText scrTextForUser = ScrTextCollection.FindById(authorUserName, ptProjectId);
                             log.AppendLine(
                                 $"Received ScrText: {(scrTextForUser == null ? "null" : (scrTextForUser.Name))}"
                             );
-                            scrTexts.Add(userSFId, scrTextForUser);
+                            scrTexts.Add(sfUserId, scrTextForUser);
                         }
                     }
 
@@ -1074,16 +1084,16 @@ namespace SIL.XForge.Scripture.Services
                         try
                         {
                             ScrText target = scrTexts.Values.First();
-                            string authorUserSFId = scrTexts.Keys.First();
+                            string authorSFUserId = scrTexts.Keys.First();
                             log.AppendLine(
-                                $"Using single author (user SF id '{authorUserSFId}') to write to {target.Name} book {bookNum}."
+                                $"Using single author (SF user id '{authorSFUserId}') to write to {target.Name} book {bookNum}."
                             );
-                            WriteChapterToScrText(target, authorUserSFId, bookNum, 0, usfm);
+                            WriteChapterToScrText(target, authorSFUserId, bookNum, 0, usfm);
                         }
                         catch (SafetyCheckException e)
                         {
                             log.AppendLine(
-                                $"There was trouble writing ({e.Message}). Trying again, but using user sf id '{userSecret.Id}' to write to {scrText.Name}"
+                                $"There was trouble writing ({e.Message}). Trying again, but using SF user id '{userSecret.Id}' to write to {scrText.Name}"
                             );
                             // If the author does not have permission, attempt to run as the current user
                             WriteChapterToScrText(scrText, userSecret.Id, bookNum, 0, usfm);
@@ -1101,24 +1111,24 @@ namespace SIL.XForge.Scripture.Services
                         );
 
                         // Put the individual chapters
-                        foreach ((int chapterNum, string authorUserSFId) in chapNumToAuthorUserSFIdMap)
+                        foreach ((int chapterNum, string authorSFUserId) in chapNumToAuthorSFUserIdMap)
                         {
                             if ((chapterNum - 1) < chapters.Count)
                             {
                                 try
                                 {
-                                    ScrText target = scrTexts[authorUserSFId];
+                                    ScrText target = scrTexts[authorSFUserId];
                                     string payloadUsfm = chapters[chapterNum - 1];
                                     log.AppendLine(
-                                        $"Writing to {target.Name}, chapter {chapterNum}, using author user SF id {authorUserSFId}, the usfm: {payloadUsfm}"
+                                        $"Writing to {target.Name}, chapter {chapterNum}, using author SF user id {authorSFUserId}, the usfm: {payloadUsfm}"
                                     );
                                     // The ScrText permissions will be the same as the last sync's permissions
-                                    WriteChapterToScrText(target, authorUserSFId, bookNum, chapterNum, payloadUsfm);
+                                    WriteChapterToScrText(target, authorSFUserId, bookNum, chapterNum, payloadUsfm);
                                 }
                                 catch (SafetyCheckException e)
                                 {
                                     log.AppendLine(
-                                        $"There was trouble writing ({e.Message}). Trying again, but using user SF id '{userSecret.Id}' to write to {scrText.Name}. Also now writing the whole book, not just the single chapter."
+                                        $"There was trouble writing ({e.Message}). Trying again, but using SF user id '{userSecret.Id}' to write to {scrText.Name}. Also now writing the whole book, not just the single chapter."
                                     );
                                     // If the author does not have permission, attempt to run as the current user
                                     WriteChapterToScrText(scrText, userSecret.Id, bookNum, 0, usfm);
@@ -1372,34 +1382,34 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        /// <summary>Returns the current revision of the local hg repo for a given project PT id,
+        /// <summary>Returns the current revision of the local hg repo for a given PT project id,
         /// accessed using a given user.</summary>
-        public string GetRepoRevision(UserSecret userSecret, string projectPTId)
+        public string GetRepoRevision(UserSecret userSecret, string ptProjectId)
         {
-            if (IsResource(projectPTId))
+            if (IsResource(ptProjectId))
             {
                 throw new InvalidOperationException("Cannot query a resource for an hg repo revision.");
             }
-            using ScrText scrText = GetScrText(userSecret, projectPTId);
+            using ScrText scrText = GetScrText(userSecret, ptProjectId);
             return _hgHelper.GetRepoRevision(scrText.Directory);
         }
 
         /// <summary>Set a project local hg repo to a given Mercurial revision. Accessed by a given user.</summary>>
-        public void SetRepoToRevision(UserSecret userSecret, string projectPTId, string desiredRevision)
+        public void SetRepoToRevision(UserSecret userSecret, string ptProjectId, string desiredRevision)
         {
-            if (IsResource(projectPTId))
+            if (IsResource(ptProjectId))
             {
                 throw new InvalidOperationException("Cannot query a resource for an hg repo revision.");
             }
-            using ScrText scrText = GetScrText(userSecret, projectPTId);
+            using ScrText scrText = GetScrText(userSecret, ptProjectId);
             // Act
             _hgHelper.Update(scrText.Directory, desiredRevision);
             // Verify
-            string currentRepoRev = GetRepoRevision(userSecret, projectPTId);
+            string currentRepoRev = GetRepoRevision(userSecret, ptProjectId);
             if (currentRepoRev != desiredRevision)
             {
                 throw new Exception(
-                    $"SetRepoToRevision failed to set repo for project PT id {projectPTId} to revision {desiredRevision}, as the resulting revision is {currentRepoRev}."
+                    $"SetRepoToRevision failed to set repo for PT project id {ptProjectId} to revision {desiredRevision}, as the resulting revision is {currentRepoRev}."
                 );
             }
         }
@@ -1582,9 +1592,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>Does a local directory exist for the project? (i.e. in /var/lib/...)</summary>
-        public bool LocalProjectDirExists(string projectPTId)
+        public bool LocalProjectDirExists(string ptProjectId)
         {
-            string dir = LocalProjectDir(projectPTId);
+            string dir = LocalProjectDir(ptProjectId);
             return _fileSystemService.DirectoryExists(dir);
         }
 
@@ -1594,18 +1604,18 @@ namespace SIL.XForge.Scripture.Services
             _httpClientHandler.Dispose();
         }
 
-        private ScrText GetScrText(UserSecret userSecret, string projectPTId)
+        private ScrText GetScrText(UserSecret userSecret, string ptProjectId)
         {
             string? ptUsername = GetParatextUsername(userSecret);
             if (ptUsername == null)
             {
                 throw new DataNotFoundException($"Failed to get username for UserSecret id {userSecret.Id}.");
             }
-            ScrText? scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectPTId);
+            ScrText? scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);
             if (scrText == null)
             {
                 throw new DataNotFoundException(
-                    $"Could not find project for UserSecret id {userSecret.Id}, project PT id {projectPTId}"
+                    $"Could not find project for UserSecret id {userSecret.Id}, PT project id {ptProjectId}"
                 );
             }
             return scrText;
@@ -1890,17 +1900,17 @@ namespace SIL.XForge.Scripture.Services
 
         /// <summary>Path for project directory on local filesystem. Whether or not that directory
         /// exists. </summary>
-        private string LocalProjectDir(string projectPTId)
+        private string LocalProjectDir(string ptProjectId)
         {
             // Historically, SF used both "target" and "source" projects in adjacent directories. Then
             // moved to just using "target".
             string subDirForMainProject = "target";
-            return Path.Combine(SyncDir, projectPTId, subDirForMainProject);
+            return Path.Combine(SyncDir, ptProjectId, subDirForMainProject);
         }
 
-        private void CloneProjectRepo(IInternetSharedRepositorySource source, string projectPTId, SharedRepository repo)
+        private void CloneProjectRepo(IInternetSharedRepositorySource source, string ptProjectId, SharedRepository repo)
         {
-            string clonePath = LocalProjectDir(projectPTId);
+            string clonePath = LocalProjectDir(ptProjectId);
             if (!_fileSystemService.DirectoryExists(clonePath))
             {
                 _fileSystemService.CreateDirectory(clonePath);
@@ -2043,11 +2053,11 @@ namespace SIL.XForge.Scripture.Services
         /// Get access to a source for PT project repositories, based on user secret.
         /// </summary>
         private async Task<IInternetSharedRepositorySource> GetInternetSharedRepositorySource(
-            string userId,
+            string sfUserId,
             CancellationToken token
         )
         {
-            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId, token))
+            using (ParatextAccessLock accessLock = await GetParatextAccessLock(sfUserId, token))
             {
                 return _internetSharedRepositorySourceProvider.GetSource(
                     accessLock.UserSecret,
@@ -2066,13 +2076,13 @@ namespace SIL.XForge.Scripture.Services
         /// The available resources.
         /// </returns>
         private async Task<IReadOnlyList<ParatextResource>> GetResourcesInternalAsync(
-            string userId,
+            string sfUserId,
             bool includeInstallableResource,
             CancellationToken token
         )
         {
             IEnumerable<SFInstallableDblResource> resources;
-            using (ParatextAccessLock accessLock = await GetParatextAccessLock(userId, token))
+            using (ParatextAccessLock accessLock = await GetParatextAccessLock(sfUserId, token))
             {
                 resources = SFInstallableDblResource.GetInstallableDblResources(
                     accessLock.UserSecret,
@@ -2460,17 +2470,20 @@ namespace SIL.XForge.Scripture.Services
             PtxUtils.Progress.Progress.Mgr.SetDisplay(progressDisplay);
         }
 
-        private async Task<ParatextAccessLock> GetParatextAccessLock(string userId, CancellationToken token)
+        private async Task<ParatextAccessLock> GetParatextAccessLock(string sfUserId, CancellationToken token)
         {
-            SemaphoreSlim semaphore = _tokenRefreshSemaphores.GetOrAdd(userId, (string key) => new SemaphoreSlim(1, 1));
+            SemaphoreSlim semaphore = _tokenRefreshSemaphores.GetOrAdd(
+                sfUserId,
+                (string key) => new SemaphoreSlim(1, 1)
+            );
             await semaphore.WaitAsync();
 
             try
             {
-                Attempt<UserSecret> attempt = await _userSecretRepository.TryGetAsync(userId);
+                Attempt<UserSecret> attempt = await _userSecretRepository.TryGetAsync(sfUserId);
                 if (!attempt.TryResult(out UserSecret userSecret))
                 {
-                    throw new DataNotFoundException("Could not find user secrets for " + userId);
+                    throw new DataNotFoundException("Could not find user secrets for SF user id " + sfUserId);
                 }
 
                 if (!userSecret.ParatextTokens.ValidateLifetime())
@@ -2482,7 +2495,7 @@ namespace SIL.XForge.Scripture.Services
                         token
                     );
                     userSecret = await _userSecretRepository.UpdateAsync(
-                        userId,
+                        sfUserId,
                         b => b.Set(u => u.ParatextTokens, refreshedUserTokens)
                     );
                 }

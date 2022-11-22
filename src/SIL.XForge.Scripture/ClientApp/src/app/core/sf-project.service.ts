@@ -150,9 +150,9 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     await this.realtimeService.create<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId, noteThread);
   }
 
-  queryNoteThreads(id: string): Promise<RealtimeQuery<NoteThreadDoc>> {
+  queryNoteThreads(sfProjectId: string): Promise<RealtimeQuery<NoteThreadDoc>> {
     const queryParams: QueryParameters = {
-      [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
+      [obj<NoteThread>().pathStr(t => t.projectRef)]: sfProjectId,
       [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo
     };
     return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, queryParams);
