@@ -20,26 +20,20 @@
                 <h2>
                   {{ t("questions") }} <span>({{ totalVisibleQuestionsString }})</span>
                 </h2>
-                <button mdcIconButton (click)="questionFilterMenu.open = !questionFilterMenu.open">
+                <button mat-icon-button [matMenuTriggerFor]="questionFilterMenu">
                   <mdc-icon [ngClass]="{ 'material-icons-outlined': !isQuestionFilterApplied }">filter_alt</mdc-icon>
                 </button>
-                <mdc-menu
-                  #questionFilterMenu
-                  anchorCorner="bottomStart"
-                  [anchorElement]="questionAnchor"
-                  (selected)="setQuestionFilter($event.source.value)"
-                  id="question-filter-menu"
-                >
-                  <mdc-list>
-                    <h2 mdcListGroupSubheader>{{ t("filter_questions") }}</h2>
-                    <mdc-list-item
+                <mat-menu #questionFilterMenu>
+                  <mat-selection-list [multiple]="false" id="question-filter-list">
+                    <h2 matSubheader>{{ t("filter_questions") }}</h2>
+                    <mat-list-option
                       *ngFor="let f of questionFilters | keyvalue"
-                      [value]="f.key"
                       [selected]="f.key === questionFilterSelected"
-                      >{{ t(f.value) }}</mdc-list-item
+                      (click)="setQuestionFilter(f.key)"
+                      >{{ t(f.value) }}</mat-list-option
                     >
-                  </mdc-list>
-                </mdc-menu>
+                  </mat-selection-list>
+                </mat-menu>
                 <button mdc-icon-button class="collapse-question-menu" (click)="collapseDrawer()" icon="clear"></button>
                 <div *ngIf="isQuestionFilterApplied" class="active-question-filter">
                   {{ t("filter") }}: {{ t(appliedQuestionFilterKey) }}
