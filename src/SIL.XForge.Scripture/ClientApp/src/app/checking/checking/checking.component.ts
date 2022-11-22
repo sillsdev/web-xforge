@@ -1090,10 +1090,20 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     );
   }
 
-  private initQuestionFilters() {
+  private initQuestionFilters(): void {
+    if (this.projectDoc?.data == null) {
+      return;
+    }
     this.questionFilters.clear();
     this.questionFilters.set(QuestionFilter.None, 'question_filter_none');
-    if (this.isProjectAdmin) {
+    if (
+      SF_PROJECT_RIGHTS.hasRight(
+        this.projectDoc.data,
+        this.userService.currentUserId,
+        SFProjectDomain.AnswerStatus,
+        Operation.Edit
+      )
+    ) {
       this.questionFilters
         .set(QuestionFilter.HasAnswers, 'question_filter_has_answers')
         .set(QuestionFilter.NoAnswers, 'question_filter_no_answers')
