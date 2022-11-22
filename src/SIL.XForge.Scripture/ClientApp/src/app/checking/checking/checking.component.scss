@@ -23,10 +23,6 @@
         display: none;
       }
     }
-    #question-filter-menu {
-      width: calc(100% - 32px);
-      margin-inline-start: 16px;
-    }
   }
   #questions-panel {
     .panel-heading {
@@ -43,9 +39,6 @@
           font-size: 14px;
           opacity: 0.5;
         }
-      }
-      button {
-        @include icon-button.icon-size(24px, 24px, 8px);
       }
       mdc-list {
         h2 {
@@ -179,4 +172,10 @@
 .heading-with-icon {
   display: flex;
   column-gap: 10px;
+}
+#question-filter-list {
+  h2 {
+    color: #000;
+    font-weight: bold;
+  }
 }
