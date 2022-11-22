@@ -16,7 +16,7 @@ jobs:
         # Environments in which to run, such as those used in development and production, or which are candidates to
         # move to.
         os: ["ubuntu-20.04", "ubuntu-22.04"]
-        dotnet_version: ["6.0.*"]
+        dotnet_version: ["6.0.301"]
         node_version: ["16.15.0"]
         npm_version: ["8.10.0"]
       # Continue building in other environments to see which are working.
@@ -26,6 +26,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: "Deps: .NET"
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{matrix.dotnet_version}}
       - name: "Deps: Node"
         uses: actions/setup-node@v3
         with:
@@ -103,7 +107,7 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-20.04", "ubuntu-22.04"]
-        dotnet_version: ["6.0.*"]
+        dotnet_version: ["6.0.301"]
         node_version: ["16.15.0"]
         npm_version: ["8.10.0"]
       fail-fast: false
@@ -112,6 +116,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: "Deps: .NET"
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{matrix.dotnet_version}}
       - name: "Deps: Node"
         uses: actions/setup-node@v3
         with:
