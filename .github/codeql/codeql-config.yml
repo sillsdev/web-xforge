@@ -1,0 +1,5 @@
+queries: security-and-quality
+paths:
+  - src
+paths-ignore:
+  - "**/*.spec.ts"
