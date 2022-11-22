@@ -24,10 +24,9 @@
     display: flex;
     align-items: center;
 
-    .audio-unavailable-message {
-      // Same left padding as .player.current-time
-      padding-left: 10px;
-    }
+    padding: 5px;
+    // Same spacing as .player .current-time
+    column-gap: 10px;
 
     a {
       color: $blueMedium;
@@ -35,12 +34,7 @@
 
       mat-icon {
         font-size: 1.3em;
-        padding: 6px;
       }
     }
   }
-}
-
-.invert-direction {
-  transform: rotateY(180deg);
 }

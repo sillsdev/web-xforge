@@ -149,3 +149,7 @@ button.mdc-icon-button {
   opacity: 0;
   animation: none;
 }
+
+body[dir='rtl'] .mirror-rtl {
+  transform: scaleX(-1);
+}

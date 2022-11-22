@@ -1,8 +1,8 @@
 <ng-container *transloco="let t; read: 'checking_audio_player'">
   <div class="audio-area">
-    <div *ngIf="hasSource && isAudioAvailable" class="player">
+    <div *ngIf="hasSource && isAudioAvailable" class="player" dir="ltr">
       <button *ngIf="!isPlaying" mat-icon-button type="button" (click)="play()" class="play">
-        <mat-icon [class.invert-direction]="i18n.isRtl">play_arrow</mat-icon>
+        <mat-icon>play_arrow</mat-icon>
       </button>
       <button *ngIf="isPlaying" mat-icon-button type="button" (click)="pause()" class="pause">
         <mat-icon>pause</mat-icon>
@@ -14,7 +14,7 @@
     </div>
     <div *ngIf="!isAudioAvailable" class="audio-not-available">
       <mat-icon>volume_off</mat-icon>
-      <span class="audio-unavailable-message">{{ t("audio_unavailable") }}</span>
+      <span>{{ t("audio_unavailable") }}</span>
       <div *ngIf="hasErrorState">
         <a
           id="error-load"
