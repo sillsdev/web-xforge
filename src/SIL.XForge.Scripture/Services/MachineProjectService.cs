@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,37 +19,36 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
-    public class MachineProjectService : MachineServiceBase, IMachineProjectService
+    public class MachineProjectService : IMachineProjectService
     {
         private readonly IEngineService _engineService;
-        private readonly IExceptionHandler _exceptionHandler;
         private readonly IFeatureManager _featureManager;
         private readonly ILogger<MachineProjectService> _logger;
         private readonly IMachineBuildService _machineBuildService;
         private readonly IMachineCorporaService _machineCorporaService;
+        private readonly IMachineTranslationService _machineTranslationService;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
         private readonly IRealtimeService _realtimeService;
         private readonly ITextCorpusFactory _textCorpusFactory;
 
         public MachineProjectService(
             IEngineService engineService,
-            IExceptionHandler exceptionHandler,
             IFeatureManager featureManager,
-            IHttpClientFactory httpClientFactory,
             ILogger<MachineProjectService> logger,
             IMachineBuildService machineBuildService,
             IMachineCorporaService machineCorporaService,
+            IMachineTranslationService machineTranslationService,
             IRepository<SFProjectSecret> projectSecrets,
             IRealtimeService realtimeService,
             ITextCorpusFactory textCorpusFactory
-        ) : base(httpClientFactory)
+        )
         {
             _engineService = engineService;
-            _exceptionHandler = exceptionHandler;
             _featureManager = featureManager;
             _logger = logger;
             _machineBuildService = machineBuildService;
             _machineCorporaService = machineCorporaService;
+            _machineTranslationService = machineTranslationService;
             _projectSecrets = projectSecrets;
             _realtimeService = realtimeService;
             _textCorpusFactory = textCorpusFactory;
@@ -83,7 +81,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Add the project to the Machine API
-            string translationEngineId = await AddTranslationEngineAsync(
+            string translationEngineId = await _machineTranslationService.CreateTranslationEngineAsync(
                 projectId,
                 machineProject.SourceLanguageTag,
                 machineProject.TargetLanguageTag,
@@ -172,16 +170,10 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Remove the project from the Machine API
-            string requestUri = $"translation-engines/{projectSecret.MachineData.TranslationEngineId}";
-            using var response = await MachineClient.DeleteAsync(requestUri, cancellationToken);
-
-            // There is no response body - just check the status code
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogInformation(
-                    $"Translation engine {projectSecret.MachineData.TranslationEngineId} for project {projectId} could not be deleted."
-                );
-            }
+            await _machineTranslationService.DeleteTranslationEngineAsync(
+                projectSecret.MachineData.TranslationEngineId,
+                cancellationToken
+            );
 
             // Ensure we have a corpus id
             if (string.IsNullOrWhiteSpace(projectSecret.MachineData?.CorpusId))
@@ -267,7 +259,11 @@ namespace SIL.XForge.Scripture.Services
             string corpusId;
             if (string.IsNullOrWhiteSpace(projectSecret.MachineData.CorpusId))
             {
-                corpusId = await _machineCorporaService.AddCorpusAsync(projectId, paratext: false, cancellationToken);
+                corpusId = await _machineCorporaService.CreateCorpusAsync(
+                    projectId,
+                    paratext: false,
+                    cancellationToken
+                );
                 await _machineCorporaService.AddCorpusToTranslationEngineAsync(
                     projectSecret.MachineData.TranslationEngineId,
                     corpusId,
@@ -313,38 +309,6 @@ namespace SIL.XForge.Scripture.Services
             );
 
             return corpusUpdated;
-        }
-
-        private async Task<string> AddTranslationEngineAsync(
-            string name,
-            string sourceLanguageTag,
-            string targetLanguageTag,
-            CancellationToken cancellationToken
-        )
-        {
-            // TODO: When Machine >= 2.5.12, change anonymous object to TranslationEngineDto
-            const string requestUri = "translation-engines";
-            using var response = await MachineClient.PostAsJsonAsync(
-                requestUri,
-                new { name, sourceLanguageTag, targetLanguageTag, type = "SmtTransfer", },
-                cancellationToken
-            );
-            await _exceptionHandler.EnsureSuccessStatusCode(response);
-
-            try
-            {
-                var translationEngine = await ReadAnonymousObjectFromJsonAsync(
-                    response,
-                    new { id = string.Empty },
-                    Options,
-                    cancellationToken
-                );
-                return translationEngine?.id ?? string.Empty;
-            }
-            catch (Exception e)
-            {
-                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response), e);
-            }
         }
 
         private async Task<bool> SyncTextCorpusAsync(
