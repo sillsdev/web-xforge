@@ -76,9 +76,9 @@ import {
   AudioAttachment,
   CheckingAudioRecorderComponent
 } from './checking-audio-recorder/checking-audio-recorder.component';
-import { CheckingQuestionsComponent, QuestionFilter } from './checking-questions/checking-questions.component';
+import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
-import { CheckingComponent } from './checking.component';
+import { CheckingComponent, QuestionFilter } from './checking.component';
 import { FontSizeComponent } from './font-size/font-size.component';
 
 const mockedAuthService = mock(AuthService);
@@ -316,9 +316,8 @@ describe('CheckingComponent', () => {
       expect(env.component.questionDocs.length).toEqual(15);
       expect(env.component.questionVerseRefs.length).toEqual(15);
 
-      env.clickButton(env.archiveQuestionButton);
-
-      tick(env.questionReadTimer);
+      env.archiveQuestionButton.nativeElement.click();
+      env.waitForQuestionTimersToComplete();
 
       expect(question.isArchived).toBe(true);
       expect(env.component.questionDocs.length).toEqual(14);
@@ -554,19 +553,19 @@ describe('CheckingComponent', () => {
         { filter: QuestionFilter.NoAnswers, total: 11 },
         { filter: QuestionFilter.StatusExport, total: 2 },
         { filter: QuestionFilter.StatusResolved, total: 1 },
-        { filter: QuestionFilter.StatusNone, total: 2 },
+        { filter: QuestionFilter.StatusNone, total: 3 },
         { filter: QuestionFilter.CurrentUserHasAnswered, total: 2 },
         { filter: QuestionFilter.CurrentUserHasNotAnswered, total: 13 }
       ];
       expectedQuestionCounts.forEach(expected => {
         env.setQuestionFilter(expected.filter);
         expect(env.questions.length)
-          .withContext(env.component.appliedQuestionFilterLabel ?? '')
+          .withContext(env.component.appliedQuestionFilterKey ?? '')
           .toEqual(expected.total);
         const expectedVisibleQuestionTotal =
           expected.total + (expected.total < totalQuestions ? '/' + totalQuestions : '');
         expect(env.questionFilterTotal)
-          .withContext(env.component.appliedQuestionFilterLabel ?? '')
+          .withContext(env.component.appliedQuestionFilterKey ?? '')
           .toEqual(`(${expectedVisibleQuestionTotal})`);
       });
     }));
@@ -2152,6 +2151,12 @@ class TestEnvironment {
     flush();
   }
 
+  waitForQuestionTimersToComplete(): void {
+    this.fixture.detectChanges();
+    tick(this.questionReadTimer);
+    flush();
+  }
+
   insertQuestion(newQuestion: Question): void {
     const docId = getQuestionDocId('project01', newQuestion.dataId);
     this.realtimeService.addSnapshot(QuestionDoc.COLLECTION, {
@@ -2215,10 +2220,8 @@ class TestEnvironment {
   }
 
   setQuestionFilter(filter: QuestionFilter) {
-    this.component.questionFilterSelected = filter;
-    this.fixture.detectChanges();
-    tick();
-    this.fixture.detectChanges();
+    this.component.setQuestionFilter(filter);
+    this.waitForQuestionTimersToComplete();
   }
 
   simulateNewRemoteAnswer(dataId: string = 'newAnswer1', text: string = 'new answer from another user') {
@@ -2485,6 +2488,17 @@ class TestEnvironment {
       audioUrl: '/audio.mp3',
       comments: [],
       status: AnswerStatus.Resolved
+    });
+    johnQuestions[8].data!.answers.push({
+      dataId: 'a9Id',
+      ownerRef: CHECKER_USER.id,
+      text: 'Answer 9 on question',
+      verseRef: { chapterNum: 1, verseNum: 1, bookNum: 43 },
+      scriptureText: 'Quoted scripture',
+      likes: [],
+      dateCreated: dateCreated,
+      dateModified: dateCreated,
+      comments: []
     });
 
     if (this.projectBookRoute === 'JHN') {

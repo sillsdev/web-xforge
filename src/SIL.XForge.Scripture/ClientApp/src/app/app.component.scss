@@ -212,6 +212,15 @@ mat-nav-list .mat-list-item {
     column-gap: 16px;
     padding-inline-end: 8px;
   }
+  &.activated-nav-item mat-icon {
+    animation: spin 1s linear infinite;
+  }
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .mat-list-item.activated-nav-item {

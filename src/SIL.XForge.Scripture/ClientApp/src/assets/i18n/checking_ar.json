@@ -158,7 +158,7 @@
     "unknown_author": "مؤلف غير معروف",
     "next": "التالي",
     "previous": "السابق",
-    "questions": "({{ count }}) أسئلة",
+    "questions": "أسئلة",
     "view_questions": "إظهار الأسئلة"
   },
   "checking_answers": {

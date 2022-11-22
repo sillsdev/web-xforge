@@ -158,7 +158,7 @@
     "unknown_author": "Unknown author",
     "next": "Berikutnya",
     "previous": "Sebelumnya",
-    "questions": "Pertanyaan ({{ count }})",
+    "questions": "Pertanyaan",
     "view_questions": "Tampilkan Pertanyaan"
   },
   "checking_answers": {
