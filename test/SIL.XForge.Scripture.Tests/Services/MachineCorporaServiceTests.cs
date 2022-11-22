@@ -20,24 +20,6 @@ namespace SIL.XForge.Scripture.Services
         private static readonly string Project01 = "project01";
 
         [Test]
-        public async Task AddCorpusAsync_Success()
-        {
-            // Set up a mock Machine API
-            string corpusId = "633fdb281a2e7ac760f7193a";
-            string response = $"{{\"id\": \"{corpusId}\",\"href\":\"/corpora/{corpusId}\"}}";
-            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
-
-            // Set up test environment
-            var env = new TestEnvironment(httpClient);
-
-            // SUT
-            string actual = await env.Service.AddCorpusAsync(Project01, false, CancellationToken.None);
-            Assert.AreEqual(corpusId, actual);
-            Assert.AreEqual(1, handler.NumberOfCalls);
-        }
-
-        [Test]
         public async Task AddCorpusToTranslationEngineAsync_Success()
         {
             // Set up a mock Machine API
@@ -66,6 +48,24 @@ namespace SIL.XForge.Scripture.Services
                 CancellationToken.None
             );
             Assert.IsTrue(actual);
+            Assert.AreEqual(1, handler.NumberOfCalls);
+        }
+
+        [Test]
+        public async Task CreateCorpusAsync_Success()
+        {
+            // Set up a mock Machine API
+            string corpusId = "633fdb281a2e7ac760f7193a";
+            string response = $"{{\"id\": \"{corpusId}\",\"href\":\"/corpora/{corpusId}\"}}";
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            string actual = await env.Service.CreateCorpusAsync(Project01, false, CancellationToken.None);
+            Assert.AreEqual(corpusId, actual);
             Assert.AreEqual(1, handler.NumberOfCalls);
         }
 
