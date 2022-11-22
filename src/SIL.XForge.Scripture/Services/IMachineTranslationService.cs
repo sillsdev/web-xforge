@@ -2,11 +2,23 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using SIL.Machine.WebApi;
+using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services
 {
     public interface IMachineTranslationService
     {
+        Task<string> CreateTranslationEngineAsync(
+            string name,
+            string sourceLanguageTag,
+            string targetLanguageTag,
+            CancellationToken cancellationToken
+        );
+        Task DeleteTranslationEngineAsync(string translationEngineId, CancellationToken cancellationToken);
+        Task<MachineApiTranslationEngine> GetTranslationEngineAsync(
+            string translationEngineId,
+            CancellationToken cancellationToken
+        );
         Task<WordGraphDto> GetWordGraphAsync(
             string translationEngineId,
             IEnumerable<string> segment,

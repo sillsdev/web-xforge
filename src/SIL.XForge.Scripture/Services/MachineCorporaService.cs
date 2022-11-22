@@ -36,33 +36,6 @@ namespace SIL.XForge.Scripture.Services
             _fileSystemService = fileSystemService;
         }
 
-        public async Task<string> AddCorpusAsync(string name, bool paratext, CancellationToken cancellationToken)
-        {
-            // Add the corpus to the Machine API
-            const string requestUri = "corpora";
-            using var response = await MachineClient.PostAsJsonAsync(
-                requestUri,
-                new { name, format = paratext ? "Paratext" : "Text", type = "Text" },
-                cancellationToken
-            );
-            await _exceptionHandler.EnsureSuccessStatusCode(response);
-
-            try
-            {
-                var corpus = await ReadAnonymousObjectFromJsonAsync(
-                    response,
-                    new { id = string.Empty },
-                    Options,
-                    cancellationToken
-                );
-                return corpus?.id ?? string.Empty;
-            }
-            catch (Exception e)
-            {
-                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response), e);
-            }
-        }
-
         public async Task<bool> AddCorpusToTranslationEngineAsync(
             string translationEngineId,
             string corpusId,
@@ -90,6 +63,33 @@ namespace SIL.XForge.Scripture.Services
                     cancellationToken
                 );
                 return corpus?.corpus.id == corpusId;
+            }
+            catch (Exception e)
+            {
+                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response), e);
+            }
+        }
+
+        public async Task<string> CreateCorpusAsync(string name, bool paratext, CancellationToken cancellationToken)
+        {
+            // Add the corpus to the Machine API
+            const string requestUri = "corpora";
+            using var response = await MachineClient.PostAsJsonAsync(
+                requestUri,
+                new { name, format = paratext ? "Paratext" : "Text", type = "Text" },
+                cancellationToken
+            );
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
+
+            try
+            {
+                var corpus = await ReadAnonymousObjectFromJsonAsync(
+                    response,
+                    new { id = string.Empty },
+                    Options,
+                    cancellationToken
+                );
+                return corpus?.id ?? string.Empty;
             }
             catch (Exception e)
             {
