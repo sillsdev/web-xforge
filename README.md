@@ -27,7 +27,7 @@ The rest of this document discusses the development of the underlying software.
   - [Builds](#builds)
   - [Gitflow](#gitflow)
   - [Style Guides](#style-guides)
-  - [Layout](#layout)
+  - [Components and Layout](#components-and-layout)
   - [Development Environment](#development-environment)
     - [Vagrant Development Machine](#vagrant-development-machine)
     - [Local Linux Development Setup](#local-linux-development-setup)
@@ -105,15 +105,23 @@ We use [Prettier](https://prettier.io/) with a pre-commit hook.
 
 Microsoft .NET library [design guidelines](https://docs.microsoft.com/en-us/dotnet/standard/design-guidelines/).
 
-### Layout
+### Components and Layout
 
-We use [Angular Flex-Layout](https://github.com/angular/flex-layout) with
-[Angular MDC](https://trimox.github.io/angular-mdc-web) including the
-[Material Design Icons](https://google.github.io/material-design-icons/).
+Within the Angular app:
 
-To generate `src/SIL.XForge.Scripture/wwwroot/css/sf.min.css`, install VS Code extension "ritwickdey.live-sass", which
-can watch and re-generate it upon changes to `wwwroot/scss` files, or manually with "Compile Sass" from the VS Code
-Command Palette.
+- We use [Angular Material](https://material.angular.io/) and the
+  [Material Design Icons](https://developers.google.com/fonts/docs/material_icons).
+- Some components use [Angular MDC](https://trimox.github.io/angular-mdc-web), though we are in the process of moving
+  away from it, and all new components should use Angular Material instead.
+- Some components use [Angular Flex-Layout](https://github.com/angular/flex-layout), though this should be avoided for
+  new components, as the project is no longer receiving new releases and will become unsupported.
+
+Within the home pages:
+
+- The file `src/SIL.XForge.Scripture/wwwroot/css/sf.min.css` is used to style all the home pages (those served by the
+  C# back end) and is generated and checked in to version control. To updated it, install the VS Code extension
+  "ritwickdey.live-sass", which can watch and re-generate it upon changes to `wwwroot/scss` files, or manually with
+  "Compile Sass" from the VS Code Command Palette.
 
 ### Development Environment
 
@@ -272,8 +280,8 @@ connects to. But it may still prove useful for testing certain things.
 
 - Angular Tutorial https://angular.io/tutorial
 - Angular https://angular.io/api
-- Angular MDC https://trimox.github.io/angular-mdc-web/#/angular-mdc-web/button-demo/api
 - Angular Material https://material.angular.io/components/categories
+- Angular MDC [Deprecated] https://trimox.github.io/angular-mdc-web/
 - TypeScript https://www.typescriptlang.org/docs/home.html
 - JavaScript https://developer.mozilla.org/en-US/docs/Web/JavaScript
 - ts-mockito https://github.com/NagRock/ts-mockito#ts-mockito--
