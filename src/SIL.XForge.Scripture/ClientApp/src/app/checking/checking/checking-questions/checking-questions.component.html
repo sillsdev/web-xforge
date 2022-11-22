@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; read: 'checking_questions'">
   <mdc-list>
     <mdc-list-item
-      *ngFor="let questionDoc of visibleQuestions"
+      *ngFor="let questionDoc of questionDocs"
       (click)="activateQuestion(questionDoc)"
       [ngClass]="{
         'question-read': hasUserReadQuestion(questionDoc),
@@ -20,7 +20,7 @@
       </a>
     </mdc-list-item>
   </mdc-list>
-  <div *ngIf="isFilterApplied && !hasVisibleQuestions" class="no-questions-found">
+  <div *ngIf="!hasVisibleQuestions" class="no-questions-found">
     {{ t("no_questions_found") }}
   </div>
 </ng-container>

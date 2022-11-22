@@ -158,7 +158,7 @@
     "unknown_author": "Autor necunoscut",
     "next": "Următor",
     "previous": "Anterior",
-    "questions": "Întrebări ({{ count }})",
+    "questions": "Întrebări",
     "view_questions": "Vezi întrebările"
   },
   "checking_answers": {
