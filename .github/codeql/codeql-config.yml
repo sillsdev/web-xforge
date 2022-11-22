@@ -1,0 +1,4 @@
+queries:
+  - uses: security-and-quality
+paths-ignore:
+  - "**/*.min.js"
