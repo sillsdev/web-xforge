@@ -16,5 +16,6 @@
     "paths": {
       "*": ["./typings/*"]
     }
-  }
+  },
+  "include": ["scriptureforge/**/*", "common/**/*", "typings/**/*", "node_modules/jest-expect-message/types/index.d.ts"]
 }
