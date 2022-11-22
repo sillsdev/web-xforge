@@ -158,7 +158,7 @@
     "unknown_author": "Auteur inconnu",
     "next": "Suivant",
     "previous": "Précédent",
-    "questions": "Questions ({{ count }})",
+    "questions": "Questions",
     "view_questions": "Afficher les questions"
   },
   "checking_answers": {
