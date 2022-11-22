@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
 using SIL.Machine.WebApi;
+using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -14,6 +15,122 @@ namespace SIL.XForge.Scripture.Services
     public class MachineTranslationServiceTests
     {
         private static readonly string TranslationEngine01 = "translationEngine01";
+
+        [Test]
+        public async Task CreateTranslationEngineAsync_Success()
+        {
+            // Set up a mock Machine API
+            string response =
+                $"{{\"id\": \"{TranslationEngine01}\",\"href\":\"/translation-engines/{TranslationEngine01}\"}}";
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            string actual = await env.Service.CreateTranslationEngineAsync("name", "en", "en", CancellationToken.None);
+
+            Assert.AreEqual(TranslationEngine01, actual);
+            Assert.AreEqual(1, handler.NumberOfCalls);
+        }
+
+        [Test]
+        public void DeleteTranslationEngineAsync_NoPermission()
+        {
+            // Set up a mock Machine API
+            string response = string.Empty;
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.Forbidden);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            Assert.ThrowsAsync<HttpRequestException>(
+                () => env.Service.DeleteTranslationEngineAsync(TranslationEngine01, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task DeleteTranslationEngineAsync_Success()
+        {
+            // Set up a mock Machine API
+            string response = string.Empty;
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            await env.Service.DeleteTranslationEngineAsync(TranslationEngine01, CancellationToken.None);
+        }
+
+        [Test]
+        public void GetTranslationEngineAsync_NoPermission()
+        {
+            // Set up a mock Machine API
+            string response = string.Empty;
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.Forbidden);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            Assert.ThrowsAsync<HttpRequestException>(
+                () => env.Service.GetTranslationEngineAsync(TranslationEngine01, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task GetTranslationEngineAsync_Success()
+        {
+            // Set up a mock Machine API
+            string name = "my_translation_engine";
+            string sourceLanguageTag = "en_US";
+            string targetLanguageTag = "en_NZ";
+            string type = "SmtTransfer";
+            int modelRevision = 1;
+            int confidence = 100;
+            int corpusSize = 472;
+            string response =
+                $@"{{
+                ""name"": ""{name}"",
+                ""sourceLanguageTag"": ""{sourceLanguageTag}"",
+                ""targetLanguageTag"": ""{targetLanguageTag}"",
+                ""type"": ""{type}"",
+                ""isBuilding"": true,
+                ""modelRevision"": {modelRevision},
+                ""confidence"": {confidence},
+                ""corpusSize"": {corpusSize},
+                ""id"": ""{TranslationEngine01}"",
+                ""href"": ""/translation-engines/{TranslationEngine01}""
+            }}";
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            MachineApiTranslationEngine actual = await env.Service.GetTranslationEngineAsync(
+                TranslationEngine01,
+                CancellationToken.None
+            );
+
+            Assert.AreEqual(1, handler.NumberOfCalls);
+            Assert.AreEqual(TranslationEngine01, actual.Id);
+            Assert.AreEqual(name, actual.Name);
+            Assert.AreEqual(sourceLanguageTag, actual.SourceLanguageTag);
+            Assert.AreEqual(targetLanguageTag, actual.TargetLanguageTag);
+            Assert.AreEqual(type, actual.Type);
+            Assert.IsTrue(actual.IsBuilding);
+            Assert.AreEqual(modelRevision, actual.ModelRevision);
+            Assert.AreEqual(confidence, actual.Confidence);
+            Assert.AreEqual(corpusSize, actual.CorpusSize);
+        }
 
         [Test]
         public async Task GetWordGraphAsync_Success()
