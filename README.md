@@ -44,6 +44,7 @@ The rest of this document discusses the development of the underlying software.
     - [Filtering Unit Tests](#filtering-unit-tests)
   - [PWA Testing](#pwa-testing)
   - [Physical Device Testing](#physical-device-testing)
+  - [Offline testing](#offline-testing)
 - [Backend Development](#backend-development)
   - [Model Changes](#model-changes)
 - [Debugging](#debugging)
@@ -425,6 +426,17 @@ With USB debugging turned on navigate in Chrome on your desktop to [chrome://ins
 You're now ready to go. Build the app as normal on your desktop using `dotnet run` or `ng serve` or whichever variation you need. Once the build is complete, open up Chrome on your device and navigate to [localhost:5000](http://localhost:5000/). On your desktop the inspection page will show all the open tabs you have in Chrome on the device. Locate the tab running `http://localhost:5000/` and click the `inspect` link. A new window will open with the Chrome DevTools giving you full access to the console, DOM, network, screen sharing, etc.
 
 Please note that if your device goes to sleep or switches to the lock screen then the USB debugging will no longer have permission.
+
+### Offline testing
+
+When locally testing Scripture Forge, you can simulate being offline. A simple way to do so would be to stop the backend dotnet application, which will also stop the realtime server.
+
+Alternatively, you can pause operation of the realtime server, and then resume it, by sending SIGSTOP and SIGCONT. Interestingly, this does not make the broken cloud icon to appear in the frontend, but in the backend you may see instances of "Jering.Javascript.NodeJS.InvocationException: The Node invocation timed out after 60000ms".
+
+```bash
+pkill --parent $(pgrep SIL.XForge.Scri) --full 'node -e module.exports' --signal SIGSTOP
+pkill --parent $(pgrep SIL.XForge.Scri) --full 'node -e module.exports' --signal SIGCONT
+```
 
 ## Backend Development
 
