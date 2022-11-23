@@ -584,6 +584,33 @@ describe('CheckingComponent', () => {
       expect(env.questions.length).toEqual(0);
       expect(env.noQuestionsFound).not.toBeNull();
     }));
+
+    it('should update question summary when filtered', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      expect(env.questions.length).toEqual(15);
+      // Admin has already read 2 questions and the 3rd is read on load
+      expect(env.component.summary.unread).toEqual(12);
+      env.setQuestionFilter(QuestionFilter.NoAnswers);
+      expect(env.questions.length).toEqual(11);
+      // The first question after filter has now been read
+      expect(env.component.summary.unread).toEqual(10);
+    }));
+
+    it('should reset filtering after a new question is added', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      expect(env.questions.length).toEqual(15);
+      env.setQuestionFilter(QuestionFilter.StatusResolved);
+      expect(env.questions.length).toEqual(1);
+
+      // Technically this is an existing question returned but the test is to confirm the filter reset
+      const questionDoc = env.getQuestionDoc('q5Id');
+      when(mockedQuestionDialogService.questionDialog(anything())).thenResolve(questionDoc);
+      env.clickButton(env.addQuestionButton);
+      verify(mockedQuestionDialogService.questionDialog(anything())).once();
+      expect(env.component.questionFilterSelected).toEqual(QuestionFilter.None);
+      expect(env.questions.length).toEqual(15);
+      env.waitForQuestionTimersToComplete();
+    }));
   });
 
   describe('Answers', () => {
