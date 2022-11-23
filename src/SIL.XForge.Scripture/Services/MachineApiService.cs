@@ -45,7 +45,7 @@ namespace SIL.XForge.Scripture.Services
             );
 
             // Modify the Build DTO to reference the project
-            if (build != null)
+            if (build is not null)
             {
                 build = UpdateDto(build, projectId);
             }
