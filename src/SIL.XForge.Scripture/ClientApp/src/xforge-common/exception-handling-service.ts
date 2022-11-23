@@ -91,7 +91,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
       }
       // Remove CSS specific selectors that Bugsnag added as they aren't compatible with the querySelector
       if (targetSelector.includes('>')) {
-        targetSelector = targetSelector.substr(0, targetSelector.indexOf('>')).trim();
+        targetSelector = targetSelector.substring(0, targetSelector.indexOf('>')).trim();
       }
       // Check we can still query the element
       const node = document.querySelector(targetSelector);
