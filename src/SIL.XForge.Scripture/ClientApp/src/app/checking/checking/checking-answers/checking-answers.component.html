@@ -152,6 +152,12 @@
               <app-checking-audio-player *ngIf="answer.audioUrl" [source]="getFileSource(answer.audioUrl)">
               </app-checking-audio-player>
               <div class="answer-footer">
+                <app-owner
+                  [ownerRef]="answer.ownerRef"
+                  [includeAvatar]="true"
+                  [layoutStacked]="true"
+                  [dateTime]="answer.dateCreated"
+                ></app-owner>
                 <div class="actions">
                   <button
                     *ngIf="canChangeAnswerStatus(answer)"
@@ -198,12 +204,6 @@
                     {{ t("delete") }}
                   </button>
                 </div>
-                <app-owner
-                  [ownerRef]="answer.ownerRef"
-                  [includeAvatar]="true"
-                  [layoutStacked]="true"
-                  [dateTime]="answer.dateCreated"
-                ></app-owner>
               </div>
               <app-checking-comments
                 [project]="project"

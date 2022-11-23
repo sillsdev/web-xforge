@@ -173,6 +173,12 @@
         flex: 1;
         align-items: flex-end;
 
+        @include media-breakpoint-down(xs) {
+          align-items: flex-start;
+          flex-direction: column;
+          row-gap: 5px;
+        }
+
         button {
           height: auto;
           &.answer-status {
@@ -196,6 +202,9 @@
         }
         button + .delete-divider {
           display: inline;
+          @include media-breakpoint-down(xs) {
+            transform: rotate(90deg);
+          }
         }
       }
 
@@ -212,11 +221,12 @@
 
       .answer-footer {
         display: flex;
-        justify-content: space-between;
+        flex-direction: column;
+        row-gap: 10px;
         border-bottom: 1px solid $borderColor;
         padding: 10px 0;
-        @include media-breakpoint-down(sm) {
-          flex-direction: column-reverse;
+        app-owner {
+          align-self: flex-end;
         }
       }
     }
