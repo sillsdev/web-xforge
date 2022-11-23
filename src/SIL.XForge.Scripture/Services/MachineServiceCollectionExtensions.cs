@@ -51,7 +51,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         Address = machineOptions.TokenUrl,
                         ClientId = machineOptions.ClientId,
                         ClientSecret = machineOptions.ClientSecret,
-                        Parameters = new Parameters { { "audience", machineOptions.Audience }, },
+                        Parameters = new Parameters { { "audience", machineOptions.Audience } },
                     }
                 );
             });
