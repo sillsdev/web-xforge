@@ -4,7 +4,7 @@ import { Injectable, TemplateRef } from '@angular/core';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 import { GenericDialogComponent, GenericDialogOptions } from './generic-dialog/generic-dialog.component';
-import { I18nService } from './i18n.service';
+import { I18nKey, I18nService } from './i18n.service';
 
 @Injectable({
   providedIn: 'root'
@@ -55,12 +55,12 @@ export class DialogService {
   /**
    * Shows a message in a dialog. The message and close button may be specified via an Observable<string>, or by passing
    * the key to a localization string.
-   * @param message The message to show. May be an Observable<string>, or a string which will be used as a translation
+   * @param message The message to show. May be an Observable<string>, or an I18nKey which will be used as a translation
    * key.
-   * @param close (optional) May be an Observable<string>, or a string which will be used as a translation key. If not
+   * @param close (optional) May be an Observable<string>, or an I18nKey which will be used as a translation key. If not
    * provided the button will use a default label for the close button.
    */
-  async message(message: string | Observable<string>, close?: string | Observable<string>): Promise<void> {
+  async message(message: I18nKey | Observable<string>, close?: I18nKey | Observable<string>): Promise<void> {
     const closeText = close instanceof Observable ? close : this.i18n.translate(close ?? 'dialog.close');
     await this.openGenericDialog({
       title: typeof message === 'string' ? this.i18n.translate(message) : message,
