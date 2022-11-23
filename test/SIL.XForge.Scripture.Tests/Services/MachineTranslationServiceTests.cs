@@ -1,6 +1,6 @@
-using System.Net;
 using System;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,7 +14,7 @@ namespace SIL.XForge.Scripture.Services
     [TestFixture]
     public class MachineTranslationServiceTests
     {
-        private static readonly string TranslationEngine01 = "translationEngine01";
+        private const string TranslationEngine01 = "translationEngine01";
 
         [Test]
         public async Task CreateTranslationEngineAsync_Success()

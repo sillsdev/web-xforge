@@ -1,10 +1,10 @@
-using NSubstitute;
-using NUnit.Framework;
-using System.Net;
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using NSubstitute;
+using NUnit.Framework;
 using SIL.Machine.WebApi;
 
 namespace SIL.XForge.Scripture.Services
@@ -12,7 +12,7 @@ namespace SIL.XForge.Scripture.Services
     [TestFixture]
     public class MachineBuildServiceTests
     {
-        private static readonly string TranslationEngine01 = "translationEngine01";
+        private const string TranslationEngine01 = "translationEngine01";
 
         [Test]
         public async Task CancelCurrentBuildAsync_Success()
