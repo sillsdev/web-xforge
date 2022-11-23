@@ -22,6 +22,85 @@ namespace SIL.XForge.Scripture.Services
         private const string User01 = "user01";
 
         [Test]
+        public async Task GetBuildAsync_NoBuildRunning()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineBuildService
+                .GetCurrentBuildAsync(TranslationEngine01, null, Arg.Any<CancellationToken>())
+                .Returns(Task.FromResult<BuildDto>(null));
+
+            // SUT
+            BuildDto? actual = await env.Service.GetBuildAsync(User01, Project01, null, CancellationToken.None);
+
+            Assert.IsNull(actual);
+        }
+
+        [Test]
+        public void GetBuildAsync_NoPermission()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.GetBuildAsync("invalid_user_id", Project01, null, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public void GetBuildAsync_NoProject()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetBuildAsync(User01, "invalid_project_id", null, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task GetBuildAsync_Success()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            string message = "Finalizing";
+            double percentCompleted = 0.95;
+            int revision = 553;
+            string state = "Active";
+            env.MachineBuildService
+                .GetCurrentBuildAsync(TranslationEngine01, null, Arg.Any<CancellationToken>())
+                .Returns(
+                    Task.FromResult(
+                        new BuildDto
+                        {
+                            Href = "https://example.com",
+                            Id = "buildId",
+                            Engine = new ResourceDto { Id = "engineId", Href = "https://example.com", },
+                            Message = message,
+                            PercentCompleted = percentCompleted,
+                            Revision = revision,
+                            State = state,
+                        }
+                    )
+                );
+
+            // SUT
+            BuildDto? actual = await env.Service.GetBuildAsync(User01, Project01, null, CancellationToken.None);
+
+            Assert.IsNotNull(actual);
+            Assert.AreEqual(message, actual.Message);
+            Assert.AreEqual(percentCompleted, actual.PercentCompleted);
+            Assert.AreEqual(revision, actual.Revision);
+            Assert.AreEqual(state, actual.State);
+            Assert.AreEqual(Project01, actual.Id);
+            Assert.AreEqual(MachineApi.GetBuildHref(Project01), actual.Href);
+            Assert.AreEqual(Project01, actual.Engine.Id);
+            Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+        }
+
+        [Test]
         public void GetEngineAsync_NoPermission()
         {
             // Set up test environment
@@ -88,10 +167,74 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Projects.First().Href);
         }
 
+        [Test]
+        public void StartBuildAsync_NoPermission()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<ForbiddenException>(
+                () => env.Service.StartBuildAsync("invalid_user_id", Project01, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public void StartBuildAsyncc_NoProject()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.StartBuildAsync(User01, "invalid_project_id", CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task StartBuildAsync_Success()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            string message = "Training language model";
+            double percentCompleted = 0.01;
+            int revision = 2;
+            string state = "Active";
+            env.MachineBuildService
+                .StartBuildAsync(TranslationEngine01, Arg.Any<CancellationToken>())
+                .Returns(
+                    Task.FromResult(
+                        new BuildDto
+                        {
+                            Href = "https://example.com",
+                            Id = "buildId",
+                            Engine = new ResourceDto { Id = "engineId", Href = "https://example.com", },
+                            Message = message,
+                            PercentCompleted = percentCompleted,
+                            Revision = revision,
+                            State = state,
+                        }
+                    )
+                );
+
+            // SUT
+            BuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+
+            Assert.AreEqual(message, actual.Message);
+            Assert.AreEqual(percentCompleted, actual.PercentCompleted);
+            Assert.AreEqual(revision, actual.Revision);
+            Assert.AreEqual(state, actual.State);
+            Assert.AreEqual(Project01, actual.Id);
+            Assert.AreEqual(MachineApi.GetBuildHref(Project01), actual.Href);
+            Assert.AreEqual(Project01, actual.Engine.Id);
+            Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment()
             {
+                MachineBuildService = Substitute.For<IMachineBuildService>();
                 MachineTranslationService = Substitute.For<IMachineTranslationService>();
                 var projectSecrets = new MemoryRepository<SFProjectSecret>(
                     new[]
@@ -122,9 +265,15 @@ namespace SIL.XForge.Scripture.Services
                     )
                 );
 
-                Service = new MachineApiService(MachineTranslationService, projectSecrets, realtimeService);
+                Service = new MachineApiService(
+                    MachineBuildService,
+                    MachineTranslationService,
+                    projectSecrets,
+                    realtimeService
+                );
             }
 
+            public IMachineBuildService MachineBuildService { get; }
             public IMachineTranslationService MachineTranslationService { get; }
             public MachineApiService Service { get; }
         }

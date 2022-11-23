@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using SIL.Machine.WebApi;
@@ -11,19 +12,45 @@ namespace SIL.XForge.Scripture.Services
 {
     public class MachineApiService : IMachineApiService
     {
+        private readonly IMachineBuildService _machineBuildService;
         private readonly IMachineTranslationService _machineTranslationService;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
         private readonly IRealtimeService _realtimeService;
 
         public MachineApiService(
+            IMachineBuildService machineBuildService,
             IMachineTranslationService machineTranslationService,
             IRepository<SFProjectSecret> projectSecrets,
             IRealtimeService realtimeService
         )
         {
+            _machineBuildService = machineBuildService;
             _machineTranslationService = machineTranslationService;
             _projectSecrets = projectSecrets;
             _realtimeService = realtimeService;
+        }
+
+        public async Task<BuildDto?> GetBuildAsync(
+            string curUserId,
+            string projectId,
+            long? minRevision,
+            CancellationToken cancellationToken
+        )
+        {
+            string translationEngineId = await GetTranslationIdAsync(curUserId, projectId);
+            BuildDto? build = await _machineBuildService.GetCurrentBuildAsync(
+                translationEngineId,
+                minRevision,
+                cancellationToken
+            );
+
+            // Modify the Build DTO to reference the project
+            if (build != null)
+            {
+                build = UpdateDto(build, projectId);
+            }
+
+            return build;
         }
 
         public async Task<EngineDto> GetEngineAsync(
@@ -51,6 +78,36 @@ namespace SIL.XForge.Scripture.Services
                 TargetLanguageTag = translationEngine.TargetLanguageTag,
                 TrainedSegmentCount = translationEngine.CorpusSize,
             };
+        }
+
+        public async Task<WordGraphDto> GetWordGraphAsync(
+            string curUserId,
+            string projectId,
+            IEnumerable<string> segment,
+            CancellationToken cancellationToken
+        )
+        {
+            string translationEngineId = await GetTranslationIdAsync(curUserId, projectId);
+            return await _machineTranslationService.GetWordGraphAsync(translationEngineId, segment, cancellationToken);
+        }
+
+        public async Task<BuildDto> StartBuildAsync(
+            string curUserId,
+            string projectId,
+            CancellationToken cancellationToken
+        )
+        {
+            string translationEngineId = await GetTranslationIdAsync(curUserId, projectId);
+            BuildDto build = await _machineBuildService.StartBuildAsync(translationEngineId, cancellationToken);
+            return UpdateDto(build, projectId);
+        }
+
+        private static BuildDto UpdateDto(BuildDto build, string projectId)
+        {
+            build.Href = MachineApi.GetBuildHref(projectId);
+            build.Id = projectId;
+            build.Engine = new ResourceDto { Href = MachineApi.GetEngineHref(projectId), Id = projectId };
+            return build;
         }
 
         private async Task<string> GetTranslationIdAsync(string curUserId, string projectId)
