@@ -17,7 +17,7 @@ namespace SIL.XForge.Scripture.Services
     [TestFixture]
     public class MachineCorporaServiceTests
     {
-        private static readonly string Project01 = "project01";
+        private const string Project01 = "project01";
 
         [Test]
         public async Task AddCorpusToTranslationEngineAsync_Success()

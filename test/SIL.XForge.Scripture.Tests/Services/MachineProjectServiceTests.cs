@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.FeatureManagement;
@@ -21,15 +20,15 @@ namespace SIL.XForge.Scripture.Services
     [TestFixture]
     public class MachineProjectServiceTests
     {
-        private static readonly string Project01 = "project01";
-        private static readonly string Project02 = "project02";
-        private static readonly string Project03 = "project03";
+        private const string Project01 = "project01";
+        private const string Project02 = "project02";
+        private const string Project03 = "project03";
         private const string User01 = "user01";
-        private static readonly string Corpus01 = "corpus01";
-        private static readonly string File01 = "file01";
-        private static readonly string File02 = "file02";
-        private static readonly string TranslationEngine01 = "translationEngine01";
-        private static readonly string TranslationEngine02 = "translationEngine02";
+        private const string Corpus01 = "corpus01";
+        private const string File01 = "file01";
+        private const string File02 = "file02";
+        private const string TranslationEngine01 = "translationEngine01";
+        private const string TranslationEngine02 = "translationEngine02";
 
         [Test]
         public async Task AddProjectAsync_ExecutesInMemoryMachineAndMachineApi()
@@ -698,11 +697,9 @@ namespace SIL.XForge.Scripture.Services
 
         private class TestEnvironment
         {
-            public TestEnvironment(HttpClient? httpClient = default)
+            public TestEnvironment()
             {
                 EngineService = Substitute.For<IEngineService>();
-                var httpClientFactory = Substitute.For<IHttpClientFactory>();
-                httpClientFactory.CreateClient(Arg.Any<string>()).Returns(httpClient);
                 var logger = new MockLogger<MachineProjectService>();
                 MachineBuildService = Substitute.For<IMachineBuildService>();
                 MachineCorporaService = Substitute.For<IMachineCorporaService>();
