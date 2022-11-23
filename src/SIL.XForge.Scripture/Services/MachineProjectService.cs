@@ -57,9 +57,8 @@ namespace SIL.XForge.Scripture.Services
         public async Task AddProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken)
         {
             // Load the project from the realtime service
-            using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
-            IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
-            if (!projectDoc.IsLoaded)
+            Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(projectId);
+            if (!attempt.TryResult(out SFProject project))
             {
                 throw new DataNotFoundException("The project does not exist.");
             }
@@ -68,8 +67,8 @@ namespace SIL.XForge.Scripture.Services
             var machineProject = new Project
             {
                 Id = projectId,
-                SourceLanguageTag = projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag,
-                TargetLanguageTag = projectDoc.Data.WritingSystem.Tag,
+                SourceLanguageTag = project.TranslateConfig.Source.WritingSystem.Tag,
+                TargetLanguageTag = project.WritingSystem.Tag,
             };
             await _engineService.AddProjectAsync(machineProject);
 
@@ -236,9 +235,8 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Load the project from the realtime service
-            using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
-            IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
-            if (!projectDoc.IsLoaded)
+            Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(projectId);
+            if (!attempt.TryResult(out SFProject project))
             {
                 throw new DataNotFoundException("The project does not exist.");
             }
@@ -289,7 +287,7 @@ namespace SIL.XForge.Scripture.Services
             ITextCorpus? textCorpus = await _textCorpusFactory.CreateAsync(new[] { projectId }, TextCorpusType.Source);
             corpusUpdated |= await SyncTextCorpusAsync(
                 corpusId,
-                projectDoc.Data,
+                project,
                 projectSecret,
                 textCorpus,
                 TextCorpusType.Source,
@@ -300,7 +298,7 @@ namespace SIL.XForge.Scripture.Services
             textCorpus = await _textCorpusFactory.CreateAsync(new[] { projectId }, TextCorpusType.Target);
             corpusUpdated |= await SyncTextCorpusAsync(
                 corpusId,
-                projectDoc.Data,
+                project,
                 projectSecret,
                 textCorpus,
                 TextCorpusType.Target,
