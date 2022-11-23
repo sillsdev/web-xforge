@@ -1,7 +1,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Polly.CircuitBreaker;
 using SIL.Machine.WebApi;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
@@ -14,6 +16,8 @@ namespace SIL.XForge.Scripture.Controllers
     [Authorize]
     public class MachineApiController : ControllerBase
     {
+        private const string MachineApiUnavailable = "Machine API is unavailable";
+        private readonly IExceptionHandler _exceptionHandler;
         private readonly IMachineApiService _machineApiService;
         private readonly IUserAccessor _userAccessor;
 
@@ -25,11 +29,12 @@ namespace SIL.XForge.Scripture.Controllers
         {
             _machineApiService = machineApiService;
             _userAccessor = userAccessor;
-            exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
+            _exceptionHandler = exceptionHandler;
+            _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
         }
 
         [HttpGet(MachineApi.GetBuild)]
-        public async Task<ActionResult<BuildDto>> GetBuildAsync(
+        public async Task<ActionResult<BuildDto?>> GetBuildAsync(
             string projectId,
             [FromQuery] int? minRevision,
             CancellationToken cancellationToken
@@ -45,12 +50,17 @@ namespace SIL.XForge.Scripture.Controllers
                 );
 
                 // A null means no build is running
-                if (build == null)
+                if (build is null)
                 {
                     return NoContent();
                 }
 
                 return Ok(build);
+            }
+            catch (BrokenCircuitException e)
+            {
+                _exceptionHandler.ReportException(e);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
             }
             catch (DataNotFoundException)
             {
@@ -63,7 +73,7 @@ namespace SIL.XForge.Scripture.Controllers
         }
 
         [HttpPost(MachineApi.GetWordGraph)]
-        public async Task<ActionResult<BuildDto>> GetWordGraphAsync(
+        public async Task<ActionResult<WordGraphDto>> GetWordGraphAsync(
             string projectId,
             [FromBody] string[] segment,
             CancellationToken cancellationToken
@@ -78,6 +88,11 @@ namespace SIL.XForge.Scripture.Controllers
                     cancellationToken
                 );
                 return Ok(wordGraph);
+            }
+            catch (BrokenCircuitException e)
+            {
+                _exceptionHandler.ReportException(e);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
             }
             catch (DataNotFoundException)
             {
@@ -104,6 +119,11 @@ namespace SIL.XForge.Scripture.Controllers
                 );
                 return Ok(build);
             }
+            catch (BrokenCircuitException e)
+            {
+                _exceptionHandler.ReportException(e);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+            }
             catch (DataNotFoundException)
             {
                 return NotFound();
@@ -125,6 +145,11 @@ namespace SIL.XForge.Scripture.Controllers
                     cancellationToken
                 );
                 return Ok(engine);
+            }
+            catch (BrokenCircuitException e)
+            {
+                _exceptionHandler.ReportException(e);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
             }
             catch (DataNotFoundException)
             {
