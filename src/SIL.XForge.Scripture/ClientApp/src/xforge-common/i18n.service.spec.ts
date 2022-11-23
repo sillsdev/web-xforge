@@ -54,14 +54,14 @@ describe('I18nService', () => {
     when(mockedTranslocoService.translate<string>(anything(), anything())).thenReturn('translated key');
     const service = getI18nService();
     expect(
-      service.translateAndInsertTags('namespace.key', {
+      service.translateAndInsertTags('app.settings', {
         value: 2,
         spanClass: 'text'
       })
     ).toEqual('translated key');
     verify(
       mockedTranslocoService.translate(
-        'namespace.key',
+        'app.settings',
         deepEqual({
           value: 2,
           spanClass: 'text',
@@ -82,7 +82,7 @@ describe('I18nService', () => {
       'translated key with {{ boundary }}tag text{{ boundary }} in template'
     );
     const service = getI18nService();
-    expect(service.translateTextAroundTemplateTags('namespace.key')).toEqual({
+    expect(service.translateTextAroundTemplateTags('app.settings')).toEqual({
       before: 'translated key with ',
       templateTagText: 'tag text',
       after: ' in template'
@@ -107,11 +107,11 @@ describe('I18nService', () => {
   });
 
   it('should interpolate translations', () => {
-    when(mockedTranslocoService.translate<string>('sentence', anything())).thenReturn(
+    when(mockedTranslocoService.translate<string>('app.settings', anything())).thenReturn(
       'A quick brown { 1 }fox{ 2 } jumps over the lazy { 3 }dog{ 4 }.'
     );
     const service = getI18nService();
-    expect(service.interpolate('sentence')).toEqual([
+    expect(service.interpolate('app.settings')).toEqual([
       { text: 'A quick brown ' },
       { text: 'fox', id: 1 },
       { text: ' jumps over the lazy ' },
