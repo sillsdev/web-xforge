@@ -18,9 +18,9 @@ namespace SIL.XForge.Scripture.Services
     [TestFixture]
     public class SyncServiceTests
     {
-        private static readonly string Project01 = "project01";
-        private static readonly string Project02 = "project02";
-        private static readonly string Project03 = "project03";
+        private const string Project01 = "project01";
+        private const string Project02 = "project02";
+        private const string Project03 = "project03";
 
         [Test]
         public async Task SyncAsync_CancelSourceAndTarget()
