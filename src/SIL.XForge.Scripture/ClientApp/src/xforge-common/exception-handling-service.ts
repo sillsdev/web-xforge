@@ -196,6 +196,21 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     }
 
     if (
+      error instanceof HttpErrorResponse &&
+      error.status === 503 &&
+      error.statusText === 'Service Unavailable' &&
+      error.url != null
+    ) {
+      // ignore 503 errors from ngsw-worker.js to machine-api,
+      // as the machine API is down and we do not want to interrupt the user's word
+      const url = new URL(error.url);
+      if (url.pathname.startsWith('/' + MACHINE_API_BASE_URL)) {
+        silently = true;
+      }
+    }
+
+    if (
+      typeof error === 'object' &&
       // these are the properties Bugsnag checks for, and will have problems if they don't exist
       !(
         (hasStringProp(error, 'name') || hasStringProp(error, 'errorClass')) &&
