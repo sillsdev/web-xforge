@@ -1,6 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { v1 as uuidv1 } from 'uuid';
+import { hasNumberProp, hasObjectProp, hasStringProp } from '../type-utils';
 import { BugsnagService } from './bugsnag.service';
 import { COMMAND_API_NAMESPACE } from './url-constants';
 
@@ -37,7 +38,7 @@ export interface JsonRpcError {
 }
 
 export class CommandError extends Error {
-  constructor(public readonly code: CommandErrorCode, message: string, public readonly data?: any) {
+  constructor(public readonly code: CommandErrorCode, message: string, public readonly data?: unknown) {
     super(message);
     // this restores the prototype chain, so that the class can properly inherit from the built-in Error class
     Object.setPrototypeOf(this, new.target.prototype);
@@ -81,34 +82,25 @@ export class CommandService {
         throw response.error;
       }
       return response.result;
-    } catch (error: any) {
+    } catch (error) {
       // Transform the various kinds of errors into a CommandError.
 
       let code: CommandErrorCode = CommandErrorCode.Other;
-      let moreInformation: string = '';
-      let data: any = undefined;
-      if (
-        // Does error.error implement interface ErrorEvent?
-        error.error != null &&
-        error.error.colno !== undefined &&
-        error.error.error !== undefined &&
-        error.error.filename !== undefined &&
-        error.error.lineno !== undefined &&
-        error.error.message !== undefined
-      ) {
-        // (Also, error may be an HttpErrorResponse in this situation.)
+      let moreInformation: string;
+      let data: unknown;
+      if (hasObjectProp(error, 'error') && error.error instanceof ErrorEvent) {
         const errorEvent: ErrorEvent = error.error;
         moreInformation = `${errorEvent.type}: ${errorEvent.message}`;
       } else if (error instanceof HttpErrorResponse) {
         // Only set code to HTTP status code if it is a CommandErrorCode.
-        if (Object.values(CommandErrorCode).includes(error.status as CommandErrorCode)) {
+        if (Object.values(CommandErrorCode).includes(error.status)) {
           code = error.status as CommandErrorCode;
         }
         moreInformation = error.message;
       } else if (
         // Does error implement interface JsonRpcError by having these properties?
-        error.code !== undefined &&
-        error.message !== undefined
+        hasNumberProp(error, 'code') &&
+        hasStringProp(error, 'message')
       ) {
         // Note that we might not be using errors that implement JsonRpcError anymore. But if we do receive one:
         const jsonRpcError: JsonRpcError = error;

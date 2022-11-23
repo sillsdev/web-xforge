@@ -4,6 +4,7 @@ import { Injectable, Injector, NgZone } from '@angular/core';
 import Bugsnag, { Breadcrumb, BrowserConfig } from '@bugsnag/js';
 import { BugsnagErrorHandler } from '@bugsnag/plugin-angular';
 import { translate } from '@ngneat/transloco';
+import { hasObjectProp, hasStringProp } from '../type-utils';
 import { MACHINE_API_BASE_URL } from '../app/core/machine-http-client';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
@@ -138,7 +139,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     super();
   }
 
-  async handleError(error: any, silently: boolean = false) {
+  async handleError(originalError: unknown, silently: boolean = false) {
     // Angular error handlers are instantiated before all other providers, so we cannot inject dependencies. Instead we
     // use the "Injector" to get the dependencies in this method. At this point, providers should have been
     // instantiated.
@@ -152,23 +153,26 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
       dialog = this.injector.get(MdcDialog);
       errorReportingService = this.injector.get(ErrorReportingService);
       this.console = this.injector.get(CONSOLE);
-    } catch (err) {
+    } catch {
       this.console.log(`Error occurred. Unable to report to Bugsnag, because dependency injection failed.`);
-      this.console.error(error);
+      this.console.error(originalError);
       return;
     }
 
-    if (typeof error !== 'object' || error === null || Array.isArray(error)) {
-      // using String(value) rather than plain string concatenation, because concatenating a symbol throws an error
-      error = new Error('Unknown error: ' + String(error));
-    }
+    // Error could be any value; if it's not an object turn it into one
+    let error: object = ErrorReportingService.normalizeError(originalError);
 
     // If a promise was rejected with an error, we want to report that error, because it is more likely to have a useful
     // stack trace.
-    error = error.rejection ? error.rejection : error;
+    error = hasObjectProp(error, 'rejection') ? error.rejection : error;
 
     // There's no exact science here. We're looking for XMLHttpRequests that failed, but not due to HTTP response codes.
-    if (error.error && error.error.target instanceof XMLHttpRequest && error.error.target.status === 0) {
+    if (
+      hasObjectProp(error, 'error') &&
+      hasObjectProp(error.error, 'target') &&
+      error.error.target instanceof XMLHttpRequest &&
+      error.error.target.status === 0
+    ) {
       ngZone.run(() => noticeService.showError(translate('exception_handling_service.network_request_failed')));
       return;
     }
@@ -192,11 +196,10 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     }
 
     if (
-      typeof error === 'object' &&
       // these are the properties Bugsnag checks for, and will have problems if they don't exist
       !(
-        (typeof error.name === 'string' || typeof error.errorClass === 'string') &&
-        (typeof error.message === 'string' || typeof error.errorMessage === 'string')
+        (hasStringProp(error, 'name') || hasStringProp(error, 'errorClass')) &&
+        (hasStringProp(error, 'message') || hasStringProp(error, 'errorMessage'))
       )
     ) {
       // JSON.stringify will throw if there are recursive references, and this needs to be bulletproof
@@ -209,12 +212,11 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
 
     // some rejection objects from Auth0 use errorDescription or error_description for the rejection message
     const messageKeys = ['message', 'errorDescription', 'error_description'];
-    const messageKey = messageKeys.find(key => typeof error[key] === 'string');
-    let message: string =
-      messageKey == null
-        ? translate('exception_handling_service.unknown_error')
-        : (error[messageKey] as string).split('\n')[0];
+    const messages: string[] = messageKeys
+      .map(key => (hasStringProp(error, key) ? error[key].split('\n')[0] : null))
+      .filter((s): s is string => s != null);
 
+    let message = messages[0] ?? translate<string>('exception_handling_service.unknown_error');
     if (
       message.includes('A mutation operation was attempted on a database that did not allow mutations.') &&
       window.navigator.userAgent.includes('Gecko/')
@@ -229,7 +231,8 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
       try {
         // Don't show a dialog if this is a silent error that we just want sent to Bugsnag
         if (!silently) {
-          this.handleAlert(ngZone, dialog, { message, stack: error.stack, eventId });
+          const stack = hasStringProp(error, 'stack') ? error.stack : undefined;
+          this.handleAlert(ngZone, dialog, { message, stack, eventId });
         }
       } finally {
         errorReportingService.addMeta({ eventId });
