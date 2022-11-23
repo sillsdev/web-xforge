@@ -80,6 +80,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .SetHandlerLifetime(TimeSpan.FromMinutes(5))
                 .AddPolicyHandler(GetRetryPolicy())
                 .AddPolicyHandler(GetCircuitBreakerPolicy());
+            services.AddSingleton<IMachineApiService, MachineApiService>();
             services.AddSingleton<IMachineBuildService, MachineBuildService>();
             services.AddSingleton<IMachineCorporaService, MachineCorporaService>();
             services.AddSingleton<IMachineProjectService, MachineProjectService>();
