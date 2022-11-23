@@ -189,10 +189,10 @@ namespace SIL.XForge.Scripture.Services
                 {
                     await _machineCorporaService.DeleteCorpusFileAsync(corpusId, fileId, cancellationToken);
                 }
-                catch (HttpRequestException ex)
+                catch (HttpRequestException e)
                 {
                     // A 404 means that the file does not exist
-                    if (ex.StatusCode == HttpStatusCode.NotFound)
+                    if (e.StatusCode == HttpStatusCode.NotFound)
                     {
                         _logger.LogInformation(
                             $"Corpora file {fileId} in corpus {corpusId} for project {projectId} was missing or already deleted."
@@ -206,10 +206,10 @@ namespace SIL.XForge.Scripture.Services
             {
                 await _machineCorporaService.DeleteCorpusAsync(corpusId, cancellationToken);
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException e)
             {
                 // A 404 means that the file does not exist
-                if (ex.StatusCode == HttpStatusCode.NotFound)
+                if (e.StatusCode == HttpStatusCode.NotFound)
                 {
                     _logger.LogInformation(
                         $"Corpora {corpusId} for project {projectId} was missing or already deleted."
