@@ -89,7 +89,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(percentCompleted, actual.PercentCompleted);
             Assert.AreEqual(message, actual.Message);
             Assert.AreEqual(revision, actual.Revision);
-            Assert.AreEqual(state, actual.State);
+            Assert.AreEqual(state.ToUpperInvariant(), actual.State);
             Assert.AreEqual(1, handler.NumberOfCalls);
         }
 
@@ -135,7 +135,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(percentCompleted, actual.PercentCompleted);
             Assert.AreEqual(message, actual.Message);
             Assert.AreEqual(revision, actual.Revision);
-            Assert.AreEqual(state, actual.State);
+            Assert.AreEqual(state.ToUpperInvariant(), actual.State);
             Assert.AreEqual(1, handler.NumberOfCalls);
         }
 
@@ -154,6 +154,28 @@ namespace SIL.XForge.Scripture.Services
             BuildDto? actual = await env.Service.GetCurrentBuildAsync(
                 TranslationEngine01,
                 minRevision: null,
+                CancellationToken.None
+            );
+
+            Assert.Null(actual);
+            Assert.AreEqual(1, handler.NumberOfCalls);
+        }
+
+        [Test]
+        public async Task GetCurrentBuildAsync_NoBuildStarted()
+        {
+            // Set up a mock Machine API
+            string response = string.Empty;
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.RequestTimeout);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+                TranslationEngine01,
+                minRevision: 0,
                 CancellationToken.None
             );
 
@@ -210,7 +232,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.Zero(actual.PercentCompleted);
             Assert.Null(actual.Message);
             Assert.AreEqual(revision, actual.Revision);
-            Assert.AreEqual(state, actual.State);
+            Assert.AreEqual(state.ToUpperInvariant(), actual.State);
             Assert.AreEqual(1, handler.NumberOfCalls);
         }
 
