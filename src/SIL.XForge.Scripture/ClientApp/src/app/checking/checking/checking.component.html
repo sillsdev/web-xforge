@@ -151,7 +151,7 @@
             </div>
           </div>
         </div>
-        <div *ngIf="questionsPanel.activeQuestionDoc" id="project-navigation">
+        <div *ngIf="projectDoc" id="project-navigation">
           <button mdc-button *ngIf="!this.isDrawerPermanent" type="button" (click)="toggleDrawer()">
             <span class="mdc-button__label">{{ t("view_questions") }}</span>
           </button>
