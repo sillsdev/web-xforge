@@ -358,9 +358,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         // the project deleted dialog should be closed by now, so we can reset its ref to null
         if (projectId == null) {
           this.projectDeletedDialogRef = null;
-        } else {
-          this.userService.setCurrentProjectId(this.currentUserDoc!, projectId);
-          this.refreshQuestionsQuery(projectId);
         }
       })
     );
@@ -396,6 +393,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       if (this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded) {
         return;
       }
+      this.userService.setCurrentProjectId(this.currentUserDoc!, this.selectedProjectDoc.id);
+      this.refreshQuestionsQuery(this.selectedProjectDoc.id);
 
       // handle remotely deleted project
       this.selectedProjectDeleteSub = this.selectedProjectDoc.delete$.subscribe(() => {
