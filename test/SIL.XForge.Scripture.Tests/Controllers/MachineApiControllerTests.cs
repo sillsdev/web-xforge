@@ -1,10 +1,12 @@
 using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
+using Polly.CircuitBreaker;
 using SIL.Machine.WebApi;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
@@ -18,6 +20,27 @@ namespace SIL.XForge.Scripture.Controllers
         private const string User01 = "user01";
 
         [Test]
+        public async Task GetBuildAsync_MachineApiDown()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .GetBuildAsync(User01, Project01, null, CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+
+            // SUT
+            ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+                Project01,
+                null,
+                CancellationToken.None
+            );
+
+            env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+            Assert.IsInstanceOf<ObjectResult>(actual.Result);
+            Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+        }
+
+        [Test]
         public async Task GetBuildAsync_NoBuildRunning()
         {
             // Set up test environment
@@ -27,7 +50,12 @@ namespace SIL.XForge.Scripture.Controllers
                 .Returns(Task.FromResult<BuildDto>(null));
 
             // SUT
-            ActionResult<BuildDto> actual = await env.Controller.GetBuildAsync(Project01, null, CancellationToken.None);
+            ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+                Project01,
+                null,
+                CancellationToken.None
+            );
+
             Assert.IsInstanceOf<NoContentResult>(actual.Result);
         }
 
@@ -41,7 +69,12 @@ namespace SIL.XForge.Scripture.Controllers
                 .Throws(new ForbiddenException());
 
             // SUT
-            ActionResult<BuildDto> actual = await env.Controller.GetBuildAsync(Project01, null, CancellationToken.None);
+            ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+                Project01,
+                null,
+                CancellationToken.None
+            );
+
             Assert.IsInstanceOf<ForbidResult>(actual.Result);
         }
 
@@ -55,7 +88,12 @@ namespace SIL.XForge.Scripture.Controllers
                 .Throws(new DataNotFoundException(string.Empty));
 
             // SUT
-            ActionResult<BuildDto> actual = await env.Controller.GetBuildAsync(Project01, null, CancellationToken.None);
+            ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+                Project01,
+                null,
+                CancellationToken.None
+            );
+
             Assert.IsInstanceOf<NotFoundResult>(actual.Result);
         }
 
@@ -69,8 +107,30 @@ namespace SIL.XForge.Scripture.Controllers
                 .Returns(Task.FromResult(new BuildDto()));
 
             // SUT
-            ActionResult<BuildDto> actual = await env.Controller.GetBuildAsync(Project01, null, CancellationToken.None);
+            ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+                Project01,
+                null,
+                CancellationToken.None
+            );
+
             Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        }
+
+        [Test]
+        public async Task GetEngineAsync_MachineApiDown()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .GetEngineAsync(User01, Project01, CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+
+            // SUT
+            ActionResult<EngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
+
+            env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+            Assert.IsInstanceOf<ObjectResult>(actual.Result);
+            Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
         }
 
         [Test]
@@ -84,6 +144,7 @@ namespace SIL.XForge.Scripture.Controllers
 
             // SUT
             ActionResult<EngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
+
             Assert.IsInstanceOf<ForbidResult>(actual.Result);
         }
 
@@ -98,6 +159,7 @@ namespace SIL.XForge.Scripture.Controllers
 
             // SUT
             ActionResult<EngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
+
             Assert.IsInstanceOf<NotFoundResult>(actual.Result);
         }
 
@@ -112,7 +174,29 @@ namespace SIL.XForge.Scripture.Controllers
 
             // SUT
             ActionResult<EngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
+
             Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        }
+
+        [Test]
+        public async Task GetWordGraphAsync_MachineApiDown()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+
+            // SUT
+            ActionResult<WordGraphDto> actual = await env.Controller.GetWordGraphAsync(
+                Project01,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+            Assert.IsInstanceOf<ObjectResult>(actual.Result);
+            Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
         }
 
         [Test]
@@ -125,11 +209,12 @@ namespace SIL.XForge.Scripture.Controllers
                 .Throws(new ForbiddenException());
 
             // SUT
-            ActionResult<BuildDto> actual = await env.Controller.GetWordGraphAsync(
+            ActionResult<WordGraphDto> actual = await env.Controller.GetWordGraphAsync(
                 Project01,
                 Array.Empty<string>(),
                 CancellationToken.None
             );
+
             Assert.IsInstanceOf<ForbidResult>(actual.Result);
         }
 
@@ -143,11 +228,12 @@ namespace SIL.XForge.Scripture.Controllers
                 .Throws(new DataNotFoundException(string.Empty));
 
             // SUT
-            ActionResult<BuildDto> actual = await env.Controller.GetWordGraphAsync(
+            ActionResult<WordGraphDto> actual = await env.Controller.GetWordGraphAsync(
                 Project01,
                 Array.Empty<string>(),
                 CancellationToken.None
             );
+
             Assert.IsInstanceOf<NotFoundResult>(actual.Result);
         }
 
@@ -161,12 +247,30 @@ namespace SIL.XForge.Scripture.Controllers
                 .Returns(Task.FromResult(new WordGraphDto()));
 
             // SUT
-            ActionResult<BuildDto> actual = await env.Controller.GetWordGraphAsync(
+            ActionResult<WordGraphDto> actual = await env.Controller.GetWordGraphAsync(
                 Project01,
                 Array.Empty<string>(),
                 CancellationToken.None
             );
+
             Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        }
+
+        [Test]
+        public async Task StartBuildAsync_MachineApiDown()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .StartBuildAsync(User01, Project01, CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+
+            // SUT
+            ActionResult<BuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+
+            env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+            Assert.IsInstanceOf<ObjectResult>(actual.Result);
+            Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
         }
 
         [Test]
@@ -180,6 +284,7 @@ namespace SIL.XForge.Scripture.Controllers
 
             // SUT
             ActionResult<BuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+
             Assert.IsInstanceOf<ForbidResult>(actual.Result);
         }
 
@@ -194,6 +299,7 @@ namespace SIL.XForge.Scripture.Controllers
 
             // SUT
             ActionResult<BuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+
             Assert.IsInstanceOf<NotFoundResult>(actual.Result);
         }
 
@@ -208,6 +314,7 @@ namespace SIL.XForge.Scripture.Controllers
 
             // SUT
             ActionResult<BuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+
             Assert.IsInstanceOf<OkObjectResult>(actual.Result);
         }
 
@@ -217,14 +324,15 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 var userAccessor = Substitute.For<IUserAccessor>();
                 userAccessor.UserId.Returns(User01);
-                var exceptionHandler = Substitute.For<IExceptionHandler>();
+                ExceptionHandler = Substitute.For<IExceptionHandler>();
                 MachineApiService = Substitute.For<IMachineApiService>();
 
-                Controller = new MachineApiController(exceptionHandler, MachineApiService, userAccessor);
+                Controller = new MachineApiController(ExceptionHandler, MachineApiService, userAccessor);
             }
 
-            public IMachineApiService MachineApiService { get; }
             public MachineApiController Controller { get; }
+            public IExceptionHandler ExceptionHandler { get; }
+            public IMachineApiService MachineApiService { get; }
         }
     }
 }
