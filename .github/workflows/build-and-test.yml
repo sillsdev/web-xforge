@@ -92,6 +92,8 @@ jobs:
       - name: "Test: Frontend"
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:gha
 
+      - name: "Coverage: Pre report generator report"
+        run: ls ; ls test ; ls test/*
       - name: "Coverage: Backend"
         run: |
           reportgenerator \
