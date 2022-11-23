@@ -189,7 +189,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       let projectId: string = '';
       try {
         projectId = await this.projectService.onlineCreate(settings);
-      } catch (err: unknown) {
+      } catch (err) {
         if (!hasStringProp(err, 'message') || !err.message.includes(ConnectProjectComponent.errorAlreadyConnectedKey)) {
           throw err;
         }

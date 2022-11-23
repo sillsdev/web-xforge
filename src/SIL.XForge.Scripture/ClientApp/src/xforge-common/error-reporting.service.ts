@@ -28,6 +28,18 @@ export class ErrorReportingService {
     }
   }
 
+  /**
+   * Takes any value and normalizes it by converting it to an object. If it is already an object that is not null and is
+   * not an array, the object is returned. Otherwise the value is converted to a string, an error is constructed with a
+   * message that includes that string, and that error is returned.
+   */
+  static normalizeError(error: unknown): object {
+    if (typeof error !== 'object' || error == null || Array.isArray(error)) {
+      // using String(value) rather than plain string concatenation, because concatenating a symbol throws an error
+      return new Error('Unknown error: ' + String(error));
+    } else return error;
+  }
+
   private static redactAccessToken(url: string): string {
     return url.replace(/^(.*#access_token=).*$/, '$1redacted_for_error_report');
   }

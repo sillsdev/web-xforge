@@ -15,6 +15,7 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { of, Subscription, timer } from 'rxjs';
 import { filter, mergeMap } from 'rxjs/operators';
 import { PwaService } from 'xforge-common/pwa.service';
+import { hasPropWithValue } from '../type-utils';
 import { environment } from '../environments/environment';
 import { Auth0Service } from './auth0.service';
 import { BugsnagService } from './bugsnag.service';
@@ -274,7 +275,7 @@ export class AuthService {
       }
       await this.remoteStore.init(() => this.getAccessToken());
       return { loggedIn: true, newlyLoggedIn: false };
-    } catch (error: any) {
+    } catch (error) {
       await this.handleLoginError('tryLogIn', error);
       return { loggedIn: false, newlyLoggedIn: false };
     }
@@ -315,7 +316,7 @@ export class AuthService {
         }
       }
       return { loggedIn: true, newlyLoggedIn: false };
-    } catch (error: any) {
+    } catch (error) {
       await this.handleLoginError('tryOnlineLogIn', error);
       return { loggedIn: false, newlyLoggedIn: false };
     }
@@ -425,9 +426,9 @@ export class AuthService {
     });
   }
 
-  private async handleLoginError(method: string, error: object): Promise<void> {
+  private async handleLoginError(method: string, error: unknown): Promise<void> {
     console.error(error);
-    this.reportingService.silentError(`Error occurred in ${method}`, error);
+    this.reportingService.silentError(`Error occurred in ${method}`, ErrorReportingService.normalizeError(error));
     await this.dialogService.message('error_messages.error_occurred_login', 'error_messages.try_again');
   }
 
@@ -453,9 +454,12 @@ export class AuthService {
             success = true;
             resolve();
           }
-        } catch (err: any) {
+        } catch (err) {
           console.error('Error while renewing access token:', err);
-          this.reportingService.silentError('Error while renewing access token', err);
+          this.reportingService.silentError(
+            'Error while renewing access token',
+            ErrorReportingService.normalizeError(err)
+          );
           success = false;
         }
         if (!success) {
@@ -478,10 +482,10 @@ export class AuthService {
         try {
           const tokenResponse = await this.getTokenDetails();
           resolve(tokenResponse);
-        } catch (err: any) {
-          if (err.error === 'login_required') {
+        } catch (err) {
+          if (hasPropWithValue(err, 'error', 'login_required')) {
             resolve(null);
-          } else if (retryUponTimeout && err.error === 'timeout') {
+          } else if (retryUponTimeout && hasPropWithValue(err, 'error', 'timeout')) {
             this.checkSessionPromise = undefined;
             this.checkSession(false).then(resolve).catch(reject);
           } else {
