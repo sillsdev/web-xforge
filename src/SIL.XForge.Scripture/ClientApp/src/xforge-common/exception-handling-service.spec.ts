@@ -128,6 +128,32 @@ describe('ExceptionHandlingService', () => {
     expect().nothing();
   }));
 
+  it('should silently report 503 errors from machine-api', fakeAsync(() => {
+    const env = new TestEnvironment();
+    spyOn<any>(env.service, 'handleAlert');
+
+    env.handleError(
+      new HttpErrorResponse({
+        status: 503,
+        statusText: 'Service Unavailable',
+        url: 'http://localhost:5000/machine-api/v1/translation/engines/some-end-point'
+      })
+    );
+
+    expect(env.service['handleAlert']).not.toHaveBeenCalled();
+
+    env.handleError(
+      new HttpErrorResponse({
+        status: 503,
+        statusText: 'Service Unavailable',
+        url: 'http://localhost:5000/command-api/some-end-point'
+      })
+    );
+
+    expect(env.service['handleAlert']).toHaveBeenCalled();
+    verify(mockedNoticeService.showError(anything())).never();
+  }));
+
   it('should silently report 504 errors from machine-api or command-api', fakeAsync(() => {
     const env = new TestEnvironment();
     spyOn<any>(env.service, 'handleAlert');

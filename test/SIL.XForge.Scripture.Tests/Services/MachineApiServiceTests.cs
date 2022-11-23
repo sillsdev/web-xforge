@@ -68,7 +68,7 @@ namespace SIL.XForge.Scripture.Services
             string message = "Finalizing";
             double percentCompleted = 0.95;
             int revision = 553;
-            string state = "Active";
+            string state = "ACTIVE";
             env.MachineBuildService
                 .GetCurrentBuildAsync(TranslationEngine01, null, Arg.Any<CancellationToken>())
                 .Returns(
@@ -199,7 +199,7 @@ namespace SIL.XForge.Scripture.Services
             string message = "Training language model";
             double percentCompleted = 0.01;
             int revision = 2;
-            string state = "Active";
+            string state = "ACTIVE";
             env.MachineBuildService
                 .StartBuildAsync(TranslationEngine01, Arg.Any<CancellationToken>())
                 .Returns(
