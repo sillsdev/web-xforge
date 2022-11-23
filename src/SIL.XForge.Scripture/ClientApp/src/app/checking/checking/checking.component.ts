@@ -735,6 +735,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     };
     const newQuestion = await this.questionDialogService.questionDialog(data);
     if (newQuestion != null) {
+      this.setQuestionFilter(QuestionFilter.None);
       this.questionsPanel.activateQuestion(newQuestion);
     }
   }
@@ -869,6 +870,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       this.totalVisibleQuestionsString = `${this.totalVisibleQuestions()}/${this.totalQuestions()}`;
     }
     this.updateQuestionRefs();
+    this.refreshSummary();
   }
 
   private getAnswerIndex(answer: Answer): number {
@@ -1048,7 +1050,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.summary.answered = 0;
     this.summary.read = 0;
     this.summary.unread = 0;
-    for (const questionDoc of this.questionDocs) {
+    for (const questionDoc of this.visibleQuestions) {
       if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
         this.summary.answered++;
       } else if (
