@@ -23,7 +23,7 @@
                 <button mat-icon-button [matMenuTriggerFor]="questionFilterMenu">
                   <mdc-icon [ngClass]="{ 'material-icons-outlined': !isQuestionFilterApplied }">filter_alt</mdc-icon>
                 </button>
-                <mat-menu #questionFilterMenu>
+                <mat-menu #questionFilterMenu xPosition="before">
                   <mat-selection-list [multiple]="false" id="question-filter-list">
                     <h2 matSubheader>{{ t("filter_questions") }}</h2>
                     <mat-list-option
