@@ -1,8 +1,7 @@
-import { MdcDialog, MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Route } from '@angular/router';
@@ -31,6 +30,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -52,8 +52,7 @@ import { QuestionDialogService } from '../question-dialog/question-dialog.servic
 import { CheckingOverviewComponent } from './checking-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
-const mockedMdcDialog = mock(MdcDialog);
-const mockedMatDialog = mock(MatDialog);
+const mockedDialogService = mock(DialogService);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
@@ -75,8 +74,7 @@ describe('CheckingOverviewComponent', () => {
     imports: [DialogTestModule, RouterTestingModule.withRoutes(ROUTES), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
-      { provide: MdcDialog, useMock: mockedMdcDialog },
-      { provide: MatDialog, useMock: mockedMatDialog },
+      { provide: DialogService, useMock: mockedDialogService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
@@ -255,17 +253,17 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(1, id);
       // Edit a question with no answers
       env.clickElement(env.questionEditButtons[3]);
-      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).never();
-      resetCalls(mockedMdcDialog);
+      verify(mockedDialogService.openMdcDialog(anything())).never();
+      resetCalls(mockedDialogService);
       when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('close'));
       // Edit a question with answers
       env.clickElement(env.questionEditButtons[0]);
-      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).once();
-      verify(mockedMdcDialog.open(QuestionDialogComponent, anything())).never();
+      verify(mockedDialogService.openMdcDialog(anything())).once();
+      verify(mockedDialogService.openMdcDialog(QuestionDialogComponent)).never();
       resetCalls(mockedQuestionDialogService);
       when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
       env.clickElement(env.questionEditButtons[0]);
-      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).twice();
+      verify(mockedDialogService.openMdcDialog(anything())).twice();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));
@@ -276,7 +274,7 @@ describe('CheckingOverviewComponent', () => {
       const env = new TestEnvironment();
       env.waitForQuestions();
       env.clickElement(env.importButton);
-      verify(mockedMatDialog.open(ImportQuestionsDialogComponent, anything())).once();
+      verify(mockedDialogService.openMatDialog(ImportQuestionsDialogComponent, anything())).once();
       expect().nothing();
     }));
 
@@ -397,7 +395,7 @@ describe('CheckingOverviewComponent', () => {
 
       env.simulateRowClick(0, undefined, true);
       env.simulateRowClick(1, id, true);
-      env.clickElement(env.questionPublishButtons[0]);
+      env.clickElement(env.questionPublishButtons[2]);
       expect(env.loadingArchivedQuestionsLabel).toBeNull();
       expect(env.noArchivedQuestionsLabel).not.toBeNull();
     }));
@@ -408,14 +406,14 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
       expect(env.textArchivedRows.length).toEqual(1);
-      expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toContain('1 questions');
+      expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('1 questions');
       env.simulateRowClick(0);
       env.simulateRowClick(1, id);
       expect(env.textRows.length).toEqual(9);
-      expect(env.questionArchiveButtons.length).toEqual(6);
-      env.clickElement(env.questionArchiveButtons[0]);
+      expect(env.questionArchiveButtons.length).toEqual(9);
+      env.clickElement(env.questionArchiveButtons[2]);
       expect(env.textArchivedRows.length).toEqual(1);
-      expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toContain('2 questions');
+      expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('2 questions');
       expect(env.textRows.length).toEqual(8);
 
       // Re-publish a question that has been archived
@@ -423,10 +421,95 @@ describe('CheckingOverviewComponent', () => {
       env.simulateRowClick(1, id, true);
       const archivedQuestion: HTMLElement = env.archivedQuestionDates[0].nativeElement;
       expect(archivedQuestion.textContent).toContain('Archived on');
-      env.clickElement(env.questionPublishButtons[0]);
+      env.clickElement(env.questionPublishButtons[2]);
       expect(env.textArchivedRows.length).toEqual(3);
-      expect(env.getArchivedQuestionsCountByRow(0).nativeElement.textContent).toContain('1 questions');
+      expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('1 questions');
       expect(env.textRows.length).toEqual(9);
+    }));
+
+    it('archives and republishes questions for an entire chapter or book', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.waitForQuestions();
+
+      // VERIFY CORRECT SETUP
+
+      // expect two books with published questions
+      expect(env.textRows.length).toEqual(2);
+      // expect one book with archived questions
+      expect(env.textArchivedRows.length).toEqual(1);
+      // expand the first book
+      env.simulateRowClick(0);
+      // expect there is only one chapter of questions in that book (number of rows increased from 2 to 3)
+      expect(env.textRows.length).toEqual(3);
+      // that chapter should have 6 questions
+      expect(env.getPublishedQuestionsCountTextByRow(1)).toContain('6 questions');
+      // and one question has been archived already
+      expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('1 questions');
+
+      // ARCHIVE QUESTIONS IN A CHAPTER
+
+      // archive questions from the only chapter of the first book
+      env.clickElement(env.questionArchiveButtons[1]);
+      // now there should be just one book with published questions
+      expect(env.textRows.length).toEqual(1);
+      // and 7 archived questions, all in one book
+      expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('7 questions');
+
+      // REPUBLISH QUESTIONS IN A CHAPTER
+
+      // expand the book with archived questions
+      env.simulateRowClick(0, undefined, true);
+      // expect 7 questions all in the one chapter
+      expect(env.getArchivedQuestionsCountTextByRow(1)).toContain('7 questions');
+      // republish all 7 questions in that chapter
+      env.clickElement(env.questionPublishButtons[1]);
+      // expect no archived questions
+      expect(env.textArchivedRows.length).toEqual(0);
+      // Expect 2 books with published questions. In this case the first book will still be expanded, so the row length
+      // will be 3. It seems to remember that the book was expanded, even after all questions in that book are archived,
+      // so when they get republished and the book shows up in the list again, the books is expanded. Technically this
+      // is probably a bug, but it's hard to imagine why anyone would care.
+      expect(env.textRows.length).toEqual(3);
+      // for the sake of expectations later in the test, close that first book
+      env.simulateRowClick(0);
+      // now just the two books should be shown, not any expanded chapters
+      expect(env.textRows.length).toEqual(2);
+      // with 7 questions in the first book
+      expect(env.getPublishedQuestionsCountTextByRow(0)).toContain('7 questions');
+
+      // ARCHIVE QUESTIONS ONE BOOK AT A TIME
+
+      // archive questions in the first book
+      env.clickElement(env.questionArchiveButtons[0]);
+      // there should only be one book with published questions now
+      expect(env.textRows.length).toEqual(1);
+      // archive the one book of remaining questions
+      env.clickElement(env.questionArchiveButtons[0]);
+      // there should be no books with published questions now
+      expect(env.textRows.length).toEqual(0);
+      // Expect two books with archived questions. The first book will still be expanded from before, so there will be
+      // 3 rows. See the note above about the same thing happening for the published questions list.
+      expect(env.textArchivedRows.length).toEqual(3);
+      // for the sake of expectations later in the test, close that first book
+      env.simulateRowClick(0, undefined, true);
+      // now just the two books should be shown, not any expanded chapters
+      expect(env.textArchivedRows.length).toEqual(2);
+      expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('7 questions');
+      expect(env.getArchivedQuestionsCountTextByRow(1)).toContain('1 questions');
+
+      // REPUBLISH QUESTIONS ONE BOOK AT A TIME
+
+      env.clickElement(env.questionPublishButtons[0]);
+      // there should now only be one book with archived questions
+      expect(env.textArchivedRows.length).toEqual(1);
+      // republish the last remaining book
+      env.clickElement(env.questionPublishButtons[0]);
+      // there should now be no books with archived questions
+      expect(env.textArchivedRows.length).toEqual(0);
+      // and two books with published questions
+      expect(env.textRows.length).toEqual(2);
+      expect(env.getPublishedQuestionsCountTextByRow(0)).toContain('7 questions');
+      expect(env.getPublishedQuestionsCountTextByRow(1)).toContain('1 questions');
     }));
   });
 
@@ -790,7 +873,8 @@ class TestEnvironment {
 
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedQuestionDialogService.questionDialog(anything())).thenResolve();
-    when(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).thenReturn(
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+    when(mockedDialogService.openMdcDialog(QuestionAnsweredDialogComponent)).thenReturn(
       instance(this.mockedAnsweredDialogRef)
     );
     when(this.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
@@ -887,8 +971,13 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  getArchivedQuestionsCountByRow(row: number): DebugElement {
-    return this.archivedQuestions.queryAll(By.css('mdc-list-item .archived-questions-count'))[row];
+  getPublishedQuestionsCountTextByRow(row: number): string {
+    return this.questions.queryAll(By.css('mdc-list-item .questions-count'))[row].nativeElement.textContent;
+  }
+
+  getArchivedQuestionsCountTextByRow(row: number): string {
+    return this.archivedQuestions.queryAll(By.css('mdc-list-item .archived-questions-count'))[row].nativeElement
+      .textContent;
   }
 
   waitForQuestions(): void {
@@ -946,6 +1035,7 @@ class TestEnvironment {
     element.click();
     this.fixture.detectChanges();
     flush();
+    this.fixture.detectChanges();
   }
 
   setCurrentUser(currentUser: UserInfo): void {
