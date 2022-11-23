@@ -1,4 +1,3 @@
-using System.Security;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -29,11 +28,94 @@ namespace SIL.XForge.Scripture.Controllers
             exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
         }
 
-        [HttpGet(MachineApi.GetEngine)]
-        public async Task<ActionResult<MachineApiTranslationEngine>> GetEngineAsync(
+        [HttpGet(MachineApi.GetBuild)]
+        public async Task<ActionResult<BuildDto>> GetBuildAsync(
             string projectId,
+            [FromQuery] int? minRevision,
             CancellationToken cancellationToken
         )
+        {
+            try
+            {
+                BuildDto? build = await _machineApiService.GetBuildAsync(
+                    _userAccessor.UserId,
+                    projectId,
+                    minRevision,
+                    cancellationToken
+                );
+
+                // A null means no build is running
+                if (build == null)
+                {
+                    return NoContent();
+                }
+
+                return Ok(build);
+            }
+            catch (DataNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpPost(MachineApi.GetWordGraph)]
+        public async Task<ActionResult<BuildDto>> GetWordGraphAsync(
+            string projectId,
+            [FromBody] string[] segment,
+            CancellationToken cancellationToken
+        )
+        {
+            try
+            {
+                WordGraphDto wordGraph = await _machineApiService.GetWordGraphAsync(
+                    _userAccessor.UserId,
+                    projectId,
+                    segment,
+                    cancellationToken
+                );
+                return Ok(wordGraph);
+            }
+            catch (DataNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpPost(MachineApi.StartBuild)]
+        public async Task<ActionResult<BuildDto>> StartBuildAsync(
+            [FromBody] string projectId,
+            CancellationToken cancellationToken
+        )
+        {
+            try
+            {
+                BuildDto build = await _machineApiService.StartBuildAsync(
+                    _userAccessor.UserId,
+                    projectId,
+                    cancellationToken
+                );
+                return Ok(build);
+            }
+            catch (DataNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpGet(MachineApi.GetEngine)]
+        public async Task<ActionResult<EngineDto>> GetEngineAsync(string projectId, CancellationToken cancellationToken)
         {
             try
             {
@@ -46,11 +128,11 @@ namespace SIL.XForge.Scripture.Controllers
             }
             catch (DataNotFoundException)
             {
-                return NoContent();
+                return NotFound();
             }
-            catch (SecurityException)
+            catch (ForbiddenException)
             {
-                return NoContent();
+                return Forbid();
             }
         }
     }
