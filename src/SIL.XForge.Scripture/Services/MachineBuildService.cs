@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -44,7 +45,12 @@ namespace SIL.XForge.Scripture.Services
             }
 
             using var response = await MachineClient.GetAsync(requestUri, cancellationToken);
-            await _exceptionHandler.EnsureSuccessStatusCode(response);
+
+            // A 408 HTTP status code is returned if there is no build started/running within the timeout period
+            if (response.StatusCode == HttpStatusCode.RequestTimeout)
+            {
+                return null;
+            }
 
             // No body is returned on a 204 HTTP status code
             if (response.StatusCode == HttpStatusCode.NoContent)
@@ -52,10 +58,22 @@ namespace SIL.XForge.Scripture.Services
                 return null;
             }
 
+            // Ensure we have a 2XX HTTP status code
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
+
             // Return the build job information
             try
             {
-                return await response.Content.ReadFromJsonAsync<BuildDto>(Options, cancellationToken);
+                BuildDto? build = await response.Content.ReadFromJsonAsync<BuildDto>(Options, cancellationToken);
+                if (build is not null)
+                {
+                    // The Machine 2.5.11 DTO requires this to be uppercase
+                    // Upgrading to a later version changes this to an enum
+                    // When this occurs, remove this block
+                    build.State = build.State.ToUpperInvariant();
+                }
+
+                return build;
             }
             catch (Exception e)
             {
@@ -74,7 +92,18 @@ namespace SIL.XForge.Scripture.Services
             // Return the build job information
             try
             {
-                return (await response.Content.ReadFromJsonAsync<BuildDto>(Options, cancellationToken))!;
+                BuildDto? build = await response.Content.ReadFromJsonAsync<BuildDto>(Options, cancellationToken);
+                if (build is null)
+                {
+                    throw new InvalidDataException();
+                }
+
+                // The Machine 2.5.11 DTO requires this to be uppercase
+                // Upgrading to a later version changes this to an enum
+                // When this occurs, remove this line
+                build.State = build.State.ToUpperInvariant();
+
+                return build;
             }
             catch (Exception e)
             {
