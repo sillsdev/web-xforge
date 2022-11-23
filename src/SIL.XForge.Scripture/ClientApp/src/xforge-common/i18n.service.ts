@@ -9,6 +9,7 @@ import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils
 import { Observable, of, zip } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { ObjectPaths } from '../type-utils';
 import enChecking from '../assets/i18n/checking_en.json';
 import enNonChecking from '../assets/i18n/non_checking_en.json';
 import { AuthService } from './auth.service';
@@ -28,6 +29,12 @@ export interface TextAroundTemplate {
 }
 
 export const en = merge(enChecking, enNonChecking);
+
+export type I18nKey = ObjectPaths<typeof en>;
+// TODO create a I18nRoleKey and I18nRoleDescriptionKey type (e.g. `keyof typeof en.roles`). Right now the existence of
+// pt_read and pt_write_note in the SFProjectRole definition causes the type system to correctly conclude that there are
+// not corresponding localization strings for all of the roles we have defined. Determining the proper way to reconcile
+// this mismatch is left to be solved at another time.
 
 @Injectable()
 export class TranslationLoader implements TranslocoLoader {
@@ -216,11 +223,11 @@ export class I18nService {
     return this.transloco.translate(`role_descriptions.${role}`).replace(/\s*,\s*/, ' • ');
   }
 
-  translate(key: string, params: object = {}): Observable<string> {
+  translate(key: I18nKey, params: object = {}): Observable<string> {
     return this.transloco.selectTranslate<string>(key, params);
   }
 
-  translateAndInsertTags(key: string, params: object = {}) {
+  translateAndInsertTags(key: I18nKey, params: object = {}) {
     return this.transloco.translate(key, {
       ...params,
       boldStart: '<strong>',
@@ -245,7 +252,7 @@ export class I18nService {
         );
   }
 
-  translateTextAroundTemplateTags(key: string, params: object = {}): TextAroundTemplate | undefined {
+  translateTextAroundTemplateTags(key: I18nKey, params: object = {}): TextAroundTemplate | undefined {
     const boundary = '{{ boundary }}';
     const text: string = this.translateAndInsertTags(key, {
       ...params,
@@ -273,7 +280,7 @@ export class I18nService {
    * view, or a link for the text "fox" or "dog". This system has the advantage of being able to handle translations
    * that reorder "fox" and "dog".
    */
-  interpolate(key: string, params?: HashMap): { text: string; id?: number }[] {
+  interpolate(key: I18nKey, params?: HashMap): { text: string; id?: number }[] {
     const hashKey = this.localeCode + ' ' + key;
     if (this.interpolationCache[hashKey] != null) {
       return this.interpolationCache[hashKey];
