@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using IdentityModel.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -8,7 +9,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Polly;
-using Polly.Extensions.Http;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
 using SIL.XForge.Scripture.Services;
@@ -87,11 +87,15 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy() =>
-            HttpPolicyExtensions
-                .HandleTransientHttpError()
+            Policy<HttpResponseMessage>
+                .Handle<HttpRequestException>()
+                .OrResult(r => r.StatusCode >= HttpStatusCode.InternalServerError)
                 .WaitAndRetryAsync(6, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
         private static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy() =>
-            HttpPolicyExtensions.HandleTransientHttpError().CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
+            Policy<HttpResponseMessage>
+                .Handle<HttpRequestException>()
+                .OrResult(r => r.StatusCode >= HttpStatusCode.InternalServerError)
+                .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30));
     }
 }
