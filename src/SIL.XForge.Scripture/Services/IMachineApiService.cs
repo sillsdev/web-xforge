@@ -21,5 +21,11 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         );
         Task<BuildDto> StartBuildAsync(string curUserId, string projectId, CancellationToken cancellationToken);
+        Task TrainSegmentAsync(
+            string curUserId,
+            string projectId,
+            SegmentPairDto segmentPair,
+            CancellationToken cancellationToken
+        );
     }
 }
