@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -168,6 +169,75 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void GetWordGraphAsync_NoPermission()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<ForbiddenException>(
+                () =>
+                    env.Service.GetWordGraphAsync(
+                        "invalid_user_id",
+                        Project01,
+                        Array.Empty<string>(),
+                        CancellationToken.None
+                    )
+            );
+        }
+
+        [Test]
+        public void GetWordGraphAsync_NoProject()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () =>
+                    env.Service.GetWordGraphAsync(
+                        User01,
+                        "invalid_project_id",
+                        Array.Empty<string>(),
+                        CancellationToken.None
+                    )
+            );
+        }
+
+        [Test]
+        public async Task GetWordGraphAsync_Success()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            float initialStateScore = -91.43696f;
+            env.MachineTranslationService
+                .GetWordGraphAsync(TranslationEngine01, Array.Empty<string>(), Arg.Any<CancellationToken>())
+                .Returns(
+                    Task.FromResult(
+                        new WordGraphDto
+                        {
+                            Arcs = new[] { new WordGraphArcDto() },
+                            FinalStates = new[] { 1 },
+                            InitialStateScore = initialStateScore,
+                        }
+                    )
+                );
+
+            // SUT
+            WordGraphDto actual = await env.Service.GetWordGraphAsync(
+                User01,
+                Project01,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            Assert.IsNotNull(actual);
+            Assert.AreEqual(initialStateScore, actual.InitialStateScore);
+            Assert.AreEqual(1, actual.Arcs.Length);
+            Assert.AreEqual(1, actual.FinalStates.Length);
+        }
+
+        [Test]
         public void StartBuildAsync_NoPermission()
         {
             // Set up test environment
@@ -180,7 +250,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void StartBuildAsyncc_NoProject()
+        public void StartBuildAsync_NoProject()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -228,6 +298,57 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(MachineApi.GetBuildHref(Project01), actual.Href);
             Assert.AreEqual(Project01, actual.Engine.Id);
             Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+        }
+
+        [Test]
+        public void TrainSegmentAsync_NoPermission()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<ForbiddenException>(
+                () =>
+                    env.Service.TrainSegmentAsync(
+                        "invalid_user_id",
+                        Project01,
+                        new SegmentPairDto(),
+                        CancellationToken.None
+                    )
+            );
+        }
+
+        [Test]
+        public void TrainSegmentAsync_NoProject()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () =>
+                    env.Service.TrainSegmentAsync(
+                        User01,
+                        "invalid_project_id",
+                        new SegmentPairDto(),
+                        CancellationToken.None
+                    )
+            );
+        }
+
+        [Test]
+        public async Task TrainSegmentAsync_Success()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            var segmentPair = new SegmentPairDto();
+
+            // SUT
+            await env.Service.TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
+
+            await env.MachineTranslationService
+                .Received(1)
+                .TrainSegmentAsync(TranslationEngine01, segmentPair, CancellationToken.None);
         }
 
         private class TestEnvironment

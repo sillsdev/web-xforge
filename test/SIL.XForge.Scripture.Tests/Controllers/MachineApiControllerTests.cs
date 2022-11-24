@@ -318,6 +318,88 @@ namespace SIL.XForge.Scripture.Controllers
             Assert.IsInstanceOf<OkObjectResult>(actual.Result);
         }
 
+        [Test]
+        public async Task TrainSegmentAsync_MachineApiDown()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            var segmentPair = new SegmentPairDto();
+            env.MachineApiService
+                .TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+
+            // SUT
+            ActionResult actual = await env.Controller.TrainSegmentAsync(
+                Project01,
+                segmentPair,
+                CancellationToken.None
+            );
+
+            env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+            Assert.IsInstanceOf<ObjectResult>(actual);
+            Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual as ObjectResult)?.StatusCode);
+        }
+
+        [Test]
+        public async Task TrainSegmentAsync_NoPermission()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            var segmentPair = new SegmentPairDto();
+            env.MachineApiService
+                .TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None)
+                .Throws(new ForbiddenException());
+
+            // SUT
+            ActionResult actual = await env.Controller.TrainSegmentAsync(
+                Project01,
+                segmentPair,
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<ForbidResult>(actual);
+        }
+
+        [Test]
+        public async Task TrainSegmentAsync_NoProject()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            var segmentPair = new SegmentPairDto();
+            env.MachineApiService
+                .TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None)
+                .Throws(new DataNotFoundException(string.Empty));
+
+            // SUT
+            ActionResult actual = await env.Controller.TrainSegmentAsync(
+                Project01,
+                segmentPair,
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<NotFoundResult>(actual);
+        }
+
+        [Test]
+        public async Task TrainSegmentAsync_Success()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            var segmentPair = new SegmentPairDto();
+
+            // SUT
+            ActionResult actual = await env.Controller.TrainSegmentAsync(
+                Project01,
+                segmentPair,
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<OkResult>(actual);
+            await env.MachineApiService
+                .Received(1)
+                .TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment()
