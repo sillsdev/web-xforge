@@ -7,6 +7,7 @@ namespace SIL.XForge.Scripture.Models
         public const string GetBuild = "translation/builds/{reference}:{projectId}";
         public const string GetEngine = "translation/engines/project:{projectId}";
         public const string GetWordGraph = "translation/engines/project:{projectId}/actions/getWordGraph";
+        public const string TrainSegment = "translation/engines/project:{projectId}/actions/trainSegment";
 
         public static string GetBuildHref(string projectId) =>
             $"{Namespace}/{GetBuild.Replace("{projectId}", projectId).Replace("{reference}", "id")}";
