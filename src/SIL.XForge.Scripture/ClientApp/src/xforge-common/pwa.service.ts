@@ -6,7 +6,7 @@ import { filter, mapTo, take } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { LocationService } from './location.service';
 
-export const PWA_CHECK_FOR_UPDATES = 30000;
+export const PWA_CHECK_FOR_UPDATES = 30_000;
 
 @Injectable({
   providedIn: 'root'
