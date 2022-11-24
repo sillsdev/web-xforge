@@ -102,6 +102,17 @@ namespace SIL.XForge.Scripture.Services
             return UpdateDto(build, projectId);
         }
 
+        public async Task TrainSegmentAsync(
+            string curUserId,
+            string projectId,
+            SegmentPairDto segmentPair,
+            CancellationToken cancellationToken
+        )
+        {
+            string translationEngineId = await GetTranslationIdAsync(curUserId, projectId);
+            await _machineTranslationService.TrainSegmentAsync(translationEngineId, segmentPair, cancellationToken);
+        }
+
         private static BuildDto UpdateDto(BuildDto build, string projectId)
         {
             build.Href = MachineApi.GetBuildHref(projectId);
