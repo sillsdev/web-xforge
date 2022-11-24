@@ -72,6 +72,33 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
+        [HttpGet(MachineApi.GetEngine)]
+        public async Task<ActionResult<EngineDto>> GetEngineAsync(string projectId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                EngineDto engine = await _machineApiService.GetEngineAsync(
+                    _userAccessor.UserId,
+                    projectId,
+                    cancellationToken
+                );
+                return Ok(engine);
+            }
+            catch (BrokenCircuitException e)
+            {
+                _exceptionHandler.ReportException(e);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+            }
+            catch (DataNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+        }
+
         [HttpPost(MachineApi.GetWordGraph)]
         public async Task<ActionResult<WordGraphDto>> GetWordGraphAsync(
             string projectId,
@@ -134,17 +161,22 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
-        [HttpGet(MachineApi.GetEngine)]
-        public async Task<ActionResult<EngineDto>> GetEngineAsync(string projectId, CancellationToken cancellationToken)
+        [HttpPost(MachineApi.TrainSegment)]
+        public async Task<ActionResult> TrainSegmentAsync(
+            string projectId,
+            [FromBody] SegmentPairDto segmentPair,
+            CancellationToken cancellationToken
+        )
         {
             try
             {
-                EngineDto engine = await _machineApiService.GetEngineAsync(
+                await _machineApiService.TrainSegmentAsync(
                     _userAccessor.UserId,
                     projectId,
+                    segmentPair,
                     cancellationToken
                 );
-                return Ok(engine);
+                return Ok();
             }
             catch (BrokenCircuitException e)
             {
