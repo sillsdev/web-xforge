@@ -547,7 +547,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get lastSyncFailed(): boolean {
-    return this.selectedProjectDoc?.data?.sync.lastSyncSuccessful === false;
+    return this.selectedProjectDoc?.data?.sync.lastSyncSuccessful === false && !this.syncInProgress;
+  }
+
+  get syncInProgress(): boolean {
+    return this.selectedProjectDoc?.data != null && this.selectedProjectDoc.data.sync.queuedCount > 0;
   }
 
   private async refreshQuestionsQuery(projectId: string): Promise<void> {

@@ -233,6 +233,16 @@ mdc-drawer-content {
   overflow-y: auto;
 }
 
+.sync-in-progress {
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
 ::ng-deep #sync-icon .mat-badge-content {
   font-family: 'Material Icons';
   background: transparent;
