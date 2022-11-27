@@ -107,7 +107,7 @@ namespace SIL.XForge.Scripture.Services
                 );
 
             // SUT
-            await env.Service.BuildProjectAsync(User01, Project02, true, CancellationToken.None);
+            await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
 
             await env.MachineBuildService.Received().StartBuildAsync(TranslationEngine02, CancellationToken.None);
         }
@@ -120,7 +120,7 @@ namespace SIL.XForge.Scripture.Services
             env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
 
             // SUT
-            await env.Service.BuildProjectAsync(User01, Project02, true, CancellationToken.None);
+            await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
 
             await env.MachineCorporaService
                 .DidNotReceiveWithAnyArgs()
@@ -137,7 +137,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
 
             // SUT
-            await env.Service.BuildProjectAsync(User01, Project02, true, CancellationToken.None);
+            await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
 
             await env.MachineBuildService
                 .DidNotReceiveWithAnyArgs()
@@ -151,23 +151,11 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
 
             // SUT
-            await env.Service.BuildProjectAsync(User01, Project01, true, CancellationToken.None);
+            await env.Service.BuildProjectAsync(User01, Project01, CancellationToken.None);
 
             await env.MachineBuildService
                 .DidNotReceiveWithAnyArgs()
                 .StartBuildAsync(TranslationEngine02, CancellationToken.None);
-        }
-
-        [Test]
-        public async Task BuildProjectAsync_DoesNotExecuteInMemoryMachine()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-
-            // SUT
-            await env.Service.BuildProjectAsync(User01, Project01, false, CancellationToken.None);
-
-            await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync(Project01);
         }
 
         [Test]
@@ -177,7 +165,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
 
             // SUT
-            await env.Service.BuildProjectAsync(User01, Project01, true, CancellationToken.None);
+            await env.Service.BuildProjectAsync(User01, Project01, CancellationToken.None);
 
             await env.EngineService.Received().StartBuildByProjectIdAsync(Project01);
         }
