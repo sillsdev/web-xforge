@@ -98,18 +98,10 @@ namespace SIL.XForge.Scripture.Services
             );
         }
 
-        public async Task BuildProjectAsync(
-            string curUserId,
-            string projectId,
-            bool trainInMemoryEngine,
-            CancellationToken cancellationToken
-        )
+        public async Task BuildProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken)
         {
             // Build the project with the in-memory Machine instance
-            if (trainInMemoryEngine)
-            {
-                await _engineService.StartBuildByProjectIdAsync(projectId);
-            }
+            await _engineService.StartBuildByProjectIdAsync(projectId);
 
             // Ensure that the Machine API feature flag is enabled
             if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
