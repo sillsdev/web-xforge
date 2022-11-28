@@ -70,7 +70,12 @@ namespace SIL.XForge.Scripture.Services
                 SourceLanguageTag = project.TranslateConfig.Source.WritingSystem.Tag,
                 TargetLanguageTag = project.WritingSystem.Tag,
             };
-            await _engineService.AddProjectAsync(machineProject);
+
+            // Only add to the in-memory instance if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            {
+                await _engineService.AddProjectAsync(machineProject);
+            }
 
             // Ensure that the Machine API feature flag is enabled
             if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
@@ -100,8 +105,11 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task BuildProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken)
         {
-            // Build the project with the in process Machine instance
-            await _engineService.StartBuildByProjectIdAsync(projectId);
+            // Build the project with the in-memory Machine instance
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            {
+                await _engineService.StartBuildByProjectIdAsync(projectId);
+            }
 
             // Ensure that the Machine API feature flag is enabled
             if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
@@ -137,8 +145,11 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task RemoveProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken)
         {
-            // Remove the project from the in process Machine instance
-            await _engineService.RemoveProjectAsync(projectId);
+            // Remove the project from the in-memory Machine instance
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            {
+                await _engineService.RemoveProjectAsync(projectId);
+            }
 
             // Ensure that the Machine API feature flag is enabled
             if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
