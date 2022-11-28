@@ -3,9 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 using NSubstitute;
 using NUnit.Framework;
+using SIL.Machine.Annotations;
+using SIL.Machine.Translation;
 using SIL.Machine.WebApi;
+using SIL.Machine.WebApi.Configuration;
+using SIL.Machine.WebApi.DataAccess;
+using SIL.Machine.WebApi.Models;
+using SIL.Machine.WebApi.Services;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
@@ -19,16 +27,50 @@ namespace SIL.XForge.Scripture.Services
     {
         private const string Project01 = "project01";
         private const string Project02 = "project02";
+        private const string Project03 = "project03";
         private const string TranslationEngine01 = "translationEngine01";
         private const string User01 = "user01";
 
         [Test]
-        public async Task GetBuildAsync_NoBuildRunning()
+        public async Task GetBuildAsync_InMemoryNoRevisionNoBuildRunning()
         {
             // Set up test environment
             var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.Builds
+                .GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None)
+                .Returns(Task.FromResult<Build>(null));
+
+            // SUT
+            BuildDto? actual = await env.Service.GetBuildAsync(User01, Project01, null, CancellationToken.None);
+
+            Assert.IsNull(actual);
+        }
+
+        [Test]
+        public async Task GetBuildAsync_InMemorySpecificRevisionNoBuildRunning()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.Builds
+                .SubscribeByEngineIdAsync(TranslationEngine01, CancellationToken.None)
+                .Returns(Task.FromResult(new Subscription<Build>(TranslationEngine01, null, _ => { })));
+
+            // SUT
+            BuildDto? actual = await env.Service.GetBuildAsync(User01, Project01, 1, CancellationToken.None);
+
+            Assert.IsNull(actual);
+        }
+
+        [Test]
+        public async Task GetBuildAsync_MachineApiNoBuildRunning()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
             env.MachineBuildService
-                .GetCurrentBuildAsync(TranslationEngine01, null, Arg.Any<CancellationToken>())
+                .GetCurrentBuildAsync(TranslationEngine01, null, CancellationToken.None)
                 .Returns(Task.FromResult<BuildDto>(null));
 
             // SUT
@@ -62,7 +104,36 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetBuildAsync_Success()
+        public void GetBuildAsync_InMemoryNoEngine()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.Engines
+                .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+                .Returns(Task.FromResult<Engine>(null));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetBuildAsync(User01, Project01, null, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public void GetBuildAsync_MachineApiNoTranslationEngine()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetBuildAsync(User01, Project03, null, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task GetBuildAsync_InMemorySuccess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -70,15 +141,13 @@ namespace SIL.XForge.Scripture.Services
             double percentCompleted = 0.95;
             int revision = 553;
             string state = "ACTIVE";
-            env.MachineBuildService
-                .GetCurrentBuildAsync(TranslationEngine01, null, Arg.Any<CancellationToken>())
+            env.Builds
+                .GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None)
                 .Returns(
                     Task.FromResult(
-                        new BuildDto
+                        new Build
                         {
-                            Href = "https://example.com",
                             Id = "buildId",
-                            Engine = new ResourceDto { Id = "engineId", Href = "https://example.com", },
                             Message = message,
                             PercentCompleted = percentCompleted,
                             Revision = revision,
@@ -86,6 +155,7 @@ namespace SIL.XForge.Scripture.Services
                         }
                     )
                 );
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
 
             // SUT
             BuildDto? actual = await env.Service.GetBuildAsync(User01, Project01, null, CancellationToken.None);
@@ -99,6 +169,64 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(MachineApi.GetBuildHref(Project01), actual.Href);
             Assert.AreEqual(Project01, actual.Engine.Id);
             Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+        }
+
+        [Test]
+        public async Task GetBuildAsync_MachineApiSuccess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            string message = "Finalizing";
+            double percentCompleted = 0.95;
+            int revision = 553;
+            string state = "ACTIVE";
+            env.MachineBuildService
+                .GetCurrentBuildAsync(TranslationEngine01, null, CancellationToken.None)
+                .Returns(
+                    Task.FromResult(
+                        new BuildDto
+                        {
+                            Href = "https://example.com",
+                            Id = "buildId",
+                            Engine = new ResourceDto { Id = "engineId", Href = "https://example.com" },
+                            Message = message,
+                            PercentCompleted = percentCompleted,
+                            Revision = revision,
+                            State = state,
+                        }
+                    )
+                );
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+
+            // SUT
+            BuildDto? actual = await env.Service.GetBuildAsync(User01, Project01, null, CancellationToken.None);
+
+            Assert.IsNotNull(actual);
+            Assert.AreEqual(message, actual.Message);
+            Assert.AreEqual(percentCompleted, actual.PercentCompleted);
+            Assert.AreEqual(revision, actual.Revision);
+            Assert.AreEqual(state, actual.State);
+            Assert.AreEqual(Project01, actual.Id);
+            Assert.AreEqual(MachineApi.GetBuildHref(Project01), actual.Href);
+            Assert.AreEqual(Project01, actual.Engine.Id);
+            Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+        }
+
+        [Test]
+        public async Task GetBuildAsync_ExecutesApiAndInMemory()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            _ = await env.Service.GetBuildAsync(User01, Project01, null, CancellationToken.None);
+
+            await env.Builds
+                .Received(1)
+                .GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None);
+            await env.MachineBuildService
+                .Received(1)
+                .GetCurrentBuildAsync(TranslationEngine01, null, CancellationToken.None);
         }
 
         [Test]
@@ -126,7 +254,77 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetEngineAsync_Success()
+        public void GetEngineAsync_InMemoryNoEngine()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.Engines
+                .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+                .Returns(Task.FromResult<Engine>(null));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetEngineAsync(User01, Project01, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public void GetEngineAsync_MachineApiNoTranslationEngine()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetEngineAsync(User01, Project03, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task GetEngineAsync_InMemorySuccess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            string sourceLanguageTag = "en_US";
+            string targetLanguageTag = "en_NZ";
+            int confidence = 100;
+            int corpusSize = 472;
+            env.Engines
+                .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+                .Returns(
+                    Task.FromResult(
+                        new Engine
+                        {
+                            Confidence = confidence,
+                            Id = Project01,
+                            IsShared = false,
+                            Revision = 1,
+                            SourceLanguageTag = sourceLanguageTag,
+                            TargetLanguageTag = targetLanguageTag,
+                            TrainedSegmentCount = corpusSize,
+                        }
+                    )
+                );
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+
+            // SUT
+            EngineDto actual = await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
+
+            Assert.AreEqual(confidence, actual.Confidence);
+            Assert.AreEqual(corpusSize, actual.TrainedSegmentCount);
+            Assert.AreEqual(sourceLanguageTag, actual.SourceLanguageTag);
+            Assert.AreEqual(targetLanguageTag, actual.TargetLanguageTag);
+            Assert.IsFalse(actual.IsShared);
+            Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Href);
+            Assert.AreEqual(1, actual.Projects.Length);
+            Assert.AreEqual(Project01, actual.Projects.First().Id);
+            Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Projects.First().Href);
+        }
+
+        [Test]
+        public async Task GetEngineAsync_MachineApiSuccess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -135,7 +333,7 @@ namespace SIL.XForge.Scripture.Services
             int confidence = 100;
             int corpusSize = 472;
             env.MachineTranslationService
-                .GetTranslationEngineAsync(TranslationEngine01, Arg.Any<CancellationToken>())
+                .GetTranslationEngineAsync(TranslationEngine01, CancellationToken.None)
                 .Returns(
                     Task.FromResult(
                         new MachineApiTranslationEngine
@@ -153,6 +351,7 @@ namespace SIL.XForge.Scripture.Services
                         }
                     )
                 );
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
 
             // SUT
             EngineDto actual = await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
@@ -166,6 +365,29 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(1, actual.Projects.Length);
             Assert.AreEqual(Project01, actual.Projects.First().Id);
             Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Projects.First().Href);
+        }
+
+        [Test]
+        public async Task GetEngineAsync_ExecutesApiAndInMemory()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineTranslationService
+                .GetTranslationEngineAsync(TranslationEngine01, CancellationToken.None)
+                .Returns(Task.FromResult(new MachineApiTranslationEngine()));
+            env.Engines
+                .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+                .Returns(Task.FromResult(new Engine()));
+
+            // SUT
+            _ = await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
+
+            await env.Engines
+                .Received(1)
+                .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None);
+            await env.MachineTranslationService
+                .Received(1)
+                .GetTranslationEngineAsync(TranslationEngine01, CancellationToken.None);
         }
 
         [Test]
@@ -205,23 +427,63 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetWordGraphAsync_Success()
+        public void GetWordGraphAsync_InMemoryNoEngine()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.Engines
+                .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+                .Returns(Task.FromResult<Engine>(null));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public void GetWordGraphAsync_MachineApiNoTranslationEngine()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetWordGraphAsync(User01, Project03, Array.Empty<string>(), CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task GetWordGraphAsync_InMemorySuccess()
         {
             // Set up test environment
             var env = new TestEnvironment();
             float initialStateScore = -91.43696f;
-            env.MachineTranslationService
-                .GetWordGraphAsync(TranslationEngine01, Array.Empty<string>(), Arg.Any<CancellationToken>())
+            env.EngineService
+                .GetWordGraphAsync(TranslationEngine01, Array.Empty<string>())
                 .Returns(
                     Task.FromResult(
-                        new WordGraphDto
-                        {
-                            Arcs = new[] { new WordGraphArcDto() },
-                            FinalStates = new[] { 1 },
-                            InitialStateScore = initialStateScore,
-                        }
+                        new WordGraph(
+                            new[]
+                            {
+                                new WordGraphArc(
+                                    0,
+                                    0,
+                                    0.0,
+                                    Array.Empty<string>(),
+                                    new WordAlignmentMatrix(0, 0),
+                                    Range<int>.Null,
+                                    Array.Empty<TranslationSources>()
+                                )
+                            },
+                            new[] { 1 },
+                            initialStateScore
+                        )
                     )
                 );
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
 
             // SUT
             WordGraphDto actual = await env.Service.GetWordGraphAsync(
@@ -235,6 +497,58 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(initialStateScore, actual.InitialStateScore);
             Assert.AreEqual(1, actual.Arcs.Length);
             Assert.AreEqual(1, actual.FinalStates.Length);
+        }
+
+        [Test]
+        public async Task GetWordGraphAsync_MachineApiSuccess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            float initialStateScore = -91.43696f;
+            env.MachineTranslationService
+                .GetWordGraphAsync(TranslationEngine01, Array.Empty<string>(), CancellationToken.None)
+                .Returns(
+                    Task.FromResult(
+                        new WordGraphDto
+                        {
+                            Arcs = new[] { new WordGraphArcDto() },
+                            FinalStates = new[] { 1 },
+                            InitialStateScore = initialStateScore,
+                        }
+                    )
+                );
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+
+            // SUT
+            WordGraphDto actual = await env.Service.GetWordGraphAsync(
+                User01,
+                Project01,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            Assert.IsNotNull(actual);
+            Assert.AreEqual(initialStateScore, actual.InitialStateScore);
+            Assert.AreEqual(1, actual.Arcs.Length);
+            Assert.AreEqual(1, actual.FinalStates.Length);
+        }
+
+        [Test]
+        public async Task GetWordGraphAsync_ExecutesApiAndInMemory()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.EngineService
+                .GetWordGraphAsync(TranslationEngine01, Array.Empty<string>())
+                .Returns(Task.FromResult(new WordGraph()));
+
+            // SUT
+            _ = await env.Service.GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None);
+
+            await env.EngineService.Received(1).GetWordGraphAsync(TranslationEngine01, Array.Empty<string>());
+            await env.MachineTranslationService
+                .Received(1)
+                .GetWordGraphAsync(TranslationEngine01, Array.Empty<string>(), CancellationToken.None);
         }
 
         [Test]
@@ -262,7 +576,36 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task StartBuildAsync_Success()
+        public void StartBuildAsync_InMemoryNoEngine()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.Engines
+                .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+                .Returns(Task.FromResult<Engine>(null));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.StartBuildAsync(User01, Project01, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public void StartBuildAsync_MachineApiNoTranslationEngine()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.StartBuildAsync(User01, Project03, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task StartBuildAsync_InMemorySuccess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -270,15 +613,13 @@ namespace SIL.XForge.Scripture.Services
             double percentCompleted = 0.01;
             int revision = 2;
             string state = "ACTIVE";
-            env.MachineBuildService
-                .StartBuildAsync(TranslationEngine01, Arg.Any<CancellationToken>())
+            env.EngineService
+                .StartBuildAsync(TranslationEngine01)
                 .Returns(
                     Task.FromResult(
-                        new BuildDto
+                        new Build
                         {
-                            Href = "https://example.com",
                             Id = "buildId",
-                            Engine = new ResourceDto { Id = "engineId", Href = "https://example.com", },
                             Message = message,
                             PercentCompleted = percentCompleted,
                             Revision = revision,
@@ -286,6 +627,7 @@ namespace SIL.XForge.Scripture.Services
                         }
                     )
                 );
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
 
             // SUT
             BuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
@@ -298,6 +640,60 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(MachineApi.GetBuildHref(Project01), actual.Href);
             Assert.AreEqual(Project01, actual.Engine.Id);
             Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+        }
+
+        [Test]
+        public async Task StartBuildAsync_MachineApiSuccess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            string message = "Training language model";
+            double percentCompleted = 0.01;
+            int revision = 2;
+            string state = "ACTIVE";
+            env.MachineBuildService
+                .StartBuildAsync(TranslationEngine01, CancellationToken.None)
+                .Returns(
+                    Task.FromResult(
+                        new BuildDto
+                        {
+                            Href = "https://example.com",
+                            Id = "buildId",
+                            Engine = new ResourceDto { Id = "engineId", Href = "https://example.com" },
+                            Message = message,
+                            PercentCompleted = percentCompleted,
+                            Revision = revision,
+                            State = state,
+                        }
+                    )
+                );
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+
+            // SUT
+            BuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+
+            Assert.AreEqual(message, actual.Message);
+            Assert.AreEqual(percentCompleted, actual.PercentCompleted);
+            Assert.AreEqual(revision, actual.Revision);
+            Assert.AreEqual(state, actual.State);
+            Assert.AreEqual(Project01, actual.Id);
+            Assert.AreEqual(MachineApi.GetBuildHref(Project01), actual.Href);
+            Assert.AreEqual(Project01, actual.Engine.Id);
+            Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+        }
+
+        [Test]
+        public async Task StartBuildAsync_ExecutesApiAndInMemory()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
+
+            // SUT
+            _ = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+
+            await env.EngineService.Received(1).StartBuildAsync(TranslationEngine01);
+            await env.MachineBuildService.Received(1).StartBuildAsync(TranslationEngine01, CancellationToken.None);
         }
 
         [Test]
@@ -337,10 +733,61 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task TrainSegmentAsync_Success()
+        public void TrainSegmentAsync_InMemoryNoEngine()
         {
             // Set up test environment
             var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.Engines
+                .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+                .Returns(Task.FromResult<Engine>(null));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.TrainSegmentAsync(User01, Project01, new SegmentPairDto(), CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public void TrainSegmentAsync_MachineApiNoTranslationEngine()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.TrainSegmentAsync(User01, Project03, new SegmentPairDto(), CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task TrainSegmentAsync_InMemorySuccess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            var segmentPair = new SegmentPairDto();
+
+            // SUT
+            await env.Service.TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
+
+            await env.EngineService
+                .Received(1)
+                .TrainSegmentAsync(
+                    TranslationEngine01,
+                    segmentPair.SourceSegment,
+                    segmentPair.TargetSegment,
+                    segmentPair.SentenceStart
+                );
+        }
+
+        [Test]
+        public async Task TrainSegmentAsync_MachineApiSuccess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
             var segmentPair = new SegmentPairDto();
 
             // SUT
@@ -351,10 +798,55 @@ namespace SIL.XForge.Scripture.Services
                 .TrainSegmentAsync(TranslationEngine01, segmentPair, CancellationToken.None);
         }
 
+        [Test]
+        public async Task TrainSegmentAsync_ExecutesApiAndInMemory()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            var segmentPair = new SegmentPairDto();
+
+            // SUT
+            await env.Service.TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
+
+            await env.EngineService
+                .Received(1)
+                .TrainSegmentAsync(
+                    TranslationEngine01,
+                    segmentPair.SourceSegment,
+                    segmentPair.TargetSegment,
+                    segmentPair.SentenceStart
+                );
+            await env.MachineTranslationService
+                .Received(1)
+                .TrainSegmentAsync(TranslationEngine01, segmentPair, CancellationToken.None);
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment()
             {
+                Builds = Substitute.For<IBuildRepository>();
+                Engines = Substitute.For<IEngineRepository>();
+                Engines
+                    .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+                    .Returns(
+                        Task.FromResult(
+                            new Engine
+                            {
+                                Confidence = 100,
+                                Id = TranslationEngine01,
+                                SourceLanguageTag = "en_US",
+                                TrainedSegmentCount = 472,
+                                TargetLanguageTag = "en_NZ",
+                            }
+                        )
+                    );
+                IOptions<EngineOptions> engineOptions = Options.Create(new EngineOptions());
+                EngineService = Substitute.For<IEngineService>();
+                FeatureManager = Substitute.For<IFeatureManager>();
+                FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(true));
+                FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(true));
+
                 MachineBuildService = Substitute.For<IMachineBuildService>();
                 MachineTranslationService = Substitute.For<IMachineTranslationService>();
                 var projectSecrets = new MemoryRepository<SFProjectSecret>(
@@ -363,7 +855,7 @@ namespace SIL.XForge.Scripture.Services
                         new SFProjectSecret
                         {
                             Id = Project01,
-                            MachineData = new MachineData { TranslationEngineId = TranslationEngine01, },
+                            MachineData = new MachineData { TranslationEngineId = TranslationEngine01 },
                         },
                         new SFProjectSecret { Id = Project02 },
                     }
@@ -379,14 +871,24 @@ namespace SIL.XForge.Scripture.Services
                             new SFProject
                             {
                                 Id = Project01,
-                                UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator }, },
+                                UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
                             },
-                            new SFProject { Id = Project02, },
+                            new SFProject { Id = Project02 },
+                            new SFProject
+                            {
+                                Id = Project03,
+                                UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Translator } },
+                            },
                         }
                     )
                 );
 
                 Service = new MachineApiService(
+                    Builds,
+                    Engines,
+                    engineOptions,
+                    EngineService,
+                    FeatureManager,
                     MachineBuildService,
                     MachineTranslationService,
                     projectSecrets,
@@ -394,6 +896,10 @@ namespace SIL.XForge.Scripture.Services
                 );
             }
 
+            public IBuildRepository Builds { get; }
+            public IEngineRepository Engines { get; }
+            public IEngineService EngineService { get; }
+            public IFeatureManager FeatureManager { get; }
             public IMachineBuildService MachineBuildService { get; }
             public IMachineTranslationService MachineTranslationService { get; }
             public MachineApiService Service { get; }

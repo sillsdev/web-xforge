@@ -1,7 +1,17 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
+using SIL.Machine.Annotations;
+using SIL.Machine.Threading;
+using SIL.Machine.Translation;
 using SIL.Machine.WebApi;
+using SIL.Machine.WebApi.Configuration;
+using SIL.Machine.WebApi.DataAccess;
+using SIL.Machine.WebApi.Models;
+using SIL.Machine.WebApi.Services;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
@@ -12,18 +22,38 @@ namespace SIL.XForge.Scripture.Services
 {
     public class MachineApiService : IMachineApiService
     {
+        private readonly IBuildRepository _builds;
+        private readonly IEngineRepository _engines;
+        private readonly IOptions<EngineOptions> _engineOptions;
+        private readonly IEngineService _engineService;
+        private readonly IFeatureManager _featureManager;
         private readonly IMachineBuildService _machineBuildService;
         private readonly IMachineTranslationService _machineTranslationService;
-        private readonly IRepository<SFProjectSecret> _projectSecrets;
+        private readonly DataAccess.IRepository<SFProjectSecret> _projectSecrets;
         private readonly IRealtimeService _realtimeService;
 
         public MachineApiService(
+            IBuildRepository builds,
+            IEngineRepository engines,
+            IOptions<EngineOptions> engineOptions,
+            IEngineService engineService,
+            IFeatureManager featureManager,
             IMachineBuildService machineBuildService,
             IMachineTranslationService machineTranslationService,
-            IRepository<SFProjectSecret> projectSecrets,
+            DataAccess.IRepository<SFProjectSecret> projectSecrets,
             IRealtimeService realtimeService
         )
         {
+            // In-Memory Machine Dependencies
+            _builds = builds;
+            _engines = engines;
+            _engineOptions = engineOptions;
+            _engineService = engineService;
+
+            // Shared Dependencies
+            _featureManager = featureManager;
+
+            // Machine API Dependencies
             _machineBuildService = machineBuildService;
             _machineTranslationService = machineTranslationService;
             _projectSecrets = projectSecrets;
@@ -37,20 +67,60 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            string translationEngineId = await GetTranslationIdAsync(curUserId, projectId);
-            BuildDto? build = await _machineBuildService.GetCurrentBuildAsync(
-                translationEngineId,
-                minRevision,
-                cancellationToken
-            );
+            BuildDto? buildDto = null;
 
-            // Modify the Build DTO to reference the project
-            if (build is not null)
+            // Ensure that the user has permission
+            await EnsurePermissionAsync(curUserId, projectId);
+
+            // Execute the Machine API, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
             {
-                build = UpdateDto(build, projectId);
+                string translationEngineId = await GetTranslationIdAsync(projectId);
+                if (!string.IsNullOrWhiteSpace(translationEngineId))
+                {
+                    buildDto = await _machineBuildService.GetCurrentBuildAsync(
+                        translationEngineId,
+                        minRevision,
+                        cancellationToken
+                    );
+                }
+                else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                {
+                    // Only throw the exception if the in-memory instance will not be called below
+                    throw new DataNotFoundException("The translation engine is not configured");
+                }
             }
 
-            return build;
+            // Execute the in-memory Machine instance, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            {
+                Engine engine = await GetInMemoryEngineAsync(projectId, cancellationToken);
+                Build? build;
+                if (minRevision is not null)
+                {
+                    EntityChange<Build> change = await _builds
+                        .GetNewerRevisionAsync(BuildLocatorType.Engine, engine.Id, minRevision.Value, cancellationToken)
+                        .Timeout(_engineOptions.Value.BuildLongPollTimeout, cancellationToken);
+                    build = change.Entity;
+                }
+                else
+                {
+                    build = await _builds.GetByLocatorAsync(BuildLocatorType.Engine, engine.Id, cancellationToken);
+                }
+
+                if (build is not null)
+                {
+                    buildDto = CreateDto(build);
+                }
+            }
+
+            // Make sure the DTO conforms to the machine-api V2 URLs
+            if (buildDto is not null)
+            {
+                UpdateDto(buildDto, projectId);
+            }
+
+            return buildDto;
         }
 
         public async Task<EngineDto> GetEngineAsync(
@@ -59,36 +129,82 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            string translationEngineId = await GetTranslationIdAsync(curUserId, projectId);
-            var translationEngine = await _machineTranslationService.GetTranslationEngineAsync(
-                translationEngineId,
-                cancellationToken
-            );
-            return new EngineDto
+            var engineDto = new EngineDto();
+
+            // Ensure that the user has permission
+            await EnsurePermissionAsync(curUserId, projectId);
+
+            // Execute the Machine API, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
             {
-                Confidence = translationEngine.Confidence,
-                Href = MachineApi.GetEngineHref(projectId),
-                Id = projectId,
-                IsShared = false,
-                Projects = new[]
+                string translationEngineId = await GetTranslationIdAsync(projectId);
+                if (!string.IsNullOrWhiteSpace(translationEngineId))
                 {
-                    new ResourceDto { Href = MachineApi.GetEngineHref(projectId), Id = projectId }
-                },
-                SourceLanguageTag = translationEngine.SourceLanguageTag,
-                TargetLanguageTag = translationEngine.TargetLanguageTag,
-                TrainedSegmentCount = translationEngine.CorpusSize,
-            };
+                    MachineApiTranslationEngine translationEngine =
+                        await _machineTranslationService.GetTranslationEngineAsync(
+                            translationEngineId,
+                            cancellationToken
+                        );
+                    engineDto = CreateDto(translationEngine);
+                }
+                else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                {
+                    // Only throw the exception if the in-memory instance will not be called below
+                    throw new DataNotFoundException("The translation engine is not configured");
+                }
+            }
+
+            // Execute the in-memory Machine instance, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            {
+                Engine engine = await GetInMemoryEngineAsync(projectId, cancellationToken);
+                engineDto = CreateDto(engine);
+            }
+
+            // Make sure the DTO conforms to the machine-api V2 URLs
+            return UpdateDto(engineDto, projectId);
         }
 
         public async Task<WordGraphDto> GetWordGraphAsync(
             string curUserId,
             string projectId,
-            IEnumerable<string> segment,
+            IReadOnlyCollection<string> segment,
             CancellationToken cancellationToken
         )
         {
-            string translationEngineId = await GetTranslationIdAsync(curUserId, projectId);
-            return await _machineTranslationService.GetWordGraphAsync(translationEngineId, segment, cancellationToken);
+            var wordGraphDto = new WordGraphDto();
+
+            // Ensure that the user has permission
+            await EnsurePermissionAsync(curUserId, projectId);
+
+            // Execute the Machine API, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+            {
+                string translationEngineId = await GetTranslationIdAsync(projectId);
+                if (!string.IsNullOrWhiteSpace(translationEngineId))
+                {
+                    wordGraphDto = await _machineTranslationService.GetWordGraphAsync(
+                        translationEngineId,
+                        segment,
+                        cancellationToken
+                    );
+                }
+                else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                {
+                    // Only throw the exception if the in-memory instance will not be called below
+                    throw new DataNotFoundException("The translation engine is not configured");
+                }
+            }
+
+            // Execute the in-memory Machine instance, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            {
+                Engine engine = await GetInMemoryEngineAsync(projectId, cancellationToken);
+                WordGraph wordGraph = await _engineService.GetWordGraphAsync(engine.Id, segment.ToArray());
+                wordGraphDto = CreateDto(wordGraph);
+            }
+
+            return wordGraphDto;
         }
 
         public async Task<BuildDto> StartBuildAsync(
@@ -97,9 +213,35 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            string translationEngineId = await GetTranslationIdAsync(curUserId, projectId);
-            BuildDto build = await _machineBuildService.StartBuildAsync(translationEngineId, cancellationToken);
-            return UpdateDto(build, projectId);
+            var buildDto = new BuildDto();
+
+            // Ensure that the user has permission
+            await EnsurePermissionAsync(curUserId, projectId);
+
+            // Execute the Machine API, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+            {
+                string translationEngineId = await GetTranslationIdAsync(projectId);
+                if (!string.IsNullOrWhiteSpace(translationEngineId))
+                {
+                    buildDto = await _machineBuildService.StartBuildAsync(translationEngineId, cancellationToken);
+                }
+                else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                {
+                    // Only throw the exception if the in-memory instance will not be called below
+                    throw new DataNotFoundException("The translation engine is not configured");
+                }
+            }
+
+            // Execute the in-memory Machine instance, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            {
+                Engine engine = await GetInMemoryEngineAsync(projectId, cancellationToken);
+                Build build = await _engineService.StartBuildAsync(engine.Id);
+                buildDto = CreateDto(build);
+            }
+
+            return UpdateDto(buildDto, projectId);
         }
 
         public async Task TrainSegmentAsync(
@@ -109,19 +251,123 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            string translationEngineId = await GetTranslationIdAsync(curUserId, projectId);
-            await _machineTranslationService.TrainSegmentAsync(translationEngineId, segmentPair, cancellationToken);
+            // Ensure that the user has permission
+            await EnsurePermissionAsync(curUserId, projectId);
+
+            // Execute the Machine API, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+            {
+                string translationEngineId = await GetTranslationIdAsync(projectId);
+                if (string.IsNullOrWhiteSpace(translationEngineId))
+                {
+                    throw new DataNotFoundException("The translation engine is not configured");
+                }
+
+                await _machineTranslationService.TrainSegmentAsync(translationEngineId, segmentPair, cancellationToken);
+            }
+
+            // Execute the in-memory Machine instance, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            {
+                Engine engine = await GetInMemoryEngineAsync(projectId, cancellationToken);
+                await _engineService.TrainSegmentAsync(
+                    engine.Id,
+                    segmentPair.SourceSegment,
+                    segmentPair.TargetSegment,
+                    segmentPair.SentenceStart
+                );
+            }
         }
 
-        private static BuildDto UpdateDto(BuildDto build, string projectId)
+        private static BuildDto CreateDto(Build build) =>
+            new BuildDto
+            {
+                Revision = build.Revision,
+                PercentCompleted = build.PercentCompleted,
+                Message = build.Message,
+                State = build.State,
+            };
+
+        private static EngineDto CreateDto(MachineApiTranslationEngine translationEngine) =>
+            new EngineDto
+            {
+                Confidence = translationEngine.Confidence,
+                IsShared = false,
+                SourceLanguageTag = translationEngine.SourceLanguageTag,
+                TargetLanguageTag = translationEngine.TargetLanguageTag,
+                TrainedSegmentCount = translationEngine.CorpusSize,
+            };
+
+        private static EngineDto CreateDto(Engine engine) =>
+            new EngineDto
+            {
+                Confidence = engine.Confidence,
+                IsShared = false,
+                SourceLanguageTag = engine.SourceLanguageTag,
+                TargetLanguageTag = engine.TargetLanguageTag,
+                TrainedSegmentCount = engine.TrainedSegmentCount,
+            };
+
+        private static RangeDto CreateDto(Range<int> range) => new RangeDto { Start = range.Start, End = range.End };
+
+        private static WordGraphDto CreateDto(WordGraph wordGraph) =>
+            new WordGraphDto
+            {
+                InitialStateScore = (float)wordGraph.InitialStateScore,
+                FinalStates = wordGraph.FinalStates.ToArray(),
+                Arcs = wordGraph.Arcs.Select(CreateDto).ToArray(),
+            };
+
+        private static WordGraphArcDto CreateDto(WordGraphArc arc) =>
+            new WordGraphArcDto
+            {
+                PrevState = arc.PrevState,
+                NextState = arc.NextState,
+                Score = (float)arc.Score,
+                Words = arc.Words.ToArray(),
+                Confidences = arc.WordConfidences.Select(c => (float)c).ToArray(),
+                SourceSegmentRange = CreateDto(arc.SourceSegmentRange),
+                Sources = arc.WordSources.ToArray(),
+                Alignment = CreateDto(arc.Alignment),
+            };
+
+        private static AlignedWordPairDto[] CreateDto(WordAlignmentMatrix matrix)
         {
-            build.Href = MachineApi.GetBuildHref(projectId);
-            build.Id = projectId;
-            build.Engine = new ResourceDto { Href = MachineApi.GetEngineHref(projectId), Id = projectId };
-            return build;
+            var wordPairs = new List<AlignedWordPairDto>();
+            for (int i = 0; i < matrix.RowCount; i++)
+            {
+                for (int j = 0; j < matrix.ColumnCount; j++)
+                {
+                    if (matrix[i, j])
+                    {
+                        wordPairs.Add(new AlignedWordPairDto { SourceIndex = i, TargetIndex = j });
+                    }
+                }
+            }
+
+            return wordPairs.ToArray();
         }
 
-        private async Task<string> GetTranslationIdAsync(string curUserId, string projectId)
+        private static BuildDto UpdateDto(BuildDto buildDto, string projectId)
+        {
+            buildDto.Href = MachineApi.GetBuildHref(projectId);
+            buildDto.Id = projectId;
+            buildDto.Engine = new ResourceDto { Href = MachineApi.GetEngineHref(projectId), Id = projectId };
+            return buildDto;
+        }
+
+        private static EngineDto UpdateDto(EngineDto engineDto, string projectId)
+        {
+            engineDto.Href = MachineApi.GetEngineHref(projectId);
+            engineDto.Id = projectId;
+            engineDto.Projects = new[]
+            {
+                new ResourceDto { Href = MachineApi.GetEngineHref(projectId), Id = projectId },
+            };
+            return engineDto;
+        }
+
+        private async Task EnsurePermissionAsync(string curUserId, string projectId)
         {
             // Load the project from the realtime service
             Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(projectId);
@@ -140,18 +386,32 @@ namespace SIL.XForge.Scripture.Services
             {
                 throw new ForbiddenException();
             }
+        }
 
+        private async Task<Engine> GetInMemoryEngineAsync(string projectId, CancellationToken cancellationToken)
+        {
+            Engine? engine = await _engines.GetByLocatorAsync(EngineLocatorType.Project, projectId, cancellationToken);
+            if (engine is null)
+            {
+                throw new DataNotFoundException("The engine does not exist.");
+            }
+
+            return engine;
+        }
+
+        private async Task<string> GetTranslationIdAsync(string projectId)
+        {
             // Load the project secret, so we can get the translation engine ID
             if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
             {
-                throw new DataNotFoundException("The project secret cannot be found.");
+                return string.Empty;
             }
 
             // Ensure we have a translation engine ID
             string? translationEngineId = projectSecret.MachineData?.TranslationEngineId;
             if (string.IsNullOrWhiteSpace(translationEngineId))
             {
-                throw new DataNotFoundException("The translation engine is not configured");
+                return string.Empty;
             }
 
             return translationEngineId;
