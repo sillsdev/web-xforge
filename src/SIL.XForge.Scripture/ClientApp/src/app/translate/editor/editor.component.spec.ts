@@ -2426,7 +2426,7 @@ describe('EditorComponent', () => {
     it('shows only note threads created in Scripture Forge', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.setCurrentUser('user05');
+      env.setReviewerUser();
       const threadId: string = SF_NOTE_THREAD_PREFIX + 'thread06';
       env.addParatextNoteThread(threadId, 'MAT 1:4', 'Paragraph break.', { start: 0, length: 0 }, ['user05']);
       env.wait();
@@ -2492,7 +2492,7 @@ describe('EditorComponent', () => {
     it('reviewers can click to select verse', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.setCurrentUser('user05');
+      env.setReviewerUser();
       env.wait();
 
       const hasSelectionAnchors = env.getSegmentElement('verse_1_1')!.querySelector('display-text-anchor');
@@ -2533,7 +2533,7 @@ describe('EditorComponent', () => {
     it('does not allow selecting section headings', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.setCurrentUser('user05');
+      env.setReviewerUser();
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
 
@@ -2561,7 +2561,7 @@ describe('EditorComponent', () => {
     it('reviewers can create note on selected verse with FAB', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.setCurrentUser('user05');
+      env.setReviewerUser();
       env.wait();
 
       const verseSegment: HTMLElement = env.getSegmentElement('verse_1_5')!;
@@ -3035,20 +3035,13 @@ class TestEnvironment {
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
     when(mockedSFProjectService.isProjectAdmin('project01', 'user04')).thenResolve(true);
-    when(mockedSFProjectService.queryNoteThreads(anything(), false)).thenCall((id, _) =>
+    when(mockedSFProjectService.queryNoteThreads(anything())).thenCall((id, _) =>
       this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
         [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
         [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo
       })
     );
 
-    when(mockedSFProjectService.queryNoteThreads('project01', true)).thenCall((id, _) =>
-      this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
-        [obj<NoteThread>().pathStr(t => t.dataId)]: { $regex: SF_NOTE_THREAD_PREFIX },
-        [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
-        [obj<NoteThread>().pathStr(t => t.projectRef)]: id
-      })
-    );
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus$).thenReturn(of(true));
 
@@ -3177,6 +3170,17 @@ class TestEnvironment {
   setCurrentUser(userId: string): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
     when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
+  }
+
+  setReviewerUser(): void {
+    this.setCurrentUser('user05');
+    when(mockedSFProjectService.queryNoteThreads('project01')).thenCall((id, _) =>
+      this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
+        [obj<NoteThread>().pathStr(t => t.dataId)]: { $regex: SF_NOTE_THREAD_PREFIX },
+        [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
+        [obj<NoteThread>().pathStr(t => t.projectRef)]: id
+      })
+    );
   }
 
   setupUsers(): void {

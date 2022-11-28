@@ -1,5 +1,4 @@
 import { Connection, Doc } from 'sharedb/lib/client';
-import { SFProjectRole } from '../models/sf-project-role';
 import { createFetchQuery, docSubmitJson0Op } from '../../common/utils/sharedb-utils';
 import { OwnedData } from '../../common/models/owned-data';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
@@ -15,6 +14,7 @@ import { SFProjectUserConfig, SF_PROJECT_USER_CONFIGS_COLLECTION } from '../mode
 import { Note } from '../models/note';
 import { Project } from '../../common/models/project';
 import { ConnectSession } from '../../common/connect-session';
+import { canViewParatextNotes } from '../scripture-utils/utils';
 import { NOTE_THREAD_MIGRATIONS } from './note-thread-migrations';
 import { SFProjectDataService } from './sf-project-data-service';
 
@@ -77,7 +77,7 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
       if (project == null) return false;
       const userRole = project.userRoles[session.userId];
       if (userRole == null) return false;
-      if (userRole === SFProjectRole.Reviewer && !doc.dataId.startsWith(SF_NOTE_THREAD_PREFIX)) return false;
+      if (!canViewParatextNotes(userRole) && !doc.dataId.startsWith(SF_NOTE_THREAD_PREFIX)) return false;
       return true;
     }
     return false;

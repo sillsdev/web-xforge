@@ -5,6 +5,7 @@ import { DocService } from '../common/services/doc-service';
 import { UserService } from '../common/services/user-service';
 import { NOTE_THREAD_COLLECTION, SF_NOTE_THREAD_PREFIX } from './models/note-thread';
 import { SF_PROJECTS_COLLECTION } from './models/sf-project';
+import { canViewParatextNotes } from './scripture-utils/utils';
 import { NoteThreadService } from './services/note-thread-service';
 import { QuestionService } from './services/question-service';
 import { SFProjectService } from './services/sf-project-service';
@@ -28,9 +29,20 @@ class SFRealtimeServer extends RealtimeServer {
     super(siteId, migrationsDisabled, SF_DOC_SERVICES, SF_PROJECTS_COLLECTION, db, schemaVersions);
     this.use('query', (context: ShareDB.middleware.QueryContext, next: (err?: any) => void) => {
       if (context.collection === NOTE_THREAD_COLLECTION) {
-        context.query = { ...context.query, ...{ dataId: { $regex: SF_NOTE_THREAD_PREFIX } } };
+        if (context.agent.connectSession.isServer) {
+          next();
+          return;
+        }
+        this.getProject(context.query.projectRef).then(p => {
+          const userRole: string = p?.userRoles[context.agent.connectSession.userId] ?? '';
+          if (!canViewParatextNotes(userRole)) {
+            context.query = { ...context.query, ...{ dataId: { $regex: SF_NOTE_THREAD_PREFIX } } };
+          }
+          next();
+        });
+      } else {
+        next();
       }
-      next();
     });
   }
 }
