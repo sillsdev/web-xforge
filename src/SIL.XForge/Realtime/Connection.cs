@@ -334,6 +334,7 @@ namespace SIL.XForge.Realtime
             if (_isTransaction)
             {
                 // If we have a collection of JSON0 operations, see if any are to be committed immediately
+                bool queueOperation = true;
                 if (_excludedProperties.Any() && op is IEnumerable<Json0Op> jsonOps)
                 {
                     foreach (Json0Op jsonOp in jsonOps)
@@ -341,22 +342,29 @@ namespace SIL.XForge.Realtime
                         string path = (typeof(T).Name + "." + string.Join('.', jsonOp.Path)).ToLowerInvariant();
                         if (_excludedProperties.Contains(path))
                         {
-                            return await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op);
+                            // Do not return the submitted operation, as it will not include the queued ops,
+                            // as SubmitOpAsync writes to then reads directly from the Realtime Server.
+                            _ = await _realtimeServer.SubmitOpAsync<T>(_handle, collection, id, op);
+                            queueOperation = false;
+                            break;
                         }
                     }
                 }
 
                 // Queue this operation
-                _queuedOperations.Enqueue(
-                    new QueuedOperation
-                    {
-                        Action = QueuedAction.Submit,
-                        Collection = collection,
-                        Handle = _handle,
-                        Id = id,
-                        Op = op,
-                    }
-                );
+                if (queueOperation)
+                {
+                    _queuedOperations.Enqueue(
+                        new QueuedOperation
+                        {
+                            Action = QueuedAction.Submit,
+                            Collection = collection,
+                            Handle = _handle,
+                            Id = id,
+                            Op = op,
+                        }
+                    );
+                }
 
                 // Return the operation applied to the object
                 string otTypeName = op is IEnumerable<Json0Op> || op is Json0Op ? OTType.Json0 : OTType.RichText;
