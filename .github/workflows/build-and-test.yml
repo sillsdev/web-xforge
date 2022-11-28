@@ -92,14 +92,14 @@ jobs:
       - name: "Test: Frontend"
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run test:gha
 
-      - name: "Coverage: Backend"
-        run: |
-          reportgenerator \
-            -reports:test/*/coverage.opencover.xml \
-            -targetdir:coverage \
-            "-reporttypes:HTML;TeamCitySummary"
-      - name: "Coverage: Publish to Codecov"
-        uses: codecov/codecov-action@v3
+      # - name: "Coverage: Backend"
+      #   run: |
+      #     reportgenerator \
+      #       -reports:test/*/coverage.opencover.xml \
+      #       -targetdir:coverage \
+      #       "-reporttypes:HTML;TeamCitySummary"
+      # - name: "Coverage: Publish to Codecov"
+      #   uses: codecov/codecov-action@v3
 
   build-production:
     name: "Production build and test"
