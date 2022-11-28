@@ -17,7 +17,7 @@ namespace SIL.XForge.Scripture.Services
         Task<WordGraphDto> GetWordGraphAsync(
             string curUserId,
             string projectId,
-            IEnumerable<string> segment,
+            IReadOnlyCollection<string> segment,
             CancellationToken cancellationToken
         );
         Task<BuildDto> StartBuildAsync(string curUserId, string projectId, CancellationToken cancellationToken);
