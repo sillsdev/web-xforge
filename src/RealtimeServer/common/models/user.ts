@@ -19,7 +19,7 @@ export function getAuthType(authId: string): AuthType {
     return AuthType.Unknown;
   }
 
-  const authIdType = authId.substr(0, authId.lastIndexOf('|'));
+  const authIdType = authId.substring(0, authId.lastIndexOf('|'));
   if (authIdType.includes('paratext')) {
     return AuthType.Paratext;
   }
