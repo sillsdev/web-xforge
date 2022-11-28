@@ -77,6 +77,27 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task AddProjectAsync_DoesNotExecuteInMemoryMachineIfFeatureDisabled()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.MachineTranslationService
+                .CreateTranslationEngineAsync(
+                    Project01,
+                    Arg.Any<string>(),
+                    Arg.Any<string>(),
+                    Arg.Any<CancellationToken>()
+                )
+                .Returns(Task.FromResult(TranslationEngine01));
+
+            // SUT
+            await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
+
+            await env.EngineService.DidNotReceiveWithAnyArgs().AddProjectAsync(Arg.Any<MachineProject>());
+        }
+
+        [Test]
         public async Task BuildProjectAsync_CallsMachineApiIfTranslationEngineIdPresent()
         {
             // Set up test environment
@@ -107,6 +128,19 @@ namespace SIL.XForge.Scripture.Services
             await env.MachineBuildService
                 .DidNotReceiveWithAnyArgs()
                 .StartBuildAsync(TranslationEngine02, CancellationToken.None);
+        }
+
+        [Test]
+        public async Task BuildProjectAsync_DoesNotExecuteInMemoryMachineIfFeatureDisabled()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+
+            // SUT
+            await env.Service.BuildProjectAsync(User01, Project01, CancellationToken.None);
+
+            await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync(Project01);
         }
 
         [Test]
@@ -217,7 +251,21 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task RemoveProjectAsync_ExecutesInProcessMachine()
+        public async Task RemoveProjectAsync_DoesNotExecuteInMemoryMachineIfFeatureDisabled()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+
+            // SUT
+            await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
+
+            // Ensure that the in memory instance was not called
+            await env.EngineService.DidNotReceiveWithAnyArgs().RemoveProjectAsync(Project02);
+        }
+
+        [Test]
+        public async Task RemoveProjectAsync_ExecutesInMemoryMachine()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -556,6 +604,7 @@ namespace SIL.XForge.Scripture.Services
 
                 FeatureManager = Substitute.For<IFeatureManager>();
                 FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(true));
+                FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(true));
 
                 ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                     new[]
