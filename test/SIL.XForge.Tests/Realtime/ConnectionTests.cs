@@ -314,30 +314,30 @@ namespace SIL.XForge.Realtime
             var env = new TestEnvironment();
             string collection = "test_project";
             string id = "id1";
-            var data = new TestProject() { Id = id, SyncDisabled = false, };
+            var data = new TestProject { Id = id, SyncDisabled = false };
             var snapshot = new Snapshot<TestProject>
             {
-                Data = new TestProject() { Id = id, SyncDisabled = true, },
+                Data = new TestProject { Id = id, SyncDisabled = true },
                 Version = 2,
             };
+            var expected = new Snapshot<TestProject> { Data = snapshot.Data, Version = 3, };
             var builder = new Json0OpBuilder<TestProject>(data);
             builder.Set(p => p.SyncDisabled, true);
             List<Json0Op> op = builder.Op;
             env.RealtimeService.Server
-                .SubmitOpAsync<TestProject>(Arg.Any<int>(), collection, id, op)
-                .Returns(Task.FromResult(snapshot));
+                .ApplyOpAsync(Arg.Any<string>(), Arg.Any<TestProject>(), Arg.Any<object>())
+                .Returns(Task.FromResult(snapshot.Data));
 
             // SUT
             env.Service.BeginTransaction();
             env.Service.ExcludePropertyFromTransaction<TestProject>(p => p.SyncDisabled);
             var result = await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version);
 
-            // Verify result
-            Assert.AreEqual(result.Version, snapshot.Version);
-            Assert.AreEqual(result.Data, snapshot.Data);
+            Assert.AreEqual(expected.Version, result.Version);
+            Assert.AreEqual(expected.Data, result.Data);
 
             // Verify queue
-            Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
+            Assert.Zero(env.Service.QueuedOperations.Count);
 
             // Verify that the call was passed to the underlying realtime server
             await env.RealtimeService.Server
