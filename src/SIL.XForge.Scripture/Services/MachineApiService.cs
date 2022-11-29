@@ -60,6 +60,51 @@ namespace SIL.XForge.Scripture.Services
             _realtimeService = realtimeService;
         }
 
+        public async Task<BuildDto?> GetBuildAsync(
+            string curUserId,
+            string projectId,
+            string buildId,
+            long? minRevision,
+            CancellationToken cancellationToken
+        )
+        {
+            BuildDto? buildDto = null;
+
+            // Ensure that the user has permission
+            await EnsurePermissionAsync(curUserId, projectId);
+
+            // Execute the in-memory Machine instance, if it is enabled
+            // We can only use In Memory or the API - not both or unnecessary delays will result
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            {
+                buildDto = await GetInMemoryBuildAsync(BuildLocatorType.Id, buildId, minRevision, cancellationToken);
+            }
+            else if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+            {
+                // Execute the Machine API, if it is enabled
+                string translationEngineId = await GetTranslationIdAsync(projectId);
+                if (string.IsNullOrWhiteSpace(translationEngineId))
+                {
+                    throw new DataNotFoundException("The translation engine is not configured");
+                }
+
+                buildDto = await _machineBuildService.GetBuildAsync(
+                    translationEngineId,
+                    buildId,
+                    minRevision,
+                    cancellationToken
+                );
+            }
+
+            // Make sure the DTO conforms to the machine-api V2 URLs
+            if (buildDto is not null)
+            {
+                UpdateDto(buildDto, projectId);
+            }
+
+            return buildDto;
+        }
+
         public async Task<BuildDto?> GetCurrentBuildAsync(
             string curUserId,
             string projectId,
@@ -72,61 +117,32 @@ namespace SIL.XForge.Scripture.Services
             // Ensure that the user has permission
             await EnsurePermissionAsync(curUserId, projectId);
 
-            // Execute the Machine API, if it is enabled
-            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
-            {
-                string translationEngineId = await GetTranslationIdAsync(projectId);
-                if (!string.IsNullOrWhiteSpace(translationEngineId))
-                {
-                    try
-                    {
-                        buildDto = await _machineBuildService.GetCurrentBuildAsync(
-                            translationEngineId,
-                            minRevision,
-                            cancellationToken
-                        );
-                    }
-                    catch (DataNotFoundException)
-                    {
-                        // Only rethrow the DataNotFoundException if there is no in-memory machine
-                        if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
-                        {
-                            throw;
-                        }
-                    }
-                }
-                else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
-                {
-                    // Only throw the exception if the in-memory instance will not be called below
-                    throw new DataNotFoundException("The translation engine is not configured");
-                }
-            }
-
-            // Execute the in-memory Machine instance, if it is enabled
+            // We can only use In Memory or the API - not both or unnecessary delays will result
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
             {
+                // Execute the in-memory Machine instance, if it is enabled
                 Engine engine = await GetInMemoryEngineAsync(projectId, cancellationToken);
-                Build? build;
-                if (minRevision is not null)
+                buildDto = await GetInMemoryBuildAsync(
+                    BuildLocatorType.Engine,
+                    engine.Id,
+                    minRevision,
+                    cancellationToken
+                );
+            }
+            else if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+            {
+                // Otherwise, execute the Machine API, if it is enabled
+                string translationEngineId = await GetTranslationIdAsync(projectId);
+                if (string.IsNullOrWhiteSpace(translationEngineId))
                 {
-                    EntityChange<Build> change = await _builds
-                        .GetNewerRevisionAsync(BuildLocatorType.Engine, engine.Id, minRevision.Value, cancellationToken)
-                        .Timeout(_engineOptions.Value.BuildLongPollTimeout, cancellationToken);
-                    build = change.Entity;
-                    if (change.Type == EntityChangeType.Delete)
-                    {
-                        throw new DataNotFoundException("Entity Deleted");
-                    }
-                }
-                else
-                {
-                    build = await _builds.GetByLocatorAsync(BuildLocatorType.Engine, engine.Id, cancellationToken);
+                    throw new DataNotFoundException("The translation engine is not configured");
                 }
 
-                if (build is not null)
-                {
-                    buildDto = CreateDto(build);
-                }
+                buildDto = await _machineBuildService.GetCurrentBuildAsync(
+                    translationEngineId,
+                    minRevision,
+                    cancellationToken
+                );
             }
 
             // Make sure the DTO conforms to the machine-api V2 URLs
@@ -297,6 +313,7 @@ namespace SIL.XForge.Scripture.Services
         private static BuildDto CreateDto(Build build) =>
             new BuildDto
             {
+                Id = build.Id,
                 Revision = build.Revision,
                 PercentCompleted = build.PercentCompleted,
                 Message = build.Message,
@@ -365,9 +382,11 @@ namespace SIL.XForge.Scripture.Services
 
         private static BuildDto UpdateDto(BuildDto buildDto, string projectId)
         {
-            buildDto.Href = MachineApi.GetBuildHref(projectId);
-            buildDto.Id = projectId;
+            buildDto.Href = MachineApi.GetBuildHref(projectId, buildDto.Id);
             buildDto.Engine = new ResourceDto { Href = MachineApi.GetEngineHref(projectId), Id = projectId };
+
+            // We use this special ID format so that the DTO ID can be an optional URL parameter
+            buildDto.Id = $"{projectId}.{buildDto.Id}";
             return buildDto;
         }
 
@@ -401,6 +420,39 @@ namespace SIL.XForge.Scripture.Services
             {
                 throw new ForbiddenException();
             }
+        }
+
+        private async Task<BuildDto?> GetInMemoryBuildAsync(
+            BuildLocatorType locatorType,
+            string locator,
+            long? minRevision,
+            CancellationToken cancellationToken
+        )
+        {
+            BuildDto? buildDto = null;
+            Build? build;
+            if (minRevision is not null)
+            {
+                EntityChange<Build> change = await _builds
+                    .GetNewerRevisionAsync(locatorType, locator, minRevision.Value, cancellationToken)
+                    .Timeout(_engineOptions.Value.BuildLongPollTimeout, cancellationToken);
+                build = change.Entity;
+                if (change.Type == EntityChangeType.Delete)
+                {
+                    throw new DataNotFoundException("Entity Deleted");
+                }
+            }
+            else
+            {
+                build = await _builds.GetByLocatorAsync(locatorType, locator, cancellationToken);
+            }
+
+            if (build is not null)
+            {
+                buildDto = CreateDto(build);
+            }
+
+            return buildDto;
         }
 
         private async Task<Engine> GetInMemoryEngineAsync(string projectId, CancellationToken cancellationToken)
