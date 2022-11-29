@@ -6,6 +6,7 @@ using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using SIL.Machine.WebApi;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -49,13 +50,15 @@ namespace SIL.XForge.Scripture.Services
             // A 408 HTTP status code is returned if there is no build started/running within the timeout period
             if (response.StatusCode == HttpStatusCode.RequestTimeout)
             {
+                // This is equivalent to 204 in the V1 API and represents EntityChangeType.None
                 return null;
             }
 
             // No body is returned on a 204 HTTP status code
             if (response.StatusCode == HttpStatusCode.NoContent)
             {
-                return null;
+                // This is equivalent to 404 in the V1 API and represents EntityChangeType.Delete
+                throw new DataNotFoundException("Entity Deleted");
             }
 
             // Ensure we have a 2XX HTTP status code
