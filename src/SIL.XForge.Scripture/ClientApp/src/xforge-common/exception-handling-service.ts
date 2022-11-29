@@ -210,7 +210,6 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     }
 
     if (
-      typeof error === 'object' &&
       // these are the properties Bugsnag checks for, and will have problems if they don't exist
       !(
         (hasStringProp(error, 'name') || hasStringProp(error, 'errorClass')) &&
