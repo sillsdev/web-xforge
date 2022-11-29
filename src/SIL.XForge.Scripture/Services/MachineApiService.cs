@@ -60,7 +60,7 @@ namespace SIL.XForge.Scripture.Services
             _realtimeService = realtimeService;
         }
 
-        public async Task<BuildDto?> GetBuildAsync(
+        public async Task<BuildDto?> GetCurrentBuildAsync(
             string curUserId,
             string projectId,
             long? minRevision,
@@ -78,11 +78,22 @@ namespace SIL.XForge.Scripture.Services
                 string translationEngineId = await GetTranslationIdAsync(projectId);
                 if (!string.IsNullOrWhiteSpace(translationEngineId))
                 {
-                    buildDto = await _machineBuildService.GetCurrentBuildAsync(
-                        translationEngineId,
-                        minRevision,
-                        cancellationToken
-                    );
+                    try
+                    {
+                        buildDto = await _machineBuildService.GetCurrentBuildAsync(
+                            translationEngineId,
+                            minRevision,
+                            cancellationToken
+                        );
+                    }
+                    catch (DataNotFoundException)
+                    {
+                        // Only rethrow the DataNotFoundException if there is no in-memory machine
+                        if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                        {
+                            throw;
+                        }
+                    }
                 }
                 else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
                 {
@@ -102,6 +113,10 @@ namespace SIL.XForge.Scripture.Services
                         .GetNewerRevisionAsync(BuildLocatorType.Engine, engine.Id, minRevision.Value, cancellationToken)
                         .Timeout(_engineOptions.Value.BuildLongPollTimeout, cancellationToken);
                     build = change.Entity;
+                    if (change.Type == EntityChangeType.Delete)
+                    {
+                        throw new DataNotFoundException("Entity Deleted");
+                    }
                 }
                 else
                 {
