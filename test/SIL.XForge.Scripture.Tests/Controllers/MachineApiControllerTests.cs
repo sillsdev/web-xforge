@@ -20,12 +20,31 @@ namespace SIL.XForge.Scripture.Controllers
         private const string User01 = "user01";
 
         [Test]
+        public async Task GetBuildAsync_BuildEnded()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
+                .Throws(new DataNotFoundException("Entity Deleted"));
+
+            // SUT
+            ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+                Project01,
+                null,
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+        }
+
+        [Test]
         public async Task GetBuildAsync_MachineApiDown()
         {
             // Set up test environment
             var env = new TestEnvironment();
             env.MachineApiService
-                .GetBuildAsync(User01, Project01, null, CancellationToken.None)
+                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
                 .Throws(new BrokenCircuitException());
 
             // SUT
@@ -46,7 +65,7 @@ namespace SIL.XForge.Scripture.Controllers
             // Set up test environment
             var env = new TestEnvironment();
             env.MachineApiService
-                .GetBuildAsync(User01, Project01, null, CancellationToken.None)
+                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
                 .Returns(Task.FromResult<BuildDto>(null));
 
             // SUT
@@ -65,7 +84,7 @@ namespace SIL.XForge.Scripture.Controllers
             // Set up test environment
             var env = new TestEnvironment();
             env.MachineApiService
-                .GetBuildAsync(User01, Project01, null, CancellationToken.None)
+                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
                 .Throws(new ForbiddenException());
 
             // SUT
@@ -84,7 +103,7 @@ namespace SIL.XForge.Scripture.Controllers
             // Set up test environment
             var env = new TestEnvironment();
             env.MachineApiService
-                .GetBuildAsync(User01, Project01, null, CancellationToken.None)
+                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
                 .Throws(new DataNotFoundException(string.Empty));
 
             // SUT
@@ -103,7 +122,7 @@ namespace SIL.XForge.Scripture.Controllers
             // Set up test environment
             var env = new TestEnvironment();
             env.MachineApiService
-                .GetBuildAsync(User01, Project01, null, CancellationToken.None)
+                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
                 .Returns(Task.FromResult(new BuildDto()));
 
             // SUT

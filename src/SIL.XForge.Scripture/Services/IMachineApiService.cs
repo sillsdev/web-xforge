@@ -7,7 +7,7 @@ namespace SIL.XForge.Scripture.Services
 {
     public interface IMachineApiService
     {
-        Task<BuildDto?> GetBuildAsync(
+        Task<BuildDto?> GetCurrentBuildAsync(
             string curUserId,
             string projectId,
             long? minRevision,

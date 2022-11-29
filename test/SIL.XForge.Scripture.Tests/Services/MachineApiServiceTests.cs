@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using SIL.Machine.Annotations;
 using SIL.Machine.Translation;
@@ -32,7 +33,7 @@ namespace SIL.XForge.Scripture.Services
         private const string User01 = "user01";
 
         [Test]
-        public async Task GetBuildAsync_InMemoryNoRevisionNoBuildRunning()
+        public async Task GetCurrentBuildAsync_InMemoryNoRevisionNoBuildRunning()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -42,29 +43,53 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(Task.FromResult<Build>(null));
 
             // SUT
-            BuildDto? actual = await env.Service.GetBuildAsync(User01, Project01, null, CancellationToken.None);
+            BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+                User01,
+                Project01,
+                minRevision: null,
+                CancellationToken.None
+            );
 
             Assert.IsNull(actual);
         }
 
         [Test]
-        public async Task GetBuildAsync_InMemorySpecificRevisionNoBuildRunning()
+        public void GetCurrentBuildAsync_InMemorySpecificRevisionBuildEnded()
         {
             // Set up test environment
             var env = new TestEnvironment();
             env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+
+            // NOTE: It is not possible to test No Build Running, as the Subscription Change cannot be modified
             env.Builds
                 .SubscribeByEngineIdAsync(TranslationEngine01, CancellationToken.None)
                 .Returns(Task.FromResult(new Subscription<Build>(TranslationEngine01, null, _ => { })));
 
             // SUT
-            BuildDto? actual = await env.Service.GetBuildAsync(User01, Project01, 1, CancellationToken.None);
-
-            Assert.IsNull(actual);
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetCurrentBuildAsync(User01, Project01, minRevision: 1, CancellationToken.None)
+            );
         }
 
         [Test]
-        public async Task GetBuildAsync_MachineApiNoBuildRunning()
+        public void GetCurrentBuildAsync_MachineApiBuildEnded()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            int minRevision = 0;
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.MachineBuildService
+                .GetCurrentBuildAsync(TranslationEngine01, minRevision, CancellationToken.None)
+                .Throws(new DataNotFoundException("Entity Deleted"));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetCurrentBuildAsync(User01, Project01, minRevision, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task GetCurrentBuildAsync_MachineApiNoBuildRunning()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -74,37 +99,54 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(Task.FromResult<BuildDto>(null));
 
             // SUT
-            BuildDto? actual = await env.Service.GetBuildAsync(User01, Project01, null, CancellationToken.None);
+            BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+                User01,
+                Project01,
+                minRevision: null,
+                CancellationToken.None
+            );
 
             Assert.IsNull(actual);
         }
 
         [Test]
-        public void GetBuildAsync_NoPermission()
+        public void GetCurrentBuildAsync_NoPermission()
         {
             // Set up test environment
             var env = new TestEnvironment();
 
             // SUT
             Assert.ThrowsAsync<ForbiddenException>(
-                () => env.Service.GetBuildAsync("invalid_user_id", Project01, null, CancellationToken.None)
+                () =>
+                    env.Service.GetCurrentBuildAsync(
+                        "invalid_user_id",
+                        Project01,
+                        minRevision: null,
+                        CancellationToken.None
+                    )
             );
         }
 
         [Test]
-        public void GetBuildAsync_NoProject()
+        public void GetCurrentBuildAsync_NoProject()
         {
             // Set up test environment
             var env = new TestEnvironment();
 
             // SUT
             Assert.ThrowsAsync<DataNotFoundException>(
-                () => env.Service.GetBuildAsync(User01, "invalid_project_id", null, CancellationToken.None)
+                () =>
+                    env.Service.GetCurrentBuildAsync(
+                        User01,
+                        "invalid_project_id",
+                        minRevision: null,
+                        CancellationToken.None
+                    )
             );
         }
 
         [Test]
-        public void GetBuildAsync_InMemoryNoEngine()
+        public void GetCurrentBuildAsync_InMemoryNoEngine()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -115,12 +157,12 @@ namespace SIL.XForge.Scripture.Services
 
             // SUT
             Assert.ThrowsAsync<DataNotFoundException>(
-                () => env.Service.GetBuildAsync(User01, Project01, null, CancellationToken.None)
+                () => env.Service.GetCurrentBuildAsync(User01, Project01, minRevision: null, CancellationToken.None)
             );
         }
 
         [Test]
-        public void GetBuildAsync_MachineApiNoTranslationEngine()
+        public void GetCurrentBuildAsync_MachineApiNoTranslationEngine()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -128,12 +170,12 @@ namespace SIL.XForge.Scripture.Services
 
             // SUT
             Assert.ThrowsAsync<DataNotFoundException>(
-                () => env.Service.GetBuildAsync(User01, Project03, null, CancellationToken.None)
+                () => env.Service.GetCurrentBuildAsync(User01, Project03, minRevision: null, CancellationToken.None)
             );
         }
 
         [Test]
-        public async Task GetBuildAsync_InMemorySuccess()
+        public async Task GetCurrentBuildAsync_InMemorySuccess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -158,7 +200,12 @@ namespace SIL.XForge.Scripture.Services
             env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
 
             // SUT
-            BuildDto? actual = await env.Service.GetBuildAsync(User01, Project01, null, CancellationToken.None);
+            BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+                User01,
+                Project01,
+                minRevision: null,
+                CancellationToken.None
+            );
 
             Assert.IsNotNull(actual);
             Assert.AreEqual(message, actual.Message);
@@ -172,7 +219,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetBuildAsync_MachineApiSuccess()
+        public async Task GetCurrentBuildAsync_MachineApiSuccess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -181,7 +228,7 @@ namespace SIL.XForge.Scripture.Services
             int revision = 553;
             string state = "ACTIVE";
             env.MachineBuildService
-                .GetCurrentBuildAsync(TranslationEngine01, null, CancellationToken.None)
+                .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None)
                 .Returns(
                     Task.FromResult(
                         new BuildDto
@@ -199,7 +246,12 @@ namespace SIL.XForge.Scripture.Services
             env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
 
             // SUT
-            BuildDto? actual = await env.Service.GetBuildAsync(User01, Project01, null, CancellationToken.None);
+            BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+                User01,
+                Project01,
+                minRevision: null,
+                CancellationToken.None
+            );
 
             Assert.IsNotNull(actual);
             Assert.AreEqual(message, actual.Message);
@@ -213,20 +265,20 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetBuildAsync_ExecutesApiAndInMemory()
+        public async Task GetCurrentBuildAsync_ExecutesApiAndInMemory()
         {
             // Set up test environment
             var env = new TestEnvironment();
 
             // SUT
-            _ = await env.Service.GetBuildAsync(User01, Project01, null, CancellationToken.None);
+            _ = await env.Service.GetCurrentBuildAsync(User01, Project01, minRevision: null, CancellationToken.None);
 
             await env.Builds
                 .Received(1)
                 .GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None);
             await env.MachineBuildService
                 .Received(1)
-                .GetCurrentBuildAsync(TranslationEngine01, null, CancellationToken.None);
+                .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None);
         }
 
         [Test]
