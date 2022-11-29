@@ -574,7 +574,7 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment(ADMIN_USER);
       expect(env.questionFilterLabel).toBeUndefined();
       env.setQuestionFilter(QuestionFilter.HasAnswers);
-      expect(env.questionFilterLabel).toEqual('Filter: Has Answers');
+      expect(env.questionFilterLabel).toEqual('Filter: Has answers');
     }));
 
     it('show no questions message for filter', fakeAsync(() => {

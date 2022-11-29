@@ -20,7 +20,7 @@
       </a>
     </mdc-list-item>
   </mdc-list>
-  <div *ngIf="!hasVisibleQuestions" class="no-questions-found">
+  <div *ngIf="!hasQuestions && haveQuestionsLoaded" class="no-questions-found">
     {{ t("no_questions_found") }}
   </div>
 </ng-container>

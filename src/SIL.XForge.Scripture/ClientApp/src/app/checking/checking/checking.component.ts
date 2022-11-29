@@ -14,7 +14,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { merge, NEVER, Observable, Subscription } from 'rxjs';
+import { merge, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -101,7 +101,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   textDocId?: TextDocId;
   totalVisibleQuestionsString: string = '0';
   userDoc?: UserDoc;
-  visibleQuestions: QuestionDoc[] = [];
+  visibleQuestions?: QuestionDoc[];
 
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
@@ -209,10 +209,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   get questionDocs(): Readonly<QuestionDoc[]> {
     return this.questionsQuery?.docs || [];
-  }
-
-  get questionDocs$(): Observable<Readonly<QuestionDoc[]>> {
-    return this.questionsQuery?.docs$ || NEVER;
   }
 
   get textsByBookId(): TextsByBookId {
@@ -750,7 +746,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   totalVisibleQuestions(): number {
-    return this.visibleQuestions.length;
+    return (this.visibleQuestions ?? []).length;
   }
 
   verseRefClicked(verseRef: VerseRef): void {
@@ -813,7 +809,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       return;
     } else if (this.showAllBooks) {
       const availableBooks = new Set<string>();
-      for (const questionDoc of this.visibleQuestions) {
+      for (const questionDoc of this.visibleQuestions ?? []) {
         const questionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
         if (questionVerseRef != null && !availableBooks.has(questionVerseRef.book)) {
           availableBooks.add(questionVerseRef.book);
@@ -846,7 +842,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private updateQuestionRefs(): void {
     // Only pass in relevant verse references to the text component
     const questionVerseRefs: VerseRef[] = [];
-    for (const questionDoc of this.visibleQuestions) {
+    for (const questionDoc of this.visibleQuestions ?? []) {
       const questionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
       if (questionVerseRef != null && questionVerseRef.bookNum === this.book) {
         questionVerseRefs.push(questionVerseRef);
@@ -1050,7 +1046,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.summary.answered = 0;
     this.summary.read = 0;
     this.summary.unread = 0;
-    for (const questionDoc of this.visibleQuestions) {
+    for (const questionDoc of this.visibleQuestions ?? []) {
       if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
         this.summary.answered++;
       } else if (

@@ -18,7 +18,6 @@
       top: 0;
     }
     .collapse-question-menu {
-      @include icon-button.icon-size(24px, 24px, 8px);
       @include media-breakpoint-up(md) {
         display: none;
       }
@@ -38,13 +37,6 @@
         span {
           font-size: 14px;
           opacity: 0.5;
-        }
-      }
-      mdc-list {
-        h2 {
-          justify-content: flex-start;
-          font-weight: bold;
-          color: #000;
         }
       }
     }

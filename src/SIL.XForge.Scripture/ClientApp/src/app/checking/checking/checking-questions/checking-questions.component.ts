@@ -50,6 +50,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   activeQuestionDoc?: QuestionDoc;
   activeQuestionDoc$ = new Subject<QuestionDoc>();
   @ViewChild(MdcList, { static: true }) mdcList?: MdcList;
+  haveQuestionsLoaded: boolean = false;
 
   private project?: SFProjectProfile;
   private _projectUserConfigDoc?: SFProjectUserConfigDoc;
@@ -112,18 +113,22 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     return this.questionDocs.findIndex(question => question.id === activeQuestionDocId);
   }
 
-  get hasVisibleQuestions(): boolean {
+  get hasQuestions(): boolean {
     return this.questionDocs.length > 0;
   }
 
   @Input()
-  set questionDocs(questionDocs: Readonly<QuestionDoc[]>) {
+  set questionDocs(questionDocs: Readonly<QuestionDoc[]> | undefined) {
+    if (questionDocs == null) {
+      return;
+    }
     if (questionDocs.length > 0) {
       this.activateStoredQuestion(questionDocs);
     } else {
       this.activeQuestionDoc = undefined;
     }
     this._questionDocs = questionDocs;
+    this.haveQuestionsLoaded = true;
     this.changeDetector.markForCheck();
   }
 
