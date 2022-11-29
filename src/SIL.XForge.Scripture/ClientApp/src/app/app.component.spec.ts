@@ -402,6 +402,21 @@ describe('AppComponent', () => {
     expect(env.lastSyncFailedBadgeIsPresent).toBeTrue();
   }));
 
+  it('add spin class to sync icon when in progress', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    expect(env.syncInProgressClassIsPresent).toBeFalse();
+    env.setFakeSyncInProgress('project01', true);
+    // SUT 1
+    expect(env.syncInProgressClassIsPresent).toBeTrue();
+
+    env.setFakeSyncInProgress('project01', false);
+    // SUT 2
+    expect(env.syncInProgressClassIsPresent).toBeFalse();
+  }));
+
   it('checks online auth status when browser comes online but app is not fully online', fakeAsync(() => {
     const env = new TestEnvironment('offline');
     env.init();
@@ -700,6 +715,11 @@ class TestEnvironment {
     return this.realtimeService.get(UserDoc.COLLECTION, 'user01');
   }
 
+  get syncInProgressClassIsPresent(): boolean {
+    const iconIfClassSet = this.menuDrawer.query(By.css('#sync-icon.sync-in-progress'));
+    return iconIfClassSet != null;
+  }
+
   get lastSyncFailedBadgeIsPresent(): boolean {
     const iconIfBadgeHidden = this.menuDrawer.query(By.css('#sync-icon.mat-badge-hidden'));
     if (iconIfBadgeHidden != null) {
@@ -832,6 +852,12 @@ class TestEnvironment {
   removeUserFromProject(projectId: string): void {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles['user01']), false);
+    this.wait();
+  }
+
+  setFakeSyncInProgress(projectId: string, inProgress: boolean): void {
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+    projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.queuedCount!, inProgress ? 1 : 0));
     this.wait();
   }
 
