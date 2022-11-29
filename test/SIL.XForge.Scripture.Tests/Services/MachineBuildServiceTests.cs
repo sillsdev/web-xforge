@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
 using SIL.Machine.WebApi;
+using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -140,7 +141,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetCurrentBuildAsync_NoBuildRunning()
+        public void GetCurrentBuildAsync_BuildEnded()
         {
             // Set up a mock Machine API
             string response = string.Empty;
@@ -151,18 +152,15 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(httpClient);
 
             // SUT
-            BuildDto? actual = await env.Service.GetCurrentBuildAsync(
-                TranslationEngine01,
-                minRevision: null,
-                CancellationToken.None
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetCurrentBuildAsync(TranslationEngine01, minRevision: 0, CancellationToken.None)
             );
 
-            Assert.Null(actual);
             Assert.AreEqual(1, handler.NumberOfCalls);
         }
 
         [Test]
-        public async Task GetCurrentBuildAsync_NoBuildStarted()
+        public async Task GetCurrentBuildAsync_NoBuildRunning()
         {
             // Set up a mock Machine API
             string response = string.Empty;
