@@ -13,6 +13,7 @@ using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
+using SIL.XForge.Services;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 
@@ -39,6 +40,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
+                                    <p>(User 02)</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -61,6 +63,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
+                                    <p>(User 02)</p>
                                     <p>Test answer 1.</p>
                                 </content>
                             </comment>
@@ -74,11 +77,15 @@ namespace SIL.XForge.Scripture.Services
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
+                                    <p>(User 04)</p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
-                                <content>Test comment 2.</content>
+                                <content>
+                                    <p>(User 02)</p>
+                                    <p>Test comment 2.</p>
+                                </content>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer03"">
@@ -86,6 +93,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"" deleted=""true"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
+                                    <p>(User 02)</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -115,6 +123,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">- xForge audio-only question -</span></p>
+                                    <p>(User 02)</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -137,6 +146,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">- xForge audio-only question -</span></p>
+                                    <p>(User 02)</p>
                                     <p>- xForge audio-only response -</p>
                                 </content>
                             </comment>
@@ -150,11 +160,15 @@ namespace SIL.XForge.Scripture.Services
                                 <content>
                                     <p><span style=""bold"">- xForge audio-only question -</span></p>
                                     <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
+                                    <p>(User 04)</p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
-                                <content>Test comment 2.</content>
+                                <content>
+                                    <p>(User 02)</p>
+                                    <p>Test comment 2.</p>
+                                </content>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer03"">
@@ -162,6 +176,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"" deleted=""true"">
                                 <content>
                                     <p><span style=""bold"">- xForge audio-only question -</span></p>
+                                    <p>(User 02)</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -191,6 +206,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
+                                    <p>(User 02)</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -218,6 +234,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
+                                    <p>(User 02)</p>
                                     <p>Test answer 1.</p>
                                 </content>
                             </comment>
@@ -231,11 +248,15 @@ namespace SIL.XForge.Scripture.Services
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
+                                    <p>(User 04)</p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
-                                <content>Test comment 2.</content>
+                                <content>
+                                    <p>(User 02)</p>
+                                    <p>Test comment 2.</p>
+                                </content>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer03"">
@@ -243,6 +264,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"" deleted=""true"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
+                                    <p>(User 02)</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -272,6 +294,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
+                                    <p>(User 02)</p>
                                     <p>Old test answer 1.</p>
                                 </content>
                             </comment>
@@ -282,11 +305,15 @@ namespace SIL.XForge.Scripture.Services
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
+                                    <p>(User 04)</p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
                             <comment user=""PT User 3"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
-                                <content>Old test comment 2.</content>
+                                <content>
+                                    <p>(User 02)</p>
+                                    <p>Old test comment 2.</p>
+                                </content>
                             </comment>
                         </thread>
                     </notes>";
@@ -307,6 +334,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
+                                    <p>(User 02)</p>
                                     <p>Test answer 1.</p>
                                 </content>
                             </comment>
@@ -317,7 +345,10 @@ namespace SIL.XForge.Scripture.Services
                         <thread id=""ANSWER_answer02"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 3"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
-                                <content>Test comment 2.</content>
+                                <content>
+                                    <p>(User 02)</p>
+                                    <p>Test comment 2.</p>
+                                </content>
                             </comment>
                         </thread>
                     </notes>";
@@ -343,6 +374,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
+                                    <p>(User 02)</p>
                                     <p>Test answer 1.</p>
                                 </content>
                             </comment>
@@ -356,11 +388,15 @@ namespace SIL.XForge.Scripture.Services
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
+                                    <p>(User 04)</p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
                             <comment user=""PT User 3"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
-                                <content>Test comment 2.</content>
+                                <content>
+                                    <p>(User 02)</p>
+                                    <p>Test comment 2.</p>
+                                </content>
                             </comment>
                             <comment user=""PT User 1"" date=""2019-01-02T10:00:00.0000000+00:00"">
                                 <content>Test comment 3.</content>
@@ -371,6 +407,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
+                                    <p>(User 02)</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -405,6 +442,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"" deleted=""true"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
+                                    <p>(User 02)</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -431,6 +469,21 @@ namespace SIL.XForge.Scripture.Services
                 ParatextService = Substitute.For<IParatextService>();
                 ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("PT User 1");
                 ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user03")).Returns("PT User 3");
+
+                UserService = Substitute.For<IUserService>();
+                UserService
+                    .GetUsernameFromUserId(Arg.Any<string>(), Arg.Is<string>(u => u == "user01"))
+                    .Returns("User 01");
+                UserService
+                    .GetUsernameFromUserId(Arg.Any<string>(), Arg.Is<string>(u => u == "user03"))
+                    .Returns("User 03");
+                UserService
+                    .GetUsernameFromUserId(Arg.Any<string>(), Arg.Is<string>(u => u == "user02"))
+                    .Returns("User 02");
+                UserService
+                    .GetUsernameFromUserId(Arg.Any<string>(), Arg.Is<string>(u => u == "user04"))
+                    .Returns("User 04");
+
                 var options = Microsoft.Extensions.Options.Options.Create(
                     new LocalizationOptions { ResourcesPath = "Resources" }
                 );
@@ -441,6 +494,7 @@ namespace SIL.XForge.Scripture.Services
                 Mapper = new ParatextNotesMapper(
                     UserSecrets,
                     ParatextService,
+                    UserService,
                     Localizer,
                     siteOptions,
                     new TestGuidService()
@@ -451,6 +505,7 @@ namespace SIL.XForge.Scripture.Services
             public MemoryRepository<UserSecret> UserSecrets { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
             public IParatextService ParatextService { get; }
+            public IUserService UserService { get; }
             public IStringLocalizer<SharedResource> Localizer { get; }
             public IEnumerable<ParatextUserProfile> PtProjectUsers { get; set; }
 

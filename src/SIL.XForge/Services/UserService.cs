@@ -230,6 +230,15 @@ namespace SIL.XForge.Services
             await _realtimeService.DeleteUserAsync(userId);
         }
 
+        public async Task<string> GetUsernameFromUserId(string curUserId, string userId)
+        {
+            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
+            {
+                IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
+                return userDoc.Data.DisplayName;
+            }
+        }
+
         /// <summary>
         /// Gets the identity provider ID from the specified Auth0 ID.
         /// </summary>
