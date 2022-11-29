@@ -36,6 +36,7 @@ namespace SIL.XForge.Scripture.Controllers
         [HttpGet(MachineApi.GetBuild)]
         public async Task<ActionResult<BuildDto?>> GetBuildAsync(
             string projectId,
+            string? buildId,
             [FromQuery] int? minRevision,
             CancellationToken cancellationToken
         )
@@ -45,12 +46,25 @@ namespace SIL.XForge.Scripture.Controllers
                 BuildDto? build;
                 try
                 {
-                    build = await _machineApiService.GetCurrentBuildAsync(
-                        _userAccessor.UserId,
-                        projectId,
-                        minRevision,
-                        cancellationToken
-                    );
+                    if (string.IsNullOrWhiteSpace(buildId))
+                    {
+                        build = await _machineApiService.GetCurrentBuildAsync(
+                            _userAccessor.UserId,
+                            projectId,
+                            minRevision,
+                            cancellationToken
+                        );
+                    }
+                    else
+                    {
+                        build = await _machineApiService.GetBuildAsync(
+                            _userAccessor.UserId,
+                            projectId,
+                            buildId,
+                            minRevision,
+                            cancellationToken
+                        );
+                    }
                 }
                 catch (DataNotFoundException)
                 {

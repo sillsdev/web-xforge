@@ -34,6 +34,20 @@ namespace SIL.XForge.Scripture.Services
             await _exceptionHandler.EnsureSuccessStatusCode(response);
         }
 
+        public async Task<BuildDto?> GetBuildAsync(
+            string translationEngineId,
+            string buildId,
+            long? minRevision,
+            CancellationToken cancellationToken
+        )
+        {
+            ValidateId(translationEngineId);
+            ValidateId(buildId);
+
+            string requestUri = $"translation-engines/{translationEngineId}/builds/{buildId}";
+            return await GetBuildAsync(requestUri, minRevision, cancellationToken);
+        }
+
         public async Task<BuildDto?> GetCurrentBuildAsync(
             string translationEngineId,
             long? minRevision,
@@ -43,6 +57,45 @@ namespace SIL.XForge.Scripture.Services
             ValidateId(translationEngineId);
 
             string requestUri = $"translation-engines/{translationEngineId}/current-build";
+            return await GetBuildAsync(requestUri, minRevision, cancellationToken);
+        }
+
+        public async Task<BuildDto> StartBuildAsync(string translationEngineId, CancellationToken cancellationToken)
+        {
+            ValidateId(translationEngineId);
+
+            string requestUri = $"translation-engines/{translationEngineId}/builds";
+            using var response = await MachineClient.PostAsync(requestUri, content: null, cancellationToken);
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
+
+            // Return the build job information
+            try
+            {
+                BuildDto? build = await response.Content.ReadFromJsonAsync<BuildDto>(Options, cancellationToken);
+                if (build is null)
+                {
+                    throw new InvalidDataException();
+                }
+
+                // The Machine 2.5.12 DTO requires this to be uppercase
+                // Upgrading to a later version changes this to an enum
+                // When this occurs, remove this line
+                build.State = build.State.ToUpperInvariant();
+
+                return build;
+            }
+            catch (Exception e)
+            {
+                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response), e);
+            }
+        }
+
+        private async Task<BuildDto?> GetBuildAsync(
+            string requestUri,
+            long? minRevision,
+            CancellationToken cancellationToken
+        )
+        {
             if (minRevision.HasValue)
             {
                 requestUri += $"?minRevision={minRevision}";
@@ -78,36 +131,6 @@ namespace SIL.XForge.Scripture.Services
                     // When this occurs, remove this block
                     build.State = build.State.ToUpperInvariant();
                 }
-
-                return build;
-            }
-            catch (Exception e)
-            {
-                throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response), e);
-            }
-        }
-
-        public async Task<BuildDto> StartBuildAsync(string translationEngineId, CancellationToken cancellationToken)
-        {
-            ValidateId(translationEngineId);
-
-            string requestUri = $"translation-engines/{translationEngineId}/builds";
-            using var response = await MachineClient.PostAsync(requestUri, content: null, cancellationToken);
-            await _exceptionHandler.EnsureSuccessStatusCode(response);
-
-            // Return the build job information
-            try
-            {
-                BuildDto? build = await response.Content.ReadFromJsonAsync<BuildDto>(Options, cancellationToken);
-                if (build is null)
-                {
-                    throw new InvalidDataException();
-                }
-
-                // The Machine 2.5.12 DTO requires this to be uppercase
-                // Upgrading to a later version changes this to an enum
-                // When this occurs, remove this line
-                build.State = build.State.ToUpperInvariant();
 
                 return build;
             }
