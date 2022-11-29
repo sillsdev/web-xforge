@@ -16,6 +16,7 @@ namespace SIL.XForge.Scripture.Controllers
     [TestFixture]
     public class MachineApiControllerTests
     {
+        private const string Build01 = "build01";
         private const string Project01 = "project01";
         private const string User01 = "user01";
 
@@ -25,13 +26,14 @@ namespace SIL.XForge.Scripture.Controllers
             // Set up test environment
             var env = new TestEnvironment();
             env.MachineApiService
-                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
+                .GetBuildAsync(User01, Project01, Build01, null, CancellationToken.None)
                 .Throws(new DataNotFoundException("Entity Deleted"));
 
             // SUT
             ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
                 Project01,
-                null,
+                Build01,
+                minRevision: null,
                 CancellationToken.None
             );
 
@@ -44,13 +46,14 @@ namespace SIL.XForge.Scripture.Controllers
             // Set up test environment
             var env = new TestEnvironment();
             env.MachineApiService
-                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
+                .GetBuildAsync(User01, Project01, Build01, null, CancellationToken.None)
                 .Throws(new BrokenCircuitException());
 
             // SUT
             ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
                 Project01,
-                null,
+                Build01,
+                minRevision: null,
                 CancellationToken.None
             );
 
@@ -65,13 +68,14 @@ namespace SIL.XForge.Scripture.Controllers
             // Set up test environment
             var env = new TestEnvironment();
             env.MachineApiService
-                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
+                .GetBuildAsync(User01, Project01, Build01, null, CancellationToken.None)
                 .Returns(Task.FromResult<BuildDto>(null));
 
             // SUT
             ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
                 Project01,
-                null,
+                Build01,
+                minRevision: null,
                 CancellationToken.None
             );
 
@@ -84,13 +88,14 @@ namespace SIL.XForge.Scripture.Controllers
             // Set up test environment
             var env = new TestEnvironment();
             env.MachineApiService
-                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
+                .GetBuildAsync(User01, Project01, Build01, null, CancellationToken.None)
                 .Throws(new ForbiddenException());
 
             // SUT
             ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
                 Project01,
-                null,
+                Build01,
+                minRevision: null,
                 CancellationToken.None
             );
 
@@ -103,13 +108,14 @@ namespace SIL.XForge.Scripture.Controllers
             // Set up test environment
             var env = new TestEnvironment();
             env.MachineApiService
-                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
+                .GetBuildAsync(User01, Project01, Build01, null, CancellationToken.None)
                 .Throws(new DataNotFoundException(string.Empty));
 
             // SUT
             ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
                 Project01,
-                null,
+                Build01,
+                minRevision: null,
                 CancellationToken.None
             );
 
@@ -122,13 +128,136 @@ namespace SIL.XForge.Scripture.Controllers
             // Set up test environment
             var env = new TestEnvironment();
             env.MachineApiService
+                .GetBuildAsync(User01, Project01, Build01, null, CancellationToken.None)
+                .Returns(Task.FromResult(new BuildDto()));
+
+            // SUT
+            ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+                Project01,
+                Build01,
+                minRevision: null,
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        }
+
+        [Test]
+        public async Task GetBuildAsync_NoBuildIdBuildEnded()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .GetBuildAsync(User01, Project01, Build01, null, CancellationToken.None)
+                .Throws(new DataNotFoundException("Entity Deleted"));
+
+            // SUT
+            ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+                Project01,
+                Build01,
+                minRevision: null,
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+        }
+
+        [Test]
+        public async Task GetBuildAsync_NoBuildIdMachineApiDown()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+
+            // SUT
+            ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+                Project01,
+                buildId: null,
+                minRevision: null,
+                CancellationToken.None
+            );
+
+            env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+            Assert.IsInstanceOf<ObjectResult>(actual.Result);
+            Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+        }
+
+        [Test]
+        public async Task GetBuildAsync_NoBuildIdNoBuildRunning()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
+                .Returns(Task.FromResult<BuildDto>(null));
+
+            // SUT
+            ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+                Project01,
+                buildId: null,
+                minRevision: null,
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<NoContentResult>(actual.Result);
+        }
+
+        [Test]
+        public async Task GetBuildAsync_NoBuildIdNoPermission()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
+                .Throws(new ForbiddenException());
+
+            // SUT
+            ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+                Project01,
+                buildId: null,
+                minRevision: null,
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<ForbidResult>(actual.Result);
+        }
+
+        [Test]
+        public async Task GetBuildAsync_NoBuildIdNoProject()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
+                .Throws(new DataNotFoundException(string.Empty));
+
+            // SUT
+            ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+                Project01,
+                buildId: null,
+                minRevision: null,
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+        }
+
+        [Test]
+        public async Task GetBuildAsync_NoBuildIdSuccess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
                 .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
                 .Returns(Task.FromResult(new BuildDto()));
 
             // SUT
             ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
                 Project01,
-                null,
+                buildId: null,
+                minRevision: null,
                 CancellationToken.None
             );
 

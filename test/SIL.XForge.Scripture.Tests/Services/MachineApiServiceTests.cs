@@ -29,8 +29,248 @@ namespace SIL.XForge.Scripture.Services
         private const string Project01 = "project01";
         private const string Project02 = "project02";
         private const string Project03 = "project03";
+        private const string Build01 = "build01";
         private const string TranslationEngine01 = "translationEngine01";
         private const string User01 = "user01";
+
+        [Test]
+        public async Task GetBuildAsync_InMemoryNoRevisionNoBuildRunning()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.Builds
+                .GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None)
+                .Returns(Task.FromResult<Build>(null));
+
+            // SUT
+            BuildDto? actual = await env.Service.GetBuildAsync(
+                User01,
+                Project01,
+                Build01,
+                minRevision: null,
+                CancellationToken.None
+            );
+
+            Assert.IsNull(actual);
+        }
+
+        [Test]
+        public void GetBuildAsync_InMemorySpecificRevisionBuildEnded()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+
+            // NOTE: It is not possible to test No Build Running, as the Subscription Change cannot be modified
+            env.Builds
+                .SubscribeAsync(Build01, CancellationToken.None)
+                .Returns(Task.FromResult(new Subscription<Build>(Build01, null, _ => { })));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetBuildAsync(User01, Project01, Build01, minRevision: 1, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public void GetBuildAsync_MachineApiBuildEnded()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            int minRevision = 0;
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.MachineBuildService
+                .GetBuildAsync(TranslationEngine01, Build01, minRevision, CancellationToken.None)
+                .Throws(new DataNotFoundException("Entity Deleted"));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetBuildAsync(User01, Project01, Build01, minRevision, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task GetBuildAsync_MachineApiNoBuildRunning()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.MachineBuildService
+                .GetBuildAsync(TranslationEngine01, Build01, null, CancellationToken.None)
+                .Returns(Task.FromResult<BuildDto>(null));
+
+            // SUT
+            BuildDto? actual = await env.Service.GetBuildAsync(
+                User01,
+                Project01,
+                Build01,
+                minRevision: null,
+                CancellationToken.None
+            );
+
+            Assert.IsNull(actual);
+        }
+
+        [Test]
+        public void GetBuildAsync_NoPermission()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<ForbiddenException>(
+                () =>
+                    env.Service.GetBuildAsync(
+                        "invalid_user_id",
+                        Project01,
+                        Build01,
+                        minRevision: null,
+                        CancellationToken.None
+                    )
+            );
+        }
+
+        [Test]
+        public void GetBuildAsync_NoProject()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () =>
+                    env.Service.GetBuildAsync(
+                        User01,
+                        "invalid_project_id",
+                        Build01,
+                        minRevision: null,
+                        CancellationToken.None
+                    )
+            );
+        }
+
+        [Test]
+        public void GetBuildAsync_MachineApiNoTranslationEngine()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetBuildAsync(User01, Project03, Build01, minRevision: null, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task GetBuildAsync_InMemorySuccess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            string buildDtoId = $"{Project01}.{Build01}";
+            string message = "Finalizing";
+            double percentCompleted = 0.95;
+            int revision = 553;
+            string state = "ACTIVE";
+            env.Builds
+                .GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None)
+                .Returns(
+                    Task.FromResult(
+                        new Build
+                        {
+                            Id = Build01,
+                            Message = message,
+                            PercentCompleted = percentCompleted,
+                            Revision = revision,
+                            State = state,
+                        }
+                    )
+                );
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+
+            // SUT
+            BuildDto? actual = await env.Service.GetBuildAsync(
+                User01,
+                Project01,
+                Build01,
+                minRevision: null,
+                CancellationToken.None
+            );
+
+            Assert.IsNotNull(actual);
+            Assert.AreEqual(message, actual.Message);
+            Assert.AreEqual(percentCompleted, actual.PercentCompleted);
+            Assert.AreEqual(revision, actual.Revision);
+            Assert.AreEqual(state, actual.State);
+            Assert.AreEqual(buildDtoId, actual.Id);
+            Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
+            Assert.AreEqual(Project01, actual.Engine.Id);
+            Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+        }
+
+        [Test]
+        public async Task GetBuildAsync_MachineApiSuccess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            string buildDtoId = $"{Project01}.{Build01}";
+            string message = "Finalizing";
+            double percentCompleted = 0.95;
+            int revision = 553;
+            string state = "ACTIVE";
+            env.MachineBuildService
+                .GetBuildAsync(TranslationEngine01, Build01, minRevision: null, CancellationToken.None)
+                .Returns(
+                    Task.FromResult(
+                        new BuildDto
+                        {
+                            Href = "https://example.com",
+                            Id = Build01,
+                            Engine = new ResourceDto { Id = "engineId", Href = "https://example.com" },
+                            Message = message,
+                            PercentCompleted = percentCompleted,
+                            Revision = revision,
+                            State = state,
+                        }
+                    )
+                );
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+
+            // SUT
+            BuildDto? actual = await env.Service.GetBuildAsync(
+                User01,
+                Project01,
+                Build01,
+                minRevision: null,
+                CancellationToken.None
+            );
+
+            Assert.IsNotNull(actual);
+            Assert.AreEqual(message, actual.Message);
+            Assert.AreEqual(percentCompleted, actual.PercentCompleted);
+            Assert.AreEqual(revision, actual.Revision);
+            Assert.AreEqual(state, actual.State);
+            Assert.AreEqual(buildDtoId, actual.Id);
+            Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
+            Assert.AreEqual(Project01, actual.Engine.Id);
+            Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+        }
+
+        [Test]
+        public async Task GetBuildAsync_ExecutesOnlyInMemoryIfBothEnabled()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            _ = await env.Service.GetBuildAsync(User01, Project01, Build01, minRevision: null, CancellationToken.None);
+
+            await env.Builds.Received(1).GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None);
+            await env.MachineBuildService
+                .DidNotReceiveWithAnyArgs()
+                .GetBuildAsync(TranslationEngine01, Build01, minRevision: null, CancellationToken.None);
+        }
 
         [Test]
         public async Task GetCurrentBuildAsync_InMemoryNoRevisionNoBuildRunning()
@@ -179,6 +419,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up test environment
             var env = new TestEnvironment();
+            string buildDtoId = $"{Project01}.{Build01}";
             string message = "Finalizing";
             double percentCompleted = 0.95;
             int revision = 553;
@@ -189,7 +430,7 @@ namespace SIL.XForge.Scripture.Services
                     Task.FromResult(
                         new Build
                         {
-                            Id = "buildId",
+                            Id = Build01,
                             Message = message,
                             PercentCompleted = percentCompleted,
                             Revision = revision,
@@ -212,8 +453,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(percentCompleted, actual.PercentCompleted);
             Assert.AreEqual(revision, actual.Revision);
             Assert.AreEqual(state, actual.State);
-            Assert.AreEqual(Project01, actual.Id);
-            Assert.AreEqual(MachineApi.GetBuildHref(Project01), actual.Href);
+            Assert.AreEqual(buildDtoId, actual.Id);
+            Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
             Assert.AreEqual(Project01, actual.Engine.Id);
             Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
         }
@@ -223,6 +464,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up test environment
             var env = new TestEnvironment();
+            string buildDtoId = $"{Project01}.{Build01}";
             string message = "Finalizing";
             double percentCompleted = 0.95;
             int revision = 553;
@@ -234,7 +476,7 @@ namespace SIL.XForge.Scripture.Services
                         new BuildDto
                         {
                             Href = "https://example.com",
-                            Id = "buildId",
+                            Id = Build01,
                             Engine = new ResourceDto { Id = "engineId", Href = "https://example.com" },
                             Message = message,
                             PercentCompleted = percentCompleted,
@@ -258,14 +500,14 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(percentCompleted, actual.PercentCompleted);
             Assert.AreEqual(revision, actual.Revision);
             Assert.AreEqual(state, actual.State);
-            Assert.AreEqual(Project01, actual.Id);
-            Assert.AreEqual(MachineApi.GetBuildHref(Project01), actual.Href);
+            Assert.AreEqual(buildDtoId, actual.Id);
+            Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
             Assert.AreEqual(Project01, actual.Engine.Id);
             Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
         }
 
         [Test]
-        public async Task GetCurrentBuildAsync_ExecutesApiAndInMemory()
+        public async Task GetCurrentBuildAsync_ExecutesOnlyInMemoryIfBothEnabled()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -277,7 +519,7 @@ namespace SIL.XForge.Scripture.Services
                 .Received(1)
                 .GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None);
             await env.MachineBuildService
-                .Received(1)
+                .DidNotReceiveWithAnyArgs()
                 .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None);
         }
 
@@ -661,6 +903,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up test environment
             var env = new TestEnvironment();
+            string buildDtoId = $"{Project01}.{Build01}";
             string message = "Training language model";
             double percentCompleted = 0.01;
             int revision = 2;
@@ -671,7 +914,7 @@ namespace SIL.XForge.Scripture.Services
                     Task.FromResult(
                         new Build
                         {
-                            Id = "buildId",
+                            Id = Build01,
                             Message = message,
                             PercentCompleted = percentCompleted,
                             Revision = revision,
@@ -688,8 +931,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(percentCompleted, actual.PercentCompleted);
             Assert.AreEqual(revision, actual.Revision);
             Assert.AreEqual(state, actual.State);
-            Assert.AreEqual(Project01, actual.Id);
-            Assert.AreEqual(MachineApi.GetBuildHref(Project01), actual.Href);
+            Assert.AreEqual(buildDtoId, actual.Id);
+            Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
             Assert.AreEqual(Project01, actual.Engine.Id);
             Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
         }
@@ -699,6 +942,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up test environment
             var env = new TestEnvironment();
+            string buildDtoId = $"{Project01}.{Build01}";
             string message = "Training language model";
             double percentCompleted = 0.01;
             int revision = 2;
@@ -710,7 +954,7 @@ namespace SIL.XForge.Scripture.Services
                         new BuildDto
                         {
                             Href = "https://example.com",
-                            Id = "buildId",
+                            Id = Build01,
                             Engine = new ResourceDto { Id = "engineId", Href = "https://example.com" },
                             Message = message,
                             PercentCompleted = percentCompleted,
@@ -728,8 +972,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.AreEqual(percentCompleted, actual.PercentCompleted);
             Assert.AreEqual(revision, actual.Revision);
             Assert.AreEqual(state, actual.State);
-            Assert.AreEqual(Project01, actual.Id);
-            Assert.AreEqual(MachineApi.GetBuildHref(Project01), actual.Href);
+            Assert.AreEqual(buildDtoId, actual.Id);
+            Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
             Assert.AreEqual(Project01, actual.Engine.Id);
             Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
         }
