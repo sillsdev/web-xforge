@@ -11,6 +11,7 @@ using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
+using SIL.XForge.Services;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Utils;
 
@@ -29,6 +30,7 @@ namespace SIL.XForge.Scripture.Services
     {
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IParatextService _paratextService;
+        private readonly IUserService _userService;
         private readonly IStringLocalizer<SharedResource> _localizer;
         private readonly IOptions<SiteOptions> _siteOptions;
         private UserSecret _currentUserSecret;
@@ -40,6 +42,7 @@ namespace SIL.XForge.Scripture.Services
         public ParatextNotesMapper(
             IRepository<UserSecret> userSecrets,
             IParatextService paratextService,
+            IUserService userService,
             IStringLocalizer<SharedResource> localizer,
             IOptions<SiteOptions> siteOptions,
             IGuidService guidService
@@ -47,6 +50,7 @@ namespace SIL.XForge.Scripture.Services
         {
             _userSecrets = userSecrets;
             _paratextService = paratextService;
+            _userService = userService;
             _localizer = localizer;
             _siteOptions = siteOptions;
             _guidService = guidService;
@@ -91,6 +95,8 @@ namespace SIL.XForge.Scripture.Services
             string answerExportMethod
         )
         {
+            // Usernames of SF community checker users. Paratext users are mapped to null.
+            Dictionary<string, string> checkerUsernames = new Dictionary<string, string>();
             var version = (string)oldNotesElem.Attribute("version");
             Dictionary<string, XElement> oldCommentElems = GetOldCommentElements(oldNotesElem, ptProjectUsers);
 
@@ -121,6 +127,7 @@ namespace SIL.XForge.Scripture.Services
                             )
                         );
                         var answerPrefixContents = new List<object>();
+
                         // Questions that have empty texts will show in Paratext notes that it is audio-only
                         string qText = string.IsNullOrEmpty(question.Text)
                             ? _localizer[SharedResource.Keys.AudioOnlyQuestion, _siteOptions.Value.Name]
@@ -134,6 +141,10 @@ namespace SIL.XForge.Scripture.Services
                                 new XElement("span", new XAttribute("style", "italic"), scriptureText)
                             );
                         }
+                        string username = await TryGetCommunityCheckerUsername(answer.OwnerRef, checkerUsernames);
+                        if (!string.IsNullOrEmpty(username))
+                            answerPrefixContents.Add($"({username})");
+
                         string answerSyncUserId = await AddCommentIfChangedAsync(
                             oldCommentElems,
                             threadElem,
@@ -147,11 +158,16 @@ namespace SIL.XForge.Scripture.Services
                         for (int k = 0; k < answer.Comments.Count; k++)
                         {
                             Comment comment = answer.Comments[k];
+                            var commentPrefixContents = new List<object>();
+                            string commentUsername = await TryGetCommunityCheckerUsername(comment.OwnerRef, checkerUsernames);
+                            if (!string.IsNullOrEmpty(commentUsername))
+                                commentPrefixContents.Add($"({commentUsername})");
                             string commentSyncUserId = await AddCommentIfChangedAsync(
                                 oldCommentElems,
                                 threadElem,
                                 comment,
-                                ptProjectUsers
+                                ptProjectUsers,
+                                commentPrefixContents
                             );
                             if (comment.SyncUserRef == null)
                                 commentSyncUserIds.Add((j, k, commentSyncUserId));
@@ -334,6 +350,32 @@ namespace SIL.XForge.Scripture.Services
             }
             Console.WriteLine(ptProjectUser.OpaqueUserId);
             return ptProjectUser;
+        }
+
+        /// <summary>
+        /// Gets the username for a community checker, or null if the user has a paratext role on the project.
+        /// </summary>
+        private async Task<string> TryGetCommunityCheckerUsername(
+            string userId,
+            Dictionary<string, string> checkerUsernames
+        )
+        {
+            string username;
+            if (checkerUsernames.TryGetValue(userId, out username))
+                return username;
+
+            var userSecretAttempt = await _userSecrets.TryGetAsync(userId);
+            // map paratext users to null
+            if (userSecretAttempt.TryResult(out UserSecret userSecret))
+            {
+                checkerUsernames.Add(userId, null);
+                return null;
+            }
+
+            // the user is an SF community checker
+            username = await _userService.GetUsernameFromUserId(_currentUserSecret.Id, userId);
+            checkerUsernames.Add(userId, username);
+            return username;
         }
 
         private string GetCommentKey(
