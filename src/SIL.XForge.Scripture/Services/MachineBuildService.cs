@@ -74,7 +74,7 @@ namespace SIL.XForge.Scripture.Services
                     throw new InvalidDataException();
                 }
 
-                // The Machine 2.5.11 DTO requires this to be uppercase
+                // The Machine 2.5.X DTO requires this to be uppercase
                 // Upgrading to a later version changes this to an enum
                 // When this occurs, remove this line
                 build.State = build.State.ToUpperInvariant();
@@ -123,7 +123,7 @@ namespace SIL.XForge.Scripture.Services
                 BuildDto? build = await response.Content.ReadFromJsonAsync<BuildDto>(Options, cancellationToken);
                 if (build is not null)
                 {
-                    // The Machine 2.5.11 DTO requires this to be uppercase
+                    // The Machine 2.5.X DTO requires this to be uppercase
                     // Upgrading to a later version changes this to an enum
                     // When this occurs, remove this block
                     build.State = build.State.ToUpperInvariant();
