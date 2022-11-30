@@ -67,7 +67,7 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
         op.set<boolean>(puc => puc.translationSuggestionsEnabled, this.suggestionsEnabledSwitch.value)
       );
     });
-    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+    this.subscribe(this.pwaService.onlineStatus$, isOnline => {
       isOnline ? this.suggestionsSwitchFormGroup.enable() : this.suggestionsEnabledSwitch.disable();
     });
   }

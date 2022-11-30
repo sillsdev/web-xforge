@@ -1594,7 +1594,7 @@ class TestEnvironment {
     when(mockedUserService.editDisplayName(true)).thenResolve();
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
     when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
-    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
+    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
     when(mockedPwaService.isOnline).thenReturn(hasConnection);
     when(
       mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), anyString())

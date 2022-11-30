@@ -117,7 +117,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.subscribe(this.pwaService.onlineStatus, async isOnline => {
+    this.subscribe(this.pwaService.onlineStatus$, async isOnline => {
       this.isAppOnline = isOnline;
       if (this.isAppOnline && this.paratextUsername == null) {
         const username = await this.paratextService.getParatextUsername().toPromise();

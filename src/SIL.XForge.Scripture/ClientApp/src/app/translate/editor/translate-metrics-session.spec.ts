@@ -396,7 +396,7 @@ describe('TranslateMetricsSession', () => {
     // CommandError is ignored when offline
     resetCalls(mockedSFProjectService);
     when(mockedPwaService.isOnline).thenReturn(false);
-    when(mockedPwaService.onlineStatus).thenReturn(of(false));
+    when(mockedPwaService.onlineStatus$).thenReturn(of(false));
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(commandError);
     expect(() => {
       env.keyPress('a');
@@ -438,7 +438,7 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
     when(mockedSFProjectService.getProfile(anything())).thenResolve({} as SFProjectProfileDoc);
     when(mockedPwaService.isOnline).thenReturn(true);
-    when(mockedPwaService.onlineStatus).thenReturn(of(true));
+    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
     when(mockedUserService.getCurrentUser()).thenResolve({ data: { displayName: 'name' } } as UserDoc);
 
     this.sourceFixture = TestBed.createComponent(TextComponent);

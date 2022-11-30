@@ -3035,7 +3035,7 @@ class TestEnvironment {
   private isOnline: boolean = true;
 
   constructor({ textDoc, chapterNum, presenceEnabled = true }: TestEnvCtorArgs = {}) {
-    when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
+    when(mockedPwaService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
     when(mockedPwaService.isOnline).thenCall(() => this.isOnline);
     when(mockedTranslocoService.translate<string>(anything())).thenCall(
       (translationStringKey: string) => translationStringKey

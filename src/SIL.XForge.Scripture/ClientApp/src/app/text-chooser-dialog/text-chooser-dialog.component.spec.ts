@@ -505,7 +505,7 @@ class TestEnvironment {
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
     when(mockedPwaService.isOnline).thenReturn(true);
-    when(mockedPwaService.onlineStatus).thenReturn(of(true));
+    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
 
     this.fixture.detectChanges();
     flush();

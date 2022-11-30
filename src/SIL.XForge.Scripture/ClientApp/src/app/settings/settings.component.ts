@@ -135,7 +135,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       tap(() => (this.loading = this.isAppOnline)),
       map(params => params['projectId'] as string)
     );
-    this.subscribe(combineLatest([this.pwaService.onlineStatus, projectId$]), async ([isOnline, projectId]) => {
+    this.subscribe(combineLatest([this.pwaService.onlineStatus$, projectId$]), async ([isOnline, projectId]) => {
       this.isAppOnline = isOnline;
       if (isOnline && this.projects == null) {
         this.loading = true;

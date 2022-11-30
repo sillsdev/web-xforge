@@ -103,7 +103,7 @@ describe('PwaService', () => {
   it('hasUpdate should emit on VERSION_READY', fakeAsync(() => {
     const env = new TestEnvironment();
     let isVersionReady = false;
-    env.pwaService.hasUpdate.subscribe((event: VersionReadyEvent) => {
+    env.pwaService.hasUpdate$.subscribe((event: VersionReadyEvent) => {
       expect(event.type).toEqual('VERSION_READY');
       isVersionReady = true;
     });
@@ -119,6 +119,7 @@ class TestEnvironment {
   private versionUpdates$: Subject<VersionEvent> = new Subject<VersionEvent>();
 
   constructor() {
+    when(mockedSwUpdate.isEnabled).thenReturn(true);
     this.pwaService = new PwaService(
       instance(mockedHttpClient),
       instance(mockedSwUpdate),

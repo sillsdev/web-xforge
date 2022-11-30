@@ -68,7 +68,7 @@ export class FileService extends SubscriptionDisposable {
 
   init(realtimeService: RealtimeService): void {
     this.realtimeService = realtimeService;
-    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+    this.subscribe(this.pwaService.onlineStatus$, isOnline => {
       if (isOnline) {
         this.syncFiles();
       }

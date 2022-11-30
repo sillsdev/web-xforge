@@ -62,7 +62,7 @@ class TestEnvironment {
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
-    when(mockedPwaService.onlineStatus).thenReturn(of(true));
+    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
