@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'app'">
-  <h2><mdc-icon>error_outline</mdc-icon>{{ t("page_not_found") }}</h2>
+  <h2><mat-icon>error_outline</mat-icon>{{ t("page_not_found") }}</h2>
   <p>{{ t("redirecting_in_moments") }}</p>
   <mat-progress-bar mode="determinate" [value]="(progress | async) || 0"></mat-progress-bar>
   <br />
