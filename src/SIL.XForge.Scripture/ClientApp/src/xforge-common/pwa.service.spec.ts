@@ -137,7 +137,6 @@ class TestEnvironment {
   }
 
   dispose() {
-    discardPeriodicTasks();
     this.pwaService.dispose();
   }
 
