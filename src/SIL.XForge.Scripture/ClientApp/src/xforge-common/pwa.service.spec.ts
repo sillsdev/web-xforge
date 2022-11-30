@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
+import { fakeAsync, flush, tick } from '@angular/core/testing';
 import { SwUpdate, VersionEvent, VersionReadyEvent } from '@angular/service-worker';
 import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { Subject } from 'rxjs';
