@@ -403,6 +403,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         if (this.questionsQuery != null) {
           this.questionsQuery.dispose();
         }
+        this.resetFilter();
         const prevShowAllBooks = this.showAllBooks;
         this.showAllBooks = bookId === 'ALL';
         this.questionsQuery = await this.projectService.queryQuestions(projectId, {
@@ -731,7 +732,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     };
     const newQuestion = await this.questionDialogService.questionDialog(data);
     if (newQuestion != null) {
-      this.setQuestionFilter(QuestionFilter.None);
+      this.resetFilter();
       this.questionsPanel.activateQuestion(newQuestion);
     }
   }
@@ -815,7 +816,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           availableBooks.add(questionVerseRef.book);
         }
       }
-      if (availableBooks.size === 1) {
+      if (availableBooks.size === 1 && !this.isQuestionFilterApplied) {
         this.router.navigate(['/projects', this.projectDoc.id, 'checking', availableBooks.values().next().value], {
           replaceUrl: true
         });
@@ -898,6 +899,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         });
       this.refreshSummary();
     }
+  }
+
+  private resetFilter(): void {
+    this.setQuestionFilter(QuestionFilter.None);
   }
 
   private saveAnswer(answer: Answer, questionDoc: QuestionDoc | undefined): void {
