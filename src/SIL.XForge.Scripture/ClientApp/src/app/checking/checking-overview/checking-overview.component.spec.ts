@@ -889,7 +889,7 @@ class TestEnvironment {
     );
     this.setCurrentUser(this.adminUser);
 
-    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
+    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
     when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
 
     this.fixture = TestBed.createComponent(CheckingOverviewComponent);

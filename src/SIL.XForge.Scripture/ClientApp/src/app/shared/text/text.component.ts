@@ -453,7 +453,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   ngAfterViewInit(): void {
-    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+    this.subscribe(this.pwaService.onlineStatus$, isOnline => {
       this.updatePlaceholderText(isOnline);
       this.changeDetector.detectChanges();
       if (!isOnline && this._editor != null) {

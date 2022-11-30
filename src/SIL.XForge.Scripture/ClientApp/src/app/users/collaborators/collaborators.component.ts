@@ -152,7 +152,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         this.loadingFinished();
       }
     );
-    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+    this.subscribe(this.pwaService.onlineStatus$, isOnline => {
       this.isAppOnline = isOnline;
       if (isOnline && this._userRows == null) {
         this.loadingStarted();
@@ -163,7 +163,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   ngAfterViewInit(): void {
-    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+    this.subscribe(this.pwaService.onlineStatus$, isOnline => {
       if (isOnline) {
         this.filterForm.enable();
       } else {

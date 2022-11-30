@@ -288,7 +288,7 @@ class TestEnvironment {
   constructor(isOnline: boolean = true) {
     this.isOnline = new BehaviorSubject<boolean>(isOnline);
     when(mockedPwaService.isOnline).thenReturn(isOnline);
-    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline);
+    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline);
     when(mockedAuthService.isLoggedIn).thenResolve(true);
 
     this.realtimeService = TestBed.inject(TestRealtimeService);

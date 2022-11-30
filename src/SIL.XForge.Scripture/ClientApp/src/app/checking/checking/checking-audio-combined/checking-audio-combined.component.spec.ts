@@ -107,7 +107,7 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
     when(mockedPwaService.isOnline).thenReturn(true);
-    when(mockedPwaService.onlineStatus).thenReturn(of(true));
+    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
     this.fixture.detectChanges();
   }
 

@@ -49,12 +49,12 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
       filter(id => !!userProjects?.includes(id) || this.route.snapshot.queryParams['sharing'] == null)
     );
     this.subscribe(navigateToProject$, projectId => this.navigateToProject(projectId));
-    const checkLinkSharing$ = combineLatest([projectId$, this.pwaService.onlineStatus]).pipe(
+    const checkLinkSharing$ = combineLatest([projectId$, this.pwaService.onlineStatus$]).pipe(
       filter(([_, isOnline]) => isOnline && (this.route.snapshot.queryParams['sharing'] as string) === 'true'),
       map(([projectId, _]) => projectId)
     );
     this.subscribe(checkLinkSharing$, projectId => this.checkLinkSharing(projectId));
-    const showOfflineMessage$ = combineLatest([projectId$, this.pwaService.onlineStatus]).pipe(
+    const showOfflineMessage$ = combineLatest([projectId$, this.pwaService.onlineStatus$]).pipe(
       filter(
         ([id, isOnline]) =>
           !userProjects?.includes(id) && !isOnline && (this.route.snapshot.queryParams['sharing'] as string) === 'true'

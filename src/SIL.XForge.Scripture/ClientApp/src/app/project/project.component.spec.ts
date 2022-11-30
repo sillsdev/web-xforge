@@ -276,7 +276,7 @@ class TestEnvironment {
 
     when(mockedTranslocoService.translate<string>(anything())).thenReturn('The project link is invalid.');
     this.isOnline = new BehaviorSubject<boolean>(true);
-    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
+    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
     this.setLinkSharing(false);
 
     this.fixture = TestBed.createComponent(ProjectComponent);

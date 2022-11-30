@@ -34,7 +34,7 @@ export class RetryingRequestService {
   invoke<T>(fetchOptions: FetchOptions, cancel$: Subject<void>): RetryingRequest<T> {
     return new RetryingRequest<T>(
       this.commandService,
-      this.pwaService.onlineStatus,
+      this.pwaService.onlineStatus$,
       cancel$,
       fetchOptions,
       this.console
