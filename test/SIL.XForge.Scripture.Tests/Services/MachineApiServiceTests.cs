@@ -1139,6 +1139,7 @@ namespace SIL.XForge.Scripture.Services
                     );
                 IOptions<EngineOptions> engineOptions = Options.Create(new EngineOptions());
                 EngineService = Substitute.For<IEngineService>();
+                ExceptionHandler = Substitute.For<IExceptionHandler>();
                 FeatureManager = Substitute.For<IFeatureManager>();
                 FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(true));
                 FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(true));
@@ -1184,6 +1185,7 @@ namespace SIL.XForge.Scripture.Services
                     Engines,
                     engineOptions,
                     EngineService,
+                    ExceptionHandler,
                     FeatureManager,
                     MachineBuildService,
                     MachineTranslationService,
@@ -1195,6 +1197,7 @@ namespace SIL.XForge.Scripture.Services
             public IBuildRepository Builds { get; }
             public IEngineRepository Engines { get; }
             public IEngineService EngineService { get; }
+            public IExceptionHandler ExceptionHandler { get; }
             public IFeatureManager FeatureManager { get; }
             public IMachineBuildService MachineBuildService { get; }
             public IMachineTranslationService MachineTranslationService { get; }
