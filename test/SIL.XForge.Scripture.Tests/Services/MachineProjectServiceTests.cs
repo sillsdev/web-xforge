@@ -31,7 +31,7 @@ namespace SIL.XForge.Scripture.Services
         private const string TranslationEngine02 = "translationEngine02";
 
         [Test]
-        public async Task AddProjectAsync_ExecutesInMemoryMachineAndMachineApi()
+        public async Task AddProjectAsync_ExecutesInProcessMachineAndMachineApi()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -159,7 +159,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task BuildProjectAsync_ExecutesInMemoryMachine()
+        public async Task BuildProjectAsync_ExecutesInProcessMachine()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -238,7 +238,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task RemoveProjectAsync_ExecutesInMemoryMachine()
+        public async Task RemoveProjectAsync_ExecutesInProcessMachine()
         {
             // Set up test environment
             var env = new TestEnvironment();
