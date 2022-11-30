@@ -47,7 +47,7 @@ namespace SIL.XForge.Scripture.Services
             IRealtimeService realtimeService
         )
         {
-            // In-Memory Machine Dependencies
+            // In Process Machine Dependencies
             _builds = builds;
             _engines = engines;
             _engineOptions = engineOptions;
@@ -77,11 +77,11 @@ namespace SIL.XForge.Scripture.Services
             // Ensure that the user has permission
             await EnsurePermissionAsync(curUserId, projectId);
 
-            // Execute the in-memory Machine instance, if it is enabled
-            // We can only use In Memory or the API - not both or unnecessary delays will result
-            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            // Execute the In Process Machine instance, if it is enabled
+            // We can only use In Process or the API - not both or unnecessary delays will result
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
-                buildDto = await GetInMemoryBuildAsync(BuildLocatorType.Id, buildId, minRevision, cancellationToken);
+                buildDto = await GetInProcessBuildAsync(BuildLocatorType.Id, buildId, minRevision, cancellationToken);
             }
             else if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
             {
@@ -121,12 +121,12 @@ namespace SIL.XForge.Scripture.Services
             // Ensure that the user has permission
             await EnsurePermissionAsync(curUserId, projectId);
 
-            // We can only use In Memory or the API - not both or unnecessary delays will result
-            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            // We can only use In Process or the API - not both or unnecessary delays will result
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
-                // Execute the in-memory Machine instance, if it is enabled
-                Engine engine = await GetInMemoryEngineAsync(projectId, cancellationToken);
-                buildDto = await GetInMemoryBuildAsync(
+                // Execute the In Process Machine instance, if it is enabled
+                Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
+                buildDto = await GetInProcessBuildAsync(
                     BuildLocatorType.Engine,
                     engine.Id,
                     minRevision,
@@ -186,8 +186,8 @@ namespace SIL.XForge.Scripture.Services
                     }
                     catch (BrokenCircuitException e)
                     {
-                        // We do not want to throw the error if we are returning from in-memory API below
-                        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                        // We do not want to throw the error if we are returning from In Process API below
+                        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
                         {
                             _exceptionHandler.ReportException(e);
                         }
@@ -197,17 +197,17 @@ namespace SIL.XForge.Scripture.Services
                         }
                     }
                 }
-                else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
                 {
-                    // Only throw the exception if the in-memory instance will not be called below
+                    // Only throw the exception if the In Process instance will not be called below
                     throw new DataNotFoundException("The translation engine is not configured");
                 }
             }
 
-            // Execute the in-memory Machine instance, if it is enabled
-            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            // Execute the In Process Machine instance, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
-                Engine engine = await GetInMemoryEngineAsync(projectId, cancellationToken);
+                Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
                 engineDto = CreateDto(engine);
             }
 
@@ -243,8 +243,8 @@ namespace SIL.XForge.Scripture.Services
                     }
                     catch (BrokenCircuitException e)
                     {
-                        // We do not want to throw the error if we are returning from in-memory API below
-                        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                        // We do not want to throw the error if we are returning from In Process API below
+                        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
                         {
                             _exceptionHandler.ReportException(e);
                         }
@@ -254,17 +254,17 @@ namespace SIL.XForge.Scripture.Services
                         }
                     }
                 }
-                else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
                 {
-                    // Only throw the exception if the in-memory instance will not be called below
+                    // Only throw the exception if the In Process instance will not be called below
                     throw new DataNotFoundException("The translation engine is not configured");
                 }
             }
 
-            // Execute the in-memory Machine instance, if it is enabled
-            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            // Execute the In Process Machine instance, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
-                Engine engine = await GetInMemoryEngineAsync(projectId, cancellationToken);
+                Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
                 WordGraph wordGraph = await _engineService.GetWordGraphAsync(engine.Id, segment.ToArray());
                 wordGraphDto = CreateDto(wordGraph);
             }
@@ -295,8 +295,8 @@ namespace SIL.XForge.Scripture.Services
                     }
                     catch (BrokenCircuitException e)
                     {
-                        // We do not want to throw the error if we are returning from in-memory API below
-                        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                        // We do not want to throw the error if we are returning from In Process API below
+                        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
                         {
                             _exceptionHandler.ReportException(e);
                         }
@@ -306,17 +306,17 @@ namespace SIL.XForge.Scripture.Services
                         }
                     }
                 }
-                else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
                 {
-                    // Only throw the exception if the in-memory instance will not be called below
+                    // Only throw the exception if the In Process instance will not be called below
                     throw new DataNotFoundException("The translation engine is not configured");
                 }
             }
 
-            // Execute the in-memory Machine instance, if it is enabled
-            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            // Execute the In Process Machine instance, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
-                Engine engine = await GetInMemoryEngineAsync(projectId, cancellationToken);
+                Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
                 Build build = await _engineService.StartBuildAsync(engine.Id);
                 buildDto = CreateDto(build);
             }
@@ -353,8 +353,8 @@ namespace SIL.XForge.Scripture.Services
                 }
                 catch (BrokenCircuitException e)
                 {
-                    // We do not want to throw the error if we are returning from in-memory API below
-                    if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                    // We do not want to throw the error if we are returning from In Process API below
+                    if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
                     {
                         _exceptionHandler.ReportException(e);
                     }
@@ -365,10 +365,10 @@ namespace SIL.XForge.Scripture.Services
                 }
             }
 
-            // Execute the in-memory Machine instance, if it is enabled
-            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            // Execute the In Process Machine instance, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
-                Engine engine = await GetInMemoryEngineAsync(projectId, cancellationToken);
+                Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
                 await _engineService.TrainSegmentAsync(
                     engine.Id,
                     segmentPair.SourceSegment,
@@ -490,7 +490,7 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        private async Task<BuildDto?> GetInMemoryBuildAsync(
+        private async Task<BuildDto?> GetInProcessBuildAsync(
             BuildLocatorType locatorType,
             string locator,
             long? minRevision,
@@ -523,7 +523,7 @@ namespace SIL.XForge.Scripture.Services
             return buildDto;
         }
 
-        private async Task<Engine> GetInMemoryEngineAsync(string projectId, CancellationToken cancellationToken)
+        private async Task<Engine> GetInProcessEngineAsync(string projectId, CancellationToken cancellationToken)
         {
             Engine? engine = await _engines.GetByLocatorAsync(EngineLocatorType.Project, projectId, cancellationToken);
             if (engine is null)
