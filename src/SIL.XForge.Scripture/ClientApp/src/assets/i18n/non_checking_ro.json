@@ -20,13 +20,17 @@
   "checking_overview": {
     "add_question": "Adaugă o întrebare",
     "answer_count_label": "{{ count }} răspunsuri",
+    "archive_multiple": "Archive all questions in {{ location }}",
     "archive": "Arhivare",
     "archived_questions": "Întrebări arhivate",
     "click_add_question": "Faceți clic pe butonul {{ boldStart }}Adaugă o întrebare{{ boldEnd }}, mai sus.",
+    "confirm_bulk_archive": "Are you sure you want to archive all the questions in {{ scope }}?",
+    "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
     "import_questions": "Importare",
     "no_archived_questions": "Nu sunt întrebări arhivate.",
     "no_questions": "Nu sunt întrebări publicate. ",
     "question_count_label": "{{ count }} întrebări",
+    "republish_multiple": "Republish all questions in {{ location }}",
     "republish": "Republicare",
     "time_archived_stamp": "Arhivat pe {{ timeStamp }}"
   },

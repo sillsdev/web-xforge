@@ -168,6 +168,7 @@
     "answers": "{{ count }} إجابات",
     "cancel": "إلغاء",
     "cannot_like_own_answer": "لا يمكنك أن تسجِّل إعجاباً بإجابتك.",
+    "confirm_delete": "هل ترغب حقّــا بحذف هذه الإجابة؟",
     "delete": "حذف",
     "edit": "تعديل",
     "no_scripture_selected": "لم يتمّ تحديد مقطع كتابي بعد.",
@@ -267,6 +268,7 @@
     "unknown": "غير معروف"
   },
   "dialog": {
+    "cancel": "إلغاء",
     "close": "إغلاق"
   },
   "project": {

@@ -20,13 +20,17 @@
   "checking_overview": {
     "add_question": "Добавить вопрос",
     "answer_count_label": "{{ count }} ответы",
+    "archive_multiple": "Archive all questions in {{ location }}",
     "archive": "Архив",
     "archived_questions": "Архивные вопросы",
     "click_add_question": "Нажмите {{ boldStart }}Добавить вопрос{{ boldEnd }} выше.",
+    "confirm_bulk_archive": "Are you sure you want to archive all the questions in {{ scope }}?",
+    "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
     "import_questions": "Bulk import",
     "no_archived_questions": "Нет архивных вопросов.",
     "no_questions": "Нет опубликованных вопросов. ",
     "question_count_label": "{{ count }} вопросов",
+    "republish_multiple": "Republish all questions in {{ location }}",
     "republish": "Повторно опубликовать",
     "time_archived_stamp": "Архивировано на {{ timeStamp }}"
   },

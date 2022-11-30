@@ -168,6 +168,7 @@
     "answers": "{{ count }} Ответы",
     "cancel": "Отменить",
     "cannot_like_own_answer": "Вы не можете одобрить свой собственный ответ.",
+    "confirm_delete": "Are you sure you want to delete this answer?",
     "delete": "Удалить",
     "edit": "Редактировать",
     "no_scripture_selected": "Пока ещё не выбрано ни одного текста Библии.",
@@ -267,6 +268,7 @@
     "unknown": "неизвестно"
   },
   "dialog": {
+    "cancel": "Отменить",
     "close": "Закрыть"
   },
   "project": {
