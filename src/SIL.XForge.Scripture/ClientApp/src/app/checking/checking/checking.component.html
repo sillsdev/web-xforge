@@ -22,10 +22,10 @@
                   <mat-selection-list [multiple]="false" id="question-filter-list">
                     <h2 matSubheader>{{ t("filter_questions") }}</h2>
                     <mat-list-option
-                      *ngFor="let f of questionFilters | keyvalue"
-                      [selected]="f.key === questionFilterSelected"
-                      (click)="setQuestionFilter(f.key)"
-                      >{{ t(f.value) }}</mat-list-option
+                      *ngFor="let key of questionFilters"
+                      [selected]="key === questionFilterSelected"
+                      (click)="setQuestionFilter(key)"
+                      >{{ i18n.t("checking_question_filters." + key) }}</mat-list-option
                     >
                   </mat-selection-list>
                 </mat-menu>
@@ -33,7 +33,7 @@
                   <mat-icon>close</mat-icon>
                 </button>
                 <div *ngIf="isQuestionFilterApplied" class="active-question-filter">
-                  {{ t("filter") }}: {{ t(appliedQuestionFilterKey) }}
+                  {{ t("filter") }}: {{ t(questionFilterSelected) }}
                 </div>
               </div>
               <div class="panel-content">

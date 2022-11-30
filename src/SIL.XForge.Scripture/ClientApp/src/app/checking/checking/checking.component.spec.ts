@@ -78,7 +78,7 @@ import {
 } from './checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
-import { CheckingComponent, QuestionFilter } from './checking.component';
+import { CheckingComponent, QuestionFilter, QuestionFilterKey } from './checking.component';
 import { FontSizeComponent } from './font-size/font-size.component';
 
 const mockedAuthService = mock(AuthService);
@@ -510,36 +510,44 @@ describe('CheckingComponent', () => {
 
     it('admin can see appropriate filter options', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
-      expect(env.component.questionFilters.has(QuestionFilter.None)).withContext('All').toEqual(true);
-      expect(env.component.questionFilters.has(QuestionFilter.HasAnswers)).withContext('HasAnswers').toEqual(true);
-      expect(env.component.questionFilters.has(QuestionFilter.NoAnswers)).withContext('NoAnswers').toEqual(true);
-      expect(env.component.questionFilters.has(QuestionFilter.StatusExport)).withContext('StatusExport').toEqual(true);
-      expect(env.component.questionFilters.has(QuestionFilter.StatusResolved))
+      expect(env.component.questionFilters.includes(QuestionFilter.None)).withContext('All').toEqual(true);
+      expect(env.component.questionFilters.includes(QuestionFilter.HasAnswers)).withContext('HasAnswers').toEqual(true);
+      expect(env.component.questionFilters.includes(QuestionFilter.NoAnswers)).withContext('NoAnswers').toEqual(true);
+      expect(env.component.questionFilters.includes(QuestionFilter.StatusExport))
+        .withContext('StatusExport')
+        .toEqual(true);
+      expect(env.component.questionFilters.includes(QuestionFilter.StatusResolved))
         .withContext('StatusResolved')
         .toEqual(true);
-      expect(env.component.questionFilters.has(QuestionFilter.StatusNone)).withContext('StatusNone').toEqual(true);
-      expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasAnswered))
+      expect(env.component.questionFilters.includes(QuestionFilter.StatusNone)).withContext('StatusNone').toEqual(true);
+      expect(env.component.questionFilters.includes(QuestionFilter.CurrentUserHasAnswered))
         .withContext('CurrentUserHasAnswered')
         .toEqual(false);
-      expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasNotAnswered))
+      expect(env.component.questionFilters.includes(QuestionFilter.CurrentUserHasNotAnswered))
         .withContext('CurrentUserHasNotAnswered')
         .toEqual(false);
     }));
 
     it('non-admin can see appropriate filter options', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
-      expect(env.component.questionFilters.has(QuestionFilter.None)).withContext('All').toEqual(true);
-      expect(env.component.questionFilters.has(QuestionFilter.HasAnswers)).withContext('HasAnswers').toEqual(false);
-      expect(env.component.questionFilters.has(QuestionFilter.NoAnswers)).withContext('NoAnswers').toEqual(false);
-      expect(env.component.questionFilters.has(QuestionFilter.StatusExport)).withContext('StatusExport').toEqual(false);
-      expect(env.component.questionFilters.has(QuestionFilter.StatusResolved))
+      expect(env.component.questionFilters.includes(QuestionFilter.None)).withContext('All').toEqual(true);
+      expect(env.component.questionFilters.includes(QuestionFilter.HasAnswers))
+        .withContext('HasAnswers')
+        .toEqual(false);
+      expect(env.component.questionFilters.includes(QuestionFilter.NoAnswers)).withContext('NoAnswers').toEqual(false);
+      expect(env.component.questionFilters.includes(QuestionFilter.StatusExport))
+        .withContext('StatusExport')
+        .toEqual(false);
+      expect(env.component.questionFilters.includes(QuestionFilter.StatusResolved))
         .withContext('StatusResolved')
         .toEqual(false);
-      expect(env.component.questionFilters.has(QuestionFilter.StatusNone)).withContext('StatusNone').toEqual(false);
-      expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasAnswered))
+      expect(env.component.questionFilters.includes(QuestionFilter.StatusNone))
+        .withContext('StatusNone')
+        .toEqual(false);
+      expect(env.component.questionFilters.includes(QuestionFilter.CurrentUserHasAnswered))
         .withContext('CurrentUserHasAnswered')
         .toEqual(true);
-      expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasNotAnswered))
+      expect(env.component.questionFilters.includes(QuestionFilter.CurrentUserHasNotAnswered))
         .withContext('CurrentUserHasNotAnswered')
         .toEqual(true);
     }));
@@ -547,7 +555,7 @@ describe('CheckingComponent', () => {
     it('can filter questions', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
       const totalQuestions = env.questions.length;
-      const expectedQuestionCounts: { filter: QuestionFilter; total: number }[] = [
+      const expectedQuestionCounts: { filter: QuestionFilterKey; total: number }[] = [
         { filter: QuestionFilter.None, total: 15 },
         { filter: QuestionFilter.HasAnswers, total: 4 },
         { filter: QuestionFilter.NoAnswers, total: 11 },
@@ -560,12 +568,12 @@ describe('CheckingComponent', () => {
       expectedQuestionCounts.forEach(expected => {
         env.setQuestionFilter(expected.filter);
         expect(env.questions.length)
-          .withContext(env.component.appliedQuestionFilterKey ?? '')
+          .withContext(env.component.questionFilterSelected ?? '')
           .toEqual(expected.total);
         const expectedVisibleQuestionTotal =
           expected.total + (expected.total < totalQuestions ? '/' + totalQuestions : '');
         expect(env.questionFilterTotal)
-          .withContext(env.component.appliedQuestionFilterKey ?? '')
+          .withContext(env.component.questionFilterSelected ?? '')
           .toEqual(`(${expectedVisibleQuestionTotal})`);
       });
     }));
@@ -2284,7 +2292,7 @@ class TestEnvironment {
     flush();
   }
 
-  setQuestionFilter(filter: QuestionFilter) {
+  setQuestionFilter(filter: QuestionFilterKey) {
     this.component.setQuestionFilter(filter);
     this.waitForQuestionTimersToComplete();
   }

@@ -216,6 +216,10 @@ export class I18nService {
     return this.transloco.translate(`role_descriptions.${role}`).replace(/\s*,\s*/, ' • ');
   }
 
+  t(key: string, params: object = {}): string {
+    return this.transloco.translate<string>(key, params);
+  }
+
   translate(key: string, params: object = {}): Observable<string> {
     return this.transloco.selectTranslate<string>(key, params);
   }

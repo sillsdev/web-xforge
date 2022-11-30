@@ -17,7 +17,7 @@ import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils
 import { merge, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { I18nService } from 'xforge-common/i18n.service';
+import { I18nService, en } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -52,16 +52,20 @@ interface Summary {
   answered: number;
 }
 
-export enum QuestionFilter {
-  None,
-  CurrentUserHasAnswered,
-  CurrentUserHasNotAnswered,
-  HasAnswers,
-  NoAnswers,
-  StatusNone,
-  StatusExport,
-  StatusResolved
-}
+type QuestionFilterI18nKey = keyof typeof en['checking_question_filters'];
+
+export const QuestionFilter = {
+  None: 'none',
+  CurrentUserHasAnswered: 'answered',
+  CurrentUserHasNotAnswered: 'not_answered',
+  HasAnswers: 'has_answers',
+  NoAnswers: 'no_answers',
+  StatusNone: 'not_reviewed',
+  StatusExport: 'exportable',
+  StatusResolved: 'resolved'
+} as const;
+
+export type QuestionFilterKey = typeof QuestionFilter[keyof typeof QuestionFilter] & QuestionFilterI18nKey;
 
 @Component({
   selector: 'app-checking',
@@ -92,8 +96,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     unread: 0,
     answered: 0
   };
-  questionFilters: Map<QuestionFilter, string> = new Map<QuestionFilter, string>();
-  questionFilterSelected: QuestionFilter = QuestionFilter.None;
+  questionFilters: QuestionFilterKey[] = [];
+  questionFilterSelected: QuestionFilterKey = QuestionFilter.None;
   questionVerseRefs: VerseRef[] = [];
   answersPanelContainerElement?: ElementRef;
   projectDoc?: SFProjectProfileDoc;
@@ -111,7 +115,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private questionsSub?: Subscription;
   private projectDeleteSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
-  private questionFilterFunctions: Record<QuestionFilter, (answers: Answer[]) => boolean> = {
+  private questionFilterFunctions: Record<QuestionFilterKey, (answers: Answer[]) => boolean> = {
     [QuestionFilter.None]: () => true,
     [QuestionFilter.CurrentUserHasNotAnswered]: answers =>
       !answers.some(a => a.ownerRef === this.userService.currentUserId),
@@ -147,10 +151,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       return this._activeQuestionVerseRef;
     }
     return undefined;
-  }
-
-  get appliedQuestionFilterKey(): string {
-    return this.questionFilters.get(this.questionFilterSelected)!;
   }
 
   get bookName(): string {
@@ -737,7 +737,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  setQuestionFilter(filter: QuestionFilter): void {
+  setQuestionFilter(filter: QuestionFilterKey): void {
     this.questionFilterSelected = filter;
     this.updateVisibleQuestions();
   }
@@ -1097,8 +1097,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     if (this.projectDoc?.data == null) {
       return;
     }
-    this.questionFilters.clear();
-    this.questionFilters.set(QuestionFilter.None, 'question_filter_none');
+    this.questionFilters = [];
+    this.questionFilters.push(QuestionFilter.None);
     if (
       SF_PROJECT_RIGHTS.hasRight(
         this.projectDoc.data,
@@ -1107,16 +1107,15 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         Operation.Edit
       )
     ) {
-      this.questionFilters
-        .set(QuestionFilter.HasAnswers, 'question_filter_has_answers')
-        .set(QuestionFilter.NoAnswers, 'question_filter_no_answers')
-        .set(QuestionFilter.StatusExport, 'question_filter_exportable')
-        .set(QuestionFilter.StatusResolved, 'question_filter_resolved')
-        .set(QuestionFilter.StatusNone, 'question_filter_not_reviewed');
+      this.questionFilters.push(
+        QuestionFilter.HasAnswers,
+        QuestionFilter.NoAnswers,
+        QuestionFilter.StatusExport,
+        QuestionFilter.StatusResolved,
+        QuestionFilter.StatusNone
+      );
     } else {
-      this.questionFilters
-        .set(QuestionFilter.CurrentUserHasAnswered, 'question_filter_answered')
-        .set(QuestionFilter.CurrentUserHasNotAnswered, 'question_filter_not_answered');
+      this.questionFilters.push(QuestionFilter.CurrentUserHasAnswered, QuestionFilter.CurrentUserHasNotAnswered);
     }
   }
 }
