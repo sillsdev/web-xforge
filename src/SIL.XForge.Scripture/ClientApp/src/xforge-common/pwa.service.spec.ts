@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
-import { fakeAsync, flush, tick } from '@angular/core/testing';
+import { discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { SwUpdate, VersionEvent, VersionReadyEvent } from '@angular/service-worker';
-import { instance, mock, verify, when } from 'ts-mockito';
+import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { Subject } from 'rxjs';
 import { LocationService } from './location.service';
 import { PWA_CHECK_FOR_UPDATES, PwaService } from './pwa.service';
@@ -11,37 +11,37 @@ const mockedSwUpdate = mock(SwUpdate);
 const mockedLocationService = mock(LocationService);
 
 describe('PwaService', () => {
-  it('offline when navigator is set to offline', () => {
+  it('offline when navigator is set to offline', fakeAsync(() => {
     const env = new TestEnvironment();
     env.onlineStatus = false;
     expect(env.pwaService.isOnline).toBe(false);
     env.dispose();
-  });
+  }));
 
-  it('online when navigator is set to online', () => {
+  it('online when navigator is set to online', fakeAsync(() => {
     const env = new TestEnvironment();
     env.onlineStatus = true;
     expect(env.pwaService.isOnline).toBe(true);
     env.dispose();
-  });
+  }));
 
-  it('switch to offline when navigator changes status', () => {
+  it('switch to offline when navigator changes status', fakeAsync(() => {
     const env = new TestEnvironment();
     env.onlineStatus = true;
     expect(env.pwaService.isOnline).toBe(true);
     env.onlineStatus = false;
     expect(env.pwaService.isOnline).toBe(false);
     env.dispose();
-  });
+  }));
 
-  it('switch to online when navigator changes status', () => {
+  it('switch to online when navigator changes status', fakeAsync(() => {
     const env = new TestEnvironment();
     env.onlineStatus = false;
     expect(env.pwaService.isOnline).toBe(false);
     env.onlineStatus = true;
     expect(env.pwaService.isOnline).toBe(true);
     env.dispose();
-  });
+  }));
 
   it('informs the caller when the user is back online', fakeAsync(() => {
     const env = new TestEnvironment();
@@ -66,16 +66,16 @@ describe('PwaService', () => {
     env.dispose();
   }));
 
-  it('switch to offline when navigator is online but websocket status is false', () => {
+  it('switch to offline when navigator is online but websocket status is false', fakeAsync(() => {
     const env = new TestEnvironment();
     env.onlineStatus = true;
     expect(env.pwaService.isOnline).toBe(true);
     env.pwaService.webSocketResponse = false;
     expect(env.pwaService.isOnline).toBe(false);
     env.dispose();
-  });
+  }));
 
-  it('switch to online when navigator is online and websocket comes back online', () => {
+  it('switch to online when navigator is online and websocket comes back online', fakeAsync(() => {
     const env = new TestEnvironment();
     env.onlineStatus = true;
     expect(env.pwaService.isOnline).toBe(true);
@@ -84,7 +84,7 @@ describe('PwaService', () => {
     env.pwaService.webSocketResponse = true;
     expect(env.pwaService.isOnline).toBe(true);
     env.dispose();
-  });
+  }));
 
   it('checks for updates', fakeAsync(() => {
     const env = new TestEnvironment();
@@ -100,7 +100,7 @@ describe('PwaService', () => {
     env.dispose();
   }));
 
-  it('hasUpdate should emit on VERSION_READY', () => {
+  it('hasUpdate should emit on VERSION_READY', fakeAsync(() => {
     const env = new TestEnvironment();
     let isVersionReady = false;
     env.pwaService.hasUpdate.subscribe((event: VersionReadyEvent) => {
@@ -110,7 +110,7 @@ describe('PwaService', () => {
     env.triggerVersionEvent('VERSION_READY');
     expect(isVersionReady).toEqual(true);
     env.dispose();
-  });
+  }));
 });
 
 class TestEnvironment {
@@ -126,6 +126,8 @@ class TestEnvironment {
     );
     spyOnProperty(window.navigator, 'onLine').and.returnValue(this.navigatorOnline);
     when(mockedSwUpdate.versionUpdates).thenReturn(this.versionUpdates$);
+    when(mockedSwUpdate.checkForUpdate()).thenResolve(true);
+    resetCalls(mockedSwUpdate);
   }
 
   set onlineStatus(status: boolean) {
@@ -134,6 +136,7 @@ class TestEnvironment {
   }
 
   dispose() {
+    discardPeriodicTasks();
     this.pwaService.dispose();
   }
 

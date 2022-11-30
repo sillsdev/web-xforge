@@ -43,7 +43,12 @@ export class PwaService extends SubscriptionDisposable {
       this.appOnlineStatus.next(this.windowOnLineStatus.getValue() && this.webSocketStatus.getValue() !== false);
     });
     // Check for updates periodically
-    this.subscribe(interval(PWA_CHECK_FOR_UPDATES), () => this.updates.checkForUpdate());
+    const checkForUpdatesInterval = interval(PWA_CHECK_FOR_UPDATES).subscribe(() =>
+      this.updates.checkForUpdate().catch(() => {
+        // Stop checking for updates if the browser doesn't support it
+        checkForUpdatesInterval.unsubscribe();
+      })
+    );
   }
 
   get isBrowserOnline(): boolean {
