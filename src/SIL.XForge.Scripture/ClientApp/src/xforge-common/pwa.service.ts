@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { BehaviorSubject, fromEvent, interval, merge, Observable, of } from 'rxjs';
-import { filter, mapTo, take } from 'rxjs/operators';
+import { filter, mapTo, take, takeUntil } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { LocationService } from './location.service';
 
@@ -44,13 +44,15 @@ export class PwaService extends SubscriptionDisposable {
     });
     // Check for updates periodically if enabled and the browser supports it
     if (this.updates.isEnabled) {
-      const checkForUpdatesInterval$ = interval(PWA_CHECK_FOR_UPDATES).subscribe(() =>
-        this.updates.checkForUpdate().catch((error: any) => {
-          // Stop checking for updates and throw the error
-          checkForUpdatesInterval$.unsubscribe();
-          throw new Error(error);
-        })
-      );
+      const checkForUpdatesInterval$ = interval(PWA_CHECK_FOR_UPDATES)
+        .pipe(takeUntil(this.ngUnsubscribe))
+        .subscribe(() =>
+          this.updates.checkForUpdate().catch((error: any) => {
+            // Stop checking for updates and throw the error
+            checkForUpdatesInterval$.unsubscribe();
+            throw new Error(error);
+          })
+        );
     }
   }
 
