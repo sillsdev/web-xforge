@@ -196,7 +196,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   async removeProjectUserClicked(row: Row): Promise<void> {
     const confirmed: boolean = await this.dialogService.confirm(
       this.i18n.translate('collaborators.confirm_remove_user', { user: row.user.displayName }),
-      this.i18n.translate('collaborators.remove_user')
+      'collaborators.remove_user'
     );
     if (confirmed) {
       this.projectService.onlineRemoveUser(this.projectId, row.id);
