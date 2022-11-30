@@ -63,7 +63,7 @@ namespace SIL.XForge.Scripture.Services
                 throw new DataNotFoundException("The project does not exist.");
             }
 
-            // Add the project to the in-memory Machine instance
+            // Add the project to the in process Machine instance
             var machineProject = new Project
             {
                 Id = projectId,
@@ -100,7 +100,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task BuildProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken)
         {
-            // Build the project with the in-memory Machine instance
+            // Build the project with the in process Machine instance
             await _engineService.StartBuildByProjectIdAsync(projectId);
 
             // Ensure that the Machine API feature flag is enabled
@@ -137,7 +137,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task RemoveProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken)
         {
-            // Remove the project from the in-memory Machine instance
+            // Remove the project from the in process Machine instance
             await _engineService.RemoveProjectAsync(projectId);
 
             // Ensure that the Machine API feature flag is enabled
