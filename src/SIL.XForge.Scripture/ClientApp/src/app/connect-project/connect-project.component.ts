@@ -145,7 +145,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       }
     });
 
-    this.subscribe(this.pwaService.onlineStatus, async isOnline => {
+    this.subscribe(this.pwaService.onlineStatus$, async isOnline => {
       this.isAppOnline = isOnline;
       if (isOnline) {
         if (this._projects == null) {

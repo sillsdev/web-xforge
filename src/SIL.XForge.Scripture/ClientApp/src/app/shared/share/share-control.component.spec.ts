@@ -368,7 +368,7 @@ class TestEnvironment {
     when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
-    when(mockedPwaService.onlineStatus).thenReturn(this._onlineStatus.asObservable());
+    when(mockedPwaService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
     when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
     when(mockedUserService.currentUserId).thenReturn(args.userId!);
     when(mockedProjectService.onlineGetLinkSharingKey(args.projectId!, anything())).thenResolve(

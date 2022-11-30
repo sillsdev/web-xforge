@@ -152,7 +152,7 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
 
     when(mockedPwaService.isOnline).thenCall(() => this.onlineStatus.getValue());
-    when(mockedPwaService.onlineStatus).thenReturn(this.onlineStatus.asObservable());
+    when(mockedPwaService.onlineStatus$).thenReturn(this.onlineStatus.asObservable());
   }
 
   get overlayContainerElement(): HTMLElement {

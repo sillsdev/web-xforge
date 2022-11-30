@@ -36,7 +36,7 @@ export class TranslationEngineService extends SubscriptionDisposable {
     private readonly machineHttp: MachineHttpClient
   ) {
     super();
-    this.onlineStatus$ = this.pwaService.onlineStatus.pipe(
+    this.onlineStatus$ = this.pwaService.onlineStatus$.pipe(
       filter(online => online),
       share()
     );

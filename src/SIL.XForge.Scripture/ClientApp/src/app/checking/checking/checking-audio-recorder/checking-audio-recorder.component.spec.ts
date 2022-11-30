@@ -119,7 +119,7 @@ class TestEnvironment {
         this.rejectUserMedia ? Promise.reject() : navigator.mediaDevices.getUserMedia(mediaConstraints)
     } as MediaDevices);
     when(mockedPwaService.isOnline).thenReturn(true);
-    when(mockedPwaService.onlineStatus).thenReturn(of(true));
+    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
     this.fixture.detectChanges();
   }
 

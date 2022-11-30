@@ -540,7 +540,7 @@ class TestEnvironment {
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
-    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
+    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
     when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
 
     when(mockedParatextService.getProjects()).thenResolve([

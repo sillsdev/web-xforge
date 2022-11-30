@@ -61,7 +61,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
     private readonly featureFlags: FeatureFlagService
   ) {
     super();
-    this.subscribe(combineLatest([this.projectId$, this.pwaService.onlineStatus]), async ([projectId]) => {
+    this.subscribe(combineLatest([this.projectId$, this.pwaService.onlineStatus$]), async ([projectId]) => {
       if (projectId === '') {
         return;
       }
@@ -74,7 +74,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
       }
       this.subscribe(this.projectDoc.remoteChanges$, () => this.updateFormEnabledStateAndLinkSharingKey());
     });
-    this.subscribe(combineLatest([this.pwaService.onlineStatus, this.roleControl.valueChanges]), () =>
+    this.subscribe(combineLatest([this.pwaService.onlineStatus$, this.roleControl.valueChanges]), () =>
       this.updateFormEnabledStateAndLinkSharingKey()
     );
   }
