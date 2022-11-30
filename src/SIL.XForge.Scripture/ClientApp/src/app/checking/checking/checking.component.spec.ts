@@ -5,7 +5,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute, ActivatedRouteSnapshot, Route } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Params, Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
@@ -610,6 +610,18 @@ describe('CheckingComponent', () => {
       expect(env.component.questionFilterSelected).toEqual(QuestionFilter.None);
       expect(env.questions.length).toEqual(15);
       env.waitForQuestionTimersToComplete();
+    }));
+
+    it('should reset filtering when changing books', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER, 'ALL');
+      env.setQuestionFilter(QuestionFilter.StatusResolved);
+      expect(env.component.bookName).toEqual('John');
+      expect(env.component.questionFilterSelected).toEqual(QuestionFilter.StatusResolved);
+
+      env.setBookId('MAT');
+      env.waitForQuestionTimersToComplete();
+      expect(env.component.bookName).toEqual('Matthew');
+      expect(env.component.questionFilterSelected).toEqual(QuestionFilter.None);
     }));
   });
 
@@ -1635,12 +1647,14 @@ class TestEnvironment {
   readonly mockedAnsweredDialogRef = mock<MdcDialogRef<QuestionAnsweredDialogComponent>>(MdcDialogRef);
   readonly mockedTextChooserDialogComponent = mock<MatDialogRef<TextChooserDialogComponent>>(MatDialogRef);
   readonly location: Location;
+  readonly router: Router;
 
   questionReadTimer: number = 2000;
   project01WritingSystemTag = 'en';
   isOnline: BehaviorSubject<boolean>;
   fileSyncComplete: Subject<void> = new Subject();
 
+  private readonly params$: BehaviorSubject<Params>;
   private readonly adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: ADMIN_USER.id,
     projectRef: 'project01',
@@ -1763,7 +1777,8 @@ class TestEnvironment {
 
   constructor(user: UserInfo, projectBookRoute: string = 'JHN', hasConnection: boolean = true) {
     reset(mockedFileService);
-    this.setRouteSnapshot(projectBookRoute);
+    this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: projectBookRoute });
+    this.setBookId(projectBookRoute);
     this.setupDefaultProjectData(user);
     when(mockedUserService.editDisplayName(true)).thenResolve();
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
@@ -1780,6 +1795,7 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(CheckingComponent);
     this.component = this.fixture.componentInstance;
     this.location = TestBed.inject(Location);
+    this.router = TestBed.inject(Router);
     // Need to wait for questions, text promises, and slider position calculations to finish
     this.fixture.detectChanges();
     tick(1);
@@ -1834,7 +1850,7 @@ class TestEnvironment {
     for (const questionNumber in questions) {
       if (
         questions[questionNumber].classes.hasOwnProperty('mdc-list-item--activated') &&
-        questions[questionNumber].classes['mdc-list-item--activated'] === true
+        questions[questionNumber].classes['mdc-list-item--activated']
       ) {
         // Need to add one as css selector nth-child starts index from 1 instead of zero
         return Number(questionNumber) + 1;
@@ -2012,6 +2028,28 @@ class TestEnvironment {
     }
     this.clickButton(this.saveAnswerButton);
     this.waitForSliderUpdate();
+  }
+
+  setBookId(bookId: string): void {
+    this.setRouteSnapshot(bookId);
+    when(
+      mockedProjectService.queryQuestions(
+        'project01',
+        deepEqual({
+          bookNum: this.projectBookRoute === 'ALL' ? undefined : Canon.bookIdToNumber(this.projectBookRoute),
+          sort: true,
+          activeOnly: true
+        })
+      )
+    ).thenCall(() =>
+      this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {
+        [obj<Question>().pathStr(q => q.isArchived)]: false,
+        // Sort questions in order from oldest to newest
+        $sort: { [obj<Question>().pathStr(q => q.dateCreated)]: 1 }
+      })
+    );
+    this.setupQuestionData();
+    this.params$.next({ projectId: 'project01', bookId });
   }
 
   clickButton(button: DebugElement): void {
@@ -2385,7 +2423,45 @@ class TestEnvironment {
     when(mockedProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
+    when(mockedActivatedRoute.params).thenReturn(this.params$);
+    when(mockedProjectService.createQuestion('project01', anything())).thenCall((id: string, question: Question) =>
+      this.realtimeService.create(QuestionDoc.COLLECTION, getQuestionDocId(id, question.dataId), question)
+    );
+    when(mockedUserService.currentUserId).thenReturn(user.id);
 
+    this.realtimeService.addSnapshots<User>(UserDoc.COLLECTION, [
+      {
+        id: user.id,
+        data: user.user
+      }
+    ]);
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, user.id)
+    );
+
+    this.realtimeService.addSnapshots<User>(UserProfileDoc.COLLECTION, [
+      {
+        id: ADMIN_USER.id,
+        data: ADMIN_USER.user
+      },
+      {
+        id: CHECKER_USER.id,
+        data: CHECKER_USER.user
+      }
+    ]);
+    when(mockedUserService.getProfile(anything())).thenCall(id =>
+      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
+    );
+
+    when(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
+    when(mockedDialogService.openMatDialog(TextChooserDialogComponent, anything())).thenReturn(
+      instance(this.mockedTextChooserDialogComponent)
+    );
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+    this.setupQuestionData();
+  }
+
+  private setupQuestionData(): void {
     const date = new Date();
     date.setDate(date.getDate() - 1);
     const dateCreated = date.toJSON();
@@ -2537,57 +2613,6 @@ class TestEnvironment {
       questions = johnQuestions.concat(matthewQuestions);
     }
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, questions);
-    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01', bookId: this.projectBookRoute }));
-    when(
-      mockedProjectService.queryQuestions(
-        'project01',
-        deepEqual({
-          bookNum: this.projectBookRoute === 'ALL' ? undefined : Canon.bookIdToNumber(this.projectBookRoute),
-          sort: true,
-          activeOnly: true
-        })
-      )
-    ).thenCall(() =>
-      this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {
-        [obj<Question>().pathStr(q => q.isArchived)]: false,
-        // Sort questions in order from oldest to newest
-        $sort: { [obj<Question>().pathStr(q => q.dateCreated)]: 1 }
-      })
-    );
-    when(mockedProjectService.createQuestion('project01', anything())).thenCall((id: string, question: Question) =>
-      this.realtimeService.create(QuestionDoc.COLLECTION, getQuestionDocId(id, question.dataId), question)
-    );
-    when(mockedUserService.currentUserId).thenReturn(user.id);
-
-    this.realtimeService.addSnapshots<User>(UserDoc.COLLECTION, [
-      {
-        id: user.id,
-        data: user.user
-      }
-    ]);
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, user.id)
-    );
-
-    this.realtimeService.addSnapshots<User>(UserProfileDoc.COLLECTION, [
-      {
-        id: ADMIN_USER.id,
-        data: ADMIN_USER.user
-      },
-      {
-        id: CHECKER_USER.id,
-        data: CHECKER_USER.user
-      }
-    ]);
-    when(mockedUserService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
-    );
-
-    when(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
-    when(mockedDialogService.openMatDialog(TextChooserDialogComponent, anything())).thenReturn(
-      instance(this.mockedTextChooserDialogComponent)
-    );
-    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
   }
 
   private createTextDataForChapter(chapter: number): TextData {
