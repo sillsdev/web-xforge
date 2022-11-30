@@ -75,8 +75,8 @@ namespace SIL.XForge.Scripture.Services
                 TargetLanguageTag = project.WritingSystem.Tag,
             };
 
-            // Only add to the in-memory instance if it is enabled
-            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            // Only add to the In Process instance if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
                 await _engineService.AddProjectAsync(machineProject);
             }
@@ -110,8 +110,8 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task BuildProjectAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken)
         {
-            // Build the project with the in-memory Machine instance
-            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            // Build the project with the In Process Machine instance
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
                 await _engineService.StartBuildByProjectIdAsync(sfProjectId);
             }
@@ -150,8 +150,8 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task RemoveProjectAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken)
         {
-            // Remove the project from the in-memory Machine instance
-            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+            // Remove the project from the In Process Machine instance
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
                 await _engineService.RemoveProjectAsync(sfProjectId);
             }
