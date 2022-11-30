@@ -248,7 +248,7 @@ class TestEnvironment {
     when(mockedNoticeService.loadingFinished()).thenCall(() => (this.isLoading = false));
     when(mockedNoticeService.isAppLoading).thenCall(() => this.isLoading);
     this.isOnline = new BehaviorSubject(isOnline);
-    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
+    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
 
     const date = new Date();
     date.setMonth(date.getMonth() - 2);

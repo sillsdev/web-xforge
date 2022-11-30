@@ -2949,7 +2949,7 @@ class TestEnvironment {
       })
     );
     when(mockedPwaService.isOnline).thenReturn(true);
-    when(mockedPwaService.onlineStatus).thenReturn(of(true));
+    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
 
     this.fixture = TestBed.createComponent(EditorComponent);
     this.component = this.fixture.componentInstance;
@@ -3062,7 +3062,7 @@ class TestEnvironment {
 
   set onlineStatus(value: boolean) {
     when(mockedPwaService.isOnline).thenReturn(value);
-    when(mockedPwaService.onlineStatus).thenReturn(of(value));
+    when(mockedPwaService.onlineStatus$).thenReturn(of(value));
   }
 
   deleteText(textId: string): void {

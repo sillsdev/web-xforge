@@ -149,7 +149,7 @@ class TestEnvironment {
       imports: [UICommonModule, TestTranslocoModule]
     });
     when(this.mockedPwaService.isOnline).thenCall(() => isOnline);
-    when(this.mockedPwaService.onlineStatus).thenReturn(of(isOnline));
+    when(this.mockedPwaService.onlineStatus$).thenReturn(of(isOnline));
 
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
     this.ngZone = TestBed.inject(NgZone);

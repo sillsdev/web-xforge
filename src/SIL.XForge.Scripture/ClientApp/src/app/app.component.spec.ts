@@ -623,8 +623,8 @@ class TestEnvironment {
     when(mockedPwaService.isOnline).thenReturn(this.browserOnline$.getValue() && this.webSocketOnline$.getValue());
     when(mockedPwaService.isBrowserOnline).thenReturn(this.browserOnline$.getValue());
     when(mockedPwaService.online).thenReturn(comesOnline);
-    when(mockedPwaService.onlineStatus).thenReturn(this.webSocketOnline$);
-    when(mockedPwaService.onlineBrowserStatus).thenReturn(this.browserOnline$);
+    when(mockedPwaService.onlineStatus$).thenReturn(this.webSocketOnline$);
+    when(mockedPwaService.onlineBrowserStatus$).thenReturn(this.browserOnline$);
     if (initialConnectionStatus === 'offline') {
       this.goFullyOffline();
     } else {
@@ -632,7 +632,7 @@ class TestEnvironment {
       this.goFullyOnline();
     }
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
-    when(mockedPwaService.hasUpdate).thenReturn(this.hasUpdate$);
+    when(mockedPwaService.hasUpdate$).thenReturn(this.hasUpdate$);
     when(mockedMdcDialog.open(ProjectDeletedDialogComponent, anything())).thenReturn(
       instance(this.mockedProjectDeletedDialogRef)
     );

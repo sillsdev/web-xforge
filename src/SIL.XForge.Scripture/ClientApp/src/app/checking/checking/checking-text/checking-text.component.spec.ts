@@ -153,7 +153,7 @@ class TestEnvironment {
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
-    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
+    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
 
     this.fixture = TestBed.createComponent(CheckingTextComponent);
     this.component = this.fixture.componentInstance;

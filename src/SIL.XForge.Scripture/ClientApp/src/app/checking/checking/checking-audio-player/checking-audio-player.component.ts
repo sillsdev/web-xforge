@@ -65,7 +65,7 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
       }
     });
 
-    this.subscribe(this.pwaService.onlineStatus, isOnline => {
+    this.subscribe(this.pwaService.onlineStatus$, isOnline => {
       if (isOnline && !this.audioDataLoaded) {
         // force the audio element to try loading again, now that the user is online again
         if (this.audio.src === '') {

@@ -127,7 +127,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
     // Check full online status changes
     this.isAppOnline = pwaService.isOnline;
-    this.subscribe(pwaService.onlineStatus, status => {
+    this.subscribe(pwaService.onlineStatus$, status => {
       if (status !== this.isAppOnline) {
         this.isAppOnline = status;
         this.checkDeviceStorage();
@@ -135,7 +135,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     });
 
     // Check browser online status to allow checks with Auth0
-    this.subscribe(pwaService.onlineBrowserStatus, status => {
+    this.subscribe(pwaService.onlineBrowserStatus$, status => {
       // Check authentication when coming back online
       // This is also run on first load when the websocket connects for the first time
       if (status && !this.isAppLoading) {
@@ -143,7 +143,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       }
     });
 
-    this.subscribe(pwaService.hasUpdate, () => (this.hasUpdate = true));
+    this.subscribe(pwaService.hasUpdate$, () => (this.hasUpdate = true));
 
     // Google Analytics - send data at end of navigation so we get data inside the SPA client-side routing
     if (environment.releaseStage === 'live') {

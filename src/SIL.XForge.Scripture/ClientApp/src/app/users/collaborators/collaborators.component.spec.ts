@@ -510,7 +510,7 @@ class TestEnvironment {
     ]);
 
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
-    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
+    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
     when(mockedPwaService.isOnline).thenReturn(this.isOnline.value);
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
     this.fixture = TestBed.createComponent(CollaboratorsComponent);

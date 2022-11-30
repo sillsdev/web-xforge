@@ -420,7 +420,7 @@ class TestEnvironment {
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedI18nService.translateAndInsertTags(anything())).thenReturn('A translated string.');
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
-    when(mockedPwaService.onlineStatus).thenReturn(this.isOnline.asObservable());
+    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
     this.fixture = TestBed.createComponent(ConnectProjectComponent);
     this.component = this.fixture.componentInstance;
   }
