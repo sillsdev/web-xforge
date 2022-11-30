@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
+using Polly.CircuitBreaker;
 using SIL.Machine.Annotations;
 using SIL.Machine.Threading;
 using SIL.Machine.Translation;
@@ -26,6 +27,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly IEngineRepository _engines;
         private readonly IOptions<EngineOptions> _engineOptions;
         private readonly IEngineService _engineService;
+        private readonly IExceptionHandler _exceptionHandler;
         private readonly IFeatureManager _featureManager;
         private readonly IMachineBuildService _machineBuildService;
         private readonly IMachineTranslationService _machineTranslationService;
@@ -37,6 +39,7 @@ namespace SIL.XForge.Scripture.Services
             IEngineRepository engines,
             IOptions<EngineOptions> engineOptions,
             IEngineService engineService,
+            IExceptionHandler exceptionHandler,
             IFeatureManager featureManager,
             IMachineBuildService machineBuildService,
             IMachineTranslationService machineTranslationService,
@@ -51,6 +54,7 @@ namespace SIL.XForge.Scripture.Services
             _engineService = engineService;
 
             // Shared Dependencies
+            _exceptionHandler = exceptionHandler;
             _featureManager = featureManager;
 
             // Machine API Dependencies
@@ -171,12 +175,27 @@ namespace SIL.XForge.Scripture.Services
                 string translationEngineId = await GetTranslationIdAsync(projectId);
                 if (!string.IsNullOrWhiteSpace(translationEngineId))
                 {
-                    MachineApiTranslationEngine translationEngine =
-                        await _machineTranslationService.GetTranslationEngineAsync(
-                            translationEngineId,
-                            cancellationToken
-                        );
-                    engineDto = CreateDto(translationEngine);
+                    try
+                    {
+                        MachineApiTranslationEngine translationEngine =
+                            await _machineTranslationService.GetTranslationEngineAsync(
+                                translationEngineId,
+                                cancellationToken
+                            );
+                        engineDto = CreateDto(translationEngine);
+                    }
+                    catch (BrokenCircuitException e)
+                    {
+                        // We do not want to throw the error if we are returning from in-memory API below
+                        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                        {
+                            _exceptionHandler.ReportException(e);
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
                 }
                 else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
                 {
@@ -214,11 +233,26 @@ namespace SIL.XForge.Scripture.Services
                 string translationEngineId = await GetTranslationIdAsync(projectId);
                 if (!string.IsNullOrWhiteSpace(translationEngineId))
                 {
-                    wordGraphDto = await _machineTranslationService.GetWordGraphAsync(
-                        translationEngineId,
-                        segment,
-                        cancellationToken
-                    );
+                    try
+                    {
+                        wordGraphDto = await _machineTranslationService.GetWordGraphAsync(
+                            translationEngineId,
+                            segment,
+                            cancellationToken
+                        );
+                    }
+                    catch (BrokenCircuitException e)
+                    {
+                        // We do not want to throw the error if we are returning from in-memory API below
+                        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                        {
+                            _exceptionHandler.ReportException(e);
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
                 }
                 else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
                 {
@@ -255,7 +289,22 @@ namespace SIL.XForge.Scripture.Services
                 string translationEngineId = await GetTranslationIdAsync(projectId);
                 if (!string.IsNullOrWhiteSpace(translationEngineId))
                 {
-                    buildDto = await _machineBuildService.StartBuildAsync(translationEngineId, cancellationToken);
+                    try
+                    {
+                        buildDto = await _machineBuildService.StartBuildAsync(translationEngineId, cancellationToken);
+                    }
+                    catch (BrokenCircuitException e)
+                    {
+                        // We do not want to throw the error if we are returning from in-memory API below
+                        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                        {
+                            _exceptionHandler.ReportException(e);
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
                 }
                 else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
                 {
@@ -294,7 +343,26 @@ namespace SIL.XForge.Scripture.Services
                     throw new DataNotFoundException("The translation engine is not configured");
                 }
 
-                await _machineTranslationService.TrainSegmentAsync(translationEngineId, segmentPair, cancellationToken);
+                try
+                {
+                    await _machineTranslationService.TrainSegmentAsync(
+                        translationEngineId,
+                        segmentPair,
+                        cancellationToken
+                    );
+                }
+                catch (BrokenCircuitException e)
+                {
+                    // We do not want to throw the error if we are returning from in-memory API below
+                    if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInMemory))
+                    {
+                        _exceptionHandler.ReportException(e);
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
             }
 
             // Execute the in-memory Machine instance, if it is enabled
