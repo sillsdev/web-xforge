@@ -20,13 +20,17 @@
   "checking_overview": {
     "add_question": "Tambah Pertanyaan",
     "answer_count_label": "{{ count }} jawaban",
+    "archive_multiple": "Archive all questions in {{ location }}",
     "archive": "Arsip",
     "archived_questions": "Arsipkan Pertanyaan",
     "click_add_question": "Klik {{ boldStart }}Tambah pertanyaan{{ boldEnd }}, diatas.",
+    "confirm_bulk_archive": "Are you sure you want to archive all the questions in {{ scope }}?",
+    "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
     "import_questions": "Bulk import",
     "no_archived_questions": "Tidak ada pertanyaan yang diarsipkan.",
     "no_questions": "Tidak ada pertanyaan yang dipublikasikan. ",
     "question_count_label": "{{ count }} pertanyaan",
+    "republish_multiple": "Republish all questions in {{ location }}",
     "republish": "Dipublikasikan ulang",
     "time_archived_stamp": "Diarsipkan pada{{ timeStamp }}"
   },

@@ -20,13 +20,17 @@
   "checking_overview": {
     "add_question": "ꤙꤢꤩ꤬ꤔꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭",
     "answer_count_label": "{{ ꤘꤛꤢ }} ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ ",
+    "archive_multiple": "Archive all questions in {{ location }}",
     "archive": "ꤙꤢꤩ꤬ꤕꤜꤢꤪꤕꤜꤢꤪ ꤜꤤ꤬ꤒꤟꤢꤧ꤬ꤘꤛꤢꤊꤛꤢ꤭",
     "archived_questions": "ꤙꤢꤩ꤬ꤕꤜꤢꤪ ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ",
     "click_add_question": "ꤒꤣ꤬ꤙꤢꤧ꤬ {{ boldStart }}ꤚꤢ꤭ꤔꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭{{ boldEnd }}, ꤘꤣꤢ꤬ꤋꤢꤨ꤬ꤓꤛꤢ꤬.",
+    "confirm_bulk_archive": "Are you sure you want to archive all the questions in {{ scope }}?",
+    "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
     "import_questions": "Bulk import",
     "no_archived_questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤬ ꤘꤣ ꤢꤨ꤭ ꤙꤢꤩ꤬ꤕꤜꤢꤪ ꤔꤌꤣ꤬ ꤢ꤬ꤥ꤬ ꤒꤥ꤬꤯ ",
     "no_questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ꤘꤣ ꤢꤧꤕꤚꤟꤢꤧ꤬ ꤜꤟꤢꤩꤞꤢꤧꤑꤢꤩ꤭ ꤥ꤬ ꤒꤥ꤬꤯",
     "question_count_label": "{{ count }} ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭",
+    "republish_multiple": "Republish all questions in {{ location }}",
     "republish": "ꤘꤛꤢꤩꤜꤟꤌꤣ꤭ꤒꤟꤢ꤭ ꤋꤛꤢꤩ꤭ꤞꤛꤢ",
     "time_archived_stamp": "ꤙꤢꤩ꤬ꤕꤜꤢꤪꤓꤛꤢ꤬ {{ timeStamp }}"
   },

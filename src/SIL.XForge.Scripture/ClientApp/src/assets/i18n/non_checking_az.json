@@ -20,13 +20,17 @@
   "checking_overview": {
     "add_question": "Sual əlavə etmək",
     "answer_count_label": "{{ count }} cavablar",
+    "archive_multiple": "Archive all questions in {{ location }}",
     "archive": "Arxiv",
     "archived_questions": "Arxivdə saxlanmış suallar",
     "click_add_question": "Yuxarıdakı {{ boldStart }}Sual əlavə etmək{{ boldEnd }} tıklayın.",
+    "confirm_bulk_archive": "Are you sure you want to archive all the questions in {{ scope }}?",
+    "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
     "import_questions": "İdxal",
     "no_archived_questions": "Arxivləşdirilmiş suallar yoxdur.",
     "no_questions": "Nəşr edilmiş suallar yoxdur. ",
     "question_count_label": "{{ count }} suallar",
+    "republish_multiple": "Republish all questions in {{ location }}",
     "republish": "Yenidən nəşr etmək",
     "time_archived_stamp": "{{ timeStamp }}-da arxivləşdirilib"
   },

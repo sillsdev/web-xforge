@@ -20,13 +20,17 @@
   "checking_overview": {
     "add_question": "أضِف سؤالاً",
     "answer_count_label": "{{ count }} إجابات",
+    "archive_multiple": "حفظ جميع الأسئلة في الأرشيف {{ location }}",
     "archive": "أرشيف",
     "archived_questions": "أسئلة محفوظة في الأرشيف",
     "click_add_question": "انقر على {{ boldStart }} أضِف السؤال {{ boldEnd }} أعلاه.",
+    "confirm_bulk_archive": "هل أنت متأكد من أنك تريد حفظ جميع الأسئلة في الأرشيف {{ scope }}؟",
+    "confirm_bulk_republish": "هل أنت متأكد من أنك تريد إعادة نشر جميع الأسئلة في {{ scope }}؟",
     "import_questions": "تحميل أسئلة مجمعة",
     "no_archived_questions": "لا توجد أسئلة محفوظة في الأرشيف.",
     "no_questions": "لا توجد أسئلة منشورة. ",
     "question_count_label": "{{ count }} أسئلة",
+    "republish_multiple": "أعد نشر جميع الأسئلة في {{ location }}",
     "republish": "أعِد نشر",
     "time_archived_stamp": "تم حفظه في الأرشيف في {{ timeStamp }}"
   },
