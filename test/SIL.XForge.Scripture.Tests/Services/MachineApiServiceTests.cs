@@ -8,6 +8,7 @@ using Microsoft.FeatureManagement;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
+using Polly.CircuitBreaker;
 using SIL.Machine.Annotations;
 using SIL.Machine.Translation;
 using SIL.Machine.WebApi;
@@ -577,6 +578,40 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void GetEngineAsync_MachineApiOutageNoInProcess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineTranslationService
+                .GetTranslationEngineAsync(TranslationEngine01, CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<BrokenCircuitException>(
+                () => env.Service.GetEngineAsync(User01, Project01, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task GetEngineAsync_MachineApiOutageFailsToInProcess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineTranslationService
+                .GetTranslationEngineAsync(TranslationEngine01, CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+            env.Engines
+                .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+                .Returns(Task.FromResult(new Engine()));
+
+            // SUT
+            await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
+
+            env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        }
+
+        [Test]
         public async Task GetEngineAsync_InProcessSuccess()
         {
             // Set up test environment
@@ -750,6 +785,40 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void GetWordGraphAsync_MachineApiOutageNoInProcess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineTranslationService
+                .GetWordGraphAsync(TranslationEngine01, Array.Empty<string>(), CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<BrokenCircuitException>(
+                () => env.Service.GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task GetWordGraphAsync_MachineApiOutageFailsToInProcess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineTranslationService
+                .GetWordGraphAsync(TranslationEngine01, Array.Empty<string>(), CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+            env.EngineService
+                .GetWordGraphAsync(TranslationEngine01, Array.Empty<string>())
+                .Returns(Task.FromResult(new WordGraph(Array.Empty<WordGraphArc>(), Array.Empty<int>())));
+
+            // SUT
+            await env.Service.GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None);
+
+            env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        }
+
+        [Test]
         public async Task GetWordGraphAsync_InProcessSuccess()
         {
             // Set up test environment
@@ -896,6 +965,38 @@ namespace SIL.XForge.Scripture.Services
             Assert.ThrowsAsync<DataNotFoundException>(
                 () => env.Service.StartBuildAsync(User01, Project03, CancellationToken.None)
             );
+        }
+
+        [Test]
+        public void StartBuildAsync_MachineApiOutageNoInProcess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineBuildService
+                .StartBuildAsync(TranslationEngine01, CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<BrokenCircuitException>(
+                () => env.Service.StartBuildAsync(User01, Project01, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task StartBuildAsync_MachineApiOutageFailsToInProcess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineBuildService
+                .StartBuildAsync(TranslationEngine01, CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+            env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
+
+            // SUT
+            await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+
+            env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         }
 
         [Test]
@@ -1055,6 +1156,47 @@ namespace SIL.XForge.Scripture.Services
             Assert.ThrowsAsync<DataNotFoundException>(
                 () => env.Service.TrainSegmentAsync(User01, Project03, new SegmentPairDto(), CancellationToken.None)
             );
+        }
+
+        [Test]
+        public void TrainSegmentAsync_MachineApiOutageNoInProcess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            var segmentPairDto = new SegmentPairDto();
+            env.MachineTranslationService
+                .TrainSegmentAsync(TranslationEngine01, segmentPairDto, CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<BrokenCircuitException>(
+                () => env.Service.TrainSegmentAsync(User01, Project01, segmentPairDto, CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task TrainSegmentAsync_MachineApiOutageFailsToInProcess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            var segmentPairDto = new SegmentPairDto();
+            env.MachineTranslationService
+                .TrainSegmentAsync(TranslationEngine01, segmentPairDto, CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+            env.EngineService
+                .TrainSegmentAsync(
+                    TranslationEngine01,
+                    segmentPairDto.SourceSegment,
+                    segmentPairDto.TargetSegment,
+                    segmentPairDto.SentenceStart
+                )
+                .Returns(Task.FromResult(true));
+
+            // SUT
+            await env.Service.TrainSegmentAsync(User01, Project01, segmentPairDto, CancellationToken.None);
+
+            env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         }
 
         [Test]
