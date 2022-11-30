@@ -747,7 +747,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   totalVisibleQuestions(): number {
-    return (this.visibleQuestions ?? []).length;
+    return this.visibleQuestions?.length ?? 0;
   }
 
   verseRefClicked(verseRef: VerseRef): void {
