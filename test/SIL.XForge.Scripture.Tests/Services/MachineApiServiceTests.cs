@@ -34,7 +34,7 @@ namespace SIL.XForge.Scripture.Services
         private const string User01 = "user01";
 
         [Test]
-        public async Task GetBuildAsync_InMemoryNoRevisionNoBuildRunning()
+        public async Task GetBuildAsync_InProcessNoRevisionNoBuildRunning()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -56,7 +56,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void GetBuildAsync_InMemorySpecificRevisionBuildEnded()
+        public void GetBuildAsync_InProcessSpecificRevisionBuildEnded()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -79,7 +79,7 @@ namespace SIL.XForge.Scripture.Services
             // Set up test environment
             var env = new TestEnvironment();
             int minRevision = 0;
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
             env.MachineBuildService
                 .GetBuildAsync(TranslationEngine01, Build01, minRevision, CancellationToken.None)
                 .Throws(new DataNotFoundException("Entity Deleted"));
@@ -95,7 +95,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up test environment
             var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
             env.MachineBuildService
                 .GetBuildAsync(TranslationEngine01, Build01, null, CancellationToken.None)
                 .Returns(Task.FromResult<BuildDto>(null));
@@ -155,7 +155,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up test environment
             var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
             // SUT
             Assert.ThrowsAsync<DataNotFoundException>(
@@ -164,7 +164,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetBuildAsync_InMemorySuccess()
+        public async Task GetBuildAsync_InProcessSuccess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -235,7 +235,7 @@ namespace SIL.XForge.Scripture.Services
                         }
                     )
                 );
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
             // SUT
             BuildDto? actual = await env.Service.GetBuildAsync(
@@ -258,7 +258,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetBuildAsync_ExecutesOnlyInMemoryIfBothEnabled()
+        public async Task GetBuildAsync_ExecutesOnlyInProcessIfBothEnabled()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -273,7 +273,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetCurrentBuildAsync_InMemoryNoRevisionNoBuildRunning()
+        public async Task GetCurrentBuildAsync_InProcessNoRevisionNoBuildRunning()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -294,7 +294,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void GetCurrentBuildAsync_InMemorySpecificRevisionBuildEnded()
+        public void GetCurrentBuildAsync_InProcessSpecificRevisionBuildEnded()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -317,7 +317,7 @@ namespace SIL.XForge.Scripture.Services
             // Set up test environment
             var env = new TestEnvironment();
             int minRevision = 0;
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
             env.MachineBuildService
                 .GetCurrentBuildAsync(TranslationEngine01, minRevision, CancellationToken.None)
                 .Throws(new DataNotFoundException("Entity Deleted"));
@@ -333,7 +333,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up test environment
             var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
             env.MachineBuildService
                 .GetCurrentBuildAsync(TranslationEngine01, null, CancellationToken.None)
                 .Returns(Task.FromResult<BuildDto>(null));
@@ -386,7 +386,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void GetCurrentBuildAsync_InMemoryNoEngine()
+        public void GetCurrentBuildAsync_InProcessNoEngine()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -406,7 +406,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up test environment
             var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
             // SUT
             Assert.ThrowsAsync<DataNotFoundException>(
@@ -415,7 +415,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetCurrentBuildAsync_InMemorySuccess()
+        public async Task GetCurrentBuildAsync_InProcessSuccess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -485,7 +485,7 @@ namespace SIL.XForge.Scripture.Services
                         }
                     )
                 );
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
             // SUT
             BuildDto? actual = await env.Service.GetCurrentBuildAsync(
@@ -507,7 +507,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetCurrentBuildAsync_ExecutesOnlyInMemoryIfBothEnabled()
+        public async Task GetCurrentBuildAsync_ExecutesOnlyInProcessIfBothEnabled()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -548,7 +548,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void GetEngineAsync_InMemoryNoEngine()
+        public void GetEngineAsync_InProcessNoEngine()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -568,7 +568,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up test environment
             var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
             // SUT
             Assert.ThrowsAsync<DataNotFoundException>(
@@ -577,7 +577,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetEngineAsync_InMemorySuccess()
+        public async Task GetEngineAsync_InProcessSuccess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -645,7 +645,7 @@ namespace SIL.XForge.Scripture.Services
                         }
                     )
                 );
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
             // SUT
             EngineDto actual = await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
@@ -662,7 +662,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetEngineAsync_ExecutesApiAndInMemory()
+        public async Task GetEngineAsync_ExecutesApiAndInProcess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -721,7 +721,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void GetWordGraphAsync_InMemoryNoEngine()
+        public void GetWordGraphAsync_InProcessNoEngine()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -741,7 +741,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up test environment
             var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
             // SUT
             Assert.ThrowsAsync<DataNotFoundException>(
@@ -750,7 +750,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetWordGraphAsync_InMemorySuccess()
+        public async Task GetWordGraphAsync_InProcessSuccess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -811,7 +811,7 @@ namespace SIL.XForge.Scripture.Services
                         }
                     )
                 );
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
             // SUT
             WordGraphDto actual = await env.Service.GetWordGraphAsync(
@@ -828,7 +828,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task GetWordGraphAsync_ExecutesApiAndInMemory()
+        public async Task GetWordGraphAsync_ExecutesApiAndInProcess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -870,7 +870,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void StartBuildAsync_InMemoryNoEngine()
+        public void StartBuildAsync_InProcessNoEngine()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -890,7 +890,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up test environment
             var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
             // SUT
             Assert.ThrowsAsync<DataNotFoundException>(
@@ -899,7 +899,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task StartBuildAsync_InMemorySuccess()
+        public async Task StartBuildAsync_InProcessSuccess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -963,7 +963,7 @@ namespace SIL.XForge.Scripture.Services
                         }
                     )
                 );
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
             // SUT
             BuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
@@ -979,7 +979,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task StartBuildAsync_ExecutesApiAndInMemory()
+        public async Task StartBuildAsync_ExecutesApiAndInProcess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -1029,7 +1029,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public void TrainSegmentAsync_InMemoryNoEngine()
+        public void TrainSegmentAsync_InProcessNoEngine()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -1049,7 +1049,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up test environment
             var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
             // SUT
             Assert.ThrowsAsync<DataNotFoundException>(
@@ -1058,7 +1058,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task TrainSegmentAsync_InMemorySuccess()
+        public async Task TrainSegmentAsync_InProcessSuccess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -1083,7 +1083,7 @@ namespace SIL.XForge.Scripture.Services
         {
             // Set up test environment
             var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
             var segmentPair = new SegmentPairDto();
 
             // SUT
@@ -1095,7 +1095,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task TrainSegmentAsync_ExecutesApiAndInMemory()
+        public async Task TrainSegmentAsync_ExecutesApiAndInProcess()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -1142,7 +1142,7 @@ namespace SIL.XForge.Scripture.Services
                 ExceptionHandler = Substitute.For<IExceptionHandler>();
                 FeatureManager = Substitute.For<IFeatureManager>();
                 FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(true));
-                FeatureManager.IsEnabledAsync(FeatureFlags.MachineInMemory).Returns(Task.FromResult(true));
+                FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(true));
 
                 MachineBuildService = Substitute.For<IMachineBuildService>();
                 MachineTranslationService = Substitute.For<IMachineTranslationService>();
