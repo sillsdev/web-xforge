@@ -853,9 +853,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   private updateVisibleQuestions(): void {
+    if (!this.totalQuestions()) {
+      return;
+    }
     let matchingQuestions: QuestionDoc[];
-    // If there is no filter applied, avoid allocating a new array of questions
-    if (this.questionFilterSelected === QuestionFilter.None) matchingQuestions = this.questionDocs.map(q => q);
+    // If there is no filter applied, clone the questions to trigger change detection in the questions component
+    if (this.questionFilterSelected === QuestionFilter.None) matchingQuestions = this.questionDocs.slice();
     else {
       const filterFunction = this.questionFilterFunctions[this.questionFilterSelected];
       matchingQuestions = this.questionDocs.filter(q => (q.data == null ? false : filterFunction(q.data.answers)));
