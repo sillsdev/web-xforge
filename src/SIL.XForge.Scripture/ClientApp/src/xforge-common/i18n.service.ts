@@ -18,9 +18,10 @@ import { BugsnagService } from './bugsnag.service';
 import { FeatureFlagService } from './feature-flags/feature-flag.service';
 import { LocationService } from './location.service';
 import { Locale } from './models/i18n-locale';
+import { PseudoLocalization } from './pseudo-localization';
 import { aspCultureCookieValue, ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage, getI18nLocales } from './utils';
 
-type DateFormat = Intl.DateTimeFormatOptions | ((date: Date) => string);
+export type DateFormat = Intl.DateTimeFormatOptions | ((date: Date) => string);
 
 export interface TextAroundTemplate {
   before: string;
@@ -40,10 +41,12 @@ export type I18nKey = ObjectPaths<typeof en>;
 export class TranslationLoader implements TranslocoLoader {
   constructor(private http: HttpClient) {}
 
-  getTranslation(code: string) {
+  getTranslation(code: string): Observable<Translation> {
     if (code.startsWith('en')) {
       // statically load English so there will always be keys to fall back to
       return of(en);
+    } else if (code === PseudoLocalization.locale.canonicalTag) {
+      return of(PseudoLocalization.localize(en));
     } else {
       code = code.replace(/-/g, '_');
       return zip(
@@ -62,14 +65,15 @@ function pad(number: number) {
   providedIn: 'root'
 })
 export class I18nService {
-  static readonly locales: Locale[] = getI18nLocales();
+  static readonly locales: Locale[] = getI18nLocales().concat(PseudoLocalization.locale);
 
   static dateFormats: { [key: string]: DateFormat } = {
     en: { month: 'short' },
     'en-GB': { month: 'short', hour12: true },
     // Chrome formats az dates as en-US. This manual override is the format Firefox uses for az
     az: (d: Date) =>
-      `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+      `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`,
+    [PseudoLocalization.locale.canonicalTag]: PseudoLocalization.dateFormat
   };
 
   static readonly defaultLocale = I18nService.getLocale('en')!;
