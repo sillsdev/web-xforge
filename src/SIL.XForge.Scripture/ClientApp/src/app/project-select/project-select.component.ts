@@ -1,5 +1,5 @@
 import { Component, EventEmitter, forwardRef, Input, Output, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, UntypedFormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { ShowOnDirtyErrorStateMatcher } from '@angular/material/core';
 import { BehaviorSubject, combineLatest, fromEvent, Observable } from 'rxjs';
@@ -31,7 +31,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
   @ViewChild(MatAutocomplete) autocomplete!: MatAutocomplete;
   @ViewChild(MatAutocompleteTrigger) autocompleteTrigger!: MatAutocompleteTrigger;
 
-  readonly paratextIdControl = new FormControl('', [SFValidators.selectableProject(true)]);
+  readonly paratextIdControl = new UntypedFormControl('', [SFValidators.selectableProject(true)]);
   @Input() projects?: SelectableProject[];
   @Input() resources?: SelectableProject[];
   /** Projects that can be an already selected value, but not given as an option in the menu */

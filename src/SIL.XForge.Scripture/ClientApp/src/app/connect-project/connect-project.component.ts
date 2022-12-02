@@ -1,5 +1,5 @@
 import { Component, ErrorHandler, OnInit } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -30,12 +30,12 @@ interface ConnectProjectFormValues {
 })
 export class ConnectProjectComponent extends DataLoadingComponent implements OnInit {
   static readonly errorAlreadyConnectedKey: string = 'error-already-connected';
-  readonly connectProjectForm = new FormGroup({
-    paratextId: new FormControl(undefined),
-    settings: new FormGroup({
-      translationSuggestions: new FormControl(false),
-      sourceParatextId: new FormControl(undefined),
-      checking: new FormControl(true)
+  readonly connectProjectForm = new UntypedFormGroup({
+    paratextId: new UntypedFormControl(undefined),
+    settings: new UntypedFormGroup({
+      translationSuggestions: new UntypedFormControl(false),
+      sourceParatextId: new UntypedFormControl(undefined),
+      checking: new UntypedFormControl(true)
     })
   });
   resources?: SelectableProject[];
@@ -113,8 +113,8 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this.settings.controls.translationSuggestions.value;
   }
 
-  get settings(): FormGroup {
-    return this.connectProjectForm.controls.settings as FormGroup;
+  get settings(): UntypedFormGroup {
+    return this.connectProjectForm.controls.settings as UntypedFormGroup;
   }
 
   ngOnInit(): void {

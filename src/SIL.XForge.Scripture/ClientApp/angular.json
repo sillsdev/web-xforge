@@ -2,7 +2,6 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "newProjectRoot": "projects",
-  "defaultProject": "SIL.XForge.Scripture",
   "projects": {
     "SIL.XForge.Scripture": {
       "root": "",
@@ -165,6 +164,6 @@
   },
   "cli": {
     "analytics": "62cc4c83-1f58-4311-beb3-55e7dd022de8",
-    "defaultCollection": "@angular-eslint/schematics"
+    "schematicCollections": ["@angular-eslint/schematics"]
   }
 }

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { XFValidators } from 'xforge-common/xfvalidators';
 
 @Component({
@@ -17,8 +17,8 @@ export class CheckingCommentFormComponent {
   @Output() save: EventEmitter<string> = new EventEmitter<string>();
   @Output() cancel: EventEmitter<boolean> = new EventEmitter<boolean>();
 
-  commentForm: FormGroup = new FormGroup({
-    commentText: new FormControl('', [Validators.required, XFValidators.someNonWhitespace])
+  commentForm: UntypedFormGroup = new UntypedFormGroup({
+    commentText: new UntypedFormControl('', [Validators.required, XFValidators.someNonWhitespace])
   });
   constructor() {}
 
@@ -35,7 +35,7 @@ export class CheckingCommentFormComponent {
     this.cancel.emit(false);
   }
 
-  private get commentText(): FormControl {
-    return this.commentForm.controls.commentText as FormControl;
+  private get commentText(): UntypedFormControl {
+    return this.commentForm.controls.commentText as UntypedFormControl;
   }
 }

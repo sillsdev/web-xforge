@@ -1,5 +1,5 @@
 import { Component, Inject, ViewChild } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSlider } from '@angular/material/slider';
 import { BehaviorSubject } from 'rxjs';
@@ -22,8 +22,8 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
   @ViewChild('confidenceThresholdSlider') confidenceThresholdSlider?: MatSlider;
   open: boolean = false;
 
-  suggestionsEnabledSwitch = new FormControl();
-  suggestionsSwitchFormGroup = new FormGroup({
+  suggestionsEnabledSwitch = new UntypedFormControl();
+  suggestionsSwitchFormGroup = new UntypedFormGroup({
     suggestionsEnabledSwitch: this.suggestionsEnabledSwitch
   });
 

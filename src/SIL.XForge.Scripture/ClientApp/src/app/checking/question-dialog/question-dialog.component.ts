@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit, ViewChild } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatDialogConfig, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { toStartAndEndVerseRefs } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
@@ -47,11 +47,11 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
       ? translate('question_dialog.edit_question')
       : translate('question_dialog.new_question');
   parentAndStartMatcher = new ParentAndStartErrorStateMatcher();
-  questionForm: FormGroup = new FormGroup(
+  questionForm: UntypedFormGroup = new UntypedFormGroup(
     {
-      scriptureStart: new FormControl('', [Validators.required, SFValidators.verseStr(this.data.textsByBookId)]),
-      scriptureEnd: new FormControl('', [SFValidators.verseStr(this.data.textsByBookId)]),
-      questionText: new FormControl('', [Validators.required, XFValidators.someNonWhitespace])
+      scriptureStart: new UntypedFormControl('', [Validators.required, SFValidators.verseStr(this.data.textsByBookId)]),
+      scriptureEnd: new UntypedFormControl('', [SFValidators.verseStr(this.data.textsByBookId)]),
+      questionText: new UntypedFormControl('', [Validators.required, XFValidators.someNonWhitespace])
     },
     SFValidators.verseStartBeforeEnd
   );

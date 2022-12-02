@@ -1,5 +1,5 @@
 import { fakeAsync } from '@angular/core/testing';
-import { FormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { XFValidators } from './xfvalidators';
 
 describe('XFValidators', () => {
@@ -9,27 +9,27 @@ describe('XFValidators', () => {
     }));
 
     it('error on empty value', fakeAsync(() => {
-      expect(XFValidators.someNonWhitespace(new FormControl(''))).toEqual({ someNonWhitespace: true });
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl(''))).toEqual({ someNonWhitespace: true });
     }));
 
     it('error on only whitespace', fakeAsync(() => {
-      expect(XFValidators.someNonWhitespace(new FormControl(' '))).toEqual({ someNonWhitespace: true });
-      expect(XFValidators.someNonWhitespace(new FormControl('  '))).toEqual({ someNonWhitespace: true });
-      expect(XFValidators.someNonWhitespace(new FormControl('\n'))).toEqual({ someNonWhitespace: true });
-      expect(XFValidators.someNonWhitespace(new FormControl(' \n '))).toEqual({ someNonWhitespace: true });
-      expect(XFValidators.someNonWhitespace(new FormControl('\t'))).toEqual({ someNonWhitespace: true });
-      expect(XFValidators.someNonWhitespace(new FormControl(' \t '))).toEqual({ someNonWhitespace: true });
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl(' '))).toEqual({ someNonWhitespace: true });
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl('  '))).toEqual({ someNonWhitespace: true });
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl('\n'))).toEqual({ someNonWhitespace: true });
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl(' \n '))).toEqual({ someNonWhitespace: true });
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl('\t'))).toEqual({ someNonWhitespace: true });
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl(' \t '))).toEqual({ someNonWhitespace: true });
     }));
 
     it('no error if any non-whitespace', fakeAsync(() => {
-      expect(XFValidators.someNonWhitespace(new FormControl('a'))).toBeNull();
-      expect(XFValidators.someNonWhitespace(new FormControl('aaa'))).toBeNull();
-      expect(XFValidators.someNonWhitespace(new FormControl(' a'))).toBeNull();
-      expect(XFValidators.someNonWhitespace(new FormControl('a '))).toBeNull();
-      expect(XFValidators.someNonWhitespace(new FormControl(' a '))).toBeNull();
-      expect(XFValidators.someNonWhitespace(new FormControl(':'))).toBeNull();
-      expect(XFValidators.someNonWhitespace(new FormControl('\na'))).toBeNull();
-      expect(XFValidators.someNonWhitespace(new FormControl('\ta'))).toBeNull();
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl('a'))).toBeNull();
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl('aaa'))).toBeNull();
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl(' a'))).toBeNull();
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl('a '))).toBeNull();
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl(' a '))).toBeNull();
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl(':'))).toBeNull();
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl('\na'))).toBeNull();
+      expect(XFValidators.someNonWhitespace(new UntypedFormControl('\ta'))).toBeNull();
     }));
   });
 });

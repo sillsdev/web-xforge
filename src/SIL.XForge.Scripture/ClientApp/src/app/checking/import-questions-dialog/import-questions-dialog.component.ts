@@ -1,6 +1,6 @@
 import { MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { Component, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
-import { AbstractControl, FormControl, FormGroup } from '@angular/forms';
+import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialogConfig, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
@@ -87,10 +87,10 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
   @ViewChild('selectAllCheckbox') selectAllCheckbox!: MatCheckbox;
   @ViewChild('dialogContentBody') dialogContentBody!: ElementRef;
 
-  fromControl = new FormControl('', [SFValidators.verseStr()]);
-  toControl = new FormControl('', [SFValidators.verseStr()]);
-  filterControl = new FormControl();
-  filterForm = new FormGroup({
+  fromControl = new UntypedFormControl('', [SFValidators.verseStr()]);
+  toControl = new UntypedFormControl('', [SFValidators.verseStr()]);
+  filterControl = new UntypedFormControl();
+  filterForm = new UntypedFormGroup({
     from: this.fromControl,
     to: this.toControl,
     filter: this.filterControl

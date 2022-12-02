@@ -1,8 +1,8 @@
 import { ErrorStateMatcher } from '@angular-mdc/web/form-field';
 import {
   AbstractControl,
-  FormControl,
-  FormGroup,
+  UntypedFormControl,
+  UntypedFormGroup,
   FormGroupDirective,
   NgForm,
   ValidationErrors,
@@ -72,7 +72,7 @@ export class SFValidators {
   }
 
   static verseStartBeforeEnd(group: AbstractControl): ValidationErrors | null {
-    if (!(group instanceof FormGroup)) {
+    if (!(group instanceof UntypedFormGroup)) {
       return null;
     }
     const scriptureStart = group.controls.scriptureStart.value;
@@ -94,7 +94,7 @@ export class SFValidators {
     return isAfterStart ? null : { verseBeforeStart: true };
   }
 
-  static requireIfEndReferenceProvided(group: FormGroup): ValidationErrors | null {
+  static requireIfEndReferenceProvided(group: UntypedFormGroup): ValidationErrors | null {
     return group.controls.scriptureEnd.value && !group.controls.scriptureStart.value
       ? { startReferenceRequired: true }
       : null;
@@ -107,7 +107,7 @@ export class SFValidators {
  * start reference is already invalid
  */
 export class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
-  isErrorState(control: FormControl | null, _form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, _form: FormGroupDirective | NgForm | null): boolean {
     if (control == null || control.parent == null) {
       return false;
     }
@@ -127,7 +127,7 @@ export class ParentAndStartErrorStateMatcher implements ErrorStateMatcher {
  * An error state matcher for the start reference text field to match when the field should be styled with red outline
  */
 export class StartReferenceRequiredErrorStateMatcher implements ErrorStateMatcher {
-  isErrorState(control: FormControl | null, _form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, _form: FormGroupDirective | NgForm | null): boolean {
     if (control == null || control.parent == null) {
       return false;
     }
