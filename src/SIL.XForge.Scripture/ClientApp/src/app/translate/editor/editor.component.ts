@@ -1649,7 +1649,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.source.editor.scrollingContainer.scrollTop += otherBounds.top - thisBounds.top;
   }
 
-  viewerClicked(viewer: MultiCursorViewer) {
+  onViewerClicked(viewer: MultiCursorViewer) {
     this.target!.scrollToViewer(viewer);
   }
 }
