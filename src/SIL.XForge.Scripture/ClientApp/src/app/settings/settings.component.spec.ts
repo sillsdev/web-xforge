@@ -11,6 +11,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateConfig, TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -393,6 +394,12 @@ describe('SettingsComponent', () => {
         tick();
         env.fixture.detectChanges();
         expect(env.statusDone(env.checkingShareStatus)).not.toBeNull();
+
+        expect(env.statusDone(env.checkingExportStatus)).toBeNull();
+        env.clickElement(env.inputElement(env.checkingExportAll));
+        tick();
+        env.fixture.detectChanges();
+        expect(env.statusDone(env.checkingExportStatus)).not.toBeNull();
       }));
 
       it('share level should be disabled if share set to false', fakeAsync(() => {
@@ -401,7 +408,8 @@ describe('SettingsComponent', () => {
           checkingEnabled: true,
           usersSeeEachOthersResponses: false,
           shareEnabled: true,
-          shareLevel: CheckingShareLevel.Anyone
+          shareLevel: CheckingShareLevel.Anyone,
+          answerExportMethod: CheckingAnswerExport.MarkedForExport
         });
         env.wait();
 
@@ -422,7 +430,8 @@ describe('SettingsComponent', () => {
             checkingEnabled: true,
             usersSeeEachOthersResponses: false,
             shareEnabled: true,
-            shareLevel: CheckingShareLevel.Specific
+            shareLevel: CheckingShareLevel.Specific,
+            answerExportMethod: CheckingAnswerExport.MarkedForExport
           }
         );
         env.wait();
@@ -620,6 +629,14 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#see-others-responses-status'));
   }
 
+  get checkingExportAll(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#radio-checkingExport-all'));
+  }
+
+  get checkingExportStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkingExport-status'));
+  }
+
   get checkingShareCheckbox(): DebugElement {
     return this.fixture.debugElement.query(By.css('#checkbox-checking-share'));
   }
@@ -745,7 +762,8 @@ class TestEnvironment {
       checkingEnabled: false,
       usersSeeEachOthersResponses: false,
       shareEnabled: false,
-      shareLevel: CheckingShareLevel.Specific
+      shareLevel: CheckingShareLevel.Specific,
+      answerExportMethod: CheckingAnswerExport.MarkedForExport
     }
   ) {
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {

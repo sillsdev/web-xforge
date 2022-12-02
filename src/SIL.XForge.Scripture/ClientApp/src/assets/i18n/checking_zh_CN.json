@@ -158,7 +158,7 @@
     "unknown_author": "Unknown author",
     "next": "下一个",
     "previous": "前一个",
-    "questions": "问题 （{{ count }}）",
+    "questions": "问题",
     "view_questions": "显示问题"
   },
   "checking_answers": {

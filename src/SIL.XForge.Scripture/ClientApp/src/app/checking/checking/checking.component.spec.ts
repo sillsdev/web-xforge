@@ -5,7 +5,7 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { ActivatedRoute, ActivatedRouteSnapshot, Route } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Params, Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
@@ -15,7 +15,10 @@ import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import {
+  CheckingAnswerExport,
+  CheckingShareLevel
+} from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -51,6 +54,7 @@ import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforg
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
+import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -74,7 +78,7 @@ import {
 } from './checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
-import { CheckingComponent } from './checking.component';
+import { CheckingComponent, QuestionFilter } from './checking.component';
 import { FontSizeComponent } from './font-size/font-size.component';
 
 const mockedAuthService = mock(AuthService);
@@ -312,9 +316,8 @@ describe('CheckingComponent', () => {
       expect(env.component.questionDocs.length).toEqual(15);
       expect(env.component.questionVerseRefs.length).toEqual(15);
 
-      env.clickButton(env.archiveQuestionButton);
-
-      tick(env.questionReadTimer);
+      env.archiveQuestionButton.nativeElement.click();
+      env.waitForQuestionTimersToComplete();
 
       expect(question.isArchived).toBe(true);
       expect(env.component.questionDocs.length).toEqual(14);
@@ -503,6 +506,122 @@ describe('CheckingComponent', () => {
       expect(env.location.path()).toEqual('/projects/project01/checking/MAT');
       env.activateQuestion('q1Id');
       expect(env.location.path()).toEqual('/projects/project01/checking/JHN');
+    }));
+
+    it('admin can see appropriate filter options', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      expect(env.component.questionFilters.has(QuestionFilter.None)).withContext('All').toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.HasAnswers)).withContext('HasAnswers').toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.NoAnswers)).withContext('NoAnswers').toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.StatusExport)).withContext('StatusExport').toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.StatusResolved))
+        .withContext('StatusResolved')
+        .toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.StatusNone)).withContext('StatusNone').toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasAnswered))
+        .withContext('CurrentUserHasAnswered')
+        .toEqual(false);
+      expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasNotAnswered))
+        .withContext('CurrentUserHasNotAnswered')
+        .toEqual(false);
+    }));
+
+    it('non-admin can see appropriate filter options', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      expect(env.component.questionFilters.has(QuestionFilter.None)).withContext('All').toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.HasAnswers)).withContext('HasAnswers').toEqual(false);
+      expect(env.component.questionFilters.has(QuestionFilter.NoAnswers)).withContext('NoAnswers').toEqual(false);
+      expect(env.component.questionFilters.has(QuestionFilter.StatusExport)).withContext('StatusExport').toEqual(false);
+      expect(env.component.questionFilters.has(QuestionFilter.StatusResolved))
+        .withContext('StatusResolved')
+        .toEqual(false);
+      expect(env.component.questionFilters.has(QuestionFilter.StatusNone)).withContext('StatusNone').toEqual(false);
+      expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasAnswered))
+        .withContext('CurrentUserHasAnswered')
+        .toEqual(true);
+      expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasNotAnswered))
+        .withContext('CurrentUserHasNotAnswered')
+        .toEqual(true);
+    }));
+
+    it('can filter questions', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      const totalQuestions = env.questions.length;
+      const expectedQuestionCounts: { filter: QuestionFilter; total: number }[] = [
+        { filter: QuestionFilter.None, total: 15 },
+        { filter: QuestionFilter.HasAnswers, total: 4 },
+        { filter: QuestionFilter.NoAnswers, total: 11 },
+        { filter: QuestionFilter.StatusExport, total: 2 },
+        { filter: QuestionFilter.StatusResolved, total: 1 },
+        { filter: QuestionFilter.StatusNone, total: 3 },
+        { filter: QuestionFilter.CurrentUserHasAnswered, total: 2 },
+        { filter: QuestionFilter.CurrentUserHasNotAnswered, total: 13 }
+      ];
+      expectedQuestionCounts.forEach(expected => {
+        env.setQuestionFilter(expected.filter);
+        expect(env.questions.length)
+          .withContext(env.component.appliedQuestionFilterKey ?? '')
+          .toEqual(expected.total);
+        const expectedVisibleQuestionTotal =
+          expected.total + (expected.total < totalQuestions ? '/' + totalQuestions : '');
+        expect(env.questionFilterTotal)
+          .withContext(env.component.appliedQuestionFilterKey ?? '')
+          .toEqual(`(${expectedVisibleQuestionTotal})`);
+      });
+    }));
+
+    it('show applied filter label', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      expect(env.questionFilterLabel).toBeUndefined();
+      env.setQuestionFilter(QuestionFilter.HasAnswers);
+      expect(env.questionFilterLabel).toEqual('Filter: Has answers');
+    }));
+
+    it('show no questions message for filter', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER, 'MAT');
+      expect(env.questions.length).toEqual(1);
+      env.setQuestionFilter(QuestionFilter.StatusExport);
+      expect(env.questions.length).toEqual(0);
+      expect(env.noQuestionsFound).not.toBeNull();
+    }));
+
+    it('should update question summary when filtered', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      expect(env.questions.length).toEqual(15);
+      // Admin has already read 2 questions and the 3rd is read on load
+      expect(env.component.summary.unread).toEqual(12);
+      env.setQuestionFilter(QuestionFilter.NoAnswers);
+      expect(env.questions.length).toEqual(11);
+      // The first question after filter has now been read
+      expect(env.component.summary.unread).toEqual(10);
+    }));
+
+    it('should reset filtering after a new question is added', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      expect(env.questions.length).toEqual(15);
+      env.setQuestionFilter(QuestionFilter.StatusResolved);
+      expect(env.questions.length).toEqual(1);
+
+      // Technically this is an existing question returned but the test is to confirm the filter reset
+      const questionDoc = env.getQuestionDoc('q5Id');
+      when(mockedQuestionDialogService.questionDialog(anything())).thenResolve(questionDoc);
+      env.clickButton(env.addQuestionButton);
+      verify(mockedQuestionDialogService.questionDialog(anything())).once();
+      expect(env.component.questionFilterSelected).toEqual(QuestionFilter.None);
+      expect(env.questions.length).toEqual(15);
+      env.waitForQuestionTimersToComplete();
+    }));
+
+    it('should reset filtering when changing books', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER, 'ALL');
+      env.setQuestionFilter(QuestionFilter.StatusResolved);
+      expect(env.component.bookName).toEqual('John');
+      expect(env.component.questionFilterSelected).toEqual(QuestionFilter.StatusResolved);
+
+      env.setBookId('MAT');
+      env.waitForQuestionTimersToComplete();
+      expect(env.component.bookName).toEqual('Matthew');
+      expect(env.component.questionFilterSelected).toEqual(QuestionFilter.None);
     }));
   });
 
@@ -1389,6 +1508,72 @@ describe('CheckingComponent', () => {
       verify(questionDoc!.updateAnswerFileCache()).twice();
       expect().nothing();
     }));
+
+    it('only admins can change answer export status', fakeAsync(() => {
+      [OBSERVER_USER, CHECKER_USER, ADMIN_USER].forEach(USER => {
+        const env = new TestEnvironment(USER);
+
+        env.selectQuestion(6);
+        if (USER === ADMIN_USER) {
+          expect(env.getExportAnswerButton(0)).withContext(`${USER.role} can see export button`).not.toBeNull();
+          expect(env.getResolveAnswerButton(0)).withContext(`${USER.role} can see resolve button`).not.toBeNull();
+        } else {
+          expect(env.getExportAnswerButton(0)).withContext(`${USER.role} can not see export button`).toBeNull();
+          expect(env.getResolveAnswerButton(0)).withContext(`${USER.role} can not see resolve button`).toBeNull();
+        }
+      });
+    }));
+
+    it('can mark answer ready for export', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      env.selectQuestion(6);
+      const buttonIndex = 0;
+
+      expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBeUndefined();
+      env.clickButton(env.getExportAnswerButton(buttonIndex));
+      expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBe(true);
+      const questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Exportable);
+    }));
+
+    it('can mark answer as resolved', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      env.selectQuestion(6);
+      const buttonIndex = 0;
+
+      expect(env.getResolveAnswerButton(buttonIndex).classes['status-resolved']).toBeUndefined();
+      env.clickButton(env.getResolveAnswerButton(buttonIndex));
+      expect(env.getResolveAnswerButton(buttonIndex).classes['status-resolved']).toBe(true);
+      const questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Resolved);
+    }));
+
+    it('can change between different answer statuses', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      env.selectQuestion(6);
+      const buttonIndex = 0;
+
+      expect(env.getResolveAnswerButton(buttonIndex).classes['status-resolved']).toBeUndefined();
+      expect(env.getResolveAnswerButton(buttonIndex).classes['status-exportable']).toBeUndefined();
+
+      env.clickButton(env.getResolveAnswerButton(buttonIndex));
+      expect(env.getResolveAnswerButton(buttonIndex).classes['status-resolved']).toBe(true);
+      expect(env.getResolveAnswerButton(buttonIndex).classes['status-exportable']).toBeUndefined();
+      let questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Resolved);
+
+      env.clickButton(env.getExportAnswerButton(buttonIndex));
+      expect(env.getExportAnswerButton(buttonIndex).classes['status-resolved']).toBeUndefined();
+      expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBe(true);
+      questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Exportable);
+
+      env.clickButton(env.getExportAnswerButton(buttonIndex));
+      expect(env.getExportAnswerButton(buttonIndex).classes['status-resolved']).toBeUndefined();
+      expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBeUndefined();
+      questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.None);
+    }));
   });
 
   describe('Text', () => {
@@ -1462,12 +1647,14 @@ class TestEnvironment {
   readonly mockedAnsweredDialogRef = mock<MdcDialogRef<QuestionAnsweredDialogComponent>>(MdcDialogRef);
   readonly mockedTextChooserDialogComponent = mock<MatDialogRef<TextChooserDialogComponent>>(MatDialogRef);
   readonly location: Location;
+  readonly router: Router;
 
   questionReadTimer: number = 2000;
   project01WritingSystemTag = 'en';
   isOnline: BehaviorSubject<boolean>;
   fileSyncComplete: Subject<void> = new Subject();
 
+  private readonly params$: BehaviorSubject<Params>;
   private readonly adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: ADMIN_USER.id,
     projectRef: 'project01',
@@ -1542,7 +1729,8 @@ class TestEnvironment {
       usersSeeEachOthersResponses: true,
       checkingEnabled: true,
       shareEnabled: true,
-      shareLevel: CheckingShareLevel.Anyone
+      shareLevel: CheckingShareLevel.Anyone,
+      answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     translateConfig: {
       translationSuggestionsEnabled: true,
@@ -1589,7 +1777,8 @@ class TestEnvironment {
 
   constructor(user: UserInfo, projectBookRoute: string = 'JHN', hasConnection: boolean = true) {
     reset(mockedFileService);
-    this.setRouteSnapshot(projectBookRoute);
+    this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: projectBookRoute });
+    this.setBookId(projectBookRoute);
     this.setupDefaultProjectData(user);
     when(mockedUserService.editDisplayName(true)).thenResolve();
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
@@ -1606,6 +1795,7 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(CheckingComponent);
     this.component = this.fixture.componentInstance;
     this.location = TestBed.inject(Location);
+    this.router = TestBed.inject(Router);
     // Need to wait for questions, text promises, and slider position calculations to finish
     this.fixture.detectChanges();
     tick(1);
@@ -1660,7 +1850,7 @@ class TestEnvironment {
     for (const questionNumber in questions) {
       if (
         questions[questionNumber].classes.hasOwnProperty('mdc-list-item--activated') &&
-        questions[questionNumber].classes['mdc-list-item--activated'] === true
+        questions[questionNumber].classes['mdc-list-item--activated']
       ) {
         // Need to add one as css selector nth-child starts index from 1 instead of zero
         return Number(questionNumber) + 1;
@@ -1689,6 +1879,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#project-navigation .next-question'));
   }
 
+  get noQuestionsFound(): DebugElement {
+    return this.fixture.debugElement.query(By.css('app-checking-questions .no-questions-found'));
+  }
+
   set onlineStatus(hasConnection: boolean) {
     when(mockedPwaService.isOnline).thenReturn(hasConnection);
     this.isOnline.next(hasConnection);
@@ -1700,8 +1894,18 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#project-navigation .prev-question'));
   }
 
+  get questionFilterLabel(): string | undefined {
+    return this.fixture.debugElement.query(By.css('.active-question-filter'))?.nativeElement.textContent.trim();
+  }
+
+  get questionFilterTotal(): string {
+    return this.fixture.debugElement
+      .query(By.css('#questions-panel .panel-heading h2 span'))
+      .nativeElement.textContent.trim();
+  }
+
   get questions(): DebugElement[] {
-    return this.fixture.debugElement.queryAll(By.css('#questions-panel .mdc-list-item'));
+    return this.fixture.debugElement.queryAll(By.css('app-checking-questions .mdc-list-item'));
   }
 
   get quillEditor(): HTMLElement {
@@ -1786,6 +1990,14 @@ class TestEnvironment {
     this.setRouteSnapshot(Canon.bookNumberToId(questionDoc.data!.verseRef.bookNum));
   }
 
+  getExportAnswerButton(index: number): DebugElement {
+    return this.getAnswer(index).query(By.css('.answer-status.answer-export'));
+  }
+
+  getResolveAnswerButton(index: number): DebugElement {
+    return this.getAnswer(index).query(By.css('.answer-status.answer-resolve'));
+  }
+
   /** Fetch first sequence of numbers (without spaces between) from an element's text. */
   getFirstNumberFromElementText(selector: string): number | null {
     const element = document.querySelector(selector);
@@ -1816,6 +2028,28 @@ class TestEnvironment {
     }
     this.clickButton(this.saveAnswerButton);
     this.waitForSliderUpdate();
+  }
+
+  setBookId(bookId: string): void {
+    this.setRouteSnapshot(bookId);
+    when(
+      mockedProjectService.queryQuestions(
+        'project01',
+        deepEqual({
+          bookNum: this.projectBookRoute === 'ALL' ? undefined : Canon.bookIdToNumber(this.projectBookRoute),
+          sort: true,
+          activeOnly: true
+        })
+      )
+    ).thenCall(() =>
+      this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {
+        [obj<Question>().pathStr(q => q.isArchived)]: false,
+        // Sort questions in order from oldest to newest
+        $sort: { [obj<Question>().pathStr(q => q.dateCreated)]: 1 }
+      })
+    );
+    this.setupQuestionData();
+    this.params$.next({ projectId: 'project01', bookId });
   }
 
   clickButton(button: DebugElement): void {
@@ -1918,7 +2152,7 @@ class TestEnvironment {
 
   selectQuestion(/** indexed starting at 1 */ questionNumber: number, includeReadTimer: boolean = true): DebugElement {
     const question = this.fixture.debugElement.query(
-      By.css('#questions-panel .mdc-list-item:nth-child(' + questionNumber + ')')
+      By.css('app-checking-questions .mdc-list-item:nth-child(' + questionNumber + ')')
     );
     question.nativeElement.click();
     tick(1);
@@ -1979,6 +2213,12 @@ class TestEnvironment {
   waitForSliderUpdate(): void {
     tick(100);
     this.fixture.detectChanges();
+    flush();
+  }
+
+  waitForQuestionTimersToComplete(): void {
+    this.fixture.detectChanges();
+    tick(this.questionReadTimer);
     flush();
   }
 
@@ -2043,6 +2283,11 @@ class TestEnvironment {
 
     this.fixture.detectChanges();
     flush();
+  }
+
+  setQuestionFilter(filter: QuestionFilter) {
+    this.component.setQuestionFilter(filter);
+    this.waitForQuestionTimersToComplete();
   }
 
   simulateNewRemoteAnswer(dataId: string = 'newAnswer1', text: string = 'new answer from another user') {
@@ -2132,6 +2377,9 @@ class TestEnvironment {
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id)
     );
+    when(mockedProjectService.isProjectAdmin(anything(), anything())).thenResolve(
+      user.role === SFProjectRole.ParatextAdministrator
+    );
 
     this.realtimeService.addSnapshots<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, [
       {
@@ -2175,7 +2423,45 @@ class TestEnvironment {
     when(mockedProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
+    when(mockedActivatedRoute.params).thenReturn(this.params$);
+    when(mockedProjectService.createQuestion('project01', anything())).thenCall((id: string, question: Question) =>
+      this.realtimeService.create(QuestionDoc.COLLECTION, getQuestionDocId(id, question.dataId), question)
+    );
+    when(mockedUserService.currentUserId).thenReturn(user.id);
 
+    this.realtimeService.addSnapshots<User>(UserDoc.COLLECTION, [
+      {
+        id: user.id,
+        data: user.user
+      }
+    ]);
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, user.id)
+    );
+
+    this.realtimeService.addSnapshots<User>(UserProfileDoc.COLLECTION, [
+      {
+        id: ADMIN_USER.id,
+        data: ADMIN_USER.user
+      },
+      {
+        id: CHECKER_USER.id,
+        data: CHECKER_USER.user
+      }
+    ]);
+    when(mockedUserService.getProfile(anything())).thenCall(id =>
+      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
+    );
+
+    when(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
+    when(mockedDialogService.openMatDialog(TextChooserDialogComponent, anything())).thenReturn(
+      instance(this.mockedTextChooserDialogComponent)
+    );
+    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
+    this.setupQuestionData();
+  }
+
+  private setupQuestionData(): void {
     const date = new Date();
     date.setDate(date.getDate() - 1);
     const dateCreated = date.toJSON();
@@ -2278,7 +2564,8 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateCreated,
       dateModified: dateCreated,
-      comments: a8Comments
+      comments: a8Comments,
+      status: AnswerStatus.Exportable
     });
     johnQuestions[8].data!.answers.push({
       dataId: 'a0Id',
@@ -2290,7 +2577,8 @@ class TestEnvironment {
       dateCreated: dateCreated,
       dateModified: dateCreated,
       audioUrl: '/audio.mp3',
-      comments: []
+      comments: [],
+      status: AnswerStatus.Exportable
     });
     johnQuestions[8].data!.answers.push({
       dataId: 'a1Id',
@@ -2302,66 +2590,29 @@ class TestEnvironment {
       dateCreated: dateCreated,
       dateModified: dateCreated,
       audioUrl: '/audio.mp3',
+      comments: [],
+      status: AnswerStatus.Resolved
+    });
+    johnQuestions[8].data!.answers.push({
+      dataId: 'a9Id',
+      ownerRef: CHECKER_USER.id,
+      text: 'Answer 9 on question',
+      verseRef: { chapterNum: 1, verseNum: 1, bookNum: 43 },
+      scriptureText: 'Quoted scripture',
+      likes: [],
+      dateCreated: dateCreated,
+      dateModified: dateCreated,
       comments: []
     });
 
     if (this.projectBookRoute === 'JHN') {
       questions = johnQuestions;
+    } else if (this.projectBookRoute === 'MAT') {
+      questions = matthewQuestions;
     } else if (this.projectBookRoute === 'ALL') {
       questions = johnQuestions.concat(matthewQuestions);
     }
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, questions);
-    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01', bookId: this.projectBookRoute }));
-    when(
-      mockedProjectService.queryQuestions(
-        'project01',
-        deepEqual({
-          bookNum: this.projectBookRoute === 'ALL' ? undefined : Canon.bookIdToNumber(this.projectBookRoute),
-          sort: true,
-          activeOnly: true
-        })
-      )
-    ).thenCall(() =>
-      this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {
-        [obj<Question>().pathStr(q => q.isArchived)]: false,
-        // Sort questions in order from oldest to newest
-        $sort: { [obj<Question>().pathStr(q => q.dateCreated)]: 1 }
-      })
-    );
-    when(mockedProjectService.createQuestion('project01', anything())).thenCall((id: string, question: Question) =>
-      this.realtimeService.create(QuestionDoc.COLLECTION, getQuestionDocId(id, question.dataId), question)
-    );
-    when(mockedUserService.currentUserId).thenReturn(user.id);
-
-    this.realtimeService.addSnapshots<User>(UserDoc.COLLECTION, [
-      {
-        id: user.id,
-        data: user.user
-      }
-    ]);
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, user.id)
-    );
-
-    this.realtimeService.addSnapshots<User>(UserProfileDoc.COLLECTION, [
-      {
-        id: ADMIN_USER.id,
-        data: ADMIN_USER.user
-      },
-      {
-        id: CHECKER_USER.id,
-        data: CHECKER_USER.user
-      }
-    ]);
-    when(mockedUserService.getProfile(anything())).thenCall(id =>
-      this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
-    );
-
-    when(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
-    when(mockedDialogService.openMatDialog(TextChooserDialogComponent, anything())).thenReturn(
-      instance(this.mockedTextChooserDialogComponent)
-    );
-    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
   }
 
   private createTextDataForChapter(chapter: number): TextData {

@@ -6,15 +6,15 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
+import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { merge, NEVER, Observable, Subscription } from 'rxjs';
+import { merge, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -52,6 +52,17 @@ interface Summary {
   answered: number;
 }
 
+export enum QuestionFilter {
+  None,
+  CurrentUserHasAnswered,
+  CurrentUserHasNotAnswered,
+  HasAnswers,
+  NoAnswers,
+  StatusNone,
+  StatusExport,
+  StatusResolved
+}
+
 @Component({
   selector: 'app-checking',
   templateUrl: './checking.component.html',
@@ -81,12 +92,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     unread: 0,
     answered: 0
   };
+  questionFilters: Map<QuestionFilter, string> = new Map<QuestionFilter, string>();
+  questionFilterSelected: QuestionFilter = QuestionFilter.None;
   questionVerseRefs: VerseRef[] = [];
   answersPanelContainerElement?: ElementRef;
   projectDoc?: SFProjectProfileDoc;
   projectUserConfigDoc?: SFProjectUserConfigDoc;
   textDocId?: TextDocId;
+  totalVisibleQuestionsString: string = '0';
   userDoc?: UserDoc;
+  visibleQuestions?: QuestionDoc[];
 
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
@@ -96,6 +111,18 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private questionsSub?: Subscription;
   private projectDeleteSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
+  private questionFilterFunctions: Record<QuestionFilter, (answers: Answer[]) => boolean> = {
+    [QuestionFilter.None]: () => true,
+    [QuestionFilter.CurrentUserHasNotAnswered]: answers =>
+      !answers.some(a => a.ownerRef === this.userService.currentUserId),
+    [QuestionFilter.CurrentUserHasAnswered]: answers =>
+      answers.some(a => a.ownerRef === this.userService.currentUserId),
+    [QuestionFilter.HasAnswers]: answers => answers.length > 0,
+    [QuestionFilter.NoAnswers]: answers => answers.length === 0,
+    [QuestionFilter.StatusNone]: answers => answers.some(a => a.status === AnswerStatus.None || a.status == null),
+    [QuestionFilter.StatusExport]: answers => answers.some(a => a.status === AnswerStatus.Exportable),
+    [QuestionFilter.StatusResolved]: answers => answers.some(a => a.status === AnswerStatus.Resolved)
+  };
   private questionsRemoteChangesSub?: Subscription;
   private text?: TextInfo;
   private isProjectAdmin: boolean = false;
@@ -120,6 +147,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       return this._activeQuestionVerseRef;
     }
     return undefined;
+  }
+
+  get appliedQuestionFilterKey(): string {
+    return this.questionFilters.get(this.questionFilterSelected)!;
   }
 
   get bookName(): string {
@@ -157,6 +188,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
+  get isQuestionFilterApplied(): boolean {
+    return this.questionFilterSelected !== QuestionFilter.None;
+  }
+
   get canCreateQuestions(): boolean {
     const project = this.projectDoc?.data;
     return (
@@ -174,10 +209,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   get questionDocs(): Readonly<QuestionDoc[]> {
     return this.questionsQuery?.docs || [];
-  }
-
-  get questionDocs$(): Observable<Readonly<QuestionDoc[]>> {
-    return this.questionsQuery?.docs$ || NEVER;
   }
 
   get textsByBookId(): TextsByBookId {
@@ -372,6 +403,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         if (this.questionsQuery != null) {
           this.questionsQuery.dispose();
         }
+        this.resetFilter();
         const prevShowAllBooks = this.showAllBooks;
         this.showAllBooks = bookId === 'ALL';
         this.questionsQuery = await this.projectService.queryQuestions(projectId, {
@@ -448,6 +480,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       }
       this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
       this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
+      this.initQuestionFilters();
     });
     this.subscribe(
       this.media.asObservable().pipe(
@@ -489,7 +522,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
             likes: [],
             dateCreated: dateNow,
             dateModified: dateNow,
-            comments: []
+            comments: [],
+            status: AnswerStatus.None
           };
         }
         answer.text = answerAction.text;
@@ -548,6 +582,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       case 'show-form':
         break;
       case 'hide-form':
+        break;
+      case 'status':
+        this.saveAnswer(answerAction.answer!, answerAction.questionDoc);
         break;
     }
     this.calculateScriptureSliderPosition(true);
@@ -695,12 +732,22 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     };
     const newQuestion = await this.questionDialogService.questionDialog(data);
     if (newQuestion != null) {
+      this.resetFilter();
       this.questionsPanel.activateQuestion(newQuestion);
     }
   }
 
+  setQuestionFilter(filter: QuestionFilter): void {
+    this.questionFilterSelected = filter;
+    this.updateVisibleQuestions();
+  }
+
   totalQuestions(): number {
     return this.questionDocs.length;
+  }
+
+  totalVisibleQuestions(): number {
+    return this.visibleQuestions?.length ?? 0;
   }
 
   verseRefClicked(verseRef: VerseRef): void {
@@ -747,7 +794,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
    * If no redirect is necessary, updates the list of verse refs to show in the text doc.
    * This method assumes any local data in IndexedDB has already been loaded into this.questionQuery
    */
-  private async updateQuestionRefsOrRedirect(): Promise<void> {
+  private updateQuestionRefsOrRedirect(): void {
     if (
       this.projectDoc == null ||
       this.questionsQuery == null ||
@@ -755,6 +802,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     ) {
       return;
     }
+    this.updateVisibleQuestions();
     if (this.totalQuestions() === 0) {
       this.router.navigate(['/projects', this.projectDoc.id, 'checking'], {
         replaceUrl: true
@@ -762,28 +810,19 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       return;
     } else if (this.showAllBooks) {
       const availableBooks = new Set<string>();
-      for (const questionDoc of this.questionDocs) {
+      for (const questionDoc of this.visibleQuestions ?? []) {
         const questionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
         if (questionVerseRef != null && !availableBooks.has(questionVerseRef.book)) {
           availableBooks.add(questionVerseRef.book);
         }
       }
-      if (availableBooks.size === 1) {
+      if (availableBooks.size === 1 && !this.isQuestionFilterApplied) {
         this.router.navigate(['/projects', this.projectDoc.id, 'checking', availableBooks.values().next().value], {
           replaceUrl: true
         });
         return;
       }
     }
-    // Only pass in relevant verse references to the text component
-    const questionVerseRefs: VerseRef[] = [];
-    for (const questionDoc of this.questionDocs) {
-      const questionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
-      if (questionVerseRef != null && questionVerseRef.bookNum === this.book) {
-        questionVerseRefs.push(questionVerseRef);
-      }
-    }
-    this.questionVerseRefs = questionVerseRefs;
     if (
       !this.showAllBooks &&
       this.book != null &&
@@ -799,6 +838,39 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         Canon.bookNumberToId(this.questionsPanel.activeQuestionBook)
       ]);
     }
+  }
+
+  private updateQuestionRefs(): void {
+    // Only pass in relevant verse references to the text component
+    const questionVerseRefs: VerseRef[] = [];
+    for (const questionDoc of this.visibleQuestions ?? []) {
+      const questionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
+      if (questionVerseRef != null && questionVerseRef.bookNum === this.book) {
+        questionVerseRefs.push(questionVerseRef);
+      }
+    }
+    this.questionVerseRefs = questionVerseRefs;
+  }
+
+  private updateVisibleQuestions(): void {
+    if (!this.totalQuestions()) {
+      return;
+    }
+    let matchingQuestions: QuestionDoc[];
+    // If there is no filter applied, clone the questions to trigger change detection in the questions component
+    if (this.questionFilterSelected === QuestionFilter.None) matchingQuestions = this.questionDocs.slice();
+    else {
+      const filterFunction = this.questionFilterFunctions[this.questionFilterSelected];
+      matchingQuestions = this.questionDocs.filter(q => (q.data == null ? false : filterFunction(q.data.answers)));
+    }
+    this.visibleQuestions = matchingQuestions;
+    if (this.totalQuestions() === this.totalVisibleQuestions()) {
+      this.totalVisibleQuestionsString = this.totalQuestions().toString();
+    } else {
+      this.totalVisibleQuestionsString = `${this.totalVisibleQuestions()}/${this.totalQuestions()}`;
+    }
+    this.updateQuestionRefs();
+    this.refreshSummary();
   }
 
   private getAnswerIndex(answer: Answer): number {
@@ -832,6 +904,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
+  private resetFilter(): void {
+    this.setQuestionFilter(QuestionFilter.None);
+  }
+
   private saveAnswer(answer: Answer, questionDoc: QuestionDoc | undefined): void {
     if (this.questionsPanel == null || questionDoc?.data == null) {
       return;
@@ -855,6 +931,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           .set(q => q.answers[answerIndex].selectionStartClipped, newAnswer.selectionStartClipped)
           .set(q => q.answers[answerIndex].selectionEndClipped, newAnswer.selectionEndClipped)
           .set(q => q.answers[answerIndex].audioUrl, newAnswer.audioUrl)
+          .set(q => q.answers[answerIndex].status, newAnswer.status)
           .set(q => q.answers[answerIndex].dateModified, newAnswer.dateModified)
       );
       if (deleteAudio) {
@@ -977,7 +1054,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.summary.answered = 0;
     this.summary.read = 0;
     this.summary.unread = 0;
-    for (const questionDoc of this.questionDocs) {
+    for (const questionDoc of this.visibleQuestions ?? []) {
       if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
         this.summary.answered++;
       } else if (
@@ -1017,5 +1094,32 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return (
       element.lastElementChild!.getBoundingClientRect().bottom - element.firstElementChild!.getBoundingClientRect().top
     );
+  }
+
+  private initQuestionFilters(): void {
+    if (this.projectDoc?.data == null) {
+      return;
+    }
+    this.questionFilters.clear();
+    this.questionFilters.set(QuestionFilter.None, 'question_filter_none');
+    if (
+      SF_PROJECT_RIGHTS.hasRight(
+        this.projectDoc.data,
+        this.userService.currentUserId,
+        SFProjectDomain.AnswerStatus,
+        Operation.Edit
+      )
+    ) {
+      this.questionFilters
+        .set(QuestionFilter.HasAnswers, 'question_filter_has_answers')
+        .set(QuestionFilter.NoAnswers, 'question_filter_no_answers')
+        .set(QuestionFilter.StatusExport, 'question_filter_exportable')
+        .set(QuestionFilter.StatusResolved, 'question_filter_resolved')
+        .set(QuestionFilter.StatusNone, 'question_filter_not_reviewed');
+    } else {
+      this.questionFilters
+        .set(QuestionFilter.CurrentUserHasAnswered, 'question_filter_answered')
+        .set(QuestionFilter.CurrentUserHasNotAnswered, 'question_filter_not_answered');
+    }
   }
 }

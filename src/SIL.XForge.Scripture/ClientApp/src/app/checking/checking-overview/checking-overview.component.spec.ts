@@ -26,6 +26,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -609,7 +610,8 @@ class TestEnvironment {
       usersSeeEachOthersResponses: true,
       checkingEnabled: true,
       shareEnabled: true,
-      shareLevel: CheckingShareLevel.Anyone
+      shareLevel: CheckingShareLevel.Anyone,
+      answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     translateConfig: {
       translationSuggestionsEnabled: false,

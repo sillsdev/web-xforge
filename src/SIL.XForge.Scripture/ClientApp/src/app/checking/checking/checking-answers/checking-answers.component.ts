@@ -5,9 +5,9 @@ import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/fo
 import { translate } from '@ngneat/transloco';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
+import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
@@ -35,7 +35,17 @@ import { CheckingTextComponent } from '../checking-text/checking-text.component'
 import { CommentAction } from './checking-comments/checking-comments.component';
 
 export interface AnswerAction {
-  action: 'delete' | 'save' | 'edit' | 'archive' | 'show-form' | 'hide-form' | 'like' | 'recorder' | 'show-unread';
+  action:
+    | 'delete'
+    | 'save'
+    | 'edit'
+    | 'archive'
+    | 'show-form'
+    | 'hide-form'
+    | 'like'
+    | 'recorder'
+    | 'show-unread'
+    | 'status';
   questionDoc?: QuestionDoc;
   answer?: Answer;
   text?: string;
@@ -44,6 +54,7 @@ export interface AnswerAction {
   selectionStartClipped?: boolean;
   selectionEndClipped?: boolean;
   audio?: AudioAttachment;
+  status?: AnswerStatus;
   savedCallback?: () => void;
 }
 
@@ -357,6 +368,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     });
   }
 
+  canChangeAnswerStatus(answer: Answer): boolean {
+    const userId = this.userService.currentUserId;
+    return (
+      this.project != null &&
+      SF_PROJECT_RIGHTS.hasRight(this.project, userId, SFProjectDomain.AnswerStatus, Operation.Edit, answer)
+    );
+  }
+
   canEditAnswer(answer: Answer): boolean {
     const userId = this.userService.currentUserId;
     return (
@@ -390,6 +409,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.refreshAnswersHighlightStatus();
   }
 
+  isMarkedForExport(answer: Answer): boolean {
+    return answer.status === AnswerStatus.Exportable;
+  }
+
+  isAnswerResolved(answer: Answer): boolean {
+    return answer.status === AnswerStatus.Resolved;
+  }
+
   likeAnswer(answer: Answer) {
     const likeAnswerResponse: LikeAnswerResponse = this.canLikeAnswer(answer);
     if (likeAnswerResponse === LikeAnswerResponse.Granted) {
@@ -402,6 +429,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     } else if (likeAnswerResponse === LikeAnswerResponse.DeniedNonCommunityChecker) {
       this.noticeService.show(translate('checking_answers.only_community_checkers_can_like'));
     }
+  }
+
+  markAnswerForExport(answer: Answer) {
+    this.toggleAnswerStatus(answer, AnswerStatus.Exportable);
+  }
+
+  markAnswerAsResolved(answer: Answer) {
+    this.toggleAnswerStatus(answer, AnswerStatus.Resolved);
   }
 
   hasUserLikedAnswer(answer: Answer) {
@@ -558,5 +593,15 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       this.answerText.setValidators(Validators.required);
     }
     this.answerText.updateValueAndValidity();
+  }
+
+  private toggleAnswerStatus(answer: Answer, status: AnswerStatus) {
+    const newAnswer = cloneDeep(answer);
+    newAnswer.status = answer.status !== status ? status : AnswerStatus.None;
+    this.action.emit({
+      action: 'status',
+      answer: newAnswer,
+      questionDoc: this.questionDoc
+    });
   }
 }

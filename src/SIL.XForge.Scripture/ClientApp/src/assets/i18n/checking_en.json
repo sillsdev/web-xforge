@@ -154,11 +154,22 @@
     }
   },
   "checking": {
+    "filter": "Filter",
+    "filter_questions": "Filter questions",
     "me": "Me",
-    "unknown_author": "Unknown author",
     "next": "Next",
     "previous": "Previous",
-    "questions": "Questions ({{ count }})",
+    "questions": "Questions",
+    "question_filter_none": "Show all",
+    "question_filter_exportable": "Answers marked for export",
+    "question_filter_has_answers": "Has answers",
+    "question_filter_answered": "Answered",
+    "question_filter_no_answers": "No answers",
+    "question_filter_not_answered": "Not answered",
+    "question_filter_not_reviewed": "Unreviewed answers",
+    "question_filter_resolved": "Answers marked resolved",
+    "tooltip_questions_filter": "Filter questions",
+    "unknown_author": "Unknown author",
     "view_questions": "View Questions"
   },
   "checking_answers": {
@@ -171,15 +182,21 @@
     "confirm_delete": "Are you sure you want to delete this answer?",
     "delete": "Delete",
     "edit": "Edit",
+    "marked_for_export": "Marked for export",
+    "mark_for_export": "Mark for export",
     "no_scripture_selected": "No scripture selected yet.",
     "record_upload": "Record/Upload",
     "record": "Record",
     "recording_automatically_stopped": "The recording for your answer was automatically stopped.",
+    "resolve": "Resolve",
+    "resolved": "Resolved",
     "save_answer": "Save Answer",
     "select_text": "Select Text",
     "select_verses": "Select verses",
     "select": "Select",
     "show_more_unread": "Show {{ count }} more unread answers",
+    "tooltip_status_export": "Mark for export to Paratext",
+    "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Your answer"
   },
   "checking_audio_combined": {
@@ -223,6 +240,9 @@
     "my_progress": "My progress",
     "project_stats": "Project stats",
     "questions": "Questions"
+  },
+  "checking_questions": {
+    "no_questions_found": "No questions found to match your filter"
   },
   "edit_name_dialog": {
     "cancel": "Cancel",

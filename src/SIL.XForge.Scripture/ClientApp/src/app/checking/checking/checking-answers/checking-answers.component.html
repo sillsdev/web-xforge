@@ -152,7 +152,38 @@
               <app-checking-audio-player *ngIf="answer.audioUrl" [source]="getFileSource(answer.audioUrl)">
               </app-checking-audio-player>
               <div class="answer-footer">
+                <app-owner
+                  [ownerRef]="answer.ownerRef"
+                  [includeAvatar]="true"
+                  [layoutStacked]="true"
+                  [dateTime]="answer.dateCreated"
+                ></app-owner>
                 <div class="actions">
+                  <button
+                    *ngIf="canChangeAnswerStatus(answer)"
+                    mdc-button
+                    type="button"
+                    (click)="markAnswerForExport(answer)"
+                    class="answer-status answer-export"
+                    [class.status-exportable]="isMarkedForExport(answer)"
+                    [matTooltip]="t('tooltip_status_export')"
+                    matTooltipPosition="above"
+                  >
+                    {{ t(isMarkedForExport(answer) ? "marked_for_export" : "mark_for_export") }}
+                  </button>
+                  <button
+                    *ngIf="canChangeAnswerStatus(answer)"
+                    mdc-button
+                    type="button"
+                    (click)="markAnswerAsResolved(answer)"
+                    class="answer-status answer-resolve"
+                    [class.status-resolved]="isAnswerResolved(answer)"
+                    [matTooltip]="t('tooltip_status_resolve')"
+                    matTooltipPosition="above"
+                  >
+                    {{ t(isAnswerResolved(answer) ? "resolved" : "resolve") }}
+                  </button>
+
                   <button
                     *ngIf="canEditAnswer(answer)"
                     mdc-button
@@ -162,6 +193,7 @@
                   >
                     {{ t("edit") }}
                   </button>
+                  <div *ngIf="canDeleteAnswer(answer)" class="delete-divider">|</div>
                   <button
                     *ngIf="canDeleteAnswer(answer)"
                     mdc-button
@@ -172,12 +204,6 @@
                     {{ t("delete") }}
                   </button>
                 </div>
-                <app-owner
-                  [ownerRef]="answer.ownerRef"
-                  [includeAvatar]="true"
-                  [layoutStacked]="true"
-                  [dateTime]="answer.dateCreated"
-                ></app-owner>
               </div>
               <app-checking-comments
                 [project]="project"

@@ -740,7 +740,8 @@ namespace SIL.XForge.Scripture.Services
             XElement notesElem = await _notesMapper.GetNotesChangelistAsync(
                 oldNotesElem,
                 questionDocs,
-                _currentPtSyncUsers
+                _currentPtSyncUsers,
+                _projectDoc.Data.CheckingConfig.AnswerExportMethod
             );
             if (notesElem.Elements("thread").Any())
             {

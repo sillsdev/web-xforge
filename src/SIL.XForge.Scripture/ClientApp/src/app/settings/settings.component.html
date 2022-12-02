@@ -184,6 +184,36 @@
                   </div>
                 </mat-radio-group>
               </div>
+              <div>
+                <h2 class="sharing-heading">{{ t("exporting_answers") }}</h2>
+                <p class="helper-text">{{ t("export_checking_answers") }}</p>
+                <div class="tool-setting">
+                  <mat-radio-group
+                    id="checking-export-radio-group"
+                    formControlName="checkingAnswerExport"
+                    class="tool-setting"
+                  >
+                    <div class="tool-setting-field">
+                      <mat-radio-button
+                        id="radio-checkingExport-exportable"
+                        [value]="CheckingAnswerExport.MarkedForExport"
+                        >{{ t("export_marked_for_export") }}</mat-radio-button
+                      >
+                      <mat-radio-button id="radio-checkingExport-all" [value]="CheckingAnswerExport.All">{{
+                        t("export_all")
+                      }}</mat-radio-button>
+                      <mat-radio-button id="radio-checkingExport-none" [value]="CheckingAnswerExport.None">{{
+                        t("export_none")
+                      }}</mat-radio-button>
+                      <app-write-status
+                        [state]="getControlState('checkingAnswerExport')"
+                        [formGroup]="form"
+                        id="checkingExport-status"
+                      ></app-write-status>
+                    </div>
+                  </mat-radio-group>
+                </div>
+              </div>
             </ng-container>
           </mat-card-content>
         </form>

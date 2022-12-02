@@ -1,11 +1,11 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
-import { SFProject, SF_PROJECTS_COLLECTION, SF_PROJECT_PROFILES_COLLECTION } from '../models/sf-project';
+import { SF_PROJECT_PROFILES_COLLECTION, SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { clientConnect, createDoc, fetchDoc } from '../../common/utils/test-utils';
-import { CheckingShareLevel } from '../models/checking-config';
+import { CheckingAnswerExport, CheckingShareLevel } from '../models/checking-config';
 import { TranslateShareLevel } from '../models/translate-config';
 import { SystemRole } from '../../common/models/system-role';
 import { ParatextUserProfile } from '../models/paratext-user-profile';
@@ -102,7 +102,8 @@ class TestEnvironment {
         checkingEnabled: false,
         shareEnabled: false,
         shareLevel: CheckingShareLevel.Specific,
-        usersSeeEachOthersResponses: false
+        usersSeeEachOthersResponses: false,
+        answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
       translateConfig: {
         translationSuggestionsEnabled: false,

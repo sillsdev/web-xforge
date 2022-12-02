@@ -4,6 +4,7 @@ import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/
 import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Delta, TextDocId } from '../core/models/text-doc';
 
 export function getTextDoc(id: TextDocId): TextData {
@@ -115,7 +116,8 @@ export function getSFProject(id: string): SFProjectProfile {
       checkingEnabled: false,
       usersSeeEachOthersResponses: true,
       shareEnabled: true,
-      shareLevel: CheckingShareLevel.Specific
+      shareLevel: CheckingShareLevel.Specific,
+      answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     sync: { queuedCount: 0 },
     editable: true,

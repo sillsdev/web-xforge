@@ -295,6 +295,7 @@ namespace SIL.XForge.Scripture.Services
                     );
                     UpdateSetting(op, p => p.CheckingConfig.ShareEnabled, settings.CheckingShareEnabled);
                     UpdateSetting(op, p => p.CheckingConfig.ShareLevel, settings.CheckingShareLevel);
+                    UpdateSetting(op, p => p.CheckingConfig.AnswerExportMethod, settings.CheckingAnswerExport);
                 });
 
                 bool suggestionsEnabledSet = settings.TranslationSuggestionsEnabled != null;

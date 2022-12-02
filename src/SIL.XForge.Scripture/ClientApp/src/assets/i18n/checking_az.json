@@ -158,7 +158,7 @@
     "unknown_author": "Naməlum müəllif",
     "next": "Növbəti",
     "previous": "Əvvəlki",
-    "questions": "Suallar ({{ count }})",
+    "questions": "Suallar",
     "view_questions": "Suallara baxmaq"
   },
   "checking_answers": {

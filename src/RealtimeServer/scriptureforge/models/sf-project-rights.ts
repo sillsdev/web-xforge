@@ -8,6 +8,7 @@ export enum SFProjectDomain {
   Questions = 'questions',
   Answers = 'answers',
   AnswerComments = 'answer_comments',
+  AnswerStatus = 'answer_status',
   Likes = 'likes',
   NoteThreads = 'note_threads',
   Notes = 'notes'
@@ -28,6 +29,8 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Answers, operation: Operation.View },
 
       { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.View },
+
+      { projectDomain: SFProjectDomain.AnswerStatus, operation: Operation.View },
 
       { projectDomain: SFProjectDomain.Likes, operation: Operation.View },
 
@@ -88,6 +91,8 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Create },
       { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.EditOwn },
       { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Delete },
+
+      { projectDomain: SFProjectDomain.AnswerStatus, operation: Operation.Edit },
 
       { projectDomain: SFProjectDomain.Likes, operation: Operation.Create },
       { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn },

@@ -18,10 +18,33 @@
       top: 0;
     }
     .collapse-question-menu {
-      @include icon-button.icon-size(24px, 24px, 8px);
       @include media-breakpoint-up(md) {
         display: none;
       }
+    }
+  }
+  #questions-panel {
+    .panel-heading {
+      flex-wrap: wrap;
+      &.filter-applied {
+        height: 66px;
+        margin-bottom: 6px;
+      }
+      h2 {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        span {
+          font-size: 14px;
+          opacity: 0.5;
+        }
+      }
+    }
+    .active-question-filter {
+      flex: 1 0 100%;
+      font-size: 0.7em;
+      opacity: 0.5;
+      margin-top: -5px;
     }
   }
   #text-panel {
@@ -141,4 +164,10 @@
 .heading-with-icon {
   display: flex;
   column-gap: 10px;
+}
+#question-filter-list {
+  h2 {
+    color: #000;
+    font-weight: bold;
+  }
 }

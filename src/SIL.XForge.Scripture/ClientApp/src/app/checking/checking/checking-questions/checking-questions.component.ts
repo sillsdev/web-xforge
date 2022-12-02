@@ -15,7 +15,7 @@ import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { Observable, Subject, Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
@@ -47,17 +47,17 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   @Input() isAllBooksShown: boolean = false;
   @Output() update = new EventEmitter<QuestionDoc>();
   @Output() changed = new EventEmitter<QuestionDoc>();
-  questionDocs: Readonly<QuestionDoc[]> = [];
   activeQuestionDoc?: QuestionDoc;
   activeQuestionDoc$ = new Subject<QuestionDoc>();
-  @ViewChild(MdcList, { static: true }) mdcList!: MdcList;
+  @ViewChild(MdcList, { static: true }) mdcList?: MdcList;
+  haveQuestionsLoaded: boolean = false;
 
   private project?: SFProjectProfile;
   private _projectUserConfigDoc?: SFProjectUserConfigDoc;
+  private _questionDocs: Readonly<QuestionDoc[]> = [];
 
   private projectProfileDocChangesSubscription?: Subscription;
   private projectUserConfigDocChangesSubscription?: Subscription;
-  private questionDocsSubscription?: Subscription;
 
   constructor(
     private readonly userService: UserService,
@@ -113,18 +113,23 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     return this.questionDocs.findIndex(question => question.id === activeQuestionDocId);
   }
 
+  get hasQuestions(): boolean {
+    return this.questionDocs.length > 0;
+  }
+
   @Input()
-  set questionDocs$(questionDocs$: Observable<Readonly<QuestionDoc[]>>) {
-    this.questionDocsSubscription?.unsubscribe();
-    this.questionDocsSubscription = this.subscribe(questionDocs$, docs => {
-      if (docs.length > 0) {
-        this.activateStoredQuestion(docs);
-      } else {
-        this.activeQuestionDoc = undefined;
-      }
-      this.questionDocs = docs;
-      this.changeDetector.markForCheck();
-    });
+  set questionDocs(questionDocs: Readonly<QuestionDoc[]> | undefined) {
+    if (questionDocs == null) {
+      return;
+    }
+    if (questionDocs.length > 0) {
+      this.activateStoredQuestion(questionDocs);
+    } else {
+      this.activeQuestionDoc = undefined;
+    }
+    this._questionDocs = questionDocs;
+    this.haveQuestionsLoaded = true;
+    this.changeDetector.markForCheck();
   }
 
   // When the list of questions is hidden it has display: none applied, which prevents scrolling to the active question
@@ -144,6 +149,10 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     ) {
       this.scrollToActiveQuestion();
     }
+  }
+
+  get questionDocs(): Readonly<QuestionDoc[]> {
+    return this._questionDocs;
   }
 
   private get canAddAnswer(): boolean {
@@ -303,7 +312,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   private scrollToActiveQuestion() {
-    const element = (this.mdcList.elementRef.nativeElement as HTMLElement).querySelector('.mdc-list-item--activated');
+    const element = (this.mdcList?.elementRef.nativeElement as HTMLElement)?.querySelector('.mdc-list-item--activated');
     if (element != null) {
       element.scrollIntoView({ block: 'nearest' });
     }
