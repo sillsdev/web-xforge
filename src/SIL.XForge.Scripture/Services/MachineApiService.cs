@@ -30,6 +30,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly IExceptionHandler _exceptionHandler;
         private readonly IFeatureManager _featureManager;
         private readonly IMachineBuildService _machineBuildService;
+        private readonly IMachineProjectService _machineProjectService;
         private readonly IMachineTranslationService _machineTranslationService;
         private readonly DataAccess.IRepository<SFProjectSecret> _projectSecrets;
         private readonly IRealtimeService _realtimeService;
@@ -42,6 +43,7 @@ namespace SIL.XForge.Scripture.Services
             IExceptionHandler exceptionHandler,
             IFeatureManager featureManager,
             IMachineBuildService machineBuildService,
+            IMachineProjectService machineProjectService,
             IMachineTranslationService machineTranslationService,
             DataAccess.IRepository<SFProjectSecret> projectSecrets,
             IRealtimeService realtimeService
@@ -59,6 +61,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Machine API Dependencies
             _machineBuildService = machineBuildService;
+            _machineProjectService = machineProjectService;
             _machineTranslationService = machineTranslationService;
             _projectSecrets = projectSecrets;
             _realtimeService = realtimeService;
@@ -291,6 +294,12 @@ namespace SIL.XForge.Scripture.Services
                 {
                     try
                     {
+                        // We do not need the success boolean result , as we will still rebuild if no files have changed
+                        _ = await _machineProjectService.SyncProjectCorporaAsync(
+                            curUserId,
+                            projectId,
+                            cancellationToken
+                        );
                         buildDto = await _machineBuildService.StartBuildAsync(translationEngineId, cancellationToken);
                     }
                     catch (BrokenCircuitException e)
