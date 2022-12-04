@@ -1069,6 +1069,9 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             BuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
 
+            await env.MachineProjectService
+                .Received(1)
+                .SyncProjectCorporaAsync(User01, Project01, CancellationToken.None);
             Assert.AreEqual(message, actual.Message);
             Assert.AreEqual(percentCompleted, actual.PercentCompleted);
             Assert.AreEqual(revision, actual.Revision);
@@ -1090,6 +1093,9 @@ namespace SIL.XForge.Scripture.Services
             _ = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
 
             await env.EngineService.Received(1).StartBuildAsync(TranslationEngine01);
+            await env.MachineProjectService
+                .Received(1)
+                .SyncProjectCorporaAsync(User01, Project01, CancellationToken.None);
             await env.MachineBuildService.Received(1).StartBuildAsync(TranslationEngine01, CancellationToken.None);
         }
 
@@ -1287,6 +1293,7 @@ namespace SIL.XForge.Scripture.Services
                 FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(true));
 
                 MachineBuildService = Substitute.For<IMachineBuildService>();
+                MachineProjectService = Substitute.For<IMachineProjectService>();
                 MachineTranslationService = Substitute.For<IMachineTranslationService>();
                 var projectSecrets = new MemoryRepository<SFProjectSecret>(
                     new[]
@@ -1330,6 +1337,7 @@ namespace SIL.XForge.Scripture.Services
                     ExceptionHandler,
                     FeatureManager,
                     MachineBuildService,
+                    MachineProjectService,
                     MachineTranslationService,
                     projectSecrets,
                     realtimeService
@@ -1342,6 +1350,7 @@ namespace SIL.XForge.Scripture.Services
             public IExceptionHandler ExceptionHandler { get; }
             public IFeatureManager FeatureManager { get; }
             public IMachineBuildService MachineBuildService { get; }
+            public IMachineProjectService MachineProjectService { get; }
             public IMachineTranslationService MachineTranslationService { get; }
             public MachineApiService Service { get; }
         }
