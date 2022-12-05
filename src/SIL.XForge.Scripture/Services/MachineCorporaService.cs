@@ -43,7 +43,7 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            // Add the corpora to the Machine API
+            // Add the corpus to the Machine API
             ValidateId(translationEngineId);
             ValidateId(corpusId);
             string requestUri = $"translation-engines/{translationEngineId}/corpora";
@@ -136,6 +136,20 @@ namespace SIL.XForge.Scripture.Services
             {
                 throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response), e);
             }
+        }
+
+        public async Task RemoveCorpusFromTranslationEngineAsync(
+            string translationEngineId,
+            string corpusId,
+            CancellationToken cancellationToken
+        )
+        {
+            // Remove the corpus from the translation engine on the Machine API
+            ValidateId(translationEngineId);
+            ValidateId(corpusId);
+            string requestUri = $"translation-engines/{translationEngineId}/corpora/{corpusId}";
+            using var response = await MachineClient.DeleteAsync(requestUri, cancellationToken);
+            await _exceptionHandler.EnsureSuccessStatusCode(response);
         }
 
         public async Task<string> UploadCorpusTextAsync(

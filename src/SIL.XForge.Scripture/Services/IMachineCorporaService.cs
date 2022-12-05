@@ -17,6 +17,11 @@ namespace SIL.XForge.Scripture.Services
         Task DeleteCorpusAsync(string corpusId, CancellationToken cancellationToken);
         Task DeleteCorpusFileAsync(string corpusId, string fileId, CancellationToken cancellationToken);
         Task<IList<MachineApiCorpusFile>> GetCorpusFilesAsync(string corpusId, CancellationToken cancellationToken);
+        Task RemoveCorpusFromTranslationEngineAsync(
+            string translationEngineId,
+            string corpusId,
+            CancellationToken cancellationToken
+        );
         Task<string> UploadCorpusTextAsync(
             string corpusId,
             string languageTag,
