@@ -1,7 +1,7 @@
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
@@ -137,6 +137,6 @@ export function getSFProject(id: string): SFProjectProfile {
 
 export function paratextUsersFromRoles(userRoles: { [id: string]: string }): ParatextUserProfile[] {
   return Object.keys(userRoles)
-    .filter(u => hasParatextRole(userRoles[u]))
+    .filter(u => isParatextRole(userRoles[u]))
     .map(u => ({ sfUserId: u, username: `pt${u}`, opaqueUserId: `opaque${u}` }));
 }
