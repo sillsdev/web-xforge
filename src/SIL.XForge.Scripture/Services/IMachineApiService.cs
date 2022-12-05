@@ -24,7 +24,7 @@ namespace SIL.XForge.Scripture.Services
         Task<WordGraphDto> GetWordGraphAsync(
             string curUserId,
             string projectId,
-            IReadOnlyCollection<string> segment,
+            IReadOnlyList<string> segment,
             CancellationToken cancellationToken
         );
         Task<BuildDto> StartBuildAsync(string curUserId, string projectId, CancellationToken cancellationToken);
@@ -32,6 +32,19 @@ namespace SIL.XForge.Scripture.Services
             string curUserId,
             string projectId,
             SegmentPairDto segmentPair,
+            CancellationToken cancellationToken
+        );
+        Task<TranslationResultDto> TranslateAsync(
+            string curUserId,
+            string projectId,
+            IReadOnlyList<string> segment,
+            CancellationToken cancellationToken
+        );
+        Task<TranslationResultDto[]> TranslateNAsync(
+            string curUserId,
+            string projectId,
+            int n,
+            IReadOnlyList<string> segment,
             CancellationToken cancellationToken
         );
     }
