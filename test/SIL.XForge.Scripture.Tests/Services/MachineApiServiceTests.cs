@@ -606,7 +606,7 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(Task.FromResult(new Engine()));
 
             // SUT
-            await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
+            _ = await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
 
             env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         }
@@ -813,7 +813,7 @@ namespace SIL.XForge.Scripture.Services
                 .Returns(Task.FromResult(new WordGraph(Array.Empty<WordGraphArc>(), Array.Empty<int>())));
 
             // SUT
-            await env.Service.GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None);
+            _ = await env.Service.GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None);
 
             env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         }
@@ -994,7 +994,7 @@ namespace SIL.XForge.Scripture.Services
             env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
 
             // SUT
-            await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+            _ = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
 
             env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         }
@@ -1263,6 +1263,431 @@ namespace SIL.XForge.Scripture.Services
             await env.MachineTranslationService
                 .Received(1)
                 .TrainSegmentAsync(TranslationEngine01, segmentPair, CancellationToken.None);
+        }
+
+        [Test]
+        public void TranslateAsync_NoPermission()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<ForbiddenException>(
+                () =>
+                    env.Service.TranslateAsync(
+                        "invalid_user_id",
+                        Project01,
+                        Array.Empty<string>(),
+                        CancellationToken.None
+                    )
+            );
+        }
+
+        [Test]
+        public void TranslateAsync_NoProject()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () =>
+                    env.Service.TranslateAsync(
+                        User01,
+                        "invalid_project_id",
+                        Array.Empty<string>(),
+                        CancellationToken.None
+                    )
+            );
+        }
+
+        [Test]
+        public void TranslateAsync_InProcessNoEngine()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.Engines
+                .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+                .Returns(Task.FromResult<Engine>(null));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public void TranslateAsync_MachineApiNoTranslationEngine()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.TranslateAsync(User01, Project03, Array.Empty<string>(), CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public void TranslateAsync_MachineApiOutageNoInProcess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineTranslationService
+                .TranslateAsync(TranslationEngine01, Array.Empty<string>(), CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<BrokenCircuitException>(
+                () => env.Service.TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task TranslateAsync_MachineApiOutageFailsToInProcess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineTranslationService
+                .TranslateAsync(TranslationEngine01, Array.Empty<string>(), CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+            env.EngineService
+                .TranslateAsync(TranslationEngine01, Array.Empty<string>())
+                .Returns(
+                    Task.FromResult(
+                        new TranslationResult(
+                            Array.Empty<string>(),
+                            Array.Empty<string>(),
+                            Array.Empty<double>(),
+                            Array.Empty<TranslationSources>(),
+                            new WordAlignmentMatrix(0, 0),
+                            Array.Empty<Phrase>()
+                        )
+                    )
+                );
+
+            // SUT
+            _ = await env.Service.TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None);
+
+            env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        }
+
+        [Test]
+        public async Task TranslateAsync_InProcessSuccess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.EngineService
+                .TranslateAsync(TranslationEngine01, Array.Empty<string>())
+                .Returns(
+                    Task.FromResult(
+                        new TranslationResult(
+                            new[] { string.Empty },
+                            new[] { string.Empty },
+                            new[] { 0.0 },
+                            new[] { TranslationSources.Smt },
+                            new WordAlignmentMatrix(1, 1, new[] { (0, 0) }),
+                            new[] { new Phrase(new Range<int>(), 0, 0.0) }
+                        )
+                    )
+                );
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+
+            // SUT
+            TranslationResultDto actual = await env.Service.TranslateAsync(
+                User01,
+                Project01,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            Assert.IsNotNull(actual);
+            Assert.AreEqual(1, actual.Target.Length);
+            Assert.AreEqual(1, actual.Confidences.Length);
+            Assert.AreEqual(1, actual.Sources.Length);
+            Assert.AreEqual(1, actual.Alignment.Length);
+            Assert.AreEqual(1, actual.Phrases.Length);
+        }
+
+        [Test]
+        public async Task TranslateAsync_MachineApiSuccess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineTranslationService
+                .TranslateAsync(TranslationEngine01, Array.Empty<string>(), CancellationToken.None)
+                .Returns(
+                    Task.FromResult(
+                        new TranslationResultDto
+                        {
+                            Alignment = new[] { new AlignedWordPairDto() },
+                            Confidences = new[] { 0.0f },
+                            Phrases = new[] { new PhraseDto() },
+                            Sources = new[] { TranslationSources.Smt },
+                            Target = new[] { string.Empty },
+                        }
+                    )
+                );
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            TranslationResultDto actual = await env.Service.TranslateAsync(
+                User01,
+                Project01,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            Assert.IsNotNull(actual);
+            Assert.AreEqual(1, actual.Target.Length);
+            Assert.AreEqual(1, actual.Confidences.Length);
+            Assert.AreEqual(1, actual.Sources.Length);
+            Assert.AreEqual(1, actual.Alignment.Length);
+            Assert.AreEqual(1, actual.Phrases.Length);
+        }
+
+        [Test]
+        public async Task TranslateAsync_ExecutesApiAndInProcess()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.EngineService
+                .TranslateAsync(TranslationEngine01, Array.Empty<string>())
+                .Returns(
+                    Task.FromResult(
+                        new TranslationResult(
+                            Array.Empty<string>(),
+                            Array.Empty<string>(),
+                            Array.Empty<double>(),
+                            Array.Empty<TranslationSources>(),
+                            new WordAlignmentMatrix(0, 0),
+                            Array.Empty<Phrase>()
+                        )
+                    )
+                );
+
+            // SUT
+            _ = await env.Service.TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None);
+
+            await env.EngineService.Received(1).TranslateAsync(TranslationEngine01, Array.Empty<string>());
+            await env.MachineTranslationService
+                .Received(1)
+                .TranslateAsync(TranslationEngine01, Array.Empty<string>(), CancellationToken.None);
+        }
+
+        [Test]
+        public void TranslateNAsync_NoPermission()
+        {
+            // Set up test environment
+            int n = 1;
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<ForbiddenException>(
+                () =>
+                    env.Service.TranslateNAsync(
+                        "invalid_user_id",
+                        Project01,
+                        n,
+                        Array.Empty<string>(),
+                        CancellationToken.None
+                    )
+            );
+        }
+
+        [Test]
+        public void TranslateNAsync_NoProject()
+        {
+            // Set up test environment
+            int n = 1;
+            var env = new TestEnvironment();
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () =>
+                    env.Service.TranslateNAsync(
+                        User01,
+                        "invalid_project_id",
+                        n,
+                        Array.Empty<string>(),
+                        CancellationToken.None
+                    )
+            );
+        }
+
+        [Test]
+        public void TranslateNAsync_InProcessNoEngine()
+        {
+            // Set up test environment
+            int n = 1;
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.Engines
+                .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+                .Returns(Task.FromResult<Engine>(null));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public void TranslateNAsync_MachineApiNoTranslationEngine()
+        {
+            // Set up test environment
+            int n = 1;
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.TranslateNAsync(User01, Project03, n, Array.Empty<string>(), CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public void TranslateNAsync_MachineApiOutageNoInProcess()
+        {
+            // Set up test environment
+            int n = 1;
+            var env = new TestEnvironment();
+            env.MachineTranslationService
+                .TranslateNAsync(TranslationEngine01, n, Array.Empty<string>(), CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<BrokenCircuitException>(
+                () => env.Service.TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
+            );
+        }
+
+        [Test]
+        public async Task TranslateNAsync_MachineApiOutageFailsToInProcess()
+        {
+            // Set up test environment
+            int n = 1;
+            var env = new TestEnvironment();
+            env.MachineTranslationService
+                .TranslateNAsync(TranslationEngine01, n, Array.Empty<string>(), CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+            env.EngineService
+                .TranslateAsync(TranslationEngine01, n, Array.Empty<string>())
+                .Returns(Task.FromResult(Array.Empty<TranslationResult>().AsEnumerable()));
+
+            // SUT
+            _ = await env.Service.TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None);
+
+            env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        }
+
+        [Test]
+        public async Task TranslateNAsync_InProcessSuccess()
+        {
+            // Set up test environment
+            int n = 1;
+            var env = new TestEnvironment();
+            env.EngineService
+                .TranslateAsync(TranslationEngine01, n, Array.Empty<string>())
+                .Returns(
+                    Task.FromResult(
+                        new[]
+                        {
+                            new TranslationResult(
+                                new[] { string.Empty },
+                                new[] { string.Empty },
+                                new[] { 0.0 },
+                                new[] { TranslationSources.Smt },
+                                new WordAlignmentMatrix(1, 1, new[] { (0, 0) }),
+                                new[] { new Phrase(new Range<int>(), 0, 0.0) }
+                            ),
+                        }.AsEnumerable()
+                    )
+                );
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+
+            // SUT
+            TranslationResultDto[] actual = await env.Service.TranslateNAsync(
+                User01,
+                Project01,
+                n,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            Assert.IsNotNull(actual);
+            Assert.AreEqual(1, actual.Length);
+            Assert.AreEqual(1, actual.First().Target.Length);
+            Assert.AreEqual(1, actual.First().Confidences.Length);
+            Assert.AreEqual(1, actual.First().Sources.Length);
+            Assert.AreEqual(1, actual.First().Alignment.Length);
+            Assert.AreEqual(1, actual.First().Phrases.Length);
+        }
+
+        [Test]
+        public async Task TranslateNAsync_MachineApiSuccess()
+        {
+            // Set up test environment
+            int n = 1;
+            var env = new TestEnvironment();
+            env.MachineTranslationService
+                .TranslateNAsync(TranslationEngine01, n, Array.Empty<string>(), CancellationToken.None)
+                .Returns(
+                    Task.FromResult(
+                        new[]
+                        {
+                            new TranslationResultDto
+                            {
+                                Alignment = new[] { new AlignedWordPairDto() },
+                                Confidences = new[] { 0.0f },
+                                Phrases = new[] { new PhraseDto() },
+                                Sources = new[] { TranslationSources.Smt },
+                                Target = new[] { string.Empty },
+                            },
+                        }
+                    )
+                );
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            TranslationResultDto[] actual = await env.Service.TranslateNAsync(
+                User01,
+                Project01,
+                n,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            Assert.IsNotNull(actual);
+            Assert.AreEqual(1, actual.Length);
+            Assert.AreEqual(1, actual.First().Target.Length);
+            Assert.AreEqual(1, actual.First().Confidences.Length);
+            Assert.AreEqual(1, actual.First().Sources.Length);
+            Assert.AreEqual(1, actual.First().Alignment.Length);
+            Assert.AreEqual(1, actual.First().Phrases.Length);
+        }
+
+        [Test]
+        public async Task TranslateNAsync_ExecutesApiAndInProcess()
+        {
+            // Set up test environment
+            int n = 1;
+            var env = new TestEnvironment();
+            env.EngineService
+                .TranslateAsync(TranslationEngine01, n, Array.Empty<string>())
+                .Returns(Task.FromResult(Array.Empty<TranslationResult>().AsEnumerable()));
+
+            // SUT
+            _ = await env.Service.TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None);
+
+            await env.EngineService.Received(1).TranslateAsync(TranslationEngine01, n, Array.Empty<string>());
+            await env.MachineTranslationService
+                .Received(1)
+                .TranslateNAsync(TranslationEngine01, n, Array.Empty<string>(), CancellationToken.None);
         }
 
         private class TestEnvironment
