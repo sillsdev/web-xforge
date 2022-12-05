@@ -183,6 +183,9 @@ namespace SIL.XForge.Scripture.Services
             await env.MachineTranslationService
                 .Received(1)
                 .DeleteTranslationEngineAsync(TranslationEngine02, CancellationToken.None);
+            await env.MachineCorporaService
+                .Received(1)
+                .RemoveCorpusFromTranslationEngineAsync(TranslationEngine02, Corpus01, CancellationToken.None);
             await env.MachineCorporaService.Received(1).DeleteCorpusAsync(Corpus01, CancellationToken.None);
             await env.MachineCorporaService.Received(1).DeleteCorpusFileAsync(Corpus01, File01, CancellationToken.None);
             await env.MachineCorporaService.Received(1).DeleteCorpusFileAsync(Corpus01, File02, CancellationToken.None);
