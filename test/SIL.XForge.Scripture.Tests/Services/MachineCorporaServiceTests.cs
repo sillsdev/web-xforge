@@ -195,6 +195,51 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void RemoveCorpusFromTranslationEngineAsync_NoPermission()
+        {
+            // Set up a mock Machine API
+            string translationEngineId = "63372e670935fe633f927c85";
+            string corpusId = "633fdb281a2e7ac760f7193a";
+            string response = string.Empty;
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.Forbidden);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            Assert.ThrowsAsync<HttpRequestException>(
+                () =>
+                    env.Service.RemoveCorpusFromTranslationEngineAsync(
+                        translationEngineId,
+                        corpusId,
+                        CancellationToken.None
+                    )
+            );
+        }
+
+        [Test]
+        public async Task RemoveCorpusFromTranslationEngineAsync_Success()
+        {
+            // Set up a mock Machine API
+            string translationEngineId = "63372e670935fe633f927c85";
+            string corpusId = "633fdb281a2e7ac760f7193a";
+            string response = string.Empty;
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
+            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            await env.Service.RemoveCorpusFromTranslationEngineAsync(
+                translationEngineId,
+                corpusId,
+                CancellationToken.None
+            );
+        }
+
+        [Test]
         public async Task UploadCorpusTextAsync_Success()
         {
             // Set up a mock Machine API

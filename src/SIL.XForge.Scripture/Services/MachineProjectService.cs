@@ -160,12 +160,6 @@ namespace SIL.XForge.Scripture.Services
                 return;
             }
 
-            // Remove the project from the Machine API
-            await _machineTranslationService.DeleteTranslationEngineAsync(
-                projectSecret.MachineData.TranslationEngineId,
-                cancellationToken
-            );
-
             // Remove the corpus files
             foreach ((string corpusId, _) in projectSecret.MachineData.Corpora)
             {
@@ -187,6 +181,26 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
+                // Remove the corpus from the translation engine
+                try
+                {
+                    await _machineCorporaService.RemoveCorpusFromTranslationEngineAsync(
+                        projectSecret.MachineData.TranslationEngineId,
+                        corpusId,
+                        cancellationToken
+                    );
+                }
+                catch (HttpRequestException e)
+                {
+                    // A 404 means that the translation engine does not exist
+                    if (e.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        _logger.LogInformation(
+                            $"Translation Engine {projectSecret.MachineData.TranslationEngineId} for project {projectId} was missing or already deleted."
+                        );
+                    }
+                }
+
                 // Delete the corpus
                 try
                 {
@@ -203,6 +217,12 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
             }
+
+            // Remove the project from the Machine API
+            await _machineTranslationService.DeleteTranslationEngineAsync(
+                projectSecret.MachineData.TranslationEngineId,
+                cancellationToken
+            );
         }
 
         public async Task<bool> SyncProjectCorporaAsync(
