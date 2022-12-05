@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -221,7 +222,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task<WordGraphDto> GetWordGraphAsync(
             string curUserId,
             string projectId,
-            IReadOnlyCollection<string> segment,
+            IReadOnlyList<string> segment,
             CancellationToken cancellationToken
         )
         {
@@ -268,7 +269,7 @@ namespace SIL.XForge.Scripture.Services
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
                 Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
-                WordGraph wordGraph = await _engineService.GetWordGraphAsync(engine.Id, segment.ToArray());
+                WordGraph wordGraph = await _engineService.GetWordGraphAsync(engine.Id, segment);
                 wordGraphDto = CreateDto(wordGraph);
             }
 
@@ -294,7 +295,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     try
                     {
-                        // We do not need the success boolean result , as we will still rebuild if no files have changed
+                        // We do not need the success boolean result, as we will still rebuild if no files have changed
                         _ = await _machineProjectService.SyncProjectCorporaAsync(
                             curUserId,
                             projectId,
@@ -347,30 +348,33 @@ namespace SIL.XForge.Scripture.Services
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
             {
                 string translationEngineId = await GetTranslationIdAsync(projectId);
-                if (string.IsNullOrWhiteSpace(translationEngineId))
+                if (!string.IsNullOrWhiteSpace(translationEngineId))
                 {
+                    try
+                    {
+                        await _machineTranslationService.TrainSegmentAsync(
+                            translationEngineId,
+                            segmentPair,
+                            cancellationToken
+                        );
+                    }
+                    catch (BrokenCircuitException e)
+                    {
+                        // We do not want to throw the error if we are returning from In Process API below
+                        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
+                        {
+                            _exceptionHandler.ReportException(e);
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
+                }
+                else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
+                {
+                    // Only throw the exception if the In Process instance will not be called below
                     throw new DataNotFoundException("The translation engine is not configured");
-                }
-
-                try
-                {
-                    await _machineTranslationService.TrainSegmentAsync(
-                        translationEngineId,
-                        segmentPair,
-                        cancellationToken
-                    );
-                }
-                catch (BrokenCircuitException e)
-                {
-                    // We do not want to throw the error if we are returning from In Process API below
-                    if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
-                    {
-                        _exceptionHandler.ReportException(e);
-                    }
-                    else
-                    {
-                        throw;
-                    }
                 }
             }
 
@@ -385,6 +389,126 @@ namespace SIL.XForge.Scripture.Services
                     segmentPair.SentenceStart
                 );
             }
+        }
+
+        public async Task<TranslationResultDto> TranslateAsync(
+            string curUserId,
+            string projectId,
+            IReadOnlyList<string> segment,
+            CancellationToken cancellationToken
+        )
+        {
+            var translationResultDto = new TranslationResultDto();
+
+            // Ensure that the user has permission
+            await EnsurePermissionAsync(curUserId, projectId);
+
+            // Execute the Machine API, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+            {
+                string translationEngineId = await GetTranslationIdAsync(projectId);
+                if (!string.IsNullOrWhiteSpace(translationEngineId))
+                {
+                    try
+                    {
+                        translationResultDto = await _machineTranslationService.TranslateAsync(
+                            translationEngineId,
+                            segment,
+                            cancellationToken
+                        );
+                    }
+                    catch (BrokenCircuitException e)
+                    {
+                        // We do not want to throw the error if we are returning from In Process API below
+                        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
+                        {
+                            _exceptionHandler.ReportException(e);
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
+                }
+                else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
+                {
+                    // Only throw the exception if the In Process instance will not be called below
+                    throw new DataNotFoundException("The translation engine is not configured");
+                }
+            }
+
+            // Execute the In Process Machine instance, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
+            {
+                Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
+                TranslationResult translationResult = await _engineService.TranslateAsync(engine.Id, segment);
+                translationResultDto = CreateDto(translationResult);
+            }
+
+            return translationResultDto;
+        }
+
+        public async Task<TranslationResultDto[]> TranslateNAsync(
+            string curUserId,
+            string projectId,
+            int n,
+            IReadOnlyList<string> segment,
+            CancellationToken cancellationToken
+        )
+        {
+            TranslationResultDto[] translationResultsDto = Array.Empty<TranslationResultDto>();
+
+            // Ensure that the user has permission
+            await EnsurePermissionAsync(curUserId, projectId);
+
+            // Execute the Machine API, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+            {
+                string translationEngineId = await GetTranslationIdAsync(projectId);
+                if (!string.IsNullOrWhiteSpace(translationEngineId))
+                {
+                    try
+                    {
+                        translationResultsDto = await _machineTranslationService.TranslateNAsync(
+                            translationEngineId,
+                            n,
+                            segment,
+                            cancellationToken
+                        );
+                    }
+                    catch (BrokenCircuitException e)
+                    {
+                        // We do not want to throw the error if we are returning from In Process API below
+                        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
+                        {
+                            _exceptionHandler.ReportException(e);
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
+                }
+                else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
+                {
+                    // Only throw the exception if the In Process instance will not be called below
+                    throw new DataNotFoundException("The translation engine is not configured");
+                }
+            }
+
+            // Execute the In Process Machine instance, if it is enabled
+            if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
+            {
+                Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
+                IEnumerable<TranslationResult> translationResults = await _engineService.TranslateAsync(
+                    engine.Id,
+                    n,
+                    segment
+                );
+                translationResultsDto = translationResults.Select(CreateDto).ToArray();
+            }
+
+            return translationResultsDto;
         }
 
         private static BuildDto CreateDto(Build build) =>
@@ -417,7 +541,25 @@ namespace SIL.XForge.Scripture.Services
                 TrainedSegmentCount = engine.TrainedSegmentCount,
             };
 
+        private static PhraseDto CreateDto(Phrase phrase) =>
+            new PhraseDto
+            {
+                SourceSegmentRange = CreateDto(phrase.SourceSegmentRange),
+                TargetSegmentCut = phrase.TargetSegmentCut,
+                Confidence = phrase.Confidence,
+            };
+
         private static RangeDto CreateDto(Range<int> range) => new RangeDto { Start = range.Start, End = range.End };
+
+        private static TranslationResultDto CreateDto(TranslationResult translationResult) =>
+            new TranslationResultDto
+            {
+                Target = translationResult.TargetSegment.ToArray(),
+                Confidences = translationResult.WordConfidences.Select(c => (float)c).ToArray(),
+                Sources = translationResult.WordSources.ToArray(),
+                Alignment = CreateDto(translationResult.Alignment),
+                Phrases = translationResult.Phrases.Select(CreateDto).ToArray(),
+            };
 
         private static WordGraphDto CreateDto(WordGraph wordGraph) =>
             new WordGraphDto
