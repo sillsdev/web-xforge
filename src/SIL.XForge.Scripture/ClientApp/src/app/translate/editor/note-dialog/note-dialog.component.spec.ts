@@ -17,7 +17,7 @@ import {
   SF_NOTE_THREAD_PREFIX
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -878,7 +878,7 @@ class TestEnvironment {
     );
 
     when(mockedProjectService.tryGetForRole(anything(), anything())).thenCall((id, role) =>
-      hasParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id) : undefined
+      isParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id) : undefined
     );
 
     when(mockedUserService.currentUserId).thenReturn(currentUserId);
