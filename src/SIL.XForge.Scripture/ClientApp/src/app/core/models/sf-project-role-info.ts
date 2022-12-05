@@ -1,4 +1,4 @@
-import { hasTranslateRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { isTranslateRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { ProjectRoleInfo } from 'xforge-common/models/project-role-info';
 
 export const SF_PROJECT_ROLES: ProjectRoleInfo[] = [
@@ -16,7 +16,7 @@ export const SF_PROJECT_ROLES: ProjectRoleInfo[] = [
 ];
 
 export function canAccessTranslateApp(role?: SFProjectRole) {
-  return hasTranslateRole(role);
+  return isTranslateRole(role);
 }
 
 export const SF_DEFAULT_SHARE_ROLE: SFProjectRole = SFProjectRole.CommunityChecker;
