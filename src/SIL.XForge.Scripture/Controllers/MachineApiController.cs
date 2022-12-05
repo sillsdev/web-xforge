@@ -214,5 +214,71 @@ namespace SIL.XForge.Scripture.Controllers
                 return Forbid();
             }
         }
+
+        [HttpPost(MachineApi.Translate)]
+        public async Task<ActionResult<TranslationResultDto>> TranslateAsync(
+            string projectId,
+            [FromBody] string[] segment,
+            CancellationToken cancellationToken
+        )
+        {
+            try
+            {
+                TranslationResultDto translationResult = await _machineApiService.TranslateAsync(
+                    _userAccessor.UserId,
+                    projectId,
+                    segment,
+                    cancellationToken
+                );
+                return Ok(translationResult);
+            }
+            catch (BrokenCircuitException e)
+            {
+                _exceptionHandler.ReportException(e);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+            }
+            catch (DataNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+        }
+
+        [HttpPost(MachineApi.TranslateN)]
+        public async Task<ActionResult<TranslationResultDto[]>> TranslateNAsync(
+            string projectId,
+            int n,
+            [FromBody] string[] segment,
+            CancellationToken cancellationToken
+        )
+        {
+            try
+            {
+                TranslationResultDto[] translationResults = await _machineApiService.TranslateNAsync(
+                    _userAccessor.UserId,
+                    projectId,
+                    n,
+                    segment,
+                    cancellationToken
+                );
+                return Ok(translationResults);
+            }
+            catch (BrokenCircuitException e)
+            {
+                _exceptionHandler.ReportException(e);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+            }
+            catch (DataNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (ForbiddenException)
+            {
+                return Forbid();
+            }
+        }
     }
 }
