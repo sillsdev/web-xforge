@@ -30,6 +30,7 @@ export class DialogService {
   async openGenericDialog<T>(options: GenericDialogOptions<T>): Promise<T | undefined> {
     return this.matDialog
       .open<GenericDialogComponent<T>, GenericDialogOptions<T>, T>(GenericDialogComponent, {
+        direction: this.i18n.direction,
         autoFocus: false,
         data: options
       })
