@@ -8,6 +8,8 @@ namespace SIL.XForge.Scripture.Models
         public const string GetEngine = "translation/engines/project:{projectId}";
         public const string GetWordGraph = "translation/engines/project:{projectId}/actions/getWordGraph";
         public const string TrainSegment = "translation/engines/project:{projectId}/actions/trainSegment";
+        public const string Translate = "translation/engines/project:{projectId}/actions/translate";
+        public const string TranslateN = "translation/engines/project:{projectId}/actions/translate/{n}";
 
         public static string GetBuildHref(string projectId, string buildId)
         {
