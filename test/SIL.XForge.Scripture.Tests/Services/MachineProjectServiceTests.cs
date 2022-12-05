@@ -282,9 +282,12 @@ namespace SIL.XForge.Scripture.Services
                         }
                     )
                 );
+            env.MachineCorporaService
+                .CreateCorpusAsync(Arg.Any<string>(), false, CancellationToken.None)
+                .Returns(Task.FromResult(Corpus01));
             await env.ProjectSecrets.UpdateAsync(
                 Project01,
-                u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = Project01, })
+                u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = Project01 })
             );
 
             // SUT
@@ -296,7 +299,7 @@ namespace SIL.XForge.Scripture.Services
             await env.MachineCorporaService
                 .ReceivedWithAnyArgs(1)
                 .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
-            Assert.AreEqual(1, env.ProjectSecrets.Get(Project01).MachineData?.Files.Count);
+            Assert.AreEqual(1, env.ProjectSecrets.Get(Project01).MachineData?.Corpora[Corpus01].Files.Count);
         }
 
         [Test]
@@ -334,7 +337,7 @@ namespace SIL.XForge.Scripture.Services
                 );
 
             // SUT
-            Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).MachineData?.Files.Count);
+            Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).MachineData?.Corpora[Corpus01].Files.Count);
             bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
             Assert.IsTrue(actual);
             await env.MachineCorporaService
@@ -343,7 +346,7 @@ namespace SIL.XForge.Scripture.Services
             await env.MachineCorporaService
                 .ReceivedWithAnyArgs(1)
                 .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
-            Assert.AreEqual(3, env.ProjectSecrets.Get(Project02).MachineData?.Files.Count);
+            Assert.AreEqual(3, env.ProjectSecrets.Get(Project02).MachineData?.Corpora[Corpus01].Files.Count);
         }
 
         [Test]
@@ -389,7 +392,7 @@ namespace SIL.XForge.Scripture.Services
                 Project02,
                 u =>
                     u.Add(
-                        p => p.MachineData.Files,
+                        p => p.MachineData.Corpora[Corpus01].Files,
                         new MachineCorpusFile
                         {
                             FileChecksum = "a_previous_checksum",
@@ -451,7 +454,7 @@ namespace SIL.XForge.Scripture.Services
                 Project02,
                 u =>
                     u.Add(
-                        p => p.MachineData.Files,
+                        p => p.MachineData.Corpora[Corpus01].Files,
                         new MachineCorpusFile
                         {
                             FileChecksum = checksum,
@@ -559,7 +562,7 @@ namespace SIL.XForge.Scripture.Services
                 Project02,
                 u =>
                     u.Add(
-                        p => p.MachineData.Files,
+                        p => p.MachineData.Corpora[Corpus01].Files,
                         new MachineCorpusFile
                         {
                             FileChecksum = "a_previous_checksum",
@@ -645,7 +648,7 @@ namespace SIL.XForge.Scripture.Services
                 Project02,
                 u =>
                     u.Add(
-                            p => p.MachineData.Files,
+                            p => p.MachineData.Corpora[Corpus01].Files,
                             new MachineCorpusFile
                             {
                                 FileChecksum = "a_previous_checksum",
@@ -655,7 +658,7 @@ namespace SIL.XForge.Scripture.Services
                             }
                         )
                         .Add(
-                            p => p.MachineData.Files,
+                            p => p.MachineData.Corpora[Corpus01].Files,
                             new MachineCorpusFile
                             {
                                 FileChecksum = "another_previous_checksum",
@@ -707,11 +710,19 @@ namespace SIL.XForge.Scripture.Services
                             MachineData = new MachineData
                             {
                                 TranslationEngineId = TranslationEngine02,
-                                CorpusId = Corpus01,
-                                Files = new List<MachineCorpusFile>
+                                Corpora = new Dictionary<string, MachineCorpus>
                                 {
-                                    new MachineCorpusFile { FileId = File01 },
-                                    new MachineCorpusFile { FileId = File02 },
+                                    {
+                                        Corpus01,
+                                        new MachineCorpus
+                                        {
+                                            Files = new List<MachineCorpusFile>
+                                            {
+                                                new MachineCorpusFile { FileId = File01 },
+                                                new MachineCorpusFile { FileId = File02 },
+                                            },
+                                        }
+                                    },
                                 },
                             },
                         },
