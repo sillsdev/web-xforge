@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { hasParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -259,7 +259,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         role,
         allowCreatingQuestions,
         canHaveQuestionPermissionRevoked,
-        userEligibleForQuestionPermission: hasParatextRole(role)
+        userEligibleForQuestionPermission: isParatextRole(role)
       });
     }
 

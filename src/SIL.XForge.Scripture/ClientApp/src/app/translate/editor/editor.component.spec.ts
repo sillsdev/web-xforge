@@ -33,7 +33,7 @@ import {
   SF_NOTE_THREAD_PREFIX
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
@@ -2942,7 +2942,7 @@ class TestEnvironment {
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project02')
     );
     when(mockedSFProjectService.tryGetForRole('project01', anything())).thenCall((id, role) =>
-      hasParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id) : undefined
+      isParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id) : undefined
     );
     when(mockedSFProjectService.getUserConfig('project01', anything())).thenCall((_projectId, userId) =>
       this.realtimeService.subscribe(
