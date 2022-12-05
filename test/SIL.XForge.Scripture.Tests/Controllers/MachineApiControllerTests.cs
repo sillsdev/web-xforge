@@ -548,6 +548,170 @@ namespace SIL.XForge.Scripture.Controllers
                 .TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
         }
 
+        [Test]
+        public async Task TranslateAsync_MachineApiDown()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+
+            // SUT
+            ActionResult<TranslationResultDto> actual = await env.Controller.TranslateAsync(
+                Project01,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+            Assert.IsInstanceOf<ObjectResult>(actual.Result);
+            Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+        }
+
+        [Test]
+        public async Task TranslateAsync_NoPermission()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+                .Throws(new ForbiddenException());
+
+            // SUT
+            ActionResult<TranslationResultDto> actual = await env.Controller.TranslateAsync(
+                Project01,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<ForbidResult>(actual.Result);
+        }
+
+        [Test]
+        public async Task TranslateAsync_NoProject()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+                .Throws(new DataNotFoundException(string.Empty));
+
+            // SUT
+            ActionResult<TranslationResultDto> actual = await env.Controller.TranslateAsync(
+                Project01,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+        }
+
+        [Test]
+        public async Task TranslateAsync_Success()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+                .Returns(Task.FromResult(new TranslationResultDto()));
+
+            // SUT
+            ActionResult<TranslationResultDto> actual = await env.Controller.TranslateAsync(
+                Project01,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        }
+
+        [Test]
+        public async Task TranslateNAsync_MachineApiDown()
+        {
+            // Set up test environment
+            int n = 1;
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
+                .Throws(new BrokenCircuitException());
+
+            // SUT
+            ActionResult<TranslationResultDto[]> actual = await env.Controller.TranslateNAsync(
+                Project01,
+                n,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+            Assert.IsInstanceOf<ObjectResult>(actual.Result);
+            Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+        }
+
+        [Test]
+        public async Task TranslateNAsync_NoPermission()
+        {
+            // Set up test environment
+            int n = 1;
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
+                .Throws(new ForbiddenException());
+
+            // SUT
+            ActionResult<TranslationResultDto[]> actual = await env.Controller.TranslateNAsync(
+                Project01,
+                n,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<ForbidResult>(actual.Result);
+        }
+
+        [Test]
+        public async Task TranslateNAsync_NoProject()
+        {
+            // Set up test environment
+            int n = 1;
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
+                .Throws(new DataNotFoundException(string.Empty));
+
+            // SUT
+            ActionResult<TranslationResultDto[]> actual = await env.Controller.TranslateNAsync(
+                Project01,
+                n,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+        }
+
+        [Test]
+        public async Task TranslateNAsync_Success()
+        {
+            // Set up test environment
+            int n = 1;
+            var env = new TestEnvironment();
+            env.MachineApiService
+                .TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
+                .Returns(Task.FromResult(Array.Empty<TranslationResultDto>()));
+
+            // SUT
+            ActionResult<TranslationResultDto[]> actual = await env.Controller.TranslateNAsync(
+                Project01,
+                n,
+                Array.Empty<string>(),
+                CancellationToken.None
+            );
+
+            Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment()
