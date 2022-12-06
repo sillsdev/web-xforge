@@ -19,7 +19,7 @@ namespace SIL.XForge.Scripture.Services
     /// <remarks>
     /// This should only be called from <see cref="MachineProjectService"/>,
     /// and exists to allow proper unit testing of the Machine API integration.
-    /// TODO: When Machine >= 2.5.X, change all object usage to the appropriate corpus DTO
+    /// TODO: When Machine > 2.5.X, change all object usage to the appropriate corpus DTO
     /// </remarks>
     public class MachineCorporaService : MachineServiceBase, IMachineCorporaService
     {
@@ -76,7 +76,12 @@ namespace SIL.XForge.Scripture.Services
             const string requestUri = "corpora";
             using var response = await MachineClient.PostAsJsonAsync(
                 requestUri,
-                new { name, format = paratext ? "Paratext" : "Text", type = "Text" },
+                new
+                {
+                    name,
+                    format = paratext ? "Paratext" : "Text",
+                    type = "Text"
+                },
                 cancellationToken
             );
             await _exceptionHandler.EnsureSuccessStatusCode(response);
