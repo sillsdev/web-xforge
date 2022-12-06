@@ -6,7 +6,7 @@ namespace SIL.XForge.Scripture.Models
     /// The details of a corpus file from the Machine API.
     /// </summary>
     /// <remarks>
-    /// TODO: When Machine >= 2.5.X, change any code that uses this to use DataFileDto
+    /// TODO: When Machine > 2.5.X, change any code that uses this to use DataFileDto
     /// </remarks>
     public class MachineApiCorpusFile : ResourceDto
     {
