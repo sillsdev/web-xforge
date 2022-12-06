@@ -55,7 +55,8 @@
               "quill",
               "recordrtc",
               "tinycolor2",
-              "ts-md5"
+              "ts-md5",
+              "xregexp"
             ],
             "scripts": [],
             "aot": false,
