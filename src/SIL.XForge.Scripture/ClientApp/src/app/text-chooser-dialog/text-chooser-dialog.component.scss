@@ -24,7 +24,6 @@ app-text {
   display: block;
   overflow-y: scroll;
   max-height: calc(100vh - 25rem);
-  min-height: 300px;
 }
 
 .selection-reference {
@@ -47,4 +46,5 @@ app-text {
 
 ::ng-deep app-text quill-editor > .ql-container > .ql-editor {
   padding: 0 1em 1em;
+  min-height: 300px;
 }
