@@ -36,12 +36,12 @@
         <span>{{ t("choose_chapter") }}</span>
       </h1>
       <div mat-dialog-content>
-        <div class="reference">{{ getBookName(selection?.book) }}</div>
+        <div class="reference">{{ getBookName(selection.book) }}</div>
         <button
-          *ngFor="let chapter of chaptersOf(selection?.book)"
+          *ngFor="let chapter of chaptersOf(selection.book)"
           mat-button
           [ngClass]="{
-            'mat-flat-button': data.input?.book === selection?.book && getNumOrNaN(data.input?.chapterNum) === +chapter
+            'mat-flat-button': data.input?.book === selection.book && getNumOrNaN(data.input?.chapterNum) === +chapter
           }"
           (click)="onClickChapter(chapter)"
         >
@@ -57,14 +57,14 @@
         <span>{{ t("choose_verse") }}</span>
       </h1>
       <div mat-dialog-content>
-        <div class="reference">{{ getBookName(selection?.book) }} {{ selection.chapter }}</div>
+        <div class="reference">{{ getBookName(selection.book) }} {{ selection.chapter }}</div>
         <button
           *ngFor="let verse of versesOf(selection?.book, selection?.chapter)"
           mat-button
           [ngClass]="{
             'mat-flat-button':
-              data.input?.book === selection?.book &&
-              data.input?.chapter === selection?.chapter &&
+              data.input?.book === selection.book &&
+              data.input?.chapter === selection.chapter &&
               getNumOrNaN(data.input?.verseNum) === +verse
           }"
           (click)="onClickVerse(verse)"
