@@ -35,7 +35,7 @@ namespace SIL.XForge.Scripture.Services
                   ""pretranslate"": false
                 }}";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -58,7 +58,7 @@ namespace SIL.XForge.Scripture.Services
             string corpusId = "633fdb281a2e7ac760f7193a";
             string response = $"{{\"id\": \"{corpusId}\",\"href\":\"/corpora/{corpusId}\"}}";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -76,7 +76,7 @@ namespace SIL.XForge.Scripture.Services
             string corpusId = "633fdb281a2e7ac760f7193a";
             string response = string.Empty;
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.Forbidden);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -94,7 +94,7 @@ namespace SIL.XForge.Scripture.Services
             string corpusId = "633fdb281a2e7ac760f7193a";
             string response = string.Empty;
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -111,7 +111,7 @@ namespace SIL.XForge.Scripture.Services
             string fileId = "634089bd1706669dc1acf6a4";
             string response = string.Empty;
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.Forbidden);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -130,7 +130,7 @@ namespace SIL.XForge.Scripture.Services
             string fileId = "634089bd1706669dc1acf6a4";
             string response = string.Empty;
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -160,7 +160,7 @@ namespace SIL.XForge.Scripture.Services
                     }}
                 ]";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -186,7 +186,7 @@ namespace SIL.XForge.Scripture.Services
             string corpusId = "633fdb281a2e7ac760f7193a";
             string response = "[]";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -207,7 +207,7 @@ namespace SIL.XForge.Scripture.Services
             string corpusId = "633fdb281a2e7ac760f7193a";
             string response = string.Empty;
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.Forbidden);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -231,7 +231,7 @@ namespace SIL.XForge.Scripture.Services
             string corpusId = "633fdb281a2e7ac760f7193a";
             string response = string.Empty;
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -266,7 +266,7 @@ namespace SIL.XForge.Scripture.Services
                     ""textId"": ""{textId}""
                 }}";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -318,7 +318,7 @@ namespace SIL.XForge.Scripture.Services
                     ""name"": ""{name}""
                 }}";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -356,6 +356,9 @@ namespace SIL.XForge.Scripture.Services
 
             public IFileSystemService FileSystemService { get; }
             public MachineCorporaService Service { get; }
+
+            public static HttpClient CreateHttpClient(HttpMessageHandler handler) =>
+                new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
         }
     }
 }
