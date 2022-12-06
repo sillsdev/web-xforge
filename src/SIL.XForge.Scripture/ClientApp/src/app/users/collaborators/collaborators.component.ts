@@ -1,5 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
@@ -45,12 +45,12 @@ export interface InviteeStatus {
   styleUrls: ['./collaborators.component.scss']
 })
 export class CollaboratorsComponent extends DataLoadingComponent implements OnInit, AfterViewInit {
-  userInviteForm = new FormGroup({
-    email: new FormControl('', [XFValidators.email])
+  userInviteForm = new UntypedFormGroup({
+    email: new UntypedFormControl('', [XFValidators.email])
   });
   pageIndex: number = 0;
   pageSize: number = 50;
-  filterForm: FormGroup = new FormGroup({ filter: new FormControl('') });
+  filterForm: UntypedFormGroup = new UntypedFormGroup({ filter: new UntypedFormControl('') });
   isAppOnline = true;
 
   private projectDoc?: SFProjectDoc;

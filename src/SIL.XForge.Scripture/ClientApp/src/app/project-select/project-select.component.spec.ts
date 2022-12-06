@@ -1,6 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { FormControl, FormGroup } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatAutocomplete } from '@angular/material/autocomplete';
 import { MatFormField } from '@angular/material/form-field';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -124,8 +124,8 @@ describe('ProjectSelectComponent', () => {
   </form>`
 })
 class HostComponent {
-  readonly sourceParatextId = new FormControl(undefined);
-  readonly connectProjectForm = new FormGroup({ sourceParatextId: this.sourceParatextId });
+  readonly sourceParatextId = new UntypedFormControl(undefined);
+  readonly connectProjectForm = new UntypedFormGroup({ sourceParatextId: this.sourceParatextId });
 
   @ViewChild(ProjectSelectComponent) projectSelect!: ProjectSelectComponent;
   isDisabled: boolean = false;

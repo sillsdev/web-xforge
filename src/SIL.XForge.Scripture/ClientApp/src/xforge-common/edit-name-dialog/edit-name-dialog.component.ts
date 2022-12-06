@@ -1,6 +1,6 @@
 import { MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web/dialog';
 import { Component, Inject } from '@angular/core';
-import { FormControl, Validators } from '@angular/forms';
+import { UntypedFormControl, Validators } from '@angular/forms';
 import { I18nService } from 'xforge-common/i18n.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 
@@ -12,7 +12,7 @@ export interface EditNameDialogResult {
   templateUrl: './edit-name-dialog.component.html'
 })
 export class EditNameDialogComponent {
-  name: FormControl = new FormControl('');
+  name: UntypedFormControl = new UntypedFormControl('');
 
   constructor(
     public dialogRef: MdcDialogRef<EditNameDialogComponent, EditNameDialogResult | 'close'>,

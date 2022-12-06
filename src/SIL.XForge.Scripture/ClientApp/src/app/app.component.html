@@ -88,7 +88,7 @@
             <mdc-icon
               class="avatar-icon"
               mdcTopAppBarActionItem
-              [title]="currentUser?.displayName"
+              [title]="currentUser.displayName"
               (click)="userMenu.open = !userMenu.open"
             >
               <app-avatar id="avatarId" [user]="currentUser" [round]="true" [showOnlineStatus]="true"></app-avatar>
@@ -103,7 +103,7 @@
                 <div class="mdc-list-group__subheader">
                   {{ t("logged_in_as") }}
                   <div fxLayout="row" fxLayoutAlign="start center">
-                    <strong class="user-menu-name">{{ currentUser?.displayName }}</strong>
+                    <strong class="user-menu-name">{{ currentUser.displayName }}</strong>
                     <button id="edit-name-btn" mdcIconButton icon="edit" type="button" (click)="editName()"></button>
                   </div>
                 </div>

@@ -1,7 +1,7 @@
 import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
-import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -90,9 +90,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   questionChangeSubscription?: Subscription = undefined;
   /** Answer being edited. */
   activeAnswer?: Answer;
-  answerForm = new FormGroup({
-    answerText: new FormControl(),
-    scriptureText: new FormControl()
+  answerForm = new UntypedFormGroup({
+    answerText: new UntypedFormControl(),
+    scriptureText: new UntypedFormControl()
   });
   answerFormVisible: boolean = false;
   answerFormSubmitAttempted: boolean = false;

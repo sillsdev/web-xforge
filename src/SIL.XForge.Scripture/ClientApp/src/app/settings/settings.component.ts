@@ -1,6 +1,6 @@
 import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
 import { Component, OnInit } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -28,21 +28,21 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
   styleUrls: ['./settings.component.scss']
 })
 export class SettingsComponent extends DataLoadingComponent implements OnInit {
-  translationSuggestionsEnabled = new FormControl(false);
-  sourceParatextId = new FormControl(undefined);
-  translateShareEnabled = new FormControl(false);
-  translateShareLevel = new FormControl(undefined);
-  checkingEnabled = new FormControl(false);
-  usersSeeEachOthersResponses = new FormControl(false);
-  checkingShareEnabled = new FormControl(false);
-  checkingShareLevel = new FormControl(undefined);
-  checkingAnswerExport = new FormControl(undefined);
+  translationSuggestionsEnabled = new UntypedFormControl(false);
+  sourceParatextId = new UntypedFormControl(undefined);
+  translateShareEnabled = new UntypedFormControl(false);
+  translateShareLevel = new UntypedFormControl(undefined);
+  checkingEnabled = new UntypedFormControl(false);
+  usersSeeEachOthersResponses = new UntypedFormControl(false);
+  checkingShareEnabled = new UntypedFormControl(false);
+  checkingShareLevel = new UntypedFormControl(undefined);
+  checkingAnswerExport = new UntypedFormControl(undefined);
 
   TranslateShareLevel = TranslateShareLevel;
   CheckingShareLevel = CheckingShareLevel;
   CheckingAnswerExport = CheckingAnswerExport;
 
-  form = new FormGroup({
+  form = new UntypedFormGroup({
     translationSuggestionsEnabled: this.translationSuggestionsEnabled,
     sourceParatextId: this.sourceParatextId,
     translateShareEnabled: this.translateShareEnabled,

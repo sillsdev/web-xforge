@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
@@ -36,10 +36,14 @@ export class ShareControlComponent extends SubscriptionDisposable {
   @Input() defaultRole: SFProjectRole = SF_DEFAULT_SHARE_ROLE;
   @ViewChild('shareLinkField') shareLinkField?: ElementRef<HTMLInputElement>;
 
-  email = new FormControl('', [XFValidators.email]);
-  localeControl = new FormControl('', [Validators.required]);
-  roleControl = new FormControl('', [Validators.required]);
-  sendInviteForm: FormGroup = new FormGroup({ email: this.email, role: this.roleControl, locale: this.localeControl });
+  email = new UntypedFormControl('', [XFValidators.email]);
+  localeControl = new UntypedFormControl('', [Validators.required]);
+  roleControl = new UntypedFormControl('', [Validators.required]);
+  sendInviteForm: UntypedFormGroup = new UntypedFormGroup({
+    email: this.email,
+    role: this.roleControl,
+    locale: this.localeControl
+  });
   isSubmitted: boolean = false;
   isAlreadyInvited: boolean = false;
   isProjectAdmin: boolean = false;

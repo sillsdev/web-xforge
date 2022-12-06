@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { UntypedFormGroup } from '@angular/forms';
 import { ElementState } from '../models/element-state';
 
 @Component({
@@ -9,7 +9,7 @@ import { ElementState } from '../models/element-state';
 })
 export class WriteStatusComponent {
   @Input() state?: ElementState;
-  @Input() formGroup?: FormGroup;
+  @Input() formGroup?: UntypedFormGroup;
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
   ElementState = ElementState;

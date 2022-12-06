@@ -2,7 +2,7 @@ import { MdcDialogRef } from '@angular-mdc/web';
 import { CommonModule } from '@angular/common';
 import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { UntypedFormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -643,7 +643,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  setControlValue(control: FormControl, value: string) {
+  setControlValue(control: UntypedFormControl, value: string) {
     control.setValue(value);
     tick();
     this.fixture.detectChanges();
