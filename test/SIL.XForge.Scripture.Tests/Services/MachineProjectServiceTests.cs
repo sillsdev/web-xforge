@@ -286,11 +286,14 @@ namespace SIL.XForge.Scripture.Services
                     )
                 );
             env.MachineCorporaService
-                .CreateCorpusAsync(Arg.Any<string>(), false, CancellationToken.None)
+                .CreateCorpusAsync(Project01, false, CancellationToken.None)
                 .Returns(Task.FromResult(Corpus01));
+            env.MachineCorporaService
+                .AddCorpusToTranslationEngineAsync(TranslationEngine01, Corpus01, false, CancellationToken.None)
+                .Returns(Task.FromResult(true));
             await env.ProjectSecrets.UpdateAsync(
                 Project01,
-                u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = Project01 })
+                u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = TranslationEngine01 })
             );
 
             // SUT
@@ -508,6 +511,25 @@ namespace SIL.XForge.Scripture.Services
             await env.MachineCorporaService
                 .DidNotReceiveWithAnyArgs()
                 .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
+        }
+
+        [Test]
+        public async Task SyncProjectCorporaAsync_FailsIfCorpusNotAddedToTranslationEngine()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.MachineCorporaService
+                .CreateCorpusAsync(Project01, false, CancellationToken.None)
+                .Returns(Task.FromResult(Corpus01));
+            await env.ProjectSecrets.UpdateAsync(
+                Project01,
+                u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = TranslationEngine01 })
+            );
+
+            // SUT
+            Assert.ThrowsAsync<InvalidOperationException>(
+                () => env.Service.SyncProjectCorporaAsync(User01, Project01, CancellationToken.None)
+            );
         }
 
         [Test]
