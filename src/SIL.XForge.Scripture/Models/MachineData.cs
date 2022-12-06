@@ -24,6 +24,9 @@ namespace SIL.XForge.Scripture.Models
         /// <value>
         /// The machine corpora.
         /// </value>
+        /// <remarks>
+        /// The dictionary key is the corpus ID.
+        /// </remarks>
         public Dictionary<string, MachineCorpus> Corpora { get; set; } = new Dictionary<string, MachineCorpus>();
     }
 }
