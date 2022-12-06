@@ -143,7 +143,7 @@ namespace SIL.XForge.Scripture.Services
                         }
                         string username = await TryGetCommunityCheckerUsername(answer.OwnerRef, checkerUsernames);
                         if (!string.IsNullOrEmpty(username))
-                            answerPrefixContents.Add($"({username})");
+                            answerPrefixContents.Add($"[{username} | {_siteOptions.Value.Name}]");
 
                         string answerSyncUserId = await AddCommentIfChangedAsync(
                             oldCommentElems,
@@ -159,9 +159,12 @@ namespace SIL.XForge.Scripture.Services
                         {
                             Comment comment = answer.Comments[k];
                             var commentPrefixContents = new List<object>();
-                            string commentUsername = await TryGetCommunityCheckerUsername(comment.OwnerRef, checkerUsernames);
+                            string commentUsername = await TryGetCommunityCheckerUsername(
+                                comment.OwnerRef,
+                                checkerUsernames
+                            );
                             if (!string.IsNullOrEmpty(commentUsername))
-                                commentPrefixContents.Add($"({commentUsername})");
+                                commentPrefixContents.Add($"[{commentUsername} | {_siteOptions.Value.Name}]");
                             string commentSyncUserId = await AddCommentIfChangedAsync(
                                 oldCommentElems,
                                 threadElem,
@@ -348,7 +351,6 @@ namespace SIL.XForge.Scripture.Services
                 // Add the sync user to the dictionary
                 ptProjectUsers.Add(paratextUsername, ptProjectUser);
             }
-            Console.WriteLine(ptProjectUser.OpaqueUserId);
             return ptProjectUser;
         }
 
