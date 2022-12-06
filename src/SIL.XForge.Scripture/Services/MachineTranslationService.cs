@@ -26,7 +26,7 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            // TODO: When Machine >= 2.5.12, change the anonymous object to TranslationEngineConfigDto
+            // TODO: When Machine >= 2.5.X, change the anonymous object to TranslationEngineConfigDto
             const string requestUri = "translation-engines";
             using var response = await MachineClient.PostAsJsonAsync(
                 requestUri,

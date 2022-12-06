@@ -145,16 +145,18 @@ namespace SIL.XForge.Scripture.Services
             // Set up a mock Machine API
             string fileId = "634089bd1706669dc1acf6a4";
             string corpusId = "633fdb281a2e7ac760f7193a";
+            string href = $"/corpora/{corpusId}/files/{fileId}";
             string languageTag = "en";
+            string name = "test.txt";
             string textId = "test1";
             string response =
                 @$"[
                     {{
                         ""languageTag"": ""{languageTag}"",
-                        ""name"": ""test.txt"",
+                        ""name"": ""{name}"",
                         ""textId"": ""{textId}"",
                         ""id"": ""{fileId}"",
-                        ""href"": ""/corpora/{corpusId}/files/{fileId}""
+                        ""href"": ""{href}""
                     }}
                 ]";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
@@ -169,8 +171,11 @@ namespace SIL.XForge.Scripture.Services
             ).ToList();
             Assert.AreEqual(1, actual.Count);
             Assert.AreEqual(fileId, actual.First().Id);
+            Assert.AreEqual(href, actual.First().Href);
             Assert.AreEqual(languageTag, actual.First().LanguageTag);
+            Assert.AreEqual(name, actual.First().Name);
             Assert.AreEqual(textId, actual.First().TextId);
+            Assert.IsNull(actual.First().Corpus);
             Assert.AreEqual(1, handler.NumberOfCalls);
         }
 
