@@ -41,7 +41,22 @@
             "stylePreprocessorOptions": {
               "includePaths": ["node_modules"]
             },
-            "allowedCommonJsDependencies": ["@bugsnag/js"],
+            "allowedCommonJsDependencies": [
+              "@bugsnag/browser",
+              "@bugsnag/js",
+              "arraydiff",
+              "bowser",
+              "bson-objectid",
+              "crc-32",
+              "flat",
+              "gensequence",
+              "mingo",
+              "papaparse",
+              "quill",
+              "recordrtc",
+              "tinycolor2",
+              "ts-md5"
+            ],
             "scripts": [],
             "aot": false,
             "vendorChunk": true,
