@@ -812,10 +812,11 @@ namespace SIL.XForge.Scripture.Services
                 Models.TextInfo text = projectDoc.Data.Texts[textIndex];
                 List<Chapter> chapters = text.Chapters;
                 Dictionary<string, string> bookPermissions = null;
-                IEnumerable<(int bookIndex, int chapterIndex, Dictionary<
-                        string,
-                        string
-                    > chapterPermissions)> chapterPermissionsInBook = null;
+                IEnumerable<(
+                    int bookIndex,
+                    int chapterIndex,
+                    Dictionary<string, string> chapterPermissions
+                )> chapterPermissionsInBook = null;
 
                 if (isResource)
                 {

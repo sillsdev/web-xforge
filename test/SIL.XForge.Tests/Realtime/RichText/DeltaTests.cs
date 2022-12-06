@@ -209,7 +209,17 @@ namespace SIL.XForge.Realtime.RichText
         public void Compose_InsertRetain_MergeOps()
         {
             var a = Delta.New().Insert("A");
-            var b = Delta.New().Retain(1, new { bold = true, color = "red", font = (string)null });
+            var b = Delta
+                .New()
+                .Retain(
+                    1,
+                    new
+                    {
+                        bold = true,
+                        color = "red",
+                        font = (string)null
+                    }
+                );
             var expected = Delta.New().Insert("A", new { bold = true, color = "red" });
             Assert.That(a.Compose(b), Is.EqualTo(expected).Using(Delta.EqualityComparer));
         }
@@ -263,8 +273,28 @@ namespace SIL.XForge.Realtime.RichText
         public void Compose_RetainRetain_MergeOps()
         {
             var a = Delta.New().Retain(1, new { color = "blue" });
-            var b = Delta.New().Retain(1, new { bold = true, color = "red", font = (string)null });
-            var expected = Delta.New().Retain(1, new { bold = true, color = "red", font = (string)null });
+            var b = Delta
+                .New()
+                .Retain(
+                    1,
+                    new
+                    {
+                        bold = true,
+                        color = "red",
+                        font = (string)null
+                    }
+                );
+            var expected = Delta
+                .New()
+                .Retain(
+                    1,
+                    new
+                    {
+                        bold = true,
+                        color = "red",
+                        font = (string)null
+                    }
+                );
             Assert.That(a.Compose(b), Is.EqualTo(expected).Using(Delta.EqualityComparer));
         }
 
