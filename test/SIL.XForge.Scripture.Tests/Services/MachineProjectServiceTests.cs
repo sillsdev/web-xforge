@@ -552,7 +552,9 @@ namespace SIL.XForge.Scripture.Services
                             new MachineApiCorpusFile
                             {
                                 Id = "File03",
+                                Href = "/corpora/corpus01/files/File03",
                                 LanguageTag = "en",
+                                Name = "textId_source.txt",
                                 TextId = "textId_source",
                             },
                         }
@@ -629,13 +631,17 @@ namespace SIL.XForge.Scripture.Services
                             new MachineApiCorpusFile
                             {
                                 Id = "File03",
+                                Href = "/corpora/corpus01/files/File03",
                                 LanguageTag = "en",
+                                Name = "textId_source.txt",
                                 TextId = "textId_source",
                             },
                             new MachineApiCorpusFile
                             {
                                 Id = "File04",
+                                Href = "/corpora/corpus01/files/File04",
                                 LanguageTag = "en",
+                                Name = "textId_target.txt",
                                 TextId = "textId_target",
                             },
                         }
