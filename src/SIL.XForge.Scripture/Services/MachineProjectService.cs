@@ -269,12 +269,17 @@ namespace SIL.XForge.Scripture.Services
                     paratext: false,
                     cancellationToken
                 );
-                await _machineCorporaService.AddCorpusToTranslationEngineAsync(
-                    projectSecret.MachineData.TranslationEngineId,
-                    corpusId,
-                    false,
-                    cancellationToken
-                );
+                if (
+                    !await _machineCorporaService.AddCorpusToTranslationEngineAsync(
+                        projectSecret.MachineData.TranslationEngineId,
+                        corpusId,
+                        pretranslate: false,
+                        cancellationToken
+                    )
+                )
+                {
+                    throw new InvalidOperationException("The corpus could not be added to the translation");
+                }
 
                 // Store the Corpus ID
                 projectSecret = await _projectSecrets.UpdateAsync(
