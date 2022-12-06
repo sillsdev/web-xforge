@@ -18,7 +18,7 @@ export interface MultiCursorViewer extends UserProfile {
 })
 export class MultiViewerComponent extends SubscriptionDisposable implements OnInit {
   @Input() viewers: MultiCursorViewer[] = [];
-  @Output() onViewerClick: EventEmitter<MultiCursorViewer> = new EventEmitter<MultiCursorViewer>();
+  @Output() viewerClick: EventEmitter<MultiCursorViewer> = new EventEmitter<MultiCursorViewer>();
   maxAvatars: number = 3;
   isMenuOpen: boolean = false;
 
@@ -60,6 +60,6 @@ export class MultiViewerComponent extends SubscriptionDisposable implements OnIn
   }
 
   clickAvatar(viewer: MultiCursorViewer) {
-    this.onViewerClick.emit(viewer);
+    this.viewerClick.emit(viewer);
   }
 }
