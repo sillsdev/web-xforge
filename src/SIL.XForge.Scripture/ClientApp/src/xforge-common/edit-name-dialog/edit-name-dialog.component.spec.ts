@@ -3,7 +3,7 @@ import { Component, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { Subject } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -51,7 +51,7 @@ describe('EditNameDialogComponent', () => {
     expect(env.cancelButton).not.toBe(null);
     if (env.cancelButton != null) {
       env.cancelButton.click();
-      env.fixture.detectChanges();
+      env.wait();
     }
     expect(env.component.confirmedName).toBeUndefined();
   }));
@@ -86,6 +86,7 @@ describe('EditNameDialogComponent', () => {
     expect(env.overlayContainerElement).not.toBeNull();
     expect(env.component.confirmedName).toBeUndefined();
     env.cancelButton!.click();
+    env.wait();
   }));
 
   it('shows messages in a confirmation context', fakeAsync(() => {
@@ -112,14 +113,14 @@ class TestEnvironment {
   fixture: ComponentFixture<DialogOpenerComponent>;
   component: DialogOpenerComponent;
 
-  private onlineStatus$: Subject<boolean> = new Subject<boolean>();
+  private onlineStatus$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   constructor() {
     TestBed.configureTestingModule({
       declarations: [DialogOpenerComponent],
       imports: [DialogTestModule, UICommonModule]
     });
-    when(mockedPwaService.onlineStatus).thenReturn(this.onlineStatus$);
+    when(mockedPwaService.onlineStatus$).thenReturn(this.onlineStatus$.asObservable());
     this.fixture = TestBed.createComponent(DialogOpenerComponent);
     this.component = this.fixture.componentInstance;
   }
@@ -168,13 +169,17 @@ class TestEnvironment {
 
   clickSubmit(): void {
     this.submitButton.click();
-    tick();
-    this.fixture.detectChanges();
+    this.wait();
   }
 
   setTextFieldValue(element: HTMLInputElement, value: string) {
     element.value = value;
     element.dispatchEvent(new Event('input'));
+    this.fixture.detectChanges();
+  }
+
+  wait(): void {
+    tick(20);
     this.fixture.detectChanges();
   }
 
