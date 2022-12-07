@@ -10,7 +10,6 @@ import {
   MAX_SEGMENT_LENGTH,
   PhraseTranslationSuggester,
   RangeTokenizer,
-  RemoteTranslationEngine,
   TranslationSuggester
 } from '@sillsdev/machine';
 import isEqual from 'lodash-es/isEqual';
@@ -52,6 +51,7 @@ import { Delta } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { Segment } from '../../shared/text/segment';
 import {
   EmbedsByVerse,
