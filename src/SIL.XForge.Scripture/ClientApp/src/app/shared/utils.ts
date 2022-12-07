@@ -149,5 +149,5 @@ export function formatFontSizeToRems(fontSize: number | undefined): string | und
 }
 
 export function canInsertNote(project: SFProjectProfile, userId: string): boolean {
-  return SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.NoteThreads, Operation.Create);
+  return SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.SFNoteThreads, Operation.Create);
 }
