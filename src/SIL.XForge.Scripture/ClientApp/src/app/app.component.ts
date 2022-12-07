@@ -248,7 +248,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this.currentUserDoc == null ? undefined : this.currentUserDoc.data;
   }
 
-  get canChangePassword(): boolean {
+  get hasAccountAuthType(): boolean {
     if (this.currentUser == null) {
       return false;
     }

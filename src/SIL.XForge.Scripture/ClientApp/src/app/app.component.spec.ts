@@ -431,28 +431,14 @@ describe('AppComponent', () => {
     verify(mockedAuthService.checkOnlineAuth()).once();
   }));
 
-  it('can edit name online', fakeAsync(() => {
+  it('social users cannot edit name', fakeAsync(() => {
     const env = new TestEnvironment('online');
     env.init();
 
     env.avatarIcon.nativeElement.click();
     env.wait();
     expect(env.userMenu).not.toBeNull();
-    env.clickEditDisplayName();
-    verify(mockedUserService.editDisplayName(false)).once();
-  }));
-
-  it('shows message when edit name button clicked while offline', fakeAsync(() => {
-    const env = new TestEnvironment('offline');
-    env.init();
-
-    env.avatarIcon.nativeElement.click();
-    env.wait();
-    expect(env.userMenu).not.toBeNull();
-    expect(env.editNameIcon).not.toBeNull();
-    env.clickEditDisplayName();
-    verify(mockedNoticeService.show(anything())).once();
-    verify(mockedUserService.editDisplayName(anything())).never();
+    expect(env.editNameIcon).toBeNull();
   }));
 
   describe('Community Checking', () => {
@@ -554,6 +540,32 @@ describe('AppComponent', () => {
       env.removeUserFromProject(projectId);
       verify(mockedSFProjectService.localDelete(projectId)).once();
     }));
+
+    it('can edit name online', fakeAsync(() => {
+      const env = new TestEnvironment('online');
+      env.setCurrentUser('user02');
+      env.init();
+
+      env.avatarIcon.nativeElement.click();
+      env.wait();
+      expect(env.userMenu).not.toBeNull();
+      env.clickEditDisplayName();
+      verify(mockedUserService.editDisplayName(false)).once();
+    }));
+
+    it('shows message when edit name button clicked while offline', fakeAsync(() => {
+      const env = new TestEnvironment('offline');
+      env.setCurrentUser('user02');
+      env.init();
+
+      env.avatarIcon.nativeElement.click();
+      env.wait();
+      expect(env.userMenu).not.toBeNull();
+      expect(env.editNameIcon).not.toBeNull();
+      env.clickEditDisplayName();
+      verify(mockedNoticeService.show(anything())).once();
+      verify(mockedUserService.editDisplayName(anything())).never();
+    }));
   });
 });
 
@@ -584,23 +596,8 @@ class TestEnvironment {
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor(initialConnectionStatus?: 'online' | 'offline') {
-    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
-      id: 'user01',
-      data: {
-        name: 'User 01',
-        email: 'user1@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth01',
-        displayName: 'User 01',
-        sites: {
-          sf: {
-            projects: ['project01', 'project02', 'project03']
-          }
-        }
-      }
-    });
+    this.addUser('user01', 'User 01', 'paratext|user01');
+    this.addUser('user02', 'User 02', 'auth0|user02');
 
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, []);
     when(mockedSFProjectService.queryQuestions(anything(), anything())).thenCall((_projectId, options) => {
@@ -610,16 +607,16 @@ class TestEnvironment {
       return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, parameters);
     });
 
-    this.addProject('project01', { user01: SFProjectRole.ParatextTranslator }, [
+    this.addProject('project01', { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.CommunityChecker }, [
       { bookNum: 40, hasSource: true, chapters: [], permissions: {} },
       { bookNum: 41, hasSource: false, chapters: [], permissions: {} }
     ]);
     // Books are out-of-order on purpose so that we can test that books are displayed in canonical order
-    this.addProject('project02', { user01: SFProjectRole.CommunityChecker }, [
+    this.addProject('project02', { user01: SFProjectRole.CommunityChecker, user02: SFProjectRole.CommunityChecker }, [
       { bookNum: 43, hasSource: false, chapters: [], permissions: {} },
       { bookNum: 42, hasSource: false, chapters: [], permissions: {} }
     ]);
-    this.addProject('project03', { user01: SFProjectRole.CommunityChecker }, [
+    this.addProject('project03', { user01: SFProjectRole.CommunityChecker, user02: SFProjectRole.CommunityChecker }, [
       { bookNum: 44, hasSource: true, chapters: [], permissions: {} },
       { bookNum: 45, hasSource: true, chapters: [], permissions: {} }
     ]);
@@ -631,11 +628,8 @@ class TestEnvironment {
     when(mockedSFProjectService.getProfile(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
-    when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedAuthService.isLoggedIn).thenResolve(true);
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
-    );
+    this.setCurrentUser('user01');
     when(mockedUserService.currentProjectId(anything())).thenReturn('project01');
     when(mockedSettingsAuthGuard.allowTransition(anything())).thenReturn(this.canSeeSettings$);
     when(mockedSyncAuthGuard.allowTransition(anything())).thenReturn(this.canSync$);
@@ -771,6 +765,11 @@ class TestEnvironment {
 
   getMenuItemContaining(substring: string): DebugElement | undefined {
     return this.menuListItems.find((item: DebugElement) => item.nativeElement.innerText.includes(substring));
+  }
+
+  setCurrentUser(userId: string): void {
+    when(mockedUserService.currentUserId).thenReturn(userId);
+    when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
   }
 
   someMenuItemContains(substring: string): boolean {
@@ -911,6 +910,26 @@ class TestEnvironment {
 
   confirmProjectDeletedDialog() {
     this.ngZone.run(() => this.projectDeletedDialogRefAfterClosed$.next('close'));
+  }
+
+  private addUser(userId: string, name: string, authId: string): void {
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: userId,
+      data: {
+        name,
+        email: `${userId}@example.com`,
+        role: SystemRole.User,
+        isDisplayNameConfirmed: true,
+        avatarUrl: '',
+        authId,
+        displayName: name,
+        sites: {
+          sf: {
+            projects: ['project01', 'project02', 'project03']
+          }
+        }
+      }
+    });
   }
 
   private addProject(projectId: string, userRoles: { [userRef: string]: string }, texts: TextInfo[]): void {
