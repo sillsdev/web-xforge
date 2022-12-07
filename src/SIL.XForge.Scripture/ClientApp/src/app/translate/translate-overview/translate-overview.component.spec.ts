@@ -5,7 +5,7 @@ import { MatProgressBar } from '@angular/material/progress-bar';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
+import { ProgressStatus } from '@sillsdev/machine';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -30,6 +30,7 @@ import { TextDocId } from '../../core/models/text-doc';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { TranslateOverviewComponent } from './translate-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
