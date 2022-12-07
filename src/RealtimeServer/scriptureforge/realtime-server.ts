@@ -5,7 +5,7 @@ import { DocService } from '../common/services/doc-service';
 import { UserService } from '../common/services/user-service';
 import { Operation } from '../common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from './models/sf-project-rights';
-import { NOTE_THREAD_COLLECTION, SF_NOTE_THREAD_PREFIX } from './models/note-thread';
+import { NOTE_THREAD_COLLECTION } from './models/note-thread';
 import { SF_PROJECTS_COLLECTION } from './models/sf-project';
 import { NoteThreadService } from './services/note-thread-service';
 import { QuestionService } from './services/question-service';
@@ -34,17 +34,14 @@ class SFRealtimeServer extends RealtimeServer {
           next();
           return;
         }
+        const userId: string = context.agent.connectSession.userId;
         this.getProject(context.query.projectRef).then(p => {
           if (
             p != null &&
-            !SF_PROJECT_RIGHTS.hasRight(
-              p,
-              context.agent.connectSession.userId,
-              SFProjectDomain.PTNoteThreads,
-              Operation.View
-            )
+            !SF_PROJECT_RIGHTS.hasRight(p, userId, SFProjectDomain.PTNoteThreads, Operation.View) &&
+            SF_PROJECT_RIGHTS.hasRight(p, userId, SFProjectDomain.SFNoteThreads, Operation.View)
           ) {
-            context.query = { ...context.query, ...{ dataId: { $regex: SF_NOTE_THREAD_PREFIX } } };
+            context.query = { ...context.query, ...{ publishedToSF: true } };
           }
           next();
         });

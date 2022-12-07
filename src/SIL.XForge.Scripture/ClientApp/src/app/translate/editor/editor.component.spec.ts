@@ -29,8 +29,7 @@ import {
   NoteConflictType,
   NoteStatus,
   NoteThread,
-  NoteType,
-  SF_NOTE_THREAD_PREFIX
+  NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -2378,12 +2377,21 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('shows only note threads created in Scripture Forge', fakeAsync(() => {
+    it('shows only note threads published in Scripture Forge', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.setReviewerUser();
-      const threadId: string = SF_NOTE_THREAD_PREFIX + 'thread06';
-      env.addParatextNoteThread(threadId, 'MAT 1:4', 'Paragraph break.', { start: 0, length: 0 }, ['user05']);
+      const threadId: string = 'thread06';
+      env.addParatextNoteThread(
+        threadId,
+        'MAT 1:4',
+        'Paragraph break.',
+        { start: 0, length: 0 },
+        ['user05'],
+        NoteStatus.Todo,
+        '',
+        true
+      );
       env.wait();
 
       const noteThreadElem: HTMLElement | null = env.getNoteThreadIconElement('verse_1_1', 'thread01');
@@ -3101,7 +3109,7 @@ class TestEnvironment {
     this.setCurrentUser('user05');
     when(mockedSFProjectService.queryNoteThreads('project01')).thenCall((id, _) =>
       this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
-        [obj<NoteThread>().pathStr(t => t.dataId)]: { $regex: SF_NOTE_THREAD_PREFIX },
+        [obj<NoteThread>().pathStr(t => t.publishedToSF)]: true,
         [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
         [obj<NoteThread>().pathStr(t => t.projectRef)]: id
       })
@@ -3477,7 +3485,8 @@ class TestEnvironment {
     position: TextAnchor,
     userIds: string[],
     status: NoteStatus = NoteStatus.Todo,
-    assignedSFUserRef?: string
+    assignedSFUserRef?: string,
+    publishedToSF?: boolean
   ): void {
     const threadId: string = typeof threadNum === 'string' ? threadNum : `thread0${threadNum}`;
     const assignedUser: ParatextUserProfile | undefined = this.paratextUsersOnProject.find(
@@ -3523,7 +3532,8 @@ class TestEnvironment {
         originalContextAfter: ', verse 1.',
         position,
         status: status,
-        assignment: assignedUser?.opaqueUserId
+        assignment: assignedUser?.opaqueUserId,
+        publishedToSF
       }
     });
   }
