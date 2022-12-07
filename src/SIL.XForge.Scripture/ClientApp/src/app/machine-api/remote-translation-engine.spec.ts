@@ -5,10 +5,10 @@ import { BuildDto } from './build-dto';
 import { BuildStates } from './build-states';
 import { EngineDto } from './engine-dto';
 import { HttpClient } from './http-client';
-import { WebApiClient } from './web-api-client';
 import { WordGraphDto } from './word-graph-dto';
+import { RemoteTranslationEngine } from './remote-translation-engine';
 
-describe('WebApiClient', () => {
+describe('RemoteTranslationEngine', () => {
   it('get word graph', async () => {
     const env = new TestEnvironment();
     const sourceSegment = ['Esto', 'es', 'una', 'prueba', '.'];
@@ -72,7 +72,7 @@ describe('WebApiClient', () => {
       })
     );
 
-    const wordGraph = await env.client.getWordGraph('project01', sourceSegment);
+    const wordGraph = await env.client.getWordGraph(sourceSegment);
     expect(wordGraph.initialStateScore).toEqual(-111.111);
     expect(Array.from(wordGraph.finalStates)).toEqual([4]);
     expect(wordGraph.arcs.length).toEqual(4);
@@ -97,7 +97,7 @@ describe('WebApiClient', () => {
     env.addBuildProgress();
 
     let expectedStep = -1;
-    env.client.train('project01').subscribe(
+    env.client.train().subscribe(
       progress => {
         expectedStep++;
         expect(progress.percentCompleted).toEqual(expectedStep / 10);
@@ -115,7 +115,7 @@ describe('WebApiClient', () => {
       throwError(new Error('Error while creating build.'))
     );
 
-    env.client.train('project01').subscribe(
+    env.client.train().subscribe(
       () => {},
       err => expect(err.message).toEqual('Error while creating build.')
     );
@@ -139,7 +139,7 @@ describe('WebApiClient', () => {
       })
     );
 
-    env.client.train('project01').subscribe(
+    env.client.train().subscribe(
       progress => expect(progress.percentCompleted).toEqual(0),
       err => expect(err.message).toEqual('Error occurred during build: broken')
     );
@@ -164,7 +164,7 @@ describe('WebApiClient', () => {
     env.addBuildProgress();
 
     let expectedStep = -1;
-    env.client.listenForTrainingStatus('project01').subscribe(
+    env.client.listenForTrainingStatus().subscribe(
       progress => {
         expectedStep++;
         expect(progress.percentCompleted).toEqual(expectedStep / 10);
@@ -179,7 +179,7 @@ describe('WebApiClient', () => {
 
 class TestEnvironment {
   readonly mockedHttpClient: HttpClient;
-  readonly client: WebApiClient;
+  readonly client: RemoteTranslationEngine;
 
   constructor() {
     this.mockedHttpClient = mock(HttpClient);
@@ -198,7 +198,7 @@ class TestEnvironment {
         }
       })
     );
-    this.client = new WebApiClient(instance(this.mockedHttpClient));
+    this.client = new RemoteTranslationEngine('project01', instance(this.mockedHttpClient));
   }
 
   addCreateBuild(): void {
