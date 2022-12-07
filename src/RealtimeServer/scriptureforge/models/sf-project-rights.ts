@@ -75,8 +75,7 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Project, operation: Operation.View },
 
       { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Edit },
-      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Delete }
+      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Edit }
     ]);
     this.addRights(SFProjectRole.ParatextConsultant, ptReviewerRights);
 

@@ -3,12 +3,7 @@ import { createFetchQuery, docSubmitJson0Op } from '../../common/utils/sharedb-u
 import { OwnedData } from '../../common/models/owned-data';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { ANY_INDEX } from '../../common/utils/obj-path';
-import {
-  NoteThread,
-  NOTE_THREAD_COLLECTION,
-  NOTE_THREAD_INDEX_PATHS,
-  SF_NOTE_THREAD_PREFIX
-} from '../models/note-thread';
+import { NoteThread, NOTE_THREAD_COLLECTION, NOTE_THREAD_INDEX_PATHS } from '../models/note-thread';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from '../models/sf-project-rights';
 import { SFProjectUserConfig, SF_PROJECT_USER_CONFIGS_COLLECTION } from '../models/sf-project-user-config';
 import { Note } from '../models/note';
@@ -73,15 +68,12 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
     }
 
     const project: Project | undefined = await this.server.getProject(doc.projectRef);
-    if (project?.userRoles[session.userId] == null) return false;
-    if (
-      SF_PROJECT_RIGHTS.hasRight(project, session.userId, SFProjectDomain.PTNoteThreads, Operation.View) ||
-      (SF_PROJECT_RIGHTS.hasRight(project, session.userId, SFProjectDomain.SFNoteThreads, Operation.View) &&
-        doc.dataId.startsWith(SF_NOTE_THREAD_PREFIX))
-    ) {
-      return true;
-    }
-    return false;
+    const userId: string = session.userId;
+    if (project?.userRoles[userId] == null) return false;
+
+    const canReadPTNotes = SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.PTNoteThreads, Operation.View);
+    const canReadSFNotes = SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.SFNoteThreads, Operation.View);
+    return canReadPTNotes || (canReadSFNotes && doc.publishedToSF === true);
   }
 
   private async removeEntityHaveReadRefs(

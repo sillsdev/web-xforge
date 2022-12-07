@@ -31,8 +31,7 @@ import {
   NoteStatus,
   NoteThread,
   NoteType,
-  NoteConflictType,
-  SF_NOTE_THREAD_PREFIX
+  NoteConflictType
 } from '../models/note-thread';
 import { Note } from '../models/note';
 import { VerseRefData } from '../models/verse-ref-data';
@@ -115,7 +114,7 @@ describe('NoteThreadService', () => {
     expect(doc).not.toBeNull();
   });
 
-  it('prohibits reviewer user to read note threads not created in Scripture Forge', async () => {
+  it('prohibits reviewer user to read note threads not published in Scripture Forge', async () => {
     const env = new TestEnvironment();
     await env.createData();
     const conn: Connection = clientConnect(env.server, 'reviewer');
@@ -125,7 +124,7 @@ describe('NoteThreadService', () => {
       new Error(`403: Permission denied (read), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
     );
 
-    const threadId: string = SF_NOTE_THREAD_PREFIX + 'noteThread03';
+    const threadId = 'noteThread03';
     const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', threadId));
     expect(doc).not.toBeNull();
   });
@@ -411,7 +410,7 @@ class TestEnvironment {
       tagIcon: ''
     });
 
-    const noteThreadId: string = SF_NOTE_THREAD_PREFIX + 'noteThread03';
+    const noteThreadId = 'noteThread03';
     await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', noteThreadId), {
       projectRef: 'project01',
       ownerRef: 'some-owner',
@@ -436,7 +435,8 @@ class TestEnvironment {
       originalContextAfter: '',
       position,
       status,
-      tagIcon: ''
+      tagIcon: '',
+      publishedToSF: true
     });
   }
 
