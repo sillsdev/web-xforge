@@ -61,8 +61,7 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn },
 
       { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.Edit },
-      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.Delete },
+      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.DeleteOwn },
 
       { projectDomain: SFProjectDomain.Notes, operation: Operation.Create },
       { projectDomain: SFProjectDomain.Notes, operation: Operation.EditOwn },
@@ -75,7 +74,7 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Project, operation: Operation.View },
 
       { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Edit }
+      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.DeleteOwn }
     ]);
     this.addRights(SFProjectRole.ParatextConsultant, ptReviewerRights);
 

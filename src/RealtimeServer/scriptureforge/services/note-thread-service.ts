@@ -4,12 +4,9 @@ import { OwnedData } from '../../common/models/owned-data';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { ANY_INDEX } from '../../common/utils/obj-path';
 import { NoteThread, NOTE_THREAD_COLLECTION, NOTE_THREAD_INDEX_PATHS } from '../models/note-thread';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from '../models/sf-project-rights';
+import { SFProjectDomain } from '../models/sf-project-rights';
 import { SFProjectUserConfig, SF_PROJECT_USER_CONFIGS_COLLECTION } from '../models/sf-project-user-config';
 import { Note } from '../models/note';
-import { Project } from '../../common/models/project';
-import { ConnectSession } from '../../common/connect-session';
-import { Operation } from '../../common/models/project-rights';
 import { NOTE_THREAD_MIGRATIONS } from './note-thread-migrations';
 import { SFProjectDataService } from './sf-project-data-service';
 
@@ -40,11 +37,34 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
         pathTemplate: this.pathTemplate()
       },
       {
+        projectDomain: SFProjectDomain.SFNoteThreads,
+        pathTemplate: this.pathTemplate()
+      },
+      {
         projectDomain: SFProjectDomain.Notes,
         pathTemplate: this.pathTemplate(t => t.notes[ANY_INDEX])
       }
     ];
   }
+
+  protected getApplicableDomains(entity?: OwnedData): ProjectDomainConfig[] {
+    const domains: ProjectDomainConfig[] = super.getApplicableDomains(entity);
+    const noteThread = entity as NoteThread | undefined;
+    if (noteThread == null) return domains;
+    const applicableDomains: ProjectDomainConfig[] = [];
+
+    for (const domain of domains) {
+      if (noteThread.publishedToSF === true && domain.projectDomain === SFProjectDomain.PTNoteThreads) {
+        continue;
+      }
+      if (noteThread.publishedToSF !== true && domain.projectDomain === SFProjectDomain.SFNoteThreads) {
+        continue;
+      }
+      applicableDomains.push(domain);
+    }
+    return applicableDomains;
+  }
+
   protected onDelete(userId: string, docId: string, projectDomain: string, entity: OwnedData): Promise<void> {
     if (projectDomain === SFProjectDomain.Notes) {
       this.removeEntityHaveReadRefs(userId, docId, projectDomain, entity);
@@ -58,22 +78,6 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
       this.removeEntityHaveReadRefs(userId, docId, projectDomain, entity);
     }
     return Promise.resolve();
-  }
-
-  protected async allowRead(_docId: string, doc: NoteThread, session: ConnectSession): Promise<boolean> {
-    if (session.isServer || Object.keys(doc).length === 0) return true;
-
-    if (this.server == null) {
-      throw new Error('The doc service has not been initialized.');
-    }
-
-    const project: Project | undefined = await this.server.getProject(doc.projectRef);
-    const userId: string = session.userId;
-    if (project?.userRoles[userId] == null) return false;
-
-    const canReadPTNotes = SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.PTNoteThreads, Operation.View);
-    const canReadSFNotes = SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.SFNoteThreads, Operation.View);
-    return canReadPTNotes || (canReadSFNotes && doc.publishedToSF === true);
   }
 
   private async removeEntityHaveReadRefs(

@@ -129,6 +129,109 @@ describe('NoteThreadService', () => {
     expect(doc).not.toBeNull();
   });
 
+  it('allows a reviewer to create a note thread', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn: Connection = clientConnect(env.server, 'reviewer');
+
+    const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread04');
+    const noteThread: NoteThread = {
+      dataId: 'noteThread04',
+      ownerRef: 'reviewer',
+      projectRef: 'project01',
+      publishedToSF: true,
+      tagIcon: '',
+      originalContextAfter: '',
+      originalSelectedText: '',
+      originalContextBefore: '',
+      verseRef: { bookNum: 40, chapterNum: 1, verseNum: 10 },
+      status: NoteStatus.Todo,
+      position: { start: 0, length: 0 },
+      notes: [
+        {
+          dataId: 'noteThread02note01',
+          type: NoteType.Normal,
+          conflictType: NoteConflictType.DefaultValue,
+          threadId: 'noteThread02',
+          extUserId: 'reviewer',
+          deleted: false,
+          status: NoteStatus.Todo,
+          dateModified: '',
+          dateCreated: '',
+          ownerRef: 'reviewer'
+        }
+      ]
+    };
+    await createDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId, noteThread);
+    const noteThreadDoc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId);
+    expect(noteThreadDoc).not.toBeNull();
+  });
+
+  it('allows reviewer to update own note', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn: Connection = clientConnect(env.server, 'reviewer');
+    const noteThreadDocId = getNoteThreadDocId('project01', 'noteThread02');
+    const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId);
+    const noteThread: NoteThread = doc.data as NoteThread;
+    expect(noteThread).not.toBeNull();
+
+    const content = 'edited content';
+    // edit the note
+    await expect(() =>
+      submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, noteThreadDocId, op =>
+        op.set(n => n.notes[0].content, content)
+      )
+    ).rejects.toEqual(
+      new Error(`403: Permission denied (update), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
+    );
+
+    // delete the note
+    await expect(() =>
+      submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, noteThreadDocId, op => op.remove(n => n.notes, 0))
+    ).rejects.toEqual(
+      new Error(`403: Permission denied (update), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
+    );
+
+    const reviewerNoteThreadId = getNoteThreadDocId('project01', 'noteThread03');
+    const reviewerDoc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, reviewerNoteThreadId);
+    let reviewerNoteThread: NoteThread = reviewerDoc.data as NoteThread;
+    expect(reviewerNoteThread).not.toBeNull();
+
+    // edit the note
+    await submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, reviewerNoteThreadId, op =>
+      op.set(n => n.notes[0].content, content)
+    );
+    reviewerNoteThread = reviewerDoc.data;
+    expect(reviewerNoteThread.notes[0].content).toEqual('edited content');
+
+    // delete the note
+    await submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, reviewerNoteThreadId, op =>
+      op.remove(n => n.notes, 0)
+    );
+    reviewerNoteThread = reviewerDoc.data;
+    expect(reviewerNoteThread.notes.length).toEqual(0);
+  });
+
+  it('allows reviewer to delete their own note thread', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn: Connection = clientConnect(env.server, 'reviewer');
+    const noteThreadDocId = getNoteThreadDocId('project01', 'noteThread02');
+    await expect(() => deleteDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId)).rejects.toEqual(
+      new Error(`403: Permission denied (delete), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
+    );
+
+    const reviewerThreadDocId = getNoteThreadDocId('project01', 'noteThread03');
+    const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, reviewerThreadDocId);
+    let reviewerNoteThread: NoteThread = doc.data as NoteThread;
+    expect(reviewerNoteThread).toBeDefined();
+    // the user who created the first note in the thread can delete the thread because they own the thread
+    await deleteDoc(conn, NOTE_THREAD_COLLECTION, reviewerThreadDocId);
+    reviewerNoteThread = doc.data as NoteThread;
+    expect(reviewerNoteThread).toBeUndefined();
+  });
+
   it('removes have-read note refs when thread deleted', async () => {
     const env = new TestEnvironment();
     await env.createData();
@@ -380,7 +483,8 @@ class TestEnvironment {
       originalContextAfter: '',
       position,
       status,
-      tagIcon: ''
+      tagIcon: '',
+      publishedToSF: false
     });
 
     await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread02'), {
@@ -407,27 +511,27 @@ class TestEnvironment {
       originalContextAfter: '',
       position,
       status,
-      tagIcon: ''
+      tagIcon: '',
+      publishedToSF: true
     });
 
-    const noteThreadId = 'noteThread03';
-    await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', noteThreadId), {
+    await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread03'), {
       projectRef: 'project01',
-      ownerRef: 'some-owner',
-      dataId: noteThreadId,
+      ownerRef: 'reviewer',
+      dataId: 'noteThread03',
       verseRef,
       notes: [
         {
-          dataId: noteThreadId + 'note01',
+          dataId: 'noteThread03note01',
           type,
           conflictType,
-          threadId: noteThreadId,
-          extUserId: 'some-ext-user-id',
+          threadId: 'noteThread03',
+          extUserId: 'reviewer',
           deleted: false,
           status,
           dateModified: '',
           dateCreated: '',
-          ownerRef: 'some-owner-id'
+          ownerRef: 'reviewer'
         }
       ],
       originalSelectedText: '',
