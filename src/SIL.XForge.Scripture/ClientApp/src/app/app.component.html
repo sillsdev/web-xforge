@@ -105,7 +105,14 @@
                   {{ t("logged_in_as") }}
                   <div fxLayout="row" fxLayoutAlign="start center">
                     <strong class="user-menu-name">{{ currentUser.displayName }}</strong>
-                    <button id="edit-name-btn" mdcIconButton icon="edit" type="button" (click)="editName()"></button>
+                    <button
+                      *ngIf="hasAccountAuthType"
+                      id="edit-name-btn"
+                      mdcIconButton
+                      icon="edit"
+                      type="button"
+                      (click)="editName()"
+                    ></button>
                   </div>
                 </div>
                 <div>
@@ -119,7 +126,7 @@
                       {{ t("system_administration") }}
                     </mdc-list-item>
                     <mdc-list-item appRouterLink="/projects">{{ t("project_home") }}</mdc-list-item>
-                    <mdc-list-item *ngIf="canChangePassword" (click)="changePassword()" [disabled]="!isAppOnline">
+                    <mdc-list-item *ngIf="hasAccountAuthType" (click)="changePassword()" [disabled]="!isAppOnline">
                       {{ t("change_password") }}
                     </mdc-list-item>
                     <mdc-list-item name="logout" (click)="logOut()"> {{ t("log_out") }} </mdc-list-item>
