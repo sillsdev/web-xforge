@@ -10,7 +10,8 @@ export enum SFProjectDomain {
   AnswerComments = 'answer_comments',
   AnswerStatus = 'answer_status',
   Likes = 'likes',
-  NoteThreads = 'note_threads',
+  PTNoteThreads = 'pt_note_threads',
+  SFNoteThreads = 'sf_note_threads',
   Notes = 'notes'
 }
 
@@ -34,14 +35,16 @@ export class SFProjectRights extends ProjectRights {
 
       { projectDomain: SFProjectDomain.Likes, operation: Operation.View },
 
-      { projectDomain: SFProjectDomain.NoteThreads, operation: Operation.View },
+      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.View },
 
       { projectDomain: SFProjectDomain.Notes, operation: Operation.View }
     ];
     this.addRights(SFProjectRole.Observer, observerRights);
 
     const ptObserverRights: ProjectRight[] = observerRights.concat([
-      { projectDomain: SFProjectDomain.Project, operation: Operation.View }
+      { projectDomain: SFProjectDomain.Project, operation: Operation.View },
+
+      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.View }
     ]);
     this.addRights(SFProjectRole.ParatextObserver, ptObserverRights);
 
@@ -57,9 +60,9 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Likes, operation: Operation.Create },
       { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn },
 
-      { projectDomain: SFProjectDomain.NoteThreads, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.NoteThreads, operation: Operation.Edit },
-      { projectDomain: SFProjectDomain.NoteThreads, operation: Operation.Delete },
+      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.Create },
+      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.Edit },
+      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.Delete },
 
       { projectDomain: SFProjectDomain.Notes, operation: Operation.Create },
       { projectDomain: SFProjectDomain.Notes, operation: Operation.EditOwn },
@@ -69,7 +72,11 @@ export class SFProjectRights extends ProjectRights {
     this.addRights(SFProjectRole.CommunityChecker, reviewerRights);
 
     const ptReviewerRights: ProjectRight[] = reviewerRights.concat([
-      { projectDomain: SFProjectDomain.Project, operation: Operation.View }
+      { projectDomain: SFProjectDomain.Project, operation: Operation.View },
+
+      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Create },
+      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Edit },
+      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Delete }
     ]);
     this.addRights(SFProjectRole.ParatextConsultant, ptReviewerRights);
 
@@ -97,9 +104,13 @@ export class SFProjectRights extends ProjectRights {
       { projectDomain: SFProjectDomain.Likes, operation: Operation.Create },
       { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn },
 
-      { projectDomain: SFProjectDomain.NoteThreads, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.NoteThreads, operation: Operation.Edit },
-      { projectDomain: SFProjectDomain.NoteThreads, operation: Operation.Delete },
+      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Create },
+      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Edit },
+      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Delete },
+
+      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.Create },
+      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.Edit },
+      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.Delete },
 
       { projectDomain: SFProjectDomain.Notes, operation: Operation.Create },
       { projectDomain: SFProjectDomain.Notes, operation: Operation.EditOwn },

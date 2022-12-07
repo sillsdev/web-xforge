@@ -3,9 +3,10 @@ import { RealtimeServer } from '../common/realtime-server';
 import { SchemaVersionRepository } from '../common/schema-version-repository';
 import { DocService } from '../common/services/doc-service';
 import { UserService } from '../common/services/user-service';
+import { Operation } from '../common/models/project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from './models/sf-project-rights';
 import { NOTE_THREAD_COLLECTION, SF_NOTE_THREAD_PREFIX } from './models/note-thread';
 import { SF_PROJECTS_COLLECTION } from './models/sf-project';
-import { canViewParatextNotes } from './scripture-utils/utils';
 import { NoteThreadService } from './services/note-thread-service';
 import { QuestionService } from './services/question-service';
 import { SFProjectService } from './services/sf-project-service';
@@ -34,8 +35,15 @@ class SFRealtimeServer extends RealtimeServer {
           return;
         }
         this.getProject(context.query.projectRef).then(p => {
-          const userRole: string = p?.userRoles[context.agent.connectSession.userId] ?? '';
-          if (!canViewParatextNotes(userRole)) {
+          if (
+            p != null &&
+            !SF_PROJECT_RIGHTS.hasRight(
+              p,
+              context.agent.connectSession.userId,
+              SFProjectDomain.PTNoteThreads,
+              Operation.View
+            )
+          ) {
             context.query = { ...context.query, ...{ dataId: { $regex: SF_NOTE_THREAD_PREFIX } } };
           }
           next();
