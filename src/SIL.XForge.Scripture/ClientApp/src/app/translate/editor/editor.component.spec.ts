@@ -10,7 +10,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import {
   createRange,
   ProgressStatus,
-  RemoteTranslationEngine,
   TranslationSources,
   WordAlignmentMatrix,
   WordGraph,
@@ -70,6 +69,7 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
