@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using NSubstitute;
 using NSubstitute.Extensions;
@@ -18,13 +19,13 @@ namespace SIL.XForge.Scripture.Services
             env.MockPTArchivesClient
                 .Configure()
                 .Get(Arg.Any<string>())
-                .Returns(_ =>
-                {
-                    throw Paratext.Data.HttpException.Create(
-                        new WebException(),
-                        HttpWebRequest.CreateHttp("https://example.com")
-                    );
-                });
+                .Returns(
+                    _ =>
+                        throw HttpException.Create(
+                            new WebException(),
+                            GenericRequest.Create(new Uri("https://example.com"))
+                        )
+                );
             // One SUT
             Assert.That(env.RepoSource.CanUserAuthenticateToPTArchives(), Is.False, "problem when using server");
 
