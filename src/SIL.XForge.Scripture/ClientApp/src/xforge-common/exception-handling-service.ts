@@ -5,7 +5,7 @@ import Bugsnag, { Breadcrumb, BrowserConfig } from '@bugsnag/js';
 import { BugsnagErrorHandler } from '@bugsnag/plugin-angular';
 import { translate } from '@ngneat/transloco';
 import { hasObjectProp, hasStringProp } from '../type-utils';
-import { MACHINE_API_BASE_URL } from '../app/core/machine-http-client';
+import { MACHINE_API_BASE_URL } from '../app/machine-api/http-client';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { CONSOLE } from './browser-globals';
