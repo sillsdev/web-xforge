@@ -2,7 +2,7 @@ import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Location } from '@angular/common';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Route, Router } from '@angular/router';

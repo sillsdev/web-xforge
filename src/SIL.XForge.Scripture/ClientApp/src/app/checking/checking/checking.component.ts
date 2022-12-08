@@ -25,7 +25,10 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
+import {
+  MatLegacyDialogConfig as MatDialogConfig,
+  MatLegacyDialogRef as MatDialogRef
+} from '@angular/material/legacy-dialog';
 import { DialogService } from 'xforge-common/dialog.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { QuestionDoc } from '../../core/models/question-doc';

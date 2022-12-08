@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import {

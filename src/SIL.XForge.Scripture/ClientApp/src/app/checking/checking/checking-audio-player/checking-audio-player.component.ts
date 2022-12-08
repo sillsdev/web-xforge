@@ -1,5 +1,8 @@
 import { Component, Input, OnDestroy, Pipe, PipeTransform, ViewChild } from '@angular/core';
-import { MatSlider, MatSliderChange } from '@angular/material/slider';
+import {
+  MatLegacySlider as MatSlider,
+  MatLegacySliderChange as MatSliderChange
+} from '@angular/material/legacy-slider';
 import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';

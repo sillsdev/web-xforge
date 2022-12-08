@@ -1,7 +1,11 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { ComponentType } from '@angular/cdk/portal';
 import { Injectable, TemplateRef } from '@angular/core';
-import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
+import {
+  MatLegacyDialog as MatDialog,
+  MatLegacyDialogConfig as MatDialogConfig,
+  MatLegacyDialogRef as MatDialogRef
+} from '@angular/material/legacy-dialog';
 import { Observable } from 'rxjs';
 import { GenericDialogComponent, GenericDialogOptions } from './generic-dialog/generic-dialog.component';
 import { I18nKey, I18nService } from './i18n.service';

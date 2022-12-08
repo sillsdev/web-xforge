@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatProgressBar } from '@angular/material/progress-bar';
+import { MatLegacyProgressBar as MatProgressBar } from '@angular/material/legacy-progress-bar';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';

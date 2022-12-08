@@ -1,8 +1,12 @@
 import { MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web';
 import { Component, ElementRef, Inject, NgZone, OnDestroy, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import { MatCheckbox } from '@angular/material/checkbox';
-import { MatDialogConfig, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatLegacyCheckbox as MatCheckbox } from '@angular/material/legacy-checkbox';
+import {
+  MatLegacyDialogConfig as MatDialogConfig,
+  MatLegacyDialogRef as MatDialogRef,
+  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA
+} from '@angular/material/legacy-dialog';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
