@@ -48,6 +48,8 @@ The rest of this document discusses the development of the underlying software.
 - [Backend Development](#backend-development)
   - [Model Changes](#model-changes)
 - [Debugging](#debugging)
+  - [Run processes to attach to](#run-processes-to-attach-to)
+  - [Attach debugger](#attach-debugger)
 - [Linting and Formatting](#linting-and-formatting)
 - [Database](#database)
 - [USX Validation](#usx-validation)
@@ -227,7 +229,7 @@ Although this setup is specifically written for **Windows**, the steps could be 
 On Windows, just put these off your root drive, e.g. `C:\var\lib\...`
 
 10. Add developer secrets. Ask another developer how to get these.
-11. Copy `/deploy/files/InternetSettings.xml` to `%localappdata%/Paratext92` or `~/.local/share/Paratext92/` on other systems. If you have installed Paratext 9.2, and completed the initial setup on first run, then this step will be taken care of for you.
+11. Copy `/deploy/files/InternetSettings.xml` to `%localappdata%/Paratext93` or `~/.local/share/Paratext93/` on other systems. If you have installed Paratext 9.3, and completed the initial setup on first run, then this step will be taken care of for you.
 12. In `src/SIL.XForge.Scripture/`, run `dotnet run`. Browse to `http://localhost:5000`.
 
 ### Development Process
