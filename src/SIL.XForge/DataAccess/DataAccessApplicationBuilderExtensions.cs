@@ -9,7 +9,6 @@ namespace Microsoft.AspNetCore.Builder
     {
         public static void UseDataAccess(this IApplicationBuilder app)
         {
-            app.UseHangfireServer();
             app.UseHangfireDashboard();
 
             app.InitRepository<UserSecret>();

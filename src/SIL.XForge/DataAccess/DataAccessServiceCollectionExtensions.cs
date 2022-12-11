@@ -1,6 +1,7 @@
 using System;
 using Hangfire;
 using Hangfire.Mongo;
+using Hangfire.Mongo.Migration.Strategies;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
@@ -18,13 +19,18 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             var options = configuration.GetOptions<DataAccessOptions>();
             string jobDatabaseName = options.JobDatabaseName ?? options.Prefix + "_jobs";
+            services.AddHangfireServer();
             services.AddHangfire(
                 x =>
                     x.UseMongoStorage(
                         $"{options.ConnectionString}/{jobDatabaseName}",
                         new MongoStorageOptions
                         {
-                            MigrationOptions = new MongoMigrationOptions { Strategy = MongoMigrationStrategy.Migrate }
+                            CheckQueuedJobsStrategy = CheckQueuedJobsStrategy.TailNotificationsCollection,
+                            MigrationOptions = new MongoMigrationOptions
+                            {
+                                MigrationStrategy = new MigrateMongoMigrationStrategy(),
+                            },
                         }
                     )
             );
