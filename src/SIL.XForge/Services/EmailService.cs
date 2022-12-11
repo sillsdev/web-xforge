@@ -1,11 +1,11 @@
 using System;
+using System.Threading.Tasks;
 using MailKit.Net.Smtp;
+using MailKit.Security;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MimeKit;
 using SIL.XForge.Configuration;
-using Microsoft.Extensions.Options;
-using MailKit.Security;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace SIL.XForge.Services
 {
@@ -25,27 +25,24 @@ namespace SIL.XForge.Services
             SiteOptions siteOptions = _options.Value;
             string fromAddress = siteOptions.EmailFromAddress;
             string title = siteOptions.Name;
-            var mimeMessage = new MimeMessage();
+            using var mimeMessage = new MimeMessage();
             mimeMessage.From.Add(new MailboxAddress(title, fromAddress));
             mimeMessage.To.Add(new MailboxAddress("", email));
             mimeMessage.Subject = subject;
 
-            var bodyBuilder = new BodyBuilder();
-            bodyBuilder.HtmlBody = body;
+            var bodyBuilder = new BodyBuilder { HtmlBody = body };
             mimeMessage.Body = bodyBuilder.ToMessageBody();
 
             if (siteOptions.SendEmail)
             {
-                using (var client = new SmtpClient())
-                {
-                    await client.ConnectAsync(
-                        siteOptions.SmtpServer,
-                        Convert.ToInt32(siteOptions.PortNumber),
-                        SecureSocketOptions.None
-                    );
-                    await client.SendAsync(mimeMessage);
-                    await client.DisconnectAsync(true);
-                }
+                using var client = new SmtpClient();
+                await client.ConnectAsync(
+                    siteOptions.SmtpServer,
+                    Convert.ToInt32(siteOptions.PortNumber),
+                    SecureSocketOptions.None
+                );
+                await client.SendAsync(mimeMessage);
+                await client.DisconnectAsync(true);
             }
             _logger.LogInformation("Email Sent\n{0}", mimeMessage.ToString());
         }
