@@ -2,6 +2,7 @@ using System;
 using System.Linq.Expressions;
 using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 
 public class XFFieldDefinition<TDocument, TField> : FieldDefinition<TDocument, TField>
 {
@@ -14,7 +15,8 @@ public class XFFieldDefinition<TDocument, TField> : FieldDefinition<TDocument, T
 
     public override RenderedFieldDefinition<TField> Render(
         IBsonSerializer<TDocument> documentSerializer,
-        IBsonSerializerRegistry serializerRegistry
+        IBsonSerializerRegistry serializerRegistry,
+        LinqProvider linqProvider
     )
     {
         RenderedFieldDefinition<TField> rendered = _internalDef.Render(documentSerializer, serializerRegistry);
