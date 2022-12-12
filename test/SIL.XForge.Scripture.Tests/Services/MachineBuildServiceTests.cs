@@ -57,6 +57,7 @@ namespace SIL.XForge.Scripture.Services
             string message = "Finalizing";
             int revision = 553;
             double percentCompleted = 0.95;
+            string href = $"/translation-engines/{TranslationEngine01}/builds/{buildId}";
             string response =
                 @$"{{
                     ""revision"": {revision},
@@ -69,7 +70,7 @@ namespace SIL.XForge.Scripture.Services
                     ""message"": ""{message}"",
                     ""state"": ""{state}"",
                     ""id"": ""{buildId}"",
-                    ""href"": ""/translation-engines/{TranslationEngine01}/builds/{buildId}""
+                    ""href"": ""{href}""
                     }}";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
             var httpClient = TestEnvironment.CreateHttpClient(handler);
@@ -86,6 +87,7 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.NotNull(actual);
             Assert.AreEqual(buildId, actual.Id);
+            Assert.AreEqual(href, actual.Href);
             Assert.AreEqual(percentCompleted, actual.PercentCompleted);
             Assert.AreEqual(message, actual.Message);
             Assert.AreEqual(revision, actual.Revision);
@@ -103,6 +105,7 @@ namespace SIL.XForge.Scripture.Services
             string message = "Finalizing";
             int revision = minRevision + 1;
             double percentCompleted = 0.95;
+            string href = $"/translation-engines/{TranslationEngine01}/builds/{buildId}";
             string response =
                 @$"{{
                     ""revision"": {revision},
@@ -115,7 +118,7 @@ namespace SIL.XForge.Scripture.Services
                     ""message"": ""{message}"",
                     ""state"": ""{state}"",
                     ""id"": ""{buildId}"",
-                    ""href"": ""/translation-engines/{TranslationEngine01}/builds/{buildId}""
+                    ""href"": ""{href}""
                     }}";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
             var httpClient = TestEnvironment.CreateHttpClient(handler);
@@ -132,6 +135,7 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.NotNull(actual);
             Assert.AreEqual(buildId, actual.Id);
+            Assert.AreEqual(href, actual.Href);
             Assert.AreEqual(percentCompleted, actual.PercentCompleted);
             Assert.AreEqual(message, actual.Message);
             Assert.AreEqual(revision, actual.Revision);
@@ -207,6 +211,7 @@ namespace SIL.XForge.Scripture.Services
             string buildId = "633fdb281a2e7ac760f7193a";
             string state = "Pending";
             int revision = 2;
+            string href = $"/translation-engines/{TranslationEngine01}/builds/{buildId}";
             string response =
                 @$"{{
                     ""revision"": {revision},
@@ -217,7 +222,7 @@ namespace SIL.XForge.Scripture.Services
                     ""step"": 1,
                     ""state"": ""{state}"",
                     ""id"": ""{buildId}"",
-                    ""href"": ""/translation-engines/{TranslationEngine01}/builds/{buildId}""
+                    ""href"": ""{href}""
                     }}";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
             var httpClient = TestEnvironment.CreateHttpClient(handler);
@@ -229,6 +234,7 @@ namespace SIL.XForge.Scripture.Services
             BuildDto actual = await env.Service.StartBuildAsync(TranslationEngine01, CancellationToken.None);
 
             Assert.AreEqual(buildId, actual.Id);
+            Assert.AreEqual(href, actual.Href);
             Assert.Zero(actual.PercentCompleted);
             Assert.Null(actual.Message);
             Assert.AreEqual(revision, actual.Revision);
