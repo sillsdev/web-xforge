@@ -29,7 +29,13 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(httpClient);
 
             // SUT
-            string actual = await env.Service.CreateTranslationEngineAsync("name", "en", "en", CancellationToken.None);
+            string actual = await env.Service.CreateTranslationEngineAsync(
+                "name",
+                "en",
+                "en",
+                true,
+                CancellationToken.None
+            );
 
             Assert.AreEqual(TranslationEngine01, actual);
             Assert.AreEqual(1, handler.NumberOfCalls);
