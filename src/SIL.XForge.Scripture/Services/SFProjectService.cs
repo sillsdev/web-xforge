@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
+using SIL.Machine.WebApi.Models;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -136,6 +137,7 @@ namespace SIL.XForge.Scripture.Services
 
                 if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled)
                 {
+                    await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
                     await _machineProjectService.AddProjectAsync(curUserId, projectDoc.Id, CancellationToken.None);
                 }
             }
@@ -222,7 +224,7 @@ namespace SIL.XForge.Scripture.Services
                 await Task.WhenAll(tasks);
             }
 
-            // The machine service requires the project secrets
+            // The machine service requires the project secrets, so call it before removing them
             await _machineProjectService.RemoveProjectAsync(curUserId, projectId, CancellationToken.None);
             await ProjectSecrets.DeleteAsync(projectId);
             await RealtimeService.DeleteProjectAsync(projectId);
@@ -247,35 +249,25 @@ namespace SIL.XForge.Scripture.Services
                 // Get the source - any creation or permission updates are handled in GetTranslateSourceAsync
                 TranslateSource source = null;
                 bool unsetSourceProject = settings.SourceParatextId == ProjectSettingValueUnset;
-                string writingSystemTag = projectDoc.Data.WritingSystem.Tag;
-                if ((writingSystemTag == null || settings.SourceParatextId != null) && !unsetSourceProject)
+                IReadOnlyList<ParatextProject>? ptProjects = null;
+                if (settings.SourceParatextId != null && !unsetSourceProject)
                 {
                     Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
                     if (!userSecretAttempt.TryResult(out UserSecret userSecret))
                         throw new DataNotFoundException("The user does not exist.");
 
-                    IReadOnlyList<ParatextProject> ptProjects = await _paratextService.GetProjectsAsync(userSecret);
-                    if (settings.SourceParatextId != null)
+                    ptProjects = await _paratextService.GetProjectsAsync(userSecret);
+                    source = await GetTranslateSourceAsync(
+                        curUserId,
+                        userSecret,
+                        settings.SourceParatextId,
+                        ptProjects,
+                        projectDoc.Data.UserRoles
+                    );
+                    if (source.ProjectRef == projectId)
                     {
-                        source = await GetTranslateSourceAsync(
-                            curUserId,
-                            userSecret,
-                            settings.SourceParatextId,
-                            ptProjects,
-                            projectDoc.Data.UserRoles
-                        );
-                        if (source.ProjectRef == projectId)
-                        {
-                            // A project cannot reference itself
-                            source = null;
-                        }
-                    }
-
-                    // Update the writing system tag, if it is null
-                    ParatextProject paratextProject = ptProjects.FirstOrDefault(p => p.ProjectId == projectId);
-                    if (string.IsNullOrEmpty(writingSystemTag) && !string.IsNullOrEmpty(paratextProject?.LanguageTag))
-                    {
-                        writingSystemTag = paratextProject.LanguageTag;
+                        // A project cannot reference itself
+                        source = null;
                     }
                 }
 
@@ -300,7 +292,6 @@ namespace SIL.XForge.Scripture.Services
                     UpdateSetting(op, p => p.CheckingConfig.ShareEnabled, settings.CheckingShareEnabled);
                     UpdateSetting(op, p => p.CheckingConfig.ShareLevel, settings.CheckingShareLevel);
                     UpdateSetting(op, p => p.CheckingConfig.AnswerExportMethod, settings.CheckingAnswerExport);
-                    UpdateSetting(op, p => p.WritingSystem.Tag, writingSystemTag);
                 });
 
                 bool suggestionsEnabledSet = settings.TranslationSuggestionsEnabled != null;
@@ -329,6 +320,7 @@ namespace SIL.XForge.Scripture.Services
                                 );
                             }
 
+                            await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
                             await _machineProjectService.AddProjectAsync(curUserId, projectId, CancellationToken.None);
                             trainEngine = true;
                         }
@@ -1155,6 +1147,37 @@ namespace SIL.XForge.Scripture.Services
                 }
             }
             return false;
+        }
+
+        private async Task EnsureWritingSystemTagIsSetAsync(
+            string curUserId,
+            IDocument<SFProject> projectDoc,
+            IReadOnlyList<ParatextProject>? ptProjects
+        )
+        {
+            // If we do not have a writing system tag
+            if (string.IsNullOrWhiteSpace(projectDoc.Data.WritingSystem.Tag))
+            {
+                // Get the projects, if they are missing
+                if (ptProjects == null)
+                {
+                    Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
+                    if (!userSecretAttempt.TryResult(out UserSecret userSecret))
+                        throw new DataNotFoundException("The user does not exist.");
+
+                    ptProjects = await _paratextService.GetProjectsAsync(userSecret);
+                }
+
+                // Update the writing system tag, if it is in the Paratext project
+                ParatextProject ptProject = ptProjects.FirstOrDefault(p => p.ProjectId == projectDoc.Id);
+                if (!string.IsNullOrEmpty(ptProject?.LanguageTag))
+                {
+                    await projectDoc.SubmitJson0OpAsync(op =>
+                    {
+                        UpdateSetting(op, p => p.WritingSystem.Tag, ptProject.LanguageTag);
+                    });
+                }
+            }
         }
     }
 }

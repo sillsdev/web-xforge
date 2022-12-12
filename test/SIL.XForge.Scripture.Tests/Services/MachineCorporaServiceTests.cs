@@ -20,6 +20,31 @@ namespace SIL.XForge.Scripture.Services
         private const string Project01 = "project01";
 
         [Test]
+        public void AddCorpusToTranslationEngineAsync_Invalid()
+        {
+            // Set up a mock Machine API
+            string translationEngineId = "63372e670935fe633f927c85";
+            string corpusId = "633fdb281a2e7ac760f7193a";
+            string response = "{}";
+            var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
+
+            // Set up test environment
+            var env = new TestEnvironment(httpClient);
+
+            // SUT
+            Assert.ThrowsAsync<HttpRequestException>(
+                () =>
+                    env.Service.AddCorpusToTranslationEngineAsync(
+                        translationEngineId,
+                        corpusId,
+                        false,
+                        CancellationToken.None
+                    )
+            );
+        }
+
+        [Test]
         public async Task AddCorpusToTranslationEngineAsync_Success()
         {
             // Set up a mock Machine API
@@ -41,13 +66,12 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(httpClient);
 
             // SUT
-            bool actual = await env.Service.AddCorpusToTranslationEngineAsync(
+            await env.Service.AddCorpusToTranslationEngineAsync(
                 translationEngineId,
                 corpusId,
                 false,
                 CancellationToken.None
             );
-            Assert.IsTrue(actual);
             Assert.AreEqual(1, handler.NumberOfCalls);
         }
 

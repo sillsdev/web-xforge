@@ -36,7 +36,7 @@ namespace SIL.XForge.Scripture.Services
             _fileSystemService = fileSystemService;
         }
 
-        public async Task<bool> AddCorpusToTranslationEngineAsync(
+        public async Task AddCorpusToTranslationEngineAsync(
             string translationEngineId,
             string corpusId,
             bool pretranslate,
@@ -62,7 +62,10 @@ namespace SIL.XForge.Scripture.Services
                     Options,
                     cancellationToken
                 );
-                return corpus?.corpus.id == corpusId;
+                if (corpus?.corpus.id != corpusId)
+                {
+                    throw new DataNotFoundException("The corpus could not be added to the translation");
+                }
             }
             catch (Exception e)
             {
