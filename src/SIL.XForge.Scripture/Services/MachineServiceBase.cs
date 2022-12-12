@@ -10,6 +10,9 @@ using SIL.ObjectModel;
 
 namespace SIL.XForge.Scripture.Services
 {
+    /// <summary>
+    /// Shared functionality and configuration for Machine Services that access the Machine API.
+    /// </summary>
     public abstract class MachineServiceBase : DisposableBase
     {
         public const string ClientName = "machine_api";
