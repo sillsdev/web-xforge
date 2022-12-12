@@ -12,6 +12,7 @@ namespace SIL.XForge.Scripture.Services
             string name,
             string sourceLanguageTag,
             string targetLanguageTag,
+            bool smtTransfer,
             CancellationToken cancellationToken
         );
         Task DeleteTranslationEngineAsync(string translationEngineId, CancellationToken cancellationToken);

@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.FeatureManagement;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using SIL.Machine.Corpora;
 using SIL.Machine.WebApi.Services;
@@ -40,7 +42,8 @@ namespace SIL.XForge.Scripture.Services
                     Project01,
                     Arg.Any<string>(),
                     Arg.Any<string>(),
-                    Arg.Any<CancellationToken>()
+                    true,
+                    CancellationToken.None
                 )
                 .Returns(Task.FromResult(TranslationEngine01));
 
@@ -68,6 +71,7 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<string>(),
                     Arg.Any<string>(),
                     Arg.Any<string>(),
+                    Arg.Any<bool>(),
                     Arg.Any<CancellationToken>()
                 );
         }
@@ -79,32 +83,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(
-                    Task.FromResult<ITextCorpus>(
-                        new MockTextCorpus
-                        {
-                            Texts = new[]
-                            {
-                                new MockText
-                                {
-                                    Id = "textId",
-                                    Segments = new List<TextSegment>
-                                    {
-                                        new TextSegment(
-                                            "textId",
-                                            "segRef",
-                                            new string[] { "segment01" },
-                                            false,
-                                            false,
-                                            false,
-                                            false
-                                        ),
-                                    },
-                                },
-                            },
-                        }
-                    )
-                );
+                .Returns(env.MockTextCorpus);
 
             // SUT
             await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
@@ -211,9 +190,6 @@ namespace SIL.XForge.Scripture.Services
             await env.MachineCorporaService
                 .DidNotReceiveWithAnyArgs()
                 .DeleteCorpusFileAsync(Corpus01, File01, CancellationToken.None);
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .DeleteCorpusFileAsync(Corpus01, File02, CancellationToken.None);
         }
 
         [Test]
@@ -259,38 +235,10 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(
-                    Task.FromResult<ITextCorpus>(
-                        new MockTextCorpus
-                        {
-                            Texts = new[]
-                            {
-                                new MockText
-                                {
-                                    Id = "textId",
-                                    Segments = new List<TextSegment>
-                                    {
-                                        new TextSegment(
-                                            "textId",
-                                            "segRef",
-                                            new string[] { "segment01" },
-                                            false,
-                                            false,
-                                            false,
-                                            false
-                                        ),
-                                    },
-                                },
-                            },
-                        }
-                    )
-                );
+                .Returns(env.MockTextCorpus);
             env.MachineCorporaService
                 .CreateCorpusAsync(Project01, false, CancellationToken.None)
                 .Returns(Task.FromResult(Corpus01));
-            env.MachineCorporaService
-                .AddCorpusToTranslationEngineAsync(TranslationEngine01, Corpus01, false, CancellationToken.None)
-                .Returns(Task.FromResult(true));
             await env.ProjectSecrets.UpdateAsync(
                 Project01,
                 u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = TranslationEngine01 })
@@ -315,32 +263,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(
-                    Task.FromResult<ITextCorpus>(
-                        new MockTextCorpus
-                        {
-                            Texts = new[]
-                            {
-                                new MockText
-                                {
-                                    Id = "textId",
-                                    Segments = new List<TextSegment>
-                                    {
-                                        new TextSegment(
-                                            "textId",
-                                            "segRef",
-                                            new string[] { "segment01" },
-                                            false,
-                                            false,
-                                            false,
-                                            false
-                                        ),
-                                    },
-                                },
-                            },
-                        }
-                    )
-                );
+                .Returns(env.MockTextCorpus);
 
             // SUT
             Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).MachineData?.Corpora[Corpus01].Files.Count);
@@ -362,32 +285,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(
-                    Task.FromResult<ITextCorpus>(
-                        new MockTextCorpus
-                        {
-                            Texts = new[]
-                            {
-                                new MockText
-                                {
-                                    Id = "textId",
-                                    Segments = new List<TextSegment>
-                                    {
-                                        new TextSegment(
-                                            "textId",
-                                            "segRef",
-                                            new string[] { "segment01" },
-                                            false,
-                                            false,
-                                            false,
-                                            false
-                                        ),
-                                    },
-                                },
-                            },
-                        }
-                    )
-                );
+                .Returns(env.MockTextCorpus);
             env.MachineCorporaService
                 .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
                 .Returns(Task.FromResult<IList<MachineApiCorpusFile>>(Array.Empty<MachineApiCorpusFile>()));
@@ -426,36 +324,11 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(
-                    Task.FromResult<ITextCorpus>(
-                        new MockTextCorpus
-                        {
-                            Texts = new[]
-                            {
-                                new MockText
-                                {
-                                    Id = "textId",
-                                    Segments = new List<TextSegment>
-                                    {
-                                        new TextSegment(
-                                            "textId",
-                                            "segRef",
-                                            new string[] { "segment01" },
-                                            false,
-                                            false,
-                                            false,
-                                            false
-                                        ),
-                                    },
-                                },
-                            },
-                        }
-                    )
-                );
+                .Returns(env.MockTextCorpus);
             env.MachineCorporaService
                 .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None)
                 .Returns(Task.FromResult("File03"));
-            string checksum = StringUtils.ComputeMd5Hash($"segRef\tsegment01{Environment.NewLine}");
+            string checksum = StringUtils.ComputeMd5Hash($"segRef\tsegment01\n");
             await env.ProjectSecrets.UpdateAsync(
                 Project02,
                 u =>
@@ -521,13 +394,16 @@ namespace SIL.XForge.Scripture.Services
             env.MachineCorporaService
                 .CreateCorpusAsync(Project01, false, CancellationToken.None)
                 .Returns(Task.FromResult(Corpus01));
+            env.MachineCorporaService
+                .AddCorpusToTranslationEngineAsync(TranslationEngine01, Corpus01, false, CancellationToken.None)
+                .Throws(new HttpRequestException());
             await env.ProjectSecrets.UpdateAsync(
                 Project01,
                 u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = TranslationEngine01 })
             );
 
             // SUT
-            Assert.ThrowsAsync<InvalidOperationException>(
+            Assert.ThrowsAsync<HttpRequestException>(
                 () => env.Service.SyncProjectCorporaAsync(User01, Project01, CancellationToken.None)
             );
         }
@@ -539,32 +415,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(
-                    Task.FromResult<ITextCorpus>(
-                        new MockTextCorpus
-                        {
-                            Texts = new[]
-                            {
-                                new MockText
-                                {
-                                    Id = "textId",
-                                    Segments = new List<TextSegment>
-                                    {
-                                        new TextSegment(
-                                            "textId",
-                                            "segRef",
-                                            new string[] { "segment01" },
-                                            false,
-                                            false,
-                                            false,
-                                            false
-                                        ),
-                                    },
-                                },
-                            },
-                        }
-                    )
-                );
+                .Returns(env.MockTextCorpus);
             env.MachineCorporaService
                 .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
                 .Returns(
@@ -618,32 +469,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>())
-                .Returns(
-                    Task.FromResult<ITextCorpus>(
-                        new MockTextCorpus
-                        {
-                            Texts = new[]
-                            {
-                                new MockText
-                                {
-                                    Id = "textId",
-                                    Segments = new List<TextSegment>
-                                    {
-                                        new TextSegment(
-                                            "textId",
-                                            "segRef",
-                                            new string[] { "segment01" },
-                                            false,
-                                            false,
-                                            false,
-                                            false
-                                        ),
-                                    },
-                                },
-                            },
-                        }
-                    )
-                );
+                .Returns(env.MockTextCorpus);
             env.MachineCorporaService
                 .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
                 .Returns(
@@ -823,6 +649,32 @@ namespace SIL.XForge.Scripture.Services
                     TextCorpusFactory
                 );
             }
+
+            public Task<ITextCorpus> MockTextCorpus =>
+                Task.FromResult<ITextCorpus>(
+                    new MockTextCorpus
+                    {
+                        Texts = new[]
+                        {
+                            new MockText
+                            {
+                                Id = "textId",
+                                Segments = new List<TextSegment>
+                                {
+                                    new TextSegment(
+                                        "textId",
+                                        "segRef",
+                                        new string[] { "segment01" },
+                                        false,
+                                        false,
+                                        false,
+                                        false
+                                    ),
+                                },
+                            },
+                        },
+                    }
+                );
 
             public MachineProjectService Service { get; }
             public IEngineService EngineService { get; }
