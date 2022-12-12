@@ -81,9 +81,10 @@ namespace SIL.XForge.Scripture.Services
 
             // Add the project to the Machine API
             string translationEngineId = await _machineTranslationService.CreateTranslationEngineAsync(
-                projectId,
+                name: projectId,
                 machineProject.SourceLanguageTag,
                 machineProject.TargetLanguageTag,
+                smtTransfer: true,
                 cancellationToken
             );
             if (string.IsNullOrWhiteSpace(translationEngineId))
@@ -172,20 +173,30 @@ namespace SIL.XForge.Scripture.Services
                     catch (HttpRequestException e)
                     {
                         // A 404 means that the file does not exist
+                        string message;
                         if (e.StatusCode == HttpStatusCode.NotFound)
                         {
-                            _logger.LogInformation(
-                                $"Corpora file {fileId} in corpus {corpusId} for project {projectId} was missing or already deleted."
-                            );
+                            message =
+                                $"Corpora file {fileId} in corpus {corpusId} for project {projectId}"
+                                + " was missing or already deleted.";
+                            _logger.LogInformation(message);
+                        }
+                        else
+                        {
+                            message =
+                                $"Ignored exception while deleting file {fileId} in corpus {corpusId}"
+                                + $" for project {projectId}.";
+                            _logger.LogError(e, message);
                         }
                     }
                 }
 
                 // Remove the corpus from the translation engine
+                string translationEngineId = projectSecret.MachineData.TranslationEngineId;
                 try
                 {
                     await _machineCorporaService.RemoveCorpusFromTranslationEngineAsync(
-                        projectSecret.MachineData.TranslationEngineId,
+                        translationEngineId,
                         corpusId,
                         cancellationToken
                     );
@@ -193,11 +204,20 @@ namespace SIL.XForge.Scripture.Services
                 catch (HttpRequestException e)
                 {
                     // A 404 means that the translation engine does not exist
+                    string message;
                     if (e.StatusCode == HttpStatusCode.NotFound)
                     {
-                        _logger.LogInformation(
-                            $"Translation Engine {projectSecret.MachineData.TranslationEngineId} for project {projectId} was missing or already deleted."
-                        );
+                        message =
+                            $"Translation Engine {translationEngineId} for project {projectId}"
+                            + " was missing or already deleted.";
+                        _logger.LogInformation(message);
+                    }
+                    else
+                    {
+                        message =
+                            $"Ignored exception while deleting translation engine {translationEngineId}"
+                            + $" for project {projectId}.";
+                        _logger.LogError(e, message);
                     }
                 }
 
@@ -208,12 +228,17 @@ namespace SIL.XForge.Scripture.Services
                 }
                 catch (HttpRequestException e)
                 {
-                    // A 404 means that the file does not exist
+                    // A 404 means that the corpus does not exist
+                    string message;
                     if (e.StatusCode == HttpStatusCode.NotFound)
                     {
-                        _logger.LogInformation(
-                            $"Corpora {corpusId} for project {projectId} was missing or already deleted."
-                        );
+                        message = $"Corpus {corpusId} for project {projectId} was missing or already deleted.";
+                        _logger.LogInformation(message);
+                    }
+                    else
+                    {
+                        message = $"Ignored exception while deleting corpus {corpusId} for project {projectId}.";
+                        _logger.LogError(e, message);
                     }
                 }
             }
@@ -225,13 +250,28 @@ namespace SIL.XForge.Scripture.Services
             );
         }
 
+        /// <summary>
+        /// Syncs the project corpora from MongoDB to the Machine API via <see cref="SFTextCorpusFactory"/>
+        /// </summary>
+        /// <param name="curUserId">The current user identifier.</param>
+        /// <param name="projectId">The project identifier.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns><c>true</c> if the project corpora and its files were updated; otherwise, <c>false</c>.</returns>
+        /// <exception cref="DataNotFoundException">The project does not exist.</exception>
+        /// <exception cref="ArgumentException">One of the arguments was an invalid identifier.</exception>
+        /// <remarks>
+        /// Notes:
+        ///  - If the corpus was updated, then you should start the Build with <see cref="MachineBuildService"/>.
+        ///  - If the Machine API feature flag is disabled, false is returned and an information message logged.
+        ///  - If a corpus is not configured on the Machine API, one is created and recorded in the project secret.
+        /// </remarks>
         public async Task<bool> SyncProjectCorporaAsync(
             string curUserId,
             string projectId,
             CancellationToken cancellationToken
         )
         {
-            // We will return whether the corpus was updated
+            // Used to return whether or not the corpus was updated
             bool corpusUpdated = false;
 
             // Ensure that the Machine API feature flag is enabled
@@ -269,17 +309,12 @@ namespace SIL.XForge.Scripture.Services
                     paratext: false,
                     cancellationToken
                 );
-                if (
-                    !await _machineCorporaService.AddCorpusToTranslationEngineAsync(
-                        projectSecret.MachineData.TranslationEngineId,
-                        corpusId,
-                        pretranslate: false,
-                        cancellationToken
-                    )
-                )
-                {
-                    throw new InvalidOperationException("The corpus could not be added to the translation");
-                }
+                await _machineCorporaService.AddCorpusToTranslationEngineAsync(
+                    projectSecret.MachineData.TranslationEngineId,
+                    corpusId,
+                    pretranslate: false,
+                    cancellationToken
+                );
 
                 // Store the Corpus ID
                 projectSecret = await _projectSecrets.UpdateAsync(
@@ -328,6 +363,71 @@ namespace SIL.XForge.Scripture.Services
             return corpusUpdated;
         }
 
+        /// <summary>
+        /// Gets the segments from the text with Unix/Linux line endings.
+        /// </summary>
+        /// <param name="text">The IText</param>
+        /// <returns>The text file data to be uploaded to the Machine API.</returns>
+        private static string GetTextFileData(IText text)
+        {
+            var sb = new StringBuilder();
+            foreach (TextSegment segment in text.GetSegments())
+            {
+                if (!segment.IsEmpty)
+                {
+                    if (segment.SegmentRef is TextSegmentRef textSegmentRef)
+                    {
+                        sb.Append(string.Join('-', textSegmentRef.Keys));
+                    }
+                    else
+                    {
+                        sb.Append(segment.SegmentRef);
+                    }
+
+                    sb.Append('\t');
+                    sb.Append(string.Join(' ', segment.Segment));
+                    sb.Append('\t');
+                    if (segment.IsSentenceStart)
+                    {
+                        sb.Append("ss,");
+                    }
+
+                    if (segment.IsInRange)
+                    {
+                        sb.Append("ir,");
+                    }
+
+                    if (segment.IsRangeStart)
+                    {
+                        sb.Append("rs,");
+                    }
+
+                    // Strip the last comma, or the tab if there are no flags
+                    sb.Length--;
+
+                    // Append the Unix EOL to ensure consistency as this text data is uploaded to the Machine API
+                    sb.Append('\n');
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Syncs an <see cref="ITextCorpus"/> with a corpus on the Machine APU, creating and updating corpus
+        /// files on the corpus as necessary, and recording the details in the <see cref="projectSecret"/>.
+        /// </summary>
+        /// <param name="corpusId">The corpus identifier.</param>
+        /// <param name="project">The project.</param>
+        /// <param name="projectSecret">The project secret.</param>
+        /// <param name="textCorpus">The text corpus created by <see cref="SFTextCorpusFactory"/>.</param>
+        /// <param name="type">The type can be either Source or Target.</param>
+        /// <param name="serverCorpusFiles">The corpus files already on the server, from the Machine API.</param>
+        /// <param name="cancellationToken"></param>
+        /// <returns><c>true</c> if the corpus was created or updated; otherwise, <c>false</c>.</returns>
+        /// <remarks>
+        /// The project secret is updated with the corpus file details added or updated on the Machine API.
+        /// </remarks>
         private async Task<bool> SyncTextCorpusAsync(
             string corpusId,
             SFProject project,
@@ -338,7 +438,7 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            // We will return whether the corpus was updated
+            // Used to return whether or not the corpus files were created or updated
             bool corpusUpdated = false;
 
             // Get the language tag
@@ -357,53 +457,14 @@ namespace SIL.XForge.Scripture.Services
                 projectSecret.MachineData?.Corpora[corpusId].Files ?? new List<MachineCorpusFile>();
 
             // Sync each text
-            var sb = new StringBuilder();
             foreach (IText text in textCorpus?.Texts ?? Array.Empty<IText>())
             {
-                sb.Clear();
-                foreach (TextSegment segment in text.GetSegments())
-                {
-                    if (!segment.IsEmpty)
-                    {
-                        if (segment.SegmentRef is TextSegmentRef textSegmentRef)
-                        {
-                            sb.Append(string.Join('-', textSegmentRef.Keys));
-                        }
-                        else
-                        {
-                            sb.Append(segment.SegmentRef);
-                        }
-
-                        sb.Append('\t');
-                        sb.Append(string.Join(' ', segment.Segment));
-                        sb.Append('\t');
-                        if (segment.IsSentenceStart)
-                        {
-                            sb.Append("ss,");
-                        }
-
-                        if (segment.IsInRange)
-                        {
-                            sb.Append("ir,");
-                        }
-
-                        if (segment.IsRangeStart)
-                        {
-                            sb.Append("rs,");
-                        }
-
-                        // Strip the last comma, or the tab if there are no flags
-                        sb.Length--;
-                        sb.AppendLine();
-                    }
-                }
-
-                if (sb.Length > 0)
+                string textFileData = GetTextFileData(text);
+                if (!string.IsNullOrWhiteSpace(textFileData))
                 {
                     // See if the corpus exists, and delete it if it does
                     bool uploadText = false;
                     string textId = $"{text.Id}_{type.ToString().ToLowerInvariant()}";
-                    string textFileData = sb.ToString();
                     string checksum = StringUtils.ComputeMd5Hash(textFileData);
                     MachineCorpusFile? previousCorpusFile = previousCorpusFiles.FirstOrDefault(c => c.TextId == textId);
                     if (previousCorpusFile is null)

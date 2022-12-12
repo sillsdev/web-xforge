@@ -7,7 +7,7 @@ namespace SIL.XForge.Scripture.Services
 {
     public interface IMachineCorporaService
     {
-        Task<bool> AddCorpusToTranslationEngineAsync(
+        Task AddCorpusToTranslationEngineAsync(
             string translationEngineId,
             string corpusId,
             bool pretranslate,
