@@ -58,10 +58,10 @@ namespace SIL.XForge.Scripture.Services
             _textCorpusFactory = textCorpusFactory;
         }
 
-        public async Task AddProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken)
+        public async Task AddProjectAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken)
         {
             // Load the project from the realtime service
-            Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(projectId);
+            Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
             if (!attempt.TryResult(out SFProject project))
             {
                 throw new DataNotFoundException("The project does not exist.");
@@ -70,7 +70,7 @@ namespace SIL.XForge.Scripture.Services
             // Add the project to the in process Machine instance
             var machineProject = new Project
             {
-                Id = projectId,
+                Id = sfProjectId,
                 SourceLanguageTag = project.TranslateConfig.Source.WritingSystem.Tag,
                 TargetLanguageTag = project.WritingSystem.Tag,
             };
@@ -85,7 +85,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Add the project to the Machine API
             string translationEngineId = await _machineTranslationService.CreateTranslationEngineAsync(
-                name: projectId,
+                name: sfProjectId,
                 machineProject.SourceLanguageTag,
                 machineProject.TargetLanguageTag,
                 smtTransfer: true,
@@ -98,15 +98,15 @@ namespace SIL.XForge.Scripture.Services
 
             // Store the Translation Engine ID
             await _projectSecrets.UpdateAsync(
-                projectId,
+                sfProjectId,
                 u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = translationEngineId })
             );
         }
 
-        public async Task BuildProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken)
+        public async Task BuildProjectAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken)
         {
             // Build the project with the in process Machine instance
-            await _engineService.StartBuildByProjectIdAsync(projectId);
+            await _engineService.StartBuildByProjectIdAsync(sfProjectId);
 
             // Ensure that the Machine API feature flag is enabled
             if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
@@ -116,7 +116,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Load the target project secrets, so we can get the translation engine ID
-            if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
+            if (!(await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
             {
                 throw new ArgumentException("The project secret cannot be found.");
             }
@@ -124,12 +124,12 @@ namespace SIL.XForge.Scripture.Services
             // Ensure we have a translation engine id
             if (string.IsNullOrWhiteSpace(projectSecret.MachineData?.TranslationEngineId))
             {
-                _logger.LogInformation($"No Translation Engine Id specified for project {projectId}");
+                _logger.LogInformation($"No Translation Engine Id specified for project {sfProjectId}");
                 return;
             }
 
             // Sync the corpus
-            if (await SyncProjectCorporaAsync(curUserId, projectId, cancellationToken))
+            if (await SyncProjectCorporaAsync(curUserId, sfProjectId, cancellationToken))
             {
                 // If the corpus was updated, start the build
                 // We do not need the build ID for tracking as we use GetCurrentBuildAsync for that
@@ -140,10 +140,10 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
-        public async Task RemoveProjectAsync(string curUserId, string projectId, CancellationToken cancellationToken)
+        public async Task RemoveProjectAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken)
         {
             // Remove the project from the in process Machine instance
-            await _engineService.RemoveProjectAsync(projectId);
+            await _engineService.RemoveProjectAsync(sfProjectId);
 
             // Ensure that the Machine API feature flag is enabled
             if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
@@ -153,7 +153,7 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Load the target project secrets, so we can get the translation engine ID
-            if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
+            if (!(await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
             {
                 throw new ArgumentException("The project secret cannot be found.");
             }
@@ -161,7 +161,7 @@ namespace SIL.XForge.Scripture.Services
             // Ensure we have a translation engine id
             if (string.IsNullOrWhiteSpace(projectSecret.MachineData?.TranslationEngineId))
             {
-                _logger.LogInformation($"No Translation Engine Id specified for project {projectId}");
+                _logger.LogInformation($"No Translation Engine Id specified for project {sfProjectId}");
                 return;
             }
 
@@ -181,7 +181,7 @@ namespace SIL.XForge.Scripture.Services
                         if (e.StatusCode == HttpStatusCode.NotFound)
                         {
                             message =
-                                $"Corpora file {fileId} in corpus {corpusId} for project {projectId}"
+                                $"Corpora file {fileId} in corpus {corpusId} for project {sfProjectId}"
                                 + " was missing or already deleted.";
                             _logger.LogInformation(message);
                         }
@@ -189,7 +189,7 @@ namespace SIL.XForge.Scripture.Services
                         {
                             message =
                                 $"Ignored exception while deleting file {fileId} in corpus {corpusId}"
-                                + $" for project {projectId}.";
+                                + $" for project {sfProjectId}.";
                             _logger.LogError(e, message);
                         }
                     }
@@ -212,7 +212,7 @@ namespace SIL.XForge.Scripture.Services
                     if (e.StatusCode == HttpStatusCode.NotFound)
                     {
                         message =
-                            $"Translation Engine {translationEngineId} for project {projectId}"
+                            $"Translation Engine {translationEngineId} for project {sfProjectId}"
                             + " was missing or already deleted.";
                         _logger.LogInformation(message);
                     }
@@ -220,7 +220,7 @@ namespace SIL.XForge.Scripture.Services
                     {
                         message =
                             $"Ignored exception while deleting translation engine {translationEngineId}"
-                            + $" for project {projectId}.";
+                            + $" for project {sfProjectId}.";
                         _logger.LogError(e, message);
                     }
                 }
@@ -236,12 +236,12 @@ namespace SIL.XForge.Scripture.Services
                     string message;
                     if (e.StatusCode == HttpStatusCode.NotFound)
                     {
-                        message = $"Corpus {corpusId} for project {projectId} was missing or already deleted.";
+                        message = $"Corpus {corpusId} for project {sfProjectId} was missing or already deleted.";
                         _logger.LogInformation(message);
                     }
                     else
                     {
-                        message = $"Ignored exception while deleting corpus {corpusId} for project {projectId}.";
+                        message = $"Ignored exception while deleting corpus {corpusId} for project {sfProjectId}.";
                         _logger.LogError(e, message);
                     }
                 }
@@ -258,7 +258,7 @@ namespace SIL.XForge.Scripture.Services
         /// Syncs the project corpora from MongoDB to the Machine API via <see cref="SFTextCorpusFactory"/>
         /// </summary>
         /// <param name="curUserId">The current user identifier.</param>
-        /// <param name="projectId">The project identifier.</param>
+        /// <param name="sfProjectId">The project identifier.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns><c>true</c> if the project corpora and its files were updated; otherwise, <c>false</c>.</returns>
         /// <exception cref="DataNotFoundException">The project does not exist.</exception>
@@ -271,7 +271,7 @@ namespace SIL.XForge.Scripture.Services
         /// </remarks>
         public async Task<bool> SyncProjectCorporaAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             CancellationToken cancellationToken
         )
         {
@@ -286,14 +286,14 @@ namespace SIL.XForge.Scripture.Services
             }
 
             // Load the project from the realtime service
-            Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(projectId);
+            Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
             if (!attempt.TryResult(out SFProject project))
             {
                 throw new DataNotFoundException("The project does not exist.");
             }
 
             // Load the project secrets, so we can get the corpus files
-            if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
+            if (!(await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
             {
                 throw new ArgumentException("The project secret cannot be found.");
             }
@@ -309,7 +309,7 @@ namespace SIL.XForge.Scripture.Services
             if (string.IsNullOrWhiteSpace(projectSecret.MachineData.Corpora.Keys.FirstOrDefault()))
             {
                 corpusId = await _machineCorporaService.CreateCorpusAsync(
-                    projectId,
+                    sfProjectId,
                     paratext: false,
                     cancellationToken
                 );
@@ -322,7 +322,7 @@ namespace SIL.XForge.Scripture.Services
 
                 // Store the Corpus ID
                 projectSecret = await _projectSecrets.UpdateAsync(
-                    projectId,
+                    sfProjectId,
                     u =>
                         u.Set(
                             p => p.MachineData.Corpora[corpusId],
@@ -342,7 +342,10 @@ namespace SIL.XForge.Scripture.Services
             );
 
             // Reuse the SFTextCorpusFactory implementation
-            ITextCorpus? textCorpus = await _textCorpusFactory.CreateAsync(new[] { projectId }, TextCorpusType.Source);
+            ITextCorpus? textCorpus = await _textCorpusFactory.CreateAsync(
+                new[] { sfProjectId },
+                TextCorpusType.Source
+            );
             corpusUpdated |= await SyncTextCorpusAsync(
                 corpusId,
                 project,
@@ -353,7 +356,7 @@ namespace SIL.XForge.Scripture.Services
                 cancellationToken
             );
 
-            textCorpus = await _textCorpusFactory.CreateAsync(new[] { projectId }, TextCorpusType.Target);
+            textCorpus = await _textCorpusFactory.CreateAsync(new[] { sfProjectId }, TextCorpusType.Target);
             corpusUpdated |= await SyncTextCorpusAsync(
                 corpusId,
                 project,
