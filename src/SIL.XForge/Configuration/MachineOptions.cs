@@ -1,5 +1,8 @@
 namespace SIL.XForge.Configuration
 {
+    /// <summary>
+    /// Configuration options for the Machine API.
+    /// </summary>
     public class MachineOptions
     {
         public string ApiServer { get; set; } = string.Empty;

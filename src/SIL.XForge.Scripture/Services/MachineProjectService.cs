@@ -19,6 +19,10 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
+    /// <summary>
+    /// Provides functionality to add, remove, and build Machine projects in both
+    /// the In-Process Machine and Machine API implementations.
+    /// </summary>
     public class MachineProjectService : IMachineProjectService
     {
         private readonly IEngineService _engineService;
