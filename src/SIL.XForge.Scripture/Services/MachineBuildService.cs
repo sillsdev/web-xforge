@@ -9,6 +9,9 @@ using SIL.Machine.WebApi;
 
 namespace SIL.XForge.Scripture.Services
 {
+    /// <summary>
+    /// Provides an interface to the Build endpoints of the Machine API Translation Engine.
+    /// </summary>
     public class MachineBuildService : MachineServiceBase, IMachineBuildService
     {
         private readonly IExceptionHandler _exceptionHandler;

@@ -9,6 +9,10 @@ using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services
 {
+    /// <summary>
+    /// Provides an interface to the non-build endpoints of the Machine API Translation Engine.
+    /// These include project creation, deletion, and translation related methods.
+    /// </summary>
     public class MachineTranslationService : MachineServiceBase, IMachineTranslationService
     {
         private readonly IExceptionHandler _exceptionHandler;
