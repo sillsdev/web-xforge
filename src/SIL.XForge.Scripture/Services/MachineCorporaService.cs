@@ -36,6 +36,21 @@ namespace SIL.XForge.Scripture.Services
             _fileSystemService = fileSystemService;
         }
 
+        /// <summary>
+        /// Adds a corpus to a translation engine.
+        /// </summary>
+        /// <param name="translationEngineId">The translation engine identifier.</param>
+        /// <param name="corpusId">The corpus identifier</param>
+        /// <param name="pretranslate">
+        /// If <c>true</c>, enable pre-translation.
+        /// This is only to be enabled with Nmt translation engine types.
+        /// </param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The asynchronous task.</returns>
+        /// <exception cref="HttpRequestException">
+        /// An error occurred adding the corpus to the translation engine.
+        /// </exception>
+        /// <remarks>Pre-translation is not currently used by Scripture Forge.</remarks>
         public async Task AddCorpusToTranslationEngineAsync(
             string translationEngineId,
             string corpusId,
@@ -73,6 +88,18 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        /// <summary>
+        /// Creates a corpus.
+        /// </summary>
+        /// <param name="name">The corpus name.</param>
+        /// <param name="paratext">
+        /// If <c>true</c>, texts will be uploaded using <see cref="UploadParatextCorpusAsync"/>;
+        /// otherwise, upload texts via <see cref="UploadCorpusTextAsync"/>.
+        /// </param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The new corpus identifier.</returns>
+        /// <exception cref="HttpRequestException">An error occurred creating the corpus.</exception>
+        /// <remarks>The Paratext file upload is not currently used by Scripture Forge.</remarks>
         public async Task<string> CreateCorpusAsync(string name, bool paratext, CancellationToken cancellationToken)
         {
             // Add the corpus to the Machine API
@@ -83,7 +110,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     name,
                     format = paratext ? "Paratext" : "Text",
-                    type = "Text"
+                    type = "Text",
                 },
                 cancellationToken
             );
@@ -105,6 +132,15 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        /// <summary>
+        /// Deletes a corpus.
+        /// </summary>
+        /// <param name="corpusId">The corpus identifier.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The asynchronous task.</returns>
+        /// <remarks>
+        /// The corpus files should be deleted using <see cref="DeleteCorpusFileAsync"/> before this method is executed.
+        /// </remarks>
         public async Task DeleteCorpusAsync(string corpusId, CancellationToken cancellationToken)
         {
             // Delete the corpus from the Machine API
@@ -114,6 +150,13 @@ namespace SIL.XForge.Scripture.Services
             await _exceptionHandler.EnsureSuccessStatusCode(response);
         }
 
+        /// <summary>
+        /// Deletes a corpus file.
+        /// </summary>
+        /// <param name="corpusId">The corpus identifier.</param>
+        /// <param name="fileId">The file identifier.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The asynchronous task.</returns>
         public async Task DeleteCorpusFileAsync(string corpusId, string fileId, CancellationToken cancellationToken)
         {
             // Delete the corpus file from the Machine API
@@ -124,6 +167,13 @@ namespace SIL.XForge.Scripture.Services
             await _exceptionHandler.EnsureSuccessStatusCode(response);
         }
 
+        /// <summary>
+        /// Gets the files in a corpus.
+        /// </summary>
+        /// <param name="corpusId">The corpus identifier.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A collection of the files in the corpus.</returns>
+        /// <exception cref="HttpRequestException">An error occurred retrieving the files.</exception>
         public async Task<IList<MachineApiCorpusFile>> GetCorpusFilesAsync(
             string corpusId,
             CancellationToken cancellationToken
@@ -146,6 +196,14 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        /// <summary>
+        /// Removes a corpus from a translation engine.
+        /// </summary>
+        /// <param name="translationEngineId">The translation engine identifier.</param>
+        /// <param name="corpusId">The corpus identifier.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The asynchronous task.</returns>
+        /// <remarks>This method does not delete the corpus.</remarks>
         public async Task RemoveCorpusFromTranslationEngineAsync(
             string translationEngineId,
             string corpusId,
@@ -160,6 +218,20 @@ namespace SIL.XForge.Scripture.Services
             await _exceptionHandler.EnsureSuccessStatusCode(response);
         }
 
+        /// <summary>
+        /// Uploads a text file to a corpus.
+        /// </summary>
+        /// <param name="corpusId">The corpus identifier.</param>
+        /// <param name="languageTag">The language tag.</param>
+        /// <param name="textId">The text identifier.</param>
+        /// <param name="text">The text file data.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The file identifier.</returns>
+        /// <exception cref="HttpRequestException">An error occurred uploading the text file.</exception>
+        /// <remarks>
+        /// The text file is created by the <see cref="MachineProjectService"/>
+        /// using the <see cref="SFTextCorpusFactory"/>.
+        /// </remarks>
         public async Task<string> UploadCorpusTextAsync(
             string corpusId,
             string languageTag,
@@ -178,7 +250,7 @@ namespace SIL.XForge.Scripture.Services
             using var fileContent = new StreamContent(memoryStream);
             fileContent.Headers.ContentType = new MediaTypeHeaderValue("text/plain")
             {
-                CharSet = Encoding.UTF8.WebName
+                CharSet = Encoding.UTF8.WebName,
             };
             string fileName = string.Join("_", textId.Split(Path.GetInvalidFileNameChars()));
             content.Add(fileContent, "file", $"{fileName}.txt");
@@ -205,6 +277,17 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        /// <summary>
+        /// Uploads a Paratext project directory to a corpus.
+        /// </summary>
+        /// <param name="corpusId">The corpus identifier.</param>
+        /// <param name="languageTag">The language tag.</param>
+        /// <param name="path">The path to the Paratext project.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The file identifier.</returns>
+        /// <exception cref="DirectoryNotFoundException">The Paratext project directory does not exist.</exception>
+        /// <exception cref="HttpRequestException">An error occurred uploading the Paratext project.</exception>
+        /// <remarks>This is not currently used by Scripture Forge.</remarks>
         public async Task<string> UploadParatextCorpusAsync(
             string corpusId,
             string languageTag,
