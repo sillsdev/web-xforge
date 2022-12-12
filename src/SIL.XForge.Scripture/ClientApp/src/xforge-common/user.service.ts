@@ -113,7 +113,8 @@ export class UserService {
     }
     const dialogRef = this.dialogService.openMatDialog(EditNameDialogComponent, {
       data: { name: currentUserDoc.data.displayName, isConfirmation },
-      disableClose: isConfirmation
+      disableClose: isConfirmation,
+      width: '280px'
     }) as MatDialogRef<EditNameDialogComponent, EditNameDialogResult | 'close'>;
     const result = await dialogRef.afterClosed().toPromise();
     if (result != null && result !== 'close') {

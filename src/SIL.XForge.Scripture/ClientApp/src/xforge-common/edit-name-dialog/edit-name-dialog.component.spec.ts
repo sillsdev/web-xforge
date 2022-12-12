@@ -62,13 +62,11 @@ describe('EditNameDialogComponent', () => {
     expect(env.component.confirmedName).toBeUndefined();
     env.setTextFieldValue(env.nameInput, '');
     env.submitButton.click();
-    tick();
-    env.fixture.detectChanges();
+    env.wait();
     expect(env.component.confirmedName).toBeUndefined();
     env.setTextFieldValue(env.nameInput, ' ');
     env.submitButton.click();
-    tick();
-    env.fixture.detectChanges();
+    env.wait();
     expect(env.component.confirmedName).toBeUndefined();
     env.setTextFieldValue(env.nameInput, 'Bob');
     env.clickSubmit();
@@ -155,8 +153,7 @@ class TestEnvironment {
 
   set isOnline(value: boolean) {
     this.onlineStatus$.next(value);
-    tick();
-    this.fixture.detectChanges();
+    this.wait();
   }
 
   openDialog(): void {
