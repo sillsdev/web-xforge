@@ -431,7 +431,7 @@ describe('AppComponent', () => {
     verify(mockedAuthService.checkOnlineAuth()).once();
   }));
 
-  it('social users cannot edit name', fakeAsync(() => {
+  it('non auth0 connection users cannot edit name', fakeAsync(() => {
     const env = new TestEnvironment('online');
     env.init();
 
@@ -541,9 +541,21 @@ describe('AppComponent', () => {
       verify(mockedSFProjectService.localDelete(projectId)).once();
     }));
 
-    it('can edit name online', fakeAsync(() => {
+    it('auth0 users can edit name online', fakeAsync(() => {
       const env = new TestEnvironment('online');
       env.setCurrentUser('user02');
+      env.init();
+
+      env.avatarIcon.nativeElement.click();
+      env.wait();
+      expect(env.userMenu).not.toBeNull();
+      env.clickEditDisplayName();
+      verify(mockedUserService.editDisplayName(false)).once();
+    }));
+
+    it('can edit sms user name online', fakeAsync(() => {
+      const env = new TestEnvironment('online');
+      env.setCurrentUser('user03');
       env.init();
 
       env.avatarIcon.nativeElement.click();
@@ -598,6 +610,7 @@ class TestEnvironment {
   constructor(initialConnectionStatus?: 'online' | 'offline') {
     this.addUser('user01', 'User 01', 'paratext|user01');
     this.addUser('user02', 'User 02', 'auth0|user02');
+    this.addUser('user03', 'User 03', 'sms|user03');
 
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, []);
     when(mockedSFProjectService.queryQuestions(anything(), anything())).thenCall((_projectId, options) => {
@@ -607,10 +620,18 @@ class TestEnvironment {
       return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, parameters);
     });
 
-    this.addProject('project01', { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.CommunityChecker }, [
-      { bookNum: 40, hasSource: true, chapters: [], permissions: {} },
-      { bookNum: 41, hasSource: false, chapters: [], permissions: {} }
-    ]);
+    this.addProject(
+      'project01',
+      {
+        user01: SFProjectRole.ParatextTranslator,
+        user02: SFProjectRole.CommunityChecker,
+        user03: SFProjectRole.CommunityChecker
+      },
+      [
+        { bookNum: 40, hasSource: true, chapters: [], permissions: {} },
+        { bookNum: 41, hasSource: false, chapters: [], permissions: {} }
+      ]
+    );
     // Books are out-of-order on purpose so that we can test that books are displayed in canonical order
     this.addProject('project02', { user01: SFProjectRole.CommunityChecker, user02: SFProjectRole.CommunityChecker }, [
       { bookNum: 43, hasSource: false, chapters: [], permissions: {} },

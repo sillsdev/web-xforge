@@ -248,11 +248,17 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this.currentUserDoc == null ? undefined : this.currentUserDoc.data;
   }
 
-  get hasAccountAuthType(): boolean {
+  get canChangePassword(): boolean {
     if (this.currentUser == null) {
       return false;
     }
     return getAuthType(this.currentUser.authId) === AuthType.Account;
+  }
+
+  get canUpdateDisplayName(): boolean {
+    if (this.currentUser == null) return false;
+    const authType: AuthType = getAuthType(this.currentUser.authId);
+    return authType === AuthType.Account || authType === AuthType.SMS;
   }
 
   get selectedProjectId(): string | undefined {
