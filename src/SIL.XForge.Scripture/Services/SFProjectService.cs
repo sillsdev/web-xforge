@@ -1149,6 +1149,25 @@ namespace SIL.XForge.Scripture.Services
             return false;
         }
 
+        /// <summary>
+        /// Ensures that the <see cref="WritingSystem"/> Tag is not null.
+        /// </summary>
+        /// <param name="curUserId">The current user identifier.</param>
+        /// <param name="projectDoc">The project document to check</param>
+        /// <param name="ptProjects">
+        /// The available Paratext projects. If null, the projects will be retrieved from the server.
+        /// </param>
+        /// <returns>The asynchronous task.</returns>
+        /// <exception cref="DataNotFoundException">
+        /// A user secret could not be returned for the user identifier.
+        /// </exception>
+        /// <remarks>
+        /// A issue was introduced in an early version of ScriptureForge where the writing system tag was not set when
+        /// the project was created. This issue has since been fixed, but some erroneous data remains. The Machine API
+        /// requires the writing system tag to be specified, and so this method should be called before a project is
+        /// created in the Machine API to ensure that it can be created without an error. If the writing system tag is
+        /// already set, it is not modified.
+        /// </remarks>
         private async Task EnsureWritingSystemTagIsSetAsync(
             string curUserId,
             IDocument<SFProject> projectDoc,
