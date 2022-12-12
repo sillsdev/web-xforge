@@ -101,6 +101,7 @@ namespace SIL.XForge.Scripture.Services
             int modelRevision = 1;
             int confidence = 100;
             int corpusSize = 472;
+            string href = $"/translation-engines/{TranslationEngine01}";
             string response =
                 $@"{{
                 ""name"": ""{name}"",
@@ -112,7 +113,7 @@ namespace SIL.XForge.Scripture.Services
                 ""confidence"": {confidence},
                 ""corpusSize"": {corpusSize},
                 ""id"": ""{TranslationEngine01}"",
-                ""href"": ""/translation-engines/{TranslationEngine01}""
+                ""href"": ""{href}""
             }}";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
             var httpClient = TestEnvironment.CreateHttpClient(handler);
@@ -128,6 +129,7 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.AreEqual(1, handler.NumberOfCalls);
             Assert.AreEqual(TranslationEngine01, actual.Id);
+            Assert.AreEqual(href, actual.Href);
             Assert.AreEqual(name, actual.Name);
             Assert.AreEqual(sourceLanguageTag, actual.SourceLanguageTag);
             Assert.AreEqual(targetLanguageTag, actual.TargetLanguageTag);
