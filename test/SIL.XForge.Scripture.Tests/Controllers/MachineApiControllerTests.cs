@@ -148,13 +148,13 @@ namespace SIL.XForge.Scripture.Controllers
             // Set up test environment
             var env = new TestEnvironment();
             env.MachineApiService
-                .GetBuildAsync(User01, Project01, Build01, null, CancellationToken.None)
+                .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
                 .Throws(new DataNotFoundException("Entity Deleted"));
 
             // SUT
             ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
                 Project01,
-                Build01,
+                buildId: null,
                 minRevision: null,
                 CancellationToken.None
             );

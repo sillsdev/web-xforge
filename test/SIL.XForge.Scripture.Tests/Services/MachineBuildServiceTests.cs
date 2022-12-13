@@ -89,6 +89,7 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.NotNull(actual);
             Assert.AreEqual(Build01, actual.Id);
+            Assert.AreEqual(href, actual.Href);
             Assert.AreEqual(percentCompleted, actual.PercentCompleted);
             Assert.AreEqual(message, actual.Message);
             Assert.AreEqual(revision, actual.Revision);
@@ -105,6 +106,7 @@ namespace SIL.XForge.Scripture.Services
             string message = "Finalizing";
             int revision = minRevision + 1;
             double percentCompleted = 0.95;
+            string href = $"/translation-engines/{TranslationEngine01}/builds/{Build01}";
             string response =
                 @$"{{
                     ""revision"": {revision},
@@ -117,10 +119,10 @@ namespace SIL.XForge.Scripture.Services
                     ""message"": ""{message}"",
                     ""state"": ""{state}"",
                     ""id"": ""{Build01}"",
-                    ""href"": ""/translation-engines/{TranslationEngine01}/builds/{Build01}""
+                    ""href"": ""{href}""
                     }}";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -135,6 +137,7 @@ namespace SIL.XForge.Scripture.Services
 
             Assert.NotNull(actual);
             Assert.AreEqual(Build01, actual.Id);
+            Assert.AreEqual(href, actual.Href);
             Assert.AreEqual(percentCompleted, actual.PercentCompleted);
             Assert.AreEqual(message, actual.Message);
             Assert.AreEqual(revision, actual.Revision);
@@ -148,7 +151,7 @@ namespace SIL.XForge.Scripture.Services
             // Set up a mock Machine API
             string response = string.Empty;
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.NoContent);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -167,7 +170,7 @@ namespace SIL.XForge.Scripture.Services
             // Set up a mock Machine API
             string response = string.Empty;
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.RequestTimeout);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -190,7 +193,7 @@ namespace SIL.XForge.Scripture.Services
             // Set up a mock Machine API
             string response = string.Empty;
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.Forbidden);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);
@@ -225,7 +228,7 @@ namespace SIL.XForge.Scripture.Services
                     ""href"": ""{href}""
                     }}";
             var handler = new MockHttpMessageHandler(response, HttpStatusCode.OK);
-            var httpClient = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+            var httpClient = TestEnvironment.CreateHttpClient(handler);
 
             // Set up test environment
             var env = new TestEnvironment(httpClient);

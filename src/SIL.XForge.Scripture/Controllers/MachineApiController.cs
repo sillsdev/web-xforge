@@ -35,7 +35,7 @@ namespace SIL.XForge.Scripture.Controllers
 
         [HttpGet(MachineApi.GetBuild)]
         public async Task<ActionResult<BuildDto?>> GetBuildAsync(
-            string projectId,
+            string sfProjectId,
             string? buildId,
             [FromQuery] int? minRevision,
             CancellationToken cancellationToken
@@ -50,7 +50,7 @@ namespace SIL.XForge.Scripture.Controllers
                     {
                         build = await _machineApiService.GetCurrentBuildAsync(
                             _userAccessor.UserId,
-                            projectId,
+                            sfProjectId,
                             minRevision,
                             cancellationToken
                         );
@@ -59,7 +59,7 @@ namespace SIL.XForge.Scripture.Controllers
                     {
                         build = await _machineApiService.GetBuildAsync(
                             _userAccessor.UserId,
-                            projectId,
+                            sfProjectId,
                             buildId,
                             minRevision,
                             cancellationToken
@@ -95,13 +95,16 @@ namespace SIL.XForge.Scripture.Controllers
         }
 
         [HttpGet(MachineApi.GetEngine)]
-        public async Task<ActionResult<EngineDto>> GetEngineAsync(string projectId, CancellationToken cancellationToken)
+        public async Task<ActionResult<EngineDto>> GetEngineAsync(
+            string sfProjectId,
+            CancellationToken cancellationToken
+        )
         {
             try
             {
                 EngineDto engine = await _machineApiService.GetEngineAsync(
                     _userAccessor.UserId,
-                    projectId,
+                    sfProjectId,
                     cancellationToken
                 );
                 return Ok(engine);
@@ -123,7 +126,7 @@ namespace SIL.XForge.Scripture.Controllers
 
         [HttpPost(MachineApi.GetWordGraph)]
         public async Task<ActionResult<WordGraphDto>> GetWordGraphAsync(
-            string projectId,
+            string sfProjectId,
             [FromBody] string[] segment,
             CancellationToken cancellationToken
         )
@@ -132,7 +135,7 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 WordGraphDto wordGraph = await _machineApiService.GetWordGraphAsync(
                     _userAccessor.UserId,
-                    projectId,
+                    sfProjectId,
                     segment,
                     cancellationToken
                 );
@@ -155,7 +158,7 @@ namespace SIL.XForge.Scripture.Controllers
 
         [HttpPost(MachineApi.StartBuild)]
         public async Task<ActionResult<BuildDto>> StartBuildAsync(
-            [FromBody] string projectId,
+            [FromBody] string sfProjectId,
             CancellationToken cancellationToken
         )
         {
@@ -163,7 +166,7 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 BuildDto build = await _machineApiService.StartBuildAsync(
                     _userAccessor.UserId,
-                    projectId,
+                    sfProjectId,
                     cancellationToken
                 );
                 return Ok(build);
@@ -185,7 +188,7 @@ namespace SIL.XForge.Scripture.Controllers
 
         [HttpPost(MachineApi.TrainSegment)]
         public async Task<ActionResult> TrainSegmentAsync(
-            string projectId,
+            string sfProjectId,
             [FromBody] SegmentPairDto segmentPair,
             CancellationToken cancellationToken
         )
@@ -194,7 +197,7 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 await _machineApiService.TrainSegmentAsync(
                     _userAccessor.UserId,
-                    projectId,
+                    sfProjectId,
                     segmentPair,
                     cancellationToken
                 );
@@ -217,7 +220,7 @@ namespace SIL.XForge.Scripture.Controllers
 
         [HttpPost(MachineApi.Translate)]
         public async Task<ActionResult<TranslationResultDto>> TranslateAsync(
-            string projectId,
+            string sfProjectId,
             [FromBody] string[] segment,
             CancellationToken cancellationToken
         )
@@ -226,7 +229,7 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 TranslationResultDto translationResult = await _machineApiService.TranslateAsync(
                     _userAccessor.UserId,
-                    projectId,
+                    sfProjectId,
                     segment,
                     cancellationToken
                 );
@@ -249,7 +252,7 @@ namespace SIL.XForge.Scripture.Controllers
 
         [HttpPost(MachineApi.TranslateN)]
         public async Task<ActionResult<TranslationResultDto[]>> TranslateNAsync(
-            string projectId,
+            string sfProjectId,
             int n,
             [FromBody] string[] segment,
             CancellationToken cancellationToken
@@ -259,7 +262,7 @@ namespace SIL.XForge.Scripture.Controllers
             {
                 TranslationResultDto[] translationResults = await _machineApiService.TranslateNAsync(
                     _userAccessor.UserId,
-                    projectId,
+                    sfProjectId,
                     n,
                     segment,
                     cancellationToken

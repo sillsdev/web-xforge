@@ -22,6 +22,9 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
 {
+    /// <summary>
+    /// The Machine API service for use with <see cref="Controllers.MachineApiController"/>.
+    /// </summary>
     public class MachineApiService : IMachineApiService
     {
         private readonly IBuildRepository _builds;
@@ -70,7 +73,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task<BuildDto?> GetBuildAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             string buildId,
             long? minRevision,
             CancellationToken cancellationToken
@@ -79,7 +82,7 @@ namespace SIL.XForge.Scripture.Services
             BuildDto? buildDto = null;
 
             // Ensure that the user has permission
-            await EnsurePermissionAsync(curUserId, projectId);
+            await EnsurePermissionAsync(curUserId, sfProjectId);
 
             // Execute the In Process Machine instance, if it is enabled
             // We can only use In Process or the API - not both or unnecessary delays will result
@@ -90,7 +93,7 @@ namespace SIL.XForge.Scripture.Services
             else if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
             {
                 // Execute the Machine API, if it is enabled
-                string translationEngineId = await GetTranslationIdAsync(projectId);
+                string translationEngineId = await GetTranslationIdAsync(sfProjectId);
                 if (string.IsNullOrWhiteSpace(translationEngineId))
                 {
                     throw new DataNotFoundException("The translation engine is not configured");
@@ -107,7 +110,7 @@ namespace SIL.XForge.Scripture.Services
             // Make sure the DTO conforms to the machine-api V2 URLs
             if (buildDto is not null)
             {
-                UpdateDto(buildDto, projectId);
+                UpdateDto(buildDto, sfProjectId);
             }
 
             return buildDto;
@@ -115,7 +118,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task<BuildDto?> GetCurrentBuildAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             long? minRevision,
             CancellationToken cancellationToken
         )
@@ -123,13 +126,13 @@ namespace SIL.XForge.Scripture.Services
             BuildDto? buildDto = null;
 
             // Ensure that the user has permission
-            await EnsurePermissionAsync(curUserId, projectId);
+            await EnsurePermissionAsync(curUserId, sfProjectId);
 
             // We can only use In Process or the API - not both or unnecessary delays will result
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
                 // Execute the In Process Machine instance, if it is enabled
-                Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
+                Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
                 buildDto = await GetInProcessBuildAsync(
                     BuildLocatorType.Engine,
                     engine.Id,
@@ -140,7 +143,7 @@ namespace SIL.XForge.Scripture.Services
             else if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
             {
                 // Otherwise, execute the Machine API, if it is enabled
-                string translationEngineId = await GetTranslationIdAsync(projectId);
+                string translationEngineId = await GetTranslationIdAsync(sfProjectId);
                 if (string.IsNullOrWhiteSpace(translationEngineId))
                 {
                     throw new DataNotFoundException("The translation engine is not configured");
@@ -156,7 +159,7 @@ namespace SIL.XForge.Scripture.Services
             // Make sure the DTO conforms to the machine-api V2 URLs
             if (buildDto is not null)
             {
-                UpdateDto(buildDto, projectId);
+                UpdateDto(buildDto, sfProjectId);
             }
 
             return buildDto;
@@ -164,19 +167,19 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task<EngineDto> GetEngineAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             CancellationToken cancellationToken
         )
         {
             var engineDto = new EngineDto();
 
             // Ensure that the user has permission
-            await EnsurePermissionAsync(curUserId, projectId);
+            await EnsurePermissionAsync(curUserId, sfProjectId);
 
             // Execute the Machine API, if it is enabled
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
             {
-                string translationEngineId = await GetTranslationIdAsync(projectId);
+                string translationEngineId = await GetTranslationIdAsync(sfProjectId);
                 if (!string.IsNullOrWhiteSpace(translationEngineId))
                 {
                     try
@@ -211,17 +214,17 @@ namespace SIL.XForge.Scripture.Services
             // Execute the In Process Machine instance, if it is enabled
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
-                Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
+                Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
                 engineDto = CreateDto(engine);
             }
 
             // Make sure the DTO conforms to the machine-api V2 URLs
-            return UpdateDto(engineDto, projectId);
+            return UpdateDto(engineDto, sfProjectId);
         }
 
         public async Task<WordGraphDto> GetWordGraphAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             IReadOnlyList<string> segment,
             CancellationToken cancellationToken
         )
@@ -229,12 +232,12 @@ namespace SIL.XForge.Scripture.Services
             var wordGraphDto = new WordGraphDto();
 
             // Ensure that the user has permission
-            await EnsurePermissionAsync(curUserId, projectId);
+            await EnsurePermissionAsync(curUserId, sfProjectId);
 
             // Execute the Machine API, if it is enabled
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
             {
-                string translationEngineId = await GetTranslationIdAsync(projectId);
+                string translationEngineId = await GetTranslationIdAsync(sfProjectId);
                 if (!string.IsNullOrWhiteSpace(translationEngineId))
                 {
                     try
@@ -268,7 +271,7 @@ namespace SIL.XForge.Scripture.Services
             // Execute the In Process Machine instance, if it is enabled
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
-                Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
+                Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
                 WordGraph wordGraph = await _engineService.GetWordGraphAsync(engine.Id, segment);
                 wordGraphDto = CreateDto(wordGraph);
             }
@@ -278,19 +281,19 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task<BuildDto> StartBuildAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             CancellationToken cancellationToken
         )
         {
             var buildDto = new BuildDto();
 
             // Ensure that the user has permission
-            await EnsurePermissionAsync(curUserId, projectId);
+            await EnsurePermissionAsync(curUserId, sfProjectId);
 
             // Execute the Machine API, if it is enabled
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
             {
-                string translationEngineId = await GetTranslationIdAsync(projectId);
+                string translationEngineId = await GetTranslationIdAsync(sfProjectId);
                 if (!string.IsNullOrWhiteSpace(translationEngineId))
                 {
                     try
@@ -298,7 +301,7 @@ namespace SIL.XForge.Scripture.Services
                         // We do not need the success boolean result, as we will still rebuild if no files have changed
                         _ = await _machineProjectService.SyncProjectCorporaAsync(
                             curUserId,
-                            projectId,
+                            sfProjectId,
                             cancellationToken
                         );
                         buildDto = await _machineBuildService.StartBuildAsync(translationEngineId, cancellationToken);
@@ -326,28 +329,28 @@ namespace SIL.XForge.Scripture.Services
             // Execute the In Process Machine instance, if it is enabled
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
-                Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
+                Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
                 Build build = await _engineService.StartBuildAsync(engine.Id);
                 buildDto = CreateDto(build);
             }
 
-            return UpdateDto(buildDto, projectId);
+            return UpdateDto(buildDto, sfProjectId);
         }
 
         public async Task TrainSegmentAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             SegmentPairDto segmentPair,
             CancellationToken cancellationToken
         )
         {
             // Ensure that the user has permission
-            await EnsurePermissionAsync(curUserId, projectId);
+            await EnsurePermissionAsync(curUserId, sfProjectId);
 
             // Execute the Machine API, if it is enabled
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
             {
-                string translationEngineId = await GetTranslationIdAsync(projectId);
+                string translationEngineId = await GetTranslationIdAsync(sfProjectId);
                 if (!string.IsNullOrWhiteSpace(translationEngineId))
                 {
                     try
@@ -381,7 +384,7 @@ namespace SIL.XForge.Scripture.Services
             // Execute the In Process Machine instance, if it is enabled
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
-                Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
+                Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
                 await _engineService.TrainSegmentAsync(
                     engine.Id,
                     segmentPair.SourceSegment,
@@ -393,7 +396,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task<TranslationResultDto> TranslateAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             IReadOnlyList<string> segment,
             CancellationToken cancellationToken
         )
@@ -401,12 +404,12 @@ namespace SIL.XForge.Scripture.Services
             var translationResultDto = new TranslationResultDto();
 
             // Ensure that the user has permission
-            await EnsurePermissionAsync(curUserId, projectId);
+            await EnsurePermissionAsync(curUserId, sfProjectId);
 
             // Execute the Machine API, if it is enabled
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
             {
-                string translationEngineId = await GetTranslationIdAsync(projectId);
+                string translationEngineId = await GetTranslationIdAsync(sfProjectId);
                 if (!string.IsNullOrWhiteSpace(translationEngineId))
                 {
                     try
@@ -440,7 +443,7 @@ namespace SIL.XForge.Scripture.Services
             // Execute the In Process Machine instance, if it is enabled
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
-                Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
+                Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
                 TranslationResult translationResult = await _engineService.TranslateAsync(engine.Id, segment);
                 translationResultDto = CreateDto(translationResult);
             }
@@ -450,7 +453,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task<TranslationResultDto[]> TranslateNAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             int n,
             IReadOnlyList<string> segment,
             CancellationToken cancellationToken
@@ -459,12 +462,12 @@ namespace SIL.XForge.Scripture.Services
             TranslationResultDto[] translationResultsDto = Array.Empty<TranslationResultDto>();
 
             // Ensure that the user has permission
-            await EnsurePermissionAsync(curUserId, projectId);
+            await EnsurePermissionAsync(curUserId, sfProjectId);
 
             // Execute the Machine API, if it is enabled
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
             {
-                string translationEngineId = await GetTranslationIdAsync(projectId);
+                string translationEngineId = await GetTranslationIdAsync(sfProjectId);
                 if (!string.IsNullOrWhiteSpace(translationEngineId))
                 {
                     try
@@ -499,7 +502,7 @@ namespace SIL.XForge.Scripture.Services
             // Execute the In Process Machine instance, if it is enabled
             if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
             {
-                Engine engine = await GetInProcessEngineAsync(projectId, cancellationToken);
+                Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
                 IEnumerable<TranslationResult> translationResults = await _engineService.TranslateAsync(
                     engine.Id,
                     n,
@@ -599,31 +602,31 @@ namespace SIL.XForge.Scripture.Services
             return wordPairs.ToArray();
         }
 
-        private static BuildDto UpdateDto(BuildDto buildDto, string projectId)
+        private static BuildDto UpdateDto(BuildDto buildDto, string sfProjectId)
         {
-            buildDto.Href = MachineApi.GetBuildHref(projectId, buildDto.Id);
-            buildDto.Engine = new ResourceDto { Href = MachineApi.GetEngineHref(projectId), Id = projectId };
+            buildDto.Href = MachineApi.GetBuildHref(sfProjectId, buildDto.Id);
+            buildDto.Engine = new ResourceDto { Href = MachineApi.GetEngineHref(sfProjectId), Id = sfProjectId };
 
             // We use this special ID format so that the DTO ID can be an optional URL parameter
-            buildDto.Id = $"{projectId}.{buildDto.Id}";
+            buildDto.Id = $"{sfProjectId}.{buildDto.Id}";
             return buildDto;
         }
 
-        private static EngineDto UpdateDto(EngineDto engineDto, string projectId)
+        private static EngineDto UpdateDto(EngineDto engineDto, string sfProjectId)
         {
-            engineDto.Href = MachineApi.GetEngineHref(projectId);
-            engineDto.Id = projectId;
+            engineDto.Href = MachineApi.GetEngineHref(sfProjectId);
+            engineDto.Id = sfProjectId;
             engineDto.Projects = new[]
             {
-                new ResourceDto { Href = MachineApi.GetEngineHref(projectId), Id = projectId },
+                new ResourceDto { Href = MachineApi.GetEngineHref(sfProjectId), Id = sfProjectId },
             };
             return engineDto;
         }
 
-        private async Task EnsurePermissionAsync(string curUserId, string projectId)
+        private async Task EnsurePermissionAsync(string curUserId, string sfProjectId)
         {
             // Load the project from the realtime service
-            Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(projectId);
+            Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
             if (!attempt.TryResult(out SFProject project))
             {
                 throw new DataNotFoundException("The project does not exist.");
@@ -674,9 +677,13 @@ namespace SIL.XForge.Scripture.Services
             return buildDto;
         }
 
-        private async Task<Engine> GetInProcessEngineAsync(string projectId, CancellationToken cancellationToken)
+        private async Task<Engine> GetInProcessEngineAsync(string sfProjectId, CancellationToken cancellationToken)
         {
-            Engine? engine = await _engines.GetByLocatorAsync(EngineLocatorType.Project, projectId, cancellationToken);
+            Engine? engine = await _engines.GetByLocatorAsync(
+                EngineLocatorType.Project,
+                sfProjectId,
+                cancellationToken
+            );
             if (engine is null)
             {
                 throw new DataNotFoundException("The engine does not exist.");
@@ -685,10 +692,10 @@ namespace SIL.XForge.Scripture.Services
             return engine;
         }
 
-        private async Task<string> GetTranslationIdAsync(string projectId)
+        private async Task<string> GetTranslationIdAsync(string sfProjectId)
         {
             // Load the project secret, so we can get the translation engine ID
-            if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
+            if (!(await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
             {
                 return string.Empty;
             }
