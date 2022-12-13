@@ -211,8 +211,8 @@ namespace SIL.XForge.Realtime
 
         private class TestEnvironment
         {
-            public RealtimeService Service = null;
-            public IMongoDatabase MongoDatabase = Substitute.For<IMongoDatabase>();
+            public readonly RealtimeService Service;
+            public readonly IMongoDatabase MongoDatabase = Substitute.For<IMongoDatabase>();
 
             public TestEnvironment()
             {

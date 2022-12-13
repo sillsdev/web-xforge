@@ -57,8 +57,8 @@ namespace SIL.XForge.Scripture.Services
 
         private class TestEnvironment
         {
-            public JwtInternetSharedRepositorySource RepoSource;
-            public IRESTClient MockPTArchivesClient;
+            public readonly JwtInternetSharedRepositorySource RepoSource;
+            public readonly IRESTClient MockPTArchivesClient;
 
             public TestEnvironment()
             {

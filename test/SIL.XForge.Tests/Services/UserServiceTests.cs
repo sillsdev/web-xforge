@@ -295,9 +295,9 @@ namespace SIL.XForge.Services
             public UserService Service { get; }
             public MemoryRepository<UserSecret> UserSecrets { get; }
             public MemoryRealtimeService RealtimeService { get; }
-            public IAuthService AuthService = Substitute.For<IAuthService>();
-            public DateTime IssuedAt => DateTime.UtcNow;
-            public IProjectService ProjectService = Substitute.For<IProjectService>();
+            public readonly IAuthService AuthService = Substitute.For<IAuthService>();
+            public readonly DateTime IssuedAt = DateTime.UtcNow;
+            public readonly IProjectService ProjectService = Substitute.For<IProjectService>();
 
             public TestEnvironment()
             {

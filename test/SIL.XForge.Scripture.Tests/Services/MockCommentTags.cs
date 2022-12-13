@@ -11,7 +11,7 @@ namespace SIL.XForge.Scripture.Services
 
         public CommentTags.CommentTagList TagsList
         {
-            set { list = value; }
+            set => list = value;
         }
 
         public static MockCommentTags GetCommentTags(string username, string ptProjectId)
@@ -29,11 +29,11 @@ namespace SIL.XForge.Scripture.Services
             for (int i = 0; i < tagIds.Length; i++)
             {
                 int tagId = tagIds[i];
-                tags[i] = new Paratext.Data.ProjectComments.CommentTag($"tag{tagId}", $"icon{tagId}", tagId);
+                tags[i] = new CommentTag($"tag{tagId}", $"icon{tagId}", tagId);
             }
-            var list = new CommentTags.CommentTagList();
-            list.SerializedData = tags;
-            TagsList = list;
+            var tagsList = new CommentTagList();
+            tagsList.SerializedData = tags;
+            TagsList = tagsList;
         }
 
         protected override void ReadFromDisk()

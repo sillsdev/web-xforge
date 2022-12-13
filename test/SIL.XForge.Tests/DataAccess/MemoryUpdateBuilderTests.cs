@@ -63,7 +63,6 @@ namespace SIL.XForge.DataAccess
         {
             // Setup environment
             var env = new TestEnvironment();
-            string oldValue = env.TestEntity.TestStringField;
             string expected = "updated_test_value";
 
             // Test string field set
@@ -91,7 +90,6 @@ namespace SIL.XForge.DataAccess
         {
             // Setup environment
             var env = new TestEnvironment(true);
-            string oldValue = env.TestEntity.TestStringField;
             string expected = "updated_test_value";
 
             // Test string field set
