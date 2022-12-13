@@ -378,43 +378,40 @@ namespace SIL.XForge.Scripture.Services
         private static string GetTextFileData(IText text)
         {
             var sb = new StringBuilder();
-            foreach (TextSegment segment in text.GetSegments())
+            foreach (TextSegment segment in text.GetSegments().Where(s => !s.IsEmpty))
             {
-                if (!segment.IsEmpty)
+                if (segment.SegmentRef is TextSegmentRef textSegmentRef)
                 {
-                    if (segment.SegmentRef is TextSegmentRef textSegmentRef)
-                    {
-                        sb.Append(string.Join('-', textSegmentRef.Keys));
-                    }
-                    else
-                    {
-                        sb.Append(segment.SegmentRef);
-                    }
-
-                    sb.Append('\t');
-                    sb.Append(string.Join(' ', segment.Segment));
-                    sb.Append('\t');
-                    if (segment.IsSentenceStart)
-                    {
-                        sb.Append("ss,");
-                    }
-
-                    if (segment.IsInRange)
-                    {
-                        sb.Append("ir,");
-                    }
-
-                    if (segment.IsRangeStart)
-                    {
-                        sb.Append("rs,");
-                    }
-
-                    // Strip the last comma, or the tab if there are no flags
-                    sb.Length--;
-
-                    // Append the Unix EOL to ensure consistency as this text data is uploaded to the Machine API
-                    sb.Append('\n');
+                    sb.Append(string.Join('-', textSegmentRef.Keys));
                 }
+                else
+                {
+                    sb.Append(segment.SegmentRef);
+                }
+
+                sb.Append('\t');
+                sb.Append(string.Join(' ', segment.Segment));
+                sb.Append('\t');
+                if (segment.IsSentenceStart)
+                {
+                    sb.Append("ss,");
+                }
+
+                if (segment.IsInRange)
+                {
+                    sb.Append("ir,");
+                }
+
+                if (segment.IsRangeStart)
+                {
+                    sb.Append("rs,");
+                }
+
+                // Strip the last comma, or the tab if there are no flags
+                sb.Length--;
+
+                // Append the Unix EOL to ensure consistency as this text data is uploaded to the Machine API
+                sb.Append('\n');
             }
 
             return sb.ToString();
@@ -450,14 +447,10 @@ namespace SIL.XForge.Scripture.Services
 
             // Get the language tag
             string languageTag;
-            if (type == TextCorpusType.Target)
-            {
-                languageTag = project.WritingSystem.Tag;
-            }
-            else
-            {
-                languageTag = project.TranslateConfig.Source.WritingSystem.Tag;
-            }
+            languageTag =
+                type == TextCorpusType.Target
+                    ? project.WritingSystem.Tag
+                    : project.TranslateConfig.Source.WritingSystem.Tag;
 
             // Get the files we have already synced
             List<MachineCorpusFile> previousCorpusFiles =
@@ -505,11 +498,11 @@ namespace SIL.XForge.Scripture.Services
                         );
 
                         // Record the fileId and checksum, matching the text id
-                        int? index = projectSecret.MachineData?.Corpora[corpusId].Files.FindIndex(
-                            f => f.TextId == textId
-                        );
+                        // We coalesce to -1, as FindIndex returns -1 if not found
+                        int index =
+                            projectSecret.MachineData?.Corpora[corpusId].Files.FindIndex(f => f.TextId == textId) ?? -1;
 
-                        if (previousCorpusFile is null || index is null or -1)
+                        if (previousCorpusFile is null || index == -1)
                         {
                             // Add the file information to the project secret
                             projectSecret = await _projectSecrets.UpdateAsync(
@@ -533,15 +526,9 @@ namespace SIL.XForge.Scripture.Services
                             projectSecret = await _projectSecrets.UpdateAsync(
                                 projectSecret,
                                 u =>
-                                    u.Set(
-                                            p => p.MachineData.Corpora[corpusId].Files[index.Value].FileChecksum,
-                                            checksum
-                                        )
-                                        .Set(p => p.MachineData.Corpora[corpusId].Files[index.Value].FileId, fileId)
-                                        .Set(
-                                            p => p.MachineData.Corpora[corpusId].Files[index.Value].LanguageTag,
-                                            languageTag
-                                        )
+                                    u.Set(p => p.MachineData.Corpora[corpusId].Files[index].FileChecksum, checksum)
+                                        .Set(p => p.MachineData.Corpora[corpusId].Files[index].FileId, fileId)
+                                        .Set(p => p.MachineData.Corpora[corpusId].Files[index].LanguageTag, languageTag)
                             );
                         }
 

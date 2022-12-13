@@ -353,7 +353,7 @@ namespace SIL.XForge.Scripture.Services
             env.FileSystemService.EnumerateFiles(path).Returns(new[] { filePath });
             env.FileSystemService
                 .OpenFile(filePath, FileMode.Open)
-                .Returns(new MemoryStream(Encoding.UTF8.GetBytes("file_contents")));
+                .Returns(new MemoryStream("file_contents"u8.ToArray()));
 
             // SUT
             string actual = await env.Service.UploadParatextCorpusAsync(
