@@ -408,7 +408,7 @@ namespace SIL.XForge.Realtime
             List<Json0Op> op = builder.Op;
 
             // SUT
-            var result = await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version);
+            await env.Service.SubmitOpAsync(collection, id, op, snapshot.Data, snapshot.Version);
 
             // Verify queue
             Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
@@ -421,8 +421,8 @@ namespace SIL.XForge.Realtime
 
         private class TestEnvironment
         {
-            public Connection Service = null;
-            public RealtimeService RealtimeService = null;
+            public readonly Connection Service;
+            public readonly RealtimeService RealtimeService;
 
             public TestEnvironment()
             {

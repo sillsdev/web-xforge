@@ -1011,30 +1011,23 @@ namespace SIL.XForge.Scripture.Services
         [Test]
         public async Task RunAsync_NoRecordOfSyncedToRepositoryVersion_DoesFullSync()
         {
-            foreach (bool isChanged in new bool[] { true, false })
-            {
-                var env = new TestEnvironment();
-                string projectSFId = "project03";
-                string userId = "user01";
+            var env = new TestEnvironment();
+            string projectSFId = "project03";
+            string userId = "user01";
 
-                SFProject project = env.SetupProjectWithExpectedImportedRev(projectSFId, null);
-                Assert.That(
-                    project.Sync.DataInSync,
-                    Is.Null,
-                    "setup. Should be testing what happens when this is null."
-                );
-                string projectPTId = project.ParatextId;
-                env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId).Returns("1", "2");
-                // The expected after-sync repository version can be past the original, before-sync project version,
-                // even if there were no local changes, since there may be incoming changes from the PT Archives server.
-                string expectedRepositoryVersion = "2";
-                // SUT
-                await env.RunAndAssertContinuesAsync(projectSFId, userId, expectedRepositoryVersion);
-                // Shouldn't be setting repo rev.
-                env.ParatextService
-                    .DidNotReceive()
-                    .SetRepoToRevision(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<string>());
-            }
+            SFProject project = env.SetupProjectWithExpectedImportedRev(projectSFId, null);
+            Assert.That(project.Sync.DataInSync, Is.Null, "setup. Should be testing what happens when this is null.");
+            string projectPTId = project.ParatextId;
+            env.ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), projectPTId).Returns("1", "2");
+            // The expected after-sync repository version can be past the original, before-sync project version,
+            // even if there were no local changes, since there may be incoming changes from the PT Archives server.
+            string expectedRepositoryVersion = "2";
+            // SUT
+            await env.RunAndAssertContinuesAsync(projectSFId, userId, expectedRepositoryVersion);
+            // Shouldn't be setting repo rev.
+            env.ParatextService
+                .DidNotReceive()
+                .SetRepoToRevision(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<string>());
         }
 
         [Test]
@@ -1142,7 +1135,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-            var cancellationTokenSource = new CancellationTokenSource();
+            using var cancellationTokenSource = new CancellationTokenSource();
 
             // Setup a trap to crash the task
             env.NotesMapper
@@ -1217,7 +1210,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-            var cancellationTokenSource = new CancellationTokenSource();
+            using var cancellationTokenSource = new CancellationTokenSource();
 
             // Setup a trap to cancel the task
             env.NotesMapper
@@ -1264,7 +1257,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-            var cancellationTokenSource = new CancellationTokenSource();
+            using var cancellationTokenSource = new CancellationTokenSource();
 
             // Setup a trap to cancel the task
             env.ParatextService
@@ -1297,7 +1290,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.SetupSFData(true, false, true, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-            var cancellationTokenSource = new CancellationTokenSource();
+            using var cancellationTokenSource = new CancellationTokenSource();
             env.ParatextService.BackupExists(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(true);
             env.ParatextService.RestoreRepository(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(false);
 
@@ -1331,7 +1324,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-            var cancellationTokenSource = new CancellationTokenSource();
+            using var cancellationTokenSource = new CancellationTokenSource();
 
             // Cancel the token before awaiting the task
             cancellationTokenSource.Cancel();
@@ -1355,7 +1348,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(substituteRealtimeService: true);
             env.SetupSFData(true, true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-            var cancellationTokenSource = new CancellationTokenSource();
+            using var cancellationTokenSource = new CancellationTokenSource();
 
             // Return the project so InitAsync will execute successfully
             var project = Substitute.For<IDocument<SFProject>>();
@@ -1404,7 +1397,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment(substituteRealtimeService: true);
             env.SetupSFData(true, true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-            var cancellationTokenSource = new CancellationTokenSource();
+            using var cancellationTokenSource = new CancellationTokenSource();
 
             // Throw an TaskCanceledException in InitAsync after the exclusions have been called
             // InitAsync calls the IConnection.FetchAsync() extension, which calls IConnection.Get()
@@ -1446,7 +1439,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.SetupSFData(true, true, false, false);
             env.SetupPTData(new Book("MAT", 2), new Book("MRK", 2));
-            var cancellationTokenSource = new CancellationTokenSource();
+            using var cancellationTokenSource = new CancellationTokenSource();
 
             // Run the task
             await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
@@ -2872,7 +2865,7 @@ namespace SIL.XForge.Scripture.Services
                     {
                         { "user01", "User 1" },
                         { "user02", "User 2" },
-                        { "user03", "User 3" }
+                        { "user03", "User 3" },
                     };
                     ParatextService
                         .GetParatextUsernameMappingAsync(
@@ -2881,15 +2874,6 @@ namespace SIL.XForge.Scripture.Services
                             CancellationToken.None
                         )
                         .Returns(userIdsToUsernames);
-                }
-                else
-                {
-                    var noteChange = new Paratext.Data.ProjectComments.Comment(new SFParatextUser("User 1"))
-                    {
-                        Thread = threadId,
-                        VerseRefStr = verseRef
-                    };
-                    var changeList = (new[] { (new[] { noteChange }).ToList() }).ToList();
                 }
             }
 

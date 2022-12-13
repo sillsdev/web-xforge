@@ -31,7 +31,7 @@ namespace SIL.XForge.Services
             env.FileSystemService.OpenFile(Arg.Any<string>(), FileMode.Create).Returns(new MemoryStream());
             env.FileSystemService.FileExists(filePath).Returns(true);
 
-            var stream = new MemoryStream();
+            using var stream = new MemoryStream();
             Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, ".wav", stream);
             Assert.That(
                 uri.ToString().StartsWith($"http://localhost/assets/audio/project01/user01_{dataId}.mp3?t="),
@@ -49,7 +49,7 @@ namespace SIL.XForge.Services
             env.FileSystemService.OpenFile(Arg.Any<string>(), FileMode.Create).Returns(new MemoryStream());
             env.FileSystemService.FileExists(filePath).Returns(true);
 
-            var stream = new MemoryStream();
+            using var stream = new MemoryStream();
             Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, ".mp3", stream);
             Assert.That(
                 uri.ToString().StartsWith($"http://localhost/assets/audio/project01/user01_{dataId}.mp3?t="),
@@ -64,7 +64,7 @@ namespace SIL.XForge.Services
         {
             var env = new TestEnvironment();
 
-            var stream = new MemoryStream();
+            using var stream = new MemoryStream();
             Assert.ThrowsAsync<FormatException>(
                 () => env.Service.SaveAudioAsync(User01, Project01, "/../test/abc.txt", ".wav", stream)
             );
@@ -75,7 +75,7 @@ namespace SIL.XForge.Services
         {
             var env = new TestEnvironment();
 
-            var stream = new MemoryStream();
+            using var stream = new MemoryStream();
             Assert.ThrowsAsync<DataNotFoundException>(
                 () => env.Service.SaveAudioAsync(User01, "/../abc.txt", "507f1f77bcf86cd799439011", ".wav", stream)
             );
