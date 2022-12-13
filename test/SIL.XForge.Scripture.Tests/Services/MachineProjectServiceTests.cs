@@ -83,7 +83,13 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
             env.MachineTranslationService
-                .CreateTranslationEngineAsync(Project01, Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None)
+                .CreateTranslationEngineAsync(
+                    Project01,
+                    Arg.Any<string>(),
+                    Arg.Any<string>(),
+                    true,
+                    CancellationToken.None
+                )
                 .Returns(Task.FromResult(TranslationEngine01));
 
             // SUT
