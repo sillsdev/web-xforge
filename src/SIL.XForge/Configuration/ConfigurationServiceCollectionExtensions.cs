@@ -16,6 +16,7 @@ namespace SIL.XForge.Configuration
             services.AddOptions<RealtimeOptions>(configuration);
             services.AddOptions<AuthOptions>(configuration);
             services.AddOptions<AudioOptions>(configuration);
+            services.AddOptions<MachineOptions>(configuration);
             return services;
         }
 

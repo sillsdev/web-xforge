@@ -12,7 +12,6 @@ using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Paratext.Data.ProjectComments;
 using Paratext.Data.ProjectSettingsAccess;
-using SIL.Machine.WebApi.Services;
 using SIL.Scripture;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -95,7 +94,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
-            await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
+            await env.MachineProjectService
+                .DidNotReceive()
+                .BuildProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
             env.VerifyProjectSync(true);
 
             // Verify the sync metrics
@@ -132,7 +133,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
-            await env.EngineService.Received().StartBuildByProjectIdAsync("project01");
+            await env.MachineProjectService.Received().BuildProjectAsync("user01", "project01", CancellationToken.None);
             env.VerifyProjectSync(true);
 
             // Verify the sync metrics
@@ -169,7 +170,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
-            await env.EngineService.Received().StartBuildByProjectIdAsync("project01");
+            await env.MachineProjectService.Received().BuildProjectAsync("user01", "project01", CancellationToken.None);
             env.VerifyProjectSync(true);
 
             // Verify the sync metrics
@@ -205,7 +206,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsQuestion("MRK", 1), Is.False);
             Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
 
-            await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
+            await env.MachineProjectService
+                .DidNotReceive()
+                .BuildProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
             env.VerifyProjectSync(true);
 
             // Verify the sync metrics
@@ -232,7 +235,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.ContainsText("project02", "MAT", 1), Is.False);
             Assert.That(env.ContainsText("project02", "MAT", 2), Is.False);
 
-            await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync("project01");
+            await env.MachineProjectService
+                .DidNotReceive()
+                .BuildProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
             env.VerifyProjectSync(true);
 
             // Verify the sync metrics
@@ -2258,7 +2263,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                 );
                 SFProjectService = Substitute.For<ISFProjectService>();
-                EngineService = Substitute.For<IEngineService>();
+                MachineProjectService = Substitute.For<IMachineProjectService>();
                 ParatextService = Substitute.For<IParatextService>();
 
                 var ptUserRoles = new Dictionary<string, string>
@@ -2319,7 +2324,7 @@ namespace SIL.XForge.Scripture.Services
                     _projectSecrets,
                     _syncMetrics,
                     SFProjectService,
-                    EngineService,
+                    MachineProjectService,
                     ParatextService,
                     substituteRealtimeService ? SubstituteRealtimeService : RealtimeService,
                     DeltaUsxMapper,
@@ -2330,7 +2335,7 @@ namespace SIL.XForge.Scripture.Services
 
             public ParatextSyncRunner Runner { get; }
             public ISFProjectService SFProjectService { get; }
-            public IEngineService EngineService { get; }
+            public IMachineProjectService MachineProjectService { get; }
             public IParatextNotesMapper NotesMapper { get; }
             public IParatextService ParatextService { get; }
             public SFMemoryRealtimeService RealtimeService { get; }
