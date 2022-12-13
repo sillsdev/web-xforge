@@ -9,40 +9,40 @@ namespace SIL.XForge.Scripture.Services
     {
         Task<BuildDto?> GetBuildAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             string buildId,
             long? minRevision,
             CancellationToken cancellationToken
         );
         Task<BuildDto?> GetCurrentBuildAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             long? minRevision,
             CancellationToken cancellationToken
         );
-        Task<EngineDto> GetEngineAsync(string curUserId, string projectId, CancellationToken cancellationToken);
+        Task<EngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
         Task<WordGraphDto> GetWordGraphAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             IReadOnlyList<string> segment,
             CancellationToken cancellationToken
         );
-        Task<BuildDto> StartBuildAsync(string curUserId, string projectId, CancellationToken cancellationToken);
+        Task<BuildDto> StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
         Task TrainSegmentAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             SegmentPairDto segmentPair,
             CancellationToken cancellationToken
         );
         Task<TranslationResultDto> TranslateAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             IReadOnlyList<string> segment,
             CancellationToken cancellationToken
         );
         Task<TranslationResultDto[]> TranslateNAsync(
             string curUserId,
-            string projectId,
+            string sfProjectId,
             int n,
             IReadOnlyList<string> segment,
             CancellationToken cancellationToken
