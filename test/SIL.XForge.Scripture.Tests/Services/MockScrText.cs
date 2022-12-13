@@ -1,13 +1,13 @@
 using System.Collections.Generic;
+using NSubstitute;
 using Paratext.Data;
+using Paratext.Data.Languages;
 using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.ProjectSettingsAccess;
-using SIL.Scripture;
-using NSubstitute;
-using Paratext.Data.Languages;
-using PtxUtils;
-using SIL.WritingSystems;
 using Paratext.Data.Users;
+using PtxUtils;
+using SIL.Scripture;
+using SIL.WritingSystems;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -19,7 +19,7 @@ namespace SIL.XForge.Scripture.Services
         public MockScrText(ParatextUser associatedPtUser, ProjectName projectName) : base(associatedPtUser)
         {
             this.projectName = projectName;
-            Settings = new MockProjectSettings(this);
+            _settings = new MockProjectSettings(this);
             // ScrText sets its cachedGuid from the settings Guid. Here we are doing it the other way around.
             // Some tests may need both MockScrText.Guid and MockScrText.Settings.Guid to be set.
             _language = new MockScrLanguage(this);
@@ -44,19 +44,16 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="singleChapter">True to get a single chapter.</param>
         /// <param name="doMapIn">true to do mapping (normally true)</param>
         /// <returns>Text of book or chapter</returns>
-        public override string GetText(VerseRef vref, bool singleChapter, bool doMapIn)
-        {
-            string usfm;
-            if (Data.TryGetValue(singleChapter ? vref.Book + " " + vref.Chapter : vref.Book, out usfm))
-                return usfm;
-            return "";
-        }
+        public override string GetText(VerseRef vref, bool singleChapter, bool doMapIn) =>
+            Data.TryGetValue(singleChapter ? vref.Book + " " + vref.Chapter : vref.Book, out string usfm)
+                ? usfm
+                : string.Empty;
 
         protected override ProjectFileManager CreateFileManager()
         {
-            _fileManager = Substitute.For<ProjectFileManager>(this, null);
-            _fileManager.IsWritable.Returns(true);
-            return _fileManager;
+            ProjectFileManager fileManager = Substitute.For<ProjectFileManager>(this, null);
+            fileManager.IsWritable.Returns(true);
+            return fileManager;
         }
 
         protected override PermissionManager CreatePermissionManager()
@@ -64,13 +61,13 @@ namespace SIL.XForge.Scripture.Services
             return new ComparableProjectPermissionManager(this);
         }
 
-        public override ProjectSettings Settings { get; }
+        public override ProjectSettings Settings => _settings;
         public override ScrStylesheet DefaultStylesheet => new MockScrStylesheet("./usfm.sty");
         public override string Directory => projectName.ProjectPath;
         public override string Name => projectName.ShortName;
         public override ScrLanguage Language => _language;
-        public ProjectFileManager _fileManager;
-        private ScrLanguage _language;
+        private readonly ScrLanguage _language;
+        private readonly ProjectSettings _settings;
     }
 
     /// <summary>
