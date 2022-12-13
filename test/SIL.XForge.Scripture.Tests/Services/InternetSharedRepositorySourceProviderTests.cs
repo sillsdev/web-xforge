@@ -61,8 +61,8 @@ namespace SIL.XForge.Scripture.Services
 
         private class TestEnvironment
         {
-            public IJwtTokenHelper MockJwtTokenHelper;
-            public InternetSharedRepositorySourceProvider Provider;
+            public readonly IJwtTokenHelper MockJwtTokenHelper;
+            public readonly InternetSharedRepositorySourceProvider Provider;
 
             public TestEnvironment()
             {

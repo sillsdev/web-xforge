@@ -39,7 +39,7 @@ namespace SIL.XForge.Scripture.Services
                 thread.OriginalContextBefore
                 + thread.OriginalSelectedText
                 + thread.OriginalContextAfter
-                + $"{selection}-{thread.VerseRef.ToString()}-{thread.TagIcon}";
+                + $"{selection}-{thread.VerseRef}-{thread.TagIcon}";
             return result;
         }
 
