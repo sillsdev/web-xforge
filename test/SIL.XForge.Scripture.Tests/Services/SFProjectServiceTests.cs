@@ -479,7 +479,6 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             SFProject project = env.GetProject(Project03);
-            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
 
             Assert.That(project.UserRoles.ContainsKey(User04), Is.False, "setup");
             var invitees = await env.Service.InvitedUsersAsync(User01, Project03);
@@ -494,7 +493,7 @@ namespace SIL.XForge.Scripture.Services
             // Use the sharekey linked to user03
             await env.Service.CheckLinkSharingAsync(User04, Project03, "key1234");
             project = env.GetProject(Project03);
-            projectSecret = env.ProjectSecrets.Get(Project03);
+            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
             Assert.That(project.UserRoles.ContainsKey(User04), Is.True, "User should have been added to project");
             Assert.That(
                 projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"),
@@ -1727,7 +1726,6 @@ namespace SIL.XForge.Scripture.Services
         {
             string project01PTId = "paratext_" + Project01;
             var env = new TestEnvironment();
-            SFProject sfProject = env.GetProject(Project01);
             env.ParatextService.GetBookList(Arg.Any<UserSecret>(), project01PTId).Returns(new List<int>() { 40, 41 });
             Assert.That(env.ProjectSecrets.Contains(User04), Is.False, "setup");
 
@@ -1746,16 +1744,14 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             string project01PTId = "paratext_" + Project01;
 
-            SFProject sfProject = env.GetProject(Project01);
-
             env.ParatextService.GetBookList(Arg.Any<UserSecret>(), project01PTId).Returns(new List<int>() { 40, 41 });
 
-            var ptBookPermissions = new Dictionary<string, string>()
+            var ptBookPermissions = new Dictionary<string, string>
             {
                 { User01, TextInfoPermission.Read },
                 { User02, TextInfoPermission.Write },
             };
-            var ptChapterPermissions = new Dictionary<string, string>()
+            var ptChapterPermissions = new Dictionary<string, string>
             {
                 { User01, TextInfoPermission.Write },
                 { User02, TextInfoPermission.Read },
@@ -1780,7 +1776,7 @@ namespace SIL.XForge.Scripture.Services
                 )
                 .Returns(Task.FromResult(ptChapterPermissions));
 
-            sfProject = env.GetProject(Project01);
+            SFProject sfProject = env.GetProject(Project01);
             Assert.That(sfProject.Texts.First().Permissions.Count, Is.EqualTo(0), "setup");
             Assert.That(sfProject.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0), "setup");
 
@@ -1809,16 +1805,14 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             string project01PTId = "paratext_" + Project01;
 
-            SFProject sfProject = env.GetProject(Project01);
-
             env.ParatextService.GetBookList(Arg.Any<UserSecret>(), project01PTId).Returns(new List<int>() { 40, 41 });
 
-            var ptBookPermissions = new Dictionary<string, string>()
+            var ptBookPermissions = new Dictionary<string, string>
             {
                 { User01, TextInfoPermission.Read },
                 { User02, TextInfoPermission.None },
             };
-            var ptChapterPermissions = new Dictionary<string, string>()
+            var ptChapterPermissions = new Dictionary<string, string>
             {
                 { User01, TextInfoPermission.Read },
                 { User02, TextInfoPermission.None },
@@ -1843,7 +1837,7 @@ namespace SIL.XForge.Scripture.Services
                 )
                 .Returns(Task.FromResult(ptChapterPermissions));
 
-            sfProject = env.GetProject(Project01);
+            SFProject sfProject = env.GetProject(Project01);
             Assert.That(sfProject.Texts.First().Permissions.Count, Is.EqualTo(0), "setup");
             Assert.That(sfProject.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0), "setup");
 
@@ -1872,22 +1866,20 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             string project01PTId = "paratext_" + Project01;
 
-            SFProject sfProject = env.GetProject(Project01);
-
-            var bookList = new List<int>() { 40, 41 };
+            var bookList = new List<int> { 40, 41 };
             env.ParatextService.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns(bookList);
 
-            var ptBookPermissions = new Dictionary<string, string>()
+            var ptBookPermissions = new Dictionary<string, string>
             {
                 { User01, TextInfoPermission.Write },
                 { User02, TextInfoPermission.Write },
             };
-            var ptChapterPermissions = new Dictionary<string, string>()
+            var ptChapterPermissions = new Dictionary<string, string>
             {
                 { User01, TextInfoPermission.Write },
                 { User02, TextInfoPermission.Write },
             };
-            var ptSourcePermissions = new Dictionary<string, string>()
+            var ptSourcePermissions = new Dictionary<string, string>
             {
                 { User01, TextInfoPermission.Read },
                 { User02, TextInfoPermission.None },
@@ -1922,7 +1914,7 @@ namespace SIL.XForge.Scripture.Services
                 )
                 .Returns(Task.FromResult(ptSourcePermissions));
 
-            sfProject = env.GetProject(Project01);
+            SFProject sfProject = env.GetProject(Project01);
             Assert.That(sfProject.Texts.First().Permissions.Count, Is.EqualTo(0), "setup");
             Assert.That(sfProject.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0), "setup");
 

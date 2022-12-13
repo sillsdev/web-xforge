@@ -381,7 +381,7 @@ namespace SIL.XForge.Scripture.Services
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             // Set up mock REST client to return a successful GET request
-            ISFRestClientFactory mockRestClientFactory = env.SetRestClientFactory(user01Secret);
+            env.SetRestClientFactory(user01Secret);
 
             var paratextId = "resid_is_16_char";
             var permission = await env.Service.GetResourcePermissionAsync(
@@ -448,10 +448,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             string ptProjectId = env.PTProjectIds[env.Project01].Id;
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
-                user01Secret,
-                UserRoles.Administrator
-            );
+            env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.MockScrTextCollection.FindById(env.Username01, ptProjectId).Returns(i => null);
 
             // SUT
@@ -1025,7 +1022,6 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             env.AddTextDoc(40, 1);
             string threadId = "thread01";
-            string threadOwner = env.User01;
 
             env.MockGuidService.NewObjectId().Returns("thread01note01");
 
@@ -1124,7 +1120,7 @@ namespace SIL.XForge.Scripture.Services
             };
             env.AddParatextComment(comment);
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            using (await env.RealtimeService.ConnectAsync())
             {
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = new IDocument<NoteThread>[0];
                 Dictionary<int, ChapterDelta> chapterDeltas = new Dictionary<int, ChapterDelta>();
@@ -1715,7 +1711,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             );
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            using (await env.RealtimeService.ConnectAsync())
             {
                 var deltas = env.GetChapterDeltasByBook(
                     env.Project01,
@@ -2141,10 +2137,7 @@ namespace SIL.XForge.Scripture.Services
             string projectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
-                user01Secret,
-                UserRoles.Administrator
-            );
+            env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.SetupSuccessfulSendReceive();
             // Setup share changes to be unsuccessful
             env.MockSharingLogicWrapper
@@ -2174,7 +2167,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
-            string projectId = env.SetupProject(env.Project01, associatedPtUser);
+            env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
@@ -2196,10 +2189,7 @@ namespace SIL.XForge.Scripture.Services
             string projectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
-                user01Secret,
-                UserRoles.Administrator
-            );
+            env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.SetupSuccessfulSendReceive();
             // Setup share changes to be unsuccessful, but return true
             // This scenario occurs if a project is locked on the PT server
@@ -2388,10 +2378,7 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
-                user01Secret,
-                UserRoles.Administrator
-            );
+            env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.SetupSuccessfulSendReceive();
             env.SetRestClientFactory(user01Secret);
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
@@ -2407,10 +2394,7 @@ namespace SIL.XForge.Scripture.Services
             var associatedPtUser = new SFParatextUser(env.Username01);
             string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
-                user01Secret,
-                UserRoles.Administrator
-            );
+            env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
             env.SetupSuccessfulSendReceive();
             env.SetRestClientFactory(user01Secret);
             ScrTextCollection.Initialize("/srv/scriptureforge/projects");
@@ -2527,16 +2511,10 @@ namespace SIL.XForge.Scripture.Services
 
             source
                 .GetRepositories()
-                .Returns(x =>
-                {
-                    throw Paratext.Data.HttpException.Create(
-                        new WebException("401: Unauthorized"),
-                        (HttpWebRequest)null
-                    );
-                });
+                .Returns(x => throw HttpException.Create(new WebException("401: Unauthorized"), (HttpWebRequest)null));
 
             // SUT
-            Paratext.Data.HttpException thrown = Assert.ThrowsAsync<Paratext.Data.HttpException>(
+            Assert.ThrowsAsync<HttpException>(
                 () => env.Service.GetProjectRolesAsync(userSecret, project, CancellationToken.None)
             );
 
@@ -2589,7 +2567,7 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             // Note that the following user secret has same PT username and id as the other user. This presumably
             // represents a bad DB state.
-            var dos = env.MakeUserSecret(env.User02, env.Username01, env.ParatextUserId01);
+            env.MakeUserSecret(env.User02, env.Username01, env.ParatextUserId01);
             env.MockJwtTokenHelper
                 .GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == env.User02))
                 .Returns(env.Username01);
@@ -2944,7 +2922,7 @@ namespace SIL.XForge.Scripture.Services
         public async Task CanUserAuthenticateToPTArchivesAsync_Works()
         {
             var env = new TestEnvironment();
-            UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             string userSFId = env.User01;
 
@@ -3262,33 +3240,27 @@ namespace SIL.XForge.Scripture.Services
             public readonly string AlternateBefore = "Alternate before ";
             public readonly string AlternateAfter = " alternate after.";
             public readonly string ReattachedSelectedText = "reattached text";
-            public Dictionary<string, string> usernamesToIds = new Dictionary<string, string>
-            {
-                { "User 01", "user01" },
-                { "User 02", "user02" },
-                { "User 03", "user03" }
-            };
 
             private string ruthBookUsfm =
                 "\\id RUT - ProjectNameHere\n" + "\\c 1\n" + "\\v 1 Verse 1 here.\n" + "\\v 2 Verse 2 here.";
 
-            public IWebHostEnvironment MockWebHostEnvironment;
-            public IOptions<ParatextOptions> MockParatextOptions;
-            public IRepository<UserSecret> MockRepository;
-            public SFMemoryRealtimeService RealtimeService;
-            public IExceptionHandler MockExceptionHandler;
-            public IOptions<SiteOptions> MockSiteOptions;
-            public IFileSystemService MockFileSystemService;
-            public IScrTextCollection MockScrTextCollection;
-            public ISharingLogicWrapper MockSharingLogicWrapper;
-            public IHgWrapper MockHgWrapper;
-            public MockLogger<ParatextService> MockLogger;
-            public IJwtTokenHelper MockJwtTokenHelper;
-            public IParatextDataHelper MockParatextDataHelper;
-            public IInternetSharedRepositorySourceProvider MockInternetSharedRepositorySourceProvider;
-            public ISFRestClientFactory MockRestClientFactory;
-            public IGuidService MockGuidService;
-            public ParatextService Service;
+            public readonly IWebHostEnvironment MockWebHostEnvironment;
+            public readonly IOptions<ParatextOptions> MockParatextOptions;
+            public readonly IRepository<UserSecret> MockRepository;
+            public readonly SFMemoryRealtimeService RealtimeService;
+            public readonly IExceptionHandler MockExceptionHandler;
+            public readonly IOptions<SiteOptions> MockSiteOptions;
+            public readonly IFileSystemService MockFileSystemService;
+            public readonly IScrTextCollection MockScrTextCollection;
+            public readonly ISharingLogicWrapper MockSharingLogicWrapper;
+            public readonly IHgWrapper MockHgWrapper;
+            public readonly MockLogger<ParatextService> MockLogger;
+            public readonly IJwtTokenHelper MockJwtTokenHelper;
+            public readonly IParatextDataHelper MockParatextDataHelper;
+            public readonly IInternetSharedRepositorySourceProvider MockInternetSharedRepositorySourceProvider;
+            public readonly ISFRestClientFactory MockRestClientFactory;
+            public readonly IGuidService MockGuidService;
+            public readonly ParatextService Service;
 
             public TestEnvironment()
             {
@@ -4211,7 +4183,8 @@ namespace SIL.XForge.Scripture.Services
                 bool includeExtraLastVerseSegment
             )
             {
-                string chapterText = "[ { \"insert\": { \"chapter\": { \"number\": \"" + chapterNum + "\" } }}";
+                var chapterText = new StringBuilder();
+                chapterText.Append("[ { \"insert\": { \"chapter\": { \"number\": \"" + chapterNum + "\" } }}");
                 for (int i = 1; i <= verses; i++)
                 {
                     string noteSelectedText = useThreadSuffix ? selectedText + $" thread{i}" : selectedText;
@@ -4224,52 +4197,52 @@ namespace SIL.XForge.Scripture.Services
                         after = AlternateAfter;
                         noteSelectedText = ReattachedSelectedText;
                     }
-                    chapterText =
-                        chapterText
-                        + ","
-                        + "{ \"insert\": { \"verse\": { \"number\": \""
-                        + i
-                        + "\" } }}, "
-                        + "{ \"insert\": \""
-                        + before
-                        + noteSelectedText
-                        + after
-                        + "\", "
-                        + "\"attributes\": { \"segment\": \"verse_"
-                        + chapterNum
-                        + "_"
-                        + i
-                        + "\" } }";
+                    chapterText.Append(
+                        ","
+                            + "{ \"insert\": { \"verse\": { \"number\": \""
+                            + i
+                            + "\" } }}, "
+                            + "{ \"insert\": \""
+                            + before
+                            + noteSelectedText
+                            + after
+                            + "\", "
+                            + "\"attributes\": { \"segment\": \"verse_"
+                            + chapterNum
+                            + "_"
+                            + i
+                            + "\" } }"
+                    );
                     if (i == 8 || i == 9)
                     {
                         // create a new section heading after verse 8
-                        chapterText =
-                            chapterText
-                            + " ,"
-                            + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"p\" } }}, "
-                            + "{ \"insert\": \"Section heading text\", \"attributes\": { \"segment\": \"s_1\" } }, "
-                            + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"s\" } }}, "
-                            + "{ \"insert\": { \"blank\": true }, \"attributes\": { \"segment\": \"p_1\" } }";
+                        chapterText.Append(
+                            " ,"
+                                + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"p\" } }}, "
+                                + "{ \"insert\": \"Section heading text\", \"attributes\": { \"segment\": \"s_1\" } }, "
+                                + "{ \"insert\": \"\n\", \"attributes\": { \"para\": { \"style\": \"s\" } }}, "
+                                + "{ \"insert\": { \"blank\": true }, \"attributes\": { \"segment\": \"p_1\" } }"
+                        );
                     }
                 }
                 if (includeExtraLastVerseSegment)
                 {
                     // Add a second segment in the last verse (Note the segment name ends with "/p_1").
                     string verseRef = $"verse_{chapterNum}_{verses}";
-                    chapterText =
-                        chapterText
-                        + ", { \"insert\": \"\n\" },"
-                        + "{ \"insert\": { \"note\": { \"caller\": \"*\" } }, "
-                        + "\"attributes\": { \"segment\": \""
-                        + verseRef
-                        + "\" } },"
-                        + "{ \"insert\": \"other text in verse\", "
-                        + "\"attributes\": { \"segment\": \""
-                        + verseRef
-                        + "/p_1\" } }";
+                    chapterText.Append(
+                        ", { \"insert\": \"\n\" },"
+                            + "{ \"insert\": { \"note\": { \"caller\": \"*\" } }, "
+                            + "\"attributes\": { \"segment\": \""
+                            + verseRef
+                            + "\" } },"
+                            + "{ \"insert\": \"other text in verse\", "
+                            + "\"attributes\": { \"segment\": \""
+                            + verseRef
+                            + "/p_1\" } }"
+                    );
                 }
-                chapterText = chapterText + "]";
-                return new Delta(JToken.Parse(chapterText));
+                chapterText.Append("]");
+                return new Delta(JToken.Parse(chapterText.ToString()));
             }
 
             private ProjectMetadata GetMetadata(string projectId, string fullname)
