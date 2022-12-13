@@ -39,6 +39,16 @@ namespace SIL.XForge.Scripture.Services
             MachineClient.Dispose();
         }
 
+        /// <summary>
+        /// Validates an identifier for passing via a URL segment to the Machine API.
+        /// </summary>
+        /// <param name="id">The identifier.</param>
+        /// <exception cref="ArgumentException"></exception>
+        /// <remarks>
+        /// Calling this method on an ID string ensures that the ID can be included in a URL to a Machine API endpoint,
+        /// without risk of URL injection. This identifier will usually be a 24 character MongoDB generated identifier.
+        /// Length is not verified - the Machine API will return an error for an incorrect/missing ID.
+        /// </remarks>
         protected void ValidateId(string id)
         {
             if (!Regex.IsMatch(id, "^[a-zA-Z0-9]+$"))
