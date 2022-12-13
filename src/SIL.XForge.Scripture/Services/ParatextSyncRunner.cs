@@ -740,6 +740,7 @@ namespace SIL.XForge.Scripture.Services
                 oldNotesElem,
                 questionDocs,
                 _currentPtSyncUsers,
+                _projectDoc.Data.UserRoles,
                 _projectDoc.Data.CheckingConfig.AnswerExportMethod
             );
             if (notesElem.Elements("thread").Any())

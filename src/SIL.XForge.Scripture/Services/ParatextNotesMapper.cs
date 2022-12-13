@@ -92,6 +92,7 @@ namespace SIL.XForge.Scripture.Services
             XElement oldNotesElem,
             IEnumerable<IDocument<Question>> questionsDocs,
             Dictionary<string, ParatextUserProfile> ptProjectUsers,
+            Dictionary<string, string> userRoles,
             string answerExportMethod
         )
         {
@@ -141,7 +142,11 @@ namespace SIL.XForge.Scripture.Services
                                 new XElement("span", new XAttribute("style", "italic"), scriptureText)
                             );
                         }
-                        string username = await TryGetCommunityCheckerUsername(answer.OwnerRef, checkerUsernames);
+                        string username = await TryGetCommunityCheckerUsername(
+                            answer.OwnerRef,
+                            userRoles,
+                            checkerUsernames
+                        );
                         if (!string.IsNullOrEmpty(username))
                             answerPrefixContents.Add($"[{username} | {_siteOptions.Value.Name}]");
 
@@ -161,6 +166,7 @@ namespace SIL.XForge.Scripture.Services
                             var commentPrefixContents = new List<object>();
                             string commentUsername = await TryGetCommunityCheckerUsername(
                                 comment.OwnerRef,
+                                userRoles,
                                 checkerUsernames
                             );
                             if (!string.IsNullOrEmpty(commentUsername))
@@ -359,6 +365,7 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         private async Task<string> TryGetCommunityCheckerUsername(
             string userId,
+            Dictionary<string, string> userRoles,
             Dictionary<string, string> checkerUsernames
         )
         {
@@ -366,10 +373,9 @@ namespace SIL.XForge.Scripture.Services
             if (checkerUsernames.TryGetValue(userId, out username))
                 return username;
 
-            var userSecretAttempt = await _userSecrets.TryGetAsync(userId);
-            // map paratext users to null
-            if (userSecretAttempt.TryResult(out UserSecret userSecret))
+            if (userRoles.TryGetValue(userId, out string role) && SFProjectRole.IsParatextRole(role))
             {
+                // map users with paratext roles to null
                 checkerUsernames.Add(userId, null);
                 return null;
             }

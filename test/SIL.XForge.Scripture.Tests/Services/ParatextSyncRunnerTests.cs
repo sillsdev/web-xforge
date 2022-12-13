@@ -2741,6 +2741,7 @@ namespace SIL.XForge.Scripture.Services
                         Arg.Any<XElement>(),
                         Arg.Any<IEnumerable<IDocument<Question>>>(),
                         Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                        Arg.Any<Dictionary<string, string>>(),
                         CheckingAnswerExport.MarkedForExport
                     )
                     .Returns(Task.FromResult(notesElem));
@@ -3188,6 +3189,7 @@ namespace SIL.XForge.Scripture.Services
                         Arg.Any<XElement>(),
                         Arg.Any<IEnumerable<IDocument<Question>>>(),
                         Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                        Arg.Any<Dictionary<string, string>>(),
                         CheckingAnswerExport.MarkedForExport
                     );
 
@@ -3231,6 +3233,7 @@ namespace SIL.XForge.Scripture.Services
                         Arg.Any<XElement>(),
                         Arg.Any<IEnumerable<IDocument<Question>>>(),
                         Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                        Arg.Any<Dictionary<string, string>>(),
                         CheckingAnswerExport.MarkedForExport
                     );
 

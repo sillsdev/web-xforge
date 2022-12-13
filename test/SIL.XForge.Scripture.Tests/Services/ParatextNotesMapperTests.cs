@@ -53,6 +53,7 @@ namespace SIL.XForge.Scripture.Services
                     XElement.Parse(oldNotesText),
                     await env.GetQuestionDocsAsync(conn),
                     ptProjectUsers,
+                    TestEnvironment.userRoles,
                     CheckingAnswerExport.All
                 );
 
@@ -127,6 +128,96 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task GetNotesChangelistAsync_UsesCheckerNameForPTUserNotOnProject()
+        {
+            // pt user is a community checker on the project
+            var env = new TestEnvironment();
+            env.SetParatextProjectRoles(false);
+            await env.InitMapperAsync(false, false);
+            env.AddData(null, null, null, null);
+
+            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            {
+                const string oldNotesText = @"<notes version=""1.1""></notes>";
+                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
+                    u => u.Username
+                );
+
+                Dictionary<string, string> userRoles = TestEnvironment.userRoles;
+                userRoles["user03"] = SFProjectRole.CommunityChecker;
+                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+                    XElement.Parse(oldNotesText),
+                    await env.GetQuestionDocsAsync(conn),
+                    ptProjectUsers,
+                    userRoles,
+                    CheckingAnswerExport.All
+                );
+
+                // User 03 is listed as a community checker because they are not a PT user on the particular project
+                const string expectedNotesText =
+                    @"
+                    <notes version=""1.1"">
+                        <thread id=""ANSWER_answer01"">
+                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p>[User 02 | xForge]</p>
+                                    <p>Test answer 1.</p>
+                                </content>
+                            </comment>
+                            <comment user=""PT User 1"" extUser=""user03"" date=""2019-01-01T09:00:00.0000000+00:00"">
+                                <content>
+                                    <p>[User 03 | xForge]</p>
+                                    <p>Test comment 1.</p>
+                                </content>
+                            </comment>
+                        </thread>
+                        <thread id=""ANSWER_answer02"">
+                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
+                                    <p>[User 04 | xForge]</p>
+                                    <p>Test answer 2.</p>
+                                </content>
+                            </comment>
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
+                                <content>
+                                    <p>[User 02 | xForge]</p>
+                                    <p>Test comment 2.</p>
+                                </content>
+                            </comment>
+                        </thread>
+                        <thread id=""ANSWER_answer04"">
+                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p>[User 04 | xForge]</p>
+                                    <p>Test answer 4 is marked for export</p>
+                                </content>
+                            </comment>
+                        </thread>
+                        <thread id=""ANSWER_answer05"">
+                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p>[User 04 | xForge]</p>
+                                    <p>Test answer 5 is resolved</p>
+                                </content>
+                            </comment>
+                        </thread>
+                    </notes>";
+
+                Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
+                Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { "PT User 1" }));
+            }
+        }
+
+        [Test]
         public async Task GetNotesChangelistAsync_AddAudioNotes()
         {
             var env = new TestEnvironment();
@@ -157,6 +248,7 @@ namespace SIL.XForge.Scripture.Services
                     XElement.Parse(oldNotesText),
                     await env.GetQuestionDocsAsync(conn),
                     ptProjectUsers,
+                    TestEnvironment.userRoles,
                     CheckingAnswerExport.All
                 );
 
@@ -261,6 +353,7 @@ namespace SIL.XForge.Scripture.Services
                     XElement.Parse(oldNotesText),
                     await env.GetQuestionDocsAsync(conn),
                     ptProjectUsers,
+                    TestEnvironment.userRoles,
                     CheckingAnswerExport.All
                 );
 
@@ -387,6 +480,7 @@ namespace SIL.XForge.Scripture.Services
                     XElement.Parse(oldNotesText),
                     await env.GetQuestionDocsAsync(conn),
                     ptProjectUsers,
+                    TestEnvironment.userRoles,
                     CheckingAnswerExport.All
                 );
 
@@ -504,6 +598,7 @@ namespace SIL.XForge.Scripture.Services
                     XElement.Parse(oldNotesText),
                     await env.GetQuestionDocsAsync(conn),
                     ptProjectUsers,
+                    TestEnvironment.userRoles,
                     CheckingAnswerExport.All
                 );
 
@@ -575,6 +670,7 @@ namespace SIL.XForge.Scripture.Services
                     XElement.Parse(oldNotesText),
                     await env.GetQuestionDocsAsync(conn),
                     ptProjectUsers,
+                    TestEnvironment.userRoles,
                     CheckingAnswerExport.All
                 );
 
@@ -654,6 +750,7 @@ namespace SIL.XForge.Scripture.Services
                     XElement.Parse(oldNotesText),
                     await env.GetQuestionDocsAsync(conn),
                     ptProjectUsers,
+                    TestEnvironment.userRoles,
                     CheckingAnswerExport.None
                 );
 
@@ -680,6 +777,7 @@ namespace SIL.XForge.Scripture.Services
                     XElement.Parse(oldNotesText),
                     await env.GetQuestionDocsAsync(conn),
                     ptProjectUsers,
+                    TestEnvironment.userRoles,
                     CheckingAnswerExport.MarkedForExport
                 );
 
@@ -703,6 +801,14 @@ namespace SIL.XForge.Scripture.Services
 
         private class TestEnvironment
         {
+            public static readonly Dictionary<string, string> userRoles = new Dictionary<string, string>
+            {
+                { "user01", SFProjectRole.Administrator },
+                { "user02", SFProjectRole.CommunityChecker },
+                { "user03", SFProjectRole.Translator },
+                { "user04", SFProjectRole.CommunityChecker }
+            };
+
             public TestEnvironment()
             {
                 UserSecrets = new MemoryRepository<UserSecret>(
@@ -720,18 +826,16 @@ namespace SIL.XForge.Scripture.Services
                 ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user03")).Returns("PT User 3");
 
                 UserService = Substitute.For<IUserService>();
+                var userIdToUsername = new Dictionary<string, string>
+                {
+                    { "user01", "User 01" },
+                    { "user02", "User 02" },
+                    { "user03", "User 03" },
+                    { "user04", "User 04" }
+                };
                 UserService
-                    .GetUsernameFromUserId(Arg.Any<string>(), Arg.Is<string>(u => u == "user01"))
-                    .Returns("User 01");
-                UserService
-                    .GetUsernameFromUserId(Arg.Any<string>(), Arg.Is<string>(u => u == "user03"))
-                    .Returns("User 03");
-                UserService
-                    .GetUsernameFromUserId(Arg.Any<string>(), Arg.Is<string>(u => u == "user02"))
-                    .Returns("User 02");
-                UserService
-                    .GetUsernameFromUserId(Arg.Any<string>(), Arg.Is<string>(u => u == "user04"))
-                    .Returns("User 04");
+                    .GetUsernameFromUserId(Arg.Any<string>(), Arg.Any<string>())
+                    .Returns(x => Task.FromResult(userIdToUsername[(string)x[1]]));
 
                 var options = Microsoft.Extensions.Options.Options.Create(
                     new LocalizationOptions { ResourcesPath = "Resources" }
@@ -908,7 +1012,8 @@ namespace SIL.XForge.Scripture.Services
                 {
                     Id = "project01",
                     ParatextId = "paratextId",
-                    ParatextUsers = ptProjectUsers
+                    ParatextUsers = ptProjectUsers,
+                    UserRoles = userRoles
                 };
             }
 

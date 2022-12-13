@@ -980,7 +980,7 @@ namespace SIL.XForge.Scripture.Services
 
         private static bool HasParatextRole(SFProject project, string userId)
         {
-            return project.UserRoles.TryGetValue(userId, out string role) && role.StartsWith("pt_");
+            return project.UserRoles.TryGetValue(userId, out string role) && SFProjectRole.IsParatextRole(role);
         }
 
         private static void UpdateSetting<T>(
