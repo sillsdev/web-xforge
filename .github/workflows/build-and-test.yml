@@ -40,6 +40,7 @@ jobs:
         run: |
           set -xueo pipefail
           lsb_release -a
+          node -e "console.log(os.cpus())"
           which dotnet
           dotnet --version
           dpkg -l dotnet\*
