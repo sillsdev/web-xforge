@@ -114,6 +114,20 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void GetBuildAsync_NoFeatureFlagsEnabled()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetBuildAsync(User01, Project01, Build01, minRevision: null, CancellationToken.None)
+            );
+        }
+
+        [Test]
         public void GetBuildAsync_NoPermission()
         {
             // Set up test environment
@@ -351,6 +365,20 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void GetCurrentBuildAsync_NoFeatureFlagsEnabled()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetCurrentBuildAsync(User01, Project01, minRevision: null, CancellationToken.None)
+            );
+        }
+
+        [Test]
         public void GetCurrentBuildAsync_NoPermission()
         {
             // Set up test environment
@@ -522,6 +550,20 @@ namespace SIL.XForge.Scripture.Services
             await env.MachineBuildService
                 .DidNotReceiveWithAnyArgs()
                 .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None);
+        }
+
+        [Test]
+        public void GetEngineAsync_NoFeatureFlagsEnabled()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetEngineAsync(User01, Project01, CancellationToken.None)
+            );
         }
 
         [Test]
@@ -720,6 +762,20 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void GetWordGraphAsync_NoFeatureFlagsEnabled()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            );
+        }
+
+        [Test]
         public void GetWordGraphAsync_NoPermission()
         {
             // Set up test environment
@@ -912,6 +968,20 @@ namespace SIL.XForge.Scripture.Services
             await env.MachineTranslationService
                 .Received(1)
                 .GetWordGraphAsync(TranslationEngine01, Array.Empty<string>(), CancellationToken.None);
+        }
+
+        [Test]
+        public void StartBuildAsync_NoFeatureFlagsEnabled()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.StartBuildAsync(User01, Project01, CancellationToken.None)
+            );
         }
 
         [Test]
@@ -1263,6 +1333,20 @@ namespace SIL.XForge.Scripture.Services
             await env.MachineTranslationService
                 .Received(1)
                 .TrainSegmentAsync(TranslationEngine01, segmentPair, CancellationToken.None);
+        }
+
+        [Test]
+        public void TranslateAsync_NoFeatureFlagsEnabled()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+            // SUT
+            Assert.ThrowsAsync<DataNotFoundException>(
+                () => env.Service.TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            );
         }
 
         [Test]
