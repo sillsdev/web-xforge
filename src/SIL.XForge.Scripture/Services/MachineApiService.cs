@@ -79,7 +79,7 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            BuildDto? buildDto = null;
+            BuildDto? buildDto;
 
             // Ensure that the user has permission
             await EnsurePermissionAsync(curUserId, sfProjectId);
@@ -106,6 +106,11 @@ namespace SIL.XForge.Scripture.Services
                     cancellationToken
                 );
             }
+            else
+            {
+                // No feature flags enabled, notify the user
+                throw new DataNotFoundException("No Machine learning engine is enabled");
+            }
 
             // Make sure the DTO conforms to the machine-api V2 URLs
             if (buildDto is not null)
@@ -123,7 +128,7 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            BuildDto? buildDto = null;
+            BuildDto? buildDto;
 
             // Ensure that the user has permission
             await EnsurePermissionAsync(curUserId, sfProjectId);
@@ -155,6 +160,11 @@ namespace SIL.XForge.Scripture.Services
                     cancellationToken
                 );
             }
+            else
+            {
+                // No feature flags enabled, notify the user
+                throw new DataNotFoundException("No Machine learning engine is enabled");
+            }
 
             // Make sure the DTO conforms to the machine-api V2 URLs
             if (buildDto is not null)
@@ -171,7 +181,7 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            var engineDto = new EngineDto();
+            EngineDto? engineDto = null;
 
             // Ensure that the user has permission
             await EnsurePermissionAsync(curUserId, sfProjectId);
@@ -218,6 +228,12 @@ namespace SIL.XForge.Scripture.Services
                 engineDto = CreateDto(engine);
             }
 
+            // This will be null if the Machine API is down, or if all feature flags are false
+            if (engineDto is null)
+            {
+                throw new DataNotFoundException("No translation engine could be retrieved");
+            }
+
             // Make sure the DTO conforms to the machine-api V2 URLs
             return UpdateDto(engineDto, sfProjectId);
         }
@@ -229,7 +245,7 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            var wordGraphDto = new WordGraphDto();
+            WordGraphDto? wordGraphDto = null;
 
             // Ensure that the user has permission
             await EnsurePermissionAsync(curUserId, sfProjectId);
@@ -276,6 +292,12 @@ namespace SIL.XForge.Scripture.Services
                 wordGraphDto = CreateDto(wordGraph);
             }
 
+            // This will be null if the Machine API is down, or if all feature flags are false
+            if (wordGraphDto is null)
+            {
+                throw new DataNotFoundException("No translation engine could be retrieved");
+            }
+
             return wordGraphDto;
         }
 
@@ -285,7 +307,7 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            var buildDto = new BuildDto();
+            BuildDto? buildDto = null;
 
             // Ensure that the user has permission
             await EnsurePermissionAsync(curUserId, sfProjectId);
@@ -332,6 +354,12 @@ namespace SIL.XForge.Scripture.Services
                 Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
                 Build build = await _engineService.StartBuildAsync(engine.Id);
                 buildDto = CreateDto(build);
+            }
+
+            // This will be null if the Machine API is down, or if all feature flags are false
+            if (buildDto is null)
+            {
+                throw new DataNotFoundException("No translation engine could be retrieved");
             }
 
             return UpdateDto(buildDto, sfProjectId);
@@ -401,7 +429,7 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken cancellationToken
         )
         {
-            var translationResultDto = new TranslationResultDto();
+            TranslationResultDto? translationResultDto = null;
 
             // Ensure that the user has permission
             await EnsurePermissionAsync(curUserId, sfProjectId);
@@ -446,6 +474,12 @@ namespace SIL.XForge.Scripture.Services
                 Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
                 TranslationResult translationResult = await _engineService.TranslateAsync(engine.Id, segment);
                 translationResultDto = CreateDto(translationResult);
+            }
+
+            // This will be null if the Machine API is down, or if all feature flags are false
+            if (translationResultDto is null)
+            {
+                throw new DataNotFoundException("No translation engine could be retrieved");
             }
 
             return translationResultDto;

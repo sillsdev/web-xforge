@@ -44,31 +44,24 @@ namespace SIL.XForge.Scripture.Controllers
             try
             {
                 BuildDto? build;
-                try
+                if (string.IsNullOrWhiteSpace(buildId))
                 {
-                    if (string.IsNullOrWhiteSpace(buildId))
-                    {
-                        build = await _machineApiService.GetCurrentBuildAsync(
-                            _userAccessor.UserId,
-                            sfProjectId,
-                            minRevision,
-                            cancellationToken
-                        );
-                    }
-                    else
-                    {
-                        build = await _machineApiService.GetBuildAsync(
-                            _userAccessor.UserId,
-                            sfProjectId,
-                            buildId,
-                            minRevision,
-                            cancellationToken
-                        );
-                    }
+                    build = await _machineApiService.GetCurrentBuildAsync(
+                        _userAccessor.UserId,
+                        sfProjectId,
+                        minRevision,
+                        cancellationToken
+                    );
                 }
-                catch (DataNotFoundException)
+                else
                 {
-                    return NotFound();
+                    build = await _machineApiService.GetBuildAsync(
+                        _userAccessor.UserId,
+                        sfProjectId,
+                        buildId,
+                        minRevision,
+                        cancellationToken
+                    );
                 }
 
                 // A null means no build is running
