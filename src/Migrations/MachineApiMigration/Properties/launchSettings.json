@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "MachineApiMigration": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
