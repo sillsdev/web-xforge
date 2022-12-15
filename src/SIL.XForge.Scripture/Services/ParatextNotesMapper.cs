@@ -112,7 +112,11 @@ namespace SIL.XForge.Scripture.Services
                     for (int j = 0; j < question.Answers.Count; j++)
                     {
                         Answer answer = question.Answers[j];
-                        if (answer.Status != AnswerStatus.Exportable && answerExportMethod != CheckingAnswerExport.All)
+                        if (
+                            answer.Status != AnswerStatus.Exportable
+                            && answerExportMethod != CheckingAnswerExport.All
+                            && answerExportMethod != null
+                        )
                         {
                             continue;
                         }
