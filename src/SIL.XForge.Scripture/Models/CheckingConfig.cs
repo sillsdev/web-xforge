@@ -6,6 +6,6 @@ namespace SIL.XForge.Scripture.Models
         public bool UsersSeeEachOthersResponses { get; set; } = true;
         public bool ShareEnabled { get; set; } = false;
         public string ShareLevel { get; set; } = CheckingShareLevel.Specific;
-        public string AnswerExportMethod { get; set; }
+        public string AnswerExportMethod { get; set; } = CheckingAnswerExport.All;
     }
 }
