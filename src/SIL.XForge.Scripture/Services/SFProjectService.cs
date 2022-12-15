@@ -95,7 +95,11 @@ namespace SIL.XForge.Scripture.Services
                 {
                     TranslationSuggestionsEnabled = settings.TranslationSuggestionsEnabled
                 },
-                CheckingConfig = new CheckingConfig { CheckingEnabled = settings.CheckingEnabled }
+                CheckingConfig = new CheckingConfig
+                {
+                    CheckingEnabled = settings.CheckingEnabled,
+                    AnswerExportMethod = settings.AnswerExportMethod
+                }
             };
             Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
             if (!attempt.TryResult(out string projectRole) || projectRole != SFProjectRole.Administrator)
