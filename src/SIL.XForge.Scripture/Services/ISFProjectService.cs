@@ -26,5 +26,6 @@ namespace SIL.XForge.Scripture.Services
         bool IsSourceProject(string projectId);
         Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId);
         Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc, CancellationToken token);
+        Task EnsureWritingSystemTagIsSetAsync(string curUserId, string projectId);
     }
 }
