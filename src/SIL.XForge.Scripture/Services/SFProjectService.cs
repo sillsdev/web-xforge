@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
-using SIL.Machine.WebApi.Models;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -706,6 +705,27 @@ namespace SIL.XForge.Scripture.Services
                     throw new ForbiddenException();
                 return _transceleratorService.Questions(projectDoc.Data.ParatextId);
             }
+        }
+
+        /// <summary>
+        /// Ensures that the <see cref="WritingSystem"/> Tag is not null.
+        /// </summary>
+        /// <param name="curUserId">The current user identifier.</param>
+        /// <param name="projectId">The project identifier.</param>
+        /// <returns>The asynchronous task.</returns>
+        /// <remarks>
+        /// This public method exists for the Machine API Migration utility.
+        /// </remarks>
+        public async Task EnsureWritingSystemTagIsSetAsync(string curUserId, string projectId)
+        {
+            using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+            IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+            if (!projectDoc.IsLoaded)
+            {
+                throw new DataNotFoundException("The project does not exist.");
+            }
+
+            await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, null);
         }
 
         protected override async Task AddUserToProjectAsync(
