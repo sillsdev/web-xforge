@@ -40,7 +40,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -65,7 +65,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test answer 1.</p>
                                 </content>
                             </comment>
@@ -79,13 +79,13 @@ namespace SIL.XForge.Scripture.Services
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test comment 2.</p>
                                 </content>
                             </comment>
@@ -95,7 +95,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
                             </comment>
@@ -105,7 +105,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 5 is resolved</p>
                                 </content>
                             </comment>
@@ -115,7 +115,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"" deleted=""true"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -162,13 +162,13 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test answer 1.</p>
                                 </content>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user03"" date=""2019-01-01T09:00:00.0000000+00:00"">
                                 <content>
-                                    <p>[User 03 | xForge]</p>
+                                    <p>[User 03 - xForge]</p>
                                     <p>Test comment 1.</p>
                                 </content>
                             </comment>
@@ -179,13 +179,13 @@ namespace SIL.XForge.Scripture.Services
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test comment 2.</p>
                                 </content>
                             </comment>
@@ -195,7 +195,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
                             </comment>
@@ -205,7 +205,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 5 is resolved</p>
                                 </content>
                             </comment>
@@ -235,7 +235,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">- xForge audio-only question -</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -260,7 +260,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">- xForge audio-only question -</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>- xForge audio-only response -</p>
                                 </content>
                             </comment>
@@ -274,13 +274,13 @@ namespace SIL.XForge.Scripture.Services
                                 <content>
                                     <p><span style=""bold"">- xForge audio-only question -</span></p>
                                     <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test comment 2.</p>
                                 </content>
                             </comment>
@@ -290,7 +290,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">- xForge audio-only question -</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
                             </comment>
@@ -300,7 +300,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">- xForge audio-only question -</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 5 is resolved</p>
                                 </content>
                             </comment>
@@ -310,7 +310,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"" deleted=""true"">
                                 <content>
                                     <p><span style=""bold"">- xForge audio-only question -</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -340,7 +340,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -370,7 +370,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test answer 1.</p>
                                 </content>
                             </comment>
@@ -384,13 +384,13 @@ namespace SIL.XForge.Scripture.Services
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test comment 2.</p>
                                 </content>
                             </comment>
@@ -400,7 +400,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
                             </comment>
@@ -410,7 +410,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 5 is resolved</p>
                                 </content>
                             </comment>
@@ -420,7 +420,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"" deleted=""true"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -450,7 +450,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Old test answer 1.</p>
                                 </content>
                             </comment>
@@ -461,13 +461,13 @@ namespace SIL.XForge.Scripture.Services
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
                             <comment user=""PT User 3"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Old test comment 2.</p>
                                 </content>
                             </comment>
@@ -492,7 +492,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test answer 1.</p>
                                 </content>
                             </comment>
@@ -504,7 +504,7 @@ namespace SIL.XForge.Scripture.Services
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
                             <comment user=""PT User 3"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test comment 2.</p>
                                 </content>
                             </comment>
@@ -514,7 +514,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
                             </comment>
@@ -524,7 +524,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 5 is resolved</p>
                                 </content>
                             </comment>
@@ -552,7 +552,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test answer 1.</p>
                                 </content>
                             </comment>
@@ -566,13 +566,13 @@ namespace SIL.XForge.Scripture.Services
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
                             <comment user=""PT User 3"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test comment 2.</p>
                                 </content>
                             </comment>
@@ -585,7 +585,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -616,7 +616,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
                             </comment>
@@ -626,7 +626,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 5 is resolved</p>
                                 </content>
                             </comment>
@@ -642,7 +642,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-03T08:00:00.0000000+00:00"" deleted=""true"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
                             </comment>
@@ -682,7 +682,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test answer 1.</p>
                                 </content>
                             </comment>
@@ -696,13 +696,13 @@ namespace SIL.XForge.Scripture.Services
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 2.</p>
                                 </content>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
-                                    <p>[User 02 | xForge]</p>
+                                    <p>[User 02 - xForge]</p>
                                     <p>Test comment 2.</p>
                                 </content>
                             </comment>
@@ -712,7 +712,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
                             </comment>
@@ -722,7 +722,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 5 is resolved</p>
                                 </content>
                             </comment>
@@ -789,7 +789,7 @@ namespace SIL.XForge.Scripture.Services
                             <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
-                                    <p>[User 04 | xForge]</p>
+                                    <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
                             </comment>

@@ -148,7 +148,7 @@ namespace SIL.XForge.Scripture.Services
                             checkerUsernames
                         );
                         if (!string.IsNullOrEmpty(username))
-                            answerPrefixContents.Add($"[{username} | {_siteOptions.Value.Name}]");
+                            answerPrefixContents.Add($"[{username} - {_siteOptions.Value.Name}]");
 
                         string answerSyncUserId = await AddCommentIfChangedAsync(
                             oldCommentElems,
@@ -170,7 +170,7 @@ namespace SIL.XForge.Scripture.Services
                                 checkerUsernames
                             );
                             if (!string.IsNullOrEmpty(commentUsername))
-                                commentPrefixContents.Add($"[{commentUsername} | {_siteOptions.Value.Name}]");
+                                commentPrefixContents.Add($"[{commentUsername} - {_siteOptions.Value.Name}]");
                             string commentSyncUserId = await AddCommentIfChangedAsync(
                                 oldCommentElems,
                                 threadElem,
