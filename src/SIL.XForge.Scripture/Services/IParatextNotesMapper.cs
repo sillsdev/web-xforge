@@ -21,6 +21,7 @@ namespace SIL.XForge.Scripture.Services
             XElement oldNotesElem,
             IEnumerable<IDocument<Question>> questionsDocs,
             Dictionary<string, ParatextUserProfile> ptProjectUsers,
+            Dictionary<string, string> userRoles,
             string answerExportMethod
         );
     }

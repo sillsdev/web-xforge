@@ -11,5 +11,19 @@ namespace SIL.XForge.Scripture.Models
         public const string Reviewer = "sf_reviewer";
         public const string CommunityChecker = "sf_community_checker";
         public const string SFObserver = "sf_observer";
+
+        public static bool IsParatextRole(string role)
+        {
+            switch (role)
+            {
+                case SFProjectRole.Administrator:
+                case SFProjectRole.Translator:
+                case SFProjectRole.Consultant:
+                case SFProjectRole.PTObserver:
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 }
