@@ -8,11 +8,10 @@ import { User, USERS_COLLECTION } from '../../common/models/user';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { allowAll, clientConnect, createDoc, fetchDoc, submitOp } from '../../common/utils/test-utils';
-import { CheckingAnswerExport, CheckingShareLevel } from '../models/checking-config';
+import { CheckingAnswerExport } from '../models/checking-config';
 import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { getTextDocId, TextData, TEXTS_COLLECTION } from '../models/text-data';
-import { TranslateShareLevel } from '../models/translate-config';
 import { TextService } from './text-service';
 
 ShareDB.types.register(RichText.type);
@@ -117,14 +116,12 @@ class TestEnvironment {
       writingSystem: { tag: 'qaa' },
       translateConfig: {
         translationSuggestionsEnabled: false,
-        shareEnabled: true,
-        shareLevel: TranslateShareLevel.Specific
+        shareEnabled: true
       },
       checkingConfig: {
         checkingEnabled: false,
         usersSeeEachOthersResponses: true,
         shareEnabled: true,
-        shareLevel: CheckingShareLevel.Specific,
         answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
       texts: [],

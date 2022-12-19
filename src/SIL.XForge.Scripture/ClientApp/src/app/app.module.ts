@@ -31,6 +31,7 @@ import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';
 import { UsersModule } from './users/users.module';
 import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
+import { JoinComponent } from './join/join.component';
 
 @NgModule({
   declarations: [
@@ -49,7 +50,8 @@ import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-not
     FeatureFlagsDialogComponent,
     ProjectSelectComponent,
     SyncProgressComponent,
-    TextNoteDialogComponent
+    TextNoteDialogComponent,
+    JoinComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),

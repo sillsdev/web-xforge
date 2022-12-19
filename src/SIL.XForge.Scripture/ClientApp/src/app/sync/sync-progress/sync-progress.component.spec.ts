@@ -1,9 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { mock, verify, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -11,7 +9,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { paratextUsersFromRoles } from '../../../app/shared/test-utils';
+import { paratextUsersFromRoles } from '../../shared/test-utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -143,7 +141,6 @@ class TestEnvironment {
         translateConfig: {
           translationSuggestionsEnabled: !!args.translationSuggestionsEnabled,
           shareEnabled: false,
-          shareLevel: TranslateShareLevel.Specific,
           source:
             args.sourceProject != null
               ? {
@@ -160,7 +157,6 @@ class TestEnvironment {
           checkingEnabled: false,
           usersSeeEachOthersResponses: true,
           shareEnabled: true,
-          shareLevel: CheckingShareLevel.Specific,
           answerExportMethod: CheckingAnswerExport.MarkedForExport
         },
         sync: {
@@ -189,14 +185,12 @@ class TestEnvironment {
           },
           translateConfig: {
             translationSuggestionsEnabled: false,
-            shareEnabled: false,
-            shareLevel: TranslateShareLevel.Specific
+            shareEnabled: false
           },
           checkingConfig: {
             checkingEnabled: false,
             usersSeeEachOthersResponses: true,
             shareEnabled: true,
-            shareLevel: CheckingShareLevel.Specific,
             answerExportMethod: CheckingAnswerExport.MarkedForExport
           },
           sync: {

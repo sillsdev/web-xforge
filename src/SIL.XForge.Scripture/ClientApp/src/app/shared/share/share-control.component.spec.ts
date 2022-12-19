@@ -5,9 +5,8 @@ import { flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
@@ -26,6 +25,7 @@ import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../co
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareControlComponent } from './share-control.component';
+import { ShareComponent } from './share.component';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
@@ -122,8 +122,8 @@ describe('ShareControlComponent', () => {
   it('shareLink is for projectId and has specific key', fakeAsync(() => {
     const env = new TestEnvironment({ isLinkSharingEnabled: true, projectId: 'myProject1' });
     env.wait();
-    verify(mockedProjectService.onlineGetLinkSharingKey('myProject1', anything())).once();
-    expect(env.hostComponent.component.shareLink).toContain('myProject1?sharing=true&shareKey=linkSharing01');
+    verify(mockedProjectService.onlineGetLinkSharingKey('myProject1', anything(), anything())).once();
+    expect(env.component.shareLink).toContain('/join/linkSharing01');
     flush();
   }));
 
@@ -180,35 +180,6 @@ describe('ShareControlComponent', () => {
     expect(env.emailSharingOfflineMessage).not.toBeNull();
   }));
 
-  it('share link should be hidden if link sharing is turned off', fakeAsync(() => {
-    const env = new TestEnvironment();
-    expect(env.shareLink).toBeNull();
-    env.setCheckingShareLevel(CheckingShareLevel.Anyone);
-    expect(env.shareLink).not.toBeNull();
-  }));
-
-  it('share link should not be shown when offline', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.onlineStatus = false;
-    env.setCheckingShareLevel(CheckingShareLevel.Anyone);
-    expect(env.shareLink.nativeElement.value).toEqual('');
-    expect(env.linkSharingOfflineMessage).not.toBeNull();
-    expect(env.shareLinkCopyIcon.nativeElement.disabled).toBe(true);
-  }));
-
-  it('clicking copy link icon should copy link to clipboard', fakeAsync(() => {
-    const env = new TestEnvironment({ isLinkSharingEnabled: true, projectId: 'project123' });
-    // Two waits are needed, otherwise the link text is not set by the time of the next expectation
-    env.wait();
-    env.wait();
-    expect(env.shareLink.nativeElement.value).toEqual(
-      'https://scriptureforge.org/projects/project123?sharing=true&shareKey=linkSharing01'
-    );
-    env.click(env.shareLinkCopyIcon);
-    // TODO: figure out a way to check the clipboard data
-    verify(mockedNoticeService.show(anything())).once();
-  }));
-
   it('should require selecting a language before sending the invitation', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setTextFieldValue(env.emailTextField, 'already@example.com');
@@ -233,10 +204,10 @@ describe('ShareControlComponent', () => {
     expect(roles).toContain(SFProjectRole.Reviewer);
     env.component.roleControl.setValue(SFProjectRole.Observer);
     env.wait();
-    verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything())).twice();
+    verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything(), anything())).twice();
     env.component.roleControl.setValue(SFProjectRole.Reviewer);
     env.wait();
-    verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything())).thrice();
+    verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything(), anything())).thrice();
     expect(env.component.isLinkSharingEnabled).toBe(true);
   }));
 
@@ -273,7 +244,6 @@ describe('ShareControlComponent', () => {
     const checkingConfig: CheckingConfig = {
       checkingEnabled: false,
       shareEnabled: true,
-      shareLevel: CheckingShareLevel.Anyone,
       usersSeeEachOthersResponses: false,
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     };
@@ -286,32 +256,31 @@ describe('ShareControlComponent', () => {
     env.wait();
     expect(env.shareLink).not.toBeNull();
     // Disable link sharing
-    checkingConfig.shareLevel = CheckingShareLevel.Specific;
+    checkingConfig.checkingEnabled = false;
     env.updateCheckingProperties(checkingConfig);
     env.wait();
     expect(env.shareLink).toBeNull();
   }));
 
-  it('should not show link sharing to admin when link sharing is enabled but sharing is disabled', fakeAsync(() => {
+  it('should show link sharing to admin when link sharing is enabled but sharing is disabled', fakeAsync(() => {
     const env = new TestEnvironment({ userId: 'user02', checkingEnabled: true, isLinkSharingEnabled: true });
     env.wait();
     expect(env.shareLink).not.toBeNull();
     const checkingConfig: CheckingConfig = {
       checkingEnabled: true,
       shareEnabled: false,
-      shareLevel: CheckingShareLevel.Anyone,
       usersSeeEachOthersResponses: false,
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     };
     env.updateCheckingProperties(checkingConfig);
     env.wait();
-    expect(env.shareLink).toBeNull();
+    expect(env.shareLink).not.toBeNull();
   }));
 });
 
 @NgModule({
   imports: [BrowserModule, HttpClientTestingModule, RouterTestingModule, UICommonModule, TestTranslocoModule],
-  declarations: [ShareControlComponent],
+  declarations: [ShareControlComponent, ShareComponent],
   exports: [ShareControlComponent]
 })
 class TestModule {}
@@ -355,7 +324,6 @@ class TestEnvironment {
       checkingEnabled: true
     };
     args = { ...defaultArgs, ...args };
-    const shareLevel = args.isLinkSharingEnabled ? TranslateShareLevel.Anyone : TranslateShareLevel.Specific;
     this.realtimeService.addSnapshot(SFProjectProfileDoc.COLLECTION, {
       id: args.projectId,
       data: {
@@ -364,8 +332,8 @@ class TestEnvironment {
           user02: SFProjectRole.ParatextAdministrator,
           user03: SFProjectRole.Observer
         },
-        translateConfig: { shareEnabled: true, shareLevel },
-        checkingConfig: { checkingEnabled: args.checkingEnabled, shareEnabled: true, shareLevel }
+        translateConfig: { shareEnabled: true },
+        checkingConfig: { checkingEnabled: args.checkingEnabled, shareEnabled: true }
       }
     });
     when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
@@ -374,8 +342,11 @@ class TestEnvironment {
     when(mockedPwaService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
     when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
     when(mockedUserService.currentUserId).thenReturn(args.userId!);
-    when(mockedProjectService.onlineGetLinkSharingKey(args.projectId!, anything())).thenResolve(
+    when(mockedProjectService.onlineGetLinkSharingKey(args.projectId!, anything(), anything())).thenResolve(
       args.isLinkSharingEnabled ? 'linkSharing01' : ''
+    );
+    when(mockedProjectService.generateSharingUrl(anything())).thenCall(
+      () => `/join/${(this.component as any).linkSharingKey}`
     );
     when(mockedProjectService.isProjectAdmin('project01', 'user02')).thenResolve(true);
     this.fixture = TestBed.createComponent(TestHostComponent);
@@ -412,12 +383,8 @@ class TestEnvironment {
     return this.emailTextField.query(By.css('input[type="email"]'));
   }
 
-  get linkSharingOfflineMessage(): DebugElement {
-    return this.fetchElement('.invite-by-link .offline-text');
-  }
-
   get emailSharingOfflineMessage(): DebugElement {
-    return this.fetchElement('.invite-by-email .offline-text');
+    return this.fetchElement('.offline-text');
   }
 
   get roleField(): DebugElement {
@@ -425,11 +392,7 @@ class TestEnvironment {
   }
 
   get shareLink(): DebugElement {
-    return this.fetchElement('#share-link');
-  }
-
-  get shareLinkCopyIcon(): DebugElement {
-    return this.fetchElement('#share-link-copy-icon');
+    return this.fetchElement('.invite-by-link app-share');
   }
 
   set onlineStatus(value: boolean) {
@@ -480,13 +443,6 @@ class TestEnvironment {
   updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
     const projectDoc: SFProjectProfileDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
     return projectDoc.submitJson0Op(op => op.set(p => p.checkingConfig, config));
-  }
-
-  setCheckingShareLevel(value: CheckingShareLevel): void {
-    this.realtimeService
-      .get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01')
-      .submitJson0Op(op => op.set<CheckingShareLevel>(p => p.checkingConfig.shareLevel, value));
-    this.wait();
   }
 
   wait(): void {

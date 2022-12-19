@@ -1,10 +1,8 @@
 <ng-container *transloco="let t; read: 'share'">
-  <button
-    type="button"
-    (click)="openDialog()"
-    mdc-icon-button
-    icon="share"
-    title="{{ t('share') }}"
-    id="share-btn"
-  ></button>
+  <button *ngIf="iconOnlyButton" (click)="openDialog()" mat-icon-button title="{{ t('share') }}" id="share-btn">
+    <mat-icon>share</mat-icon>
+  </button>
+  <button *ngIf="!iconOnlyButton" mat-flat-button (click)="openDialog()" color="primary">
+    <mat-icon>share</mat-icon>{{ t("share") }}
+  </button>
 </ng-container>

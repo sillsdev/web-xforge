@@ -90,26 +90,6 @@
                   <span>{{ shareDescription?.after }}</span>
                 </span>
               </mat-hint>
-              <mat-radio-group
-                id="translate-share-level-radio-group"
-                formControlName="translateShareLevel"
-                class="tool-setting"
-                [fxHide]="translateShareLevel.disabled"
-              >
-                <div class="tool-setting-field">
-                  <mat-radio-button id="radio-translateShareLevel-anyone" [value]="TranslateShareLevel.Anyone">{{
-                    t("anyone_with_a_link")
-                  }}</mat-radio-button>
-                  <mat-radio-button id="radio-translateShareLevel-specific" [value]="TranslateShareLevel.Specific">{{
-                    t("email_invitations_only")
-                  }}</mat-radio-button>
-                  <app-write-status
-                    [state]="getControlState('translateShareLevel')"
-                    [formGroup]="form"
-                    id="translateShareLevel-status"
-                  ></app-write-status>
-                </div>
-              </mat-radio-group>
             </div>
           </mat-card-content>
           <mat-divider></mat-divider>
@@ -163,26 +143,6 @@
                     <span>{{ shareDescription?.after }}</span>
                   </span>
                 </mat-hint>
-                <mat-radio-group
-                  id="checking-share-level-radio-group"
-                  formControlName="checkingShareLevel"
-                  class="tool-setting"
-                  [fxHide]="checkingShareLevel.disabled"
-                >
-                  <div class="tool-setting-field">
-                    <mat-radio-button id="radio-checkingShareLevel-anyone" [value]="CheckingShareLevel.Anyone">{{
-                      t("anyone_with_a_link")
-                    }}</mat-radio-button>
-                    <mat-radio-button id="radio-checkingShareLevel-specific" [value]="CheckingShareLevel.Specific">{{
-                      t("email_invitations_only")
-                    }}</mat-radio-button>
-                    <app-write-status
-                      [state]="getControlState('checkingShareLevel')"
-                      [formGroup]="form"
-                      id="checkingShareLevel-status"
-                    ></app-write-status>
-                  </div>
-                </mat-radio-group>
               </div>
               <div>
                 <h2 class="sharing-heading">{{ t("exporting_answers") }}</h2>
