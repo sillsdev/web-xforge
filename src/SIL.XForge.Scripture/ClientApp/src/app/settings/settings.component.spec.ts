@@ -8,9 +8,9 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
-import { CheckingConfig, CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { TranslateConfig, TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
+import { TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
@@ -210,8 +210,7 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           translationSuggestionsEnabled: false,
-          shareEnabled: false,
-          shareLevel: TranslateShareLevel.Specific
+          shareEnabled: false
         });
         tick();
         env.fixture.detectChanges();
@@ -305,8 +304,7 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           translationSuggestionsEnabled: false,
-          shareEnabled: false,
-          shareLevel: TranslateShareLevel.Specific
+          shareEnabled: false
         });
         env.wait();
         expect(env.translationSuggestionsCheckbox).toBeNull();
@@ -339,7 +337,6 @@ describe('SettingsComponent', () => {
         env.setupProject({
           translationSuggestionsEnabled: false,
           shareEnabled: false,
-          shareLevel: TranslateShareLevel.Specific,
           source: {
             paratextId: 'paratextId01',
             projectRef: 'paratext01',
@@ -400,63 +397,6 @@ describe('SettingsComponent', () => {
         tick();
         env.fixture.detectChanges();
         expect(env.statusDone(env.checkingExportStatus)).not.toBeNull();
-      }));
-
-      it('share level should be disabled if share set to false', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject(undefined, {
-          checkingEnabled: true,
-          usersSeeEachOthersResponses: false,
-          shareEnabled: true,
-          shareLevel: CheckingShareLevel.Anyone,
-          answerExportMethod: CheckingAnswerExport.MarkedForExport
-        });
-        env.wait();
-
-        expect(env.component.checkingShareLevel.disabled).toEqual(false);
-        env.clickElement(env.inputElement(env.checkingShareCheckbox));
-        expect(env.component.checkingShareLevel.disabled).toEqual(true);
-      }));
-
-      it('share level can be changed for both checking and translate tool', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject(
-          {
-            translationSuggestionsEnabled: false,
-            shareEnabled: true,
-            shareLevel: TranslateShareLevel.Specific
-          },
-          {
-            checkingEnabled: true,
-            usersSeeEachOthersResponses: false,
-            shareEnabled: true,
-            shareLevel: CheckingShareLevel.Specific,
-            answerExportMethod: CheckingAnswerExport.MarkedForExport
-          }
-        );
-        env.wait();
-
-        expect(env.component.checkingShareLevel.value).toEqual(CheckingShareLevel.Specific);
-        expect(env.component.translateShareLevel.value).toEqual(TranslateShareLevel.Specific);
-
-        env.clickElement(env.inputElement(env.checkingShareLevelAnyone));
-        env.clickElement(env.inputElement(env.translateShareLevelAnyone));
-
-        expect(env.component.checkingShareLevel.value).toEqual(CheckingShareLevel.Anyone);
-        expect(env.component.translateShareLevel.value).toEqual(TranslateShareLevel.Anyone);
-
-        verify(
-          mockedSFProjectService.onlineUpdateSettings(
-            'project01',
-            deepEqual({ checkingShareLevel: CheckingShareLevel.Anyone })
-          )
-        ).once();
-        verify(
-          mockedSFProjectService.onlineUpdateSettings(
-            'project01',
-            deepEqual({ translateShareLevel: TranslateShareLevel.Anyone })
-          )
-        ).once();
       }));
     });
   });
@@ -609,10 +549,6 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#btn-log-in-settings'));
   }
 
-  get translateShareLevelAnyone(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#radio-translateShareLevel-anyone'));
-  }
-
   get checkingCheckbox(): DebugElement {
     return this.fixture.debugElement.query(By.css('#checkbox-community-checking'));
   }
@@ -643,10 +579,6 @@ class TestEnvironment {
 
   get checkingShareStatus(): DebugElement {
     return this.fixture.debugElement.query(By.css('#checking-share-status'));
-  }
-
-  get checkingShareLevelAnyone(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#radio-checkingShareLevel-anyone'));
   }
 
   get dangerZoneTitle(): HTMLElement {
@@ -746,7 +678,6 @@ class TestEnvironment {
     translateConfig: TranslateConfig = {
       translationSuggestionsEnabled: true,
       shareEnabled: false,
-      shareLevel: TranslateShareLevel.Specific,
 
       source: {
         paratextId: 'paratextId01',
@@ -762,7 +693,6 @@ class TestEnvironment {
       checkingEnabled: false,
       usersSeeEachOthersResponses: false,
       shareEnabled: false,
-      shareLevel: CheckingShareLevel.Specific,
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     }
   ) {

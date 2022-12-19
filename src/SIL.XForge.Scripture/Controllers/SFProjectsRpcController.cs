@@ -114,10 +114,8 @@ namespace SIL.XForge.Scripture.Controllers
                     {
                         { "method", "UpdateSettings" },
                         { "projectId", projectId },
-                        { "CheckingShareLevel", settings?.CheckingShareLevel },
                         { "CheckingAnswerExport", settings?.CheckingAnswerExport },
                         { "SourceParatextId", settings?.SourceParatextId },
-                        { "TranslateShareLevel", settings?.TranslateShareLevel },
                         { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
                         { "CheckingShareEnabled", settings?.CheckingShareEnabled?.ToString() },
                         { "TranslateShareEnabled", settings?.TranslateShareEnabled?.ToString() },
@@ -343,12 +341,11 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
-        public async Task<IRpcMethodResult> CheckLinkSharing(string projectId, string shareKey)
+        public async Task<IRpcMethodResult> CheckLinkSharing(string shareKey)
         {
             try
             {
-                await _projectService.CheckLinkSharingAsync(UserId, projectId, shareKey);
-                return Ok();
+                return Ok(await _projectService.CheckLinkSharingAsync(UserId, shareKey));
             }
             catch (ForbiddenException)
             {
@@ -361,15 +358,10 @@ namespace SIL.XForge.Scripture.Controllers
             catch (Exception)
             {
                 _exceptionHandler.RecordEndpointInfoForException(
-                    new Dictionary<string, string> { { "method", "CheckLinkSharing" }, { "projectId", projectId }, }
+                    new Dictionary<string, string> { { "method", "CheckLinkSharing" }, { "shareKey", shareKey }, }
                 );
                 throw;
             }
-        }
-
-        public async Task<IRpcMethodResult> CheckLinkSharing(string projectId)
-        {
-            return await CheckLinkSharing(projectId, null);
         }
 
         public IRpcMethodResult IsSourceProject(string projectId)
@@ -377,11 +369,11 @@ namespace SIL.XForge.Scripture.Controllers
             return Ok(_projectService.IsSourceProject(projectId));
         }
 
-        public async Task<IRpcMethodResult> LinkSharingKey(string projectId, string role)
+        public async Task<IRpcMethodResult> LinkSharingKey(string projectId, string role, string shareLinkType)
         {
             try
             {
-                return Ok(await _projectService.GetLinkSharingKeyAsync(UserId, projectId, role));
+                return Ok(await _projectService.GetLinkSharingKeyAsync(UserId, projectId, role, shareLinkType));
             }
             catch (DataNotFoundException dnfe)
             {
@@ -395,6 +387,7 @@ namespace SIL.XForge.Scripture.Controllers
                         { "method", "LinkSharingKey" },
                         { "projectId", projectId },
                         { "role", role },
+                        { "shareLinkType", shareLinkType },
                     }
                 );
                 throw;

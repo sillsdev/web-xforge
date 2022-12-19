@@ -6,15 +6,10 @@ import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
-import {
-  CheckingAnswerExport,
-  CheckingConfig,
-  CheckingShareLevel
-} from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { CheckingAnswerExport, CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -420,7 +415,6 @@ describe('CollaboratorsComponent', () => {
     const checkingConfig: CheckingConfig = {
       checkingEnabled: true,
       shareEnabled: true,
-      shareLevel: CheckingShareLevel.Anyone,
       usersSeeEachOthersResponses: false,
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     };
@@ -492,7 +486,9 @@ class TestEnvironment {
     when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
-    when(mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything())).thenResolve('linkSharingKey01');
+    when(mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything(), anything())).thenResolve(
+      'linkSharingKey01'
+    );
     when(mockedProjectService.onlineSetUserProjectPermissions(this.project01Id, 'user02', anything())).thenCall(
       (projectId: string, userId: string, permissions: string[]) => {
         const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, projectId);
@@ -667,14 +663,12 @@ class TestEnvironment {
       sync: { queuedCount: 0 },
       translateConfig: {
         translationSuggestionsEnabled: false,
-        shareEnabled: false,
-        shareLevel: TranslateShareLevel.Specific
+        shareEnabled: false
       },
       checkingConfig: {
         checkingEnabled: false,
         usersSeeEachOthersResponses: false,
         shareEnabled: false,
-        shareLevel: CheckingShareLevel.Specific,
         answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
       editable: true,
