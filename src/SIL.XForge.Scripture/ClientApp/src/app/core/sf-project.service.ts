@@ -30,6 +30,7 @@ import { SFProjectUserConfigDoc } from './models/sf-project-user-config-doc';
 import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from './models/text-doc';
 import { TranslateMetrics } from './models/translate-metrics';
+import { LocationService } from 'xforge-common/location.service';
 
 @Injectable({
   providedIn: 'root'
