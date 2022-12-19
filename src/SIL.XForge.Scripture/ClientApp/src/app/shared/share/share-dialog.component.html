@@ -1,12 +1,82 @@
 <ng-container *transloco="let t; read: 'share_dialog'">
-  <h1 mat-dialog-title>{{ t("share_with_others") }}</h1>
-  <app-share-control
-    mat-dialog-content
-    class="share-dialog"
-    [projectId]="data.projectId"
-    [defaultRole]="data.defaultRole"
-  ></app-share-control>
-  <div mat-dialog-actions align="end">
-    <button id="close-btn" mat-flat-button mat-dialog-close>{{ t("done") }}</button>
+  <h1 mat-dialog-title>
+    <span>{{ t("share") }} '{{ projectName }}'</span
+    ><button mat-icon-button mat-dialog-close tabindex="-1"><mat-icon>close</mat-icon></button>
+  </h1>
+  <div class="configurations">
+    <div class="configuration-option configuration-invitation-role">
+      <mat-icon>public</mat-icon>
+      <div>
+        {{ t("anyone_with_link_can") }} <b>{{ i18n.localizeRoleDescription(shareRole) }}</b>
+        <a [matMenuTriggerFor]="roleMenu" title="{{ t('invitation_role') }}" *ngIf="canUserChangeRole"
+          >({{ t("change") }})</a
+        >
+      </div>
+      <mat-menu #roleMenu>
+        <mat-selection-list [multiple]="false" class="share-selection-role">
+          <mat-list-option *ngFor="let role of availableRoles" [selected]="role === shareRole" (click)="setRole(role)">
+            <div class="role-name">{{ i18n.localizeRole(role) }}</div>
+            <div class="role-description">{{ i18n.localizeRoleDescription(role) }}</div>
+          </mat-list-option>
+        </mat-selection-list>
+      </mat-menu>
+    </div>
+    <div class="configuration-option">
+      <mat-icon>translate</mat-icon>
+      <div>
+        {{ t("invitation_shared_in_language") }} <b>{{ shareLocaleCode.localName }}</b>
+        <a [matMenuTriggerFor]="langMenu" title="{{ t('invitation_language') }}">({{ t("change") }})</a>
+      </div>
+      <mat-menu #langMenu>
+        <mat-selection-list [multiple]="false">
+          <mat-list-option
+            *ngFor="let locale of i18n.locales"
+            [selected]="locale === shareLocaleCode"
+            (click)="setLocale(locale)"
+          >
+            <span [class.locale-disabled]="!locale.production">{{ locale.localName }}</span>
+          </mat-list-option>
+        </mat-selection-list>
+      </mat-menu>
+    </div>
+    <div class="configuration-option configuration-link-type" *ngIf="canUserChangeLinkUsage">
+      <mat-icon>groups</mat-icon>
+      <div>
+        {{ t("link_can_be_used_by") }} <b>{{ t(shareLinkType) }}</b>
+        <a
+          [matMenuTriggerFor]="linkUsageMenu"
+          title="{{ t('invitation_link_type') }}"
+          *ngIf="shareLinkUsageOptions.length > 1"
+          >({{ t("change") }})</a
+        >
+      </div>
+      <mat-menu #linkUsageMenu>
+        <mat-selection-list [multiple]="false" *ngIf="shareLinkUsageOptions.length > 1">
+          <mat-list-option
+            *ngFor="let option of shareLinkUsageOptions"
+            [selected]="option === shareLinkType"
+            (click)="setLinkType(option)"
+          >
+            {{ t(option) }}
+          </mat-list-option>
+        </mat-selection-list>
+      </mat-menu>
+    </div>
+  </div>
+  <div *ngIf="showLinkSharingUnavailable" class="offline-text">{{ t("link_sharing_not_available_offline") }}</div>
+  <div mat-dialog-actions>
+    <button
+      id="share-btn"
+      mat-flat-button
+      color="primary"
+      *ngIf="supportsShareAPI"
+      (click)="shareLink()"
+      [disabled]="!isLinkReady"
+    >
+      <mat-icon>share</mat-icon>{{ t("share") }}
+    </button>
+    <button id="copy-btn" mat-flat-button (click)="copyLink()" [disabled]="!isLinkReady">
+      <mat-icon>content_copy</mat-icon>{{ t("copy_link") }}
+    </button>
   </div>
 </ng-container>

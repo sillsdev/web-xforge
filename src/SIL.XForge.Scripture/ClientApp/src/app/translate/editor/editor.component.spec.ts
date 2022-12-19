@@ -21,7 +21,6 @@ import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources } from 'quill'
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import {
   AssignedUsers,
@@ -39,7 +38,6 @@ import {
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
@@ -1058,7 +1056,6 @@ describe('EditorComponent', () => {
         translateConfig: {
           translationSuggestionsEnabled: true,
           shareEnabled: false,
-          shareLevel: TranslateShareLevel.Specific,
           source: {
             paratextId: 'resource01',
             name: 'Resource 1',
@@ -2819,7 +2816,6 @@ describe('EditorComponent', () => {
         translateConfig: {
           translationSuggestionsEnabled: false,
           shareEnabled: false,
-          shareLevel: TranslateShareLevel.Specific,
           source: {
             paratextId: 'resource01',
             name: 'Resource 1',
@@ -2925,8 +2921,7 @@ describe('EditorComponent', () => {
 
 const defaultTranslateConfig = {
   translationSuggestionsEnabled: false,
-  shareEnabled: false,
-  shareLevel: TranslateShareLevel.Specific
+  shareEnabled: false
 };
 
 class TestEnvironment {
@@ -2980,7 +2975,6 @@ class TestEnvironment {
       translationSuggestionsEnabled: true,
       defaultNoteTagId: 2,
       shareEnabled: false,
-      shareLevel: TranslateShareLevel.Specific,
       source: {
         paratextId: 'source01',
         projectRef: 'project02',
@@ -2995,7 +2989,6 @@ class TestEnvironment {
       checkingEnabled: false,
       usersSeeEachOthersResponses: true,
       shareEnabled: true,
-      shareLevel: CheckingShareLevel.Specific,
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     sync: { queuedCount: 0, dataInSync: true },
