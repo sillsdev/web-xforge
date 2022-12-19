@@ -18,6 +18,7 @@ import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
+import { ShareLinkType } from '../shared/share/share-dialog.component';
 import { NoteThreadDoc } from './models/note-thread-doc';
 import { QuestionDoc } from './models/question-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
@@ -28,6 +29,7 @@ import { SFProjectUserConfigDoc } from './models/sf-project-user-config-doc';
 import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from './models/text-doc';
 import { TranslateMetrics } from './models/translate-metrics';
+import { LocationService } from 'xforge-common/location.service';
 
 @Injectable({
   providedIn: 'root'
@@ -39,6 +41,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     realtimeService: RealtimeService,
     commandService: CommandService,
     private readonly fileService: FileService,
+    private readonly locationService: LocationService,
     protected readonly retryingRequestService: RetryingRequestService
   ) {
     super(realtimeService, commandService, retryingRequestService, SF_PROJECT_ROLES);
@@ -150,6 +153,17 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     await this.realtimeService.create<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId, noteThread);
   }
 
+  generateSharingUrl(shareKey: string, localeCode?: string): string {
+    if (shareKey === '') {
+      return '';
+    }
+    let url = `${this.locationService.origin}/join/${shareKey}`;
+    if (localeCode != null) {
+      url += `/${localeCode}`;
+    }
+    return url;
+  }
+
   queryNoteThreads(sfProjectId: string): Promise<RealtimeQuery<NoteThreadDoc>> {
     const queryParams: QueryParameters = {
       [obj<NoteThread>().pathStr(t => t.projectRef)]: sfProjectId,
@@ -181,8 +195,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   /** Get added into project, with optionally specified shareKey code. */
-  onlineCheckLinkSharing(id: string, shareKey?: string): Promise<void> {
-    return this.onlineInvoke('checkLinkSharing', { projectId: id, shareKey });
+  async onlineCheckLinkSharing(shareKey?: string): Promise<string> {
+    return (await this.onlineInvoke<string>('checkLinkSharing', { shareKey }))!;
   }
 
   onlineInvite(id: string, email: string, locale: string, role: string): Promise<string | undefined> {
@@ -197,8 +211,14 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return (await this.onlineInvoke<boolean>('isSourceProject', { projectId }))!;
   }
 
-  async onlineGetLinkSharingKey(projectId: string, role: SFProjectRole): Promise<string> {
-    return (await this.onlineInvoke<string>('linkSharingKey', { projectId, role })) ?? '';
+  async onlineGetLinkSharingKey(projectId: string, role: SFProjectRole, shareLinkType: ShareLinkType): Promise<string> {
+    return (
+      (await this.onlineInvoke<string>('linkSharingKey', {
+        projectId,
+        role,
+        shareLinkType
+      })) ?? ''
+    );
   }
 
   transceleratorQuestions(projectId: string, cancel: Subject<void>): RetryingRequest<TransceleratorQuestion[]> {

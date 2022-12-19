@@ -1,7 +1,72 @@
 // Note: ViewEncapsulation is disabled for this file, so all styles can apply to any element globally
+@import 'src/variables';
 
 .share-dialog-component-panel {
   width: 30em;
   // Angular Material sets max-width on the element itself, so this is the only way to override in CSS
   max-width: 90vw !important;
+}
+
+.mat-dialog-title {
+  margin-bottom: 0.25em;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  button {
+    margin-top: -4px;
+  }
+}
+
+.configurations {
+  display: flex;
+  flex-direction: column;
+  row-gap: 16px;
+  margin: 16px 0;
+  .configuration-option {
+    display: flex;
+    column-gap: 10px;
+
+    mat-icon {
+      color: $purpleLight;
+    }
+    div {
+      padding-top: 3px;
+      font-size: 0.9em;
+      a {
+        color: $purpleLight;
+        cursor: pointer;
+        display: inline-block;
+        padding-inline-start: 10px;
+      }
+    }
+  }
+}
+div[mat-dialog-actions] {
+  display: flex;
+  flex-direction: row-reverse; /* This was done so the share button would receive the focus */
+  justify-items: flex-end;
+  column-gap: 10px;
+
+  button {
+    mat-icon {
+      margin-inline-end: 10px;
+    }
+  }
+}
+.share-selection-role.mat-list-base {
+  padding-top: 0;
+  mat-list-option {
+    height: auto !important;
+    .mat-list-text > {
+      .role-name {
+        margin-top: 8px;
+      }
+
+      .role-description {
+        color: gray;
+        font-size: 0.9em;
+        margin-bottom: 8px;
+      }
+    }
+  }
 }

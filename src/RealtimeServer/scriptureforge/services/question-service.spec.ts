@@ -1,13 +1,12 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
-import { TranslateShareLevel } from '../models/translate-config';
 import { SystemRole } from '../../common/models/system-role';
 import { User, USERS_COLLECTION } from '../../common/models/user';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { allowAll, clientConnect, createDoc, flushPromises, submitJson0Op } from '../../common/utils/test-utils';
-import { CheckingAnswerExport, CheckingShareLevel } from '../models/checking-config';
+import { CheckingAnswerExport } from '../models/checking-config';
 import { getQuestionDocId, Question, QUESTIONS_COLLECTION } from '../models/question';
 import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
@@ -156,14 +155,12 @@ class TestEnvironment {
       writingSystem: { tag: 'qaa' },
       translateConfig: {
         translationSuggestionsEnabled: false,
-        shareEnabled: true,
-        shareLevel: TranslateShareLevel.Specific
+        shareEnabled: true
       },
       checkingConfig: {
         checkingEnabled: false,
         usersSeeEachOthersResponses: true,
         shareEnabled: true,
-        shareLevel: CheckingShareLevel.Specific,
         answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
       texts: [],

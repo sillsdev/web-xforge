@@ -11,6 +11,7 @@ import { ShareDialogComponent, ShareDialogData } from './share-dialog.component'
 })
 export class ShareButtonComponent implements OnInit {
   @Input() defaultRole?: SFProjectRole;
+  @Input() iconOnlyButton: boolean = true;
 
   private projectId?: string;
 
@@ -24,6 +25,7 @@ export class ShareButtonComponent implements OnInit {
 
   openDialog(): void {
     this.dialogService.openMatDialog(ShareDialogComponent, {
+      width: '500px',
       data: {
         projectId: this.projectId,
         defaultRole: this.defaultRole
