@@ -32,6 +32,14 @@ form {
   margin-top: 20px;
 }
 
+.invite-by-link {
+  display: flex;
+  flex-direction: column;
+  app-share {
+    align-self: flex-end;
+  }
+}
+
 ::ng-deep .invitation-role-panel .mat-option {
   height: 4em !important;
 

@@ -4,7 +4,6 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
-import { I18nService } from 'xforge-common/i18n.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -22,18 +21,16 @@ const mockedProjectService = mock(SFProjectService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedUserService = mock(UserService);
 const mockedPwaService = mock(PwaService);
-const mockedI18nService = mock(I18nService);
 
 describe('ShareComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [DialogTestModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), UICommonModule],
     declarations: [ShareComponent],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: UserService, useMock: mockedUserService },
-      { provide: PwaService, useMock: mockedPwaService },
-      { provide: I18nService, useMock: mockedI18nService }
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -81,7 +78,7 @@ class TestEnvironment {
   }
 
   get closeButton(): HTMLButtonElement {
-    return this.overlayContainerElement.querySelector('#close-btn') as HTMLButtonElement;
+    return this.overlayContainerElement.querySelector('button[mat-dialog-close]') as HTMLButtonElement;
   }
 
   clickElement(element: HTMLElement): void {

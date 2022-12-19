@@ -5,8 +5,7 @@ import { SF_PROJECT_PROFILES_COLLECTION, SF_PROJECTS_COLLECTION, SFProject } fro
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { clientConnect, createDoc, fetchDoc } from '../../common/utils/test-utils';
-import { CheckingAnswerExport, CheckingShareLevel } from '../models/checking-config';
-import { TranslateShareLevel } from '../models/translate-config';
+import { CheckingAnswerExport } from '../models/checking-config';
 import { SystemRole } from '../../common/models/system-role';
 import { ParatextUserProfile } from '../models/paratext-user-profile';
 import { SFProjectService } from './sf-project-service';
@@ -101,14 +100,12 @@ class TestEnvironment {
       checkingConfig: {
         checkingEnabled: false,
         shareEnabled: false,
-        shareLevel: CheckingShareLevel.Specific,
         usersSeeEachOthersResponses: false,
         answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
       translateConfig: {
         translationSuggestionsEnabled: false,
-        shareEnabled: false,
-        shareLevel: TranslateShareLevel.Specific
+        shareEnabled: false
       },
       writingSystem: {
         tag: 'en'

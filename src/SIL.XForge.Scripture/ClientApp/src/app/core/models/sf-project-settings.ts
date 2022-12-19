@@ -1,5 +1,3 @@
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 
 /**
@@ -9,11 +7,9 @@ export interface SFProjectSettings {
   translationSuggestionsEnabled?: boolean;
   sourceParatextId?: string;
   translateShareEnabled?: boolean;
-  translateShareLevel?: TranslateShareLevel;
 
   checkingEnabled?: boolean;
   usersSeeEachOthersResponses?: boolean;
   checkingShareEnabled?: boolean;
-  checkingShareLevel?: CheckingShareLevel;
   checkingAnswerExport?: CheckingAnswerExport;
 }
