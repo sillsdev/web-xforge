@@ -9,12 +9,10 @@ import { ProgressStatus } from '@sillsdev/machine';
 import { CookieService } from 'ngx-cookie-service';
 import {
   CheckingAnswerExport,
-  CheckingShareLevel
 } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -301,14 +299,12 @@ class TestEnvironment {
         },
         translateConfig: {
           translationSuggestionsEnabled,
-          shareEnabled: false,
-          shareLevel: TranslateShareLevel.Specific
+          shareEnabled: false
         },
         checkingConfig: {
           checkingEnabled: false,
           usersSeeEachOthersResponses: true,
           shareEnabled: true,
-          shareLevel: CheckingShareLevel.Specific,
           answerExportMethod: CheckingAnswerExport.MarkedForExport
         },
         sync: { queuedCount: 0 },

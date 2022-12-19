@@ -66,6 +66,7 @@ namespace SIL.XForge.Scripture
             "connect-project",
             "login",
             "projects",
+            "join",
             "system-administration",
             "favicon.ico",
             "assets"

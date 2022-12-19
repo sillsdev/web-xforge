@@ -1,5 +1,7 @@
 @use '@material/icon-button/mixins' as icon-button;
 
-#share-btn {
-  @include icon-button.icon-size(24px, 24px, 8px);
+button {
+  mat-icon {
+    margin-inline-end: 10px;
+  }
 }
