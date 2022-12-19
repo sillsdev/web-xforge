@@ -9,13 +9,15 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 using SIL.Machine.Corpora;
-using SIL.Machine.WebApi.Models;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.DataAccess;
+using SIL.XForge.Models;
 using SIL.XForge.Realtime;
+using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using Project = SIL.Machine.WebApi.Models.Project;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -31,9 +33,11 @@ namespace SIL.XForge.Scripture.Services
         private readonly IMachineBuildService _machineBuildService;
         private readonly IMachineCorporaService _machineCorporaService;
         private readonly IMachineTranslationService _machineTranslationService;
+        private readonly IParatextService _paratextService;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
         private readonly IRealtimeService _realtimeService;
         private readonly ITextCorpusFactory _textCorpusFactory;
+        private readonly IRepository<UserSecret> _userSecrets;
 
         public MachineProjectService(
             IEngineService engineService,
@@ -42,9 +46,11 @@ namespace SIL.XForge.Scripture.Services
             IMachineBuildService machineBuildService,
             IMachineCorporaService machineCorporaService,
             IMachineTranslationService machineTranslationService,
+            IParatextService paratextService,
             IRepository<SFProjectSecret> projectSecrets,
             IRealtimeService realtimeService,
-            ITextCorpusFactory textCorpusFactory
+            ITextCorpusFactory textCorpusFactory,
+            IRepository<UserSecret> userSecrets
         )
         {
             _engineService = engineService;
@@ -53,9 +59,11 @@ namespace SIL.XForge.Scripture.Services
             _machineBuildService = machineBuildService;
             _machineCorporaService = machineCorporaService;
             _machineTranslationService = machineTranslationService;
+            _paratextService = paratextService;
             _projectSecrets = projectSecrets;
             _realtimeService = realtimeService;
             _textCorpusFactory = textCorpusFactory;
+            _userSecrets = userSecrets;
         }
 
         public async Task AddProjectAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken)
@@ -88,24 +96,17 @@ namespace SIL.XForge.Scripture.Services
                 return;
             }
 
-            // Add the project to the Machine API
-            string translationEngineId = await _machineTranslationService.CreateTranslationEngineAsync(
-                name: sfProjectId,
-                machineProject.SourceLanguageTag,
-                machineProject.TargetLanguageTag,
-                smtTransfer: true,
-                cancellationToken
-            );
-            if (string.IsNullOrWhiteSpace(translationEngineId))
+            // We may not have the source language tag or target language tag if either is a back translation
+            // If that is the case, we will create the translation engine on first sync by running this method again
+            // After ensuring that the source and target language tags are present
+            if (
+                !string.IsNullOrWhiteSpace(machineProject.SourceLanguageTag)
+                && !string.IsNullOrWhiteSpace(machineProject.TargetLanguageTag)
+            )
             {
-                throw new ArgumentException("Translation Engine ID from the Machine API is missing.");
+                // We do not need the returned project secret
+                _ = await CreateMachineApiProjectAsync(project, cancellationToken);
             }
-
-            // Store the Translation Engine ID
-            await _projectSecrets.UpdateAsync(
-                sfProjectId,
-                u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = translationEngineId })
-            );
         }
 
         public async Task BuildProjectAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken)
@@ -132,8 +133,65 @@ namespace SIL.XForge.Scripture.Services
             // Ensure we have a translation engine id
             if (string.IsNullOrWhiteSpace(projectSecret.MachineData?.TranslationEngineId))
             {
-                _logger.LogInformation($"No Translation Engine Id specified for project {sfProjectId}");
-                return;
+                // We do not have one, likely because the translation is a back translation
+                // We can only get the language tags for back translations from the ScrText,
+                // which is not present until after the first sync (not from the Registry).
+
+                // Load the project from the realtime service
+                using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
+                IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
+                if (!projectDoc.IsLoaded)
+                {
+                    throw new DataNotFoundException("The project does not exist.");
+                }
+
+                // If the source or target writing system tag is missing, get them from the ScrText
+                if (
+                    string.IsNullOrWhiteSpace(projectDoc.Data.WritingSystem.Tag)
+                    || string.IsNullOrWhiteSpace(projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag)
+                )
+                {
+                    // Get the user secret
+                    Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
+                    if (!userSecretAttempt.TryResult(out UserSecret userSecret))
+                        throw new DataNotFoundException("The user does not exist.");
+
+                    // Update the target writing system tag
+                    if (string.IsNullOrWhiteSpace(projectDoc.Data.WritingSystem.Tag))
+                    {
+                        string targetLanguageTag = _paratextService.GetLanguageId(
+                            userSecret,
+                            projectDoc.Data.ParatextId
+                        );
+                        if (!string.IsNullOrEmpty(targetLanguageTag))
+                        {
+                            await projectDoc.SubmitJson0OpAsync(op =>
+                            {
+                                op.Set(p => p.WritingSystem.Tag, targetLanguageTag);
+                            });
+                        }
+                    }
+
+                    // Update the source writing system tag
+                    if (string.IsNullOrWhiteSpace(projectDoc.Data.TranslateConfig.Source.WritingSystem.Tag))
+                    {
+                        string sourceLanguageTag = _paratextService.GetLanguageId(
+                            userSecret,
+                            projectDoc.Data.TranslateConfig.Source.ParatextId
+                        );
+                        if (!string.IsNullOrEmpty(sourceLanguageTag))
+                        {
+                            await projectDoc.SubmitJson0OpAsync(op =>
+                            {
+                                op.Set(p => p.TranslateConfig.Source.WritingSystem.Tag, sourceLanguageTag);
+                            });
+                        }
+                    }
+                }
+
+                // Create the Machine API project
+                // The returned project secret will have the translation engine id
+                projectSecret = await CreateMachineApiProjectAsync(projectDoc.Data, cancellationToken);
             }
 
             // Sync the corpus
@@ -142,7 +200,7 @@ namespace SIL.XForge.Scripture.Services
                 // If the corpus was updated, start the build
                 // We do not need the build ID for tracking as we use GetCurrentBuildAsync for that
                 _ = await _machineBuildService.StartBuildAsync(
-                    projectSecret.MachineData.TranslationEngineId,
+                    projectSecret.MachineData!.TranslationEngineId,
                     cancellationToken
                 );
             }
@@ -426,6 +484,38 @@ namespace SIL.XForge.Scripture.Services
             }
 
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Creates a project in the Machine API.
+        /// </summary>
+        /// <param name="sfProject">The Scripture Forge project</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The asynchronous task.</returns>
+        /// <exception cref="ArgumentException">The translation engine could not be created.</exception>
+        private async Task<SFProjectSecret> CreateMachineApiProjectAsync(
+            SFProject sfProject,
+            CancellationToken cancellationToken
+        )
+        {
+            // Add the project to the Machine API
+            string translationEngineId = await _machineTranslationService.CreateTranslationEngineAsync(
+                name: sfProject.Id,
+                sourceLanguageTag: sfProject.TranslateConfig.Source.WritingSystem.Tag,
+                targetLanguageTag: sfProject.WritingSystem.Tag,
+                smtTransfer: true,
+                cancellationToken
+            );
+            if (string.IsNullOrWhiteSpace(translationEngineId))
+            {
+                throw new ArgumentException("Translation Engine ID from the Machine API is missing.");
+            }
+
+            // Store the Translation Engine ID
+            return await _projectSecrets.UpdateAsync(
+                sfProject.Id,
+                u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = translationEngineId })
+            );
         }
 
         /// <summary>

@@ -2497,6 +2497,65 @@ namespace SIL.XForge.Scripture.Services
             Assert.ThrowsAsync<ForbiddenException>(() => env.Service.SyncAsync(User02, Project01));
         }
 
+        [Test]
+        public async Task EnsureWritingSystemTagIsSetAsync_DoesNotUpdateIfNoChanges()
+        {
+            // Setup
+            var env = new TestEnvironment();
+
+            // SUT
+            await env.Service.EnsureWritingSystemTagIsSetAsync(User01, Project01);
+
+            // If the writing system tags are updated, the projects must be retrieved
+            await env.ParatextService.DidNotReceive().GetProjectsAsync(Arg.Any<UserSecret>());
+        }
+
+        [Test]
+        public async Task EnsureWritingSystemTagIsSetAsync_DoesNotUpdateIfNotInRegistry()
+        {
+            // Setup
+            var env = new TestEnvironment();
+            IReadOnlyList<ParatextProject> ptProjects = Array.Empty<ParatextProject>();
+            env.ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(ptProjects));
+
+            // SUT
+            await env.Service.EnsureWritingSystemTagIsSetAsync(User01, Project04);
+
+            // If the writing system tags are updated, the projects must be retrieved
+            await env.ParatextService.Received(1).GetProjectsAsync(Arg.Any<UserSecret>());
+
+            Assert.IsNull(env.GetProject(Project04).WritingSystem.Tag);
+            Assert.IsNull(env.GetProject(Project04).TranslateConfig.Source.WritingSystem.Tag);
+        }
+
+        [Test]
+        public async Task EnsureWritingSystemTagIsSetAsync_UpdatesTagsIfMissing()
+        {
+            // Setup
+            const string languageTag01 = "languageTag01";
+            const string languageTag02 = "languageTag02";
+            var env = new TestEnvironment();
+            IReadOnlyList<ParatextProject> ptProjects = new[]
+            {
+                new ParatextProject { ProjectId = Project04, LanguageTag = languageTag01 },
+                new ParatextProject
+                {
+                    ParatextId = env.GetProject(Project04).TranslateConfig.Source.ParatextId,
+                    LanguageTag = languageTag02
+                },
+            };
+            env.ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(ptProjects));
+
+            // SUT
+            await env.Service.EnsureWritingSystemTagIsSetAsync(User01, Project04);
+
+            // If the writing system tags are updated, the projects must be retrieved
+            await env.ParatextService.Received(1).GetProjectsAsync(Arg.Any<UserSecret>());
+
+            Assert.AreEqual(languageTag01, env.GetProject(Project04).WritingSystem.Tag);
+            Assert.AreEqual(languageTag02, env.GetProject(Project04).TranslateConfig.Source.WritingSystem.Tag);
+        }
+
         private class TestEnvironment
         {
             public TestEnvironment()
@@ -2659,7 +2718,8 @@ namespace SIL.XForge.Scripture.Services
                                             }
                                         }
                                     }
-                                }
+                                },
+                                WritingSystem = new WritingSystem { Tag = "qaa" },
                             },
                             new SFProject
                             {
