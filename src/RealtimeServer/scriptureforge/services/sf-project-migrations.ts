@@ -3,7 +3,6 @@ import { Migration, MigrationConstructor } from '../../common/migration';
 import { submitMigrationOp } from '../../common/realtime-server';
 import { SFProjectRole } from '../models/sf-project-role';
 import { TextInfoPermission } from '../models/text-info-permission';
-import { TranslateShareLevel } from '../models/translate-config';
 
 class SFProjectMigration1 implements Migration {
   static readonly VERSION = 1;
@@ -120,7 +119,6 @@ class SFProjectMigration5 implements Migration {
       ops.push({ p: ['translateConfig'], oi: {} });
     }
     ops.push({ p: ['translateConfig', 'shareEnabled'], oi: false });
-    ops.push({ p: ['translateConfig', 'shareLevel'], oi: TranslateShareLevel.Specific });
     await submitMigrationOp(SFProjectMigration5.VERSION, doc, ops);
   }
 

@@ -3,21 +3,15 @@ import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router'
 import { TranslocoService } from '@ngneat/transloco';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
-import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
-import { DialogService } from 'xforge-common/dialog.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -34,10 +28,7 @@ const mockedUserService = mock(UserService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
-const mockedNoticeService = mock(NoticeService);
-const mockedDialogService = mock(DialogService);
 const mockedTranslocoService = mock(TranslocoService);
-const mockedPwaService = mock(PwaService);
 
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
@@ -48,10 +39,7 @@ describe('ProjectComponent', () => {
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: DialogService, useMock: mockedDialogService },
-      { provide: TranslocoService, useMock: mockedTranslocoService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: TranslocoService, useMock: mockedTranslocoService }
     ]
   }));
 
@@ -146,110 +134,12 @@ describe('ProjectComponent', () => {
     expect().nothing();
   }));
 
-  it('check sharing link passes shareKey', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setProjectData();
-    env.setLinkSharing(true, 'secret123');
+  it('navigate old sharing link to new joining link', fakeAsync(() => {
+    const env = new TestEnvironment(true);
     env.fixture.detectChanges();
     tick();
-
-    verify(mockedSFProjectService.onlineCheckLinkSharing('project01', 'secret123')).once();
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'translate', 'MAT']), anything())).once();
-    expect().nothing();
-  }));
-
-  it('check sharing link skipped offline', fakeAsync(() => {
-    when(mockedDialogService.message(anything())).thenResolve();
-    const env = new TestEnvironment();
-    env.onlineStatus = false;
-    env.setProjectData({
-      selectedTask: 'translate',
-      selectedBooknum: 40,
-      memberProjects: ['project01'],
-      projectId: 'project02'
-    });
-    env.setLinkSharing(true, 'secret123');
-    env.fixture.detectChanges();
-    tick();
-    verify(mockedSFProjectService.onlineCheckLinkSharing(anything(), anything())).never();
-    verify(mockedDialogService.message(anything())).once();
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'translate', 'MAT']), anything())).once();
-    expect().nothing();
-  }));
-
-  it('check sharing link skipped offline and redirect user if not on any projects', fakeAsync(() => {
-    when(mockedDialogService.message(anything())).thenResolve();
-    const env = new TestEnvironment();
-    env.onlineStatus = false;
-    env.setProjectData({ selectedTask: 'translate', projectId: 'project02' });
-    env.setLinkSharing(true, 'secret123');
-    env.fixture.detectChanges();
-    tick();
-    verify(mockedSFProjectService.onlineCheckLinkSharing(anything(), anything())).never();
-    verify(mockedDialogService.message(anything())).once();
-    verify(mockedRouter.navigateByUrl('/projects', anything())).once();
-    expect().nothing();
-  }));
-
-  it('check sharing link directs user to project offline when user is already a member', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.onlineStatus = false;
-    env.setProjectData({
-      selectedTask: 'checking',
-      projectId: 'project02',
-      memberProjects: ['project01', 'project02']
-    });
-    env.setLinkSharing(true, 'secret123');
-    env.fixture.detectChanges();
-    tick();
-    verify(mockedSFProjectService.onlineCheckLinkSharing(anything(), anything())).never();
-    verify(mockedDialogService.message(anything())).never();
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project02', 'checking', 'ALL']), anything())).once();
-    expect().nothing();
-  }));
-
-  it('check sharing link forbidden', fakeAsync(() => {
-    const env = new TestEnvironment();
-    when(mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).thenReject(
-      new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
-    );
-    env.setProjectData({ selectedTask: 'translate', selectedBooknum: 41 });
-    env.setLinkSharing(true);
-    env.fixture.detectChanges();
-    tick();
-
-    verify(mockedDialogService.message(anything())).once();
-    verify(mockedRouter.navigateByUrl('/projects', anything())).once();
-    expect().nothing();
-  }));
-
-  it('check sharing link project not found', fakeAsync(() => {
-    const env = new TestEnvironment();
-    when(mockedSFProjectService.onlineCheckLinkSharing('project01', undefined)).thenReject(
-      new CommandError(CommandErrorCode.NotFound, 'NotFound')
-    );
-    env.setProjectData({ selectedTask: 'translate', selectedBooknum: 41 });
-    env.setLinkSharing(true);
-    env.fixture.detectChanges();
-    tick();
-
-    verify(mockedDialogService.message(anything())).once();
-    verify(mockedRouter.navigateByUrl('/projects', anything())).once();
-    expect().nothing();
-  }));
-
-  it('ensure local storage is cleared when sharing a project fails', fakeAsync(() => {
-    const env = new TestEnvironment();
-    const projectId = 'project01';
-    when(mockedSFProjectService.onlineCheckLinkSharing(projectId, undefined)).thenReject(
-      new CommandError(CommandErrorCode.Forbidden, 'Forbidden')
-    );
-    env.setProjectData({ selectedTask: 'translate', selectedBooknum: 41, memberProjects: [projectId] });
-    env.setLinkSharing(true);
-    env.fixture.detectChanges();
-    tick();
-
-    verify(mockedSFProjectService.localDelete(projectId)).once();
+    verify(mockedRouter.navigateByUrl('/join/shareKey01', anything())).once();
+    verify(mockedRouter.navigate(anything(), anything())).never();
     expect().nothing();
   }));
 });
@@ -258,34 +148,24 @@ class TestEnvironment {
   readonly component: ProjectComponent;
   readonly fixture: ComponentFixture<ProjectComponent>;
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
-  private readonly isOnline: BehaviorSubject<boolean>;
 
-  constructor() {
+  constructor(enableSharing = false) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
-    const snapshot = new ActivatedRouteSnapshot();
-    snapshot.queryParams = { sharing: 'true' };
-    when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedUserService.currentProjectId(anything())).thenReturn('project01');
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
-    when(mockedSFProjectService.onlineCheckLinkSharing('project01', anything())).thenCall(() =>
+    when(mockedSFProjectService.onlineCheckLinkSharing(anything())).thenCall(() =>
       this.setProjectData({ memberProjects: ['project01'] })
     );
-    when(mockedDialogService.message(anything())).thenResolve();
-
     when(mockedTranslocoService.translate<string>(anything())).thenReturn('The project link is invalid.');
-    this.isOnline = new BehaviorSubject<boolean>(true);
-    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
-    this.setLinkSharing(false);
+    const snapshot = new ActivatedRouteSnapshot();
+    snapshot.queryParams = enableSharing ? { sharing: 'true', shareKey: 'shareKey01' } : {};
+    when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
 
     this.fixture = TestBed.createComponent(ProjectComponent);
     this.component = this.fixture.componentInstance;
-  }
-
-  set onlineStatus(hasConnection: boolean) {
-    this.isOnline.next(hasConnection);
   }
 
   setProjectData(
@@ -334,14 +214,12 @@ class TestEnvironment {
           },
           translateConfig: {
             translationSuggestionsEnabled: false,
-            shareEnabled: false,
-            shareLevel: TranslateShareLevel.Specific
+            shareEnabled: false
           },
           checkingConfig: {
             checkingEnabled: args.checkingEnabled == null ? true : args.checkingEnabled,
             usersSeeEachOthersResponses: true,
             shareEnabled: true,
-            shareLevel: CheckingShareLevel.Specific,
             answerExportMethod: CheckingAnswerExport.MarkedForExport
           },
           sync: { queuedCount: 0 },
@@ -386,12 +264,6 @@ class TestEnvironment {
         sites: { sf: { projects: memberProjects } }
       }
     });
-  }
-
-  setLinkSharing(enabled: boolean, shareKey?: string): void {
-    const snapshot = new ActivatedRouteSnapshot();
-    snapshot.queryParams = { sharing: enabled ? 'true' : undefined, shareKey: shareKey ? shareKey : undefined };
-    when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
   }
 
   subscribeRealtimeDocs(projectId: string) {
