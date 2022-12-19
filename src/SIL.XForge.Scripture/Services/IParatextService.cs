@@ -75,6 +75,7 @@ namespace SIL.XForge.Scripture.Services
         bool BackupRepository(UserSecret userSecret, string paratextId);
         bool RestoreRepository(UserSecret userSecret, string paratextId);
         bool LocalProjectDirExists(string projectPTId);
+        string GetLanguageId(UserSecret userSecret, string projectPTId);
 
         Task<ParatextProject> SendReceiveAsync(
             UserSecret userSecret,
