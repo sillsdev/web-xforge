@@ -117,7 +117,7 @@ describe('SFProjectMigrations', () => {
     });
   });
   describe('version 5', () => {
-    it('adds shareEnabled and shareLevel to translate config', async () => {
+    it('adds shareEnabled to translate config', async () => {
       const env = new TestEnvironment(4);
       const conn = env.server.connect();
       await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
@@ -125,13 +125,11 @@ describe('SFProjectMigrations', () => {
       });
       let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
       expect(projectDoc.data.translateConfig.shareEnabled).not.toBeDefined();
-      expect(projectDoc.data.translateConfig.shareLevel).not.toBeDefined();
 
       await env.server.migrateIfNecessary();
 
       projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
       expect(projectDoc.data.translateConfig.shareEnabled).toBe(false);
-      expect(projectDoc.data.translateConfig.shareLevel).toBe('specific');
     });
   });
 

@@ -1,24 +1,11 @@
 <ng-container *transloco="let t; read: 'share_control'">
+  <h2>{{ t("invite_people") }}</h2>
+  <p class="mat-hint">{{ t("invite_people_intro") }}</p>
+  <p class="mat-hint">{{ t("email_sharing") }}</p>
+  <div *ngIf="!isAppOnline" class="offline-text">{{ t("share_not_available_offline") }}</div>
   <div fxLayout="column" fxLayoutGap="20px">
-    <div *ngIf="isLinkSharingEnabled" class="invite-by-link">
-      <div class="mat-hint">{{ t("link_sharing") }}</div>
-      <mat-form-field class="share-link-field" appearance="outline">
-        <input matInput #shareLinkField id="share-link" [value]="shareLink" [disabled]="!shareLink" [readonly]="true" />
-        <button
-          mat-icon-button
-          matSuffix
-          id="share-link-copy-icon"
-          title="{{ t('copy_link') }}"
-          (click)="copyShareLink()"
-          [disabled]="showLinkSharingUnavailable"
-        >
-          <mat-icon>file_copy</mat-icon>
-        </button>
-      </mat-form-field>
-      <div *ngIf="showLinkSharingUnavailable" class="offline-text">{{ t("link_sharing_not_available_offline") }}</div>
-    </div>
     <div class="invite-by-email">
-      <div class="mat-hint">{{ t("invite_people") }}</div>
+      <h3>{{ t("send_a_link") }}</h3>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="10px">
         <form id="email-form" [formGroup]="sendInviteForm">
           <mat-form-field id="email">
@@ -63,7 +50,11 @@
           </button>
         </form>
       </div>
-      <div *ngIf="!isAppOnline" class="offline-text">{{ t("share_by_email_not_available_offline") }}</div>
+    </div>
+    <div *ngIf="isLinkSharingEnabled" class="invite-by-link">
+      <h3>{{ t("share_a_link") }}</h3>
+      <p class="mat-hint">{{ t("link_sharing") }}</p>
+      <app-share [iconOnlyButton]="false"></app-share>
     </div>
   </div>
 </ng-container>
