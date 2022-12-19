@@ -451,7 +451,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 if (segment.SegmentRef is TextSegmentRef textSegmentRef)
                 {
-                    sb.Append(string.Join('-', textSegmentRef.Keys));
+                    sb.Append(string.Join('_', textSegmentRef.Keys));
                 }
                 else
                 {
