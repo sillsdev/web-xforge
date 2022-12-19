@@ -105,7 +105,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(env.MockTextCorpus);
+                .Returns(TestEnvironment.MockTextCorpus);
 
             // SUT
             await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
@@ -139,9 +139,9 @@ namespace SIL.XForge.Scripture.Services
             env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
             // SUT
-            await env.Service.BuildProjectAsync(User01, Project01, CancellationToken.None);
+            await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
 
-            await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync(Project01);
+            await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync(Project02);
         }
 
         [Test]
@@ -159,10 +159,19 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task BuildProjectAsync_DoesNotBuildMachineApiIfNoTranslationEngineId()
+        public async Task BuildProjectAsync_CreatesTranslationEngineIfNoTranslationEngineId()
         {
             // Set up test environment
             var env = new TestEnvironment();
+            env.MachineTranslationService
+                .CreateTranslationEngineAsync(
+                    Project01,
+                    Arg.Any<string>(),
+                    Arg.Any<string>(),
+                    true,
+                    CancellationToken.None
+                )
+                .Returns(Task.FromResult(TranslationEngine01));
 
             // SUT
             await env.Service.BuildProjectAsync(User01, Project01, CancellationToken.None);
@@ -179,9 +188,9 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
 
             // SUT
-            await env.Service.BuildProjectAsync(User01, Project01, CancellationToken.None);
+            await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
 
-            await env.EngineService.Received().StartBuildByProjectIdAsync(Project01);
+            await env.EngineService.Received().StartBuildByProjectIdAsync(Project02);
         }
 
         [Test]
@@ -284,7 +293,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(env.MockTextCorpus);
+                .Returns(TestEnvironment.MockTextCorpus);
             env.MachineCorporaService
                 .CreateCorpusAsync(Project01, false, CancellationToken.None)
                 .Returns(Task.FromResult(Corpus01));
@@ -312,7 +321,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(env.MockTextCorpus);
+                .Returns(TestEnvironment.MockTextCorpus);
 
             // SUT
             Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).MachineData?.Corpora[Corpus01].Files.Count);
@@ -334,7 +343,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(env.MockTextCorpus);
+                .Returns(TestEnvironment.MockTextCorpus);
             env.MachineCorporaService
                 .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
                 .Returns(Task.FromResult<IList<MachineApiCorpusFile>>(Array.Empty<MachineApiCorpusFile>()));
@@ -373,7 +382,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(env.MockTextCorpus);
+                .Returns(TestEnvironment.MockTextCorpus);
             env.MachineCorporaService
                 .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None)
                 .Returns(Task.FromResult("File03"));
@@ -464,7 +473,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(env.MockTextCorpus);
+                .Returns(TestEnvironment.MockTextCorpus);
             env.MachineCorporaService
                 .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
                 .Returns(
@@ -518,7 +527,7 @@ namespace SIL.XForge.Scripture.Services
             var env = new TestEnvironment();
             env.TextCorpusFactory
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>())
-                .Returns(env.MockTextCorpus);
+                .Returns(TestEnvironment.MockTextCorpus);
             env.MachineCorporaService
                 .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
                 .Returns(
@@ -601,6 +610,7 @@ namespace SIL.XForge.Scripture.Services
                 MachineBuildService = Substitute.For<IMachineBuildService>();
                 MachineCorporaService = Substitute.For<IMachineCorporaService>();
                 MachineTranslationService = Substitute.For<IMachineTranslationService>();
+                var paratextService = Substitute.For<IParatextService>();
                 TextCorpusFactory = Substitute.For<ITextCorpusFactory>();
 
                 FeatureManager = Substitute.For<IFeatureManager>();
@@ -637,6 +647,8 @@ namespace SIL.XForge.Scripture.Services
                     }
                 );
 
+                var userSecrets = new MemoryRepository<UserSecret>(new[] { new UserSecret { Id = User01 }, });
+
                 var realtimeService = new SFMemoryRealtimeService();
                 realtimeService.AddRepository(
                     "sf_projects",
@@ -654,8 +666,13 @@ namespace SIL.XForge.Scripture.Services
                                 TranslateConfig = new TranslateConfig
                                 {
                                     TranslationSuggestionsEnabled = true,
-                                    Source = new TranslateSource { ProjectRef = Project02 },
+                                    Source = new TranslateSource
+                                    {
+                                        ProjectRef = Project02,
+                                        WritingSystem = new WritingSystem { Tag = "en_US" },
+                                    },
                                 },
+                                WritingSystem = new WritingSystem { Tag = "en_GB" },
                             },
                             new SFProject
                             {
@@ -694,13 +711,15 @@ namespace SIL.XForge.Scripture.Services
                     MachineBuildService,
                     MachineCorporaService,
                     MachineTranslationService,
+                    paratextService,
                     ProjectSecrets,
                     realtimeService,
-                    TextCorpusFactory
+                    TextCorpusFactory,
+                    userSecrets
                 );
             }
 
-            public Task<ITextCorpus> MockTextCorpus =>
+            public static Task<ITextCorpus> MockTextCorpus =>
                 Task.FromResult<ITextCorpus>(
                     new MockTextCorpus
                     {
