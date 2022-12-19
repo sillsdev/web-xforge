@@ -1598,6 +1598,19 @@ namespace SIL.XForge.Scripture.Services
             return _fileSystemService.DirectoryExists(dir);
         }
 
+        /// <summary>
+        /// Gets the Language tag for a Paratext project.
+        /// </summary>
+        /// <param name="userSecret">The user secret.</param>
+        /// <param name="ptProjectId">The Project identifier</param>
+        /// <returns>The Language identifier.</returns>
+        /// <remarks>This is used to get the WritingSystem Tag for Back Translations.</remarks>
+        public string GetLanguageId(UserSecret userSecret, string ptProjectId)
+        {
+            using ScrText scrText = GetScrText(userSecret, ptProjectId);
+            return scrText.Language.Id;
+        }
+
         protected override void DisposeManagedResources()
         {
             _registryClient.Dispose();
