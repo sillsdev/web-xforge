@@ -3,6 +3,7 @@ import { Migration, MigrationConstructor } from '../../common/migration';
 import { submitMigrationOp } from '../../common/realtime-server';
 import { SFProjectRole } from '../models/sf-project-role';
 import { TextInfoPermission } from '../models/text-info-permission';
+import { TranslateShareLevel } from '../models/translate-config';
 
 class SFProjectMigration1 implements Migration {
   static readonly VERSION = 1;
@@ -119,6 +120,7 @@ class SFProjectMigration5 implements Migration {
       ops.push({ p: ['translateConfig'], oi: {} });
     }
     ops.push({ p: ['translateConfig', 'shareEnabled'], oi: false });
+    ops.push({ p: ['translateConfig', 'shareLevel'], oi: TranslateShareLevel.Specific });
     await submitMigrationOp(SFProjectMigration5.VERSION, doc, ops);
   }
 
@@ -188,11 +190,16 @@ class SFProjectMigration9 implements Migration {
   static readonly VERSION = 9;
 
   async migrateDoc(doc: Doc): Promise<void> {
-    const ops = [
-      { p: ['translateConfig', 'shareLevel'], od: true },
-      { p: ['checkingConfig', 'shareLevel'], od: true }
-    ];
-    await submitMigrationOp(SFProjectMigration8.VERSION, doc, ops);
+    const ops: Op[] = [];
+    const translateConfigShareLevel = doc.data.translateConfig?.shareLevel;
+    if (translateConfigShareLevel != null) {
+      ops.push({ p: ['translateConfig', 'shareLevel'], od: translateConfigShareLevel });
+    }
+    const checkingConfigShareLevel = doc.data.checkingConfig?.shareLevel;
+    if (checkingConfigShareLevel != null) {
+      ops.push({ p: ['checkingConfig', 'shareLevel'], od: checkingConfigShareLevel });
+    }
+    await submitMigrationOp(SFProjectMigration9.VERSION, doc, ops);
   }
 
   migrateOp(_op: RawOp): void {
