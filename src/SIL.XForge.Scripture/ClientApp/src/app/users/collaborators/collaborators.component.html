@@ -1,10 +1,5 @@
 <ng-container *transloco="let t; read: 'collaborators'">
   <div class="invite-user">
-    <h3>{{ t("share_with_others") }}</h3>
-    <app-share-control [projectId]="projectId" (invited)="onInvitationSent()"></app-share-control>
-
-    <mdc-list-divider></mdc-list-divider>
-
     <div fxLayout="row" fxLayoutAlign="start center">
       <p class="helper-text">
         <span [innerHtml]="rolesText?.before"></span><strong><mdc-icon>menu</mdc-icon></strong
@@ -128,5 +123,7 @@
       </div>
       <div *ngIf="totalUsers === 0" class="no-users-label">{{ t("no_users_found") }}</div>
     </div>
+    <mdc-list-divider></mdc-list-divider>
+    <app-share-control [projectId]="projectId" (invited)="onInvitationSent()"></app-share-control>
   </div>
 </ng-container>

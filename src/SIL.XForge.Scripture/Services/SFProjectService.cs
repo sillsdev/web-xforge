@@ -116,7 +116,7 @@ namespace SIL.XForge.Scripture.Services
                 await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
 
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
-                await AddUserToProjectAsync(conn, projectDoc, userDoc, SFProjectRole.Administrator, false);
+                await AddUserToProjectAsync(conn, projectDoc, userDoc, SFProjectRole.Administrator);
 
                 // Add the source after the project has been created
                 // This will make the source project appear after the target, if it needs to be created
@@ -281,7 +281,6 @@ namespace SIL.XForge.Scripture.Services
                     );
                     UpdateSetting(op, p => p.TranslateConfig.Source, source, unsetSourceProject);
                     UpdateSetting(op, p => p.TranslateConfig.ShareEnabled, settings.TranslateShareEnabled);
-                    UpdateSetting(op, p => p.TranslateConfig.ShareLevel, settings.TranslateShareLevel);
 
                     UpdateSetting(op, p => p.CheckingConfig.CheckingEnabled, settings.CheckingEnabled);
                     UpdateSetting(
@@ -290,7 +289,6 @@ namespace SIL.XForge.Scripture.Services
                         settings.UsersSeeEachOthersResponses
                     );
                     UpdateSetting(op, p => p.CheckingConfig.ShareEnabled, settings.CheckingShareEnabled);
-                    UpdateSetting(op, p => p.CheckingConfig.ShareLevel, settings.CheckingShareLevel);
                     UpdateSetting(op, p => p.CheckingConfig.AnswerExportMethod, settings.CheckingAnswerExport);
                 });
 
@@ -435,7 +433,8 @@ namespace SIL.XForge.Scripture.Services
                             Email = email,
                             Key = _securityService.GenerateKey(),
                             ExpirationTime = expTime,
-                            ProjectRole = role
+                            ProjectRole = role,
+                            ShareLinkType = ShareLinkType.Recipient
                         }
                     )
             );
@@ -477,30 +476,27 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Get the link sharing key for a project if it exists, otherwise create a new one. </summary>
-        public async Task<string> GetLinkSharingKeyAsync(string curUserId, string projectId, string role)
+        public async Task<string> GetLinkSharingKeyAsync(
+            string curUserId,
+            string projectId,
+            string role,
+            string shareLinkType
+        )
         {
             SFProject project = await GetProjectAsync(projectId);
             if (!CanUserShareRole(curUserId, project, role))
                 throw new ForbiddenException();
 
+            bool isProjectAdmin = IsProjectAdmin(project, curUserId);
+
             string[] availableRoles = new Dictionary<string, bool>
             {
                 {
                     SFProjectRole.CommunityChecker,
-                    project.CheckingConfig.CheckingEnabled
-                        && project.CheckingConfig.ShareEnabled
-                        && project.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone
+                    project.CheckingConfig.CheckingEnabled && (isProjectAdmin || project.CheckingConfig.ShareEnabled)
                 },
-                {
-                    SFProjectRole.SFObserver,
-                    project.TranslateConfig.ShareEnabled
-                        && project.TranslateConfig.ShareLevel == TranslateShareLevel.Anyone
-                },
-                {
-                    SFProjectRole.Reviewer,
-                    project.TranslateConfig.ShareEnabled
-                        && project.TranslateConfig.ShareLevel == TranslateShareLevel.Anyone
-                }
+                { SFProjectRole.SFObserver, isProjectAdmin || (project.TranslateConfig.ShareEnabled) },
+                { SFProjectRole.Reviewer, isProjectAdmin || (project.TranslateConfig.ShareEnabled) }
             }
                 .Where(entry => entry.Value)
                 .Select(entry => entry.Key)
@@ -511,12 +507,22 @@ namespace SIL.XForge.Scripture.Services
 
             SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
             // Link sharing keys have Email set to null and ExpirationTime set to null.
-            string key = projectSecret.ShareKeys.SingleOrDefault(sk => sk.Email == null && sk.ProjectRole == role)?.Key;
+            string key = projectSecret.ShareKeys
+                .FirstOrDefault(
+                    sk =>
+                        sk.Email == null
+                        && sk.ProjectRole == role
+                        && sk.ShareLinkType == shareLinkType
+                        && sk.RecipientUserId == null
+                        && (sk.ExpirationTime == null || sk.ExpirationTime > DateTime.UtcNow)
+                )
+                ?.Key;
             if (!string.IsNullOrEmpty(key))
                 return key;
 
             // Generate a new link sharing key for the given role
             key = _securityService.GenerateKey();
+            DateTime expTime = DateTime.UtcNow.AddDays(14);
             await ProjectSecrets.UpdateAsync(
                 p => p.Id == projectId,
                 update =>
@@ -526,7 +532,8 @@ namespace SIL.XForge.Scripture.Services
                         {
                             Key = key,
                             ProjectRole = role,
-                            ExpirationTime = null
+                            ExpirationTime = (shareLinkType == ShareLinkType.Recipient ? expTime : null),
+                            ShareLinkType = shareLinkType
                         }
                     )
             );
@@ -598,14 +605,35 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Check that a share link is valid for a project and add the user to the project. </summary>
-        public async Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey)
+        public async Task<string> CheckLinkSharingAsync(string curUserId, string shareKey)
         {
             using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
+                ProjectSecret projectSecret = ProjectSecrets
+                    .Query()
+                    .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
+                if (projectSecret == null)
+                    throw new ForbiddenException();
+
+                String projectId = projectSecret.Id;
+                ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
+
+                if (projectSecretShareKey == null)
+                    throw new ForbiddenException();
+
+                if (projectSecretShareKey.RecipientUserId != null)
+                {
+                    if (projectSecretShareKey.RecipientUserId == curUserId)
+                    {
+                        return projectId;
+                    }
+                    throw new ForbiddenException();
+                }
+
                 IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
                 SFProject project = projectDoc.Data;
                 if (project.UserRoles.ContainsKey(curUserId))
-                    return;
+                    return projectId;
 
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
                 string projectRole;
@@ -613,62 +641,56 @@ namespace SIL.XForge.Scripture.Services
                 Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
                 if (attempt.TryResult(out projectRole))
                 {
-                    // Add the user and remove the specific user share key if it exists.
-                    await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, true);
-                    return;
+                    await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, projectSecretShareKey.Key);
+                    return projectId;
                 }
 
-                // Get the project role that is specified in the sharekey
-                Attempt<SFProjectSecret> psAttempt = await ProjectSecrets.TryGetAsync(projectId);
-                if (psAttempt.TryResult(out SFProjectSecret ps))
-                    projectRole = ps.ShareKeys.SingleOrDefault(sk => sk.Key == shareKey)?.ProjectRole;
-                // The share key was invalid
-                if (projectRole == null)
+                // Get the project role that is specified in the shareKey
+                if (projectSecretShareKey.ProjectRole == null)
                     throw new ForbiddenException();
 
-                string[] availableRoles = new Dictionary<string, bool>
+                if (projectSecretShareKey.ShareLinkType == ShareLinkType.Anyone)
                 {
+                    string[] availableRoles = new Dictionary<string, bool>
                     {
-                        SFProjectRole.CommunityChecker,
-                        project.CheckingConfig.CheckingEnabled
-                            && project.CheckingConfig.ShareEnabled
-                            && project.CheckingConfig.ShareLevel == CheckingShareLevel.Anyone
-                    },
+                        {
+                            SFProjectRole.CommunityChecker,
+                            project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled
+                        },
+                        { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled },
+                        { SFProjectRole.Reviewer, project.TranslateConfig.ShareEnabled }
+                    }
+                        .Where(entry => entry.Value)
+                        .Select(entry => entry.Key)
+                        .ToArray();
+
+                    if (availableRoles.Contains(projectSecretShareKey.ProjectRole))
                     {
-                        SFProjectRole.SFObserver,
-                        project.TranslateConfig.ShareEnabled
-                            && project.TranslateConfig.ShareLevel == TranslateShareLevel.Anyone
-                    },
-                    {
-                        SFProjectRole.Reviewer,
-                        project.TranslateConfig.ShareEnabled
-                            && project.TranslateConfig.ShareLevel == TranslateShareLevel.Anyone
+                        await AddUserToProjectAsync(
+                            conn,
+                            projectDoc,
+                            userDoc,
+                            projectSecretShareKey.ProjectRole,
+                            projectSecretShareKey.Key
+                        );
+                        return projectId;
                     }
                 }
-                    .Where(entry => entry.Value)
-                    .Select(entry => entry.Key)
-                    .ToArray();
-
-                if (availableRoles.Contains(projectRole))
-                {
-                    // Add the user and remove the specific user share key if it exists. Link sharing keys
-                    // have Email set to null and will not be removed.
-                    await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, true);
-                    return;
-                }
                 // Look for a valid specific user share key.
-                SFProjectSecret projectSecret = await ProjectSecrets.UpdateAsync(
-                    p =>
-                        p.Id == projectId
-                        && p.ShareKeys.Any(
-                            sk => sk.Email != null && sk.Key == shareKey && sk.ExpirationTime > DateTime.UtcNow
-                        ),
-                    update => update.RemoveAll(p => p.ShareKeys, sk => sk.Key == shareKey)
-                );
-                if (projectSecret != null)
+                // TODO: Migrate data and set all keys with "Email" to ShareLinkType.Recipient
+                if (
+                    projectSecretShareKey.ExpirationTime > DateTime.UtcNow
+                    && projectSecretShareKey.ShareLinkType == ShareLinkType.Recipient
+                )
                 {
-                    await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, false);
-                    return;
+                    await AddUserToProjectAsync(
+                        conn,
+                        projectDoc,
+                        userDoc,
+                        projectSecretShareKey.ProjectRole,
+                        projectSecretShareKey.Key
+                    );
+                    return projectId;
                 }
                 throw new ForbiddenException();
             }
@@ -709,7 +731,7 @@ namespace SIL.XForge.Scripture.Services
             IDocument<SFProject> projectDoc,
             IDocument<User> userDoc,
             string projectRole,
-            bool removeShareKeys = true
+            string? shareKey = null
         )
         {
             await conn.CreateAsync<SFProjectUserConfig>(
@@ -717,7 +739,7 @@ namespace SIL.XForge.Scripture.Services
                 new SFProjectUserConfig { ProjectRef = projectDoc.Id, OwnerRef = userDoc.Id }
             );
             // Listeners can now assume the ProjectUserConfig is ready when the user is added.
-            await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, removeShareKeys);
+            await base.AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, shareKey);
 
             // Update book and chapter permissions on SF project/resource, but only if user
             // has a role on the PT project or permissions to the DBL resource. These permissions are needed
@@ -743,13 +765,7 @@ namespace SIL.XForge.Scripture.Services
                     if (attempt.TryResult(out string sourceProjectRole))
                     {
                         // If they are in Paratext, add the user to the source project
-                        await this.AddUserToProjectAsync(
-                            conn,
-                            sourceProjectDoc,
-                            userDoc,
-                            sourceProjectRole,
-                            removeShareKeys
-                        );
+                        await this.AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole, shareKey);
                     }
                 }
             }
@@ -901,6 +917,14 @@ namespace SIL.XForge.Scripture.Services
                 SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id)
             );
             await projectUserConfigDoc.DeleteAsync();
+            // Delete any share keys used to this user
+            await ProjectSecrets.UpdateAsync(
+                projectDoc.Id,
+                u =>
+                {
+                    u.RemoveAll(secretSet => secretSet.ShareKeys, shareKey => shareKey.RecipientUserId == userDoc.Id);
+                }
+            );
         }
 
         /// <summary>

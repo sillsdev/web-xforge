@@ -10,12 +10,10 @@ import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
@@ -891,13 +889,11 @@ class TestEnvironment {
         },
         translateConfig: {
           translationSuggestionsEnabled: false,
-          shareEnabled: false,
-          shareLevel: TranslateShareLevel.Specific
+          shareEnabled: false
         },
         checkingConfig: {
           checkingEnabled: true,
           shareEnabled: true,
-          shareLevel: CheckingShareLevel.Specific,
           usersSeeEachOthersResponses: true,
           answerExportMethod: CheckingAnswerExport.MarkedForExport
         },

@@ -5,7 +5,9 @@ namespace SIL.XForge.Scripture.Models
         public bool CheckingEnabled { get; set; }
         public bool UsersSeeEachOthersResponses { get; set; } = true;
         public bool ShareEnabled { get; set; } = false;
-        public string ShareLevel { get; set; } = CheckingShareLevel.Specific;
+
+        // TODO: Migrate to remove this from every project
+        public string ShareLevel { get; set; }
         public string AnswerExportMethod { get; set; } = CheckingAnswerExport.MarkedForExport;
     }
 }

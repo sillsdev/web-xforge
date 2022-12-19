@@ -2,8 +2,6 @@ import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -31,26 +29,20 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   translationSuggestionsEnabled = new UntypedFormControl(false);
   sourceParatextId = new UntypedFormControl(undefined);
   translateShareEnabled = new UntypedFormControl(false);
-  translateShareLevel = new UntypedFormControl(undefined);
   checkingEnabled = new UntypedFormControl(false);
   usersSeeEachOthersResponses = new UntypedFormControl(false);
   checkingShareEnabled = new UntypedFormControl(false);
-  checkingShareLevel = new UntypedFormControl(undefined);
   checkingAnswerExport = new UntypedFormControl(undefined);
 
-  TranslateShareLevel = TranslateShareLevel;
-  CheckingShareLevel = CheckingShareLevel;
   CheckingAnswerExport = CheckingAnswerExport;
 
   form = new UntypedFormGroup({
     translationSuggestionsEnabled: this.translationSuggestionsEnabled,
     sourceParatextId: this.sourceParatextId,
     translateShareEnabled: this.translateShareEnabled,
-    translateShareLevel: this.translateShareLevel,
     checkingEnabled: this.checkingEnabled,
     usersSeeEachOthersResponses: this.usersSeeEachOthersResponses,
     checkingShareEnabled: this.checkingShareEnabled,
-    checkingShareLevel: this.checkingShareLevel,
     checkingAnswerExport: this.checkingAnswerExport
   });
 
@@ -292,37 +284,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     }
     if (newValue.translateShareEnabled !== this.previousFormValues.translateShareEnabled) {
       this.updateSetting(newValue, 'translateShareEnabled');
-      if (newValue.translateShareEnabled) {
-        // when a control is disabled the value is undefined, so reset back to previous value
-        this.previousFormValues.translateShareLevel = this.projectDoc.data.translateConfig.shareLevel;
-        this.translateShareLevel.enable();
-      } else {
-        this.translateShareLevel.disable();
-      }
     }
     if (newValue.checkingShareEnabled !== this.previousFormValues.checkingShareEnabled) {
       this.updateSetting(newValue, 'checkingShareEnabled');
-      if (newValue.checkingShareEnabled) {
-        // when a control is disabled the value is undefined, so reset back to previous value
-        this.previousFormValues.checkingShareLevel = this.projectDoc.data.checkingConfig.shareLevel;
-        this.checkingShareLevel.enable();
-      } else {
-        this.checkingShareLevel.disable();
-      }
-    }
-    if (
-      newValue.checkingShareLevel != null &&
-      newValue.checkingShareLevel !== this.previousFormValues.checkingShareLevel &&
-      this.checkingShareLevel.enabled
-    ) {
-      this.updateSetting(newValue, 'checkingShareLevel');
-    }
-    if (
-      newValue.translateShareLevel != null &&
-      newValue.translateShareLevel !== this.previousFormValues.translateShareLevel &&
-      this.translateShareLevel.enabled
-    ) {
-      this.updateSetting(newValue, 'translateShareLevel');
     }
     if (
       newValue.checkingAnswerExport != null &&
@@ -349,11 +313,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
       sourceParatextId: curSource != null ? curSource.paratextId : undefined,
       translateShareEnabled: !!this.projectDoc.data.translateConfig.shareEnabled,
-      translateShareLevel: this.projectDoc.data.translateConfig.shareLevel,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
       checkingShareEnabled: this.projectDoc.data.checkingConfig.shareEnabled,
-      checkingShareLevel: this.projectDoc.data.checkingConfig.shareLevel,
       checkingAnswerExport:
         this.projectDoc.data.checkingConfig.answerExportMethod ?? CheckingAnswerExport.MarkedForExport
     };
@@ -366,23 +328,15 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (!this.isLoggedInToParatext && !this.isTranslationSuggestionsEnabled) {
       this.translationSuggestionsEnabled.disable();
     }
-    if (!this.projectDoc?.data?.translateConfig.shareEnabled) {
-      this.translateShareLevel.disable();
-    }
-    if (!this.projectDoc?.data?.checkingConfig.shareEnabled) {
-      this.checkingShareLevel.disable();
-    }
   }
 
   private setAllControlsToInSync(): void {
     this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
     this.controlStates.set('sourceParatextId', ElementState.InSync);
     this.controlStates.set('translateShareEnabled', ElementState.InSync);
-    this.controlStates.set('translateShareLevel', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);
     this.controlStates.set('usersSeeEachOthersResponses', ElementState.InSync);
     this.controlStates.set('checkingShareEnabled', ElementState.InSync);
-    this.controlStates.set('checkingShareLevel', ElementState.InSync);
     this.controlStates.set('checkingAnswerExport', ElementState.InSync);
   }
 
