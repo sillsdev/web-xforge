@@ -11,7 +11,6 @@ import { CookieService } from 'ngx-cookie-service';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import {
   getQuestionDocId,
   Question,
@@ -24,7 +23,6 @@ import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject, of } from 'rxjs';
@@ -610,13 +608,11 @@ class TestEnvironment {
       usersSeeEachOthersResponses: true,
       checkingEnabled: true,
       shareEnabled: true,
-      shareLevel: CheckingShareLevel.Anyone,
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     translateConfig: {
       translationSuggestionsEnabled: false,
-      shareEnabled: false,
-      shareLevel: TranslateShareLevel.Specific
+      shareEnabled: false
     },
     sync: { queuedCount: 0 },
     editable: true,

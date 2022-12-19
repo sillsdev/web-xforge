@@ -1,7 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import {
   getQuestionDocId,
   Question,
@@ -10,7 +9,6 @@ import {
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
@@ -185,14 +183,12 @@ class TestEnvironment {
     writingSystem: { tag: 'en' },
     translateConfig: {
       translationSuggestionsEnabled: false,
-      shareEnabled: false,
-      shareLevel: TranslateShareLevel.Specific
+      shareEnabled: false
     },
     checkingConfig: {
       usersSeeEachOthersResponses: true,
       checkingEnabled: true,
       shareEnabled: true,
-      shareLevel: CheckingShareLevel.Anyone,
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     texts: [this.matthewText],
