@@ -116,7 +116,7 @@ public class SFProjectsRpcController : RpcControllerBase
                     { "method", "UpdateSettings" },
                     { "projectId", projectId },
                     { "CheckingAnswerExport", settings?.CheckingAnswerExport },
-                    { "SourceParatextId", settings?.SourceParatextId },
+                        { "SourceParatextId", settings?.SourceParatextId },
                     { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
                     { "CheckingShareEnabled", settings?.CheckingShareEnabled?.ToString() },
                     { "TranslateShareEnabled", settings?.TranslateShareEnabled?.ToString() },
@@ -340,10 +340,10 @@ public class SFProjectsRpcController : RpcControllerBase
     }
 
     public async Task<IRpcMethodResult> CheckLinkSharing(string shareKey)
-    {
-        try
         {
-            return Ok(await _projectService.CheckLinkSharingAsync(UserId, shareKey));
+            try
+            {
+                return Ok(await _projectService.CheckLinkSharingAsync(UserId, shareKey));
         }
         catch (ForbiddenException)
         {
