@@ -40,7 +40,7 @@ export enum ShareLinkType {
 export class ShareDialogComponent extends SubscriptionDisposable {
   isProjectAdmin: boolean = false;
   shareLocaleCode: Locale;
-  shareRole?: SFProjectRole;
+  shareRole: SFProjectRole = this.data.defaultRole;
   shareLinkType: ShareLinkType = ShareLinkType.Anyone;
 
   private readonly projectId?: string;
@@ -81,9 +81,8 @@ export class ShareDialogComponent extends SubscriptionDisposable {
       if (this.isProjectAdmin) {
         this.shareLinkType = ShareLinkType.Recipient;
       }
-      this.updateFormEnabledStateAndLinkSharingKey();
+      this.subscribe(this.pwaService.onlineStatus$, () => this.updateFormEnabledStateAndLinkSharingKey());
     });
-    this.subscribe(this.pwaService.onlineStatus$, () => this.updateFormEnabledStateAndLinkSharingKey());
     this.shareLocaleCode = this.i18n.locale;
   }
 
@@ -179,7 +178,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     this.updateFormEnabledStateAndLinkSharingKey();
   }
 
-  private get defaultShareRole(): SFProjectRole | undefined {
+  private get defaultShareRole(): SFProjectRole {
     const roles = this.userShareableRoles;
     if (this.data.defaultRole != null && roles.some(role => role === this.data.defaultRole)) {
       return this.data.defaultRole;
