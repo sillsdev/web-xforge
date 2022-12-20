@@ -24,8 +24,8 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
+import { SharedModule } from '../shared.module';
 import { ShareControlComponent } from './share-control.component';
-import { ShareComponent } from './share.component';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
@@ -38,7 +38,7 @@ const mockedFeatureFlagService = mock(FeatureFlagService);
 describe('ShareControlComponent', () => {
   configureTestingModule(() => ({
     declarations: [TestHostComponent],
-    imports: [TestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), NoopAnimationsModule],
+    imports: [TestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), NoopAnimationsModule, SharedModule],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -279,9 +279,7 @@ describe('ShareControlComponent', () => {
 });
 
 @NgModule({
-  imports: [BrowserModule, HttpClientTestingModule, RouterTestingModule, UICommonModule, TestTranslocoModule],
-  declarations: [ShareControlComponent, ShareComponent],
-  exports: [ShareControlComponent]
+  imports: [BrowserModule, HttpClientTestingModule, RouterTestingModule, UICommonModule, TestTranslocoModule]
 })
 class TestModule {}
 
