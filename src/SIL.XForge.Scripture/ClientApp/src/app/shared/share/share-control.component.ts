@@ -125,10 +125,6 @@ export class ShareControlComponent extends SubscriptionDisposable {
     return linkSharingSettings[this.shareRole] && this.userShareableRoles.includes(this.shareRole);
   }
 
-  get showLinkSharingUnavailable(): boolean {
-    return this.isLinkSharingEnabled && !this.isAppOnline && !this.shareLink;
-  }
-
   private get userShareableRoles(): string[] {
     const project = this.projectDoc?.data;
     if (project == null) {
@@ -172,15 +168,6 @@ export class ShareControlComponent extends SubscriptionDisposable {
     return roles.some(role => role === SF_DEFAULT_TRANSLATE_SHARE_ROLE) ? SF_DEFAULT_TRANSLATE_SHARE_ROLE : roles[0];
   }
 
-  copyShareLink(): void {
-    if (this.shareLinkField == null) {
-      return;
-    }
-    this.shareLinkField.nativeElement.select();
-    document.execCommand('copy');
-    this.noticeService.show(translate('share_control.link_copied'));
-  }
-
   async onEmailInput(): Promise<void> {
     if (this._projectId == null || this.email.invalid) {
       return;
@@ -202,7 +189,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
     );
     this.isSubmitted = false;
     this.isAlreadyInvited = false;
-    let message = '';
+    let message: string;
     if (response === this.alreadyProjectMemberResponse) {
       message = translate('share_control.not_inviting_already_member');
     } else {

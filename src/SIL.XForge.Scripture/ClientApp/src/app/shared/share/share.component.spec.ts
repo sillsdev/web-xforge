@@ -13,8 +13,6 @@ import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ShareControlComponent } from './share-control.component';
-import { ShareDialogComponent } from './share-dialog.component';
 import { ShareComponent } from './share.component';
 
 const mockedProjectService = mock(SFProjectService);
@@ -47,9 +45,7 @@ describe('ShareComponent', () => {
 });
 
 @NgModule({
-  imports: [NoopAnimationsModule, UICommonModule, TestTranslocoModule],
-  exports: [ShareDialogComponent, ShareControlComponent],
-  declarations: [ShareDialogComponent, ShareControlComponent]
+  imports: [NoopAnimationsModule, UICommonModule, TestTranslocoModule]
 })
 class DialogTestModule {}
 

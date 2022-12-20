@@ -16,6 +16,7 @@ import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
+import { LocationService } from 'xforge-common/location.service';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { ShareLinkType } from '../shared/share/share-dialog.component';
@@ -29,7 +30,6 @@ import { SFProjectUserConfigDoc } from './models/sf-project-user-config-doc';
 import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from './models/text-doc';
 import { TranslateMetrics } from './models/translate-metrics';
-import { LocationService } from 'xforge-common/location.service';
 
 @Injectable({
   providedIn: 'root'
