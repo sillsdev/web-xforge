@@ -74,14 +74,14 @@ export class ShareDialogComponent extends SubscriptionDisposable {
         } else if (!this.shareLinkUsageOptions.includes(this.shareLinkType)) {
           this.resetLinkUsageOptions();
         } else {
-          this.updateFormEnabledStateAndLinkSharingKey();
+          this.updateSharingKey();
         }
       });
       this.shareRole = this.defaultShareRole;
       if (this.isProjectAdmin) {
         this.shareLinkType = ShareLinkType.Recipient;
       }
-      this.subscribe(this.pwaService.onlineStatus$, () => this.updateFormEnabledStateAndLinkSharingKey());
+      this.subscribe(this.pwaService.onlineStatus$, () => this.updateSharingKey());
     });
     this.shareLocaleCode = this.i18n.locale;
   }
@@ -175,7 +175,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
 
   setLinkType(linkType: ShareLinkType) {
     this.shareLinkType = linkType;
-    this.updateFormEnabledStateAndLinkSharingKey();
+    this.updateSharingKey();
   }
 
   private get defaultShareRole(): SFProjectRole {
@@ -195,7 +195,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     this.setLinkType(this.shareLinkUsageOptions[0]);
   }
 
-  private updateFormEnabledStateAndLinkSharingKey() {
+  private updateSharingKey() {
     this.linkSharingReady = false;
     if (!this.pwaService.isOnline || this.projectId == null || this.shareRole == null) {
       return;
