@@ -33,7 +33,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_PROJECT_ROLES } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ShareControlComponent } from '../../shared/share/share-control.component';
+import { SharedModule } from '../../shared/shared.module';
 import { CollaboratorsComponent } from './collaborators.component';
 
 const mockedAuthService = mock(AuthService);
@@ -49,13 +49,14 @@ const mockedDialogService = mock(DialogService);
 
 describe('CollaboratorsComponent', () => {
   configureTestingModule(() => ({
-    declarations: [CollaboratorsComponent, ShareControlComponent],
+    declarations: [CollaboratorsComponent],
     imports: [
       NoopAnimationsModule,
       AvatarTestingModule,
       UICommonModule,
       TestTranslocoModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      SharedModule
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
@@ -518,14 +519,6 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
   }
 
-  get emailInput(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('#email-input');
-  }
-
-  get inviteButton(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('#btn-invite');
-  }
-
   get offlineMessage(): DebugElement {
     return this.fixture.debugElement.query(By.css('#collaborators-offline-message'));
   }
@@ -619,14 +612,6 @@ class TestEnvironment {
 
     input.value = value;
     input.dispatchEvent(new Event('keyup'));
-    this.fixture.detectChanges();
-    tick();
-  }
-
-  setTextFieldValue(element: HTMLElement, value: string) {
-    const inputElem = element.querySelector('input') as HTMLInputElement;
-    inputElem.value = value;
-    inputElem.dispatchEvent(new Event('input'));
     this.fixture.detectChanges();
     tick();
   }
