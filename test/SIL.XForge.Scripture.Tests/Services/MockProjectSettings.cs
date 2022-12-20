@@ -1,16 +1,15 @@
-namespace Paratext.Data.ProjectSettingsAccess
+namespace Paratext.Data.ProjectSettingsAccess;
+
+/// <summary>Mock for tests.</summary>
+public class MockProjectSettings : ProjectSettings
 {
-    /// <summary>Mock for tests.</summary>
-    public class MockProjectSettings : ProjectSettings
+    private bool _editable = true;
+
+    public MockProjectSettings(ScrText scrText) : base(scrText) { }
+
+    public override bool Editable
     {
-        private bool _editable = true;
-
-        public MockProjectSettings(ScrText scrText) : base(scrText) { }
-
-        public override bool Editable
-        {
-            get { return _editable; }
-            set { _editable = value; }
-        }
+        get => _editable;
+        set => _editable = value;
     }
 }

@@ -1,13 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using SIL.XForge.Realtime;
 
-namespace Microsoft.AspNetCore.Builder
+namespace Microsoft.AspNetCore.Builder;
+
+public static class RealtimeApplicationBuilderExtensions
 {
-    public static class RealtimeApplicationBuilderExtensions
-    {
-        public static void UseRealtimeServer(this IApplicationBuilder app)
-        {
-            app.ApplicationServices.GetService<IRealtimeService>().StartServer();
-        }
-    }
+    public static void UseRealtimeServer(this IApplicationBuilder app) =>
+        app.ApplicationServices.GetService<IRealtimeService>().StartServer();
 }

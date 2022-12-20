@@ -4,79 +4,78 @@ using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Utils;
 
-namespace SIL.XForge.Realtime
+namespace SIL.XForge.Realtime;
+
+public class MemoryDocument<T> : IDocument<T> where T : IIdentifiable
 {
-    public class MemoryDocument<T> : IDocument<T> where T : IIdentifiable
+    private readonly MemoryRepository<T> _repo;
+
+    internal MemoryDocument(MemoryRepository<T> repo, string otTypeName, string collection, string id)
     {
-        private readonly MemoryRepository<T> _repo;
+        _repo = repo;
+        OTTypeName = otTypeName;
+        Collection = collection;
+        Id = id;
+    }
 
-        internal MemoryDocument(MemoryRepository<T> repo, string otTypeName, string collection, string id)
+    public string Collection { get; }
+
+    public string Id { get; }
+
+    public int Version { get; private set; }
+
+    public string OTTypeName { get; }
+
+    public T Data { get; private set; }
+
+    public bool IsLoaded => Data != null;
+
+    public async Task CreateAsync(T data)
+    {
+        if (IsLoaded)
+            throw new InvalidOperationException("The doc already exists.");
+        data.Id = Id;
+        await _repo.InsertAsync(data);
+        Data = data;
+        Version = 0;
+    }
+
+    public async Task DeleteAsync()
+    {
+        if (!_repo.Contains(Id))
         {
-            _repo = repo;
-            OTTypeName = otTypeName;
-            Collection = collection;
-            Id = id;
+            throw new Jering.Javascript.NodeJS.InvocationException(
+                "Document does not exist",
+                "Would be received in production."
+            );
         }
+        await _repo.DeleteAsync(Id);
+        Data = default;
+        Version = -1;
+    }
 
-        public string Collection { get; }
-
-        public string Id { get; }
-
-        public int Version { get; private set; }
-
-        public string OTTypeName { get; }
-
-        public T Data { get; private set; }
-
-        public bool IsLoaded => Data != null;
-
-        public async Task CreateAsync(T data)
+    public async Task FetchAsync()
+    {
+        Attempt<T> attempt = await _repo.TryGetAsync(Id);
+        if (attempt.TryResult(out T data))
         {
-            if (IsLoaded)
-                throw new InvalidOperationException("The doc already exists.");
-            data.Id = Id;
-            await _repo.InsertAsync(data);
             Data = data;
             Version = 0;
         }
+    }
 
-        public async Task DeleteAsync()
-        {
-            if (!_repo.Contains(Id))
-            {
-                throw new Jering.Javascript.NodeJS.InvocationException(
-                    "Document does not exist",
-                    "Would be received in production."
-                );
-            }
-            await _repo.DeleteAsync(Id);
-            Data = default(T);
-            Version = -1;
-        }
+    public async Task FetchOrCreateAsync(Func<T> createData)
+    {
+        await FetchAsync();
+        if (!IsLoaded)
+            await CreateAsync(createData());
+    }
 
-        public async Task FetchAsync()
-        {
-            Attempt<T> attempt = await _repo.TryGetAsync(Id);
-            if (attempt.TryResult(out T data))
-            {
-                Data = data;
-                Version = 0;
-            }
-        }
-
-        public async Task FetchOrCreateAsync(Func<T> createData)
-        {
-            await FetchAsync();
-            if (!IsLoaded)
-                await CreateAsync(createData());
-        }
-
-        public async Task SubmitOpAsync(object op)
-        {
-            Data = await MemoryRealtimeService.Server.ApplyOpAsync(OTTypeName, Data, op);
-            Data.Id = Id;
-            Version++;
-            await _repo.ReplaceAsync(Data);
-        }
+    public async Task SubmitOpAsync(object op)
+    {
+        Data = await MemoryRealtimeService.Server.ApplyOpAsync(OTTypeName, Data, op);
+        Data.Id = Id;
+        Version++;
+        await _repo.ReplaceAsync(Data);
     }
 }

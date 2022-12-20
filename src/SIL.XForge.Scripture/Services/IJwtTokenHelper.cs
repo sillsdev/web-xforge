@@ -4,17 +4,16 @@ using System.Threading.Tasks;
 using SIL.XForge.Configuration;
 using SIL.XForge.Models;
 
-namespace SIL.XForge.Scripture.Services
+namespace SIL.XForge.Scripture.Services;
+
+public interface IJwtTokenHelper
 {
-    public interface IJwtTokenHelper
-    {
-        string? GetParatextUsername(UserSecret userSecret);
-        string GetJwtTokenFromUserSecret(UserSecret userSecret);
-        Task<Tokens> RefreshAccessTokenAsync(
-            ParatextOptions options,
-            Tokens paratextTokens,
-            HttpClient client,
-            CancellationToken token
-        );
-    }
+    string? GetParatextUsername(UserSecret userSecret);
+    string GetJwtTokenFromUserSecret(UserSecret userSecret);
+    Task<Tokens> RefreshAccessTokenAsync(
+        ParatextOptions options,
+        Tokens paratextTokens,
+        HttpClient client,
+        CancellationToken token
+    );
 }
