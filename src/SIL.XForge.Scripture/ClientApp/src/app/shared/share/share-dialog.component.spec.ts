@@ -16,12 +16,12 @@ import { UserService } from 'xforge-common/user.service';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareDialogComponent, ShareDialogData, ShareLinkType } from './share-dialog.component';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedNavigator = mock(Navigator);
