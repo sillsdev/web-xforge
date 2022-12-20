@@ -64,6 +64,11 @@ namespace SIL.XForge.Realtime
             InvokeExportAsync<object>("disconnect", handle).GetAwaiter().GetResult();
         }
 
+        public Task DisconnectAsync(int handle)
+        {
+            return InvokeExportAsync<object>("disconnect", handle);
+        }
+
         public Task<T> ApplyOpAsync<T>(string otTypeName, T data, object op)
         {
             return InvokeExportAsync<T>("applyOp", otTypeName, data, op);

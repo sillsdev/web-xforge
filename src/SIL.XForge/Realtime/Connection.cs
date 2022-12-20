@@ -388,5 +388,11 @@ namespace SIL.XForge.Realtime
         {
             _realtimeService.Server.Disconnect(_handle);
         }
+
+        public async ValueTask DisposeAsync()
+        {
+            await _realtimeService.Server.DisconnectAsync(_handle);
+            GC.SuppressFinalize(this);
+        }
     }
 }
