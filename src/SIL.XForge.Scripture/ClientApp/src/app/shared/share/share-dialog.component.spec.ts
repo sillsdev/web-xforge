@@ -17,6 +17,7 @@ import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dial
 import { CommonModule } from '@angular/common';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -115,13 +116,26 @@ describe('ShareDialogComponent', () => {
     expect(env.linkSharingOfflineMessage).toBeNull();
   }));
 
-  it('clicking copy link icon should copy link to clipboard', fakeAsync(() => {
+  it('clicking copy link should copy link to clipboard', fakeAsync(() => {
     env = new TestEnvironment({ projectId: 'project123' });
     expect(env.clipboardText).toBeUndefined();
     env.copyLinkButton.click();
     env.wait();
     expect(env.clipboardText).toContain('/join/linkSharing01/en');
     verify(mockedNoticeService.show(anything())).once();
+  }));
+
+  it('clicking share link should open share control', fakeAsync(() => {
+    env = new TestEnvironment({ projectId: 'project123' });
+    env.shareButton.click();
+    env.wait();
+    const expectedShareData: ShareData = {
+      title: "You've been invited to the project Share Project on Scripture Forge",
+      url: 'https://scriptureforge.org/join/linkSharing01/en',
+      text: "You've been invited to join the Share Project project on Scripture Forge.\r\nJust click the link below, choose how to log in, and you will be ready to start."
+    };
+    expect(env.shareData).toEqual(expectedShareData);
+    expect().nothing();
   }));
 
   it('changing user role refreshes the share key', fakeAsync(() => {
@@ -251,6 +265,21 @@ describe('ShareDialogComponent', () => {
     env.disableCheckingSharing();
     expect(env.isDialogOpen).toBeFalse();
   }));
+
+  it('should remove checking role as an option if remote project settings change', fakeAsync(() => {
+    env = new TestEnvironment({ userId: TestUsers.Admin });
+    let roles: SFProjectRole[] = env.component.availableRoles;
+    expect(roles).toContain(SFProjectRole.CommunityChecker);
+    expect(roles).toContain(SFProjectRole.Observer);
+    expect(env.canChangeLinkUsage).toBeTrue();
+
+    env.disableCheckingSharing();
+
+    roles = env.component.availableRoles;
+    expect(roles).not.toContain(SFProjectRole.CommunityChecker);
+    expect(roles).toContain(SFProjectRole.Observer);
+    expect(env.canChangeLinkUsage).toBeFalse();
+  }));
 });
 
 interface TestEnvironmentArgs {
@@ -299,6 +328,11 @@ class TestEnvironment {
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private _onlineStatus = new BehaviorSubject<boolean>(true);
   private _clipboardText?: string;
+  private _shareData?: ShareData;
+  private share = (shareData?: ShareData | undefined): Promise<void> => {
+    this._shareData = shareData;
+    return new Promise<void>(r => r);
+  };
 
   constructor({
     projectId = 'project01',
@@ -313,6 +347,7 @@ class TestEnvironment {
     this.realtimeService.addSnapshot(SFProjectProfileDoc.COLLECTION, {
       id: projectId,
       data: {
+        name: 'Share Project',
         userRoles: {
           user01: SFProjectRole.CommunityChecker,
           user02: SFProjectRole.ParatextAdministrator,
@@ -323,7 +358,7 @@ class TestEnvironment {
       }
     });
     if (shareAPIEnabled) {
-      when(mockedNavigator.share).thenReturn((_?: ShareData | undefined): Promise<void> => new Promise<void>(r => r));
+      when(mockedNavigator.share).thenReturn(this.share);
     } else {
       when(mockedNavigator.share).thenReturn(undefined as any);
     }
@@ -340,11 +375,15 @@ class TestEnvironment {
     when(mockedPwaService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
     when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
     when(mockedUserService.currentUserId).thenReturn(userId);
+    when(mockedUserService.getCurrentUser()).thenResolve({ data: { displayName: 'name' } } as UserDoc);
     when(mockedProjectService.onlineGetLinkSharingKey(projectId, anything(), anything())).thenResolve(
       checkingShareEnabled || translateShareEnabled ? 'linkSharing01' : ''
     );
     when(mockedProjectService.generateSharingUrl(anything(), anything())).thenCall(
-      () => `/join/${(this.component as any).linkSharingKey}/${this.component.shareLocaleCode.canonicalTag}`
+      () =>
+        `https://scriptureforge.org/join/${(this.component as any).linkSharingKey}/${
+          this.component.shareLocaleCode.canonicalTag
+        }`
     );
     when(mockedProjectService.isProjectAdmin(projectId, TestUsers.Admin)).thenResolve(true);
     when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
@@ -365,11 +404,6 @@ class TestEnvironment {
       });
     this.component = this.dialogRef.componentInstance;
     this.fixture.detectChanges();
-
-    when(
-      mockedProjectService.onlineInvite(anything(), 'unknown-address@example.com', anything(), anything())
-    ).thenResolve(undefined);
-    when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');
     this.wait();
   }
 
@@ -407,6 +441,10 @@ class TestEnvironment {
 
   get shareButton(): HTMLButtonElement {
     return this.fetchElement('#share-btn') as HTMLButtonElement;
+  }
+
+  get shareData(): ShareData | undefined {
+    return this._shareData;
   }
 
   get linkSharingOfflineMessage(): HTMLElement {
