@@ -10,7 +10,7 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     /// <seealso cref="ProjectPermissionManager" />
     /// <seealso cref="IEquatable{ComparableProjectPermissionManager}" />
-    public class ComparableProjectPermissionManager
+    public sealed class ComparableProjectPermissionManager
         : ProjectPermissionManager,
             IEquatable<ComparableProjectPermissionManager>
     {
@@ -24,6 +24,16 @@ namespace SIL.XForge.Scripture.Services
         /// </remarks>
         private string XmlData => Memento.ToXmlString(Data, false, true);
 
-        public bool Equals(ComparableProjectPermissionManager other) => this.XmlData == other?.XmlData;
+        public bool Equals(ComparableProjectPermissionManager? other) => XmlData == other?.XmlData;
+
+        public override bool Equals(object? obj)
+        {
+            return Equals(obj as ComparableProjectPermissionManager);
+        }
+
+        public override int GetHashCode()
+        {
+            return XmlData.GetHashCode();
+        }
     }
 }
