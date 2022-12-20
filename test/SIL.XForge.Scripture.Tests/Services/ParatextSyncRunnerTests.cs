@@ -2575,7 +2575,11 @@ namespace SIL.XForge.Scripture.Services
                                 IsRightToLeft = false
                             }
                         },
-                        CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                        CheckingConfig = new CheckingConfig
+                        {
+                            CheckingEnabled = checkingEnabled,
+                            AnswerExportMethod = CheckingAnswerExport.MarkedForExport
+                        },
                         Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
                         Sync = new Sync
                         {
@@ -2600,7 +2604,11 @@ namespace SIL.XForge.Scripture.Services
                         ParatextId = "source",
                         IsRightToLeft = false,
                         TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
-                        CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                        CheckingConfig = new CheckingConfig
+                        {
+                            CheckingEnabled = checkingEnabled,
+                            AnswerExportMethod = CheckingAnswerExport.MarkedForExport
+                        },
                         WritingSystem = new WritingSystem { Tag = "en" },
                         Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
                         Sync = new Sync { QueuedCount = 0, SyncedToRepositoryVersion = "beforeSR" }
@@ -2632,7 +2640,11 @@ namespace SIL.XForge.Scripture.Services
                                 IsRightToLeft = false
                             }
                         },
-                        CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                        CheckingConfig = new CheckingConfig
+                        {
+                            CheckingEnabled = checkingEnabled,
+                            AnswerExportMethod = CheckingAnswerExport.MarkedForExport
+                        },
                         Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
                         Sync = new Sync
                         {
@@ -2650,7 +2662,11 @@ namespace SIL.XForge.Scripture.Services
                         ParatextId = "paratext-project04",
                         IsRightToLeft = false,
                         TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
-                        CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                        CheckingConfig = new CheckingConfig
+                        {
+                            CheckingEnabled = checkingEnabled,
+                            AnswerExportMethod = CheckingAnswerExport.MarkedForExport
+                        },
                         WritingSystem = new WritingSystem { Tag = "en" },
                         Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
                         Sync = new Sync
@@ -2688,7 +2704,11 @@ namespace SIL.XForge.Scripture.Services
                                 IsRightToLeft = false
                             }
                         },
-                        CheckingConfig = new CheckingConfig { CheckingEnabled = checkingEnabled },
+                        CheckingConfig = new CheckingConfig
+                        {
+                            CheckingEnabled = checkingEnabled,
+                            AnswerExportMethod = CheckingAnswerExport.MarkedForExport
+                        },
                         Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
                         Sync = new Sync
                         {
