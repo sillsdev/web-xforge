@@ -43,17 +43,15 @@ namespace SIL.XForge.Scripture.Controllers
         {
             try
             {
-                using (Stream stream = file.OpenReadStream())
-                {
-                    Uri uri = await _projectService.SaveAudioAsync(
-                        _userAccessor.UserId,
-                        projectId,
-                        dataId,
-                        Path.GetExtension(file.FileName),
-                        stream
-                    );
-                    return Created(uri.PathAndQuery, Path.GetFileName(uri.AbsolutePath));
-                }
+                await using Stream stream = file.OpenReadStream();
+                Uri uri = await _projectService.SaveAudioAsync(
+                    _userAccessor.UserId,
+                    projectId,
+                    dataId,
+                    Path.GetExtension(file.FileName),
+                    stream
+                );
+                return Created(uri.PathAndQuery, Path.GetFileName(uri.AbsolutePath));
             }
             catch (ForbiddenException)
             {

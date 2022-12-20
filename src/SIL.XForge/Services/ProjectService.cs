@@ -194,15 +194,15 @@ namespace SIL.XForge.Services
             string outputPath = Path.Combine(audioDir, $"{curUserId}_{dataId}.mp3");
             if (string.Equals(extension, ".mp3", StringComparison.InvariantCultureIgnoreCase))
             {
-                using (Stream fileStream = FileSystemService.OpenFile(outputPath, FileMode.Create))
-                    await inputStream.CopyToAsync(fileStream);
+                await using Stream fileStream = FileSystemService.OpenFile(outputPath, FileMode.Create);
+                await inputStream.CopyToAsync(fileStream);
             }
             else
             {
                 string tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + extension);
                 try
                 {
-                    using (Stream fileStream = FileSystemService.OpenFile(tempPath, FileMode.Create))
+                    await using (Stream fileStream = FileSystemService.OpenFile(tempPath, FileMode.Create))
                         await inputStream.CopyToAsync(fileStream);
                     await _audioService.ConvertToMp3Async(tempPath, outputPath);
                 }

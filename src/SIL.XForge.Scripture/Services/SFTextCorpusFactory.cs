@@ -104,7 +104,7 @@ namespace SIL.XForge.Scripture.Services
                 );
                 if (_fileSystemService.FileExists(termRenderingsFileName))
                 {
-                    using var stream = _fileSystemService.OpenFile(termRenderingsFileName, FileMode.Open);
+                    await using Stream stream = _fileSystemService.OpenFile(termRenderingsFileName, FileMode.Open);
                     XDocument termRenderingsDoc = await XDocument.LoadAsync(
                         stream,
                         LoadOptions.None,
