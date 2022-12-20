@@ -167,10 +167,6 @@
       become: no
       shell: dotnet tool update --global dotnet-reportgenerator-globaltool
 
-    - name: Install csharpier
-      become: no
-      shell: dotnet tool update csharpier
-
     - name: Set initial PT connection settings
       become: no
       copy:
