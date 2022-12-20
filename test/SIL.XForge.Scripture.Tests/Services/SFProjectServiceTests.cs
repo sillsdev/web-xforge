@@ -848,7 +848,7 @@ namespace SIL.XForge.Scripture.Services
                     Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException())
                 );
 
-            string userRoleOnPTProject = (string)null;
+            string userRoleOnPTProject = null;
             env.ParatextService
                 .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Failure(userRoleOnPTProject)));
@@ -1037,7 +1037,7 @@ namespace SIL.XForge.Scripture.Services
                     Task.FromException<IReadOnlyDictionary<string, string>>(new System.Net.Http.HttpRequestException())
                 );
 
-            string userRoleOnPTProject = (string)null;
+            string userRoleOnPTProject = null;
             env.ParatextService
                 .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
                 .Returns(Task.FromResult(Attempt.Failure(userRoleOnPTProject)));

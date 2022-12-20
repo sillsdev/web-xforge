@@ -217,7 +217,7 @@ namespace SIL.XForge.Realtime.RichText
                     {
                         bold = true,
                         color = "red",
-                        font = (string)null
+                        font = default(string?),
                     }
                 );
             var expected = Delta.New().Insert("A", new { bold = true, color = "red" });
@@ -281,7 +281,7 @@ namespace SIL.XForge.Realtime.RichText
                     {
                         bold = true,
                         color = "red",
-                        font = (string)null
+                        font = default(string?),
                     }
                 );
             var expected = Delta
@@ -292,7 +292,7 @@ namespace SIL.XForge.Realtime.RichText
                     {
                         bold = true,
                         color = "red",
-                        font = (string)null
+                        font = default(string?),
                     }
                 );
             Assert.That(a.Compose(b), Is.EqualTo(expected).Using(Delta.EqualityComparer));
@@ -368,7 +368,7 @@ namespace SIL.XForge.Realtime.RichText
         public void Compose_RemoveAttributes_MergeOps()
         {
             var a = Delta.New().Insert("A", new { bold = true });
-            var b = Delta.New().Retain(1, new { bold = (bool?)null });
+            var b = Delta.New().Retain(1, new { bold = default(bool?) });
             var expected = Delta.New().Insert("A");
             Assert.That(a.Compose(b), Is.EqualTo(expected).Using(Delta.EqualityComparer));
         }
@@ -377,7 +377,7 @@ namespace SIL.XForge.Realtime.RichText
         public void Compose_RemoveEmbedAttributes_MergeOps()
         {
             var a = Delta.New().Insert(2, new { bold = true });
-            var b = Delta.New().Retain(1, new { bold = (bool?)null });
+            var b = Delta.New().Retain(1, new { bold = default(bool?) });
             var expected = Delta.New().Insert(2);
             Assert.That(a.Compose(b), Is.EqualTo(expected).Using(Delta.EqualityComparer));
         }
@@ -532,8 +532,8 @@ namespace SIL.XForge.Realtime.RichText
             var b = Delta.New().Insert("123", new { color = "red" });
             var expected = Delta
                 .New()
-                .Retain(2, new { bold = (bool?)null, color = "red" })
-                .Retain(1, new { italic = (bool?)null, color = "red" })
+                .Retain(2, new { bold = default(bool?), color = "red" })
+                .Retain(1, new { italic = default(bool?), color = "red" })
                 .Delete(1);
             Assert.That(a.Diff(b), Is.EqualTo(expected).Using(Delta.EqualityComparer));
         }
@@ -547,7 +547,7 @@ namespace SIL.XForge.Realtime.RichText
                 .New()
                 .Insert("Good", new { bold = true })
                 .Delete(2)
-                .Retain(1, new { italic = true, color = (string)null })
+                .Retain(1, new { italic = true, color = default(string?) })
                 .Delete(3)
                 .Insert("og", new { italic = true });
             Assert.That(a.Diff(b), Is.EqualTo(expected).Using(Delta.EqualityComparer));
@@ -570,7 +570,7 @@ namespace SIL.XForge.Realtime.RichText
             var a2 = Delta.New().Insert("A", attr1);
             var b1 = Delta.New().Insert("A", new { bold = true }).Insert("B");
             var b2 = Delta.New().Insert("A", new { bold = true }).Insert("B");
-            var expected = Delta.New().Retain(1, new { bold = true, color = (string)null }).Insert("B");
+            var expected = Delta.New().Retain(1, new { bold = true, color = default(string?) }).Insert("B");
             Assert.That(a1.Diff(b1), Is.EqualTo(expected).Using(Delta.EqualityComparer));
             Assert.That(a1, Is.EqualTo(a2).Using(Delta.EqualityComparer));
             Assert.That(b1, Is.EqualTo(b2).Using(Delta.EqualityComparer));
