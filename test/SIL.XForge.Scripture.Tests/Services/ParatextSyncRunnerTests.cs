@@ -1051,7 +1051,7 @@ namespace SIL.XForge.Scripture.Services
             );
             env.ParatextService
                 .GetLatestSharedVersion(Arg.Any<UserSecret>(), project.ParatextId)
-                .Returns((string?)null);
+                .Returns(default(string?));
             Assert.That(
                 project.Sync.DataInSync,
                 Is.Not.Null,
@@ -3282,11 +3282,12 @@ namespace SIL.XForge.Scripture.Services
                                 !(invalidChapters?.Contains(c) ?? false),
                                 Delta.New().InsertText("text")
                             )
-                    );
-                if (chapterDeltas.Count() == 0)
+                    )
+                    .ToList();
+                if (!chapterDeltas.Any())
                 {
                     // Add implicit ChapterDelta, mimicing DeltaUsxMapper.ToChapterDeltas().
-                    chapterDeltas = chapterDeltas.Append(new ChapterDelta(1, 0, true, Delta.New()));
+                    chapterDeltas.Add(new ChapterDelta(1, 0, true, Delta.New()));
                 }
                 DeltaUsxMapper.ToChapterDeltas(Arg.Is<XDocument>(d => predicate(d))).Returns(chapterDeltas);
             }
