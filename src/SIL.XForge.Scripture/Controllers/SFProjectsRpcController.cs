@@ -394,6 +394,25 @@ namespace SIL.XForge.Scripture.Controllers
             }
         }
 
+        public async Task<IRpcMethodResult> ReserveLinkSharingKey(string shareKey)
+        {
+            try
+            {
+                return Ok(await _projectService.ReserveLinkSharingKeyAsync(UserId, shareKey));
+            }
+            catch (DataNotFoundException dnfe)
+            {
+                return NotFoundError(dnfe.Message);
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "ReserveLinkSharingKey" }, { "shareKey", shareKey }, }
+                );
+                throw;
+            }
+        }
+
         public async Task<IRpcMethodResult> AddTranslateMetrics(string projectId, TranslateMetrics metrics)
         {
             try

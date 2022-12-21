@@ -26,7 +26,7 @@ export class ShareComponent implements OnInit {
 
   openDialog() {
     this.dialogService.openMatDialog(ShareDialogComponent, {
-      width: '500px',
+      width: '480px',
       data: {
         projectId: this.projectId,
         defaultRole: this.defaultRole
