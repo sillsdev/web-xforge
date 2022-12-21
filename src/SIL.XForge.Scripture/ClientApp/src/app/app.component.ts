@@ -255,6 +255,12 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return getAuthType(this.currentUser.authId) === AuthType.Account;
   }
 
+  get canUpdateDisplayName(): boolean {
+    if (this.currentUser == null) return false;
+    const authType: AuthType = getAuthType(this.currentUser.authId);
+    return authType === AuthType.Account || authType === AuthType.SMS;
+  }
+
   get selectedProjectId(): string | undefined {
     return this.selectedProjectDoc == null ? undefined : this.selectedProjectDoc.id;
   }
@@ -466,8 +472,12 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     }
   }
 
-  async editName(): Promise<void> {
-    this.userService.editDisplayName(false);
+  editName(): void {
+    if (this.isAppOnline) {
+      this.userService.editDisplayName(false);
+    } else {
+      this.noticeService.show(translate('app.action_not_available_offline'));
+    }
   }
 
   logOut(): void {

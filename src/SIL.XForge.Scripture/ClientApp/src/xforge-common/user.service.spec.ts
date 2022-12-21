@@ -1,36 +1,38 @@
-import { anything, capture, instance, mock, when } from 'ts-mockito';
-import { MdcDialog } from '@angular-mdc/web';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatDialogRef } from '@angular/material/dialog';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
-import { verify } from 'ts-mockito';
-import { MdcDialogRef } from '@angular-mdc/web/dialog';
 import { of } from 'rxjs';
+import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
 import { CURRENT_PROJECT_ID_SETTING, UserService } from './user.service';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
+import { DialogService } from './dialog.service';
 import { LocalSettingsService } from './local-settings.service';
 import { UserDoc } from './models/user-doc';
 import { TestRealtimeService } from './test-realtime.service';
-import { configureTestingModule } from './test-utils';
+import { configureTestingModule, TestTranslocoModule } from './test-utils';
 import { TestRealtimeModule } from './test-realtime.module';
 import { TypeRegistry } from './type-registry';
+import { NoticeService } from './notice.service';
 
 const mockedAuthService = mock(AuthService);
 const mockedLocalSettingsService = mock(LocalSettingsService);
-const mockedDialog = mock(MdcDialog);
 const mockedCommandService = mock(CommandService);
+const mockedDialogService = mock(DialogService);
+const mockedNoticeService = mock(NoticeService);
 
 describe('UserService', () => {
   configureTestingModule(() => ({
-    imports: [TestRealtimeModule.forRoot(new TypeRegistry([UserDoc], [], []))],
+    imports: [TestTranslocoModule, TestRealtimeModule.forRoot(new TypeRegistry([UserDoc], [], []))],
     providers: [
       UserService,
       { provide: AuthService, useMock: mockedAuthService },
       { provide: LocalSettingsService, useMock: mockedLocalSettingsService },
-      { provide: MdcDialog, useMock: mockedDialog },
-      { provide: CommandService, useMock: mockedCommandService }
+      { provide: CommandService, useMock: mockedCommandService },
+      { provide: DialogService, useMock: mockedDialogService },
+      { provide: NoticeService, useMock: mockedNoticeService }
     ]
   }));
 
@@ -67,6 +69,18 @@ describe('UserService', () => {
     const [, method] = capture<string, string, any>(mockedCommandService.onlineInvoke).last();
     expect(method).toEqual('updateAvatarFromDisplayName');
   }));
+
+  it('shows message when avatar could not be updated', fakeAsync(() => {
+    const env = new TestEnvironment({ storedProjectId: 'project01' });
+    when(mockedCommandService.onlineInvoke(anything(), 'updateAvatarFromDisplayName', anything())).thenReject(
+      new Error('error')
+    );
+    env.service.editDisplayName(false);
+    tick();
+    verify(mockedCommandService.onlineInvoke(anything(), 'updateAvatarFromDisplayName', anything())).once();
+    verify(mockedNoticeService.showError(anything())).once();
+    expect().nothing();
+  }));
 });
 
 interface TestArgs {
@@ -77,7 +91,7 @@ interface TestArgs {
 class TestEnvironment {
   readonly service: UserService;
   readonly realtimeService: TestRealtimeService;
-  readonly mockedEditNameDialogRef = mock<MdcDialogRef<EditNameDialogComponent>>(MdcDialogRef);
+  readonly mockedEditNameDialogRef = mock<MatDialogRef<EditNameDialogComponent>>(MatDialogRef);
 
   constructor(testArgs: TestArgs) {
     this.realtimeService = TestBed.inject(TestRealtimeService);
@@ -94,12 +108,15 @@ class TestEnvironment {
         sites: { sf: { currentProjectId: testArgs.storedProjectId, projects: ['project01', 'project02'] } }
       }
     });
+
     this.service = TestBed.inject(UserService);
 
     when(mockedLocalSettingsService.get<string>(CURRENT_PROJECT_ID_SETTING)).thenReturn(testArgs.localProjectId);
     when(mockedAuthService.currentUserId).thenReturn('user01');
     when(mockedAuthService.isLoggedIn).thenResolve(true);
-    when(mockedDialog.open(EditNameDialogComponent, anything())).thenReturn(instance(this.mockedEditNameDialogRef));
+    when(mockedDialogService.openMatDialog(EditNameDialogComponent, anything())).thenReturn(
+      instance(this.mockedEditNameDialogRef)
+    );
     when(this.mockedEditNameDialogRef.afterClosed()).thenReturn(of({ displayName: 'User Name' }));
   }
 }

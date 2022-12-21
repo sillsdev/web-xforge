@@ -1,41 +1,23 @@
 <ng-container *transloco="let t; read: 'edit_name_dialog'">
-  <mdc-dialog [dir]="i18n.direction">
-    <mdc-dialog-container>
-      <mdc-dialog-surface>
-        <mdc-dialog-title *ngIf="data.isConfirmation">{{ t("confirm_your_name") }}</mdc-dialog-title>
-        <mdc-dialog-title *ngIf="!data.isConfirmation">{{ t("update_your_name") }}</mdc-dialog-title>
-        <mdc-dialog-content>
-          <form id="name-form">
-            <p *ngIf="data.isConfirmation">{{ t("confirm_name") }}</p>
-            <p *ngIf="!data.isConfirmation">{{ t("enter_name") }}</p>
-            <mdc-form-field [fluid]="true">
-              <mdc-text-field [formControl]="name" id="name-input" label="{{ t('your_name') }}"></mdc-text-field>
-            </mdc-form-field>
-          </form>
-        </mdc-dialog-content>
-        <mdc-dialog-actions>
-          <button
-            form="name-form"
-            mdcDialogButton
-            type="button"
-            (click)="cancelDialog()"
-            *ngIf="!data.isConfirmation"
-            id="cancel-button"
-          >
-            {{ t("cancel") }}
-          </button>
-          <button
-            mdcDialogButton
-            form="name-form"
-            [unelevated]="true"
-            type="submit"
-            (click)="submitDialog()"
-            id="submit-button"
-          >
-            {{ data.isConfirmation ? t("confirm") : t("update") }}
-          </button>
-        </mdc-dialog-actions>
-      </mdc-dialog-surface>
-    </mdc-dialog-container>
-  </mdc-dialog>
+  <h1 mat-dialog-title *ngIf="data.isConfirmation">{{ t("confirm_your_name") }}</h1>
+  <h1 mat-dialog-title *ngIf="!data.isConfirmation">{{ t("update_your_name") }}</h1>
+  <mat-dialog-content>
+    <span *ngIf="!isOnline" class="offline-text">{{ t("connect_to_edit_name") }}</span>
+    <form id="name-form">
+      <p *ngIf="data.isConfirmation">{{ t("confirm_name") }}</p>
+      <p *ngIf="!data.isConfirmation">{{ t("enter_name") }}</p>
+      <mat-form-field appearance="fill">
+        <mat-label>{{ t("your_name") }}</mat-label>
+        <input matInput [formControl]="name" />
+      </mat-form-field>
+    </form>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" [mat-dialog-close]="'close'" *ngIf="!data.isConfirmation" id="cancel-button">
+      {{ t("cancel") }}
+    </button>
+    <button mat-flat-button color="primary" type="submit" (click)="submitDialog()" id="submit-button">
+      {{ data.isConfirmation ? t("confirm") : t("update") }}
+    </button>
+  </mat-dialog-actions>
 </ng-container>

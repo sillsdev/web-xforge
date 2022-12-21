@@ -16,6 +16,7 @@ import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
@@ -120,6 +121,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly questionDialogService: QuestionDialogService,
     private readonly i18n: I18nService,
     private readonly fileService: FileService,
+    private readonly pwaService: PwaService,
     public media: MediaObserver
   ) {
     super();
@@ -479,7 +481,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
     this.saveAnswerDisabled = true;
     const userDoc = await this.userService.getCurrentUser();
-    if (userDoc.data != null && !userDoc.data.isDisplayNameConfirmed) {
+    if (this.pwaService.isOnline && userDoc.data?.isDisplayNameConfirmed !== true) {
       await this.userService.editDisplayName(true);
     }
     this.emitAnswerToSave();

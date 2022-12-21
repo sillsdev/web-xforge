@@ -95,6 +95,7 @@
             </mdc-icon>
             <mdc-menu
               #userMenu
+              id="user-menu"
               anchorCorner="bottomStart"
               [anchorElement]="userMenuAnchor"
               [defaultFocusState]="defaultFocusState"
@@ -104,7 +105,14 @@
                   {{ t("logged_in_as") }}
                   <div fxLayout="row" fxLayoutAlign="start center">
                     <strong class="user-menu-name">{{ currentUser.displayName }}</strong>
-                    <button id="edit-name-btn" mdcIconButton icon="edit" type="button" (click)="editName()"></button>
+                    <button
+                      *ngIf="canUpdateDisplayName"
+                      id="edit-name-btn"
+                      mdcIconButton
+                      icon="edit"
+                      type="button"
+                      (click)="editName()"
+                    ></button>
                   </div>
                 </div>
                 <div>
