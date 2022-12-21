@@ -1,0 +1,21 @@
+@import 'src/variables';
+
+div {
+  display: flex;
+  align-items: center;
+  color: #fff;
+  padding: 16px;
+  border-radius: 4px;
+  background: $purpleLight;
+  mat-icon {
+    flex: 0 0 24px;
+    margin-inline-end: 16px;
+    align-self: flex-start;
+  }
+  &.error {
+    background-color: var(--mdc-theme-error);
+  }
+  &.warning {
+    background-color: $orange;
+  }
+}

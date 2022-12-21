@@ -7,7 +7,7 @@
     <div class="configuration-option configuration-invitation-role">
       <mat-icon>public</mat-icon>
       <div>
-        {{ t("anyone_with_link_can") }} <b>{{ i18n.localizeRoleDescription(shareRole) }}</b>
+        {{ t(shareLinkType) }} {{ t("can") }} <b>{{ i18n.localizeRoleDescription(shareRole) }}</b>
         <a [matMenuTriggerFor]="roleMenu" title="{{ t('invitation_role') }}" *ngIf="canUserChangeRole"
           >({{ t("change") }})</a
         >
@@ -39,31 +39,39 @@
         </mat-selection-list>
       </mat-menu>
     </div>
-    <div class="configuration-option configuration-link-type" *ngIf="canUserChangeLinkUsage">
-      <mat-icon>groups</mat-icon>
-      <div>
-        {{ t("link_can_be_used_by") }} <b>{{ t(shareLinkType) }}</b>
-        <a
-          [matMenuTriggerFor]="linkUsageMenu"
-          title="{{ t('invitation_link_type') }}"
-          *ngIf="shareLinkUsageOptions.length > 1"
-          >({{ t("change") }})</a
-        >
-      </div>
-      <mat-menu #linkUsageMenu>
-        <mat-selection-list [multiple]="false" *ngIf="shareLinkUsageOptions.length > 1">
-          <mat-list-option
-            *ngFor="let option of shareLinkUsageOptions"
-            [selected]="option === shareLinkType"
-            (click)="setLinkType(option)"
+    <ng-container *ngIf="canUserChangeLinkUsage">
+      <div class="configuration-option configuration-link-type">
+        <mat-icon>groups</mat-icon>
+        <div>
+          {{ t("link_can_be_used_by") }} <b>{{ t(shareLinkType) }}</b>
+          <a
+            [matMenuTriggerFor]="linkUsageMenu"
+            title="{{ t('invitation_link_type') }}"
+            *ngIf="shareLinkUsageOptions.length > 1"
+            >({{ t("change") }})</a
           >
-            {{ t(option) }}
-          </mat-list-option>
-        </mat-selection-list>
-      </mat-menu>
-    </div>
+        </div>
+        <mat-menu #linkUsageMenu>
+          <mat-selection-list [multiple]="false" *ngIf="shareLinkUsageOptions.length > 1">
+            <mat-list-option
+              *ngFor="let option of shareLinkUsageOptions"
+              [selected]="option === shareLinkType"
+              (click)="setLinkType(option)"
+            >
+              {{ t(option) }}
+            </mat-list-option>
+          </mat-selection-list>
+        </mat-menu>
+      </div>
+      <app-notice *ngIf="isRecipientOnlyLink" icon="info" text="share_dialog.recipient_only_notice"></app-notice>
+    </ng-container>
   </div>
-  <div *ngIf="showLinkSharingUnavailable" class="offline-text">{{ t("link_sharing_not_available_offline") }}</div>
+  <app-notice
+    *ngIf="showLinkSharingUnavailable"
+    type="error"
+    icon="cloud_off"
+    text="share_dialog.link_sharing_not_available_offline"
+  ></app-notice>
   <div mat-dialog-actions>
     <button
       id="share-btn"
