@@ -25,6 +25,12 @@
   .configuration-option {
     display: flex;
     column-gap: 10px;
+    &.configuration-link-type,
+    &.configuration-invitation-role {
+      b {
+        text-transform: lowercase;
+      }
+    }
 
     mat-icon {
       color: $purpleLight;

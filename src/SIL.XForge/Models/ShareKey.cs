@@ -10,4 +10,5 @@ public class ShareKey
     public string ShareLinkType { get; set; }
     public string ProjectRole { get; set; }
     public string? RecipientUserId { get; set; }
+    public bool? Reserved { get; set; }
 }

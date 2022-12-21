@@ -280,6 +280,21 @@ describe('ShareDialogComponent', () => {
     expect(roles).toContain(SFProjectRole.Observer);
     expect(env.canChangeLinkUsage).toBeFalse();
   }));
+
+  it('should reserve sharing key for recipient only links', fakeAsync(() => {
+    env = new TestEnvironment({ userId: TestUsers.Admin });
+    expect(env.component.shareLinkType).toEqual(ShareLinkType.Recipient);
+    verify(mockedProjectService.onlineGetLinkSharingKey(anything(), anything(), anything())).once();
+    verify(mockedProjectService.onlineReserveLinkSharingKey(anything())).never();
+
+    env.clickElement(env.copyLinkButton);
+    verify(mockedProjectService.onlineGetLinkSharingKey(anything(), anything(), anything())).twice();
+    verify(mockedProjectService.onlineReserveLinkSharingKey(anything())).once();
+
+    env.clickElement(env.shareButton);
+    verify(mockedProjectService.onlineGetLinkSharingKey(anything(), anything(), anything())).thrice();
+    verify(mockedProjectService.onlineReserveLinkSharingKey(anything())).twice();
+  }));
 });
 
 interface TestEnvironmentArgs {
@@ -331,7 +346,7 @@ class TestEnvironment {
   private _shareData?: ShareData;
   private share = (shareData?: ShareData | undefined): Promise<void> => {
     this._shareData = shareData;
-    return new Promise<void>(r => r);
+    return Promise.resolve();
   };
 
   constructor({
@@ -379,6 +394,7 @@ class TestEnvironment {
     when(mockedProjectService.onlineGetLinkSharingKey(projectId, anything(), anything())).thenResolve(
       checkingShareEnabled || translateShareEnabled ? 'linkSharing01' : ''
     );
+    when(mockedProjectService.onlineReserveLinkSharingKey(anything())).thenResolve();
     when(mockedProjectService.generateSharingUrl(anything(), anything())).thenCall(
       () =>
         `https://scriptureforge.org/join/${(this.component as any).linkSharingKey}/${
@@ -448,7 +464,7 @@ class TestEnvironment {
   }
 
   get linkSharingOfflineMessage(): HTMLElement {
-    return this.fetchElement('.offline-text');
+    return this.fetchElement('app-notice[type="error"]');
   }
 
   set onlineStatus(value: boolean) {
