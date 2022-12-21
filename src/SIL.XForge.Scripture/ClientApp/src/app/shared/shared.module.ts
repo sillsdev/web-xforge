@@ -8,9 +8,11 @@ import { ShareControlComponent } from './share/share-control.component';
 import { ShareDialogComponent } from './share/share-dialog.component';
 import { ShareButtonComponent } from './share/share-button.component';
 import { TextComponent } from './text/text.component';
+import { NoticeComponent } from './notice/notice.component';
 
 const componentExports = [
   ChapterNavComponent,
+  NoticeComponent,
   ShareButtonComponent,
   ShareControlComponent,
   ShareDialogComponent,
