@@ -11,86 +11,85 @@ using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
 
-namespace SIL.XForge.Scripture.Controllers
+namespace SIL.XForge.Scripture.Controllers;
+
+[Route("paratext-api")]
+[ApiController]
+[Authorize]
+public class ParatextController : ControllerBase
 {
-    [Route("paratext-api")]
-    [ApiController]
-    [Authorize]
-    public class ParatextController : ControllerBase
+    private readonly IExceptionHandler _exceptionHandler;
+    private readonly IRepository<UserSecret> _userSecrets;
+    private readonly IParatextService _paratextService;
+    private readonly IUserAccessor _userAccessor;
+
+    public ParatextController(
+        IRepository<UserSecret> userSecrets,
+        IParatextService paratextService,
+        IUserAccessor userAccessor,
+        IExceptionHandler exceptionHandler
+    )
     {
-        private readonly IExceptionHandler _exceptionHandler;
-        private readonly IRepository<UserSecret> _userSecrets;
-        private readonly IParatextService _paratextService;
-        private readonly IUserAccessor _userAccessor;
+        _userSecrets = userSecrets;
+        _paratextService = paratextService;
+        _userAccessor = userAccessor;
+        _exceptionHandler = exceptionHandler;
+        _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
+    }
 
-        public ParatextController(
-            IRepository<UserSecret> userSecrets,
-            IParatextService paratextService,
-            IUserAccessor userAccessor,
-            IExceptionHandler exceptionHandler
-        )
+    [HttpGet("projects")]
+    public async Task<ActionResult<IEnumerable<ParatextProject>>> GetAsync()
+    {
+        Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
+        if (!attempt.TryResult(out UserSecret userSecret))
+            return NoContent();
+
+        try
         {
-            _userSecrets = userSecrets;
-            _paratextService = paratextService;
-            _userAccessor = userAccessor;
-            _exceptionHandler = exceptionHandler;
-            _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
+            IReadOnlyList<ParatextProject> projects = await _paratextService.GetProjectsAsync(userSecret);
+            return Ok(projects);
         }
-
-        [HttpGet("projects")]
-        public async Task<ActionResult<IEnumerable<ParatextProject>>> GetAsync()
+        catch (SecurityException)
         {
-            Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
-            if (!attempt.TryResult(out UserSecret userSecret))
-                return NoContent();
-
-            try
-            {
-                IReadOnlyList<ParatextProject> projects = await _paratextService.GetProjectsAsync(userSecret);
-                return Ok(projects);
-            }
-            catch (SecurityException)
-            {
-                return NoContent();
-            }
+            return NoContent();
         }
+    }
 
-        /// <summary>
-        /// GET /paratext-api/resources/
-        /// </summary>
-        /// <returns>
-        /// The resources as projects
-        /// </returns>
-        /// <remarks>
-        /// The UI does not need the extra properties found in the <see cref="ParatextResource" /> class,
-        /// so we just return the base class <see cref="ParatextProject" />.
-        /// </remarks>
-        [HttpGet("resources")]
-        public async Task<ActionResult<Dictionary<string, string[]>>> ResourcesAsync()
+    /// <summary>
+    /// GET /paratext-api/resources/
+    /// </summary>
+    /// <returns>
+    /// The resources as projects
+    /// </returns>
+    /// <remarks>
+    /// The UI does not need the extra properties found in the <see cref="ParatextResource" /> class,
+    /// so we just return the base class <see cref="ParatextProject" />.
+    /// </remarks>
+    [HttpGet("resources")]
+    public async Task<ActionResult<Dictionary<string, string[]>>> ResourcesAsync()
+    {
+        try
         {
-            try
-            {
-                var resources = await _paratextService.GetResourcesAsync(_userAccessor.UserId);
-                return Ok(resources.ToDictionary(r => r.ParatextId, r => new string[] { r.ShortName, r.Name }));
-            }
-            catch (DataNotFoundException)
-            {
-                return NoContent();
-            }
-            catch (SecurityException)
-            {
-                return NoContent();
-            }
+            var resources = await _paratextService.GetResourcesAsync(_userAccessor.UserId);
+            return Ok(resources.ToDictionary(r => r.ParatextId, r => new string[] { r.ShortName, r.Name }));
         }
-
-        [HttpGet("username")]
-        public async Task<ActionResult<string>> UsernameAsync()
+        catch (DataNotFoundException)
         {
-            Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
-            if (!attempt.TryResult(out UserSecret userSecret))
-                return NoContent();
-            string username = _paratextService.GetParatextUsername(userSecret);
-            return Ok(username);
+            return NoContent();
         }
+        catch (SecurityException)
+        {
+            return NoContent();
+        }
+    }
+
+    [HttpGet("username")]
+    public async Task<ActionResult<string>> UsernameAsync()
+    {
+        Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
+        if (!attempt.TryResult(out UserSecret userSecret))
+            return NoContent();
+        string username = _paratextService.GetParatextUsername(userSecret);
+        return Ok(username);
     }
 }

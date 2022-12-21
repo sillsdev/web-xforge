@@ -1,16 +1,15 @@
 using SIL.XForge.Scripture.Models;
 
-namespace Microsoft.AspNetCore.Builder
-{
-    public static class SFDataAccessApplicationBuilderExtensions
-    {
-        public static void UseSFDataAccess(this IApplicationBuilder app)
-        {
-            app.UseDataAccess();
+namespace Microsoft.AspNetCore.Builder;
 
-            app.InitRepository<TranslateMetrics>();
-            app.InitRepository<SFProjectSecret>();
-            app.InitRepository<SyncMetrics>();
-        }
+public static class SFDataAccessApplicationBuilderExtensions
+{
+    public static void UseSFDataAccess(this IApplicationBuilder app)
+    {
+        app.UseDataAccess();
+
+        app.InitRepository<TranslateMetrics>();
+        app.InitRepository<SFProjectSecret>();
+        app.InitRepository<SyncMetrics>();
     }
 }

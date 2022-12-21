@@ -6,23 +6,22 @@ using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 
-namespace SIL.XForge.Scripture.Services
+namespace SIL.XForge.Scripture.Services;
+
+public interface IParatextNotesMapper
 {
-    public interface IParatextNotesMapper
-    {
-        Task InitAsync(
-            UserSecret currentUserSecret,
-            SFProjectSecret projectSecret,
-            List<User> ptUsers,
-            SFProject project,
-            CancellationToken token
-        );
-        Task<XElement> GetNotesChangelistAsync(
-            XElement oldNotesElem,
-            IEnumerable<IDocument<Question>> questionsDocs,
-            Dictionary<string, ParatextUserProfile> ptProjectUsers,
-            Dictionary<string, string> userRoles,
-            string answerExportMethod
-        );
-    }
+    Task InitAsync(
+        UserSecret currentUserSecret,
+        SFProjectSecret projectSecret,
+        List<User> ptUsers,
+        SFProject project,
+        CancellationToken token
+    );
+    Task<XElement> GetNotesChangelistAsync(
+        XElement oldNotesElem,
+        IEnumerable<IDocument<Question>> questionsDocs,
+        Dictionary<string, ParatextUserProfile> ptProjectUsers,
+        Dictionary<string, string> userRoles,
+        string answerExportMethod
+    );
 }

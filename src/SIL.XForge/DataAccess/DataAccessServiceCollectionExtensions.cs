@@ -11,69 +11,66 @@ using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+public static class DataAccessServiceCollectionExtensions
 {
-    public static class DataAccessServiceCollectionExtensions
+    public static IServiceCollection AddDataAccess(this IServiceCollection services, IConfiguration configuration)
     {
-        public static IServiceCollection AddDataAccess(this IServiceCollection services, IConfiguration configuration)
-        {
-            var options = configuration.GetOptions<DataAccessOptions>();
-            string jobDatabaseName = options.JobDatabaseName ?? options.Prefix + "_jobs";
-            services.AddHangfireServer();
-            services.AddHangfire(
-                x =>
-                    x.UseMongoStorage(
-                        $"{options.ConnectionString}/{jobDatabaseName}",
-                        new MongoStorageOptions
+        var options = configuration.GetOptions<DataAccessOptions>();
+        string jobDatabaseName = options.JobDatabaseName ?? options.Prefix + "_jobs";
+        services.AddHangfireServer();
+        services.AddHangfire(
+            x =>
+                x.UseMongoStorage(
+                    $"{options.ConnectionString}/{jobDatabaseName}",
+                    new MongoStorageOptions
+                    {
+                        CheckQueuedJobsStrategy = CheckQueuedJobsStrategy.TailNotificationsCollection,
+                        MigrationOptions = new MongoMigrationOptions
                         {
-                            CheckQueuedJobsStrategy = CheckQueuedJobsStrategy.TailNotificationsCollection,
-                            MigrationOptions = new MongoMigrationOptions
-                            {
-                                MigrationStrategy = new MigrateMongoMigrationStrategy(),
-                            },
-                        }
-                    )
-            );
+                            MigrationStrategy = new MigrateMongoMigrationStrategy(),
+                        },
+                    }
+                )
+        );
 
-            DataAccessClassMap.RegisterConventions(
-                "SIL.XForge",
-                new CamelCaseElementNameConvention(),
-                new EnumRepresentationConvention(BsonType.String),
-                new IgnoreIfNullConvention(true)
-            );
+        DataAccessClassMap.RegisterConventions(
+            "SIL.XForge",
+            new CamelCaseElementNameConvention(),
+            new EnumRepresentationConvention(BsonType.String),
+            new IgnoreIfNullConvention(true)
+        );
 
-            DataAccessClassMap.RegisterClass<Json0Snapshot>(cm => cm.MapIdProperty(e => e.Id));
-            DataAccessClassMap.RegisterClass<ProjectSecret>(cm => cm.MapIdProperty(e => e.Id));
+        DataAccessClassMap.RegisterClass<Json0Snapshot>(cm => cm.MapIdProperty(e => e.Id));
+        DataAccessClassMap.RegisterClass<ProjectSecret>(cm => cm.MapIdProperty(e => e.Id));
 
-            services.AddSingleton<IMongoClient>(sp => new MongoClient(options.ConnectionString));
-            services.AddSingleton(sp => sp.GetService<IMongoClient>().GetDatabase(options.MongoDatabaseName));
+        services.AddSingleton<IMongoClient>(sp => new MongoClient(options.ConnectionString));
+        services.AddSingleton(sp => sp.GetService<IMongoClient>().GetDatabase(options.MongoDatabaseName));
 
-            services.AddMongoRepository<UserSecret>("user_secrets", cm => cm.MapIdProperty(us => us.Id));
+        services.AddMongoRepository<UserSecret>("user_secrets", cm => cm.MapIdProperty(us => us.Id));
 
-            return services;
-        }
-
-        public static void AddMongoRepository<T>(
-            this IServiceCollection services,
-            string collection,
-            Action<BsonClassMap<T>> mapSetup = null,
-            Action<IMongoIndexManager<T>> indexSetup = null
-        ) where T : IIdentifiable
-        {
-            DataAccessClassMap.RegisterClass(mapSetup);
-            services.AddSingleton<IRepository<T>>(sp => CreateMongoRepository(sp, collection, indexSetup));
-        }
-
-        private static MongoRepository<T> CreateMongoRepository<T>(
-            IServiceProvider sp,
-            string collection,
-            Action<IMongoIndexManager<T>> indexSetup
-        ) where T : IIdentifiable
-        {
-            return new MongoRepository<T>(
-                sp.GetService<IMongoDatabase>().GetCollection<T>(collection),
-                c => indexSetup?.Invoke(c.Indexes)
-            );
-        }
+        return services;
     }
+
+    public static void AddMongoRepository<T>(
+        this IServiceCollection services,
+        string collection,
+        Action<BsonClassMap<T>> mapSetup = null,
+        Action<IMongoIndexManager<T>> indexSetup = null
+    ) where T : IIdentifiable
+    {
+        DataAccessClassMap.RegisterClass(mapSetup);
+        services.AddSingleton<IRepository<T>>(sp => CreateMongoRepository(sp, collection, indexSetup));
+    }
+
+    private static MongoRepository<T> CreateMongoRepository<T>(
+        IServiceProvider sp,
+        string collection,
+        Action<IMongoIndexManager<T>> indexSetup
+    ) where T : IIdentifiable =>
+        new MongoRepository<T>(
+            sp.GetService<IMongoDatabase>().GetCollection<T>(collection),
+            c => indexSetup?.Invoke(c.Indexes)
+        );
 }

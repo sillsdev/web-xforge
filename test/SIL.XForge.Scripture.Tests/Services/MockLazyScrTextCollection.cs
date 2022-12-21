@@ -1,14 +1,13 @@
 using Paratext.Data;
 using SIL.XForge.Scripture.Models;
 
-namespace SIL.XForge.Scripture.Services
+namespace SIL.XForge.Scripture.Services;
+
+public class MockLazyScrTextCollection : LazyScrTextCollection
 {
-    public class MockLazyScrTextCollection : LazyScrTextCollection
+    protected override ScrText CreateScrText(string ptUsername, ProjectName projectName)
     {
-        protected override ScrText CreateScrText(string ptUsername, ProjectName projectName)
-        {
-            var associatedPtUser = new SFParatextUser(ptUsername);
-            return new MockScrText(associatedPtUser, projectName);
-        }
+        var associatedPtUser = new SFParatextUser(ptUsername);
+        return new MockScrText(associatedPtUser, projectName);
     }
 }

@@ -1,13 +1,12 @@
 using System;
 
-namespace SIL.XForge.DataAccess
+namespace SIL.XForge.DataAccess;
+
+public class DuplicateKeyException : Exception
 {
-    public class DuplicateKeyException : Exception
-    {
-        private const string DefaultMessage = "The inserted/updated entity has the same key as an existing entity.";
+    private const string DefaultMessage = "The inserted/updated entity has the same key as an existing entity.";
 
-        public DuplicateKeyException() : base(DefaultMessage) { }
+    public DuplicateKeyException() : base(DefaultMessage) { }
 
-        public DuplicateKeyException(Exception innerException) : base(DefaultMessage, innerException) { }
-    }
+    public DuplicateKeyException(Exception innerException) : base(DefaultMessage, innerException) { }
 }

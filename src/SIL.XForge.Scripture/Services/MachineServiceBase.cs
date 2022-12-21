@@ -8,43 +8,39 @@ using System.Threading;
 using System.Threading.Tasks;
 using SIL.ObjectModel;
 
-namespace SIL.XForge.Scripture.Services
+namespace SIL.XForge.Scripture.Services;
+
+/// <summary>
+/// Shared functionality and configuration for Machine Services that access the Machine API.
+/// </summary>
+public abstract class MachineServiceBase : DisposableBase
 {
-    /// <summary>
-    /// Shared functionality and configuration for Machine Services that access the Machine API.
-    /// </summary>
-    public abstract class MachineServiceBase : DisposableBase
+    public const string ClientName = "machine_api";
+
+    protected HttpClient MachineClient { get; }
+    protected JsonSerializerOptions Options { get; }
+
+    protected MachineServiceBase(IHttpClientFactory httpClientFactory)
     {
-        public const string ClientName = "machine_api";
+        MachineClient = httpClientFactory.CreateClient(ClientName);
+        Options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        Options.Converters.Add(new JsonStringEnumConverter());
+    }
 
-        protected HttpClient MachineClient { get; }
-        protected JsonSerializerOptions Options { get; }
+    protected static async Task<T> ReadAnonymousObjectFromJsonAsync<T>(
+        HttpResponseMessage response,
+        T _,
+        JsonSerializerOptions options,
+        CancellationToken cancellationToken
+    ) => await response.Content.ReadFromJsonAsync<T>(options, cancellationToken);
 
-        protected MachineServiceBase(IHttpClientFactory httpClientFactory)
+    protected override void DisposeManagedResources() => MachineClient.Dispose();
+
+    protected void ValidateId(string id)
+    {
+        if (!Regex.IsMatch(id, "^[a-zA-Z0-9]+$"))
         {
-            MachineClient = httpClientFactory.CreateClient(ClientName);
-            Options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            Options.Converters.Add(new JsonStringEnumConverter());
-        }
-
-        protected static async Task<T> ReadAnonymousObjectFromJsonAsync<T>(
-            HttpResponseMessage response,
-            T _,
-            JsonSerializerOptions options,
-            CancellationToken cancellationToken
-        ) => await response.Content.ReadFromJsonAsync<T>(options, cancellationToken);
-
-        protected override void DisposeManagedResources()
-        {
-            MachineClient.Dispose();
-        }
-
-        protected void ValidateId(string id)
-        {
-            if (!Regex.IsMatch(id, "^[a-zA-Z0-9]+$"))
-            {
-                throw new ArgumentException($"Invalid Identifier: {id}");
-            }
+            throw new ArgumentException($"Invalid Identifier: {id}");
         }
     }
 }

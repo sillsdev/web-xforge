@@ -1,7 +1,6 @@
-namespace SIL.XForge.Scripture.Models
+namespace SIL.XForge.Scripture.Models;
+
+public class Like
 {
-    public class Like
-    {
-        public string OwnerRef { get; set; }
-    }
+    public string OwnerRef { get; set; }
 }
