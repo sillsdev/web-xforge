@@ -20,6 +20,7 @@ namespace SIL.XForge.Scripture.Services
         Task CancelSyncAsync(string curUserId, string projectId);
         Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale, string role);
         Task<string> GetLinkSharingKeyAsync(string curUserId, string projectId, string role, string shareLinkType);
+        Task<bool> ReserveLinkSharingKeyAsync(string curUserId, string shareKey);
         Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email);
         Task UninviteUserAsync(string curUserId, string projectId, string email);
         Task<string> CheckLinkSharingAsync(string curUserId, string shareKey = null);
