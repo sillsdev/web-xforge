@@ -336,8 +336,8 @@
     "share_not_available_offline": "Inviting  is unavailable while offline."
   },
   "share_dialog": {
-    "anyone": "anyone with the link",
-    "anyone_with_link_can": "Anyone with the link can",
+    "anyone": "Anyone with the link",
+    "can": "can",
     "change": "change",
     "copy_link": "Copy link",
     "invitation_language": "Change invitation language",
@@ -346,7 +346,8 @@
     "invitation_shared_in_language": "Invitation to be shared in",
     "link_can_be_used_by": "Link can be used by",
     "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
-    "recipient": "only the recipient",
+    "recipient": "Only the recipient",
+    "recipient_only_notice": "Each link can only be used once. Click the button again to generate and share a new link.",
     "share": "Share",
     "share_with_others": "Share with others"
   },
