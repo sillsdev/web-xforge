@@ -104,6 +104,10 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     return this.linkSharingReady && this.sharableLink !== '';
   }
 
+  get isRecipientOnlyLink(): boolean {
+    return this.shareLinkType === ShareLinkType.Recipient;
+  }
+
   get projectName(): string {
     return this.projectDoc?.data?.name ?? '';
   }
@@ -137,8 +141,9 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   }
 
   copyLink(): void {
-    this.navigator.clipboard.writeText(this.sharableLink).then(() => {
-      this.noticeService.show(translate('share_control.link_copied'));
+    this.navigator.clipboard.writeText(this.sharableLink).then(async () => {
+      await this.reserveShareLink();
+      await this.noticeService.show(translate('share_control.link_copied'));
     });
   }
 
@@ -152,16 +157,20 @@ export class ShareDialogComponent extends SubscriptionDisposable {
       projectName: this.projectDoc.data.name,
       siteName: environment.siteName
     };
-    this.navigator.share({
-      title: translate('share_control.share_title', params),
-      url: this.sharableLink,
-      text: this.i18n.translateAndInsertTags(
-        this.shareLinkType === ShareLinkType.Anyone
-          ? 'share_control.share_text_anyone'
-          : 'share_control.share_text_single',
-        params
-      )
-    });
+    this.navigator
+      .share({
+        title: translate('share_control.share_title', params),
+        url: this.sharableLink,
+        text: this.i18n.translateAndInsertTags(
+          this.shareLinkType === ShareLinkType.Anyone
+            ? 'share_control.share_text_anyone'
+            : 'share_control.share_text_single',
+          params
+        )
+      })
+      .then(async () => {
+        await this.reserveShareLink();
+      });
   }
 
   setLocale(locale: Locale) {
@@ -189,6 +198,11 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     return roles.some(role => role === SF_DEFAULT_TRANSLATE_SHARE_ROLE)
       ? SF_DEFAULT_TRANSLATE_SHARE_ROLE
       : (roles[0] as SFProjectRole);
+  }
+
+  private async reserveShareLink(): Promise<void> {
+    await this.projectService.onlineReserveLinkSharingKey(this.linkSharingKey);
+    this.updateSharingKey();
   }
 
   private resetLinkUsageOptions(): void {

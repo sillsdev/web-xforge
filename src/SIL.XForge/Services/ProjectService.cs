@@ -271,6 +271,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
                                 .Set(p => p.ShareKeys[index].RecipientUserId, userDoc.Id)
                                 .Unset(p => p.ShareKeys[index].Email)
                                 .Unset(p => p.ShareKeys[index].ExpirationTime)
+                                .Unset(p => p.ShareKeys[index].Reserved)
                     );
             }
         }
