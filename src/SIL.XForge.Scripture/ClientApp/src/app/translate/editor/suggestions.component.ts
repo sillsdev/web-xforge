@@ -191,6 +191,11 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
     if (selection == null) {
       return;
     }
+    // If the segment is blank, then the selection is after the blank. We want to align the suggestion to the beginning
+    // of the segment, so we shift the selection back one index.
+    if (this.text?.segmentText === '') {
+      selection.index--;
+    }
     const reference = this.editor.getBounds(selection.index, selection.length);
     const left = reference.left + 1;
     // root.scrollTop should be 0 if scrollContainer !== root

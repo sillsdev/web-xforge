@@ -746,6 +746,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     const selectIndex = range.index + insertText.length;
     this.insertSuggestionEnd = selectIndex;
+    // If the segment is blank, then the selection is after the blank. The blank will be deleted, so we need
+    // to shift end of the inserted suggestion back one.
+    if (this.target.segmentText === '') {
+      this.insertSuggestionEnd--;
+    }
     const previousContents = this.target.editor.getContents();
     this.target.editor.updateContents(delta, 'user');
     const updatedContents = this.target.editor.getContents();
