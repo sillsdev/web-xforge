@@ -106,7 +106,7 @@ namespace SIL.XForge.Scripture.Services
                 throw new ForbiddenException();
 
             string projectId = ObjectId.GenerateNewId().ToString();
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 if (
                     this.RealtimeService
@@ -196,7 +196,7 @@ namespace SIL.XForge.Scripture.Services
             await _syncService.CancelSyncAsync(curUserId, projectId);
 
             string ptProjectId;
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
                 if (!projectDoc.IsLoaded)
@@ -242,7 +242,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task UpdateSettingsAsync(string curUserId, string projectId, SFProjectSettings settings)
         {
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
                 if (!projectDoc.IsLoaded)
@@ -604,7 +604,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary> Check that a share link is valid for a project and add the user to the project. </summary>
         public async Task CheckLinkSharingAsync(string curUserId, string projectId, string shareKey)
         {
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
                 SFProject project = projectDoc.Data;
@@ -692,7 +692,7 @@ namespace SIL.XForge.Scripture.Services
             string projectId
         )
         {
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
                 if (!projectDoc.IsLoaded)
@@ -1022,7 +1022,7 @@ namespace SIL.XForge.Scripture.Services
 
             // Create the new project using the realtime service
             string projectId = ObjectId.GenerateNewId().ToString();
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 if (
                     this.RealtimeService

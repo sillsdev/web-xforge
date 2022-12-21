@@ -717,7 +717,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             );
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
                     conn,
@@ -792,7 +792,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             );
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
                     conn,
@@ -907,7 +907,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
             );
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
                     conn,
@@ -1045,7 +1045,7 @@ namespace SIL.XForge.Scripture.Services
             };
             env.AddParatextComment(comment);
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 // But we have no SF notes.
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
@@ -1120,7 +1120,7 @@ namespace SIL.XForge.Scripture.Services
             };
             env.AddParatextComment(comment);
 
-            using (await env.RealtimeService.ConnectAsync())
+            await using (await env.RealtimeService.ConnectAsync())
             {
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = new IDocument<NoteThread>[0];
                 Dictionary<int, ChapterDelta> chapterDeltas = new Dictionary<int, ChapterDelta>();
@@ -1259,7 +1259,7 @@ namespace SIL.XForge.Scripture.Services
             string commentId = commentThread.Comments[0].Id;
             Assert.That(commentThread.Comments.Where(c => c.Id == commentId).Count, Is.EqualTo(2));
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
                     conn,
@@ -1403,7 +1403,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             );
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
                     conn,
@@ -1591,7 +1591,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             );
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 // SUT
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
@@ -1711,7 +1711,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             );
 
-            using (await env.RealtimeService.ConnectAsync())
+            await using (await env.RealtimeService.ConnectAsync())
             {
                 var deltas = env.GetChapterDeltasByBook(
                     env.Project01,
@@ -1845,7 +1845,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             );
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
                     conn,
@@ -1936,7 +1936,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
             );
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
                 Assert.That(thread, Is.Null);
@@ -2002,7 +2002,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             );
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 IDocument<NoteThread> noteThreadDoc = await env.GetNoteThreadDocAsync(conn, threadId);
                 // Edit a comment
@@ -2070,7 +2070,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             );
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 IDocument<NoteThread> noteThreadDoc = await env.GetNoteThreadDocAsync(conn, threadId);
 
@@ -4142,7 +4142,7 @@ namespace SIL.XForge.Scripture.Services
                 modifyComment(comment);
                 env.AddParatextComment(comment);
 
-                using (IConnection conn = await env.RealtimeService.ConnectAsync())
+                await using (IConnection conn = await env.RealtimeService.ConnectAsync())
                 {
                     IEnumerable<IDocument<NoteThread>> noteThreadDocs = await env.GetNoteThreadDocsAsync(
                         conn,

@@ -25,7 +25,7 @@ namespace SIL.XForge.Scripture.Services
 
         public override async Task OnCompleted(BuildContext context)
         {
-            using (IConnection conn = await _realtimeService.ConnectAsync())
+            await using (IConnection conn = await _realtimeService.ConnectAsync())
             {
                 IDocument<SFProject> project = await conn.FetchAsync<SFProject>(context.Engine.Projects.First());
                 if (!project.IsLoaded)

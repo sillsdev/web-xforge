@@ -30,7 +30,7 @@ namespace SIL.XForge.Scripture.Services
             await env.InitMapperAsync(false, true);
             env.AddData(null, null, null, null);
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 const string oldNotesText =
                     @"
@@ -136,7 +136,7 @@ namespace SIL.XForge.Scripture.Services
             await env.InitMapperAsync(false, false);
             env.AddData(null, null, null, null);
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 const string oldNotesText = @"<notes version=""1.1""></notes>";
                 Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
@@ -225,7 +225,7 @@ namespace SIL.XForge.Scripture.Services
             await env.InitMapperAsync(false, true);
             env.AddData(null, null, null, null, true);
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 const string oldNotesText =
                     @"
@@ -330,7 +330,7 @@ namespace SIL.XForge.Scripture.Services
             await env.InitMapperAsync(false, true);
             env.AddData(null, null, null, null);
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 const string oldNotesText =
                     @"
@@ -440,7 +440,7 @@ namespace SIL.XForge.Scripture.Services
             await env.InitMapperAsync(true, true);
             env.AddData("syncuser01", "syncuser03", null, "syncuser03");
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 const string oldNotesText =
                     @"
@@ -542,7 +542,7 @@ namespace SIL.XForge.Scripture.Services
             await env.InitMapperAsync(true, true);
             env.AddData("syncuser01", "syncuser03", "syncuser03", "syncuser03");
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 const string oldNotesText =
                     @"
@@ -660,7 +660,7 @@ namespace SIL.XForge.Scripture.Services
             await env.InitMapperAsync(false, true);
             env.AddData(null, null, null, null);
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 const string oldNotesText = @"<notes version=""1.1""></notes>";
                 Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
@@ -740,7 +740,7 @@ namespace SIL.XForge.Scripture.Services
             await env.InitMapperAsync(false, true);
             env.AddData(null, null, null, null);
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 const string oldNotesText = @"<notes version=""1.1""></notes>";
                 Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
@@ -767,7 +767,7 @@ namespace SIL.XForge.Scripture.Services
             await env.InitMapperAsync(false, true);
             env.AddData(null, null, null, null);
 
-            using (IConnection conn = await env.RealtimeService.ConnectAsync())
+            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
             {
                 const string oldNotesText = @"<notes version=""1.1""></notes>";
                 Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
