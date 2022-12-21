@@ -449,15 +449,18 @@ namespace SIL.XForge.Scripture.Services
             var sb = new StringBuilder();
             foreach (TextSegment segment in text.GetSegments().Where(s => !s.IsEmpty))
             {
+                string key;
                 if (segment.SegmentRef is TextSegmentRef textSegmentRef)
                 {
-                    sb.Append(string.Join('_', textSegmentRef.Keys));
+                    key = string.Join('_', textSegmentRef.Keys);
                 }
                 else
                 {
-                    sb.Append(segment.SegmentRef);
+                    key = (string)segment.SegmentRef;
                 }
 
+                // Strip characters from the key that will corrupt the line
+                sb.Append(key.Replace('\n', '_').Replace('\t', '_'));
                 sb.Append('\t');
                 sb.Append(string.Join(' ', segment.Segment));
                 sb.Append('\t');
