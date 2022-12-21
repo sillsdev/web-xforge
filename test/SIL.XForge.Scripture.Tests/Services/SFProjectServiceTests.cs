@@ -311,6 +311,45 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task ReserveLinkSharingKeyAsync_GenerateNewKeyIfReserved()
+        {
+            var env = new TestEnvironment();
+            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
+
+            Assert.That(
+                projectSecret.ShareKeys.Any(
+                    sk =>
+                        sk.Key == "reservedKey"
+                        && sk.ShareLinkType == ShareLinkType.Recipient
+                        && sk.ProjectRole == SFProjectRole.SFObserver
+                ),
+                Is.True,
+                "setup"
+            );
+            env.SecurityService.GenerateKey().Returns("newKey");
+
+            string shareLink = await env.Service.GetLinkSharingKeyAsync(
+                User07,
+                Project06,
+                SFProjectRole.SFObserver,
+                ShareLinkType.Recipient
+            );
+            Assert.That(shareLink, Is.EqualTo("newKey"));
+            projectSecret = env.ProjectSecrets.Get(Project06);
+            Assert.That(
+                projectSecret.ShareKeys.Any(
+                    sk =>
+                        sk.Key == "newKey"
+                        && sk.ShareLinkType == ShareLinkType.Recipient
+                        && sk.ProjectRole == SFProjectRole.SFObserver
+                        && sk.ExpirationTime > DateTime.Now
+                        && sk.Reserved == null
+                ),
+                Is.True
+            );
+        }
+
+        [Test]
         public async Task GetLinkSharingKeyAsync_LinkDoesNotExist_NewShareKeyCreated()
         {
             var env = new TestEnvironment();
@@ -1689,6 +1728,40 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(source.UserRoles.ContainsKey(User03));
             user = env.GetUser(User03);
             Assert.That(user.Sites[SiteId].Projects, Is.EquivalentTo(new[] { Project03, SourceOnly }));
+        }
+
+        [Test]
+        public async Task ReserveLinkSharingKeyAsync_MarkAsReserved()
+        {
+            var env = new TestEnvironment();
+            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
+
+            Assert.That(
+                projectSecret.ShareKeys.Any(
+                    sk =>
+                        sk.Key == "toBeReservedKey"
+                        && sk.ShareLinkType == ShareLinkType.Recipient
+                        && sk.ProjectRole == SFProjectRole.CommunityChecker
+                        && sk.Reserved == null
+                ),
+                Is.True,
+                "setup"
+            );
+
+            Assert.That(await env.Service.ReserveLinkSharingKeyAsync(User07, "toBeReservedKey"), Is.True);
+
+            projectSecret = env.ProjectSecrets.Get(Project06);
+
+            Assert.That(
+                projectSecret.ShareKeys.Any(
+                    sk =>
+                        sk.Key == "toBeReservedKey"
+                        && sk.ShareLinkType == ShareLinkType.Recipient
+                        && sk.ProjectRole == SFProjectRole.CommunityChecker
+                        && sk.Reserved == true
+                ),
+                Is.True
+            );
         }
 
         [Test]
@@ -3105,7 +3178,22 @@ namespace SIL.XForge.Scripture.Services
                                     ProjectRole = SFProjectRole.SFObserver,
                                     ShareLinkType = ShareLinkType.Recipient,
                                     RecipientUserId = User02
-                                }
+                                },
+                                new ShareKey
+                                {
+                                    Key = "reservedKey",
+                                    ExpirationTime = currentTime.AddDays(1),
+                                    ProjectRole = SFProjectRole.SFObserver,
+                                    ShareLinkType = ShareLinkType.Recipient,
+                                    Reserved = true
+                                },
+                                new ShareKey
+                                {
+                                    Key = "toBeReservedKey",
+                                    ExpirationTime = currentTime.AddDays(1),
+                                    ProjectRole = SFProjectRole.CommunityChecker,
+                                    ShareLinkType = ShareLinkType.Recipient,
+                                },
                             }
                         },
                     }

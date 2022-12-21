@@ -518,6 +518,7 @@ namespace SIL.XForge.Scripture.Services
                         && sk.ProjectRole == role
                         && sk.ShareLinkType == shareLinkType
                         && sk.RecipientUserId == null
+                        && sk.Reserved == null
                         && (sk.ExpirationTime == null || sk.ExpirationTime > DateTime.UtcNow)
                 )
                 ?.Key;
@@ -542,6 +543,31 @@ namespace SIL.XForge.Scripture.Services
                     )
             );
             return key;
+        }
+
+        public async Task<bool> ReserveLinkSharingKeyAsync(string curUserId, string shareKey)
+        {
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            {
+                ProjectSecret projectSecret = ProjectSecrets
+                    .Query()
+                    .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
+                if (projectSecret == null)
+                    throw new DataNotFoundException("Unable to locate shareKey");
+
+                String projectId = projectSecret.Id;
+                ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
+                SFProject project = await GetProjectAsync(projectId);
+                if (!IsProjectAdmin(project, curUserId))
+                    throw new ForbiddenException();
+
+                int index = projectSecret.ShareKeys.FindIndex(sk => sk.Key == shareKey);
+                await ProjectSecrets.UpdateAsync(
+                    p => p.Id == project.Id,
+                    update => update.Set(p => p.ShareKeys[index].Reserved, true)
+                );
+                return true;
+            }
         }
 
         /// <summary>Cancel an outstanding project invitation.</summary>
@@ -621,9 +647,6 @@ namespace SIL.XForge.Scripture.Services
 
                 String projectId = projectSecret.Id;
                 ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
-
-                if (projectSecretShareKey == null)
-                    throw new ForbiddenException();
 
                 if (projectSecretShareKey.RecipientUserId != null)
                 {
