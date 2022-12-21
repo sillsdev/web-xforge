@@ -389,34 +389,53 @@ public class SFProjectsRpcController : RpcControllerBase
         }
     }
 
-    public async Task<IRpcMethodResult> AddTranslateMetrics(string projectId, TranslateMetrics metrics)
-    {
-        try
+    public async Task<IRpcMethodResult> ReserveLinkSharingKey(string shareKey)
         {
-            await _projectService.AddTranslateMetricsAsync(UserId, projectId, metrics);
-            return Ok();
+            try
+            {
+                return Ok(await _projectService.ReserveLinkSharingKeyAsync(UserId, shareKey));
+            }
+            catch (DataNotFoundException dnfe)
+            {
+                return NotFoundError(dnfe.Message);
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string> { { "method", "ReserveLinkSharingKey" }, { "shareKey", shareKey }, }
+                );
+                throw;
+            }
         }
-        catch (ForbiddenException)
+
+        public async Task<IRpcMethodResult> AddTranslateMetrics(string projectId, TranslateMetrics metrics)
         {
-            return ForbiddenError();
+            try
+            {
+                await _projectService.AddTranslateMetricsAsync(UserId, projectId, metrics);
+                return Ok();
+            }
+            catch (ForbiddenException)
+            {
+                return ForbiddenError();
+            }
+            catch (DataNotFoundException dnfe)
+            {
+                return NotFoundError(dnfe.Message);
+            }
+            catch (Exception)
+            {
+                _exceptionHandler.RecordEndpointInfoForException(
+                    new Dictionary<string, string>
+                    {
+                        { "method", "AddTranslateMetrics" },
+                        { "metricsId", metrics.Id },
+                        { "projectId", projectId },
+                    }
+                );
+                throw;
+            }
         }
-        catch (DataNotFoundException dnfe)
-        {
-            return NotFoundError(dnfe.Message);
-        }
-        catch (Exception)
-        {
-            _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string>
-                {
-                    { "method", "AddTranslateMetrics" },
-                    { "metricsId", metrics.Id },
-                    { "projectId", projectId },
-                }
-            );
-            throw;
-        }
-    }
 
     public async Task<IRpcMethodResult> Sync(string projectId)
     {

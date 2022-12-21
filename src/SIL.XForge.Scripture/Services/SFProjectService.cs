@@ -492,6 +492,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         && sk.ProjectRole == role
                         && sk.ShareLinkType == shareLinkType
                         && sk.RecipientUserId == null
+                        && sk.Reserved == null
                         && (sk.ExpirationTime == null || sk.ExpirationTime > DateTime.UtcNow)
                 )
                 ?.Key;
@@ -518,12 +519,37 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         return key;
     }
 
-    /// <summary>Cancel an outstanding project invitation.</summary>
-    public async Task UninviteUserAsync(string curUserId, string projectId, string emailToUninvite)
-    {
-        SFProject project = await GetProjectAsync(projectId);
-        if (!IsProjectAdmin(project, curUserId))
-            throw new ForbiddenException();
+    public async Task<bool> ReserveLinkSharingKeyAsync(string curUserId, string shareKey)
+        {
+            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            {
+                ProjectSecret projectSecret = ProjectSecrets
+                    .Query()
+                    .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
+                if (projectSecret == null)
+                    throw new DataNotFoundException("Unable to locate shareKey");
+
+                String projectId = projectSecret.Id;
+                ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
+                SFProject project = await GetProjectAsync(projectId);
+                if (!IsProjectAdmin(project, curUserId))
+                    throw new ForbiddenException();
+
+                int index = projectSecret.ShareKeys.FindIndex(sk => sk.Key == shareKey);
+                await ProjectSecrets.UpdateAsync(
+                    p => p.Id == project.Id,
+                    update => update.Set(p => p.ShareKeys[index].Reserved, true)
+                );
+                return true;
+            }
+        }
+
+        /// <summary>Cancel an outstanding project invitation.</summary>
+        public async Task UninviteUserAsync(string curUserId, string projectId, string emailToUninvite)
+        {
+            SFProject project = await GetProjectAsync(projectId);
+            if (!IsProjectAdmin(project, curUserId))
+                throw new ForbiddenException();
 
         if (!await IsAlreadyInvitedAsync(curUserId, projectId, emailToUninvite))
         {
@@ -592,9 +618,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
                 String projectId = projectSecret.Id;
                 ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
-
-                if (projectSecretShareKey == null)
-                    throw new ForbiddenException();
 
                 if (projectSecretShareKey.RecipientUserId != null)
                 {
