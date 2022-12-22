@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -1417,13 +1418,6 @@ namespace SIL.XForge.Scripture.Services
                 .Received(1)
                 .ExcludePropertyFromTransaction(
                     Arg.Is<Expression<Func<SFProject, object>>>(
-                        ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.PercentCompleted"
-                    )
-                );
-            env.Connection
-                .Received(1)
-                .ExcludePropertyFromTransaction(
-                    Arg.Is<Expression<Func<SFProject, object>>>(
                         ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.QueuedCount"
                     )
                 );
@@ -1434,7 +1428,7 @@ namespace SIL.XForge.Scripture.Services
                         ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.DataInSync"
                     )
                 );
-            env.Connection.Received(3).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
+            env.Connection.Received(2).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
         }
 
         [Test]
@@ -2317,6 +2311,7 @@ namespace SIL.XForge.Scripture.Services
                 SubstituteRealtimeService.ConnectAsync().Returns(Task.FromResult(Connection));
                 DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
                 NotesMapper = Substitute.For<IParatextNotesMapper>();
+                var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
                 MockLogger = new MockLogger<ParatextSyncRunner>();
 
                 Runner = new ParatextSyncRunner(
@@ -2329,6 +2324,7 @@ namespace SIL.XForge.Scripture.Services
                     substituteRealtimeService ? SubstituteRealtimeService : RealtimeService,
                     DeltaUsxMapper,
                     NotesMapper,
+                    hubContext,
                     MockLogger
                 );
             }

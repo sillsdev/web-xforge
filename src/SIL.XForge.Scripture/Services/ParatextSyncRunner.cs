@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using SIL.ObjectModel;
 using SIL.Scripture;
@@ -68,6 +69,7 @@ namespace SIL.XForge.Scripture.Services
         private readonly IDeltaUsxMapper _deltaUsxMapper;
         private readonly IParatextNotesMapper _notesMapper;
         private readonly ILogger<ParatextSyncRunner> _logger;
+        private readonly IHubContext<NotificationHub, INotifier> _hubContext;
 
         private IConnection _conn;
         private UserSecret _userSecret;
@@ -86,6 +88,7 @@ namespace SIL.XForge.Scripture.Services
             IRealtimeService realtimeService,
             IDeltaUsxMapper deltaUsxMapper,
             IParatextNotesMapper notesMapper,
+            IHubContext<NotificationHub, INotifier> hubContext,
             ILogger<ParatextSyncRunner> logger
         )
         {
@@ -99,6 +102,7 @@ namespace SIL.XForge.Scripture.Services
             _logger = logger;
             _deltaUsxMapper = deltaUsxMapper;
             _notesMapper = notesMapper;
+            _hubContext = hubContext;
         }
 
         private bool TranslationSuggestionsEnabled => _projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
@@ -571,7 +575,6 @@ namespace SIL.XForge.Scripture.Services
 
             _conn = await _realtimeService.ConnectAsync();
             _conn.BeginTransaction();
-            _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.PercentCompleted);
             _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.QueuedCount);
             _conn.ExcludePropertyFromTransaction<SFProject>(op => op.Sync.DataInSync);
             _projectDoc = await _conn.FetchAsync<SFProject>(projectSFId);
@@ -604,7 +607,7 @@ namespace SIL.XForge.Scripture.Services
 
             await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data, token);
 
-            await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.Sync.PercentCompleted, 0));
+            await _hubContext.Clients.All.NotifySyncProgress(projectSFId, new ProgressState { ProgressValue = 0.0 });
             return true;
         }
 
@@ -1281,10 +1284,9 @@ namespace SIL.XForge.Scripture.Services
                 }
             }
 
-            // NOTE: This is executed outside of the transaction because it modifies "Sync.PercentCompleted"
+            // NOTE: This is executed outside of the transaction because it modifies "Sync.QueuedCount"
             await _projectDoc.SubmitJson0OpAsync(op =>
             {
-                op.Unset(pd => pd.Sync.PercentCompleted);
                 op.Set(pd => pd.Sync.LastSyncSuccessful, successful);
 
                 // Get the latest shared revision of the local hg repo. On a failed synchronize attempt, the data
@@ -1364,6 +1366,7 @@ namespace SIL.XForge.Scripture.Services
                         op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
                 }
             });
+            await _hubContext.Clients.All.NotifySyncProgress(_projectDoc.Id, null);
 
             if (_syncMetrics != null)
             {
@@ -1565,13 +1568,10 @@ namespace SIL.XForge.Scripture.Services
             }
             else if (sender is SyncProgress progress)
             {
-                double percentCompleted = progress.ProgressValue;
-                if (percentCompleted >= 0)
-                {
-                    await _projectDoc.SubmitJson0OpAsync(
-                        op => op.Set(pd => pd.Sync.PercentCompleted, percentCompleted)
-                    );
-                }
+                await _hubContext.Clients.All.NotifySyncProgress(
+                    _projectDoc.Id,
+                    new ProgressState { ProgressValue = progress.ProgressValue }
+                );
             }
         }
 
