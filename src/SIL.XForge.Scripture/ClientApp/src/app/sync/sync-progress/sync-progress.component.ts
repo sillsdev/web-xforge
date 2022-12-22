@@ -1,11 +1,17 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ProgressBarMode } from '@angular/material/progress-bar';
+import { HubConnectionBuilder } from '@microsoft/signalr';
 import { OtJson0Op } from 'ot-json0';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { merge, Observable } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+
+export interface ProgressState {
+  progressValue: number;
+  progressString: string;
+}
 
 @Component({
   selector: 'app-sync-progress',
@@ -16,9 +22,31 @@ export class SyncProgressComponent extends SubscriptionDisposable {
 
   private sourceProjectDoc?: SFProjectDoc;
   private _projectDoc?: SFProjectDoc;
+  private progressPercent: number = 0;
+
+  private connection = new HubConnectionBuilder().withUrl('/project-notifications').build();
 
   constructor(private readonly projectService: SFProjectService) {
     super();
+
+    this.connection.on('notifySyncProgress', (projectId: string, progressState: ProgressState) => {
+      if (this.sourceProjectDoc?.data == null) {
+        // There is no source project, so only check the target
+        if (this._projectDoc?.id == projectId) {
+          this.progressPercent = progressState.progressValue;
+        }
+      } else {
+        if (this.sourceProjectDoc.data.sync.queuedCount > 0 && this.sourceProjectDoc.id == projectId) {
+          // We are syncing the source project
+          this.progressPercent = progressState.progressValue * 0.5;
+        } else if (this._projectDoc?.id == projectId) {
+          // We are syncing the target project
+          // The source project has synchronized so this is the midway point
+          this.progressPercent = 0.5 + progressState.progressValue * 0.5;
+        }
+      }
+    });
+    this.connection.start();
   }
 
   @Input() set projectDoc(doc: SFProjectDoc | undefined) {
@@ -31,18 +59,7 @@ export class SyncProgressComponent extends SubscriptionDisposable {
 
   /** The progress as a percent between 0 and 100 for the target project and the source project, if one exists. */
   get syncProgressPercent(): number {
-    if (this.sourceProjectDoc?.data == null) {
-      return (this._projectDoc?.data?.sync.percentCompleted || 0) * 100;
-    }
-    let progress: number = 0;
-    if (this.sourceProjectDoc.data.sync.queuedCount > 0) {
-      progress += (this.sourceProjectDoc.data.sync.percentCompleted || 0) * 0.5;
-    } else {
-      // The source project has synchronized so this is the midway point
-      progress = 0.5;
-    }
-    progress += (this._projectDoc?.data?.sync.percentCompleted || 0) * 0.5;
-    return progress * 100;
+    return this.progressPercent * 100;
   }
 
   get mode(): ProgressBarMode {
@@ -70,6 +87,10 @@ export class SyncProgressComponent extends SubscriptionDisposable {
         ? this._projectDoc.remoteChanges$
         : merge(this._projectDoc.remoteChanges$, this.sourceProjectDoc.remoteChanges$);
     this.subscribe(checkSyncStatus$, () => this.checkSyncStatus());
+  }
+
+  override dispose(): void {
+    this.connection.stop();
   }
 
   private checkSyncStatus(): void {
