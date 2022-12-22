@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.States;
+using Microsoft.AspNetCore.SignalR;
 using NSubstitute;
 using NUnit.Framework;
 using SIL.XForge.DataAccess;
@@ -516,6 +517,7 @@ namespace SIL.XForge.Scripture.Services
             public TestEnvironment()
             {
                 BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
+                var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
                 ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                     new[]
                     {
@@ -571,6 +573,7 @@ namespace SIL.XForge.Scripture.Services
 
                 Service = new SyncService(
                     BackgroundJobClient,
+                    hubContext,
                     ProjectSecrets,
                     SyncMetrics,
                     RealtimeService,

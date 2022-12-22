@@ -11,6 +11,7 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
+using Microsoft.AspNetCore.SignalR;
 
 namespace SIL.XForge.Scripture.Services
 {
@@ -20,6 +21,7 @@ namespace SIL.XForge.Scripture.Services
     public class SyncService : ISyncService
     {
         private readonly IBackgroundJobClient _backgroundJobClient;
+        private readonly IHubContext<NotificationHub, INotifier> _hubContext;
         private readonly IRepository<SFProjectSecret> _projectSecrets;
         private readonly IRepository<SyncMetrics> _syncMetrics;
         private readonly IRealtimeService _realtimeService;
@@ -27,6 +29,7 @@ namespace SIL.XForge.Scripture.Services
 
         public SyncService(
             IBackgroundJobClient backgroundJobClient,
+            IHubContext<NotificationHub, INotifier> hubContext,
             IRepository<SFProjectSecret> projectSecrets,
             IRepository<SyncMetrics> syncMetrics,
             IRealtimeService realtimeService,
@@ -34,6 +37,7 @@ namespace SIL.XForge.Scripture.Services
         )
         {
             _backgroundJobClient = backgroundJobClient;
+            _hubContext = hubContext;
             _projectSecrets = projectSecrets;
             _syncMetrics = syncMetrics;
             _realtimeService = realtimeService;
@@ -322,10 +326,10 @@ namespace SIL.XForge.Scripture.Services
                     $"For SF project id {projectDoc.Id} before setting QueuedCount to 0 as part of cancelling."
                 );
                 // Mark sync as cancelled
+                await _hubContext.Clients.All.NotifySyncProgress(projectDoc.Id, null);
                 await projectDoc.SubmitJson0OpAsync(op =>
                 {
                     op.Set(pd => pd.Sync.QueuedCount, 0);
-                    op.Unset(pd => pd.Sync.PercentCompleted);
                     op.Set(pd => pd.Sync.LastSyncSuccessful, false);
                 });
             }

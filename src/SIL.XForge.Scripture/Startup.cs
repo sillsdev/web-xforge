@@ -18,6 +18,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using SIL.XForge.Configuration;
+using SIL.XForge.Scripture.Services;
 
 namespace SIL.XForge.Scripture
 {
@@ -132,6 +133,8 @@ namespace SIL.XForge.Scripture
             services.AddConfiguration(Configuration);
 
             services.AddFeatureManagement();
+
+            services.AddSignalR();
 
             string? nodeOptions = Configuration.GetValue<string>("node-options");
             services.AddSFRealtimeServer(LoggerFactory, Configuration, nodeOptions);
@@ -254,6 +257,7 @@ namespace SIL.XForge.Scripture
             {
                 endpoints.MapControllers();
                 endpoints.MapRazorPages();
+                endpoints.MapHub<NotificationHub>(pattern: "/project-notifications");
             });
 
             // Map JSON-RPC controllers after MVC controllers, so that MVC controllers take precedence.
