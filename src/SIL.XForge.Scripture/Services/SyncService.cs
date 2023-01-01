@@ -326,7 +326,7 @@ namespace SIL.XForge.Scripture.Services
                     $"For SF project id {projectDoc.Id} before setting QueuedCount to 0 as part of cancelling."
                 );
                 // Mark sync as cancelled
-                await _hubContext.Clients.All.NotifySyncProgress(projectDoc.Id, null);
+                await _hubContext.NotifySyncProgress(projectDoc.Id, null);
                 await projectDoc.SubmitJson0OpAsync(op =>
                 {
                     op.Set(pd => pd.Sync.QueuedCount, 0);
