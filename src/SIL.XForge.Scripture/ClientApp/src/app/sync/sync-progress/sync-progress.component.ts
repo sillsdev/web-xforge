@@ -77,8 +77,15 @@ export class SyncProgressComponent extends SubscriptionDisposable {
       const sourceProjectId: string | undefined = this._projectDoc.data.translateConfig.source?.projectRef;
       if (sourceProjectId != null) {
         const role: string = await this.projectService.onlineGetProjectRole(sourceProjectId);
-        // Only show progress for the source project when the user has sync permission
-        this.sourceProjectDoc = isParatextRole(role) ? await this.projectService.get(sourceProjectId) : undefined;
+        // Only show progress for the source project when the user has sync
+        if (isParatextRole(role)) {
+          this.sourceProjectDoc = await this.projectService.get(sourceProjectId);
+
+          // Subscribe to SignalR notifications for the source project
+          this.connection.send('subscribeToProject', this.sourceProjectDoc.id);
+        } else {
+          this.sourceProjectDoc = undefined;
+        }
       }
     }
 
@@ -87,6 +94,9 @@ export class SyncProgressComponent extends SubscriptionDisposable {
         ? this._projectDoc.remoteChanges$
         : merge(this._projectDoc.remoteChanges$, this.sourceProjectDoc.remoteChanges$);
     this.subscribe(checkSyncStatus$, () => this.checkSyncStatus());
+
+    // Subscribe to SignalR notifications for the target project
+    this.connection.send('subscribeToProject', this._projectDoc.id);
   }
 
   override dispose(): void {
