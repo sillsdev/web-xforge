@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -607,7 +607,7 @@ namespace SIL.XForge.Scripture.Services
 
             await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data, token);
 
-            await _hubContext.Clients.All.NotifySyncProgress(projectSFId, new ProgressState { ProgressValue = 0.0 });
+            await _hubContext.NotifySyncProgress(projectSFId, new ProgressState { ProgressValue = 0.0 });
             return true;
         }
 
@@ -1366,7 +1366,7 @@ namespace SIL.XForge.Scripture.Services
                         op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
                 }
             });
-            await _hubContext.Clients.All.NotifySyncProgress(_projectDoc.Id, null);
+            await _hubContext.NotifySyncProgress(_projectDoc.Id, null);
 
             if (_syncMetrics != null)
             {
@@ -1568,7 +1568,7 @@ namespace SIL.XForge.Scripture.Services
             }
             else if (sender is SyncProgress progress)
             {
-                await _hubContext.Clients.All.NotifySyncProgress(
+                await _hubContext.NotifySyncProgress(
                     _projectDoc.Id,
                     new ProgressState { ProgressValue = progress.ProgressValue }
                 );
