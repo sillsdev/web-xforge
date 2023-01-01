@@ -1,4 +1,5 @@
 using Microsoft.FeatureManagement;
+using SIL.ObjectModel;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
@@ -9,12 +10,17 @@ namespace MachineApiMigration;
 /// <summary>
 /// Migrates all projects to the new Machine API, if translation is enabled.
 /// </summary>
-public class MachineApiMigrator
+public class MachineApiMigrator : DisposableBase
 {
     /// <summary>
     /// The feature manager.
     /// </summary>
     private readonly IFeatureManager _featureManager;
+
+    /// <summary>
+    /// THe HTTP client to test if the Machine API is accessible.
+    /// </summary>
+    private readonly HttpClient _httpClient;
 
     /// <summary>
     /// The Machine project service.
@@ -35,23 +41,26 @@ public class MachineApiMigrator
     /// Initializes a new instance of the <see cref="MachineApiMigrator" /> class.
     /// </summary>
     /// <param name="featureManager">The feature manager.</param>
+    /// <param name="httpClientFactory">The HTTP client factory.</param>
     /// <param name="machineProjectService">The Machine project service.</param>
     /// <param name="projectSecrets">The SF project secrets repository.</param>
     /// <param name="realtimeService">The realtime service.</param>
     public MachineApiMigrator(
         IFeatureManager featureManager,
+        IHttpClientFactory httpClientFactory,
         IMachineProjectService machineProjectService,
         IRepository<SFProjectSecret> projectSecrets,
         IRealtimeService realtimeService
     )
     {
         _featureManager = featureManager;
+        _httpClient = httpClientFactory.CreateClient(MachineServiceBase.ClientName);
         _machineProjectService = machineProjectService;
         _projectSecrets = projectSecrets;
         _realtimeService = realtimeService;
     }
 
-    public async Task MigrateAllProjectsAsync(
+    public async Task<bool> MigrateAllProjectsAsync(
         bool doWrite,
         ICollection<string> sfProjectIdsToMigrate,
         IDictionary<string, string> sfAdminsToUse,
@@ -62,13 +71,20 @@ public class MachineApiMigrator
         if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
         {
             Program.Log("ERROR: Cannot proceed. The Machine API feature flag is disabled.");
-            return;
+            return false;
         }
 
         if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
         {
             Program.Log("ERROR: Cannot proceed. The In-Process Machine feature flag is enabled.");
-            return;
+            return false;
+        }
+
+        // Validate that the Machine API is accessible
+        if (!await IsMachineApiAccessible(cancellationToken))
+        {
+            Program.Log("ERROR: Cannot proceed. The Machine API is not accessible.");
+            return false;
         }
 
         // Get all projects that have translation suggestions enabled, and are not configured for the Machine API
@@ -149,6 +165,40 @@ public class MachineApiMigrator
                 // We do not need to iterate any longer (the continue statements above ensure the correct user is used)
                 break;
             }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Disposes managed resources.
+    /// </summary>
+    protected override void DisposeManagedResources()
+    {
+        _httpClient.Dispose();
+    }
+
+    /// <summary>
+    /// Checks if the Machine API returns a valid response
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token</param>
+    /// <returns><c>true</c> if the Machine API was successfully accessed; otherwise <c>false</c>.</returns>
+    private async Task<bool> IsMachineApiAccessible(CancellationToken cancellationToken)
+    {
+        Program.Log("Checking if the Machine API is accessible...");
+        try
+        {
+            using var response = await _httpClient.GetAsync(
+                "translation-engines/",
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken
+            );
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception e)
+        {
+            Program.Log(e.ToString());
+            return false;
         }
     }
 }
