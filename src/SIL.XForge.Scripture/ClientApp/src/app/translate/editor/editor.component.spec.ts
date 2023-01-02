@@ -73,6 +73,7 @@ import { RemoteTranslationEngine } from '../../machine-api/remote-translation-en
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
+import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { NoteDialogComponent } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
@@ -109,7 +110,7 @@ class MockConsole {
 
 describe('EditorComponent', () => {
   configureTestingModule(() => ({
-    declarations: [EditorComponent, SuggestionsComponent],
+    declarations: [EditorComponent, SuggestionsComponent, TrainingProgressComponent],
     imports: [
       NoopAnimationsModule,
       RouterTestingModule.withRoutes(ROUTES),

@@ -107,6 +107,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   trainingPercentage: number = 0;
   trainingMessage: string = '';
   showTrainingProgress: boolean = false;
+  trainingProgressClosed: boolean = false;
   textHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
@@ -141,7 +142,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private onTargetDeleteSub?: Subscription;
   private trainingSub?: Subscription;
   private projectDataChangesSub?: Subscription;
-  private trainingProgressClosed: boolean = false;
   private trainingCompletedTimeout: any;
   private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
   private selectionClickSubs: Subscription[] = [];
@@ -546,11 +546,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.onTargetDeleteSub != null) {
       this.onTargetDeleteSub.unsubscribe();
     }
-  }
-
-  closeTrainingProgress(): void {
-    this.showTrainingProgress = false;
-    this.trainingProgressClosed = true;
   }
 
   async onTargetUpdated(
