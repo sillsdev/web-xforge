@@ -70,36 +70,6 @@ app-text {
   padding: 15px;
 }
 
-.training-progress {
-  position: fixed;
-  display: flex;
-  flex-direction: column;
-  inset-inline-end: 15px;
-  bottom: 10px;
-  border-radius: 4px;
-  width: 270px;
-  background-color: white;
-  overflow: hidden;
-
-  > .training-title {
-    padding: 2px;
-    padding-inline-start: 10px;
-
-    > div {
-      color: white;
-    }
-    > button {
-      @include button.ink-color(white);
-    }
-    background-color: $sf_grey;
-  }
-
-  > .training-content {
-    padding: 10px;
-    height: 44px;
-  }
-}
-
 .text-ellipsis {
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -129,11 +99,6 @@ app-text {
 .no-edit-permission-message,
 .project-text-not-editable {
   color: $lighterTextColor;
-}
-
-#training-progress-spinner {
-  width: 24px;
-  height: 24px;
 }
 
 .both-editors-wrapper {
