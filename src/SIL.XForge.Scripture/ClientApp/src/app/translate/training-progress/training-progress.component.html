@@ -1,0 +1,26 @@
+<ng-container *transloco="let t; read: 'editor'">
+  <div *ngIf="showTrainingProgress" class="training-progress">
+    <div class="training-title" fxLayout="row" fxLayoutAlign="space-between center">
+      <div>{{ t("training") }}</div>
+      <button id="training-close-button" mat-icon-button type="button" (click)="closeTrainingProgress()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="training-content" fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="5px">
+      <div class="text-ellipsis">{{ trainingMessage }}</div>
+      <div>
+        <app-donut-chart
+          id="training-progress-spinner"
+          *ngIf="trainingPercentage < 100"
+          [colors]="['#b8d332', 'transparent']"
+          [data]="[trainingPercentage, 100 - trainingPercentage]"
+          backgroundColor="#ececec"
+          [innerThicknessDelta]="0"
+          [thickness]="22"
+        ></app-donut-chart>
+        <mat-icon id="training-complete-icon" *ngIf="trainingPercentage === 100">check_circle_outline</mat-icon>
+      </div>
+    </div>
+  </div>
+</ng-container>

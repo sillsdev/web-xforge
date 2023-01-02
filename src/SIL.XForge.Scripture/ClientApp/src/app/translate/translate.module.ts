@@ -9,6 +9,7 @@ import { MultiViewerComponent } from './editor/multi-viewer/multi-viewer.compone
 import { NoteDialogComponent } from './editor/note-dialog/note-dialog.component';
 import { SuggestionsSettingsDialogComponent } from './editor/suggestions-settings-dialog.component';
 import { SuggestionsComponent } from './editor/suggestions.component';
+import { TrainingProgressComponent } from './training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview/translate-overview.component';
 import { TranslateRoutingModule } from './translate-routing.module';
 
@@ -19,6 +20,7 @@ import { TranslateRoutingModule } from './translate-routing.module';
     NoteDialogComponent,
     SuggestionsComponent,
     SuggestionsSettingsDialogComponent,
+    TrainingProgressComponent,
     TranslateOverviewComponent
   ],
   imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, XForgeCommonModule, TranslocoModule]
