@@ -22,6 +22,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ParatextService } from '../core/paratext.service';
+import { ProjectNotificationService } from '../core/project-notification.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { SyncProgressComponent } from './sync-progress/sync-progress.component';
 import { SyncComponent } from './sync.component';
@@ -32,6 +33,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedDialogService = mock(DialogService);
 const mockedParatextService = mock(ParatextService);
 const mockedProjectService = mock(SFProjectService);
+const mockedProjectNotificationService = mock(ProjectNotificationService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
@@ -46,6 +48,7 @@ describe('SyncComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: ParatextService, useMock: mockedParatextService },
+      { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
@@ -120,7 +123,7 @@ describe('SyncComponent', () => {
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
     // Simulate sync in progress
-    env.emitSyncProgress(0.25, env.projectId);
+    env.emitSyncProgress(env.projectId);
 
     // Simulate sync error
     env.emitSyncComplete(false, env.projectId);
@@ -188,7 +191,7 @@ describe('SyncComponent', () => {
     verify(mockedProjectService.onlineSync(env.projectId)).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
-    env.emitSyncProgress(0.25, env.projectId);
+    env.emitSyncProgress(env.projectId);
 
     env.clickElement(env.cancelButton);
     env.emitSyncComplete(false, env.projectId);
@@ -243,7 +246,7 @@ class TestEnvironment {
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
     when(mockedProjectService.onlineSync(anything()))
-      .thenCall(id => this.emitSyncProgress(0, id))
+      .thenCall(id => this.emitSyncProgress(id))
       .thenResolve();
     when(mockedNoticeService.loadingStarted()).thenCall(() => (this.isLoading = true));
     when(mockedNoticeService.loadingFinished()).thenCall(() => (this.isLoading = false));
@@ -276,7 +279,6 @@ class TestEnvironment {
         },
         sync: {
           queuedCount: isInProgress ? 1 : 0,
-          percentCompleted: isInProgress ? 0.1 : undefined,
           lastSyncSuccessful: lastSyncWasSuccessful,
           dateLastSuccessfulSync: date.toJSON()
         },
@@ -355,12 +357,9 @@ class TestEnvironment {
     tick();
   }
 
-  emitSyncProgress(percentCompleted: number, projectId: string): void {
+  emitSyncProgress(projectId: string): void {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
-    projectDoc.submitJson0Op(ops => {
-      ops.set<number>(p => p.sync.queuedCount, 1);
-      ops.set(p => p.sync.percentCompleted!, percentCompleted);
-    }, false);
+    projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.queuedCount, 1), false);
     this.fixture.detectChanges();
   }
 
@@ -368,7 +367,6 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 0);
-      ops.unset(p => p.sync.percentCompleted!);
       ops.set(p => p.sync.lastSyncSuccessful!, successful);
       if (successful) {
         ops.set(p => p.sync.dateLastSuccessfulSync!, new Date().toJSON());

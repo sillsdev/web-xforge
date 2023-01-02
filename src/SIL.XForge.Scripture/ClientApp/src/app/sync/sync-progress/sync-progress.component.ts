@@ -1,16 +1,15 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ProgressBarMode } from '@angular/material/progress-bar';
-import { HubConnectionBuilder } from '@microsoft/signalr';
 import { OtJson0Op } from 'ot-json0';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { merge, Observable } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
 
-export interface ProgressState {
-  progressValue: number;
-  progressString: string;
+export class ProgressState {
+  constructor(public progressValue: number, public progressString?: string) {}
 }
 
 @Component({
@@ -24,29 +23,15 @@ export class SyncProgressComponent extends SubscriptionDisposable {
   private _projectDoc?: SFProjectDoc;
   private progressPercent: number = 0;
 
-  private connection = new HubConnectionBuilder().withUrl('/project-notifications').build();
-
-  constructor(private readonly projectService: SFProjectService) {
+  constructor(
+    private readonly projectService: SFProjectService,
+    private readonly projectNotificationService: ProjectNotificationService
+  ) {
     super();
 
-    this.connection.on('notifySyncProgress', (projectId: string, progressState: ProgressState) => {
-      if (this.sourceProjectDoc?.data == null) {
-        // There is no source project, so only check the target
-        if (this._projectDoc?.id == projectId) {
-          this.progressPercent = progressState.progressValue;
-        }
-      } else {
-        if (this.sourceProjectDoc.data.sync.queuedCount > 0 && this.sourceProjectDoc.id == projectId) {
-          // We are syncing the source project
-          this.progressPercent = progressState.progressValue * 0.5;
-        } else if (this._projectDoc?.id == projectId) {
-          // We are syncing the target project
-          // The source project has synchronized so this is the midway point
-          this.progressPercent = 0.5 + progressState.progressValue * 0.5;
-        }
-      }
-    });
-    this.connection.start();
+    this.projectNotificationService.setNotifySyncProgressHandler((projectId: string, progressState: ProgressState) =>
+      this.updateProgressState(projectId, progressState)
+    );
   }
 
   @Input() set projectDoc(doc: SFProjectDoc | undefined) {
@@ -73,6 +58,7 @@ export class SyncProgressComponent extends SubscriptionDisposable {
     if (this._projectDoc?.data == null) {
       return;
     }
+    await this.projectNotificationService.start();
     if (this._projectDoc?.data?.translateConfig.source != null) {
       const sourceProjectId: string | undefined = this._projectDoc.data.translateConfig.source?.projectRef;
       if (sourceProjectId != null) {
@@ -82,7 +68,7 @@ export class SyncProgressComponent extends SubscriptionDisposable {
           this.sourceProjectDoc = await this.projectService.get(sourceProjectId);
 
           // Subscribe to SignalR notifications for the source project
-          this.connection.send('subscribeToProject', this.sourceProjectDoc.id);
+          await this.projectNotificationService.subscribeToProject(this.sourceProjectDoc.id);
         } else {
           this.sourceProjectDoc = undefined;
         }
@@ -96,11 +82,30 @@ export class SyncProgressComponent extends SubscriptionDisposable {
     this.subscribe(checkSyncStatus$, () => this.checkSyncStatus());
 
     // Subscribe to SignalR notifications for the target project
-    this.connection.send('subscribeToProject', this._projectDoc.id);
+    await this.projectNotificationService.subscribeToProject(this._projectDoc.id);
   }
 
-  override dispose(): void {
-    this.connection.stop();
+  override async dispose(): Promise<void> {
+    await this.projectNotificationService.stop();
+    super.dispose();
+  }
+
+  public updateProgressState(projectId: string, progressState: ProgressState) {
+    if (this.sourceProjectDoc?.data == null) {
+      // There is no source project, so only check the target
+      if (this._projectDoc?.id === projectId) {
+        this.progressPercent = progressState.progressValue;
+      }
+    } else {
+      if (this.sourceProjectDoc.data.sync.queuedCount > 0 && this.sourceProjectDoc.id === projectId) {
+        // We are syncing the source project
+        this.progressPercent = progressState.progressValue * 0.5;
+      } else if (this._projectDoc?.id === projectId) {
+        // We are syncing the target project
+        // The source project has synchronized so this is the midway point
+        this.progressPercent = 0.5 + progressState.progressValue * 0.5;
+      }
+    }
   }
 
   private checkSyncStatus(): void {

@@ -27,12 +27,14 @@ import { SFProjectCreateSettings } from '../core/models/sf-project-create-settin
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
+import { ProjectNotificationService } from '../core/project-notification.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectSelectComponent } from '../project-select/project-select.component';
 import { SyncProgressComponent } from '../sync/sync-progress/sync-progress.component';
 import { ConnectProjectComponent } from './connect-project.component';
 
 const mockedParatextService = mock(ParatextService);
+const mockedProjectNotificationService = mock(ProjectNotificationService);
 const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
@@ -53,6 +55,7 @@ describe('ConnectProjectComponent', () => {
     declarations: [ConnectProjectComponent, ProjectSelectComponent, SyncProgressComponent],
     providers: [
       { provide: ParatextService, useMock: mockedParatextService },
+      { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -260,7 +263,7 @@ describe('ConnectProjectComponent', () => {
     expect(env.component.state).toEqual('connecting');
     expect(env.submitButton).toBeNull();
     expect(env.progressBar).not.toBeNull();
-    env.emitSyncProgress(1);
+    env.emitSyncProgress();
     env.emitSyncComplete();
 
     const settings: SFProjectCreateSettings = {
@@ -287,7 +290,7 @@ describe('ConnectProjectComponent', () => {
 
     expect(env.component.state).toEqual('connecting');
     expect(env.progressBar).not.toBeNull();
-    env.emitSyncProgress(1);
+    env.emitSyncProgress();
     env.emitSyncComplete();
 
     const project: SFProjectCreateSettings = {
@@ -353,7 +356,7 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.submitButton);
 
     expect(env.component.state).toEqual('connecting');
-    env.emitSyncProgress(1);
+    env.emitSyncProgress();
     env.emitSyncComplete();
 
     const settings: SFProjectCreateSettings = {
@@ -553,9 +556,9 @@ class TestEnvironment {
     return element.nativeElement.querySelector('input') as HTMLInputElement;
   }
 
-  emitSyncProgress(percentCompleted: number): void {
+  emitSyncProgress(): void {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
-    projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.percentCompleted!, percentCompleted), false);
+    projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.queuedCount, 1), false);
     tick();
     this.fixture.detectChanges();
   }
@@ -564,7 +567,6 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
     projectDoc.submitJson0Op(op => {
       op.set<number>(p => p.sync.queuedCount, 0);
-      op.unset(p => p.sync.percentCompleted!);
       op.set<boolean>(p => p.sync.lastSyncSuccessful!, true);
       op.set(p => p.sync.dateLastSuccessfulSync!, new Date().toJSON());
     }, false);
