@@ -6,7 +6,7 @@ namespace SIL.XForge.Scripture.Services
 {
     public class NotificationHub : Hub<INotifier>, INotifier
     {
-        public async Task NotifySyncProgress(string projectId, ProgressState? progressState) =>
+        public async Task NotifySyncProgress(string projectId, ProgressState progressState) =>
             await Clients.Group(projectId).NotifySyncProgress(projectId, progressState);
 
         public async Task SubscribeToProject(string projectId) =>
