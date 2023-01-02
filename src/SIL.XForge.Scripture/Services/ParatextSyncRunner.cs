@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -160,6 +160,7 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 ReportRepoRevs();
+                await NotifySyncProgress(SyncPhase.Phase1, 50.0);
 
                 if (_paratextService.IsResource(targetParatextId))
                 {
@@ -187,8 +188,17 @@ namespace SIL.XForge.Scripture.Services
                 var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
                 ParatextSettings settings = _paratextService.GetParatextSettings(_userSecret, targetParatextId);
                 // update target Paratext books and notes
+                double i = 0.0;
                 foreach (TextInfo text in _projectDoc.Data.Texts)
                 {
+                    i++;
+
+                    // A resource does not sync to Paratext, so lets skip phase 2 to make the progress bar look better
+                    await NotifySyncProgress(
+                        _paratextService.IsResource(targetParatextId) ? SyncPhase.Phase3 : SyncPhase.Phase2,
+                        i / _projectDoc.Data.Texts.Count
+                    );
+
                     LogMetric($"Updating Paratext book {text.BookNum}");
                     if (settings == null)
                     {
@@ -249,6 +259,8 @@ namespace SIL.XForge.Scripture.Services
                     progress.ProgressUpdated -= SyncProgress_ProgressUpdated;
                 }
 
+                await NotifySyncProgress(SyncPhase.Phase4, 30.0);
+
                 // Check for cancellation
                 if (token.IsCancellationRequested)
                 {
@@ -292,6 +304,8 @@ namespace SIL.XForge.Scripture.Services
 
                     _syncMetrics.Books.Deleted = targetBooksToDelete.Count;
                 }
+
+                await NotifySyncProgress(SyncPhase.Phase4, 60.0);
 
                 // Check for cancellation
                 if (token.IsCancellationRequested)
@@ -358,6 +372,8 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
+                await NotifySyncProgress(SyncPhase.Phase4, 90.0);
+
                 bool resourceNeedsUpdating =
                     paratextProject is ParatextResource paratextResource
                     && _paratextService.ResourceDocsNeedUpdating(_projectDoc.Data, paratextResource);
@@ -373,6 +389,7 @@ namespace SIL.XForge.Scripture.Services
                         token
                     );
                 }
+                await NotifySyncProgress(SyncPhase.Phase6, 20.0);
 
                 // Check for cancellation
                 if (token.IsCancellationRequested)
@@ -391,6 +408,8 @@ namespace SIL.XForge.Scripture.Services
                 // We will always update permissions, even if this is a resource project
                 LogMetric("Updating permissions");
                 await _projectService.UpdatePermissionsAsync(userId, _projectDoc, token);
+
+                await NotifySyncProgress(SyncPhase.Phase6, 40.0);
 
                 // Check for cancellation
                 if (token.IsCancellationRequested)
@@ -488,8 +507,11 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<string, string> ptUsernamesToSFUserIds = await GetPTUsernameToSFUserIdsAsync(token);
 
             // update source and target real-time docs
+            double i = 0.0;
             foreach (int bookNum in targetBooks)
             {
+                i++;
+                await NotifySyncProgress(SyncPhase.Phase5, i / targetBooks.Count);
                 LogMetric($"Updating text info for book {bookNum}");
                 bool hasSource = sourceBooks.Contains(bookNum);
                 int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
@@ -559,6 +581,7 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken token
         )
         {
+            await _hubContext.NotifySyncProgress(projectSFId, ProgressState.NotStarted);
             _logger.LogInformation($"Initializing sync for project {projectSFId} with sync metrics id {syncMetricsId}");
             if (!(await _syncMetricsRepository.TryGetAsync(syncMetricsId)).TryResult(out _syncMetrics))
             {
@@ -584,6 +607,8 @@ namespace SIL.XForge.Scripture.Services
                 return false;
             }
 
+            await NotifySyncProgress(SyncPhase.Phase1, 10.0);
+
             if (!(await _projectSecrets.TryGetAsync(projectSFId)).TryResult(out _projectSecret))
             {
                 Log($"Could not find project secret.", projectSFId, userId);
@@ -607,7 +632,7 @@ namespace SIL.XForge.Scripture.Services
 
             await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data, token);
 
-            await _hubContext.NotifySyncProgress(projectSFId, ProgressState.NotStarted);
+            await NotifySyncProgress(SyncPhase.Phase1, 20.0);
             return true;
         }
 
@@ -1199,6 +1224,7 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken token
         )
         {
+            await NotifySyncProgress(SyncPhase.Phase6, 60.0);
             if (token.IsCancellationRequested)
             {
                 Log($"CompleteSync: There was a cancellation request.");
@@ -1366,7 +1392,7 @@ namespace SIL.XForge.Scripture.Services
                         op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
                 }
             });
-            await _hubContext.NotifySyncProgress(_projectDoc.Id, ProgressState.Completed);
+            await NotifySyncProgress(SyncPhase.Phase6, 80.0);
 
             if (_syncMetrics != null)
             {
@@ -1492,6 +1518,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             }
 
+            await NotifySyncProgress(SyncPhase.Phase6, 100.0);
             Log($"CompleteSync: Finished. Sync was {(successful ? "successful" : "unsuccessful")}.");
         }
 
@@ -1568,11 +1595,34 @@ namespace SIL.XForge.Scripture.Services
             }
             else if (sender is SyncProgress progress)
             {
+                await NotifySyncProgress(SyncPhase.Phase3, progress.ProgressValue);
+            }
+        }
+
+        private async Task NotifySyncProgress(SyncPhase syncPhase, double progress)
+        {
+            if (_projectDoc is not null)
+            {
                 await _hubContext.NotifySyncProgress(
                     _projectDoc.Id,
-                    new ProgressState { ProgressValue = progress.ProgressValue }
+                    new ProgressState
+                    {
+                        // The fraction is based on the number of phases
+                        ProgressValue =
+                            1.0 / 6.0 * (double)syncPhase + (progress > 1.0 ? progress / 100.0 : progress) * 1.0 / 6.0,
+                    }
                 );
             }
+        }
+
+        private enum SyncPhase
+        {
+            Phase1 = 0, // Initial methods
+            Phase2 = 1, // Update Paratext books and notes
+            Phase3 = 2, // Paratext Sync
+            Phase4 = 3, // Deleting texts and granting resource access
+            Phase5 = 4, // Updating texts from Paratext books
+            Phase6 = 5, // Final methods
         }
 
         private class ChapterEqualityComparer : IEqualityComparer<Chapter>
