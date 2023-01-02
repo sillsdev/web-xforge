@@ -613,7 +613,7 @@ namespace SIL.XForge.Scripture.Services
 
             await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data, token);
 
-            await _hubContext.NotifySyncProgress(projectSFId, new ProgressState { ProgressValue = 0.0 });
+            await _hubContext.NotifySyncProgress(projectSFId, ProgressState.NotStarted);
             return true;
         }
 
@@ -1372,7 +1372,7 @@ namespace SIL.XForge.Scripture.Services
                         op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
                 }
             });
-            await _hubContext.NotifySyncProgress(_projectDoc.Id, null);
+            await _hubContext.NotifySyncProgress(_projectDoc.Id, ProgressState.Completed);
 
             if (_syncMetrics != null)
             {
