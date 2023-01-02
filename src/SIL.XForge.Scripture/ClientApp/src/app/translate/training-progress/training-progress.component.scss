@@ -1,0 +1,39 @@
+@use '@material/button/mixins' as button;
+
+@import 'src/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
+
+.training-progress {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  inset-inline-end: 15px;
+  bottom: 10px;
+  border-radius: 4px;
+  width: 270px;
+  background-color: white;
+  overflow: hidden;
+
+  > .training-title {
+    padding: 2px;
+    padding-inline-start: 10px;
+
+    > div {
+      color: white;
+    }
+    > button {
+      @include button.ink-color(white);
+    }
+    background-color: $sf_grey;
+  }
+
+  > .training-content {
+    padding: 10px;
+    height: 44px;
+  }
+}
+
+#training-progress-spinner {
+  width: 24px;
+  height: 24px;
+}
