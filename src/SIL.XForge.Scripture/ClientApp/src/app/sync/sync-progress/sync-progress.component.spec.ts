@@ -14,11 +14,13 @@ import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/mod
 import { paratextUsersFromRoles } from '../../../app/shared/test-utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
+import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
-import { SyncProgressComponent } from './sync-progress.component';
+import { ProgressState, SyncProgressComponent } from './sync-progress.component';
 
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
+const mockedProjectNotificationService = mock(ProjectNotificationService);
 
 describe('SyncProgressComponent', () => {
   configureTestingModule(() => ({
@@ -26,6 +28,7 @@ describe('SyncProgressComponent', () => {
     imports: [UICommonModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: NoticeService, useMock: mockedNoticeService },
+      { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
       { provide: SFProjectService, useMock: mockedProjectService }
     ]
   }));
@@ -165,7 +168,6 @@ class TestEnvironment {
         },
         sync: {
           queuedCount: args.isInProgress === true ? 1 : 0,
-          percentCompleted: !!args.isInProgress ? 0.1 : undefined,
           lastSyncSuccessful: true,
           dateLastSuccessfulSync: date.toJSON()
         },
@@ -235,18 +237,18 @@ class TestEnvironment {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 1);
-      ops.set(p => p.sync.percentCompleted!, percentCompleted);
     }, false);
+    this.host.syncProgress.updateProgressState(projectId, new ProgressState(percentCompleted));
     tick();
     this.fixture.detectChanges();
     tick();
   }
 
   emitSyncComplete(successful: boolean, projectId: string): void {
+    this.host.syncProgress.updateProgressState(projectId, new ProgressState(1));
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(ops => {
       ops.set<number>(p => p.sync.queuedCount, 0);
-      ops.unset(p => p.sync.percentCompleted!);
       ops.set(p => p.sync.lastSyncSuccessful!, successful);
       if (successful) {
         ops.set(p => p.sync.dateLastSuccessfulSync!, new Date().toJSON());
