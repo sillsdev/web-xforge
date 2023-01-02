@@ -5,7 +5,7 @@ namespace SIL.XForge.Scripture.Services
 {
     public class SyncProgress : IProgress<ProgressState>
     {
-        public event EventHandler ProgressUpdated;
+        public event EventHandler? ProgressUpdated;
         private string _progressString = "";
         private double _progressValue = 0;
 
@@ -20,7 +20,7 @@ namespace SIL.XForge.Scripture.Services
                 _progressString = progressState.ProgressString;
             if (progressState.ProgressValue > _progressValue)
                 _progressValue = progressState.ProgressValue;
-            OnProgressUpdated(new EventArgs());
+            OnProgressUpdated(EventArgs.Empty);
         }
 
         protected void OnProgressUpdated(EventArgs e)

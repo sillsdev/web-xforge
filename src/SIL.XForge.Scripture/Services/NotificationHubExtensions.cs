@@ -9,7 +9,7 @@ namespace SIL.XForge.Scripture.Services
         public static Task NotifySyncProgress(
             this IHubContext<NotificationHub, INotifier> hubContext,
             string projectId,
-            ProgressState? progressState
+            ProgressState progressState
         ) => hubContext.Clients.Groups(projectId).NotifySyncProgress(projectId, progressState);
     }
 }

@@ -5,7 +5,7 @@ namespace SIL.XForge.Scripture.Services
 {
     public interface INotifier
     {
-        Task NotifySyncProgress(string sfProjectId, ProgressState? progressState);
+        Task NotifySyncProgress(string sfProjectId, ProgressState progressState);
         Task SubscribeToProject(string projectId);
     }
 }
