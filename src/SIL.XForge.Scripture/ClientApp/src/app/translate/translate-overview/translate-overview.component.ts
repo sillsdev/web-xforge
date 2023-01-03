@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { RemoteTranslationEngine } from '@sillsdev/machine';
+import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { ANY_INDEX, obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -49,12 +50,16 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   texts?: TextProgress[];
   overallProgress = new Progress();
   trainingPercentage: number = 0;
+  trainingMessage: string = '';
+  showTrainingProgress: boolean = false;
+  trainingProgressClosed: boolean = false;
   isTraining: boolean = false;
   readonly engineQualityStars: number[];
   engineQuality: number = 0;
   engineConfidence: number = 0;
   trainedSegmentCount: number = 0;
 
+  private trainingCompletedTimeout: any;
   private trainingSub?: Subscription;
   private translationEngine?: RemoteTranslationEngine;
   private projectDoc?: SFProjectProfileDoc;
@@ -208,22 +213,51 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     }
 
     this.translationEngine = this.translationEngineService.createTranslationEngine(this.projectDoc.id);
-    const trainingStatus$ = this.translationEngine.listenForTrainingStatus().pipe(
-      tap({
-        error: () => (this.isTraining = false),
-        complete: () => {
-          this.isTraining = false;
-          this.updateEngineStats();
+    this.trainingSub = this.translationEngine
+      .listenForTrainingStatus()
+      .pipe(
+        tap({
+          error: () => {
+            // error while listening
+            this.isTraining = false;
+            this.showTrainingProgress = false;
+            this.trainingCompletedTimeout = undefined;
+            this.trainingProgressClosed = false;
+          },
+          complete: () => {
+            // training completed successfully
+            this.isTraining = false;
+            if (this.trainingProgressClosed) {
+              this.noticeService.show(translate('editor.training_completed_successfully'));
+              this.trainingProgressClosed = false;
+            } else {
+              this.trainingMessage = translate('editor.completed_successfully');
+              this.trainingCompletedTimeout = setTimeout(() => {
+                this.showTrainingProgress = false;
+                this.trainingCompletedTimeout = undefined;
+              }, 5000);
+            }
+
+            this.updateEngineStats();
+          }
+        }),
+        repeat(),
+        filter(progress => progress.percentCompleted > 0),
+        retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
+      )
+      .subscribe(progress => {
+        if (!this.trainingProgressClosed) {
+          this.showTrainingProgress = true;
         }
-      }),
-      repeat(),
-      filter(progress => progress.percentCompleted > 0),
-      retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
-    );
-    this.trainingSub = trainingStatus$.subscribe(async progress => {
-      this.trainingPercentage = progress.percentCompleted * 100;
-      this.isTraining = true;
-    });
+        if (this.trainingCompletedTimeout != null) {
+          clearTimeout(this.trainingCompletedTimeout);
+          this.trainingCompletedTimeout = undefined;
+        }
+        this.trainingPercentage = Math.round(progress.percentCompleted * 100);
+        // ToDo: internationalize message
+        this.trainingMessage = progress.message;
+        this.isTraining = true;
+      });
   }
 
   private async updateEngineStats(): Promise<void> {

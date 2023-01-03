@@ -44,7 +44,7 @@
 
     <mat-card *ngIf="translationSuggestionsEnabled && canEditTexts" class="engine-card">
       <mat-progress-bar
-        id="training-progress"
+        id="training-progress-bar"
         [mode]="trainingPercentage > 0 ? 'determinate' : 'indeterminate'"
         [class.mat-progress-bar--closed]="!isTraining"
         [value]="trainingPercentage"
@@ -77,4 +77,10 @@
       </mat-card-actions>
     </mat-card>
   </div>
+  <app-training-progress
+    [trainingPercentage]="trainingPercentage"
+    [trainingMessage]="trainingMessage"
+    [(showTrainingProgress)]="showTrainingProgress"
+    (trainingProgressClosed)="trainingProgressClosed = $event"
+  ></app-training-progress>
 </ng-container>

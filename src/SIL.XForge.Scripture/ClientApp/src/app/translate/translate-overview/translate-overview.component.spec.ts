@@ -30,6 +30,7 @@ import { TextDocId } from '../../core/models/text-doc';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -41,7 +42,7 @@ const mockedUserService = mock(UserService);
 
 describe('TranslateOverviewComponent', () => {
   configureTestingModule(() => ({
-    declarations: [TranslateOverviewComponent],
+    declarations: [TranslateOverviewComponent, TrainingProgressComponent],
     imports: [RouterTestingModule, UICommonModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
@@ -238,7 +239,7 @@ class TestEnvironment {
   }
 
   get trainingProgress(): MatProgressBar {
-    return this.fixture.debugElement.query(By.css('#training-progress')).componentInstance;
+    return this.fixture.debugElement.query(By.css('#training-progress-bar')).componentInstance;
   }
 
   get trainingProgressShown(): boolean {
