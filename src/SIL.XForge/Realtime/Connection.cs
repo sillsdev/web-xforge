@@ -372,6 +372,12 @@ namespace SIL.XForge.Realtime
             }
         }
 
+        public async ValueTask DisposeAsync()
+        {
+            await _realtimeService.Server.DisconnectAsync(_handle);
+            GC.SuppressFinalize(this);
+        }
+
         /// <summary>
         /// Starts the realtime server asynchronously.
         /// </summary>
@@ -387,12 +393,6 @@ namespace SIL.XForge.Realtime
         protected override void DisposeManagedResources()
         {
             _realtimeService.Server.Disconnect(_handle);
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            await _realtimeService.Server.DisconnectAsync(_handle);
-            GC.SuppressFinalize(this);
         }
     }
 }
