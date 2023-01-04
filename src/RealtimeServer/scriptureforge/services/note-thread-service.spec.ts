@@ -147,31 +147,42 @@ describe('NoteThreadService', () => {
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 10 },
       status: NoteStatus.Todo,
       position: { start: 0, length: 0 },
-      notes: [
-        {
-          dataId: 'noteThread02note01',
-          type: NoteType.Normal,
-          conflictType: NoteConflictType.DefaultValue,
-          threadId: 'noteThread02',
-          extUserId: 'reviewer',
-          deleted: false,
-          status: NoteStatus.Todo,
-          dateModified: '',
-          dateCreated: '',
-          ownerRef: 'reviewer'
-        }
-      ]
+      notes: [env.getNewNote('noteThread04', 'noteThread04note01', 'reviewer')]
     };
     await createDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId, noteThread);
     const noteThreadDoc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId);
     expect(noteThreadDoc).not.toBeNull();
   });
 
+  it('reviewers can add notes to note thread they can read', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn: Connection = clientConnect(env.server, 'reviewer');
+    const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread01');
+    const note: Note = env.getNewNote('noteThread01', 'reviewerNote01', 'reviewer');
+    // since the user cannot read the note thread, they should not be able to add a note
+    await expect(() =>
+      submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, noteThreadDocId, op => op.insert(n => n.notes, 4, note))
+    ).rejects.toEqual(
+      new Error(`403: Permission denied (read), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
+    );
+
+    const sfNoteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread02');
+    const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, sfNoteThreadDocId);
+    let sfNoteThread: NoteThread = doc.data as NoteThread;
+    expect(sfNoteThread.notes.length).toEqual(1);
+    await submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, sfNoteThreadDocId, op =>
+      op.insert(n => n.notes, 1, note)
+    );
+    sfNoteThread = doc.data;
+    expect(sfNoteThread.notes.length).toEqual(2);
+  });
+
   it('allows reviewer to update own note', async () => {
     const env = new TestEnvironment();
     await env.createData();
     const conn: Connection = clientConnect(env.server, 'reviewer');
-    const noteThreadDocId = getNoteThreadDocId('project01', 'noteThread02');
+    const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread02');
     const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId);
     const noteThread: NoteThread = doc.data as NoteThread;
     expect(noteThread).not.toBeNull();
@@ -193,7 +204,7 @@ describe('NoteThreadService', () => {
       new Error(`403: Permission denied (update), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
     );
 
-    const reviewerNoteThreadId = getNoteThreadDocId('project01', 'noteThread03');
+    const reviewerNoteThreadId: string = getNoteThreadDocId('project01', 'noteThread03');
     const reviewerDoc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, reviewerNoteThreadId);
     let reviewerNoteThread: NoteThread = reviewerDoc.data as NoteThread;
     expect(reviewerNoteThread).not.toBeNull();
@@ -217,12 +228,12 @@ describe('NoteThreadService', () => {
     const env = new TestEnvironment();
     await env.createData();
     const conn: Connection = clientConnect(env.server, 'reviewer');
-    const noteThreadDocId = getNoteThreadDocId('project01', 'noteThread02');
+    const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread02');
     await expect(() => deleteDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId)).rejects.toEqual(
       new Error(`403: Permission denied (delete), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
     );
 
-    const reviewerThreadDocId = getNoteThreadDocId('project01', 'noteThread03');
+    const reviewerThreadDocId: string = getNoteThreadDocId('project01', 'noteThread03');
     const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, reviewerThreadDocId);
     let reviewerNoteThread: NoteThread = doc.data as NoteThread;
     expect(reviewerNoteThread).toBeDefined();
@@ -421,62 +432,17 @@ class TestEnvironment {
     };
     const position: TextAnchor = { start: 0, length: 0 };
     const status: NoteStatus = NoteStatus.Todo;
-    const type: NoteType = NoteType.Normal;
-    const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
+
     await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'), {
       projectRef: 'project01',
       ownerRef: 'some-owner',
       dataId: 'noteThread01',
       verseRef,
       notes: [
-        {
-          dataId: 'noteThread01note01',
-          type,
-          conflictType,
-          threadId: 'noteThread01',
-          extUserId: 'some-ext-user-id',
-          deleted: false,
-          status,
-          dateModified: '',
-          dateCreated: '',
-          ownerRef: 'some-owner-id'
-        },
-        {
-          dataId: 'noteThread01note02',
-          type,
-          conflictType,
-          threadId: 'noteThread01',
-          extUserId: 'some-ext-user-id',
-          deleted: false,
-          status,
-          dateModified: '',
-          dateCreated: '',
-          ownerRef: 'some-owner-id'
-        },
-        {
-          dataId: 'noteThread01note03',
-          type,
-          conflictType,
-          threadId: 'noteThread01',
-          extUserId: 'some-ext-user-id',
-          deleted: false,
-          status,
-          dateModified: '',
-          dateCreated: '',
-          ownerRef: 'some-owner-id'
-        },
-        {
-          dataId: 'noteThread01note04',
-          type,
-          conflictType,
-          threadId: 'noteThread01',
-          extUserId: 'some-ext-user-id',
-          deleted: false,
-          status,
-          dateModified: '',
-          dateCreated: '',
-          ownerRef: 'some-owner-id'
-        }
+        this.getNewNote('noteThread01', 'noteThread01note01', 'ptUser01'),
+        this.getNewNote('noteThread01', 'noteThread01note02', 'ptUser01'),
+        this.getNewNote('noteThread01', 'noteThread01note03', 'ptUser01'),
+        this.getNewNote('noteThread01', 'noteThread01note04', 'ptUser01')
       ],
       originalSelectedText: '',
       originalContextBefore: '',
@@ -492,20 +458,7 @@ class TestEnvironment {
       ownerRef: 'some-owner',
       dataId: 'noteThread02',
       verseRef,
-      notes: [
-        {
-          dataId: 'noteThread02note01',
-          type,
-          conflictType,
-          threadId: 'noteThread02',
-          extUserId: 'some-ext-user-id',
-          deleted: false,
-          status,
-          dateModified: '',
-          dateCreated: '',
-          ownerRef: 'some-owner-id'
-        }
-      ],
+      notes: [this.getNewNote('noteThread02', 'noteThread02note01', 'ptUser01')],
       originalSelectedText: '',
       originalContextBefore: '',
       originalContextAfter: '',
@@ -520,20 +473,7 @@ class TestEnvironment {
       ownerRef: 'reviewer',
       dataId: 'noteThread03',
       verseRef,
-      notes: [
-        {
-          dataId: 'noteThread03note01',
-          type,
-          conflictType,
-          threadId: 'noteThread03',
-          extUserId: 'reviewer',
-          deleted: false,
-          status,
-          dateModified: '',
-          dateCreated: '',
-          ownerRef: 'reviewer'
-        }
-      ],
+      notes: [this.getNewNote('noteThread03', 'noteThread03note01', 'reviewer')],
       originalSelectedText: '',
       originalContextBefore: '',
       originalContextAfter: '',
@@ -581,5 +521,21 @@ class TestEnvironment {
       this.db.docs[NOTE_THREAD_COLLECTION][getNoteThreadDocId('project01', 'noteThread02')].data;
     const noteThread02noteIds: string[] = noteThread02.notes.map((note: Note) => note.dataId);
     expect(noteThread02noteIds).toContain('noteThread02note01');
+  }
+
+  getNewNote(threadId: string, dataId: string, ownerRef: string): Note {
+    return {
+      dataId,
+      threadId,
+      dateCreated: '',
+      dateModified: '',
+      ownerRef,
+      content: 'this note should not be inserted',
+      type: NoteType.Normal,
+      conflictType: NoteConflictType.DefaultValue,
+      status: NoteStatus.Todo,
+      extUserId: ownerRef,
+      deleted: false
+    };
   }
 }
