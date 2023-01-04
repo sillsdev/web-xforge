@@ -142,6 +142,13 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
       this.projectDoc = await this.projectService.get(projectId);
       this.checkSyncStatus();
       this.loadingFinished();
+
+      // Check to see if a sync has started when the project document changes
+      this.subscribe(this.projectDoc.remoteChanges$, () => {
+        if (!this.syncActive) {
+          this.checkSyncStatus();
+        }
+      });
     });
   }
 
