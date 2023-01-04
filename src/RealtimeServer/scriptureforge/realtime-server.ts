@@ -41,7 +41,7 @@ class SFRealtimeServer extends RealtimeServer {
             !SF_PROJECT_RIGHTS.hasRight(p, userId, SFProjectDomain.PTNoteThreads, Operation.View) &&
             SF_PROJECT_RIGHTS.hasRight(p, userId, SFProjectDomain.SFNoteThreads, Operation.View)
           ) {
-            context.query = { ...context.query, ...{ publishedToSF: true } };
+            context.query = { ...context.query, publishedToSF: true };
           }
           next();
         });
