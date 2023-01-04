@@ -153,6 +153,7 @@ namespace SIL.XForge.Scripture.Services
             return projects == null ? null : projects.Select(p => new ProjectMetadata((JObject)p)).ToList();
         }
 
+        /// <summary>Gets the client.</summary>
         /// <remarks>Helps unit tests</remarks>
         public virtual RESTClient GetClient()
         {
