@@ -7,47 +7,43 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Utils;
 
-namespace SIL.XForge.Scripture.Services
+namespace SIL.XForge.Scripture.Services;
+
+/// <summary>
+/// This class is responsible for authorizing access to Machine API endpoints.
+/// </summary>
+public class MachineAuthorizationHandler : IAuthorizationHandler
 {
-    /// <summary>
-    /// This class is responsible for authorizing access to Machine API endpoints.
-    /// </summary>
-    public class MachineAuthorizationHandler : IAuthorizationHandler
+    private readonly IRealtimeService _realtimeService;
+
+    public MachineAuthorizationHandler(IRealtimeService realtimeService) => _realtimeService = realtimeService;
+
+    public async Task HandleAsync(AuthorizationHandlerContext context)
     {
-        private readonly IRealtimeService _realtimeService;
-
-        public MachineAuthorizationHandler(IRealtimeService realtimeService)
+        string projectId = null;
+        switch (context.Resource)
         {
-            _realtimeService = realtimeService;
+            case Project project:
+                projectId = project.Id;
+                break;
+            case Engine engine:
+                projectId = engine.Projects.First();
+                break;
         }
-
-        public async Task HandleAsync(AuthorizationHandlerContext context)
+        if (projectId != null)
         {
-            string projectId = null;
-            switch (context.Resource)
+            Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(projectId);
+            if (attempt.TryResult(out SFProject project))
             {
-                case Project project:
-                    projectId = project.Id;
-                    break;
-                case Engine engine:
-                    projectId = engine.Projects.First();
-                    break;
-            }
-            if (projectId != null)
-            {
-                Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(projectId);
-                if (attempt.TryResult(out SFProject project))
+                string userId = context.User.FindFirst(XFClaimTypes.UserId)?.Value;
+                if (
+                    project.UserRoles.TryGetValue(userId, out string role)
+                    && (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
+                )
                 {
-                    string userId = context.User.FindFirst(XFClaimTypes.UserId)?.Value;
-                    if (
-                        project.UserRoles.TryGetValue(userId, out string role)
-                        && (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
-                    )
-                    {
-                        List<IAuthorizationRequirement> pendingRequirements = context.PendingRequirements.ToList();
-                        foreach (IAuthorizationRequirement requirement in pendingRequirements)
-                            context.Succeed(requirement);
-                    }
+                    List<IAuthorizationRequirement> pendingRequirements = context.PendingRequirements.ToList();
+                    foreach (IAuthorizationRequirement requirement in pendingRequirements)
+                        context.Succeed(requirement);
                 }
             }
         }

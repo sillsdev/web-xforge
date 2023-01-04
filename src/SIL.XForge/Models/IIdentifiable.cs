@@ -1,7 +1,6 @@
-namespace SIL.XForge.Models
+namespace SIL.XForge.Models;
+
+public interface IIdentifiable
 {
-    public interface IIdentifiable
-    {
-        string Id { get; set; }
-    }
+    string Id { get; set; }
 }

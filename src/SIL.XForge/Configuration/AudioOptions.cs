@@ -1,10 +1,9 @@
-namespace SIL.XForge.Configuration
+namespace SIL.XForge.Configuration;
+
+/// <summary>
+/// This class defines the audio configuration.
+/// </summary>
+public class AudioOptions
 {
-    /// <summary>
-    /// This class defines the audio configuration.
-    /// </summary>
-    public class AudioOptions
-    {
-        public string FfmpegPath { get; set; }
-    }
+    public string FfmpegPath { get; set; }
 }

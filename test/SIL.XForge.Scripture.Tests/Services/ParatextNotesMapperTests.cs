@@ -13,27 +13,26 @@ using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
-using SIL.XForge.Services;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
+using SIL.XForge.Services;
 
-namespace SIL.XForge.Scripture.Services
+namespace SIL.XForge.Scripture.Services;
+
+[TestFixture]
+public class ParatextNotesMapperTests
 {
-    [TestFixture]
-    public class ParatextNotesMapperTests
+    [Test]
+    public async Task GetNotesChangelistAsync_AddNotes()
     {
-        [Test]
-        public async Task GetNotesChangelistAsync_AddNotes()
-        {
-            var env = new TestEnvironment();
-            env.SetParatextProjectRoles(true);
-            await env.InitMapperAsync(false, true);
-            env.AddData(null, null, null, null);
+        var env = new TestEnvironment();
+        env.SetParatextProjectRoles(true);
+        await env.InitMapperAsync(false, true);
+        env.AddData(null, null, null, null);
 
-            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
-            {
-                const string oldNotesText =
-                    @"
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        const string oldNotesText =
+            @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer03"">
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
@@ -46,19 +45,17 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
-                    u => u.Username
-                );
-                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
-                    XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn),
-                    ptProjectUsers,
-                    TestEnvironment.userRoles,
-                    CheckingAnswerExport.All
-                );
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
+        XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+            XElement.Parse(oldNotesText),
+            await TestEnvironment.GetQuestionDocsAsync(conn),
+            ptProjectUsers,
+            TestEnvironment.userRoles,
+            CheckingAnswerExport.All
+        );
 
-                const string expectedNotesText =
-                    @"
+        const string expectedNotesText =
+            @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -121,41 +118,37 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
+        Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
 
-                Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { "PT User 1", "PT User 3" }));
-            }
-        }
+        Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { "PT User 1", "PT User 3" }));
+    }
 
-        [Test]
-        public async Task GetNotesChangelistAsync_UsesCheckerNameForPTUserNotOnProject()
-        {
-            // pt user is a community checker on the project
-            var env = new TestEnvironment();
-            env.SetParatextProjectRoles(false);
-            await env.InitMapperAsync(false, false);
-            env.AddData(null, null, null, null);
+    [Test]
+    public async Task GetNotesChangelistAsync_UsesCheckerNameForPTUserNotOnProject()
+    {
+        // pt user is a community checker on the project
+        var env = new TestEnvironment();
+        env.SetParatextProjectRoles(false);
+        await env.InitMapperAsync(false, false);
+        env.AddData(null, null, null, null);
 
-            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
-            {
-                const string oldNotesText = @"<notes version=""1.1""></notes>";
-                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
-                    u => u.Username
-                );
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        const string oldNotesText = @"<notes version=""1.1""></notes>";
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
 
-                Dictionary<string, string> userRoles = TestEnvironment.userRoles;
-                userRoles["user03"] = SFProjectRole.CommunityChecker;
-                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
-                    XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn),
-                    ptProjectUsers,
-                    userRoles,
-                    CheckingAnswerExport.All
-                );
+        Dictionary<string, string> userRoles = TestEnvironment.userRoles;
+        userRoles["user03"] = SFProjectRole.CommunityChecker;
+        XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+            XElement.Parse(oldNotesText),
+            await TestEnvironment.GetQuestionDocsAsync(conn),
+            ptProjectUsers,
+            userRoles,
+            CheckingAnswerExport.All
+        );
 
-                // User 03 is listed as a community checker because they are not a PT user on the particular project
-                const string expectedNotesText =
-                    @"
+        // User 03 is listed as a community checker because they are not a PT user on the particular project
+        const string expectedNotesText =
+            @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -212,23 +205,21 @@ namespace SIL.XForge.Scripture.Services
                         </thread>
                     </notes>";
 
-                Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
-                Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { "PT User 1" }));
-            }
-        }
+        Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
+        Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { "PT User 1" }));
+    }
 
-        [Test]
-        public async Task GetNotesChangelistAsync_AddAudioNotes()
-        {
-            var env = new TestEnvironment();
-            env.SetParatextProjectRoles(true);
-            await env.InitMapperAsync(false, true);
-            env.AddData(null, null, null, null, true);
+    [Test]
+    public async Task GetNotesChangelistAsync_AddAudioNotes()
+    {
+        var env = new TestEnvironment();
+        env.SetParatextProjectRoles(true);
+        await env.InitMapperAsync(false, true);
+        env.AddData(null, null, null, null, true);
 
-            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
-            {
-                const string oldNotesText =
-                    @"
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        const string oldNotesText =
+            @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer03"">
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
@@ -241,19 +232,17 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
-                    u => u.Username
-                );
-                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
-                    XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn),
-                    ptProjectUsers,
-                    TestEnvironment.userRoles,
-                    CheckingAnswerExport.All
-                );
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
+        XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+            XElement.Parse(oldNotesText),
+            await TestEnvironment.GetQuestionDocsAsync(conn),
+            ptProjectUsers,
+            TestEnvironment.userRoles,
+            CheckingAnswerExport.All
+        );
 
-                const string expectedNotesText =
-                    @"
+        const string expectedNotesText =
+            @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -316,24 +305,22 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
+        Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
 
-                Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { "PT User 1", "PT User 3" }));
-            }
-        }
+        Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { "PT User 1", "PT User 3" }));
+    }
 
-        [Test]
-        public async Task GetNotesChangelistAsync_ParatextUserNotOnProject_AddNotes()
-        {
-            var env = new TestEnvironment();
-            env.SetParatextProjectRoles(false);
-            await env.InitMapperAsync(false, true);
-            env.AddData(null, null, null, null);
+    [Test]
+    public async Task GetNotesChangelistAsync_ParatextUserNotOnProject_AddNotes()
+    {
+        var env = new TestEnvironment();
+        env.SetParatextProjectRoles(false);
+        await env.InitMapperAsync(false, true);
+        env.AddData(null, null, null, null);
 
-            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
-            {
-                const string oldNotesText =
-                    @"
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        const string oldNotesText =
+            @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer03"">
                             <selection verseRef=""MAT 1:2"" startPos=""0"" selectedText="""" />
@@ -346,24 +333,22 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
-                    u => u.Username
-                );
-                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
-                    XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn),
-                    ptProjectUsers,
-                    TestEnvironment.userRoles,
-                    CheckingAnswerExport.All
-                );
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
+        XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+            XElement.Parse(oldNotesText),
+            await TestEnvironment.GetQuestionDocsAsync(conn),
+            ptProjectUsers,
+            TestEnvironment.userRoles,
+            CheckingAnswerExport.All
+        );
 
-                // User 3 is a PT user but does not have a role on this particular PT project, according to the PT
-                // Registry. So we will attribute their comment to user 1, who does have a role on this project
-                // according to the PT registry. Otherwise we would get errors when uploading a note attributed to user
-                // 3's PT username since they do not have appropriate access to write a note. Also, NewSyncUsers will
-                // not contain user 3.
-                const string expectedNotesText =
-                    @"
+        // User 3 is a PT user but does not have a role on this particular PT project, according to the PT
+        // Registry. So we will attribute their comment to user 1, who does have a role on this project
+        // according to the PT registry. Otherwise we would get errors when uploading a note attributed to user
+        // 3's PT username since they do not have appropriate access to write a note. Also, NewSyncUsers will
+        // not contain user 3.
+        const string expectedNotesText =
+            @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -426,24 +411,22 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
+        Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
 
-                Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { "PT User 1" }));
-            }
-        }
+        Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { "PT User 1" }));
+    }
 
-        [Test]
-        public async Task GetNotesChangelistAsync_UpdateNotes()
-        {
-            var env = new TestEnvironment();
-            env.SetParatextProjectRoles(true);
-            await env.InitMapperAsync(true, true);
-            env.AddData("syncuser01", "syncuser03", null, "syncuser03");
+    [Test]
+    public async Task GetNotesChangelistAsync_UpdateNotes()
+    {
+        var env = new TestEnvironment();
+        env.SetParatextProjectRoles(true);
+        await env.InitMapperAsync(true, true);
+        env.AddData("syncuser01", "syncuser03", null, "syncuser03");
 
-            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
-            {
-                const string oldNotesText =
-                    @"
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        const string oldNotesText =
+            @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -473,19 +456,17 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
-                    u => u.Username
-                );
-                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
-                    XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn),
-                    ptProjectUsers,
-                    TestEnvironment.userRoles,
-                    CheckingAnswerExport.All
-                );
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
+        XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+            XElement.Parse(oldNotesText),
+            await TestEnvironment.GetQuestionDocsAsync(conn),
+            ptProjectUsers,
+            TestEnvironment.userRoles,
+            CheckingAnswerExport.All
+        );
 
-                const string expectedNotesText =
-                    @"
+        const string expectedNotesText =
+            @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -530,22 +511,20 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
-            }
-        }
+        Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
+    }
 
-        [Test]
-        public async Task GetNotesChangelistAsync_DeleteNotes()
-        {
-            var env = new TestEnvironment();
-            env.SetParatextProjectRoles(true);
-            await env.InitMapperAsync(true, true);
-            env.AddData("syncuser01", "syncuser03", "syncuser03", "syncuser03");
+    [Test]
+    public async Task GetNotesChangelistAsync_DeleteNotes()
+    {
+        var env = new TestEnvironment();
+        env.SetParatextProjectRoles(true);
+        await env.InitMapperAsync(true, true);
+        env.AddData("syncuser01", "syncuser03", "syncuser03", "syncuser03");
 
-            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
-            {
-                const string oldNotesText =
-                    @"
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        const string oldNotesText =
+            @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -591,19 +570,17 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
-                    u => u.Username
-                );
-                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
-                    XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn),
-                    ptProjectUsers,
-                    TestEnvironment.userRoles,
-                    CheckingAnswerExport.All
-                );
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
+        XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+            XElement.Parse(oldNotesText),
+            await TestEnvironment.GetQuestionDocsAsync(conn),
+            ptProjectUsers,
+            TestEnvironment.userRoles,
+            CheckingAnswerExport.All
+        );
 
-                const string expectedNotesText =
-                    @"
+        const string expectedNotesText =
+            @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -648,34 +625,30 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
-            }
-        }
+        Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
+    }
 
-        [Test]
-        public async Task GetNotesChangelistAsync_ExportAllNotes()
-        {
-            var env = new TestEnvironment();
-            env.SetParatextProjectRoles(true);
-            await env.InitMapperAsync(false, true);
-            env.AddData(null, null, null, null);
+    [Test]
+    public async Task GetNotesChangelistAsync_ExportAllNotes()
+    {
+        var env = new TestEnvironment();
+        env.SetParatextProjectRoles(true);
+        await env.InitMapperAsync(false, true);
+        env.AddData(null, null, null, null);
 
-            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
-            {
-                const string oldNotesText = @"<notes version=""1.1""></notes>";
-                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
-                    u => u.Username
-                );
-                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
-                    XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn),
-                    ptProjectUsers,
-                    TestEnvironment.userRoles,
-                    CheckingAnswerExport.All
-                );
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        const string oldNotesText = @"<notes version=""1.1""></notes>";
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
+        XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+            XElement.Parse(oldNotesText),
+            await TestEnvironment.GetQuestionDocsAsync(conn),
+            ptProjectUsers,
+            TestEnvironment.userRoles,
+            CheckingAnswerExport.All
+        );
 
-                const string expectedNotesText =
-                    @"
+        const string expectedNotesText =
+            @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer01"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -728,61 +701,53 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
-            }
-        }
+        Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
+    }
 
-        [Test]
-        public async Task GetNotesChangelistAsync_ExportNoNotes()
-        {
-            var env = new TestEnvironment();
-            env.SetParatextProjectRoles(true);
-            await env.InitMapperAsync(false, true);
-            env.AddData(null, null, null, null);
+    [Test]
+    public async Task GetNotesChangelistAsync_ExportNoNotes()
+    {
+        var env = new TestEnvironment();
+        env.SetParatextProjectRoles(true);
+        await env.InitMapperAsync(false, true);
+        env.AddData(null, null, null, null);
 
-            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
-            {
-                const string oldNotesText = @"<notes version=""1.1""></notes>";
-                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
-                    u => u.Username
-                );
-                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
-                    XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn),
-                    ptProjectUsers,
-                    TestEnvironment.userRoles,
-                    CheckingAnswerExport.None
-                );
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        const string oldNotesText = @"<notes version=""1.1""></notes>";
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
+        XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+            XElement.Parse(oldNotesText),
+            await TestEnvironment.GetQuestionDocsAsync(conn),
+            ptProjectUsers,
+            TestEnvironment.userRoles,
+            CheckingAnswerExport.None
+        );
 
-                const string expectedNotesText = @"<notes version=""1.1"" />";
-                Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
-            }
-        }
+        const string expectedNotesText = @"<notes version=""1.1"" />";
+        Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
+    }
 
-        [Test]
-        public async Task GetNotesChangelistAsync_ExportOnlyExportableNotes()
-        {
-            var env = new TestEnvironment();
-            env.SetParatextProjectRoles(true);
-            await env.InitMapperAsync(false, true);
-            env.AddData(null, null, null, null);
+    [Test]
+    public async Task GetNotesChangelistAsync_ExportOnlyExportableNotes()
+    {
+        var env = new TestEnvironment();
+        env.SetParatextProjectRoles(true);
+        await env.InitMapperAsync(false, true);
+        env.AddData(null, null, null, null);
 
-            await using (IConnection conn = await env.RealtimeService.ConnectAsync())
-            {
-                const string oldNotesText = @"<notes version=""1.1""></notes>";
-                Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(
-                    u => u.Username
-                );
-                XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
-                    XElement.Parse(oldNotesText),
-                    await env.GetQuestionDocsAsync(conn),
-                    ptProjectUsers,
-                    TestEnvironment.userRoles,
-                    CheckingAnswerExport.MarkedForExport
-                );
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        const string oldNotesText = @"<notes version=""1.1""></notes>";
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
+        XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+            XElement.Parse(oldNotesText),
+            await TestEnvironment.GetQuestionDocsAsync(conn),
+            ptProjectUsers,
+            TestEnvironment.userRoles,
+            CheckingAnswerExport.MarkedForExport
+        );
 
-                const string expectedNotesText =
-                    @"
+        const string expectedNotesText =
+            @"
                     <notes version=""1.1"">
                         <thread id=""ANSWER_answer04"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
@@ -795,243 +760,236 @@ namespace SIL.XForge.Scripture.Services
                             </comment>
                         </thread>
                     </notes>";
-                Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
-            }
+        Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
+    }
+
+    private class TestEnvironment
+    {
+        public static readonly Dictionary<string, string> userRoles = new Dictionary<string, string>
+        {
+            { "user01", SFProjectRole.Administrator },
+            { "user02", SFProjectRole.CommunityChecker },
+            { "user03", SFProjectRole.Translator },
+            { "user04", SFProjectRole.CommunityChecker }
+        };
+
+        public TestEnvironment()
+        {
+            UserSecrets = new MemoryRepository<UserSecret>(
+                new[]
+                {
+                    new UserSecret { Id = "user01" },
+                    new UserSecret { Id = "user03" }
+                }
+            );
+
+            RealtimeService = new SFMemoryRealtimeService();
+
+            ParatextService = Substitute.For<IParatextService>();
+            ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("PT User 1");
+            ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user03")).Returns("PT User 3");
+
+            UserService = Substitute.For<IUserService>();
+            var userIdToUsername = new Dictionary<string, string>
+            {
+                { "user01", "User 01" },
+                { "user02", "User 02" },
+                { "user03", "User 03" },
+                { "user04", "User 04" }
+            };
+            UserService
+                .GetUsernameFromUserId(Arg.Any<string>(), Arg.Any<string>())
+                .Returns(x => Task.FromResult(userIdToUsername[(string)x[1]]));
+
+            var options = Microsoft.Extensions.Options.Options.Create(
+                new LocalizationOptions { ResourcesPath = "Resources" }
+            );
+            var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
+            Localizer = new StringLocalizer<SharedResource>(factory);
+            var siteOptions = Substitute.For<IOptions<SiteOptions>>();
+            siteOptions.Value.Returns(new SiteOptions { Name = "xForge", });
+            Mapper = new ParatextNotesMapper(
+                UserSecrets,
+                ParatextService,
+                UserService,
+                Localizer,
+                siteOptions,
+                new TestGuidService()
+            );
         }
 
-        private class TestEnvironment
-        {
-            public static readonly Dictionary<string, string> userRoles = new Dictionary<string, string>
-            {
-                { "user01", SFProjectRole.Administrator },
-                { "user02", SFProjectRole.CommunityChecker },
-                { "user03", SFProjectRole.Translator },
-                { "user04", SFProjectRole.CommunityChecker }
-            };
+        public ParatextNotesMapper Mapper { get; }
+        public MemoryRepository<UserSecret> UserSecrets { get; }
+        public SFMemoryRealtimeService RealtimeService { get; }
+        public IParatextService ParatextService { get; }
+        public IUserService UserService { get; }
+        public IStringLocalizer<SharedResource> Localizer { get; }
+        public IEnumerable<ParatextUserProfile> PtProjectUsers { get; set; }
 
-            public TestEnvironment()
-            {
-                UserSecrets = new MemoryRepository<UserSecret>(
+        public async Task InitMapperAsync(bool includeSyncUsers, bool twoPtUsersOnProject)
+        {
+            SFProject project = Project(includeSyncUsers);
+            PtProjectUsers = project.ParatextUsers;
+            await Mapper.InitAsync(
+                UserSecrets.Get("user01"),
+                ProjectSecret(),
+                ParatextUsersOnProject(twoPtUsersOnProject),
+                project,
+                CancellationToken.None
+            );
+        }
+
+        public void AddData(
+            string answerSyncUserId1,
+            string answerSyncUserId2,
+            string commentSyncUserId1,
+            string commentSyncUserId2,
+            bool useAudioResponses = false
+        ) =>
+            RealtimeService.AddRepository(
+                "questions",
+                OTType.Json0,
+                new MemoryRepository<Question>(
                     new[]
                     {
-                        new UserSecret { Id = "user01" },
-                        new UserSecret { Id = "user03" }
-                    }
-                );
-
-                RealtimeService = new SFMemoryRealtimeService();
-
-                ParatextService = Substitute.For<IParatextService>();
-                ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("PT User 1");
-                ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user03")).Returns("PT User 3");
-
-                UserService = Substitute.For<IUserService>();
-                var userIdToUsername = new Dictionary<string, string>
-                {
-                    { "user01", "User 01" },
-                    { "user02", "User 02" },
-                    { "user03", "User 03" },
-                    { "user04", "User 04" }
-                };
-                UserService
-                    .GetUsernameFromUserId(Arg.Any<string>(), Arg.Any<string>())
-                    .Returns(x => Task.FromResult(userIdToUsername[(string)x[1]]));
-
-                var options = Microsoft.Extensions.Options.Options.Create(
-                    new LocalizationOptions { ResourcesPath = "Resources" }
-                );
-                var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
-                Localizer = new StringLocalizer<SharedResource>(factory);
-                var siteOptions = Substitute.For<IOptions<SiteOptions>>();
-                siteOptions.Value.Returns(new SiteOptions { Name = "xForge", });
-                Mapper = new ParatextNotesMapper(
-                    UserSecrets,
-                    ParatextService,
-                    UserService,
-                    Localizer,
-                    siteOptions,
-                    new TestGuidService()
-                );
-            }
-
-            public ParatextNotesMapper Mapper { get; }
-            public MemoryRepository<UserSecret> UserSecrets { get; }
-            public SFMemoryRealtimeService RealtimeService { get; }
-            public IParatextService ParatextService { get; }
-            public IUserService UserService { get; }
-            public IStringLocalizer<SharedResource> Localizer { get; }
-            public IEnumerable<ParatextUserProfile> PtProjectUsers { get; set; }
-
-            public async Task InitMapperAsync(bool includeSyncUsers, bool twoPtUsersOnProject)
-            {
-                SFProject project = Project(includeSyncUsers);
-                PtProjectUsers = project.ParatextUsers;
-                await Mapper.InitAsync(
-                    UserSecrets.Get("user01"),
-                    ProjectSecret(),
-                    ParatextUsersOnProject(twoPtUsersOnProject),
-                    project,
-                    CancellationToken.None
-                );
-            }
-
-            public void AddData(
-                string answerSyncUserId1,
-                string answerSyncUserId2,
-                string commentSyncUserId1,
-                string commentSyncUserId2,
-                bool useAudioResponses = false
-            )
-            {
-                RealtimeService.AddRepository(
-                    "questions",
-                    OTType.Json0,
-                    new MemoryRepository<Question>(
-                        new[]
+                        new Question
                         {
-                            new Question
+                            Id = "project01:question01",
+                            DataId = "question01",
+                            VerseRef = new VerseRefData(40, 1, 1),
+                            Text = useAudioResponses ? "" : "Test question?",
+                            Answers =
                             {
-                                Id = "project01:question01",
-                                DataId = "question01",
-                                VerseRef = new VerseRefData(40, 1, 1),
-                                Text = useAudioResponses ? "" : "Test question?",
-                                Answers =
+                                new Answer
                                 {
-                                    new Answer
+                                    DataId = "answer01",
+                                    OwnerRef = "user02",
+                                    SyncUserRef = answerSyncUserId1,
+                                    DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
+                                    Text = useAudioResponses ? "" : "Test answer 1.",
+                                    Comments =
                                     {
-                                        DataId = "answer01",
-                                        OwnerRef = "user02",
-                                        SyncUserRef = answerSyncUserId1,
-                                        DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
-                                        Text = useAudioResponses ? "" : "Test answer 1.",
-                                        Comments =
+                                        new Comment
                                         {
-                                            new Comment
-                                            {
-                                                DataId = "comment01",
-                                                OwnerRef = "user03",
-                                                SyncUserRef = commentSyncUserId1,
-                                                DateCreated = new DateTime(2019, 1, 1, 9, 0, 0, DateTimeKind.Utc),
-                                                Text = "Test comment 1."
-                                            }
+                                            DataId = "comment01",
+                                            OwnerRef = "user03",
+                                            SyncUserRef = commentSyncUserId1,
+                                            DateCreated = new DateTime(2019, 1, 1, 9, 0, 0, DateTimeKind.Utc),
+                                            Text = "Test comment 1."
                                         }
-                                    },
-                                    new Answer
-                                    {
-                                        DataId = "answer02",
-                                        OwnerRef = "user04",
-                                        SyncUserRef = answerSyncUserId2,
-                                        DateCreated = new DateTime(2019, 1, 2, 8, 0, 0, DateTimeKind.Utc),
-                                        Text = "Test answer 2.",
-                                        VerseRef = new VerseRefData(40, 1, "2-3"),
-                                        ScriptureText = "This is some scripture.",
-                                        Comments =
-                                        {
-                                            new Comment
-                                            {
-                                                DataId = "comment02",
-                                                OwnerRef = "user02",
-                                                SyncUserRef = commentSyncUserId2,
-                                                DateCreated = new DateTime(2019, 1, 2, 9, 0, 0, DateTimeKind.Utc),
-                                                Text = "Test comment 2."
-                                            }
-                                        }
-                                    },
-                                    new Answer
-                                    {
-                                        DataId = "answer04",
-                                        OwnerRef = "user04",
-                                        SyncUserRef = answerSyncUserId2,
-                                        DateCreated = new DateTime(2019, 1, 4, 8, 0, 0, DateTimeKind.Utc),
-                                        Text = "Test answer 4 is marked for export",
-                                        VerseRef = new VerseRefData(40, 1, "2-3"),
-                                        Status = AnswerStatus.Exportable
-                                    },
-                                    new Answer
-                                    {
-                                        DataId = "answer05",
-                                        OwnerRef = "user04",
-                                        SyncUserRef = answerSyncUserId2,
-                                        DateCreated = new DateTime(2019, 1, 5, 8, 0, 0, DateTimeKind.Utc),
-                                        Text = "Test answer 5 is resolved",
-                                        VerseRef = new VerseRefData(40, 1, "2-3"),
-                                        Status = AnswerStatus.Resolved
                                     }
+                                },
+                                new Answer
+                                {
+                                    DataId = "answer02",
+                                    OwnerRef = "user04",
+                                    SyncUserRef = answerSyncUserId2,
+                                    DateCreated = new DateTime(2019, 1, 2, 8, 0, 0, DateTimeKind.Utc),
+                                    Text = "Test answer 2.",
+                                    VerseRef = new VerseRefData(40, 1, "2-3"),
+                                    ScriptureText = "This is some scripture.",
+                                    Comments =
+                                    {
+                                        new Comment
+                                        {
+                                            DataId = "comment02",
+                                            OwnerRef = "user02",
+                                            SyncUserRef = commentSyncUserId2,
+                                            DateCreated = new DateTime(2019, 1, 2, 9, 0, 0, DateTimeKind.Utc),
+                                            Text = "Test comment 2."
+                                        }
+                                    }
+                                },
+                                new Answer
+                                {
+                                    DataId = "answer04",
+                                    OwnerRef = "user04",
+                                    SyncUserRef = answerSyncUserId2,
+                                    DateCreated = new DateTime(2019, 1, 4, 8, 0, 0, DateTimeKind.Utc),
+                                    Text = "Test answer 4 is marked for export",
+                                    VerseRef = new VerseRefData(40, 1, "2-3"),
+                                    Status = AnswerStatus.Exportable
+                                },
+                                new Answer
+                                {
+                                    DataId = "answer05",
+                                    OwnerRef = "user04",
+                                    SyncUserRef = answerSyncUserId2,
+                                    DateCreated = new DateTime(2019, 1, 5, 8, 0, 0, DateTimeKind.Utc),
+                                    Text = "Test answer 5 is resolved",
+                                    VerseRef = new VerseRefData(40, 1, "2-3"),
+                                    Status = AnswerStatus.Resolved
                                 }
                             }
                         }
-                    )
-                );
-            }
-
-            public async Task<IEnumerable<IDocument<Question>>> GetQuestionDocsAsync(IConnection conn)
-            {
-                IDocument<Question> questionDoc = await conn.FetchAsync<Question>("project01:question01");
-                return new[] { questionDoc };
-            }
-
-            public async Task<IEnumerable<IDocument<NoteThread>>> GetNoteThreadDocsAsync(
-                IConnection conn,
-                string[] threadIds
-            )
-            {
-                IDocument<NoteThread>[] noteThreadDocs = new IDocument<NoteThread>[threadIds.Length];
-                var tasks = new List<Task>();
-                for (int i = 0; i < threadIds.Length; i++)
-                {
-                    async Task fetchNoteThread(int index)
-                    {
-                        noteThreadDocs[index] = await conn.FetchAsync<NoteThread>("project01:" + threadIds[index]);
                     }
-                    tasks.Add(fetchNoteThread(i));
-                }
-                await Task.WhenAll(tasks);
-                return noteThreadDocs;
-            }
+                )
+            );
 
-            public void SetParatextProjectRoles(bool twoPtUserOnProject)
-            {
-                Dictionary<string, string> ptUserRoles = new Dictionary<string, string>();
-                ptUserRoles["ptuser01"] = SFProjectRole.Administrator;
-                if (twoPtUserOnProject)
-                    ptUserRoles["ptuser03"] = SFProjectRole.Translator;
-                ParatextService
-                    .GetProjectRolesAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), Arg.Any<CancellationToken>())
-                    .Returns(ptUserRoles);
-            }
+        public static async Task<IEnumerable<IDocument<Question>>> GetQuestionDocsAsync(IConnection conn)
+        {
+            IDocument<Question> questionDoc = await conn.FetchAsync<Question>("project01:question01");
+            return new[] { questionDoc };
+        }
 
-            private static SFProject Project(bool includeSyncUsers = true)
+        public static async Task<IEnumerable<IDocument<NoteThread>>> GetNoteThreadDocsAsync(
+            IConnection conn,
+            string[] threadIds
+        )
+        {
+            IDocument<NoteThread>[] noteThreadDocs = new IDocument<NoteThread>[threadIds.Length];
+            var tasks = new List<Task>();
+            for (int i = 0; i < threadIds.Length; i++)
             {
-                var ptProjectUsers = new List<ParatextUserProfile>();
-                if (includeSyncUsers)
-                {
-                    ptProjectUsers.Add(new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "PT User 1" });
-                    ptProjectUsers.Add(new ParatextUserProfile { OpaqueUserId = "syncuser03", Username = "PT User 3" });
-                }
-                return new SFProject
-                {
-                    Id = "project01",
-                    ParatextId = "paratextId",
-                    ParatextUsers = ptProjectUsers,
-                    UserRoles = userRoles
-                };
+                async Task fetchNoteThread(int index) =>
+                    noteThreadDocs[index] = await conn.FetchAsync<NoteThread>("project01:" + threadIds[index]);
+                tasks.Add(fetchNoteThread(i));
             }
+            await Task.WhenAll(tasks);
+            return noteThreadDocs;
+        }
 
-            private static SFProjectSecret ProjectSecret()
+        public void SetParatextProjectRoles(bool twoPtUserOnProject)
+        {
+            Dictionary<string, string> ptUserRoles = new Dictionary<string, string>
             {
-                return new SFProjectSecret { Id = "project01", };
-            }
+                ["ptuser01"] = SFProjectRole.Administrator
+            };
+            if (twoPtUserOnProject)
+                ptUserRoles["ptuser03"] = SFProjectRole.Translator;
+            ParatextService
+                .GetProjectRolesAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), Arg.Any<CancellationToken>())
+                .Returns(ptUserRoles);
+        }
 
-            private static List<User> ParatextUsersOnProject(bool twoPtUsersOnProject)
+        private static SFProject Project(bool includeSyncUsers = true)
+        {
+            var ptProjectUsers = new List<ParatextUserProfile>();
+            if (includeSyncUsers)
             {
-                var ptUsers = new List<User>
-                {
-                    new User { Id = "user01", ParatextId = "ptuser01" }
-                };
-                if (twoPtUsersOnProject)
-                    ptUsers.Add(new User { Id = "user03", ParatextId = "ptuser03" });
-                return ptUsers;
+                ptProjectUsers.Add(new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "PT User 1" });
+                ptProjectUsers.Add(new ParatextUserProfile { OpaqueUserId = "syncuser03", Username = "PT User 3" });
             }
+            return new SFProject
+            {
+                Id = "project01",
+                ParatextId = "paratextId",
+                ParatextUsers = ptProjectUsers,
+                UserRoles = userRoles
+            };
+        }
+
+        private static SFProjectSecret ProjectSecret() => new SFProjectSecret { Id = "project01", };
+
+        private static List<User> ParatextUsersOnProject(bool twoPtUsersOnProject)
+        {
+            var ptUsers = new List<User>
+            {
+                new User { Id = "user01", ParatextId = "ptuser01" }
+            };
+            if (twoPtUsersOnProject)
+                ptUsers.Add(new User { Id = "user03", ParatextId = "ptuser03" });
+            return ptUsers;
         }
     }
 }

@@ -1,7 +1,6 @@
-namespace SIL.XForge.Models
+namespace SIL.XForge.Models;
+
+public static class ProjectRole
 {
-    public static class ProjectRole
-    {
-        public const string None = "none";
-    }
+    public const string None = "none";
 }
