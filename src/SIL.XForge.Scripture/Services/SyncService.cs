@@ -42,7 +42,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task SyncAsync(string curUserId, string projectId, bool trainEngine)
         {
-            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 // Load the project document
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
@@ -240,7 +240,7 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task CancelSyncAsync(string curUserId, string projectId)
         {
-            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
                 if (projectDoc.Data.Sync.QueuedCount > 0)

@@ -5,7 +5,7 @@ using SIL.XForge.Models;
 
 namespace SIL.XForge.Realtime
 {
-    public interface IConnection : IDisposable
+    public interface IConnection : IDisposable, IAsyncDisposable
     {
         void BeginTransaction();
         Task CommitTransactionAsync();

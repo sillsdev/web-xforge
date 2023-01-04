@@ -1696,7 +1696,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sfProject.Texts.First().Permissions.Count, Is.EqualTo(0), "setup");
             Assert.That(sfProject.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0), "setup");
 
-            using IConnection conn = await env.RealtimeService.ConnectAsync(User01);
+            await using IConnection conn = await env.RealtimeService.ConnectAsync(User01);
             IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
             // SUT
@@ -1727,7 +1727,7 @@ namespace SIL.XForge.Scripture.Services
             env.ParatextService.GetBookList(Arg.Any<UserSecret>(), project01PTId).Returns(new List<int>() { 40, 41 });
             Assert.That(env.ProjectSecrets.Contains(User04), Is.False, "setup");
 
-            using IConnection conn = await env.RealtimeService.ConnectAsync(User04);
+            await using IConnection conn = await env.RealtimeService.ConnectAsync(User04);
             IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
             // SUT
@@ -1778,7 +1778,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sfProject.Texts.First().Permissions.Count, Is.EqualTo(0), "setup");
             Assert.That(sfProject.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0), "setup");
 
-            using IConnection conn = await env.RealtimeService.ConnectAsync(User01);
+            await using IConnection conn = await env.RealtimeService.ConnectAsync(User01);
             IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
             // SUT
@@ -1839,7 +1839,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(sfProject.Texts.First().Permissions.Count, Is.EqualTo(0), "setup");
             Assert.That(sfProject.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0), "setup");
 
-            using IConnection conn = await env.RealtimeService.ConnectAsync(User01);
+            await using IConnection conn = await env.RealtimeService.ConnectAsync(User01);
             IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
 
             // SUT
@@ -1920,7 +1920,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(resource.Texts.First().Permissions.Count, Is.EqualTo(0), "setup");
             Assert.That(resource.Texts.First().Chapters.First().Permissions.Count, Is.EqualTo(0), "setup");
 
-            using IConnection conn = await env.RealtimeService.ConnectAsync(User01);
+            await using IConnection conn = await env.RealtimeService.ConnectAsync(User01);
             IDocument<SFProject> project01Doc = await conn.FetchAsync<SFProject>(Project01);
             IDocument<SFProject> resource01Doc = await conn.FetchAsync<SFProject>(Resource01);
 

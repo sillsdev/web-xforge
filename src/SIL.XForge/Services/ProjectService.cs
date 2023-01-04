@@ -45,7 +45,7 @@ namespace SIL.XForge.Services
 
         public async Task AddUserAsync(string curUserId, string projectId, string projectRole)
         {
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
 
@@ -71,7 +71,7 @@ namespace SIL.XForge.Services
             {
                 throw new ArgumentNullException();
             }
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
 
@@ -94,7 +94,7 @@ namespace SIL.XForge.Services
             {
                 throw new ArgumentNullException();
             }
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 await RemoveUserCoreAsync(conn, curUserId, projectId, projectUserId);
             }
@@ -129,7 +129,7 @@ namespace SIL.XForge.Services
             {
                 throw new ArgumentNullException();
             }
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<User> userDoc = await GetUserDocAsync(projectUserId, conn);
                 IEnumerable<Task> removalTasks = userDoc.Data.Sites[SiteOptions.Value.Id].Projects.Select(
@@ -164,7 +164,7 @@ namespace SIL.XForge.Services
             if (systemRole != SystemRole.SystemAdmin)
                 throw new ForbiddenException();
 
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
 
@@ -194,15 +194,15 @@ namespace SIL.XForge.Services
             string outputPath = Path.Combine(audioDir, $"{curUserId}_{dataId}.mp3");
             if (string.Equals(extension, ".mp3", StringComparison.InvariantCultureIgnoreCase))
             {
-                using (Stream fileStream = FileSystemService.OpenFile(outputPath, FileMode.Create))
-                    await inputStream.CopyToAsync(fileStream);
+                await using Stream fileStream = FileSystemService.OpenFile(outputPath, FileMode.Create);
+                await inputStream.CopyToAsync(fileStream);
             }
             else
             {
                 string tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + extension);
                 try
                 {
-                    using (Stream fileStream = FileSystemService.OpenFile(tempPath, FileMode.Create))
+                    await using (Stream fileStream = FileSystemService.OpenFile(tempPath, FileMode.Create))
                         await inputStream.CopyToAsync(fileStream);
                     await _audioService.ConvertToMp3Async(tempPath, outputPath);
                 }
@@ -241,7 +241,7 @@ namespace SIL.XForge.Services
             if (systemRole != SystemRole.SystemAdmin)
                 throw new ForbiddenException();
 
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
                 await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.SyncDisabled, isDisabled));
@@ -255,7 +255,7 @@ namespace SIL.XForge.Services
             string[] permissions
         )
         {
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
             {
                 IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
                 if (!projectDoc.IsLoaded)

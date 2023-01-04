@@ -9,6 +9,7 @@ namespace SIL.XForge.Realtime
         Task<Snapshot<T>> CreateDocAsync<T>(int handle, string collection, string id, T data, string otTypeName);
         Task DeleteDocAsync(int handle, string collection, string id);
         void Disconnect(int handle);
+        Task DisconnectAsync(int handle);
         Task<Snapshot<T>> FetchDocAsync<T>(int handle, string collection, string id);
         void Start(object options);
         void Stop();

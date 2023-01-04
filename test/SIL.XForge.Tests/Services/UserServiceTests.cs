@@ -117,7 +117,7 @@ namespace SIL.XForge.Services
             var env = new TestEnvironment();
             var userId = "user04";
             var userAuth = "auth04";
-            using IConnection conn = await env.RealtimeService.ConnectAsync(userId);
+            await using IConnection conn = await env.RealtimeService.ConnectAsync(userId);
             IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
 
             string[,] expectedInitials =

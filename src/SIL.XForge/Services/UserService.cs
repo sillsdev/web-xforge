@@ -50,7 +50,7 @@ namespace SIL.XForge.Services
                 .OfType<JObject>()
                 .FirstOrDefault(i => (string)i["connection"] == "paratext");
             Regex emailRegex = new Regex(EMAIL_PATTERN);
-            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 string name = (string)userProfile["name"];
                 IDocument<User> userDoc = await conn.FetchOrCreateAsync<User>(
@@ -139,7 +139,7 @@ namespace SIL.XForge.Services
                 true
             );
 
-            using (IConnection conn = await _realtimeService.ConnectAsync(primaryUserId))
+            await using (IConnection conn = await _realtimeService.ConnectAsync(primaryUserId))
             {
                 IDocument<User> userDoc = await conn.FetchAsync<User>(primaryUserId);
                 await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId)));
@@ -151,7 +151,7 @@ namespace SIL.XForge.Services
         /// </summary>
         public async Task UpdateAvatarFromDisplayNameAsync(string curUserId, string authId)
         {
-            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
                 // Only overwrite the avatar for allowed domains so as not to overwrite an avatar provided by a social connection
@@ -198,7 +198,7 @@ namespace SIL.XForge.Services
         {
             await _authService.UpdateInterfaceLanguage(authId, language);
 
-            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
                 await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.InterfaceLanguage, language));
@@ -221,7 +221,7 @@ namespace SIL.XForge.Services
 
             await _projectService.RemoveUserFromAllProjectsAsync(curUserId, userId);
             await _userSecrets.DeleteAsync(userId);
-            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
                 await userDoc.DeleteAsync();
@@ -232,7 +232,7 @@ namespace SIL.XForge.Services
 
         public async Task<string> GetUsernameFromUserId(string curUserId, string userId)
         {
-            using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
+            await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
             {
                 IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
                 return userDoc.Data.DisplayName;
