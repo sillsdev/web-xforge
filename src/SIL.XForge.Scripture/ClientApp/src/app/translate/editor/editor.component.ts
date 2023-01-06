@@ -1258,7 +1258,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private loadProjectUserConfig() {
-    let chapter = 1;
+    let chapter = this.chapters.length > 0 ? this.chapters[0] : 1;
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
       const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
       this.translationSuggester.confidenceThreshold = pcnt / 100;

@@ -1072,6 +1072,23 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('first chapter is missing', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject();
+      env.setProjectUserConfig();
+      env.updateParams({ projectId: 'project01', bookId: 'ROM' });
+      env.wait();
+      expect(env.bookName).toEqual('Romans');
+      expect(env.component.chapter).toBe(2);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target!.segmentRef).toEqual('');
+      const selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEdit).toBe(true);
+      env.dispose();
+    }));
+
     it('ensure direction is RTL when project is to set to RTL', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject({ isRightToLeft: true });
@@ -2682,6 +2699,23 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('first chapter is missing', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({ translateConfig: defaultTranslateConfig });
+      env.setProjectUserConfig();
+      env.updateParams({ projectId: 'project01', bookId: 'ROM' });
+      env.wait();
+      expect(env.bookName).toEqual('Romans');
+      expect(env.component.chapter).toBe(2);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target!.segmentRef).toEqual('');
+      const selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEdit).toBe(true);
+      env.dispose();
+    }));
+
     it('prevents editing and informs user when text doc is corrupted', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setupProject({ translateConfig: defaultTranslateConfig });
@@ -2878,6 +2912,19 @@ class TestEnvironment {
           }
         ],
         hasSource: true,
+        permissions: this.textInfoPermissions
+      },
+      {
+        bookNum: 45,
+        chapters: [
+          {
+            number: 2,
+            lastVerse: 3,
+            isValid: true,
+            permissions: this.textInfoPermissions
+          }
+        ],
+        hasSource: false,
         permissions: this.textInfoPermissions
       }
     ]
