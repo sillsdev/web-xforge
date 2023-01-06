@@ -55,7 +55,7 @@ namespace SIL.XForge.Scripture.Services
                     RefreshToken = "refresh_token01"
                 }
             };
-            env.MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns((string)null);
+            env.MockJwtTokenHelper.GetParatextUsername(Arg.Any<UserSecret>()).Returns(default(string?));
             Assert.Throws<Exception>(() => env.Provider.GetSource(userSecret, "srServer", "regServer"));
         }
 

@@ -45,12 +45,14 @@ The rest of this document discusses the development of the underlying software.
   - [PWA Testing](#pwa-testing)
   - [Physical Device Testing](#physical-device-testing)
   - [Offline testing](#offline-testing)
+  - [Tokens](#tokens)
 - [Backend Development](#backend-development)
   - [Model Changes](#model-changes)
 - [Debugging](#debugging)
   - [Run processes to attach to](#run-processes-to-attach-to)
   - [Attach debugger](#attach-debugger)
 - [Linting and Formatting](#linting-and-formatting)
+- [Cleaning](#cleaning)
 - [Database](#database)
 - [USX Validation](#usx-validation)
 - [.NET Performance Profiling](#net-performance-profiling)
@@ -452,6 +454,53 @@ pkill --parent $(pgrep SIL.XForge.Scri) --full 'node -e module.exports' --signal
 pkill --parent $(pgrep SIL.XForge.Scri) --full 'node -e module.exports' --signal SIGCONT
 ```
 
+### Tokens
+
+During testing, it can be useful if your refreshToken is not valid. You can invalidate your user's refreshToken in
+MongoDB by manually sending a refresh request.
+
+To do this, use a tool to send a POST to https://registry-dev.paratext.org/api8/token with headers Content-Type and
+Accept set to "application/json" and with a body of the following, where client_id and client_secret are SF
+site-specific, and refresh_token is your current refreshToken from the user_secrets collection in mongodb.
+
+```json
+{
+  "grant_type": "refresh_token",
+  "client_id": "--",
+  "client_secret": "--",
+  "refresh_token": "--"
+}
+```
+
+For example, with curl:
+
+```bash
+curl --location --request POST 'https://registry-dev.paratext.org/api8/token' \
+  --header 'Content-Type: application/json' \
+  --header 'Accept: application/json' \
+  --data-raw '{
+    "grant_type": "refresh_token",
+    "client_id": "--",
+    "client_secret": "--",
+    "refresh_token": "--"
+  }'
+```
+
+What you receive back is the new refresh_token, and so the one in MongoDB is no longer valid. It may help to also
+erase the access token from MongoDB with something like the following, since the access token may not have expired yet.
+
+```ts
+const sfUserId = "put_user_sf_id_here";
+const userSecretsCollection = db.collection("user_secrets");
+let userSecret = (await userSecretsCollection.findOne({ _id: sfUserId }))!;
+console.log("before", userSecret);
+await userSecretsCollection.updateOne({ _id: sfUserId }, { $set: { "paratextTokens.accessToken": null } });
+userSecret = (await userSecretsCollection.findOne({ _id: sfUserId }))!;
+console.log("after", userSecret);
+```
+
+You might also just erase the `paratextTokens.refreshToken` if it's not significant that it exist but be rejected.
+
 ## Backend Development
 
 Normally when you run `dotnet run` it starts `ng serve` for you. This works great if you are developing on the front end as it watches for file changes and reloads your browser once it has compiled.
@@ -570,6 +619,28 @@ C# can be formatted from the repo root by running
 ```bash
 dotnet tool install csharpier
 dotnet csharpier .
+```
+
+## Cleaning
+
+After updating or switching branches, some of these cleaning steps may be helpful. Run from the repo root directory.
+
+```bash
+# Delete obj directories left over from old .NET versions.
+find test src -name obj -print0 | xargs -0 xargs rm -vrf
+# Clean .NET backend.
+dotnet clean
+# Install package-lock versions of rts and frontend dependencies.
+cd src/RealtimeServer &&
+  npm ci &&
+  cd ../SIL.XForge.Scripture/ClientApp &&
+  npm ci
+```
+
+On Windows, replace the `find` command above with:
+
+```cmd
+FOR /F "tokens=*" %G IN ('DIR /B /AD /S obj') DO RMDIR /S /Q "%G"
 ```
 
 ## Database

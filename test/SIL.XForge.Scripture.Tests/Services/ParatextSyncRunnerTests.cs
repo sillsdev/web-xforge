@@ -1051,7 +1051,7 @@ namespace SIL.XForge.Scripture.Services
             );
             env.ParatextService
                 .GetLatestSharedVersion(Arg.Any<UserSecret>(), project.ParatextId)
-                .Returns((string?)null);
+                .Returns(default(string?));
             Assert.That(
                 project.Sync.DataInSync,
                 Is.Not.Null,
@@ -3284,30 +3284,35 @@ namespace SIL.XForge.Scripture.Services
                 string bookId,
                 int highestChapter,
                 HashSet<int> missingChapters,
-                HashSet<int> invalidChapters = null
+                HashSet<int>? invalidChapters = null
             )
             {
                 MockGetBookText(paratextId, bookId);
                 Func<XDocument, bool> predicate = d =>
                     (string)d?.Root?.Element("book")?.Attribute("code") == bookId
                     && (string)d?.Root?.Element("book") == paratextId;
-                var chapterDeltas = Enumerable
-                    .Range(1, highestChapter)
-                    .Where(chapterNumber => !(missingChapters?.Contains(chapterNumber) ?? false))
-                    .Select(
-                        c =>
+                var chapterDeltas = new List<ChapterDelta>();
+                for (int i = 1; i <= highestChapter; i++)
+                {
+                    if (!missingChapters.Contains(i))
+                    {
+                        chapterDeltas.Add(
                             new ChapterDelta(
-                                c,
+                                i,
                                 10,
-                                !(invalidChapters?.Contains(c) ?? false),
+                                !(invalidChapters?.Contains(i) ?? false),
                                 Delta.New().InsertText("text")
                             )
-                    );
-                if (chapterDeltas.Count() == 0)
-                {
-                    // Add implicit ChapterDelta, mimicing DeltaUsxMapper.ToChapterDeltas().
-                    chapterDeltas = chapterDeltas.Append(new ChapterDelta(1, 0, true, Delta.New()));
+                        );
+                    }
                 }
+
+                if (!chapterDeltas.Any())
+                {
+                    // Add implicit ChapterDelta, mimicking DeltaUsxMapper.ToChapterDeltas().
+                    chapterDeltas.Add(new ChapterDelta(1, 0, true, Delta.New()));
+                }
+
                 DeltaUsxMapper.ToChapterDeltas(Arg.Is<XDocument>(d => predicate(d))).Returns(chapterDeltas);
             }
 

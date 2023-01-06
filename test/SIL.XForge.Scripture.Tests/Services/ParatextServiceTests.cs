@@ -2170,10 +2170,7 @@ namespace SIL.XForge.Scripture.Services
             env.SetupProject(env.Project01, associatedPtUser);
             UserSecret user01Secret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-            IInternetSharedRepositorySource mockSource = env.SetSharedRepositorySource(
-                user01Secret,
-                UserRoles.Administrator
-            );
+            env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
 
             ArgumentException ex = Assert.ThrowsAsync<ArgumentException>(
                 () => env.Service.SendReceiveAsync(user01Secret, "badProjectId", null)
@@ -2876,7 +2873,7 @@ namespace SIL.XForge.Scripture.Services
                 "the user secret does not have usable content"
             );
 
-            var unauthorizedHttpResponseMessage = new HttpResponseMessage(HttpStatusCode.Unauthorized)
+            using var unauthorizedHttpResponseMessage = new HttpResponseMessage(HttpStatusCode.Unauthorized)
             {
                 RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
                 Content = new ByteArrayContent(Encoding.UTF8.GetBytes("big problem"))
@@ -2894,7 +2891,7 @@ namespace SIL.XForge.Scripture.Services
                 "authorization token is not accepted by server. unauthorized."
             );
 
-            var okHttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK)
+            using var okHttpResponseMessage = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 RequestMessage = new HttpRequestMessage(HttpMethod.Get, "some-request-uri"),
                 Content = new ByteArrayContent(
@@ -3241,7 +3238,7 @@ namespace SIL.XForge.Scripture.Services
             public readonly string AlternateAfter = " alternate after.";
             public readonly string ReattachedSelectedText = "reattached text";
 
-            private string ruthBookUsfm =
+            private readonly string ruthBookUsfm =
                 "\\id RUT - ProjectNameHere\n" + "\\c 1\n" + "\\v 1 Verse 1 here.\n" + "\\v 2 Verse 2 here.";
 
             public readonly IWebHostEnvironment MockWebHostEnvironment;

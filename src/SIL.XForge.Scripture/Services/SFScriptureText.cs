@@ -14,6 +14,9 @@ namespace SIL.XForge.Scripture.Services
     {
         private IEnumerable<TextSegment> _segments;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SFScriptureText"/> class.
+        /// </summary>
         /// <remarks>Builds segments from texts and references.
         /// Will use ops in doc that have an insert and a segment attribute providing reference information.
         /// For example,
