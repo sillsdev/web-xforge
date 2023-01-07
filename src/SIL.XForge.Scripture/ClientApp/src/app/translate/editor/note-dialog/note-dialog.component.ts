@@ -2,7 +2,6 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { cloneDeep, sortBy } from 'lodash-es';
-import { Observable } from 'rxjs';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import {
@@ -218,9 +217,10 @@ export class NoteDialogComponent implements OnInit {
   }
 
   async deleteNote(note: Note): Promise<void> {
-    const message: Observable<string> = this.i18n.translate('note_dialog.permanently_delete_note');
-    const confirm: Observable<string> = this.i18n.translate('note_dialog.delete');
-    const confirmed: boolean = await this.dialogService.confirm(message, confirm);
+    const confirmed: boolean = await this.dialogService.confirm(
+      'note_dialog.permanently_delete_note',
+      'note_dialog.delete'
+    );
     if (!confirmed) return;
 
     if (this.notesToDisplay.length === 1) {

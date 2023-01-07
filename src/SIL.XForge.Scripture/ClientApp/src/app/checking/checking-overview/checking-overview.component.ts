@@ -431,7 +431,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       this.i18n.translate(`checking_overview.${archive ? 'confirm_bulk_archive' : 'confirm_bulk_republish'}`, {
         scope
       }),
-      this.i18n.translate(`checking_overview.${archive ? 'archive' : 'republish'}`)
+      `checking_overview.${archive ? 'archive' : 'republish'}`
     );
     return confirmation === true;
   }
