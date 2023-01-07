@@ -154,11 +154,22 @@
     }
   },
   "checking": {
+    "filter": "Filter",
+    "filter_questions": "Filter questions",
     "me": "ꤠꤢ꤭",
-    "unknown_author": "Unknown author",
     "next": "ꤘꤣꤋꤛꤢꤩ꤭ꤕꤟꤥ",
     "previous": "ꤘꤣꤢ꤬ꤚꤟꤢꤩ",
     "questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭",
+    "question_filter_none": "Show all",
+    "question_filter_exportable": "Answers marked for export",
+    "question_filter_has_answers": "Has answers",
+    "question_filter_answered": "Answered",
+    "question_filter_no_answers": "No answers",
+    "question_filter_not_answered": "Not answered",
+    "question_filter_not_reviewed": "Unreviewed answers",
+    "question_filter_resolved": "Answers marked resolved",
+    "tooltip_questions_filter": "Filter questions",
+    "unknown_author": "Unknown author",
     "view_questions": "ꤗꤛꤢ ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭"
   },
   "checking_answers": {
@@ -171,15 +182,21 @@
     "confirm_delete": "Are you sure you want to delete this answer?",
     "delete": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭",
     "edit": "ꤗꤟꤢꤩ꤬ꤚꤛꤢꤕꤟꤥ",
+    "marked_for_export": "Marked for export",
+    "mark_for_export": "Mark for export",
     "no_scripture_selected": "ꤗꤟꤢꤩ꤬ꤗꤢ ꤟꤤ ꤜꤤ꤬ꤡꤢ꤭ꤏꤢꤧ꤭ ꤒꤣ꤬ꤖꤥ꤬꤮ ꤒꤥ꤬꤯",
     "record_upload": "ꤕꤟꤢꤦꤍꤟꤥ/ꤙꤢꤩ꤬ꤓꤛꤢ꤬",
     "record": "ꤕꤟꤢꤦꤍꤟꤥ",
     "recording_automatically_stopped": "ꤜꤟꤢꤩꤕꤟꤢꤦ ꤔꤟꤢꤧ꤬ꤍꤟꤥ ꤔꤌꤣ꤬ ꤢ꤬ ꤥ꤬ꤊꤟꤌꤣꤊꤛꤢ꤭ ꤔꤟꤤꤘꤢꤦ꤬ ꤢ꤬ꤒꤢꤧ꤭꤯",
+    "resolve": "Resolve",
+    "resolved": "Resolved",
     "save_answer": "ꤙꤢꤩ꤬ꤘꤝꤥ ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ ",
     "select_text": "ꤗꤟꤢꤩ꤬ꤗꤢ ꤜꤤ꤬ꤕꤜꤢꤪ꤬",
     "select_verses": "ꤗꤟꤢꤩ꤬ꤗꤢ ꤜꤤ꤬ꤏꤢ꤭ꤏꤢꤧ꤭ꤗꤟꤢ꤭",
     "select": "ꤗꤟꤢꤩ꤬ꤗꤢ",
     "show_more_unread": "ꤙꤢꤩ꤬ꤜꤟꤌꤣ꤭  {{ count }} ꤕꤟꤥ ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ ꤘꤣ ꤟꤣꤟꤤꤒꤥ꤬ ꤒꤢ꤬ꤟꤢꤩ꤬",
+    "tooltip_status_export": "Mark for export to Paratext",
+    "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "ꤔꤟꤢꤧ꤬ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ "
   },
   "checking_audio_combined": {
@@ -224,11 +241,15 @@
     "project_stats": "Project stats",
     "questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ꤒꤢ꤬ꤟꤢꤩ꤬"
   },
+  "checking_questions": {
+    "no_questions_found": "No questions found to match your filter"
+  },
   "edit_name_dialog": {
     "cancel": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭",
     "confirm_name": "ꤙꤤ ꤔꤟꤢꤧ꤬ ꤙꤢꤩ꤬ꤓꤛꤢ꤬ ꤓꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ ꤔꤢ ꤒꤟꤢꤧ꤬ꤒꤢ꤬ꤔꤟꤢꤩ꤬ ꤢ꤬ꤋꤢꤧ꤭ꤔꤌꤣ꤬ ꤔꤟꤢꤧ꤬ ꤗꤛꤢꤓꤛꤢꤩ꤬ ꤊꤢ꤬ꤛꤢ꤭ ꤘꤣ ꤢꤨ꤭ ꤢꤩ꤬ꤊꤜꤟꤢꤪ꤬ ꤢꤧ꤬ꤞꤤ꤭ꤗꤝꤟꤤ꤬ ꤙꤤ project ꤢ꤬ꤊꤢꤨ꤭ ꤛꤢꤩ꤭ ꤒꤢ꤬ꤟꤢꤩ꤬ ꤕꤢ꤭",
     "confirm_your_name": "ꤢꤩ꤬ꤊꤜꤟꤢꤪ꤬ ꤔꤟꤢꤧ꤬ꤗꤝꤟꤤ꤬",
     "confirm": "ꤢꤩ꤬ꤊꤜꤟꤢꤪ꤬",
+    "connect_to_edit_name": "Please connect to the internet to edit your name",
     "enter_name": "ꤋꤛꤢꤞꤢꤧꤘꤥ꤭ ꤚꤢ꤭ꤔꤟꤌꤣ꤭ ꤔꤟꤢꤧ꤬ꤗꤝꤟꤤ꤬",
     "update_your_name": "ꤚꤢ꤭ꤒꤢ꤬ꤕꤜꤢꤩ꤬ ꤔꤟꤢꤧ꤬ꤗꤝꤟꤤ꤬",
     "update": "ꤗꤟꤢꤩ꤬ꤚꤛꤢꤓꤛꤢ꤬",
@@ -248,6 +269,7 @@
   },
   "error_messages": {
     "error_occurred_login": "An error occurred during login.",
+    "failed_to_update_avatar": "Your avatar image could not be updated.",
     "try_again": "ꤗꤟꤢꤩ꤬ꤋꤛꤢꤩ꤭ ꤒꤣ꤬ꤟꤢꤦ꤬ "
   },
   "exception_handling_service": {

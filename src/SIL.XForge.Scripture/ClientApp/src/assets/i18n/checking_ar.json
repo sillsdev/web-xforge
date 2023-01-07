@@ -154,11 +154,22 @@
     }
   },
   "checking": {
+    "filter": "Filter",
+    "filter_questions": "تصفية الأسئلة",
     "me": "إجابتي",
-    "unknown_author": "مؤلف غير معروف",
     "next": "التالي",
     "previous": "السابق",
     "questions": "أسئلة",
+    "question_filter_none": "Show all",
+    "question_filter_exportable": "Answers marked for export",
+    "question_filter_has_answers": "Has answers",
+    "question_filter_answered": "Answered",
+    "question_filter_no_answers": "No answers",
+    "question_filter_not_answered": "Not answered",
+    "question_filter_not_reviewed": "Unreviewed answers",
+    "question_filter_resolved": "Answers marked resolved",
+    "tooltip_questions_filter": "تصفية الأسئلة",
+    "unknown_author": "مؤلف غير معروف",
     "view_questions": "إظهار الأسئلة"
   },
   "checking_answers": {
@@ -171,15 +182,21 @@
     "confirm_delete": "هل ترغب حقّــا بحذف هذه الإجابة؟",
     "delete": "حذف",
     "edit": "تعديل",
+    "marked_for_export": "Marked for export",
+    "mark_for_export": "Mark for export",
     "no_scripture_selected": "لم يتمّ تحديد مقطع كتابي بعد.",
     "record_upload": "تسجيل/ تحميل",
     "record": "سجِّل",
     "recording_automatically_stopped": "تمّ إيقاف تسجيل إجابتك بصورةآلية.",
+    "resolve": "Resolve",
+    "resolved": "تم الحل",
     "save_answer": "حفظ الإجابة",
     "select_text": "اختر النصّ",
     "select_verses": "اختر الآيات الكتابية",
     "select": "اختيار",
     "show_more_unread": "إظهار {{ count }} أسئلة لم يُجَب عنها",
+    "tooltip_status_export": "Mark for export to Paratext",
+    "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "إجابتك"
   },
   "checking_audio_combined": {
@@ -224,11 +241,15 @@
     "project_stats": "تحديثات المشروع",
     "questions": "أسئلة"
   },
+  "checking_questions": {
+    "no_questions_found": "No questions found to match your filter"
+  },
   "edit_name_dialog": {
     "cancel": "إلغاء",
     "confirm_name": "تأكيد الاسم الذي سيراه الآخرون في هذا المشروع حين تنشر إجاباتك وتعليقاتك",
     "confirm_your_name": "أكِّد اسمك",
     "confirm": "تأكيد",
+    "connect_to_edit_name": "Please connect to the internet to edit your name",
     "enter_name": "يُرجى إدخال اسمك",
     "update_your_name": "حدِّث اسمك",
     "update": "تحديث",
@@ -248,6 +269,7 @@
   },
   "error_messages": {
     "error_occurred_login": "حدث خطأ أثناء تسجيل الدخول.",
+    "failed_to_update_avatar": "Your avatar image could not be updated.",
     "try_again": "حاول ثانيةً"
   },
   "exception_handling_service": {
