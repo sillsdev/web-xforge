@@ -105,7 +105,7 @@ export class WebSocketStreamListener {
 
   private getKey(header: JwtHeader, done: SigningKeyCallback): void {
     if (header.kid == null) {
-      done('No key ID.');
+      done(new Error('No key ID.'));
       return;
     }
 
