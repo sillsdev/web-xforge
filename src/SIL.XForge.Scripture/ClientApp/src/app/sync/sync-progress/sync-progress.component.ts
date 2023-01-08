@@ -48,10 +48,8 @@ export class SyncProgressComponent extends SubscriptionDisposable {
   }
 
   get mode(): ProgressBarMode {
-    // Show indeterminate at the beginning and at the halfway point if a source project was synced
-    const sourceSyncCompleted = this.sourceProjectDoc?.data != null && this.sourceProjectDoc.data.sync.queuedCount < 1;
-    const isDeterminate = sourceSyncCompleted ? this.syncProgressPercent > 50 : this.syncProgressPercent > 0;
-    return isDeterminate ? 'determinate' : 'indeterminate';
+    // Show indeterminate only at the beginning, as the sync has not yet started
+    return this.syncProgressPercent > 0 ? 'determinate' : 'indeterminate';
   }
 
   async initialize(): Promise<void> {
