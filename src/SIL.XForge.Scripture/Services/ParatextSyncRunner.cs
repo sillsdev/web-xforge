@@ -187,7 +187,7 @@ namespace SIL.XForge.Scripture.Services
 
                 var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
                 var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
-                ParatextSettings settings = _paratextService.GetParatextSettings(_userSecret, targetParatextId);
+                ParatextSettings? settings = _paratextService.GetParatextSettings(_userSecret, targetParatextId);
                 // update target Paratext books and notes
                 double i = 0.0;
                 foreach (TextInfo text in _projectDoc.Data.Texts)
@@ -1373,7 +1373,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
 
-                ParatextSettings settings = _paratextService.GetParatextSettings(
+                ParatextSettings? settings = _paratextService.GetParatextSettings(
                     _userSecret,
                     _projectDoc.Data.ParatextId
                 );
@@ -1395,7 +1395,7 @@ namespace SIL.XForge.Scripture.Services
                 // The source can be null if there was an error getting a resource from the DBL
                 if (TranslationSuggestionsEnabled && _projectDoc.Data.TranslateConfig.Source != null)
                 {
-                    ParatextSettings sourceSettings = _paratextService.GetParatextSettings(
+                    ParatextSettings? sourceSettings = _paratextService.GetParatextSettings(
                         _userSecret,
                         _projectDoc.Data.TranslateConfig.Source.ParatextId
                     );

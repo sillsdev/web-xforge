@@ -22,7 +22,7 @@ namespace SIL.XForge.Scripture.Services
             SFProject project,
             CancellationToken token
         );
-        ParatextSettings GetParatextSettings(UserSecret userSecret, string paratextId);
+        ParatextSettings? GetParatextSettings(UserSecret userSecret, string paratextId);
 
         Task<IReadOnlyList<ParatextResource>> GetResourcesAsync(string userId);
         bool IsResource(string paratextId);
