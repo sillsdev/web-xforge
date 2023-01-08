@@ -276,7 +276,7 @@ class TestEnvironment {
     expect(this.host.syncProgress.mode).toBe('determinate');
     this.emitSyncComplete(true, 'sourceProject02');
     expect(this.host.syncProgress.syncProgressPercent).toEqual(50);
-    expect(this.host.syncProgress.mode).toBe('indeterminate');
+    expect(this.host.syncProgress.mode).toBe('determinate');
     this.emitSyncProgress(0.8, 'testProject01');
     expect(this.host.syncProgress.syncProgressPercent).toEqual(90);
     this.emitSyncComplete(true, 'testProject01');
