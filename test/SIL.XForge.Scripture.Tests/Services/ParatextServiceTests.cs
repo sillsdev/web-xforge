@@ -1166,7 +1166,8 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             IEnumerable<NoteThreadChange> changes = await env.PrepareChangeOnSingleCommentAsync(
-                (Paratext.Data.ProjectComments.Comment comment) => {
+                (Paratext.Data.ProjectComments.Comment comment) =>
+                {
                     // Not modifying comment.
                 }
             );
@@ -2149,8 +2150,8 @@ namespace SIL.XForge.Scripture.Services
                 Name = "SF Note Tag",
             };
             env.SetupCommentTags(env.ProjectScrText, noteTag);
-            ParatextSettings settings = env.Service.GetParatextSettings(userSecret, paratextId);
-            Assert.That(settings.NoteTags.Any(t => t.Name == noteTag.Name), Is.True);
+            ParatextSettings? settings = env.Service.GetParatextSettings(userSecret, paratextId);
+            Assert.That(settings?.NoteTags.Any(t => t.Name == noteTag.Name), Is.True);
         }
 
         [Test]
@@ -2166,8 +2167,8 @@ namespace SIL.XForge.Scripture.Services
                 Icon = "sf05",
                 Name = "SF Note Tag"
             };
-            ParatextSettings settings = env.Service.GetParatextSettings(userSecret, paratextId);
-            Assert.That(settings.NoteTags.FirstOrDefault(t => t.Icon == noteTag.Icon), Is.Null);
+            ParatextSettings? settings = env.Service.GetParatextSettings(userSecret, paratextId);
+            Assert.That(settings?.NoteTags.FirstOrDefault(t => t.Icon == noteTag.Icon), Is.Null);
         }
 
         [Test]
@@ -2187,8 +2188,8 @@ namespace SIL.XForge.Scripture.Services
             env.Service.UpdateCommentTag(userSecret, paratextId, noteTag);
             // the new tag is created with a tag id one greater than the last used id
             int tagId = env.TagCount + 1;
-            ParatextSettings settings = env.Service.GetParatextSettings(userSecret, paratextId);
-            Assert.That(settings.NoteTags.First(t => t.Icon == icon).TagId, Is.EqualTo(tagId));
+            ParatextSettings? settings = env.Service.GetParatextSettings(userSecret, paratextId);
+            Assert.That(settings?.NoteTags.First(t => t.Icon == icon).TagId, Is.EqualTo(tagId));
         }
 
         [Test]
