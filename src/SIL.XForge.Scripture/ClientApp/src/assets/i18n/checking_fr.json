@@ -154,11 +154,22 @@
     }
   },
   "checking": {
+    "filter": "Filter",
+    "filter_questions": "Filtrer les questions",
     "me": "Moi",
-    "unknown_author": "Auteur inconnu",
     "next": "Suivant",
     "previous": "Précédent",
     "questions": "Questions",
+    "question_filter_none": "Show all",
+    "question_filter_exportable": "Answers marked for export",
+    "question_filter_has_answers": "Has answers",
+    "question_filter_answered": "Answered",
+    "question_filter_no_answers": "No answers",
+    "question_filter_not_answered": "Not answered",
+    "question_filter_not_reviewed": "Unreviewed answers",
+    "question_filter_resolved": "Answers marked resolved",
+    "tooltip_questions_filter": "Filtrer les questions",
+    "unknown_author": "Auteur inconnu",
     "view_questions": "Afficher les questions"
   },
   "checking_answers": {
@@ -171,15 +182,21 @@
     "confirm_delete": "Are you sure you want to delete this answer?",
     "delete": "Supprimer",
     "edit": "Modifier",
+    "marked_for_export": "Marked for export",
+    "mark_for_export": "Mark for export",
     "no_scripture_selected": "Aucun texte sélectionné pour l'instant.",
     "record_upload": "Enregistrer/Télétransmettre",
     "record": "Enregistrer",
     "recording_automatically_stopped": "L'enregistrement de votre réponse a été arrêté automatiquement.",
+    "resolve": "Resolve",
+    "resolved": "Résolue",
     "save_answer": "Envoyer la réponse",
     "select_text": "Sélectionner le texte",
     "select_verses": "Sélectionner des versets",
     "select": "Sélectionner",
     "show_more_unread": "Afficher {{ count }} autres réponses non lues",
+    "tooltip_status_export": "Mark for export to Paratext",
+    "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Votre réponse"
   },
   "checking_audio_combined": {
@@ -224,11 +241,15 @@
     "project_stats": "Project stats",
     "questions": "Questions"
   },
+  "checking_questions": {
+    "no_questions_found": "No questions found to match your filter"
+  },
   "edit_name_dialog": {
     "cancel": "Annuler",
     "confirm_name": "Confirmez le nom que les autres personnes sur ce projet verront lorsque vous publierez des réponses et des commentaires",
     "confirm_your_name": "Confirmez votre nom",
     "confirm": "Confirmer",
+    "connect_to_edit_name": "Please connect to the internet to edit your name",
     "enter_name": "Veuillez entrer votre nom",
     "update_your_name": "Mettre à jour votre nom",
     "update": "Mettre à jour",
@@ -248,6 +269,7 @@
   },
   "error_messages": {
     "error_occurred_login": "Une erreur s'est produite lors de la connexion.",
+    "failed_to_update_avatar": "Your avatar image could not be updated.",
     "try_again": "Essayez à nouveau"
   },
   "exception_handling_service": {

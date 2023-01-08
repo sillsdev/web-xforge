@@ -20,17 +20,17 @@
   "checking_overview": {
     "add_question": "Agregar pregunta",
     "answer_count_label": "{{ count }} respuestas",
-    "archive_multiple": "Archive all questions in {{ location }}",
+    "archive_multiple": "Archivar todas las preguntas en {{ location }}",
     "archive": "Archivar",
     "archived_questions": "Preguntas archivadas",
     "click_add_question": "Haga clic en {{ boldStart }}Agregar pregunta{{ boldEnd }}, arriba.",
-    "confirm_bulk_archive": "Are you sure you want to archive all the questions in {{ scope }}?",
-    "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
+    "confirm_bulk_archive": "¿Está seguro que desea archivar todas las preguntas en {{ scope }}?",
+    "confirm_bulk_republish": "¿Está seguro de que quiere volver a publicar todas las preguntas en {{ scope }}?",
     "import_questions": "Importar",
     "no_archived_questions": "No hay preguntas archivadas.",
     "no_questions": "No hay preguntas publicadas. ",
     "question_count_label": "{{ count }} preguntas",
-    "republish_multiple": "Republish all questions in {{ location }}",
+    "republish_multiple": "Volver a publicar todas las preguntas en {{ location }}",
     "republish": "Publicar de nuevo",
     "time_archived_stamp": "Archivado en {{ timeStamp }}"
   },
@@ -129,6 +129,7 @@
     "invalid_csv_rows_will_be_skipped": "Estas filas del archivo CSV no eran válidas y se omitirán.",
     "learn_more": "Más información",
     "loading": "Cargando...",
+    "missing_header_row": "The file you imported needs to have a header row with columns titled {{ boldStart }}Reference{{ boldEnd }} and {{ boldStart }}Question{{ boldEnd }}.",
     "must_be_valid_reference": "Debe ser una referencia válida",
     "network_error_transcelerator": "Error de red al obtener las preguntas de Transcelerator. Reintentando ({{ count }}).",
     "no_questions_available": "No hay preguntas para los libros de este proyecto.",
@@ -213,9 +214,9 @@
     "sf_observer": "Observador"
   },
   "role_descriptions": {
-    "sf_community_checker": "Answer questions, Comment on answers",
-    "sf_reviewer": "View translation, Add notes",
-    "sf_observer": "View translation"
+    "sf_community_checker": "Responder a las preguntas, Comentar las respuestas",
+    "sf_reviewer": "Ver traducción, Añadir notas",
+    "sf_observer": "Ver traducción"
   },
   "settings": {
     "anyone_with_a_link": "Cualquiera con un enlace",
@@ -231,6 +232,11 @@
     "error_fetching_projects_resources": "Se ha producido un error al obtener los proyectos y recursos. No se puede cambiar en qué se basa el proyecto.",
     "error_fetching_projects": "Se ha producido un error al obtener los proyectos. Sólo podrá seleccionar recursos de la Biblioteca Bíblica Digital.",
     "error_fetching_resources": "Se ha producido un error al recuperar los recursos de la Biblioteca Bíblica Digital. Sólo podrá seleccionar proyectos.",
+    "export_all": "Todas las respuestas",
+    "export_checking_answers": "Establece qué respuestas se exportarán como comentarios al sincronizar con Paratext.",
+    "export_marked_for_export": "Respuestas marcadas para exportar",
+    "export_none": "Sin respuestas",
+    "exporting_answers": "Exportando respuestas",
     "log_in_with_paratext": "Iniciar sesión en Paratext",
     "see_others_answers_and_comments": "Permitir que los revisores vean las respuestas de los demás",
     "select_project_or_resource": "Seleccione el proyecto Paratext o el recurso de la Biblioteca Bíblica Digital en el que se basa su proyecto. Si su proyecto se basa en un proyecto Paratext, lo mejor es configurarlo como un proyecto hijo en Paratext.",
@@ -283,7 +289,7 @@
     "footnote": "Nota al pie"
   },
   "translate_overview": {
-    "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",
+    "cannot_train_suggestion_engine": "Las sugerencias de traducción no están disponibles. Por favor, seleccione un proyecto fuente que comparta libros en común con este proyecto para obtener sugerencias de traducción.",
     "progress": "Progreso",
     "quality": "Calidad",
     "retrain": "Volver a entrenar",

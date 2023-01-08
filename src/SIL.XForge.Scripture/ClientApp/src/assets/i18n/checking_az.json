@@ -154,11 +154,22 @@
     }
   },
   "checking": {
+    "filter": "Filter",
+    "filter_questions": "Sualları süzgəcdən keçirmək",
     "me": "Mən",
-    "unknown_author": "Naməlum müəllif",
     "next": "Növbəti",
     "previous": "Əvvəlki",
     "questions": "Suallar",
+    "question_filter_none": "Show all",
+    "question_filter_exportable": "Answers marked for export",
+    "question_filter_has_answers": "Has answers",
+    "question_filter_answered": "Answered",
+    "question_filter_no_answers": "No answers",
+    "question_filter_not_answered": "Not answered",
+    "question_filter_not_reviewed": "Unreviewed answers",
+    "question_filter_resolved": "Answers marked resolved",
+    "tooltip_questions_filter": "Sualları süzgəcdən keçirmək",
+    "unknown_author": "Naməlum müəllif",
     "view_questions": "Suallara baxmaq"
   },
   "checking_answers": {
@@ -171,15 +182,21 @@
     "confirm_delete": "Are you sure you want to delete this answer?",
     "delete": "Silmək",
     "edit": "Düzəliş etmək",
+    "marked_for_export": "Marked for export",
+    "mark_for_export": "Mark for export",
     "no_scripture_selected": "Hələ Kəlam seçilməyib. ",
     "record_upload": "Səs yazın/Yükləyin.",
     "record": "Səs yazın",
     "recording_automatically_stopped": "Sizin cavabınız səslə yazılarkən öz-özünə dayandı.",
+    "resolve": "Resolve",
+    "resolved": "Resolved",
     "save_answer": "Cavabınızı saxlamaq",
     "select_text": "Mətni seçmək",
     "select_verses": "Ayələri seçmək",
     "select": "Seçmək",
     "show_more_unread": "Oxunmamış başqa cavabları {{ count }} göstərmək",
+    "tooltip_status_export": "Mark for export to Paratext",
+    "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Sizin cavabınız"
   },
   "checking_audio_combined": {
@@ -224,11 +241,15 @@
     "project_stats": "Project stats",
     "questions": "Suallar"
   },
+  "checking_questions": {
+    "no_questions_found": "No questions found to match your filter"
+  },
   "edit_name_dialog": {
     "cancel": "Ləğv etmək",
     "confirm_name": "Cavab və şərh yazdığınız zaman bu layihədəki digər insanların sizi hansı adla görəcəyini təsdiqləyin",
     "confirm_your_name": "Adınızı təsdiqləyin",
     "confirm": "Təsdiq etmək",
+    "connect_to_edit_name": "Please connect to the internet to edit your name",
     "enter_name": "Adınızı daxil edin",
     "update_your_name": "Adınızı yeniləyin",
     "update": "Yeniləmə",
@@ -248,6 +269,7 @@
   },
   "error_messages": {
     "error_occurred_login": "Giriş edəndə bir səhv baş verdi.",
+    "failed_to_update_avatar": "Your avatar image could not be updated.",
     "try_again": "Yenidən çalışın"
   },
   "exception_handling_service": {
