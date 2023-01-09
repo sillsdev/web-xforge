@@ -689,8 +689,7 @@ namespace SIL.XForge.Scripture.Services
             SortedList<int, IDocument<TextData>> textDocs
         )
         {
-            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
-            var oldUsxDoc = XDocument.Parse(bookText);
+            var oldUsxDoc = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
             XDocument newUsxDoc = _deltaUsxMapper.ToUsx(
                 oldUsxDoc,
                 text.Chapters
@@ -830,8 +829,7 @@ namespace SIL.XForge.Scripture.Services
             ISet<int>? chaptersToInclude = null
         )
         {
-            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
-            var usxDoc = XDocument.Parse(bookText);
+            var usxDoc = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
             var tasks = new List<Task>();
             Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper
                 .ToChapterDeltas(usxDoc)
@@ -1619,8 +1617,7 @@ namespace SIL.XForge.Scripture.Services
 
         private Dictionary<int, ChapterDelta> GetDeltasByChapter(TextInfo text, string paratextId)
         {
-            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
-            XDocument usxDoc = XDocument.Parse(bookText);
+            XDocument usxDoc = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
             Dictionary<int, ChapterDelta> chapterDeltas = _deltaUsxMapper
                 .ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);
