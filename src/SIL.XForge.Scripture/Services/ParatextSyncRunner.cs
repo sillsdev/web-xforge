@@ -569,7 +569,7 @@ namespace SIL.XForge.Scripture.Services
                 Dictionary<int, ChapterDelta> chapterDeltas = GetDeltasByChapter(text, targetParatextId);
 
                 LogMetric("Updating thread docs - updating");
-                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, token, chapterDeltas, ptUsernamesToSFUserIds);
+                await UpdateNoteThreadDocsAsync(text, noteThreadDocs, chapterDeltas, ptUsernamesToSFUserIds);
 
                 // update project metadata
                 LogMetric("Updating project metadata");
@@ -913,7 +913,6 @@ namespace SIL.XForge.Scripture.Services
         private async Task UpdateNoteThreadDocsAsync(
             TextInfo text,
             Dictionary<string, IDocument<NoteThread>> noteThreadDocs,
-            CancellationToken token,
             Dictionary<int, ChapterDelta> chapterDeltas,
             Dictionary<string, string> usernamesToUserIds
         )
@@ -931,12 +930,11 @@ namespace SIL.XForge.Scripture.Services
             foreach (NoteThreadChange change in noteThreadChanges)
             {
                 // Find the thread doc if it exists
-                IDocument<NoteThread> threadDoc;
-                if (!noteThreadDocs.TryGetValue(change.ThreadId, out threadDoc))
+                if (!noteThreadDocs.TryGetValue(change.ThreadId, out IDocument<NoteThread> threadDoc))
                 {
                     // Create a new ParatextNoteThread doc
                     IDocument<NoteThread> doc = GetNoteThreadDoc(change.ThreadId);
-                    async Task createThreadDoc(string threadId, string projectId, NoteThreadChange change)
+                    async Task createThreadDoc(NoteThreadChange change)
                     {
                         VerseRef verseRef = new VerseRef();
                         verseRef.Parse(change.VerseRefStr);
@@ -957,7 +955,7 @@ namespace SIL.XForge.Scripture.Services
                         );
                         await SubmitChangesOnNoteThreadDocAsync(doc, change, usernamesToUserIds);
                     }
-                    tasks.Add(createThreadDoc(change.ThreadId, _projectDoc.Id, change));
+                    tasks.Add(createThreadDoc(change));
                     _syncMetrics.NoteThreads.Added++;
                 }
                 else
@@ -1187,7 +1185,7 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Preserve all whitespace in data but remove whitespace at the beginning of lines and remove line endings.
         /// </summary>
-        private XElement ParseText(string text)
+        private static XElement ParseText(string text)
         {
             text = text.Trim().Replace("\r\n", "\n");
             text = Regex.Replace(text, @"\n\s*<", "<", RegexOptions.CultureInvariant);
@@ -1310,7 +1308,7 @@ namespace SIL.XForge.Scripture.Services
             var projectUsers = await _realtimeService
                 .QuerySnapshots<User>()
                 .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
-                .Select(u => new { UserId = u.Id, ParatextId = u.ParatextId })
+                .Select(u => new { UserId = u.Id, u.ParatextId })
                 .ToListAsync();
 
             bool dataInSync = true;
