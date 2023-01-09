@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
@@ -43,7 +44,7 @@ namespace SIL.XForge.Scripture.Services
         bool ResourceDocsNeedUpdating(SFProject project, ParatextResource resource);
 
         IReadOnlyList<int> GetBookList(UserSecret userSecret, string paratextId);
-        string GetBookText(UserSecret userSecret, string paratextId, int bookNum);
+        XDocument GetBookText(UserSecret userSecret, string paratextId, int bookNum);
         Task<int> PutBookText(
             UserSecret userSecret,
             string paratextId,
