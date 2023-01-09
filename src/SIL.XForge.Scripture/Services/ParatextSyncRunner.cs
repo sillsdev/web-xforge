@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -187,50 +187,11 @@ namespace SIL.XForge.Scripture.Services
 
                 var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
                 var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
-                ParatextSettings? settings = _paratextService.GetParatextSettings(_userSecret, targetParatextId);
-                // update target Paratext books and notes
-                double i = 0.0;
-                foreach (TextInfo text in _projectDoc.Data.Texts)
+
+                // Update target Paratext books and notes, if this is not a resource
+                if (!_paratextService.IsResource(targetParatextId))
                 {
-                    i++;
-
-                    // A resource does not sync to Paratext, so lets skip phase 2 to make the progress bar look better
-                    await NotifySyncProgress(
-                        _paratextService.IsResource(targetParatextId) ? SyncPhase.Phase3 : SyncPhase.Phase2,
-                        i / _projectDoc.Data.Texts.Count
-                    );
-
-                    LogMetric($"Updating Paratext book {text.BookNum}");
-                    if (settings == null)
-                    {
-                        Log($"FAILED: Attempting to write to a project repository that does not exist.");
-                        await CompleteSync(false, canRollbackParatext, trainEngine, token);
-                        return;
-                    }
-                    SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
-                    targetTextDocsByBook[text.BookNum] = targetTextDocs;
-                    if (settings.Editable && !_paratextService.IsResource(targetParatextId))
-                    {
-                        LogMetric("Updating Paratext book");
-                        await UpdateParatextBook(text, targetParatextId, targetTextDocs);
-                    }
-
-                    IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
-                    questionDocsByBook[text.BookNum] = questionDocs;
-                    if (!_paratextService.IsResource(targetParatextId))
-                    {
-                        LogMetric("Updating paratext notes");
-                        IEnumerable<IDocument<NoteThread>> noteThreadDocs = (
-                            await FetchNoteThreadDocsAsync(text.BookNum)
-                        ).Values;
-                        // Only update the note tag if there are SF note threads in the project
-                        if (noteThreadDocs.Any(d => d.Data.PublishedToSF == true))
-                            await UpdateTranslateNoteTag(targetParatextId);
-                        await UpdateParatextNotesAsync(text, questionDocs);
-                        // TODO: Sync Note changes back to Paratext, and record sync metric info
-                        // await _paratextService.UpdateParatextCommentsAsync(_userSecret, targetParatextId, text.BookNum,
-                        //     noteThreadDocs, _currentPtSyncUsers);
-                    }
+                    await GetAndUpdateParatextBooksAndNotes(SyncPhase.Phase2, targetParatextId, targetTextDocsByBook, questionDocsByBook);
                 }
 
                 // Check for cancellation
@@ -389,10 +350,16 @@ namespace SIL.XForge.Scripture.Services
                     paratextProject is ParatextResource paratextResource
                     && _paratextService.ResourceDocsNeedUpdating(_projectDoc.Data, paratextResource);
 
+                // If a resource needs updating, retrieve the books, as they were not retrieved previously
+                if (resourceNeedsUpdating)
+                {
+                    await GetAndUpdateParatextBooksAndNotes(SyncPhase.Phase5, targetParatextId, targetTextDocsByBook, questionDocsByBook);
+                }
+
                 if (!_paratextService.IsResource(targetParatextId) || resourceNeedsUpdating)
                 {
                     await UpdateDocsAsync(
-                        SyncPhase.Phase5,
+                        SyncPhase.Phase6,
                         targetParatextId,
                         targetTextDocsByBook,
                         questionDocsByBook,
@@ -402,7 +369,7 @@ namespace SIL.XForge.Scripture.Services
                     );
                 }
                 LogMetric("Back from UpdateDocsAsync");
-                await NotifySyncProgress(SyncPhase.Phase6, 20.0);
+                await NotifySyncProgress(SyncPhase.Phase7, 20.0);
 
                 // Check for cancellation
                 if (token.IsCancellationRequested)
@@ -422,7 +389,7 @@ namespace SIL.XForge.Scripture.Services
                 LogMetric("Updating permissions");
                 await _projectService.UpdatePermissionsAsync(userId, _projectDoc, token);
 
-                await NotifySyncProgress(SyncPhase.Phase6, 40.0);
+                await NotifySyncProgress(SyncPhase.Phase7, 40.0);
 
                 // Check for cancellation
                 if (token.IsCancellationRequested)
@@ -455,6 +422,68 @@ namespace SIL.XForge.Scripture.Services
             finally
             {
                 CloseConnection();
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the texts and questions from the Realtime server, and updates the Paratext repository if the
+        /// project is not a Paratext resource. Both of the dictionaries <paramref name="textDocsByBook"/> and
+        /// <paramref name="questionDocsByBook"/> are populated by this method.
+        /// </summary>
+        /// <param name="syncPhase">The sync phase.</param>
+        /// <param name="paratextId">The Paratext ID.</param>
+        /// <param name="textDocsByBook">The text documents with the book number as key.</param>
+        /// <param name="questionDocsByBook">The question documents with the book number as key.</param>
+        /// <returns>The task.</returns>
+        /// <exception cref="ArgumentException">The Paratext project repository does not exist.</exception>
+        private async Task GetAndUpdateParatextBooksAndNotes(
+            SyncPhase syncPhase,
+            string paratextId,
+            Dictionary<int, SortedList<int, IDocument<TextData>>> textDocsByBook,
+            Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook
+        )
+        {
+            ParatextSettings? settings = _paratextService.GetParatextSettings(_userSecret, paratextId);
+            double i = 0.0;
+            foreach (TextInfo text in _projectDoc.Data.Texts)
+            {
+                i++;
+
+                await NotifySyncProgress(syncPhase, i / _projectDoc.Data.Texts.Count);
+
+                // We check for settings in the loop, because if there are no texts, we would expect it to be null
+                if (settings == null)
+                {
+                    throw new ArgumentException(
+                        "FAILED: Attempting to write to a project repository that does not exist."
+                    );
+                }
+
+                LogMetric($"Getting Paratext book {text.BookNum}");
+                SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
+                textDocsByBook[text.BookNum] = targetTextDocs;
+                if (settings.Editable && !_paratextService.IsResource(paratextId))
+                {
+                    LogMetric("Updating Paratext book");
+                    await UpdateParatextBook(text, paratextId, targetTextDocs);
+                }
+
+                IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
+                questionDocsByBook[text.BookNum] = questionDocs;
+                if (!_paratextService.IsResource(paratextId))
+                {
+                    LogMetric("Updating Paratext notes");
+                    IEnumerable<IDocument<NoteThread>> noteThreadDocs = (
+                        await FetchNoteThreadDocsAsync(text.BookNum)
+                    ).Values;
+                    // Only update the note tag if there are SF note threads in the project
+                    if (noteThreadDocs.Any(d => d.Data.PublishedToSF == true))
+                        await UpdateTranslateNoteTag(paratextId);
+                    await UpdateParatextNotesAsync(text, questionDocs);
+                    // TODO: Sync Note changes back to Paratext, and record sync metric info
+                    // await _paratextService.UpdateParatextCommentsAsync(_userSecret, paratextId, text.BookNum,
+                    //     noteThreadDocs, _currentPtSyncUsers);
+                }
             }
         }
 
@@ -1254,7 +1283,7 @@ namespace SIL.XForge.Scripture.Services
             CancellationToken token
         )
         {
-            await NotifySyncProgress(SyncPhase.Phase6, 60.0);
+            await NotifySyncProgress(SyncPhase.Phase7, 60.0);
             if (token.IsCancellationRequested)
             {
                 Log($"CompleteSync: There was a cancellation request.");
@@ -1423,7 +1452,7 @@ namespace SIL.XForge.Scripture.Services
                         op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
                 }
             });
-            await NotifySyncProgress(SyncPhase.Phase6, 80.0);
+            await NotifySyncProgress(SyncPhase.Phase7, 80.0);
 
             if (_syncMetrics != null)
             {
@@ -1549,7 +1578,7 @@ namespace SIL.XForge.Scripture.Services
                 }
             }
 
-            await NotifySyncProgress(SyncPhase.Phase6, 100.0);
+            await NotifySyncProgress(SyncPhase.Phase7, 100.0);
             Log($"CompleteSync: Finished. Sync was {(successful ? "successful" : "unsuccessful")}.");
         }
 
@@ -1660,8 +1689,9 @@ namespace SIL.XForge.Scripture.Services
             Phase2 = 1, // Update Paratext books and notes
             Phase3 = 2, // Paratext Sync
             Phase4 = 3, // Deleting texts and granting resource access
-            Phase5 = 4, // Updating texts from Paratext books
-            Phase6 = 5, // Final methods
+            Phase5 = 4, // Getting the resource texts
+            Phase6 = 5, // Updating texts from Paratext books
+            Phase7 = 6, // Final methods
         }
 
         private class ChapterEqualityComparer : IEqualityComparer<Chapter>
