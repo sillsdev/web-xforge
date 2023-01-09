@@ -49,7 +49,7 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret,
             string paratextId,
             int bookNum,
-            string usx,
+            XDocument usx,
             Dictionary<int, string> chapterAuthors = null
         );
         string GetNotes(UserSecret userSecret, string paratextId, int bookNum);

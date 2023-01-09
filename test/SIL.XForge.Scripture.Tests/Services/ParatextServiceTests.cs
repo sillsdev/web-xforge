@@ -491,12 +491,7 @@ namespace SIL.XForge.Scripture.Services
                 Substitute.For<IExceptionHandler>()
             );
             var newDocUsx = mapper.ToUsx(oldDocUsx, new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) });
-            int booksUpdated = await env.Service.PutBookText(
-                userSecret,
-                ptProjectId,
-                ruthBookNum,
-                newDocUsx.Root.ToString()
-            );
+            int booksUpdated = await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx);
             env.ProjectFileManager.Received(1).WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
             Assert.That(booksUpdated, Is.EqualTo(1));
 
@@ -520,7 +515,12 @@ namespace SIL.XForge.Scripture.Services
                 + "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
 
             // SUT
-            int booksUpdated = await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx);
+            int booksUpdated = await env.Service.PutBookText(
+                userSecret,
+                ptProjectId,
+                ruthBookNum,
+                XDocument.Parse(ruthBookUsx)
+            );
 
             // Make sure only one ScrText was loaded
             env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
@@ -557,7 +557,7 @@ namespace SIL.XForge.Scripture.Services
                 userSecret,
                 ptProjectId,
                 ruthBookNum,
-                ruthBookUsx,
+                XDocument.Parse(ruthBookUsx),
                 chapterAuthors
             );
 
@@ -597,7 +597,7 @@ namespace SIL.XForge.Scripture.Services
                 userSecret,
                 ptProjectId,
                 ruthBookNum,
-                ruthBookUsx,
+                XDocument.Parse(ruthBookUsx),
                 chapterAuthors
             );
 

@@ -270,17 +270,17 @@ namespace SIL.XForge.Scripture.Services
 
             await env.ParatextService
                 .DidNotReceive()
-                .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<string>());
+                .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<XDocument>());
             await env.ParatextService
                 .DidNotReceive()
-                .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<string>());
+                .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<XDocument>());
 
             await env.ParatextService
                 .DidNotReceive()
-                .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<string>());
+                .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<XDocument>());
             await env.ParatextService
                 .DidNotReceive()
-                .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<string>());
+                .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<XDocument>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
@@ -318,7 +318,7 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<UserSecret>(),
                     "target",
                     40,
-                    Arg.Any<string>(),
+                    Arg.Any<XDocument>(),
                     Arg.Any<Dictionary<int, string>>()
                 );
             await env.ParatextService
@@ -327,7 +327,7 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<UserSecret>(),
                     "target",
                     41,
-                    Arg.Any<string>(),
+                    Arg.Any<XDocument>(),
                     Arg.Any<Dictionary<int, string>>()
                 );
 
@@ -337,7 +337,7 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<UserSecret>(),
                     "source",
                     40,
-                    Arg.Any<string>(),
+                    Arg.Any<XDocument>(),
                     Arg.Any<Dictionary<int, string>>()
                 );
             await env.ParatextService
@@ -346,7 +346,7 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<UserSecret>(),
                     "source",
                     41,
-                    Arg.Any<string>(),
+                    Arg.Any<XDocument>(),
                     Arg.Any<Dictionary<int, string>>()
                 );
 
@@ -385,7 +385,7 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<UserSecret>(),
                     "target",
                     40,
-                    Arg.Any<string>(),
+                    Arg.Any<XDocument>(),
                     Arg.Any<Dictionary<int, string>>()
                 );
             await env.ParatextService
@@ -394,7 +394,7 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<UserSecret>(),
                     "target",
                     41,
-                    Arg.Any<string>(),
+                    Arg.Any<XDocument>(),
                     Arg.Any<Dictionary<int, string>>()
                 );
 
@@ -404,7 +404,7 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<UserSecret>(),
                     "source",
                     40,
-                    Arg.Any<string>(),
+                    Arg.Any<XDocument>(),
                     Arg.Any<Dictionary<int, string>>()
                 );
             await env.ParatextService
@@ -413,7 +413,7 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<UserSecret>(),
                     "source",
                     41,
-                    Arg.Any<string>(),
+                    Arg.Any<XDocument>(),
                     Arg.Any<Dictionary<int, string>>()
                 );
 
@@ -2256,7 +2256,7 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<UserSecret>(),
                     Arg.Any<string>(),
                     Arg.Any<int>(),
-                    Arg.Any<string>(),
+                    Arg.Any<XDocument>(),
                     Arg.Any<Dictionary<int, string>>()
                 )
                 .Returns(1);
@@ -2269,7 +2269,7 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<UserSecret>(),
                     Arg.Any<string>(),
                     Arg.Any<int>(),
-                    Arg.Any<string>(),
+                    Arg.Any<XDocument>(),
                     Arg.Any<Dictionary<int, string>>()
                 );
             ;

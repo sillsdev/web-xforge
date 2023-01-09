@@ -1028,7 +1028,7 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret,
             string paratextId,
             int bookNum,
-            string usx,
+            XDocument usx,
             Dictionary<int, string> chapNumToAuthorSFUserIdMap = null
         )
         {
@@ -1036,14 +1036,14 @@ namespace SIL.XForge.Scripture.Services
             {
                 throw new ArgumentNullException(nameof(userSecret));
             }
-            if (String.IsNullOrWhiteSpace(paratextId))
+            if (string.IsNullOrWhiteSpace(paratextId))
             {
-                throw new ArgumentException(nameof(paratextId));
+                throw new ArgumentNullException(nameof(paratextId));
             }
 
             int booksUpdated = 0;
             StringBuilder log = new StringBuilder(
-                $"ParatextService.PutBookText(userSecret, paratextId {paratextId}, bookNum {bookNum}, usx {usx}, chapterAuthors: {(chapNumToAuthorSFUserIdMap == null ? "null" : ($"count {chapNumToAuthorSFUserIdMap.Count}"))})"
+                $"ParatextService.PutBookText(userSecret, paratextId {paratextId}, bookNum {bookNum}, usx {usx.Root}, chapterAuthors: {(chapNumToAuthorSFUserIdMap == null ? "null" : ($"count {chapNumToAuthorSFUserIdMap.Count}"))})"
             );
             Dictionary<string, ScrText> scrTexts = new Dictionary<string, ScrText>();
             try
@@ -1059,12 +1059,10 @@ namespace SIL.XForge.Scripture.Services
 
                 // We add this here so we can dispose in the finally
                 scrTexts.Add(userSecret.Id, scrText);
-                var doc = new XmlDocument { PreserveWhitespace = true };
-                doc.LoadXml(usx);
-                log.AppendLine($"Imported string as XmlDocument with {doc.ChildNodes.Count} child nodes.");
+                log.AppendLine($"Imported XDocument with {usx.Elements().Count()} elements.");
                 UsxFragmenter.FindFragments(
                     scrText.ScrStylesheet(bookNum),
-                    doc.CreateNavigator(),
+                    usx.CreateNavigator(),
                     XPathExpression.Compile("*[false()]"),
                     out string usfm
                 );
