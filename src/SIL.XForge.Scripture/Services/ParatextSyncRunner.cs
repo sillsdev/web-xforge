@@ -699,13 +699,12 @@ namespace SIL.XForge.Scripture.Services
 
             if (!XNode.DeepEquals(oldUsxDoc, newUsxDoc))
             {
-                string usx = newUsxDoc.Root.ToString();
                 var chapterAuthors = await GetChapterAuthorsAsync(text, textDocs);
                 _syncMetrics.ParatextBooks.Updated += await _paratextService.PutBookText(
                     _userSecret,
                     paratextId,
                     text.BookNum,
-                    usx,
+                    newUsxDoc,
                     chapterAuthors
                 );
             }
