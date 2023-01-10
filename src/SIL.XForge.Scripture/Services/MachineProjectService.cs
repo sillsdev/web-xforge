@@ -550,8 +550,7 @@ namespace SIL.XForge.Scripture.Services
             bool corpusUpdated = false;
 
             // Get the language tag
-            string languageTag;
-            languageTag =
+            string languageTag =
                 type == TextCorpusType.Target
                     ? project.WritingSystem.Tag
                     : project.TranslateConfig.Source.WritingSystem.Tag;

@@ -79,7 +79,7 @@ public class Program
 
         // Migrate all projects to the new Machine API
         var machineApiMigrator = webHost.Services.GetService<MachineApiMigrator>();
-        await machineApiMigrator!.MigrateAllProjectsAsync(
+        bool success = await machineApiMigrator!.MigrateAllProjectsAsync(
             doWrite,
             sfProjectIdsToMigrate,
             sfAdminsToUse,
@@ -91,7 +91,7 @@ public class Program
         await webHost.StopAsync();
 
         Log(string.Empty);
-        Log("Finished Migration.");
+        Log(success ? "Finished Migration." : "Migration Failed.");
     }
 
     internal static void Log(string message)

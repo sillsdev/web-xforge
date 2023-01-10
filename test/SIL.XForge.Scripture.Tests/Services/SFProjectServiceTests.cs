@@ -2507,6 +2507,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Service.EnsureWritingSystemTagIsSetAsync(User01, Project01);
 
             // If the writing system tags are updated, the projects must be retrieved
+            // We check that this is not called, to ensure that it was not updated
             await env.ParatextService.DidNotReceive().GetProjectsAsync(Arg.Any<UserSecret>());
         }
 
@@ -2521,7 +2522,7 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             await env.Service.EnsureWritingSystemTagIsSetAsync(User01, Project04);
 
-            // If the writing system tags are updated, the projects must be retrieved
+            // Ensure that our mock GetProjectsAsync created above is called
             await env.ParatextService.Received(1).GetProjectsAsync(Arg.Any<UserSecret>());
 
             Assert.IsNull(env.GetProject(Project04).WritingSystem.Tag);
@@ -2541,7 +2542,7 @@ namespace SIL.XForge.Scripture.Services
                 new ParatextProject
                 {
                     ParatextId = env.GetProject(Project04).TranslateConfig.Source.ParatextId,
-                    LanguageTag = languageTag02
+                    LanguageTag = languageTag02,
                 },
             };
             env.ParatextService.GetProjectsAsync(Arg.Any<UserSecret>()).Returns(Task.FromResult(ptProjects));
@@ -2549,7 +2550,7 @@ namespace SIL.XForge.Scripture.Services
             // SUT
             await env.Service.EnsureWritingSystemTagIsSetAsync(User01, Project04);
 
-            // If the writing system tags are updated, the projects must be retrieved
+            // Ensure that our mock GetProjectsAsync created above is called
             await env.ParatextService.Received(1).GetProjectsAsync(Arg.Any<UserSecret>());
 
             Assert.AreEqual(languageTag01, env.GetProject(Project04).WritingSystem.Tag);
