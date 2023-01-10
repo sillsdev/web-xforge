@@ -348,7 +348,7 @@ namespace SIL.XForge.Scripture.Services
                 .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
                 .Returns(Task.FromResult<IList<MachineApiCorpusFile>>(Array.Empty<MachineApiCorpusFile>()));
             env.MachineCorporaService
-                .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None)
+                .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None)
                 .Returns(Task.FromResult("File03"));
             await env.ProjectSecrets.UpdateAsync(
                 Project02,
@@ -359,7 +359,7 @@ namespace SIL.XForge.Scripture.Services
                         {
                             FileChecksum = "a_previous_checksum",
                             FileId = "File03",
-                            TextId = "textId_source",
+                            TextId = "textId",
                         }
                     )
             );
@@ -384,7 +384,7 @@ namespace SIL.XForge.Scripture.Services
                 .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
                 .Returns(TestEnvironment.MockTextCorpus);
             env.MachineCorporaService
-                .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None)
+                .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None)
                 .Returns(Task.FromResult("File03"));
             string checksum = StringUtils.ComputeMd5Hash($"segRef\tsegment01\n");
             await env.ProjectSecrets.UpdateAsync(
@@ -396,7 +396,8 @@ namespace SIL.XForge.Scripture.Services
                         {
                             FileChecksum = checksum,
                             FileId = "File03",
-                            TextId = "textId_source",
+                            LanguageTag = "en",
+                            TextId = "textId",
                         }
                     )
             );
@@ -485,14 +486,14 @@ namespace SIL.XForge.Scripture.Services
                                 Id = "File03",
                                 Href = "/corpora/corpus01/files/File03",
                                 LanguageTag = "en",
-                                Name = "textId_source.txt",
-                                TextId = "textId_source",
+                                Name = "textId.txt",
+                                TextId = "textId",
                             },
                         }
                     )
                 );
             env.MachineCorporaService
-                .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None)
+                .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None)
                 .Returns(Task.FromResult("File03"));
             await env.ProjectSecrets.UpdateAsync(
                 Project02,
@@ -504,7 +505,7 @@ namespace SIL.XForge.Scripture.Services
                             FileChecksum = "a_previous_checksum",
                             FileId = "File03",
                             LanguageTag = "en",
-                            TextId = "textId_source",
+                            TextId = "textId",
                         }
                     )
             );
@@ -521,7 +522,88 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
-        public async Task SyncProjectCorporaAsync_UpdatesSourceAndTargetTexts()
+        public async Task SyncProjectCorporaAsync_UpdatesSourceAndTargetTextsWithDifferentSourceAndTargetLanguages()
+        {
+            // Set up test environment
+            var env = new TestEnvironment();
+            env.TextCorpusFactory
+                .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>())
+                .Returns(TestEnvironment.MockTextCorpus);
+            env.MachineCorporaService
+                .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
+                .Returns(
+                    Task.FromResult<IList<MachineApiCorpusFile>>(
+                        new List<MachineApiCorpusFile>
+                        {
+                            new MachineApiCorpusFile
+                            {
+                                Id = "File03",
+                                Href = "/corpora/corpus01/files/File03",
+                                LanguageTag = "en",
+                                Name = "textId.txt",
+                                TextId = "textId",
+                            },
+                            new MachineApiCorpusFile
+                            {
+                                Id = "File04",
+                                Href = "/corpora/corpus01/files/File04",
+                                LanguageTag = "en_US",
+                                Name = "textId.txt",
+                                TextId = "textId",
+                            },
+                        }
+                    )
+                );
+            env.MachineCorporaService
+                .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None)
+                .Returns(Task.FromResult("File03"));
+            env.MachineCorporaService
+                .UploadCorpusTextAsync(Corpus01, "en_US", "textId", Arg.Any<string>(), CancellationToken.None)
+                .Returns(Task.FromResult("File04"));
+            await env.ProjectSecrets.UpdateAsync(
+                Project02,
+                u =>
+                    u.Add(
+                            p => p.MachineData.Corpora[Corpus01].Files,
+                            new MachineCorpusFile
+                            {
+                                FileChecksum = "a_previous_checksum",
+                                FileId = "File03",
+                                LanguageTag = "en",
+                                TextId = "textId",
+                            }
+                        )
+                        .Add(
+                            p => p.MachineData.Corpora[Corpus01].Files,
+                            new MachineCorpusFile
+                            {
+                                FileChecksum = "another_previous_checksum",
+                                FileId = "File04",
+                                LanguageTag = "en_US",
+                                TextId = "textId",
+                            }
+                        )
+            );
+
+            // SUT
+            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+            Assert.IsTrue(actual);
+            await env.MachineCorporaService
+                .Received(1)
+                .DeleteCorpusFileAsync(Corpus01, "File03", CancellationToken.None);
+            await env.MachineCorporaService
+                .Received(1)
+                .DeleteCorpusFileAsync(Corpus01, "File04", CancellationToken.None);
+            await env.MachineCorporaService
+                .Received(1)
+                .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None);
+            await env.MachineCorporaService
+                .Received(1)
+                .UploadCorpusTextAsync(Corpus01, "en_US", "textId", Arg.Any<string>(), CancellationToken.None);
+        }
+
+        [Test]
+        public async Task SyncProjectCorporaAsync_UpdatesSourceAndTargetTextsWithTheSameSourceAndTargetLanguage()
         {
             // Set up test environment
             var env = new TestEnvironment();
@@ -559,6 +641,7 @@ namespace SIL.XForge.Scripture.Services
             env.MachineCorporaService
                 .UploadCorpusTextAsync(Corpus01, "en", "textId_target", Arg.Any<string>(), CancellationToken.None)
                 .Returns(Task.FromResult("File04"));
+            await env.Projects.UpdateAsync(Project02, u => u.Set(p => p.WritingSystem.Tag, "en"));
             await env.ProjectSecrets.UpdateAsync(
                 Project02,
                 u =>
@@ -598,7 +681,7 @@ namespace SIL.XForge.Scripture.Services
                 .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None);
             await env.MachineCorporaService
                 .Received(1)
-                .UploadCorpusTextAsync(Corpus01, "en_US", "textId_target", Arg.Any<string>(), CancellationToken.None);
+                .UploadCorpusTextAsync(Corpus01, "en", "textId_target", Arg.Any<string>(), CancellationToken.None);
         }
 
         private class TestEnvironment
@@ -647,62 +730,60 @@ namespace SIL.XForge.Scripture.Services
                     }
                 );
 
-                var userSecrets = new MemoryRepository<UserSecret>(new[] { new UserSecret { Id = User01 }, });
+                var userSecrets = new MemoryRepository<UserSecret>(new[] { new UserSecret { Id = User01 } });
+
+                Projects = new MemoryRepository<SFProject>(
+                    new[]
+                    {
+                        new SFProject
+                        {
+                            Id = Project01,
+                            Name = "project01",
+                            ShortName = "P01",
+                            CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                            UserRoles = new Dictionary<string, string>(),
+                            TranslateConfig = new TranslateConfig
+                            {
+                                TranslationSuggestionsEnabled = true,
+                                Source = new TranslateSource
+                                {
+                                    ProjectRef = Project02,
+                                    WritingSystem = new WritingSystem { Tag = "en_US" },
+                                },
+                            },
+                            WritingSystem = new WritingSystem { Tag = "en_GB" },
+                        },
+                        new SFProject
+                        {
+                            Id = Project02,
+                            Name = "project02",
+                            ShortName = "P02",
+                            CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                            UserRoles = new Dictionary<string, string>(),
+                            TranslateConfig = new TranslateConfig
+                            {
+                                TranslationSuggestionsEnabled = true,
+                                Source = new TranslateSource
+                                {
+                                    ProjectRef = Project03,
+                                    WritingSystem = new WritingSystem { Tag = "en" },
+                                },
+                            },
+                            WritingSystem = new WritingSystem { Tag = "en_US" },
+                        },
+                        new SFProject
+                        {
+                            Id = Project03,
+                            Name = "project03",
+                            ShortName = "P03",
+                            CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                            UserRoles = new Dictionary<string, string>(),
+                        },
+                    }
+                );
 
                 var realtimeService = new SFMemoryRealtimeService();
-                realtimeService.AddRepository(
-                    "sf_projects",
-                    OTType.Json0,
-                    new MemoryRepository<SFProject>(
-                        new[]
-                        {
-                            new SFProject
-                            {
-                                Id = Project01,
-                                Name = "project01",
-                                ShortName = "P01",
-                                CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                                UserRoles = new Dictionary<string, string>(),
-                                TranslateConfig = new TranslateConfig
-                                {
-                                    TranslationSuggestionsEnabled = true,
-                                    Source = new TranslateSource
-                                    {
-                                        ProjectRef = Project02,
-                                        WritingSystem = new WritingSystem { Tag = "en_US" },
-                                    },
-                                },
-                                WritingSystem = new WritingSystem { Tag = "en_GB" },
-                            },
-                            new SFProject
-                            {
-                                Id = Project02,
-                                Name = "project02",
-                                ShortName = "P02",
-                                CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                                UserRoles = new Dictionary<string, string>(),
-                                TranslateConfig = new TranslateConfig
-                                {
-                                    TranslationSuggestionsEnabled = true,
-                                    Source = new TranslateSource
-                                    {
-                                        ProjectRef = Project03,
-                                        WritingSystem = new WritingSystem { Tag = "en" },
-                                    },
-                                },
-                                WritingSystem = new WritingSystem { Tag = "en_US" },
-                            },
-                            new SFProject
-                            {
-                                Id = Project03,
-                                Name = "project03",
-                                ShortName = "P03",
-                                CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                                UserRoles = new Dictionary<string, string>(),
-                            },
-                        }
-                    )
-                );
+                realtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
 
                 Service = new MachineProjectService(
                     EngineService,
@@ -752,6 +833,7 @@ namespace SIL.XForge.Scripture.Services
             public IMachineCorporaService MachineCorporaService { get; }
             public IMachineTranslationService MachineTranslationService { get; }
             public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
+            public MemoryRepository<SFProject> Projects { get; }
             public ITextCorpusFactory TextCorpusFactory { get; }
         }
     }
