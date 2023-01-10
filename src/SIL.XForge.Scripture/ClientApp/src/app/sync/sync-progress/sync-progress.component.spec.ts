@@ -173,6 +173,7 @@ class TestEnvironment {
         },
         editable: true,
         texts: [],
+        noteTags: [],
         userRoles: this.userRoleTarget,
         paratextUsers: paratextUsersFromRoles(this.userRoleTarget),
         userPermissions: {}
@@ -208,6 +209,7 @@ class TestEnvironment {
           },
           editable: true,
           texts: [],
+          noteTags: [],
           userRoles: this.userRoleSource,
           paratextUsers: paratextUsersFromRoles(this.userRoleSource),
           userPermissions: {}

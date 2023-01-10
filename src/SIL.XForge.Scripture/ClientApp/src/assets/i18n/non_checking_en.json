@@ -219,6 +219,7 @@
     "sf_observer": "View translation"
   },
   "settings": {
+    "adding_notes": "Adding Notes",
     "anyone_with_a_link": "Anyone with a link",
     "community_checking_settings": "Community Checking Settings",
     "connect_network_to_change_settings": "Project settings cannot be changed while offline. Please connect to the internet to make changes.",
@@ -238,6 +239,9 @@
     "export_none": "No answers",
     "exporting_answers": "Exporting Answers",
     "log_in_with_paratext": "Log in to Paratext",
+    "no_tag_icon": "No note tag icon has been created for this project",
+    "notes_created_tagged_with_icon": "Notes added in Scripture Forge on this project will be tagged with the icon below. If you desire to use a different icon, please update the icon for the \"Scripture Forge Note\" tag in Paratext.",
+    "sf_note_tag_icon": "Scripture Forge Note Icon",
     "see_others_answers_and_comments": "Allow checkers to see each other's answers",
     "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
     "settings": "Settings",

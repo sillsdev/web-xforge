@@ -131,7 +131,8 @@ export function getSFProject(id: string): SFProjectProfile {
         hasSource: true,
         permissions: {}
       }
-    ]
+    ],
+    noteTags: []
   };
 }
 
