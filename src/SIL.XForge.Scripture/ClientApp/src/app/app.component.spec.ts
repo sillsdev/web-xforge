@@ -980,6 +980,7 @@ class TestEnvironment {
         userRoles,
         userPermissions: {},
         texts,
+        noteTags: [],
         paratextUsers: paratextUsersFromRoles(userRoles)
       }
     });
