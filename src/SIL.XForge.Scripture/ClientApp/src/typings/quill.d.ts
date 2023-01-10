@@ -27,7 +27,7 @@ declare module 'quill' {
   }
 
   export interface Selection {
-    getBounds(index: number, length?: number): ClientRect;
+    getBounds(index: number, length?: number): DOMRect;
     update(sources: Sources): void;
   }
 

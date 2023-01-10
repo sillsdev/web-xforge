@@ -103,9 +103,10 @@ describe('AuthHttpInterceptor', () => {
       expect(request.headers.get('authorization')).toEqual(`Bearer ${TestEnvironment.accessToken}`);
       return true;
     });
-    request.error(new ErrorEvent('Error', { message: 'An error occurred' }));
+    const mockError = new ProgressEvent('An error occurred');
+    request.error(mockError);
     tick();
-    expect(result!.error.message).toBe('An error occurred');
+    expect(result!.error).toBe(mockError);
     env.httpMock.verify();
   }));
 

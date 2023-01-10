@@ -143,7 +143,7 @@ export function getAudioBlob(): Blob {
     'ABgACAAIABgACAAYACgACAAoAAgASAAACABIABgACABIABgACABYAAAIACh4AABIeAAIACgACAAIACgAWAAIABgAWGgAABg4AAB' +
     'oAFhYAAAIAAhoADgAeAAIATgoAAAIAGhYACgACAA4AGgAOABoAGgASABoACgAeEgAKAAAWFgAABACKAFYAHgAGDgAAHgACABYAB' +
     'gACABAQCAMQA1wAhADB2A=';
-  const byteCharacters = atob(base64);
+  const byteCharacters = window.atob(base64);
   const byteNumbers = new Array(byteCharacters.length);
   for (let i = 0; i < byteCharacters.length; i++) {
     byteNumbers[i] = byteCharacters.charCodeAt(i);

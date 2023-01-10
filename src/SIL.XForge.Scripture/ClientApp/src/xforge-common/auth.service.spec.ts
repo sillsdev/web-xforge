@@ -594,7 +594,7 @@ class TestEnvironment {
   static encodeAccessToken(token: Auth0AccessToken) {
     // The response from auth0 contains 3 parts separated by a dot
     // jwtDecode does a base64 decode on a JSON string after the first dot
-    return '.' + btoa(JSON.stringify(token));
+    return '.' + window.btoa(JSON.stringify(token));
   }
 
   constructor({
