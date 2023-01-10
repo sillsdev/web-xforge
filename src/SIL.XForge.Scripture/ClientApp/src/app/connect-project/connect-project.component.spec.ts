@@ -406,6 +406,7 @@ class TestEnvironment {
         sync: { queuedCount: 1 },
         editable: true,
         texts: [],
+        noteTags: [],
         userRoles: {
           user01: SFProjectRole.ParatextAdministrator
         },

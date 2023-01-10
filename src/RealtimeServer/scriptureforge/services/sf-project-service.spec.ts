@@ -133,7 +133,8 @@ class TestEnvironment {
             translator: 'write'
           }
         }
-      ]
+      ],
+      noteTags: []
     });
   }
 }

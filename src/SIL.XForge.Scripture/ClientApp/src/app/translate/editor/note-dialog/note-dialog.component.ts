@@ -4,6 +4,7 @@ import { translate } from '@ngneat/transloco';
 import { cloneDeep, sortBy } from 'lodash-es';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   AssignedUsers,
   NoteConflictType,
@@ -20,7 +21,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { NoteThreadDoc, defaultNoteThreadIcon, DEFAULT_TAG_ICON } from '../../../core/models/note-thread-doc';
+import { NoteThreadDoc, defaultNoteThreadIcon } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -90,9 +91,16 @@ export class NoteDialogComponent implements OnInit {
     return this.threadDoc?.data?.assignment ?? '';
   }
 
+  get defaultNoteTagId(): number | undefined {
+    return this.projectProfileDoc?.data?.translateConfig.defaultNoteTagId;
+  }
+
   get flagIcon(): string {
     if (this.threadDoc?.data == null) {
-      return defaultNoteThreadIcon(this.projectProfileDoc?.data?.tagIcon).url;
+      const noteTag: NoteTag | undefined = this.projectProfileDoc?.data?.noteTags.find(
+        t => t.id === this.defaultNoteTagId
+      );
+      return defaultNoteThreadIcon(noteTag?.icon).url;
     }
     return this.isAssignedToOtherUser ? this.threadDoc.iconGrayed.url : this.threadDoc.icon.url;
   }
@@ -373,6 +381,7 @@ export class NoteDialogComponent implements OnInit {
       // create a new thread
       const threadId: string = objectId();
       this.noteBeingEdited.threadId = threadId;
+
       const noteThread: NoteThread = {
         dataId: threadId,
         verseRef: verseRef,
@@ -383,11 +392,14 @@ export class NoteDialogComponent implements OnInit {
         originalContextBefore: '',
         originalSelectedText: this.segmentText,
         originalContextAfter: '',
-        tagIcon: this.projectProfileDoc!.data!.tagIcon ?? DEFAULT_TAG_ICON,
+        tagIcon: this.projectProfileDoc?.data?.noteTags.find(t => t.id === this.defaultNoteTagId)?.icon ?? '',
         status: NoteStatus.Todo,
         publishedToSF: true
       };
       await this.projectService.createNoteThread(this.projectId, noteThread);
+      if (this.projectProfileDoc != null && this.projectProfileDoc?.data?.translateConfig.defaultNoteTagId == null) {
+        await this.projectProfileDoc.submitJson0Op(op => op.set(p => p.translateConfig.defaultNoteTagId, 0));
+      }
       this.dialogRef.close(true);
       return;
     }

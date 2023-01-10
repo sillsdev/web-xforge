@@ -363,6 +363,7 @@ class TestEnvironment {
                   }
                 ]
               : [],
+          noteTags: [],
           userRoles:
             args.memberProjects == null
               ? {}

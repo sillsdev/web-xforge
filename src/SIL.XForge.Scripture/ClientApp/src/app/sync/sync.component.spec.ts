@@ -283,6 +283,7 @@ class TestEnvironment {
         syncDisabled: isSyncDisabled,
         editable: true,
         texts: [],
+        noteTags: [],
         userRoles: {},
         paratextUsers: [],
         userPermissions: {}

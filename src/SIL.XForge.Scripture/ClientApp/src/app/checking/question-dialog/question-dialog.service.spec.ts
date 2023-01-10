@@ -196,6 +196,7 @@ class TestEnvironment {
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     texts: [this.matthewText],
+    noteTags: [],
     sync: { queuedCount: 0 },
     editable: true,
     userRoles: {

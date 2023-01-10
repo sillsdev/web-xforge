@@ -673,6 +673,79 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_CreatesNoteTagIcon()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 1) };
+            env.SetupSFData(true, true, false, true, books);
+            env.SetupNewNoteTag("project01");
+            env.SetupPTData(books);
+
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+            env.VerifyProjectSync(true, null, "project01");
+            env.ParatextService
+                .Received()
+                .UpdateCommentTag(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<string>(),
+                    Arg.Any<SIL.XForge.Scripture.Models.NoteTag>()
+                );
+        }
+
+        [Test]
+        public async Task SyncAsync_UpdatesExistingNoteTags()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 1) };
+            env.SetupSFData(true, true, false, true, books);
+            var noteTags = new List<NoteTag>
+            {
+                new NoteTag
+                {
+                    Id = 1,
+                    Name = "To do",
+                    Icon = NoteTag.defaultTagIcon
+                },
+                new NoteTag
+                {
+                    Id = 2,
+                    Name = "Original tag",
+                    Icon = "originalIcon"
+                },
+                new NoteTag
+                {
+                    Id = 3,
+                    Name = "Tag to delete",
+                    Icon = "delete"
+                }
+            };
+            env.SetupProjectNoteTags("project01", noteTags);
+            env.SetupPTData(books);
+            var newNoteTags = new List<NoteTag>
+            {
+                new NoteTag
+                {
+                    Id = 1,
+                    Name = "To do",
+                    Icon = NoteTag.defaultTagIcon
+                },
+                new NoteTag
+                {
+                    Id = 2,
+                    Name = "Edited tag",
+                    Icon = "editedIcon"
+                }
+            };
+            env.ParatextService
+                .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
+                .Returns(new ParatextSettings { NoteTags = newNoteTags });
+
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+            SFProject project = env.VerifyProjectSync(true, null, "project01");
+            Assert.That(project.NoteTags.Select(t => t.Name), Is.EquivalentTo(newNoteTags.Select(t => t.Name)));
+        }
+
+        [Test]
         public async Task SyncAsync_SetsProjectSettings()
         {
             var env = new TestEnvironment();
@@ -695,15 +768,24 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.DefaultFont, Is.EqualTo(font));
             int newFontSize = 16;
             string newFont = "Doulos SIL";
-            string toDoIcon = "todoIcon1";
+            string customIcon = "customIcon01";
+            List<NoteTag> noteTags = new List<NoteTag>
+            {
+                new NoteTag
+                {
+                    Id = env.translateNoteTagId,
+                    Icon = customIcon,
+                    Name = "Tag Name"
+                }
+            };
             env.ParatextService
-                .GetParatextSettings(Arg.Any<UserSecret>(), "target")
+                .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
                 .Returns(
                     new ParatextSettings
                     {
                         DefaultFontSize = newFontSize,
                         DefaultFont = newFont,
-                        TagIcon = toDoIcon
+                        NoteTags = noteTags
                     }
                 );
 
@@ -712,7 +794,7 @@ namespace SIL.XForge.Scripture.Services
             project = env.VerifyProjectSync(true);
             Assert.That(project.DefaultFontSize, Is.EqualTo(newFontSize));
             Assert.That(project.DefaultFont, Is.EqualTo(newFont));
-            Assert.That(project.TagIcon, Is.EqualTo(toDoIcon));
+            Assert.That(project.NoteTags.Select(t => t.Icon), Is.EquivalentTo(new[] { customIcon }));
         }
 
         [Test]
@@ -2219,6 +2301,7 @@ namespace SIL.XForge.Scripture.Services
 
         private class TestEnvironment
         {
+            public int translateNoteTagId = 5;
             private readonly MemoryRepository<SFProjectSecret> _projectSecrets;
             private readonly MemoryRepository<SyncMetrics> _syncMetrics;
             private bool _sendReceivedCalled = false;
@@ -2573,7 +2656,8 @@ namespace SIL.XForge.Scripture.Services
                                 ShortName = "SRC",
                                 WritingSystem = new WritingSystem { Tag = "en" },
                                 IsRightToLeft = false
-                            }
+                            },
+                            DefaultNoteTagId = translateNoteTagId
                         },
                         CheckingConfig = new CheckingConfig
                         {
@@ -2593,7 +2677,8 @@ namespace SIL.XForge.Scripture.Services
                         {
                             new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "User 1" },
                             new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" }
-                        }
+                        },
+                        NoteTags = new List<NoteTag>()
                     },
                     new SFProject
                     {
@@ -2604,6 +2689,7 @@ namespace SIL.XForge.Scripture.Services
                         ParatextId = "source",
                         IsRightToLeft = false,
                         TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
+                        NoteTags = new List<NoteTag>(),
                         CheckingConfig = new CheckingConfig
                         {
                             CheckingEnabled = checkingEnabled,
@@ -3045,6 +3131,24 @@ namespace SIL.XForge.Scripture.Services
 
                 // Cause the created NoteThreadChange to be what is given when changes are asked for.
                 SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
+            }
+
+            /// <summary> Set the project's default comment tag to the a blank comment tag. </summary>
+            public void SetupNewNoteTag(string projectId)
+            {
+                RealtimeService
+                    .GetRepository<SFProject>()
+                    .UpdateAsync(
+                        p => p.Id == projectId,
+                        u => u.Set(p => p.TranslateConfig.DefaultNoteTagId, CommentTag.notSetId)
+                    );
+            }
+
+            public void SetupProjectNoteTags(string projectId, List<NoteTag> noteTags)
+            {
+                RealtimeService
+                    .GetRepository<SFProject>()
+                    .UpdateAsync(p => p.Id == projectId, u => u.Set(p => p.NoteTags, noteTags));
             }
 
             /// <summary>

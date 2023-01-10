@@ -2979,7 +2979,8 @@ class TestEnvironment {
         hasSource: false,
         permissions: this.textInfoPermissions
       }
-    ]
+    ],
+    noteTags: []
   };
 
   constructor() {
