@@ -565,11 +565,23 @@ namespace SIL.XForge.Scripture.Services
                 string textFileData = GetTextFileData(text);
                 if (!string.IsNullOrWhiteSpace(textFileData))
                 {
+                    // Remove the project id from the start of the text id (if present)
+                    string textId = text.Id.StartsWith($"{project.Id}_") ? text.Id[(project.Id.Length + 1)..] : text.Id;
+
+                    // If the writing system is the same, we need to differentiate the texts.
+                    // Note that if the writing system is different, the same text id is required for source and target
+                    // texts to allow them to be aligned in the ParallelTextCorpus
+                    if (project.WritingSystem.Tag == project.TranslateConfig.Source.WritingSystem.Tag)
+                    {
+                        textId = $"{text.Id}_{type.ToString().ToLowerInvariant()}";
+                    }
+
                     // See if the corpus exists, and delete it if it does
                     bool uploadText = false;
-                    string textId = $"{text.Id}_{type.ToString().ToLowerInvariant()}";
                     string checksum = StringUtils.ComputeMd5Hash(textFileData);
-                    MachineCorpusFile? previousCorpusFile = previousCorpusFiles.FirstOrDefault(c => c.TextId == textId);
+                    MachineCorpusFile? previousCorpusFile = previousCorpusFiles.FirstOrDefault(
+                        c => c.TextId == textId && c.LanguageTag == languageTag
+                    );
                     if (previousCorpusFile is null)
                     {
                         uploadText = true;
@@ -603,7 +615,9 @@ namespace SIL.XForge.Scripture.Services
                         // Record the fileId and checksum, matching the text id
                         // We coalesce to -1, as FindIndex returns -1 if not found
                         int index =
-                            projectSecret.MachineData?.Corpora[corpusId].Files.FindIndex(f => f.TextId == textId) ?? -1;
+                            projectSecret.MachineData?.Corpora[corpusId].Files.FindIndex(
+                                f => f.TextId == textId && f.LanguageTag == languageTag
+                            ) ?? -1;
 
                         if (previousCorpusFile is null || index == -1)
                         {
