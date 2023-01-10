@@ -47,7 +47,7 @@ describe('NoteThreadService', () => {
   it('removes read refs when note deleted', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    const conn: Connection = clientConnect(env.server, 'projectAdmin');
+    const conn: Connection = clientConnect(env.server, env.projectAdminId);
     await env.setHaveReadNoteRefs(conn);
 
     // Assert that data is set up as expected for testing.
@@ -56,14 +56,15 @@ describe('NoteThreadService', () => {
     env.assertHaveReadNotes();
 
     let adminProjectUserConfig: SFProjectUserConfig =
-      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', 'projectAdmin')].data;
+      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', env.projectAdminId)]
+        .data;
     expect(adminProjectUserConfig.noteRefsRead).toContain('noteThread01note01');
     expect(adminProjectUserConfig.noteRefsRead).not.toContain('noteThread01note02');
     expect(adminProjectUserConfig.noteRefsRead).toContain('noteThread01note03');
     expect(adminProjectUserConfig.noteRefsRead).toContain('noteThread01note04');
     expect(adminProjectUserConfig.noteRefsRead).toContain('noteThread02note01');
     let checkerProjectUserConfig: SFProjectUserConfig =
-      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', 'checker')].data;
+      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', env.checkerId)].data;
     expect(checkerProjectUserConfig.noteRefsRead).toContain('noteThread01note03');
     expect(checkerProjectUserConfig.noteRefsRead).toContain('noteThread01note04');
 
@@ -85,7 +86,7 @@ describe('NoteThreadService', () => {
     await flushPromises();
 
     adminProjectUserConfig = env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][
-      getSFProjectUserConfigDocId('project01', 'projectAdmin')
+      getSFProjectUserConfigDocId('project01', env.projectAdminId)
     ].data as SFProjectUserConfig;
     // This have-read should be gone since the corresponding note was removed.
     expect(adminProjectUserConfig.noteRefsRead).not.toContain('noteThread01note01');
@@ -98,7 +99,7 @@ describe('NoteThreadService', () => {
     // this have-read should not have been removed. It regards a note in another notethread that was not touched.
     expect(adminProjectUserConfig.noteRefsRead).toContain('noteThread02note01');
     checkerProjectUserConfig = env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][
-      getSFProjectUserConfigDocId('project01', 'checker')
+      getSFProjectUserConfigDocId('project01', env.checkerId)
     ].data as SFProjectUserConfig;
     // This have-read should be gone since the corresponding note was removed.
     expect(checkerProjectUserConfig.noteRefsRead).not.toContain('noteThread01note03');
@@ -109,7 +110,7 @@ describe('NoteThreadService', () => {
   it('allows user to read note thread', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    const conn: Connection = clientConnect(env.server, 'projectAdmin');
+    const conn: Connection = clientConnect(env.server, env.projectAdminId);
     const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'));
     expect(doc).not.toBeNull();
   });
@@ -117,7 +118,7 @@ describe('NoteThreadService', () => {
   it('prohibits reviewer user to read note threads not published in Scripture Forge', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    const conn: Connection = clientConnect(env.server, 'reviewer');
+    const conn: Connection = clientConnect(env.server, env.reviewerId);
 
     const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread01');
     await expect(async () => fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId)).rejects.toEqual(
@@ -132,12 +133,13 @@ describe('NoteThreadService', () => {
   it('allows a reviewer to create a note thread', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    const conn: Connection = clientConnect(env.server, 'reviewer');
+    // the user id 'reviewer' is assigned to have the Reviewer role on the project
+    const conn: Connection = clientConnect(env.server, env.reviewerId);
 
     const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread04');
     const noteThread: NoteThread = {
       dataId: 'noteThread04',
-      ownerRef: 'reviewer',
+      ownerRef: env.reviewerId,
       projectRef: 'project01',
       publishedToSF: true,
       tagIcon: '',
@@ -147,7 +149,7 @@ describe('NoteThreadService', () => {
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 10 },
       status: NoteStatus.Todo,
       position: { start: 0, length: 0 },
-      notes: [env.getNewNote('noteThread04', 'noteThread04note01', 'reviewer')]
+      notes: [env.getNewNote('noteThread04', 'noteThread04note01', env.reviewerId)]
     };
     await createDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId, noteThread);
     const noteThreadDoc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId);
@@ -157,9 +159,9 @@ describe('NoteThreadService', () => {
   it('reviewers can add notes to note thread they can read', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    const conn: Connection = clientConnect(env.server, 'reviewer');
+    const conn: Connection = clientConnect(env.server, env.reviewerId);
     const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread01');
-    const note: Note = env.getNewNote('noteThread01', 'reviewerNote01', 'reviewer');
+    const note: Note = env.getNewNote('noteThread01', 'reviewerNote01', env.reviewerId);
     // since the user cannot read the note thread, they should not be able to add a note
     await expect(() =>
       submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, noteThreadDocId, op => op.insert(n => n.notes, 4, note))
@@ -178,10 +180,10 @@ describe('NoteThreadService', () => {
     expect(sfNoteThread.notes.length).toEqual(2);
   });
 
-  it('allows reviewer to update own note', async () => {
+  it('allows reviewer to update and delete own note', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    const conn: Connection = clientConnect(env.server, 'reviewer');
+    const conn: Connection = clientConnect(env.server, env.reviewerId);
     const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread02');
     const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId);
     const noteThread: NoteThread = doc.data as NoteThread;
@@ -227,7 +229,7 @@ describe('NoteThreadService', () => {
   it('allows reviewer to delete their own note thread', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    const conn: Connection = clientConnect(env.server, 'reviewer');
+    const conn: Connection = clientConnect(env.server, env.reviewerId);
     const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread02');
     await expect(() => deleteDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId)).rejects.toEqual(
       new Error(`403: Permission denied (delete), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
@@ -246,19 +248,20 @@ describe('NoteThreadService', () => {
   it('removes have-read note refs when thread deleted', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    const conn: Connection = clientConnect(env.server, 'projectAdmin');
+    const conn: Connection = clientConnect(env.server, env.projectAdminId);
     await env.setHaveReadNoteRefs(conn);
 
     // Assert that data is set up as expected for testing.
     expect(await hasDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'))).toEqual(true);
     env.assertHaveReadNotes();
     let adminProjectUserConfig: SFProjectUserConfig =
-      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', 'projectAdmin')].data;
+      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', env.projectAdminId)]
+        .data;
     expect(adminProjectUserConfig.noteRefsRead).toContain('noteThread01note01');
     expect(adminProjectUserConfig.noteRefsRead).toContain('noteThread01note03');
     expect(adminProjectUserConfig.noteRefsRead).toContain('noteThread02note01');
     let checkerProjectUserConfig: SFProjectUserConfig =
-      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', 'checker')].data;
+      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', env.checkerId)].data;
     expect(checkerProjectUserConfig.noteRefsRead).toContain('noteThread01note03');
 
     // SUT
@@ -268,20 +271,24 @@ describe('NoteThreadService', () => {
     // Doc should be gone.
     expect(await hasDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'))).toEqual(false);
     adminProjectUserConfig =
-      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', 'projectAdmin')].data;
+      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', env.projectAdminId)]
+        .data;
     // Have-read note references to notes in the thread that was removed should be gone.
     expect(adminProjectUserConfig.noteRefsRead).not.toContain('noteThread01note01');
     expect(adminProjectUserConfig.noteRefsRead).not.toContain('noteThread01note03');
     // Have-read note references to notes in a thread that was not removed should not have disappeared.
     expect(adminProjectUserConfig.noteRefsRead).toContain('noteThread02note01');
     checkerProjectUserConfig =
-      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', 'checker')].data;
+      env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', env.checkerId)].data;
     // Also for other users, the have-read note references to notes in the removed thread, should be gone.
     expect(checkerProjectUserConfig.noteRefsRead).not.toContain('noteThread01note03');
   });
 });
 
 class TestEnvironment {
+  readonly projectAdminId = 'projectAdmin';
+  readonly checkerId = 'checker';
+  readonly reviewerId = 'reviewer';
   readonly service: NoteThreadService;
   readonly server: RealtimeServer;
   readonly db: ShareDBMingo;
@@ -306,7 +313,7 @@ class TestEnvironment {
 
   async createData(): Promise<void> {
     const conn = this.server.connect();
-    await createDoc<User>(conn, USERS_COLLECTION, 'projectAdmin', {
+    await createDoc<User>(conn, USERS_COLLECTION, this.projectAdminId, {
       name: 'User 01',
       email: 'user01@example.com',
       role: SystemRole.User,
@@ -320,10 +327,10 @@ class TestEnvironment {
     await createDoc<SFProjectUserConfig>(
       conn,
       SF_PROJECT_USER_CONFIGS_COLLECTION,
-      getSFProjectUserConfigDocId('project01', 'projectAdmin'),
+      getSFProjectUserConfigDocId('project01', this.projectAdminId),
       {
         projectRef: 'project01',
-        ownerRef: 'projectAdmin',
+        ownerRef: this.projectAdminId,
         isTargetTextRight: false,
         confidenceThreshold: 0.2,
         translationSuggestionsEnabled: true,
@@ -336,7 +343,7 @@ class TestEnvironment {
       }
     );
 
-    await createDoc<User>(conn, USERS_COLLECTION, 'checker', {
+    await createDoc<User>(conn, USERS_COLLECTION, this.checkerId, {
       name: 'User 02',
       email: 'user02@example.com',
       role: SystemRole.User,
@@ -350,10 +357,10 @@ class TestEnvironment {
     await createDoc<SFProjectUserConfig>(
       conn,
       SF_PROJECT_USER_CONFIGS_COLLECTION,
-      getSFProjectUserConfigDocId('project01', 'checker'),
+      getSFProjectUserConfigDocId('project01', this.checkerId),
       {
         projectRef: 'project01',
-        ownerRef: 'checker',
+        ownerRef: this.checkerId,
         isTargetTextRight: false,
         confidenceThreshold: 0.2,
         translationSuggestionsEnabled: true,
@@ -366,7 +373,7 @@ class TestEnvironment {
       }
     );
 
-    await createDoc<User>(conn, USERS_COLLECTION, 'reviewer', {
+    await createDoc<User>(conn, USERS_COLLECTION, this.reviewerId, {
       name: 'User 03',
       email: 'user03@example.com',
       role: SystemRole.User,
@@ -380,10 +387,10 @@ class TestEnvironment {
     await createDoc<SFProjectUserConfig>(
       conn,
       SF_PROJECT_USER_CONFIGS_COLLECTION,
-      getSFProjectUserConfigDocId('project01', 'reviewer'),
+      getSFProjectUserConfigDocId('project01', this.reviewerId),
       {
         projectRef: 'project01',
-        ownerRef: 'reviewer',
+        ownerRef: this.reviewerId,
         isTargetTextRight: false,
         confidenceThreshold: 0.2,
         translationSuggestionsEnabled: false,
@@ -470,10 +477,10 @@ class TestEnvironment {
 
     await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread03'), {
       projectRef: 'project01',
-      ownerRef: 'reviewer',
+      ownerRef: this.reviewerId,
       dataId: 'noteThread03',
       verseRef,
-      notes: [this.getNewNote('noteThread03', 'noteThread03note01', 'reviewer')],
+      notes: [this.getNewNote('noteThread03', 'noteThread03note01', this.reviewerId)],
       originalSelectedText: '',
       originalContextBefore: '',
       originalContextAfter: '',
@@ -489,7 +496,7 @@ class TestEnvironment {
     submitJson0Op<SFProjectUserConfig>(
       conn,
       SF_PROJECT_USER_CONFIGS_COLLECTION,
-      getSFProjectUserConfigDocId('project01', 'projectAdmin'),
+      getSFProjectUserConfigDocId('project01', this.projectAdminId),
       ops => {
         ops.add((puc: SFProjectUserConfig) => puc.noteRefsRead, 'noteThread01note01');
         ops.add((puc: SFProjectUserConfig) => puc.noteRefsRead, 'noteThread01note03');
@@ -500,7 +507,7 @@ class TestEnvironment {
     submitJson0Op<SFProjectUserConfig>(
       conn,
       SF_PROJECT_USER_CONFIGS_COLLECTION,
-      getSFProjectUserConfigDocId('project01', 'checker'),
+      getSFProjectUserConfigDocId('project01', this.checkerId),
       ops => {
         ops.add((puc: SFProjectUserConfig) => puc.noteRefsRead, 'noteThread01note03');
         ops.add((puc: SFProjectUserConfig) => puc.noteRefsRead, 'noteThread01note04');
@@ -530,7 +537,7 @@ class TestEnvironment {
       dateCreated: '',
       dateModified: '',
       ownerRef,
-      content: 'this note should not be inserted',
+      content: 'note content',
       type: NoteType.Normal,
       conflictType: NoteConflictType.DefaultValue,
       status: NoteStatus.Todo,
