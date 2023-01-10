@@ -14,11 +14,13 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
+import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { defaultNoteThreadIcon } from '../core/models/note-thread-doc';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
@@ -128,6 +130,18 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get deleteButtonDisabled(): boolean {
     return !this.isAppOnline || !this.mainSettingsLoaded || this.isActiveSourceProject;
+  }
+
+  get defaultNoteTagId(): number | undefined {
+    return this.projectDoc?.data?.translateConfig.defaultNoteTagId;
+  }
+
+  get reviewerTagIconSrc(): string {
+    if (this.defaultNoteTagId === null) {
+      return '';
+    }
+    const noteTag: NoteTag | undefined = this.projectDoc?.data?.noteTags.find(t => t.id === this.defaultNoteTagId);
+    return noteTag == null ? '' : defaultNoteThreadIcon(noteTag.icon).url;
   }
 
   ngOnInit(): void {

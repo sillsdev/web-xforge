@@ -637,6 +637,7 @@ class TestEnvironment {
         permissions: {}
       }
     ],
+    noteTags: [],
     userRoles: {
       [this.adminUser.id]: this.adminUser.role,
       [this.checkerUser.id]: this.checkerUser.role,
