@@ -1,3 +1,4 @@
+import { DEFAULT_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   NoteThread,
   NOTE_THREAD_COLLECTION,
@@ -10,8 +11,6 @@ import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { AssignedUsers } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-
-export const DEFAULT_TAG_ICON = '01flag1';
 
 export function defaultNoteThreadIcon(tagIcon: string | undefined): NoteThreadIcon {
   if (tagIcon == null) {

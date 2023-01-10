@@ -24,6 +24,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
+import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
@@ -359,6 +360,38 @@ describe('SettingsComponent', () => {
         expect(env.statusDone(env.translationSuggestionsStatus)).not.toBeNull();
         expect(env.statusDone(env.basedOnStatus)).toBeNull();
       }));
+
+      it('shows no icon selected if project tag icon not set', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          translationSuggestionsEnabled: true,
+          shareEnabled: false,
+          shareLevel: TranslateShareLevel.Specific,
+          source: {
+            paratextId: 'paratextId01',
+            projectRef: 'paratext01',
+            name: 'ParatextP1',
+            shortName: 'PT1',
+            writingSystem: {
+              tag: 'qaa'
+            }
+          }
+        });
+        env.wait();
+        expect(env.noteTagIcon).toBeNull();
+        expect(env.noTagIconMsg).toBeTruthy();
+      }));
+
+      it('shows the icon for notes created in SF', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+
+        const tagIcon: string = env.noteTags[0].icon;
+        const noteIconElement: DebugElement = env.noteTagIcon;
+        expect(noteIconElement.query(By.css('img[src="/assets/icons/TagIcons/' + tagIcon + '.png"]'))).not.toBeNull();
+        expect(env.noTagIconMsg).toBeNull();
+      }));
     });
 
     describe('Checking options', () => {
@@ -535,6 +568,7 @@ class TestEnvironment {
   readonly component: SettingsComponent;
   readonly fixture: ComponentFixture<SettingsComponent>;
   readonly location: Location;
+  readonly noteTags: NoteTag[] = [{ id: 1, name: 'Tag icon', icon: 'tag01' }];
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isOnline: BehaviorSubject<boolean>;
@@ -611,6 +645,14 @@ class TestEnvironment {
 
   get translateShareLevelAnyone(): DebugElement {
     return this.fixture.debugElement.query(By.css('#radio-translateShareLevel-anyone'));
+  }
+
+  get noteTagIcon(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#sf-note-tag-icon'));
+  }
+
+  get noTagIconMsg(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#no-tag-icon-msg'));
   }
 
   get checkingCheckbox(): DebugElement {
@@ -747,7 +789,7 @@ class TestEnvironment {
       translationSuggestionsEnabled: true,
       shareEnabled: false,
       shareLevel: TranslateShareLevel.Specific,
-
+      defaultNoteTagId: this.noteTags[0].id,
       source: {
         paratextId: 'paratextId01',
         projectRef: 'paratext01',
@@ -780,6 +822,7 @@ class TestEnvironment {
         sync: { queuedCount: 0 },
         editable: true,
         texts: [],
+        noteTags: this.noteTags,
         userRoles: {},
         userPermissions: {},
         paratextUsers: []
