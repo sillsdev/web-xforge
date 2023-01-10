@@ -14,26 +14,37 @@ namespace SIL.XForge.Realtime
     /// </summary>
     public class RealtimeJsonService : IJsonService
     {
-        private static readonly JsonSerializer Serializer = new JsonSerializer
+        private readonly IContractResolver _contractResolver = new DefaultContractResolver
         {
-            ContractResolver = new CamelCasePropertyNamesContractResolver(),
-            NullValueHandling = NullValueHandling.Ignore,
+            NamingStrategy = new CamelCaseNamingStrategy(),
         };
 
         /// <inheritdoc />
         public ValueTask<T> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
         {
-            using StreamReader sr = new StreamReader(stream, System.Text.Encoding.Default, true, 1024, true);
-            using JsonTextReader reader = new JsonTextReader(sr);
-            return ValueTask.FromResult(Serializer.Deserialize<T>(reader));
+            using var sr = new StreamReader(stream, System.Text.Encoding.Default, true, 1024, false);
+            using var reader = new JsonTextReader(sr) { CloseInput = true };
+            var serializer = new JsonSerializer
+            {
+                ContractResolver = _contractResolver,
+                NullValueHandling = NullValueHandling.Ignore,
+                MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+            };
+            return ValueTask.FromResult(serializer.Deserialize<T>(reader));
         }
 
         /// <inheritdoc />
         public async Task SerializeAsync<T>(Stream stream, T value, CancellationToken cancellationToken = default)
         {
-            await using StreamWriter sw = new StreamWriter(stream, System.Text.Encoding.Default, 1024, true);
-            using JsonWriter writer = new JsonTextWriter(sw);
-            Serializer.Serialize(writer, value);
+            await using var sw = new StreamWriter(stream, System.Text.Encoding.Default, 1024, true);
+            using var writer = new JsonTextWriter(sw);
+            var serializer = new JsonSerializer
+            {
+                ContractResolver = _contractResolver,
+                NullValueHandling = NullValueHandling.Ignore,
+                MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+            };
+            serializer.Serialize(writer, value);
         }
     }
 }
