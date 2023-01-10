@@ -25,11 +25,11 @@ namespace SIL.XForge.Scripture.Services
 
         internal void InitializeTagList(int[] tagIds)
         {
-            CommentTag[] tags = new CommentTag[tagIds.Length];
+            var tags = new Paratext.Data.ProjectComments.CommentTag[tagIds.Length];
             for (int i = 0; i < tagIds.Length; i++)
             {
                 int tagId = tagIds[i];
-                tags[i] = new CommentTag($"tag{tagId}", $"icon{tagId}", tagId);
+                tags[i] = new Paratext.Data.ProjectComments.CommentTag($"tag{tagId}", $"icon{tagId}", tagId);
             }
             var tagsList = new CommentTagList();
             tagsList.SerializedData = tags;

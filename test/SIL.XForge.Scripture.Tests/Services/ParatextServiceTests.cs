@@ -2111,10 +2111,72 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             var associatedPtUser = new SFParatextUser(env.Username01);
-            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            string paratextId = env.SetupProject(env.Project01, associatedPtUser);
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-            ParatextSettings settings = env.Service.GetParatextSettings(userSecret, ptProjectId);
-            Assert.That(settings.TagIcon, Is.EqualTo("icon1"));
+            var noteTag = new NoteTag
+            {
+                Id = 5,
+                Icon = "sf05",
+                Name = "SF Note Tag",
+            };
+            env.SetupCommentTags(env.ProjectScrText, noteTag);
+            ParatextSettings settings = env.Service.GetParatextSettings(userSecret, paratextId);
+            Assert.That(settings.NoteTags.Any(t => t.Name == noteTag.Name), Is.True);
+        }
+
+        [Test]
+        public void GetParatextSettings_NoteTagSetToNull()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            var noteTag = new NoteTag
+            {
+                Id = CommentTag.notSetId,
+                Icon = "sf05",
+                Name = "SF Note Tag"
+            };
+            ParatextSettings settings = env.Service.GetParatextSettings(userSecret, paratextId);
+            Assert.That(settings.NoteTags.FirstOrDefault(t => t.Icon == noteTag.Icon), Is.Null);
+        }
+
+        [Test]
+        public void UpdateCommentTag_WritesTagIcon()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            string icon = "someIcon";
+            var noteTag = new NoteTag
+            {
+                Id = CommentTag.notSetId,
+                Icon = icon,
+                Name = "SF Note Tag"
+            };
+            env.Service.UpdateCommentTag(userSecret, paratextId, noteTag);
+            int tagId = 11;
+            ParatextSettings settings = env.Service.GetParatextSettings(userSecret, paratextId);
+            Assert.That(settings.NoteTags.First(t => t.Icon == icon).Id, Is.EqualTo(tagId));
+        }
+
+        [Test]
+        public void UpdateCommentTag_DoesNotWriteIfExistingTag()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            int existingId = 5;
+            var noteTag = new NoteTag
+            {
+                Id = existingId,
+                Icon = "existingIcon",
+                Name = "SF Note Tag"
+            };
+            env.SetupCommentTags(env.ProjectScrText, noteTag);
+            Assert.Throws<ArgumentException>(() => env.Service.UpdateCommentTag(userSecret, paratextId, noteTag));
         }
 
         [Test]
@@ -3918,7 +3980,7 @@ namespace SIL.XForge.Scripture.Services
                 ProjectScrText.SetFileManager(ProjectFileManager);
                 ProjectCommentManager = CommentManager.Get(ProjectScrText);
                 MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId).Returns(ProjectScrText);
-                SetupCommentTags(ProjectScrText);
+                SetupCommentTags(ProjectScrText, null);
                 return ptProjectId;
             }
 
@@ -4040,15 +4102,25 @@ namespace SIL.XForge.Scripture.Services
                 return scrText;
             }
 
-            public void SetupCommentTags(MockScrText scrText)
+            public void SetupCommentTags(MockScrText scrText, NoteTag noteTag)
             {
-                CommentTag[] tags = new CommentTag[10];
-                for (int tagId = 0; tagId < 10; tagId++)
+                int tagCount = 10;
+                var tags = new List<CommentTag>();
+                int noteTagId = noteTag?.Id ?? -1;
+                for (int tagId = 1; tagId <= tagCount; tagId++)
                 {
-                    tags[tagId] = new Paratext.Data.ProjectComments.CommentTag($"tag{tagId}", $"icon{tagId}", tagId);
+                    if (tagId < tagCount)
+                    {
+                        if (tagId == noteTagId)
+                            tags.Add(new CommentTag(noteTag.Name, noteTag.Icon, tagId));
+                        else
+                            tags.Add(new CommentTag($"tag{tagId}", $"icon{tagId}", tagId));
+                    }
                 }
+
                 CommentTags.CommentTagList list = new CommentTags.CommentTagList();
-                list.SerializedData = tags;
+                list.SerializedData = tags.ToArray();
+                list.SerializedLastUsedId = tagCount;
                 scrText.FileManager.GetXml<CommentTags.CommentTagList>(Arg.Any<string>()).Returns(list);
             }
 

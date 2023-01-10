@@ -1771,6 +1771,7 @@ class TestEnvironment {
         permissions: {}
       }
     ],
+    noteTags: [],
     userRoles: {
       [ADMIN_USER.id]: ADMIN_USER.role,
       [CHECKER_USER.id]: CHECKER_USER.role,

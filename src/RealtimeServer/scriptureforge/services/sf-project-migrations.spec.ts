@@ -149,6 +149,26 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.editable).toBe(true);
     });
   });
+
+  describe('version 7', () => {
+    it('moves tag icon to translateConfig class', async () => {
+      const env = new TestEnvironment(6);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        tagIcon: '01flag1',
+        translateConfig: {}
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.tagIcon).toBeDefined();
+      expect(projectDoc.data.noteTags).toBeUndefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.tagIcon).toBeUndefined();
+      expect(projectDoc.data.noteTags).toBeDefined();
+    });
+  });
 });
 
 class TestEnvironment {

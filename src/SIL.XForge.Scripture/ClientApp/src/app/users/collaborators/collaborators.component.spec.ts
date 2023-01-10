@@ -677,6 +677,7 @@ class TestEnvironment {
         shareLevel: CheckingShareLevel.Specific,
         answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
+      noteTags: [],
       editable: true,
       userRoles,
       paratextUsers: paratextUsersFromRoles(userRoles),
