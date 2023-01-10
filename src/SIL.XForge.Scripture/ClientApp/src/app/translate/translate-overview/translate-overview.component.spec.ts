@@ -346,7 +346,8 @@ class TestEnvironment {
             hasSource: true,
             permissions: {}
           }
-        ]
+        ],
+        noteTags: []
       }
     });
 
