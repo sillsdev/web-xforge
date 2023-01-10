@@ -226,6 +226,20 @@ namespace SIL.XForge.Scripture.Services
                         //     (await FetchNoteThreadDocsAsync(text.BookNum)).Values;
                         // await _paratextService.UpdateParatextCommentsAsync(_userSecret, targetParatextId, text.BookNum,
                         //     noteThreadDocs, _currentPtSyncUsers);
+                        int noteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? -1;
+                        if (noteTagId == 0)
+                        {
+                            var newNoteTag = new NoteTag
+                            {
+                                Id = 0,
+                                Icon = NoteTag.sfNoteTagIcon,
+                                Name = NoteTag.sfNoteTagName
+                            };
+                            noteTagId = _paratextService.UpdateCommentTag(_userSecret, targetParatextId, newNoteTag);
+                            await _projectDoc.SubmitJson0OpAsync(
+                                op => op.Set(p => p.TranslateConfig.DefaultNoteTagId, noteTagId)
+                            );
+                        }
                     }
                 }
 
@@ -1388,7 +1402,32 @@ namespace SIL.XForge.Scripture.Services
                     op.Set(pd => pd.Editable, settings.Editable);
                     op.Set(pd => pd.DefaultFont, settings.DefaultFont);
                     op.Set(pd => pd.DefaultFontSize, settings.DefaultFontSize);
-                    op.Set(pd => pd.TagIcon, settings.TagIcon);
+                    if (settings.NoteTags != null)
+                    {
+                        List<int> tagsToRemove = _projectDoc.Data.NoteTags.Select(t => t.Id).ToList();
+                        foreach (NoteTag tag in settings.NoteTags)
+                        {
+                            tagsToRemove.Remove(tag.Id);
+                            int index = _projectDoc.Data.NoteTags.FindIndex(t => t.Id == tag.Id);
+                            int tagLength = _projectDoc.Data.NoteTags.Count;
+                            if (index == -1)
+                            {
+                                op.Add(pd => pd.NoteTags, tag);
+                                continue;
+                            }
+                            NoteTag nt = _projectDoc.Data.NoteTags.FirstOrDefault(t => t.Id == tag.Id);
+                            if (nt.Name != tag.Name)
+                                op.Set(pd => pd.NoteTags[index].Name, tag.Name);
+                            if (nt.Icon != tag.Icon)
+                                op.Set(pd => pd.NoteTags[index].Icon, tag.Icon);
+                        }
+
+                        foreach (int tagId in tagsToRemove)
+                        {
+                            int index = _projectDoc.Data.NoteTags.FindIndex(t => t.Id == tagId);
+                            op.Remove(pd => pd.NoteTags, index);
+                        }
+                    }
                 }
                 // The source can be null if there was an error getting a resource from the DBL
                 if (TranslationSuggestionsEnabled && _projectDoc.Data.TranslateConfig.Source != null)

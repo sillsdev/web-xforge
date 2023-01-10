@@ -421,6 +421,7 @@ class TestEnvironment {
         answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
       texts: [],
+      noteTags: [],
       editable: true,
       sync: { queuedCount: 0 },
       userRoles: {

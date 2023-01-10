@@ -403,6 +403,7 @@ class TestEnvironment {
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     texts: [TestEnvironment.matthewText],
+    noteTags: [],
     sync: { queuedCount: 0 },
     editable: true,
     userRoles: {
