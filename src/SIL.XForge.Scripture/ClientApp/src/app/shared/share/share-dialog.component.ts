@@ -9,7 +9,6 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { PwaService } from 'xforge-common/pwa.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { translate } from '@ngneat/transloco';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
@@ -53,7 +52,6 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     @Inject(MAT_DIALOG_DATA) public readonly data: ShareDialogData,
     private readonly featureFlags: FeatureFlagService,
     readonly i18n: I18nService,
-    private readonly locationService: LocationService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
     private readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
@@ -142,8 +140,8 @@ export class ShareDialogComponent extends SubscriptionDisposable {
 
   copyLink(): void {
     this.navigator.clipboard.writeText(this.sharableLink).then(async () => {
-      await this.reserveShareLink();
       await this.noticeService.show(translate('share_control.link_copied'));
+      await this.reserveShareLink();
     });
   }
 
@@ -201,6 +199,9 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   }
 
   private async reserveShareLink(): Promise<void> {
+    if (this.shareLinkType !== ShareLinkType.Recipient) {
+      return;
+    }
     await this.projectService.onlineReserveLinkSharingKey(this.linkSharingKey);
     this.updateSharingKey();
   }
