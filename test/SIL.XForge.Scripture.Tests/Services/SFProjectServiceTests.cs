@@ -1430,8 +1430,6 @@ namespace SIL.XForge.Scripture.Services
             string userToRemove = User02;
             string projectId = Project06;
 
-            SFProjectSecret projectSecret = env.ProjectSecrets.Get(projectId);
-
             Assert.That(
                 env.ProjectSecrets.Get(projectId).ShareKeys.Any(sk => sk.RecipientUserId == userToRemove),
                 Is.True,
@@ -1439,8 +1437,6 @@ namespace SIL.XForge.Scripture.Services
             );
 
             await env.Service.RemoveUserAsync(requestingUser, projectId, userToRemove);
-
-            projectSecret = env.ProjectSecrets.Get(projectId);
 
             Assert.That(
                 env.ProjectSecrets.Get(projectId).ShareKeys.Any(sk => sk.RecipientUserId == userToRemove),
