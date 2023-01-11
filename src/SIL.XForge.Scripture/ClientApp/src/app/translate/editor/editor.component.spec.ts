@@ -2340,6 +2340,34 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('note icon is changed after remote update', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const threadId: string = 'thread01';
+      const projectId: string = 'project01';
+      const currentIconTag: string = '01flag3';
+      const newIconTag: string = 'tag1';
+
+      const verse1Segment: HTMLElement = env.getSegmentElement('verse_1_1')!;
+      let verse1Note = verse1Segment.querySelector('display-note') as HTMLElement;
+      expect(verse1Note).not.toBeNull();
+      expect(verse1Note.getAttribute('style')).toEqual(
+        `--icon-file: url(/assets/icons/TagIcons/${currentIconTag}.png);`
+      );
+
+      // Update the last note on the thread as that is the icon displayed
+      const noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadId);
+      const index: number = noteThread.data!.notes.length - 1;
+      const note: Note = noteThread.data!.notes[index];
+      note.tagIcon = newIconTag;
+      noteThread.submitJson0Op(op => op.insert(nt => nt.notes, index, note), false);
+      verse1Note = verse1Segment.querySelector('display-note') as HTMLElement;
+      expect(verse1Note.getAttribute('style')).toEqual(`--icon-file: url(/assets/icons/TagIcons/${newIconTag}.png);`);
+      env.dispose();
+    }));
+
     it('note dialog appears after undo delete-a-note', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
