@@ -452,7 +452,11 @@ namespace SIL.XForge.Scripture.Services
                 string key;
                 if (segment.SegmentRef is TextSegmentRef textSegmentRef)
                 {
-                    key = string.Join('_', textSegmentRef.Keys);
+                    // We pad the verse number so the string based key comparisons in Machine will be accurate
+                    key = string.Join(
+                        '_',
+                        textSegmentRef.Keys.Select(k => int.TryParse(k, out int _) ? k.PadLeft(3, '0') : k)
+                    );
                 }
                 else
                 {
