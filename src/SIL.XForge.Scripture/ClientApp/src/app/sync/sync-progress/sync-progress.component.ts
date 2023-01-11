@@ -89,20 +89,11 @@ export class SyncProgressComponent extends SubscriptionDisposable {
   }
 
   public updateProgressState(projectId: string, progressState: ProgressState) {
-    if (this.sourceProjectDoc?.data == null) {
-      // There is no source project, so only check the target
-      if (this._projectDoc?.id === projectId) {
-        this.progressPercent = progressState.progressValue;
-      }
-    } else {
-      if (this.sourceProjectDoc.data.sync.queuedCount > 0 && this.sourceProjectDoc.id === projectId) {
-        // We are syncing the source project
-        this.progressPercent = progressState.progressValue * 0.5;
-      } else if (this._projectDoc?.id === projectId) {
-        // We are syncing the target project
-        // The source project has synchronized so this is the midway point
-        this.progressPercent = 0.5 + progressState.progressValue * 0.5;
-      }
+    const hasSourceProject = this.sourceProjectDoc?.data != null;
+    if (projectId === this._projectDoc?.id) {
+      this.progressPercent = hasSourceProject ? 0.5 + progressState.progressValue * 0.5 : progressState.progressValue;
+    } else if (hasSourceProject && projectId === this.sourceProjectDoc?.id) {
+      this.progressPercent = progressState.progressValue * 0.5;
     }
   }
 
