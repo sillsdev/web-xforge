@@ -2,8 +2,6 @@ import { Component, Input } from '@angular/core';
 import { I18nKey } from 'xforge-common/i18n.service';
 import { TranslocoService } from '@ngneat/transloco';
 
-export type NoticeType = 'normal' | 'warning' | 'error';
-
 @Component({
   selector: 'app-notice',
   templateUrl: './notice.component.html',
@@ -12,7 +10,8 @@ export type NoticeType = 'normal' | 'warning' | 'error';
 export class NoticeComponent {
   @Input() icon?: string;
   @Input() text?: I18nKey;
-  @Input() type: NoticeType = 'normal';
+  @Input() type: 'normal' | 'warning' | 'error' = 'normal';
+  @Input() outline: boolean = false;
 
   constructor(private readonly transloco: TranslocoService) {}
   get notice(): string {

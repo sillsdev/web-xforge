@@ -521,7 +521,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
     public async Task<bool> ReserveLinkSharingKeyAsync(string curUserId, string shareKey)
         {
-            using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+            using (await RealtimeService.ConnectAsync(curUserId))
             {
                 ProjectSecret projectSecret = ProjectSecrets
                     .Query()
@@ -530,7 +530,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     throw new DataNotFoundException("Unable to locate shareKey");
 
                 String projectId = projectSecret.Id;
-                ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
                 SFProject project = await GetProjectAsync(projectId);
                 if (!IsProjectAdmin(project, curUserId))
                     throw new ForbiddenException();
