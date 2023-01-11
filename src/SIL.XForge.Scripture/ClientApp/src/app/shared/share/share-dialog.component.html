@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'share_dialog'">
   <h1 mat-dialog-title>
-    <span>{{ t("share") }} '{{ projectName }}'</span
+    <span>{{ t("share_project", { project: projectName }) }}</span
     ><button mat-icon-button mat-dialog-close tabindex="-1"><mat-icon>close</mat-icon></button>
   </h1>
   <div class="configurations">
@@ -63,7 +63,12 @@
           </mat-selection-list>
         </mat-menu>
       </div>
-      <app-notice *ngIf="isRecipientOnlyLink" icon="info" text="share_dialog.recipient_only_notice"></app-notice>
+      <app-notice
+        *ngIf="isRecipientOnlyLink"
+        icon="info"
+        [outline]="true"
+        text="share_dialog.recipient_only_notice"
+      ></app-notice>
     </ng-container>
   </div>
   <app-notice
@@ -83,7 +88,13 @@
     >
       <mat-icon>share</mat-icon>{{ t("share") }}
     </button>
-    <button id="copy-btn" mat-flat-button (click)="copyLink()" [disabled]="!isLinkReady">
+    <button
+      id="copy-btn"
+      mat-flat-button
+      (click)="copyLink()"
+      [disabled]="!isLinkReady"
+      color="{{ !supportsShareAPI ? 'primary' : '' }}"
+    >
       <mat-icon>content_copy</mat-icon>{{ t("copy_link") }}
     </button>
   </div>
