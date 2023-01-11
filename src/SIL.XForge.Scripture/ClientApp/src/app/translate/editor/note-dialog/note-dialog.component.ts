@@ -9,8 +9,7 @@ import {
   NoteConflictType,
   NoteStatus,
   NoteThread,
-  NoteType,
-  SF_NOTE_THREAD_PREFIX
+  NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
@@ -372,7 +371,7 @@ export class NoteDialogComponent implements OnInit {
     }
     if (this.noteBeingEdited.threadId === '') {
       // create a new thread
-      const threadId: string = SF_NOTE_THREAD_PREFIX + objectId();
+      const threadId: string = objectId();
       this.noteBeingEdited.threadId = threadId;
       const noteThread: NoteThread = {
         dataId: threadId,
@@ -385,7 +384,8 @@ export class NoteDialogComponent implements OnInit {
         originalSelectedText: this.segmentText,
         originalContextAfter: '',
         tagIcon: this.projectProfileDoc!.data!.tagIcon ?? DEFAULT_TAG_ICON,
-        status: NoteStatus.Todo
+        status: NoteStatus.Todo,
+        publishedToSF: true
       };
       await this.projectService.createNoteThread(this.projectId, noteThread);
       this.dialogRef.close(true);

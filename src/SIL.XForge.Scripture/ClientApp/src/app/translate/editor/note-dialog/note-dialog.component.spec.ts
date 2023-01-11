@@ -13,8 +13,7 @@ import {
   NoteConflictType,
   NoteStatus,
   NoteThread,
-  NoteType,
-  SF_NOTE_THREAD_PREFIX
+  NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -477,9 +476,9 @@ describe('NoteDialogComponent', () => {
     const [, noteThread] = capture(mockedProjectService.createNoteThread).last();
     expect(noteThread.verseRef).toEqual(verseData);
     expect(noteThread.originalSelectedText).toEqual('target: chapter 1, verse 3.');
+    expect(noteThread.publishedToSF).toBe(true);
     expect(noteThread.notes[0].ownerRef).toEqual('user01');
     expect(noteThread.notes[0].content).toEqual('Enter note content');
-    expect(noteThread.notes[0].threadId).toContain(SF_NOTE_THREAD_PREFIX);
     expect(noteThread.tagIcon).toEqual('defaultIcon');
   }));
 
