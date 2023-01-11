@@ -263,7 +263,7 @@ describe('ConnectProjectComponent', () => {
     expect(env.component.state).toEqual('connecting');
     expect(env.submitButton).toBeNull();
     expect(env.progressBar).not.toBeNull();
-    env.emitSyncProgress();
+    env.setQueuedCount();
     env.emitSyncComplete();
 
     const settings: SFProjectCreateSettings = {
@@ -290,7 +290,7 @@ describe('ConnectProjectComponent', () => {
 
     expect(env.component.state).toEqual('connecting');
     expect(env.progressBar).not.toBeNull();
-    env.emitSyncProgress();
+    env.setQueuedCount();
     env.emitSyncComplete();
 
     const project: SFProjectCreateSettings = {
@@ -356,7 +356,7 @@ describe('ConnectProjectComponent', () => {
     env.clickElement(env.submitButton);
 
     expect(env.component.state).toEqual('connecting');
-    env.emitSyncProgress();
+    env.setQueuedCount();
     env.emitSyncComplete();
 
     const settings: SFProjectCreateSettings = {
@@ -556,7 +556,7 @@ class TestEnvironment {
     return element.nativeElement.querySelector('input') as HTMLInputElement;
   }
 
-  emitSyncProgress(): void {
+  setQueuedCount(): void {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, 'project01');
     projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.queuedCount, 1), false);
     tick();
