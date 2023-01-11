@@ -56,6 +56,7 @@ namespace SIL.XForge.Scripture.Services
     /// </summary>
     public class ParatextSyncRunner : IParatextSyncRunner
     {
+        private static readonly double _numberOfPhases = Enum.GetValues(typeof(SyncPhase)).Length;
         private static readonly IEqualityComparer<List<Chapter>> _chapterListEqualityComparer =
             SequenceEqualityComparer.Create(new ChapterEqualityComparer());
 
@@ -387,6 +388,7 @@ namespace SIL.XForge.Scripture.Services
                 if (!_paratextService.IsResource(targetParatextId) || resourceNeedsUpdating)
                 {
                     await UpdateDocsAsync(
+                        SyncPhase.Phase5,
                         targetParatextId,
                         targetTextDocsByBook,
                         questionDocsByBook,
@@ -502,6 +504,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         private async Task UpdateDocsAsync(
+            SyncPhase syncPhase,
             string targetParatextId,
             Dictionary<int, SortedList<int, IDocument<TextData>>> targetTextDocsByBook,
             Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook,
@@ -517,7 +520,7 @@ namespace SIL.XForge.Scripture.Services
             foreach (int bookNum in targetBooks)
             {
                 i++;
-                await NotifySyncProgress(SyncPhase.Phase5, i / targetBooks.Count);
+                await NotifySyncProgress(syncPhase, i / targetBooks.Count);
                 LogMetric($"Updating text info for book {bookNum}");
                 bool hasSource = sourceBooks.Contains(bookNum);
                 int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
@@ -1615,12 +1618,20 @@ namespace SIL.XForge.Scripture.Services
                     {
                         // The fraction is based on the number of phases
                         ProgressValue =
-                            1.0 / 6.0 * (double)syncPhase + (progress > 1.0 ? progress / 100.0 : progress) * 1.0 / 6.0,
+                            1.0 / _numberOfPhases * (double)syncPhase
+                            + (progress > 1.0 ? progress / 100.0 : progress) * 1.0 / _numberOfPhases,
                     }
                 );
             }
         }
 
+        /// <summary>
+        /// The sync phase.
+        /// </summary>
+        /// <remarks>
+        /// The first phase must be 0, and each succeeding phase in numeric sequence, as the integer value of the
+        /// SyncPhase enum is used to calculate the progress value in <see cref="NotifySyncProgress"/>.
+        /// </remarks>
         private enum SyncPhase
         {
             Phase1 = 0, // Initial methods
