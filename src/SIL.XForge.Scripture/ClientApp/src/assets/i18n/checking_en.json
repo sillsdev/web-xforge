@@ -343,12 +343,13 @@
     "invitation_language": "Change invitation language",
     "invitation_link_type": "Change how the link can be used",
     "invitation_role": "Change invitation role",
-    "invitation_shared_in_language": "Invitation to be shared in",
+    "invitation_shared_in_language": "Invitation will be shared in",
     "link_can_be_used_by": "Link can be used by",
     "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
     "recipient": "Only the recipient",
-    "recipient_only_notice": "Each link can only be used once. Click the button again to generate and share a new link.",
+    "recipient_only_notice": "Each link can only be used once and will expire after 14 days. Click the button again to generate and share a new link.",
     "share": "Share",
+    "share_project": "Share {{ project }}",
     "share_with_others": "Share with others"
   },
   "start": {
