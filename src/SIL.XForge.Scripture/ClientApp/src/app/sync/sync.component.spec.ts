@@ -123,7 +123,7 @@ describe('SyncComponent', () => {
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
     // Simulate sync in progress
-    env.emitSyncProgress(env.projectId);
+    env.setQueuedCount(env.projectId);
 
     // Simulate sync error
     env.emitSyncComplete(false, env.projectId);
@@ -191,7 +191,7 @@ describe('SyncComponent', () => {
     verify(mockedProjectService.onlineSync(env.projectId)).once();
     expect(env.component.syncActive).toBe(true);
     expect(env.progressBar).not.toBeNull();
-    env.emitSyncProgress(env.projectId);
+    env.setQueuedCount(env.projectId);
 
     env.clickElement(env.cancelButton);
     env.emitSyncComplete(false, env.projectId);
@@ -246,7 +246,7 @@ class TestEnvironment {
     const ptUsername = isParatextAccountConnected ? 'Paratext User01' : '';
     when(mockedParatextService.getParatextUsername()).thenReturn(of(ptUsername));
     when(mockedProjectService.onlineSync(anything()))
-      .thenCall(id => this.emitSyncProgress(id))
+      .thenCall(id => this.setQueuedCount(id))
       .thenResolve();
     when(mockedNoticeService.loadingStarted()).thenCall(() => (this.isLoading = true));
     when(mockedNoticeService.loadingFinished()).thenCall(() => (this.isLoading = false));
@@ -357,7 +357,7 @@ class TestEnvironment {
     tick();
   }
 
-  emitSyncProgress(projectId: string): void {
+  setQueuedCount(projectId: string): void {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.queuedCount, 1), false);
     this.fixture.detectChanges();
