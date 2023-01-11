@@ -3,19 +3,29 @@
 div {
   display: flex;
   align-items: center;
-  color: #fff;
   padding: 16px;
   border-radius: 4px;
-  background: $purpleLight;
+  --notice-background: #{$purpleLight};
+  --notice-color: #fff;
+  --notice-border: #{$purpleLight};
+  &.error {
+    --notice-background: var(--mdc-theme-error);
+    --notice-border: var(--mdc-theme-error);
+  }
+  &.warning {
+    --notice-background: #{$orange};
+    --notice-border: #{$orange};
+  }
+  &.outline {
+    --notice-background: #fff;
+    --notice-color: var(--notice-border);
+  }
+  border: 1px solid var(--notice-border);
+  color: var(--notice-color);
+  background-color: var(--notice-background);
   mat-icon {
     flex: 0 0 24px;
     margin-inline-end: 16px;
     align-self: flex-start;
-  }
-  &.error {
-    background-color: var(--mdc-theme-error);
-  }
-  &.warning {
-    background-color: $orange;
   }
 }

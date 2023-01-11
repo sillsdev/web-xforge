@@ -1,4 +1,4 @@
-<div [class]="type">
+<div [ngClass]="{ outline }" [class]="type">
   <mat-icon *ngIf="icon">{{ icon }}</mat-icon>
   <span>{{ notice }}</span>
 </div>
