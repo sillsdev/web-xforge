@@ -12,7 +12,7 @@ namespace SIL.XForge.Scripture.Services
     /// <summary>Set of Scripture text segments.</summary>
     public class SFScriptureText : IText
     {
-        private IEnumerable<TextSegment> _segments;
+        private readonly IEnumerable<TextSegment> _segments;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SFScriptureText"/> class.
@@ -35,7 +35,7 @@ namespace SIL.XForge.Scripture.Services
                 throw new ArgumentNullException(nameof(doc));
             doc.TryGetValue("ops", out BsonValue ops);
             if (ops as BsonArray == null)
-                throw new ArgumentException("Doc is missing ops, perhaps the doc was deleted.", nameof(doc));
+                throw new ArgumentException(@"Doc is missing ops, perhaps the doc was deleted.", nameof(doc));
 
             Id = $"{projectId}_{book}_{chapter}";
             _segments = GetSegments(wordTokenizer, doc).OrderBy(s => s.SegmentRef).ToArray();
@@ -45,7 +45,7 @@ namespace SIL.XForge.Scripture.Services
 
         public string SortKey => Id;
 
-        public IEnumerable<TextSegment> GetSegments(bool includeText = true, IText basedOn = null)
+        public IEnumerable<TextSegment> GetSegments(bool includeText = true, IText? basedOn = null)
         {
             return _segments;
         }
@@ -55,7 +55,6 @@ namespace SIL.XForge.Scripture.Services
             string prevRef = null;
             bool isSentenceStart = true;
             bool isInRange = false;
-            bool isRangeStart = false;
             var sb = new StringBuilder();
             var ops = (BsonArray)doc["ops"];
             foreach (BsonDocument op in ops.Cast<BsonDocument>())
@@ -74,9 +73,16 @@ namespace SIL.XForge.Scripture.Services
                 string curRef = segmentValue.AsString;
                 if (prevRef != null && prevRef != curRef)
                 {
-                    bool inRange = curRef.IndexOf("/") != -1;
-                    isRangeStart = curRef.StartsWith(prevRef) && inRange;
-                    isInRange = isRangeStart || inRange;
+                    // The prev range is a range start if the current reference has a '/' (is in a range)
+                    // i.e. verse_1_1/li_1
+                    bool curRefIsInRange = curRef.Contains('/');
+                    bool isRangeStart = curRef.StartsWith(prevRef) && curRefIsInRange;
+
+                    // We are in range if the previous or current reference contains a '/' (is in a range)
+                    bool prevRefIsInRange = prevRef.Contains('/');
+                    isInRange = curRefIsInRange || prevRefIsInRange;
+
+                    // Return the previous segment, using the current segment to calculate ss,ir,rs values
                     yield return CreateSegment(
                         wordTokenizer,
                         prevRef,
@@ -114,10 +120,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 string[] partKeys = refPart.Split('_');
                 // do not include the paragraph style for sub-segments, so that the segments sort correctly
-                if (keys.Count > 0)
-                    keys.AddRange(partKeys.Skip(1));
-                else
-                    keys.AddRange(partKeys);
+                keys.AddRange(keys.Count > 0 ? partKeys.Skip(1) : partKeys);
             }
             string[] segment = wordTokenizer.Tokenize(segmentStr).ToArray();
             return new TextSegment(
@@ -127,7 +130,7 @@ namespace SIL.XForge.Scripture.Services
                 isSentenceStart,
                 isInRange,
                 isRangeStart,
-                segment.Count() == 0
+                !segment.Any()
             );
         }
     }
