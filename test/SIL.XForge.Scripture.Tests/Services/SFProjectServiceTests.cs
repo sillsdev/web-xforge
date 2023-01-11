@@ -1403,8 +1403,6 @@ public class SFProjectServiceTests
             string userToRemove = User02;
             string projectId = Project06;
 
-            SFProjectSecret projectSecret = env.ProjectSecrets.Get(projectId);
-
             Assert.That(
                 env.ProjectSecrets.Get(projectId).ShareKeys.Any(sk => sk.RecipientUserId == userToRemove),
                 Is.True,
@@ -1412,8 +1410,6 @@ public class SFProjectServiceTests
             );
 
             await env.Service.RemoveUserAsync(requestingUser, projectId, userToRemove);
-
-            projectSecret = env.ProjectSecrets.Get(projectId);
 
             Assert.That(
                 env.ProjectSecrets.Get(projectId).ShareKeys.Any(sk => sk.RecipientUserId == userToRemove),
