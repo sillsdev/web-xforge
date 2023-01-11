@@ -452,7 +452,10 @@ namespace SIL.XForge.Scripture.Services
                 string key;
                 if (segment.SegmentRef is TextSegmentRef textSegmentRef)
                 {
-                    key = string.Join('_', textSegmentRef.Keys);
+                    key = string.Join(
+                        '_',
+                        textSegmentRef.Keys.Select(k => int.TryParse(k, out int _) ? k.PadLeft(3, '0') : k)
+                    );
                 }
                 else
                 {
