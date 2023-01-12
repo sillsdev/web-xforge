@@ -337,7 +337,7 @@
   },
   "share_dialog": {
     "anyone": "Anyone with the link",
-    "can": "can",
+    "anyone_can": "Anyone with the link can",
     "change": "change",
     "copy_link": "Copy link",
     "invitation_language": "Change invitation language",
@@ -347,6 +347,7 @@
     "link_can_be_used_by": "Link can be used by",
     "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
     "recipient": "Only the recipient",
+    "recipient_can": "Only the recipient can",
     "recipient_only_notice": "Each link can only be used once and will expire after 14 days. Click the button again to generate and share a new link.",
     "share": "Share",
     "share_project": "Share {{ project }}",
