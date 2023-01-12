@@ -9,6 +9,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
+import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
@@ -39,16 +40,32 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
       this.router.navigateByUrl(`/join/${shareKey}`, { replaceUrl: true });
       return;
     }
-    const userProjects: string[] | undefined = (await this.userService.getCurrentUser()).data?.sites[environment.siteId]
-      .projects;
     const projectId$ = this.route.params.pipe(
       map(params => params['projectId'] as string),
       distinctUntilChanged(),
       filter(projectId => projectId != null)
     );
 
-    const navigateToProject$ = projectId$.pipe(filter(id => !!userProjects?.includes(id)));
-    this.subscribe(navigateToProject$, projectId => this.navigateToProject(projectId));
+    // Can only navigate to the project if the user is on the project
+    // Race condition can occur with the user doc sites so listen to remote changes
+    const userDoc = await this.userService.getCurrentUser();
+    const navigateToProject$: Observable<string> = new Observable(subscriber => {
+      let projectId: string | undefined;
+      this.subscribe(projectId$, id => {
+        projectId = id;
+        subscriber.next(projectId);
+      });
+      this.subscribe(userDoc.remoteChanges$, () => {
+        subscriber.next(projectId);
+      });
+    });
+
+    this.subscribe(navigateToProject$, projectId => {
+      if (!userDoc.data?.sites[environment.siteId].projects?.includes(projectId)) {
+        return;
+      }
+      this.navigateToProject(projectId);
+    });
   }
 
   private async navigateToProject(projectId: string): Promise<void> {
