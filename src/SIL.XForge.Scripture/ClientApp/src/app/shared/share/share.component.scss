@@ -3,5 +3,6 @@
 button {
   mat-icon {
     margin-inline-end: 10px;
+    direction: inherit;
   }
 }
