@@ -142,6 +142,25 @@ describe('ProjectComponent', () => {
     verify(mockedRouter.navigate(anything(), anything())).never();
     expect().nothing();
   }));
+
+  it('should only navigate to project if user is on the project', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setProjectData({
+      selectedTask: 'checking',
+      selectedBooknum: 41,
+      hasTexts: true,
+      checkingEnabled: false,
+      memberProjects: []
+    });
+    env.fixture.detectChanges();
+    tick();
+
+    verify(mockedRouter.navigate(anything(), anything())).never();
+
+    env.addUserToProject('project01');
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'translate', 'MAT']), anything())).once();
+    expect().nothing();
+  }));
 });
 
 class TestEnvironment {
@@ -264,6 +283,13 @@ class TestEnvironment {
         sites: { sf: { projects: memberProjects } }
       }
     });
+  }
+
+  addUserToProject(projectId: string): void {
+    this.setProjectData({ memberProjects: [projectId] });
+    const userDoc: UserDoc = this.realtimeService.get(UserDoc.COLLECTION, 'user01');
+    userDoc.submitJson0Op(op => op.set(u => u.sites, { sf: { projects: [projectId] } }), false);
+    tick();
   }
 
   subscribeRealtimeDocs(projectId: string) {
