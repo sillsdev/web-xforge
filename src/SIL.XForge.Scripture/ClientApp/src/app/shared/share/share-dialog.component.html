@@ -7,7 +7,7 @@
     <div class="configuration-option configuration-invitation-role">
       <mat-icon>public</mat-icon>
       <div>
-        {{ t(shareLinkType) }} {{ t("can") }} <b>{{ i18n.localizeRoleDescription(shareRole) }}</b>
+        {{ t(shareLinkType + "_can") }} <b>{{ i18n.localizeRoleDescription(shareRole) }}</b>
         <a [matMenuTriggerFor]="roleMenu" title="{{ t('invitation_role') }}" *ngIf="canUserChangeRole"
           >({{ t("change") }})</a
         >
