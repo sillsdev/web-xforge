@@ -28,7 +28,6 @@ import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, matDialogCloseDelay, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -42,6 +41,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { getTextDoc, paratextUsersFromRoles } from '../../../shared/test-utils';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { TranslateModule } from '../../translate.module';
 import { NoteDialogComponent, NoteDialogData, SF_NOTE_THREAD_PREFIX } from './note-dialog.component';
 
 const mockedAuthService = mock(AuthService);
@@ -601,9 +601,9 @@ class ChildViewContainerComponent {
 }
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, TestTranslocoModule],
-  declarations: [ViewContainerDirective, ChildViewContainerComponent, NoteDialogComponent, OwnerComponent],
-  exports: [ViewContainerDirective, ChildViewContainerComponent, NoteDialogComponent]
+  imports: [CommonModule, UICommonModule, TranslateModule, TestTranslocoModule],
+  declarations: [ViewContainerDirective, ChildViewContainerComponent],
+  exports: [ViewContainerDirective, ChildViewContainerComponent]
 })
 class DialogTestModule {}
 

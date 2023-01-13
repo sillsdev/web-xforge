@@ -29,7 +29,7 @@
           <div class="note-content" [innerHTML]="parseNote(note.acceptedChangeXml)" *ngIf="isConflictNote(note)"></div>
           <div class="note-conflict-explanation" *ngIf="isConflictNote(note)">{{ t("rejection_change_heading") }}</div>
           <div class="note-content-and-actions">
-            <div class="note-content" [innerHTML]="contentForDisplay(note)"></div>
+            <div class="note-content" [innerHTML]="contentForDisplay(note)" [ngStyle]="{ fontSize }"></div>
             <div *ngIf="isNoteEditable(note)" class="edit-actions">
               <button mat-icon-button class="edit-button" (click)="editNote(note)"><mat-icon>edit</mat-icon></button>
               <button mat-icon-button class="delete-button" (click)="deleteNote(note)">
