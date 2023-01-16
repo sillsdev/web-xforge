@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { ANY_INDEX, obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -50,16 +49,13 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   texts?: TextProgress[];
   overallProgress = new Progress();
   trainingPercentage: number = 0;
-  trainingMessage: string = '';
-  showTrainingProgress: boolean = false;
-  trainingProgressClosed: boolean = false;
+  projectId: string = '';
   isTraining: boolean = false;
   readonly engineQualityStars: number[];
   engineQuality: number = 0;
   engineConfidence: number = 0;
   trainedSegmentCount: number = 0;
 
-  private trainingCompletedTimeout: any;
   private trainingSub?: Subscription;
   private translationEngine?: RemoteTranslationEngine;
   private projectDoc?: SFProjectProfileDoc;
@@ -108,6 +104,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
       this.loadingStarted();
       try {
+        this.projectId = projectId;
         this.projectDoc = await this.projectService.getProfile(projectId);
         this.setupTranslationEngine();
         await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
@@ -220,24 +217,10 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
           error: () => {
             // error while listening
             this.isTraining = false;
-            this.showTrainingProgress = false;
-            this.trainingCompletedTimeout = undefined;
-            this.trainingProgressClosed = false;
           },
           complete: () => {
             // training completed successfully
             this.isTraining = false;
-            if (this.trainingProgressClosed) {
-              this.noticeService.show(translate('training_progress.training_completed_successfully'));
-              this.trainingProgressClosed = false;
-            } else {
-              this.trainingMessage = translate('training_progress.completed_successfully');
-              this.trainingCompletedTimeout = setTimeout(() => {
-                this.showTrainingProgress = false;
-                this.trainingCompletedTimeout = undefined;
-              }, 5000);
-            }
-
             this.updateEngineStats();
           }
         }),
@@ -246,16 +229,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
         retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
       )
       .subscribe(progress => {
-        if (!this.trainingProgressClosed) {
-          this.showTrainingProgress = true;
-        }
-        if (this.trainingCompletedTimeout != null) {
-          clearTimeout(this.trainingCompletedTimeout);
-          this.trainingCompletedTimeout = undefined;
-        }
         this.trainingPercentage = Math.round(progress.percentCompleted * 100);
-        // ToDo: internationalize message
-        this.trainingMessage = progress.message;
         this.isTraining = true;
       });
   }
