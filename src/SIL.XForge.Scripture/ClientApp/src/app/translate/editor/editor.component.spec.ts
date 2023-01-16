@@ -760,29 +760,25 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      expect(env.component.showTrainingProgress).toBe(false);
+      expect(env.trainingProgress).toBeNull();
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).not.toBeNull();
-      expect(env.component.showTrainingProgress).toBe(true);
       expect(env.trainingProgressSpinner).not.toBeNull();
       env.updateTrainingProgress(1);
       expect(env.trainingCompleteIcon).not.toBeNull();
       expect(env.trainingProgressSpinner).toBeNull();
       env.completeTrainingProgress();
       expect(env.trainingProgress).not.toBeNull();
-      expect(env.component.showTrainingProgress).toBe(true);
       tick(5000);
       env.wait();
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       expect(env.trainingProgress).toBeNull();
-      expect(env.component.showTrainingProgress).toBe(false);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).not.toBeNull();
-      expect(env.component.showTrainingProgress).toBe(true);
       expect(env.trainingProgressSpinner).not.toBeNull();
 
       env.dispose();
@@ -793,18 +789,16 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      expect(env.component.showTrainingProgress).toBe(false);
+      expect(env.trainingProgress).toBeNull();
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).not.toBeNull();
-      expect(env.component.showTrainingProgress).toBe(true);
       expect(env.trainingProgressSpinner).not.toBeNull();
       env.clickTrainingProgressCloseButton();
       expect(env.trainingProgress).toBeNull();
-      expect(env.component.showTrainingProgress).toBe(false);
       env.updateTrainingProgress(1);
       env.completeTrainingProgress();
       env.wait();
@@ -813,7 +807,6 @@ describe('EditorComponent', () => {
 
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).not.toBeNull();
-      expect(env.component.showTrainingProgress).toBe(true);
       expect(env.trainingProgressSpinner).not.toBeNull();
 
       env.dispose();
@@ -824,23 +817,20 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      expect(env.component.showTrainingProgress).toBe(false);
+      expect(env.trainingProgress).toBeNull();
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).not.toBeNull();
-      expect(env.component.showTrainingProgress).toBe(true);
       expect(env.trainingProgressSpinner).not.toBeNull();
       env.throwTrainingProgressError();
       expect(env.trainingProgress).toBeNull();
-      expect(env.component.showTrainingProgress).toBe(false);
 
       tick(30000);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).not.toBeNull();
-      expect(env.component.showTrainingProgress).toBe(true);
       expect(env.trainingProgressSpinner).not.toBeNull();
 
       env.dispose();

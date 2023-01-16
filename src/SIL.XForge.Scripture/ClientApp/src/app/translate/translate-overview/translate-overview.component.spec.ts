@@ -115,7 +115,7 @@ describe('TranslateOverviewComponent', () => {
 
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).never();
       env.simulateTranslateSuggestionsEnabled();
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
       expect().nothing();
     }));
 
@@ -123,7 +123,7 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgressShown).toBe(true);
       expect(env.component.isTraining).toBe(true);
@@ -140,7 +140,7 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgressShown).toBe(true);
       expect(env.component.isTraining).toBe(true);
@@ -158,7 +158,7 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
       env.clickRetrainButton();
       expect(env.trainingProgressShown).toBe(true);
       expect(env.trainingProgress.mode).toBe('indeterminate');
