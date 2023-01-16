@@ -28,6 +28,7 @@ import { SFProjectService } from './sf-project.service';
 })
 export class TranslationEngineService extends SubscriptionDisposable {
   private onlineStatus$: Observable<boolean>;
+  private translationEngines: Map<string, RemoteTranslationEngine> = new Map<string, RemoteTranslationEngine>();
 
   constructor(
     private readonly offlineStore: OfflineStore,
@@ -50,7 +51,10 @@ export class TranslationEngineService extends SubscriptionDisposable {
   }
 
   createTranslationEngine(projectId: string): RemoteTranslationEngine {
-    return new RemoteTranslationEngine(projectId, this.machineHttp);
+    if (!this.translationEngines.has(projectId)) {
+      this.translationEngines.set(projectId, new RemoteTranslationEngine(projectId, this.machineHttp));
+    }
+    return this.translationEngines.get(projectId)!;
   }
 
   checkHasSourceBooks(project: SFProjectProfile): boolean {
