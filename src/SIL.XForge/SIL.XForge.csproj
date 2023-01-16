@@ -14,11 +14,11 @@
     <PackageReference Include="Hangfire.Mongo" Version="1.9.1" />
     <PackageReference Include="IdentityModel" Version="6.0.0" />
     <PackageReference Include="Jering.Javascript.NodeJS" Version="6.3.1" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.12" />
-    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="6.0.12" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="6.0.13" />
     <PackageReference Include="MongoDB.Driver" Version="2.18.0" />
     <PackageReference Include="MailKit" Version="3.4.3" />
-    <PackageReference Include="idunno.Authentication.Basic" Version="2.2.3" />
+    <PackageReference Include="idunno.Authentication.Basic" Version="2.3.0" />
     <PackageReference Include="AbrarJahin.DiffMatchPatch" Version="0.1.0" />
     <PackageReference Include="SIL.Core" Version="10.1.0" />
   </ItemGroup>
