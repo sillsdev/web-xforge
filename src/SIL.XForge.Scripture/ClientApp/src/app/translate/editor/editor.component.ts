@@ -104,10 +104,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   chapters: number[] = [];
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
-  trainingPercentage: number = 0;
-  trainingMessage: string = '';
-  showTrainingProgress: boolean = false;
-  trainingProgressClosed: boolean = false;
+  projectId: string = '';
   textHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
@@ -142,7 +139,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private onTargetDeleteSub?: Subscription;
   private trainingSub?: Subscription;
   private projectDataChangesSub?: Subscription;
-  private trainingCompletedTimeout: any;
   private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
   private selectionClickSubs: Subscription[] = [];
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
@@ -443,6 +439,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
+          this.projectId = projectId;
           this.projectDoc = await this.projectService.getProfile(projectId);
           const userRole: string | undefined = this.projectDoc.data?.userRoles[this.userService.currentUserId];
           if (userRole != null) {
@@ -915,25 +912,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       .listenForTrainingStatus()
       .pipe(
         tap({
-          error: () => {
-            // error while listening
-            this.showTrainingProgress = false;
-            this.trainingCompletedTimeout = undefined;
-            this.trainingProgressClosed = false;
-          },
           complete: async () => {
-            // training completed successfully
-            if (this.trainingProgressClosed) {
-              this.noticeService.show(translate('training_progress.training_completed_successfully'));
-              this.trainingProgressClosed = false;
-            } else {
-              this.trainingMessage = translate('training_progress.completed_successfully');
-              this.trainingCompletedTimeout = setTimeout(() => {
-                this.showTrainingProgress = false;
-                this.trainingCompletedTimeout = undefined;
-              }, 5000);
-            }
-
             // ensure that any changes to the segment will be trained
             if (this.target != null && this.target.segment != null) {
               this.target.segment.acceptChanges();
@@ -951,18 +930,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         filter(progress => progress.percentCompleted > 0),
         retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
       )
-      .subscribe(progress => {
-        if (!this.trainingProgressClosed) {
-          this.showTrainingProgress = true;
-        }
-        if (this.trainingCompletedTimeout != null) {
-          clearTimeout(this.trainingCompletedTimeout);
-          this.trainingCompletedTimeout = undefined;
-        }
-        this.trainingPercentage = Math.round(progress.percentCompleted * 100);
-        // ToDo: internationalize message
-        this.trainingMessage = progress.message;
-      });
+      .subscribe();
   }
 
   private setTextHeight(): void {

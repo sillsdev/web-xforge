@@ -77,10 +77,5 @@
       </mat-card-actions>
     </mat-card>
   </div>
-  <app-training-progress
-    [trainingPercentage]="trainingPercentage"
-    [trainingMessage]="trainingMessage"
-    [(showTrainingProgress)]="showTrainingProgress"
-    (trainingProgressClosed)="trainingProgressClosed = $event"
-  ></app-training-progress>
+  <app-training-progress [projectId]="projectId"></app-training-progress>
 </ng-container>

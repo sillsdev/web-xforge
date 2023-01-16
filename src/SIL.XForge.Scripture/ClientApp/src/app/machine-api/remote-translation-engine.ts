@@ -12,7 +12,7 @@ import {
   WordGraphArc
 } from '@sillsdev/machine';
 import { Observable, of, throwError } from 'rxjs';
-import { catchError, expand, filter, map, mergeMap, startWith, takeWhile } from 'rxjs/operators';
+import { catchError, expand, filter, map, mergeMap, share, startWith, takeWhile } from 'rxjs/operators';
 import { AlignedWordPairDto } from './aligned-word-pair-dto';
 import { BuildDto } from './build-dto';
 import { BuildStates } from './build-states';
@@ -26,6 +26,8 @@ import { TranslationResultDto } from './translation-result-dto';
 import { WordGraphDto } from './word-graph-dto';
 
 export class RemoteTranslationEngine implements InteractiveTranslationEngine {
+  private trainingStatus$?: Observable<ProgressStatus>;
+
   constructor(public readonly projectId: string, private readonly httpClient: HttpClient) {}
 
   async translate(segment: string[]): Promise<TranslationResult> {
@@ -81,7 +83,13 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   }
 
   listenForTrainingStatus(): Observable<ProgressStatus> {
-    return this.getEngine(this.projectId).pipe(mergeMap(e => this.pollBuildProgress('engine', e.id, 0)));
+    if (this.trainingStatus$ == null) {
+      this.trainingStatus$ = this.getEngine(this.projectId).pipe(
+        mergeMap(e => this.pollBuildProgress('engine', e.id, 0)),
+        share()
+      );
+    }
+    return this.trainingStatus$;
   }
 
   async getStats(): Promise<TranslationEngineStats> {
