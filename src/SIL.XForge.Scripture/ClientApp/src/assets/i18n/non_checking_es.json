@@ -86,7 +86,6 @@
   "editor": {
     "anonymous": "Anónimo",
     "cannot_edit_chapter_formatting_invalid": "Este capítulo no puede ser editado porque el formato no es válido. Por favor, arregle el formato en Paratext.",
-    "completed_successfully": "Completado con éxito",
     "configure_translation_suggestions": "Configurar sugerencias de traducción",
     "insert_note": "Insertar nota",
     "more_notes": "--- {{ count }} nota(s) más ---",
@@ -97,8 +96,6 @@
     "text_doc_corrupted": "Este capítulo no se puede editar porque los datos se han corrompido.",
     "text_has_been_deleted": "El libro ha sido eliminado o ya no está disponible.",
     "to_report_issue_email": "Para informar de un problema, envíe un correo electrónico {{ issueEmailLink }}.",
-    "training_completed_successfully": "Entrenamiento completado con éxito",
-    "training": "Entrenamiento",
     "verse_too_long_for_suggestions": "Este versículo es demasiado largo para generar sugerencias."
   },
   "import_questions_confirmation_dialog": {
@@ -287,6 +284,11 @@
     "cross_reference": "Referencia cruzada",
     "end_note": "Nota final",
     "footnote": "Nota al pie"
+  },
+  "training_progress": {
+    "completed_successfully": "Completado con éxito",
+    "training_completed_successfully": "Entrenamiento completado con éxito",
+    "training": "Entrenamiento"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Las sugerencias de traducción no están disponibles. Por favor, seleccione un proyecto fuente que comparta libros en común con este proyecto para obtener sugerencias de traducción.",

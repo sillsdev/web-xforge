@@ -86,7 +86,6 @@
   "editor": {
     "anonymous": "Anonymous",
     "cannot_edit_chapter_formatting_invalid": "Bu fəsil redaktə oluna bilməz, çünki formatlaşdırma yanlışdır. Zəhmət olmazsa, formatlaşdırmanı Paratextdə düzəldin.",
-    "completed_successfully": "Uğurla tamamlandı",
     "configure_translation_suggestions": "Tərcümə təkliflərini irəli sürün",
     "insert_note": "Insert note",
     "more_notes": "--- {{ count }} more note(s) ---",
@@ -97,8 +96,6 @@
     "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "Problemi bildirmək üçün {{ issueEmailLink }}-a e-poçt göndərin.",
-    "training_completed_successfully": "Təlim uğurla başa çatdı",
-    "training": "Təlim",
     "verse_too_long_for_suggestions": "Bu ayə təkliflər irəli sürmək üçün çox uzundur."
   },
   "import_questions_confirmation_dialog": {
@@ -287,6 +284,11 @@
     "cross_reference": "Cross-reference",
     "end_note": "End note",
     "footnote": "Footnote"
+  },
+  "training_progress": {
+    "completed_successfully": "Uğurla tamamlandı",
+    "training_completed_successfully": "Təlim uğurla başa çatdı",
+    "training": "Təlim"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",

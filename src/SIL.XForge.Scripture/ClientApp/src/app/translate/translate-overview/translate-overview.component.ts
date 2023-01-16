@@ -228,10 +228,10 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
             // training completed successfully
             this.isTraining = false;
             if (this.trainingProgressClosed) {
-              this.noticeService.show(translate('editor.training_completed_successfully'));
+              this.noticeService.show(translate('training_progress.training_completed_successfully'));
               this.trainingProgressClosed = false;
             } else {
-              this.trainingMessage = translate('editor.completed_successfully');
+              this.trainingMessage = translate('training_progress.completed_successfully');
               this.trainingCompletedTimeout = setTimeout(() => {
                 this.showTrainingProgress = false;
                 this.trainingCompletedTimeout = undefined;

@@ -86,7 +86,6 @@
   "editor": {
     "anonymous": "Anonymous",
     "cannot_edit_chapter_formatting_invalid": "ꤢ꤬ꤗꤟꤢ꤭ꤘꤢꤨ꤬ ꤛꤢꤩ꤭ꤒꤣ꤬ꤗꤟꤢ꤭ ꤗꤢ꤬ ꤗꤟꤢꤩ꤬ꤚꤛꤢꤓꤛꤢ꤬ ꤕꤟꤥ ꤜꤢꤨ꤭ ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤ ꤒꤥ꤬, ꤗꤟꤢꤩ꤬ꤒꤢꤩ꤭ꤟꤢꤩꤚꤢꤪ ꤒꤟꤢꤧ꤬ꤢꤩ꤬ꤊꤜꤟꤢꤪ꤬ꤗꤢ꤬ ꤔꤌꤣ꤬ꤗꤢ꤬ ꤔꤢꤪ꤭ꤢꤩ꤬ꤔꤟꤤ ꤒꤥ꤬꤯ ꤋꤛꤢꤞꤢꤧꤘꤥ꤭ ꤗꤟꤢꤩ꤬ꤚꤛꤢꤚꤟꤢꤩ ꤒꤟꤢꤧ꤬ꤢꤩ꤬ꤊꤜꤟꤢꤪ꤬ꤗꤢ꤬ ꤘꤣ Paratext ꤊꤢꤨ꤭ꤔꤌꤣ꤬ ꤔꤤ꤯ ",
-    "completed_successfully": "ꤢ꤬ꤓꤌꤣ꤭ꤢ꤬ꤕꤜꤥ꤭ ꤜꤟꤢꤪ꤭ꤕꤜꤤ꤭ ꤟꤢꤪ",
     "configure_translation_suggestions": "ꤘꤛꤢꤩꤜꤟꤌꤣ꤭ꤓꤛꤢ꤬ ꤒꤟꤢꤧ꤬ꤚꤢ꤭ꤕꤟꤥ꤬ꤓꤢꤩ꤬ ꤢ꤬ꤒꤟꤢꤧ꤬ꤘꤛꤢꤩꤞꤢꤧꤑꤢꤩ꤭ꤡꤝꤟꤥ ꤒꤢ꤬ꤟꤢꤩ꤬",
     "insert_note": "Insert note",
     "more_notes": "--- {{ count }} more note(s) ---",
@@ -97,8 +96,6 @@
     "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "ꤜꤟꤢꤩꤘꤛꤢꤩꤜꤟꤌꤣ꤭ꤓꤛꤢ꤬ ꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭, email {{ issueEmailLink }}.",
-    "training_completed_successfully": "ꤒꤟꤢꤧ꤬ꤤ꤬ꤞꤛꤥ ꤢ꤬ꤓꤌꤣ꤭ꤢ꤬ꤕꤜꤥ꤭ ꤚꤛꤢ ꤊꤛꤢ꤭ ꤟꤢꤪ",
-    "training": "ꤒꤟꤢꤧ꤬ꤤ꤬ꤞꤛꤥ",
     "verse_too_long_for_suggestions": "ꤜꤟꤢꤩ ꤘꤛꤢꤩ ꤒꤟꤢꤧ꤬ꤘꤛꤢꤩꤞꤢꤧꤑꤢꤩ꤭ꤡꤝꤟꤥ ꤢ꤬ꤑꤢꤩ꤭ ꤜꤤ꤬ꤡꤢ꤭ꤏꤢꤧ꤭ꤗꤟꤢ꤭ ꤛꤢꤩ꤭ ꤗꤢ꤬ ꤢ꤬ꤓꤢꤨ꤭ꤏꤢꤦ꤬ꤜꤢꤦ꤭ ꤡꤢꤪ꤯ \n"
   },
   "import_questions_confirmation_dialog": {
@@ -287,6 +284,11 @@
     "cross_reference": "Cross-reference",
     "end_note": "End note",
     "footnote": "Footnote"
+  },
+  "training_progress": {
+    "completed_successfully": "ꤢ꤬ꤓꤌꤣ꤭ꤢ꤬ꤕꤜꤥ꤭ ꤜꤟꤢꤪ꤭ꤕꤜꤤ꤭ ꤟꤢꤪ",
+    "training_completed_successfully": "ꤒꤟꤢꤧ꤬ꤤ꤬ꤞꤛꤥ ꤢ꤬ꤓꤌꤣ꤭ꤢ꤬ꤕꤜꤥ꤭ ꤚꤛꤢ ꤊꤛꤢ꤭ ꤟꤢꤪ",
+    "training": "ꤒꤟꤢꤧ꤬ꤤ꤬ꤞꤛꤥ"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",

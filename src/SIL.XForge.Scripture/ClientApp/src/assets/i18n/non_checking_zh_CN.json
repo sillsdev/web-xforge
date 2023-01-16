@@ -86,7 +86,6 @@
   "editor": {
     "anonymous": "Anonymous",
     "cannot_edit_chapter_formatting_invalid": "This chapter cannot be edited because the formatting is invalid. Please fix the formatting in Paratext.",
-    "completed_successfully": "Completed successfully",
     "configure_translation_suggestions": "Configure translation suggestions",
     "insert_note": "Insert note",
     "more_notes": "--- {{ count }} more note(s) ---",
@@ -97,8 +96,6 @@
     "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "以便报告问题, 发电子邮件给{{ issueEmailLink }}",
-    "training_completed_successfully": "Training completed successfully",
-    "training": "Training",
     "verse_too_long_for_suggestions": "This verse is too long to generate suggestions."
   },
   "import_questions_confirmation_dialog": {
@@ -287,6 +284,11 @@
     "cross_reference": "Cross-reference",
     "end_note": "End note",
     "footnote": "Footnote"
+  },
+  "training_progress": {
+    "completed_successfully": "Completed successfully",
+    "training_completed_successfully": "Training completed successfully",
+    "training": "Training"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",
