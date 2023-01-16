@@ -143,6 +143,12 @@ export class DonutChartComponent extends SubscriptionDisposable implements After
 
     // avoid firing change detection for each animation frame
     this.ngZone.runOutsideAngular(() => {
+      if (duration === 0) {
+        // Animation is disabled
+        this.constructSegments(percentages);
+        return;
+      }
+
       const startTime = performance.now();
       const id = ++this.lastAnimationId;
 
