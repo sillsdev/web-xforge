@@ -86,7 +86,6 @@
   "editor": {
     "anonymous": "Anonyme",
     "cannot_edit_chapter_formatting_invalid": "Ce chapitre ne peut pas être modifié car le formatage n'est pas valide. Veuillez corriger le formatage dans Paratext.",
-    "completed_successfully": "Terminé avec succès",
     "configure_translation_suggestions": "Configurer les suggestions de traduction",
     "insert_note": "Insérer une remarque",
     "more_notes": "--- {{ count }} plus de remarque(s) ---",
@@ -97,8 +96,6 @@
     "text_doc_corrupted": "Ce chapitre ne peut pas être modifié car les données ont été corrompues.",
     "text_has_been_deleted": "Le livre a été supprimé ou n'est plus accessible.",
     "to_report_issue_email": "Pour signaler un problème, envoyez un e-mail à {{ issueEmailLink }}.",
-    "training_completed_successfully": "Formation terminée avec succès",
-    "training": "Formation",
     "verse_too_long_for_suggestions": "Ce verset est trop long pour générer des suggestions."
   },
   "import_questions_confirmation_dialog": {
@@ -287,6 +284,11 @@
     "cross_reference": "Renvoi",
     "end_note": "Note de fin",
     "footnote": "Note de bas de page"
+  },
+  "training_progress": {
+    "completed_successfully": "Terminé avec succès",
+    "training_completed_successfully": "Formation terminée avec succès",
+    "training": "Formation"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Les suggestions de traduction ne sont pas disponibles. Veuillez sélectionner un projet source qui a des livres en commun avec ce projet pour obtenir des suggestions de traduction.",
