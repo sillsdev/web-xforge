@@ -1,4 +1,4 @@
-export function hasParatextRole(role: string | undefined): boolean {
+export function isParatextRole(role: string | undefined): boolean {
   switch (role) {
     case SFProjectRole.ParatextAdministrator:
     case SFProjectRole.ParatextTranslator:
@@ -10,8 +10,8 @@ export function hasParatextRole(role: string | undefined): boolean {
   }
 }
 
-export function hasTranslateRole(role: string | undefined): boolean {
-  if (hasParatextRole(role)) {
+export function isTranslateRole(role: string | undefined): boolean {
+  if (isParatextRole(role)) {
     return true;
   }
   switch (role) {

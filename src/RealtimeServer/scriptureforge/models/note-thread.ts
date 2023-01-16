@@ -63,5 +63,6 @@ export interface NoteThread extends ProjectData {
   position: TextAnchor;
   status: NoteStatus;
   tagIcon: string;
+  publishedToSF?: boolean;
   assignment?: string;
 }

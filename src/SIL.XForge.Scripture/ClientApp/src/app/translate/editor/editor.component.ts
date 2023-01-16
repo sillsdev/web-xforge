@@ -1243,6 +1243,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private async loadNoteThreadDocs(sfProjectId: string): Promise<void> {
     this.noteThreadQuery?.dispose();
+
     this.noteThreadQuery = await this.projectService.queryNoteThreads(sfProjectId);
     this.toggleNoteThreadSub?.unsubscribe();
     this.toggleNoteThreadSub = this.subscribe(

@@ -81,7 +81,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
       throw new Error('The doc service has not been initialized.');
     }
     const project = await this.server.getProject(doc.projectRef);
-    const domain = this.getUpdatedDomain([]);
+    const domain = this.getUpdatedDomain([], doc);
     return project != null && domain != null && this.hasRight(project, domain, Operation.Create, session.userId, doc);
   }
 
@@ -94,7 +94,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
       throw new Error('The doc service has not been initialized.');
     }
     const project = await this.server.getProject(doc.projectRef);
-    const domain = this.getUpdatedDomain([]);
+    const domain = this.getUpdatedDomain([], doc);
     return project != null && domain != null && this.hasRight(project, domain, Operation.Delete, session.userId, doc);
   }
 
@@ -111,7 +111,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
       return false;
     }
 
-    for (const domain of this.domains) {
+    for (const domain of this.getApplicableDomains(doc)) {
       if (!this.hasRight(project, domain, Operation.View, session.userId, doc)) {
         return false;
       }
@@ -122,7 +122,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
   protected async allowUpdate(
     _docId: string,
     oldDoc: T,
-    _newDoc: T,
+    newDoc: T,
     ops: ShareDB.Op[],
     session: ConnectSession
   ): Promise<boolean> {
@@ -139,7 +139,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
     }
 
     for (const op of ops) {
-      const domain = this.getUpdatedDomain(op.p);
+      const domain: ProjectDomainConfig | undefined = this.getUpdatedDomain(op.p, newDoc);
       if (domain == null) {
         return false;
       }
@@ -245,15 +245,25 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
     return Promise.resolve();
   }
 
-  private getUpdatedDomain(path: ShareDB.Path): ProjectDomainConfig | undefined {
-    const index = this.getMatchingPathTemplate(
-      this.domains.map(dc => dc.pathTemplate),
-      path
+  /**
+   * Gets the applicable domains based on the properties in the entity.
+   * @param _entity A noteThread or note.
+   * @returns
+   */
+  protected getApplicableDomains(_entity?: OwnedData): ProjectDomainConfig[] {
+    return this.domains;
+  }
+
+  private getUpdatedDomain(path: ShareDB.Path, entity: OwnedData): ProjectDomainConfig | undefined {
+    const domainConfigs: ProjectDomainConfig[] = this.getApplicableDomains(entity);
+    const index: number = this.getMatchingPathTemplate(
+      domainConfigs.map(dc => dc.pathTemplate),
+      path,
+      entity
     );
     if (index !== -1) {
-      return this.domains[index];
+      return domainConfigs[index];
     }
-
     return undefined;
   }
 
@@ -281,7 +291,7 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
   private async handleApply(context: ShareDB.middleware.SubmitContext): Promise<void> {
     const connectSession = context.agent.connectSession as ConnectSession;
     if (context.op.del != null) {
-      const domain = this.getUpdatedDomain([]);
+      const domain = this.getUpdatedDomain([], context.snapshot!.data);
       if (domain != null) {
         await this.onBeforeDelete(connectSession.userId, context.id, domain.projectDomain, context.snapshot!.data);
       }
@@ -291,18 +301,18 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
   private async handleAfterSubmit(context: ShareDB.middleware.SubmitContext): Promise<void> {
     const connectSession = context.agent.connectSession as ConnectSession;
     if (context.op.create != null) {
-      const domain = this.getUpdatedDomain([]);
+      const domain = this.getUpdatedDomain([], context.op.create.data);
       if (domain != null) {
         await this.onInsert(connectSession.userId, context.id, domain.projectDomain, context.op.create.data);
       }
     } else if (context.op.del != null) {
-      const domain = this.getUpdatedDomain([]);
+      const domain = this.getUpdatedDomain([], context.snapshot!.data);
       if (domain != null) {
         await this.onDelete(connectSession.userId, context.id, domain.projectDomain, context.snapshot!.data);
       }
     } else if (context.op.op != null) {
       for (const op of context.op.op) {
-        const domain = this.getUpdatedDomain(op.p);
+        const domain = this.getUpdatedDomain(op.p, context.snapshot!.data);
         if (domain == null) {
           return;
         }

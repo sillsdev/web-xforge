@@ -34,8 +34,6 @@ export interface NoteDialogData {
   verseRef?: VerseRef;
 }
 
-export const SF_NOTE_THREAD_PREFIX = 'SFNOTETHREAD_';
-
 // TODO: Implement a diff - there is an accepted solution here that might be a good starting point:
 // https://codereview.stackexchange.com/questions/133586/a-string-prototype-diff-implementation-text-diff
 
@@ -373,7 +371,7 @@ export class NoteDialogComponent implements OnInit {
     }
     if (this.noteBeingEdited.threadId === '') {
       // create a new thread
-      const threadId: string = SF_NOTE_THREAD_PREFIX + objectId();
+      const threadId: string = objectId();
       this.noteBeingEdited.threadId = threadId;
       const noteThread: NoteThread = {
         dataId: threadId,
@@ -386,7 +384,8 @@ export class NoteDialogComponent implements OnInit {
         originalSelectedText: this.segmentText,
         originalContextAfter: '',
         tagIcon: this.projectProfileDoc!.data!.tagIcon ?? DEFAULT_TAG_ICON,
-        status: NoteStatus.Todo
+        status: NoteStatus.Todo,
+        publishedToSF: true
       };
       await this.projectService.createNoteThread(this.projectId, noteThread);
       this.dialogRef.close(true);

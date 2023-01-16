@@ -16,7 +16,7 @@ import {
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { hasParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -42,7 +42,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { getTextDoc, paratextUsersFromRoles } from '../../../shared/test-utils';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
-import { NoteDialogComponent, NoteDialogData, SF_NOTE_THREAD_PREFIX } from './note-dialog.component';
+import { NoteDialogComponent, NoteDialogData } from './note-dialog.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedCookieService = mock(CookieService);
@@ -476,9 +476,9 @@ describe('NoteDialogComponent', () => {
     const [, noteThread] = capture(mockedProjectService.createNoteThread).last();
     expect(noteThread.verseRef).toEqual(verseData);
     expect(noteThread.originalSelectedText).toEqual('target: chapter 1, verse 3.');
+    expect(noteThread.publishedToSF).toBe(true);
     expect(noteThread.notes[0].ownerRef).toEqual('user01');
     expect(noteThread.notes[0].content).toEqual('Enter note content');
-    expect(noteThread.notes[0].threadId).toContain(SF_NOTE_THREAD_PREFIX);
     expect(noteThread.tagIcon).toEqual('defaultIcon');
   }));
 
@@ -877,7 +877,7 @@ class TestEnvironment {
     );
 
     when(mockedProjectService.tryGetForRole(anything(), anything())).thenCall((id, role) =>
-      hasParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id) : undefined
+      isParatextRole(role) ? this.realtimeService.subscribe(SFProjectDoc.COLLECTION, id) : undefined
     );
 
     when(mockedUserService.currentUserId).thenReturn(currentUserId);

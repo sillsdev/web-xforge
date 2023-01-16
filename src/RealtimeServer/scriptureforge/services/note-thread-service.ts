@@ -33,7 +33,11 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
   protected setupDomains(): ProjectDomainConfig[] {
     return [
       {
-        projectDomain: SFProjectDomain.NoteThreads,
+        projectDomain: SFProjectDomain.PTNoteThreads,
+        pathTemplate: this.pathTemplate()
+      },
+      {
+        projectDomain: SFProjectDomain.SFNoteThreads,
         pathTemplate: this.pathTemplate()
       },
       {
@@ -42,6 +46,25 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
       }
     ];
   }
+
+  protected getApplicableDomains(entity?: OwnedData): ProjectDomainConfig[] {
+    const domains: ProjectDomainConfig[] = super.getApplicableDomains(entity);
+    const noteThread = entity as NoteThread | undefined;
+    if (noteThread == null) return domains;
+    const applicableDomains: ProjectDomainConfig[] = [];
+
+    for (const domain of domains) {
+      if (noteThread.publishedToSF === true && domain.projectDomain === SFProjectDomain.PTNoteThreads) {
+        continue;
+      }
+      if (noteThread.publishedToSF !== true && domain.projectDomain === SFProjectDomain.SFNoteThreads) {
+        continue;
+      }
+      applicableDomains.push(domain);
+    }
+    return applicableDomains;
+  }
+
   protected onDelete(userId: string, docId: string, projectDomain: string, entity: OwnedData): Promise<void> {
     if (projectDomain === SFProjectDomain.Notes) {
       this.removeEntityHaveReadRefs(userId, docId, projectDomain, entity);
@@ -51,7 +74,7 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
 
   protected onBeforeDelete(userId: string, docId: string, projectDomain: string, entity: OwnedData): Promise<void> {
     // Process an incoming deletion for a NoteThread before it happens so we can look at its list of notes.
-    if (projectDomain === SFProjectDomain.NoteThreads) {
+    if (projectDomain === SFProjectDomain.PTNoteThreads) {
       this.removeEntityHaveReadRefs(userId, docId, projectDomain, entity);
     }
     return Promise.resolve();
@@ -74,7 +97,8 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
     const promises: Promise<boolean>[] = [];
     for (const doc of pucDocs) {
       switch (projectDomain) {
-        case SFProjectDomain.NoteThreads:
+        case SFProjectDomain.PTNoteThreads:
+        case SFProjectDomain.SFNoteThreads:
           (entity as NoteThread).notes.forEach((note: Note) => promises.push(this.removeNoteHaveReadRefs(doc, note)));
           break;
         case SFProjectDomain.Notes:
