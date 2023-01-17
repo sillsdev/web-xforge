@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -313,8 +313,10 @@ namespace SIL.XForge.Scripture.Services
                     {
                         // NOTE: The following additions/removals not included in the transaction
 
-                        // Add new users who are in the target project, but not the source project
-                        List<string> usersToAdd = _projectDoc.Data.UserRoles.Keys
+                        // Add new PT users who are in the target project, but not the source project
+                        List<string> usersToAdd = _projectDoc.Data.UserRoles
+                            .Where(u => SFProjectRole.IsParatextRole(u.Value))
+                            .Select(u => u.Key)
                             .Except(sourceProject.Data.UserRoles.Keys)
                             .ToList();
                         foreach (string uid in usersToAdd)
@@ -332,8 +334,12 @@ namespace SIL.XForge.Scripture.Services
                             }
                         }
 
-                        // Remove users who are in the target project, and no longer have access
-                        List<string> usersToCheck = _projectDoc.Data.UserRoles.Keys.Except(usersToAdd).ToList();
+                        // Remove PT users who are in the target project, and no longer have access to the resource
+                        List<string> usersToCheck = _projectDoc.Data.UserRoles
+                            .Where(u => SFProjectRole.IsParatextRole(u.Value))
+                            .Select(u => u.Key)
+                            .Except(usersToAdd)
+                            .ToList();
                         foreach (string uid in usersToCheck)
                         {
                             string permission = await _paratextService.GetResourcePermissionAsync(

@@ -2196,6 +2196,52 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(syncMetrics.ParatextBooks, Is.EqualTo(new SyncMetricInfo(0, 0, 2)));
         }
 
+        [Test]
+        public async Task SyncAsync_OnlyTargetParatextUsersAreGivenResourceAccess()
+        {
+            // Setup the environment so there will be Paratext changes
+            var env = new TestEnvironment();
+            env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
+            env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
+
+            // Make user02 an SF only user
+            await env.SetUserRole("user02", SFProjectRole.CommunityChecker);
+
+            // Setup the environment so the Paratext service will return that source is a resource
+            env.ParatextService.IsResource(Arg.Any<string>()).Returns(true);
+            env.ParatextService
+                .SendReceiveAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<string>(),
+                    Arg.Any<IProgress<ProgressState>>(),
+                    Arg.Any<CancellationToken>()
+                )
+                .Returns(new ParatextResource());
+
+            // Ensure that the source is project02, and has no users with access
+            Assert.AreEqual("project02", env.GetProject().TranslateConfig.Source.ProjectRef);
+            Assert.AreEqual(0, env.GetProject("project02").UserRoles.Count);
+
+            // SUT
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+            env.MockLogger.AssertEventCount(
+                (LogEvent logEvent) =>
+                    logEvent.LogLevel == LogLevel.Information && Regex.IsMatch(logEvent.Message, "Starting"),
+                1
+            );
+
+            // Only one user should have been added, although two are present
+            Assert.AreEqual(2, env.GetProject().UserRoles.Count);
+            await env.SFProjectService
+                .Received(1)
+                .AddUserAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+
+            // Check that the resource users metrics have been updated
+            SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+            Assert.That(syncMetrics.ResourceUsers, Is.EqualTo(new SyncMetricInfo(1, 0, 0)));
+        }
+
         private class Book
         {
             public Book(string bookId, int highestChapter, bool hasSource = true)
