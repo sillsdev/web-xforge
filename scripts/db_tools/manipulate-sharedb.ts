@@ -87,7 +87,6 @@ class Program {
       // const updatedOps: DeltaOperation[] = textDoc.data.ops.splice(1, 7);
       // const diff = textDoc.type.diff(origOps, updatedOps);
       // await submitDocOp(textDoc, diff);
-
     });
   }
 }

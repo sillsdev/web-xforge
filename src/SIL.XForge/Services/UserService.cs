@@ -135,6 +135,10 @@ public class UserService : IUserService
             // Another auth0 profile already exists that is linked to the paratext account
             throw new ArgumentException(PTLinkedToAnotherUserKey);
         }
+
+        JObject secondaryAuth0UserProfile = JObject.Parse(await _authService.GetUserAsync(paratextAuthId));
+        string secondarySFUserId = (string)secondaryAuth0UserProfile["app_metadata"]["xf_user_id"];
+
         await _authService.LinkAccounts(primaryAuthId, paratextAuthId);
         JObject userProfile = JObject.Parse(await _authService.GetUserAsync(primaryAuthId));
         var primaryUserId = (string)userProfile["app_metadata"]["xf_user_id"];
@@ -151,6 +155,23 @@ public class UserService : IUserService
         await using IConnection conn = await _realtimeService.ConnectAsync(primaryUserId);
         IDocument<User> userDoc = await conn.FetchAsync<User>(primaryUserId);
         await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId)));
+        IDocument<User> secondaryUserDoc = await conn.FetchAsync<User>(secondarySFUserId);
+        if (secondaryUserDoc.Data != null)
+        {
+            this._logger.LogInformation(
+                $"UserService.LinkParatextAccountAsync() will remove the paratextId and tokens from SF user id {secondarySFUserId}. Perhaps a race condition occurred, resulting in a situation like SF-1849. This secondary SF user and associated user_secret can probably be deleted."
+            );
+            await secondaryUserDoc.SubmitJson0OpAsync(op => op.Set(u => u.ParatextId, null));
+        }
+
+        if (await _userSecrets.GetAsync(secondarySFUserId) != null)
+        {
+            await _userSecrets.UpdateAsync(
+                secondarySFUserId,
+                update => update.Set(us => us.ParatextTokens, null),
+                true
+            );
+        }
     }
 
     /// <summary>
