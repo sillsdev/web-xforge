@@ -122,6 +122,10 @@ namespace SIL.XForge.Services
                 // Another auth0 profile already exists that is linked to the paratext account
                 throw new ArgumentException(PTLinkedToAnotherUserKey);
             }
+
+            JObject secondaryAuth0UserProfile = JObject.Parse(await _authService.GetUserAsync(paratextAuthId));
+            string secondarySFUserId = (string)secondaryAuth0UserProfile["app_metadata"]["xf_user_id"];
+
             await _authService.LinkAccounts(primaryAuthId, paratextAuthId);
             JObject userProfile = JObject.Parse(await _authService.GetUserAsync(primaryAuthId));
             var primaryUserId = (string)userProfile["app_metadata"]["xf_user_id"];
@@ -143,7 +147,15 @@ namespace SIL.XForge.Services
             {
                 IDocument<User> userDoc = await conn.FetchAsync<User>(primaryUserId);
                 await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId)));
+                IDocument<User> secondaryUserDoc = await conn.FetchAsync<User>(secondarySFUserId);
+                await secondaryUserDoc.SubmitJson0OpAsync(op => op.Set(u => u.ParatextId, null));
             }
+
+            await _userSecrets.UpdateAsync(
+                secondarySFUserId,
+                update => update.Set(us => us.ParatextTokens, null),
+                true
+            );
         }
 
         /// <summary>

@@ -91,14 +91,29 @@ namespace SIL.XForge.Services
             env.AuthService.LinkAccounts("auth02", "paratext|paratext01").Returns(Task.CompletedTask);
             JObject userProfile = env.CreateUserProfile("user02", "auth02", env.IssuedAt);
             env.AuthService.GetUserAsync("auth02").Returns(Task.FromResult(userProfile.ToString()));
-            JObject ptProfile = env.CreateUserProfile("newPtProfile", "paratext|paratext01", env.IssuedAt);
+            JObject ptProfile = env.CreateUserProfile("user01", "paratext|paratext01", env.IssuedAt);
             env.AuthService.GetUserAsync("paratext|paratext01").Returns(Task.FromResult(ptProfile.ToString()));
+            Assert.That(env.UserSecrets.Get("user01").ParatextTokens, Is.Not.Null, "setup");
+            Assert.That(env.GetUser("user01").ParatextId, Is.Not.Null, "setup");
 
+            // SUT
             await env.Service.LinkParatextAccountAsync("auth02", "paratext|paratext01");
             User user2 = env.GetUser("user02");
             Assert.That(user2.ParatextId, Is.EqualTo("paratext01"));
-            UserSecret userSecret = env.UserSecrets.Get("user02");
-            Assert.That(userSecret.ParatextTokens.RefreshToken, Is.EqualTo("new_refresh_token"));
+            User user1 = env.GetUser("user01");
+            Assert.That(
+                user1.ParatextId,
+                Is.Null,
+                "secondary user paratextId should be removed so that only one user has a given paratextId"
+            );
+            UserSecret userSecret02 = env.UserSecrets.Get("user02");
+            Assert.That(userSecret02.ParatextTokens.RefreshToken, Is.EqualTo("new_refresh_token"));
+            UserSecret userSecret01 = env.UserSecrets.Get("user01");
+            Assert.That(
+                userSecret01.ParatextTokens,
+                Is.Null,
+                "secondary user pt tokens should be removed so that we don't have old expired tokens, and so that there can be better expectations on what it means for a user to have PT tokens."
+            );
         }
 
         [Test]
