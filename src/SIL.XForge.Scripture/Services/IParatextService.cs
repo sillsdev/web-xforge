@@ -53,7 +53,7 @@ namespace SIL.XForge.Scripture.Services
             Dictionary<int, string> chapterAuthors = null
         );
         string GetNotes(UserSecret userSecret, string ptProjectId, int bookNum);
-        SyncMetricInfo PutNotes(UserSecret userSecret, string ptProjectId, string notesText);
+        SyncMetricInfo PutNotes(UserSecret userSecret, string ptProjectId, XElement notesElement);
         Task<SyncMetricInfo> UpdateParatextCommentsAsync(
             UserSecret userSecret,
             string projectId,
