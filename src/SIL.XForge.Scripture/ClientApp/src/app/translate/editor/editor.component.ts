@@ -462,9 +462,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             const userOnProject: boolean = !!this.currentUser?.sites[environment.siteId].projects.includes(sourceId);
             // Only get the project doc if the user is on the project to avoid an error.
             this.sourceProjectDoc = userOnProject ? await this.projectService.getProfile(sourceId) : undefined;
-            if (this.sourceProjectDoc != null && this.sourceProjectDoc.data != null) {
-              this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
-            }
           }
 
           if (this.projectUserConfigChangesSub != null) {
@@ -479,6 +476,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
         await this.loadNoteThreadDocs(this.projectDoc.id);
         this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
+        if (this.sourceProjectDoc?.data != null) {
+          this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
+        }
         this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
 
         this.loadProjectUserConfig();
