@@ -650,8 +650,8 @@ namespace SIL.XForge.Scripture.Services
             string threadId = "Answer_0123";
             string content = "Content for comment to update.";
             string verseRef = "RUT 1:1";
-            string updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef);
-            var syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
+            XElement updateNotesXml = env.GetUpdateNotesXml(threadId, env.User01, date, content, verseRef);
+            var syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesXml);
 
             CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
@@ -663,8 +663,8 @@ namespace SIL.XForge.Scripture.Services
 
             // Edit a comment
             content = "Edited: Content for comment to update.";
-            updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef);
-            syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
+            updateNotesXml = env.GetUpdateNotesXml(threadId, env.User01, date, content, verseRef);
+            syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesXml);
 
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
             comment = thread.Comments.First();
@@ -672,8 +672,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 1)));
 
             // Delete a comment
-            updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef, true);
-            syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
+            updateNotesXml = env.GetUpdateNotesXml(threadId, env.User01, date, content, verseRef, true);
+            syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesXml);
 
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
             comment = thread.Comments.First();
@@ -3960,7 +3960,7 @@ namespace SIL.XForge.Scripture.Services
                 return chapterDeltas;
             }
 
-            public string GetUpdateNotesString(
+            public XElement GetUpdateNotesXml(
                 string threadId,
                 string user,
                 DateTime date,
@@ -3992,7 +3992,7 @@ namespace SIL.XForge.Scripture.Services
                 }
                 threadElem.Add(commentElem);
                 notesElem.Add(threadElem);
-                return notesElem.ToString();
+                return notesElem;
             }
 
             public async Task<IEnumerable<IDocument<NoteThread>>> GetNoteThreadDocsAsync(

@@ -820,7 +820,7 @@ namespace SIL.XForge.Scripture.Services
                 _syncMetrics.ParatextNotes += _paratextService.PutNotes(
                     _userSecret,
                     _projectDoc.Data.ParatextId,
-                    notesElem.ToString()
+                    notesElem
                 );
             }
         }

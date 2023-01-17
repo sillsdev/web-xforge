@@ -35,15 +35,14 @@ namespace SIL.XForge.Scripture.Services
         /// <summary>
         /// Parses the XML into a nested list of Comments - each inner list is the data for a thread.
         /// </summary>
-        /// <param name="noteXml"></param>
+        /// <param name="noteXml">The Note XML Element</param>
         /// <param name="ptUser">ParatextUser to use when creating any new Comments.</param>
         /// <returns>Nested list of comments</returns>
         /// <remarks>This code assumes that the XML passes the validation of the notes XML schema.</remarks>
-        public static List<List<Comment>> ParseNotes(string noteXml, ParatextUser ptUser)
+        public static List<List<Comment>> ParseNotes(XElement noteXml, ParatextUser ptUser)
         {
             List<List<Comment>> result = new List<List<Comment>>();
-            XDocument doc = XDocument.Parse(noteXml);
-            foreach (var threadElem in doc.Root.Elements("thread"))
+            foreach (var threadElem in noteXml.Elements("thread"))
             {
                 result.Add(ParseThread(threadElem, ptUser));
             }

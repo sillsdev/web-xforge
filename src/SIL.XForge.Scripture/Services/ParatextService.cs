@@ -1213,10 +1213,13 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Write up-to-date notes from the mongo database to the Paratext project folder </summary>
-        public SyncMetricInfo PutNotes(UserSecret userSecret, string paratextId, string notesText)
+        public SyncMetricInfo PutNotes(UserSecret userSecret, string paratextId, XElement notesElement)
         {
             // TODO: should accept some data structure instead of XML
-            var changeList = NotesFormatter.ParseNotes(notesText, new SFParatextUser(GetParatextUsername(userSecret)));
+            var changeList = NotesFormatter.ParseNotes(
+                notesElement,
+                new SFParatextUser(GetParatextUsername(userSecret))
+            );
             return PutCommentThreads(userSecret, paratextId, changeList);
         }
 

@@ -293,7 +293,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetText("project02", "MRK", 1).DeepEquals(delta), Is.True);
             Assert.That(env.GetText("project02", "MRK", 2).DeepEquals(delta), Is.True);
 
-            env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<XElement>());
 
             SFProject project = env.VerifyProjectSync(true);
             Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
@@ -361,7 +361,7 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(env.GetText("project02", "MRK", 1).DeepEquals(delta), Is.True);
             Assert.That(env.GetText("project02", "MRK", 2).DeepEquals(delta), Is.True);
 
-            env.ParatextService.Received(2).PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
+            env.ParatextService.Received(2).PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<XElement>());
 
             SFProject project = env.GetProject();
             Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
@@ -417,7 +417,7 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Any<Dictionary<int, string>>()
                 );
 
-            env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
+            env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<XElement>());
 
             var delta = Delta.New().InsertText("text");
             Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
@@ -2231,11 +2231,11 @@ namespace SIL.XForge.Scripture.Services
             env.SetupSFData(true, true, true, false, books);
             env.SetupPTData(books);
             var syncMetricInfo = new SyncMetricInfo(1, 2, 3);
-            env.ParatextService.PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>()).Returns(syncMetricInfo);
+            env.ParatextService.PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<XElement>()).Returns(syncMetricInfo);
 
             await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
-            env.ParatextService.Received(2).PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<string>());
+            env.ParatextService.Received(2).PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<XElement>());
 
             env.VerifyProjectSync(true);
 
