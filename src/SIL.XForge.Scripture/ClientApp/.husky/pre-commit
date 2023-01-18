@@ -4,4 +4,4 @@
 # Run npx in ClientApp.
 cd src/SIL.XForge.Scripture/ClientApp
 # But specify a working directory to lint-staged to work from the root of the repository.
-npx --no-install lint-staged --cwd ../../..
+npx --no-install lint-staged --relative --cwd ../../..
