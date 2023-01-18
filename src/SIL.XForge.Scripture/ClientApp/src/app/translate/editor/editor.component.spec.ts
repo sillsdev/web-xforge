@@ -863,6 +863,60 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('source correctly displays when text changes', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject(
+        {
+          texts: [
+            {
+              bookNum: 44,
+              chapters: [
+                {
+                  number: 1,
+                  lastVerse: 3,
+                  isValid: true,
+                  permissions: {
+                    user01: TextInfoPermission.Read
+                  }
+                }
+              ],
+              hasSource: false,
+              permissions: {
+                user01: TextInfoPermission.Read
+              }
+            }
+          ]
+        },
+        'project02'
+      );
+      env.setProjectUserConfig();
+      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.wait();
+      expect(env.bookName).toEqual('Matthew');
+      expect(env.component.chapter).toBe(1);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target!.segmentRef).toEqual('');
+      var selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEdit).toBe(true);
+      expect(env.isSourceAreaHidden).toBe(true);
+
+      env.updateParams({ projectId: 'project01', bookId: 'ACT' });
+      env.wait();
+      expect(env.bookName).toEqual('Acts');
+      expect(env.component.chapter).toBe(1);
+      expect(env.component.sourceLabel).toEqual('SRC');
+      expect(env.component.targetLabel).toEqual('TRG');
+      expect(env.component.target!.segmentRef).toEqual('');
+      selection = env.targetEditor.getSelection();
+      expect(selection).toBeNull();
+      expect(env.component.canEdit).toBe(true);
+      expect(env.isSourceAreaHidden).toBe(false);
+
+      env.dispose();
+    }));
+
     it('user cannot edit', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser('user02');
@@ -3214,7 +3268,7 @@ class TestEnvironment {
     }
   }
 
-  setupProject(data: Partial<SFProject> = {}): void {
+  setupProject(data: Partial<SFProject> = {}, id?: string): void {
     const projectProfileData = cloneDeep(this.testProjectProfile);
     const projectData: SFProject = {
       ...this.testProjectProfile,
@@ -3236,18 +3290,28 @@ class TestEnvironment {
     if (data.defaultFontSize != null) {
       projectProfileData.defaultFontSize = data.defaultFontSize;
     }
-    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
-      id: 'project01',
-      data: projectProfileData
-    });
-    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
-      id: 'project02',
-      data: cloneDeep(projectProfileData)
-    });
-    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
-      id: 'project01',
-      data: projectData
-    });
+    if (data.texts != null) {
+      projectProfileData.texts = data.texts;
+    }
+    if (id !== undefined) {
+      this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
+        id: id,
+        data: projectProfileData
+      });
+    } else {
+      this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
+        id: 'project01',
+        data: projectProfileData
+      });
+      this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
+        id: 'project02',
+        data: cloneDeep(projectProfileData)
+      });
+      this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+        id: 'project01',
+        data: projectData
+      });
+    }
   }
 
   setProjectUserConfig(userConfig: Partial<SFProjectUserConfig> = {}): void {
