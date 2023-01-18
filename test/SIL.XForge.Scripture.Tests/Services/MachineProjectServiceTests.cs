@@ -14,6 +14,7 @@ using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
+using SIL.XForge.Services;
 using SIL.XForge.Utils;
 using MachineProject = SIL.Machine.WebApi.Models.Project;
 

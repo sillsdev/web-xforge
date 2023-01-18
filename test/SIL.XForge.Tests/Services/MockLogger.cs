@@ -4,7 +4,7 @@ using System;
 using NUnit.Framework;
 using System.Linq;
 
-namespace SIL.XForge.Scripture.Services
+namespace SIL.XForge.Services
 {
     /// <summary>
     /// An occurrence of something being logged. For use by unit tests.
