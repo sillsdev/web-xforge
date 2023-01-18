@@ -1,12 +1,11 @@
 <ng-container *transloco="let t; read: 'training_progress'">
-  <div *ngIf="showTrainingProgress" class="training-progress">
+  <div *ngIf="showTrainingProgress" class="training-progress mat-card">
     <div class="training-title" fxLayout="row" fxLayoutAlign="space-between center">
       <div>{{ t("training") }}</div>
       <button id="training-close-button" mat-icon-button type="button" (click)="closeTrainingProgress()">
         <mat-icon>close</mat-icon>
       </button>
     </div>
-    <mat-divider></mat-divider>
     <div class="training-content" fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="5px">
       <div class="text-ellipsis">{{ trainingMessage }}</div>
       <div>
