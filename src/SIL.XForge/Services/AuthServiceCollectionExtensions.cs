@@ -10,36 +10,33 @@ using Microsoft.Extensions.Configuration;
 using SIL.XForge.Configuration;
 using SIL.XForge.Services;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+public static class AuthServiceCollectionExtensions
 {
-    public static class AuthServiceCollectionExtensions
+    public static IServiceCollection AddXFAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        public static IServiceCollection AddXFAuthentication(
-            this IServiceCollection services,
-            IConfiguration configuration
-        )
-        {
-            var authOptions = configuration.GetOptions<AuthOptions>();
-            services
-                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
+        var authOptions = configuration.GetOptions<AuthOptions>();
+        services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.Authority = $"https://{authOptions.Domain}/";
+                options.Audience = authOptions.Audience;
+                options.Events = new JwtBearerEvents
                 {
-                    options.Authority = $"https://{authOptions.Domain}/";
-                    options.Audience = authOptions.Audience;
-                    options.Events = new JwtBearerEvents
+                    OnTokenValidated = context =>
                     {
-                        OnTokenValidated = context =>
-                        {
-                            string scopeClaim = context.Principal.FindFirst(c => c.Type == JwtClaimTypes.Scope)?.Value;
-                            var scopes = new HashSet<string>(scopeClaim?.Split(' ') ?? Enumerable.Empty<string>());
-                            if (!scopes.Contains(authOptions.Scope))
-                                context.Fail("A required scope has not been granted.");
-                            return Task.CompletedTask;
-                        }
-                    };
-                })
-                .AddBasic(options =>
-                {
+                        string scopeClaim = context.Principal.FindFirst(c => c.Type == JwtClaimTypes.Scope)?.Value;
+                        var scopes = new HashSet<string>(scopeClaim?.Split(' ') ?? Enumerable.Empty<string>());
+                        if (!scopes.Contains(authOptions.Scope))
+                            context.Fail("A required scope has not been granted.");
+                        return Task.CompletedTask;
+                    }
+                };
+            })
+            .AddBasic(
+                options =>
                     options.Events = new BasicAuthenticationEvents
                     {
                         OnValidateCredentials = context =>
@@ -70,9 +67,8 @@ namespace Microsoft.Extensions.DependencyInjection
                             }
                             return Task.CompletedTask;
                         }
-                    };
-                });
-            return services;
-        }
+                    }
+            );
+        return services;
     }
 }

@@ -1,7 +1,6 @@
-namespace SIL.XForge.Services
+namespace SIL.XForge.Services;
+
+public interface ISecurityService
 {
-    public interface ISecurityService
-    {
-        string GenerateKey();
-    }
+    string GenerateKey();
 }

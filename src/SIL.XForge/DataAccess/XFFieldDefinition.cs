@@ -8,10 +8,8 @@ public class XFFieldDefinition<TDocument, TField> : FieldDefinition<TDocument, T
 {
     private readonly ExpressionFieldDefinition<TDocument, TField> _internalDef;
 
-    public XFFieldDefinition(Expression<Func<TDocument, TField>> expression)
-    {
+    public XFFieldDefinition(Expression<Func<TDocument, TField>> expression) =>
         _internalDef = new ExpressionFieldDefinition<TDocument, TField>(expression);
-    }
 
     public override RenderedFieldDefinition<TField> Render(
         IBsonSerializer<TDocument> documentSerializer,

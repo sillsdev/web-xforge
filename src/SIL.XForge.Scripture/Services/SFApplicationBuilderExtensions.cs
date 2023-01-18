@@ -1,13 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using SIL.XForge.Scripture.Services;
 
-namespace Microsoft.AspNetCore.Builder
+namespace Microsoft.AspNetCore.Builder;
+
+public static class SFApplicationBuilderExtensions
 {
-    public static class SFApplicationBuilderExtensions
-    {
-        public static void UseSFServices(this IApplicationBuilder app)
-        {
-            app.ApplicationServices.GetService<IParatextService>().Init();
-        }
-    }
+    public static void UseSFServices(this IApplicationBuilder app) =>
+        app.ApplicationServices.GetService<IParatextService>().Init();
 }
