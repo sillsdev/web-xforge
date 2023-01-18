@@ -20,6 +20,7 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
+using SIL.XForge.Services;
 using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Services
