@@ -1,7 +1,6 @@
 @use '@material/button/mixins' as button;
 
 @import 'src/variables';
-@import 'bootstrap/scss/mixins/breakpoints';
 
 .training-progress {
   position: fixed;
@@ -10,7 +9,8 @@
   inset-inline-end: 15px;
   bottom: 10px;
   border-radius: 4px;
-  width: 270px;
+  width: 300px;
+  padding: 0;
   background-color: white;
   overflow: hidden;
 
