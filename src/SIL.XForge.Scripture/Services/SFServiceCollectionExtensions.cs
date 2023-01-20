@@ -1,3 +1,4 @@
+using AsyncKeyedLock;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 
@@ -13,6 +14,11 @@ namespace Microsoft.Extensions.DependencyInjection
             services.AddCommonServices();
             services.AddSingleton<ISyncService, SyncService>();
             services.AddSingleton<IParatextService, ParatextService>();
+            services.AddSingleton(new AsyncKeyedLocker<string>(o =>
+            {
+                o.PoolSize = 20;
+                o.PoolInitialFill = 1;
+            }));
             services.AddTransient<IDeltaUsxMapper, DeltaUsxMapper>();
             services.AddTransient<IParatextNotesMapper, ParatextNotesMapper>();
             services.AddSingleton<IGuidService, GuidService>();

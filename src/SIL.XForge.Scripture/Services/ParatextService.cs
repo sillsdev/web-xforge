@@ -16,11 +16,13 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.XPath;
+using AsyncKeyedLock;
 using IdentityModel;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MongoDB.Driver.Core.Authentication;
 using Newtonsoft.Json.Linq;
 using Paratext.Data;
 using Paratext.Data.Languages;
@@ -66,10 +68,7 @@ namespace SIL.XForge.Scripture.Services
         private string _sendReceiveServerUri = InternetAccess.uriProduction;
         private readonly IInternetSharedRepositorySourceProvider _internetSharedRepositorySourceProvider;
         private readonly ISFRestClientFactory _restClientFactory;
-
-        /// <summary> Map user IDs to semaphores </summary>
-        private readonly ConcurrentDictionary<string, SemaphoreSlim> _tokenRefreshSemaphores =
-            new ConcurrentDictionary<string, SemaphoreSlim>();
+        private readonly AsyncKeyedLocker<string> _asyncKeyedLocker;
         private readonly IHgWrapper _hgHelper;
         private readonly IWebHostEnvironment _env;
 
@@ -87,7 +86,8 @@ namespace SIL.XForge.Scripture.Services
             IInternetSharedRepositorySourceProvider internetSharedRepositorySourceProvider,
             IGuidService guidService,
             ISFRestClientFactory restClientFactory,
-            IHgWrapper hgWrapper
+            IHgWrapper hgWrapper,
+            AsyncKeyedLocker<string> asyncKeyedLocker
         )
         {
             _paratextOptions = paratextOptions;
@@ -104,6 +104,7 @@ namespace SIL.XForge.Scripture.Services
             _restClientFactory = restClientFactory;
             _hgHelper = hgWrapper;
             _env = env;
+            _asyncKeyedLocker = asyncKeyedLocker;
 
             _httpClientHandler = new HttpClientHandler();
             _registryClient = new HttpClient(_httpClientHandler);
@@ -2484,14 +2485,10 @@ namespace SIL.XForge.Scripture.Services
 
         private async Task<ParatextAccessLock> GetParatextAccessLock(string sfUserId, CancellationToken token)
         {
-            SemaphoreSlim semaphore = _tokenRefreshSemaphores.GetOrAdd(
-                sfUserId,
-                (string key) => new SemaphoreSlim(1, 1)
-            );
-            await semaphore.WaitAsync();
-
+            IDisposable accessLock = null;
             try
             {
+                accessLock = await _asyncKeyedLocker.LockAsync(sfUserId, token).ConfigureAwait(false);
                 Attempt<UserSecret> attempt = await _userSecretRepository.TryGetAsync(sfUserId);
                 if (!attempt.TryResult(out UserSecret userSecret))
                 {
@@ -2522,14 +2519,14 @@ namespace SIL.XForge.Scripture.Services
                         b => b.Set(u => u.ParatextTokens, refreshedUserTokens)
                     );
                 }
-                return new ParatextAccessLock(semaphore, userSecret);
+                return new ParatextAccessLock(accessLock, userSecret);
             }
             catch
             {
                 // If an exception is thrown between awaiting the semaphore and returning the ParatextAccessLock, the
                 // caller of the method will not get a reference to a ParatextAccessLock and can't release
                 // the semaphore.
-                semaphore.Release();
+                accessLock.Dispose();
                 throw;
             }
         }
@@ -2583,18 +2580,18 @@ namespace SIL.XForge.Scripture.Services
 
     class ParatextAccessLock : DisposableBase
     {
-        private SemaphoreSlim _userSemaphore;
+        private readonly IDisposable _asyncKeyedLock;
         public readonly UserSecret UserSecret;
 
-        public ParatextAccessLock(SemaphoreSlim userSemaphore, UserSecret userSecret)
+        public ParatextAccessLock(IDisposable asyncKeyedLock, UserSecret userSecret)
         {
-            _userSemaphore = userSemaphore;
+            _asyncKeyedLock = asyncKeyedLock;
             UserSecret = userSecret;
         }
 
         protected override void DisposeManagedResources()
         {
-            _userSemaphore.Release();
+            _asyncKeyedLock.Dispose();
         }
     }
 }
