@@ -168,6 +168,11 @@ export class ShareDialogComponent extends SubscriptionDisposable {
       })
       .then(async () => {
         await this.reserveShareLink();
+      })
+      .catch((e: DOMException) => {
+        if (e.name !== 'AbortError') {
+          throw e;
+        }
       });
   }
 
