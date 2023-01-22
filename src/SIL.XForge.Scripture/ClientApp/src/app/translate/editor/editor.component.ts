@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
@@ -41,6 +41,7 @@ import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
@@ -115,6 +116,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   @ViewChild('source') source?: TextComponent;
   @ViewChild('target') target?: TextComponent;
   @ViewChild('fabButton') insertNoteFab?: ElementRef<HTMLElement>;
+  @ViewChild('fabBottomSheet') TemplateBottomSheet?: TemplateRef<any>;
 
   private translationEngine?: RemoteTranslationEngine;
   private isTranslating: boolean = false;
@@ -124,6 +126,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private readonly translationSuggester: TranslationSuggester = new PhraseTranslationSuggester();
   private readonly ecm = new ErrorCorrectionModel();
   private insertSuggestionEnd: number = -1;
+  private bottomSheetRef?: MatBottomSheetRef;
   private currentUserDoc?: UserDoc;
   private projectDoc?: SFProjectProfileDoc;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
@@ -163,7 +166,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly i18n: I18nService,
     private readonly featureFlags: FeatureFlagService,
     @Inject(CONSOLE) private readonly console: ConsoleInterface,
-    private readonly router: Router
+    private readonly router: Router,
+    private bottomSheet: MatBottomSheet
   ) {
     super(noticeService);
     const wordTokenizer = new LatinWordTokenizer();
@@ -338,6 +342,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.isProjectAdmin || this.projectDoc?.data?.translateConfig.shareEnabled === true;
   }
 
+  get currentSegmentReference(): string {
+    const segmentRef: string | undefined = this.target?.currentSegmentOrDefault;
+    if (segmentRef == null || this.bookNum == null) return '';
+    const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
+    if (verseRef == null) {
+      return '';
+    }
+    return this.i18n.localizeReference(verseRef);
+  }
+
   get fontSize(): string | undefined {
     return formatFontSizeToRems(this.projectDoc?.data?.defaultFontSize);
   }
@@ -390,8 +404,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   set showInsertNoteFab(value: boolean) {
-    if (this.insertNoteFab == null) return;
-    this.insertNoteFab.nativeElement.style.visibility = value ? 'visible' : 'hidden';
+    if (this.insertNoteFab == null || this.TemplateBottomSheet == null) return;
+    if (this.mediaObserver.isActive('lt-lg')) {
+      this.insertNoteFab.nativeElement.style.visibility = 'hidden';
+      if (value) {
+        if (this.bottomSheetRef?.containerInstance == null) {
+          this.bottomSheetRef = this.bottomSheet.open(this.TemplateBottomSheet, { hasBackdrop: false });
+        }
+      } else {
+        this.bottomSheet.dismiss();
+      }
+    } else {
+      this.insertNoteFab.nativeElement.style.visibility = value ? 'visible' : 'hidden';
+      this.bottomSheet.dismiss();
+    }
   }
 
   get isReviewer(): boolean {
@@ -796,7 +822,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.showNoteThread(undefined, verseRef);
     } else {
       const segmentRef: string | undefined = this.target.currentSegmentOrDefault;
-      if (segmentRef == null || this.bookNum == null) return;
+      if (segmentRef == null) return;
       const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
       this.showNoteThread(undefined, verseRef);
     }
@@ -1222,9 +1248,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           if (this.bookNum == null || this.target == null) return;
           const verseRef: VerseRef | undefined = verseRefFromMouseEvent(event, this.bookNum);
           if (verseRef == null) return;
-
-          this.showInsertNoteFab = this.target.toggleVerseSelection(verseRef);
-          this.positionInsertNoteFab(segmentElement);
+          if (this.canShowInsertNoteFab) {
+            this.showInsertNoteFab = this.target.toggleVerseSelection(verseRef);
+            this.positionInsertNoteFab(segmentElement);
+          } else {
+            this.showInsertNoteFab = false;
+          }
           if (this.reviewerSelectedVerseRef != null) {
             if (verseRef.equals(this.reviewerSelectedVerseRef)) {
               this.reviewerSelectedVerseRef = undefined;

@@ -84,6 +84,7 @@
     "project_name": "Project Name"
   },
   "editor": {
+    "add_comment": "Add Comment",
     "anonymous": "Anonymous",
     "cannot_edit_chapter_formatting_invalid": "This chapter cannot be edited because the formatting is invalid. Please fix the formatting in Paratext.",
     "completed_successfully": "Completed successfully",
