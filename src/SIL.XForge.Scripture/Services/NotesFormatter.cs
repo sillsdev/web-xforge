@@ -178,7 +178,7 @@ namespace SIL.XForge.Scripture.Services
         private static void ParseContents(XElement contentElem, Comment comment)
         {
             string contents;
-            if (contentElem.FirstNode.NodeType == XmlNodeType.Text)
+            if (contentElem.FirstNode?.NodeType == XmlNodeType.Text)
             {
                 contents = ((XText)contentElem.FirstNode).Value;
             }
@@ -198,8 +198,8 @@ namespace SIL.XForge.Scripture.Services
             bldr.Append("<p>");
             foreach (var node in paraElem.Nodes())
             {
-                if (node is XText)
-                    bldr.Append(((XText)node).Value);
+                if (node is XText text)
+                    bldr.Append(text.Value);
                 else
                 {
                     XElement elem = (XElement)node;
