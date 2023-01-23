@@ -104,7 +104,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   chapters: number[] = [];
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
-  projectId: string = '';
   textHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
@@ -394,6 +393,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.userRole === SFProjectRole.Reviewer;
   }
 
+  get projectId(): string | undefined {
+    return this.projectDoc?.id;
+  }
+
   private get userRole(): string | undefined {
     return this.projectDoc?.data?.userRoles[this.userService.currentUserId];
   }
@@ -439,7 +442,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
         const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
         if (projectId !== prevProjectId) {
-          this.projectId = projectId;
           this.projectDoc = await this.projectService.getProfile(projectId);
           const userRole: string | undefined = this.projectDoc.data?.userRoles[this.userService.currentUserId];
           if (userRole != null) {

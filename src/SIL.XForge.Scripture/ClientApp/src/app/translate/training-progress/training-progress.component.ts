@@ -1,8 +1,7 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { Subscription, timer } from 'rxjs';
-import { delayWhen, filter, map, repeat, retryWhen, tap } from 'rxjs/operators';
+import { BehaviorSubject, Subscription, timer } from 'rxjs';
+import { delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -16,11 +15,10 @@ import { RemoteTranslationEngine } from '../../machine-api/remote-translation-en
   styleUrls: ['./training-progress.component.scss']
 })
 export class TrainingProgressComponent extends DataLoadingComponent implements OnInit, OnDestroy {
-  @Input() projectId?: string;
-
   showTrainingProgress: boolean = false;
   trainingMessage: string = '';
   trainingPercentage: number = 0;
+  private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   private projectDoc?: SFProjectProfileDoc;
   private projectDataChangesSub?: Subscription;
   private trainingProgressClosed: boolean = false;
@@ -29,7 +27,6 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
   private translationEngine?: RemoteTranslationEngine;
 
   constructor(
-    private readonly activatedRoute: ActivatedRoute,
     noticeService: NoticeService,
     private readonly projectService: SFProjectService,
     private readonly translationEngineService: TranslationEngineService
@@ -37,24 +34,35 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
     super(noticeService);
   }
 
-  ngOnInit(): void {
-    this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
-      this.loadingStarted();
-      try {
-        this.projectDoc = await this.projectService.getProfile(projectId);
-        this.setupTranslationEngine();
-      } finally {
-        this.loadingFinished();
-      }
+  @Input() set projectId(id: string | undefined) {
+    if (id == null) {
+      return;
+    }
+    this.projectId$.next(id);
+  }
 
-      if (this.projectDataChangesSub != null) {
-        this.projectDataChangesSub.unsubscribe();
-      }
-      this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(() => {
-        if (this.translationEngine == null || !this.translationSuggestionsEnabled) {
+  async ngOnInit(): Promise<void> {
+    this.subscribe(this.projectId$, async projectId => {
+      if (this.projectId !== '') {
+        this.loadingStarted();
+        try {
+          this.projectDoc = await this.projectService.getProfile(projectId);
           this.setupTranslationEngine();
+        } finally {
+          this.loadingFinished();
         }
-      });
+
+        if (this.projectDoc !== null) {
+          if (this.projectDataChangesSub != null) {
+            this.projectDataChangesSub.unsubscribe();
+          }
+          this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(() => {
+            if (this.translationEngine == null || !this.translationSuggestionsEnabled) {
+              this.setupTranslationEngine();
+            }
+          });
+        }
+      }
     });
   }
 
