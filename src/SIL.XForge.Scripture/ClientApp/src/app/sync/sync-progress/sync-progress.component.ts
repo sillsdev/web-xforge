@@ -5,7 +5,12 @@ import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf
 import { merge, Observable } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
+
+export class ProgressState {
+  constructor(public progressValue: number, public progressString?: string) {}
+}
 
 @Component({
   selector: 'app-sync-progress',
@@ -16,9 +21,17 @@ export class SyncProgressComponent extends SubscriptionDisposable {
 
   private sourceProjectDoc?: SFProjectDoc;
   private _projectDoc?: SFProjectDoc;
+  private progressPercent: number = 0;
 
-  constructor(private readonly projectService: SFProjectService) {
+  constructor(
+    private readonly projectService: SFProjectService,
+    private readonly projectNotificationService: ProjectNotificationService
+  ) {
     super();
+
+    this.projectNotificationService.setNotifySyncProgressHandler((projectId: string, progressState: ProgressState) =>
+      this.updateProgressState(projectId, progressState)
+    );
   }
 
   @Input() set projectDoc(doc: SFProjectDoc | undefined) {
@@ -31,37 +44,32 @@ export class SyncProgressComponent extends SubscriptionDisposable {
 
   /** The progress as a percent between 0 and 100 for the target project and the source project, if one exists. */
   get syncProgressPercent(): number {
-    if (this.sourceProjectDoc?.data == null) {
-      return (this._projectDoc?.data?.sync.percentCompleted || 0) * 100;
-    }
-    let progress: number = 0;
-    if (this.sourceProjectDoc.data.sync.queuedCount > 0) {
-      progress += (this.sourceProjectDoc.data.sync.percentCompleted || 0) * 0.5;
-    } else {
-      // The source project has synchronized so this is the midway point
-      progress = 0.5;
-    }
-    progress += (this._projectDoc?.data?.sync.percentCompleted || 0) * 0.5;
-    return progress * 100;
+    return this.progressPercent * 100;
   }
 
   get mode(): ProgressBarMode {
-    // Show indeterminate at the beginning and at the halfway point if a source project was synced
-    const sourceSyncCompleted = this.sourceProjectDoc?.data != null && this.sourceProjectDoc.data.sync.queuedCount < 1;
-    const isDeterminate = sourceSyncCompleted ? this.syncProgressPercent > 50 : this.syncProgressPercent > 0;
-    return isDeterminate ? 'determinate' : 'indeterminate';
+    // Show indeterminate only at the beginning, as the sync has not yet started
+    return this.syncProgressPercent > 0 ? 'determinate' : 'indeterminate';
   }
 
   async initialize(): Promise<void> {
     if (this._projectDoc?.data == null) {
       return;
     }
+    await this.projectNotificationService.start();
     if (this._projectDoc?.data?.translateConfig.source != null) {
       const sourceProjectId: string | undefined = this._projectDoc.data.translateConfig.source?.projectRef;
       if (sourceProjectId != null) {
         const role: string = await this.projectService.onlineGetProjectRole(sourceProjectId);
-        // Only show progress for the source project when the user has sync permission
-        this.sourceProjectDoc = isParatextRole(role) ? await this.projectService.get(sourceProjectId) : undefined;
+        // Only show progress for the source project when the user has sync
+        if (isParatextRole(role)) {
+          this.sourceProjectDoc = await this.projectService.get(sourceProjectId);
+
+          // Subscribe to SignalR notifications for the source project
+          await this.projectNotificationService.subscribeToProject(this.sourceProjectDoc.id);
+        } else {
+          this.sourceProjectDoc = undefined;
+        }
       }
     }
 
@@ -70,6 +78,23 @@ export class SyncProgressComponent extends SubscriptionDisposable {
         ? this._projectDoc.remoteChanges$
         : merge(this._projectDoc.remoteChanges$, this.sourceProjectDoc.remoteChanges$);
     this.subscribe(checkSyncStatus$, () => this.checkSyncStatus());
+
+    // Subscribe to SignalR notifications for the target project
+    await this.projectNotificationService.subscribeToProject(this._projectDoc.id);
+  }
+
+  override async dispose(): Promise<void> {
+    await this.projectNotificationService.stop();
+    super.dispose();
+  }
+
+  public updateProgressState(projectId: string, progressState: ProgressState) {
+    const hasSourceProject = this.sourceProjectDoc?.data != null;
+    if (projectId === this._projectDoc?.id) {
+      this.progressPercent = hasSourceProject ? 0.5 + progressState.progressValue * 0.5 : progressState.progressValue;
+    } else if (hasSourceProject && projectId === this.sourceProjectDoc?.id) {
+      this.progressPercent = progressState.progressValue * 0.5;
+    }
   }
 
   private checkSyncStatus(): void {

@@ -226,9 +226,9 @@ namespace SIL.XForge.Scripture.Services
                 );
             }
             EnsureProjectReposExists(userSecret, ptProject, source);
-            StartProgressReporting(progress);
-            if (!(ptProject is ParatextResource))
+            if (ptProject is not ParatextResource)
             {
+                StartProgressReporting(progress);
                 SharedProject sharedProj = CreateSharedProject(
                     userSecret,
                     paratextId,
@@ -2475,7 +2475,7 @@ namespace SIL.XForge.Scripture.Services
         }
 
         // Make sure there are no asynchronous methods called after this until the progress is completed.
-        private void StartProgressReporting(IProgress<ProgressState> progress)
+        private void StartProgressReporting(IProgress<ProgressState>? progress)
         {
             if (progress == null)
                 return;
