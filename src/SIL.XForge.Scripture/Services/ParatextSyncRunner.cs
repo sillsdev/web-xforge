@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -191,7 +191,12 @@ namespace SIL.XForge.Scripture.Services
                 // Update target Paratext books and notes, if this is not a resource
                 if (!_paratextService.IsResource(targetParatextId))
                 {
-                    await GetAndUpdateParatextBooksAndNotes(SyncPhase.Phase2, targetParatextId, targetTextDocsByBook, questionDocsByBook);
+                    await GetAndUpdateParatextBooksAndNotes(
+                        SyncPhase.Phase2,
+                        targetParatextId,
+                        targetTextDocsByBook,
+                        questionDocsByBook
+                    );
                 }
 
                 // Check for cancellation
@@ -353,7 +358,12 @@ namespace SIL.XForge.Scripture.Services
                 // If a resource needs updating, retrieve the books, as they were not retrieved previously
                 if (resourceNeedsUpdating)
                 {
-                    await GetAndUpdateParatextBooksAndNotes(SyncPhase.Phase5, targetParatextId, targetTextDocsByBook, questionDocsByBook);
+                    await GetAndUpdateParatextBooksAndNotes(
+                        SyncPhase.Phase5,
+                        targetParatextId,
+                        targetTextDocsByBook,
+                        questionDocsByBook
+                    );
                 }
 
                 if (!_paratextService.IsResource(targetParatextId) || resourceNeedsUpdating)
