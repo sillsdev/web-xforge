@@ -49,7 +49,6 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   texts?: TextProgress[];
   overallProgress = new Progress();
   trainingPercentage: number = 0;
-  projectId: string = '';
   isTraining: boolean = false;
   readonly engineQualityStars: number[];
   engineQuality: number = 0;
@@ -100,11 +99,14 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     return this.translationSuggestionsEnabled && !hasSourceBooks;
   }
 
+  get projectId(): string | undefined {
+    return this.projectDoc?.id;
+  }
+
   ngOnInit(): void {
     this.subscribe(this.activatedRoute.params.pipe(map(params => params['projectId'])), async projectId => {
       this.loadingStarted();
       try {
-        this.projectId = projectId;
         this.projectDoc = await this.projectService.getProfile(projectId);
         this.setupTranslationEngine();
         await Promise.all([this.calculateProgress(), this.updateEngineStats()]);
