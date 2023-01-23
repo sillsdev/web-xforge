@@ -7,7 +7,10 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ProgressStatus } from '@sillsdev/machine';
 import { CookieService } from 'ngx-cookie-service';
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import {
+  CheckingAnswerExport,
+  CheckingShareLevel
+} from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -23,11 +26,9 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
-import { TextDocId } from '../../core/models/text-doc';
-import { Delta, TextDoc } from '../../core/models/text-doc';
+import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
@@ -123,6 +124,8 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
+      // We need an extra tick for the TrainingProgress projectId subscription
+      tick();
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgressShown).toBe(true);
@@ -140,6 +143,8 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
+      // We need an extra tick for the TrainingProgress projectId subscription
+      tick();
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgressShown).toBe(true);
@@ -158,6 +163,8 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
+      // We need an extra tick for the TrainingProgress projectId subscription
+      tick();
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
       env.clickRetrainButton();
       expect(env.trainingProgressShown).toBe(true);
