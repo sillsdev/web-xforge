@@ -58,7 +58,8 @@ namespace SIL.XForge.Scripture.Services
             string paratextId,
             int bookNum,
             IEnumerable<IDocument<NoteThread>> noteThreadDocs,
-            Dictionary<string, ParatextUserProfile> ptProjectUsers
+            Dictionary<string, ParatextUserProfile> ptProjectUsers,
+            int sfNoteTagId
         );
         IEnumerable<NoteThreadChange> GetNoteThreadChanges(
             UserSecret userSecret,
