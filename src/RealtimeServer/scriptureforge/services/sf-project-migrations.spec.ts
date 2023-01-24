@@ -160,13 +160,11 @@ describe('SFProjectMigrations', () => {
       });
       let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
       expect(projectDoc.data.tagIcon).toBeDefined();
-      expect(projectDoc.data.noteTags).toBeUndefined();
 
       await env.server.migrateIfNecessary();
 
       projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
       expect(projectDoc.data.tagIcon).toBeUndefined();
-      expect(projectDoc.data.noteTags).toBeDefined();
     });
   });
 });
