@@ -568,7 +568,7 @@ class TestEnvironment {
   readonly component: SettingsComponent;
   readonly fixture: ComponentFixture<SettingsComponent>;
   readonly location: Location;
-  readonly noteTags: NoteTag[] = [{ id: 1, name: 'Tag icon', icon: 'tag01' }];
+  readonly noteTags: NoteTag[] = [{ id: 1, name: 'Tag icon', icon: 'tag01', creatorResolve: false }];
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isOnline: BehaviorSubject<boolean>;

@@ -1236,7 +1236,7 @@ namespace SIL.XForge.Scripture.Services
                     threadDoc.Data.OriginalContextAfter,
                     threadDoc.Data.Status,
                     threadDoc.Data.Assignment,
-                    threadDoc.Data.TagIcon
+                    threadDoc.Data.TagId
                 );
                 // Find the corresponding comment thread
                 var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
@@ -1291,9 +1291,9 @@ namespace SIL.XForge.Scripture.Services
                     threadChange.ThreadUpdated = true;
                 }
                 CommentTag defaultThreadIconTag = GetCommentTag(existingThread, null, commentTags);
-                if (defaultThreadIconTag?.Icon != threadDoc.Data.TagIcon)
+                if (defaultThreadIconTag?.Id != threadDoc.Data.TagId)
                 {
-                    threadChange.TagIcon = defaultThreadIconTag?.Icon;
+                    threadChange.TagId = defaultThreadIconTag.Id;
                     threadChange.ThreadUpdated = true;
                 }
                 // Add new Comments to note thread change
@@ -1336,7 +1336,7 @@ namespace SIL.XForge.Scripture.Services
                     info.ContextAfter,
                     info.Status.InternalValue,
                     info.AssignedUser,
-                    initialTag.Icon
+                    initialTag.Id
                 );
                 newThread.Position = GetThreadTextAnchor(thread, chapterDeltas);
                 newThread.Status = thread.Status.InternalValue;
@@ -1359,10 +1359,10 @@ namespace SIL.XForge.Scripture.Services
             string paratextId,
             int bookNum,
             IEnumerable<IDocument<NoteThread>> noteThreadDocs,
-            Dictionary<string, ParatextUserProfile> ptProjectUsers
+            Dictionary<string, ParatextUserProfile> ptProjectUsers,
+            int sfNoteTagId
         )
         {
-            CommentTags commentTags = GetCommentTags(userSecret, paratextId);
             string username = GetParatextUsername(userSecret);
             IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, paratextId, bookNum);
             List<List<Paratext.Data.ProjectComments.Comment>> noteThreadChangeList =
@@ -1370,7 +1370,7 @@ namespace SIL.XForge.Scripture.Services
                     noteThreadDocs,
                     commentThreads,
                     username,
-                    commentTags,
+                    sfNoteTagId,
                     ptProjectUsers
                 );
 
@@ -1382,7 +1382,7 @@ namespace SIL.XForge.Scripture.Services
         public int UpdateCommentTag(UserSecret userSecret, string paratextId, NoteTag noteTag)
         {
             CommentTags commentTags = GetCommentTags(userSecret, paratextId);
-            if (noteTag.Id != CommentTag.notSetId)
+            if (noteTag.Id != NoteTag.notSetId)
                 throw new ArgumentException("Cannot update an existing comment tag via Scripture Forge");
             var newCommentTag = new CommentTag(noteTag.Name, noteTag.Icon);
             // Check that the tag does not already exist
@@ -2204,7 +2204,7 @@ namespace SIL.XForge.Scripture.Services
             IEnumerable<IDocument<NoteThread>> noteThreadDocs,
             IEnumerable<CommentThread> commentThreads,
             string defaultUsername,
-            CommentTags commentTags,
+            int sfNoteTagId,
             Dictionary<string, ParatextUserProfile> ptProjectUsers
         )
         {
@@ -2264,7 +2264,8 @@ namespace SIL.XForge.Scripture.Services
                             ContextBefore = threadDoc.Data.OriginalContextBefore,
                             ContextAfter = threadDoc.Data.OriginalContextAfter
                         };
-                        PopulateCommentFromNote(note, comment, commentTags);
+                        bool isFirstComment = i == 0;
+                        PopulateCommentFromNote(note, comment, sfNoteTagId, isFirstComment);
                         thread.Add(comment);
                         if (note.SyncUserRef == null)
                         {
@@ -2297,7 +2298,7 @@ namespace SIL.XForge.Scripture.Services
             bool conflictTypeChanged = comment.ConflictType.InternalValue != note.ConflictType;
             bool acceptedChangeXmlChanged = comment.AcceptedChangeXmlStr != note.AcceptedChangeXml;
             bool contentChanged = comment.Contents?.InnerXml != note.Content;
-            bool tagChanged = commentTag?.Icon != note.TagIcon;
+            bool tagChanged = commentTag?.Id != note.TagId;
             bool assignedUserChanged = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers) != note.Assignment;
             if (
                 contentChanged
@@ -2315,7 +2316,8 @@ namespace SIL.XForge.Scripture.Services
         private void PopulateCommentFromNote(
             Note note,
             Paratext.Data.ProjectComments.Comment comment,
-            CommentTags commentTags
+            int sfNoteTagId,
+            bool isFirstComment
         )
         {
             comment.Thread = note.ThreadId;
@@ -2326,11 +2328,10 @@ namespace SIL.XForge.Scripture.Services
                 comment.GetOrCreateCommentNode().InnerXml = note.Content;
             if (_userSecretRepository.Query().Any(u => u.Id == note.OwnerRef))
                 comment.ExternalUser = note.OwnerRef;
-            if (note.TagIcon != null)
-            {
-                var commentTag = new Paratext.Data.ProjectComments.CommentTag(null, note.TagIcon);
-                comment.TagsAdded = new[] { commentTags.FindMatchingTag(commentTag).ToString() };
-            }
+            if (note.TagId == null)
+                comment.TagsAdded = isFirstComment ? new[] { sfNoteTagId.ToString() } : null;
+            else
+                comment.TagsAdded = new[] { note.TagId.ToString() };
         }
 
         private Note CreateNoteFromComment(
@@ -2356,7 +2357,7 @@ namespace SIL.XForge.Scripture.Services
                 DateModified = DateTime.Parse(comment.Date),
                 Deleted = comment.Deleted,
                 Status = comment.Status.InternalValue,
-                TagIcon = commentTag?.Icon,
+                TagId = commentTag?.Id,
                 Reattached = comment.Reattached,
                 Assignment = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers)
             };
