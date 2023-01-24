@@ -278,59 +278,59 @@ class TestDataService extends ProjectDataService<TestData> {
 
   protected readonly projectRights = new ProjectRights({
     admin: [
-      { projectDomain: TestProjectDomain.TestData, operation: Operation.View },
-      { projectDomain: TestProjectDomain.TestData, operation: Operation.Create },
-      { projectDomain: TestProjectDomain.TestData, operation: Operation.Edit },
-      { projectDomain: TestProjectDomain.TestData, operation: Operation.Delete },
+      [TestProjectDomain.TestData, Operation.View],
+      [TestProjectDomain.TestData, Operation.Create],
+      [TestProjectDomain.TestData, Operation.Edit],
+      [TestProjectDomain.TestData, Operation.Delete],
 
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.View },
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.Create },
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.Edit },
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.Delete },
+      [TestProjectDomain.SubData, Operation.View],
+      [TestProjectDomain.SubData, Operation.Create],
+      [TestProjectDomain.SubData, Operation.Edit],
+      [TestProjectDomain.SubData, Operation.Delete],
 
-      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.View },
-      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.Create },
-      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.Edit },
-      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.Delete }
+      [TestProjectDomain.SubSubData, Operation.View],
+      [TestProjectDomain.SubSubData, Operation.Create],
+      [TestProjectDomain.SubSubData, Operation.Edit],
+      [TestProjectDomain.SubSubData, Operation.Delete]
     ],
     user: [
-      { projectDomain: TestProjectDomain.TestData, operation: Operation.View },
-      { projectDomain: TestProjectDomain.TestData, operation: Operation.Create },
-      { projectDomain: TestProjectDomain.TestData, operation: Operation.EditOwn },
-      { projectDomain: TestProjectDomain.TestData, operation: Operation.DeleteOwn },
+      [TestProjectDomain.TestData, Operation.View],
+      [TestProjectDomain.TestData, Operation.Create],
+      [TestProjectDomain.TestData, Operation.EditOwn],
+      [TestProjectDomain.TestData, Operation.DeleteOwn],
 
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.View },
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.Create },
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.EditOwn },
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.DeleteOwn },
+      [TestProjectDomain.SubData, Operation.View],
+      [TestProjectDomain.SubData, Operation.Create],
+      [TestProjectDomain.SubData, Operation.EditOwn],
+      [TestProjectDomain.SubData, Operation.DeleteOwn],
 
-      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.View },
-      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.Create },
-      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.EditOwn },
-      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.DeleteOwn }
+      [TestProjectDomain.SubSubData, Operation.View],
+      [TestProjectDomain.SubSubData, Operation.Create],
+      [TestProjectDomain.SubSubData, Operation.EditOwn],
+      [TestProjectDomain.SubSubData, Operation.DeleteOwn]
     ],
     userOwn: [
-      { projectDomain: TestProjectDomain.TestData, operation: Operation.ViewOwn },
-      { projectDomain: TestProjectDomain.TestData, operation: Operation.Create },
-      { projectDomain: TestProjectDomain.TestData, operation: Operation.EditOwn },
-      { projectDomain: TestProjectDomain.TestData, operation: Operation.DeleteOwn },
+      [TestProjectDomain.TestData, Operation.ViewOwn],
+      [TestProjectDomain.TestData, Operation.Create],
+      [TestProjectDomain.TestData, Operation.EditOwn],
+      [TestProjectDomain.TestData, Operation.DeleteOwn],
 
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.ViewOwn },
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.Create },
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.EditOwn },
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.DeleteOwn },
+      [TestProjectDomain.SubData, Operation.ViewOwn],
+      [TestProjectDomain.SubData, Operation.Create],
+      [TestProjectDomain.SubData, Operation.EditOwn],
+      [TestProjectDomain.SubData, Operation.DeleteOwn],
 
-      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.ViewOwn },
-      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.Create },
-      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.EditOwn },
-      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.DeleteOwn }
+      [TestProjectDomain.SubSubData, Operation.ViewOwn],
+      [TestProjectDomain.SubSubData, Operation.Create],
+      [TestProjectDomain.SubSubData, Operation.EditOwn],
+      [TestProjectDomain.SubSubData, Operation.DeleteOwn]
     ],
     observer: [
-      { projectDomain: TestProjectDomain.TestData, operation: Operation.View },
+      [TestProjectDomain.TestData, Operation.View],
 
-      { projectDomain: TestProjectDomain.SubData, operation: Operation.View },
+      [TestProjectDomain.SubData, Operation.View],
 
-      { projectDomain: TestProjectDomain.SubSubData, operation: Operation.View }
+      [TestProjectDomain.SubSubData, Operation.View]
     ]
   });
 
