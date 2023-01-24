@@ -12,10 +12,7 @@ export enum Operation {
   ViewOwn = 'view_own'
 }
 
-export interface ProjectRight {
-  projectDomain: string;
-  operation: Operation;
-}
+export type ProjectRight = [string, Operation];
 
 export class ProjectRights {
   private readonly rights = new Map<string, string[]>();
@@ -64,6 +61,6 @@ export class ProjectRights {
   }
 
   protected addRights(role: string, rights: ProjectRight[]): void {
-    this.rights.set(role, Array.from(new Set<string>(rights.map(r => this.joinRight(r.projectDomain, r.operation)))));
+    this.rights.set(role, Array.from(new Set<string>(rights.map(r => this.joinRight(r[0], r[1])))));
   }
 }

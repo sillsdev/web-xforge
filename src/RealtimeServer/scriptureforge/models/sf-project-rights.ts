@@ -15,106 +15,119 @@ export enum SFProjectDomain {
   Notes = 'notes'
 }
 
+const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `${Operation}`[] }> = {
+  sf_observer: {
+    project_user_configs: ['view_own', 'edit_own'],
+    texts: ['view'],
+    sf_note_threads: ['view'],
+    notes: ['view']
+  },
+  pt_observer: {
+    project_user_configs: ['view_own', 'edit_own'],
+    project: ['view'],
+    texts: ['view'],
+    questions: ['view'],
+    answers: ['view'],
+    answer_comments: ['view'],
+    answer_status: ['view'],
+    likes: ['view'],
+    pt_note_threads: ['view'],
+    sf_note_threads: ['view'],
+    notes: ['view']
+  },
+  sf_reviewer: {
+    project_user_configs: ['view_own', 'edit_own'],
+    texts: ['view'],
+    sf_note_threads: ['view', 'create', 'delete_own'],
+    notes: ['view', 'create', 'edit_own', 'delete_own']
+  },
+  sf_community_checker: {
+    project_user_configs: ['view_own', 'edit_own'],
+    texts: ['view'],
+    questions: ['view'],
+    answers: ['view', 'create', 'edit_own', 'delete_own'],
+    answer_comments: ['view', 'create', 'edit_own', 'delete_own'],
+    likes: ['view', 'create', 'delete_own']
+  },
+  pt_consultant: {
+    project_user_configs: ['view_own', 'edit_own'],
+    project: ['view'],
+    texts: ['view'],
+    questions: ['view'],
+    answers: ['view'],
+    answer_status: ['view'],
+    answer_comments: ['view'],
+    likes: ['view'],
+    pt_note_threads: ['view', 'create', 'delete_own'],
+    sf_note_threads: ['view', 'create', 'delete_own'],
+    notes: ['view', 'create', 'edit_own', 'delete_own']
+  },
+  pt_translator: {
+    project_user_configs: ['view_own', 'edit_own'],
+    project: ['view'],
+    texts: ['view', 'edit'],
+    questions: ['view'],
+    answers: ['view', 'create', 'edit_own', 'delete_own'],
+    answer_comments: ['view', 'create', 'edit_own', 'delete_own'],
+    answer_status: ['view'],
+    likes: ['view', 'create', 'delete_own'],
+    pt_note_threads: ['view', 'create', 'delete_own'],
+    sf_note_threads: ['view', 'create', 'delete_own'],
+    notes: ['view', 'create', 'edit_own', 'delete_own']
+  },
+  pt_administrator: {
+    project_user_configs: ['view_own', 'edit_own'],
+    project: ['view'],
+    texts: ['view', 'edit'],
+    questions: ['view', 'create', 'edit', 'delete'],
+    answers: ['view', 'delete', 'edit_own'],
+    answer_comments: ['view', 'create', 'edit_own', 'delete'],
+    answer_status: ['view', 'edit'],
+    likes: ['view', 'create', 'delete_own'],
+    pt_note_threads: ['view', 'create', 'edit', 'delete'],
+    sf_note_threads: ['view', 'create', 'edit', 'delete'],
+    notes: ['view', 'create', 'edit_own', 'delete']
+  },
+  pt_read: {
+    project_user_configs: ['view_own', 'edit_own'],
+    texts: ['view'],
+    project: ['view'],
+    questions: ['view'],
+    answers: ['view'],
+    answer_comments: ['view'],
+    answer_status: ['view'],
+    likes: ['view'],
+    pt_note_threads: ['view'],
+    sf_note_threads: ['view'],
+    notes: ['view']
+  },
+  pt_write_note: {
+    project_user_configs: ['view_own', 'edit_own'],
+    project: ['view'],
+    texts: ['view'],
+    questions: ['view'],
+    answers: ['view'],
+    answer_comments: ['view'],
+    answer_status: ['view'],
+    likes: ['view'],
+    pt_note_threads: ['view', 'create', 'delete_own'],
+    sf_note_threads: ['view', 'create', 'delete_own'],
+    notes: ['view', 'create', 'edit_own', 'delete_own']
+  },
+  none: {}
+};
+
 export class SFProjectRights extends ProjectRights {
   constructor() {
     super();
 
-    const observerRights: ProjectRight[] = [
-      { projectDomain: SFProjectDomain.ProjectUserConfigs, operation: Operation.ViewOwn },
-      { projectDomain: SFProjectDomain.ProjectUserConfigs, operation: Operation.EditOwn },
-
-      { projectDomain: SFProjectDomain.Texts, operation: Operation.View },
-
-      { projectDomain: SFProjectDomain.Questions, operation: Operation.View },
-
-      { projectDomain: SFProjectDomain.Answers, operation: Operation.View },
-
-      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.View },
-
-      { projectDomain: SFProjectDomain.AnswerStatus, operation: Operation.View },
-
-      { projectDomain: SFProjectDomain.Likes, operation: Operation.View },
-
-      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.View },
-
-      { projectDomain: SFProjectDomain.Notes, operation: Operation.View }
-    ];
-    this.addRights(SFProjectRole.Observer, observerRights);
-
-    const ptObserverRights: ProjectRight[] = observerRights.concat([
-      { projectDomain: SFProjectDomain.Project, operation: Operation.View },
-
-      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.View }
-    ]);
-    this.addRights(SFProjectRole.ParatextObserver, ptObserverRights);
-
-    const reviewerRights: ProjectRight[] = observerRights.concat([
-      { projectDomain: SFProjectDomain.Answers, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.Answers, operation: Operation.EditOwn },
-      { projectDomain: SFProjectDomain.Answers, operation: Operation.DeleteOwn },
-
-      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.EditOwn },
-      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.DeleteOwn },
-
-      { projectDomain: SFProjectDomain.Likes, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn },
-
-      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.DeleteOwn },
-
-      { projectDomain: SFProjectDomain.Notes, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.Notes, operation: Operation.EditOwn },
-      { projectDomain: SFProjectDomain.Notes, operation: Operation.DeleteOwn }
-    ]);
-    this.addRights(SFProjectRole.Reviewer, reviewerRights);
-    this.addRights(SFProjectRole.CommunityChecker, reviewerRights);
-
-    const ptReviewerRights: ProjectRight[] = reviewerRights.concat([
-      { projectDomain: SFProjectDomain.Project, operation: Operation.View },
-
-      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.DeleteOwn }
-    ]);
-    this.addRights(SFProjectRole.ParatextConsultant, ptReviewerRights);
-
-    const translatorRights: ProjectRight[] = ptReviewerRights.concat([
-      { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit }
-    ]);
-    this.addRights(SFProjectRole.ParatextTranslator, translatorRights);
-
-    const administratorRights: ProjectRight[] = ptObserverRights.concat([
-      { projectDomain: SFProjectDomain.Texts, operation: Operation.Edit },
-
-      { projectDomain: SFProjectDomain.Questions, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.Questions, operation: Operation.Edit },
-      { projectDomain: SFProjectDomain.Questions, operation: Operation.Delete },
-
-      { projectDomain: SFProjectDomain.Answers, operation: Operation.EditOwn },
-      { projectDomain: SFProjectDomain.Answers, operation: Operation.Delete },
-
-      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.EditOwn },
-      { projectDomain: SFProjectDomain.AnswerComments, operation: Operation.Delete },
-
-      { projectDomain: SFProjectDomain.AnswerStatus, operation: Operation.Edit },
-
-      { projectDomain: SFProjectDomain.Likes, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.Likes, operation: Operation.DeleteOwn },
-
-      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Edit },
-      { projectDomain: SFProjectDomain.PTNoteThreads, operation: Operation.Delete },
-
-      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.Edit },
-      { projectDomain: SFProjectDomain.SFNoteThreads, operation: Operation.Delete },
-
-      { projectDomain: SFProjectDomain.Notes, operation: Operation.Create },
-      { projectDomain: SFProjectDomain.Notes, operation: Operation.EditOwn },
-      { projectDomain: SFProjectDomain.Notes, operation: Operation.Delete }
-    ]);
-    this.addRights(SFProjectRole.ParatextAdministrator, administratorRights);
+    for (const [role, rights] of Object.entries(rightsByRole)) {
+      const rightsForRole: ProjectRight[] = [];
+      for (const [domain, operations] of Object.entries(rights)) {
+        for (const operation of operations) rightsForRole.push([domain, operation as Operation]);
+      }
+      this.addRights(role, rightsForRole);
+    }
   }
 }
 
