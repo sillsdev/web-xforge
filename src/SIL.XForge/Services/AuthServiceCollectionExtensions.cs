@@ -7,6 +7,7 @@ using idunno.Authentication.Basic;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
+using SIL.XForge;
 using SIL.XForge.Configuration;
 using SIL.XForge.Services;
 
@@ -34,7 +35,9 @@ namespace Microsoft.Extensions.DependencyInjection
                             string? accessToken = context.Request.Query["access_token"];
                             if (
                                 !string.IsNullOrEmpty(accessToken)
-                                && context.HttpContext.Request.Path.StartsWithSegments("/project-notifications")
+                                && context.HttpContext.Request.Path.StartsWithSegments(
+                                    $"/{UrlConstants.ProjectNotifications}"
+                                )
                             )
                             {
                                 // Get the token from the query string
