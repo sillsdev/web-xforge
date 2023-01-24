@@ -257,7 +257,7 @@ namespace SIL.XForge.Scripture
             {
                 endpoints.MapControllers();
                 endpoints.MapRazorPages();
-                endpoints.MapHub<NotificationHub>(pattern: "/project-notifications");
+                endpoints.MapHub<NotificationHub>(pattern: $"/{UrlConstants.ProjectNotifications}");
             });
 
             // Map JSON-RPC controllers after MVC controllers, so that MVC controllers take precedence.
