@@ -12,10 +12,8 @@ export enum Operation {
   ViewOwn = 'view_own'
 }
 
-export interface ProjectRight {
-  projectDomain: string;
-  operation: Operation;
-}
+// See https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html
+export type ProjectRight = [domain: string, operation: `${Operation}`];
 
 export class ProjectRights {
   private readonly rights = new Map<string, string[]>();
@@ -64,6 +62,6 @@ export class ProjectRights {
   }
 
   protected addRights(role: string, rights: ProjectRight[]): void {
-    this.rights.set(role, Array.from(new Set<string>(rights.map(r => this.joinRight(r.projectDomain, r.operation)))));
+    this.rights.set(role, Array.from(new Set<string>(rights.map(r => this.joinRight(r[0], r[1])))));
   }
 }
