@@ -136,11 +136,15 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     return this.projectDoc?.data?.translateConfig.defaultNoteTagId;
   }
 
+  get noteTags(): NoteTag[] {
+    return this.projectDoc?.data?.noteTags ?? [];
+  }
+
   get reviewerTagIconSrc(): string {
     if (this.defaultNoteTagId === null) {
       return '';
     }
-    const noteTag: NoteTag | undefined = this.projectDoc?.data?.noteTags.find(t => t.id === this.defaultNoteTagId);
+    const noteTag: NoteTag | undefined = this.noteTags.find(t => t.id === this.defaultNoteTagId);
     return noteTag == null ? '' : defaultNoteThreadIcon(noteTag.icon).url;
   }
 

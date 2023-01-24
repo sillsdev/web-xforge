@@ -152,7 +152,6 @@ class SFProjectMigration7 implements Migration {
     const ops = [];
     if (doc.data.tagIcon != null) {
       ops.push({ p: ['tagIcon'], od: true });
-      ops.push({ p: ['noteTags'], oi: [] });
     }
     await submitMigrationOp(SFProjectMigration6.VERSION, doc, ops);
   }
