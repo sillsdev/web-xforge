@@ -116,7 +116,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   @ViewChild('source') source?: TextComponent;
   @ViewChild('target') target?: TextComponent;
   @ViewChild('fabButton') insertNoteFab?: ElementRef<HTMLElement>;
-  @ViewChild('fabBottomSheet') TemplateBottomSheet?: TemplateRef<any>;
+  @ViewChild('fabBottomSheet') templateBottomSheet?: TemplateRef<any>;
 
   private translationEngine?: RemoteTranslationEngine;
   private isTranslating: boolean = false;
@@ -404,12 +404,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   set showInsertNoteFab(value: boolean) {
-    if (this.insertNoteFab == null || this.TemplateBottomSheet == null) return;
+    if (this.insertNoteFab == null || this.templateBottomSheet == null) return;
     if (this.mediaObserver.isActive('lt-lg')) {
       this.insertNoteFab.nativeElement.style.visibility = 'hidden';
       if (value) {
         if (this.bottomSheetRef?.containerInstance == null) {
-          this.bottomSheetRef = this.bottomSheet.open(this.TemplateBottomSheet, { hasBackdrop: false });
+          this.bottomSheetRef = this.bottomSheet.open(this.templateBottomSheet, { hasBackdrop: false });
         }
       } else {
         this.bottomSheet.dismiss();
