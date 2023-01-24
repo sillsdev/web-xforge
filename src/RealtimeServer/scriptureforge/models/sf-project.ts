@@ -22,7 +22,7 @@ export interface SFProjectProfile extends Project {
   checkingConfig: CheckingConfig;
   resourceConfig?: ResourceConfig;
   texts: TextInfo[];
-  noteTags: NoteTag[];
+  noteTags?: NoteTag[];
   sync: Sync;
   editable: boolean;
   defaultFontSize?: number;

@@ -41,9 +41,10 @@ import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
-import { NoteThreadDoc } from '../../core/models/note-thread-doc';
+import { defaultNoteThreadIcon, NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -232,6 +233,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null
       ? 1
       : this.projectUserConfigDoc.data.numSuggestions;
+  }
+
+  get noteTags(): NoteTag[] {
+    return this.projectDoc?.data?.noteTags ?? [];
   }
 
   get chapter(): number | undefined {
@@ -1309,14 +1314,19 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     const hasNewContent: boolean = this.hasNewContent(threadDoc);
+    const otherAssigned: boolean = threadDoc.isAssignedToOtherUser(this.userService.currentUserId, this.paratextUsers);
+    const icon: NoteThreadIcon =
+      threadDoc.getIcon(this.noteTags).url.length === 0
+        ? defaultNoteThreadIcon(SF_TAG_ICON)
+        : otherAssigned
+        ? threadDoc.getIconGrayed(this.noteTags)
+        : threadDoc.getIcon(this.noteTags);
 
     return {
       verseRef,
       id: threadDoc.data.dataId,
       preview,
-      icon: threadDoc.isAssignedToOtherUser(this.userService.currentUserId, this.paratextUsers)
-        ? threadDoc.iconGrayed
-        : threadDoc.icon,
+      icon,
       textAnchor: threadDoc.data.position,
       highlight: hasNewContent
     };
