@@ -14,7 +14,7 @@ export interface Note extends Comment {
   extUserId: string;
   deleted: boolean;
   status: NoteStatus;
-  tagIcon?: string;
+  tagId?: number;
   reattached?: string;
   assignment?: string;
   content?: string;

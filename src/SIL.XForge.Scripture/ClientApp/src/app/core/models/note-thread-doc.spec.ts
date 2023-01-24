@@ -11,6 +11,7 @@ import { configureTestingModule } from 'xforge-common/test-utils';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { DEFAULT_TAG_ICON, NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { SFProjectService } from '../sf-project.service';
 import { NoteThreadDoc, NoteThreadIcon } from './note-thread-doc';
 import { SF_TYPE_REGISTRY } from './sf-type-registry';
@@ -29,51 +30,53 @@ describe('NoteThreadDoc', () => {
   });
 
   it('should use specified icon instead of default', async () => {
-    const noteThreadDoc = await env.setupDoc([], 'flag02');
+    const noteThreadDoc = await env.setupDoc([], 2);
     const expectedIcon: NoteThreadIcon = {
-      cssVar: '--icon-file: url(/assets/icons/TagIcons/flag02.png);',
-      url: '/assets/icons/TagIcons/flag02.png'
+      cssVar: '--icon-file: url(/assets/icons/TagIcons/flag2.png);',
+      url: '/assets/icons/TagIcons/flag2.png'
     };
-    expect(noteThreadDoc.icon).toEqual(expectedIcon);
+    expect(noteThreadDoc.getIcon(env.noteTags)).toEqual(expectedIcon);
     const expectedVerseRef = VerseRef.parse('MAT 1:1');
     expect(noteThreadDoc.currentVerseRef()!.equals(expectedVerseRef)).toBe(true);
   });
 
-  it('should use default to do icon if none specified', async () => {
-    const noteThreadDoc = await env.setupDoc([]);
+  it('should use default to do icon if tag cannot be found', async () => {
+    const noteThreadDoc = await env.setupDoc([], 5);
     const expectedIcon: NoteThreadIcon = {
-      cssVar: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
-      url: '/assets/icons/TagIcons/01flag1.png'
+      cssVar: '--icon-file: url(/assets/icons/TagIcons/' + DEFAULT_TAG_ICON + '.png);',
+      url: '/assets/icons/TagIcons/' + DEFAULT_TAG_ICON + '.png'
     };
-    expect(noteThreadDoc.icon).toEqual(expectedIcon);
+    expect(noteThreadDoc.getIcon(env.noteTags)).toEqual(expectedIcon);
   });
 
   it('should use resolved icon', async () => {
-    const noteThreadDoc = await env.setupDoc([]);
+    const noteThreadDoc = await env.setupDoc([], 1);
     const expectedIcon: NoteThreadIcon = {
-      cssVar: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
-      url: '/assets/icons/TagIcons/01flag1.png'
+      cssVar: '--icon-file: url(/assets/icons/TagIcons/flag1.png);',
+      url: '/assets/icons/TagIcons/flag1.png'
     };
+    const resolvedIcon = 'flag5';
     const expectedIconResolved: NoteThreadIcon = {
-      cssVar: '--icon-file: url(/assets/icons/TagIcons/01flag5.png);',
-      url: '/assets/icons/TagIcons/01flag5.png'
+      cssVar: '--icon-file: url(/assets/icons/TagIcons/' + resolvedIcon + '.png);',
+      url: '/assets/icons/TagIcons/' + resolvedIcon + '.png'
     };
-    expect(noteThreadDoc.icon).toEqual(expectedIcon);
-    expect(noteThreadDoc.iconResolved).toEqual(expectedIconResolved);
+    expect(noteThreadDoc.getIcon(env.noteTags)).toEqual(expectedIcon);
+    expect(noteThreadDoc.getIconResolved(env.noteTags)).toEqual(expectedIconResolved);
   });
 
   it('should use grayed out icon', async () => {
-    const noteThreadDoc = await env.setupDoc([]);
+    const noteThreadDoc = await env.setupDoc([], 1);
     const expectedIcon: NoteThreadIcon = {
-      cssVar: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
-      url: '/assets/icons/TagIcons/01flag1.png'
+      cssVar: '--icon-file: url(/assets/icons/TagIcons/flag1.png);',
+      url: '/assets/icons/TagIcons/flag1.png'
     };
+    const grayedOutIcon = 'flag4';
     const expectedIconGrayedOut: NoteThreadIcon = {
-      cssVar: '--icon-file: url(/assets/icons/TagIcons/01flag4.png);',
-      url: '/assets/icons/TagIcons/01flag4.png'
+      cssVar: '--icon-file: url(/assets/icons/TagIcons/' + grayedOutIcon + '.png);',
+      url: '/assets/icons/TagIcons/' + grayedOutIcon + '.png'
     };
-    expect(noteThreadDoc.icon).toEqual(expectedIcon);
-    expect(noteThreadDoc.iconGrayed).toEqual(expectedIconGrayedOut);
+    expect(noteThreadDoc.getIcon(env.noteTags)).toEqual(expectedIcon);
+    expect(noteThreadDoc.getIconGrayed(env.noteTags)).toEqual(expectedIconGrayedOut);
   });
 
   it('should use the last icon specified in a threads note list based on date ', async () => {
@@ -88,7 +91,7 @@ describe('NoteThreadDoc', () => {
         threadId: 'thread01',
         content: 'note content',
         deleted: false,
-        tagIcon: 'flag2',
+        tagId: 2,
         status: NoteStatus.Todo,
         ownerRef: 'user01',
         extUserId: 'user01',
@@ -102,7 +105,7 @@ describe('NoteThreadDoc', () => {
         threadId: 'thread01',
         content: 'note content',
         deleted: false,
-        tagIcon: 'flag3',
+        tagId: 3,
         status: NoteStatus.Todo,
         ownerRef: 'user01',
         extUserId: 'user01',
@@ -116,7 +119,7 @@ describe('NoteThreadDoc', () => {
         threadId: 'thread01',
         content: 'note content',
         deleted: false,
-        tagIcon: 'flag4',
+        tagId: 4,
         status: NoteStatus.Todo,
         ownerRef: 'user01',
         extUserId: 'user01',
@@ -129,7 +132,7 @@ describe('NoteThreadDoc', () => {
       cssVar: '--icon-file: url(/assets/icons/TagIcons/flag3.png);',
       url: '/assets/icons/TagIcons/flag3.png'
     };
-    expect(noteThreadDoc.icon).toEqual(expectedIcon);
+    expect(noteThreadDoc.getIcon(env.noteTags)).toEqual(expectedIcon);
     const expectedVerseRef = VerseRef.parse('MAT 1:1');
     expect(noteThreadDoc.currentVerseRef()!.equals(expectedVerseRef)).toBe(true);
   });
@@ -147,7 +150,7 @@ describe('NoteThreadDoc', () => {
         threadId: 'thread01',
         content: 'note content',
         deleted: false,
-        tagIcon: 'flag2',
+        tagId: 2,
         status: NoteStatus.Todo,
         ownerRef: 'user01',
         extUserId: 'user01',
@@ -179,11 +182,18 @@ describe('NoteThreadDoc', () => {
 
 class TestEnvironment {
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+  readonly noteTags: NoteTag[] = [
+    { id: 1, name: 'SF 1', icon: 'flag1', creatorResolve: false },
+    { id: 2, name: 'SF 2', icon: 'flag2', creatorResolve: false },
+    { id: 3, name: 'SF 3', icon: 'flag3', creatorResolve: false },
+    { id: 4, name: 'SF 4', icon: 'flag4', creatorResolve: false }
+  ];
 
   constructor() {}
 
-  setupDoc(notes: Note[], tagIcon?: string): Promise<NoteThreadDoc> {
-    const thread: NoteThread = this.getNoteThread(notes, tagIcon);
+  setupDoc(notes: Note[], tagId: number = 1): Promise<NoteThreadDoc> {
+    notes = notes.length === 0 ? this.getDefaultNotes(tagId) : notes;
+    const thread: NoteThread = this.getNoteThread(notes, tagId);
     const threadId = [thread.projectRef, thread.dataId].join(':');
     this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
       id: threadId,
@@ -192,7 +202,7 @@ class TestEnvironment {
     return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadId);
   }
 
-  private getNoteThread(notes: Note[], tagIcon?: string): NoteThread {
+  private getNoteThread(notes: Note[], tagId: number): NoteThread {
     return {
       originalContextBefore: '',
       originalContextAfter: '',
@@ -202,9 +212,28 @@ class TestEnvironment {
       notes,
       ownerRef: 'user01',
       projectRef: 'project01',
-      tagIcon: tagIcon ?? '',
+      tagId: tagId,
       status: NoteStatus.Todo,
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 }
     };
+  }
+
+  private getDefaultNotes(tagId: number): Note[] {
+    return [
+      {
+        dataId: 'note01',
+        threadId: 'thread01',
+        ownerRef: 'user01',
+        extUserId: 'user01',
+        content: 'Some content',
+        status: NoteStatus.Todo,
+        type: NoteType.Normal,
+        conflictType: NoteConflictType.DefaultValue,
+        tagId: tagId,
+        deleted: false,
+        dateCreated: '',
+        dateModified: ''
+      }
+    ];
   }
 }
