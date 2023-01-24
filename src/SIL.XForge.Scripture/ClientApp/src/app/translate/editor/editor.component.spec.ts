@@ -62,6 +62,7 @@ import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/mode
 import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -1351,11 +1352,11 @@ describe('EditorComponent', () => {
       const verse1Segment: HTMLElement = env.getSegmentElement('verse_1_1')!;
       const verse1Note = verse1Segment.querySelector('display-note') as HTMLElement;
       expect(verse1Note).not.toBeNull();
-      expect(verse1Note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
+      expect(verse1Note.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
       expect(verse1Note.getAttribute('title')).toEqual('Note from user01\n--- 2 more note(s) ---');
       let contents = env.targetEditor.getContents();
       expect(contents.ops![3].insert).toEqual('target: ');
-      expect(contents.ops![4].attributes!['iconsrc']).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag3.png);');
+      expect(contents.ops![4].attributes!['iconsrc']).toEqual('--icon-file: url(/assets/icons/TagIcons/01flag1.png);');
 
       // three notes in the segment on verse 3
       const noteVerse3: NodeListOf<Element> = env.getSegmentElement('verse_1_3')!.querySelectorAll('display-note')!;
@@ -1424,7 +1425,7 @@ describe('EditorComponent', () => {
       expect(contents.ops![verse1EmbedIndex]!.insert['verse']['number']).toBe('1');
       expect(contents.ops![verse1SegmentIndex].insert).toBe('target: ');
       expect(contents.ops![verse1NoteIndex]!.attributes!['iconsrc']).toBe(
-        '--icon-file: url(/assets/icons/TagIcons/01flag3.png);'
+        '--icon-file: url(/assets/icons/TagIcons/01flag1.png);'
       );
       // text anchor for thread01
       expect(contents.ops![verse1NoteAnchorIndex]!.insert).toBe('chapter 1');
@@ -2401,8 +2402,8 @@ describe('EditorComponent', () => {
 
       const threadId: string = 'thread01';
       const projectId: string = 'project01';
-      const currentIconTag: string = '01flag3';
-      const newIconTag: string = 'tag1';
+      const currentIconTag: string = '01flag1';
+      const newIconTag: string = '02tag1';
 
       const verse1Segment: HTMLElement = env.getSegmentElement('verse_1_1')!;
       let verse1Note = verse1Segment.querySelector('display-note') as HTMLElement;
@@ -2415,7 +2416,7 @@ describe('EditorComponent', () => {
       const noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadId);
       const index: number = noteThread.data!.notes.length - 1;
       const note: Note = noteThread.data!.notes[index];
-      note.tagIcon = newIconTag;
+      note.tagId = 2;
       noteThread.submitJson0Op(op => op.insert(nt => nt.notes, index, note), false);
       verse1Note = verse1Segment.querySelector('display-note') as HTMLElement;
       expect(verse1Note.getAttribute('style')).toEqual(`--icon-file: url(/assets/icons/TagIcons/${newIconTag}.png);`);
@@ -2533,6 +2534,27 @@ describe('EditorComponent', () => {
       const [, arg2] = capture(mockedMatDialog.open).last();
       const noteVerseRef: VerseRef = (arg2 as MatDialogConfig).data!.verseRef;
       expect(noteVerseRef.toString()).toEqual('MAT 1:1');
+      env.dispose();
+    }));
+
+    it('shows SF note with default icon', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.addParatextNoteThread(
+        6,
+        'MAT 1:4',
+        'target: chapter 1, verse 4.',
+        { start: 0, length: 0 },
+        ['user01'],
+        NoteStatus.Todo,
+        undefined,
+        true,
+        true
+      );
+      env.wait();
+
+      const sfNote = env.getNoteThreadIconElement('verse_1_4', 'thread06')!;
+      expect(sfNote.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/' + SF_TAG_ICON + '.png);');
       env.dispose();
     }));
 
@@ -2900,6 +2922,12 @@ class TestEnvironment {
     user06: TextInfoPermission.Read,
     user07: TextInfoPermission.Read
   };
+  private openNoteDialogs: MockNoteDialogRef[] = [];
+  private noteTags: NoteTag[] = [
+    { id: 1, name: 'PT Translation Note 1', icon: '01flag1', creatorResolve: false },
+    { id: 2, name: 'PT Translation Note 2', icon: '02tag1', creatorResolve: false },
+    { id: 3, name: 'SF Note Tag', icon: SF_TAG_ICON, creatorResolve: false }
+  ];
 
   private testProjectProfile: SFProjectProfile = {
     name: 'project 01',
@@ -2911,6 +2939,7 @@ class TestEnvironment {
     writingSystem: { tag: 'qaa' },
     translateConfig: {
       translationSuggestionsEnabled: true,
+      defaultNoteTagId: 2,
       shareEnabled: false,
       shareLevel: TranslateShareLevel.Specific,
       source: {
@@ -3034,7 +3063,7 @@ class TestEnvironment {
         permissions: this.textInfoPermissions
       }
     ],
-    noteTags: []
+    noteTags: this.noteTags
   };
 
   constructor() {
@@ -3110,14 +3139,13 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(EditorComponent);
     this.component = this.fixture.componentInstance;
-    const openNoteDialogs: MockNoteDialogRef[] = [];
-    when(mockedMatDialog.openDialogs).thenCall(() => openNoteDialogs);
+    when(mockedMatDialog.openDialogs).thenCall(() => this.openNoteDialogs);
     this.mockNoteDialogRef = new MockNoteDialogRef(this.fixture.nativeElement);
     when(mockedMatDialog.open(NoteDialogComponent, anything())).thenCall(() => {
-      openNoteDialogs.push(this.mockNoteDialogRef);
+      this.openNoteDialogs.push(this.mockNoteDialogRef);
       return this.mockNoteDialogRef;
     });
-    when(mockedMatDialog.closeAll()).thenCall(() => openNoteDialogs.forEach(dialog => dialog.close()));
+    when(mockedMatDialog.closeAll()).thenCall(() => this.openNoteDialogs.forEach(dialog => dialog.close()));
     when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
@@ -3626,12 +3654,14 @@ class TestEnvironment {
     userIds: string[],
     status: NoteStatus = NoteStatus.Todo,
     assignedSFUserRef?: string,
-    publishedToSF?: boolean
+    publishedToSF?: boolean,
+    undefinedTagId?: boolean
   ): void {
     const threadId: string = typeof threadNum === 'string' ? threadNum : `thread0${threadNum}`;
     const assignedUser: ParatextUserProfile | undefined = this.paratextUsersOnProject.find(
       u => u.sfUserId === assignedSFUserRef
     );
+    const noteTagId: number | undefined = undefinedTagId ? undefined : 1;
     const notes: Note[] = [];
     for (let i = 0; i < userIds.length; i++) {
       const id = userIds[i];
@@ -3651,7 +3681,7 @@ class TestEnvironment {
         extUserId: id,
         deleted: false,
         status: NoteStatus.Todo,
-        tagIcon: `01flag${i + 1}`,
+        tagId: noteTagId,
         assignment: assignedUser?.opaqueUserId
       };
       notes.push(note);
@@ -3667,7 +3697,7 @@ class TestEnvironment {
         ownerRef: 'user01',
         originalSelectedText: selectedText,
         notes,
-        tagIcon: '01flag1',
+        tagId: noteTagId ?? 1,
         originalContextBefore: '\\v 1 target: ',
         originalContextAfter: ', verse 1.',
         position,

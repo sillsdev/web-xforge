@@ -16,7 +16,7 @@ namespace SIL.XForge.Scripture.Models
         public string ExtUserId { get; set; }
         public bool Deleted { get; set; }
         public string Status { get; set; }
-        public string TagIcon { get; set; }
+        public int? TagId { get; set; }
         public string Reattached { get; set; }
 
         /// <summary>

@@ -4,7 +4,7 @@ import { translate } from '@ngneat/transloco';
 import { cloneDeep, sortBy } from 'lodash-es';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { NoteTag, NOT_SET_ID, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   AssignedUsers,
   NoteConflictType,
@@ -21,7 +21,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { NoteThreadDoc, defaultNoteThreadIcon } from '../../../core/models/note-thread-doc';
+import { NoteThreadDoc, defaultNoteThreadIcon, NoteThreadIcon } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -95,14 +95,21 @@ export class NoteDialogComponent implements OnInit {
     return this.projectProfileDoc?.data?.translateConfig.defaultNoteTagId;
   }
 
+  get noteTags(): NoteTag[] {
+    return this.projectProfileDoc?.data?.noteTags ?? [];
+  }
+
   get flagIcon(): string {
     if (this.threadDoc?.data == null) {
-      const noteTag: NoteTag | undefined = this.projectProfileDoc?.data?.noteTags.find(
-        t => t.id === this.defaultNoteTagId
-      );
+      if (this.defaultNoteTagId == null) return defaultNoteThreadIcon(SF_TAG_ICON).url;
+      const noteTag: NoteTag | undefined = this.noteTags.find(t => t.id === this.defaultNoteTagId);
       return defaultNoteThreadIcon(noteTag?.icon).url;
     }
-    return this.isAssignedToOtherUser ? this.threadDoc.iconGrayed.url : this.threadDoc.icon.url;
+    const noteTagIcon: NoteThreadIcon = this.threadDoc.getIcon(this.noteTags);
+    if (noteTagIcon.url.length === 0) return defaultNoteThreadIcon(SF_TAG_ICON).url;
+    return this.isAssignedToOtherUser
+      ? this.threadDoc.getIconGrayed(this.noteTags).url
+      : this.threadDoc.getIcon(this.noteTags).url;
   }
 
   get fontSize(): string | undefined {
@@ -280,12 +287,12 @@ export class NoteDialogComponent implements OnInit {
     }
     switch (note.status) {
       case NoteStatus.Todo:
-        return this.threadDoc.getNoteIcon(note).url;
+        return this.threadDoc.getNoteIcon(note, this.noteTags).url;
       case NoteStatus.Done:
       case NoteStatus.Resolved:
-        return this.threadDoc.getNoteResolvedIcon(note).url;
+        return this.threadDoc.getNoteResolvedIcon(note, this.noteTags).url;
     }
-    const noteIcon: string = this.threadDoc.getNoteIcon(note).url;
+    const noteIcon: string = this.threadDoc.getNoteIcon(note, this.noteTags).url;
     return note.reattached != null && noteIcon === '' ? this.threadDoc.iconReattached.url : noteIcon;
   }
 
@@ -396,14 +403,11 @@ export class NoteDialogComponent implements OnInit {
         originalContextBefore: '',
         originalSelectedText: this.segmentText,
         originalContextAfter: '',
-        tagIcon: this.projectProfileDoc?.data?.noteTags.find(t => t.id === this.defaultNoteTagId)?.icon ?? '',
+        tagId: this.noteTags.find(t => t.id === this.defaultNoteTagId)?.id ?? NOT_SET_ID,
         status: NoteStatus.Todo,
         publishedToSF: true
       };
       await this.projectService.createNoteThread(this.projectId, noteThread);
-      if (this.projectProfileDoc != null && this.projectProfileDoc?.data?.translateConfig.defaultNoteTagId == null) {
-        await this.projectProfileDoc.submitJson0Op(op => op.set(p => p.translateConfig.defaultNoteTagId, 0));
-      }
       this.dialogRef.close(true);
       return;
     }
