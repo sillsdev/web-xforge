@@ -12,6 +12,7 @@ import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.ser
 import { NoticeService } from 'xforge-common/notice.service';
 import { translate } from '@ngneat/transloco';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import {
   SF_DEFAULT_SHARE_ROLE,
@@ -115,7 +116,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   }
 
   get shareLinkUsageOptions(): ShareLinkType[] {
-    const options = [];
+    const options: ShareLinkType[] = [];
     if (this.isProjectAdmin) {
       options.push(ShareLinkType.Recipient);
     }
@@ -146,7 +147,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   }
 
   async shareLink(): Promise<void> {
-    const currentUser = await this.userService.getCurrentUser();
+    const currentUser: UserDoc = await this.userService.getCurrentUser();
     if (!this.supportsShareAPI || this.projectDoc?.data == null || currentUser.data == null) {
       return;
     }
@@ -170,22 +171,23 @@ export class ShareDialogComponent extends SubscriptionDisposable {
         await this.reserveShareLink();
       })
       .catch((e: DOMException) => {
+        // Can be safely ignored as the user decided not to share using the API - only occurs on mobile
         if (e.name !== 'AbortError') {
           throw e;
         }
       });
   }
 
-  setLocale(locale: Locale) {
+  setLocale(locale: Locale): void {
     this.shareLocaleCode = locale;
   }
 
-  setRole(role: SFProjectRole) {
+  setRole(role: SFProjectRole): void {
     this.shareRole = role;
     this.resetLinkUsageOptions();
   }
 
-  setLinkType(linkType: ShareLinkType) {
+  setLinkType(linkType: ShareLinkType): void {
     this.shareLinkType = linkType;
     this.updateSharingKey();
   }
@@ -215,7 +217,10 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     this.setLinkType(this.shareLinkUsageOptions[0]);
   }
 
-  private updateSharingKey() {
+  /**
+   * Fetches or generates a new share key from the server based on the sharing requirements
+   */
+  private updateSharingKey(): void {
     this.linkSharingReady = false;
     if (!this.pwaService.isOnline || this.projectId == null || this.shareRole == null) {
       return;

@@ -34,7 +34,7 @@
             [selected]="locale === shareLocaleCode"
             (click)="setLocale(locale)"
           >
-            <span [class.locale-disabled]="!locale.production">{{ locale.localName }}</span>
+            {{ locale.localName }}
           </mat-list-option>
         </mat-selection-list>
       </mat-menu>
