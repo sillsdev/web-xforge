@@ -18,6 +18,7 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
   showTrainingProgress: boolean = false;
   trainingMessage: string = '';
   trainingPercentage: number = 0;
+  private _projectId?: string;
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   private projectDoc?: SFProjectProfileDoc;
   private projectDataChangesSub?: Subscription;
@@ -38,12 +39,16 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
     if (id == null) {
       return;
     }
+    this._projectId = id;
     this.projectId$.next(id);
   }
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
     this.subscribe(this.projectId$, async projectId => {
-      if (this.projectId !== '') {
+      if (projectId === '') {
+        return;
+      }
+      if (this.projectDoc == null || projectId !== this._projectId) {
         this.loadingStarted();
         try {
           this.projectDoc = await this.projectService.getProfile(projectId);
@@ -52,10 +57,11 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
           this.loadingFinished();
         }
 
+        if (this.projectDataChangesSub != null) {
+          this.projectDataChangesSub.unsubscribe();
+          this.projectDataChangesSub = undefined;
+        }
         if (this.projectDoc !== null) {
-          if (this.projectDataChangesSub != null) {
-            this.projectDataChangesSub.unsubscribe();
-          }
           this.projectDataChangesSub = this.projectDoc.remoteChanges$.subscribe(() => {
             if (this.translationEngine == null || !this.translationSuggestionsEnabled) {
               this.setupTranslationEngine();
