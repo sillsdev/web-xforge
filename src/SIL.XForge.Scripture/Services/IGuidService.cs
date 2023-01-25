@@ -1,8 +1,7 @@
-namespace SIL.XForge.Scripture.Services
+namespace SIL.XForge.Scripture.Services;
+
+public interface IGuidService
 {
-    public interface IGuidService
-    {
-        string Generate();
-        string NewObjectId();
-    }
+    string Generate();
+    string NewObjectId();
 }

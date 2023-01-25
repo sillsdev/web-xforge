@@ -2,18 +2,17 @@ using System.Collections.Generic;
 using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
 
-namespace SIL.XForge.Scripture.Services
-{
-    public interface IInternetSharedRepositorySource
-    {
-        IEnumerable<SharedRepository> GetRepositories();
-        IEnumerable<ProjectMetadata> GetProjectsMetaData();
-        string[] Pull(string repository, SharedRepository pullRepo);
-        void RefreshToken(string jwtToken);
-        void UnlockRemoteRepository(SharedRepository sharedRepo);
-        bool CanUserAuthenticateToPTArchives();
+namespace SIL.XForge.Scripture.Services;
 
-        /// <summary> Access as a particular class. </summary>
-        InternetSharedRepositorySource AsInternetSharedRepositorySource();
-    }
+public interface IInternetSharedRepositorySource
+{
+    IEnumerable<SharedRepository> GetRepositories();
+    IEnumerable<ProjectMetadata> GetProjectsMetaData();
+    string[] Pull(string repository, SharedRepository pullRepo);
+    void RefreshToken(string jwtToken);
+    void UnlockRemoteRepository(SharedRepository sharedRepo);
+    bool CanUserAuthenticateToPTArchives();
+
+    /// <summary> Access as a particular class. </summary>
+    InternetSharedRepositorySource AsInternetSharedRepositorySource();
 }

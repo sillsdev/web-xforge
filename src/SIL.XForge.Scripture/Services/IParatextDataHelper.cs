@@ -1,9 +1,8 @@
 using Paratext.Data;
 
-namespace SIL.XForge.Scripture.Services
+namespace SIL.XForge.Scripture.Services;
+
+public interface IParatextDataHelper
 {
-    public interface IParatextDataHelper
-    {
-        void CommitVersionedText(ScrText scrText, string comment);
-    }
+    void CommitVersionedText(ScrText scrText, string comment);
 }

@@ -1,19 +1,12 @@
 using System.Linq.Expressions;
 
-namespace SIL.XForge.Utils
+namespace SIL.XForge.Utils;
+
+internal class ParameterRebinder : ExpressionVisitor
 {
-    internal class ParameterRebinder : ExpressionVisitor
-    {
-        private readonly ParameterExpression _parameter;
+    private readonly ParameterExpression _parameter;
 
-        public ParameterRebinder(ParameterExpression parameter)
-        {
-            _parameter = parameter;
-        }
+    public ParameterRebinder(ParameterExpression parameter) => _parameter = parameter;
 
-        protected override Expression VisitParameter(ParameterExpression p)
-        {
-            return base.VisitParameter(_parameter);
-        }
-    }
+    protected override Expression VisitParameter(ParameterExpression p) => base.VisitParameter(_parameter);
 }

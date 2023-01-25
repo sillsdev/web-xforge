@@ -1,7 +1,6 @@
-namespace SIL.XForge.Models
+namespace SIL.XForge.Models;
+
+public class WritingSystem
 {
-    public class WritingSystem
-    {
-        public string Tag { get; set; }
-    }
+    public string Tag { get; set; }
 }
