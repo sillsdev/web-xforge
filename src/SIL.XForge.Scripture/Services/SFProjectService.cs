@@ -547,26 +547,23 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task<bool> ReserveLinkSharingKeyAsync(string curUserId, string shareKey)
         {
-            using (await RealtimeService.ConnectAsync(curUserId))
-            {
-                ProjectSecret projectSecret = ProjectSecrets
-                    .Query()
-                    .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
-                if (projectSecret == null)
-                    throw new DataNotFoundException("Unable to locate shareKey");
+            ProjectSecret projectSecret = ProjectSecrets
+                .Query()
+                .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
+            if (projectSecret == null)
+                throw new DataNotFoundException("Unable to locate shareKey");
 
-                String projectId = projectSecret.Id;
-                SFProject project = await GetProjectAsync(projectId);
-                if (!IsProjectAdmin(project, curUserId))
-                    throw new ForbiddenException();
+            String projectId = projectSecret.Id;
+            SFProject project = await GetProjectAsync(projectId);
+            if (!IsProjectAdmin(project, curUserId))
+                throw new ForbiddenException();
 
-                int index = projectSecret.ShareKeys.FindIndex(sk => sk.Key == shareKey);
-                await ProjectSecrets.UpdateAsync(
-                    p => p.Id == project.Id,
-                    update => update.Set(p => p.ShareKeys[index].Reserved, true)
-                );
-                return true;
-            }
+            int index = projectSecret.ShareKeys.FindIndex(sk => sk.Key == shareKey);
+            await ProjectSecrets.UpdateAsync(
+                p => p.Id == project.Id,
+                update => update.Set(p => p.ShareKeys[index].Reserved, true)
+            );
+            return true;
         }
 
         /// <summary>Cancel an outstanding project invitation.</summary>
@@ -943,7 +940,7 @@ namespace SIL.XForge.Scripture.Services
                 SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id)
             );
             await projectUserConfigDoc.DeleteAsync();
-            // Delete any share keys used to this user
+            // Delete any share keys used by this user
             await ProjectSecrets.UpdateAsync(
                 projectDoc.Id,
                 u =>
