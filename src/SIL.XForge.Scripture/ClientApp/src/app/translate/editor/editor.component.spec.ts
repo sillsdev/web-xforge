@@ -2529,7 +2529,7 @@ describe('EditorComponent', () => {
     it('shows insert note button using bottom sheet for mobile viewport', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
-      env.setCurrentUser('user05');
+      env.setReviewerUser();
       env.wait();
 
       // Initial setup will state FALSE when checking for mobile viewports
@@ -2547,6 +2547,24 @@ describe('EditorComponent', () => {
       env.insertNoteFabMobile!.click();
       env.wait();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+
+      env.dispose();
+    }));
+
+    it('unselect reviewer verse when opening dialog to insert note', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
+      env.setReviewerUser();
+      env.wait();
+
+      let verseSegment: HTMLElement = env.getSegmentElement('verse_1_3')!;
+      verseSegment.click();
+      env.wait();
+      expect(verseSegment.classList).toContain('reviewer-selection');
+
+      env.insertNoteButton.nativeElement.click();
+      env.wait();
+      expect(verseSegment.classList).not.toContain('reviewer-selection');
 
       env.dispose();
     }));

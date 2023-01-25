@@ -812,18 +812,23 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.target == null || this.bookNum == null) {
       return;
     }
+    let verseRef: VerseRef | undefined;
     if (this.userRole === SFProjectRole.Reviewer) {
-      let verseRef: VerseRef | undefined = this.reviewerSelectedVerseRef;
+      verseRef = this.reviewerSelectedVerseRef;
       if (verseRef == null) {
         const defaultSegmentRef: string | undefined = this.target.firstVerseSegment;
         if (defaultSegmentRef == null) return;
         verseRef = getVerseRefFromSegmentRef(this.bookNum, defaultSegmentRef);
       }
       this.showNoteThread(undefined, verseRef);
+      if (verseRef != null) {
+        this.target.toggleVerseSelection(verseRef);
+        this.reviewerSelectedVerseRef = undefined;
+      }
     } else {
       const segmentRef: string | undefined = this.target.currentSegmentOrDefault;
       if (segmentRef == null) return;
-      const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
+      verseRef = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
       this.showNoteThread(undefined, verseRef);
     }
     this.showInsertNoteFab = false;
