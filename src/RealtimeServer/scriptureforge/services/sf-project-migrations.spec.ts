@@ -183,6 +183,26 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.sync.percentCompleted).not.toBeDefined();
     });
   });
+
+  describe('version 9', () => {
+    it('removes shareLevel from translate and checking config', async () => {
+      const env = new TestEnvironment(8);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { shareLevel: 'anyone' },
+        checkingConfig: { shareLevel: 'anyone' }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.shareLevel).toBeDefined();
+      expect(projectDoc.data.checkingConfig.shareLevel).toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.shareLevel).not.toBeDefined();
+      expect(projectDoc.data.checkingConfig.shareLevel).not.toBeDefined();
+    });
+  });
 });
 
 class TestEnvironment {
