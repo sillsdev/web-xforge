@@ -148,9 +148,16 @@ class SFProjectMigration7 implements Migration {
 
   async migrateDoc(doc: Doc): Promise<void> {
     const ops = [];
+    if (doc.data.translateConfig == null) {
+      ops.push({ p: ['translateConfig'], oi: {} });
+    }
     ops.push({ p: ['translateConfig', 'shareLevel'], od: true });
+
+    if (doc.data.checkingConfig == null) {
+      ops.push({ p: ['checkingConfig'], oi: {} });
+    }
     ops.push({ p: ['checkingConfig', 'shareLevel'], od: true });
-    await submitMigrationOp(SFProjectMigration5.VERSION, doc, ops);
+    await submitMigrationOp(SFProjectMigration7.VERSION, doc, ops);
   }
 
   migrateOp(_op: RawOp): void {
