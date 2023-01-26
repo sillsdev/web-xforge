@@ -5,5 +5,6 @@ namespace SIL.XForge
         public const string CommandApiNamespace = "command-api";
         public const string Users = "users";
         public const string Projects = "projects";
+        public const string ProjectNotifications = "project-notifications";
     }
 }

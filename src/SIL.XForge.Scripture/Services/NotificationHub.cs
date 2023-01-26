@@ -1,9 +1,11 @@
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services
 {
+    [Authorize]
     public class NotificationHub : Hub<INotifier>, INotifier
     {
         /// <summary>
