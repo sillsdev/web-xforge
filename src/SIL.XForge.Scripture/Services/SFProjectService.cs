@@ -700,7 +700,6 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
                 // Look for a valid specific user share key.
-                // TODO: Migrate data and set all keys with "Email" to ShareLinkType.Recipient
                 if (
                     projectSecretShareKey.ExpirationTime > DateTime.UtcNow
                     && projectSecretShareKey.ShareLinkType == ShareLinkType.Recipient
