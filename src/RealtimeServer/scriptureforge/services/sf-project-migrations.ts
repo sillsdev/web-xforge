@@ -164,7 +164,14 @@ class SFProjectMigration8 implements Migration {
 
   async migrateDoc(doc: Doc): Promise<void> {
     const ops = [];
+    if (doc.data.translateConfig == null) {
+      ops.push({ p: ['translateConfig'], oi: {} });
+    }
     ops.push({ p: ['translateConfig', 'shareLevel'], od: true });
+
+    if (doc.data.checkingConfig == null) {
+      ops.push({ p: ['checkingConfig'], oi: {} });
+    }
     ops.push({ p: ['checkingConfig', 'shareLevel'], od: true });
     await submitMigrationOp(SFProjectMigration8.VERSION, doc, ops);
   }
