@@ -7,6 +7,12 @@ namespace SIL.XForge.Scripture.Services
     public interface IMachineBuildService
     {
         Task CancelCurrentBuildAsync(string translationEngineId, CancellationToken cancellationToken);
+        Task<BuildDto?> GetBuildAsync(
+            string translationEngineId,
+            string buildId,
+            long? minRevision,
+            CancellationToken cancellationToken
+        );
         Task<BuildDto?> GetCurrentBuildAsync(
             string translationEngineId,
             long? minRevision,

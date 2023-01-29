@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
-using SIL.Machine.WebApi.Models;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -708,6 +707,27 @@ namespace SIL.XForge.Scripture.Services
             }
         }
 
+        /// <summary>
+        /// Ensures that the <see cref="WritingSystem"/> Tag is not null.
+        /// </summary>
+        /// <param name="curUserId">The current user identifier.</param>
+        /// <param name="projectId">The project identifier.</param>
+        /// <returns>The asynchronous task.</returns>
+        /// <remarks>
+        /// This public method exists for the Machine API Migration utility.
+        /// </remarks>
+        public async Task EnsureWritingSystemTagIsSetAsync(string curUserId, string projectId)
+        {
+            using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+            IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+            if (!projectDoc.IsLoaded)
+            {
+                throw new DataNotFoundException("The project does not exist.");
+            }
+
+            await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, null);
+        }
+
         protected override async Task AddUserToProjectAsync(
             IConnection conn,
             IDocument<SFProject> projectDoc,
@@ -1167,10 +1187,12 @@ namespace SIL.XForge.Scripture.Services
         /// </exception>
         /// <remarks>
         /// A issue was introduced in an early version of ScriptureForge where the writing system tag was not set when
-        /// the project was created. This issue has since been fixed, but some erroneous data remains. The Machine API
-        /// requires the writing system tag to be specified, and so this method should be called before a project is
-        /// created in the Machine API to ensure that it can be created without an error. If the writing system tag is
-        /// already set, it is not modified.
+        /// the project was created. This issue has since been fixed. The Machine API requires the writing system tag
+        /// to be specified, and so this method should be called before a project is created in the Machine API to
+        /// ensure that it can be created without error. If the writing system tag is already set, it is not modified.
+        /// If this is a back translation, the writing system tag will not be set here, but will be set on the first
+        /// project build in <see cref="MachineProjectService"/>, as if this method does not update the writing system
+        /// tags, the Machine API Translation Engine creation will be delayed until first build.
         /// </remarks>
         private async Task EnsureWritingSystemTagIsSetAsync(
             string curUserId,
@@ -1179,7 +1201,10 @@ namespace SIL.XForge.Scripture.Services
         )
         {
             // If we do not have a writing system tag
-            if (string.IsNullOrWhiteSpace(projectDoc.Data.WritingSystem.Tag))
+            if (
+                string.IsNullOrWhiteSpace(projectDoc.Data.WritingSystem.Tag)
+                || string.IsNullOrWhiteSpace(projectDoc.Data.TranslateConfig.Source?.WritingSystem.Tag)
+            )
             {
                 // Get the projects, if they are missing
                 if (ptProjects == null)
@@ -1192,13 +1217,31 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 // Update the writing system tag, if it is in the Paratext project
-                ParatextProject ptProject = ptProjects.FirstOrDefault(p => p.ProjectId == projectDoc.Id);
-                if (!string.IsNullOrEmpty(ptProject?.LanguageTag))
+                if (string.IsNullOrWhiteSpace(projectDoc.Data.WritingSystem.Tag))
                 {
-                    await projectDoc.SubmitJson0OpAsync(op =>
+                    ParatextProject ptProject = ptProjects.FirstOrDefault(p => p.ProjectId == projectDoc.Id);
+                    if (!string.IsNullOrEmpty(ptProject?.LanguageTag))
                     {
-                        UpdateSetting(op, p => p.WritingSystem.Tag, ptProject.LanguageTag);
-                    });
+                        await projectDoc.SubmitJson0OpAsync(op =>
+                        {
+                            UpdateSetting(op, p => p.WritingSystem.Tag, ptProject.LanguageTag);
+                        });
+                    }
+                }
+
+                // Update the source writing system tag, if it is in the Paratext project
+                if (string.IsNullOrWhiteSpace(projectDoc.Data.TranslateConfig.Source?.WritingSystem.Tag))
+                {
+                    ParatextProject ptProject = ptProjects.FirstOrDefault(
+                        p => p.ParatextId == projectDoc.Data.TranslateConfig.Source.ParatextId
+                    );
+                    if (!string.IsNullOrEmpty(ptProject?.LanguageTag))
+                    {
+                        await projectDoc.SubmitJson0OpAsync(op =>
+                        {
+                            UpdateSetting(op, p => p.TranslateConfig.Source.WritingSystem.Tag, ptProject.LanguageTag);
+                        });
+                    }
                 }
             }
         }
