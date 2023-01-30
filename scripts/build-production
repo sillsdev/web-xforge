@@ -30,4 +30,4 @@ EOF
 rm -rf "${BUILD_OUTPUT}"
 dotnet publish "src/${PROJECT}/${PROJECT}.csproj" -c "${CONFIGURATION}" -r "${DEPLOY_RUNTIME}" \
   -o "${BUILD_OUTPUT}/app" /p:Version="${BUILD_NUMBER}" /p:AngularConfig="${ANGULAR_CONFIG}" \
-  --self-contained
+  --self-contained false
