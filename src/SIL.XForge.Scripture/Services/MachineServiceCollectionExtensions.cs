@@ -29,6 +29,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddMachine(config =>
                 {
                     config.AuthenticationSchemes = new[] { JwtBearerDefaults.AuthenticationScheme };
+                    config.Namespace = "machine-api/v1";
                 })
                 .AddEngineOptions(o => o.EnginesDir = Path.Combine(siteOptions.SiteDir, "engines"))
                 .AddMongoDataAccess(o =>
@@ -79,6 +80,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .SetHandlerLifetime(TimeSpan.FromMinutes(5))
                 .AddPolicyHandler(GetRetryPolicy())
                 .AddPolicyHandler(GetCircuitBreakerPolicy());
+            services.AddSingleton<IMachineApiService, MachineApiService>();
             services.AddSingleton<IMachineBuildService, MachineBuildService>();
             services.AddSingleton<IMachineCorporaService, MachineCorporaService>();
             services.AddSingleton<IMachineProjectService, MachineProjectService>();

@@ -18,6 +18,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Paratext.Data;
+using Paratext.Data.Languages;
 using Paratext.Data.ProjectComments;
 using Paratext.Data.ProjectFileAccess;
 using Paratext.Data.RegistryServerAccess;
@@ -1167,7 +1168,8 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             IEnumerable<NoteThreadChange> changes = await env.PrepareChangeOnSingleCommentAsync(
-                (Paratext.Data.ProjectComments.Comment comment) => {
+                (Paratext.Data.ProjectComments.Comment comment) =>
+                {
                     // Not modifying comment.
                 }
             );
@@ -3232,6 +3234,19 @@ namespace SIL.XForge.Scripture.Services
             env.MockHgWrapper.Received().GetRepoRevision(Arg.Any<string>());
         }
 
+        [Test]
+        public void GetLanguageId_GetsTheLanguageIdFromTheScrText()
+        {
+            var env = new TestEnvironment();
+            var associatedPtUser = new SFParatextUser(env.Username01);
+            string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+            // SUT
+            string languageId = env.Service.GetLanguageId(userSecret, ptProjectId);
+            Assert.AreEqual(LanguageId.English.Id, languageId);
+        }
+
         private class TestEnvironment : IDisposable
         {
             public readonly string ParatextUserId01 = "paratext01";
@@ -4035,6 +4050,7 @@ namespace SIL.XForge.Scripture.Services
                 scrText.Permissions.CreateFirstAdminUser();
                 scrText.Data.Add("RUT", ruthBookUsfm);
                 scrText.Settings.BooksPresentSet = new BookSet("RUT");
+                scrText.Settings.LanguageID = LanguageId.English;
                 if (!hasEditPermission)
                     scrText.Permissions.SetPermission(null, 8, PermissionSet.Manual, false);
                 return scrText;
