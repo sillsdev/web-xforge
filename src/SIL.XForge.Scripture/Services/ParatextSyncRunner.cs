@@ -1668,16 +1668,6 @@ namespace SIL.XForge.Scripture.Services
             LogMetric(message);
         }
 
-        private void LogMetric(string message)
-        {
-            _syncMetrics.Log.Add($"{DateTime.UtcNow} {message}");
-            _syncMetricsRepository
-                .ReplaceAsync(_syncMetrics, true)
-                .ContinueWith(task =>
-                {
-                    if (!task.Result)
-                        _logger.LogInformation("The sync metrics could not be updated in MongoDB");
-                });
-        }
+        private void LogMetric(string message) => _syncMetrics.Log.Add($"{DateTime.UtcNow} {message}");
     }
 }
