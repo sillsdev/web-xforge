@@ -946,7 +946,6 @@ namespace SIL.XForge.Scripture.Services
                                 OriginalSelectedText = change.SelectedText,
                                 OriginalContextBefore = change.ContextBefore,
                                 OriginalContextAfter = change.ContextAfter,
-                                TagId = change.TagId ?? NoteTag.notSetId,
                                 Position = change.Position,
                                 Status = change.Status,
                                 Assignment = change.Assignment
@@ -1089,8 +1088,6 @@ namespace SIL.XForge.Scripture.Services
                 {
                     if (threadDoc.Data.Status != change.Status)
                         op.Set(td => td.Status, change.Status);
-                    if (threadDoc.Data.TagId != change.TagId)
-                        op.Set(td => td.TagId, change.TagId);
                     if (threadDoc.Data.Assignment != change.Assignment)
                         op.Set(td => td.Assignment, change.Assignment);
                 }
@@ -1417,13 +1414,12 @@ namespace SIL.XForge.Scripture.Services
                         {
                             tagsToRemove.Remove(tag.Id);
                             int index = _projectDoc.Data.NoteTags.FindIndex(t => t.Id == tag.Id);
-                            int tagLength = _projectDoc.Data.NoteTags.Count;
                             if (index == -1)
                             {
                                 op.Add(pd => pd.NoteTags, tag);
                                 continue;
                             }
-                            NoteTag nt = _projectDoc.Data.NoteTags.FirstOrDefault(t => t.Id == tag.Id);
+                            NoteTag nt = _projectDoc.Data.NoteTags[index];
                             if (nt.Name != tag.Name)
                                 op.Set(pd => pd.NoteTags[index].Name, tag.Name);
                             if (nt.Icon != tag.Icon)

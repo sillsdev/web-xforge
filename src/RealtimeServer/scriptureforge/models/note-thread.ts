@@ -62,7 +62,6 @@ export interface NoteThread extends ProjectData {
   originalContextAfter: string;
   position: TextAnchor;
   status: NoteStatus;
-  tagId: number;
   publishedToSF?: boolean;
   assignment?: string;
 }

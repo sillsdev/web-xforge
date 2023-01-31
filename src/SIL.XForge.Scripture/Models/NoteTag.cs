@@ -9,5 +9,6 @@ namespace SIL.XForge.Scripture.Models
         public int Id { get; set; }
         public string Icon { get; set; }
         public string Name { get; set; }
+        public bool CreatorResolve { get; set; }
     }
 }
