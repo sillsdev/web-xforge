@@ -1670,8 +1670,7 @@ namespace SIL.XForge.Scripture.Services
 
         private void LogMetric(string message)
         {
-            _logger.LogInformation($"SyncLog: {DateTime.UtcNow} {message}");
-            _syncMetrics.Log.Add($"{DateTime.UtcNow} {message}");
+            Log(message);
         }
     }
 }
