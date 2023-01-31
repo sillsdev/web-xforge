@@ -193,7 +193,7 @@ class TestEnvironment {
 
   setupDoc(notes: Note[], tagId: number = 1): Promise<NoteThreadDoc> {
     notes = notes.length === 0 ? this.getDefaultNotes(tagId) : notes;
-    const thread: NoteThread = this.getNoteThread(notes, tagId);
+    const thread: NoteThread = this.getNoteThread(notes);
     const threadId = [thread.projectRef, thread.dataId].join(':');
     this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
       id: threadId,
@@ -202,7 +202,7 @@ class TestEnvironment {
     return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadId);
   }
 
-  private getNoteThread(notes: Note[], tagId: number): NoteThread {
+  private getNoteThread(notes: Note[]): NoteThread {
     return {
       originalContextBefore: '',
       originalContextAfter: '',
@@ -212,7 +212,6 @@ class TestEnvironment {
       notes,
       ownerRef: 'user01',
       projectRef: 'project01',
-      tagId: tagId,
       status: NoteStatus.Todo,
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 }
     };
@@ -229,7 +228,7 @@ class TestEnvironment {
         status: NoteStatus.Todo,
         type: NoteType.Normal,
         conflictType: NoteConflictType.DefaultValue,
-        tagId: tagId,
+        tagId,
         deleted: false,
         dateCreated: '',
         dateModified: ''
