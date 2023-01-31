@@ -4,7 +4,7 @@ import { translate } from '@ngneat/transloco';
 import { cloneDeep, sortBy } from 'lodash-es';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { NoteTag, NOT_SET_ID, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   AssignedUsers,
   NoteConflictType,
@@ -91,14 +91,6 @@ export class NoteDialogComponent implements OnInit {
     return this.threadDoc?.data?.assignment ?? '';
   }
 
-  get defaultNoteTagId(): number | undefined {
-    return this.projectProfileDoc?.data?.translateConfig.defaultNoteTagId;
-  }
-
-  get noteTags(): NoteTag[] {
-    return this.projectProfileDoc?.data?.noteTags ?? [];
-  }
-
   get flagIcon(): string {
     if (this.threadDoc?.data == null) {
       if (this.defaultNoteTagId == null) return defaultNoteThreadIcon(SF_TAG_ICON).url;
@@ -170,6 +162,14 @@ export class NoteDialogComponent implements OnInit {
   get canInsertNote(): boolean {
     if (this.projectProfileDoc?.data == null) return false;
     return this.isAddNotesEnabled && canInsertNote(this.projectProfileDoc.data, this.userService.currentUserId);
+  }
+
+  private get defaultNoteTagId(): number | undefined {
+    return this.projectProfileDoc?.data?.translateConfig.defaultNoteTagId;
+  }
+
+  private get noteTags(): NoteTag[] {
+    return this.projectProfileDoc?.data?.noteTags ?? [];
   }
 
   /** Is a note considered to be a conflict note? */
@@ -392,6 +392,7 @@ export class NoteDialogComponent implements OnInit {
       // create a new thread
       const threadId: string = objectId();
       this.noteBeingEdited.threadId = threadId;
+      this.noteBeingEdited.tagId = this.defaultNoteTagId;
 
       const noteThread: NoteThread = {
         dataId: threadId,
@@ -403,7 +404,6 @@ export class NoteDialogComponent implements OnInit {
         originalContextBefore: '',
         originalSelectedText: this.segmentText,
         originalContextAfter: '',
-        tagId: this.noteTags.find(t => t.id === this.defaultNoteTagId)?.id ?? NOT_SET_ID,
         status: NoteStatus.Todo,
         publishedToSF: true
       };

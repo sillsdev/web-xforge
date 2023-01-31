@@ -153,7 +153,7 @@ class SFProjectMigration7 implements Migration {
     if (doc.data.tagIcon != null) {
       ops.push({ p: ['tagIcon'], od: true });
     }
-    await submitMigrationOp(SFProjectMigration6.VERSION, doc, ops);
+    await submitMigrationOp(SFProjectMigration7.VERSION, doc, ops);
   }
 
   migrateOp(_op: RawOp): void {
