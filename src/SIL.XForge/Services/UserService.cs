@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using SIL.XForge.Configuration;
@@ -26,13 +27,15 @@ namespace SIL.XForge.Services
         private readonly IRepository<UserSecret> _userSecrets;
         private readonly IAuthService _authService;
         private readonly IProjectService _projectService;
+        private readonly ILogger<UserService> _logger;
 
         public UserService(
             IRealtimeService realtimeService,
             IOptions<SiteOptions> siteOptions,
             IRepository<UserSecret> userSecrets,
             IAuthService authService,
-            IProjectService projectService
+            IProjectService projectService,
+            ILogger<UserService> logger
         )
         {
             _realtimeService = realtimeService;
@@ -40,6 +43,7 @@ namespace SIL.XForge.Services
             _userSecrets = userSecrets;
             _authService = authService;
             _projectService = projectService;
+            _logger = logger;
         }
 
         public async Task UpdateUserFromProfileAsync(string curUserId, string userProfileJson)
@@ -107,6 +111,20 @@ namespace SIL.XForge.Services
                     await _userSecrets.UpdateAsync(
                         curUserId,
                         update => update.Set(put => put.ParatextTokens, newPTTokens)
+                    );
+                }
+                else if (newPTTokens.IssuedAt < userSecret.ParatextTokens.IssuedAt)
+                {
+                    string incomingIAt = newPTTokens.IssuedAt.ToString(
+                        "o",
+                        System.Globalization.CultureInfo.InvariantCulture
+                    );
+                    string currentIAt = userSecret.ParatextTokens.IssuedAt.ToString(
+                        "o",
+                        System.Globalization.CultureInfo.InvariantCulture
+                    );
+                    _logger.LogWarning(
+                        $"When updating user with SF id {curUserId} from auth0 profile, ignoring incoming tokens which were issued at {incomingIAt}, which is earlier than the current tokens {currentIAt}."
                     );
                 }
             }

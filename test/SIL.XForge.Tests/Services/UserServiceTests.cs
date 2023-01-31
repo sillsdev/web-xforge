@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
@@ -22,11 +23,20 @@ namespace SIL.XForge.Services
             var env = new TestEnvironment();
 
             JObject userProfile = env.CreateUserProfile("user01", "auth01", env.IssuedAt - TimeSpan.FromMinutes(5));
+            // SUT
             await env.Service.UpdateUserFromProfileAsync("user01", userProfile.ToString());
             User user1 = env.GetUser("user01");
             Assert.That(user1.Sites.ContainsKey("xf"), Is.True);
             UserSecret userSecret = env.UserSecrets.Get("user01");
-            Assert.That(userSecret.ParatextTokens.RefreshToken, Is.EqualTo("refresh_token"));
+            Assert.That(
+                userSecret.ParatextTokens.RefreshToken,
+                Is.EqualTo("refresh_token"),
+                "incoming older refresh token is ignored"
+            );
+            env.Logger.AssertHasEvent(
+                (LogEvent ev) => ev.Message.Contains("earlier than") && ev.Message.Contains("ignoring"),
+                "but we make a note of this potentially problematic situation"
+            );
         }
 
         [Test]
@@ -298,6 +308,7 @@ namespace SIL.XForge.Services
             public readonly IAuthService AuthService = Substitute.For<IAuthService>();
             public readonly DateTime IssuedAt = DateTime.UtcNow;
             public readonly IProjectService ProjectService = Substitute.For<IProjectService>();
+            public readonly MockLogger<UserService> Logger = new MockLogger<UserService>();
 
             public TestEnvironment()
             {
@@ -356,7 +367,7 @@ namespace SIL.XForge.Services
                     }
                 );
 
-                Service = new UserService(RealtimeService, options, UserSecrets, AuthService, ProjectService);
+                Service = new UserService(RealtimeService, options, UserSecrets, AuthService, ProjectService, Logger);
             }
 
             public User GetUser(string id)

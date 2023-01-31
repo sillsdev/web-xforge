@@ -1,14 +1,18 @@
 import { Injectable } from '@angular/core';
-import { HubConnection, HubConnectionBuilder } from '@microsoft/signalr';
+import { HubConnection, HubConnectionBuilder, IHttpConnectionOptions } from '@microsoft/signalr';
+import { AuthService } from 'xforge-common/auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProjectNotificationService {
   private connection: HubConnection;
+  private options: IHttpConnectionOptions = {
+    accessTokenFactory: async () => (await this.authService.getAccessToken()) ?? ''
+  };
 
-  constructor() {
-    this.connection = new HubConnectionBuilder().withUrl('/project-notifications').build();
+  constructor(private authService: AuthService) {
+    this.connection = new HubConnectionBuilder().withUrl('/project-notifications', this.options).build();
   }
 
   setNotifySyncProgressHandler(handler: any): void {

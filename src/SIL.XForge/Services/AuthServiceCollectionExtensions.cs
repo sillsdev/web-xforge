@@ -7,6 +7,7 @@ using idunno.Authentication.Basic;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
+using SIL.XForge;
 using SIL.XForge.Configuration;
 using SIL.XForge.Services;
 
@@ -28,6 +29,23 @@ namespace Microsoft.Extensions.DependencyInjection
                     options.Audience = authOptions.Audience;
                     options.Events = new JwtBearerEvents
                     {
+                        OnMessageReceived = context =>
+                        {
+                            // If the request is for our SignalR hub
+                            string? accessToken = context.Request.Query["access_token"];
+                            if (
+                                !string.IsNullOrEmpty(accessToken)
+                                && context.HttpContext.Request.Path.StartsWithSegments(
+                                    $"/{UrlConstants.ProjectNotifications}"
+                                )
+                            )
+                            {
+                                // Get the token from the query string
+                                context.Token = accessToken;
+                            }
+
+                            return Task.CompletedTask;
+                        },
                         OnTokenValidated = context =>
                         {
                             string scopeClaim = context.Principal.FindFirst(c => c.Type == JwtClaimTypes.Scope)?.Value;
