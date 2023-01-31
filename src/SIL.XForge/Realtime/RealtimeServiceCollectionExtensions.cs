@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net;
 using System.Reflection;
 using Jering.Javascript.NodeJS;
 using Microsoft.Extensions.Configuration;
@@ -21,7 +20,6 @@ namespace Microsoft.Extensions.DependencyInjection
         )
         {
             services.AddNodeJS();
-            services.Configure<HttpNodeJSServiceOptions>(options => options.Version = HttpVersion.Version20);
             services.Configure<NodeJSProcessOptions>(options =>
             {
                 options.ProjectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty;
