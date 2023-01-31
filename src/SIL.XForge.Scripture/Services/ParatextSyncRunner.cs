@@ -1665,7 +1665,7 @@ namespace SIL.XForge.Scripture.Services
             projectSFId ??= _projectDoc?.Id ?? "unknown";
             userId ??= _userSecret?.Id ?? "unknown";
             _logger.LogInformation($"SyncLog ({projectSFId} {userId}): {message}");
-            _syncMetrics.Log.Add($"{DateTime.UtcNow} {message}");
+            _syncMetrics.Log.Add($"{DateTime.UtcNow.ToString("u")} {message}");
         }
 
         private void LogMetric(string message)
