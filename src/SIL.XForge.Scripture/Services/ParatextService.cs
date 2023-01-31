@@ -1235,8 +1235,7 @@ namespace SIL.XForge.Scripture.Services
                     threadDoc.Data.OriginalContextBefore,
                     threadDoc.Data.OriginalContextAfter,
                     threadDoc.Data.Status,
-                    threadDoc.Data.Assignment,
-                    threadDoc.Data.TagId
+                    threadDoc.Data.Assignment
                 );
                 // Find the corresponding comment thread
                 var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
@@ -1290,12 +1289,7 @@ namespace SIL.XForge.Scripture.Services
                     threadChange.Assignment = GetAssignedUserRef(existingThread.AssignedUser, ptProjectUsers);
                     threadChange.ThreadUpdated = true;
                 }
-                CommentTag defaultThreadIconTag = GetCommentTag(existingThread, null, commentTags);
-                if (defaultThreadIconTag?.Id != threadDoc.Data.TagId)
-                {
-                    threadChange.TagId = defaultThreadIconTag.Id;
-                    threadChange.ThreadUpdated = true;
-                }
+
                 // Add new Comments to note thread change
                 IEnumerable<string> ptCommentIds = existingThread.Comments.Select(c => c.Id);
                 IEnumerable<string> newCommentIds = ptCommentIds.Except(matchedCommentIds);
@@ -1327,7 +1321,6 @@ namespace SIL.XForge.Scripture.Services
             {
                 CommentThread thread = commentThreads.Single(ct => ct.Id == threadId);
                 Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
-                CommentTag initialTag = GetCommentTag(thread, null, commentTags);
                 NoteThreadChange newThread = new NoteThreadChange(
                     threadId,
                     info.VerseRefStr,
@@ -1335,8 +1328,7 @@ namespace SIL.XForge.Scripture.Services
                     info.ContextBefore,
                     info.ContextAfter,
                     info.Status.InternalValue,
-                    info.AssignedUser,
-                    initialTag.Id
+                    info.AssignedUser
                 );
                 newThread.Position = GetThreadTextAnchor(thread, chapterDeltas);
                 newThread.Status = thread.Status.InternalValue;
@@ -1383,13 +1375,17 @@ namespace SIL.XForge.Scripture.Services
         {
             CommentTags commentTags = GetCommentTags(userSecret, paratextId);
             if (noteTag.Id != NoteTag.notSetId)
+            {
+                // Disallow updating existing comment tags from SF
                 throw new ArgumentException("Cannot update an existing comment tag via Scripture Forge");
+            }
             var newCommentTag = new CommentTag(noteTag.Name, noteTag.Icon);
             // Check that the tag does not already exist
-            if (commentTags.FindMatchingTag(newCommentTag) != CommentTag.toDoTagId)
-                return CommentTag.toDoTagId;
-
-            commentTags.AddOrUpdate(newCommentTag);
+            if (commentTags.FindMatchingTag(newCommentTag) == CommentTag.toDoTagId)
+            {
+                // The to do tag is returned as the default if a matching tag does not exist
+                commentTags.AddOrUpdate(newCommentTag);
+            }
             return commentTags.FindMatchingTag(newCommentTag);
         }
 
@@ -2341,10 +2337,12 @@ namespace SIL.XForge.Scripture.Services
                 comment.GetOrCreateCommentNode().InnerXml = note.Content;
             if (_userSecretRepository.Query().Any(u => u.Id == note.OwnerRef))
                 comment.ExternalUser = note.OwnerRef;
-            if (note.TagId == null)
-                comment.TagsAdded = isFirstComment ? new[] { sfNoteTagId.ToString() } : null;
-            else
-                comment.TagsAdded = new[] { note.TagId.ToString() };
+            comment.TagsAdded =
+                note.TagId == null
+                    ? isFirstComment
+                        ? new[] { sfNoteTagId.ToString() }
+                        : null
+                    : new[] { note.TagId.ToString() };
         }
 
         private Note CreateNoteFromComment(

@@ -1,5 +1,3 @@
-using System;
-using System.Globalization;
 using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services
@@ -24,8 +22,6 @@ namespace SIL.XForge.Scripture.Services
                     : $"-Start:{thread.Position.Start}-Length:{thread.Position.Length}";
             string result =
                 thread.ContextBefore + thread.SelectedText + thread.ContextAfter + $"{selection}-{thread.VerseRefStr}";
-            if (thread.TagId != null)
-                result = result + $"-tag:{thread.TagId}";
             return result;
         }
 
@@ -39,7 +35,7 @@ namespace SIL.XForge.Scripture.Services
                 thread.OriginalContextBefore
                 + thread.OriginalSelectedText
                 + thread.OriginalContextAfter
-                + $"{selection}-{thread.VerseRef}-tag:{thread.TagId}";
+                + $"{selection}-{thread.VerseRef}";
             return result;
         }
 

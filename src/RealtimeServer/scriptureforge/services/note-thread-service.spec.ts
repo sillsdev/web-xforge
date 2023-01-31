@@ -142,7 +142,6 @@ describe('NoteThreadService', () => {
       ownerRef: env.reviewerId,
       projectRef: 'project01',
       publishedToSF: true,
-      tagId: 1,
       originalContextAfter: '',
       originalSelectedText: '',
       originalContextBefore: '',
@@ -457,7 +456,6 @@ class TestEnvironment {
       originalContextAfter: '',
       position,
       status,
-      tagId: 1,
       publishedToSF: false
     });
 
@@ -472,7 +470,6 @@ class TestEnvironment {
       originalContextAfter: '',
       position,
       status,
-      tagId: 1,
       publishedToSF: true
     });
 
@@ -487,7 +484,6 @@ class TestEnvironment {
       originalContextAfter: '',
       position,
       status,
-      tagId: 1,
       publishedToSF: true
     });
   }
