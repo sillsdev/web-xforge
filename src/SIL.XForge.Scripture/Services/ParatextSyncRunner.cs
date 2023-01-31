@@ -397,6 +397,7 @@ namespace SIL.XForge.Scripture.Services
                         token
                     );
                 }
+                LogMetric("Back from UpdateDocsAsync");
                 await NotifySyncProgress(SyncPhase.Phase6, 20.0);
 
                 // Check for cancellation
@@ -558,13 +559,16 @@ namespace SIL.XForge.Scripture.Services
                 }
 
                 // update note thread docs
-                LogMetric("Updating thread docs");
+                LogMetric("Updating thread docs - fetching");
                 Dictionary<string, IDocument<NoteThread>> noteThreadDocs = await FetchNoteThreadDocsAsync(text.BookNum);
+                LogMetric("Updating thread docs - get deltas");
                 Dictionary<int, ChapterDelta> chapterDeltas = GetDeltasByChapter(text, targetParatextId);
 
+                LogMetric("Updating thread docs - updating");
                 await UpdateNoteThreadDocsAsync(text, noteThreadDocs, token, chapterDeltas, ptUsernamesToSFUserIds);
 
                 // update project metadata
+                LogMetric("Updating project metadata");
                 await _projectDoc.SubmitJson0OpAsync(op =>
                 {
                     if (textIndex == -1)
