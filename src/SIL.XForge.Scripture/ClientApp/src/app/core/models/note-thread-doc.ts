@@ -1,4 +1,4 @@
-import { SF_TAG_ICON, NoteTag, DEFAULT_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { NoteTag, DEFAULT_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   NoteThread,
   NOTE_THREAD_COLLECTION,
@@ -12,9 +12,10 @@ import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-
 import { AssignedUsers } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 
+/** Returns the given tag icon formatted for retrieval in the html template, or the default icon. */
 export function defaultNoteThreadIcon(tagIcon: string | undefined): NoteThreadIcon {
   if (tagIcon == null) {
-    tagIcon = SF_TAG_ICON;
+    tagIcon = DEFAULT_TAG_ICON;
   }
   const iconUrl = `/assets/icons/TagIcons/${tagIcon}.png`;
   return { cssVar: `--icon-file: url(${iconUrl});`, url: iconUrl };

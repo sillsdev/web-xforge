@@ -1776,13 +1776,9 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             NoteThread thread01 = env.GetNoteThread("project01", "thread01");
-            int expectedThreadTagId = 2;
             int expectedNoteTagId = 3;
-            string threadExpected =
-                "Context before Scripture text in project context after-Start:0-Length:0-MAT 1:1-tag:"
-                + expectedThreadTagId;
+            string threadExpected = "Context before Scripture text in project context after-Start:0-Length:0-MAT 1:1";
             Assert.That(thread01.NoteThreadToString(), Is.EqualTo(threadExpected));
-            Assert.That(thread01.TagId, Is.EqualTo(expectedThreadTagId));
             Assert.That(thread01.Assignment, Is.EqualTo(CommentThread.teamUser));
             env.DeltaUsxMapper.ReceivedWithAnyArgs(2).ToChapterDeltas(default);
             Assert.That(thread01.Notes.Count, Is.EqualTo(startingNoteCount + expectedNoteCountChange));
@@ -1840,8 +1836,7 @@ namespace SIL.XForge.Scripture.Services
                 " reattach after."
             };
             string reattached = string.Join(PtxUtils.StringUtils.orcCharacter, reattachedParts);
-            string expected =
-                "Context before Scripture text in project context after-" + $"Start:16-Length:22-MAT 1:1-tag:1";
+            string expected = "Context before Scripture text in project context after-" + $"Start:16-Length:22-MAT 1:1";
             Assert.That(thread01.NoteThreadToString(), Is.EqualTo(expected));
             Assert.That(thread01.Notes.Single(n => n.Reattached != null).Reattached, Is.EqualTo(reattached));
 
@@ -1867,8 +1862,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             NoteThread thread02 = env.GetNoteThread("project01", "thread02");
-            string expected =
-                "Context before Scripture text in project context after-" + "Start:0-Length:0-MAT 1:1-tag:1";
+            string expected = "Context before Scripture text in project context after-" + "Start:0-Length:0-MAT 1:1";
             Assert.That(thread02.NoteThreadToString(), Is.EqualTo(expected));
             Assert.That(thread02.Notes.Count, Is.EqualTo(1));
             Assert.That(thread02.Notes[0].Content, Is.EqualTo("New thread02 added."));
@@ -2352,7 +2346,7 @@ namespace SIL.XForge.Scripture.Services
 
         private class TestEnvironment
         {
-            public int translateNoteTagId = 5;
+            public readonly int translateNoteTagId = 5;
             private readonly MemoryRepository<SFProjectSecret> _projectSecrets;
             private readonly MemoryRepository<SyncMetrics> _syncMetrics;
             private bool _sendReceivedCalled = false;
@@ -2990,8 +2984,7 @@ namespace SIL.XForge.Scripture.Services
                         "Context before ",
                         " context after",
                         NoteStatus.Todo.InternalValue,
-                        "",
-                        2
+                        ""
                     );
                     noteThreadChange.ThreadUpdated = true;
                     noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
@@ -3051,8 +3044,7 @@ namespace SIL.XForge.Scripture.Services
                     "Context before ",
                     " context after",
                     status,
-                    "",
-                    CommentTag.toDoTagId
+                    ""
                 );
                 noteThreadChange.ThreadUpdated = true;
                 SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
@@ -3067,8 +3059,7 @@ namespace SIL.XForge.Scripture.Services
                     "Context before ",
                     " context after",
                     NoteStatus.Todo.InternalValue,
-                    "",
-                    CommentTag.toDoTagId
+                    ""
                 );
                 noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
                 noteThreadChange.Assignment = CommentThread.teamUser;
@@ -3088,8 +3079,7 @@ namespace SIL.XForge.Scripture.Services
                     null,
                     null,
                     NoteStatus.Todo.InternalValue,
-                    "",
-                    CommentTag.conflictTagId
+                    ""
                 );
                 noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
                 noteThreadChange.AddChange(
@@ -3115,8 +3105,7 @@ namespace SIL.XForge.Scripture.Services
                     "Context before ",
                     " context after",
                     NoteStatus.Resolved.InternalValue,
-                    "",
-                    CommentTag.toDoTagId
+                    ""
                 );
                 if (noteId == null)
                     noteThreadChange.ThreadRemoved = true;
@@ -3134,8 +3123,7 @@ namespace SIL.XForge.Scripture.Services
                     "Context before ",
                     " context after",
                     "",
-                    "",
-                    CommentTag.toDoTagId
+                    ""
                 );
                 string before = "Reattach before ";
                 string reattachSelectedText = "reattach selected text";
@@ -3176,8 +3164,7 @@ namespace SIL.XForge.Scripture.Services
                 string status = NoteStatus.Todo.InternalValue;
                 string verseRef = "MAT 1:1";
                 // Create a NoteThreadChange, and allow client to adjust it.
-                int tagId = CommentTag.toDoTagId;
-                var noteThreadChange = new NoteThreadChange(threadId, verseRef, null, null, null, status, "", tagId);
+                var noteThreadChange = new NoteThreadChange(threadId, verseRef, null, null, null, status, "");
                 if (modifyNoteThreadChange != null)
                 {
                     modifyNoteThreadChange(noteThreadChange);
@@ -3270,7 +3257,6 @@ namespace SIL.XForge.Scripture.Services
                                 OriginalContextBefore = "Context before ",
                                 OriginalContextAfter = " context after",
                                 OriginalSelectedText = "Scripture text in project",
-                                TagId = tagId,
                                 PublishedToSF = publishedToSF,
                                 Notes = new List<Note>()
                                 {

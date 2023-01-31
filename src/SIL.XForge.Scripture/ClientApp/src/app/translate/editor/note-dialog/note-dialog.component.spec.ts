@@ -316,7 +316,6 @@ describe('NoteDialogComponent', () => {
       ownerRef: 'user01',
       position: { start: 0, length: 0 },
       projectRef: TestEnvironment.PROJECT01,
-      tagId: 1,
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
       status: NoteStatus.Todo,
       assignment: AssignedUsers.TeamUser,
@@ -480,7 +479,7 @@ describe('NoteDialogComponent', () => {
     expect(noteThread.publishedToSF).toBe(true);
     expect(noteThread.notes[0].ownerRef).toEqual('user01');
     expect(noteThread.notes[0].content).toEqual('Enter note content');
-    expect(noteThread.tagId).toEqual(2);
+    expect(noteThread.notes[0].tagId).toEqual(2);
   }));
 
   it('show sf note tag on notes with undefined tag id', fakeAsync(() => {
@@ -685,7 +684,6 @@ class TestEnvironment {
     ownerRef: 'user01',
     position: { start: 0, length: 0 },
     projectRef: TestEnvironment.PROJECT01,
-    tagId: 1,
     verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
     status: NoteStatus.Todo,
     assignment: AssignedUsers.TeamUser,
@@ -706,10 +704,10 @@ class TestEnvironment {
       }
     ]
   };
-  static getNoteThread(reattachedContent?: string, undefinedTagId?: boolean): NoteThread {
+  static getNoteThread(reattachedContent?: string, setTagIdUndefined?: boolean): NoteThread {
     const type: NoteType = NoteType.Normal;
     const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
-    const tagId: number | undefined = undefinedTagId ? undefined : 1;
+    const tagId: number | undefined = setTagIdUndefined === true ? undefined : 1;
     const noteThread: NoteThread = {
       originalContextBefore: 'before selection ',
       originalContextAfter: ' after selection',
@@ -718,7 +716,6 @@ class TestEnvironment {
       ownerRef: 'user01',
       position: { start: 1, length: 1 },
       projectRef: TestEnvironment.PROJECT01,
-      tagId: tagId ?? 1,
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 7 },
       status: NoteStatus.Todo,
       assignment: AssignedUsers.TeamUser,

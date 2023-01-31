@@ -3655,13 +3655,13 @@ class TestEnvironment {
     status: NoteStatus = NoteStatus.Todo,
     assignedSFUserRef?: string,
     publishedToSF?: boolean,
-    undefinedTagId?: boolean
+    setTagIdUndefined?: boolean
   ): void {
     const threadId: string = typeof threadNum === 'string' ? threadNum : `thread0${threadNum}`;
     const assignedUser: ParatextUserProfile | undefined = this.paratextUsersOnProject.find(
       u => u.sfUserId === assignedSFUserRef
     );
-    const noteTagId: number | undefined = undefinedTagId ? undefined : 1;
+    const noteTagId: number | undefined = setTagIdUndefined === true ? undefined : 1;
     const notes: Note[] = [];
     for (let i = 0; i < userIds.length; i++) {
       const id = userIds[i];
@@ -3697,7 +3697,6 @@ class TestEnvironment {
         ownerRef: 'user01',
         originalSelectedText: selectedText,
         notes,
-        tagId: noteTagId ?? 1,
         originalContextBefore: '\\v 1 target: ',
         originalContextAfter: ', verse 1.',
         position,
