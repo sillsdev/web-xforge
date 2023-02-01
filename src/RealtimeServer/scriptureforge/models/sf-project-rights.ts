@@ -30,8 +30,8 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     texts: ['view'],
     questions: ['view'],
     answers: ['view'],
-    answer_comments: ['view'],
     answer_status: ['view'],
+    answer_comments: ['view'],
     likes: ['view'],
     pt_note_threads: ['view'],
     sf_note_threads: ['view'],
@@ -48,6 +48,7 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     texts: ['view'],
     questions: ['view'],
     answers: ['view', 'create', 'edit_own', 'delete_own'],
+    answer_status: ['view'],
     answer_comments: ['view', 'create', 'edit_own', 'delete_own'],
     likes: ['view', 'create', 'delete_own']
   },
