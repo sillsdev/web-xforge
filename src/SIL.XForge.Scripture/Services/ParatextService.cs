@@ -976,7 +976,7 @@ namespace SIL.XForge.Scripture.Services
                     t =>
                         new NoteTag
                         {
-                            Id = t.Id,
+                            TagId = t.Id,
                             Icon = t.Icon,
                             Name = t.Name
                         }
@@ -1379,7 +1379,7 @@ namespace SIL.XForge.Scripture.Services
         public int UpdateCommentTag(UserSecret userSecret, string paratextId, NoteTag noteTag)
         {
             CommentTags commentTags = GetCommentTags(userSecret, paratextId);
-            if (noteTag.Id != NoteTag.notSetId)
+            if (noteTag.TagId != NoteTag.notSetId)
             {
                 // Disallow updating existing comment tags from SF
                 throw new ArgumentException("Cannot update an existing comment tag via Scripture Forge");

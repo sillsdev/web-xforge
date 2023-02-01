@@ -657,12 +657,12 @@ class TestEnvironment {
     },
     texts: [TestEnvironment.matthewText],
     noteTags: [
-      { id: 1, name: 'PT Tag 1', icon: 'flag01', creatorResolve: false },
-      { id: 2, name: 'PT Tag 2', icon: 'circle01', creatorResolve: false },
-      { id: 3, name: 'PT Tag 3', icon: 'star01', creatorResolve: false },
-      { id: 4, name: 'PT Tag 4', icon: 'tag01', creatorResolve: false },
-      { id: 5, name: 'PT Tag 5', icon: 'asterisk01', creatorResolve: false },
-      { id: 6, name: 'SF Note Tag', icon: 'defaultIcon', creatorResolve: false }
+      { tagId: 1, name: 'PT Tag 1', icon: 'flag01', creatorResolve: false },
+      { tagId: 2, name: 'PT Tag 2', icon: 'circle01', creatorResolve: false },
+      { tagId: 3, name: 'PT Tag 3', icon: 'star01', creatorResolve: false },
+      { tagId: 4, name: 'PT Tag 4', icon: 'tag01', creatorResolve: false },
+      { tagId: 5, name: 'PT Tag 5', icon: 'asterisk01', creatorResolve: false },
+      { tagId: 6, name: 'SF Note Tag', icon: 'defaultIcon', creatorResolve: false }
     ],
     sync: { queuedCount: 0 },
     editable: true,
@@ -704,10 +704,10 @@ class TestEnvironment {
       }
     ]
   };
-  static getNoteThread(reattachedContent?: string, setTagIdUndefined?: boolean): NoteThread {
+  static getNoteThread(reattachedContent?: string, isInitialSFNote?: boolean): NoteThread {
     const type: NoteType = NoteType.Normal;
     const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
-    const tagId: number | undefined = setTagIdUndefined === true ? undefined : 1;
+    const tagId: number | undefined = isInitialSFNote === true ? undefined : 1;
     const noteThread: NoteThread = {
       originalContextBefore: 'before selection ',
       originalContextAfter: ' after selection',
@@ -719,6 +719,7 @@ class TestEnvironment {
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 7 },
       status: NoteStatus.Todo,
       assignment: AssignedUsers.TeamUser,
+      publishedToSF: !!isInitialSFNote,
       notes: [
         {
           dataId: 'note01',

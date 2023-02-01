@@ -568,7 +568,7 @@ class TestEnvironment {
   readonly component: SettingsComponent;
   readonly fixture: ComponentFixture<SettingsComponent>;
   readonly location: Location;
-  readonly noteTags: NoteTag[] = [{ id: 1, name: 'Tag icon', icon: 'tag01', creatorResolve: false }];
+  readonly noteTags: NoteTag[] = [{ tagId: 1, name: 'Tag icon', icon: 'tag01', creatorResolve: false }];
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isOnline: BehaviorSubject<boolean>;
@@ -789,7 +789,7 @@ class TestEnvironment {
       translationSuggestionsEnabled: true,
       shareEnabled: false,
       shareLevel: TranslateShareLevel.Specific,
-      defaultNoteTagId: this.noteTags[0].id,
+      defaultNoteTagId: this.noteTags[0].tagId,
       source: {
         paratextId: 'paratextId01',
         projectRef: 'paratext01',
@@ -807,7 +807,7 @@ class TestEnvironment {
       shareLevel: CheckingShareLevel.Specific,
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     }
-  ) {
+  ): void {
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'project01',
       data: {

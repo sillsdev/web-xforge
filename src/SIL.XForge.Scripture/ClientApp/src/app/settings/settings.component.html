@@ -117,7 +117,7 @@
               <span *ngIf="reviewerTagIconSrc.length > 0" id="sf-note-tag-icon">
                 {{ t("sf_note_tag_icon") }} <img [src]="reviewerTagIconSrc" />
               </span>
-              <span *ngIf="reviewerTagIconSrc === ''" id="no-tag-icon-msg">{{ t("no_tag_icon") }}</span>
+              <mat-hint *ngIf="reviewerTagIconSrc === ''" id="no-tag-icon-msg">{{ t("no_tag_icon") }}</mat-hint>
             </div>
           </mat-card-content>
           <mat-divider></mat-divider>
