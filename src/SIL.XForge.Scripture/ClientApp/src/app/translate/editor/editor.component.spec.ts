@@ -2924,9 +2924,9 @@ class TestEnvironment {
   };
   private openNoteDialogs: MockNoteDialogRef[] = [];
   private noteTags: NoteTag[] = [
-    { id: 1, name: 'PT Translation Note 1', icon: '01flag1', creatorResolve: false },
-    { id: 2, name: 'PT Translation Note 2', icon: '02tag1', creatorResolve: false },
-    { id: 3, name: 'SF Note Tag', icon: SF_TAG_ICON, creatorResolve: false }
+    { tagId: 1, name: 'PT Translation Note 1', icon: '01flag1', creatorResolve: false },
+    { tagId: 2, name: 'PT Translation Note 2', icon: '02tag1', creatorResolve: false },
+    { tagId: 3, name: 'SF Note Tag', icon: SF_TAG_ICON, creatorResolve: false }
   ];
 
   private testProjectProfile: SFProjectProfile = {

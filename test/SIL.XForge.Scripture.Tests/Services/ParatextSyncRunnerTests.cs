@@ -681,6 +681,8 @@ namespace SIL.XForge.Scripture.Services
             Book[] books = { new Book("MAT", 1) };
             env.SetupSFData(true, true, false, true, books);
             await env.SetupUndefinedNoteTag("project01");
+            SFProject project = env.GetProject();
+            Assert.That(project.TranslateConfig.DefaultNoteTagId, Is.Null);
             // introduce a PT note thread
             env.AddParatextNoteThreadData(books[0]);
             env.SetupPTData(books);
@@ -694,12 +696,16 @@ namespace SIL.XForge.Scripture.Services
 
             // introduce an SF note thread
             env.AddParatextNoteThreadData(books[0], true);
+            env.ParatextService
+                .UpdateCommentTag(Arg.Any<UserSecret>(), "target", Arg.Any<NoteTag>())
+                .Returns(env.translateNoteTagId);
             await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
-            env.VerifyProjectSync(true, null, "project01");
+            project = env.VerifyProjectSync(true, null, "project01");
             // expect that a new note tag is created
             env.ParatextService
                 .Received()
                 .UpdateCommentTag(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<NoteTag>());
+            Assert.That(project.TranslateConfig.DefaultNoteTagId, Is.EqualTo(env.translateNoteTagId));
         }
 
         [Test]
@@ -712,19 +718,19 @@ namespace SIL.XForge.Scripture.Services
             {
                 new NoteTag
                 {
-                    Id = 1,
+                    TagId = 1,
                     Name = "To do",
                     Icon = NoteTag.defaultTagIcon
                 },
                 new NoteTag
                 {
-                    Id = 2,
+                    TagId = 2,
                     Name = "Original tag",
                     Icon = "originalIcon"
                 },
                 new NoteTag
                 {
-                    Id = 3,
+                    TagId = 3,
                     Name = "Tag to delete",
                     Icon = "delete"
                 }
@@ -735,13 +741,13 @@ namespace SIL.XForge.Scripture.Services
             {
                 new NoteTag
                 {
-                    Id = 1,
+                    TagId = 1,
                     Name = "To do",
                     Icon = NoteTag.defaultTagIcon
                 },
                 new NoteTag
                 {
-                    Id = 2,
+                    TagId = 2,
                     Name = "Edited tag",
                     Icon = "editedIcon"
                 }
@@ -783,7 +789,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 new NoteTag
                 {
-                    Id = env.translateNoteTagId,
+                    TagId = env.translateNoteTagId,
                     Icon = customIcon,
                     Name = "Tag Name"
                 }

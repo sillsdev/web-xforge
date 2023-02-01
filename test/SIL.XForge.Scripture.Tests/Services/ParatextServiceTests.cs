@@ -2144,7 +2144,7 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             var noteTag = new NoteTag
             {
-                Id = 5,
+                TagId = 5,
                 Icon = "sf05",
                 Name = "SF Note Tag",
             };
@@ -2162,7 +2162,7 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
             var noteTag = new NoteTag
             {
-                Id = CommentTag.notSetId,
+                TagId = CommentTag.notSetId,
                 Icon = "sf05",
                 Name = "SF Note Tag"
             };
@@ -2180,7 +2180,7 @@ namespace SIL.XForge.Scripture.Services
             string icon = "someIcon";
             var noteTag = new NoteTag
             {
-                Id = CommentTag.notSetId,
+                TagId = CommentTag.notSetId,
                 Icon = icon,
                 Name = "SF Note Tag"
             };
@@ -2188,7 +2188,7 @@ namespace SIL.XForge.Scripture.Services
             // the new tag is created with a tag id one greater than the last used id
             int tagId = env.TagCount + 1;
             ParatextSettings settings = env.Service.GetParatextSettings(userSecret, paratextId);
-            Assert.That(settings.NoteTags.First(t => t.Icon == icon).Id, Is.EqualTo(tagId));
+            Assert.That(settings.NoteTags.First(t => t.Icon == icon).TagId, Is.EqualTo(tagId));
         }
 
         [Test]
@@ -2201,7 +2201,7 @@ namespace SIL.XForge.Scripture.Services
             int existingId = 5;
             var noteTag = new NoteTag
             {
-                Id = existingId,
+                TagId = existingId,
                 Icon = "existingIcon",
                 Name = "SF Note Tag"
             };
@@ -3841,14 +3841,6 @@ namespace SIL.XForge.Scripture.Services
                     string threadId = "thread" + comp.threadNum;
                     string text = "Text selected " + threadId;
                     string selectedText = comp.appliesToVerse ? ContextBefore + text + ContextAfter : text;
-                    string? threadTagId = Paratext.Data.ProjectComments.CommentTag.toDoTagId.ToString();
-                    if (comp.notes != null)
-                    {
-                        threadTagId =
-                            comp.notes[comp.notes.Length - 1].tagsAdded != null
-                                ? comp.notes[comp.notes.Length - 1].tagsAdded[0]
-                                : null;
-                    }
 
                     var noteThread = new NoteThread
                     {
@@ -4160,7 +4152,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     if (tagId < TagCount)
                     {
-                        if (noteTag != null && tagId == noteTag.Id)
+                        if (noteTag != null && tagId == noteTag.TagId)
                             tags.Add(new CommentTag(noteTag.Name, noteTag.Icon, tagId));
                         else
                             tags.Add(new CommentTag($"tag{tagId}", $"icon{tagId}", tagId));
