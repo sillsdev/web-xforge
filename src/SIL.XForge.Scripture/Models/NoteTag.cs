@@ -6,7 +6,7 @@ namespace SIL.XForge.Scripture.Models
         public const string sfNoteTagIcon = "06star2";
         public const string sfNoteTagName = "Scripture Forge Note";
         public const int notSetId = 0;
-        public int Id { get; set; }
+        public int TagId { get; set; }
         public string Icon { get; set; }
         public string Name { get; set; }
         public bool CreatorResolve { get; set; }

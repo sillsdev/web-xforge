@@ -41,10 +41,10 @@ import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
-import { defaultNoteThreadIcon, NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
+import { NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -884,7 +884,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private updateReadNotes(threadId: string) {
+  private updateReadNotes(threadId: string): void {
     const noteThread: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(d => d.data?.dataId === threadId);
     if (noteThread?.data != null && this.projectUserConfigDoc?.data != null) {
       const notesRead: string[] = [];
@@ -1268,7 +1268,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
-  private loadProjectUserConfig() {
+  private loadProjectUserConfig(): void {
     let chapter = this.chapters.length > 0 ? this.chapters[0] : 1;
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
       const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
@@ -1315,12 +1315,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     const hasNewContent: boolean = this.hasNewContent(threadDoc);
     const otherAssigned: boolean = threadDoc.isAssignedToOtherUser(this.userService.currentUserId, this.paratextUsers);
-    const icon: NoteThreadIcon =
-      threadDoc.getIcon(this.noteTags).url.length === 0
-        ? defaultNoteThreadIcon(SF_TAG_ICON)
-        : otherAssigned
-        ? threadDoc.getIconGrayed(this.noteTags)
-        : threadDoc.getIcon(this.noteTags);
+    const icon: NoteThreadIcon = otherAssigned
+      ? threadDoc.getIconGrayed(this.noteTags)
+      : threadDoc.getIcon(this.noteTags);
 
     return {
       verseRef,
@@ -1670,7 +1667,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.source.editor.scrollingContainer.scrollTop += otherBounds.top - thisBounds.top;
   }
 
-  onViewerClicked(viewer: MultiCursorViewer) {
+  onViewerClicked(viewer: MultiCursorViewer): void {
     this.target!.scrollToViewer(viewer);
   }
 }

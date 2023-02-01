@@ -183,10 +183,10 @@ describe('NoteThreadDoc', () => {
 class TestEnvironment {
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   readonly noteTags: NoteTag[] = [
-    { id: 1, name: 'SF 1', icon: 'flag1', creatorResolve: false },
-    { id: 2, name: 'SF 2', icon: 'flag2', creatorResolve: false },
-    { id: 3, name: 'SF 3', icon: 'flag3', creatorResolve: false },
-    { id: 4, name: 'SF 4', icon: 'flag4', creatorResolve: false }
+    { tagId: 1, name: 'SF 1', icon: 'flag1', creatorResolve: false },
+    { tagId: 2, name: 'SF 2', icon: 'flag2', creatorResolve: false },
+    { tagId: 3, name: 'SF 3', icon: 'flag3', creatorResolve: false },
+    { tagId: 4, name: 'SF 4', icon: 'flag4', creatorResolve: false }
   ];
 
   constructor() {}

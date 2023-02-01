@@ -144,7 +144,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (this.defaultNoteTagId === null) {
       return '';
     }
-    const noteTag: NoteTag | undefined = this.noteTags.find(t => t.id === this.defaultNoteTagId);
+    const noteTag: NoteTag | undefined = this.noteTags.find(t => t.tagId === this.defaultNoteTagId);
     return noteTag == null ? '' : defaultNoteThreadIcon(noteTag.icon).url;
   }
 
@@ -379,7 +379,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.setAllControlsToInSync();
   }
 
-  private setIndividualControlDisabledStates() {
+  private setIndividualControlDisabledStates(): void {
     if (!this.isLoggedInToParatext && !this.isTranslationSuggestionsEnabled) {
       this.translationSuggestionsEnabled.disable();
     }
