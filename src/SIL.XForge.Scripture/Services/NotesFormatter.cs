@@ -1,4 +1,3 @@
-// This file is copied from Paratext DataAccessServer
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,11 +11,17 @@ using SIL.Xml;
 namespace SIL.XForge.Scripture.Services
 {
     /// <summary>
-    /// Formats CommentThreads as XML.
+    /// Formats CommentThreads to and from XML.
     /// </summary>
+    /// <remarks>
+    /// This file is copied from Paratext DataAccessServer, with the following alterations:
+    ///  * ParseNotes takes an XElement for input rather than a String
+    ///  * Additional null checking
+    ///  * Code reformatting
+    /// </remarks>
     public static class NotesFormatter
     {
-        public const string notesSchemaVersion = "1.1";
+        private const string NotesSchemaVersion = "1.1";
 
         #region Public methods
         /// <summary>
@@ -25,11 +30,10 @@ namespace SIL.XForge.Scripture.Services
         public static string FormatNotes(IEnumerable<CommentThread> threads)
         {
             XElement topElem = new XElement("notes");
-            topElem.Add(new XAttribute("version", notesSchemaVersion));
+            topElem.Add(new XAttribute("version", NotesSchemaVersion));
             foreach (CommentThread thread in threads.Where(t => t.ActiveComments.Any()))
                 topElem.Add(FormatThread(thread));
-            string result = topElem.ToString();
-            return result;
+            return topElem.ToString();
         }
 
         /// <summary>
@@ -38,15 +42,13 @@ namespace SIL.XForge.Scripture.Services
         /// <param name="noteXml">The Note XML Element</param>
         /// <param name="ptUser">ParatextUser to use when creating any new Comments.</param>
         /// <returns>Nested list of comments</returns>
-        /// <remarks>This code assumes that the XML passes the validation of the notes XML schema.</remarks>
+        /// <remarks>
+        /// This code assumes that the XML passes the validation of the notes XML schema.
+        /// This is the inverse of <see cref="FormatNotes"/>, except the thread type is not parsed from the XML.
+        /// </remarks>
         public static List<List<Comment>> ParseNotes(XElement noteXml, ParatextUser ptUser)
         {
-            List<List<Comment>> result = new List<List<Comment>>();
-            foreach (var threadElem in noteXml.Elements("thread"))
-            {
-                result.Add(ParseThread(threadElem, ptUser));
-            }
-            return result;
+            return noteXml.Elements("thread").Select(threadElem => ParseThread(threadElem, ptUser)).ToList();
         }
 
         #endregion
@@ -70,7 +72,7 @@ namespace SIL.XForge.Scripture.Services
             XElement commentElem = new XElement("comment");
             commentElem.Add(new XAttribute("user", comment.User));
             commentElem.Add(new XAttribute("date", comment.Date));
-            if (comment.ExternalUser != null)
+            if (comment.ExternalUser is not null)
                 commentElem.Add(new XAttribute("extUser", comment.ExternalUser));
             if (comment.Deleted)
                 commentElem.Add(new XAttribute("deleted", "true"));
@@ -78,19 +80,20 @@ namespace SIL.XForge.Scripture.Services
             return commentElem;
         }
 
-        private static XElement FormatContent(XmlElement commentContents)
+        private static XElement FormatContent(XmlElement? commentContents)
         {
             XElement contentElem = new XElement("content");
-            if (commentContents == null)
-                contentElem.Add(new XElement("p", ""));
+            if (commentContents is null)
+                contentElem.Add(new XElement("p", string.Empty));
             else
             {
                 foreach (XmlNode node in commentContents.ChildNodes)
                     if (node.Name == "p")
                         contentElem.Add(FormatParagraph(node));
-                    else if (node.NodeType == XmlNodeType.Text)
+                    else if (node.NodeType == XmlNodeType.Text && node.Value is not null)
                         contentElem.Add(new XText(node.Value));
             }
+
             return contentElem;
         }
 
@@ -107,7 +110,7 @@ namespace SIL.XForge.Scripture.Services
                     {
                         paraElem.Add(new XText(node.InnerText));
                     }
-                    else if (node.Name == "bold" || node.Name == "italic")
+                    else if (node.Name is "bold" or "italic")
                     {
                         XElement spanElem = new XElement("span");
                         spanElem.Add(new XAttribute("style", node.Name));
@@ -123,6 +126,7 @@ namespace SIL.XForge.Scripture.Services
                     }
                 }
             }
+
             return paraElem;
         }
 
@@ -148,11 +152,11 @@ namespace SIL.XForge.Scripture.Services
             Comment comment = null;
             foreach (var commentElem in threadElem.Elements("comment"))
             {
-                if (comment == null)
+                if (comment is null)
                 {
                     comment = new Comment(ptUser);
                     XAttribute threadId = threadElem.Attribute("id");
-                    if (threadId != null)
+                    if (threadId is not null)
                         comment.Thread = threadId.Value;
                     ParseSelection(threadElem.Element("selection"), comment);
                 }
@@ -163,72 +167,82 @@ namespace SIL.XForge.Scripture.Services
                 result.Add(comment);
                 ParseComment(commentElem, comment);
             }
+
             return result;
         }
 
         private static void ParseComment(XElement commentElem, Comment comment)
         {
             comment.User = commentElem.Attribute("user")?.Value;
-            comment.Date = commentElem.Attribute("date")?.Value;
+            string commentDate = commentElem.Attribute("date")?.Value;
+            if (commentDate is not null)
+                comment.Date = commentDate;
             comment.ExternalUser = commentElem.Attribute("extUser")?.Value;
             comment.Deleted = commentElem.Attribute("deleted")?.Value == "true";
             ParseContents(commentElem.Element("content"), comment);
         }
 
-        private static void ParseContents(XElement contentElem, Comment comment)
+        private static void ParseContents(XElement? contentElem, Comment comment)
         {
             string contents;
-            if (contentElem.FirstNode?.NodeType == XmlNodeType.Text)
+            if (contentElem is null)
+            {
+                contents = string.Empty;
+            }
+            else if (contentElem.FirstNode?.NodeType == XmlNodeType.Text)
             {
                 contents = ((XText)contentElem.FirstNode).Value;
             }
             else
             {
-                StringBuilder bldr = new StringBuilder();
+                StringBuilder sb = new StringBuilder();
                 foreach (var paraElem in contentElem.Elements("p"))
-                    ParseParagraph(paraElem, bldr);
-                contents = bldr.ToString();
+                    ParseParagraph(paraElem, sb);
+                contents = sb.ToString();
             }
-            comment.AddTextToContent("", false);
+
+            comment.AddTextToContent(string.Empty, false);
             comment.Contents.InnerXml = contents;
         }
 
-        private static void ParseParagraph(XElement paraElem, StringBuilder bldr)
+        private static void ParseParagraph(XElement paraElem, StringBuilder sb)
         {
-            bldr.Append("<p>");
+            sb.Append("<p>");
             foreach (var node in paraElem.Nodes())
             {
                 if (node is XText text)
-                    bldr.Append(text.Value);
+                    sb.Append(text.Value);
                 else
                 {
                     XElement elem = (XElement)node;
                     if (elem.Name == "span")
                     {
                         string style = elem.Attribute("style")?.Value ?? "bold";
-                        bldr.Append($"<{style}>");
-                        bldr.Append(elem.GetInnerText());
-                        bldr.Append($"</{style}>");
+                        sb.Append($"<{style}>");
+                        sb.Append(elem.GetInnerText());
+                        sb.Append($"</{style}>");
                     }
                     else if (elem.Name == "lang")
                     {
                         string name = elem.Attribute("name")?.Value ?? "en";
-                        bldr.Append($"<language name=\"{name}\">");
-                        bldr.Append(elem.GetInnerText());
-                        bldr.Append("</language>");
+                        sb.Append($"<language name=\"{name}\">");
+                        sb.Append(elem.GetInnerText());
+                        sb.Append("</language>");
                     }
                 }
             }
-            bldr.Append("</p>");
+            sb.Append("</p>");
         }
 
-        private static void ParseSelection(XElement selElem, Comment comment)
+        private static void ParseSelection(XElement? selElem, Comment comment)
         {
-            comment.SelectedText = selElem.Attribute("selectedText")?.Value ?? "";
+            if (selElem is null)
+                return;
+            comment.SelectedText = selElem.Attribute("selectedText")?.Value ?? string.Empty;
             comment.VerseRefStr = selElem.Attribute("verseRef")?.Value;
             comment.StartPosition = int.Parse(selElem.Attribute("startPos")?.Value ?? "0");
-            comment.ContextBefore = selElem.Attribute("beforeContext")?.Value ?? "";
-            comment.ContextAfter = selElem.Attribute("afterContext")?.Value ?? "";
+            comment.ContextBefore = selElem.Attribute("beforeContext")?.Value ?? string.Empty;
+            comment.ContextAfter = selElem.Attribute("afterContext")?.Value ?? string.Empty;
         }
         #endregion
     }
