@@ -1,4 +1,4 @@
-import { NoteTag, DEFAULT_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { NoteTag, DEFAULT_TAG_ICON, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   NoteThread,
   NOTE_THREAD_COLLECTION,
@@ -49,12 +49,12 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
   }
 
   getNoteIcon(note: Note, noteTags: NoteTag[]): NoteThreadIcon {
-    const tagIcon: string | undefined = noteTags.find(t => t.id === note.tagId)?.icon ?? undefined;
+    const tagIcon: string | undefined = noteTags.find(t => t.tagId === note.tagId)?.icon ?? undefined;
     return this.iconProperties(tagIcon != null ? tagIcon : '');
   }
 
   getNoteResolvedIcon(note: Note, noteTags: NoteTag[]): NoteThreadIcon {
-    const tagIcon: string | undefined = noteTags.find(t => t.id === note.tagId)?.icon ?? undefined;
+    const tagIcon: string | undefined = noteTags.find(t => t.tagId === note.tagId)?.icon ?? undefined;
     const iconTag = this.getResolvedTag(tagIcon != null ? tagIcon : '');
     return this.iconProperties(iconTag);
   }
@@ -100,9 +100,10 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
     let tagId: number | undefined =
       iconDefinedNotes.length === 0 ? undefined : iconDefinedNotes[iconDefinedNotes.length - 1].tagId;
     if (tagId == null) {
-      return '';
+      if (this.data.publishedToSF === true) return SF_TAG_ICON;
+      return noteTags.find(t => t.tagId === 1)?.icon ?? DEFAULT_TAG_ICON;
     }
-    return noteTags.find(t => t.id === tagId)?.icon ?? DEFAULT_TAG_ICON;
+    return noteTags.find(t => t.tagId === tagId)?.icon ?? DEFAULT_TAG_ICON;
   }
 
   private getResolvedTag(iconTag: string = ''): string {

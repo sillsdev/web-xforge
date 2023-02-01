@@ -21,7 +21,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { NoteThreadDoc, defaultNoteThreadIcon, NoteThreadIcon } from '../../../core/models/note-thread-doc';
+import { NoteThreadDoc, defaultNoteThreadIcon } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -94,11 +94,9 @@ export class NoteDialogComponent implements OnInit {
   get flagIcon(): string {
     if (this.threadDoc?.data == null) {
       if (this.defaultNoteTagId == null) return defaultNoteThreadIcon(SF_TAG_ICON).url;
-      const noteTag: NoteTag | undefined = this.noteTags.find(t => t.id === this.defaultNoteTagId);
+      const noteTag: NoteTag | undefined = this.noteTags.find(t => t.tagId === this.defaultNoteTagId);
       return defaultNoteThreadIcon(noteTag?.icon).url;
     }
-    const noteTagIcon: NoteThreadIcon = this.threadDoc.getIcon(this.noteTags);
-    if (noteTagIcon.url.length === 0) return defaultNoteThreadIcon(SF_TAG_ICON).url;
     return this.isAssignedToOtherUser
       ? this.threadDoc.getIconGrayed(this.noteTags).url
       : this.threadDoc.getIcon(this.noteTags).url;

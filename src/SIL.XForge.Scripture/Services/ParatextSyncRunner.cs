@@ -1169,7 +1169,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 var newNoteTag = new NoteTag
                 {
-                    Id = NoteTag.notSetId,
+                    TagId = NoteTag.notSetId,
                     Icon = NoteTag.sfNoteTagIcon,
                     Name = NoteTag.sfNoteTagName
                 };
@@ -1408,30 +1408,7 @@ namespace SIL.XForge.Scripture.Services
                     op.Set(pd => pd.DefaultFont, settings.DefaultFont);
                     op.Set(pd => pd.DefaultFontSize, settings.DefaultFontSize);
                     if (settings.NoteTags != null)
-                    {
-                        List<int> tagsToRemove = _projectDoc.Data.NoteTags.Select(t => t.Id).ToList();
-                        foreach (NoteTag tag in settings.NoteTags)
-                        {
-                            tagsToRemove.Remove(tag.Id);
-                            int index = _projectDoc.Data.NoteTags.FindIndex(t => t.Id == tag.Id);
-                            if (index == -1)
-                            {
-                                op.Add(pd => pd.NoteTags, tag);
-                                continue;
-                            }
-                            NoteTag nt = _projectDoc.Data.NoteTags[index];
-                            if (nt.Name != tag.Name)
-                                op.Set(pd => pd.NoteTags[index].Name, tag.Name);
-                            if (nt.Icon != tag.Icon)
-                                op.Set(pd => pd.NoteTags[index].Icon, tag.Icon);
-                        }
-
-                        foreach (int tagId in tagsToRemove)
-                        {
-                            int index = _projectDoc.Data.NoteTags.FindIndex(t => t.Id == tagId);
-                            op.Remove(pd => pd.NoteTags, index);
-                        }
-                    }
+                        op.Set(pd => pd.NoteTags, settings.NoteTags);
                 }
                 // The source can be null if there was an error getting a resource from the DBL
                 if (TranslationSuggestionsEnabled && _projectDoc.Data.TranslateConfig.Source != null)

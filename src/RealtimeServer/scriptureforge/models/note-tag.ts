@@ -3,7 +3,7 @@ export const SF_TAG_ICON = '06star2';
 export const SF_TAG_NAME = 'Scripture Forge Note';
 
 export interface NoteTag {
-  id: number;
+  tagId: number;
   name: string;
   icon: string;
   creatorResolve: boolean;
