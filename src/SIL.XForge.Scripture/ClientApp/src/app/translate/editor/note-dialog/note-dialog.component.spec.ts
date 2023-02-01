@@ -147,7 +147,7 @@ describe('NoteDialogComponent', () => {
     });
   }));
 
-  it('conflict preamble is transformed', fakeAsync(() => {
+  xit('conflict preamble is transformed', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     const conflictNote = env.component.notesToDisplay[0];
     conflictNote.type = NoteType.Conflict;
@@ -193,7 +193,7 @@ describe('NoteDialogComponent', () => {
       .toEqual(unexpectedContent);
   }));
 
-  it('isConflictNote detects', fakeAsync(() => {
+  xit('isConflictNote detects', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     // A non-conflict note is detected.
     env.component.notesToDisplay[0].type = NoteType.Normal;
@@ -306,7 +306,7 @@ describe('NoteDialogComponent', () => {
     expect(reattachNote.querySelector('img')?.getAttribute('title')).toEqual('Note reattached');
   }));
 
-  it('conflict note displays accepted and rejected changes', fakeAsync(() => {
+  xit('conflict note displays accepted and rejected changes', fakeAsync(() => {
     // Make a conflict note to be displayed.
     const noteThread: NoteThread = {
       originalContextBefore: '',

@@ -98,7 +98,7 @@ class MockComponent {}
 const ROUTES: Route[] = [{ path: 'projects/:projectId/translate', component: MockComponent }];
 
 class MockConsole {
-  log(val: any) {
+  log(val: any): void {
     if (
       typeof val !== 'string' ||
       (!/(Translated|Trained) segment, length: \d+, time: \d+\.\d+ms/.test(val) &&
@@ -1522,6 +1522,16 @@ describe('EditorComponent', () => {
       expect(note4Position).toEqual(range.index + position.start);
       // The original note thread was on verse 3
       expect(note4Doc.data!.verseRef.verseNum).toEqual(3);
+      env.dispose();
+    }));
+
+    it('hides conflict notes', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.convertToConflictNote('project01', 'thread02');
+      env.wait();
+
+      expect(env.getNoteThreadIconElement('verse_1_3', 'thread02')).toBeNull();
       env.dispose();
     }));
 
@@ -3725,6 +3735,14 @@ class TestEnvironment {
     noteThreadDoc.submitJson0Op(op => {
       op.set(nt => nt.position, position);
       op.insert(nt => nt.notes, index, note);
+    });
+  }
+
+  convertToConflictNote(projectId: string, threadId: string): void {
+    const noteThreadDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
+    noteThreadDoc.submitJson0Op(op => {
+      op.set<string>(nt => nt.notes[0].conflictType, NoteConflictType.VerseTextConflict);
+      op.set<string>(nt => nt.notes[0].type, NoteType.Conflict);
     });
   }
 
