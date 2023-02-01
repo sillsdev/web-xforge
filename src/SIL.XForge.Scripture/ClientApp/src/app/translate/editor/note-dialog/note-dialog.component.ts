@@ -181,7 +181,6 @@ export class NoteDialogComponent implements OnInit {
         return this.parseNote(conflictContents.innerHTML);
       }
     }
-
     return this.parseNote(note.content);
   }
 
@@ -266,7 +265,7 @@ export class NoteDialogComponent implements OnInit {
     this.showSegmentText = !this.showSegmentText;
   }
 
-  noteIcon(note: Note) {
+  noteIcon(note: Note): string {
     if (this.threadDoc?.data == null) {
       return '';
     }
@@ -281,7 +280,7 @@ export class NoteDialogComponent implements OnInit {
     return note.reattached != null && noteIcon === '' ? this.threadDoc.iconReattached.url : noteIcon;
   }
 
-  noteTitle(note: Note) {
+  noteTitle(note: Note): string {
     switch (note.status) {
       case NoteStatus.Todo:
         return translate('note_dialog.status_to_do');

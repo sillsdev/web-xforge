@@ -41,6 +41,7 @@ import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { NoteType } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
@@ -879,7 +880,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private updateReadNotes(threadId: string) {
+  private updateReadNotes(threadId: string): void {
     const noteThread: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(d => d.data?.dataId === threadId);
     if (noteThread?.data != null && this.projectUserConfigDoc?.data != null) {
       const notesRead: string[] = [];
@@ -1263,7 +1264,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
-  private loadProjectUserConfig() {
+  private loadProjectUserConfig(): void {
     let chapter = this.chapters.length > 0 ? this.chapters[0] : 1;
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
       const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
@@ -1602,12 +1603,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     ) {
       return [];
     }
+    // only show notes that are from this chapter and is not a conflict note
     return this.noteThreadQuery.docs.filter(
       nt =>
         nt.data != null &&
         nt.data.verseRef.bookNum === this.bookNum &&
         nt.data.verseRef.chapterNum === this.chapter &&
-        nt.data.notes.length > 0
+        nt.data.notes.length > 0 &&
+        nt.data.notes[0].type !== NoteType.Conflict
     );
   }
 
@@ -1660,7 +1663,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.source.editor.scrollingContainer.scrollTop += otherBounds.top - thisBounds.top;
   }
 
-  onViewerClicked(viewer: MultiCursorViewer) {
+  onViewerClicked(viewer: MultiCursorViewer): void {
     this.target!.scrollToViewer(viewer);
   }
 }
