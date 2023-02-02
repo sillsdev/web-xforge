@@ -139,12 +139,13 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
         retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
       )
       .subscribe(progress => {
-        if (!this.trainingProgressClosed) {
-          this.showTrainingProgress = true;
-        }
         if (this.trainingCompletedTimeout != null) {
           clearTimeout(this.trainingCompletedTimeout);
+          this.trainingProgressClosed = false;
           this.trainingCompletedTimeout = undefined;
+        }
+        if (!this.trainingProgressClosed) {
+          this.showTrainingProgress = true;
         }
         this.trainingPercentage = Math.round(progress.percentCompleted * 100);
         // ToDo: internationalize message
