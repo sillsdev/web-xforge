@@ -958,6 +958,8 @@ namespace SIL.XForge.Scripture.Services
             using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             if (scrText == null)
                 return null;
+            // Clear the cached comment tag file
+            CommentTags.ClearCacheForProject(scrText);
             CommentTags commentTags = CommentTags.Get(scrText);
             IEnumerable<NoteTag> noteTags = commentTags
                 .GetAllTags()

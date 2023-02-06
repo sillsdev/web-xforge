@@ -3833,7 +3833,7 @@ class MockNoteDialogRef {
     element.appendChild(document.createElement('input')).focus();
   }
 
-  close(result?: boolean) {
+  close(result?: boolean): void {
     this.close$.next(result);
     this.close$.complete();
   }
