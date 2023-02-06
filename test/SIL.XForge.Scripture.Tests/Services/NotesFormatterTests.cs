@@ -44,7 +44,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     ContextScrTextName = env.ProjectScrText?.Name,
                     ScrText = env.ProjectScrText,
-                    Comments = new List<Comment> { comment, },
+                    Comments = new List<Comment> { comment },
                 },
             };
 
@@ -96,7 +96,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     ContextScrTextName = env.ProjectScrText?.Name,
                     ScrText = env.ProjectScrText,
-                    Comments = new List<Comment> { comment, },
+                    Comments = new List<Comment> { comment },
                 },
             };
 
@@ -182,7 +182,7 @@ namespace SIL.XForge.Scripture.Services
                 {
                     ContextScrTextName = env.ProjectScrText?.Name,
                     ScrText = env.ProjectScrText,
-                    Comments = new List<Comment> { comment, },
+                    Comments = new List<Comment> { comment },
                 },
             };
 
@@ -594,9 +594,6 @@ namespace SIL.XForge.Scripture.Services
             {
                 string ptProjectId = _ptProjectIds[baseId].Id;
                 ProjectScrText = GetScrText(associatedPtUser, ptProjectId, hasEditPermission);
-
-                // We set the file manager here so we can track file manager operations after
-                // the ScrText object has been disposed in ParatextService.
                 ProjectFileManager projectFileManager = Substitute.For<ProjectFileManager>(ProjectScrText, null);
                 projectFileManager.IsWritable.Returns(true);
                 ProjectScrText.SetFileManager(projectFileManager);
@@ -610,7 +607,7 @@ namespace SIL.XForge.Scripture.Services
             {
                 string scrTextDir = Path.Combine(_syncDir, projectId, "target");
                 ProjectName projectName = new ProjectName { ProjectPath = scrTextDir, ShortName = "Proj" };
-                var scrText = new MockScrText(associatedPtUser, projectName) { CachedGuid = HexId.FromStr(projectId), };
+                var scrText = new MockScrText(associatedPtUser, projectName) { CachedGuid = HexId.FromStr(projectId) };
                 scrText.Permissions.CreateFirstAdminUser();
                 scrText.Data.Add("RUT", _ruthBookUsfm);
                 scrText.Settings.BooksPresentSet = new BookSet("RUT");
