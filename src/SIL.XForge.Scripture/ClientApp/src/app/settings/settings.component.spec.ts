@@ -25,6 +25,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
 import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
@@ -43,6 +44,7 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedDialog = mock(MdcDialog);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -72,7 +74,8 @@ describe('SettingsComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
-      { provide: MdcDialog, useMock: mockedDialog }
+      { provide: MdcDialog, useMock: mockedDialog },
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ]
   }));
 
@@ -389,6 +392,7 @@ describe('SettingsComponent', () => {
 
         const tagIcon: string = env.noteTags[0].icon;
         const noteIconElement: DebugElement = env.noteTagIcon;
+        expect(noteIconElement.nativeElement.textContent).toContain(env.noteTags[0].name);
         expect(noteIconElement.query(By.css('img[src="/assets/icons/TagIcons/' + tagIcon + '.png"]'))).not.toBeNull();
         expect(env.noTagIconMsg).toBeNull();
       }));
@@ -613,6 +617,7 @@ class TestEnvironment {
       },
       { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
     ]);
+    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
 
     this.fixture = TestBed.createComponent(SettingsComponent);
     this.component = this.fixture.componentInstance;
