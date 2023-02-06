@@ -1166,8 +1166,7 @@ namespace SIL.XForge.Scripture.Services
         {
             var env = new TestEnvironment();
             IEnumerable<NoteThreadChange> changes = await env.PrepareChangeOnSingleCommentAsync(
-                (Paratext.Data.ProjectComments.Comment comment) =>
-                {
+                (Paratext.Data.ProjectComments.Comment comment) => {
                     // Not modifying comment.
                 }
             );
