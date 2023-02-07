@@ -173,24 +173,14 @@ describe('ShareDialogComponent', () => {
     expect(env.canChangeInvitationRole).toBeFalse();
   }));
 
-  it('observer users can only share the observer role when community checking is disabled', fakeAsync(() => {
-    env = new TestEnvironment({ userId: TestUsers.Observer, checkingEnabled: false });
+  it('observer users can only share the observer role', fakeAsync(() => {
+    env = new TestEnvironment({ userId: TestUsers.Observer, defaultRole: SFProjectRole.Observer });
     const roles: SFProjectRole[] = env.component.availableRoles;
     expect(roles).not.toContain(SFProjectRole.CommunityChecker);
     expect(roles).toContain(SFProjectRole.Observer);
     expect(roles).not.toContain(SFProjectRole.Reviewer);
     expect(env.component.shareRole).toEqual(SFProjectRole.Observer);
     expect(env.canChangeInvitationRole).toBeFalse();
-  }));
-
-  it('observer users can only share the observer role and optionally the community checking role if enabled', fakeAsync(() => {
-    env = new TestEnvironment({ userId: TestUsers.Observer, defaultRole: SFProjectRole.Observer });
-    const roles: SFProjectRole[] = env.component.availableRoles;
-    expect(roles).toContain(SFProjectRole.CommunityChecker);
-    expect(roles).toContain(SFProjectRole.Observer);
-    expect(roles).not.toContain(SFProjectRole.Reviewer);
-    expect(env.component.shareRole).toEqual(SFProjectRole.Observer);
-    expect(env.canChangeInvitationRole).toBeTrue();
   }));
 
   it('admin users can share any role even when sharing is disabled', fakeAsync(() => {
@@ -471,7 +461,7 @@ class TestEnvironment {
     this.wait();
   }
 
-  clickElement(element: HTMLElement) {
+  clickElement(element: HTMLElement): void {
     element.click();
     this.fixture.detectChanges();
     tick();

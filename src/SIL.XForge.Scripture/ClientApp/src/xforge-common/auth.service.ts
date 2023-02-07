@@ -57,7 +57,6 @@ interface LoginResult {
 
 interface LoginParams {
   locale?: string;
-  promptPasswordlessLogin?: boolean;
   returnUrl: string;
   signUp?: boolean;
 }
@@ -191,7 +190,7 @@ export class AuthService {
     return true;
   }
 
-  async logIn({ returnUrl, signUp, locale, promptPasswordlessLogin }: LoginParams = { returnUrl: '' }): Promise<void> {
+  async logIn({ returnUrl, signUp, locale }: LoginParams = { returnUrl: '' }): Promise<void> {
     const state: AuthState = { returnUrl };
     const language: string = getAspCultureCookieLanguage(this.cookieService.get(ASP_CULTURE_COOKIE_NAME));
     const ui_locales: string = language;
@@ -199,12 +198,14 @@ export class AuthService {
       appState: JSON.stringify(state),
       language,
       login_hint: ui_locales,
-      enablePasswordless: true,
-      promptPasswordlessLogin: promptPasswordlessLogin === true
+      enablePasswordless: true
     };
-    if (signUp) {
+    if (signUp || this.isJoining) {
       authOptions.mode = 'signUp';
       authOptions.login_hint = locale ?? ui_locales;
+      if (this.isJoining) {
+        authOptions.promptPasswordlessLogin = true;
+      }
     }
     this.unscheduleRenewal();
     await this.auth0.loginWithRedirect(authOptions);
@@ -234,6 +235,24 @@ export class AuthService {
     if (await this.isLoggedIn) {
       await this.commandService.onlineInvoke(USERS_URL, 'updateInterfaceLanguage', { language });
     }
+  }
+
+  /**
+   * Check if the user is in the process of joining a project from a share link
+   */
+  private get isJoining(): boolean {
+    return this.checkShareKeyAvailable() !== false;
+  }
+
+  /**
+   * An active route isn't available yet, so we need to get the share key, if available, from the path name
+   */
+  private checkShareKeyAvailable(): false | string {
+    const path: string[] = this.locationService.pathname.split('/').filter(p => p !== '');
+    if (path[0] !== 'join' || path[1] == null) {
+      return false;
+    }
+    return path[1];
   }
 
   private async getTokenDetails(): Promise<GetTokenSilentlyVerboseResponse> {
