@@ -18,6 +18,9 @@ h1 {
 }
 .mat-dialog-content {
   min-height: 300px;
+  @include media-breakpoint-down(sm) {
+    min-height: 200px;
+  }
 }
 .text-row {
   display: flex;

@@ -893,7 +893,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const dialogRef = this.dialogService.openMatDialog<NoteDialogComponent, NoteDialogData, boolean>(
       NoteDialogComponent,
       {
-        autoFocus: false,
+        autoFocus: true,
         width: '600px',
         disableClose: true,
         data: noteDialogData
@@ -982,7 +982,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.target.editor.scrollingContainer.scrollTop = 0;
     }
     this.textHeight = `calc(100vh - ${top}px)`;
-    if (this.targetFocused) {
+    if (this.targetFocused && this.dialogService.openDialogCount < 1) {
       setTimeout(() => {
         // reset focus, which causes Quill to scroll to the selection
         this.target!.focus();
