@@ -54,6 +54,9 @@ export class JoinComponent extends DataLoadingComponent {
     this.loadingStarted();
     // if the link has sharing turned on, check if the current user needs to be added to the project
     try {
+      // It doesn't matter if they are logged in, but we do need to wait for authentication to complete
+      // If that fails the user will be redirected to auth0 to sign up
+      await this.authService.isLoggedIn;
       const projectId = await this.projectService.onlineCheckLinkSharing(shareKey);
       this.router.navigateByUrl(`/projects/${projectId}`, { replaceUrl: true });
     } catch (err) {
