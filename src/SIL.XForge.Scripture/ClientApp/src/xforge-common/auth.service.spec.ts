@@ -298,15 +298,16 @@ describe('AuthService', () => {
     expect(authOptions).toBeDefined();
     if (authOptions != null) {
       expect(authOptions.enablePasswordless).toEqual(true);
-      expect(authOptions.promptPasswordlessLogin).toEqual(false);
+      expect(authOptions.promptPasswordlessLogin).toBeUndefined();
     }
   }));
 
   it('should login with passwordless enabled and prompt for passwordless login', fakeAsync(() => {
     const env = new TestEnvironment();
     const returnUrl = 'test-returnUrl';
+    when(mockedLocationService.pathname).thenReturn('/join/sharekey');
 
-    env.service.logIn({ returnUrl, promptPasswordlessLogin: true });
+    env.service.logIn({ returnUrl });
 
     verify(mockedWebAuth.loginWithRedirect(anything())).once();
     const authOptions: RedirectLoginOptions | undefined = capture<RedirectLoginOptions | undefined>(
@@ -410,7 +411,7 @@ describe('AuthService', () => {
   }));
 
   it('should display login error when auth0 times out', fakeAsync(() => {
-    const callback = (env: TestEnvironment) => {
+    const callback = (env: TestEnvironment): void => {
       env.setTimeoutResponse();
       mockedConsole.expectAndHide(/Timeout/);
     };
@@ -510,7 +511,7 @@ describe('AuthService', () => {
   }));
 
   it('should try online login if local settings are available but have expired', fakeAsync(() => {
-    const callback = (env: TestEnvironment) => {
+    const callback = (env: TestEnvironment): void => {
       env.setLocalLoginData({ expiresAt: 0 });
     };
     const env = new TestEnvironment({ isOnline: true, isLoggedIn: true, callback });
@@ -542,7 +543,7 @@ describe('AuthService', () => {
   }));
 
   it('should retrieve a fresh token silently if online, logged in, but expired', fakeAsync(() => {
-    const callback = (env: TestEnvironment) => {
+    const callback = (env: TestEnvironment): void => {
       env.resetTokenExpireAt();
     };
     const env = new TestEnvironment({ isOnline: true, isLoggedIn: true, callback });
@@ -591,7 +592,7 @@ class TestEnvironment {
   private _loginLinkedAccountId: string | undefined;
   private readonly _authLoginState: string;
 
-  static encodeAccessToken(token: Auth0AccessToken) {
+  static encodeAccessToken(token: Auth0AccessToken): string {
     // The response from auth0 contains 3 parts separated by a dot
     // jwtDecode does a base64 decode on a JSON string after the first dot
     return '.' + window.btoa(JSON.stringify(token));
@@ -633,8 +634,10 @@ class TestEnvironment {
     when(mockedLocationService.origin).thenReturn('http://localhost:5000');
     if (isNewlyLoggedIn) {
       when(mockedLocationService.href).thenReturn('http://localhost:5000/callback/auth0?code=1234&state=abcd');
+      when(mockedLocationService.pathname).thenReturn('/callback/auth0');
     } else {
       when(mockedLocationService.href).thenReturn('http://localhost:5000/projects');
+      when(mockedLocationService.pathname).thenReturn('/projects');
     }
     when(mockedDialogService.message(anything(), anything())).thenResolve();
     when(mockedAuth0Service.init(anything())).thenReturn(instance(mockedWebAuth));
@@ -698,7 +701,7 @@ class TestEnvironment {
   /**
    * Force the timer set for scheduled renewals to expire
    */
-  clearTokenExpiryTimer() {
+  clearTokenExpiryTimer(): void {
     tick(this.tokenExpiryTimer * 1000 - 30000);
   }
 
@@ -706,27 +709,27 @@ class TestEnvironment {
    * Discard periodic timers rather than tick which will keep restarting the timers
    * when the expiry token reaches zero and then attempts to renewTokens again
    */
-  discardTokenExpiryTimer() {
+  discardTokenExpiryTimer(): void {
     discardPeriodicTasks();
   }
 
-  logOut() {
+  logOut(): void {
     this.service.logOut();
     this.setLoginRequiredResponse();
   }
 
-  resetTokenExpireAt() {
+  resetTokenExpireAt(): void {
     this.localSettings.set(EXPIRES_AT_SETTING, 0);
   }
 
-  setLocalLoginData({ idToken, userId, role, expiresAt }: LocalSettings = {}) {
+  setLocalLoginData({ idToken, userId, role, expiresAt }: LocalSettings = {}): void {
     this.localSettings.set(ID_TOKEN_SETTING, idToken ?? this.auth0Response!.token.id_token);
     this.localSettings.set(USER_ID_SETTING, userId ?? TestEnvironment.userId);
     this.localSettings.set(ROLE_SETTING, role ?? SystemRole.SystemAdmin);
     this.localSettings.set(EXPIRES_AT_SETTING, expiresAt ?? (this.tokenExpiryTimer - 30) * 1000 + Date.now());
   }
 
-  setLoginResponse(auth0Response?: AuthDetails | undefined) {
+  setLoginResponse(auth0Response?: AuthDetails | undefined): void {
     if (auth0Response == null) {
       auth0Response = {
         token: {
@@ -749,7 +752,7 @@ class TestEnvironment {
     when(mockedWebAuth.getIdTokenClaims()).thenResolve(this.auth0Response!.idToken);
   }
 
-  setLoginRequiredResponse() {
+  setLoginRequiredResponse(): void {
     const loginError = new GenericError('login_required', 'Not logged in');
     when(mockedWebAuth.getTokenSilently()).thenThrow(loginError);
     when(mockedWebAuth.getTokenSilently(anything())).thenThrow(loginError);
@@ -761,7 +764,7 @@ class TestEnvironment {
     when(mockedPwaService.isBrowserOnline).thenReturn(isOnline);
   }
 
-  setTimeoutResponse() {
+  setTimeoutResponse(): void {
     const timeoutError = new TimeoutError();
     when(mockedWebAuth.getTokenSilently()).thenThrow(timeoutError);
     when(mockedWebAuth.getTokenSilently(anything())).thenThrow(timeoutError);
@@ -769,7 +772,7 @@ class TestEnvironment {
     this.auth0Response = undefined;
   }
 
-  triggerLocalSettingsEvent(event: StorageEvent) {
+  triggerLocalSettingsEvent(event: StorageEvent): void {
     this._localeSettingsRemoveChanges.next(event);
   }
 }
