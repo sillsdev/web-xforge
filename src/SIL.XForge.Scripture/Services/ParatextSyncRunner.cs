@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -475,13 +475,17 @@ public class ParatextSyncRunner : IParatextSyncRunner
             if (!_paratextService.IsResource(paratextId))
             {
                 LogMetric("Updating Paratext notes");
+                if (questionDocs.Count > 0)
+                {
+                    await UpdateCheckingNoteTag(paratextId);
+                    await UpdateParatextNotesAsync(text, questionDocs);
+                }
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = (
                     await FetchNoteThreadDocsAsync(text.BookNum)
                 ).Values;
                 // Only update the note tag if there are SF note threads in the project
                 if (noteThreadDocs.Any(d => d.Data.PublishedToSF == true))
                     await UpdateTranslateNoteTag(paratextId);
-                await UpdateParatextNotesAsync(text, questionDocs);
                 // TODO: Sync Note changes back to Paratext, and record sync metric info
                 // await _paratextService.UpdateParatextCommentsAsync(_userSecret, paratextId, text.BookNum,
                 //     noteThreadDocs, _currentPtSyncUsers);
@@ -813,7 +817,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
             questionDocs,
             _currentPtSyncUsers,
             _projectDoc.Data.UserRoles,
-            _projectDoc.Data.CheckingConfig.AnswerExportMethod
+            _projectDoc.Data.CheckingConfig.AnswerExportMethod,
+            _projectDoc.Data.CheckingConfig.NoteTagId ?? NoteTag.notSetId
         );
         if (notesElem.Elements("thread").Any())
         {
@@ -1197,6 +1202,22 @@ public class ParatextSyncRunner : IParatextSyncRunner
             int noteTagId = _paratextService.UpdateCommentTag(_userSecret, targetParatextId, newNoteTag);
             await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.TranslateConfig.DefaultNoteTagId, noteTagId));
         }
+    }
+
+    private async Task<int> UpdateCheckingNoteTag(string targetParatextId)
+    {
+        int noteTagId = _projectDoc.Data.CheckingConfig.NoteTagId ?? NoteTag.notSetId;
+        if (noteTagId != NoteTag.notSetId)
+            return noteTagId;
+        var newNoteTag = new NoteTag
+        {
+            TagId = NoteTag.notSetId,
+            Icon = NoteTag.checkingTagIcon,
+            Name = NoteTag.checkingTagName
+        };
+        noteTagId = _paratextService.UpdateCommentTag(_userSecret, targetParatextId, newNoteTag);
+        await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.CheckingConfig.NoteTagId, noteTagId));
+        return noteTagId;
     }
 
     /// <summary>

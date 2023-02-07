@@ -93,7 +93,8 @@ public class ParatextNotesMapper : IParatextNotesMapper
         IEnumerable<IDocument<Question>> questionsDocs,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
         Dictionary<string, string> userRoles,
-        string answerExportMethod
+        string answerExportMethod,
+        int checkingNoteTagId
     )
     {
         // Usernames of SF community checker users. Paratext users are mapped to null.
@@ -155,7 +156,8 @@ public class ParatextNotesMapper : IParatextNotesMapper
                         threadElem,
                         answer,
                         ptProjectUsers,
-                        answerPrefixContents
+                        answerPrefixContents,
+                        checkingNoteTagId
                     );
                     if (answer.SyncUserRef == null)
                         answerSyncUserIds.Add((j, answerSyncUserId));
@@ -234,7 +236,8 @@ public class ParatextNotesMapper : IParatextNotesMapper
         XElement threadElem,
         Comment comment,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
-        IReadOnlyList<object> prefixContent = null
+        IReadOnlyList<object> prefixContent = null,
+        int tagId = NoteTag.notSetId
     )
     {
         (string syncUserId, string user, bool canWritePTNoteOnProject) = await GetSyncUserAsync(
@@ -265,6 +268,11 @@ public class ParatextNotesMapper : IParatextNotesMapper
             contentElem.Add(new XElement("p", responseText));
         }
         commentElem.Add(contentElem);
+        if (tagId != NoteTag.notSetId)
+        {
+            var tagsAddedElem = new XElement("tagsAdded", tagId);
+            commentElem.Add(tagsAddedElem);
+        }
 
         var threadId = (string)threadElem.Attribute("id");
         string key = GetCommentKey(threadId, commentElem, ptProjectUsers);
