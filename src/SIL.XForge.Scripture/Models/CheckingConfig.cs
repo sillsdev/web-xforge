@@ -7,5 +7,6 @@ namespace SIL.XForge.Scripture.Models
         public bool ShareEnabled { get; set; } = false;
         public string ShareLevel { get; set; } = CheckingShareLevel.Specific;
         public string AnswerExportMethod { get; set; } = CheckingAnswerExport.All;
+        public int? NoteTagId { get; set; }
     }
 }

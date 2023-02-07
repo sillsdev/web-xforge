@@ -2020,6 +2020,7 @@ namespace SIL.XForge.Scripture.Services
                         existingComment.Contents = comment.Contents;
                         existingComment.VersionNumber += 1;
                         existingComment.Deleted = false;
+                        existingComment.TagsAdded = comment.TagsAdded;
                         syncMetricInfo.Updated++;
                     }
 

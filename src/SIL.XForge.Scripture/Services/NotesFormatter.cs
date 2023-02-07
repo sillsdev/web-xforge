@@ -179,6 +179,8 @@ namespace SIL.XForge.Scripture.Services
                 comment.Date = commentDate;
             comment.ExternalUser = commentElem.Attribute("extUser")?.Value;
             comment.Deleted = commentElem.Attribute("deleted")?.Value == "true";
+            if (commentElem.Element("tagsAdded") != null)
+                comment.TagsAdded = new[] { commentElem.Element("tagsAdded").Value };
             ParseContents(commentElem.Element("content"), comment);
         }
 

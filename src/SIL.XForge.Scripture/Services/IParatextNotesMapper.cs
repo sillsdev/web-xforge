@@ -22,7 +22,8 @@ namespace SIL.XForge.Scripture.Services
             IEnumerable<IDocument<Question>> questionsDocs,
             Dictionary<string, ParatextUserProfile> ptProjectUsers,
             Dictionary<string, string> userRoles,
-            string answerExportMethod
+            string answerExportMethod,
+            int checkingNoteTagId
         );
     }
 }
