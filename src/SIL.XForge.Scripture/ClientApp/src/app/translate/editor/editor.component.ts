@@ -395,7 +395,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get isReviewer(): boolean {
-    return this.userRole === SFProjectRole.Reviewer;
+    return this.userRole
+      ? [SFProjectRole.Reviewer, SFProjectRole.ParatextConsultant].includes(this.userRole as SFProjectRole)
+      : false;
   }
 
   private get userRole(): string | undefined {
@@ -786,7 +788,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.target == null || this.bookNum == null) {
       return;
     }
-    if (this.userRole === SFProjectRole.Reviewer) {
+    if (this.isReviewer) {
       let verseRef: VerseRef | undefined = this.reviewerSelectedVerseRef;
       if (verseRef == null) {
         const defaultSegmentRef: string | undefined = this.target.firstVerseSegment;
@@ -796,7 +798,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.showNoteThread(undefined, verseRef);
     } else {
       const segmentRef: string | undefined = this.target.currentSegmentOrDefault;
-      if (segmentRef == null || this.bookNum == null) return;
+      if (segmentRef == null) return;
       const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
       this.showNoteThread(undefined, verseRef);
     }
@@ -879,7 +881,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private updateReadNotes(threadId: string) {
+  private updateReadNotes(threadId: string): void {
     const noteThread: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(d => d.data?.dataId === threadId);
     if (noteThread?.data != null && this.projectUserConfigDoc?.data != null) {
       const notesRead: string[] = [];
@@ -1263,7 +1265,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
-  private loadProjectUserConfig() {
+  private loadProjectUserConfig(): void {
     let chapter = this.chapters.length > 0 ? this.chapters[0] : 1;
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
       const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
@@ -1660,7 +1662,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.source.editor.scrollingContainer.scrollTop += otherBounds.top - thisBounds.top;
   }
 
-  onViewerClicked(viewer: MultiCursorViewer) {
+  onViewerClicked(viewer: MultiCursorViewer): void {
     this.target!.scrollToViewer(viewer);
   }
 }

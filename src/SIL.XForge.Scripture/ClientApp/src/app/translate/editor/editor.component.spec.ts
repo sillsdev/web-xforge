@@ -96,7 +96,7 @@ class MockComponent {}
 const ROUTES: Route[] = [{ path: 'projects/:projectId/translate', component: MockComponent }];
 
 class MockConsole {
-  log(val: any) {
+  log(val: any): void {
     if (
       typeof val !== 'string' ||
       (!/(Translated|Trained) segment, length: \d+, time: \d+\.\d+ms/.test(val) &&
@@ -2630,6 +2630,16 @@ describe('EditorComponent', () => {
       verseSegment.click();
       env.wait();
       expect(verseSegment.classList).toContain('reviewer-selection');
+
+      // Change to a PT reviewer to assert they can also use the FAB
+      verseSegment.click();
+      expect(verseSegment.classList).not.toContain('reviewer-selection');
+      env.setParatextReviewerUser();
+      env.wait();
+      verseSegment.click();
+      expect(verseSegment.classList).toContain('reviewer-selection');
+
+      // Click and open the dialog
       env.insertNoteFab.nativeElement.click();
       env.wait();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
@@ -3234,11 +3244,14 @@ class TestEnvironment {
     when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
   }
 
-  setReviewerUser(): void {
-    this.setCurrentUser('user05');
+  setParatextReviewerUser(): void {
+    this.setReviewerUser('user02');
+  }
+  setReviewerUser(userId: 'user02' | 'user05' = 'user05'): void {
+    this.setCurrentUser(userId);
     when(mockedSFProjectService.queryNoteThreads('project01')).thenCall((id, _) =>
       this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
-        [obj<NoteThread>().pathStr(t => t.publishedToSF)]: true,
+        [obj<NoteThread>().pathStr(t => t.publishedToSF)]: userId === 'user05',
         [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
         [obj<NoteThread>().pathStr(t => t.projectRef)]: id
       })
@@ -3803,7 +3816,7 @@ class MockNoteDialogRef {
     element.appendChild(document.createElement('input')).focus();
   }
 
-  close(result?: boolean) {
+  close(result?: boolean): void {
     this.close$.next(result);
     this.close$.complete();
   }
