@@ -796,7 +796,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.showNoteThread(undefined, verseRef);
     } else {
       const segmentRef: string | undefined = this.target.currentSegmentOrDefault;
-      if (segmentRef == null || this.bookNum == null) return;
+      if (segmentRef == null) return;
       const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
       this.showNoteThread(undefined, verseRef);
     }
@@ -867,7 +867,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const dialogRef = this.dialogService.openMatDialog<NoteDialogComponent, NoteDialogData, boolean>(
       NoteDialogComponent,
       {
-        autoFocus: false,
+        autoFocus: true,
         width: '600px',
         disableClose: true,
         data: noteDialogData
@@ -879,7 +879,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private updateReadNotes(threadId: string) {
+  private updateReadNotes(threadId: string): void {
     const noteThread: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(d => d.data?.dataId === threadId);
     if (noteThread?.data != null && this.projectUserConfigDoc?.data != null) {
       const notesRead: string[] = [];
@@ -985,7 +985,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.target.editor.scrollingContainer.scrollTop = 0;
     }
     this.textHeight = `calc(100vh - ${top}px)`;
-    if (this.targetFocused) {
+    if (this.targetFocused && this.dialogService.openDialogCount < 1) {
       setTimeout(() => {
         // reset focus, which causes Quill to scroll to the selection
         this.target!.focus();
@@ -1263,7 +1263,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
-  private loadProjectUserConfig() {
+  private loadProjectUserConfig(): void {
     let chapter = this.chapters.length > 0 ? this.chapters[0] : 1;
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
       const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
@@ -1660,7 +1660,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.source.editor.scrollingContainer.scrollTop += otherBounds.top - thisBounds.top;
   }
 
-  onViewerClicked(viewer: MultiCursorViewer) {
+  onViewerClicked(viewer: MultiCursorViewer): void {
     this.target!.scrollToViewer(viewer);
   }
 }
