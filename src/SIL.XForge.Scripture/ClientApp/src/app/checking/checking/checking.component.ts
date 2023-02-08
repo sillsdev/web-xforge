@@ -501,7 +501,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  applyFontChange(fontSize: string) {
+  applyFontChange(fontSize: string): void {
     this.scriptureFontSize = fontSize;
   }
 
@@ -594,10 +594,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.isExpanded = false;
   }
 
-  openDrawer(): void {
-    this.isExpanded = true;
-  }
-
   toggleDrawer(): void {
     this.isExpanded = !this.isExpanded;
   }
@@ -666,7 +662,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.calculateScriptureSliderPosition(true);
   }
 
-  checkSliderPosition(event: any) {
+  checkSliderPosition(event: any): void {
     if (event.hasOwnProperty('sizes')) {
       if (event.sizes[1] < this.minAnswerPanelPercent) {
         this.calculateScriptureSliderPosition();
@@ -674,14 +670,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  onChapterSelect(event: MdcMenuSelectedEvent) {
+  onChapterSelect(event: MdcMenuSelectedEvent): void {
     const chapter = parseInt(event.source.value, 10);
     if (this.chapter !== chapter) {
       this.chapter = chapter;
     }
   }
 
-  openScriptureChooser() {
+  openScriptureChooser(): void {
     const dialogConfig: MatDialogConfig<ScriptureChooserDialogData> = {
       data: { booksAndChaptersToShow: this.textsByBookId, includeVerseSelection: false }
     };
@@ -781,7 +777,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  private triggerUpdate() {
+  private triggerUpdate(): void {
     if (this.questionsQuery != null) {
       this.questionsQuery.localUpdate();
     }

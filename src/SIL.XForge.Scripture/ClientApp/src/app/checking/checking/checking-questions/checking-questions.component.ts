@@ -25,6 +25,7 @@ import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TranslationEngineService } from '../../../core/translation-engine.service';
 import { CheckingUtils } from '../../checking.utils';
+import { SFProjectService } from '../../../core/sf-project.service';
 
 // For performance reasons, this component uses the OnPush change detection strategy rather than the default change
 // detection strategy. This means when change detection runs, this component will be skipped during change detection
@@ -55,6 +56,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   private project?: SFProjectProfile;
   private _projectUserConfigDoc?: SFProjectUserConfigDoc;
   private _questionDocs: Readonly<QuestionDoc[]> = [];
+  private isProjectAdmin: boolean = false;
 
   private projectProfileDocChangesSubscription?: Subscription;
   private projectUserConfigDocChangesSubscription?: Subscription;
@@ -62,7 +64,8 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   constructor(
     private readonly userService: UserService,
     private readonly translationEngineService: TranslationEngineService,
-    private readonly changeDetector: ChangeDetectorRef
+    private readonly changeDetector: ChangeDetectorRef,
+    private readonly projectService: SFProjectService
   ) {
     super();
     // Only mark as read if it has been viewed for a set period of time and not an accidental click
@@ -78,6 +81,9 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     if (projectProfileDoc != null) {
       this.projectProfileDocChangesSubscription = this.subscribe(projectProfileDoc.changes$, () => {
         this.changeDetector.markForCheck();
+      });
+      this.projectService.isProjectAdmin(projectProfileDoc.id, this.userService.currentUserId).then(isProjectAdmin => {
+        this.isProjectAdmin = isProjectAdmin;
       });
     }
   }
@@ -168,7 +174,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
       return [];
     }
 
-    if (this.project.checkingConfig.usersSeeEachOthersResponses || !this.canAddAnswer) {
+    if (this.project.checkingConfig.usersSeeEachOthersResponses || !this.canAddAnswer || this.isProjectAdmin) {
       return questionDoc.data.answers;
     } else {
       return questionDoc.data.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
@@ -176,7 +182,11 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   getUnreadAnswers(questionDoc: QuestionDoc): number {
-    if (this.canAddAnswer || this.project == null || !this.project.checkingConfig.usersSeeEachOthersResponses) {
+    if (
+      (this.canAddAnswer && !this.isProjectAdmin) ||
+      this.project == null ||
+      !this.project.checkingConfig.usersSeeEachOthersResponses
+    ) {
       // Non-admin users will not see unread answers badge because it may be distracting
       return 0;
     }
@@ -232,7 +242,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
         if (questionDoc != null && questionDoc.data != null && !this.hasUserReadQuestion(questionDoc)) {
           op.add(puc => puc.questionRefsRead, questionDoc.data.dataId);
         }
-        if (this.hasUserAnswered(questionDoc) || !this.canAddAnswer) {
+        if (this.hasUserAnswered(questionDoc) || !this.canAddAnswer || this.isProjectAdmin) {
           for (const answer of this.getAnswers(questionDoc)) {
             if (!this.hasUserReadAnswer(answer)) {
               op.add(puc => puc.answerRefsRead, answer.dataId);
@@ -311,7 +321,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     setTimeout(() => this.scrollToActiveQuestion());
   }
 
-  private scrollToActiveQuestion() {
+  private scrollToActiveQuestion(): void {
     const element = (this.mdcList?.elementRef.nativeElement as HTMLElement)?.querySelector('.mdc-list-item--activated');
     if (element != null) {
       element.scrollIntoView({ block: 'nearest' });
