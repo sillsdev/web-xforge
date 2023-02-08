@@ -24,10 +24,6 @@
           <div *ngIf="note.assignment != null" class="assigned-user">>{{ getAssignedUserString(note.assignment) }}</div>
           <div *ngIf="note.reattached" class="verse-reattached">{{ reattachedVerse(note) }}</div>
           <div *ngIf="note.reattached" class="text" [innerHTML]="reattachedText(note)"></div>
-          <div class="note-conflict-explanation" *ngIf="isConflictNote(note)">{{ t("declare_conflict") }}</div>
-          <div class="note-conflict-explanation" *ngIf="isConflictNote(note)">{{ t("acceptance_change_heading") }}</div>
-          <div class="note-content" [innerHTML]="parseNote(note.acceptedChangeXml)" *ngIf="isConflictNote(note)"></div>
-          <div class="note-conflict-explanation" *ngIf="isConflictNote(note)">{{ t("rejection_change_heading") }}</div>
           <div class="note-content-and-actions">
             <div class="note-content" [innerHTML]="contentForDisplay(note)" [ngStyle]="{ fontSize }"></div>
             <div *ngIf="isNoteEditable(note)" class="edit-actions">
