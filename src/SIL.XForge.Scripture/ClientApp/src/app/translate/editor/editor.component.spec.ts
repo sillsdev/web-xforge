@@ -1533,7 +1533,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('hides conflict notes', fakeAsync(() => {
+    it('does not display conflict notes', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.convertToConflictNote('project01', 'thread02');
