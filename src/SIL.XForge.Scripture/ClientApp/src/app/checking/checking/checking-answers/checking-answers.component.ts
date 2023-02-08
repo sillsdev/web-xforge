@@ -33,6 +33,7 @@ import { QuestionDialogService } from '../../question-dialog/question-dialog.ser
 import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { CommentAction } from './checking-comments/checking-comments.component';
 
 export interface AnswerAction {
@@ -81,7 +82,6 @@ enum LikeAnswerResponse {
 export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent?: CheckingAudioCombinedComponent;
   @Input() project?: SFProjectProfile;
-  @Input() projectId?: string;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() textsByBookId?: TextsByBookId;
   @Input() checkingTextComponent?: CheckingTextComponent;
@@ -106,12 +106,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   /** IDs of answers to show to user (so, excluding unshown incoming answers). */
   private _answersToShow: string[] = [];
+  private _projectId?: string;
   private _questionDoc?: QuestionDoc;
   private userAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
   private fileSources: Map<string, string | undefined> = new Map<string, string | undefined>();
   /** If the user has recently added or edited their answer since opening up the question. */
   private justEditedAnswer: boolean = false;
+  private isProjectAdmin: boolean = false;
 
   constructor(
     private readonly userService: UserService,
@@ -122,9 +124,24 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly i18n: I18nService,
     private readonly fileService: FileService,
     private readonly pwaService: PwaService,
+    private readonly projectService: SFProjectService,
     public media: MediaObserver
   ) {
     super();
+  }
+
+  get projectId(): string | undefined {
+    return this._projectId;
+  }
+
+  @Input() set projectId(projectId: string | undefined) {
+    if (projectId == null) {
+      return;
+    }
+    this._projectId = projectId;
+    this.projectService.isProjectAdmin(projectId, this.userService.currentUserId).then(isProjectAdmin => {
+      this.isProjectAdmin = isProjectAdmin;
+    });
   }
 
   @Input() set questionDoc(questionDoc: QuestionDoc | undefined) {
@@ -149,7 +166,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       // If the user hasn't added an answer yet and is able to, then
       // don't hold back any incoming answers from appearing right away
       // as soon as the user adds their answer.
-      if (this.currentUserTotalAnswers === 0 && this.canAddAnswer) {
+      if (this.currentUserTotalAnswers === 0 && this.canAddAnswer && !this.isProjectAdmin) {
         this.showRemoteAnswers();
         return;
       }
@@ -252,11 +269,15 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   }
 
   get shouldSeeAnswersList(): boolean {
-    return this.canSeeOtherUserResponses || !this.canAddAnswer;
+    return this.canSeeOtherUserResponses || !this.canAddAnswer || this.isProjectAdmin;
   }
 
   get shouldShowAnswers(): boolean {
-    return !this.answerFormVisible && this.totalAnswers > 0 && (this.currentUserTotalAnswers > 0 || !this.canAddAnswer);
+    return (
+      !this.answerFormVisible &&
+      this.totalAnswers > 0 &&
+      (this.currentUserTotalAnswers > 0 || !this.canAddAnswer || this.isProjectAdmin)
+    );
   }
 
   get totalAnswers(): number {
@@ -268,7 +289,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.subscribe(this.fileService.fileSyncComplete$, () => this.updateQuestionDocAudioUrls());
   }
 
-  clearSelection() {
+  clearSelection(): void {
     this.selectedText = '';
     this.verseRef = undefined;
     this.selectionStartClipped = undefined;
@@ -295,7 +316,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.showRemoteAnswers();
   }
 
-  editAnswer(answer: Answer) {
+  editAnswer(answer: Answer): void {
     if (this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null) {
       return;
     }
@@ -347,7 +368,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return undefined;
   }
 
-  selectScripture() {
+  selectScripture(): void {
     const verseRef = this._questionDoc!.data!.verseRef;
     const dialogData: TextChooserDialogData = {
       bookNum: (this.verseRef && this.verseRef.bookNum) || verseRef.bookNum,
@@ -398,7 +419,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return this.userAnswerRefsRead.includes(answer.dataId) || this.userService.currentUserId === answer.ownerRef;
   }
 
-  hideAnswerForm() {
+  hideAnswerForm(): void {
     this.answerFormSubmitAttempted = false;
     this.activeAnswer = undefined;
     this.clearSelection();
@@ -419,7 +440,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return answer.status === AnswerStatus.Resolved;
   }
 
-  likeAnswer(answer: Answer) {
+  likeAnswer(answer: Answer): void {
     const likeAnswerResponse: LikeAnswerResponse = this.canLikeAnswer(answer);
     if (likeAnswerResponse === LikeAnswerResponse.Granted) {
       this.action.emit({
@@ -433,19 +454,19 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
   }
 
-  markAnswerForExport(answer: Answer) {
+  markAnswerForExport(answer: Answer): void {
     this.toggleAnswerStatus(answer, AnswerStatus.Exportable);
   }
 
-  markAnswerAsResolved(answer: Answer) {
+  markAnswerAsResolved(answer: Answer): void {
     this.toggleAnswerStatus(answer, AnswerStatus.Resolved);
   }
 
-  hasUserLikedAnswer(answer: Answer) {
+  hasUserLikedAnswer(answer: Answer): boolean {
     return answer.likes.some(like => like.ownerRef === this.userService.currentUserId);
   }
 
-  processAudio(audio: AudioAttachment) {
+  processAudio(audio: AudioAttachment): void {
     this.audio = audio;
     this.applyTextAudioValidators();
   }
@@ -458,14 +479,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return `(${this.i18n.localizeReference(verseRef)})`;
   }
 
-  showAnswerForm() {
+  showAnswerForm(): void {
     this.answerFormVisible = true;
     this.action.emit({
       action: 'show-form'
     });
   }
 
-  async submit() {
+  async submit(): Promise<void> {
     if (
       this.audio.status === 'recording' &&
       this.audioCombinedComponent != null &&
@@ -490,7 +511,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   /** If a given answer should have attention drawn to it in the UI. */
   shouldDrawAttentionToAnswer(answer: Answer): boolean {
     // If user added or edited their answer since navigating to this question, spotlight it and only it.
-    if (this.justEditedAnswer === true) {
+    if (this.justEditedAnswer) {
       return answer === this.currentUserAnswer;
     }
 
@@ -498,7 +519,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     return !this.hasUserReadAnswer(answer);
   }
 
-  submitCommentAction(action: CommentAction) {
+  submitCommentAction(action: CommentAction): void {
     this.commentAction.emit({
       action: action.action,
       comment: action.comment,
@@ -507,7 +528,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     });
   }
 
-  showRemoteAnswers(showUnreadClicked?: boolean) {
+  showRemoteAnswers(showUnreadClicked?: boolean): void {
     if (this.questionDoc == null || this.questionDoc.data == null) {
       return;
     }
@@ -568,7 +589,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     });
   }
 
-  private emitAnswerToSave() {
+  private emitAnswerToSave(): void {
     this.action.emit({
       action: 'save',
       text: this.answerText.value,
@@ -597,7 +618,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.answerText.updateValueAndValidity();
   }
 
-  private toggleAnswerStatus(answer: Answer, status: AnswerStatus) {
+  private toggleAnswerStatus(answer: Answer, status: AnswerStatus): void {
     const newAnswer = cloneDeep(answer);
     newAnswer.status = answer.status !== status ? status : AnswerStatus.None;
     this.action.emit({

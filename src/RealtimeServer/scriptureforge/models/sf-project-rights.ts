@@ -83,7 +83,7 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     project: ['view'],
     texts: ['view', 'edit'],
     questions: ['view', 'create', 'edit', 'delete'],
-    answers: ['view', 'delete', 'edit_own'],
+    answers: ['view', 'create', 'delete', 'edit_own'],
     answer_comments: ['view', 'create', 'edit_own', 'delete'],
     answer_status: ['view', 'edit'],
     likes: ['view', 'create', 'delete_own'],
