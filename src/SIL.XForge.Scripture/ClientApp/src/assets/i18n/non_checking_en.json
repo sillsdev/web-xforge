@@ -152,16 +152,13 @@
     "other_viewers": "{{ count }} other viewers"
   },
   "note_dialog": {
-    "acceptance_change_heading": "Changes Paratext Accepted (current text):",
     "close": "Close",
-    "declare_conflict": "There is a conflict. Colors correspond to older (red) and newer (green) text.",
     "delete": "Delete",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
     "paratext_user": "Assigned to a Paratext user",
     "permanently_delete_note": "Permanently delete this comment?",
     "reattached": "(Re-attached)",
-    "rejection_change_heading": "Changes Paratext Rejected:",
     "save": "Save",
     "show_changes": "Show changes",
     "status_resolved": "Resolved",
