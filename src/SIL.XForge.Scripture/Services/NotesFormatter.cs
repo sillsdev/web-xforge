@@ -100,7 +100,7 @@ namespace SIL.XForge.Scripture.Services
         private static XElement FormatParagraph(XmlNode paraNode)
         {
             XElement paraElem = new XElement("p");
-            if (paraNode.ChildNodes.Count == 1)
+            if (paraNode.ChildNodes.Count == 1 && paraNode.FirstChild.NodeType == XmlNodeType.Text)
                 paraElem.Value = paraNode.InnerText;
             else
             {
