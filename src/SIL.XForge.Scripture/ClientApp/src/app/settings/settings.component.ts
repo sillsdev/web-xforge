@@ -14,14 +14,11 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
-import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
-import { defaultNoteThreadIcon } from '../core/models/note-thread-doc';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
@@ -82,8 +79,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     private readonly userService: UserService,
     private readonly router: Router,
     private readonly pwaService: PwaService,
-    readonly i18n: I18nService,
-    private readonly featureFlags: FeatureFlagService
+    readonly i18n: I18nService
   ) {
     super(noticeService);
     this.loading = true;
@@ -132,30 +128,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get deleteButtonDisabled(): boolean {
     return !this.isAppOnline || !this.mainSettingsLoaded || this.isActiveSourceProject;
-  }
-
-  get isAddNotesEnabled(): boolean {
-    return this.featureFlags.allowAddingNotes.enabled;
-  }
-
-  get defaultNoteTagId(): number | undefined {
-    return this.projectDoc?.data?.translateConfig.defaultNoteTagId;
-  }
-
-  get noteTags(): NoteTag[] {
-    return this.projectDoc?.data?.noteTags ?? [];
-  }
-
-  get reviewerTag(): NoteTag | undefined {
-    return this.noteTags.find(t => t.tagId === this.defaultNoteTagId);
-  }
-
-  get reviewerTagIconSrc(): string {
-    if (this.defaultNoteTagId === null) {
-      return '';
-    }
-    const noteTag: NoteTag | undefined = this.reviewerTag;
-    return noteTag == null ? '' : defaultNoteThreadIcon(noteTag.icon).url;
   }
 
   ngOnInit(): void {

@@ -111,16 +111,6 @@
                 </div>
               </mat-radio-group>
             </div>
-            <div *ngIf="isAddNotesEnabled">
-              <h2 class="notes-heading">{{ t("adding_notes") }}</h2>
-              <div fxLayout="column" fxLayoutGap="16px">
-                <span>{{ t("notes_created_tagged_with_icon") }}</span>
-                <span *ngIf="reviewerTagIconSrc.length > 0" id="sf-note-tag-icon">
-                  {{ reviewerTag?.name }} <img [src]="reviewerTagIconSrc" />
-                </span>
-                <mat-hint *ngIf="reviewerTagIconSrc === ''" id="no-tag-icon-msg">{{ t("no_tag_icon") }}</mat-hint>
-              </div>
-            </div>
           </mat-card-content>
           <mat-divider></mat-divider>
           <mat-card-content>

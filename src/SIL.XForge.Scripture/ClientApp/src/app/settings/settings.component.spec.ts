@@ -24,8 +24,6 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
-import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
-import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
@@ -44,7 +42,6 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedDialog = mock(MdcDialog);
-const mockedFeatureFlagService = mock(FeatureFlagService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -74,8 +71,7 @@ describe('SettingsComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
-      { provide: MdcDialog, useMock: mockedDialog },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
+      { provide: MdcDialog, useMock: mockedDialog }
     ]
   }));
 
@@ -363,39 +359,6 @@ describe('SettingsComponent', () => {
         expect(env.statusDone(env.translationSuggestionsStatus)).not.toBeNull();
         expect(env.statusDone(env.basedOnStatus)).toBeNull();
       }));
-
-      it('shows no icon selected if project tag icon not set', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject({
-          translationSuggestionsEnabled: true,
-          shareEnabled: false,
-          shareLevel: TranslateShareLevel.Specific,
-          source: {
-            paratextId: 'paratextId01',
-            projectRef: 'paratext01',
-            name: 'ParatextP1',
-            shortName: 'PT1',
-            writingSystem: {
-              tag: 'qaa'
-            }
-          }
-        });
-        env.wait();
-        expect(env.noteTagIcon).toBeNull();
-        expect(env.noTagIconMsg).toBeTruthy();
-      }));
-
-      it('shows the icon for notes created in SF', fakeAsync(() => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        env.wait();
-
-        const tagIcon: string = env.noteTags[0].icon;
-        const noteIconElement: DebugElement = env.noteTagIcon;
-        expect(noteIconElement.nativeElement.textContent).toContain(env.noteTags[0].name);
-        expect(noteIconElement.query(By.css('img[src="/assets/icons/TagIcons/' + tagIcon + '.png"]'))).not.toBeNull();
-        expect(env.noTagIconMsg).toBeNull();
-      }));
     });
 
     describe('Checking options', () => {
@@ -572,7 +535,6 @@ class TestEnvironment {
   readonly component: SettingsComponent;
   readonly fixture: ComponentFixture<SettingsComponent>;
   readonly location: Location;
-  readonly noteTags: NoteTag[] = [{ tagId: 1, name: 'Tag icon', icon: 'tag01', creatorResolve: false }];
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isOnline: BehaviorSubject<boolean>;
@@ -617,7 +579,6 @@ class TestEnvironment {
       },
       { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
     ]);
-    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
 
     this.fixture = TestBed.createComponent(SettingsComponent);
     this.component = this.fixture.componentInstance;
@@ -650,14 +611,6 @@ class TestEnvironment {
 
   get translateShareLevelAnyone(): DebugElement {
     return this.fixture.debugElement.query(By.css('#radio-translateShareLevel-anyone'));
-  }
-
-  get noteTagIcon(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#sf-note-tag-icon'));
-  }
-
-  get noTagIconMsg(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#no-tag-icon-msg'));
   }
 
   get checkingCheckbox(): DebugElement {
@@ -794,7 +747,6 @@ class TestEnvironment {
       translationSuggestionsEnabled: true,
       shareEnabled: false,
       shareLevel: TranslateShareLevel.Specific,
-      defaultNoteTagId: this.noteTags[0].tagId,
       source: {
         paratextId: 'paratextId01',
         projectRef: 'paratext01',
@@ -827,7 +779,6 @@ class TestEnvironment {
         sync: { queuedCount: 0 },
         editable: true,
         texts: [],
-        noteTags: this.noteTags,
         userRoles: {},
         userPermissions: {},
         paratextUsers: []
