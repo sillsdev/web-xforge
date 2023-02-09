@@ -53,7 +53,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   @ViewChild(MdcList, { static: true }) mdcList?: MdcList;
   haveQuestionsLoaded: boolean = false;
 
-  private project?: SFProjectProfile;
+  private _projectProfileDoc?: SFProjectProfileDoc;
   private _projectUserConfigDoc?: SFProjectUserConfigDoc;
   private _questionDocs: Readonly<QuestionDoc[]> = [];
   private isProjectAdmin: boolean = false;
@@ -77,15 +77,15 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   @Input()
   set projectProfileDoc(projectProfileDoc: SFProjectProfileDoc | undefined) {
     this.projectProfileDocChangesSubscription?.unsubscribe();
-    this.project = projectProfileDoc?.data;
-    if (projectProfileDoc != null) {
-      this.projectProfileDocChangesSubscription = this.subscribe(projectProfileDoc.changes$, () => {
-        this.changeDetector.markForCheck();
-      });
-      this.projectService.isProjectAdmin(projectProfileDoc.id, this.userService.currentUserId).then(isProjectAdmin => {
-        this.isProjectAdmin = isProjectAdmin;
-      });
+    this._projectProfileDoc = projectProfileDoc;
+    if (projectProfileDoc == null) {
+      return;
     }
+    this.projectProfileDocChangesSubscription = this.subscribe(projectProfileDoc.changes$, () => {
+      this.changeDetector.markForCheck();
+      this.setProjectAdmin();
+    });
+    this.setProjectAdmin();
   }
 
   @Input()
@@ -121,6 +121,13 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
 
   get hasQuestions(): boolean {
     return this.questionDocs.length > 0;
+  }
+
+  get project(): SFProjectProfile | undefined {
+    return this._projectProfileDoc?.data;
+  }
+  get projectId(): string | undefined {
+    return this._projectProfileDoc?.id;
   }
 
   @Input()
@@ -332,6 +339,15 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     if (this.activeQuestionDoc && this.checkCanChangeQuestion(newDifferential)) {
       this.activateQuestion(this.questionDocs[this.activeQuestionIndex + newDifferential]);
     }
+  }
+
+  private setProjectAdmin(): void {
+    if (this.projectId == null) {
+      return;
+    }
+    this.projectService.isProjectAdmin(this.projectId, this.userService.currentUserId).then(isProjectAdmin => {
+      this.isProjectAdmin = isProjectAdmin;
+    });
   }
 
   private async storeMostRecentQuestion(bookNum: number): Promise<void> {
