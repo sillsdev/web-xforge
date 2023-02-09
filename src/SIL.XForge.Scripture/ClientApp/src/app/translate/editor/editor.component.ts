@@ -41,6 +41,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { NoteType } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
@@ -1574,12 +1575,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     ) {
       return [];
     }
+    // only show notes that are from this chapter and is not a conflict note
     return this.noteThreadQuery.docs.filter(
       nt =>
         nt.data != null &&
         nt.data.verseRef.bookNum === this.bookNum &&
         nt.data.verseRef.chapterNum === this.chapter &&
-        nt.data.notes.length > 0
+        nt.data.notes.length > 0 &&
+        nt.data.notes[0].type !== NoteType.Conflict
     );
   }
 

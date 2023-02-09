@@ -170,31 +170,11 @@ export class NoteDialogComponent implements OnInit {
     return this.projectProfileDoc?.data?.noteTags ?? [];
   }
 
-  /** Is a note considered to be a conflict note? */
-  isConflictNote(note: Note): boolean {
-    // Note that human-written followup notes on a thread that starts with a conflict note, may also have their
-    // type set as 'conflict', so we can't just rely on that.
-    return note.type === NoteType.Conflict && note.conflictType !== NoteConflictType.DefaultValue;
-  }
-
   /** What to display for note content. Will be transformed for display, especially for a conflict note. */
   contentForDisplay(note: Note): string {
     if (note == null) {
       return '';
     }
-    if (this.isConflictNote(note)) {
-      // Process only the data in the language tag, not the preceding description (so don't report
-      // "Bob edited this verse on two different machines.").
-      // The XML parser won't process the text if it starts with text outside of a tag. So manually surround
-      // it in tags first, like a span.
-      const parser = new DOMParser();
-      const tree: Document = parser.parseFromString(`<span>${note.content}</span>`, 'application/xml');
-      const conflictContents = tree.querySelector('language p');
-      if (conflictContents != null) {
-        return this.parseNote(conflictContents.innerHTML);
-      }
-    }
-
     return this.parseNote(note.content);
   }
 
@@ -279,7 +259,7 @@ export class NoteDialogComponent implements OnInit {
     this.showSegmentText = !this.showSegmentText;
   }
 
-  noteIcon(note: Note) {
+  noteIcon(note: Note): string {
     if (this.threadDoc?.data == null) {
       return '';
     }
@@ -294,7 +274,7 @@ export class NoteDialogComponent implements OnInit {
     return note.reattached != null && noteIcon === '' ? this.threadDoc.iconReattached.url : noteIcon;
   }
 
-  noteTitle(note: Note) {
+  noteTitle(note: Note): string {
     switch (note.status) {
       case NoteStatus.Todo:
         return translate('note_dialog.status_to_do');
