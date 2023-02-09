@@ -41,7 +41,7 @@ import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
-import { canAccessTranslateApp } from './core/models/sf-project-role-info';
+import { canAccessCommunityCheckingApp, canAccessTranslateApp } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
@@ -233,9 +233,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   get isCheckingEnabled(): boolean {
     return (
-      this.selectedProjectDoc != null &&
-      this.selectedProjectDoc.data != null &&
-      this.selectedProjectDoc.data.checkingConfig.checkingEnabled
+      this.selectedProjectDoc?.data?.checkingConfig.checkingEnabled === true &&
+      this.selectedProjectRole != null &&
+      canAccessCommunityCheckingApp(this.selectedProjectRole)
     );
   }
 
@@ -451,7 +451,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.questionsQuery?.dispose();
   }
 
-  setLocale(locale: string) {
+  setLocale(locale: string): void {
     this.i18n.setLocale(locale, this.authService);
   }
 
@@ -552,7 +552,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.pwaService.activateUpdates();
   }
 
-  openFeatureFlagDialog() {
+  openFeatureFlagDialog(): void {
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
   }
 
