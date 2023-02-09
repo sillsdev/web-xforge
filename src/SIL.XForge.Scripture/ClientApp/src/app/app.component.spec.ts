@@ -151,6 +151,19 @@ describe('AppComponent', () => {
     expect(env.menuLength).toEqual(5);
   }));
 
+  it('hides community checking tool from reviewers', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setCurrentUser('user04');
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    expect(env.component.selectedProjectRole).toEqual(SFProjectRole.Reviewer);
+    expect(env.selectedProjectId).toEqual('project01');
+    expect(env.isDrawerVisible).toEqual(true);
+    expect(env.component.isTranslateEnabled).toEqual(true);
+    expect(env.component.isCheckingEnabled).toEqual(false);
+  }));
+
   it('expand/collapse tool', fakeAsync(() => {
     const env = new TestEnvironment();
     env.navigate(['/projects', 'project01']);
@@ -611,6 +624,7 @@ class TestEnvironment {
     this.addUser('user01', 'User 01', 'paratext|user01');
     this.addUser('user02', 'User 02', 'auth0|user02');
     this.addUser('user03', 'User 03', 'sms|user03');
+    this.addUser('user04', 'User 04', 'sms|user04');
 
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, []);
     when(mockedSFProjectService.queryQuestions(anything(), anything())).thenCall((_projectId, options) => {
@@ -625,7 +639,8 @@ class TestEnvironment {
       {
         user01: SFProjectRole.ParatextTranslator,
         user02: SFProjectRole.CommunityChecker,
-        user03: SFProjectRole.CommunityChecker
+        user03: SFProjectRole.CommunityChecker,
+        user04: SFProjectRole.Reviewer
       },
       [
         { bookNum: 40, hasSource: true, chapters: [], permissions: {} },
