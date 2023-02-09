@@ -134,9 +134,8 @@
                     <app-checking-answers
                       #answersPanel
                       [checkingTextComponent]="textPanel"
-                      [project]="projectDoc?.data"
+                      [projectProfileDoc]="projectDoc"
                       [textsByBookId]="textsByBookId"
-                      [projectId]="projectDoc?.id"
                       [questionDoc]="questionsPanel.activeQuestionDoc"
                       [projectUserConfigDoc]="projectUserConfigDoc"
                       (action)="answerAction($event)"

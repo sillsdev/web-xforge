@@ -34,6 +34,7 @@ import { CheckingAudioCombinedComponent } from '../checking-audio-combined/check
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { CommentAction } from './checking-comments/checking-comments.component';
 
 export interface AnswerAction {
@@ -81,7 +82,6 @@ enum LikeAnswerResponse {
 })
 export class CheckingAnswersComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(CheckingAudioCombinedComponent) audioCombinedComponent?: CheckingAudioCombinedComponent;
-  @Input() project?: SFProjectProfile;
   @Input() projectUserConfigDoc?: SFProjectUserConfigDoc;
   @Input() textsByBookId?: TextsByBookId;
   @Input() checkingTextComponent?: CheckingTextComponent;
@@ -106,7 +106,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   /** IDs of answers to show to user (so, excluding unshown incoming answers). */
   private _answersToShow: string[] = [];
-  private _projectId?: string;
+  private _projectProfileDoc?: SFProjectProfileDoc;
   private _questionDoc?: QuestionDoc;
   private userAnswerRefsRead: string[] = [];
   private audio: AudioAttachment = {};
@@ -114,6 +114,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
   /** If the user has recently added or edited their answer since opening up the question. */
   private justEditedAnswer: boolean = false;
   private isProjectAdmin: boolean = false;
+  private projectProfileDocChangesSubscription?: Subscription;
 
   constructor(
     private readonly userService: UserService,
@@ -130,18 +131,23 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     super();
   }
 
+  get project(): SFProjectProfile | undefined {
+    return this._projectProfileDoc?.data;
+  }
   get projectId(): string | undefined {
-    return this._projectId;
+    return this._projectProfileDoc?.id;
   }
 
-  @Input() set projectId(projectId: string | undefined) {
-    if (projectId == null) {
+  @Input() set projectProfileDoc(projectProfileDoc: SFProjectProfileDoc | undefined) {
+    this.projectProfileDocChangesSubscription?.unsubscribe();
+    this._projectProfileDoc = projectProfileDoc;
+    if (projectProfileDoc == null) {
       return;
     }
-    this._projectId = projectId;
-    this.projectService.isProjectAdmin(projectId, this.userService.currentUserId).then(isProjectAdmin => {
-      this.isProjectAdmin = isProjectAdmin;
+    this.projectProfileDocChangesSubscription = this.subscribe(projectProfileDoc.changes$, () => {
+      this.setProjectAdmin();
     });
+    this.setProjectAdmin();
   }
 
   @Input() set questionDoc(questionDoc: QuestionDoc | undefined) {
@@ -616,6 +622,15 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       this.answerText.setValidators(Validators.required);
     }
     this.answerText.updateValueAndValidity();
+  }
+
+  private setProjectAdmin(): void {
+    if (this.projectId == null) {
+      return;
+    }
+    this.projectService.isProjectAdmin(this.projectId, this.userService.currentUserId).then(isProjectAdmin => {
+      this.isProjectAdmin = isProjectAdmin;
+    });
   }
 
   private toggleAnswerStatus(answer: Answer, status: AnswerStatus): void {
