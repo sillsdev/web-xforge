@@ -1,0 +1,45 @@
+use('sf_jobs')
+
+// Hangfire may fill up a document with a large state history. Errors may indicate this in the OS journal, such as
+//
+// > 10 state change attempt(s) failed due to an exception, moving job to the FailedState
+// > MongoDB.Driver.MongoBulkWriteException`1[MongoDB.Bson.BsonDocument]: A bulk write operation resulted in one or
+// > more errors. WriteErrors: [ { Category : "Uncategorized", Code : 17419, Message : "Resulting document after
+// > update is larger than 16777216" } ].
+// > [...] at Hangfire.Server.Worker.TryChangeState
+//
+// Results of this mongo script will look like the following:
+//
+// > {
+// >   "_id": {
+// >     "$oid": "111111111122222222223333"
+// >   },
+// >   "sizeStateHistory": 78939
+// > },
+// > {
+// >   "_id": {
+// >     "$oid": "aaaaaaaaaabbbbbbbbbbcccc"
+// >   },
+// >   "sizeStateHistory": 83
+// > },
+// > [...]
+//
+// The document in the example above with ObjectId 111111111122222222223333, showing the very large state history
+// field size, may not show up as an item in the Hangfire web interface, but the document can be deleted from MongoDB
+// using another method.
+
+
+db['hangfire.jobGraph'].aggregate([
+  {$match: {
+    'StateHistory': { $exists: true }
+  }},
+  {$project: {
+    stateHistoryLength: { $size: '$StateHistory' }
+  }},
+  {$sort: {
+    stateHistoryLength: -1
+  }}
+])
+
+// Delete document:
+// db['hangfire.jobGraph'].deleteOne({_id: ObjectId('111111111122222222223333')})
