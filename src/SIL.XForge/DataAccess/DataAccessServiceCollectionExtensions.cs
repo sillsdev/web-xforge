@@ -27,6 +27,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         new MongoStorageOptions
                         {
                             CheckQueuedJobsStrategy = CheckQueuedJobsStrategy.TailNotificationsCollection,
+                            InvisibilityTimeout = TimeSpan.FromMinutes(120),
                             MigrationOptions = new MongoMigrationOptions
                             {
                                 MigrationStrategy = new MigrateMongoMigrationStrategy(),
