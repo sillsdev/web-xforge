@@ -1,6 +1,7 @@
 import { Project } from '../../common/models/project';
 import { WritingSystem } from '../../common/models/writing-system';
 import { CheckingConfig } from './checking-config';
+import { NoteTag } from './note-tag';
 import { ParatextUserProfile } from './paratext-user-profile';
 import { Sync } from './sync';
 import { TextInfo } from './text-info';
@@ -21,11 +22,11 @@ export interface SFProjectProfile extends Project {
   checkingConfig: CheckingConfig;
   resourceConfig?: ResourceConfig;
   texts: TextInfo[];
+  noteTags?: NoteTag[];
   sync: Sync;
   editable: boolean;
   defaultFontSize?: number;
   defaultFont?: string;
-  tagIcon?: string;
 }
 
 export interface SFProject extends SFProjectProfile {

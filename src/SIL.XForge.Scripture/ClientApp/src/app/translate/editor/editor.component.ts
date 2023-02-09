@@ -41,9 +41,10 @@ import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
-import { NoteThreadDoc } from '../../core/models/note-thread-doc';
+import { NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -232,6 +233,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null
       ? 1
       : this.projectUserConfigDoc.data.numSuggestions;
+  }
+
+  get noteTags(): NoteTag[] {
+    return this.projectDoc?.data?.noteTags ?? [];
   }
 
   get chapter(): number | undefined {
@@ -879,7 +884,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private updateReadNotes(threadId: string) {
+  private updateReadNotes(threadId: string): void {
     const noteThread: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(d => d.data?.dataId === threadId);
     if (noteThread?.data != null && this.projectUserConfigDoc?.data != null) {
       const notesRead: string[] = [];
@@ -1263,7 +1268,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
-  private loadProjectUserConfig() {
+  private loadProjectUserConfig(): void {
     let chapter = this.chapters.length > 0 ? this.chapters[0] : 1;
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
       const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
@@ -1309,14 +1314,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     const hasNewContent: boolean = this.hasNewContent(threadDoc);
+    const otherAssigned: boolean = threadDoc.isAssignedToOtherUser(this.userService.currentUserId, this.paratextUsers);
+    const icon: NoteThreadIcon = otherAssigned
+      ? threadDoc.getIconGrayed(this.noteTags)
+      : threadDoc.getIcon(this.noteTags);
 
     return {
       verseRef,
       id: threadDoc.data.dataId,
       preview,
-      icon: threadDoc.isAssignedToOtherUser(this.userService.currentUserId, this.paratextUsers)
-        ? threadDoc.iconGrayed
-        : threadDoc.icon,
+      icon,
       textAnchor: threadDoc.data.position,
       highlight: hasNewContent
     };
@@ -1660,7 +1667,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.source.editor.scrollingContainer.scrollTop += otherBounds.top - thisBounds.top;
   }
 
-  onViewerClicked(viewer: MultiCursorViewer) {
+  onViewerClicked(viewer: MultiCursorViewer): void {
     this.target!.scrollToViewer(viewer);
   }
 }

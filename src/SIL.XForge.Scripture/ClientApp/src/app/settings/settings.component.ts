@@ -361,7 +361,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.setAllControlsToInSync();
   }
 
-  private setIndividualControlDisabledStates() {
+  private setIndividualControlDisabledStates(): void {
     if (!this.isLoggedInToParatext && !this.isTranslationSuggestionsEnabled) {
       this.translationSuggestionsEnabled.disable();
     }

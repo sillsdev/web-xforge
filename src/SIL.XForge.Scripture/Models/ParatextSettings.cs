@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace SIL.XForge.Scripture.Models
 {
     public class ParatextSettings
@@ -14,6 +16,6 @@ namespace SIL.XForge.Scripture.Models
         public string DefaultFont { get; set; }
 
         /// <summary> The tag icon used by default for note threads created in SF. </summary>
-        public string TagIcon { get; set; }
+        public IEnumerable<NoteTag> NoteTags { get; set; }
     }
 }

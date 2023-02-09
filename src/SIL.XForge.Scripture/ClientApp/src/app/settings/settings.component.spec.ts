@@ -747,7 +747,6 @@ class TestEnvironment {
       translationSuggestionsEnabled: true,
       shareEnabled: false,
       shareLevel: TranslateShareLevel.Specific,
-
       source: {
         paratextId: 'paratextId01',
         projectRef: 'paratext01',
@@ -765,7 +764,7 @@ class TestEnvironment {
       shareLevel: CheckingShareLevel.Specific,
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     }
-  ) {
+  ): void {
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'project01',
       data: {

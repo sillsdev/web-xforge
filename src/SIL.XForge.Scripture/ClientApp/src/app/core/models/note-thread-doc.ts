@@ -1,4 +1,10 @@
 import {
+  NoteTag,
+  DEFAULT_TAG_ICON,
+  SF_TAG_ICON,
+  TO_DO_TAG_ID
+} from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import {
   NoteThread,
   NOTE_THREAD_COLLECTION,
   NOTE_THREAD_INDEX_PATHS
@@ -11,8 +17,7 @@ import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-
 import { AssignedUsers } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 
-export const DEFAULT_TAG_ICON = '01flag1';
-
+/** Returns the given tag icon formatted for retrieval in the html template, or the default icon. */
 export function defaultNoteThreadIcon(tagIcon: string | undefined): NoteThreadIcon {
   if (tagIcon == null) {
     tagIcon = DEFAULT_TAG_ICON;
@@ -30,30 +35,32 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
   static readonly COLLECTION = NOTE_THREAD_COLLECTION;
   static readonly INDEX_PATHS = NOTE_THREAD_INDEX_PATHS;
 
-  get icon(): NoteThreadIcon {
-    return this.iconProperties(this.getTag());
-  }
-
-  get iconResolved(): NoteThreadIcon {
-    const iconTag = this.getResolvedTag(this.getTag());
-    return this.iconProperties(iconTag);
-  }
-
   get iconReattached(): NoteThreadIcon {
     return this.iconProperties('ReattachNote');
   }
 
-  get iconGrayed(): NoteThreadIcon {
-    const iconTag = this.getGrayedOutTag(this.getTag());
+  getIcon(noteTags: NoteTag[]): NoteThreadIcon {
+    return this.iconProperties(this.getTagIcon(noteTags));
+  }
+
+  getIconResolved(noteTags: NoteTag[]): NoteThreadIcon {
+    const iconTag = this.getResolvedTag(this.getTagIcon(noteTags));
     return this.iconProperties(iconTag);
   }
 
-  getNoteIcon(note: Note): NoteThreadIcon {
-    return this.iconProperties(note.tagIcon ? note.tagIcon : '');
+  getIconGrayed(noteTags: NoteTag[]): NoteThreadIcon {
+    const iconTag = this.getGrayedOutTag(this.getTagIcon(noteTags));
+    return this.iconProperties(iconTag);
   }
 
-  getNoteResolvedIcon(note: Note): NoteThreadIcon {
-    const iconTag = this.getResolvedTag(note.tagIcon ? note.tagIcon : '');
+  getNoteIcon(note: Note, noteTags: NoteTag[]): NoteThreadIcon {
+    const tagIcon: string | undefined = noteTags.find(t => t.tagId === note.tagId)?.icon ?? undefined;
+    return this.iconProperties(tagIcon != null ? tagIcon : '');
+  }
+
+  getNoteResolvedIcon(note: Note, noteTags: NoteTag[]): NoteThreadIcon {
+    const tagIcon: string | undefined = noteTags.find(t => t.tagId === note.tagId)?.icon ?? undefined;
+    const iconTag = this.getResolvedTag(tagIcon != null ? tagIcon : '');
     return this.iconProperties(iconTag);
   }
 
@@ -89,18 +96,19 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
     return clone(notes).sort((a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated));
   }
 
-  private getTag(): string {
+  private getTagIcon(noteTags: NoteTag[]): string {
     if (this.data == null) {
       return '';
     }
 
-    const iconDefinedNotes = this.notesInOrderClone(this.data.notes).filter(n => n.tagIcon != null);
-    let iconTag: string =
-      iconDefinedNotes.length === 0 ? this.data.tagIcon : iconDefinedNotes[iconDefinedNotes.length - 1].tagIcon!;
-    if (iconTag === '') {
-      iconTag = '01flag1';
+    const iconDefinedNotes = this.notesInOrderClone(this.data.notes).filter(n => n.tagId != null);
+    let tagId: number | undefined =
+      iconDefinedNotes.length === 0 ? undefined : iconDefinedNotes[iconDefinedNotes.length - 1].tagId;
+    if (tagId == null) {
+      if (this.data.publishedToSF === true) return SF_TAG_ICON;
+      return noteTags.find(t => t.tagId === TO_DO_TAG_ID)?.icon ?? DEFAULT_TAG_ICON;
     }
-    return iconTag;
+    return noteTags.find(t => t.tagId === tagId)?.icon ?? DEFAULT_TAG_ICON;
   }
 
   private getResolvedTag(iconTag: string = ''): string {

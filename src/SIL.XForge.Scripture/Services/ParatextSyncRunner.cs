@@ -220,10 +220,14 @@ namespace SIL.XForge.Scripture.Services
                     if (!_paratextService.IsResource(targetParatextId))
                     {
                         LogMetric("Updating paratext notes");
+                        IEnumerable<IDocument<NoteThread>> noteThreadDocs = (
+                            await FetchNoteThreadDocsAsync(text.BookNum)
+                        ).Values;
+                        // Only update the note tag if there are SF note threads in the project
+                        if (noteThreadDocs.Any(d => d.Data.PublishedToSF == true))
+                            await UpdateTranslateNoteTag(targetParatextId);
                         await UpdateParatextNotesAsync(text, questionDocs);
                         // TODO: Sync Note changes back to Paratext, and record sync metric info
-                        // IEnumerable<IDocument<NoteThread>> noteThreadDocs =
-                        //     (await FetchNoteThreadDocsAsync(text.BookNum)).Values;
                         // await _paratextService.UpdateParatextCommentsAsync(_userSecret, targetParatextId, text.BookNum,
                         //     noteThreadDocs, _currentPtSyncUsers);
                     }
@@ -946,7 +950,6 @@ namespace SIL.XForge.Scripture.Services
                                 OriginalSelectedText = change.SelectedText,
                                 OriginalContextBefore = change.ContextBefore,
                                 OriginalContextAfter = change.ContextAfter,
-                                TagIcon = change.TagIcon,
                                 Position = change.Position,
                                 Status = change.Status,
                                 Assignment = change.Assignment
@@ -1089,8 +1092,6 @@ namespace SIL.XForge.Scripture.Services
                 {
                     if (threadDoc.Data.Status != change.Status)
                         op.Set(td => td.Status, change.Status);
-                    if (threadDoc.Data.TagIcon != change.TagIcon)
-                        op.Set(td => td.TagIcon, change.TagIcon);
                     if (threadDoc.Data.Assignment != change.Assignment)
                         op.Set(td => td.Assignment, change.Assignment);
                 }
@@ -1108,8 +1109,8 @@ namespace SIL.XForge.Scripture.Services
                             op.Set(td => td.Notes[index].Type, updated.Type);
                         if (threadDoc.Data.Notes[index].ConflictType != updated.ConflictType)
                             op.Set(td => td.Notes[index].ConflictType, updated.ConflictType);
-                        if (threadDoc.Data.Notes[index].TagIcon != updated.TagIcon)
-                            op.Set(td => td.Notes[index].TagIcon, updated.TagIcon);
+                        if (threadDoc.Data.Notes[index].TagId != updated.TagId)
+                            op.Set(td => td.Notes[index].TagId, updated.TagId);
                         if (threadDoc.Data.Notes[index].Assignment != updated.Assignment)
                             op.Set(td => td.Notes[index].Assignment, updated.Assignment);
                         if (threadDoc.Data.Notes[index].AcceptedChangeXml != updated.AcceptedChangeXml)
@@ -1163,6 +1164,24 @@ namespace SIL.XForge.Scripture.Services
                 if (change.Position != null)
                     op.Set(td => td.Position, change.Position);
             });
+        }
+
+        private async Task UpdateTranslateNoteTag(string targetParatextId)
+        {
+            int? defaultTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId;
+            if (defaultTagId == null)
+            {
+                var newNoteTag = new NoteTag
+                {
+                    TagId = NoteTag.notSetId,
+                    Icon = NoteTag.sfNoteTagIcon,
+                    Name = NoteTag.sfNoteTagName
+                };
+                // Note: If we introduce a new note tag and the remote PT repo also introduces a note tag,
+                // the tag introduced here will get overwritten
+                int noteTagId = _paratextService.UpdateCommentTag(_userSecret, targetParatextId, newNoteTag);
+                await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.TranslateConfig.DefaultNoteTagId, noteTagId));
+            }
         }
 
         /// <summary>
@@ -1392,7 +1411,8 @@ namespace SIL.XForge.Scripture.Services
                     op.Set(pd => pd.Editable, settings.Editable);
                     op.Set(pd => pd.DefaultFont, settings.DefaultFont);
                     op.Set(pd => pd.DefaultFontSize, settings.DefaultFontSize);
-                    op.Set(pd => pd.TagIcon, settings.TagIcon);
+                    if (settings.NoteTags != null)
+                        op.Set(pd => pd.NoteTags, settings.NoteTags);
                 }
                 // The source can be null if there was an error getting a resource from the DBL
                 if (TranslationSuggestionsEnabled && _projectDoc.Data.TranslateConfig.Source != null)

@@ -23,7 +23,6 @@ namespace SIL.XForge.Scripture.Models
         public string ContextBefore { get; set; }
         public string ContextAfter { get; set; }
         public TextAnchor Position { get; set; }
-        public string TagIcon { get; set; }
         public string Status { get; set; }
         public string Assignment { get; set; }
 
@@ -58,8 +57,7 @@ namespace SIL.XForge.Scripture.Models
             string contextBefore,
             string contextAfter,
             string status,
-            string assignment,
-            string tagIcon = null
+            string assignment
         )
         {
             ThreadId = threadId;
@@ -68,7 +66,6 @@ namespace SIL.XForge.Scripture.Models
             ContextBefore = contextBefore;
             ContextAfter = contextAfter;
             Assignment = assignment;
-            TagIcon = tagIcon;
             Status = status;
         }
 

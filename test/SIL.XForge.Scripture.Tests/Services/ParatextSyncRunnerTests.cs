@@ -675,6 +675,93 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public async Task SyncAsync_CreatesNoteTagIcon()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 1) };
+            env.SetupSFData(true, true, false, true, books);
+            await env.SetupUndefinedNoteTag("project01");
+            SFProject project = env.GetProject();
+            Assert.That(project.TranslateConfig.DefaultNoteTagId, Is.Null);
+            // introduce a PT note thread
+            env.AddParatextNoteThreadData(books[0]);
+            env.SetupPTData(books);
+
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+            env.VerifyProjectSync(true, null, "project01");
+            // expect that we do not create a new note tag
+            env.ParatextService
+                .DidNotReceive()
+                .UpdateCommentTag(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<NoteTag>());
+
+            // introduce an SF note thread
+            env.AddParatextNoteThreadData(books[0], true);
+            env.ParatextService
+                .UpdateCommentTag(Arg.Any<UserSecret>(), "target", Arg.Any<NoteTag>())
+                .Returns(env.translateNoteTagId);
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+            project = env.VerifyProjectSync(true, null, "project01");
+            // expect that a new note tag is created
+            env.ParatextService
+                .Received()
+                .UpdateCommentTag(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<NoteTag>());
+            Assert.That(project.TranslateConfig.DefaultNoteTagId, Is.EqualTo(env.translateNoteTagId));
+        }
+
+        [Test]
+        public async Task SyncAsync_UpdatesExistingNoteTags()
+        {
+            var env = new TestEnvironment();
+            Book[] books = { new Book("MAT", 1) };
+            env.SetupSFData(true, true, false, true, books);
+            var noteTags = new List<NoteTag>
+            {
+                new NoteTag
+                {
+                    TagId = 1,
+                    Name = "To do",
+                    Icon = NoteTag.defaultTagIcon
+                },
+                new NoteTag
+                {
+                    TagId = 2,
+                    Name = "Original tag",
+                    Icon = "originalIcon"
+                },
+                new NoteTag
+                {
+                    TagId = 3,
+                    Name = "Tag to delete",
+                    Icon = "delete"
+                }
+            };
+            await env.SetupProjectNoteTags("project01", noteTags);
+            env.SetupPTData(books);
+            var newNoteTags = new List<NoteTag>
+            {
+                new NoteTag
+                {
+                    TagId = 1,
+                    Name = "To do",
+                    Icon = NoteTag.defaultTagIcon
+                },
+                new NoteTag
+                {
+                    TagId = 2,
+                    Name = "Edited tag",
+                    Icon = "editedIcon"
+                }
+            };
+            env.ParatextService
+                .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
+                .Returns(new ParatextSettings { NoteTags = newNoteTags });
+
+            await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+            SFProject project = env.VerifyProjectSync(true, null, "project01");
+            Assert.That(project.NoteTags.Select(t => t.Name), Is.EquivalentTo(newNoteTags.Select(t => t.Name)));
+        }
+
+        [Test]
         public async Task SyncAsync_SetsProjectSettings()
         {
             var env = new TestEnvironment();
@@ -697,15 +784,24 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(project.DefaultFont, Is.EqualTo(font));
             int newFontSize = 16;
             string newFont = "Doulos SIL";
-            string toDoIcon = "todoIcon1";
+            string customIcon = "customIcon01";
+            List<NoteTag> noteTags = new List<NoteTag>
+            {
+                new NoteTag
+                {
+                    TagId = env.translateNoteTagId,
+                    Icon = customIcon,
+                    Name = "Tag Name"
+                }
+            };
             env.ParatextService
-                .GetParatextSettings(Arg.Any<UserSecret>(), "target")
+                .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
                 .Returns(
                     new ParatextSettings
                     {
                         DefaultFontSize = newFontSize,
                         DefaultFont = newFont,
-                        TagIcon = toDoIcon
+                        NoteTags = noteTags
                     }
                 );
 
@@ -714,7 +810,7 @@ namespace SIL.XForge.Scripture.Services
             project = env.VerifyProjectSync(true);
             Assert.That(project.DefaultFontSize, Is.EqualTo(newFontSize));
             Assert.That(project.DefaultFont, Is.EqualTo(newFont));
-            Assert.That(project.TagIcon, Is.EqualTo(toDoIcon));
+            Assert.That(project.NoteTags.Select(t => t.Icon), Is.EquivalentTo(new[] { customIcon }));
         }
 
         [Test]
@@ -1646,7 +1742,8 @@ namespace SIL.XForge.Scripture.Services
                 default,
                 default,
                 Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
-                Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                default
             );
 
             await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -1659,7 +1756,8 @@ namespace SIL.XForge.Scripture.Services
                     Arg.Is<IEnumerable<IDocument<NoteThread>>>(
                         t => t.Count() == 1 && t.First().Id == "project01:thread01"
                     ),
-                    Arg.Any<Dictionary<string, ParatextUserProfile>>()
+                    Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                    Arg.Any<int>()
                 );
 
             SFProject project = env.GetProject();
@@ -1684,13 +1782,9 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             NoteThread thread01 = env.GetNoteThread("project01", "thread01");
-            string expectedThreadTagIcon = "tag02";
-            string expectedNoteTagIcon = "tag03";
-            string threadExpected =
-                "Context before Scripture text in project context after-Start:0-Length:0-MAT 1:1-"
-                + expectedThreadTagIcon;
+            int expectedNoteTagId = 3;
+            string threadExpected = "Context before Scripture text in project context after-Start:0-Length:0-MAT 1:1";
             Assert.That(thread01.NoteThreadToString(), Is.EqualTo(threadExpected));
-            Assert.That(thread01.TagIcon, Is.EqualTo(expectedThreadTagIcon));
             Assert.That(thread01.Assignment, Is.EqualTo(CommentThread.teamUser));
             env.DeltaUsxMapper.ReceivedWithAnyArgs(2).ToChapterDeltas(default);
             Assert.That(thread01.Notes.Count, Is.EqualTo(startingNoteCount + expectedNoteCountChange));
@@ -1698,9 +1792,9 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(thread01.Notes[0].Assignment, Is.EqualTo(CommentThread.teamUser));
             Assert.That(thread01.Notes[1].Deleted, Is.True);
             Assert.That(thread01.Notes[2].Content, Is.EqualTo("thread01 added."));
-            string expected = "thread01-syncuser03--thread01 added.-" + expectedNoteTagIcon;
+            string expected = "thread01-syncuser03--thread01 added.-tag:" + expectedNoteTagId;
             Assert.That(thread01.Notes[2].NoteToString(), Is.EqualTo(expected));
-            Assert.That(thread01.Notes[2].TagIcon, Is.EqualTo(expectedNoteTagIcon));
+            Assert.That(thread01.Notes[2].TagId, Is.EqualTo(expectedNoteTagId));
             Assert.That(thread01.Notes[2].OwnerRef, Is.EqualTo("user03"));
 
             SFProject project = env.GetProject();
@@ -1748,8 +1842,7 @@ namespace SIL.XForge.Scripture.Services
                 " reattach after."
             };
             string reattached = string.Join(PtxUtils.StringUtils.orcCharacter, reattachedParts);
-            string expected =
-                "Context before Scripture text in project context after-" + $"Start:16-Length:22-MAT 1:1-icon1";
+            string expected = "Context before Scripture text in project context after-" + $"Start:16-Length:22-MAT 1:1";
             Assert.That(thread01.NoteThreadToString(), Is.EqualTo(expected));
             Assert.That(thread01.Notes.Single(n => n.Reattached != null).Reattached, Is.EqualTo(reattached));
 
@@ -1775,8 +1868,7 @@ namespace SIL.XForge.Scripture.Services
             await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
             NoteThread thread02 = env.GetNoteThread("project01", "thread02");
-            string expected =
-                "Context before Scripture text in project context after-" + "Start:0-Length:0-MAT 1:1-icon1";
+            string expected = "Context before Scripture text in project context after-" + "Start:0-Length:0-MAT 1:1";
             Assert.That(thread02.NoteThreadToString(), Is.EqualTo(expected));
             Assert.That(thread02.Notes.Count, Is.EqualTo(1));
             Assert.That(thread02.Notes[0].Content, Is.EqualTo("New thread02 added."));
@@ -2260,6 +2352,7 @@ namespace SIL.XForge.Scripture.Services
 
         private class TestEnvironment
         {
+            public readonly int translateNoteTagId = 5;
             private readonly MemoryRepository<SFProjectSecret> _projectSecrets;
             private readonly MemoryRepository<SyncMetrics> _syncMetrics;
             private bool _sendReceivedCalled = false;
@@ -2616,7 +2709,8 @@ namespace SIL.XForge.Scripture.Services
                                 ShortName = "SRC",
                                 WritingSystem = new WritingSystem { Tag = "en" },
                                 IsRightToLeft = false
-                            }
+                            },
+                            DefaultNoteTagId = translateNoteTagId
                         },
                         CheckingConfig = new CheckingConfig
                         {
@@ -2636,7 +2730,8 @@ namespace SIL.XForge.Scripture.Services
                         {
                             new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "User 1" },
                             new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" }
-                        }
+                        },
+                        NoteTags = new List<NoteTag>()
                     },
                     new SFProject
                     {
@@ -2647,6 +2742,7 @@ namespace SIL.XForge.Scripture.Services
                         ParatextId = "source",
                         IsRightToLeft = false,
                         TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false },
+                        NoteTags = new List<NoteTag>(),
                         CheckingConfig = new CheckingConfig
                         {
                             CheckingEnabled = checkingEnabled,
@@ -2894,8 +2990,7 @@ namespace SIL.XForge.Scripture.Services
                         "Context before ",
                         " context after",
                         NoteStatus.Todo.InternalValue,
-                        "",
-                        "tag02"
+                        ""
                     );
                     noteThreadChange.ThreadUpdated = true;
                     noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
@@ -2909,7 +3004,7 @@ namespace SIL.XForge.Scripture.Services
                         ChangeType.Deleted
                     );
                     noteThreadChange.AddChange(
-                        CreateNote(threadId, "n03", "syncuser03", $"{threadId} added.", ChangeType.Added, "tag03"),
+                        CreateNote(threadId, "n03", "syncuser03", $"{threadId} added.", ChangeType.Added, 3),
                         ChangeType.Added
                     );
 
@@ -2955,8 +3050,7 @@ namespace SIL.XForge.Scripture.Services
                     "Context before ",
                     " context after",
                     status,
-                    "",
-                    "icon1"
+                    ""
                 );
                 noteThreadChange.ThreadUpdated = true;
                 SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
@@ -2971,8 +3065,7 @@ namespace SIL.XForge.Scripture.Services
                     "Context before ",
                     " context after",
                     NoteStatus.Todo.InternalValue,
-                    "",
-                    "icon1"
+                    ""
                 );
                 noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
                 noteThreadChange.Assignment = CommentThread.teamUser;
@@ -2992,12 +3085,18 @@ namespace SIL.XForge.Scripture.Services
                     null,
                     null,
                     NoteStatus.Todo.InternalValue,
-                    "",
-                    "conflict1"
+                    ""
                 );
                 noteThreadChange.Position = new TextAnchor { Start = 0, Length = 0 };
                 noteThreadChange.AddChange(
-                    CreateNote(threadId, "conflict1", "", "Conflict on note.", ChangeType.Added, "conflict1"),
+                    CreateNote(
+                        threadId,
+                        "conflict1",
+                        "",
+                        "Conflict on note.",
+                        ChangeType.Added,
+                        CommentTag.conflictTagId
+                    ),
                     ChangeType.Added
                 );
                 SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
@@ -3012,8 +3111,7 @@ namespace SIL.XForge.Scripture.Services
                     "Context before ",
                     " context after",
                     NoteStatus.Resolved.InternalValue,
-                    "",
-                    "icon1"
+                    ""
                 );
                 if (noteId == null)
                     noteThreadChange.ThreadRemoved = true;
@@ -3031,8 +3129,7 @@ namespace SIL.XForge.Scripture.Services
                     "Context before ",
                     " context after",
                     "",
-                    "",
-                    null
+                    ""
                 );
                 string before = "Reattach before ";
                 string reattachSelectedText = "reattach selected text";
@@ -3073,7 +3170,7 @@ namespace SIL.XForge.Scripture.Services
                 string status = NoteStatus.Todo.InternalValue;
                 string verseRef = "MAT 1:1";
                 // Create a NoteThreadChange, and allow client to adjust it.
-                var noteThreadChange = new NoteThreadChange(threadId, verseRef, null, null, null, status, "", "icon1");
+                var noteThreadChange = new NoteThreadChange(threadId, verseRef, null, null, null, status, "");
                 if (modifyNoteThreadChange != null)
                 {
                     modifyNoteThreadChange(noteThreadChange);
@@ -3088,6 +3185,21 @@ namespace SIL.XForge.Scripture.Services
 
                 // Cause the created NoteThreadChange to be what is given when changes are asked for.
                 SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
+            }
+
+            /// <summary> Set the project's default comment tag to the a blank comment tag. </summary>
+            public Task SetupUndefinedNoteTag(string projectId)
+            {
+                return RealtimeService
+                    .GetRepository<SFProject>()
+                    .UpdateAsync(p => p.Id == projectId, u => u.Unset(p => p.TranslateConfig.DefaultNoteTagId));
+            }
+
+            public Task SetupProjectNoteTags(string projectId, List<NoteTag> noteTags)
+            {
+                return RealtimeService
+                    .GetRepository<SFProject>()
+                    .UpdateAsync(p => p.Id == projectId, u => u.Set(p => p.NoteTags, noteTags));
             }
 
             /// <summary>
@@ -3130,10 +3242,11 @@ namespace SIL.XForge.Scripture.Services
                 Assert.That(datumGetter(note), Is.EqualTo(newData));
             }
 
-            public void AddParatextNoteThreadData(Book book)
+            public void AddParatextNoteThreadData(Book book, bool publishedToSF = false)
             {
                 int chapter = book.HighestTargetChapter;
                 string threadId = $"thread0{chapter}";
+                int tagId = CommentTag.toDoTagId;
                 RealtimeService.AddRepository(
                     "note_threads",
                     OTType.Json0,
@@ -3150,7 +3263,7 @@ namespace SIL.XForge.Scripture.Services
                                 OriginalContextBefore = "Context before ",
                                 OriginalContextAfter = " context after",
                                 OriginalSelectedText = "Scripture text in project",
-                                TagIcon = "icon1",
+                                PublishedToSF = publishedToSF,
                                 Notes = new List<Note>()
                                 {
                                     new Note
@@ -3160,6 +3273,7 @@ namespace SIL.XForge.Scripture.Services
                                         SyncUserRef = "syncuser01",
                                         ExtUserId = "user02",
                                         Content = "Paratext note 1.",
+                                        TagId = tagId,
                                         DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
                                     },
                                     new Note
@@ -3169,6 +3283,7 @@ namespace SIL.XForge.Scripture.Services
                                         SyncUserRef = "syncuser02",
                                         ExtUserId = "user03",
                                         Content = "Paratext note 2.",
+                                        TagId = tagId,
                                         DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
                                     },
                                 }
@@ -3438,7 +3553,7 @@ namespace SIL.XForge.Scripture.Services
                 string user,
                 string content,
                 ChangeType type,
-                string tagIcon = null
+                int? tagId = null
             )
             {
                 return new Note
@@ -3450,7 +3565,7 @@ namespace SIL.XForge.Scripture.Services
                     Content = content,
                     DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
                     Deleted = type == ChangeType.Deleted,
-                    TagIcon = tagIcon ?? "icon1",
+                    TagId = tagId,
                     Assignment = CommentThread.teamUser
                 };
             }

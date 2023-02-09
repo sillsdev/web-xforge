@@ -51,31 +51,33 @@ namespace SIL.XForge.Scripture.Services
             string usx,
             Dictionary<int, string> chapterAuthors = null
         );
-        string GetNotes(UserSecret userSecret, string ptProjectId, int bookNum);
-        SyncMetricInfo PutNotes(UserSecret userSecret, string ptProjectId, string notesText);
+        string GetNotes(UserSecret userSecret, string paratextId, int bookNum);
+        SyncMetricInfo PutNotes(UserSecret userSecret, string paratextId, string notesText);
         Task<SyncMetricInfo> UpdateParatextCommentsAsync(
             UserSecret userSecret,
-            string projectId,
+            string paratextId,
             int bookNum,
             IEnumerable<IDocument<NoteThread>> noteThreadDocs,
-            Dictionary<string, ParatextUserProfile> ptProjectUsers
+            Dictionary<string, ParatextUserProfile> ptProjectUsers,
+            int sfNoteTagId
         );
         IEnumerable<NoteThreadChange> GetNoteThreadChanges(
             UserSecret userSecret,
-            string projectId,
+            string paratextId,
             int bookNum,
             IEnumerable<IDocument<NoteThread>> noteThreadDocs,
             Dictionary<int, ChapterDelta> chapterDeltas,
             Dictionary<string, ParatextUserProfile> ptProjectUsers
         );
+        int UpdateCommentTag(UserSecret userSecret, string paratextId, NoteTag noteTag);
         string? GetLatestSharedVersion(UserSecret userSecret, string paratextId);
-        string GetRepoRevision(UserSecret userSecret, string projectPTId);
-        void SetRepoToRevision(UserSecret userSecret, string projectPTId, string desiredRevision);
+        string GetRepoRevision(UserSecret userSecret, string paratextId);
+        void SetRepoToRevision(UserSecret userSecret, string paratextId, string desiredRevision);
         bool BackupExists(UserSecret userSecret, string paratextId);
         bool BackupRepository(UserSecret userSecret, string paratextId);
         bool RestoreRepository(UserSecret userSecret, string paratextId);
-        bool LocalProjectDirExists(string projectPTId);
-        string GetLanguageId(UserSecret userSecret, string projectPTId);
+        bool LocalProjectDirExists(string paratextId);
+        string GetLanguageId(UserSecret userSecret, string paratextId);
 
         Task<ParatextProject> SendReceiveAsync(
             UserSecret userSecret,

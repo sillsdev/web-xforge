@@ -969,7 +969,21 @@ namespace SIL.XForge.Scripture.Services
             using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             if (scrText == null)
                 return null;
+            // Clear the cached comment tag file
+            CommentTags.ClearCacheForProject(scrText);
             CommentTags commentTags = CommentTags.Get(scrText);
+            IEnumerable<NoteTag> noteTags = commentTags
+                .GetAllTags()
+                .Select(
+                    t =>
+                        new NoteTag
+                        {
+                            TagId = t.Id,
+                            Icon = t.Icon,
+                            Name = t.Name
+                        }
+                );
+
             return new ParatextSettings
             {
                 FullName = scrText.FullName,
@@ -977,7 +991,7 @@ namespace SIL.XForge.Scripture.Services
                 Editable = scrText.Settings.Editable,
                 DefaultFontSize = scrText.Settings.DefaultFontSize,
                 DefaultFont = scrText.Settings.DefaultFont,
-                TagIcon = commentTags.Get(CommentTag.toDoTagId).Icon
+                NoteTags = noteTags
             };
         }
 
@@ -1004,7 +1018,7 @@ namespace SIL.XForge.Scripture.Services
         /// <remarks> It is up to the caller to determine whether the project text is editable. </remarks>
         public async Task<int> PutBookText(
             UserSecret userSecret,
-            string ptProjectId,
+            string paratextId,
             int bookNum,
             string usx,
             Dictionary<int, string> chapNumToAuthorSFUserIdMap = null
@@ -1014,14 +1028,14 @@ namespace SIL.XForge.Scripture.Services
             {
                 throw new ArgumentNullException(nameof(userSecret));
             }
-            if (String.IsNullOrWhiteSpace(ptProjectId))
+            if (String.IsNullOrWhiteSpace(paratextId))
             {
-                throw new ArgumentException(nameof(ptProjectId));
+                throw new ArgumentException(nameof(paratextId));
             }
 
             int booksUpdated = 0;
             StringBuilder log = new StringBuilder(
-                $"ParatextService.PutBookText(userSecret, ptProjectId {ptProjectId}, bookNum {bookNum}, usx {usx}, chapterAuthors: {(chapNumToAuthorSFUserIdMap == null ? "null" : ($"count {chapNumToAuthorSFUserIdMap.Count}"))})"
+                $"ParatextService.PutBookText(userSecret, paratextId {paratextId}, bookNum {bookNum}, usx {usx}, chapterAuthors: {(chapNumToAuthorSFUserIdMap == null ? "null" : ($"count {chapNumToAuthorSFUserIdMap.Count}"))})"
             );
             Dictionary<string, ScrText> scrTexts = new Dictionary<string, ScrText>();
             try
@@ -1033,7 +1047,7 @@ namespace SIL.XForge.Scripture.Services
                 log.AppendLine(
                     $"Acquired username: {(username == null ? "is null" : (username.Length == 0 ? "zero length" : "yes"))}"
                 );
-                using ScrText scrText = ScrTextCollection.FindById(username, ptProjectId);
+                using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
 
                 // We add this here so we can dispose in the finally
                 scrTexts.Add(userSecret.Id, scrText);
@@ -1082,7 +1096,7 @@ namespace SIL.XForge.Scripture.Services
                                 $"Received username: {(authorUserName == null ? "null" : (authorUserName.Length == 0 ? "empty" : "non-empty"))}"
                             );
                             log.AppendLine($"Fetching scrtext using this authorUserName for PT project.");
-                            ScrText scrTextForUser = ScrTextCollection.FindById(authorUserName, ptProjectId);
+                            ScrText scrTextForUser = ScrTextCollection.FindById(authorUserName, paratextId);
                             log.AppendLine(
                                 $"Received ScrText: {(scrTextForUser == null ? "null" : (scrTextForUser.Name))}"
                             );
@@ -1180,10 +1194,10 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Get notes from the Paratext project folder. </summary>
-        public string GetNotes(UserSecret userSecret, string projectId, int bookNum)
+        public string GetNotes(UserSecret userSecret, string paratextId, int bookNum)
         {
             // TODO: should return some data structure instead of XML
-            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
+            using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             if (scrText == null)
                 return null;
 
@@ -1193,11 +1207,11 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Write up-to-date notes from the mongo database to the Paratext project folder </summary>
-        public SyncMetricInfo PutNotes(UserSecret userSecret, string projectId, string notesText)
+        public SyncMetricInfo PutNotes(UserSecret userSecret, string paratextId, string notesText)
         {
             // TODO: should accept some data structure instead of XML
             var changeList = NotesFormatter.ParseNotes(notesText, new SFParatextUser(GetParatextUsername(userSecret)));
-            return PutCommentThreads(userSecret, projectId, changeList);
+            return PutCommentThreads(userSecret, paratextId, changeList);
         }
 
         /// <summary>
@@ -1206,15 +1220,15 @@ namespace SIL.XForge.Scripture.Services
         /// </summary>
         public IEnumerable<NoteThreadChange> GetNoteThreadChanges(
             UserSecret userSecret,
-            string projectId,
+            string paratextId,
             int bookNum,
             IEnumerable<IDocument<NoteThread>> noteThreadDocs,
             Dictionary<int, ChapterDelta> chapterDeltas,
             Dictionary<string, ParatextUserProfile> ptProjectUsers
         )
         {
-            IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, projectId, bookNum);
-            CommentTags commentTags = GetCommentTags(userSecret, projectId);
+            IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, paratextId, bookNum);
+            CommentTags commentTags = GetCommentTags(userSecret, paratextId);
             List<string> matchedThreadIds = new List<string>();
             List<NoteThreadChange> changes = new List<NoteThreadChange>();
 
@@ -1228,8 +1242,7 @@ namespace SIL.XForge.Scripture.Services
                     threadDoc.Data.OriginalContextBefore,
                     threadDoc.Data.OriginalContextAfter,
                     threadDoc.Data.Status,
-                    threadDoc.Data.Assignment,
-                    threadDoc.Data.TagIcon
+                    threadDoc.Data.Assignment
                 );
                 // Find the corresponding comment thread
                 var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
@@ -1251,7 +1264,11 @@ namespace SIL.XForge.Scripture.Services
                     if (matchedComment != null)
                     {
                         matchedCommentIds.Add(matchedComment.Id);
-                        CommentTag commentIconTag = GetCommentTag(existingThread, matchedComment, commentTags);
+                        Paratext.Data.ProjectComments.CommentTag commentIconTag = GetCommentTag(
+                            existingThread,
+                            matchedComment,
+                            commentTags
+                        );
                         ChangeType changeType = GetCommentChangeType(
                             matchedComment,
                             note,
@@ -1279,12 +1296,7 @@ namespace SIL.XForge.Scripture.Services
                     threadChange.Assignment = GetAssignedUserRef(existingThread.AssignedUser, ptProjectUsers);
                     threadChange.ThreadUpdated = true;
                 }
-                CommentTag defaultThreadIconTag = GetCommentTag(existingThread, null, commentTags);
-                if (defaultThreadIconTag?.Icon != threadDoc.Data.TagIcon)
-                {
-                    threadChange.TagIcon = defaultThreadIconTag?.Icon;
-                    threadChange.ThreadUpdated = true;
-                }
+
                 // Add new Comments to note thread change
                 IEnumerable<string> ptCommentIds = existingThread.Comments.Select(c => c.Id);
                 IEnumerable<string> newCommentIds = ptCommentIds.Except(matchedCommentIds);
@@ -1316,7 +1328,6 @@ namespace SIL.XForge.Scripture.Services
             {
                 CommentThread thread = commentThreads.Single(ct => ct.Id == threadId);
                 Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
-                CommentTag initialTag = GetCommentTag(thread, null, commentTags);
                 NoteThreadChange newThread = new NoteThreadChange(
                     threadId,
                     info.VerseRefStr,
@@ -1324,8 +1335,7 @@ namespace SIL.XForge.Scripture.Services
                     info.ContextBefore,
                     info.ContextAfter,
                     info.Status.InternalValue,
-                    info.AssignedUser,
-                    initialTag.Icon
+                    info.AssignedUser
                 );
                 newThread.Position = GetThreadTextAnchor(thread, chapterDeltas);
                 newThread.Status = thread.Status.InternalValue;
@@ -1345,25 +1355,45 @@ namespace SIL.XForge.Scripture.Services
 
         public async Task<SyncMetricInfo> UpdateParatextCommentsAsync(
             UserSecret userSecret,
-            string projectId,
+            string paratextId,
             int bookNum,
             IEnumerable<IDocument<NoteThread>> noteThreadDocs,
-            Dictionary<string, ParatextUserProfile> ptProjectUsers
+            Dictionary<string, ParatextUserProfile> ptProjectUsers,
+            int sfNoteTagId
         )
         {
-            CommentTags commentTags = GetCommentTags(userSecret, projectId);
             string username = GetParatextUsername(userSecret);
-            IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, projectId, bookNum);
+            IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, paratextId, bookNum);
             List<List<Paratext.Data.ProjectComments.Comment>> noteThreadChangeList =
                 await SFNotesToCommentChangeListAsync(
                     noteThreadDocs,
                     commentThreads,
                     username,
-                    commentTags,
+                    sfNoteTagId,
                     ptProjectUsers
                 );
 
-            return PutCommentThreads(userSecret, projectId, noteThreadChangeList);
+            return PutCommentThreads(userSecret, paratextId, noteThreadChangeList);
+        }
+
+        /// <summary> Adds the comment tag to the list of comment tags if that tag does not already exist. </summary>
+        /// <returns> The id of the tag that was added. </returns>
+        public int UpdateCommentTag(UserSecret userSecret, string paratextId, NoteTag noteTag)
+        {
+            CommentTags commentTags = GetCommentTags(userSecret, paratextId);
+            if (noteTag.TagId != NoteTag.notSetId)
+            {
+                // Disallow updating existing comment tags from SF
+                throw new ArgumentException("Cannot update an existing comment tag via Scripture Forge");
+            }
+            var newCommentTag = new CommentTag(noteTag.Name, noteTag.Icon);
+            // Check that the tag does not already exist
+            if (commentTags.FindMatchingTag(newCommentTag) == CommentTag.toDoTagId)
+            {
+                // The to do tag is returned as the default if a matching tag does not exist
+                commentTags.AddOrUpdate(newCommentTag);
+            }
+            return commentTags.FindMatchingTag(newCommentTag);
         }
 
         /// <summary>
@@ -1390,32 +1420,32 @@ namespace SIL.XForge.Scripture.Services
 
         /// <summary>Returns the current revision of the local hg repo for a given PT project id,
         /// accessed using a given user.</summary>
-        public string GetRepoRevision(UserSecret userSecret, string ptProjectId)
+        public string GetRepoRevision(UserSecret userSecret, string paratextId)
         {
-            if (IsResource(ptProjectId))
+            if (IsResource(paratextId))
             {
                 throw new InvalidOperationException("Cannot query a resource for an hg repo revision.");
             }
-            using ScrText scrText = GetScrText(userSecret, ptProjectId);
+            using ScrText scrText = GetScrText(userSecret, paratextId);
             return _hgHelper.GetRepoRevision(scrText.Directory);
         }
 
         /// <summary>Set a project local hg repo to a given Mercurial revision. Accessed by a given user.</summary>>
-        public void SetRepoToRevision(UserSecret userSecret, string ptProjectId, string desiredRevision)
+        public void SetRepoToRevision(UserSecret userSecret, string paratextid, string desiredRevision)
         {
-            if (IsResource(ptProjectId))
+            if (IsResource(paratextid))
             {
                 throw new InvalidOperationException("Cannot query a resource for an hg repo revision.");
             }
-            using ScrText scrText = GetScrText(userSecret, ptProjectId);
+            using ScrText scrText = GetScrText(userSecret, paratextid);
             // Act
             _hgHelper.Update(scrText.Directory, desiredRevision);
             // Verify
-            string currentRepoRev = GetRepoRevision(userSecret, ptProjectId);
+            string currentRepoRev = GetRepoRevision(userSecret, paratextid);
             if (currentRepoRev != desiredRevision)
             {
                 throw new Exception(
-                    $"SetRepoToRevision failed to set repo for PT project id {ptProjectId} to revision {desiredRevision}, as the resulting revision is {currentRepoRev}."
+                    $"SetRepoToRevision failed to set repo for PT project id {paratextid} to revision {desiredRevision}, as the resulting revision is {currentRepoRev}."
                 );
             }
         }
@@ -1598,9 +1628,9 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary>Does a local directory exist for the project? (i.e. in /var/lib/...)</summary>
-        public bool LocalProjectDirExists(string ptProjectId)
+        public bool LocalProjectDirExists(string paratextId)
         {
-            string dir = LocalProjectDir(ptProjectId);
+            string dir = LocalProjectDir(paratextId);
             return _fileSystemService.DirectoryExists(dir);
         }
 
@@ -1623,18 +1653,18 @@ namespace SIL.XForge.Scripture.Services
             _httpClientHandler.Dispose();
         }
 
-        private ScrText GetScrText(UserSecret userSecret, string ptProjectId)
+        private ScrText GetScrText(UserSecret userSecret, string paratextId)
         {
             string? ptUsername = GetParatextUsername(userSecret);
             if (ptUsername == null)
             {
                 throw new DataNotFoundException($"Failed to get username for UserSecret id {userSecret.Id}.");
             }
-            ScrText? scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), ptProjectId);
+            ScrText? scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             if (scrText == null)
             {
                 throw new DataNotFoundException(
-                    $"Could not find project for UserSecret id {userSecret.Id}, PT project id {ptProjectId}"
+                    $"Could not find project for UserSecret id {userSecret.Id}, PT project id {paratextId}"
                 );
             }
             return scrText;
@@ -1917,17 +1947,17 @@ namespace SIL.XForge.Scripture.Services
 
         /// <summary>Path for project directory on local filesystem. Whether or not that directory
         /// exists. </summary>
-        private string LocalProjectDir(string ptProjectId)
+        private string LocalProjectDir(string paratextId)
         {
             // Historically, SF used both "target" and "source" projects in adjacent directories. Then
             // moved to just using "target".
             string subDirForMainProject = "target";
-            return Path.Combine(SyncDir, ptProjectId, subDirForMainProject);
+            return Path.Combine(SyncDir, paratextId, subDirForMainProject);
         }
 
-        private void CloneProjectRepo(IInternetSharedRepositorySource source, string ptProjectId, SharedRepository repo)
+        private void CloneProjectRepo(IInternetSharedRepositorySource source, string paratextId, SharedRepository repo)
         {
-            string clonePath = LocalProjectDir(ptProjectId);
+            string clonePath = LocalProjectDir(paratextId);
             if (!_fileSystemService.DirectoryExists(clonePath))
             {
                 _fileSystemService.CreateDirectory(clonePath);
@@ -1937,9 +1967,9 @@ namespace SIL.XForge.Scripture.Services
             _hgHelper.Update(clonePath);
         }
 
-        private IEnumerable<CommentThread> GetCommentThreads(UserSecret userSecret, string projectId, int bookNum)
+        private IEnumerable<CommentThread> GetCommentThreads(UserSecret userSecret, string paratextId, int bookNum)
         {
-            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), projectId);
+            ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             if (scrText == null)
                 return null;
 
@@ -1952,14 +1982,14 @@ namespace SIL.XForge.Scripture.Services
 
         private SyncMetricInfo PutCommentThreads(
             UserSecret userSecret,
-            string projectId,
+            string paratextId,
             List<List<Paratext.Data.ProjectComments.Comment>> changeList
         )
         {
             string username = GetParatextUsername(userSecret);
             List<string> users = new List<string>();
             SyncMetricInfo syncMetricInfo = new SyncMetricInfo();
-            ScrText scrText = ScrTextCollection.FindById(username, projectId);
+            ScrText scrText = ScrTextCollection.FindById(username, paratextId);
             if (scrText == null)
                 throw new DataNotFoundException("Can't get access to cloned project.");
             CommentManager manager = CommentManager.Get(scrText);
@@ -2022,12 +2052,12 @@ namespace SIL.XForge.Scripture.Services
             return syncMetricInfo;
         }
 
-        private CommentTags? GetCommentTags(UserSecret userSecret, string projectId)
+        private CommentTags? GetCommentTags(UserSecret userSecret, string paratextId)
         {
             string? ptUsername = GetParatextUsername(userSecret);
             if (ptUsername == null)
                 return null;
-            ScrText? scrText = ScrTextCollection.FindById(ptUsername, projectId);
+            ScrText? scrText = ScrTextCollection.FindById(ptUsername, paratextId);
             return scrText == null ? null : CommentTags.Get(scrText);
         }
 
@@ -2177,7 +2207,7 @@ namespace SIL.XForge.Scripture.Services
             IEnumerable<IDocument<NoteThread>> noteThreadDocs,
             IEnumerable<CommentThread> commentThreads,
             string defaultUsername,
-            CommentTags commentTags,
+            int sfNoteTagId,
             Dictionary<string, ParatextUserProfile> ptProjectUsers
         )
         {
@@ -2237,7 +2267,8 @@ namespace SIL.XForge.Scripture.Services
                             ContextBefore = threadDoc.Data.OriginalContextBefore,
                             ContextAfter = threadDoc.Data.OriginalContextAfter
                         };
-                        PopulateCommentFromNote(note, comment, commentTags);
+                        bool isFirstComment = i == 0;
+                        PopulateCommentFromNote(note, comment, sfNoteTagId, isFirstComment);
                         thread.Add(comment);
                         if (note.SyncUserRef == null)
                         {
@@ -2258,7 +2289,7 @@ namespace SIL.XForge.Scripture.Services
         private ChangeType GetCommentChangeType(
             Paratext.Data.ProjectComments.Comment comment,
             Note note,
-            CommentTag commentTag,
+            Paratext.Data.ProjectComments.CommentTag commentTag,
             Dictionary<string, ParatextUserProfile> ptProjectUsers
         )
         {
@@ -2270,7 +2301,7 @@ namespace SIL.XForge.Scripture.Services
             bool conflictTypeChanged = comment.ConflictType.InternalValue != note.ConflictType;
             bool acceptedChangeXmlChanged = comment.AcceptedChangeXmlStr != note.AcceptedChangeXml;
             bool contentChanged = comment.Contents?.InnerXml != note.Content;
-            bool tagChanged = commentTag?.Icon != note.TagIcon;
+            bool tagChanged = commentTag?.Id != note.TagId;
             bool assignedUserChanged = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers) != note.Assignment;
             if (
                 contentChanged
@@ -2288,7 +2319,8 @@ namespace SIL.XForge.Scripture.Services
         private void PopulateCommentFromNote(
             Note note,
             Paratext.Data.ProjectComments.Comment comment,
-            CommentTags commentTags
+            int sfNoteTagId,
+            bool isFirstComment
         )
         {
             comment.Thread = note.ThreadId;
@@ -2299,11 +2331,12 @@ namespace SIL.XForge.Scripture.Services
                 comment.GetOrCreateCommentNode().InnerXml = note.Content;
             if (_userSecretRepository.Query().Any(u => u.Id == note.OwnerRef))
                 comment.ExternalUser = note.OwnerRef;
-            if (note.TagIcon != null)
-            {
-                var commentTag = new CommentTag(null, note.TagIcon);
-                comment.TagsAdded = new[] { commentTags.FindMatchingTag(commentTag).ToString() };
-            }
+            comment.TagsAdded =
+                note.TagId == null
+                    ? isFirstComment
+                        ? new[] { sfNoteTagId.ToString() }
+                        : null
+                    : new[] { note.TagId.ToString() };
         }
 
         private Note CreateNoteFromComment(
@@ -2329,7 +2362,7 @@ namespace SIL.XForge.Scripture.Services
                 DateModified = DateTime.Parse(comment.Date),
                 Deleted = comment.Deleted,
                 Status = comment.Status.InternalValue,
-                TagIcon = commentTag?.Icon,
+                TagId = commentTag?.Id,
                 Reattached = comment.Reattached,
                 Assignment = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers)
             };

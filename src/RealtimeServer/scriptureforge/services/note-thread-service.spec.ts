@@ -142,7 +142,6 @@ describe('NoteThreadService', () => {
       ownerRef: env.reviewerId,
       projectRef: 'project01',
       publishedToSF: true,
-      tagIcon: '',
       originalContextAfter: '',
       originalSelectedText: '',
       originalContextBefore: '',
@@ -421,6 +420,7 @@ class TestEnvironment {
         answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
       texts: [],
+      noteTags: [],
       editable: true,
       sync: { queuedCount: 0 },
       userRoles: {
@@ -456,7 +456,6 @@ class TestEnvironment {
       originalContextAfter: '',
       position,
       status,
-      tagIcon: '',
       publishedToSF: false
     });
 
@@ -471,7 +470,6 @@ class TestEnvironment {
       originalContextAfter: '',
       position,
       status,
-      tagIcon: '',
       publishedToSF: true
     });
 
@@ -486,7 +484,6 @@ class TestEnvironment {
       originalContextAfter: '',
       position,
       status,
-      tagIcon: '',
       publishedToSF: true
     });
   }

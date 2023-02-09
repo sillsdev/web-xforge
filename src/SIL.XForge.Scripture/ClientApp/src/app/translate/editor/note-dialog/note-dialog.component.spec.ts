@@ -34,6 +34,7 @@ import { configureTestingModule, matDialogCloseDelay, TestTranslocoModule } from
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -232,7 +233,7 @@ describe('NoteDialogComponent', () => {
 
   it('produce correct default note icon', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
-    expect(env.component.flagIcon).toEqual('/assets/icons/TagIcons/flag02.png');
+    expect(env.component.flagIcon).toEqual('/assets/icons/TagIcons/flag01.png');
   }));
 
   it('should show correct icon', fakeAsync(() => {
@@ -241,7 +242,7 @@ describe('NoteDialogComponent', () => {
     // To do
     expect(env.notes[0].nativeElement.querySelector('img').getAttribute('src'))
       .withContext('[n0] to do - src')
-      .toEqual('/assets/icons/TagIcons/flag02.png');
+      .toEqual('/assets/icons/TagIcons/flag01.png');
     expect(env.notes[0].nativeElement.querySelector('img').getAttribute('title'))
       .withContext('[n0] to do - title')
       .toEqual('To do');
@@ -287,7 +288,7 @@ describe('NoteDialogComponent', () => {
 
     // Check note with status set
     const verseText = 'before selection reattached text after selection';
-    let expectedSrc = '/assets/icons/TagIcons/flag02.png';
+    let expectedSrc = '/assets/icons/TagIcons/flag01.png';
     let reattachNote = env.notes[4].nativeElement as HTMLElement;
     expect(reattachNote.querySelector('.content .text')!.textContent).toContain(verseText);
     expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
@@ -297,7 +298,7 @@ describe('NoteDialogComponent', () => {
 
     // Check note with no status set
     reattachedContent = 'reattached02';
-    expectedSrc = '/assets/icons/TagIcons/flag03.png';
+    expectedSrc = '/assets/icons/TagIcons/flag01.png';
     reattachNote = env.notes[5].nativeElement as HTMLElement;
     expect(reattachNote.querySelector('.content .verse-reattached')!.textContent).toContain('Matthew 1:4');
     expect(reattachNote.querySelector('.content .note-content')!.textContent).toContain(reattachedContent);
@@ -315,7 +316,6 @@ describe('NoteDialogComponent', () => {
       ownerRef: 'user01',
       position: { start: 0, length: 0 },
       projectRef: TestEnvironment.PROJECT01,
-      tagIcon: 'flag02',
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
       status: NoteStatus.Todo,
       assignment: AssignedUsers.TeamUser,
@@ -336,7 +336,7 @@ describe('NoteDialogComponent', () => {
           deleted: false,
           ownerRef: 'user01',
           status: NoteStatus.Todo,
-          tagIcon: 'flag02',
+          tagId: 1,
           dateCreated: '',
           dateModified: '',
           assignment: TestEnvironment.paratextUsers.find(u => u.sfUserId === 'user01')!.opaqueUserId
@@ -387,7 +387,7 @@ describe('NoteDialogComponent', () => {
 
   it('shows correct coloured icon based on assignment', fakeAsync(() => {
     const currentUserId = 'user01';
-    const defaultIcon = 'flag02.png';
+    const defaultIcon = 'flag01.png';
     const grayIcon = 'flag04.png';
     const assigned: { assigned?: AssignedUsers | string; expectedIcon: string }[] = [
       {
@@ -453,7 +453,7 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('show insert note dialog content', fakeAsync(() => {
-    env = new TestEnvironment({ verseRef: VerseRef.parse('MAT 1:1') });
+    env = new TestEnvironment({ verseRef: VerseRef.parse('MAT 1:1'), noteTagId: 6 });
     expect(env.noteInputElement).toBeTruthy();
     expect(env.flagIcon).toEqual('/assets/icons/TagIcons/defaultIcon.png');
     expect(env.verseRef).toEqual('Matthew 1:1');
@@ -463,7 +463,7 @@ describe('NoteDialogComponent', () => {
 
   it('can insert a note', fakeAsync(() => {
     const verseRef = VerseRef.parse('MAT 1:3');
-    env = new TestEnvironment({ verseRef });
+    env = new TestEnvironment({ verseRef, noteTagId: 2 });
     expect(env.noteInputElement).toBeTruthy();
     expect(env.verseRef).toEqual('Matthew 1:3');
     env.enterNoteContent('Enter note content');
@@ -479,7 +479,13 @@ describe('NoteDialogComponent', () => {
     expect(noteThread.publishedToSF).toBe(true);
     expect(noteThread.notes[0].ownerRef).toEqual('user01');
     expect(noteThread.notes[0].content).toEqual('Enter note content');
-    expect(noteThread.tagIcon).toEqual('defaultIcon');
+    expect(noteThread.notes[0].tagId).toEqual(2);
+  }));
+
+  it('show sf note tag on notes with undefined tag id', fakeAsync(() => {
+    const noteThread: NoteThread = TestEnvironment.getNoteThread(undefined, true);
+    env = new TestEnvironment({ noteThread });
+    expect(env.flagIcon).toEqual('/assets/icons/TagIcons/' + SF_TAG_ICON + '.png');
   }));
 
   it('does not save note if textarea is empty', fakeAsync(() => {
@@ -613,6 +619,7 @@ interface TestEnvironmentConstructorArgs {
   currentUserId?: string;
   noteThread?: NoteThread;
   verseRef?: VerseRef;
+  noteTagId?: number;
 }
 
 class TestEnvironment {
@@ -649,10 +656,17 @@ class TestEnvironment {
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     texts: [TestEnvironment.matthewText],
+    noteTags: [
+      { tagId: 1, name: 'PT Tag 1', icon: 'flag01', creatorResolve: false },
+      { tagId: 2, name: 'PT Tag 2', icon: 'circle01', creatorResolve: false },
+      { tagId: 3, name: 'PT Tag 3', icon: 'star01', creatorResolve: false },
+      { tagId: 4, name: 'PT Tag 4', icon: 'tag01', creatorResolve: false },
+      { tagId: 5, name: 'PT Tag 5', icon: 'asterisk01', creatorResolve: false },
+      { tagId: 6, name: 'SF Note Tag', icon: 'defaultIcon', creatorResolve: false }
+    ],
     sync: { queuedCount: 0 },
     editable: true,
-    userRoles: TestEnvironment.userRoles,
-    tagIcon: 'defaultIcon'
+    userRoles: TestEnvironment.userRoles
   };
   static paratextUsers: ParatextUserProfile[] = paratextUsersFromRoles(TestEnvironment.userRoles);
   static testProject: SFProject = {
@@ -670,7 +684,6 @@ class TestEnvironment {
     ownerRef: 'user01',
     position: { start: 0, length: 0 },
     projectRef: TestEnvironment.PROJECT01,
-    tagIcon: 'flag02',
     verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
     status: NoteStatus.Todo,
     assignment: AssignedUsers.TeamUser,
@@ -685,14 +698,16 @@ class TestEnvironment {
         deleted: false,
         ownerRef: 'user01',
         status: NoteStatus.Todo,
+        tagId: 1,
         dateCreated: '',
         dateModified: ''
       }
     ]
   };
-  static getNoteThread(reattachedContent?: string): NoteThread {
+  static getNoteThread(reattachedContent?: string, isInitialSFNote?: boolean): NoteThread {
     const type: NoteType = NoteType.Normal;
     const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
+    const tagId: number | undefined = isInitialSFNote === true ? undefined : 1;
     const noteThread: NoteThread = {
       originalContextBefore: 'before selection ',
       originalContextAfter: ' after selection',
@@ -701,10 +716,10 @@ class TestEnvironment {
       ownerRef: 'user01',
       position: { start: 1, length: 1 },
       projectRef: TestEnvironment.PROJECT01,
-      tagIcon: 'flag02',
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 7 },
       status: NoteStatus.Todo,
       assignment: AssignedUsers.TeamUser,
+      publishedToSF: !!isInitialSFNote,
       notes: [
         {
           dataId: 'note01',
@@ -716,7 +731,7 @@ class TestEnvironment {
           deleted: false,
           ownerRef: 'user01',
           status: NoteStatus.Todo,
-          tagIcon: 'flag02',
+          tagId,
           dateCreated: '',
           dateModified: '',
           assignment: TestEnvironment.paratextUsers.find(u => u.sfUserId === 'user01')!.opaqueUserId
@@ -731,7 +746,7 @@ class TestEnvironment {
           deleted: false,
           ownerRef: 'user01',
           status: NoteStatus.Resolved,
-          tagIcon: 'flag02',
+          tagId,
           dateCreated: '',
           dateModified: '',
           assignment: AssignedUsers.TeamUser
@@ -746,7 +761,7 @@ class TestEnvironment {
           deleted: true,
           ownerRef: 'user01',
           status: NoteStatus.Todo,
-          tagIcon: 'flag02',
+          tagId,
           dateCreated: '',
           dateModified: ''
         },
@@ -773,7 +788,7 @@ class TestEnvironment {
           deleted: false,
           ownerRef: 'user01',
           status: NoteStatus.Done,
-          tagIcon: 'flag02',
+          tagId,
           dateCreated: '',
           dateModified: ''
         }
@@ -790,7 +805,7 @@ class TestEnvironment {
         deleted: false,
         ownerRef: 'user01',
         status: reattachedContent === '' ? NoteStatus.Unspecified : NoteStatus.Todo,
-        tagIcon: reattachedContent === '' ? undefined : 'flag02',
+        tagId: reattachedContent === '' ? undefined : 1,
         dateCreated: '',
         dateModified: '',
         reattached: TestEnvironment.reattached
@@ -805,7 +820,7 @@ class TestEnvironment {
         deleted: false,
         ownerRef: 'user01',
         status: NoteStatus.Unspecified,
-        tagIcon: 'flag03',
+        tagId: 1,
         dateCreated: '',
         dateModified: '',
         reattached: TestEnvironment.reattached
@@ -825,7 +840,8 @@ class TestEnvironment {
     isRightToLeftProject,
     currentUserId = 'user01',
     noteThread,
-    verseRef
+    verseRef,
+    noteTagId
   }: TestEnvironmentConstructorArgs = {}) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const textDocId = new TextDocId(TestEnvironment.PROJECT01, 40, 1);
@@ -837,6 +853,8 @@ class TestEnvironment {
     };
     TestEnvironment.testProjectProfile.isRightToLeft = isRightToLeftProject;
     TestEnvironment.testProject.isRightToLeft = isRightToLeftProject;
+    TestEnvironment.testProjectProfile.translateConfig.defaultNoteTagId = noteTagId;
+    TestEnvironment.testProject.translateConfig.defaultNoteTagId = noteTagId;
     this.dialogRef = TestBed.inject(MatDialog).open(NoteDialogComponent, { data: configData });
     this.component = this.dialogRef.componentInstance;
     tick();
@@ -960,6 +978,10 @@ class TestEnvironment {
   getNoteThreadDoc(threadId: string): NoteThreadDoc {
     const id: string = [TestEnvironment.PROJECT01, threadId].join(':');
     return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, id);
+  }
+
+  getProjectProfileDoc(projectId: string): SFProjectProfileDoc {
+    return this.realtimeService.get<SFProjectDoc>(SFProjectProfileDoc.COLLECTION, projectId);
   }
 
   noteHasEditActions(noteNumber: number): boolean {
