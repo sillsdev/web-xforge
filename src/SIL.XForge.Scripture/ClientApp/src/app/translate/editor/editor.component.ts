@@ -10,7 +10,6 @@ import {
   MAX_SEGMENT_LENGTH,
   PhraseTranslationSuggester,
   RangeTokenizer,
-  RemoteTranslationEngine,
   TranslationSuggester
 } from '@sillsdev/machine';
 import isEqual from 'lodash-es/isEqual';
@@ -52,6 +51,7 @@ import { Delta } from '../../core/models/text-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { Segment } from '../../shared/text/segment';
 import {
   EmbedsByVerse,
@@ -105,9 +105,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   chapters: number[] = [];
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
-  trainingPercentage: number = 0;
-  trainingMessage: string = '';
-  showTrainingProgress: boolean = false;
   textHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
@@ -142,8 +139,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private onTargetDeleteSub?: Subscription;
   private trainingSub?: Subscription;
   private projectDataChangesSub?: Subscription;
-  private trainingProgressClosed: boolean = false;
-  private trainingCompletedTimeout: any;
   private clickSubs: Map<string, Subscription[]> = new Map<string, Subscription[]>();
   private selectionClickSubs: Subscription[] = [];
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
@@ -403,6 +398,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.userRole === SFProjectRole.Reviewer;
   }
 
+  get projectId(): string | undefined {
+    return this.projectDoc?.id;
+  }
+
   private get userRole(): string | undefined {
     return this.projectDoc?.data?.userRoles[this.userService.currentUserId];
   }
@@ -551,11 +550,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.onTargetDeleteSub != null) {
       this.onTargetDeleteSub.unsubscribe();
     }
-  }
-
-  closeTrainingProgress(): void {
-    this.showTrainingProgress = false;
-    this.trainingProgressClosed = true;
   }
 
   async onTargetUpdated(
@@ -925,25 +919,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       .listenForTrainingStatus()
       .pipe(
         tap({
-          error: () => {
-            // error while listening
-            this.showTrainingProgress = false;
-            this.trainingCompletedTimeout = undefined;
-            this.trainingProgressClosed = false;
-          },
           complete: async () => {
-            // training completed successfully
-            if (this.trainingProgressClosed) {
-              this.noticeService.show(translate('editor.training_completed_successfully'));
-              this.trainingProgressClosed = false;
-            } else {
-              this.trainingMessage = translate('editor.completed_successfully');
-              this.trainingCompletedTimeout = setTimeout(() => {
-                this.showTrainingProgress = false;
-                this.trainingCompletedTimeout = undefined;
-              }, 5000);
-            }
-
             // ensure that any changes to the segment will be trained
             if (this.target != null && this.target.segment != null) {
               this.target.segment.acceptChanges();
@@ -961,18 +937,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         filter(progress => progress.percentCompleted > 0),
         retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
       )
-      .subscribe(progress => {
-        if (!this.trainingProgressClosed) {
-          this.showTrainingProgress = true;
-        }
-        if (this.trainingCompletedTimeout != null) {
-          clearTimeout(this.trainingCompletedTimeout);
-          this.trainingCompletedTimeout = undefined;
-        }
-        this.trainingPercentage = Math.round(progress.percentCompleted * 100);
-        // ToDo: internationalize message
-        this.trainingMessage = progress.message;
-      });
+      .subscribe();
   }
 
   private setTextHeight(): void {

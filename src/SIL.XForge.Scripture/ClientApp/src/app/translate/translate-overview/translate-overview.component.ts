@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { RemoteTranslationEngine } from '@sillsdev/machine';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { ANY_INDEX, obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -17,6 +16,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 
 const ENGINE_QUALITY_STAR_COUNT = 3;
 const TEXT_PATH_TEMPLATE = obj<SFProject>().pathTemplate(p => p.texts[ANY_INDEX]);
@@ -97,6 +97,10 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     }
     const hasSourceBooks: boolean = this.translationEngineService.checkHasSourceBooks(this.projectDoc.data);
     return this.translationSuggestionsEnabled && !hasSourceBooks;
+  }
+
+  get projectId(): string | undefined {
+    return this.projectDoc?.id;
   }
 
   ngOnInit(): void {
@@ -208,22 +212,28 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     }
 
     this.translationEngine = this.translationEngineService.createTranslationEngine(this.projectDoc.id);
-    const trainingStatus$ = this.translationEngine.listenForTrainingStatus().pipe(
-      tap({
-        error: () => (this.isTraining = false),
-        complete: () => {
-          this.isTraining = false;
-          this.updateEngineStats();
-        }
-      }),
-      repeat(),
-      filter(progress => progress.percentCompleted > 0),
-      retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
-    );
-    this.trainingSub = trainingStatus$.subscribe(async progress => {
-      this.trainingPercentage = progress.percentCompleted * 100;
-      this.isTraining = true;
-    });
+    this.trainingSub = this.translationEngine
+      .listenForTrainingStatus()
+      .pipe(
+        tap({
+          error: () => {
+            // error while listening
+            this.isTraining = false;
+          },
+          complete: () => {
+            // training completed successfully
+            this.isTraining = false;
+            this.updateEngineStats();
+          }
+        }),
+        repeat(),
+        filter(progress => progress.percentCompleted > 0),
+        retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
+      )
+      .subscribe(progress => {
+        this.trainingPercentage = Math.round(progress.percentCompleted * 100);
+        this.isTraining = true;
+      });
   }
 
   private async updateEngineStats(): Promise<void> {

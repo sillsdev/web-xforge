@@ -10,7 +10,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import {
   createRange,
   ProgressStatus,
-  RemoteTranslationEngine,
   TranslationSources,
   WordAlignmentMatrix,
   WordGraph,
@@ -71,9 +70,11 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
+import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { NoteDialogComponent } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
@@ -110,7 +111,7 @@ class MockConsole {
 
 describe('EditorComponent', () => {
   configureTestingModule(() => ({
-    declarations: [EditorComponent, SuggestionsComponent],
+    declarations: [EditorComponent, SuggestionsComponent, TrainingProgressComponent],
     imports: [
       NoopAnimationsModule,
       RouterTestingModule.withRoutes(ROUTES),
@@ -759,29 +760,25 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      expect(env.component.showTrainingProgress).toBe(false);
+      expect(env.trainingProgress).toBeNull();
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).not.toBeNull();
-      expect(env.component.showTrainingProgress).toBe(true);
       expect(env.trainingProgressSpinner).not.toBeNull();
       env.updateTrainingProgress(1);
       expect(env.trainingCompleteIcon).not.toBeNull();
       expect(env.trainingProgressSpinner).toBeNull();
       env.completeTrainingProgress();
       expect(env.trainingProgress).not.toBeNull();
-      expect(env.component.showTrainingProgress).toBe(true);
       tick(5000);
       env.wait();
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
       expect(env.trainingProgress).toBeNull();
-      expect(env.component.showTrainingProgress).toBe(false);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).not.toBeNull();
-      expect(env.component.showTrainingProgress).toBe(true);
       expect(env.trainingProgressSpinner).not.toBeNull();
 
       env.dispose();
@@ -792,18 +789,16 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      expect(env.component.showTrainingProgress).toBe(false);
+      expect(env.trainingProgress).toBeNull();
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).not.toBeNull();
-      expect(env.component.showTrainingProgress).toBe(true);
       expect(env.trainingProgressSpinner).not.toBeNull();
       env.clickTrainingProgressCloseButton();
       expect(env.trainingProgress).toBeNull();
-      expect(env.component.showTrainingProgress).toBe(false);
       env.updateTrainingProgress(1);
       env.completeTrainingProgress();
       env.wait();
@@ -812,7 +807,6 @@ describe('EditorComponent', () => {
 
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).not.toBeNull();
-      expect(env.component.showTrainingProgress).toBe(true);
       expect(env.trainingProgressSpinner).not.toBeNull();
 
       env.dispose();
@@ -823,23 +817,20 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      expect(env.component.showTrainingProgress).toBe(false);
+      expect(env.trainingProgress).toBeNull();
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).not.toBeNull();
-      expect(env.component.showTrainingProgress).toBe(true);
       expect(env.trainingProgressSpinner).not.toBeNull();
       env.throwTrainingProgressError();
       expect(env.trainingProgress).toBeNull();
-      expect(env.component.showTrainingProgress).toBe(false);
 
       tick(30000);
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgress).not.toBeNull();
-      expect(env.component.showTrainingProgress).toBe(true);
       expect(env.trainingProgressSpinner).not.toBeNull();
 
       env.dispose();

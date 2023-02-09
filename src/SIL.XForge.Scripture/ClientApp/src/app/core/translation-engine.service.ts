@@ -3,8 +3,7 @@ import {
   createInteractiveTranslator,
   ErrorCorrectionModel,
   LatinWordTokenizer,
-  MAX_SEGMENT_LENGTH,
-  RemoteTranslationEngine
+  MAX_SEGMENT_LENGTH
 } from '@sillsdev/machine';
 import * as crc from 'crc-32';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -16,7 +15,8 @@ import { filter, share } from 'rxjs/operators';
 import { OfflineData, OfflineStore } from 'xforge-common/offline-store';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { MachineHttpClient } from './machine-http-client';
+import { HttpClient } from '../machine-api/http-client';
+import { RemoteTranslationEngine } from '../machine-api/remote-translation-engine';
 import { EditedSegmentData, EDITED_SEGMENTS } from './models/edited-segment-data';
 import { SFProjectService } from './sf-project.service';
 
@@ -28,12 +28,13 @@ import { SFProjectService } from './sf-project.service';
 })
 export class TranslationEngineService extends SubscriptionDisposable {
   private onlineStatus$: Observable<boolean>;
+  private translationEngines: Map<string, RemoteTranslationEngine> = new Map<string, RemoteTranslationEngine>();
 
   constructor(
     private readonly offlineStore: OfflineStore,
     private readonly pwaService: PwaService,
     private readonly projectService: SFProjectService,
-    private readonly machineHttp: MachineHttpClient
+    private readonly machineHttp: HttpClient
   ) {
     super();
     this.onlineStatus$ = this.pwaService.onlineStatus$.pipe(
@@ -50,7 +51,10 @@ export class TranslationEngineService extends SubscriptionDisposable {
   }
 
   createTranslationEngine(projectId: string): RemoteTranslationEngine {
-    return new RemoteTranslationEngine(projectId, this.machineHttp);
+    if (!this.translationEngines.has(projectId)) {
+      this.translationEngines.set(projectId, new RemoteTranslationEngine(projectId, this.machineHttp));
+    }
+    return this.translationEngines.get(projectId)!;
   }
 
   checkHasSourceBooks(project: SFProjectProfile): boolean {

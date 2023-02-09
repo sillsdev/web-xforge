@@ -5,9 +5,12 @@ import { MatProgressBar } from '@angular/material/progress-bar';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { ProgressStatus, RemoteTranslationEngine } from '@sillsdev/machine';
+import { ProgressStatus } from '@sillsdev/machine';
 import { CookieService } from 'ngx-cookie-service';
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import {
+  CheckingAnswerExport,
+  CheckingShareLevel
+} from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -23,13 +26,13 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
-import { TextDocId } from '../../core/models/text-doc';
-import { Delta, TextDoc } from '../../core/models/text-doc';
+import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
+import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -41,7 +44,7 @@ const mockedUserService = mock(UserService);
 
 describe('TranslateOverviewComponent', () => {
   configureTestingModule(() => ({
-    declarations: [TranslateOverviewComponent],
+    declarations: [TranslateOverviewComponent, TrainingProgressComponent],
     imports: [RouterTestingModule, UICommonModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
@@ -113,7 +116,7 @@ describe('TranslateOverviewComponent', () => {
 
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).never();
       env.simulateTranslateSuggestionsEnabled();
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
       expect().nothing();
     }));
 
@@ -121,7 +124,9 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      // We need an extra tick for the TrainingProgress projectId subscription
+      tick();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgressShown).toBe(true);
       expect(env.component.isTraining).toBe(true);
@@ -138,7 +143,9 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      // We need an extra tick for the TrainingProgress projectId subscription
+      tick();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
       env.updateTrainingProgress(0.1);
       expect(env.trainingProgressShown).toBe(true);
       expect(env.component.isTraining).toBe(true);
@@ -156,7 +163,9 @@ describe('TranslateOverviewComponent', () => {
       const env = new TestEnvironment();
       env.wait();
 
-      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+      // We need an extra tick for the TrainingProgress projectId subscription
+      tick();
+      verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
       env.clickRetrainButton();
       expect(env.trainingProgressShown).toBe(true);
       expect(env.trainingProgress.mode).toBe('indeterminate');
@@ -238,7 +247,7 @@ class TestEnvironment {
   }
 
   get trainingProgress(): MatProgressBar {
-    return this.fixture.debugElement.query(By.css('#training-progress')).componentInstance;
+    return this.fixture.debugElement.query(By.css('#training-progress-bar')).componentInstance;
   }
 
   get trainingProgressShown(): boolean {
