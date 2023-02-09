@@ -228,11 +228,18 @@ namespace SIL.XForge.Scripture.Services
             if (ptProject is not ParatextResource)
             {
                 StartProgressReporting(progress);
+
+                string username = GetParatextUsername(userSecret);
+                using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
+                if (scrText == null)
+                    throw new Exception(
+                        $"Failed to fetch ScrText for PT project id {paratextId} using PT username {username}"
+                    );
+
                 SharedProject sharedProj = CreateSharedProject(
-                    userSecret,
                     paratextId,
                     ptProject.ShortName,
-                    source.AsInternetSharedRepositorySource(),
+                    scrText,
                     sendReceiveRepository
                 );
                 List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { sharedProj };
@@ -284,6 +291,10 @@ namespace SIL.XForge.Scripture.Services
                         $"Failed: Errors occurred while performing the sync with the Paratext Server. More information: noErrors: {noErrors}. success: {success}. null results: {results == null}. results: {resultsInfo}"
                     );
                 }
+
+                // Update the cached comment manager
+                CommentManager manager = CommentManager.Get(scrText);
+                manager.Load();
             }
 
             return ptProject;
@@ -1177,13 +1188,7 @@ namespace SIL.XForge.Scripture.Services
                 return null;
 
             CommentManager manager = CommentManager.Get(scrText);
-            var threads = manager.FindThreads(
-                (commentThread) =>
-                {
-                    return commentThread.VerseRef.BookNum == bookNum;
-                },
-                true
-            );
+            var threads = manager.FindThreads(commentThread => commentThread.VerseRef.BookNum == bookNum, true);
             return NotesFormatter.FormatNotes(threads);
         }
 
@@ -1890,24 +1895,16 @@ namespace SIL.XForge.Scripture.Services
 
         /// <summary> Create a shared project object for a given project. </summary>
         private SharedProject CreateSharedProject(
-            UserSecret userSecret,
             string paratextId,
             string proj,
-            SharedRepositorySource source,
+            ScrText scrText,
             SharedRepository sharedRepository
         )
         {
-            string username = GetParatextUsername(userSecret);
-            // Specifically set the ScrText property of the SharedProject to indicate the project is available locally
-            using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
-            if (scrText == null)
-                throw new Exception(
-                    $"Failed to fetch ScrText for PT project id {paratextId} using PT username {username}"
-                );
-
             // Previously we used the CreateSharedProject method of SharingLogic but it would
             // result in null if the user did not have a license to the repo which happens
-            // if the project is derived from another. This ensures the SharedProject is available
+            // if the project is derived from another. This ensures the SharedProject is available.
+            // We must set the ScrText property of the SharedProject to indicate that the project is available locally
             return new SharedProject
             {
                 ScrTextName = proj,
@@ -1947,15 +1944,10 @@ namespace SIL.XForge.Scripture.Services
                 return null;
 
             CommentManager manager = CommentManager.Get(scrText);
-            manager.LoadIfChanged();
-            IEnumerable<CommentThread> threads = manager.FindThreads(
-                (commentThread) =>
-                {
-                    return commentThread.VerseRef.BookNum == bookNum;
-                },
+            return manager.FindThreads(
+                commentThread => commentThread.VerseRef.BookNum == bookNum && !commentThread.Id.StartsWith("ANSWER_"),
                 false
             );
-            return threads.Where(t => !t.Id.StartsWith("ANSWER_"));
         }
 
         private SyncMetricInfo PutCommentThreads(
