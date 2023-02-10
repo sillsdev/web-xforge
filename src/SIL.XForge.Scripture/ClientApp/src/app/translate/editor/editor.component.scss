@@ -39,7 +39,7 @@
 
 .toolbar-separator {
   border-left: 1px solid $border-color;
-  margin: 0px 4px;
+  margin: 0 4px;
   height: 36px;
   width: 0;
 }
@@ -108,4 +108,13 @@ app-text {
 .insert-note-fab {
   position: fixed;
   visibility: hidden;
+}
+
+.fab-bottom-sheet {
+  display: flex;
+  flex-direction: column;
+  b {
+    display: block;
+    margin-bottom: 10px;
+  }
 }

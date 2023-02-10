@@ -62,6 +62,7 @@ import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/fea
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { MediaObserver } from '@angular/flex-layout';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -92,6 +93,7 @@ const mockedPwaService = mock(PwaService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
 const mockedFeatureFlagService = mock(FeatureFlagService);
+const mockedMediaObserver = mock(MediaObserver);
 
 class MockComponent {}
 
@@ -132,7 +134,8 @@ describe('EditorComponent', () => {
       { provide: PwaService, useMock: mockedPwaService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: MatDialog, useMock: mockedMatDialog },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
+      { provide: MediaObserver, useMock: mockedMediaObserver }
     ]
   }));
 
@@ -2525,6 +2528,31 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('shows insert note button using bottom sheet for mobile viewport', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
+      env.setCurrentUser('user05');
+      env.wait();
+
+      // Initial setup will state FALSE when checking for mobile viewports
+      let verseSegment: HTMLElement = env.getSegmentElement('verse_1_3')!;
+      verseSegment.click();
+      env.wait();
+      expect(env.insertNoteFabMobile).toBeNull();
+
+      // Allow check for mobile viewports to return TRUE
+      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+      verseSegment = env.getSegmentElement('verse_1_2')!;
+      verseSegment.click();
+      env.wait();
+      expect(env.insertNoteFabMobile).toBeTruthy();
+      env.insertNoteFabMobile!.click();
+      env.wait();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+
+      env.dispose();
+    }));
+
     it('can open insert note dialog on default verse', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
@@ -3150,6 +3178,7 @@ class TestEnvironment {
     when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
+    when(mockedMediaObserver.isActive(anything())).thenReturn(false);
 
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);
@@ -3184,6 +3213,10 @@ class TestEnvironment {
 
   get insertNoteFab(): DebugElement {
     return this.fixture.debugElement.query(By.css('.insert-note-fab > button'));
+  }
+
+  get insertNoteFabMobile(): HTMLButtonElement | null {
+    return document.querySelector('.fab-bottom-sheet button');
   }
 
   get sharingButton(): DebugElement {
@@ -3358,6 +3391,9 @@ class TestEnvironment {
     const user4Config = cloneDeep(userConfig);
     user4Config.ownerRef = 'user04';
     this.addProjectUserConfig(user4Config as SFProjectUserConfig);
+    const user5Config = cloneDeep(userConfig);
+    user5Config.ownerRef = 'user05';
+    this.addProjectUserConfig(user5Config as SFProjectUserConfig);
   }
 
   getProjectUserConfigDoc(userId: string = 'user01'): SFProjectUserConfigDoc {
