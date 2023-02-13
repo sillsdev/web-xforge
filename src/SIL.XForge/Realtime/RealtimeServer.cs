@@ -20,7 +20,7 @@ namespace SIL.XForge.Realtime
         {
             if (_started)
                 return;
-            InvokeExportAsync<object>("start", options).GetAwaiter().GetResult();
+            InvokeExportAsync("start", options).GetAwaiter().GetResult();
             _started = true;
         }
 
@@ -28,11 +28,11 @@ namespace SIL.XForge.Realtime
         {
             if (!_started)
                 return;
-            InvokeExportAsync<object>("stop").GetAwaiter().GetResult();
+            InvokeExportAsync("stop").GetAwaiter().GetResult();
             _started = false;
         }
 
-        public Task<int> ConnectAsync(string userId = null)
+        public Task<int> ConnectAsync(string? userId = null)
         {
             if (userId != null)
                 return InvokeExportAsync<int>("connect", userId);
@@ -56,17 +56,17 @@ namespace SIL.XForge.Realtime
 
         public Task DeleteDocAsync(int handle, string collection, string id)
         {
-            return InvokeExportAsync<object>("deleteDoc", handle, collection, id);
+            return InvokeExportAsync("deleteDoc", handle, collection, id);
         }
 
         public void Disconnect(int handle)
         {
-            InvokeExportAsync<object>("disconnect", handle).GetAwaiter().GetResult();
+            InvokeExportAsync("disconnect", handle).GetAwaiter().GetResult();
         }
 
         public Task DisconnectAsync(int handle)
         {
-            return InvokeExportAsync<object>("disconnect", handle);
+            return InvokeExportAsync("disconnect", handle);
         }
 
         public Task<T> ApplyOpAsync<T>(string otTypeName, T data, object op)
@@ -74,9 +74,14 @@ namespace SIL.XForge.Realtime
             return InvokeExportAsync<T>("applyOp", otTypeName, data, op);
         }
 
-        private Task<T> InvokeExportAsync<T>(string exportedFunctionName, params object[] args)
+        private Task<T> InvokeExportAsync<T>(string exportedFunctionName, params object?[] args)
         {
             return _nodeJSService.InvokeFromFileAsync<T>(_modulePath, exportedFunctionName, args);
+        }
+
+        private Task InvokeExportAsync(string exportedFunctionName, params object[] args)
+        {
+            return _nodeJSService.InvokeFromFileAsync(_modulePath, exportedFunctionName, args);
         }
     }
 }

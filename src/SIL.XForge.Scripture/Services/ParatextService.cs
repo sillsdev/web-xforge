@@ -14,7 +14,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
+using System.Xml.Linq;
 using System.Xml.XPath;
 using IdentityModel;
 using Microsoft.AspNetCore.Hosting;
@@ -964,7 +964,7 @@ namespace SIL.XForge.Scripture.Services
 
         /// <summary> Gets basic settings for a Paratext project. </summary>
         /// <returns> The Paratext project settings, or null if the project repository does not exist locally </returns>
-        public ParatextSettings GetParatextSettings(UserSecret userSecret, string paratextId)
+        public ParatextSettings? GetParatextSettings(UserSecret userSecret, string paratextId)
         {
             using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             if (scrText == null)
@@ -1020,7 +1020,7 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret,
             string paratextId,
             int bookNum,
-            string usx,
+            XDocument usx,
             Dictionary<int, string> chapNumToAuthorSFUserIdMap = null
         )
         {
@@ -1028,14 +1028,14 @@ namespace SIL.XForge.Scripture.Services
             {
                 throw new ArgumentNullException(nameof(userSecret));
             }
-            if (String.IsNullOrWhiteSpace(paratextId))
+            if (string.IsNullOrWhiteSpace(paratextId))
             {
-                throw new ArgumentException(nameof(paratextId));
+                throw new ArgumentNullException(nameof(paratextId));
             }
 
             int booksUpdated = 0;
             StringBuilder log = new StringBuilder(
-                $"ParatextService.PutBookText(userSecret, paratextId {paratextId}, bookNum {bookNum}, usx {usx}, chapterAuthors: {(chapNumToAuthorSFUserIdMap == null ? "null" : ($"count {chapNumToAuthorSFUserIdMap.Count}"))})"
+                $"ParatextService.PutBookText(userSecret, paratextId {paratextId}, bookNum {bookNum}, usx {usx.Root}, chapterAuthors: {(chapNumToAuthorSFUserIdMap == null ? "null" : ($"count {chapNumToAuthorSFUserIdMap.Count}"))})"
             );
             Dictionary<string, ScrText> scrTexts = new Dictionary<string, ScrText>();
             try
@@ -1051,12 +1051,10 @@ namespace SIL.XForge.Scripture.Services
 
                 // We add this here so we can dispose in the finally
                 scrTexts.Add(userSecret.Id, scrText);
-                var doc = new XmlDocument { PreserveWhitespace = true };
-                doc.LoadXml(usx);
-                log.AppendLine($"Imported string as XmlDocument with {doc.ChildNodes.Count} child nodes.");
+                log.AppendLine($"Imported XDocument with {usx.Elements().Count()} elements.");
                 UsxFragmenter.FindFragments(
                     scrText.ScrStylesheet(bookNum),
-                    doc.CreateNavigator(),
+                    usx.CreateNavigator(),
                     XPathExpression.Compile("*[false()]"),
                     out string usfm
                 );
@@ -1207,10 +1205,13 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Write up-to-date notes from the mongo database to the Paratext project folder </summary>
-        public SyncMetricInfo PutNotes(UserSecret userSecret, string paratextId, string notesText)
+        public SyncMetricInfo PutNotes(UserSecret userSecret, string paratextId, XElement notesElement)
         {
             // TODO: should accept some data structure instead of XML
-            var changeList = NotesFormatter.ParseNotes(notesText, new SFParatextUser(GetParatextUsername(userSecret)));
+            var changeList = NotesFormatter.ParseNotes(
+                notesElement,
+                new SFParatextUser(GetParatextUsername(userSecret))
+            );
             return PutCommentThreads(userSecret, paratextId, changeList);
         }
 

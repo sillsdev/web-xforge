@@ -491,12 +491,7 @@ namespace SIL.XForge.Scripture.Services
                 Substitute.For<IExceptionHandler>()
             );
             var newDocUsx = mapper.ToUsx(oldDocUsx, new List<ChapterDelta> { new ChapterDelta(1, 2, true, data) });
-            int booksUpdated = await env.Service.PutBookText(
-                userSecret,
-                ptProjectId,
-                ruthBookNum,
-                newDocUsx.Root.ToString()
-            );
+            int booksUpdated = await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, newDocUsx);
             env.ProjectFileManager.Received(1).WriteFileCreatingBackup(Arg.Any<string>(), Arg.Any<Action<string>>());
             Assert.That(booksUpdated, Is.EqualTo(1));
 
@@ -520,7 +515,12 @@ namespace SIL.XForge.Scripture.Services
                 + "Verse 1 here. <verse number=\"2\" style=\"v\" />Verse 2 here.</usx>";
 
             // SUT
-            int booksUpdated = await env.Service.PutBookText(userSecret, ptProjectId, ruthBookNum, ruthBookUsx);
+            int booksUpdated = await env.Service.PutBookText(
+                userSecret,
+                ptProjectId,
+                ruthBookNum,
+                XDocument.Parse(ruthBookUsx)
+            );
 
             // Make sure only one ScrText was loaded
             env.MockScrTextCollection.Received(1).FindById(env.Username01, ptProjectId);
@@ -557,7 +557,7 @@ namespace SIL.XForge.Scripture.Services
                 userSecret,
                 ptProjectId,
                 ruthBookNum,
-                ruthBookUsx,
+                XDocument.Parse(ruthBookUsx),
                 chapterAuthors
             );
 
@@ -597,7 +597,7 @@ namespace SIL.XForge.Scripture.Services
                 userSecret,
                 ptProjectId,
                 ruthBookNum,
-                ruthBookUsx,
+                XDocument.Parse(ruthBookUsx),
                 chapterAuthors
             );
 
@@ -650,8 +650,8 @@ namespace SIL.XForge.Scripture.Services
             string threadId = "Answer_0123";
             string content = "Content for comment to update.";
             string verseRef = "RUT 1:1";
-            string updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef);
-            var syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
+            XElement updateNotesXml = env.GetUpdateNotesXml(threadId, env.User01, date, content, verseRef);
+            var syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesXml);
 
             CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
@@ -663,8 +663,8 @@ namespace SIL.XForge.Scripture.Services
 
             // Edit a comment
             content = "Edited: Content for comment to update.";
-            updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef);
-            syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
+            updateNotesXml = env.GetUpdateNotesXml(threadId, env.User01, date, content, verseRef);
+            syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesXml);
 
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
             comment = thread.Comments.First();
@@ -672,8 +672,8 @@ namespace SIL.XForge.Scripture.Services
             Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 1)));
 
             // Delete a comment
-            updateNotesString = env.GetUpdateNotesString(threadId, env.User01, date, content, verseRef, true);
-            syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesString);
+            updateNotesXml = env.GetUpdateNotesXml(threadId, env.User01, date, content, verseRef, true);
+            syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesXml);
 
             Assert.That(thread.Comments.Count, Is.EqualTo(1));
             comment = thread.Comments.First();
@@ -2149,8 +2149,8 @@ namespace SIL.XForge.Scripture.Services
                 Name = "SF Note Tag",
             };
             env.SetupCommentTags(env.ProjectScrText, noteTag);
-            ParatextSettings settings = env.Service.GetParatextSettings(userSecret, paratextId);
-            Assert.That(settings.NoteTags.Any(t => t.Name == noteTag.Name), Is.True);
+            ParatextSettings? settings = env.Service.GetParatextSettings(userSecret, paratextId);
+            Assert.That(settings?.NoteTags.Any(t => t.Name == noteTag.Name), Is.True);
         }
 
         [Test]
@@ -2166,8 +2166,8 @@ namespace SIL.XForge.Scripture.Services
                 Icon = "sf05",
                 Name = "SF Note Tag"
             };
-            ParatextSettings settings = env.Service.GetParatextSettings(userSecret, paratextId);
-            Assert.That(settings.NoteTags.FirstOrDefault(t => t.Icon == noteTag.Icon), Is.Null);
+            ParatextSettings? settings = env.Service.GetParatextSettings(userSecret, paratextId);
+            Assert.That(settings?.NoteTags.FirstOrDefault(t => t.Icon == noteTag.Icon), Is.Null);
         }
 
         [Test]
@@ -2187,8 +2187,8 @@ namespace SIL.XForge.Scripture.Services
             env.Service.UpdateCommentTag(userSecret, paratextId, noteTag);
             // the new tag is created with a tag id one greater than the last used id
             int tagId = env.TagCount + 1;
-            ParatextSettings settings = env.Service.GetParatextSettings(userSecret, paratextId);
-            Assert.That(settings.NoteTags.First(t => t.Icon == icon).TagId, Is.EqualTo(tagId));
+            ParatextSettings? settings = env.Service.GetParatextSettings(userSecret, paratextId);
+            Assert.That(settings?.NoteTags.First(t => t.Icon == icon).TagId, Is.EqualTo(tagId));
         }
 
         [Test]
@@ -3959,7 +3959,7 @@ namespace SIL.XForge.Scripture.Services
                 return chapterDeltas;
             }
 
-            public string GetUpdateNotesString(
+            public XElement GetUpdateNotesXml(
                 string threadId,
                 string user,
                 DateTime date,
@@ -3991,7 +3991,7 @@ namespace SIL.XForge.Scripture.Services
                 }
                 threadElem.Add(commentElem);
                 notesElem.Add(threadElem);
-                return notesElem.ToString();
+                return notesElem;
             }
 
             public async Task<IEnumerable<IDocument<NoteThread>>> GetNoteThreadDocsAsync(

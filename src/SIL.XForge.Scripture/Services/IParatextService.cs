@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
@@ -22,7 +23,7 @@ namespace SIL.XForge.Scripture.Services
             SFProject project,
             CancellationToken token
         );
-        ParatextSettings GetParatextSettings(UserSecret userSecret, string paratextId);
+        ParatextSettings? GetParatextSettings(UserSecret userSecret, string paratextId);
 
         Task<IReadOnlyList<ParatextResource>> GetResourcesAsync(string userId);
         bool IsResource(string paratextId);
@@ -48,11 +49,11 @@ namespace SIL.XForge.Scripture.Services
             UserSecret userSecret,
             string paratextId,
             int bookNum,
-            string usx,
+            XDocument usx,
             Dictionary<int, string> chapterAuthors = null
         );
         string GetNotes(UserSecret userSecret, string paratextId, int bookNum);
-        SyncMetricInfo PutNotes(UserSecret userSecret, string paratextId, string notesText);
+        SyncMetricInfo PutNotes(UserSecret userSecret, string paratextId, XElement notesElement);
         Task<SyncMetricInfo> UpdateParatextCommentsAsync(
             UserSecret userSecret,
             string paratextId,
