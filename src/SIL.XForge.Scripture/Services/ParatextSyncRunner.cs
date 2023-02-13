@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -703,7 +703,11 @@ namespace SIL.XForge.Scripture.Services
             SortedList<int, IDocument<TextData>> textDocs
         )
         {
-            var oldUsxDoc = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
+            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
+
+            // XDocument.Parse ignores whitespace added during USX generation. The unnecessary whitespace can
+            // occasionally cause inaccurate comparisons with XNode.DeepEquals, and so we must remove it.
+            var oldUsxDoc = XDocument.Parse(bookText);
             XDocument newUsxDoc = _deltaUsxMapper.ToUsx(
                 oldUsxDoc,
                 text.Chapters
@@ -842,7 +846,8 @@ namespace SIL.XForge.Scripture.Services
             ISet<int>? chaptersToInclude = null
         )
         {
-            var usxDoc = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
+            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
+            var usxDoc = XDocument.Parse(bookText);
             var tasks = new List<Task>();
             Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper
                 .ToChapterDeltas(usxDoc)
@@ -1646,7 +1651,8 @@ namespace SIL.XForge.Scripture.Services
 
         private Dictionary<int, ChapterDelta> GetDeltasByChapter(TextInfo text, string paratextId)
         {
-            XDocument usxDoc = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
+            string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
+            XDocument usxDoc = XDocument.Parse(bookText);
             Dictionary<int, ChapterDelta> chapterDeltas = _deltaUsxMapper
                 .ToChapterDeltas(usxDoc)
                 .ToDictionary(cd => cd.Number);

@@ -3485,13 +3485,13 @@ namespace SIL.XForge.Scripture.Services
             {
                 MockGetBookText(paratextId, bookId);
                 int bookNum = Canon.BookIdToNumber(bookId);
-                XDocument newBook = GetBookText(paratextId, bookId, changed ? 2 : 1);
+                string newBookText = GetBookText(paratextId, bookId, changed ? 2 : 1);
                 Func<XDocument, bool> predicate = d =>
                     (string)d?.Root?.Element("book")?.Attribute("code") == bookId
                     && (string)d?.Root?.Element("book") == paratextId;
                 DeltaUsxMapper
                     .ToUsx(Arg.Is<XDocument>(d => predicate(d)), Arg.Any<IEnumerable<ChapterDelta>>())
-                    .Returns(newBook);
+                    .Returns(XDocument.Parse(newBookText));
 
                 for (int c = 1; c <= highestChapter; c++)
                 {
@@ -3521,18 +3521,16 @@ namespace SIL.XForge.Scripture.Services
 
             private void MockGetBookText(string paratextId, string bookId)
             {
-                XDocument oldBookText = GetBookText(paratextId, bookId, 1);
-                XDocument remoteBookText = GetBookText(paratextId, bookId, 3);
+                string oldBookText = GetBookText(paratextId, bookId, 1);
+                string remoteBookText = GetBookText(paratextId, bookId, 3);
                 ParatextService
                     .GetBookText(Arg.Any<UserSecret>(), paratextId, Canon.BookIdToNumber(bookId))
                     .Returns(x => _sendReceivedCalled ? remoteBookText : oldBookText);
             }
 
-            private static XDocument GetBookText(string paratextId, string bookId, int version)
+            private static string GetBookText(string paratextId, string bookId, int version)
             {
-                return XDocument.Parse(
-                    $"<usx version=\"2.5\"><book code=\"{bookId}\" style=\"id\">{paratextId}</book><content version=\"{version}\"/></usx>"
-                );
+                return $"<usx version=\"2.5\"><book code=\"{bookId}\" style=\"id\">{paratextId}</book><content version=\"{version}\"/></usx>";
             }
 
             private void SetupNoteThreadChanges(NoteThreadChange[] noteThreadChanges, string projectId, int bookNum)

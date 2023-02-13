@@ -439,8 +439,8 @@ namespace SIL.XForge.Scripture.Services
             env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
             // SUT
-            XDocument result = env.Service.GetBookText(null, ptProjectId, 8);
-            Assert.IsTrue(XNode.DeepEquals(XDocument.Parse(ruthBookUsx), result));
+            string result = env.Service.GetBookText(null, ptProjectId, 8);
+            Assert.That(result, Is.EqualTo(ruthBookUsx));
         }
 
         [Test]

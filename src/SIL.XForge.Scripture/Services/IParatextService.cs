@@ -44,7 +44,7 @@ namespace SIL.XForge.Scripture.Services
         bool ResourceDocsNeedUpdating(SFProject project, ParatextResource resource);
 
         IReadOnlyList<int> GetBookList(UserSecret userSecret, string paratextId);
-        XDocument GetBookText(UserSecret userSecret, string paratextId, int bookNum);
+        string GetBookText(UserSecret userSecret, string paratextId, int bookNum);
         Task<int> PutBookText(
             UserSecret userSecret,
             string paratextId,

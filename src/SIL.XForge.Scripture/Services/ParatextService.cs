@@ -14,7 +14,6 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
 using IdentityModel;
@@ -1006,20 +1005,13 @@ namespace SIL.XForge.Scripture.Services
         }
 
         /// <summary> Get PT book text in USX, or throw if can't. </summary>
-        public XDocument GetBookText(UserSecret userSecret, string paratextId, int bookNum)
+        public string GetBookText(UserSecret userSecret, string paratextId, int bookNum)
         {
             using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
             if (scrText == null)
                 throw new DataNotFoundException("Can't get access to cloned project.");
             string usfm = scrText.GetText(bookNum);
-            var doc = new XDocument();
-
-            // Do not be tempted to convert this to async, as the XmlWriter created by XmlWriter.CreateWriter() does not
-            // support it and the XNodeBuilder class used to create the XmlWriter is not publicly accessible.
-            using XmlWriter writer = doc.CreateWriter();
-            UsfmToUsx.ConvertToXmlWriter(scrText, bookNum, usfm, writer, forExport: false);
-            writer.Flush();
-            return doc;
+            return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
         }
 
         /// <summary> Write up-to-date book text from mongo database to Paratext project folder. </summary>
