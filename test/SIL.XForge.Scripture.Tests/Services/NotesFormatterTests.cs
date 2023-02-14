@@ -207,6 +207,63 @@ public class NotesFormatterTests
     }
 
     [Test]
+    public void FormatNotes_SingleNodeContentParagraph()
+    {
+        // Setup test environment
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+
+        // Setup the test data
+        const string thread = "Answer_dataId0123";
+        const string verseRefStr = "RUT 1:1";
+        DateTimeOffset commentDate = DateTimeOffset.Now;
+
+        // We user StringBuilder so we can have the environment specific new line
+        StringBuilder sb = new StringBuilder();
+        sb.AppendLine("<notes version=\"1.1\">");
+        sb.AppendLine($"  <thread id=\"{thread}\">");
+        sb.AppendLine($"    <selection verseRef=\"{verseRefStr}\" startPos=\"0\" selectedText=\"\" />");
+        sb.AppendLine($"    <comment user=\"{env.Username01}\" date=\"{commentDate:o}\">");
+        sb.AppendLine("      <content>");
+        sb.AppendLine("        <p>");
+        sb.AppendLine("          <span style=\"bold\">Question text</span>");
+        sb.AppendLine("        </p>");
+        sb.AppendLine("        <p>Answer text</p>");
+        sb.AppendLine("      </content>");
+        sb.AppendLine("    </comment>");
+        sb.AppendLine("  </thread>");
+        sb.Append("</notes>");
+        string expected = sb.ToString();
+
+        // Setup the test data with paragraph elements with a single child node
+        string xml = "<content><p><bold>Question text</bold></p>";
+        xml += "<p>Answer text</p></content>";
+        XmlDocument doc = new XmlDocument();
+        doc.LoadXml(xml);
+        var comment = new Comment(associatedPtUser)
+        {
+            DateTime = commentDate,
+            Thread = thread,
+            VerseRefStr = verseRefStr,
+            Contents = doc.DocumentElement
+        };
+        List<CommentThread> commentThreads = new List<CommentThread>
+        {
+            new CommentThread
+            {
+                ContextScrTextName = env.ProjectScrText?.Name,
+                ScrText = env.ProjectScrText,
+                Comments = new List<Comment> { comment }
+            }
+        };
+
+        // SUT
+        string actual = NotesFormatter.FormatNotes(commentThreads);
+        Assert.AreEqual(expected, actual);
+    }
+
+    [Test]
     public void FormatNotes_EmptyComment()
     {
         // Setup the environment
