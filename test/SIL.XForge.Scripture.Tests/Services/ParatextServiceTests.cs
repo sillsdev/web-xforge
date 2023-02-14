@@ -638,6 +638,29 @@ namespace SIL.XForge.Scripture.Services
         }
 
         [Test]
+        public void GetNotes_ParagraphWithSingleNode()
+        {
+            int ruthBookNum = 8;
+            var env = new TestEnvironment();
+            var associatedPTUser = new SFParatextUser(env.Username01);
+            string paratextId = env.SetupProject(env.Project01, associatedPTUser);
+            UserSecret userSecret = env.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+            var comment = new Paratext.Data.ProjectComments.Comment(associatedPTUser)
+            {
+                Thread = "ANSWER_123",
+                VerseRefStr = "RUT 1:1"
+            };
+            comment.AddTextToContent(string.Empty, false);
+            comment.Contents.InnerXml = "<p><bold>Question text</bold></p><p>Answer text</p>";
+            env.ProjectCommentManager.AddComment(comment);
+            string notes = env.Service.GetNotes(userSecret, paratextId, ruthBookNum);
+            string expected = $"<notes version=\"1.1\">{Environment.NewLine}  <thread id=\"ANSWER_123\">";
+            Assert.True(notes.StartsWith(expected));
+            // The paragraph style gets preserved
+            Assert.True(notes.Contains("<span style=\"bold\">Question text</span>"));
+        }
+
+        [Test]
         public void PutNotes_AddEditDeleteComment_ThreadCorrectlyUpdated()
         {
             var env = new TestEnvironment();
