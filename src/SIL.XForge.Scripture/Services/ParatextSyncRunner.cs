@@ -60,6 +60,15 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private static readonly IEqualityComparer<List<Chapter>> _chapterListEqualityComparer =
         SequenceEqualityComparer.Create(new ChapterEqualityComparer());
 
+    /// <summary>
+    /// The regular expression for finding whitespace before XML tags.
+    /// </summary>
+    /// <remarks>This is used by <see cref="ParseText"/>.</remarks>
+    private static readonly Regex WhitespaceBeforeTagsRegex = new Regex(
+        @"\n\s*<",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled
+    );
+
     private readonly IRepository<UserSecret> _userSecrets;
     private readonly IRepository<SFProjectSecret> _projectSecrets;
     private readonly IRepository<SyncMetrics> _syncMetricsRepository;
@@ -1239,7 +1248,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private static XElement ParseText(string text)
     {
         text = text.Trim().Replace("\r\n", "\n");
-        text = Regex.Replace(text, @"\n\s*<", "<", RegexOptions.CultureInvariant);
+        text = WhitespaceBeforeTagsRegex.Replace(text, "<");
         return XElement.Parse(text, LoadOptions.PreserveWhitespace);
     }
 
