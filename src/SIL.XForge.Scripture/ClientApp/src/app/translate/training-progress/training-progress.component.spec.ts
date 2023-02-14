@@ -3,13 +3,9 @@ import { ProgressStatus } from '@sillsdev/machine';
 import * as RichText from 'rich-text';
 import { defer, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import {
-  CheckingAnswerExport,
-  CheckingShareLevel
-} from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -165,14 +161,12 @@ class TestEnvironment {
         },
         translateConfig: {
           translationSuggestionsEnabled,
-          shareEnabled: false,
-          shareLevel: TranslateShareLevel.Specific
+          shareEnabled: false
         },
         checkingConfig: {
           checkingEnabled: false,
           usersSeeEachOthersResponses: true,
           shareEnabled: true,
-          shareLevel: CheckingShareLevel.Specific,
           answerExportMethod: CheckingAnswerExport.MarkedForExport
         },
         sync: { queuedCount: 0 },
@@ -201,7 +195,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  wait() {
+  wait(): void {
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
