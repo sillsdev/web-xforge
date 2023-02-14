@@ -13,7 +13,6 @@ public class Note : Comment
     /// may read "unknownConflictType".
     /// </summary>
     public string ConflictType { get; set; }
-    public string ExtUserId { get; set; }
     public bool Deleted { get; set; }
     public string Status { get; set; }
     public int? TagId { get; set; }
