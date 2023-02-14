@@ -223,7 +223,6 @@ class TestEnvironment {
         dataId: 'note01',
         threadId: 'thread01',
         ownerRef: 'user01',
-        extUserId: 'user01',
         content: 'Some content',
         status: NoteStatus.Todo,
         type: NoteType.Normal,
