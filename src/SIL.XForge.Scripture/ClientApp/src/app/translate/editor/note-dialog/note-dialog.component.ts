@@ -413,7 +413,6 @@ export class NoteDialogComponent implements OnInit {
       dateCreated: '',
       dateModified: '',
       conflictType: NoteConflictType.DefaultValue,
-      extUserId: this.userService.currentUserId,
       type: NoteType.Normal,
       status: NoteStatus.Todo,
       deleted: false

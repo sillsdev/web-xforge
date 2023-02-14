@@ -2267,7 +2267,7 @@ public class ParatextService : DisposableBase, IParatextService
 
         if (!string.IsNullOrEmpty(note.Content))
             comment.GetOrCreateCommentNode().InnerXml = note.Content;
-        if (_userSecretRepository.Query().Any(u => u.Id == note.OwnerRef))
+        if (!_userSecretRepository.Query().Any(u => u.Id == note.OwnerRef))
             comment.ExternalUser = note.OwnerRef;
         comment.TagsAdded =
             note.TagId == null
@@ -2290,7 +2290,6 @@ public class ParatextService : DisposableBase, IParatextService
             ThreadId = comment.Thread,
             Type = comment.Type.InternalValue,
             ConflictType = comment.ConflictType.InternalValue,
-            ExtUserId = comment.ExternalUser,
             // The owner is unknown at this point and is determined when submitting the ops to the note thread docs
             OwnerRef = "",
             SyncUserRef = FindOrCreateParatextUser(comment.User, ptProjectUsers)?.OpaqueUserId,

@@ -3715,7 +3715,6 @@ class TestEnvironment {
         dateCreated: date.toJSON(),
         dateModified: date.toJSON(),
         content: `<p><bold>Note from ${id}</bold></p>`,
-        extUserId: id,
         deleted: false,
         status: NoteStatus.Todo,
         tagId: noteTagId,
@@ -3760,7 +3759,6 @@ class TestEnvironment {
       threadId: template.threadId,
       content: template.content,
       deleted: false,
-      extUserId: '',
       ownerRef: template.ownerRef,
       status: NoteStatus.Unspecified,
       dateCreated: template.dateCreated,
@@ -3797,7 +3795,6 @@ class TestEnvironment {
     return {
       dataId: 'notenew01',
       threadId,
-      extUserId: 'user01',
       ownerRef: 'user01',
       status: NoteStatus.Todo,
       content: 'New note thread',
