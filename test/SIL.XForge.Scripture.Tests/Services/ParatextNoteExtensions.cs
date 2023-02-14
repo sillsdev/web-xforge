@@ -6,7 +6,7 @@ public static class ParatextNoteTestExtensions
 {
     public static string NoteToString(this Note note)
     {
-        string result = $"{note.ThreadId}-{note.SyncUserRef}-{note.ExtUserId}-{note.Content}";
+        string result = $"{note.ThreadId}-{note.SyncUserRef}-{note.Content}";
         if (note.Deleted)
             result += "-deleted";
         if (note.TagId != null)

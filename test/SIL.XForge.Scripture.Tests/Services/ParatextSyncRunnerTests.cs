@@ -1760,7 +1760,7 @@ public class ParatextSyncRunnerTests
         Assert.That(thread01.Notes[0].Assignment, Is.EqualTo(CommentThread.teamUser));
         Assert.That(thread01.Notes[1].Deleted, Is.True);
         Assert.That(thread01.Notes[2].Content, Is.EqualTo("thread01 added."));
-        string expected = "thread01-syncuser03--thread01 added.-tag:" + expectedNoteTagId;
+        string expected = "thread01-syncuser03-thread01 added.-tag:" + expectedNoteTagId;
         Assert.That(thread01.Notes[2].NoteToString(), Is.EqualTo(expected));
         Assert.That(thread01.Notes[2].TagId, Is.EqualTo(expectedNoteTagId));
         Assert.That(thread01.Notes[2].OwnerRef, Is.EqualTo("user03"));
@@ -1880,7 +1880,6 @@ public class ParatextSyncRunnerTests
                 DataId = "n03",
                 ThreadId = threadId,
                 SyncUserRef = "syncuser02",
-                ExtUserId = "user03",
                 Content = "Paratext note 3.",
                 DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
             }
@@ -3210,7 +3209,6 @@ public class ParatextSyncRunnerTests
                                     DataId = "n01",
                                     ThreadId = threadId,
                                     SyncUserRef = "syncuser01",
-                                    ExtUserId = "user02",
                                     Content = "Paratext note 1.",
                                     TagId = tagId,
                                     DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
@@ -3220,7 +3218,6 @@ public class ParatextSyncRunnerTests
                                     DataId = "n02",
                                     ThreadId = threadId,
                                     SyncUserRef = "syncuser02",
-                                    ExtUserId = "user03",
                                     Content = "Paratext note 2.",
                                     TagId = tagId,
                                     DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)

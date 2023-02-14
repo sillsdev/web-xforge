@@ -538,7 +538,6 @@ class TestEnvironment {
       type: NoteType.Normal,
       conflictType: NoteConflictType.DefaultValue,
       status: NoteStatus.Todo,
-      extUserId: ownerRef,
       deleted: false
     };
   }
