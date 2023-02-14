@@ -61,6 +61,10 @@
   ],
   "dotnet-test-explorer.testProjectPath": "test/**/*.Tests.csproj",
   "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[csharp]": {
+    "editor.defaultFormatter": "csharpier.csharpier-vscode"
+  },
   "editor.rulers": [120],
   "editor.tabSize": 2,
   "editor.wordWrapColumn": 120,
