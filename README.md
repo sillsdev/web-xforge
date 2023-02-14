@@ -456,8 +456,14 @@ pkill --parent $(pgrep SIL.XForge.Scri) --full 'node -e module.exports' --signal
 
 ### Tokens
 
+You can fetch your PT tokens from the SF DB with the following command, or manually looking in mongo.
+
+```bash
+scripts/db_tools/db-token-info.ts 'your-email@example.com'
+```
+
 During testing, it can be useful if your refreshToken is not valid. You can invalidate your user's refreshToken in
-MongoDB by manually sending a refresh request.
+MongoDB by manually sending a refresh request to PT Registry.
 
 To do this, use a tool to send a POST to https://registry-dev.paratext.org/api8/token with headers Content-Type and
 Accept set to "application/json" and with a body of the following, where client_id and client_secret are SF
@@ -472,18 +478,20 @@ site-specific, and refresh_token is your current refreshToken from the user_secr
 }
 ```
 
-For example, with curl:
+For example, with curl, and automatically populating the `client_id` and `client_secret`:
 
 ```bash
-curl --location --request POST 'https://registry-dev.paratext.org/api8/token' \
+REFRESH_TOKEN="put-your-refresh-token-here"
+PROJ_DIR="${HOME}/src/web-xforge/src/SIL.XForge.Scripture"
+curl --include --location --request POST 'https://registry-dev.paratext.org/api8/token' \
   --header 'Content-Type: application/json' \
   --header 'Accept: application/json' \
-  --data-raw '{
-    "grant_type": "refresh_token",
-    "client_id": "--",
-    "client_secret": "--",
-    "refresh_token": "--"
-  }'
+  --data-raw "{
+    \"grant_type\": \"refresh_token\",
+    \"client_id\": \"$(cd "${PROJ_DIR}" && dotnet user-secrets list | perl -n -e 'print if /^Paratext:ClientId/ and s/.* = //')\",
+    \"client_secret\": \"$(cd "${PROJ_DIR}" && dotnet user-secrets list | perl -n -e 'print if /^Paratext:ClientSecret/ and s/.* = //')\",
+    \"refresh_token\": \"${REFRESH_TOKEN}\"
+  }"
 ```
 
 What you receive back is the new refresh_token, and so the one in MongoDB is no longer valid. It may help to also
@@ -500,6 +508,16 @@ console.log("after", userSecret);
 ```
 
 You might also just erase the `paratextTokens.refreshToken` if it's not significant that it exist but be rejected.
+
+You can test whether an access token is still valid with curl:
+
+```bash
+ACCESS_TOKEN="put-your-access-token-here"
+curl --location --request GET 'https://registry-dev.paratext.org/api8/userinfo' \
+  --header 'Content-Type: application/json' \
+  --header 'Accept: application/json' \
+  --header "Authorization: Bearer ${ACCESS_TOKEN}"
+```
 
 ## Backend Development
 
