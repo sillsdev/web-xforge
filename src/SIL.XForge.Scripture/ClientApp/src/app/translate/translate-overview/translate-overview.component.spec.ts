@@ -7,9 +7,7 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ProgressStatus } from '@sillsdev/machine';
 import { CookieService } from 'ngx-cookie-service';
-import {
-  CheckingAnswerExport,
-} from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -401,7 +399,7 @@ class TestEnvironment {
     this.waitForProjectDocChanges();
   }
 
-  simulateTranslateSuggestionsEnabled(enabled: boolean = true) {
+  simulateTranslateSuggestionsEnabled(enabled: boolean = true): void {
     const projectDoc: SFProjectProfileDoc = this.realtimeService.get(SFProjectProfileDoc.COLLECTION, 'project01');
     projectDoc.submitJson0Op(
       op => op.set<boolean>(p => p.translateConfig.translationSuggestionsEnabled, enabled),
