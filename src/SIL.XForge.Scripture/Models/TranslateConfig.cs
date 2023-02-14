@@ -1,11 +1,10 @@
-namespace SIL.XForge.Scripture.Models
+namespace SIL.XForge.Scripture.Models;
+
+public class TranslateConfig
 {
-    public class TranslateConfig
-    {
-        public bool TranslationSuggestionsEnabled { get; set; }
-        public TranslateSource Source { get; set; }
-        public bool ShareEnabled { get; set; } = false;
-        public string ShareLevel { get; set; } = TranslateShareLevel.Specific;
-        public int? DefaultNoteTagId { get; set; }
-    }
+    public bool TranslationSuggestionsEnabled { get; set; }
+    public TranslateSource Source { get; set; }
+    public bool ShareEnabled { get; set; } = false;
+    public string ShareLevel { get; set; } = TranslateShareLevel.Specific;
+    public int? DefaultNoteTagId { get; set; }
 }

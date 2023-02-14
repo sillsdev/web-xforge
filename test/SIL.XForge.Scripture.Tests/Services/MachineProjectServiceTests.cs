@@ -18,824 +18,793 @@ using SIL.XForge.Services;
 using SIL.XForge.Utils;
 using MachineProject = SIL.Machine.WebApi.Models.Project;
 
-namespace SIL.XForge.Scripture.Services
+namespace SIL.XForge.Scripture.Services;
+
+[TestFixture]
+public class MachineProjectServiceTests
 {
-    [TestFixture]
-    public class MachineProjectServiceTests
+    private const string Project01 = "project01";
+    private const string Project02 = "project02";
+    private const string Project03 = "project03";
+    private const string User01 = "user01";
+    private const string Corpus01 = "corpus01";
+    private const string File01 = "file01";
+    private const string File02 = "file02";
+    private const string TranslationEngine01 = "translationEngine01";
+    private const string TranslationEngine02 = "translationEngine02";
+
+    [Test]
+    public async Task AddProjectAsync_ExecutesInProcessMachineAndMachineApi()
     {
-        private const string Project01 = "project01";
-        private const string Project02 = "project02";
-        private const string Project03 = "project03";
-        private const string User01 = "user01";
-        private const string Corpus01 = "corpus01";
-        private const string File01 = "file01";
-        private const string File02 = "file02";
-        private const string TranslationEngine01 = "translationEngine01";
-        private const string TranslationEngine02 = "translationEngine02";
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineTranslationService
+            .CreateTranslationEngineAsync(Project01, Arg.Any<string>(), Arg.Any<string>(), true, CancellationToken.None)
+            .Returns(Task.FromResult(TranslationEngine01));
 
-        [Test]
-        public async Task AddProjectAsync_ExecutesInProcessMachineAndMachineApi()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.MachineTranslationService
-                .CreateTranslationEngineAsync(
-                    Project01,
-                    Arg.Any<string>(),
-                    Arg.Any<string>(),
-                    true,
-                    CancellationToken.None
-                )
-                .Returns(Task.FromResult(TranslationEngine01));
+        // SUT
+        await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
 
-            // SUT
-            await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
+        await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
+        Assert.AreEqual(TranslationEngine01, env.ProjectSecrets.Get(Project01).MachineData?.TranslationEngineId);
+    }
 
-            await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
-            Assert.AreEqual(TranslationEngine01, env.ProjectSecrets.Get(Project01).MachineData?.TranslationEngineId);
-        }
+    [Test]
+    public async Task AddProjectAsync_DoesNotCallMachineApiIfFeatureDisabled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
 
-        [Test]
-        public async Task AddProjectAsync_DoesNotCallMachineApiIfFeatureDisabled()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        // SUT
+        await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
 
-            // SUT
-            await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
-
-            await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
-            await env.MachineTranslationService
-                .DidNotReceiveWithAnyArgs()
-                .CreateTranslationEngineAsync(
-                    Arg.Any<string>(),
-                    Arg.Any<string>(),
-                    Arg.Any<string>(),
-                    Arg.Any<bool>(),
-                    Arg.Any<CancellationToken>()
-                );
-        }
-
-        [Test]
-        public async Task AddProjectAsync_DoesNotExecuteInProcessMachineIfFeatureDisabled()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-            env.MachineTranslationService
-                .CreateTranslationEngineAsync(
-                    Project01,
-                    Arg.Any<string>(),
-                    Arg.Any<string>(),
-                    true,
-                    CancellationToken.None
-                )
-                .Returns(Task.FromResult(TranslationEngine01));
-
-            // SUT
-            await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
-
-            await env.EngineService.DidNotReceiveWithAnyArgs().AddProjectAsync(Arg.Any<MachineProject>());
-        }
-
-        [Test]
-        public async Task BuildProjectAsync_CallsMachineApiIfTranslationEngineIdPresent()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.TextCorpusFactory
-                .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(TestEnvironment.MockTextCorpus);
-
-            // SUT
-            await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
-
-            await env.MachineBuildService.Received().StartBuildAsync(TranslationEngine02, CancellationToken.None);
-        }
-
-        [Test]
-        public async Task BuildProjectAsync_DoesNotCallMachineApiIfFeatureDisabled()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
-
-            // SUT
-            await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
-
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .GetCorpusFilesAsync(Corpus01, CancellationToken.None);
-            await env.MachineBuildService
-                .DidNotReceiveWithAnyArgs()
-                .StartBuildAsync(TranslationEngine02, CancellationToken.None);
-        }
-
-        [Test]
-        public async Task BuildProjectAsync_DoesNotExecuteInProcessMachineIfFeatureDisabled()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-
-            // SUT
-            await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
-
-            await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync(Project02);
-        }
-
-        [Test]
-        public async Task BuildProjectAsync_DoesNotBuildMachineApiIfNoTextChanges()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-
-            // SUT
-            await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
-
-            await env.MachineBuildService
-                .DidNotReceiveWithAnyArgs()
-                .StartBuildAsync(TranslationEngine02, CancellationToken.None);
-        }
-
-        [Test]
-        public async Task BuildProjectAsync_CreatesTranslationEngineIfNoTranslationEngineId()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.MachineTranslationService
-                .CreateTranslationEngineAsync(
-                    Project01,
-                    Arg.Any<string>(),
-                    Arg.Any<string>(),
-                    true,
-                    CancellationToken.None
-                )
-                .Returns(Task.FromResult(TranslationEngine01));
-
-            // SUT
-            await env.Service.BuildProjectAsync(User01, Project01, CancellationToken.None);
-
-            await env.MachineBuildService
-                .DidNotReceiveWithAnyArgs()
-                .StartBuildAsync(TranslationEngine02, CancellationToken.None);
-        }
-
-        [Test]
-        public async Task BuildProjectAsync_ExecutesInProcessMachine()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-
-            // SUT
-            await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
-
-            await env.EngineService.Received().StartBuildByProjectIdAsync(Project02);
-        }
-
-        [Test]
-        public async Task RemoveProjectAsync_CallsMachineApiIfTranslationEngineIdPresent()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-
-            // SUT
-            await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
-
-            // Ensure that the translation engine, corpus and any files are deleted
-            await env.MachineTranslationService
-                .Received(1)
-                .DeleteTranslationEngineAsync(TranslationEngine02, CancellationToken.None);
-            await env.MachineCorporaService
-                .Received(1)
-                .RemoveCorpusFromTranslationEngineAsync(TranslationEngine02, Corpus01, CancellationToken.None);
-            await env.MachineCorporaService.Received(1).DeleteCorpusAsync(Corpus01, CancellationToken.None);
-            await env.MachineCorporaService.Received(1).DeleteCorpusFileAsync(Corpus01, File01, CancellationToken.None);
-            await env.MachineCorporaService.Received(1).DeleteCorpusFileAsync(Corpus01, File02, CancellationToken.None);
-        }
-
-        [Test]
-        public async Task RemoveProjectAsync_DoesNotCallMachineApiIfFeatureDisabled()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
-
-            // SUT
-            await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
-
-            // Ensure that the translation engine, corpus and any files were not deleted
-            await env.MachineTranslationService
-                .DidNotReceiveWithAnyArgs()
-                .DeleteTranslationEngineAsync(TranslationEngine02, CancellationToken.None);
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .DeleteCorpusAsync(Corpus01, CancellationToken.None);
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .DeleteCorpusFileAsync(Corpus01, File01, CancellationToken.None);
-        }
-
-        [Test]
-        public async Task RemoveProjectAsync_DoesNotCallMachineApiIfNoTranslationEngineId()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-
-            // SUT
-            await env.Service.RemoveProjectAsync(User01, Project01, CancellationToken.None);
-
-            // Ensure that the translation engine, corpus and any files were not deleted
-            await env.MachineTranslationService
-                .DidNotReceiveWithAnyArgs()
-                .DeleteTranslationEngineAsync(TranslationEngine01, CancellationToken.None);
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .DeleteCorpusAsync(Corpus01, CancellationToken.None);
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .DeleteCorpusFileAsync(Corpus01, File01, CancellationToken.None);
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .DeleteCorpusFileAsync(Corpus01, File02, CancellationToken.None);
-        }
-
-        [Test]
-        public async Task RemoveProjectAsync_DoesNotExecuteInProcessMachineIfFeatureDisabled()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-
-            // SUT
-            await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
-
-            // Ensure that the in process instance was not called
-            await env.EngineService.DidNotReceiveWithAnyArgs().RemoveProjectAsync(Project02);
-        }
-
-        [Test]
-        public async Task RemoveProjectAsync_ExecutesInProcessMachine()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-
-            // SUT
-            await env.Service.RemoveProjectAsync(User01, Project01, CancellationToken.None);
-
-            await env.EngineService.Received().RemoveProjectAsync(Project01);
-        }
-
-        [Test]
-        public async Task SyncProjectCorporaAsync_CreatesCorpusIfMissing()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.TextCorpusFactory
-                .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(TestEnvironment.MockTextCorpus);
-            env.MachineCorporaService
-                .CreateCorpusAsync(Project01, false, CancellationToken.None)
-                .Returns(Task.FromResult(Corpus01));
-            await env.ProjectSecrets.UpdateAsync(
-                Project01,
-                u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = TranslationEngine01 })
+        await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
+        await env.MachineTranslationService
+            .DidNotReceiveWithAnyArgs()
+            .CreateTranslationEngineAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<bool>(),
+                Arg.Any<CancellationToken>()
             );
+    }
 
-            // SUT
-            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project01, CancellationToken.None);
-            Assert.IsTrue(actual);
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
-            await env.MachineCorporaService
-                .ReceivedWithAnyArgs(1)
-                .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
-            Assert.AreEqual(1, env.ProjectSecrets.Get(Project01).MachineData?.Corpora[Corpus01].Files.Count);
-        }
+    [Test]
+    public async Task AddProjectAsync_DoesNotExecuteInProcessMachineIfFeatureDisabled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+        env.MachineTranslationService
+            .CreateTranslationEngineAsync(Project01, Arg.Any<string>(), Arg.Any<string>(), true, CancellationToken.None)
+            .Returns(Task.FromResult(TranslationEngine01));
 
-        [Test]
-        public async Task SyncProjectCorporaAsync_CreatesCorpusTextIfTextDoesNotExistInProjectSecretOrMachineApi()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.TextCorpusFactory
-                .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(TestEnvironment.MockTextCorpus);
+        // SUT
+        await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
 
-            // SUT
-            Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).MachineData?.Corpora[Corpus01].Files.Count);
-            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
-            Assert.IsTrue(actual);
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
-            await env.MachineCorporaService
-                .ReceivedWithAnyArgs(1)
-                .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
-            Assert.AreEqual(3, env.ProjectSecrets.Get(Project02).MachineData?.Corpora[Corpus01].Files.Count);
-        }
+        await env.EngineService.DidNotReceiveWithAnyArgs().AddProjectAsync(Arg.Any<MachineProject>());
+    }
 
-        [Test]
-        public async Task SyncProjectCorporaAsync_CreatesCorpusTextIfTextExistsInProjectServerButNotMachineApi()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.TextCorpusFactory
-                .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(TestEnvironment.MockTextCorpus);
-            env.MachineCorporaService
-                .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
-                .Returns(Task.FromResult<IList<MachineApiCorpusFile>>(Array.Empty<MachineApiCorpusFile>()));
-            env.MachineCorporaService
-                .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None)
-                .Returns(Task.FromResult("File03"));
-            await env.ProjectSecrets.UpdateAsync(
-                Project02,
-                u =>
-                    u.Add(
-                        p => p.MachineData.Corpora[Corpus01].Files,
-                        new MachineCorpusFile
-                        {
-                            FileChecksum = "a_previous_checksum",
-                            FileId = "File03",
-                            TextId = "textId",
-                        }
-                    )
-            );
+    [Test]
+    public async Task BuildProjectAsync_CallsMachineApiIfTranslationEngineIdPresent()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TextCorpusFactory
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+            .Returns(TestEnvironment.MockTextCorpus);
 
-            // SUT
-            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
-            Assert.IsTrue(actual);
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
-            await env.MachineCorporaService
-                .ReceivedWithAnyArgs(1)
-                .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
-        }
+        // SUT
+        await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
 
-        [Test]
-        public async Task SyncProjectCorporaAsync_DoesNotUpdateIfNoChanges()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.TextCorpusFactory
-                .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(TestEnvironment.MockTextCorpus);
-            env.MachineCorporaService
-                .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None)
-                .Returns(Task.FromResult("File03"));
-            string checksum = StringUtils.ComputeMd5Hash($"segRef\tsegment01\n");
-            await env.ProjectSecrets.UpdateAsync(
-                Project02,
-                u =>
-                    u.Add(
-                        p => p.MachineData.Corpora[Corpus01].Files,
-                        new MachineCorpusFile
-                        {
-                            FileChecksum = checksum,
-                            FileId = "File03",
-                            LanguageTag = "en",
-                            TextId = "textId",
-                        }
-                    )
-            );
+        await env.MachineBuildService.Received().StartBuildAsync(TranslationEngine02, CancellationToken.None);
+    }
 
-            // SUT
-            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
-            Assert.IsFalse(actual);
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
-        }
+    [Test]
+    public async Task BuildProjectAsync_DoesNotCallMachineApiIfFeatureDisabled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
 
-        [Test]
-        public async Task SyncProjectCorporaAsync_DoesNotCallMachineApiIfFeatureDisabled()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        // SUT
+        await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
 
-            // SUT
-            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
-            Assert.IsFalse(actual);
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .GetCorpusFilesAsync(Corpus01, CancellationToken.None);
-        }
+        await env.MachineCorporaService
+            .DidNotReceiveWithAnyArgs()
+            .GetCorpusFilesAsync(Corpus01, CancellationToken.None);
+        await env.MachineBuildService
+            .DidNotReceiveWithAnyArgs()
+            .StartBuildAsync(TranslationEngine02, CancellationToken.None);
+    }
 
-        [Test]
-        public async Task SyncProjectCorporaAsync_DoesNotUpdateIfNoText()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
+    [Test]
+    public async Task BuildProjectAsync_DoesNotExecuteInProcessMachineIfFeatureDisabled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
-            // SUT
-            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
-            Assert.IsFalse(actual);
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
-            await env.MachineCorporaService
-                .DidNotReceiveWithAnyArgs()
-                .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
-        }
+        // SUT
+        await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
 
-        [Test]
-        public async Task SyncProjectCorporaAsync_FailsIfCorpusNotAddedToTranslationEngine()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.MachineCorporaService
-                .CreateCorpusAsync(Project01, false, CancellationToken.None)
-                .Returns(Task.FromResult(Corpus01));
-            env.MachineCorporaService
-                .AddCorpusToTranslationEngineAsync(TranslationEngine01, Corpus01, false, CancellationToken.None)
-                .Throws(new HttpRequestException());
-            await env.ProjectSecrets.UpdateAsync(
-                Project01,
-                u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = TranslationEngine01 })
-            );
+        await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync(Project02);
+    }
 
-            // SUT
-            Assert.ThrowsAsync<HttpRequestException>(
-                () => env.Service.SyncProjectCorporaAsync(User01, Project01, CancellationToken.None)
-            );
-        }
+    [Test]
+    public async Task BuildProjectAsync_DoesNotBuildMachineApiIfNoTextChanges()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
 
-        [Test]
-        public async Task SyncProjectCorporaAsync_UpdatesCorpusIfTextExists()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.TextCorpusFactory
-                .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-                .Returns(TestEnvironment.MockTextCorpus);
-            env.MachineCorporaService
-                .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
-                .Returns(
-                    Task.FromResult<IList<MachineApiCorpusFile>>(
-                        new List<MachineApiCorpusFile>
-                        {
-                            new MachineApiCorpusFile
-                            {
-                                Id = "File03",
-                                Href = "/corpora/corpus01/files/File03",
-                                LanguageTag = "en",
-                                Name = "textId.txt",
-                                TextId = "textId",
-                            },
-                        }
-                    )
-                );
-            env.MachineCorporaService
-                .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None)
-                .Returns(Task.FromResult("File03"));
-            await env.ProjectSecrets.UpdateAsync(
-                Project02,
-                u =>
-                    u.Add(
-                        p => p.MachineData.Corpora[Corpus01].Files,
-                        new MachineCorpusFile
-                        {
-                            FileChecksum = "a_previous_checksum",
-                            FileId = "File03",
-                            LanguageTag = "en",
-                            TextId = "textId",
-                        }
-                    )
-            );
+        // SUT
+        await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
 
-            // SUT
-            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
-            Assert.IsTrue(actual);
-            await env.MachineCorporaService
-                .ReceivedWithAnyArgs(1)
-                .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
-            await env.MachineCorporaService
-                .ReceivedWithAnyArgs(1)
-                .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
-        }
+        await env.MachineBuildService
+            .DidNotReceiveWithAnyArgs()
+            .StartBuildAsync(TranslationEngine02, CancellationToken.None);
+    }
 
-        [Test]
-        public async Task SyncProjectCorporaAsync_UpdatesSourceAndTargetTextsWithDifferentSourceAndTargetLanguages()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.TextCorpusFactory
-                .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>())
-                .Returns(TestEnvironment.MockTextCorpus);
-            env.MachineCorporaService
-                .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
-                .Returns(
-                    Task.FromResult<IList<MachineApiCorpusFile>>(
-                        new List<MachineApiCorpusFile>
-                        {
-                            new MachineApiCorpusFile
-                            {
-                                Id = "File03",
-                                Href = "/corpora/corpus01/files/File03",
-                                LanguageTag = "en",
-                                Name = "textId.txt",
-                                TextId = "textId",
-                            },
-                            new MachineApiCorpusFile
-                            {
-                                Id = "File04",
-                                Href = "/corpora/corpus01/files/File04",
-                                LanguageTag = "en_US",
-                                Name = "textId.txt",
-                                TextId = "textId",
-                            },
-                        }
-                    )
-                );
-            env.MachineCorporaService
-                .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None)
-                .Returns(Task.FromResult("File03"));
-            env.MachineCorporaService
-                .UploadCorpusTextAsync(Corpus01, "en_US", "textId", Arg.Any<string>(), CancellationToken.None)
-                .Returns(Task.FromResult("File04"));
-            await env.ProjectSecrets.UpdateAsync(
-                Project02,
-                u =>
-                    u.Add(
-                            p => p.MachineData.Corpora[Corpus01].Files,
-                            new MachineCorpusFile
-                            {
-                                FileChecksum = "a_previous_checksum",
-                                FileId = "File03",
-                                LanguageTag = "en",
-                                TextId = "textId",
-                            }
-                        )
-                        .Add(
-                            p => p.MachineData.Corpora[Corpus01].Files,
-                            new MachineCorpusFile
-                            {
-                                FileChecksum = "another_previous_checksum",
-                                FileId = "File04",
-                                LanguageTag = "en_US",
-                                TextId = "textId",
-                            }
-                        )
-            );
+    [Test]
+    public async Task BuildProjectAsync_CreatesTranslationEngineIfNoTranslationEngineId()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineTranslationService
+            .CreateTranslationEngineAsync(Project01, Arg.Any<string>(), Arg.Any<string>(), true, CancellationToken.None)
+            .Returns(Task.FromResult(TranslationEngine01));
 
-            // SUT
-            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
-            Assert.IsTrue(actual);
-            await env.MachineCorporaService
-                .Received(1)
-                .DeleteCorpusFileAsync(Corpus01, "File03", CancellationToken.None);
-            await env.MachineCorporaService
-                .Received(1)
-                .DeleteCorpusFileAsync(Corpus01, "File04", CancellationToken.None);
-            await env.MachineCorporaService
-                .Received(1)
-                .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None);
-            await env.MachineCorporaService
-                .Received(1)
-                .UploadCorpusTextAsync(Corpus01, "en_US", "textId", Arg.Any<string>(), CancellationToken.None);
-        }
+        // SUT
+        await env.Service.BuildProjectAsync(User01, Project01, CancellationToken.None);
 
-        [Test]
-        public async Task SyncProjectCorporaAsync_UpdatesSourceAndTargetTextsWithTheSameSourceAndTargetLanguage()
-        {
-            // Set up test environment
-            var env = new TestEnvironment();
-            env.TextCorpusFactory
-                .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>())
-                .Returns(TestEnvironment.MockTextCorpus);
-            env.MachineCorporaService
-                .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
-                .Returns(
-                    Task.FromResult<IList<MachineApiCorpusFile>>(
-                        new List<MachineApiCorpusFile>
-                        {
-                            new MachineApiCorpusFile
-                            {
-                                Id = "File03",
-                                Href = "/corpora/corpus01/files/File03",
-                                LanguageTag = "en",
-                                Name = "textId_source.txt",
-                                TextId = "textId_source",
-                            },
-                            new MachineApiCorpusFile
-                            {
-                                Id = "File04",
-                                Href = "/corpora/corpus01/files/File04",
-                                LanguageTag = "en",
-                                Name = "textId_target.txt",
-                                TextId = "textId_target",
-                            },
-                        }
-                    )
-                );
-            env.MachineCorporaService
-                .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None)
-                .Returns(Task.FromResult("File03"));
-            env.MachineCorporaService
-                .UploadCorpusTextAsync(Corpus01, "en", "textId_target", Arg.Any<string>(), CancellationToken.None)
-                .Returns(Task.FromResult("File04"));
-            await env.Projects.UpdateAsync(Project02, u => u.Set(p => p.WritingSystem.Tag, "en"));
-            await env.ProjectSecrets.UpdateAsync(
-                Project02,
-                u =>
-                    u.Add(
-                            p => p.MachineData.Corpora[Corpus01].Files,
-                            new MachineCorpusFile
-                            {
-                                FileChecksum = "a_previous_checksum",
-                                FileId = "File03",
-                                LanguageTag = "en",
-                                TextId = "textId_source",
-                            }
-                        )
-                        .Add(
-                            p => p.MachineData.Corpora[Corpus01].Files,
-                            new MachineCorpusFile
-                            {
-                                FileChecksum = "another_previous_checksum",
-                                FileId = "File04",
-                                LanguageTag = "en",
-                                TextId = "textId_target",
-                            }
-                        )
-            );
+        await env.MachineBuildService
+            .DidNotReceiveWithAnyArgs()
+            .StartBuildAsync(TranslationEngine02, CancellationToken.None);
+    }
 
-            // SUT
-            bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
-            Assert.IsTrue(actual);
-            await env.MachineCorporaService
-                .Received(1)
-                .DeleteCorpusFileAsync(Corpus01, "File03", CancellationToken.None);
-            await env.MachineCorporaService
-                .Received(1)
-                .DeleteCorpusFileAsync(Corpus01, "File04", CancellationToken.None);
-            await env.MachineCorporaService
-                .Received(1)
-                .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None);
-            await env.MachineCorporaService
-                .Received(1)
-                .UploadCorpusTextAsync(Corpus01, "en", "textId_target", Arg.Any<string>(), CancellationToken.None);
-        }
+    [Test]
+    public async Task BuildProjectAsync_ExecutesInProcessMachine()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
 
-        private class TestEnvironment
-        {
-            public TestEnvironment()
-            {
-                EngineService = Substitute.For<IEngineService>();
-                var logger = new MockLogger<MachineProjectService>();
-                MachineBuildService = Substitute.For<IMachineBuildService>();
-                MachineCorporaService = Substitute.For<IMachineCorporaService>();
-                MachineTranslationService = Substitute.For<IMachineTranslationService>();
-                var paratextService = Substitute.For<IParatextService>();
-                TextCorpusFactory = Substitute.For<ITextCorpusFactory>();
+        // SUT
+        await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
 
-                FeatureManager = Substitute.For<IFeatureManager>();
-                FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(true));
-                FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(true));
+        await env.EngineService.Received().StartBuildByProjectIdAsync(Project02);
+    }
 
-                ProjectSecrets = new MemoryRepository<SFProjectSecret>(
-                    new[]
+    [Test]
+    public async Task RemoveProjectAsync_CallsMachineApiIfTranslationEngineIdPresent()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
+
+        // Ensure that the translation engine, corpus and any files are deleted
+        await env.MachineTranslationService
+            .Received(1)
+            .DeleteTranslationEngineAsync(TranslationEngine02, CancellationToken.None);
+        await env.MachineCorporaService
+            .Received(1)
+            .RemoveCorpusFromTranslationEngineAsync(TranslationEngine02, Corpus01, CancellationToken.None);
+        await env.MachineCorporaService.Received(1).DeleteCorpusAsync(Corpus01, CancellationToken.None);
+        await env.MachineCorporaService.Received(1).DeleteCorpusFileAsync(Corpus01, File01, CancellationToken.None);
+        await env.MachineCorporaService.Received(1).DeleteCorpusFileAsync(Corpus01, File02, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task RemoveProjectAsync_DoesNotCallMachineApiIfFeatureDisabled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+
+        // SUT
+        await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
+
+        // Ensure that the translation engine, corpus and any files were not deleted
+        await env.MachineTranslationService
+            .DidNotReceiveWithAnyArgs()
+            .DeleteTranslationEngineAsync(TranslationEngine02, CancellationToken.None);
+        await env.MachineCorporaService.DidNotReceiveWithAnyArgs().DeleteCorpusAsync(Corpus01, CancellationToken.None);
+        await env.MachineCorporaService
+            .DidNotReceiveWithAnyArgs()
+            .DeleteCorpusFileAsync(Corpus01, File01, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task RemoveProjectAsync_DoesNotCallMachineApiIfNoTranslationEngineId()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.RemoveProjectAsync(User01, Project01, CancellationToken.None);
+
+        // Ensure that the translation engine, corpus and any files were not deleted
+        await env.MachineTranslationService
+            .DidNotReceiveWithAnyArgs()
+            .DeleteTranslationEngineAsync(TranslationEngine01, CancellationToken.None);
+        await env.MachineCorporaService.DidNotReceiveWithAnyArgs().DeleteCorpusAsync(Corpus01, CancellationToken.None);
+        await env.MachineCorporaService
+            .DidNotReceiveWithAnyArgs()
+            .DeleteCorpusFileAsync(Corpus01, File01, CancellationToken.None);
+        await env.MachineCorporaService
+            .DidNotReceiveWithAnyArgs()
+            .DeleteCorpusFileAsync(Corpus01, File02, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task RemoveProjectAsync_DoesNotExecuteInProcessMachineIfFeatureDisabled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+        // SUT
+        await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
+
+        // Ensure that the in process instance was not called
+        await env.EngineService.DidNotReceiveWithAnyArgs().RemoveProjectAsync(Project02);
+    }
+
+    [Test]
+    public async Task RemoveProjectAsync_ExecutesInProcessMachine()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.RemoveProjectAsync(User01, Project01, CancellationToken.None);
+
+        await env.EngineService.Received().RemoveProjectAsync(Project01);
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_CreatesCorpusIfMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TextCorpusFactory
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+            .Returns(TestEnvironment.MockTextCorpus);
+        env.MachineCorporaService
+            .CreateCorpusAsync(Project01, false, CancellationToken.None)
+            .Returns(Task.FromResult(Corpus01));
+        await env.ProjectSecrets.UpdateAsync(
+            Project01,
+            u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = TranslationEngine01 })
+        );
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project01, CancellationToken.None);
+        Assert.IsTrue(actual);
+        await env.MachineCorporaService
+            .DidNotReceiveWithAnyArgs()
+            .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
+        await env.MachineCorporaService
+            .ReceivedWithAnyArgs(1)
+            .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
+        Assert.AreEqual(1, env.ProjectSecrets.Get(Project01).MachineData?.Corpora[Corpus01].Files.Count);
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_CreatesCorpusTextIfTextDoesNotExistInProjectSecretOrMachineApi()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TextCorpusFactory
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+            .Returns(TestEnvironment.MockTextCorpus);
+
+        // SUT
+        Assert.AreEqual(2, env.ProjectSecrets.Get(Project02).MachineData?.Corpora[Corpus01].Files.Count);
+        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        Assert.IsTrue(actual);
+        await env.MachineCorporaService
+            .DidNotReceiveWithAnyArgs()
+            .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
+        await env.MachineCorporaService
+            .ReceivedWithAnyArgs(1)
+            .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
+        Assert.AreEqual(3, env.ProjectSecrets.Get(Project02).MachineData?.Corpora[Corpus01].Files.Count);
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_CreatesCorpusTextIfTextExistsInProjectServerButNotMachineApi()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TextCorpusFactory
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+            .Returns(TestEnvironment.MockTextCorpus);
+        env.MachineCorporaService
+            .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
+            .Returns(Task.FromResult<IList<MachineApiCorpusFile>>(Array.Empty<MachineApiCorpusFile>()));
+        env.MachineCorporaService
+            .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult("File03"));
+        await env.ProjectSecrets.UpdateAsync(
+            Project02,
+            u =>
+                u.Add(
+                    p => p.MachineData.Corpora[Corpus01].Files,
+                    new MachineCorpusFile
                     {
-                        new SFProjectSecret { Id = Project01 },
-                        new SFProjectSecret
+                        FileChecksum = "a_previous_checksum",
+                        FileId = "File03",
+                        TextId = "textId",
+                    }
+                )
+        );
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        Assert.IsTrue(actual);
+        await env.MachineCorporaService
+            .DidNotReceiveWithAnyArgs()
+            .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
+        await env.MachineCorporaService
+            .ReceivedWithAnyArgs(1)
+            .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_DoesNotUpdateIfNoChanges()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TextCorpusFactory
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+            .Returns(TestEnvironment.MockTextCorpus);
+        env.MachineCorporaService
+            .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult("File03"));
+        string checksum = StringUtils.ComputeMd5Hash($"segRef\tsegment01\n");
+        await env.ProjectSecrets.UpdateAsync(
+            Project02,
+            u =>
+                u.Add(
+                    p => p.MachineData.Corpora[Corpus01].Files,
+                    new MachineCorpusFile
+                    {
+                        FileChecksum = checksum,
+                        FileId = "File03",
+                        LanguageTag = "en",
+                        TextId = "textId",
+                    }
+                )
+        );
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        Assert.IsFalse(actual);
+        await env.MachineCorporaService
+            .DidNotReceiveWithAnyArgs()
+            .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
+        await env.MachineCorporaService
+            .DidNotReceiveWithAnyArgs()
+            .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_DoesNotCallMachineApiIfFeatureDisabled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        Assert.IsFalse(actual);
+        await env.MachineCorporaService
+            .DidNotReceiveWithAnyArgs()
+            .GetCorpusFilesAsync(Corpus01, CancellationToken.None);
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_DoesNotUpdateIfNoText()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        Assert.IsFalse(actual);
+        await env.MachineCorporaService
+            .DidNotReceiveWithAnyArgs()
+            .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
+        await env.MachineCorporaService
+            .DidNotReceiveWithAnyArgs()
+            .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_FailsIfCorpusNotAddedToTranslationEngine()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineCorporaService
+            .CreateCorpusAsync(Project01, false, CancellationToken.None)
+            .Returns(Task.FromResult(Corpus01));
+        env.MachineCorporaService
+            .AddCorpusToTranslationEngineAsync(TranslationEngine01, Corpus01, false, CancellationToken.None)
+            .Throws(new HttpRequestException());
+        await env.ProjectSecrets.UpdateAsync(
+            Project01,
+            u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = TranslationEngine01 })
+        );
+
+        // SUT
+        Assert.ThrowsAsync<HttpRequestException>(
+            () => env.Service.SyncProjectCorporaAsync(User01, Project01, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_UpdatesCorpusIfTextExists()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TextCorpusFactory
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+            .Returns(TestEnvironment.MockTextCorpus);
+        env.MachineCorporaService
+            .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<MachineApiCorpusFile>>(
+                    new List<MachineApiCorpusFile>
+                    {
+                        new MachineApiCorpusFile
                         {
-                            Id = Project02,
-                            MachineData = new MachineData
+                            Id = "File03",
+                            Href = "/corpora/corpus01/files/File03",
+                            LanguageTag = "en",
+                            Name = "textId.txt",
+                            TextId = "textId",
+                        },
+                    }
+                )
+            );
+        env.MachineCorporaService
+            .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult("File03"));
+        await env.ProjectSecrets.UpdateAsync(
+            Project02,
+            u =>
+                u.Add(
+                    p => p.MachineData.Corpora[Corpus01].Files,
+                    new MachineCorpusFile
+                    {
+                        FileChecksum = "a_previous_checksum",
+                        FileId = "File03",
+                        LanguageTag = "en",
+                        TextId = "textId",
+                    }
+                )
+        );
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        Assert.IsTrue(actual);
+        await env.MachineCorporaService
+            .ReceivedWithAnyArgs(1)
+            .DeleteCorpusFileAsync(string.Empty, string.Empty, default);
+        await env.MachineCorporaService
+            .ReceivedWithAnyArgs(1)
+            .UploadCorpusTextAsync(string.Empty, string.Empty, string.Empty, string.Empty, default);
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_UpdatesSourceAndTargetTextsWithDifferentSourceAndTargetLanguages()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TextCorpusFactory
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>())
+            .Returns(TestEnvironment.MockTextCorpus);
+        env.MachineCorporaService
+            .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<MachineApiCorpusFile>>(
+                    new List<MachineApiCorpusFile>
+                    {
+                        new MachineApiCorpusFile
+                        {
+                            Id = "File03",
+                            Href = "/corpora/corpus01/files/File03",
+                            LanguageTag = "en",
+                            Name = "textId.txt",
+                            TextId = "textId",
+                        },
+                        new MachineApiCorpusFile
+                        {
+                            Id = "File04",
+                            Href = "/corpora/corpus01/files/File04",
+                            LanguageTag = "en_US",
+                            Name = "textId.txt",
+                            TextId = "textId",
+                        },
+                    }
+                )
+            );
+        env.MachineCorporaService
+            .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult("File03"));
+        env.MachineCorporaService
+            .UploadCorpusTextAsync(Corpus01, "en_US", "textId", Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult("File04"));
+        await env.ProjectSecrets.UpdateAsync(
+            Project02,
+            u =>
+                u.Add(
+                        p => p.MachineData.Corpora[Corpus01].Files,
+                        new MachineCorpusFile
+                        {
+                            FileChecksum = "a_previous_checksum",
+                            FileId = "File03",
+                            LanguageTag = "en",
+                            TextId = "textId",
+                        }
+                    )
+                    .Add(
+                        p => p.MachineData.Corpora[Corpus01].Files,
+                        new MachineCorpusFile
+                        {
+                            FileChecksum = "another_previous_checksum",
+                            FileId = "File04",
+                            LanguageTag = "en_US",
+                            TextId = "textId",
+                        }
+                    )
+        );
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        Assert.IsTrue(actual);
+        await env.MachineCorporaService.Received(1).DeleteCorpusFileAsync(Corpus01, "File03", CancellationToken.None);
+        await env.MachineCorporaService.Received(1).DeleteCorpusFileAsync(Corpus01, "File04", CancellationToken.None);
+        await env.MachineCorporaService
+            .Received(1)
+            .UploadCorpusTextAsync(Corpus01, "en", "textId", Arg.Any<string>(), CancellationToken.None);
+        await env.MachineCorporaService
+            .Received(1)
+            .UploadCorpusTextAsync(Corpus01, "en_US", "textId", Arg.Any<string>(), CancellationToken.None);
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_UpdatesSourceAndTargetTextsWithTheSameSourceAndTargetLanguage()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TextCorpusFactory
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>())
+            .Returns(TestEnvironment.MockTextCorpus);
+        env.MachineCorporaService
+            .GetCorpusFilesAsync(Corpus01, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<MachineApiCorpusFile>>(
+                    new List<MachineApiCorpusFile>
+                    {
+                        new MachineApiCorpusFile
+                        {
+                            Id = "File03",
+                            Href = "/corpora/corpus01/files/File03",
+                            LanguageTag = "en",
+                            Name = "textId_source.txt",
+                            TextId = "textId_source",
+                        },
+                        new MachineApiCorpusFile
+                        {
+                            Id = "File04",
+                            Href = "/corpora/corpus01/files/File04",
+                            LanguageTag = "en",
+                            Name = "textId_target.txt",
+                            TextId = "textId_target",
+                        },
+                    }
+                )
+            );
+        env.MachineCorporaService
+            .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult("File03"));
+        env.MachineCorporaService
+            .UploadCorpusTextAsync(Corpus01, "en", "textId_target", Arg.Any<string>(), CancellationToken.None)
+            .Returns(Task.FromResult("File04"));
+        await env.Projects.UpdateAsync(Project02, u => u.Set(p => p.WritingSystem.Tag, "en"));
+        await env.ProjectSecrets.UpdateAsync(
+            Project02,
+            u =>
+                u.Add(
+                        p => p.MachineData.Corpora[Corpus01].Files,
+                        new MachineCorpusFile
+                        {
+                            FileChecksum = "a_previous_checksum",
+                            FileId = "File03",
+                            LanguageTag = "en",
+                            TextId = "textId_source",
+                        }
+                    )
+                    .Add(
+                        p => p.MachineData.Corpora[Corpus01].Files,
+                        new MachineCorpusFile
+                        {
+                            FileChecksum = "another_previous_checksum",
+                            FileId = "File04",
+                            LanguageTag = "en",
+                            TextId = "textId_target",
+                        }
+                    )
+        );
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        Assert.IsTrue(actual);
+        await env.MachineCorporaService.Received(1).DeleteCorpusFileAsync(Corpus01, "File03", CancellationToken.None);
+        await env.MachineCorporaService.Received(1).DeleteCorpusFileAsync(Corpus01, "File04", CancellationToken.None);
+        await env.MachineCorporaService
+            .Received(1)
+            .UploadCorpusTextAsync(Corpus01, "en", "textId_source", Arg.Any<string>(), CancellationToken.None);
+        await env.MachineCorporaService
+            .Received(1)
+            .UploadCorpusTextAsync(Corpus01, "en", "textId_target", Arg.Any<string>(), CancellationToken.None);
+    }
+
+    private class TestEnvironment
+    {
+        public TestEnvironment()
+        {
+            EngineService = Substitute.For<IEngineService>();
+            var logger = new MockLogger<MachineProjectService>();
+            MachineBuildService = Substitute.For<IMachineBuildService>();
+            MachineCorporaService = Substitute.For<IMachineCorporaService>();
+            MachineTranslationService = Substitute.For<IMachineTranslationService>();
+            var paratextService = Substitute.For<IParatextService>();
+            TextCorpusFactory = Substitute.For<ITextCorpusFactory>();
+
+            FeatureManager = Substitute.For<IFeatureManager>();
+            FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(true));
+            FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(true));
+
+            ProjectSecrets = new MemoryRepository<SFProjectSecret>(
+                new[]
+                {
+                    new SFProjectSecret { Id = Project01 },
+                    new SFProjectSecret
+                    {
+                        Id = Project02,
+                        MachineData = new MachineData
+                        {
+                            TranslationEngineId = TranslationEngine02,
+                            Corpora = new Dictionary<string, MachineCorpus>
                             {
-                                TranslationEngineId = TranslationEngine02,
-                                Corpora = new Dictionary<string, MachineCorpus>
                                 {
+                                    Corpus01,
+                                    new MachineCorpus
                                     {
-                                        Corpus01,
-                                        new MachineCorpus
+                                        Files = new List<MachineCorpusFile>
                                         {
-                                            Files = new List<MachineCorpusFile>
-                                            {
-                                                new MachineCorpusFile { FileId = File01 },
-                                                new MachineCorpusFile { FileId = File02 },
-                                            },
-                                        }
-                                    },
+                                            new MachineCorpusFile { FileId = File01 },
+                                            new MachineCorpusFile { FileId = File02 },
+                                        },
+                                    }
                                 },
                             },
                         },
-                        new SFProjectSecret { Id = Project03 },
-                    }
-                );
+                    },
+                    new SFProjectSecret { Id = Project03 },
+                }
+            );
 
-                var userSecrets = new MemoryRepository<UserSecret>(new[] { new UserSecret { Id = User01 } });
+            var userSecrets = new MemoryRepository<UserSecret>(new[] { new UserSecret { Id = User01 } });
 
-                Projects = new MemoryRepository<SFProject>(
-                    new[]
+            Projects = new MemoryRepository<SFProject>(
+                new[]
+                {
+                    new SFProject
                     {
-                        new SFProject
+                        Id = Project01,
+                        Name = "project01",
+                        ShortName = "P01",
+                        CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                        UserRoles = new Dictionary<string, string>(),
+                        TranslateConfig = new TranslateConfig
                         {
-                            Id = Project01,
-                            Name = "project01",
-                            ShortName = "P01",
-                            CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                            UserRoles = new Dictionary<string, string>(),
-                            TranslateConfig = new TranslateConfig
+                            TranslationSuggestionsEnabled = true,
+                            Source = new TranslateSource
                             {
-                                TranslationSuggestionsEnabled = true,
-                                Source = new TranslateSource
-                                {
-                                    ProjectRef = Project02,
-                                    WritingSystem = new WritingSystem { Tag = "en_US" },
-                                },
+                                ProjectRef = Project02,
+                                WritingSystem = new WritingSystem { Tag = "en_US" },
                             },
-                            WritingSystem = new WritingSystem { Tag = "en_GB" },
                         },
-                        new SFProject
-                        {
-                            Id = Project02,
-                            Name = "project02",
-                            ShortName = "P02",
-                            CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                            UserRoles = new Dictionary<string, string>(),
-                            TranslateConfig = new TranslateConfig
-                            {
-                                TranslationSuggestionsEnabled = true,
-                                Source = new TranslateSource
-                                {
-                                    ProjectRef = Project03,
-                                    WritingSystem = new WritingSystem { Tag = "en" },
-                                },
-                            },
-                            WritingSystem = new WritingSystem { Tag = "en_US" },
-                        },
-                        new SFProject
-                        {
-                            Id = Project03,
-                            Name = "project03",
-                            ShortName = "P03",
-                            CheckingConfig = new CheckingConfig { ShareEnabled = false },
-                            UserRoles = new Dictionary<string, string>(),
-                        },
-                    }
-                );
-
-                var realtimeService = new SFMemoryRealtimeService();
-                realtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
-
-                Service = new MachineProjectService(
-                    EngineService,
-                    FeatureManager,
-                    logger,
-                    MachineBuildService,
-                    MachineCorporaService,
-                    MachineTranslationService,
-                    paratextService,
-                    ProjectSecrets,
-                    realtimeService,
-                    TextCorpusFactory,
-                    userSecrets
-                );
-            }
-
-            public static Task<ITextCorpus> MockTextCorpus =>
-                Task.FromResult<ITextCorpus>(
-                    new MockTextCorpus
+                        WritingSystem = new WritingSystem { Tag = "en_GB" },
+                    },
+                    new SFProject
                     {
-                        Texts = new[]
+                        Id = Project02,
+                        Name = "project02",
+                        ShortName = "P02",
+                        CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                        UserRoles = new Dictionary<string, string>(),
+                        TranslateConfig = new TranslateConfig
                         {
-                            new MockText
+                            TranslationSuggestionsEnabled = true,
+                            Source = new TranslateSource
                             {
-                                Id = "textId",
-                                Segments = new List<TextSegment>
-                                {
-                                    new TextSegment(
-                                        "textId",
-                                        "segRef",
-                                        new string[] { "segment01" },
-                                        false,
-                                        false,
-                                        false,
-                                        false
-                                    ),
-                                },
+                                ProjectRef = Project03,
+                                WritingSystem = new WritingSystem { Tag = "en" },
                             },
                         },
-                    }
-                );
+                        WritingSystem = new WritingSystem { Tag = "en_US" },
+                    },
+                    new SFProject
+                    {
+                        Id = Project03,
+                        Name = "project03",
+                        ShortName = "P03",
+                        CheckingConfig = new CheckingConfig { ShareEnabled = false },
+                        UserRoles = new Dictionary<string, string>(),
+                    },
+                }
+            );
 
-            public MachineProjectService Service { get; }
-            public IEngineService EngineService { get; }
-            public IFeatureManager FeatureManager { get; }
-            public IMachineBuildService MachineBuildService { get; }
-            public IMachineCorporaService MachineCorporaService { get; }
-            public IMachineTranslationService MachineTranslationService { get; }
-            public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
-            public MemoryRepository<SFProject> Projects { get; }
-            public ITextCorpusFactory TextCorpusFactory { get; }
+            var realtimeService = new SFMemoryRealtimeService();
+            realtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
+
+            Service = new MachineProjectService(
+                EngineService,
+                FeatureManager,
+                logger,
+                MachineBuildService,
+                MachineCorporaService,
+                MachineTranslationService,
+                paratextService,
+                ProjectSecrets,
+                realtimeService,
+                TextCorpusFactory,
+                userSecrets
+            );
         }
+
+        public static Task<ITextCorpus> MockTextCorpus =>
+            Task.FromResult<ITextCorpus>(
+                new MockTextCorpus
+                {
+                    Texts = new[]
+                    {
+                        new MockText
+                        {
+                            Id = "textId",
+                            Segments = new List<TextSegment>
+                            {
+                                new TextSegment(
+                                    "textId",
+                                    "segRef",
+                                    new string[] { "segment01" },
+                                    false,
+                                    false,
+                                    false,
+                                    false
+                                ),
+                            },
+                        },
+                    },
+                }
+            );
+
+        public MachineProjectService Service { get; }
+        public IEngineService EngineService { get; }
+        public IFeatureManager FeatureManager { get; }
+        public IMachineBuildService MachineBuildService { get; }
+        public IMachineCorporaService MachineCorporaService { get; }
+        public IMachineTranslationService MachineTranslationService { get; }
+        public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
+        public MemoryRepository<SFProject> Projects { get; }
+        public ITextCorpusFactory TextCorpusFactory { get; }
     }
 }

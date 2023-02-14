@@ -1,7 +1,6 @@
-namespace SIL.XForge.Models
+namespace SIL.XForge.Models;
+
+public interface IOwnedData
 {
-    public interface IOwnedData
-    {
-        string OwnerRef { get; set; }
-    }
+    string OwnerRef { get; set; }
 }
