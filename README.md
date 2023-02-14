@@ -619,6 +619,8 @@ C# can be formatted from the repo root by running
 ```bash
 dotnet tool install csharpier
 dotnet csharpier .
+dotnet format style
+dotnet format analyzers
 ```
 
 ## Cleaning

@@ -1,11 +1,10 @@
 using System.Threading.Tasks;
 using SIL.XForge.Scripture.Models;
 
-namespace SIL.XForge.Scripture.Services
+namespace SIL.XForge.Scripture.Services;
+
+public interface INotifier
 {
-    public interface INotifier
-    {
-        Task NotifySyncProgress(string sfProjectId, ProgressState progressState);
-        Task SubscribeToProject(string projectId);
-    }
+    Task NotifySyncProgress(string sfProjectId, ProgressState progressState);
+    Task SubscribeToProject(string projectId);
 }

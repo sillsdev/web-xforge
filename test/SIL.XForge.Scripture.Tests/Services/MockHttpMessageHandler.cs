@@ -1,40 +1,39 @@
-using System.Net.Http;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace SIL.XForge.Scripture.Services
+namespace SIL.XForge.Scripture.Services;
+
+public class MockHttpMessageHandler : HttpMessageHandler
 {
-    public class MockHttpMessageHandler : HttpMessageHandler
+    private readonly string _response;
+    private readonly HttpStatusCode _statusCode;
+
+    public string? LastInput { get; private set; }
+    public int NumberOfCalls { get; private set; }
+
+    public MockHttpMessageHandler(string response, HttpStatusCode statusCode)
     {
-        private readonly string _response;
-        private readonly HttpStatusCode _statusCode;
+        _response = response;
+        _statusCode = statusCode;
+    }
 
-        public string? LastInput { get; private set; }
-        public int NumberOfCalls { get; private set; }
-
-        public MockHttpMessageHandler(string response, HttpStatusCode statusCode)
+    protected override async Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken
+    )
+    {
+        NumberOfCalls++;
+        if (request.Content is not null)
         {
-            _response = response;
-            _statusCode = statusCode;
+            LastInput = await request.Content.ReadAsStringAsync(cancellationToken);
         }
-
-        protected override async Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken
-        )
+        return new HttpResponseMessage
         {
-            NumberOfCalls++;
-            if (request.Content is not null)
-            {
-                LastInput = await request.Content.ReadAsStringAsync(cancellationToken);
-            }
-            return new HttpResponseMessage
-            {
-                StatusCode = _statusCode,
-                Content = new StringContent(_response),
-                RequestMessage = request,
-            };
-        }
+            StatusCode = _statusCode,
+            Content = new StringContent(_response),
+            RequestMessage = request,
+        };
     }
 }

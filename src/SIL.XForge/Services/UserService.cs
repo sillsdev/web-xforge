@@ -12,267 +12,246 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Utils;
 
-namespace SIL.XForge.Services
+namespace SIL.XForge.Services;
+
+/// <summary>
+/// This class manages xForge users.
+/// </summary>
+public class UserService : IUserService
 {
-    /// <summary>
-    /// This class manages xForge users.
-    /// </summary>
-    public class UserService : IUserService
+    public static readonly string PTLinkedToAnotherUserKey = "paratext-linked-to-another-user";
+    private const string EMAIL_PATTERN = "^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+[.]+[a-zA-Z]{2,}$";
+
+    private readonly IRealtimeService _realtimeService;
+    private readonly IOptions<SiteOptions> _siteOptions;
+    private readonly IRepository<UserSecret> _userSecrets;
+    private readonly IAuthService _authService;
+    private readonly IProjectService _projectService;
+    private readonly ILogger<UserService> _logger;
+
+    public UserService(
+        IRealtimeService realtimeService,
+        IOptions<SiteOptions> siteOptions,
+        IRepository<UserSecret> userSecrets,
+        IAuthService authService,
+        IProjectService projectService,
+        ILogger<UserService> logger
+    )
     {
-        public static readonly string PTLinkedToAnotherUserKey = "paratext-linked-to-another-user";
-        private const string EMAIL_PATTERN = "^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+[.]+[a-zA-Z]{2,}$";
+        _realtimeService = realtimeService;
+        _siteOptions = siteOptions;
+        _userSecrets = userSecrets;
+        _authService = authService;
+        _projectService = projectService;
+        _logger = logger;
+    }
 
-        private readonly IRealtimeService _realtimeService;
-        private readonly IOptions<SiteOptions> _siteOptions;
-        private readonly IRepository<UserSecret> _userSecrets;
-        private readonly IAuthService _authService;
-        private readonly IProjectService _projectService;
-        private readonly ILogger<UserService> _logger;
-
-        public UserService(
-            IRealtimeService realtimeService,
-            IOptions<SiteOptions> siteOptions,
-            IRepository<UserSecret> userSecrets,
-            IAuthService authService,
-            IProjectService projectService,
-            ILogger<UserService> logger
-        )
+    public async Task UpdateUserFromProfileAsync(string curUserId, string userProfileJson)
+    {
+        var userProfile = JObject.Parse(userProfileJson);
+        var identities = (JArray)userProfile["identities"];
+        JObject ptIdentity = identities.OfType<JObject>().FirstOrDefault(i => (string)i["connection"] == "paratext");
+        Regex emailRegex = new Regex(EMAIL_PATTERN);
+        await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
         {
-            _realtimeService = realtimeService;
-            _siteOptions = siteOptions;
-            _userSecrets = userSecrets;
-            _authService = authService;
-            _projectService = projectService;
-            _logger = logger;
-        }
-
-        public async Task UpdateUserFromProfileAsync(string curUserId, string userProfileJson)
-        {
-            var userProfile = JObject.Parse(userProfileJson);
-            var identities = (JArray)userProfile["identities"];
-            JObject ptIdentity = identities
-                .OfType<JObject>()
-                .FirstOrDefault(i => (string)i["connection"] == "paratext");
-            Regex emailRegex = new Regex(EMAIL_PATTERN);
-            await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
-            {
-                string name = (string)userProfile["name"];
-                IDocument<User> userDoc = await conn.FetchOrCreateAsync<User>(
-                    curUserId,
-                    () =>
-                        new User
-                        {
-                            AuthId = (string)userProfile["user_id"],
-                            DisplayName =
-                                string.IsNullOrWhiteSpace(name) || emailRegex.IsMatch(name)
-                                    ? (string)userProfile["nickname"]
-                                    : name
-                        }
-                );
-                await userDoc.SubmitJson0OpAsync(op =>
-                {
-                    op.Set(u => u.Name, name);
-                    op.Set(u => u.Email, (string)userProfile["email"]);
-                    op.Set(u => u.AvatarUrl, (string)userProfile["picture"]);
-                    op.Set(u => u.Role, (string)userProfile["app_metadata"]["xf_role"]);
-                    if (ptIdentity != null)
+            string name = (string)userProfile["name"];
+            IDocument<User> userDoc = await conn.FetchOrCreateAsync<User>(
+                curUserId,
+                () =>
+                    new User
                     {
-                        var ptId = (string)ptIdentity["user_id"];
-                        op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId));
+                        AuthId = (string)userProfile["user_id"],
+                        DisplayName =
+                            string.IsNullOrWhiteSpace(name) || emailRegex.IsMatch(name)
+                                ? (string)userProfile["nickname"]
+                                : name
                     }
-                    string language =
-                        userProfile["user_metadata"] == null
-                            ? null
-                            : (string)userProfile["user_metadata"]["interface_language"];
-                    string interfaceLanguage = string.IsNullOrWhiteSpace(language) ? "en" : language;
-                    op.Set(u => u.InterfaceLanguage, interfaceLanguage);
-                    string key = _siteOptions.Value.Id;
-                    if (!userDoc.Data.Sites.ContainsKey(key))
-                        op.Set(u => u.Sites[key], new Site());
-                });
-            }
-
-            if (ptIdentity != null)
+            );
+            await userDoc.SubmitJson0OpAsync(op =>
             {
-                var newPTTokens = new Tokens
+                op.Set(u => u.Name, name);
+                op.Set(u => u.Email, (string)userProfile["email"]);
+                op.Set(u => u.AvatarUrl, (string)userProfile["picture"]);
+                op.Set(u => u.Role, (string)userProfile["app_metadata"]["xf_role"]);
+                if (ptIdentity != null)
                 {
-                    AccessToken = (string)ptIdentity["access_token"],
-                    RefreshToken = (string)ptIdentity["refresh_token"]
-                };
-                UserSecret userSecret = await _userSecrets.UpdateAsync(
-                    curUserId,
-                    update => update.SetOnInsert(put => put.ParatextTokens, newPTTokens),
-                    true
-                );
-
-                // Only update the PT tokens if they are newer
-                if (newPTTokens.IssuedAt > userSecret.ParatextTokens.IssuedAt)
-                {
-                    await _userSecrets.UpdateAsync(
-                        curUserId,
-                        update => update.Set(put => put.ParatextTokens, newPTTokens)
-                    );
+                    var ptId = (string)ptIdentity["user_id"];
+                    op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId));
                 }
-                else if (newPTTokens.IssuedAt < userSecret.ParatextTokens.IssuedAt)
-                {
-                    string incomingIAt = newPTTokens.IssuedAt.ToString(
-                        "o",
-                        System.Globalization.CultureInfo.InvariantCulture
-                    );
-                    string currentIAt = userSecret.ParatextTokens.IssuedAt.ToString(
-                        "o",
-                        System.Globalization.CultureInfo.InvariantCulture
-                    );
-                    _logger.LogWarning(
-                        $"When updating user with SF id {curUserId} from auth0 profile, ignoring incoming tokens which were issued at {incomingIAt}, which is earlier than the current tokens {currentIAt}."
-                    );
-                }
-            }
+                string language =
+                    userProfile["user_metadata"] == null
+                        ? null
+                        : (string)userProfile["user_metadata"]["interface_language"];
+                string interfaceLanguage = string.IsNullOrWhiteSpace(language) ? "en" : language;
+                op.Set(u => u.InterfaceLanguage, interfaceLanguage);
+                string key = _siteOptions.Value.Id;
+                if (!userDoc.Data.Sites.ContainsKey(key))
+                    op.Set(u => u.Sites[key], new Site());
+            });
         }
 
-        /// <summary>
-        /// Links the secondary Auth0 account (Paratext account) to the primary Auth0 account for the specified user.
-        /// </summary>
-        public async Task LinkParatextAccountAsync(string primaryAuthId, string paratextAuthId)
+        if (ptIdentity != null)
         {
-            if (!await CheckIsParatextProfileAndFirstLogin(paratextAuthId))
-            {
-                // Another auth0 profile already exists that is linked to the paratext account
-                throw new ArgumentException(PTLinkedToAnotherUserKey);
-            }
-            await _authService.LinkAccounts(primaryAuthId, paratextAuthId);
-            JObject userProfile = JObject.Parse(await _authService.GetUserAsync(primaryAuthId));
-            var primaryUserId = (string)userProfile["app_metadata"]["xf_user_id"];
-            var identities = (JArray)userProfile["identities"];
-            JObject ptIdentity = identities.OfType<JObject>().First(i => (string)i["connection"] == "paratext");
-            var ptId = (string)ptIdentity["user_id"];
-            var ptTokens = new Tokens
+            var newPTTokens = new Tokens
             {
                 AccessToken = (string)ptIdentity["access_token"],
                 RefreshToken = (string)ptIdentity["refresh_token"]
             };
-            await _userSecrets.UpdateAsync(
-                primaryUserId,
-                update => update.Set(us => us.ParatextTokens, ptTokens),
+            UserSecret userSecret = await _userSecrets.UpdateAsync(
+                curUserId,
+                update => update.SetOnInsert(put => put.ParatextTokens, newPTTokens),
                 true
             );
 
-            await using (IConnection conn = await _realtimeService.ConnectAsync(primaryUserId))
+            // Only update the PT tokens if they are newer
+            if (newPTTokens.IssuedAt > userSecret.ParatextTokens.IssuedAt)
             {
-                IDocument<User> userDoc = await conn.FetchAsync<User>(primaryUserId);
-                await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId)));
+                await _userSecrets.UpdateAsync(curUserId, update => update.Set(put => put.ParatextTokens, newPTTokens));
             }
-        }
-
-        /// <summary>
-        /// Updates the user avatar on their Auth0 account based off their display name
-        /// </summary>
-        public async Task UpdateAvatarFromDisplayNameAsync(string curUserId, string authId)
-        {
-            await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
+            else if (newPTTokens.IssuedAt < userSecret.ParatextTokens.IssuedAt)
             {
-                IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
-                // Only overwrite the avatar for allowed domains so as not to overwrite an avatar provided by a social connection
-                string[] allowedDomains = { "cdn.auth0.com", "gravatar.com" };
-                if (!allowedDomains.Any(userDoc.Data.AvatarUrl.Contains))
-                {
-                    return;
-                }
-
-                string initials = string.Concat(
-                    userDoc.Data.DisplayName
-                        .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
-                        .Where(x => x.Length > 1 && char.IsLetter(x[0]))
-                        .Select(x => char.ToLower(x[0]))
+                string incomingIAt = newPTTokens.IssuedAt.ToString(
+                    "o",
+                    System.Globalization.CultureInfo.InvariantCulture
                 );
-                if (initials.Length == 0)
-                {
-                    return;
-                }
-                else if (initials.Length > 2)
-                {
-                    // Auth0 avatar images only support 2 characters
-                    initials = $"{initials[0]}{initials[initials.Length - 1]}";
-                }
-                var avatarUrl = $"https://cdn.auth0.com/avatars/{initials}.png";
-                // If user has an email then link to Gravatar with auth0 as a fallback
-                if (userDoc.Data.Email != null && userDoc.Data.Email != "")
-                {
-                    var emailHash = StringUtils.ComputeMd5Hash(userDoc.Data.Email);
-                    var auth0Fallback = System.Web.HttpUtility.UrlEncode(avatarUrl);
-                    avatarUrl = $"https://www.gravatar.com/avatar/{emailHash}?s=480&r=pg&d={auth0Fallback}";
-                }
-                // Update Auth0 profile
-                await _authService.UpdateAvatar(authId, avatarUrl);
-                // Update user doc
-                await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.AvatarUrl, avatarUrl));
+                string currentIAt = userSecret.ParatextTokens.IssuedAt.ToString(
+                    "o",
+                    System.Globalization.CultureInfo.InvariantCulture
+                );
+                _logger.LogWarning(
+                    $"When updating user with SF id {curUserId} from auth0 profile, ignoring incoming tokens which were issued at {incomingIAt}, which is earlier than the current tokens {currentIAt}."
+                );
             }
         }
+    }
 
-        /// <summary>
-        /// Updates the interface language in the specified user's Auth0 account in their userMetadata.
-        /// </summary>
-        public async Task UpdateInterfaceLanguageAsync(string curUserId, string authId, string language)
+    /// <summary>
+    /// Links the secondary Auth0 account (Paratext account) to the primary Auth0 account for the specified user.
+    /// </summary>
+    public async Task LinkParatextAccountAsync(string primaryAuthId, string paratextAuthId)
+    {
+        if (!await CheckIsParatextProfileAndFirstLogin(paratextAuthId))
         {
-            await _authService.UpdateInterfaceLanguage(authId, language);
-
-            await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
-            {
-                IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
-                await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.InterfaceLanguage, language));
-            }
+            // Another auth0 profile already exists that is linked to the paratext account
+            throw new ArgumentException(PTLinkedToAnotherUserKey);
         }
-
-        /// <summary>
-        /// Delete user with SF user id userId, as requested by SF user curUserId who has systemRole.
-        /// </summary>
-        public async Task DeleteAsync(string curUserId, string systemRole, string userId)
+        await _authService.LinkAccounts(primaryAuthId, paratextAuthId);
+        JObject userProfile = JObject.Parse(await _authService.GetUserAsync(primaryAuthId));
+        var primaryUserId = (string)userProfile["app_metadata"]["xf_user_id"];
+        var identities = (JArray)userProfile["identities"];
+        JObject ptIdentity = identities.OfType<JObject>().First(i => (string)i["connection"] == "paratext");
+        var ptId = (string)ptIdentity["user_id"];
+        var ptTokens = new Tokens
         {
-            if (curUserId == null || systemRole == null || userId == null)
-            {
-                throw new ArgumentNullException();
-            }
-            if (systemRole != SystemRole.SystemAdmin && userId != curUserId)
-            {
-                throw new ForbiddenException();
-            }
+            AccessToken = (string)ptIdentity["access_token"],
+            RefreshToken = (string)ptIdentity["refresh_token"]
+        };
+        await _userSecrets.UpdateAsync(primaryUserId, update => update.Set(us => us.ParatextTokens, ptTokens), true);
 
-            await _projectService.RemoveUserFromAllProjectsAsync(curUserId, userId);
-            await _userSecrets.DeleteAsync(userId);
-            await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
-            {
-                IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
-                await userDoc.DeleteAsync();
-            }
-            // Remove the actual docs.
-            await _realtimeService.DeleteUserAsync(userId);
-        }
+        await using IConnection conn = await _realtimeService.ConnectAsync(primaryUserId);
+        IDocument<User> userDoc = await conn.FetchAsync<User>(primaryUserId);
+        await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.ParatextId, GetIdpIdFromAuthId(ptId)));
+    }
 
-        public async Task<string> GetUsernameFromUserId(string curUserId, string userId)
+    /// <summary>
+    /// Updates the user avatar on their Auth0 account based off their display name
+    /// </summary>
+    public async Task UpdateAvatarFromDisplayNameAsync(string curUserId, string authId)
+    {
+        await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
+        IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
+        // Only overwrite the avatar for allowed domains so as not to overwrite an avatar provided by a social connection
+        string[] allowedDomains = { "cdn.auth0.com", "gravatar.com" };
+        if (!allowedDomains.Any(userDoc.Data.AvatarUrl.Contains))
         {
-            await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
-            {
-                IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
-                return userDoc.Data.DisplayName;
-            }
+            return;
         }
 
-        /// <summary>
-        /// Gets the identity provider ID from the specified Auth0 ID.
-        /// </summary>
-        private static string GetIdpIdFromAuthId(string authId)
+        string initials = string.Concat(
+            userDoc.Data.DisplayName
+                .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Where(x => x.Length > 1 && char.IsLetter(x[0]))
+                .Select(x => char.ToLower(x[0]))
+        );
+        if (initials.Length == 0)
         {
-            return authId.Split('|')[1];
+            return;
+        }
+        else if (initials.Length > 2)
+        {
+            // Auth0 avatar images only support 2 characters
+            initials = $"{initials[0]}{initials[^1]}";
+        }
+        var avatarUrl = $"https://cdn.auth0.com/avatars/{initials}.png";
+        // If user has an email then link to Gravatar with auth0 as a fallback
+        if (userDoc.Data.Email != null && userDoc.Data.Email != "")
+        {
+            var emailHash = StringUtils.ComputeMd5Hash(userDoc.Data.Email);
+            var auth0Fallback = System.Web.HttpUtility.UrlEncode(avatarUrl);
+            avatarUrl = $"https://www.gravatar.com/avatar/{emailHash}?s=480&r=pg&d={auth0Fallback}";
+        }
+        // Update Auth0 profile
+        await _authService.UpdateAvatar(authId, avatarUrl);
+        // Update user doc
+        await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.AvatarUrl, avatarUrl));
+    }
+
+    /// <summary>
+    /// Updates the interface language in the specified user's Auth0 account in their userMetadata.
+    /// </summary>
+    public async Task UpdateInterfaceLanguageAsync(string curUserId, string authId, string language)
+    {
+        await _authService.UpdateInterfaceLanguage(authId, language);
+
+        await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
+        IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
+        await userDoc.SubmitJson0OpAsync(op => op.Set(u => u.InterfaceLanguage, language));
+    }
+
+    /// <summary>
+    /// Delete user with SF user id userId, as requested by SF user curUserId who has systemRole.
+    /// </summary>
+    public async Task DeleteAsync(string curUserId, string systemRole, string userId)
+    {
+        if (curUserId == null || systemRole == null || userId == null)
+        {
+            throw new ArgumentNullException();
+        }
+        if (systemRole != SystemRole.SystemAdmin && userId != curUserId)
+        {
+            throw new ForbiddenException();
         }
 
-        private async Task<bool> CheckIsParatextProfileAndFirstLogin(string authId)
+        await _projectService.RemoveUserFromAllProjectsAsync(curUserId, userId);
+        await _userSecrets.DeleteAsync(userId);
+        await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
         {
-            JObject userProfile = JObject.Parse(await _authService.GetUserAsync(authId));
-            // Check that the profile for 'authId' is from a paratext connection. If it is not, then
-            // this 'authId' is not from an account with paratext as the primary connection.
-            if (!((string)userProfile["user_id"]).Contains("paratext"))
-                return false;
-            return (int)userProfile["logins_count"] <= 1;
+            IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
+            await userDoc.DeleteAsync();
         }
+        // Remove the actual docs.
+        await _realtimeService.DeleteUserAsync(userId);
+    }
+
+    public async Task<string> GetUsernameFromUserId(string curUserId, string userId)
+    {
+        await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
+        IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
+        return userDoc.Data.DisplayName;
+    }
+
+    /// <summary>
+    /// Gets the identity provider ID from the specified Auth0 ID.
+    /// </summary>
+    private static string GetIdpIdFromAuthId(string authId) => authId.Split('|')[1];
+
+    private async Task<bool> CheckIsParatextProfileAndFirstLogin(string authId)
+    {
+        JObject userProfile = JObject.Parse(await _authService.GetUserAsync(authId));
+        // Check that the profile for 'authId' is from a paratext connection. If it is not, then
+        // this 'authId' is not from an account with paratext as the primary connection.
+        if (!((string)userProfile["user_id"]).Contains("paratext"))
+            return false;
+        return (int)userProfile["logins_count"] <= 1;
     }
 }

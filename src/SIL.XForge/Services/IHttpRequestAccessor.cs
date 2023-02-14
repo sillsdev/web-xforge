@@ -1,10 +1,9 @@
 using Microsoft.AspNetCore.Http;
 
-namespace SIL.XForge.Services
+namespace SIL.XForge.Services;
+
+public interface IHttpRequestAccessor
 {
-    public interface IHttpRequestAccessor
-    {
-        PathString Path { get; }
-        HostString Host { get; }
-    }
+    PathString Path { get; }
+    HostString Host { get; }
 }
