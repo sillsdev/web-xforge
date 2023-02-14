@@ -2486,7 +2486,7 @@ public class ParatextService : DisposableBase, IParatextService
                 catch
                 {
                     _logger.LogWarning(
-                        $"ParatextService.GetParatextAccessLock for sfUserId {sfUserId} is throwing from call RefreshAccessTokenAsync()."
+                        $"ParatextService.GetParatextAccessLock for sfUserId {sfUserId} is throwing from call RefreshAccessTokenAsync(). The current access token has issuedAt time of {userSecret.ParatextTokens.IssuedAt:o}."
                     );
                     throw;
                 }
