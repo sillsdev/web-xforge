@@ -8,12 +8,13 @@ import { createDoc, fetchDoc } from '../../common/utils/test-utils';
 import { SF_PROJECTS_COLLECTION } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { TextInfoPermission } from '../models/text-info-permission';
+import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 import { SFProjectService } from './sf-project-service';
 
 describe('SFProjectMigrations', () => {
   describe('version 1', () => {
     it('migrates docs', async () => {
-      const env = new TestEnvironment(0);
+      const env = new TestEnvironment(0, 1);
       const conn = env.server.connect();
       await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
         texts: [
@@ -32,7 +33,7 @@ describe('SFProjectMigrations', () => {
   });
   describe('version 2', () => {
     it('migrates docs', async () => {
-      const env = new TestEnvironment(1);
+      const env = new TestEnvironment(1, 2);
       const conn = env.server.connect();
       await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
         texts: [
@@ -63,7 +64,7 @@ describe('SFProjectMigrations', () => {
   });
   describe('version 3', () => {
     it('migrates docs', async () => {
-      const env = new TestEnvironment(1);
+      const env = new TestEnvironment(1, 3);
       const conn = env.server.connect();
       await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
         texts: [
@@ -104,7 +105,7 @@ describe('SFProjectMigrations', () => {
   });
   describe('version 4', () => {
     it('adds userPermissions property to project docs', async () => {
-      const env = new TestEnvironment(3);
+      const env = new TestEnvironment(3, 4);
       const conn = env.server.connect();
       await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
       let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
@@ -118,7 +119,7 @@ describe('SFProjectMigrations', () => {
   });
   describe('version 5', () => {
     it('adds shareEnabled to translate config', async () => {
-      const env = new TestEnvironment(4);
+      const env = new TestEnvironment(4, 5);
       const conn = env.server.connect();
       await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
         translateConfig: { translationSuggestionsEnabled: false }
@@ -135,7 +136,7 @@ describe('SFProjectMigrations', () => {
 
   describe('version 6', () => {
     it('adds editable property', async () => {
-      const env = new TestEnvironment(5);
+      const env = new TestEnvironment(5, 6);
       const conn = env.server.connect();
       await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
       let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
@@ -150,7 +151,7 @@ describe('SFProjectMigrations', () => {
 
   describe('version 7', () => {
     it('moves tag icon to translateConfig class', async () => {
-      const env = new TestEnvironment(6);
+      const env = new TestEnvironment(6, 7);
       const conn = env.server.connect();
       await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
         tagIcon: '01flag1',
@@ -168,7 +169,7 @@ describe('SFProjectMigrations', () => {
 
   describe('version 8', () => {
     it('removes shareLevel from translate and checking config', async () => {
-      const env = new TestEnvironment(7);
+      const env = new TestEnvironment(7, 8);
       const conn = env.server.connect();
       await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
         translateConfig: { shareLevel: 'anyone' },
@@ -192,16 +193,16 @@ class TestEnvironment {
   readonly mockedSchemaVersionRepository = mock(SchemaVersionRepository);
   readonly server: RealtimeServer;
 
-  constructor(version: number) {
+  constructor(startVersion: number, endVersion: number) {
     const ShareDBMingoType = MetadataDB(ShareDBMingo.extendMemoryDB(ShareDB.MemoryDB));
     this.db = new ShareDBMingoType();
     when(this.mockedSchemaVersionRepository.getAll()).thenResolve([
-      { _id: SF_PROJECTS_COLLECTION, collection: SF_PROJECTS_COLLECTION, version }
+      { _id: SF_PROJECTS_COLLECTION, collection: SF_PROJECTS_COLLECTION, version: startVersion }
     ]);
     this.server = new RealtimeServer(
       'TEST',
       false,
-      [new SFProjectService()],
+      [new SFProjectService(SF_PROJECT_MIGRATIONS.slice(0, endVersion))],
       SF_PROJECTS_COLLECTION,
       this.db,
       instance(this.mockedSchemaVersionRepository)
