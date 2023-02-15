@@ -2350,7 +2350,7 @@ public class ParatextServiceTests
             .ShareChanges(
                 Arg.Is<List<SharedProject>>(
                     list =>
-                        list.Count().Equals(1)
+                        list.Count.Equals(1)
                         && (list[0].SendReceiveId.Id == targetProjectId || list[0].SendReceiveId.Id == sourceProjectId)
                         && (
                             sourceScrTextPermissions.Equals((ComparableProjectPermissionManager)list[0].Permissions)
