@@ -160,6 +160,11 @@ class SFProjectMigration7 implements Migration {
   }
 }
 
+/**
+ * This migration removes the shareLevel property from the translateConfig and checkingConfig objects.
+ * Project admins now select whether whether a share link can be used by only one person or by anyone at the time the
+ * link is created (rather than configuring it on the project).
+ */
 class SFProjectMigration8 implements Migration {
   static readonly VERSION = 8;
 
@@ -183,16 +188,10 @@ class SFProjectMigration9 implements Migration {
   static readonly VERSION = 9;
 
   async migrateDoc(doc: Doc): Promise<void> {
-    const ops = [];
-    if (doc.data.translateConfig == null) {
-      ops.push({ p: ['translateConfig'], oi: {} });
-    }
-    ops.push({ p: ['translateConfig', 'shareLevel'], od: true });
-
-    if (doc.data.checkingConfig == null) {
-      ops.push({ p: ['checkingConfig'], oi: {} });
-    }
-    ops.push({ p: ['checkingConfig', 'shareLevel'], od: true });
+    const ops = [
+      { p: ['translateConfig', 'shareLevel'], od: true },
+      { p: ['checkingConfig', 'shareLevel'], od: true }
+    ];
     await submitMigrationOp(SFProjectMigration8.VERSION, doc, ops);
   }
 
