@@ -8,6 +8,7 @@ import { createDoc, fetchDoc } from '../../common/utils/test-utils';
 import { SF_PROJECTS_COLLECTION } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { TextInfoPermission } from '../models/text-info-permission';
+import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 import { SFProjectService } from './sf-project-service';
 
 describe('SFProjectMigrations', () => {
@@ -63,7 +64,7 @@ describe('SFProjectMigrations', () => {
   });
   describe('version 3', () => {
     it('migrates docs', async () => {
-      const env = new TestEnvironment(1);
+      const env = new TestEnvironment(1, 3);
       const conn = env.server.connect();
       await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
         texts: [
@@ -192,16 +193,21 @@ class TestEnvironment {
   readonly mockedSchemaVersionRepository = mock(SchemaVersionRepository);
   readonly server: RealtimeServer;
 
-  constructor(version: number) {
+  /**
+   * @param startVersion The version the document is currently at (so migrations prior to this version will not be run
+   * on the document)
+   * @param endVersion The version the document should be migrated to
+   */
+  constructor(startVersion: number, endVersion: number = startVersion + 1) {
     const ShareDBMingoType = MetadataDB(ShareDBMingo.extendMemoryDB(ShareDB.MemoryDB));
     this.db = new ShareDBMingoType();
     when(this.mockedSchemaVersionRepository.getAll()).thenResolve([
-      { _id: SF_PROJECTS_COLLECTION, collection: SF_PROJECTS_COLLECTION, version }
+      { _id: SF_PROJECTS_COLLECTION, collection: SF_PROJECTS_COLLECTION, version: startVersion }
     ]);
     this.server = new RealtimeServer(
       'TEST',
       false,
-      [new SFProjectService()],
+      [new SFProjectService(SF_PROJECT_MIGRATIONS.filter(m => m.VERSION <= endVersion))],
       SF_PROJECTS_COLLECTION,
       this.db,
       instance(this.mockedSchemaVersionRepository)
