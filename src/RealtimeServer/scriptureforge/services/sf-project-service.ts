@@ -1,4 +1,5 @@
 import ShareDB from 'sharedb';
+import { MigrationConstructor } from '../../common/migration';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { RealtimeServer } from '../../common/realtime-server';
 import { ProjectService } from '../../common/services/project-service';
@@ -13,7 +14,6 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from '../models/sf-project-rights'
 import { Operation } from '../../common/models/project-rights';
 import { ConnectSession } from '../../common/connect-session';
 import { SystemRole } from '../../common/models/system-role';
-import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 
 const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   name: true,
@@ -43,8 +43,8 @@ export class SFProjectService extends ProjectService<SFProject> {
   protected readonly indexPaths = SF_PROJECT_INDEX_PATHS;
   protected readonly projectAdminRole = SFProjectRole.ParatextAdministrator;
 
-  constructor() {
-    super(SF_PROJECT_MIGRATIONS);
+  constructor(sfProjectMigrations: MigrationConstructor[]) {
+    super(sfProjectMigrations);
 
     const immutableProps = [
       this.pathTemplate(p => p.sync),
