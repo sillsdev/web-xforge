@@ -1,6 +1,7 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
+import { SF_PROJECT_MIGRATIONS } from '../services/sf-project-migrations';
 import { SF_PROJECT_PROFILES_COLLECTION, SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
