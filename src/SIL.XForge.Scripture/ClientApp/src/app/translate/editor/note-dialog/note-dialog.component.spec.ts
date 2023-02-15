@@ -17,6 +17,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -35,13 +36,14 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { getTextDoc, paratextUsersFromRoles } from '../../../shared/test-utils';
-import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
-import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { TranslateModule } from '../../translate.module';
 import { NoteDialogComponent, NoteDialogData } from './note-dialog.component';
 
@@ -339,6 +341,11 @@ describe('NoteDialogComponent', () => {
     expect(noteThread.notes[0].ownerRef).toEqual('user01');
     expect(noteThread.notes[0].content).toEqual('Enter note content');
     expect(noteThread.notes[0].tagId).toEqual(2);
+    const projectUserConfigDoc: SFProjectUserConfigDoc = env.getProjectUserConfigDoc(
+      TestEnvironment.PROJECT01,
+      'user01'
+    );
+    expect(projectUserConfigDoc.data!.noteRefsRead).toContain(noteThread.notes[0].dataId);
   }));
 
   it('show sf note tag on notes with undefined tag id', fakeAsync(() => {
@@ -387,6 +394,11 @@ describe('NoteDialogComponent', () => {
     expect(noteThread.data!.notes[5].threadId).toEqual('thread01');
     expect(noteThread.data!.notes[5].content).toEqual(content);
     expect(env.dialogResult).toBe(true);
+    const projectUserConfigDoc: SFProjectUserConfigDoc = env.getProjectUserConfigDoc(
+      TestEnvironment.PROJECT01,
+      'user01'
+    );
+    expect(projectUserConfigDoc.data!.noteRefsRead).toContain(noteThread.data!.notes[5].dataId);
   }));
 
   it('allows user to edit the last note in the thread', fakeAsync(() => {
@@ -531,6 +543,19 @@ class TestEnvironment {
   static testProject: SFProject = {
     ...TestEnvironment.testProjectProfile,
     paratextUsers: TestEnvironment.paratextUsers
+  };
+  static projectUserConfig: SFProjectUserConfig = {
+    questionRefsRead: [],
+    answerRefsRead: [],
+    commentRefsRead: [],
+    noteRefsRead: [],
+    translationSuggestionsEnabled: false,
+    isTargetTextRight: true,
+    confidenceThreshold: 0.2,
+    numSuggestions: 1,
+    selectedSegment: 'verse_1_1',
+    projectRef: TestEnvironment.PROJECT01,
+    ownerRef: 'user01'
   };
   static reattached: string = ['MAT 1:4', 'reattached text', '17', 'before selection ', ' after selection'].join(
     REATTACH_SEPARATOR
@@ -735,10 +760,14 @@ class TestEnvironment {
       });
       if (noteThread != null) {
         this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
-          id: [TestEnvironment.PROJECT01, noteThread.dataId].join(':'),
+          id: [configData.projectId, noteThread.dataId].join(':'),
           data: noteThread
         });
       }
+      this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
+        id: [configData.projectId, currentUserId].join(':'),
+        data: TestEnvironment.projectUserConfig
+      });
     }
 
     when(mockedProjectService.getNoteThread(anything())).thenCall(id =>
@@ -747,6 +776,10 @@ class TestEnvironment {
 
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
+    );
+
+    when(mockedProjectService.getUserConfig(configData.projectId, currentUserId)).thenCall((projectId, userId) =>
+      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, `${projectId}:${userId}`)
     );
 
     when(mockedProjectService.getText(anything())).thenCall(id =>
@@ -841,6 +874,11 @@ class TestEnvironment {
 
   getProjectProfileDoc(projectId: string): SFProjectProfileDoc {
     return this.realtimeService.get<SFProjectDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+  }
+
+  getProjectUserConfigDoc(projectId: string, userId: string): SFProjectUserConfigDoc {
+    const id: string = [projectId, userId].join(':');
+    return this.realtimeService.get<SFProjectUserConfigDoc>(SFProjectUserConfigDoc.COLLECTION, id);
   }
 
   noteHasEditActions(noteNumber: number): boolean {
