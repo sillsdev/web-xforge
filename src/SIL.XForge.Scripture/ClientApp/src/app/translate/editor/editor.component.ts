@@ -422,7 +422,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get isReviewer(): boolean {
-    return this.userRole === SFProjectRole.Reviewer;
+    return this.userRole
+      ? [SFProjectRole.Reviewer, SFProjectRole.ParatextConsultant].includes(this.userRole as SFProjectRole)
+      : false;
   }
 
   get projectId(): string | undefined {
@@ -812,7 +814,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.target == null || this.bookNum == null) {
       return;
     }
-    if (this.userRole === SFProjectRole.Reviewer) {
+    if (this.isReviewer) {
       let verseRef: VerseRef | undefined = this.reviewerSelectedVerseRef;
       if (verseRef == null) {
         const defaultSegmentRef: string | undefined = this.target.firstVerseSegment;
