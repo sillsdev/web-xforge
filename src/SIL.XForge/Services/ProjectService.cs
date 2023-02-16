@@ -256,23 +256,22 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
     {
         await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[userDoc.Id], projectRole));
         ProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectDoc.Id);
-            if (!string.IsNullOrWhiteSpace(shareKey) && projectSecret != null)
+        if (!string.IsNullOrWhiteSpace(shareKey) && projectSecret != null)
+        {
+            int index = projectSecret.ShareKeys.FindIndex(
+                sk => sk.RecipientUserId == null && sk.ShareLinkType == ShareLinkType.Recipient && sk.Key == shareKey
+            );
+            if (index > -1)
             {
-                int index = projectSecret.ShareKeys.FindIndex(
-                    sk =>
-                        sk.RecipientUserId == null && sk.ShareLinkType == ShareLinkType.Recipient && sk.Key == shareKey
+                await ProjectSecrets.UpdateAsync(
+                    p => p.Id == projectDoc.Id,
+                    update =>
+                        update
+                            .Set(p => p.ShareKeys[index].RecipientUserId, userDoc.Id)
+                            .Unset(p => p.ShareKeys[index].Email)
+                            .Unset(p => p.ShareKeys[index].ExpirationTime)
+                            .Unset(p => p.ShareKeys[index].Reserved)
                 );
-                if (index > -1)
-                {
-                    await ProjectSecrets.UpdateAsync(
-                        p => p.Id == projectDoc.Id,
-                        update =>
-                            update
-                                .Set(p => p.ShareKeys[index].RecipientUserId, userDoc.Id)
-                                .Unset(p => p.ShareKeys[index].Email)
-                                .Unset(p => p.ShareKeys[index].ExpirationTime)
-                                .Unset(p => p.ShareKeys[index].Reserved)
-                    );
             }
         }
         string siteId = SiteOptions.Value.Id;
