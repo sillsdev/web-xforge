@@ -67,7 +67,7 @@ public class Startup
         "login",
         "projects",
         "join",
-            "system-administration",
+        "system-administration",
         "favicon.ico",
         "assets"
     };
