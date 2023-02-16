@@ -14,12 +14,16 @@ public class Document<T> : IDocument<T>
     private readonly IConnection _connection;
     private readonly SemaphoreSlim _lock = new SemaphoreSlim(1, 1);
 
-    internal Document(IConnection connection, string otTypeName, string collection, string id)
+    internal Document(IConnection connection, string otTypeName, string collection, string id, Snapshot<T>? snapshot)
     {
         _connection = connection;
         OTTypeName = otTypeName;
         Collection = collection;
         Id = id;
+        if (snapshot is not null)
+        {
+            UpdateFromSnapshot(snapshot);
+        }
     }
 
     public string Collection { get; }

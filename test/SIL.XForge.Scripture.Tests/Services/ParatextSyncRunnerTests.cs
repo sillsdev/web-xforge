@@ -1435,7 +1435,7 @@ public class ParatextSyncRunnerTests
         var project = Substitute.For<IDocument<SFProject>>();
         project.IsLoaded.Returns(true);
         project.Data.Returns(env.GetProject());
-        env.Connection.Get<SFProject>("project01").Returns(project);
+        env.SubstituteConnection.Get<SFProject>("project01").Returns(project);
 
         // The HTTP call throws this when a cancelled token is passed
         env.ParatextService
@@ -1460,7 +1460,7 @@ public class ParatextSyncRunnerTests
 
         // Check for RollbackTransaction being executed, to ensure
         // that CompleteAsync executes to the end without exception
-        env.Connection.Received(1).RollbackTransaction();
+        env.SubstituteConnection.Received(1).RollbackTransaction();
 
         // Check that the cancellation was logged in the sync metrics
         SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
@@ -1478,28 +1478,30 @@ public class ParatextSyncRunnerTests
 
         // Throw an TaskCanceledException in InitAsync after the exclusions have been called
         // InitAsync calls the IConnection.FetchAsync() extension, which calls IConnection.Get()
-        env.Connection.Get<SFProject>("project01").Throws(new TaskCanceledException());
+        env.SubstituteConnection.Get<SFProject>("project01").Throws(new TaskCanceledException());
 
         // Run the task
         await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
 
         // Only check for ExcludePropertyFromTransaction being executed,
         // as the substitute RealtimeService will not update documents.
-        env.Connection
+        env.SubstituteConnection
             .Received(1)
             .ExcludePropertyFromTransaction(
                 Arg.Is<Expression<Func<SFProject, object>>>(
                     ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.QueuedCount"
                 )
             );
-        env.Connection
+        env.SubstituteConnection
             .Received(1)
             .ExcludePropertyFromTransaction(
                 Arg.Is<Expression<Func<SFProject, object>>>(
                     ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.DataInSync"
                 )
             );
-        env.Connection.Received(2).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
+        env.SubstituteConnection
+            .Received(2)
+            .ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
     }
 
     [Test]
@@ -1523,70 +1525,6 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
-    public async Task FetchTextDocsAsync_FetchesExistingChapters()
-    {
-        var env = new TestEnvironment();
-        var numberChapters = 3;
-        var book = new Book("MAT", numberChapters, true);
-        env.SetupSFData(true, true, false, false, book);
-
-        // SUT
-        await env.Runner.InitAsync("project01", "user01", "project01", CancellationToken.None);
-        SortedList<int, IDocument<TextData>> targetFetch = await env.Runner.FetchTextDocsAsync(
-            TestEnvironment.TextInfoFromBook(book)
-        );
-        await env.Runner.InitAsync("project02", "user01", "project02", CancellationToken.None);
-        SortedList<int, IDocument<TextData>> sourceFetch = await env.Runner.FetchTextDocsAsync(
-            TestEnvironment.TextInfoFromBook(book)
-        );
-        env.Runner.CloseConnection();
-
-        // Fetched numberChapters chapters, none of which are missing their chapter content.
-        Assert.That(targetFetch.Count, Is.EqualTo(numberChapters));
-        Assert.That(sourceFetch.Count, Is.EqualTo(numberChapters));
-        Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
-        Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
-    }
-
-    [Test]
-    public async Task FetchTextDocsAsync_MissingRequestedChapters()
-    {
-        // In production, the expected chapters list, used to specify
-        // what FetchTextDocsAsync() should fetch, comes from the
-        // SF DB project doc texts.chapters array. This array
-        // specifies what Target chapter text docs the SF DB should
-        // ave. Re-using the Target chapter list when fetching Source
-        // chapter text docs from the SF DB can lead to problems if
-        // FetchTextDocsAsync() does not omit ones that aren't
-        // actually in the DB.
-
-        var env = new TestEnvironment();
-        var highestChapter = 20;
-        var missingSourceChapters = new HashSet<int>() { 2, 3, 10, 12 };
-        var existingTargetChapters = Enumerable.Range(1, highestChapter);
-        var existingSourceChapters = Enumerable.Range(1, highestChapter).Except(missingSourceChapters);
-        Assert.That(existingSourceChapters.Count(), Is.EqualTo(highestChapter - missingSourceChapters.Count), "setup");
-        Assert.That(existingTargetChapters.Count(), Is.GreaterThan(existingSourceChapters.Count()), "setup");
-        var book = new Book("MAT", highestChapter, true) { MissingSourceChapters = missingSourceChapters };
-        env.SetupSFData(true, true, false, false, book);
-
-        // SUT
-        await env.Runner.InitAsync("project01", "user01", "project01", CancellationToken.None);
-        var targetFetch = await env.Runner.FetchTextDocsAsync(TestEnvironment.TextInfoFromBook(book));
-
-        await env.Runner.InitAsync("project02", "user01", "project02", CancellationToken.None);
-        var sourceFetch = await env.Runner.FetchTextDocsAsync(TestEnvironment.TextInfoFromBook(book));
-
-        env.Runner.CloseConnection();
-
-        // Fetched only non-missing chapters. None have null Data.
-        Assert.That(targetFetch.Keys.SequenceEqual(existingTargetChapters));
-        Assert.That(sourceFetch.Keys.SequenceEqual(existingSourceChapters));
-        Assert.That(targetFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
-        Assert.That(sourceFetch.Count(doc => doc.Value.Data == null), Is.EqualTo(0));
-    }
-
-    [Test]
     public async Task GetChapterAuthors_FromMongoDB()
     {
         // Setup
@@ -1596,7 +1534,10 @@ public class ParatextSyncRunnerTests
         var env = new TestEnvironment();
         TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
         await env.Runner.InitAsync("project01", "user01", "project01", CancellationToken.None);
-        var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+        List<string> ids = textInfo.Chapters
+            .Select(c => TextData.GetTextDocId("project01", textInfo.BookNum, c.Number))
+            .ToList();
+        var textDocs = await env.FetchTextDocsAsync(textInfo);
         textInfo.Chapters.First().Permissions.Add("user05", TextInfoPermission.Write);
         env.RealtimeService.LastModifiedUserId = "user05";
 
@@ -1615,7 +1556,7 @@ public class ParatextSyncRunnerTests
         var env = new TestEnvironment();
         TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: true);
         await env.Runner.InitAsync("project01", "user01", "project01", CancellationToken.None);
-        var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+        var textDocs = await env.FetchTextDocsAsync(textInfo);
 
         // SUT
         Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
@@ -1632,7 +1573,7 @@ public class ParatextSyncRunnerTests
         var env = new TestEnvironment();
         TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: true);
         await env.Runner.InitAsync("project01", "user02", "project01", CancellationToken.None);
-        var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+        var textDocs = await env.FetchTextDocsAsync(textInfo);
 
         // SUT
         Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
@@ -1649,7 +1590,7 @@ public class ParatextSyncRunnerTests
         var env = new TestEnvironment();
         TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
         await env.Runner.InitAsync("project01", "user02", "project01", CancellationToken.None);
-        var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+        var textDocs = await env.FetchTextDocsAsync(textInfo);
 
         // SUT
         Dictionary<int, string> chapterAuthors = await env.Runner.GetChapterAuthorsAsync(textInfo, textDocs);
@@ -1667,7 +1608,7 @@ public class ParatextSyncRunnerTests
         var env = new TestEnvironment();
         TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
         await env.Runner.InitAsync("project01", "user01", "project01", CancellationToken.None);
-        var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+        var textDocs = await env.FetchTextDocsAsync(textInfo);
         textInfo.Chapters.First().Permissions.Add("user05", TextInfoPermission.Write);
         env.RealtimeService.LastModifiedUserId = "user06";
 
@@ -1688,7 +1629,7 @@ public class ParatextSyncRunnerTests
         var env = new TestEnvironment();
         TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
         await env.Runner.InitAsync("project01", "user01", "project01", CancellationToken.None);
-        var textDocs = await env.Runner.FetchTextDocsAsync(textInfo);
+        var textDocs = await env.FetchTextDocsAsync(textInfo);
         textInfo.Chapters.First().Permissions.Add("user05", TextInfoPermission.Read);
         env.RealtimeService.LastModifiedUserId = "user05";
 
@@ -2406,9 +2347,9 @@ public class ParatextSyncRunnerTests
             ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target").Returns("beforeSR");
             ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source").Returns("beforeSR", "afterSR");
             RealtimeService = new SFMemoryRealtimeService();
-            Connection = Substitute.For<IConnection>();
+            SubstituteConnection = Substitute.For<IConnection>();
             SubstituteRealtimeService = Substitute.For<IRealtimeService>();
-            SubstituteRealtimeService.ConnectAsync().Returns(Task.FromResult(Connection));
+            SubstituteRealtimeService.ConnectAsync().Returns(Task.FromResult(SubstituteConnection));
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
             NotesMapper = Substitute.For<IParatextNotesMapper>();
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
@@ -2442,7 +2383,7 @@ public class ParatextSyncRunnerTests
         /// <summary>
         /// Gets the connection to be used with <see cref="SubstituteRealtimeService"/>.
         /// </summary>
-        public IConnection Connection { get; }
+        public IConnection SubstituteConnection { get; }
 
         public SFProject GetProject(string projectSFId = "project01") =>
             RealtimeService.GetRepository<SFProject>().Get(projectSFId);
@@ -2461,6 +2402,25 @@ public class ParatextSyncRunnerTests
             return RealtimeService
                 .GetRepository<TextData>()
                 .Contains(TextData.GetTextDocId(projectId, Canon.BookIdToNumber(bookId), chapter));
+        }
+
+        /// <summary>
+        /// Fetches the text docs for a book.
+        /// </summary>
+        public async Task<SortedList<int, IDocument<TextData>>> FetchTextDocsAsync(TextInfo text)
+        {
+            var textDocs = new SortedList<int, IDocument<TextData>>();
+            foreach (Chapter chapter in text.Chapters)
+            {
+                IDocument<TextData> textDoc = Runner.GetTextDoc(text, chapter.Number);
+                await textDoc.FetchAsync();
+                if (textDoc.IsLoaded)
+                {
+                    textDocs[chapter.Number] = textDoc;
+                }
+            }
+
+            return textDocs;
         }
 
         public TextData GetText(string projectId, string bookId, int chapter)
