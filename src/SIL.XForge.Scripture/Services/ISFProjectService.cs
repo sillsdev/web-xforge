@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services;
+
 public interface ISFProjectService : IProjectService
 {
     Task<string> CreateProjectAsync(string curUserId, SFProjectCreateSettings settings);
