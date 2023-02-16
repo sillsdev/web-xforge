@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Jering.Javascript.NodeJS;
@@ -44,6 +45,9 @@ public class RealtimeServer : IRealtimeServer
 
     public Task<Snapshot<T>> FetchDocAsync<T>(int handle, string collection, string id) =>
         InvokeExportAsync<Snapshot<T>>("fetchDoc", handle, collection, id);
+
+    public Task<Snapshot<T>[]> FetchDocsAsync<T>(int handle, string collection, IReadOnlyCollection<string> ids) =>
+        InvokeExportAsync<Snapshot<T>[]>("fetchDocs", handle, collection, ids);
 
     public Task<Snapshot<T>> SubmitOpAsync<T>(int handle, string collection, string id, object op) =>
         InvokeExportAsync<Snapshot<T>>("submitOp", handle, collection, id, op);

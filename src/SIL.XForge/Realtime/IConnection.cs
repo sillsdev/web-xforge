@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using SIL.XForge.Models;
@@ -14,6 +15,8 @@ public interface IConnection : IDisposable, IAsyncDisposable
     void ExcludePropertyFromTransaction<T>(Expression<Func<T, object>> field);
     Task<Snapshot<T>> FetchDocAsync<T>(string collection, string id);
     IDocument<T> Get<T>(string id)
+        where T : IIdentifiable;
+    Task<IReadOnlyCollection<IDocument<T>>> GetAndFetchDocsAsync<T>(IReadOnlyCollection<string> ids)
         where T : IIdentifiable;
     void RollbackTransaction();
     Task<Snapshot<T>> SubmitOpAsync<T>(string collection, string id, object op, T currentDoc, int currentVersion);
