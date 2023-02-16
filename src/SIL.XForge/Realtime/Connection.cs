@@ -278,10 +278,50 @@ public class Connection : DisposableBase, IConnection
             key =>
             {
                 string otTypeName = docConfig.OTTypeName;
-                return new Document<T>(this, otTypeName, docConfig.CollectionName, id);
+                return new Document<T>(this, otTypeName, docConfig.CollectionName, id, null);
             }
         );
         return (Document<T>)doc;
+    }
+
+    public async Task<IReadOnlyCollection<IDocument<T>>> GetAndFetchDocsAsync<T>(IReadOnlyCollection<string> ids)
+        where T : IIdentifiable
+    {
+        if (!ids.Any())
+        {
+            return new List<IDocument<T>>();
+        }
+
+        DocConfig docConfig = _realtimeService.GetDocConfig<T>();
+        List<IDocument<T>> docs = new List<IDocument<T>>(ids.Count);
+        Snapshot<T>[] snapshots = await _realtimeServer.FetchDocsAsync<T>(_handle, docConfig.CollectionName, ids);
+        foreach (Snapshot<T> snapshot in snapshots)
+        {
+            IDocument<T> doc =
+                (IDocument<T>)
+                    _documents.GetOrAdd(
+                        (docConfig.CollectionName, snapshot.Id),
+                        key =>
+                        {
+                            string otTypeName = docConfig.OTTypeName;
+                            var doc = new Document<T>(
+                                this,
+                                otTypeName,
+                                docConfig.CollectionName,
+                                snapshot.Id,
+                                snapshot
+                            );
+                            return doc;
+                        }
+                    );
+
+            if (doc.IsLoaded)
+            {
+                docs.Add(doc);
+            }
+        }
+
+        return docs;
     }
 
     /// <summary>
