@@ -24,7 +24,7 @@
           *ngIf="canDeleteComment(comment)"
           mdc-button
           type="button"
-          (click)="deleteComment(comment)"
+          (click)="deleteCommentClicked(comment)"
           class="comment-delete"
         >
           {{ t("delete") }}

@@ -8,6 +8,7 @@ import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { debounceTime } from 'rxjs/operators';
+import { DialogService } from 'xforge-common/dialog.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../../core/models/question-doc';
@@ -38,7 +39,7 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
   showAllComments: boolean = false;
   private initUserCommentRefsRead: string[] = [];
 
-  constructor(private userService: UserService) {
+  constructor(private readonly dialogService: DialogService, private userService: UserService) {
     super();
   }
 
@@ -79,17 +80,19 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
     return this.answer != null ? sortBy(this.answer.comments, c => c.dateCreated) : [];
   }
 
-  editComment(comment: Comment) {
+  editComment(comment: Comment): void {
     this.activeComment = cloneDeep(comment);
     this.showCommentForm();
   }
 
-  deleteComment(comment: Comment) {
-    this.action.emit({
-      action: 'delete',
-      answer: this.answer,
-      comment: comment
-    });
+  async deleteCommentClicked(comment: Comment): Promise<void> {
+    if (await this.dialogService.confirm('checking_comments.confirm_delete', 'checking_comments.delete')) {
+      this.action.emit({
+        action: 'delete',
+        answer: this.answer,
+        comment: comment
+      });
+    }
   }
 
   canEditComment(comment: Comment): boolean {
@@ -117,7 +120,7 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
     );
   }
 
-  hideCommentForm() {
+  hideCommentForm(): void {
     this.commentFormVisible = false;
     this.activeComment = undefined;
     this.action.emit({
@@ -172,7 +175,7 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
     });
   }
 
-  showCommentForm() {
+  showCommentForm(): void {
     this.commentFormVisible = true;
     this.action.emit({
       action: 'show-form'
