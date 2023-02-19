@@ -145,6 +145,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 return;
             }
 
+            // Remove the parallel deserializer
+            _paratextService.InitializeCommentManager(_userSecret, _projectDoc.Data.ParatextId);
+
             string targetParatextId = _projectDoc.Data.ParatextId;
             string? sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
             string? sourceProjectRef = _projectDoc.Data.TranslateConfig.Source?.ProjectRef;
@@ -1563,6 +1566,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 Log("The sync metrics could not be updated in MongoDB");
             }
         }
+
+        // Free the comment manager for this project from memory
+        _paratextService.FreeCommentManager(_userSecret, _projectDoc.Data.ParatextId);
 
         await NotifySyncProgress(SyncPhase.Phase7, 100.0);
         Log($"CompleteSync: Finished. Sync was {(successful ? "successful" : "unsuccessful")}.");
