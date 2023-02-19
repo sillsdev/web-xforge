@@ -1160,7 +1160,10 @@ public class ParatextService : DisposableBase, IParatextService
             return null;
 
         CommentManager manager = CommentManager.Get(scrText);
-        var threads = manager.FindThreads(commentThread => commentThread.VerseRef.BookNum == bookNum, true);
+
+        // CommentThread.VerseRef calculates the reallocated location, however in Paratext a note can only be
+        // reallocated within the chapter, so for our query, we only need the first location
+        var threads = manager.FindThreads(commentThread => commentThread.Comments[0].VerseRef.BookNum == bookNum, true);
         return NotesFormatter.FormatNotes(threads);
     }
 
@@ -1599,6 +1602,28 @@ public class ParatextService : DisposableBase, IParatextService
         return scrText.Language.Id;
     }
 
+    public void FreeCommentManager(UserSecret userSecret, string paratextId)
+    {
+        ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+        if (scrText is not null)
+        {
+            // The comment manager is kept in a MRU cache
+            CommentManager.RemoveCommentManager(scrText);
+        }
+    }
+
+    public void InitializeCommentManager(UserSecret userSecret, string paratextId)
+    {
+        ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
+        if (scrText is not null)
+        {
+            // Initialize the comment manager without a parallel serializer
+            CommentManager commentManager = CommentManager.Get(scrText);
+            Memento.AddParallelDeserializer<CommentList>(null);
+            commentManager.Load();
+        }
+    }
+
     protected override void DisposeManagedResources()
     {
         _registryClient.Dispose();
@@ -1923,8 +1948,12 @@ public class ParatextService : DisposableBase, IParatextService
             return null;
 
         CommentManager manager = CommentManager.Get(scrText);
+
+        // CommentThread.VerseRef calculates the reallocated location, however in Paratext a note can only be
+        // reallocated within the chapter, so for our query, we only need the first location
         return manager.FindThreads(
-            commentThread => commentThread.VerseRef.BookNum == bookNum && !commentThread.Id.StartsWith("ANSWER_"),
+            commentThread =>
+                commentThread.Comments[0].VerseRef.BookNum == bookNum && !commentThread.Id.StartsWith("ANSWER_"),
             false
         );
     }
