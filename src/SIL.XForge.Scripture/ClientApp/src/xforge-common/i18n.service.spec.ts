@@ -92,10 +92,12 @@ describe('I18nService', () => {
   it('should localize dates', () => {
     const date = new Date('November 25, 1991 17:28');
     const service = getI18nService();
-    expect(service.formatDate(date)).toEqual('Nov 25, 1991, 5:28 PM');
+    // As of Chromium 110 the space between the minutes and AM/PM has been changed to U+202F (NARROW NO-BREAK SPACE)
+    // Test for any white space character for maximum compatibility
+    expect(service.formatDate(date)).toMatch(/Nov 25, 1991, 5:28\sPM/);
 
     service.setLocale('en-GB', mockedAuthService);
-    expect(service.formatDate(date)).toEqual('25 Nov 1991, 5:28 pm');
+    expect(service.formatDate(date)).toMatch(/25 Nov 1991, 5:28\spm/);
 
     // As of Chromium 98 for zh-CN it's changed from using characters to indicate AM/PM, to using a 24 hour clock. It's
     // unclear whether the cause is Chromium itself or a localization library. The tests should pass with either version
