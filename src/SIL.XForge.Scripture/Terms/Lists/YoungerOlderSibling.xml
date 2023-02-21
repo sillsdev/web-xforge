@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BiblicalTermsList>
+  <Term Id="brother_older_as_respect">
+    <Transliteration>brother_older_as_respect</Transliteration>
+    <Gloss>brother (older as respect)</Gloss>
+    <References>
+      <Verse>044007026</Verse>
+    </References>
+  </Term>
+  <Term Id="brother_older_or_younger">
+    <Transliteration>brother_older_or_younger</Transliteration>
+    <Gloss>brother (older or younger)</Gloss>
+    <References>
+      <Verse>040004018</Verse>
+      <Verse>040010002</Verse>
+      <Verse>040012050</Verse>
+      <Verse>040014003</Verse>
+      <Verse>040017001</Verse>
+      <Verse>040022024</Verse>
+      <Verse>040022025</Verse>
+      <Verse>041001016</Verse>
+      <Verse>041001019</Verse>
+      <Verse>041003017</Verse>
+      <Verse>041005037</Verse>
+      <Verse>041006003</Verse>
+      <Verse>041006017</Verse>
+      <Verse>041006018</Verse>
+      <Verse>041012019</Verse>
+      <Verse>042003001</Verse>
+      <Verse>042003019</Verse>
+      <Verse>042006014</Verse>
+      <Verse>042020028</Verse>
+      <Verse>043001040</Verse>
+      <Verse>043001041</Verse>
+      <Verse>043011002</Verse>
+      <Verse>043011019</Verse>
+      <Verse>043011021</Verse>
+      <Verse>043011023</Verse>
+      <Verse>043011032</Verse>
+      <Verse>044012002</Verse>
+      <Verse>048001019</Verse>
+      <Verse>062003012</Verse>
+      <Verse>065001001</Verse>
+    </References>
+  </Term>
+  <Term Id="sister_older_or_younger">
+    <Transliteration>sister_older_or_younger</Transliteration>
+    <Gloss>sister (older or younger)</Gloss>
+    <References>
+      <Verse>040012050</Verse>
+      <Verse>041003035</Verse>
+      <Verse>041006003</Verse>
+      <Verse>042010039</Verse>
+      <Verse>042010040</Verse>
+      <Verse>043011001</Verse>
+      <Verse>043011005</Verse>
+      <Verse>043011028</Verse>
+      <Verse>043011039</Verse>
+    </References>
+  </Term>
+</BiblicalTermsList>

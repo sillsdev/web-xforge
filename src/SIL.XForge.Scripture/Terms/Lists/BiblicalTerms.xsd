@@ -1,0 +1,35 @@
+﻿<?xml version="1.0"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:element name="BiblicalTermsList">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="Term" minOccurs="1" maxOccurs="unbounded"/>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="Term">
+		<xsd:complexType mixed="true">
+			<xsd:all>
+        <xsd:element name="Strong" type="xsd:string" minOccurs="0"/>
+        <xsd:element name="Category" type="xsd:string"/>
+				<xsd:element name="Definition" type="xsd:string" minOccurs="0"/>
+				<xsd:element name="Domain" type="xsd:string" minOccurs="0"/>
+				<xsd:element name="Language" type="xsd:string"/>
+				<xsd:element name="Transliteration" type="xsd:string"/>
+				<xsd:element name="Gloss" type="xsd:string"/>
+				<xsd:element name="Link" type="xsd:string" minOccurs="0"/>
+				<xsd:element ref="References"/>
+			</xsd:all>
+			<xsd:attribute name="Id" use="optional" type="xsd:string"/>
+		</xsd:complexType>
+	</xsd:element>
+	
+	<xsd:element name="References">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="Verse" type="xsd:string" minOccurs="1" maxOccurs="unbounded"/>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+</xsd:schema>

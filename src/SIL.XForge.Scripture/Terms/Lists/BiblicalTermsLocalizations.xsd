@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:element name="BiblicalTermsLocalizations">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="Categories" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="Terms" minOccurs="0" maxOccurs="unbounded"/>
+        <xs:element ref="Domains" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="Language"/>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="Terms">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="1" maxOccurs="unbounded" ref="Localization"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="Domains">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="1" maxOccurs="unbounded" ref="Localization"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name="Categories">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="1" maxOccurs="unbounded" ref="Localization"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="Localization">
+    <xs:complexType mixed="true">
+      <xs:attribute name="Id"/>
+      <xs:attribute name="Gloss"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
