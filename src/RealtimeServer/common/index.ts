@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MongoClient } from 'mongodb';
 import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
 import ShareDB from 'sharedb';
 import ShareDBMongo from 'sharedb-mongo';
-import { Connection, Doc, OTType, Query } from 'sharedb/lib/client';
+import { Connection, Doc, OTType } from 'sharedb/lib/client';
 import { ExceptionReporter } from './exception-reporter';
 import { MetadataDB } from './metadata-db';
 import { RealtimeServer, RealtimeServerConstructor } from './realtime-server';
