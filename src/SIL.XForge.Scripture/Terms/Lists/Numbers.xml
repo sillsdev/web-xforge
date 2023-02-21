@@ -1,0 +1,844 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BiblicalTermsList>
+  <Term Id="cardinal_002_edged">
+    <Transliteration>cardinal_002_edged</Transliteration>
+    <Gloss>two-edged</Gloss>
+    <References>
+      <Verse>058004012</Verse>
+      <Verse>066001016</Verse>
+      <Verse>066002012</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_002_pair">
+    <Transliteration>cardinal_002_pair</Transliteration>
+    <Gloss>pair</Gloss>
+    <References>
+      <Verse>042002024</Verse>
+      <Verse>042014019</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_002_times">
+    <Transliteration>cardinal_002_times</Transliteration>
+    <Gloss>two times</Gloss>
+    <References>
+      <Verse>041014030</Verse>
+      <Verse>041014072</Verse>
+      <Verse>042018012</Verse>
+      <Verse>065001012</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_003_times">
+    <Transliteration>cardinal_003_times</Transliteration>
+    <Gloss>three times</Gloss>
+    <References>
+      <Verse>041014030</Verse>
+      <Verse>041014072</Verse>
+      <Verse>042022034</Verse>
+      <Verse>042022061</Verse>
+      <Verse>043013038</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_004_footed">
+    <Transliteration>cardinal_004_footed</Transliteration>
+    <Gloss>four-footed</Gloss>
+    <References>
+      <Verse>044010012</Verse>
+      <Verse>044011006</Verse>
+      <Verse>045001023</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_011">
+    <Transliteration>cardinal_011</Transliteration>
+    <Gloss>eleven</Gloss>
+    <References>
+      <Verse>040028016</Verse>
+      <Verse>041016014</Verse>
+      <Verse>042024009</Verse>
+      <Verse>042024033</Verse>
+      <Verse>044001026</Verse>
+      <Verse>044002014</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_012">
+    <Transliteration>cardinal_012</Transliteration>
+    <Gloss>twelve</Gloss>
+    <References>
+      <Verse>040009020</Verse>
+      <Verse>040010001</Verse>
+      <Verse>040010002</Verse>
+      <Verse>040010005</Verse>
+      <Verse>040011001</Verse>
+      <Verse>040014020</Verse>
+      <Verse>040019028</Verse>
+      <Verse>040020017</Verse>
+      <Verse>040026014</Verse>
+      <Verse>040026020</Verse>
+      <Verse>040026047</Verse>
+      <Verse>040026053</Verse>
+      <Verse>041003014</Verse>
+      <Verse>041003016</Verse>
+      <Verse>041004010</Verse>
+      <Verse>041005025</Verse>
+      <Verse>041005042</Verse>
+      <Verse>041006007</Verse>
+      <Verse>041006043</Verse>
+      <Verse>041008019</Verse>
+      <Verse>041009035</Verse>
+      <Verse>041010032</Verse>
+      <Verse>041011011</Verse>
+      <Verse>041014010</Verse>
+      <Verse>041014017</Verse>
+      <Verse>041014020</Verse>
+      <Verse>041014043</Verse>
+      <Verse>042002042</Verse>
+      <Verse>042006013</Verse>
+      <Verse>042008001</Verse>
+      <Verse>042008042</Verse>
+      <Verse>042008043</Verse>
+      <Verse>042009001</Verse>
+      <Verse>042009012</Verse>
+      <Verse>042009017</Verse>
+      <Verse>042018031</Verse>
+      <Verse>042022003</Verse>
+      <Verse>042022030</Verse>
+      <Verse>042022047</Verse>
+      <Verse>043006013</Verse>
+      <Verse>043006067</Verse>
+      <Verse>043006070</Verse>
+      <Verse>043006071</Verse>
+      <Verse>043011009</Verse>
+      <Verse>043020024</Verse>
+      <Verse>044006002</Verse>
+      <Verse>044007008</Verse>
+      <Verse>044019007</Verse>
+      <Verse>044026007</Verse>
+      <Verse>046015005</Verse>
+      <Verse>059001001</Verse>
+      <Verse>066012001</Verse>
+      <Verse>066021012</Verse>
+      <Verse>066021014</Verse>
+      <Verse>066021021</Verse>
+      <Verse>066022002</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_014">
+    <Transliteration>cardinal_014</Transliteration>
+    <Gloss>fourteen</Gloss>
+    <References>
+      <Verse>040001017</Verse>
+      <Verse>047012002</Verse>
+      <Verse>048002001</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_015">
+    <Transliteration>cardinal_015</Transliteration>
+    <Gloss>fifteen</Gloss>
+    <References>
+      <Verse>044027028</Verse>
+      <Verse>048001018</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_018">
+    <Transliteration>cardinal_018</Transliteration>
+    <Gloss>eighteen</Gloss>
+    <References>
+      <Verse>042013004</Verse>
+      <Verse>042013011</Verse>
+      <Verse>042013016</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_020">
+    <Transliteration>cardinal_020</Transliteration>
+    <Gloss>twenty</Gloss>
+    <References>
+      <Verse>043002006</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_024">
+    <Transliteration>cardinal_024</Transliteration>
+    <Gloss>twenty-four</Gloss>
+    <References>
+      <Verse>066004004</Verse>
+      <Verse>066004010</Verse>
+      <Verse>066005008</Verse>
+      <Verse>066011016</Verse>
+      <Verse>066019004</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_030">
+    <Transliteration>cardinal_030</Transliteration>
+    <Gloss>thirty</Gloss>
+    <References>
+      <Verse>040013008</Verse>
+      <Verse>040013023</Verse>
+      <Verse>040026015</Verse>
+      <Verse>040027003</Verse>
+      <Verse>040027009</Verse>
+      <Verse>041004008</Verse>
+      <Verse>041004020</Verse>
+      <Verse>042003023</Verse>
+      <Verse>043002006</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_038">
+    <Transliteration>cardinal_038</Transliteration>
+    <Gloss>thirty-eight</Gloss>
+    <References>
+      <Verse>043005005</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_039">
+    <Transliteration>cardinal_039</Transliteration>
+    <Gloss>thirty-nine</Gloss>
+    <References>
+      <Verse>047011024</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_040">
+    <Transliteration>cardinal_040</Transliteration>
+    <Gloss>forty</Gloss>
+    <References>
+      <Verse>040004002</Verse>
+      <Verse>041001013</Verse>
+      <Verse>042004002</Verse>
+      <Verse>044001003</Verse>
+      <Verse>044004022</Verse>
+      <Verse>044007023</Verse>
+      <Verse>044007030</Verse>
+      <Verse>044007036</Verse>
+      <Verse>044007042</Verse>
+      <Verse>044013018</Verse>
+      <Verse>044013021</Verse>
+      <Verse>044023013</Verse>
+      <Verse>044023021</Verse>
+      <Verse>058003009</Verse>
+      <Verse>058003017</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_042">
+    <Transliteration>cardinal_042</Transliteration>
+    <Gloss>forty-two</Gloss>
+    <References>
+      <Verse>066011002</Verse>
+      <Verse>066013005</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_046">
+    <Transliteration>cardinal_046</Transliteration>
+    <Gloss>forty-six</Gloss>
+    <References>
+      <Verse>043002020</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_050">
+    <Transliteration>cardinal_050</Transliteration>
+    <Gloss>fifty</Gloss>
+    <References>
+      <Verse>041006040</Verse>
+      <Verse>042007041</Verse>
+      <Verse>042009014</Verse>
+      <Verse>043008057</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_060">
+    <Transliteration>cardinal_060</Transliteration>
+    <Gloss>sixty</Gloss>
+    <References>
+      <Verse>040013008</Verse>
+      <Verse>040013023</Verse>
+      <Verse>041004008</Verse>
+      <Verse>041004020</Verse>
+      <Verse>054005009</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_070">
+    <Transliteration>cardinal_070</Transliteration>
+    <Gloss>seventy</Gloss>
+    <References>
+      <Verse>044023023</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_070_7">
+    <Transliteration>cardinal_070_7</Transliteration>
+    <Gloss>seventy times seven</Gloss>
+    <References>
+      <Verse>040018022</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_072">
+    <Transliteration>cardinal_072</Transliteration>
+    <Gloss>seventy-two</Gloss>
+    <References>
+      <Verse>042010001</Verse>
+      <Verse>042010017</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_075">
+    <Transliteration>cardinal_075</Transliteration>
+    <Gloss>seventy-five</Gloss>
+    <References>
+      <Verse>044007014</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_080">
+    <Transliteration>cardinal_080</Transliteration>
+    <Gloss>eighty</Gloss>
+    <References>
+      <Verse>042016007</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_084">
+    <Transliteration>cardinal_084</Transliteration>
+    <Gloss>eighty-four</Gloss>
+    <References>
+      <Verse>042002037</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_099">
+    <Transliteration>cardinal_099</Transliteration>
+    <Gloss>ninety-nine</Gloss>
+    <References>
+      <Verse>040018012</Verse>
+      <Verse>040018013</Verse>
+      <Verse>042015004</Verse>
+      <Verse>042015007</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_100">
+    <Transliteration>cardinal_100</Transliteration>
+    <Gloss>hundred</Gloss>
+    <References>
+      <Verse>040013008</Verse>
+      <Verse>040013023</Verse>
+      <Verse>040018012</Verse>
+      <Verse>040018028</Verse>
+      <Verse>041004008</Verse>
+      <Verse>041004020</Verse>
+      <Verse>041006040</Verse>
+      <Verse>041010030</Verse>
+      <Verse>042008008</Verse>
+      <Verse>042015004</Verse>
+      <Verse>042016006</Verse>
+      <Verse>042016007</Verse>
+      <Verse>043019039</Verse>
+      <Verse>045004019</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_1000">
+    <Transliteration>cardinal_1000</Transliteration>
+    <Gloss>thousand</Gloss>
+    <References>
+      <Verse>061003008</Verse>
+      <Verse>066005011</Verse>
+      <Verse>066020002</Verse>
+      <Verse>066020003</Verse>
+      <Verse>066020004</Verse>
+      <Verse>066020005</Verse>
+      <Verse>066020006</Verse>
+      <Verse>066020007</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_1000_many">
+    <Transliteration>cardinal_1000_many</Transliteration>
+    <Gloss>many thousands</Gloss>
+    <References>
+      <Verse>042012001</Verse>
+      <Verse>044021020</Verse>
+      <Verse>046004015</Verse>
+      <Verse>046014019</Verse>
+      <Verse>058012022</Verse>
+      <Verse>065001014</Verse>
+      <Verse>066005011</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_10000">
+    <Transliteration>cardinal_10000</Transliteration>
+    <Gloss>ten thousand</Gloss>
+    <References>
+      <Verse>040018024</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_120">
+    <Transliteration>cardinal_120</Transliteration>
+    <Gloss>one hundred twenty</Gloss>
+    <References>
+      <Verse>044001015</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_12000">
+    <Transliteration>cardinal_12000</Transliteration>
+    <Gloss>twelve thousand</Gloss>
+    <References>
+      <Verse>066007005</Verse>
+      <Verse>066007006</Verse>
+      <Verse>066007007</Verse>
+      <Verse>066007008</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_1260">
+    <Transliteration>cardinal_1260</Transliteration>
+    <Gloss>one thousand two hundred sixty</Gloss>
+    <References>
+      <Verse>066011003</Verse>
+      <Verse>066012006</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_144000">
+    <Transliteration>cardinal_144000</Transliteration>
+    <Gloss>one hundred forty-four thousand</Gloss>
+    <References>
+      <Verse>066007004</Verse>
+      <Verse>066014001</Verse>
+      <Verse>066014003</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_153">
+    <Transliteration>cardinal_153</Transliteration>
+    <Gloss>one hundred fifty-three</Gloss>
+    <References>
+      <Verse>043021011</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_200">
+    <Transliteration>cardinal_200</Transliteration>
+    <Gloss>two hundred</Gloss>
+    <References>
+      <Verse>041006037</Verse>
+      <Verse>043006007</Verse>
+      <Verse>044023023</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_2000">
+    <Transliteration>cardinal_2000</Transliteration>
+    <Gloss>two thousand</Gloss>
+    <References>
+      <Verse>041005013</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_200000000">
+    <Transliteration>cardinal_200000000</Transliteration>
+    <Gloss>two hundred million</Gloss>
+    <References>
+      <Verse>066009016</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_23000">
+    <Transliteration>cardinal_23000</Transliteration>
+    <Gloss>twenty-three thousand</Gloss>
+    <References>
+      <Verse>046010008</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_276">
+    <Transliteration>cardinal_276</Transliteration>
+    <Gloss>two hundred seventy-six</Gloss>
+    <References>
+      <Verse>044027037</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_300">
+    <Transliteration>cardinal_300</Transliteration>
+    <Gloss>three hundred</Gloss>
+    <References>
+      <Verse>041014005</Verse>
+      <Verse>043012005</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_3000">
+    <Transliteration>cardinal_3000</Transliteration>
+    <Gloss>three thousand</Gloss>
+    <References>
+      <Verse>044002041</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_400">
+    <Transliteration>cardinal_400</Transliteration>
+    <Gloss>four hundred</Gloss>
+    <References>
+      <Verse>044005036</Verse>
+      <Verse>044007006</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_4000">
+    <Transliteration>cardinal_4000</Transliteration>
+    <Gloss>four thousand</Gloss>
+    <References>
+      <Verse>040015038</Verse>
+      <Verse>040016010</Verse>
+      <Verse>041008009</Verse>
+      <Verse>041008020</Verse>
+      <Verse>044021038</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_430">
+    <Transliteration>cardinal_430</Transliteration>
+    <Gloss>four hundred thirty</Gloss>
+    <References>
+      <Verse>048003017</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_450">
+    <Transliteration>cardinal_450</Transliteration>
+    <Gloss>four hundred fifty</Gloss>
+    <References>
+      <Verse>044013020</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_500">
+    <Transliteration>cardinal_500</Transliteration>
+    <Gloss>five hundred</Gloss>
+    <References>
+      <Verse>042007041</Verse>
+      <Verse>046015006</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_5000">
+    <Transliteration>cardinal_5000</Transliteration>
+    <Gloss>five thousand</Gloss>
+    <References>
+      <Verse>040014021</Verse>
+      <Verse>040016009</Verse>
+      <Verse>041006044</Verse>
+      <Verse>041008019</Verse>
+      <Verse>042009014</Verse>
+      <Verse>044004004</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_50000">
+    <Transliteration>cardinal_50000</Transliteration>
+    <Gloss>fifty thousand</Gloss>
+    <References>
+      <Verse>044019019</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_666">
+    <Transliteration>cardinal_666</Transliteration>
+    <Gloss>six hundred sixty-six</Gloss>
+    <References>
+      <Verse>066013018</Verse>
+    </References>
+  </Term>
+  <Term Id="cardinal_7000">
+    <Transliteration>cardinal_7000</Transliteration>
+    <Gloss>seven thousand</Gloss>
+    <References>
+      <Verse>045011004</Verse>
+      <Verse>066011013</Verse>
+    </References>
+  </Term>
+  <Term Id="fraction_002">
+    <Transliteration>fraction_002</Transliteration>
+    <Gloss>half (1/2)</Gloss>
+    <References>
+      <Verse>041006023</Verse>
+      <Verse>042004025</Verse>
+      <Verse>042019008</Verse>
+      <Verse>044018011</Verse>
+      <Verse>059005017</Verse>
+    </References>
+  </Term>
+  <Term Id="fraction_003">
+    <Transliteration>fraction_003</Transliteration>
+    <Gloss>a third (1/3)</Gloss>
+    <References>
+      <Verse>066008007</Verse>
+      <Verse>066008008</Verse>
+      <Verse>066008009</Verse>
+      <Verse>066008010</Verse>
+      <Verse>066008011</Verse>
+      <Verse>066008012</Verse>
+      <Verse>066009015</Verse>
+      <Verse>066009018</Verse>
+      <Verse>066012004</Verse>
+    </References>
+  </Term>
+  <Term Id="fraction_004">
+    <Transliteration>fraction_004</Transliteration>
+    <Gloss>a fourth (1/4)</Gloss>
+    <References>
+      <Verse>066006008</Verse>
+    </References>
+  </Term>
+  <Term Id="fraction_010">
+    <Transliteration>fraction_010</Transliteration>
+    <Gloss>a tenth (1/10)</Gloss>
+    <References>
+      <Verse>040023023</Verse>
+      <Verse>042011042</Verse>
+      <Verse>042018012</Verse>
+      <Verse>058007002</Verse>
+      <Verse>058007004</Verse>
+      <Verse>058007005</Verse>
+      <Verse>058007006</Verse>
+      <Verse>058007008</Verse>
+      <Verse>058007009</Verse>
+      <Verse>066011013</Verse>
+    </References>
+  </Term>
+  <Term Id="multiple_002_double">
+    <Transliteration>multiple_002_double</Transliteration>
+    <Gloss>double</Gloss>
+    <References>
+      <Verse>054005017</Verse>
+      <Verse>066018006</Verse>
+    </References>
+  </Term>
+  <Term Id="multiple_002_times_as_much">
+    <Transliteration>multiple_002_times_as_much</Transliteration>
+    <Gloss>two times (as much)</Gloss>
+    <References>
+      <Verse>040023015</Verse>
+    </References>
+  </Term>
+  <Term Id="multiple_004_times_as_much">
+    <Transliteration>multiple_004_times_as_much</Transliteration>
+    <Gloss>four times (as much)</Gloss>
+    <References>
+      <Verse>042019008</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_001_day">
+    <Domain>time</Domain>
+    <Transliteration>ordinal_001_day</Transliteration>
+    <Gloss>next day</Gloss>
+    <References>
+      <Verse>042007011</Verse>
+      <Verse>042009037</Verse>
+      <Verse>042013033</Verse>
+      <Verse>043001029</Verse>
+      <Verse>044020015</Verse>
+      <Verse>044021001</Verse>
+      <Verse>044021018</Verse>
+      <Verse>044025017</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_001_firstborn">
+    <Transliteration>ordinal_001_firstborn</Transliteration>
+    <Gloss>firstborn</Gloss>
+    <References>
+      <Verse>042002007</Verse>
+      <Verse>042002023</Verse>
+      <Verse>051001018</Verse>
+      <Verse>058001006</Verse>
+      <Verse>058011028</Verse>
+      <Verse>058012023</Verse>
+      <Verse>066001005</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_002">
+    <Transliteration>ordinal_002</Transliteration>
+    <Gloss>second</Gloss>
+    <References>
+      <Verse>040021030</Verse>
+      <Verse>040022026</Verse>
+      <Verse>040022039</Verse>
+      <Verse>040026042</Verse>
+      <Verse>041012021</Verse>
+      <Verse>041012031</Verse>
+      <Verse>041014072</Verse>
+      <Verse>042019018</Verse>
+      <Verse>042020030</Verse>
+      <Verse>043003004</Verse>
+      <Verse>043004054</Verse>
+      <Verse>043009024</Verse>
+      <Verse>043021016</Verse>
+      <Verse>044007013</Verse>
+      <Verse>044010015</Verse>
+      <Verse>044011009</Verse>
+      <Verse>044012010</Verse>
+      <Verse>044013033</Verse>
+      <Verse>046012028</Verse>
+      <Verse>046015047</Verse>
+      <Verse>047001015</Verse>
+      <Verse>047013002</Verse>
+      <Verse>056003010</Verse>
+      <Verse>058008007</Verse>
+      <Verse>058009003</Verse>
+      <Verse>058009007</Verse>
+      <Verse>058009028</Verse>
+      <Verse>058010009</Verse>
+      <Verse>061003001</Verse>
+      <Verse>066002011</Verse>
+      <Verse>066004007</Verse>
+      <Verse>066006003</Verse>
+      <Verse>066008008</Verse>
+      <Verse>066011014</Verse>
+      <Verse>066014008</Verse>
+      <Verse>066016003</Verse>
+      <Verse>066019003</Verse>
+      <Verse>066020006</Verse>
+      <Verse>066020014</Verse>
+      <Verse>066021008</Verse>
+      <Verse>066021019</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_002_day">
+    <Domain>time</Domain>
+    <Transliteration>ordinal_002_day</Transliteration>
+    <Gloss>second day</Gloss>
+    <References>
+      <Verse>044028013</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_003">
+    <Transliteration>ordinal_003</Transliteration>
+    <Gloss>third</Gloss>
+    <References>
+      <Verse>040022026</Verse>
+      <Verse>040026044</Verse>
+      <Verse>041012021</Verse>
+      <Verse>041014041</Verse>
+      <Verse>042020012</Verse>
+      <Verse>042020031</Verse>
+      <Verse>042023022</Verse>
+      <Verse>043021014</Verse>
+      <Verse>043021017</Verse>
+      <Verse>044020009</Verse>
+      <Verse>046012028</Verse>
+      <Verse>047012002</Verse>
+      <Verse>047012014</Verse>
+      <Verse>047013001</Verse>
+      <Verse>066004007</Verse>
+      <Verse>066006005</Verse>
+      <Verse>066011014</Verse>
+      <Verse>066014009</Verse>
+      <Verse>066016004</Verse>
+      <Verse>066021019</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_003_day">
+    <Domain>time</Domain>
+    <Transliteration>ordinal_003_day</Transliteration>
+    <Gloss>third day</Gloss>
+    <References>
+      <Verse>040016021</Verse>
+      <Verse>040017023</Verse>
+      <Verse>040020019</Verse>
+      <Verse>040027064</Verse>
+      <Verse>042009022</Verse>
+      <Verse>042013032</Verse>
+      <Verse>042018033</Verse>
+      <Verse>042024007</Verse>
+      <Verse>042024021</Verse>
+      <Verse>042024046</Verse>
+      <Verse>043002001</Verse>
+      <Verse>044010040</Verse>
+      <Verse>044027019</Verse>
+      <Verse>046015004</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_004">
+    <Transliteration>ordinal_004</Transliteration>
+    <Gloss>fourth</Gloss>
+    <References>
+      <Verse>066004007</Verse>
+      <Verse>066006007</Verse>
+      <Verse>066008012</Verse>
+      <Verse>066016008</Verse>
+      <Verse>066021019</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_005">
+    <Transliteration>ordinal_005</Transliteration>
+    <Gloss>fifth</Gloss>
+    <References>
+      <Verse>066006009</Verse>
+      <Verse>066009001</Verse>
+      <Verse>066016010</Verse>
+      <Verse>066021020</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_006">
+    <Transliteration>ordinal_006</Transliteration>
+    <Gloss>sixth</Gloss>
+    <References>
+      <Verse>066006012</Verse>
+      <Verse>066009013</Verse>
+      <Verse>066009014</Verse>
+      <Verse>066016012</Verse>
+      <Verse>066021020</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_007">
+    <Transliteration>ordinal_007</Transliteration>
+    <Gloss>seventh</Gloss>
+    <References>
+      <Verse>040022026</Verse>
+      <Verse>065001014</Verse>
+      <Verse>066008001</Verse>
+      <Verse>066010007</Verse>
+      <Verse>066011015</Verse>
+      <Verse>066016017</Verse>
+      <Verse>066021020</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_007_day">
+    <Domain>time</Domain>
+    <Transliteration>ordinal_007_day</Transliteration>
+    <Gloss>seventh day</Gloss>
+    <References>
+      <Verse>058004004</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_008">
+    <Transliteration>ordinal_008</Transliteration>
+    <Gloss>eighth</Gloss>
+    <References>
+      <Verse>066017011</Verse>
+      <Verse>066021020</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_008_day">
+    <Domain>time</Domain>
+    <Transliteration>ordinal_008_day</Transliteration>
+    <Gloss>eighth day</Gloss>
+    <References>
+      <Verse>042001059</Verse>
+      <Verse>044007008</Verse>
+      <Verse>050003005</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_009">
+    <Transliteration>ordinal_009</Transliteration>
+    <Gloss>ninth</Gloss>
+    <References>
+      <Verse>066021020</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_010">
+    <Transliteration>ordinal_010</Transliteration>
+    <Gloss>tenth</Gloss>
+    <References>
+      <Verse>066021020</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_011">
+    <Transliteration>ordinal_011</Transliteration>
+    <Gloss>eleventh</Gloss>
+    <References>
+      <Verse>066021020</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_012">
+    <Transliteration>ordinal_012</Transliteration>
+    <Gloss>twelfth</Gloss>
+    <References>
+      <Verse>066021020</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_014">
+    <Transliteration>ordinal_014</Transliteration>
+    <Gloss>fourteenth</Gloss>
+    <References>
+      <Verse>044027027</Verse>
+      <Verse>044027033</Verse>
+    </References>
+  </Term>
+  <Term Id="ordinal_015">
+    <Transliteration>ordinal_015</Transliteration>
+    <Gloss>fifteenth</Gloss>
+    <References>
+      <Verse>042003001</Verse>
+    </References>
+  </Term>
+</BiblicalTermsList>
