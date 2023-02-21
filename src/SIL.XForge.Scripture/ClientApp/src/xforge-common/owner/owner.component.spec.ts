@@ -59,7 +59,9 @@ describe('OwnerComponent', () => {
     expect(env.fixture.debugElement.query(By.css('.layout .date-time'))).toBeNull();
     env.fixture.componentInstance.checkingOwner.dateTime = '2019-04-25T12:30:00';
     env.fixture.detectChanges();
-    expect(env.dateTime).toBe('Apr 25, 2019, 12:30 PM');
+    // As of Chromium 110 the space between the minutes and AM/PM is now a NARROW NO-BREAK SPACE (U+202F). Test for any
+    // single whitespace character to maximize compatibility.
+    expect(env.dateTime).toMatch(/Apr 25, 2019, 12:30\sPM/);
   });
 
   it('layout set correctly', () => {
