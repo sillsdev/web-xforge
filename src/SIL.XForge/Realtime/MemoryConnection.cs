@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using SIL.XForge.Configuration;
@@ -100,9 +101,8 @@ public class MemoryConnection : IConnection
         where T : IIdentifiable
     {
         List<IDocument<T>> docs = new List<IDocument<T>>();
-        foreach (string id in ids)
+        foreach (IDocument<T> doc in ids.Select(Get<T>))
         {
-            IDocument<T> doc = Get<T>(id);
             await doc.FetchAsync();
             if (doc.IsLoaded)
             {

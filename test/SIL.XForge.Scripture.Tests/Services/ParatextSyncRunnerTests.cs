@@ -1534,9 +1534,6 @@ public class ParatextSyncRunnerTests
         var env = new TestEnvironment();
         TextInfo textInfo = env.SetupChapterAuthorsAndGetTextInfo(setChapterPermissions: false);
         await env.Runner.InitAsync("project01", "user01", "project01", CancellationToken.None);
-        List<string> ids = textInfo.Chapters
-            .Select(c => TextData.GetTextDocId("project01", textInfo.BookNum, c.Number))
-            .ToList();
         var textDocs = await env.FetchTextDocsAsync(textInfo);
         textInfo.Chapters.First().Permissions.Add("user05", TextInfoPermission.Write);
         env.RealtimeService.LastModifiedUserId = "user05";
