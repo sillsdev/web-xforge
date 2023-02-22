@@ -6,12 +6,12 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { ChapterNavComponent } from './chapter-nav/chapter-nav.component';
 import { ShareControlComponent } from './share/share-control.component';
 import { ShareDialogComponent } from './share/share-dialog.component';
-import { ShareComponent } from './share/share.component';
+import { ShareButtonComponent } from './share/share-button.component';
 import { TextComponent } from './text/text.component';
 
 const componentExports = [
   ChapterNavComponent,
-  ShareComponent,
+  ShareButtonComponent,
   ShareControlComponent,
   ShareDialogComponent,
   TextComponent
