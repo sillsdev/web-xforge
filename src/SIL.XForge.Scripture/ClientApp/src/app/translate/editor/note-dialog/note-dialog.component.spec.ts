@@ -17,7 +17,10 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import {
+  getSFProjectUserConfigDocId,
+  SFProjectUserConfig
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -765,7 +768,7 @@ class TestEnvironment {
         });
       }
       this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
-        id: [configData.projectId, currentUserId].join(':'),
+        id: getSFProjectUserConfigDocId(configData.projectId, currentUserId),
         data: TestEnvironment.projectUserConfig
       });
     }
@@ -779,7 +782,7 @@ class TestEnvironment {
     );
 
     when(mockedProjectService.getUserConfig(configData.projectId, currentUserId)).thenCall((projectId, userId) =>
-      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, `${projectId}:${userId}`)
+      this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(projectId, userId))
     );
 
     when(mockedProjectService.getText(anything())).thenCall(id =>
@@ -877,7 +880,7 @@ class TestEnvironment {
   }
 
   getProjectUserConfigDoc(projectId: string, userId: string): SFProjectUserConfigDoc {
-    const id: string = [projectId, userId].join(':');
+    const id: string = getSFProjectUserConfigDocId(projectId, userId);
     return this.realtimeService.get<SFProjectUserConfigDoc>(SFProjectUserConfigDoc.COLLECTION, id);
   }
 
