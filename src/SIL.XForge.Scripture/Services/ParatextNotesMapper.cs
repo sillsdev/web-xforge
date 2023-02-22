@@ -157,7 +157,8 @@ public class ParatextNotesMapper : IParatextNotesMapper
                         answer,
                         ptProjectUsers,
                         answerPrefixContents,
-                        checkingNoteTagId
+                        checkingNoteTagId,
+                        true
                     );
                     if (answer.SyncUserRef == null)
                         answerSyncUserIds.Add((j, answerSyncUserId));
@@ -237,7 +238,8 @@ public class ParatextNotesMapper : IParatextNotesMapper
         Comment comment,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
         IReadOnlyList<object> prefixContent = null,
-        int tagId = NoteTag.notSetId
+        int tagId = NoteTag.notSetId,
+        bool setCheckingTag = false
     )
     {
         (string syncUserId, string user, bool canWritePTNoteOnProject) = await GetSyncUserAsync(
@@ -276,7 +278,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
 
         var threadId = (string)threadElem.Attribute("id");
         string key = GetCommentKey(threadId, commentElem, ptProjectUsers);
-        if (IsCommentNewOrChanged(oldCommentElems, key, commentElem))
+        if (IsCommentNewOrChanged(oldCommentElems, key, commentElem, setCheckingTag))
             threadElem.Add(commentElem);
         oldCommentElems.Remove(key);
         return syncUserId;
@@ -340,11 +342,16 @@ public class ParatextNotesMapper : IParatextNotesMapper
     private static bool IsCommentNewOrChanged(
         Dictionary<string, XElement> oldCommentElems,
         string key,
-        XElement commentElem
+        XElement commentElem,
+        bool expectNoteTagSet
     )
     {
-        return !oldCommentElems.TryGetValue(key, out XElement oldCommentElem)
-            || !XNode.DeepEquals(oldCommentElem.Element("content"), commentElem.Element("content"));
+        if (
+            !oldCommentElems.TryGetValue(key, out XElement oldCommentElem)
+            || !XNode.DeepEquals(oldCommentElem.Element("content"), commentElem.Element("content"))
+        )
+            return true;
+        return expectNoteTagSet && oldCommentElem.Element("tagsAdded") == null;
     }
 
     private ParatextUserProfile FindOrCreateParatextUser(

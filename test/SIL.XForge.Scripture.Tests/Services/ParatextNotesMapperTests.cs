@@ -484,6 +484,16 @@ public class ParatextNotesMapperTests
                                 <tagsAdded>3</tagsAdded>
                             </comment>
                         </thread>
+                        <thread id=""ANSWER_answer04"">
+                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p>[User 04 - xForge]</p>
+                                    <p>Test answer 4 is marked for export</p>
+                                </content>
+                            </comment>
+                        </thread>
                     </notes>";
         Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
         XElement notesElem = await env.Mapper.GetNotesChangelistAsync(

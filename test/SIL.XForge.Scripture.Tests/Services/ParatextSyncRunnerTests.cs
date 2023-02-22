@@ -664,15 +664,32 @@ public class ParatextSyncRunnerTests
         project = env.GetProject();
         Assert.That(project.CheckingConfig.NoteTagId, Is.Null, "setup");
         Assert.That(env.ContainsQuestion("MAT", 1), Is.True, "setup");
-        int noteTagId = 5;
-        env.ParatextService
-            .UpdateCommentTag(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<NoteTag>())
-            .Returns(noteTagId);
+        // simulate project01 does not have answers to export
+        XElement notesElem = new XElement("notes", new XAttribute("version", "1.1"));
+        var threadElem = new XElement("thread", new XAttribute("id", "thread01"));
+        notesElem.Add(threadElem);
+
+        env.NotesMapper
+            .GetNotesChangelistAsync(
+                Arg.Any<XElement>(),
+                Arg.Any<IEnumerable<IDocument<Question>>>(),
+                Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                Arg.Any<Dictionary<string, string>>(),
+                CheckingAnswerExport.MarkedForExport,
+                Arg.Any<int>()
+            )
+            .Returns(Task.FromResult(notesElem));
+        // project01 has questions but does not export any
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+        env.ParatextService.DidNotReceive().UpdateCommentTag(Arg.Any<UserSecret>(), "target", Arg.Any<NoteTag>());
+
+        // simulate project01 with exported answers
+        await env.AddAnswerToQuestion("project01", "MAT", 1);
+
         // project01 has checking answers and will need to create a tag
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
         env.ParatextService.Received(1).UpdateCommentTag(Arg.Any<UserSecret>(), "target", Arg.Any<NoteTag>());
-        project = env.VerifyProjectSync(true);
-        Assert.That(project.CheckingConfig.NoteTagId, Is.EqualTo(noteTagId));
+        env.VerifyProjectSync(true);
     }
 
     [Test]
@@ -3120,6 +3137,15 @@ public class ParatextSyncRunnerTests
             return RealtimeService
                 .GetRepository<SFProject>()
                 .UpdateAsync(p => p.Id == projectId, u => u.Set(p => p.NoteTags, noteTags));
+        }
+
+        public Task AddAnswerToQuestion(string projectId, string bookId, int chapter)
+        {
+            string id = $"{projectId}:question{bookId}{chapter}";
+            var answer = new Answer { DataId = "answer01", Status = AnswerStatus.Exportable };
+            return RealtimeService
+                .GetRepository<Question>()
+                .UpdateAsync(q => q.Id == id, u => u.Add(q => q.Answers, answer));
         }
 
         /// <summary>

@@ -477,7 +477,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 LogMetric("Updating Paratext notes");
                 if (questionDocs.Count > 0)
                 {
-                    await UpdateCheckingNoteTag(paratextId);
                     await UpdateParatextNotesAsync(text, questionDocs);
                 }
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = (
@@ -812,6 +811,20 @@ public class ParatextSyncRunner : IParatextSyncRunner
         else
             oldNotesElem = new XElement("notes", new XAttribute("version", "1.1"));
 
+        if (
+            _projectDoc.Data.CheckingConfig.NoteTagId == null
+            && _projectDoc.Data.CheckingConfig.AnswerExportMethod != CheckingAnswerExport.None
+        )
+        {
+            bool hasExportableAnswers =
+                (
+                    _projectDoc.Data.CheckingConfig.AnswerExportMethod == CheckingAnswerExport.All
+                    && questionDocs.Any(q => q.Data.Answers.Count > 0)
+                ) || questionDocs.Any(q => q.Data.Answers.Any(a => a.Status == AnswerStatus.Exportable));
+            if (hasExportableAnswers)
+                await UpdateCheckingNoteTag(_projectDoc.Data.ParatextId);
+        }
+
         XElement notesElem = await _notesMapper.GetNotesChangelistAsync(
             oldNotesElem,
             questionDocs,
@@ -820,6 +833,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             _projectDoc.Data.CheckingConfig.AnswerExportMethod,
             _projectDoc.Data.CheckingConfig.NoteTagId ?? NoteTag.notSetId
         );
+
         if (notesElem.Elements("thread").Any())
         {
             _syncMetrics.ParatextNotes += _paratextService.PutNotes(
@@ -1204,11 +1218,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
         }
     }
 
-    private async Task<int> UpdateCheckingNoteTag(string targetParatextId)
+    private async Task UpdateCheckingNoteTag(string targetParatextId)
     {
         int noteTagId = _projectDoc.Data.CheckingConfig.NoteTagId ?? NoteTag.notSetId;
         if (noteTagId != NoteTag.notSetId)
-            return noteTagId;
+            return;
         var newNoteTag = new NoteTag
         {
             TagId = NoteTag.notSetId,
@@ -1217,7 +1231,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
         };
         noteTagId = _paratextService.UpdateCommentTag(_userSecret, targetParatextId, newNoteTag);
         await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.CheckingConfig.NoteTagId, noteTagId));
-        return noteTagId;
     }
 
     /// <summary>
