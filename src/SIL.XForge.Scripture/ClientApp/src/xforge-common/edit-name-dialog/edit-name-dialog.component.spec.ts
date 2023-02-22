@@ -161,7 +161,8 @@ class TestEnvironment {
     button.click();
     this.fixture.detectChanges();
     // open dialog animation
-    tick(166);
+    tick(2000);
+    this.fixture.detectChanges();
   }
 
   clickSubmit(): void {

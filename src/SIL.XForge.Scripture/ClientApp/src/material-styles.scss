@@ -11,6 +11,7 @@
 //    `@include mat.legacy-typography-hierarchy(mat.define-legacy-typography-config());`
 // @include mat.all-legacy-component-typographies();
 @include mat.legacy-core();
+// @include mat.core();
 
 $mat-sf-purple: (
   200: $purpleLight,
@@ -73,19 +74,54 @@ $material-app-theme: mat.define-light-theme(
   )
 );
 
-@include mat.legacy-autocomplete-theme($material-app-theme);
-@include mat.legacy-button-theme($material-app-theme);
-@include mat.legacy-card-theme($material-app-theme);
-@include mat.legacy-checkbox-theme($material-app-theme);
-@include mat.legacy-optgroup-theme($material-app-theme);
-@include mat.legacy-option-theme($material-app-theme);
-@include mat.legacy-paginator-theme($material-app-theme);
-@include mat.legacy-progress-bar-theme($material-app-theme);
-@include mat.legacy-progress-spinner-theme($material-app-theme);
-@include mat.legacy-radio-theme($material-app-theme);
-@include mat.legacy-select-theme($material-app-theme);
-@include mat.legacy-slider-theme($material-app-theme);
-@include mat.legacy-table-theme($material-app-theme);
+// @include mat.legacy-autocomplete-theme($material-app-theme);
+// @include mat.legacy-button-theme($material-app-theme);
+// @include mat.legacy-card-theme($material-app-theme);
+// @include mat.legacy-checkbox-theme($material-app-theme);
+// @include mat.legacy-optgroup-theme($material-app-theme);
+// @include mat.legacy-option-theme($material-app-theme);
+// @include mat.legacy-paginator-theme($material-app-theme);
+// @include mat.legacy-progress-bar-theme($material-app-theme);
+// @include mat.legacy-progress-spinner-theme($material-app-theme);
+// @include mat.legacy-radio-theme($material-app-theme);
+// @include mat.legacy-select-theme($material-app-theme);
+// @include mat.legacy-slider-theme($material-app-theme);
+// @include mat.legacy-table-theme($material-app-theme);
+// @include mat.legacy-dialog-theme($material-app-theme);
+// @include mat.legacy-input-theme($material-app-theme);
+// @include mat.legacy-form-field-theme($material-app-theme);
+
+// @include mat.legacy-core-color($material-app-theme);
+// @include mat.legacy-core-theme($material-app-theme);
+// // @include mat.legacy-button-theme($material-app-theme);
+// // @include mat.legacy-card-theme($material-app-theme);
+// @include mat.legacy-chips-theme($material-app-theme);
+// // @include mat.legacy-dialog-theme($material-app-theme);
+// // @include mat.legacy-form-field-theme($material-app-theme);
+// // @include mat.legacy-input-theme($material-app-theme);
+// @include mat.legacy-list-theme($material-app-theme);
+// @include mat.legacy-menu-theme($material-app-theme);
+// // @include mat.legacy-paginator-theme($material-app-theme);
+// // @include mat.legacy-radio-theme($material-app-theme);
+// // @include mat.legacy-select-theme($material-app-theme);
+// // @include mat.legacy-slider-theme($material-app-theme);
+// @include mat.legacy-snack-bar-theme($material-app-theme);
+// // @include mat.legacy-table-theme($material-app-theme);
+// @include mat.legacy-tabs-theme($material-app-theme);
+// @include mat.legacy-tooltip-theme($material-app-theme);
+
+// $default-typography: mat.define-typography-config();
+// @include mat.typography-hierarchy($default-typography);
+
+@include mat.all-legacy-component-themes($material-app-theme);
+@include mat.all-legacy-component-colors($material-app-theme);
+// @include mat.all-legacy-component-typographies();
+@include mat.legacy-typography-hierarchy(mat.define-legacy-typography-config());
+
+// @include mat.all-component-themes($material-app-theme);
+// @include mat.all-component-colors($material-app-theme);
+// @include mat.all-component-typographies();
+// @include mat.typography-hierarchy(mat.define-legacy-typography-config());
 
 .card-outline {
   @include mat.elevation(0);
