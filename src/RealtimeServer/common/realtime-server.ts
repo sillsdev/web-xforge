@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Db } from 'mongodb';
 import ShareDB from 'sharedb';
 import shareDBAccess from 'sharedb-access';
@@ -234,15 +235,32 @@ export class RealtimeServer extends ShareDB {
       if (curVersion === version) {
         continue;
       }
-      const query = await createFetchQuery(this.defaultConnection!, docService.collection, {});
-      while (curVersion < version) {
-        curVersion++;
-        const promises: Promise<void>[] = [];
-        const migration = docService.getMigration(curVersion);
-        for (const doc of query.results) {
-          promises.push(migration.migrateDoc(doc));
+      const limit = 10000;
+      let skip = 0;
+      let query = await createFetchQuery(this.defaultConnection!, docService.collection, {
+        $sort: { _id: 1 },
+        $skip: skip,
+        $limit: limit
+      });
+      while (query.results.length > 0) {
+        console.log(`Migrating ${docService.collection}: ${skip + 1} to ${skip + query.results.length}`);
+        let docVersion = curVersion;
+        while (docVersion < version) {
+          docVersion++;
+          const promises: Promise<void>[] = [];
+          const migration = docService.getMigration(docVersion);
+          for (const doc of query.results) {
+            promises.push(migration.migrateDoc(doc));
+          }
+          await Promise.all(promises);
         }
-        await Promise.all(promises);
+
+        skip += limit;
+        query = await createFetchQuery(this.defaultConnection!, docService.collection, {
+          $sort: { _id: 1 },
+          $skip: skip,
+          $limit: limit
+        });
       }
 
       await this.schemaVersions.set(docService.collection, version);
