@@ -28,8 +28,9 @@ class NoteThreadMigration2 implements Migration {
     const ops: Op[] = [];
     if (doc.data.notes == null) return;
     for (let i = 0; i < doc.data.notes.length; i++) {
-      if (doc.data.notes[i].extUserId != null) {
-        ops.push({ p: ['notes', i, 'extUserId'], od: true });
+      const extUserId: string | undefined = doc.data.notes[i].extUserId;
+      if (extUserId != null) {
+        ops.push({ p: ['notes', i, 'extUserId'], od: extUserId });
       }
     }
 

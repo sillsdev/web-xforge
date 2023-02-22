@@ -705,8 +705,6 @@ public class ParatextServiceTests
         string contextBefore = "Context before changed ";
         string selectionText = "Text selected changed";
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-            env.Project01,
-            40,
             1,
             contextBefore,
             selectionText,
@@ -775,8 +773,6 @@ public class ParatextServiceTests
             }
         };
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-            env.Project01,
-            40,
             1,
             "Unrecognizable context ",
             "unrecognizable selection",
@@ -884,13 +880,7 @@ public class ParatextServiceTests
         {
             new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
         }.ToDictionary(u => u.Username);
-        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-            env.Project01,
-            40,
-            1,
-            "Context before ",
-            "Text selected"
-        );
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected");
 
         // SUT
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
@@ -1019,13 +1009,7 @@ public class ParatextServiceTests
         {
             new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
         }.ToDictionary(u => u.Username);
-        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-            env.Project01,
-            40,
-            1,
-            "Context before ",
-            "Text selected"
-        );
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected");
 
         // SUT
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
@@ -1221,13 +1205,7 @@ public class ParatextServiceTests
             conn,
             new[] { "thread1" }
         );
-        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-            projectId,
-            40,
-            1,
-            env.ContextBefore,
-            "Text selected"
-        );
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
             new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
@@ -1365,13 +1343,7 @@ public class ParatextServiceTests
         {
             new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
         }.ToDictionary(u => u.Username);
-        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-            env.Project01,
-            40,
-            1,
-            "Context before ",
-            "Text selected"
-        );
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected");
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
             userSecret,
             ptProjectId,
@@ -1535,7 +1507,7 @@ public class ParatextServiceTests
             conn,
             new[] { "thread1", "thread3", "thread4", "thread5", "thread6", "thread7", "thread8" }
         );
-        var deltas = env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected", true);
+        var deltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected", true);
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
             userSecret,
             ptProjectId,
@@ -1648,15 +1620,7 @@ public class ParatextServiceTests
 
         await using (await env.RealtimeService.ConnectAsync())
         {
-            var deltas = env.GetChapterDeltasByBook(
-                env.Project01,
-                40,
-                1,
-                "Context before ",
-                "Text selected",
-                true,
-                true
-            );
+            var deltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected", true, true);
             Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
             {
                 {
@@ -1781,13 +1745,7 @@ public class ParatextServiceTests
             conn,
             new[] { "thread1", "thread3", "thread4", "thread5" }
         );
-        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-            env.Project01,
-            40,
-            1,
-            env.ContextBefore,
-            "Text selected"
-        );
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
         Dictionary<string, ParatextUserProfile> syncUsers = new Dictionary<string, ParatextUserProfile>
         {
             {
@@ -1890,7 +1848,13 @@ public class ParatextServiceTests
             conn,
             noteThreads
         );
-        Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>();
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
+        {
+            {
+                env.Username01,
+                new ParatextUserProfile { Username = env.Username01, OpaqueUserId = "syncuser01" }
+            }
+        };
         var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             ptProjectId,
@@ -1923,8 +1887,10 @@ public class ParatextServiceTests
             + "Tag:1";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected));
         Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
-        IDocument<NoteThread> noteThreadDoc = noteThreadDocs.First(d => d.Data.DataId == thread1Id);
-        Assert.That(noteThreadDoc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser02"));
+        IDocument<NoteThread> noteThread1Doc = noteThreadDocs.First(d => d.Data.DataId == thread1Id);
+        Assert.That(noteThread1Doc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser02"));
+        IDocument<NoteThread> noteThread2Doc = noteThreadDocs.First(d => d.Data.DataId == thread2Id);
+        Assert.That(noteThread2Doc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser01"));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
 
         // PT username is not written to server logs
@@ -3781,10 +3747,7 @@ public class ParatextServiceTests
                         : new TextAnchor { Start = ContextBefore.Length, Length = text.Length },
                     OriginalContextAfter = comp.appliesToVerse ? "" : ContextAfter,
                     Status = NoteStatus.Todo.InternalValue,
-                    Assignment =
-                        comp.notes == null
-                            ? Paratext.Data.ProjectComments.CommentThread.unassignedUser
-                            : comp.notes[^1].assignedPTUser
+                    Assignment = comp.notes == null ? CommentThread.unassignedUser : comp.notes[^1].assignedPTUser
                 };
                 List<Note> notes = new List<Note>();
                 for (int i = 1; i <= comp.noteCount; i++)
@@ -3793,8 +3756,8 @@ public class ParatextServiceTests
                     {
                         ownerRef = "user02",
                         status = NoteStatus.Todo,
-                        tagsAdded = new[] { Paratext.Data.ProjectComments.CommentTag.toDoTagId.ToString() },
-                        assignedPTUser = Paratext.Data.ProjectComments.CommentThread.unassignedUser
+                        tagsAdded = new[] { CommentTag.toDoTagId.ToString() },
+                        assignedPTUser = CommentThread.unassignedUser
                     };
                     if (comp.notes != null)
                         noteComponent = comp.notes[i - 1];
@@ -3858,8 +3821,6 @@ public class ParatextServiceTests
         }
 
         public Dictionary<int, ChapterDelta> GetChapterDeltasByBook(
-            string projectId,
-            int bookNum,
             int chapters,
             string contextBefore,
             string selectedText,
@@ -4223,8 +4184,6 @@ public class ParatextServiceTests
                 new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
             }.ToDictionary(u => u.Username);
             Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-                env.Project01,
-                40,
                 1,
                 "Context before ",
                 "Text selected"
