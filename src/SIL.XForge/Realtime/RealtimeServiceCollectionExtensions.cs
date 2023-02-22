@@ -28,6 +28,13 @@ public static class RealtimeServiceCollectionExtensions
                 options.NodeAndV8Options = nodeOptions;
             }
         });
+
+        // Disable timeout so the debugger can be paused
+        if (nodeOptions?.Contains("--inspect", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            services.Configure<OutOfProcessNodeJSServiceOptions>(options => options.TimeoutMS = -1);
+        }
+
         services.AddSingleton<IJsonService, RealtimeJsonService>();
 
         services.Configure(configureOptions);
