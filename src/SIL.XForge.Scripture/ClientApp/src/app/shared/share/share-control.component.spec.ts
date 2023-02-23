@@ -294,7 +294,7 @@ class TestHostComponent {
   invitedCount = 0;
   defaultRole?: SFProjectRole | undefined;
 
-  onInvited() {
+  onInvited(): void {
     this.invitedCount++;
   }
 }
@@ -390,7 +390,7 @@ class TestEnvironment {
   }
 
   get shareLink(): DebugElement {
-    return this.fetchElement('.invite-by-link app-share');
+    return this.fetchElement('.invite-by-link app-share-button');
   }
 
   set onlineStatus(value: boolean) {
@@ -402,7 +402,7 @@ class TestEnvironment {
     return this.elementText(this.fetchElement('mat-form-field mat-error'));
   }
 
-  fetchElement(query: string) {
+  fetchElement(query: string): DebugElement {
     return this.fixture.debugElement.query(By.css(query));
   }
 
@@ -415,7 +415,7 @@ class TestEnvironment {
     this.wait();
   }
 
-  setTextFieldValue(element: HTMLElement | DebugElement, value: string) {
+  setTextFieldValue(element: HTMLElement | DebugElement, value: string): void {
     if (element instanceof DebugElement) {
       element = element.nativeElement;
     }
@@ -425,7 +425,7 @@ class TestEnvironment {
     this.wait();
   }
 
-  getTextFieldValue(element: HTMLElement | DebugElement) {
+  getTextFieldValue(element: HTMLElement | DebugElement): string {
     if (element instanceof DebugElement) {
       element = element.nativeElement;
     }
@@ -433,7 +433,7 @@ class TestEnvironment {
     return inputElem.value;
   }
 
-  setInvitationLanguage(language: string) {
+  setInvitationLanguage(language: string): void {
     this.component.localeControl.setValue(language);
     this.wait();
   }
