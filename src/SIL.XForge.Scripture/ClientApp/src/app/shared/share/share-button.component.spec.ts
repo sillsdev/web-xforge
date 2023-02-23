@@ -16,7 +16,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareControlComponent } from './share-control.component';
 import { ShareDialogComponent } from './share-dialog.component';
-import { ShareComponent } from './share.component';
+import { ShareButtonComponent } from './share-button.component';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -24,10 +24,10 @@ const mockedUserService = mock(UserService);
 const mockedPwaService = mock(PwaService);
 const mockedI18nService = mock(I18nService);
 
-describe('ShareComponent', () => {
+describe('ShareButtonComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    declarations: [ShareComponent],
+    declarations: [ShareButtonComponent],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
@@ -57,8 +57,8 @@ describe('ShareComponent', () => {
 class DialogTestModule {}
 
 class TestEnvironment {
-  readonly component: ShareComponent;
-  readonly fixture: ComponentFixture<ShareComponent>;
+  readonly component: ShareButtonComponent;
+  readonly fixture: ComponentFixture<ShareButtonComponent>;
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
@@ -68,7 +68,7 @@ class TestEnvironment {
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
 
-    this.fixture = TestBed.createComponent(ShareComponent);
+    this.fixture = TestBed.createComponent(ShareButtonComponent);
     this.component = this.fixture.componentInstance;
   }
 

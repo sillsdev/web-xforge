@@ -105,7 +105,7 @@
                     </button>
                   </ng-container>
                   <app-font-size (apply)="applyFontChange($event)"></app-font-size>
-                  <app-share *ngIf="canShare" [defaultRole]="defaultShareRole"></app-share>
+                  <app-share-button *ngIf="canShare" [defaultRole]="defaultShareRole"></app-share-button>
                 </div>
               </div>
             </div>
