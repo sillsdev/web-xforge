@@ -110,7 +110,7 @@ public class MemoryConnection : IConnection
             }
         }
 
-        return await Task.FromResult(docs);
+        return docs;
     }
 
     /// <summary>
