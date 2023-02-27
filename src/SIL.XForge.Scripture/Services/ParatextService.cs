@@ -1161,8 +1161,8 @@ public class ParatextService : DisposableBase, IParatextService
 
         CommentManager manager = CommentManager.Get(scrText);
 
-        // CommentThread.VerseRef calculates the reallocated location, however in Paratext a note can only be
-        // reallocated within the chapter, so for our query, we only need the first location
+        // CommentThread.VerseRef determines the location of a thread, even if moved. However, in Paratext a note can
+        // only be relocated within the chapter, so for our query, we only need to look at the first note location.
         var threads = manager.FindThreads(commentThread => commentThread.Comments[0].VerseRef.BookNum == bookNum, true);
         return NotesFormatter.FormatNotes(threads);
     }

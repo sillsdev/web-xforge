@@ -1388,7 +1388,7 @@ public class ParatextSyncRunnerTests
         var project = Substitute.For<IDocument<SFProject>>();
         project.IsLoaded.Returns(true);
         project.Data.Returns(env.GetProject());
-        env.SubstituteConnection.Get<SFProject>("project01").Returns(project);
+        env.Connection.Get<SFProject>("project01").Returns(project);
 
         // The HTTP call throws this when a cancelled token is passed
         env.ParatextService
@@ -1413,7 +1413,7 @@ public class ParatextSyncRunnerTests
 
         // Check for RollbackTransaction being executed, to ensure
         // that CompleteAsync executes to the end without exception
-        env.SubstituteConnection.Received(1).RollbackTransaction();
+        env.Connection.Received(1).RollbackTransaction();
 
         // Check that the cancellation was logged in the sync metrics
         SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
@@ -1431,30 +1431,28 @@ public class ParatextSyncRunnerTests
 
         // Throw an TaskCanceledException in InitAsync after the exclusions have been called
         // InitAsync calls the IConnection.FetchAsync() extension, which calls IConnection.Get()
-        env.SubstituteConnection.Get<SFProject>("project01").Throws(new TaskCanceledException());
+        env.Connection.Get<SFProject>("project01").Throws(new TaskCanceledException());
 
         // Run the task
         await env.Runner.RunAsync("project01", "user01", "project01", false, cancellationTokenSource.Token);
 
         // Only check for ExcludePropertyFromTransaction being executed,
         // as the substitute RealtimeService will not update documents.
-        env.SubstituteConnection
+        env.Connection
             .Received(1)
             .ExcludePropertyFromTransaction(
                 Arg.Is<Expression<Func<SFProject, object>>>(
                     ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.QueuedCount"
                 )
             );
-        env.SubstituteConnection
+        env.Connection
             .Received(1)
             .ExcludePropertyFromTransaction(
                 Arg.Is<Expression<Func<SFProject, object>>>(
                     ex => string.Join('.', new ObjectPath(ex).Items) == "Sync.DataInSync"
                 )
             );
-        env.SubstituteConnection
-            .Received(2)
-            .ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
+        env.Connection.Received(2).ExcludePropertyFromTransaction(Arg.Any<Expression<Func<SFProject, object>>>());
     }
 
     [Test]
@@ -2297,9 +2295,9 @@ public class ParatextSyncRunnerTests
             ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "target").Returns("beforeSR");
             ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), "source").Returns("beforeSR", "afterSR");
             RealtimeService = new SFMemoryRealtimeService();
-            SubstituteConnection = Substitute.For<IConnection>();
+            Connection = Substitute.For<IConnection>();
             SubstituteRealtimeService = Substitute.For<IRealtimeService>();
-            SubstituteRealtimeService.ConnectAsync().Returns(Task.FromResult(SubstituteConnection));
+            SubstituteRealtimeService.ConnectAsync().Returns(Task.FromResult(Connection));
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
             NotesMapper = Substitute.For<IParatextNotesMapper>();
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
@@ -2333,7 +2331,7 @@ public class ParatextSyncRunnerTests
         /// <summary>
         /// Gets the connection to be used with <see cref="SubstituteRealtimeService"/>.
         /// </summary>
-        public IConnection SubstituteConnection { get; }
+        public IConnection Connection { get; }
 
         public SFProject GetProject(string projectSFId = "project01") =>
             RealtimeService.GetRepository<SFProject>().Get(projectSFId);
