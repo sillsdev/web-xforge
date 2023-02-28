@@ -705,8 +705,6 @@ public class ParatextServiceTests
         string contextBefore = "Context before changed ";
         string selectionText = "Text selected changed";
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-            env.Project01,
-            40,
             1,
             contextBefore,
             selectionText,
@@ -775,8 +773,6 @@ public class ParatextServiceTests
             }
         };
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-            env.Project01,
-            40,
             1,
             "Unrecognizable context ",
             "unrecognizable selection",
@@ -884,13 +880,7 @@ public class ParatextServiceTests
         {
             new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
         }.ToDictionary(u => u.Username);
-        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-            env.Project01,
-            40,
-            1,
-            "Context before ",
-            "Text selected"
-        );
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected");
 
         // SUT
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
@@ -911,7 +901,7 @@ public class ParatextServiceTests
             Is.EqualTo("Context before Text selected thread1 context after.-MAT 1:1")
         );
         Assert.That(change01.NotesUpdated.Count, Is.EqualTo(1));
-        string expected1 = "thread1-syncuser01-user02-<p>thread1 note 1: EDITED.</p>-tag:1";
+        string expected1 = "thread1-syncuser01-<p>thread1 note 1: EDITED.</p>-tag:1";
         Assert.That(change01.NotesUpdated[0].NoteToString(), Is.EqualTo(expected1));
 
         // Deleted comment
@@ -921,7 +911,7 @@ public class ParatextServiceTests
             Is.EqualTo("Context before Text selected thread2 context after.-MAT 1:2")
         );
         Assert.That(change02.NotesDeleted.Count, Is.EqualTo(1));
-        string expected2 = "thread2-syncuser01-user02-<p>thread2 note 1.</p>-deleted-tag:1";
+        string expected2 = "thread2-syncuser01-<p>thread2 note 1.</p>-deleted-tag:1";
         Assert.That(change02.NotesDeleted[0].NoteToString(), Is.EqualTo(expected2));
 
         // Added comment on new thread and User 02 added as new pt user
@@ -931,7 +921,7 @@ public class ParatextServiceTests
             Is.EqualTo("Context before Text selected thread3 context after.-Start:15-Length:21-MAT 1:3")
         );
         Assert.That(change03.NotesAdded.Count, Is.EqualTo(1));
-        string expected3 = "thread3-syncuser04-user02-<p>thread3 note 1.</p>-tag:1";
+        string expected3 = "thread3-syncuser04-<p>thread3 note 1.</p>-tag:1";
         Assert.That(change03.NotesAdded[0].NoteToString(), Is.EqualTo(expected3));
 
         // Permanently removed comment
@@ -956,12 +946,12 @@ public class ParatextServiceTests
             change06.ThreadChangeToString(),
             Is.EqualTo("Context before Text selected thread6 context after.-Start:15-Length:21-MAT 1:6")
         );
-        string expected6 = "thread6---<p>thread6 note 1.</p>-tag:-1";
+        string expected6 = "thread6--<p>thread6 note 1.</p>-tag:-1";
         Assert.That(change06.NotesAdded[0].NoteToString(), Is.EqualTo(expected6));
 
         // Added comment on existing thread
         NoteThreadChange change07 = changes.Where(c => c.ThreadId == "thread7").Single();
-        string expected7 = "thread7-syncuser01-user02-<p>thread7 note 2.</p>";
+        string expected7 = "thread7-syncuser01-<p>thread7 note 2.</p>";
         Assert.That(change07.NotesAdded[0].NoteToString(), Is.EqualTo(expected7));
 
         // Removed tag icon on repeated todo notes
@@ -1019,13 +1009,7 @@ public class ParatextServiceTests
         {
             new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
         }.ToDictionary(u => u.Username);
-        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-            env.Project01,
-            40,
-            1,
-            "Context before ",
-            "Text selected"
-        );
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected");
 
         // SUT
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
@@ -1221,13 +1205,7 @@ public class ParatextServiceTests
             conn,
             new[] { "thread1" }
         );
-        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-            projectId,
-            40,
-            1,
-            env.ContextBefore,
-            "Text selected"
-        );
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
             new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
@@ -1365,13 +1343,7 @@ public class ParatextServiceTests
         {
             new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
         }.ToDictionary(u => u.Username);
-        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-            env.Project01,
-            40,
-            1,
-            "Context before ",
-            "Text selected"
-        );
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected");
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
             userSecret,
             ptProjectId,
@@ -1535,7 +1507,7 @@ public class ParatextServiceTests
             conn,
             new[] { "thread1", "thread3", "thread4", "thread5", "thread6", "thread7", "thread8" }
         );
-        var deltas = env.GetChapterDeltasByBook(env.Project01, 40, 1, "Context before ", "Text selected", true);
+        var deltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected", true);
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
             userSecret,
             ptProjectId,
@@ -1648,15 +1620,7 @@ public class ParatextServiceTests
 
         await using (await env.RealtimeService.ConnectAsync())
         {
-            var deltas = env.GetChapterDeltasByBook(
-                env.Project01,
-                40,
-                1,
-                "Context before ",
-                "Text selected",
-                true,
-                true
-            );
+            var deltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected", true, true);
             Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
             {
                 {
@@ -1781,13 +1745,7 @@ public class ParatextServiceTests
             conn,
             new[] { "thread1", "thread3", "thread4", "thread5" }
         );
-        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-            env.Project01,
-            40,
-            1,
-            env.ContextBefore,
-            "Text selected"
-        );
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
         Dictionary<string, ParatextUserProfile> syncUsers = new Dictionary<string, ParatextUserProfile>
         {
             {
@@ -1853,7 +1811,16 @@ public class ParatextServiceTests
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-        string threadId = "thread1";
+        string thread1Id = "thread1";
+        string thread2Id = "thread2";
+        var thread1Notes = new[]
+        {
+            new ThreadNoteComponents { ownerRef = "user02", tagsAdded = new[] { "1" } }
+        };
+        var thread2Notes = new[]
+        {
+            new ThreadNoteComponents { ownerRef = "user04", tagsAdded = new[] { "1" } }
+        };
         env.AddNoteThreadData(
             new[]
             {
@@ -1861,24 +1828,42 @@ public class ParatextServiceTests
                 {
                     threadNum = 1,
                     noteCount = 1,
-                    isNew = true
+                    isNew = true,
+                    notes = thread1Notes
+                },
+                new ThreadComponents
+                {
+                    threadNum = 2,
+                    noteCount = 1,
+                    isNew = true,
+                    notes = thread2Notes
                 }
             }
         );
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
-        CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
+        CommentThread thread = env.ProjectCommentManager.FindThread(thread1Id);
         Assert.That(thread, Is.Null);
-        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, threadId);
-        Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>();
+        string[] noteThreads = new[] { thread1Id, thread2Id };
+        IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
+            conn,
+            noteThreads
+        );
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
+        {
+            {
+                env.Username01,
+                new ParatextUserProfile { Username = env.Username01, OpaqueUserId = "syncuser01" }
+            }
+        };
         var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
             ptProjectId,
             40,
-            new[] { noteThreadDoc },
+            noteThreadDocs,
             ptProjectUsers,
             env.TagCount
         );
-        thread = env.ProjectCommentManager.FindThread(threadId);
+        thread = env.ProjectCommentManager.FindThread(thread1Id);
         Assert.That(thread.Comments.Count, Is.EqualTo(1));
         var comment = thread.Comments.First();
         string expected =
@@ -1886,12 +1871,27 @@ public class ParatextServiceTests
             + "MAT 1:1-"
             + "<p>thread1 note 1.</p>-"
             + "Start:0-"
-            + "user02-"
             + "Tag:1";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected));
-        Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username02 }));
-        Assert.That(noteThreadDoc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser02"));
-        Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
+
+        thread = env.ProjectCommentManager.FindThread(thread2Id);
+        Assert.That(thread.Comments.Count, Is.EqualTo(1));
+        comment = thread.Comments.First();
+        // expect the non-paratext ext user to be user04
+        expected =
+            "thread2/User 01/2019-01-01T08:00:00.0000000+00:00-"
+            + "MAT 1:2-"
+            + "<p>thread2 note 1.</p>-"
+            + "Start:0-"
+            + "user04-"
+            + "Tag:1";
+        Assert.That(comment.CommentToString(), Is.EqualTo(expected));
+        Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
+        IDocument<NoteThread> noteThread1Doc = noteThreadDocs.First(d => d.Data.DataId == thread1Id);
+        Assert.That(noteThread1Doc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser02"));
+        IDocument<NoteThread> noteThread2Doc = noteThreadDocs.First(d => d.Data.DataId == thread2Id);
+        Assert.That(noteThread2Doc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser01"));
+        Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
 
         // PT username is not written to server logs
         env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username02));
@@ -2665,6 +2665,7 @@ public class ParatextServiceTests
 
     struct ThreadNoteComponents
     {
+        public string ownerRef;
         public Enum<NoteStatus> status;
         public string[] tagsAdded;
         public string assignedPTUser;
@@ -3746,30 +3747,28 @@ public class ParatextServiceTests
                         : new TextAnchor { Start = ContextBefore.Length, Length = text.Length },
                     OriginalContextAfter = comp.appliesToVerse ? "" : ContextAfter,
                     Status = NoteStatus.Todo.InternalValue,
-                    Assignment =
-                        comp.notes == null
-                            ? Paratext.Data.ProjectComments.CommentThread.unassignedUser
-                            : comp.notes[^1].assignedPTUser
+                    Assignment = comp.notes == null ? CommentThread.unassignedUser : comp.notes[^1].assignedPTUser
                 };
                 List<Note> notes = new List<Note>();
                 for (int i = 1; i <= comp.noteCount; i++)
                 {
                     ThreadNoteComponents noteComponent = new ThreadNoteComponents
                     {
+                        ownerRef = "user02",
                         status = NoteStatus.Todo,
-                        tagsAdded = new[] { Paratext.Data.ProjectComments.CommentTag.toDoTagId.ToString() },
-                        assignedPTUser = Paratext.Data.ProjectComments.CommentThread.unassignedUser
+                        tagsAdded = new[] { CommentTag.toDoTagId.ToString() },
+                        assignedPTUser = CommentThread.unassignedUser
                     };
                     if (comp.notes != null)
                         noteComponent = comp.notes[i - 1];
+                    noteComponent.ownerRef ??= "user02";
                     Note note = new Note
                     {
                         DataId = $"n{i}on{threadId}",
                         ThreadId = threadId,
                         Type = NoteType.Normal.InternalValue,
                         ConflictType = Note.NoConflictType,
-                        OwnerRef = "user02",
-                        ExtUserId = "user02",
+                        OwnerRef = noteComponent.ownerRef,
                         Content = comp.isEdited
                             ? $"<p>{threadId} note {i}: EDITED.</p>"
                             : $"<p>{threadId} note {i}.</p>",
@@ -3795,7 +3794,6 @@ public class ParatextServiceTests
                             Type = NoteType.Normal.InternalValue,
                             ConflictType = Note.NoConflictType,
                             OwnerRef = "user02",
-                            ExtUserId = "user02",
                             SyncUserRef = "syncuser01",
                             DateCreated = new DateTime(2019, 1, 20, 8, 0, 0, DateTimeKind.Utc),
                             Status = NoteStatus.Unspecified.InternalValue,
@@ -3823,8 +3821,6 @@ public class ParatextServiceTests
         }
 
         public Dictionary<int, ChapterDelta> GetChapterDeltasByBook(
-            string projectId,
-            int bookNum,
             int chapters,
             string contextBefore,
             string selectedText,
@@ -4138,7 +4134,6 @@ public class ParatextServiceTests
                         Type = NoteType.Normal.InternalValue,
                         ConflictType = Note.NoConflictType,
                         OwnerRef = threadOwner,
-                        ExtUserId = "user02",
                         SyncUserRef = "syncuser01",
                         DateCreated = new DateTime(2019, 12, 31, 8, 0, 0, DateTimeKind.Utc),
                         TagId = CommentTag.toDoTagId,
@@ -4189,8 +4184,6 @@ public class ParatextServiceTests
                 new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
             }.ToDictionary(u => u.Username);
             Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(
-                env.Project01,
-                40,
                 1,
                 "Context before ",
                 "Text selected"

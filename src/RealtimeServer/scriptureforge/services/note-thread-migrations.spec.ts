@@ -24,6 +24,21 @@ describe('NoteThreadMigrations', () => {
       expect(doc.data.tagIcon).toBeUndefined();
     });
   });
+
+  describe('version 2', () => {
+    it('removes ext user property', async () => {
+      const env = new TestEnvironment(1);
+      const conn = env.server.connect();
+      await createDoc(conn, NOTE_THREAD_COLLECTION, 'project01:thread01', {
+        threadId: 'thread01',
+        notes: [{ threadId: 'thread01', extUserId: 'user02' }]
+      });
+
+      await env.server.migrateIfNecessary();
+      const doc: Doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, 'project01:thread01');
+      expect(doc.data.notes[0].extUserId).toBeUndefined();
+    });
+  });
 });
 
 class TestEnvironment {

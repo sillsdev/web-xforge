@@ -21,4 +21,27 @@ class NoteThreadMigration1 implements Migration {
   }
 }
 
-export const NOTE_THREAD_MIGRATIONS: MigrationConstructor[] = [NoteThreadMigration1];
+class NoteThreadMigration2 implements Migration {
+  static readonly VERSION = 2;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    if (doc.data.notes == null) return;
+    for (let i = 0; i < doc.data.notes.length; i++) {
+      const extUserId: string | undefined = doc.data.notes[i].extUserId;
+      if (extUserId != null) {
+        ops.push({ p: ['notes', i, 'extUserId'], od: extUserId });
+      }
+    }
+
+    if (ops.length > 0) {
+      await submitMigrationOp(NoteThreadMigration2.VERSION, doc, ops);
+    }
+  }
+
+  migrateOp(_op: RawOp): void {
+    // do nothing
+  }
+}
+
+export const NOTE_THREAD_MIGRATIONS: MigrationConstructor[] = [NoteThreadMigration1, NoteThreadMigration2];
