@@ -161,6 +161,24 @@ class SFProjectMigration7 implements Migration {
   }
 }
 
+class SFProjectMigration8 implements Migration {
+  static readonly VERSION = 8;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops = [];
+    if (doc.data.sync?.percentCompleted != null) {
+      ops.push({ p: ['sync', 'percentCompleted'], od: true });
+    }
+    if (ops.length > 0) {
+      await submitMigrationOp(SFProjectMigration8.VERSION, doc, ops);
+    }
+  }
+
+  migrateOp(_op: RawOp): void {
+    //do nothing
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
@@ -168,5 +186,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration4,
   SFProjectMigration5,
   SFProjectMigration6,
-  SFProjectMigration7
+  SFProjectMigration7,
+  SFProjectMigration8
 ];

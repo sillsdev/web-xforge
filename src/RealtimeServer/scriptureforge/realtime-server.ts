@@ -12,10 +12,11 @@ import { QuestionService } from './services/question-service';
 import { SFProjectService } from './services/sf-project-service';
 import { SFProjectUserConfigService } from './services/sf-project-user-config-service';
 import { TextService } from './services/text-service';
+import { SF_PROJECT_MIGRATIONS } from './services/sf-project-migrations';
 
 const SF_DOC_SERVICES: DocService[] = [
   new UserService(),
-  new SFProjectService(),
+  new SFProjectService(SF_PROJECT_MIGRATIONS),
   new SFProjectUserConfigService(),
   new TextService(),
   new QuestionService(),
