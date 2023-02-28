@@ -392,7 +392,6 @@ export class NoteDialogComponent implements OnInit {
         publishedToSF: true
       };
       await this.projectService.createNoteThread(this.projectId, noteThread);
-      await this.updateNoteReadRefs(this.noteBeingEdited.dataId);
       this.dialogRef.close(true);
       return;
     }
@@ -406,14 +405,8 @@ export class NoteDialogComponent implements OnInit {
       });
     } else {
       await this.threadDoc!.submitJson0Op(op => op.add(t => t.notes, this.noteBeingEdited));
-      await this.updateNoteReadRefs(this.noteBeingEdited.dataId);
     }
     this.dialogRef.close(true);
-  }
-
-  private async updateNoteReadRefs(noteId: string): Promise<void> {
-    if (this.projectUserConfigDoc?.data == null || this.projectUserConfigDoc.data.noteRefsRead.includes(noteId)) return;
-    await this.projectUserConfigDoc.submitJson0Op(op => op.add(puc => puc.noteRefsRead, noteId));
   }
 
   private getNoteTemplate(threadId: string | undefined): Note {
