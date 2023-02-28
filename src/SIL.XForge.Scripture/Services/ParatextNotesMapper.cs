@@ -93,7 +93,8 @@ public class ParatextNotesMapper : IParatextNotesMapper
         IEnumerable<IDocument<Question>> questionsDocs,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
         Dictionary<string, string> userRoles,
-        string answerExportMethod
+        string answerExportMethod,
+        int checkingNoteTagId
     )
     {
         // Usernames of SF community checker users. Paratext users are mapped to null.
@@ -155,7 +156,9 @@ public class ParatextNotesMapper : IParatextNotesMapper
                         threadElem,
                         answer,
                         ptProjectUsers,
-                        answerPrefixContents
+                        answerPrefixContents,
+                        checkingNoteTagId,
+                        true
                     );
                     if (answer.SyncUserRef == null)
                         answerSyncUserIds.Add((j, answerSyncUserId));
@@ -234,7 +237,9 @@ public class ParatextNotesMapper : IParatextNotesMapper
         XElement threadElem,
         Comment comment,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
-        IReadOnlyList<object> prefixContent = null
+        IReadOnlyList<object> prefixContent = null,
+        int tagId = NoteTag.notSetId,
+        bool setCheckingTag = false
     )
     {
         (string syncUserId, string user, bool canWritePTNoteOnProject) = await GetSyncUserAsync(
@@ -265,10 +270,15 @@ public class ParatextNotesMapper : IParatextNotesMapper
             contentElem.Add(new XElement("p", responseText));
         }
         commentElem.Add(contentElem);
+        if (tagId != NoteTag.notSetId)
+        {
+            var tagsAddedElem = new XElement("tagsAdded", tagId);
+            commentElem.Add(tagsAddedElem);
+        }
 
         var threadId = (string)threadElem.Attribute("id");
         string key = GetCommentKey(threadId, commentElem, ptProjectUsers);
-        if (IsCommentNewOrChanged(oldCommentElems, key, commentElem))
+        if (IsCommentNewOrChanged(oldCommentElems, key, commentElem, setCheckingTag))
             threadElem.Add(commentElem);
         oldCommentElems.Remove(key);
         return syncUserId;
@@ -332,11 +342,16 @@ public class ParatextNotesMapper : IParatextNotesMapper
     private static bool IsCommentNewOrChanged(
         Dictionary<string, XElement> oldCommentElems,
         string key,
-        XElement commentElem
+        XElement commentElem,
+        bool expectNoteTagSet
     )
     {
-        return !oldCommentElems.TryGetValue(key, out XElement oldCommentElem)
-            || !XNode.DeepEquals(oldCommentElem.Element("content"), commentElem.Element("content"));
+        if (
+            !oldCommentElems.TryGetValue(key, out XElement oldCommentElem)
+            || !XNode.DeepEquals(oldCommentElem.Element("content"), commentElem.Element("content"))
+        )
+            return true;
+        return expectNoteTagSet && oldCommentElem.Element("tagsAdded") == null;
     }
 
     private ParatextUserProfile FindOrCreateParatextUser(

@@ -1968,6 +1968,7 @@ public class ParatextService : DisposableBase, IParatextService
                     existingComment.Contents = comment.Contents;
                     existingComment.VersionNumber += 1;
                     existingComment.Deleted = false;
+                    existingComment.TagsAdded = comment.TagsAdded;
                     syncMetricInfo.Updated++;
                 }
 

@@ -619,7 +619,7 @@ public class ParatextSyncRunnerTests
         var env = new TestEnvironment();
         Book[] books = { new Book("MAT", 1) };
         env.SetupSFData(true, true, false, true, books);
-        await env.SetupUndefinedNoteTag("project01");
+        await env.SetupUndefinedNoteTag("project01", false);
         SFProject project = env.GetProject();
         Assert.That(project.TranslateConfig.DefaultNoteTagId, Is.Null);
         // introduce a PT note thread
@@ -643,6 +643,53 @@ public class ParatextSyncRunnerTests
         // expect that a new note tag is created
         env.ParatextService.Received().UpdateCommentTag(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<NoteTag>());
         Assert.That(project.TranslateConfig.DefaultNoteTagId, Is.EqualTo(env.translateNoteTagId));
+    }
+
+    [Test]
+    public async Task SyncAsync_CreatesCheckingNoteTag()
+    {
+        var env = new TestEnvironment();
+        Book[] books = { new Book("MAT", 1) };
+        env.SetupSFData(false, true, false, false, books);
+        env.SetupPTData(books);
+
+        SFProject project = env.GetProject("project05");
+        Assert.That(project.CheckingConfig.NoteTagId, Is.Null, "setup");
+        Assert.That(env.ContainsQuestion("project05", "MAT", 1), Is.False, "setup");
+        // project05 does not have checking answers and will not create a tag
+        await env.Runner.RunAsync("project05", "user01", "project05", false, CancellationToken.None);
+        env.ParatextService.DidNotReceive().UpdateCommentTag(Arg.Any<UserSecret>(), "target", Arg.Any<NoteTag>());
+
+        await env.SetupUndefinedNoteTag("project01", true);
+        project = env.GetProject();
+        Assert.That(project.CheckingConfig.NoteTagId, Is.Null, "setup");
+        Assert.That(env.ContainsQuestion("MAT", 1), Is.True, "setup");
+        // simulate project01 does not have answers to export
+        XElement notesElem = new XElement("notes", new XAttribute("version", "1.1"));
+        var threadElem = new XElement("thread", new XAttribute("id", "thread01"));
+        notesElem.Add(threadElem);
+
+        env.NotesMapper
+            .GetNotesChangelistAsync(
+                Arg.Any<XElement>(),
+                Arg.Any<IEnumerable<IDocument<Question>>>(),
+                Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                Arg.Any<Dictionary<string, string>>(),
+                CheckingAnswerExport.MarkedForExport,
+                Arg.Any<int>()
+            )
+            .Returns(Task.FromResult(notesElem));
+        // project01 has questions but does not export any
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+        env.ParatextService.DidNotReceive().UpdateCommentTag(Arg.Any<UserSecret>(), "target", Arg.Any<NoteTag>());
+
+        // simulate project01 with exported answers
+        await env.AddAnswerToQuestion("project01", "MAT", 1);
+
+        // project01 has checking answers and will need to create a tag
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+        env.ParatextService.Received(1).UpdateCommentTag(Arg.Any<UserSecret>(), "target", Arg.Any<NoteTag>());
+        env.VerifyProjectSync(true);
     }
 
     [Test]
@@ -2268,6 +2315,7 @@ public class ParatextSyncRunnerTests
     private class TestEnvironment
     {
         public readonly int translateNoteTagId = 5;
+        public readonly int checkingNoteTagId = 6;
         private readonly MemoryRepository<SFProjectSecret> _projectSecrets;
         private readonly MemoryRepository<SyncMetrics> _syncMetrics;
         private bool _sendReceivedCalled = false;
@@ -2425,6 +2473,9 @@ public class ParatextSyncRunnerTests
 
         public bool ContainsQuestion(string bookId, int chapter) =>
             RealtimeService.GetRepository<Question>().Contains($"project01:question{bookId}{chapter}");
+
+        public bool ContainsQuestion(string projectId, string bookId, int chapter) =>
+            RealtimeService.GetRepository<Question>().Contains($"{projectId}:question{bookId}{chapter}");
 
         public bool ContainsNote(int chapter) =>
             RealtimeService.GetRepository<NoteThread>().Contains($"project01:thread0{chapter}");
@@ -2610,7 +2661,8 @@ public class ParatextSyncRunnerTests
                     CheckingConfig = new CheckingConfig
                     {
                         CheckingEnabled = checkingEnabled,
-                        AnswerExportMethod = CheckingAnswerExport.MarkedForExport
+                        AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
+                        NoteTagId = checkingNoteTagId
                     },
                     Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
                     Sync = new Sync
@@ -2641,7 +2693,7 @@ public class ParatextSyncRunnerTests
                     CheckingConfig = new CheckingConfig
                     {
                         CheckingEnabled = checkingEnabled,
-                        AnswerExportMethod = CheckingAnswerExport.MarkedForExport
+                        AnswerExportMethod = CheckingAnswerExport.MarkedForExport,
                     },
                     WritingSystem = new WritingSystem { Tag = "en" },
                     Texts = books.Select(b => TextInfoFromBook(b)).ToList(),
@@ -2750,6 +2802,7 @@ public class ParatextSyncRunnerTests
                         DataInSync = false
                         // No SyncedToRepositoryVersion
                     },
+                    NoteTags = new List<NoteTag>()
                 },
             };
             RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
@@ -2796,7 +2849,8 @@ public class ParatextSyncRunnerTests
                     Arg.Any<IEnumerable<IDocument<Question>>>(),
                     Arg.Any<Dictionary<string, ParatextUserProfile>>(),
                     Arg.Any<Dictionary<string, string>>(),
-                    CheckingAnswerExport.MarkedForExport
+                    CheckingAnswerExport.MarkedForExport,
+                    Arg.Any<int>()
                 )
                 .Returns(Task.FromResult(notesElem));
         }
@@ -3065,8 +3119,14 @@ public class ParatextSyncRunnerTests
         }
 
         /// <summary> Set the project's default comment tag to the a blank comment tag. </summary>
-        public Task SetupUndefinedNoteTag(string projectId)
+        public Task SetupUndefinedNoteTag(string projectId, bool forChecking)
         {
+            if (forChecking)
+            {
+                return RealtimeService
+                    .GetRepository<SFProject>()
+                    .UpdateAsync(p => p.Id == projectId, u => u.Unset(p => p.CheckingConfig.NoteTagId));
+            }
             return RealtimeService
                 .GetRepository<SFProject>()
                 .UpdateAsync(p => p.Id == projectId, u => u.Unset(p => p.TranslateConfig.DefaultNoteTagId));
@@ -3077,6 +3137,15 @@ public class ParatextSyncRunnerTests
             return RealtimeService
                 .GetRepository<SFProject>()
                 .UpdateAsync(p => p.Id == projectId, u => u.Set(p => p.NoteTags, noteTags));
+        }
+
+        public Task AddAnswerToQuestion(string projectId, string bookId, int chapter)
+        {
+            string id = $"{projectId}:question{bookId}{chapter}";
+            var answer = new Answer { DataId = "answer01", Status = AnswerStatus.Exportable };
+            return RealtimeService
+                .GetRepository<Question>()
+                .UpdateAsync(q => q.Id == id, u => u.Add(q => q.Answers, answer));
         }
 
         /// <summary>
@@ -3231,7 +3300,8 @@ public class ParatextSyncRunnerTests
                     Arg.Any<IEnumerable<IDocument<Question>>>(),
                     Arg.Any<Dictionary<string, ParatextUserProfile>>(),
                     Arg.Any<Dictionary<string, string>>(),
-                    CheckingAnswerExport.MarkedForExport
+                    CheckingAnswerExport.MarkedForExport,
+                    Arg.Any<int>()
                 );
 
             // Should not be performing a SR.
@@ -3275,7 +3345,8 @@ public class ParatextSyncRunnerTests
                     Arg.Any<IEnumerable<IDocument<Question>>>(),
                     Arg.Any<Dictionary<string, ParatextUserProfile>>(),
                     Arg.Any<Dictionary<string, string>>(),
-                    CheckingAnswerExport.MarkedForExport
+                    CheckingAnswerExport.MarkedForExport,
+                    Arg.Any<int>()
                 );
 
             // Should be performing a SR.
