@@ -3230,7 +3230,7 @@ class TestEnvironment {
   }
 
   get sharingButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('app-share'));
+    return this.fixture.debugElement.query(By.css('app-share-button'));
   }
 
   get suggestions(): DebugElement {

@@ -6,11 +6,10 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { ShareDialogComponent, ShareDialogData } from './share-dialog.component';
 
 @Component({
-  selector: 'app-share',
-  templateUrl: './share.component.html',
-  styleUrls: ['./share.component.scss']
+  selector: 'app-share-button',
+  templateUrl: './share-button.component.html'
 })
-export class ShareComponent implements OnInit {
+export class ShareButtonComponent implements OnInit {
   @Input() defaultRole?: SFProjectRole;
 
   private projectId?: string;
@@ -23,7 +22,7 @@ export class ShareComponent implements OnInit {
     });
   }
 
-  openDialog() {
+  openDialog(): void {
     this.dialogService.openMatDialog(ShareDialogComponent, {
       data: {
         projectId: this.projectId,
