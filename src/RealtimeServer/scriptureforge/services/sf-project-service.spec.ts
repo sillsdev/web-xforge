@@ -10,6 +10,7 @@ import { TranslateShareLevel } from '../models/translate-config';
 import { SystemRole } from '../../common/models/system-role';
 import { ParatextUserProfile } from '../models/paratext-user-profile';
 import { SFProjectService } from './sf-project-service';
+import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 
 describe('SFProjectService', () => {
   it('allows user on project to see profile', async () => {
@@ -67,7 +68,7 @@ class TestEnvironment {
   ];
 
   constructor() {
-    this.service = new SFProjectService();
+    this.service = new SFProjectService(SF_PROJECT_MIGRATIONS);
     const ShareDBMingoType = ShareDBMingo.extendMemoryDB(ShareDB.MemoryDB);
     this.db = new ShareDBMingoType();
     this.server = new RealtimeServer(
