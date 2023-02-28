@@ -25,6 +25,7 @@ import { NoteThreadDoc, defaultNoteThreadIcon } from '../../../core/models/note-
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { canInsertNote, formatFontSizeToRems } from '../../../shared/utils';
 
@@ -51,6 +52,7 @@ export class NoteDialogComponent implements OnInit {
   private textDoc?: TextDoc;
   private paratextProjectUsers?: ParatextUserProfile[];
   private noteBeingEdited?: Note;
+  private projectUserConfigDoc?: SFProjectUserConfigDoc;
 
   constructor(
     private readonly dialogRef: MatDialogRef<NoteDialogComponent, boolean>,
@@ -84,6 +86,7 @@ export class NoteDialogComponent implements OnInit {
       }
     }
 
+    this.projectUserConfigDoc = await this.projectService.getUserConfig(this.projectId, this.userService.currentUserId);
     this.noteBeingEdited = this.getNoteTemplate(this.threadId);
   }
 
@@ -386,6 +389,7 @@ export class NoteDialogComponent implements OnInit {
         publishedToSF: true
       };
       await this.projectService.createNoteThread(this.projectId, noteThread);
+      await this.updateNoteReadRefs(this.noteBeingEdited.dataId);
       this.dialogRef.close(true);
       return;
     }
@@ -393,14 +397,20 @@ export class NoteDialogComponent implements OnInit {
     // updated the existing note
     const noteIndex: number = this.threadDoc!.data!.notes.findIndex(n => n.dataId === this.noteBeingEdited!.dataId);
     if (noteIndex >= 0) {
-      this.threadDoc!.submitJson0Op(op => {
+      await this.threadDoc!.submitJson0Op(op => {
         op.set(t => t.notes[noteIndex].content, this.noteBeingEdited!.content);
         op.set(t => t.notes[noteIndex].dateModified, this.noteBeingEdited!.dateModified);
       });
     } else {
-      this.threadDoc!.submitJson0Op(op => op.add(t => t.notes, this.noteBeingEdited));
+      await this.threadDoc!.submitJson0Op(op => op.add(t => t.notes, this.noteBeingEdited));
+      await this.updateNoteReadRefs(this.noteBeingEdited.dataId);
     }
     this.dialogRef.close(true);
+  }
+
+  private async updateNoteReadRefs(noteId: string): Promise<void> {
+    if (this.projectUserConfigDoc?.data == null || this.projectUserConfigDoc.data.noteRefsRead.includes(noteId)) return;
+    await this.projectUserConfigDoc.submitJson0Op(op => op.add(puc => puc.noteRefsRead, noteId));
   }
 
   private getNoteTemplate(threadId: string | undefined): Note {
