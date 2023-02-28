@@ -1535,8 +1535,9 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('shows highlights note icons when new content is unread', fakeAsync(() => {
+    it('highlights note icons when new content is unread', fakeAsync(() => {
       const env = new TestEnvironment();
+      env.setCurrentUser('user02');
       env.setProjectUserConfig({ noteRefsRead: ['thread01_note0', 'thread02_note0'] });
       env.wait();
 
@@ -1553,7 +1554,7 @@ describe('EditorComponent', () => {
       let iconElement: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'thread01')!;
       iconElement.click();
       env.wait();
-      puc = env.getProjectUserConfigDoc('user01');
+      puc = env.getProjectUserConfigDoc('user02');
       expect(puc.data!.noteRefsRead).toContain('thread01_note1');
       expect(puc.data!.noteRefsRead).toContain('thread01_note2');
       expect(env.isNoteIconHighlighted('thread01')).toBe(false);
@@ -1562,7 +1563,7 @@ describe('EditorComponent', () => {
       iconElement = env.getNoteThreadIconElement('verse_1_3', 'thread02')!;
       iconElement.click();
       env.wait();
-      puc = env.getProjectUserConfigDoc('user01');
+      puc = env.getProjectUserConfigDoc('user02');
       expect(puc.data!.noteRefsRead).toContain('thread02_note0');
       expect(puc.data!.noteRefsRead.filter(ref => ref === 'thread02_note0').length).toEqual(1);
       expect(env.isNoteIconHighlighted('thread02')).toBe(false);
@@ -2590,8 +2591,14 @@ describe('EditorComponent', () => {
       env.wait();
       env.setSelectionAndInsertNote('verse_1_4');
 
+      // The new note appears in the editor and is marked read
+      const threadId = 'threadnew01';
+      env.mockNoteDialogRef.onClose = () => env.insertNoteThread('user01', 'MAT 1:4', threadId);
       env.mockNoteDialogRef.close(true);
-      env.wait();
+      tick();
+      env.fixture.detectChanges();
+
+      expect(env.isNoteIconHighlighted(threadId)).toBeFalse();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       const [, config] = capture(mockedMatDialog.open).last();
       const noteVerseRef: VerseRef = (config as MatDialogConfig).data!.verseRef;
@@ -3465,6 +3472,25 @@ class TestEnvironment {
     );
   }
 
+  insertNoteThread(userId: string, verseStr: string, threadId: string): void {
+    const noteId = 'notenew01';
+    const noteThread: NoteThread = {
+      projectRef: 'project01',
+      verseRef: fromVerseRef(VerseRef.parse(verseStr)),
+      ownerRef: userId,
+      dataId: threadId,
+      originalContextBefore: '',
+      originalContextAfter: '',
+      originalSelectedText: '',
+      status: NoteStatus.Todo,
+      position: { start: 0, length: 0 },
+      notes: [this.getNoteTemplate(threadId, noteId, userId)]
+    };
+    this.realtimeService.create(NoteThreadDoc.COLLECTION, `project01:${threadId}`, noteThread);
+    // this is needed to simulate that this happens immediately before the dialog is closed
+    tick();
+  }
+
   getChapterElement(index: number): Element | null {
     const chapters = this.targetEditor.container.querySelectorAll('usx-chapter');
     if (chapters.hasOwnProperty(index) !== undefined) {
@@ -3518,8 +3544,10 @@ class TestEnvironment {
   }
 
   isNoteIconHighlighted(threadId: string): boolean {
+    const note = this.targetTextEditor.querySelector(`usx-segment display-note[data-thread-id=${threadId}]`);
+    expect(note).withContext('note thread highlight').not.toBeNull();
     const thread: HTMLElement | null = this.targetTextEditor.querySelector(
-      `usx-segment display-note[data-thread-id="${threadId}"].note-thread-highlight`
+      `usx-segment display-note[data-thread-id=${threadId}].note-thread-highlight`
     );
     return thread != null;
   }
@@ -3852,12 +3880,12 @@ class TestEnvironment {
     return noteEmbedCount;
   }
 
-  getNoteTemplate(threadId: string): Note {
+  getNoteTemplate(threadId: string, noteId: string, userId: string): Note {
     const date: string = '2022-08-01T01:00:000Z';
     return {
-      dataId: 'notenew01',
+      dataId: noteId,
       threadId,
-      ownerRef: 'user01',
+      ownerRef: userId,
       status: NoteStatus.Todo,
       content: 'New note thread',
       conflictType: NoteConflictType.DefaultValue,
@@ -3942,6 +3970,7 @@ class TestEnvironment {
 
 class MockNoteDialogRef {
   close$ = new Subject<boolean | void>();
+  onClose: () => void = () => {};
 
   constructor(element: Element) {
     // steal the focus to simulate a dialog stealing the focus
@@ -3949,6 +3978,7 @@ class MockNoteDialogRef {
   }
 
   close(result?: boolean): void {
+    this.onClose();
     this.close$.next(result);
     this.close$.complete();
   }
