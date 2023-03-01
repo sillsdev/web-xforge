@@ -91,32 +91,6 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     sf_note_threads: ['view', 'create', 'edit', 'delete'],
     notes: ['view', 'create', 'edit_own', 'delete']
   },
-  pt_read: {
-    project_user_configs: ['view_own', 'edit_own'],
-    texts: ['view'],
-    project: ['view'],
-    questions: ['view'],
-    answers: ['view'],
-    answer_comments: ['view'],
-    answer_status: ['view'],
-    likes: ['view'],
-    pt_note_threads: ['view'],
-    sf_note_threads: ['view'],
-    notes: ['view']
-  },
-  pt_write_note: {
-    project_user_configs: ['view_own', 'edit_own'],
-    project: ['view'],
-    texts: ['view'],
-    questions: ['view'],
-    answers: ['view'],
-    answer_comments: ['view'],
-    answer_status: ['view'],
-    likes: ['view'],
-    pt_note_threads: ['view', 'create', 'delete_own'],
-    sf_note_threads: ['view', 'create', 'delete_own'],
-    notes: ['view', 'create', 'edit_own', 'delete_own']
-  },
   none: {}
 };
 

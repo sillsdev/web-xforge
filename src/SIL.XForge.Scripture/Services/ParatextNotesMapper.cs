@@ -77,8 +77,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
         {
             SFProjectRole.Administrator,
             SFProjectRole.Translator,
-            SFProjectRole.Consultant,
-            SFProjectRole.WriteNote
+            SFProjectRole.Consultant
         };
         foreach (User user in ptUsers)
         {
