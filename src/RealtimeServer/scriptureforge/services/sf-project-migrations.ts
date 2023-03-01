@@ -102,7 +102,7 @@ class SFProjectMigration4 implements Migration {
   static readonly VERSION = 4;
 
   async migrateDoc(doc: Doc): Promise<void> {
-    const ops = [{ p: ['userPermissions'], oi: {} }];
+    const ops: Op[] = [{ p: ['userPermissions'], oi: {} }];
     await submitMigrationOp(SFProjectMigration4.VERSION, doc, ops);
   }
 
@@ -115,7 +115,7 @@ class SFProjectMigration5 implements Migration {
   static readonly VERSION = 5;
 
   async migrateDoc(doc: Doc): Promise<void> {
-    const ops = [];
+    const ops: Op[] = [];
     if (doc.data.translateConfig == null) {
       ops.push({ p: ['translateConfig'], oi: {} });
     }
@@ -133,7 +133,7 @@ class SFProjectMigration6 implements Migration {
   static readonly VERSION = 6;
 
   async migrateDoc(doc: Doc): Promise<void> {
-    const ops = [];
+    const ops: Op[] = [];
     if (doc.data.editable == null) {
       ops.push({ p: ['editable'], oi: true });
     }
@@ -149,7 +149,7 @@ class SFProjectMigration7 implements Migration {
   static readonly VERSION = 7;
 
   async migrateDoc(doc: Doc): Promise<void> {
-    const ops = [];
+    const ops: Op[] = [];
     const tagIcon: string | undefined = doc.data.tagIcon;
     if (tagIcon != null) {
       ops.push({ p: ['tagIcon'], od: tagIcon });
@@ -166,7 +166,7 @@ class SFProjectMigration8 implements Migration {
   static readonly VERSION = 8;
 
   async migrateDoc(doc: Doc): Promise<void> {
-    const ops = [];
+    const ops: Op[] = [];
     const percentCompleted: number | undefined = doc.data.sync?.percentCompleted;
     if (percentCompleted != null) {
       ops.push({ p: ['sync', 'percentCompleted'], od: percentCompleted });

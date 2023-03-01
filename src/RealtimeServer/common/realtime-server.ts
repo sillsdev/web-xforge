@@ -2,7 +2,7 @@
 import { Db } from 'mongodb';
 import ShareDB from 'sharedb';
 import shareDBAccess from 'sharedb-access';
-import { Connection, Doc, RawOp } from 'sharedb/lib/client';
+import { Connection, Doc, Op, RawOp } from 'sharedb/lib/client';
 import { ConnectSession } from './connect-session';
 import { Project } from './models/project';
 import { SchemaVersionRepository } from './schema-version-repository';
@@ -90,12 +90,15 @@ class MigrationAgent extends ShareDB.Agent {
  *
  * @param {number} version The migration version.
  * @param {Doc} doc The doc.
- * @param {*} component The op.
+ * @param {Op[]} ops The ops.
  * @returns {Promise<void>}
  */
-export function submitMigrationOp(version: number, doc: Doc, component: any): Promise<void> {
+export function submitMigrationOp(version: number, doc: Doc, ops: Op[]): Promise<void> {
+  if (ops.length === 0) {
+    return Promise.resolve();
+  }
   return new Promise<void>((resolve, reject) => {
-    const op: RawOp = { op: component, mv: version };
+    const op: RawOp = { op: ops, mv: version };
     doc._submit(op, undefined, err => {
       if (err != null) {
         reject(err);

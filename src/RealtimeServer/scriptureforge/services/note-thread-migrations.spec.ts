@@ -31,7 +31,7 @@ describe('NoteThreadMigrations', () => {
       const conn = env.server.connect();
       await createDoc(conn, NOTE_THREAD_COLLECTION, 'project01:thread01', {
         threadId: 'thread01',
-        notes: [{ threadId: 'thread01', extUserId: 'user02' }]
+        notes: [{ threadId: 'thread01', tagIcon: '01flag1', extUserId: 'user02' }]
       });
 
       await env.server.migrateIfNecessary();
