@@ -149,7 +149,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
   private toggleNoteThreadSub?: Subscription;
   private shouldNoteThreadsRespondToEdits: boolean = false;
-  private reviewerSelectedVerseRef?: VerseRef;
+  private commenterSelectedVerseRef?: VerseRef;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -421,10 +421,19 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  get isReviewer(): boolean {
-    return this.userRole
-      ? [SFProjectRole.Reviewer, SFProjectRole.ParatextConsultant].includes(this.userRole as SFProjectRole)
-      : false;
+  /**
+   * Determines whether the comment adding UI should be shown. This will be true any time the user has the right to add
+   * notes but not a role that has the general right to edit the text. (Unless the feature flag is turned off)
+   */
+  get showAddCommentUI(): boolean {
+    if (!this.isAddNotesEnabled || this.userHasGeneralEditRight || this.projectDoc?.data == null) return false;
+
+    return SF_PROJECT_RIGHTS.hasRight(
+      this.projectDoc.data,
+      this.userService.currentUserId,
+      SFProjectDomain.SFNoteThreads,
+      Operation.Create
+    );
   }
 
   get projectId(): string | undefined {
@@ -814,8 +823,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.target == null || this.bookNum == null) {
       return;
     }
-    if (this.isReviewer) {
-      let verseRef: VerseRef | undefined = this.reviewerSelectedVerseRef;
+    if (this.showAddCommentUI) {
+      let verseRef: VerseRef | undefined = this.commenterSelectedVerseRef;
       if (verseRef == null) {
         const defaultSegmentRef: string | undefined = this.target.firstVerseSegment;
         if (defaultSegmentRef == null) return;
@@ -1207,8 +1216,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private subscribeReviewerSelectionEvents(): void {
-    if (this.target == null || this.userRole == null || !this.isReviewer) return;
+  private subscribeCommentingSelectionEvents(): void {
+    if (this.target == null || this.userRole == null || !this.showAddCommentUI) return;
     this.selectionClickSubs.forEach(s => s.unsubscribe());
 
     for (const [segment] of this.target.segments) {
@@ -1227,16 +1236,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           } else {
             this.showInsertNoteFab = false;
           }
-          if (this.reviewerSelectedVerseRef != null) {
-            if (verseRef.equals(this.reviewerSelectedVerseRef)) {
-              this.reviewerSelectedVerseRef = undefined;
+          if (this.commenterSelectedVerseRef != null) {
+            if (verseRef.equals(this.commenterSelectedVerseRef)) {
+              this.commenterSelectedVerseRef = undefined;
             } else {
               // un-select previously selected verses since a note can apply to only one verse.
-              this.target.toggleVerseSelection(this.reviewerSelectedVerseRef);
-              this.reviewerSelectedVerseRef = verseRef;
+              this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
+              this.commenterSelectedVerseRef = verseRef;
             }
           } else {
-            this.reviewerSelectedVerseRef = verseRef;
+            this.commenterSelectedVerseRef = verseRef;
           }
         })
       );
@@ -1258,8 +1267,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       () => {
         this.toggleNoteThreadVerses(false);
         this.toggleNoteThreadVerses(true);
-        if (this.userRole != null && this.isReviewer && this.isAddNotesEnabled) {
-          this.subscribeReviewerSelectionEvents();
+        if (this.userRole != null && this.showAddCommentUI && this.isAddNotesEnabled) {
+          this.subscribeCommentingSelectionEvents();
         }
       }
     );
@@ -1284,9 +1293,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private resetInsertNoteFab(): void {
     this.showInsertNoteFab = false;
-    if (this.target != null && this.reviewerSelectedVerseRef != null) {
-      this.target.toggleVerseSelection(this.reviewerSelectedVerseRef);
-      this.reviewerSelectedVerseRef = undefined;
+    if (this.target != null && this.commenterSelectedVerseRef != null) {
+      this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
+      this.commenterSelectedVerseRef = undefined;
     }
     // set a 10ms time out so the layout is drawn before calculating the target contain coordinates
     setTimeout(() => {
