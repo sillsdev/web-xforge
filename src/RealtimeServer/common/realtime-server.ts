@@ -243,7 +243,6 @@ export class RealtimeServer extends ShareDB {
         $limit: limit
       });
       while (query.results.length > 0) {
-        console.log(`Migrating ${docService.collection}: ${skip + 1} to ${skip + query.results.length}`);
         let docVersion = curVersion;
         while (docVersion < version) {
           docVersion++;
