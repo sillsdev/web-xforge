@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security;
 using System.Text.Json;
 using System.Web;
@@ -149,11 +150,12 @@ class Program
                     sourceFileToHeadings.Add(relativeFile, sourceHeading);
             }
 
-            string[] targetFiles = Directory.GetFiles(targetPath, "*.htm", SearchOption.AllDirectories);
+            string[] htmlFiles = Directory.GetFiles(targetPath, "*.htm", SearchOption.AllDirectories);
+            // auxiliary html files with titles or headings that can be ignored
+            string[] ignoreFiles = { "index1.htm", "csh-redirect.htm" };
+            IEnumerable<string> targetFiles = htmlFiles.Where(t => !ignoreFiles.Contains(Path.GetFileName(t)));
             foreach (string file in targetFiles)
             {
-                if (file.EndsWith("index1.htm"))
-                    continue;
                 string relativeFile = Path.GetRelativePath(targetPath, file);
                 string targetTitle = GetHtmlTitle(file);
                 if (targetTitle != "" && sourceFileToTitles.TryGetValue(relativeFile, out string sourceTitle))
