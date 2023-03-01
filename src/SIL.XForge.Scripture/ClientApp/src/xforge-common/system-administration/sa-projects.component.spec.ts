@@ -84,10 +84,10 @@ describe('SaProjectsComponent', () => {
     const roleSelect = env.roleSelect(0);
     expect(env.selectValue(roleSelect)).toEqual('Administrator');
     env.changeSelectValue(roleSelect, 1);
-    expect(env.selectValue(roleSelect)).toEqual('User');
+    expect(env.selectValue(roleSelect)).toEqual('Translator');
 
-    verify(mockedProjectService.onlineUpdateCurrentUserRole('project01', 'user')).once();
-    expect(env.component.rows[0].projectRole.role).toEqual('user');
+    verify(mockedProjectService.onlineUpdateCurrentUserRole('project01', 'pt_translator')).once();
+    expect(env.component.rows[0].projectRole.role).toEqual('pt_translator');
   }));
 
   it('should add user to project', fakeAsync(() => {
@@ -103,7 +103,7 @@ describe('SaProjectsComponent', () => {
     env.changeSelectValue(roleSelect, 0);
     expect(env.selectValue(roleSelect)).toEqual('Administrator');
 
-    verify(mockedProjectService.onlineAddCurrentUser('project02', 'admin')).once();
+    verify(mockedProjectService.onlineAddCurrentUser('project02', 'pt_administrator')).once();
   }));
 
   it('should remove user from project', fakeAsync(() => {
@@ -199,8 +199,8 @@ class TestEnvironment {
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedProjectService.roles).thenReturn(
       new Map<string, ProjectRoleInfo>([
-        ['admin', { role: 'admin', displayName: 'Administrator', canBeShared: false }],
-        ['user', { role: 'user', displayName: 'User', canBeShared: false }],
+        ['pt_administrator', { role: 'pt_administrator', canBeShared: false }],
+        ['pt_translator', { role: 'pt_translator', canBeShared: false }],
         [NONE_ROLE.role, NONE_ROLE]
       ])
     );
@@ -305,7 +305,7 @@ class TestEnvironment {
         id: 'project01',
         data: {
           name: 'Project 01',
-          userRoles: { user01: 'admin' },
+          userRoles: { user01: 'pt_administrator' },
           userPermissions: {}
         }
       },
@@ -322,7 +322,7 @@ class TestEnvironment {
         id: 'project03',
         data: {
           name: 'Project 03',
-          userRoles: { user01: 'user' },
+          userRoles: { user01: 'pt_translator' },
           userPermissions: {}
         }
       }
