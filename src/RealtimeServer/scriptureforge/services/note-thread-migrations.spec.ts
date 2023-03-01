@@ -26,7 +26,7 @@ describe('NoteThreadMigrations', () => {
   });
 
   describe('version 2', () => {
-    it('removes ext user property', async () => {
+    it('removes ext user and tag icon property', async () => {
       const env = new TestEnvironment(1);
       const conn = env.server.connect();
       await createDoc(conn, NOTE_THREAD_COLLECTION, 'project01:thread01', {
@@ -37,6 +37,7 @@ describe('NoteThreadMigrations', () => {
       await env.server.migrateIfNecessary();
       const doc: Doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, 'project01:thread01');
       expect(doc.data.notes[0].extUserId).toBeUndefined();
+      expect(doc.data.notes[0].tagIcon).toBeUndefined();
     });
   });
 });

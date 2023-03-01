@@ -32,6 +32,10 @@ class NoteThreadMigration2 implements Migration {
       if (extUserId != null) {
         ops.push({ p: ['notes', i, 'extUserId'], od: extUserId });
       }
+      const tagIcon: string | undefined = doc.data.notes[i].tagIcon;
+      if (tagIcon != null) {
+        ops.push({ p: ['notes', i, 'tagIcon'], od: tagIcon });
+      }
     }
 
     if (ops.length > 0) {
