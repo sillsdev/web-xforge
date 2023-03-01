@@ -1225,11 +1225,7 @@ public class ParatextService : DisposableBase, IParatextService
                 if (matchedComment != null)
                 {
                     matchedCommentIds.Add(matchedComment.Id);
-                    Paratext.Data.ProjectComments.CommentTag commentIconTag = GetCommentTag(
-                        existingThread,
-                        matchedComment,
-                        commentTags
-                    );
+                    CommentTag commentIconTag = GetCommentTag(existingThread, matchedComment, commentTags);
                     ChangeType changeType = GetCommentChangeType(matchedComment, note, commentIconTag, ptProjectUsers);
                     if (changeType != ChangeType.None)
                     {
@@ -2111,12 +2107,12 @@ public class ParatextService : DisposableBase, IParatextService
         {
             resources = SFInstallableDblResource.GetInstallableDblResources(
                 accessLock.UserSecret,
-                this._paratextOptions.Value,
-                this._restClientFactory,
-                this._fileSystemService,
-                this._jwtTokenHelper,
+                _paratextOptions.Value,
+                _restClientFactory,
+                _fileSystemService,
+                _jwtTokenHelper,
                 _exceptionHandler,
-                this._dblServerUri
+                _dblServerUri
             );
         }
         IReadOnlyDictionary<string, int> resourceRevisions = SFInstallableDblResource.GetInstalledResourceRevisions();
@@ -2222,6 +2218,11 @@ public class ParatextService : DisposableBase, IParatextService
                 }
                 else
                 {
+                    if (!string.IsNullOrEmpty(note.SyncUserRef))
+                        throw new DataNotFoundException(
+                            "Could not find the matching comment for a note containing a sync user."
+                        );
+
                     // new comment added
                     ParatextUserProfile ptProjectUser;
                     UserSecret userSecret = _userSecretRepository.Query().FirstOrDefault(s => s.Id == note.OwnerRef);
@@ -2367,16 +2368,13 @@ public class ParatextService : DisposableBase, IParatextService
     {
         return assignedPTUser switch
         {
-            Paratext.Data.ProjectComments.CommentThread.teamUser
-            or Paratext.Data.ProjectComments.CommentThread.unassignedUser
-            or null
-                => assignedPTUser,
+            CommentThread.teamUser or CommentThread.unassignedUser or null => assignedPTUser,
             _ => FindOrCreateParatextUser(assignedPTUser, ptProjectUsers).OpaqueUserId,
         };
     }
 
     private static CommentTag GetCommentTag(
-        Paratext.Data.ProjectComments.CommentThread thread,
+        CommentThread thread,
         Paratext.Data.ProjectComments.Comment comment,
         CommentTags commentTags
     )

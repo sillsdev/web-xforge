@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -197,6 +197,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
             var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
             var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
+            var noteThreadDocsByBook = new Dictionary<int, IEnumerable<IDocument<NoteThread>>>();
 
             // Update target Paratext books and notes, if this is not a resource
             if (!_paratextService.IsResource(targetParatextId))
@@ -205,7 +206,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     SyncPhase.Phase2,
                     targetParatextId,
                     targetTextDocsByBook,
-                    questionDocsByBook
+                    questionDocsByBook,
+                    noteThreadDocsByBook
                 );
             }
 
@@ -368,7 +370,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     SyncPhase.Phase5,
                     targetParatextId,
                     targetTextDocsByBook,
-                    questionDocsByBook
+                    questionDocsByBook,
+                    noteThreadDocsByBook
                 );
             }
 
@@ -379,6 +382,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     targetParatextId,
                     targetTextDocsByBook,
                     questionDocsByBook,
+                    noteThreadDocsByBook,
                     targetBooks,
                     sourceBooks,
                     token
@@ -456,7 +460,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
         SyncPhase syncPhase,
         string paratextId,
         Dictionary<int, SortedList<int, IDocument<TextData>>> textDocsByBook,
-        Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook
+        Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook,
+        Dictionary<int, IEnumerable<IDocument<NoteThread>>> noteThreadDocsByBook
     )
     {
         // Get the Text Data
@@ -515,14 +520,22 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     await UpdateParatextNotesAsync(text, questionDocsByBook[text.BookNum]);
                 }
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = noteDocs.Where(
-                    n => n.Data.VerseRef.BookNum == text.BookNum
+                    n => n.Data?.VerseRef.BookNum == text.BookNum
                 );
+                noteThreadDocsByBook[text.BookNum] = noteThreadDocs;
                 // Only update the note tag if there are SF note threads in the project
                 if (noteThreadDocs.Any(d => d.Data.PublishedToSF == true))
                     await UpdateTranslateNoteTag(paratextId);
                 // TODO: Sync Note changes back to Paratext, and record sync metric info
-                // await _paratextService.UpdateParatextCommentsAsync(_userSecret, paratextId, text.BookNum,
-                //     noteThreadDocs, _currentPtSyncUsers);
+                // int sfNoteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? NoteTag.notSetId;
+                // await _paratextService.UpdateParatextCommentsAsync(
+                //     _userSecret,
+                //     paratextId,
+                //     text.BookNum,
+                //     noteThreadDocs,
+                //     _currentPtSyncUsers,
+                //     sfNoteTagId
+                // );
             }
         }
     }
@@ -582,6 +595,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         string targetParatextId,
         Dictionary<int, SortedList<int, IDocument<TextData>>> targetTextDocsByBook,
         Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook,
+        Dictionary<int, IEnumerable<IDocument<NoteThread>>> noteThreadDocsByBook,
         HashSet<int> targetBooks,
         HashSet<int> sourceBooks,
         CancellationToken token
@@ -628,14 +642,20 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 await UpdateQuestionDocsAsync(questionDocs, newSetOfChapters);
             }
 
-            // update note thread docs
-            LogMetric("Updating thread docs - fetching");
-            Dictionary<string, IDocument<NoteThread>> noteThreadDocs = await FetchNoteThreadDocsAsync(text.BookNum);
             LogMetric("Updating thread docs - get deltas");
             Dictionary<int, ChapterDelta> chapterDeltas = GetDeltasByChapter(text, targetParatextId);
 
             LogMetric("Updating thread docs - updating");
-            await UpdateNoteThreadDocsAsync(text, noteThreadDocs, chapterDeltas, ptUsernamesToSFUserIds);
+
+            if (noteThreadDocsByBook.TryGetValue(text.BookNum, out IEnumerable<IDocument<NoteThread>> noteThreadDocs))
+            {
+                await UpdateNoteThreadDocsAsync(
+                    text,
+                    noteThreadDocs.ToDictionary(nt => nt.Data.DataId),
+                    chapterDeltas,
+                    ptUsernamesToSFUserIds
+                );
+            }
 
             // update project metadata
             LogMetric("Updating project metadata");
@@ -1092,22 +1112,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
             tasks.Add(DeleteTextDocAsync(text, chapter.Number));
         await Task.WhenAll(tasks);
         _syncMetrics.TextDocs.Deleted += text.Chapters.Count;
-    }
-
-    /// <summary>
-    /// Fetch the ParatextNoteThread docs from the database and return it in a dictionary with threadId as the key.
-    /// </summary>
-    private async Task<Dictionary<string, IDocument<NoteThread>>> FetchNoteThreadDocsAsync(int bookNum)
-    {
-        List<string> ids = await _realtimeService
-            .QuerySnapshots<NoteThread>()
-            .Where(pnt => pnt.ProjectRef == _projectDoc.Id && pnt.VerseRef.BookNum == bookNum)
-            .Select(pnt => pnt.Id)
-            .ToListAsync();
-        IReadOnlyCollection<IDocument<NoteThread>> noteThreadDocs = await _conn.GetAndFetchDocsAsync<NoteThread>(
-            ids.ToArray()
-        );
-        return noteThreadDocs.ToDictionary(ntd => ntd.Data.DataId);
     }
 
     /// <summary>
