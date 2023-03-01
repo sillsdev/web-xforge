@@ -152,7 +152,8 @@ class Program
             string[] targetFiles = Directory.GetFiles(targetPath, "*.htm", SearchOption.AllDirectories);
             foreach (string file in targetFiles)
             {
-                if (file.EndsWith("index1.htm"))
+                // auxiliary html files with titles or headings that can be ignored
+                if (file.EndsWith("index1.htm") || file.EndsWith("csh-redirect.htm"))
                     continue;
                 string relativeFile = Path.GetRelativePath(targetPath, file);
                 string targetTitle = GetHtmlTitle(file);
