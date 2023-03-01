@@ -150,8 +150,9 @@ class SFProjectMigration7 implements Migration {
 
   async migrateDoc(doc: Doc): Promise<void> {
     const ops = [];
-    if (doc.data.tagIcon != null) {
-      ops.push({ p: ['tagIcon'], od: true });
+    const tagIcon: string | undefined = doc.data.tagIcon;
+    if (tagIcon != null) {
+      ops.push({ p: ['tagIcon'], od: tagIcon });
     }
     await submitMigrationOp(SFProjectMigration7.VERSION, doc, ops);
   }
@@ -166,8 +167,9 @@ class SFProjectMigration8 implements Migration {
 
   async migrateDoc(doc: Doc): Promise<void> {
     const ops = [];
-    if (doc.data.sync?.percentCompleted != null) {
-      ops.push({ p: ['sync', 'percentCompleted'], od: true });
+    const percentCompleted: number | undefined = doc.data.sync?.percentCompleted;
+    if (percentCompleted != null) {
+      ops.push({ p: ['sync', 'percentCompleted'], od: percentCompleted });
     }
     if (ops.length > 0) {
       await submitMigrationOp(SFProjectMigration8.VERSION, doc, ops);
