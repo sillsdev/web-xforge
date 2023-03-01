@@ -7,8 +7,9 @@ class NoteThreadMigration1 implements Migration {
 
   async migrateDoc(doc: Doc): Promise<void> {
     const ops: Op[] = [];
-    if (doc.data.tagIcon != null) {
-      ops.push({ p: ['tagIcon'], od: true });
+    const tagIcon: string | undefined = doc.data.tagIcon;
+    if (tagIcon != null) {
+      ops.push({ p: ['tagIcon'], od: tagIcon });
     }
 
     if (ops.length > 0) {
@@ -31,6 +32,10 @@ class NoteThreadMigration2 implements Migration {
       const extUserId: string | undefined = doc.data.notes[i].extUserId;
       if (extUserId != null) {
         ops.push({ p: ['notes', i, 'extUserId'], od: extUserId });
+      }
+      const tagIcon: string | undefined = doc.data.notes[i].tagIcon;
+      if (tagIcon != null) {
+        ops.push({ p: ['notes', i, 'tagIcon'], od: tagIcon });
       }
     }
 
