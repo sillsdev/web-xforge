@@ -1,6 +1,6 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
-import { Doc } from 'sharedb/lib/client';
+import { Doc, Op } from 'sharedb/lib/client';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { ConnectSession } from './connect-session';
 import { MetadataDB } from './metadata-db';
@@ -25,7 +25,9 @@ describe('RealtimeServer', () => {
     when(env.mockedUserService.schemaVersion).thenReturn(1);
     const mockedMigration = mock<Migration>();
     when(env.mockedUserService.getMigration(1)).thenReturn(instance(mockedMigration));
-    when(mockedMigration.migrateDoc(anything())).thenCall((doc: Doc) => submitMigrationOp(1, doc, []));
+    when(mockedMigration.migrateDoc(anything())).thenCall((doc: Doc) =>
+      submitMigrationOp(1, doc, [{ p: ['test'], oi: 'test_op' }])
+    );
 
     await env.server.migrateIfNecessary();
 
@@ -41,7 +43,9 @@ describe('RealtimeServer', () => {
     when(env.mockedProjectService.schemaVersion).thenReturn(2);
     const mockedMigration = mock<Migration>();
     when(env.mockedProjectService.getMigration(2)).thenReturn(instance(mockedMigration));
-    when(mockedMigration.migrateDoc(anything())).thenCall((doc: Doc) => submitMigrationOp(2, doc, []));
+    when(mockedMigration.migrateDoc(anything())).thenCall((doc: Doc) =>
+      submitMigrationOp(2, doc, [{ p: ['test'], oi: 'test_op' }])
+    );
 
     await env.server.migrateIfNecessary();
 
@@ -67,12 +71,28 @@ describe('RealtimeServer', () => {
     expect(ops[1]).toBeUndefined();
   });
 
+  it('does not migrate empty ops', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const userConn = clientConnect(env.server, 'user01');
+    const userDoc = await fetchDoc(userConn, USERS_COLLECTION, 'user01');
+    await env.migrateDoc(USERS_COLLECTION, 'user01', 1, []);
+    const mockedMigration = mock<Migration>();
+    when(env.mockedUserService.getMigration(1)).thenReturn(instance(mockedMigration));
+
+    await docSubmitOp(userDoc, []);
+
+    verify(mockedMigration.migrateOp(anything())).never();
+    const ops = env.db.ops[USERS_COLLECTION]['user01'];
+    expect(ops.length).toEqual(2);
+  });
+
   it('migrates op', async () => {
     const env = new TestEnvironment();
     await env.createData();
     const userConn = clientConnect(env.server, 'user01');
     const userDoc = await fetchDoc(userConn, USERS_COLLECTION, 'user01');
-    await env.migrateDoc(USERS_COLLECTION, 'user01', 1);
+    await env.migrateDoc(USERS_COLLECTION, 'user01', 1, [{ p: ['test'], oi: 'test_op' }]);
     const mockedMigration = mock<Migration>();
     when(env.mockedUserService.getMigration(1)).thenReturn(instance(mockedMigration));
 
@@ -172,11 +192,11 @@ class TestEnvironment {
     });
   }
 
-  async migrateDoc(collection: string, id: string, version: number): Promise<void> {
+  async migrateDoc(collection: string, id: string, version: number, ops: Op[]): Promise<void> {
     const conn = this.server.connect();
     const doc = conn.get(collection, id);
     await docFetch(doc);
-    await submitMigrationOp(version, doc, []);
+    await submitMigrationOp(version, doc, ops);
   }
 
   createDoc<T>(collection: string, id: string, data: T): Promise<void> {
