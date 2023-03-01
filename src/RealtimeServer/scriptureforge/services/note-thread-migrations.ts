@@ -7,8 +7,9 @@ class NoteThreadMigration1 implements Migration {
 
   async migrateDoc(doc: Doc): Promise<void> {
     const ops: Op[] = [];
-    if (doc.data.tagIcon != null) {
-      ops.push({ p: ['tagIcon'], od: true });
+    const tagIcon: string | undefined = doc.data.tagIcon;
+    if (tagIcon != null) {
+      ops.push({ p: ['tagIcon'], od: tagIcon });
     }
 
     if (ops.length > 0) {
