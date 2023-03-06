@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using SIL.XForge.Configuration;
@@ -69,7 +70,7 @@ public class MemoryConnection : IConnection
     /// Excludes the field from the transaction.
     /// </summary>
     /// <typeparam name="T">The type.</typeparam>
-    /// <param name="op">The field.</param>
+    /// <param name="field">The field.</param>
     /// <remarks>
     /// The <see cref="MemoryConnection" /> does not support transactions.
     /// </remarks>
@@ -94,6 +95,22 @@ public class MemoryConnection : IConnection
         IDocument<T> doc = new MemoryDocument<T>(repo, docConfig.OTTypeName, docConfig.CollectionName, id);
         _documents[(docConfig.CollectionName, id)] = doc;
         return doc;
+    }
+
+    public async Task<IReadOnlyCollection<IDocument<T>>> GetAndFetchDocsAsync<T>(IReadOnlyCollection<string> ids)
+        where T : IIdentifiable
+    {
+        List<IDocument<T>> docs = new List<IDocument<T>>();
+        foreach (IDocument<T> doc in ids.Select(Get<T>))
+        {
+            await doc.FetchAsync();
+            if (doc.IsLoaded)
+            {
+                docs.Add(doc);
+            }
+        }
+
+        return docs;
     }
 
     /// <summary>

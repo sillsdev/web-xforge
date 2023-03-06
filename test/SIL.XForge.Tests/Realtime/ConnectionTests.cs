@@ -254,6 +254,43 @@ public class ConnectionTests
     }
 
     [Test]
+    public async Task GetAndFetchDocAsync_RetrievesDocsWithData()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
+        string[] ids = { "id1", "id2" };
+        env.RealtimeService.Server
+            .FetchDocsAsync<Project>(Arg.Any<int>(), collection, ids)
+            .Returns(
+                new Snapshot<Project>[]
+                {
+                    new Snapshot<Project>
+                    {
+                        Data = null,
+                        Id = "id1",
+                        Version = 1,
+                    },
+                    new Snapshot<Project>
+                    {
+                        Data = new TestProject(),
+                        Id = "id2",
+                        Version = 2,
+                    },
+                }
+            );
+
+        // SUT
+        var result = await env.Service.GetAndFetchDocsAsync<Project>(ids);
+
+        // Verify
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual("id2", result.First().Id);
+        Assert.AreEqual(2, result.First().Version);
+        Assert.IsNotNull(result.First().Data);
+    }
+
+    [Test]
     public async Task RollbackTransaction_ClearsQueuedOperationsAndExcludedProperties()
     {
         // Setup

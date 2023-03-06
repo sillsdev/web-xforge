@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MongoClient } from 'mongodb';
 import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
@@ -15,6 +16,12 @@ ShareDB.types.register(RichText.type);
 ShareDB.types.register(OTJson0.type);
 
 type InteropCallback = (err?: any, ret?: any) => void;
+
+interface Snapshot {
+  version: number;
+  data: any;
+  id: string;
+}
 
 interface RealtimeServerOptions {
   appModuleName: string;
@@ -98,8 +105,14 @@ function stopServer(): void {
   }
 }
 
-function createSnapshot(doc: Doc): { version: number; data: any } {
-  return { version: doc.version, data: doc.data };
+function createSnapshot(doc: Doc): Snapshot {
+  return { version: doc.version, data: doc.data, id: doc.id };
+}
+
+function createSnapshots(docs: Doc[] | undefined): Snapshot[] | undefined {
+  return docs?.map(doc => {
+    return { version: doc.version, data: doc.data, id: doc.id };
+  });
 }
 
 function getDoc(handle: number, collection: string, id: string): Doc | undefined {
@@ -173,6 +186,16 @@ export = {
       return;
     }
     doc.fetch(err => callback(err, createSnapshot(doc)));
+  },
+
+  fetchDocs: (callback: InteropCallback, handle: number, collection: string, ids: string[]): void => {
+    if (server == null) {
+      callback(new Error('Server not started.'));
+      return;
+    }
+    const conn = connections.get(handle);
+    const query = { _id: { $in: ids } };
+    conn?.createFetchQuery(collection, query, {}, (err, results) => callback(err, createSnapshots(results)));
   },
 
   submitOp: (callback: InteropCallback, handle: number, collection: string, id: string, ops: ShareDB.Op[]): void => {

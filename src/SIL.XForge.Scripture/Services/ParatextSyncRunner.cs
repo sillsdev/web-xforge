@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -59,6 +59,15 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private static readonly double _numberOfPhases = Enum.GetValues(typeof(SyncPhase)).Length;
     private static readonly IEqualityComparer<List<Chapter>> _chapterListEqualityComparer =
         SequenceEqualityComparer.Create(new ChapterEqualityComparer());
+
+    /// <summary>
+    /// The regular expression for finding whitespace before XML tags.
+    /// </summary>
+    /// <remarks>This is used by <see cref="ParseText"/>.</remarks>
+    private static readonly Regex WhitespaceBeforeTagsRegex = new Regex(
+        @"\n\s*<",
+        RegexOptions.CultureInvariant | RegexOptions.Compiled
+    );
 
     private readonly IRepository<UserSecret> _userSecrets;
     private readonly IRepository<SFProjectSecret> _projectSecrets;
@@ -135,6 +144,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 await CompleteSync(false, canRollbackParatext, trainEngine, token);
                 return;
             }
+
+            // Remove the parallel deserializer
+            _paratextService.InitializeCommentManager(_userSecret, _projectDoc.Data.ParatextId);
 
             string targetParatextId = _projectDoc.Data.ParatextId;
             string? sourceParatextId = _projectDoc.Data.TranslateConfig.Source?.ParatextId;
@@ -447,6 +459,28 @@ public class ParatextSyncRunner : IParatextSyncRunner
         Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook
     )
     {
+        // Get the Text Data
+        List<string> textIds = _projectDoc.Data.Texts
+            .SelectMany(t => t.Chapters.Select(c => TextData.GetTextDocId(_projectDoc.Id, t.BookNum, c.Number)))
+            .ToList();
+        IReadOnlyCollection<IDocument<TextData>> textDocs = await _conn.GetAndFetchDocsAsync<TextData>(textIds);
+
+        // Get the Note Threads
+        List<string> noteIds = await _realtimeService
+            .QuerySnapshots<NoteThread>()
+            .Where(pnt => pnt.ProjectRef == _projectDoc.Id)
+            .Select(pnt => pnt.Id)
+            .ToListAsync();
+        IReadOnlyCollection<IDocument<NoteThread>> noteDocs = await _conn.GetAndFetchDocsAsync<NoteThread>(noteIds);
+
+        // Get the Questions
+        List<string> questionIds = await _realtimeService
+            .QuerySnapshots<Question>()
+            .Where(q => q.ProjectRef == _projectDoc.Id)
+            .Select(q => q.Id)
+            .ToListAsync();
+        IReadOnlyCollection<IDocument<Question>> questionDocs = await _conn.GetAndFetchDocsAsync<Question>(questionIds);
+
         ParatextSettings? settings = _paratextService.GetParatextSettings(_userSecret, paratextId);
         double i = 0.0;
         foreach (TextInfo text in _projectDoc.Data.Texts)
@@ -462,7 +496,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
 
             LogMetric($"Getting Paratext book {text.BookNum}");
-            SortedList<int, IDocument<TextData>> targetTextDocs = await FetchTextDocsAsync(text);
+            SortedList<int, IDocument<TextData>> targetTextDocs = GetTextDocsForBook(text, textDocs);
             textDocsByBook[text.BookNum] = targetTextDocs;
             if (settings.Editable && !_paratextService.IsResource(paratextId))
             {
@@ -470,18 +504,19 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 await UpdateParatextBook(text, paratextId, targetTextDocs);
             }
 
-            IReadOnlyList<IDocument<Question>> questionDocs = await FetchQuestionDocsAsync(text);
-            questionDocsByBook[text.BookNum] = questionDocs;
+            questionDocsByBook[text.BookNum] = questionDocs
+                .Where(q => q.Data.VerseRef.BookNum == text.BookNum)
+                .ToList();
             if (!_paratextService.IsResource(paratextId))
             {
                 LogMetric("Updating Paratext notes");
-                if (questionDocs.Count > 0)
+                if (questionDocsByBook[text.BookNum].Count > 0)
                 {
-                    await UpdateParatextNotesAsync(text, questionDocs);
+                    await UpdateParatextNotesAsync(text, questionDocsByBook[text.BookNum]);
                 }
-                IEnumerable<IDocument<NoteThread>> noteThreadDocs = (
-                    await FetchNoteThreadDocsAsync(text.BookNum)
-                ).Values;
+                IEnumerable<IDocument<NoteThread>> noteThreadDocs = noteDocs.Where(
+                    n => n.Data.VerseRef.BookNum == text.BookNum
+                );
                 // Only update the note tag if there are SF note threads in the project
                 if (noteThreadDocs.Any(d => d.Data.PublishedToSF == true))
                     await UpdateTranslateNoteTag(paratextId);
@@ -1025,28 +1060,25 @@ public class ParatextSyncRunner : IParatextSyncRunner
     }
 
     /// <summary>
-    /// Fetches all text docs from the database for a book.
+    /// Gets the text docs from <see cref="docs"/> for the book specified in <see cref="text"/>.
     /// </summary>
-    internal async Task<SortedList<int, IDocument<TextData>>> FetchTextDocsAsync(TextInfo text)
+    private SortedList<int, IDocument<TextData>> GetTextDocsForBook(
+        TextInfo text,
+        IReadOnlyCollection<IDocument<TextData>> docs
+    )
     {
-        var textDocs = new SortedList<int, IDocument<TextData>>();
-        var tasks = new List<Task>();
+        var textDocs = new SortedList<int, IDocument<TextData>>(text.Chapters.Count);
         foreach (Chapter chapter in text.Chapters)
         {
-            IDocument<TextData> textDoc = GetTextDoc(text, chapter.Number);
-            textDocs[chapter.Number] = textDoc;
-            tasks.Add(textDoc.FetchAsync());
-        }
-        await Task.WhenAll(tasks);
-
-        // Omit items that are not actually in the database.
-        foreach (KeyValuePair<int, IDocument<TextData>> item in textDocs.ToList())
-        {
-            if (!item.Value.IsLoaded)
+            IDocument<TextData>? textDoc = docs.FirstOrDefault(
+                d => d.Id == TextData.GetTextDocId(_projectDoc.Id, text.BookNum, chapter.Number)
+            );
+            if (textDoc is not null)
             {
-                textDocs.Remove(item.Key);
+                textDocs[chapter.Number] = textDoc;
             }
         }
+
         return textDocs;
     }
 
@@ -1062,44 +1094,19 @@ public class ParatextSyncRunner : IParatextSyncRunner
         _syncMetrics.TextDocs.Deleted += text.Chapters.Count;
     }
 
-    private async Task<IReadOnlyList<IDocument<Question>>> FetchQuestionDocsAsync(TextInfo text)
-    {
-        List<string> questionDocIds = await _realtimeService
-            .QuerySnapshots<Question>()
-            .Where(q => q.ProjectRef == _projectDoc.Id && q.VerseRef.BookNum == text.BookNum)
-            .Select(q => q.Id)
-            .ToListAsync();
-        var questionDocs = new IDocument<Question>[questionDocIds.Count];
-        var tasks = new List<Task>();
-        for (int i = 0; i < questionDocIds.Count; i++)
-        {
-            async Task fetchQuestion(int index) =>
-                questionDocs[index] = await _conn.FetchAsync<Question>(questionDocIds[index]);
-            tasks.Add(fetchQuestion(i));
-        }
-        await Task.WhenAll(tasks);
-        return questionDocs;
-    }
-
     /// <summary>
     /// Fetch the ParatextNoteThread docs from the database and return it in a dictionary with threadId as the key.
     /// </summary>
     private async Task<Dictionary<string, IDocument<NoteThread>>> FetchNoteThreadDocsAsync(int bookNum)
     {
-        List<string> noteThreadDocIds = await _realtimeService
+        List<string> ids = await _realtimeService
             .QuerySnapshots<NoteThread>()
             .Where(pnt => pnt.ProjectRef == _projectDoc.Id && pnt.VerseRef.BookNum == bookNum)
             .Select(pnt => pnt.Id)
             .ToListAsync();
-        IDocument<NoteThread>[] noteThreadDocs = new IDocument<NoteThread>[noteThreadDocIds.Count];
-        var tasks = new List<Task>();
-        for (int i = 0; i < noteThreadDocIds.Count; i++)
-        {
-            async Task fetchNoteThread(int index) =>
-                noteThreadDocs[index] = await _conn.FetchAsync<NoteThread>(noteThreadDocIds[index]);
-            tasks.Add(fetchNoteThread(i));
-        }
-        await Task.WhenAll(tasks);
+        IReadOnlyCollection<IDocument<NoteThread>> noteThreadDocs = await _conn.GetAndFetchDocsAsync<NoteThread>(
+            ids.ToArray()
+        );
         return noteThreadDocs.ToDictionary(ntd => ntd.Data.DataId);
     }
 
@@ -1239,7 +1246,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private static XElement ParseText(string text)
     {
         text = text.Trim().Replace("\r\n", "\n");
-        text = Regex.Replace(text, @"\n\s*<", "<", RegexOptions.CultureInvariant);
+        text = WhitespaceBeforeTagsRegex.Replace(text, "<");
         return XElement.Parse(text, LoadOptions.PreserveWhitespace);
     }
 
@@ -1594,6 +1601,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
         }
 
+        // Free the comment manager for this project from memory
+        _paratextService.FreeCommentManager(_userSecret, _projectDoc.Data.ParatextId);
+
         await NotifySyncProgress(SyncPhase.Phase7, 100.0);
         Log($"CompleteSync: Finished. Sync was {(successful ? "successful" : "unsuccessful")}.");
     }
@@ -1635,7 +1645,14 @@ public class ParatextSyncRunner : IParatextSyncRunner
         return usernamesToUserIds;
     }
 
-    private IDocument<TextData> GetTextDoc(TextInfo text, int chapter) =>
+    /// <summary>
+    /// Gets a text doc from the database.
+    /// </summary>
+    /// <param name="text">The text info.</param>
+    /// <param name="chapter">The chapter number</param>
+    /// <returns>The TextData IDocument</returns>
+    /// <remarks>This is internal for use in unit tests.</remarks>
+    internal IDocument<TextData> GetTextDoc(TextInfo text, int chapter) =>
         _conn.Get<TextData>(TextData.GetTextDocId(_projectDoc.Id, text.BookNum, chapter));
 
     private async Task DeleteTextDocAsync(TextInfo text, int chapter)
