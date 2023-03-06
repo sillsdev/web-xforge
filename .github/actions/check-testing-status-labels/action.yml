@@ -1,0 +1,5 @@
+name: "Check testing status labels"
+description: 'Checks that a "testing complete" or "testing not required" label has been applied'
+runs:
+  using: "node16"
+  main: "index.js"

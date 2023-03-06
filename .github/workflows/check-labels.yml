@@ -1,0 +1,15 @@
+name: Check labels
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled, unlabeled]
+
+jobs:
+  check-testing-status-labels:
+    name: check testing status labels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Check testing status labels
+        uses: ./.github/actions/check-testing-status-labels
