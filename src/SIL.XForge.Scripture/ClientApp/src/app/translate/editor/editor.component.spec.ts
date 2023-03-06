@@ -2611,35 +2611,35 @@ describe('EditorComponent', () => {
       const hasSelectionAnchors = env.getSegmentElement('verse_1_1')!.querySelector('display-text-anchor');
       expect(hasSelectionAnchors).toBeNull();
       const verseElem: HTMLElement = env.getSegmentElement('verse_1_1')!;
-      expect(verseElem.classList).not.toContain('reviewer-selection');
+      expect(verseElem.classList).not.toContain('commenter-selection');
 
       // select verse 1
       verseElem.click();
       env.wait();
-      expect(verseElem.classList).toContain('reviewer-selection');
+      expect(verseElem.classList).toContain('commenter-selection');
       let verse2Elem: HTMLElement = env.getSegmentElement('verse_1_2')!;
 
       // select verse 2, deselect verse one
       verse2Elem.click();
       env.wait();
-      expect(verse2Elem.classList).toContain('reviewer-selection');
-      expect(verseElem.classList).not.toContain('reviewer-selection');
+      expect(verse2Elem.classList).toContain('commenter-selection');
+      expect(verseElem.classList).not.toContain('commenter-selection');
 
       // deselect verse 2
       verse2Elem.click();
       env.wait();
-      expect(verse2Elem.classList).not.toContain('reviewer-selection');
+      expect(verse2Elem.classList).not.toContain('commenter-selection');
 
       // reselect verse 2, check that it is not selected when moving to a new book
       verse2Elem.click();
       env.updateParams({ projectId: 'project01', bookId: 'MRK' });
       env.wait();
       verse2Elem = env.getSegmentElement('verse_1_2')!;
-      expect(verse2Elem.classList).not.toContain('reviewer-selection');
+      expect(verse2Elem.classList).not.toContain('commenter-selection');
       const verse3Elem: HTMLElement = env.getSegmentElement('verse_1_3')!;
       verse3Elem.click();
-      expect(verse3Elem.classList).toContain('reviewer-selection');
-      expect(verse2Elem.classList).not.toContain('reviewer-selection');
+      expect(verse3Elem.classList).toContain('commenter-selection');
+      expect(verse2Elem.classList).not.toContain('commenter-selection');
       env.dispose();
     }));
 
@@ -2651,23 +2651,23 @@ describe('EditorComponent', () => {
       env.wait();
 
       let elem: HTMLElement = env.getSegmentElement('s_1')!;
-      expect(elem.classList).not.toContain('reviewer-selection');
+      expect(elem.classList).not.toContain('commenter-selection');
       elem.click();
       env.wait();
-      expect(elem.classList).not.toContain('reviewer-selection');
+      expect(elem.classList).not.toContain('commenter-selection');
 
       elem = env.getSegmentElement('s_2')!;
-      expect(elem.classList).not.toContain('reviewer-selection');
+      expect(elem.classList).not.toContain('commenter-selection');
       elem.click();
       env.wait();
-      expect(elem.classList).not.toContain('reviewer-selection');
+      expect(elem.classList).not.toContain('commenter-selection');
 
       const verseElem: HTMLElement = env.getSegmentElement('verse_1_2-3')!;
-      expect(verseElem.classList).not.toContain('reviewer-selection');
+      expect(verseElem.classList).not.toContain('commenter-selection');
       verseElem.click();
       env.wait();
-      expect(verseElem.classList).toContain('reviewer-selection');
-      expect(elem.classList).not.toContain('reviewer-selection');
+      expect(verseElem.classList).toContain('commenter-selection');
+      expect(elem.classList).not.toContain('commenter-selection');
       env.dispose();
     }));
 
@@ -2680,15 +2680,15 @@ describe('EditorComponent', () => {
       const verseSegment: HTMLElement = env.getSegmentElement('verse_1_5')!;
       verseSegment.click();
       env.wait();
-      expect(verseSegment.classList).toContain('reviewer-selection');
+      expect(verseSegment.classList).toContain('commenter-selection');
 
       // Change to a PT reviewer to assert they can also use the FAB
       verseSegment.click();
-      expect(verseSegment.classList).not.toContain('reviewer-selection');
+      expect(verseSegment.classList).not.toContain('commenter-selection');
       env.setParatextReviewerUser();
       env.wait();
       verseSegment.click();
-      expect(verseSegment.classList).toContain('reviewer-selection');
+      expect(verseSegment.classList).toContain('commenter-selection');
 
       // Click and open the dialog
       env.insertNoteFab.nativeElement.click();

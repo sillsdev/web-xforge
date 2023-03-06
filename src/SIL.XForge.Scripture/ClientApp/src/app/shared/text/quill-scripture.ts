@@ -647,7 +647,7 @@ export function registerScripture(): string[] {
   });
 
   formats.push(NoteThreadHighlightClass);
-  const ReviewerSelectedSegmentClass = new ClassAttributor('reviewer-selection', 'reviewer-selection', {
+  const ReviewerSelectedSegmentClass = new ClassAttributor('commenter-selection', 'commenter-selection', {
     scope: Parchment.Scope.INLINE
   });
   formats.push(ReviewerSelectedSegmentClass);
