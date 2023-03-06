@@ -496,7 +496,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
 
             LogMetric($"Getting Paratext book {text.BookNum}");
-            SortedList<int, IDocument<TextData>> targetTextDocs = FetchTextDocs(text, textDocs);
+            SortedList<int, IDocument<TextData>> targetTextDocs = GetTextDocsForBook(text, textDocs);
             textDocsByBook[text.BookNum] = targetTextDocs;
             if (settings.Editable && !_paratextService.IsResource(paratextId))
             {
@@ -1060,9 +1060,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
     }
 
     /// <summary>
-    /// Fetches all text docs from the database for a book.
+    /// Gets the text docs from <see cref="docs"/> for the book specified in <see cref="text"/>.
     /// </summary>
-    private SortedList<int, IDocument<TextData>> FetchTextDocs(
+    private SortedList<int, IDocument<TextData>> GetTextDocsForBook(
         TextInfo text,
         IReadOnlyCollection<IDocument<TextData>> docs
     )
