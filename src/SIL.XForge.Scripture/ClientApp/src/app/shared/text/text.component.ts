@@ -694,10 +694,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     let selectionValue: true | null = true;
     if (verseRange != null) {
       const formats: StringMap = getAttributesAtPosition(this.editor, verseRange.index);
-      selectionValue = formats['reviewer-selection'] ? null : true;
+      selectionValue = formats['commenter-selection'] ? null : true;
     }
 
-    const format: StringMap = { ['reviewer-selection']: selectionValue };
+    const format: StringMap = { ['commenter-selection']: selectionValue };
     let verseEmbedFormatted: boolean = false;
     for (const segment of verseSegments) {
       // only underline the selection if it is part of the verse text i.e. not a section heading
