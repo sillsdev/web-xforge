@@ -59,6 +59,12 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private static readonly double _numberOfPhases = Enum.GetValues(typeof(SyncPhase)).Length;
     private static readonly IEqualityComparer<List<Chapter>> _chapterListEqualityComparer =
         SequenceEqualityComparer.Create(new ChapterEqualityComparer());
+    private static readonly IEqualityComparer<IList<string>> _listStringComparer = SequenceEqualityComparer.Create(
+        EqualityComparer<string>.Default
+    );
+    private static readonly IEqualityComparer<IList<int>> _listIntComparer = SequenceEqualityComparer.Create(
+        EqualityComparer<int>.Default
+    );
 
     /// <summary>
     /// The regular expression for finding whitespace before XML tags.
@@ -80,6 +86,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private readonly IParatextNotesMapper _notesMapper;
     private readonly ILogger<ParatextSyncRunner> _logger;
     private readonly IHubContext<NotificationHub, INotifier> _hubContext;
+    private readonly IGuidService _guidService;
 
     private IConnection _conn;
     private UserSecret _userSecret;
@@ -99,6 +106,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         IDeltaUsxMapper deltaUsxMapper,
         IParatextNotesMapper notesMapper,
         IHubContext<NotificationHub, INotifier> hubContext,
+        IGuidService guidService,
         ILogger<ParatextSyncRunner> logger
     )
     {
@@ -113,6 +121,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         _deltaUsxMapper = deltaUsxMapper;
         _notesMapper = notesMapper;
         _hubContext = hubContext;
+        _guidService = guidService;
     }
 
     private bool TranslationSuggestionsEnabled => _projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
@@ -198,8 +207,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
             var targetTextDocsByBook = new Dictionary<int, SortedList<int, IDocument<TextData>>>();
             var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
             var noteThreadDocsByBook = new Dictionary<int, IEnumerable<IDocument<NoteThread>>>();
+            var biblicalTermDocs = new List<IDocument<BiblicalTerm>>();
 
-            // Update target Paratext books and notes, if this is not a resource
+            // Update target Paratext books, notes and biblical terms, if this is not a resource
             if (!_paratextService.IsResource(targetParatextId))
             {
                 await GetAndUpdateParatextBooksAndNotes(
@@ -209,6 +219,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     questionDocsByBook,
                     noteThreadDocsByBook
                 );
+                await GetAndUpdateParatextBiblicalTerms(SyncPhase.Phase3, targetParatextId, biblicalTermDocs);
             }
 
             // Check for cancellation
@@ -242,7 +253,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 progress.ProgressUpdated -= SyncProgress_ProgressUpdated;
             }
 
-            await NotifySyncProgress(SyncPhase.Phase4, 30.0);
+            await NotifySyncProgress(SyncPhase.Phase5, 30.0);
 
             // Check for cancellation
             if (token.IsCancellationRequested)
@@ -288,7 +299,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 _syncMetrics.Books.Deleted = targetBooksToDelete.Count;
             }
 
-            await NotifySyncProgress(SyncPhase.Phase4, 60.0);
+            await NotifySyncProgress(SyncPhase.Phase5, 60.0);
 
             // Check for cancellation
             if (token.IsCancellationRequested)
@@ -357,7 +368,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 }
             }
 
-            await NotifySyncProgress(SyncPhase.Phase4, 90.0);
+            await NotifySyncProgress(SyncPhase.Phase5, 90.0);
 
             bool resourceNeedsUpdating =
                 paratextProject is ParatextResource paratextResource
@@ -367,7 +378,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             if (resourceNeedsUpdating)
             {
                 await GetAndUpdateParatextBooksAndNotes(
-                    SyncPhase.Phase5,
+                    SyncPhase.Phase6,
                     targetParatextId,
                     targetTextDocsByBook,
                     questionDocsByBook,
@@ -378,7 +389,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             if (!_paratextService.IsResource(targetParatextId) || resourceNeedsUpdating)
             {
                 await UpdateDocsAsync(
-                    SyncPhase.Phase6,
+                    SyncPhase.Phase7,
                     targetParatextId,
                     targetTextDocsByBook,
                     questionDocsByBook,
@@ -387,9 +398,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     sourceBooks,
                     token
                 );
+                await UpdateBiblicalTermsAsync(SyncPhase.Phase8, targetParatextId, biblicalTermDocs);
             }
             LogMetric("Back from UpdateDocsAsync");
-            await NotifySyncProgress(SyncPhase.Phase7, 20.0);
+            await NotifySyncProgress(SyncPhase.Phase9, 20.0);
 
             // Check for cancellation
             if (token.IsCancellationRequested)
@@ -409,7 +421,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             LogMetric("Updating permissions");
             await _projectService.UpdatePermissionsAsync(userId, _projectDoc, token);
 
-            await NotifySyncProgress(SyncPhase.Phase7, 40.0);
+            await NotifySyncProgress(SyncPhase.Phase9, 40.0);
 
             // Check for cancellation
             if (token.IsCancellationRequested)
@@ -539,6 +551,174 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
         }
     }
+
+    private async Task GetAndUpdateParatextBiblicalTerms(
+        SyncPhase syncPhase,
+        string paratextId,
+        List<IDocument<BiblicalTerm>> biblicalTermDocs
+    )
+    {
+        LogMetric("Getting Paratext biblical terms");
+        await NotifySyncProgress(syncPhase, 0);
+        IReadOnlyList<BiblicalTerm> biblicalTerms = await _paratextService.GetBiblicalTermsAsync(
+            _userSecret,
+            paratextId,
+            _projectDoc.Data.Texts.Select(t => t.BookNum)
+        );
+
+        // Get the biblical terms from the database
+        LogMetric("Getting Scripture Forge biblical terms");
+        await NotifySyncProgress(syncPhase, 25);
+        biblicalTermDocs.Clear();
+        biblicalTermDocs.AddRange(await FetchBiblicalTermDocsAsync());
+
+        // Update the renderings
+        LogMetric("Updating Paratext biblical terms");
+        await NotifySyncProgress(syncPhase, 50);
+        double i = 0.0;
+        List<BiblicalTerm> biblicalTermsToUpdate = new List<BiblicalTerm>();
+        foreach (IDocument<BiblicalTerm> biblicalTermDoc in biblicalTermDocs)
+        {
+            i++;
+            await NotifySyncProgress(syncPhase, 50 + (i / biblicalTermDocs.Count / 3));
+            BiblicalTerm? biblicalTerm = biblicalTerms.FirstOrDefault(b => b.TermId == biblicalTermDoc.Data.TermId);
+            if (
+                biblicalTerm is not null
+                && (
+                    !biblicalTerm.Renderings.SequenceEqual(biblicalTermDoc.Data.Renderings)
+                    || biblicalTerm.Description != biblicalTermDoc.Data.Description
+                )
+            )
+            {
+                biblicalTerm.Renderings = biblicalTermDoc.Data.Renderings;
+                biblicalTerm.Description = biblicalTermDoc.Data.Description;
+                biblicalTermsToUpdate.Add(biblicalTerm);
+            }
+        }
+
+        LogMetric("Saving Paratext biblical terms");
+        await NotifySyncProgress(syncPhase, 75);
+        _paratextService.UpdateBiblicalTerms(_userSecret, paratextId, biblicalTermsToUpdate);
+    }
+
+    private async Task UpdateBiblicalTermsAsync(
+        SyncPhase syncPhase,
+        string paratextId,
+        List<IDocument<BiblicalTerm>> biblicalTermDocs
+    )
+    {
+        LogMetric("Getting Paratext biblical terms");
+        await NotifySyncProgress(syncPhase, 0);
+        IReadOnlyList<BiblicalTerm> biblicalTerms = await _paratextService.GetBiblicalTermsAsync(
+            _userSecret,
+            paratextId,
+            _projectDoc.Data.Texts.Select(t => t.BookNum)
+        );
+
+        var tasks = new List<Task>();
+
+        // Add and Update existing terms
+        LogMetric("Updating biblical terms");
+        double i = 0.0;
+        foreach (BiblicalTerm biblicalTerm in biblicalTerms)
+        {
+            i++;
+            await NotifySyncProgress(syncPhase, i / biblicalTerms.Count);
+            IDocument<BiblicalTerm>? biblicalTermDoc = biblicalTermDocs.FirstOrDefault(
+                b => b.Data.TermId == biblicalTerm.TermId
+            );
+            if (biblicalTermDoc is null)
+            {
+                // Add the document
+                biblicalTerm.DataId = _guidService.NewObjectId();
+                biblicalTerm.ProjectRef = _projectDoc.Id;
+                IDocument<BiblicalTerm> newBiblicalTermDoc = GetBiblicalTermDoc(biblicalTerm.DataId);
+                async Task CreateBiblicalTermAsync(BiblicalTerm newBiblicalTerm) =>
+                    await newBiblicalTermDoc.CreateAsync(newBiblicalTerm);
+                tasks.Add(CreateBiblicalTermAsync(biblicalTerm));
+                _syncMetrics.BiblicalTerms.Added++;
+            }
+            else
+            {
+                // Update the document
+                tasks.Add(
+                    biblicalTermDoc.SubmitJson0OpAsync(op =>
+                    {
+                        op.Set(b => b.Transliteration, biblicalTerm.Transliteration);
+                        op.Set(b => b.Renderings, biblicalTerm.Renderings, _listStringComparer);
+                        op.Set(b => b.Description, biblicalTerm.Description);
+                        op.Set(b => b.Language, biblicalTerm.Language);
+                        op.Set(b => b.Links, biblicalTerm.Links, _listStringComparer);
+                        op.Set(b => b.References, biblicalTerm.References, _listIntComparer);
+
+                        // Add/Update definitions
+                        foreach ((string language, BiblicalTermDefinition definition) in biblicalTerm.Definitions)
+                        {
+                            if (
+                                biblicalTermDoc.Data.Definitions.TryGetValue(
+                                    language,
+                                    out BiblicalTermDefinition existingDefinition
+                                )
+                            )
+                            {
+                                if (!_listStringComparer.Equals(existingDefinition.Categories, definition.Categories))
+                                {
+                                    op.Set(b => b.Definitions[language].Categories, definition.Categories);
+                                }
+
+                                if (!_listStringComparer.Equals(existingDefinition.Domains, definition.Domains))
+                                {
+                                    op.Set(b => b.Definitions[language].Domains, definition.Domains);
+                                }
+
+                                if (existingDefinition.Gloss != definition.Gloss)
+                                {
+                                    op.Set(b => b.Definitions[language].Gloss, definition.Gloss);
+                                }
+
+                                if (existingDefinition.Notes != definition.Notes)
+                                {
+                                    op.Set(b => b.Definitions[language].Notes, definition.Notes);
+                                }
+                            }
+                            else
+                            {
+                                op.Set(b => b.Definitions[language], definition);
+                            }
+                        }
+
+                        // Remove missing definitions
+                        foreach (
+                            (string language, _) in biblicalTermDoc.Data.Definitions.Where(
+                                d => !biblicalTerm.Definitions.ContainsKey(d.Key)
+                            )
+                        )
+                        {
+                            op.Unset(b => b.Definitions[language]);
+                        }
+                    })
+                );
+
+                _syncMetrics.BiblicalTerms.Updated++;
+            }
+        }
+
+        // Remove missing biblical terms
+        foreach (
+            IDocument<BiblicalTerm> biblicalTermDoc in biblicalTermDocs.Where(
+                doc => !biblicalTerms.Select(b => b.TermId).Contains(doc.Data.TermId)
+            )
+        )
+        {
+            tasks.Add(biblicalTermDoc.DeleteAsync());
+            _syncMetrics.BiblicalTerms.Deleted++;
+        }
+
+        await Task.WhenAll(tasks);
+    }
+
+    private IDocument<BiblicalTerm> GetBiblicalTermDoc(string dataId) =>
+        _conn.Get<BiblicalTerm>($"{_projectDoc.Id}:{dataId}");
 
     /// <summary>
     /// Updates the resource configuration
@@ -1115,6 +1295,20 @@ public class ParatextSyncRunner : IParatextSyncRunner
     }
 
     /// <summary>
+    /// Fetches all of the Biblical Terms for the current project.
+    /// </summary>
+    /// <returns>The Biblical Terms collection.</returns>
+    private async Task<IReadOnlyCollection<IDocument<BiblicalTerm>>> FetchBiblicalTermDocsAsync()
+    {
+        List<string> ids = await _realtimeService
+            .QuerySnapshots<BiblicalTerm>()
+            .Where(bt => bt.ProjectRef == _projectDoc.Id)
+            .Select(bt => bt.Id)
+            .ToListAsync();
+        return await _conn.GetAndFetchDocsAsync<BiblicalTerm>(ids.ToArray());
+    }
+
+    /// <summary>
     /// Apply the changes to a ParatextNoteThread doc.
     /// TODO: Handle if verseRef changes
     /// </summary>
@@ -1316,7 +1510,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         CancellationToken token
     )
     {
-        await NotifySyncProgress(SyncPhase.Phase7, 60.0);
+        await NotifySyncProgress(SyncPhase.Phase9, 60.0);
         if (token.IsCancellationRequested)
         {
             Log($"CompleteSync: There was a cancellation request.");
@@ -1479,7 +1673,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
             }
         });
-        await NotifySyncProgress(SyncPhase.Phase7, 80.0);
+        await NotifySyncProgress(SyncPhase.Phase9, 80.0);
 
         if (_syncMetrics != null)
         {
@@ -1608,7 +1802,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         // Free the comment manager for this project from memory
         _paratextService.FreeCommentManager(_userSecret, _projectDoc.Data.ParatextId);
 
-        await NotifySyncProgress(SyncPhase.Phase7, 100.0);
+        await NotifySyncProgress(SyncPhase.Phase9, 100.0);
         Log($"CompleteSync: Finished. Sync was {(successful ? "successful" : "unsuccessful")}.");
     }
 
@@ -1688,7 +1882,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         }
         else if (sender is SyncProgress progress)
         {
-            await NotifySyncProgress(SyncPhase.Phase3, progress.ProgressValue);
+            await NotifySyncProgress(SyncPhase.Phase4, progress.ProgressValue);
         }
     }
 
@@ -1720,11 +1914,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
     {
         Phase1 = 0, // Initial methods
         Phase2 = 1, // Update Paratext books and notes
-        Phase3 = 2, // Paratext Sync
-        Phase4 = 3, // Deleting texts and granting resource access
-        Phase5 = 4, // Getting the resource texts
-        Phase6 = 5, // Updating texts from Paratext books
-        Phase7 = 6, // Final methods
+        Phase3 = 2, // Update Paratext biblical term renderings
+        Phase4 = 3, // Paratext Sync
+        Phase5 = 4, // Deleting texts and granting resource access
+        Phase6 = 5, // Getting the resource texts
+        Phase7 = 6, // Updating texts from Paratext books
+        Phase8 = 7, // Update biblical terms from Paratext
+        Phase9 = 8, // Final methods
     }
 
     private class ChapterEqualityComparer : IEqualityComparer<Chapter>
