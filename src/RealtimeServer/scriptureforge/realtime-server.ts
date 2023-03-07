@@ -7,6 +7,7 @@ import { Operation } from '../common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from './models/sf-project-rights';
 import { NOTE_THREAD_COLLECTION } from './models/note-thread';
 import { SF_PROJECTS_COLLECTION } from './models/sf-project';
+import { BiblicalTermService } from './services/biblical-term-service';
 import { NoteThreadService } from './services/note-thread-service';
 import { QuestionService } from './services/question-service';
 import { SFProjectService } from './services/sf-project-service';
@@ -20,6 +21,7 @@ const SF_DOC_SERVICES: DocService[] = [
   new SFProjectUserConfigService(),
   new TextService(),
   new QuestionService(),
+  new BiblicalTermService(),
   new NoteThreadService()
 ];
 

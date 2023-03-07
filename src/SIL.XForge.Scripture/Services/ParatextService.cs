@@ -25,8 +25,10 @@ using Newtonsoft.Json.Linq;
 using Paratext.Data;
 using Paratext.Data.Languages;
 using Paratext.Data.ProjectComments;
+using Paratext.Data.ProjectSettingsAccess;
 using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
+using Paratext.Data.Terms;
 using Paratext.Data.Users;
 using PtxUtils;
 using SIL.ObjectModel;
@@ -1347,6 +1349,171 @@ public class ParatextService : DisposableBase, IParatextService
             commentTags.AddOrUpdate(newCommentTag);
         }
         return commentTags.FindMatchingTag(newCommentTag);
+    }
+
+    public async Task<IReadOnlyList<BiblicalTerm>> GetBiblicalTermsAsync(
+        UserSecret userSecret,
+        string paratextId,
+        IEnumerable<int> books
+    )
+    {
+        // Remove the Biblical Terms Parallel Deserializer
+        Memento.AddParallelDeserializer<BiblicalTermsList>(null);
+
+        // Get the ScrText, returning empty biblical terms if it is missing
+        List<BiblicalTerm> biblicalTerms = new List<BiblicalTerm>();
+        using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret)!, paratextId);
+        if (scrText is null)
+        {
+            return biblicalTerms;
+        }
+
+        // The biblical terms ScrText, if defined, must be disposed properly
+        ScrText? biblicalTermsScrText = null;
+        try
+        {
+            // Get the biblical terms specified in settings
+            string biblicalTermsList = scrText.Settings.GetSetting(Setting.BiblicalTermsListSetting);
+            string[] biblicalTermsListParts = biblicalTermsList.Split(':');
+            BiblicalTermsInfo biblicalTermsInfo;
+            if (biblicalTermsListParts.Length > 2 && !string.IsNullOrEmpty(biblicalTermsListParts[1]))
+            {
+                // Find the project, then load the ScrText
+                string biblicalTermsProjectParatextId = await _realtimeService
+                    .QuerySnapshots<SFProject>()
+                    .Where(p => p.ShortName == biblicalTermsListParts[1])
+                    .Select(p => p.ParatextId)
+                    .FirstOrDefaultAsync();
+                if (string.IsNullOrWhiteSpace(biblicalTermsProjectParatextId))
+                {
+                    throw new ArgumentException(
+                        "The Biblical Terms Project defined in Paratext is not accessible in Scripture Forge"
+                    );
+                }
+
+                // Load the biblical terms project
+                biblicalTermsScrText = ScrTextCollection.FindById(
+                    GetParatextUsername(userSecret)!,
+                    biblicalTermsProjectParatextId
+                );
+                if (biblicalTermsScrText is null)
+                {
+                    throw new ArgumentException(
+                        "You do not have permission to read the Biblical Terms Project defined in Paratext"
+                    );
+                }
+
+                Enum<BiblicalTermsListType> listType = string.IsNullOrEmpty(biblicalTermsListParts[0])
+                    ? BiblicalTermsListType.Major
+                    : new Enum<BiblicalTermsListType>(biblicalTermsListParts[0]);
+                biblicalTermsInfo = new BiblicalTermsInfo(biblicalTermsListParts[2], biblicalTermsScrText, listType);
+            }
+            else
+            {
+                // Use major biblical terms if it is not set
+                biblicalTermsInfo = string.IsNullOrEmpty(biblicalTermsList)
+                    ? new BiblicalTermsInfo(BiblicalTermsListType.Major)
+                    : new BiblicalTermsInfo(scrText, biblicalTermsList);
+            }
+
+            // Clear the persistent profile cache, as term rendering file is cached
+            PersistedProjectFile.ClearCacheForProject(scrText);
+
+            // Get the term renderings
+            TermRenderings termRenderings = TermRenderings.GetTermRenderings(scrText);
+
+            // Do not specify biblical terms if no renderings are specified
+            if (!termRenderings.SomeRenderingsPresent)
+            {
+                throw new ArgumentException("No Biblical Term Renderings are defined for the Project in Paratext");
+            }
+
+            // Load the biblical terms from the project settings (i.e. the terms this project's are based on)
+            BiblicalTerms projectSettingsBiblicalTerms = BiblicalTerms.GetBiblicalTerms(biblicalTermsInfo);
+
+            // Get the term localizations
+            Dictionary<string, TermLocalizations> allTermLocalizations = TermLocalizations.LanguagesAvailable
+                .Select(language => (language, termLocalizations: TermLocalizations.GetTermLocalizations(language)))
+                .ToDictionary(l => l.language, l => l.termLocalizations);
+
+            // Create the collection of Biblical Terms with Renderings
+            foreach (
+                Term term in projectSettingsBiblicalTerms.Terms.Where(
+                    t => t.VerseRefs().Any(v => books.Contains(v.BookNum))
+                )
+            )
+            {
+                TermRendering termRendering = termRenderings.GetRendering(term.Id);
+                Dictionary<string, BiblicalTermDefinition> definitions =
+                    new Dictionary<string, BiblicalTermDefinition>();
+                foreach ((string language, TermLocalizations termLocalizations) in allTermLocalizations)
+                {
+                    TermLocalization termLocalization = termLocalizations.GetTermLocalization(term.Id);
+                    BiblicalTermDefinition biblicalTermDefinition = new BiblicalTermDefinition
+                    {
+                        Categories = term.CategoryIds
+                            .Select(c => termLocalizations.GetCategoryLocalization(c))
+                            .ToList(),
+                        Domains = term.SemanticDomains.Select(d => termLocalizations.GetDomainLocalization(d)).ToList(),
+                        Gloss = termLocalization.Gloss,
+                        Notes = termLocalization.Notes,
+                    };
+                    definitions.Add(language, biblicalTermDefinition);
+                }
+
+                BiblicalTerm biblicalTerm = new BiblicalTerm
+                {
+                    TermId = term.Id,
+                    Transliteration = term.Transliteration,
+                    Renderings = termRendering.RenderingsEntries.ToList(),
+                    Description = termRendering.Notes,
+                    Language = term.Language,
+                    Links = term.Links.ToList(),
+                    References = term.VerseRefs()
+                        .Where(v => books.Contains(v.BookNum))
+                        .Select(v => v.BBBCCCVVV)
+                        .ToList(),
+                    Definitions = definitions,
+                };
+                biblicalTerms.Add(biblicalTerm);
+            }
+
+            return biblicalTerms;
+        }
+        finally
+        {
+            // Dispose the Biblical Terms ScrText from Settings, if it was set
+            biblicalTermsScrText?.Dispose();
+        }
+    }
+
+    public void UpdateBiblicalTerms(UserSecret userSecret, string paratextId, IReadOnlyList<BiblicalTerm> biblicalTerms)
+    {
+        if (!biblicalTerms.Any())
+        {
+            return;
+        }
+
+        using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret)!, paratextId);
+        if (scrText is null)
+        {
+            return;
+        }
+
+        // Get and update the term renderings
+        TermRenderings termRenderings = TermRenderings.GetTermRenderings(scrText);
+        using (termRenderings.UpdateLock())
+        {
+            foreach (BiblicalTerm biblicalTerm in biblicalTerms)
+            {
+                TermRendering termRendering = termRenderings.GetRendering(biblicalTerm.TermId);
+                termRendering.Notes = biblicalTerm.Description;
+                termRendering.RenderingsEntries = biblicalTerm.Renderings;
+                termRendering.Guess = false;
+            }
+        }
+
+        termRenderings.Save();
     }
 
     /// <summary>
