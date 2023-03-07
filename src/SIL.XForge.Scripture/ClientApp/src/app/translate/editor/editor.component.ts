@@ -1226,28 +1226,33 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       if (segmentElement == null) continue;
 
       this.selectionClickSubs.push(
-        this.subscribe(fromEvent<MouseEvent>(segmentElement, 'click'), event => {
-          if (this.bookNum == null || this.target == null) return;
-          const verseRef: VerseRef | undefined = verseRefFromMouseEvent(event, this.bookNum);
-          if (verseRef == null) return;
-          if (this.canShowInsertNoteFab) {
-            this.showInsertNoteFab = this.target.toggleVerseSelection(verseRef);
-            this.positionInsertNoteFab(segmentElement);
-          } else {
-            this.showInsertNoteFab = false;
-          }
-          if (this.commenterSelectedVerseRef != null) {
-            if (verseRef.equals(this.commenterSelectedVerseRef)) {
-              this.commenterSelectedVerseRef = undefined;
+        this.subscribe(
+          fromEvent<MouseEvent>(segmentElement, 'click').pipe(
+            filter(event => (event.target as HTMLElement).tagName.toLowerCase() !== 'display-note')
+          ),
+          event => {
+            if (this.bookNum == null || this.target == null) return;
+            const verseRef: VerseRef | undefined = verseRefFromMouseEvent(event, this.bookNum);
+            if (verseRef == null) return;
+            if (this.canShowInsertNoteFab) {
+              this.showInsertNoteFab = this.target.toggleVerseSelection(verseRef);
+              this.positionInsertNoteFab(segmentElement);
             } else {
-              // un-select previously selected verses since a note can apply to only one verse.
-              this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
+              this.showInsertNoteFab = false;
+            }
+            if (this.commenterSelectedVerseRef != null) {
+              if (verseRef.equals(this.commenterSelectedVerseRef)) {
+                this.commenterSelectedVerseRef = undefined;
+              } else {
+                // un-select previously selected verses since a note can apply to only one verse.
+                this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
+                this.commenterSelectedVerseRef = verseRef;
+              }
+            } else {
               this.commenterSelectedVerseRef = verseRef;
             }
-          } else {
-            this.commenterSelectedVerseRef = verseRef;
           }
-        })
+        )
       );
     }
   }
