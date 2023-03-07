@@ -2643,6 +2643,36 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('does not select verse when opening a note thread', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.setReviewerUser();
+      env.addParatextNoteThread(
+        6,
+        'MAT 1:1',
+        '',
+        { start: 0, length: 0 },
+        ['user01'],
+        NoteStatus.Todo,
+        undefined,
+        true
+      );
+      env.wait();
+
+      const elem: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'thread06')!;
+      elem.click();
+      env.mockNoteDialogRef.close();
+      env.wait();
+      const verse1Elem: HTMLElement = env.getSegmentElement('verse_1_1')!;
+      expect(verse1Elem.classList).not.toContain('commenter-selection');
+
+      // select verse 3 after closing the dialog
+      const verse3Elem: HTMLElement = env.getSegmentElement('verse_1_3')!;
+      verse3Elem.click();
+      expect(verse1Elem.classList).not.toContain('commenter-selection');
+      env.dispose();
+    }));
+
     it('does not allow selecting section headings', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
