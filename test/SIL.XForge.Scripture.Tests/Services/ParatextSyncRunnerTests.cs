@@ -2226,6 +2226,165 @@ public class ParatextSyncRunnerTests
         Assert.That(syncMetrics.ResourceUsers, Is.EqualTo(new SyncMetricInfo(1, 0, 0)));
     }
 
+    [Test]
+    public async Task SyncAsync_BiblicalTermsAreUpdated()
+    {
+        var env = new TestEnvironment();
+        Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+        env.SetupSFData(true, true, true, false, books);
+        env.SetupPTData(books);
+
+        // This Biblical Term will be updated
+        env.RealtimeService
+            .GetRepository<BiblicalTerm>()
+            .Add(
+                new BiblicalTerm
+                {
+                    Id = "project01:dataId01",
+                    OwnerRef = "ownerRef01",
+                    ProjectRef = "project01",
+                    DataId = "dataId01",
+                    TermId = "termId01",
+                    Transliteration = "transliteration01",
+                    Renderings = new[] { "rendering01", "rendering02" },
+                    Description = "description01",
+                    Language = "language01",
+                    Links = new[] { "link01", "link02" },
+                    References = new[] { VerseRef.GetBBBCCCVVV(1, 1, 1), VerseRef.GetBBBCCCVVV(2, 2, 2) },
+                    Definitions = new Dictionary<string, BiblicalTermDefinition>
+                    {
+                        ["en"] = new BiblicalTermDefinition
+                        {
+                            Categories = new[] { "category01_en", "category02_en" },
+                            Domains = new[] { "domain01_en", "domain02_en" },
+                            Gloss = "gloss01_en",
+                            Notes = "notes01_en",
+                        },
+                        ["fr"] = new BiblicalTermDefinition
+                        {
+                            Categories = new[] { "category01_fr", "category02_fr" },
+                            Domains = new[] { "domain01_fr", "domain02_fr" },
+                            Gloss = "gloss01_fr",
+                            Notes = "notes01_fr",
+                        },
+                    },
+                }
+            );
+
+        // This Biblical Term will be deleted
+        env.RealtimeService
+            .GetRepository<BiblicalTerm>()
+            .Add(
+                new BiblicalTerm
+                {
+                    Id = "project01:dataId02",
+                    DataId = "dataId02",
+                    ProjectRef = "project01",
+                    TermId = "termId02",
+                }
+            );
+
+        env.ParatextService
+            .GetBiblicalTermsAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IEnumerable<int>>())
+            .Returns(
+                Task.FromResult(
+                    new[]
+                    {
+                        // This Biblical Term will be updated
+                        new BiblicalTerm
+                        {
+                            TermId = "termId01",
+                            Transliteration = "transliteration02",
+                            Renderings = new[] { "rendering02", "rendering03" },
+                            Description = "description02",
+                            Language = "language02",
+                            Links = new[] { "link02", "link03" },
+                            References = new[] { VerseRef.GetBBBCCCVVV(2, 2, 2), VerseRef.GetBBBCCCVVV(3, 3, 3) },
+                            Definitions = new Dictionary<string, BiblicalTermDefinition>
+                            {
+                                ["en"] = new BiblicalTermDefinition
+                                {
+                                    Categories = new[] { "category02_en", "category03_en" },
+                                    Domains = new[] { "domain02_en", "domain03_en" },
+                                    Gloss = "gloss02_en",
+                                    Notes = "notes02_en",
+                                },
+                                ["de"] = new BiblicalTermDefinition
+                                {
+                                    Categories = new[] { "category01_de", "category02_de" },
+                                    Domains = new[] { "domain01_de", "domain02_de" },
+                                    Gloss = "gloss01_de",
+                                    Notes = "notes01_de",
+                                },
+                            },
+                        },
+                        // This Biblical Term will be added
+                        new BiblicalTerm { TermId = "termId03" },
+                    } as IReadOnlyList<BiblicalTerm>
+                )
+            );
+        env.GuidService.NewObjectId().Returns("dataId03");
+
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+        env.ParatextService
+            .Received(1)
+            .UpdateBiblicalTerms(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IReadOnlyList<BiblicalTerm>>());
+
+        SFProject project = env.GetProject();
+        Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
+        env.VerifyProjectSync(true);
+
+        // dataId02 should be deleted
+        Assert.IsFalse(env.RealtimeService.GetRepository<BiblicalTerm>().Contains("project01:dataId02"));
+
+        // dataId03 should have been created
+        Assert.IsNotNull(env.RealtimeService.GetRepository<BiblicalTerm>().Get("project01:dataId03"));
+
+        // Ensure dataId01 has been updated correctly
+        var biblicalTerm = env.RealtimeService.GetRepository<BiblicalTerm>().Get("project01:dataId01");
+
+        // DataId, ProjectRef, and TermId should not change
+        Assert.AreEqual("dataId01", biblicalTerm.DataId);
+        Assert.AreEqual("project01", biblicalTerm.ProjectRef);
+        Assert.AreEqual("termId01", biblicalTerm.TermId);
+
+        // The description and renderings in Paratext were overwritten by the values from the repo, so have not changed
+        Assert.AreEqual("description01", biblicalTerm.Description);
+        Assert.AreEqual(2, biblicalTerm.Renderings.Count);
+        Assert.AreEqual("rendering01", biblicalTerm.Renderings.First());
+        Assert.AreEqual("rendering02", biblicalTerm.Renderings.Last());
+
+        // The transliteration, language, links, references, and definitions will be updated
+        Assert.AreEqual("transliteration02", biblicalTerm.Transliteration);
+        Assert.AreEqual("language02", biblicalTerm.Language);
+        Assert.AreEqual(2, biblicalTerm.Links.Count);
+        Assert.AreEqual("link02", biblicalTerm.Links.First());
+        Assert.AreEqual("link03", biblicalTerm.Links.Last());
+        Assert.AreEqual(2, biblicalTerm.References.Count);
+        Assert.AreEqual(VerseRef.GetBBBCCCVVV(2, 2, 2), biblicalTerm.References.First());
+        Assert.AreEqual(VerseRef.GetBBBCCCVVV(3, 3, 3), biblicalTerm.References.Last());
+
+        // French should have been deleted
+        Assert.IsFalse(biblicalTerm.Definitions.ContainsKey("fr"));
+
+        // German should have been added
+        Assert.AreEqual("category01_de", biblicalTerm.Definitions["de"].Categories.First());
+        Assert.AreEqual("category02_de", biblicalTerm.Definitions["de"].Categories.Last());
+        Assert.AreEqual("domain01_de", biblicalTerm.Definitions["de"].Domains.First());
+        Assert.AreEqual("domain02_de", biblicalTerm.Definitions["de"].Domains.Last());
+        Assert.AreEqual("gloss01_de", biblicalTerm.Definitions["de"].Gloss);
+        Assert.AreEqual("notes01_de", biblicalTerm.Definitions["de"].Notes);
+
+        // English should be been updated
+        Assert.AreEqual("category02_en", biblicalTerm.Definitions["en"].Categories.First());
+        Assert.AreEqual("category03_en", biblicalTerm.Definitions["en"].Categories.Last());
+        Assert.AreEqual("domain02_en", biblicalTerm.Definitions["en"].Domains.First());
+        Assert.AreEqual("domain03_en", biblicalTerm.Definitions["en"].Domains.Last());
+        Assert.AreEqual("gloss02_en", biblicalTerm.Definitions["en"].Gloss);
+        Assert.AreEqual("notes02_en", biblicalTerm.Definitions["en"].Notes);
+    }
+
     private class Book
     {
         public Book(string bookId, int highestChapter, bool hasSource = true)
@@ -2348,6 +2507,7 @@ public class ParatextSyncRunnerTests
             DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
             NotesMapper = Substitute.For<IParatextNotesMapper>();
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
+            GuidService = Substitute.For<IGuidService>();
             MockLogger = new MockLogger<ParatextSyncRunner>();
 
             Runner = new ParatextSyncRunner(
@@ -2361,6 +2521,7 @@ public class ParatextSyncRunnerTests
                 DeltaUsxMapper,
                 NotesMapper,
                 hubContext,
+                GuidService,
                 MockLogger
             );
         }
@@ -2373,6 +2534,7 @@ public class ParatextSyncRunnerTests
         public SFMemoryRealtimeService RealtimeService { get; }
         public IRealtimeService SubstituteRealtimeService { get; }
         public IDeltaUsxMapper DeltaUsxMapper { get; }
+        public IGuidService GuidService { get; }
         public MockLogger<ParatextSyncRunner> MockLogger { get; }
 
         /// <summary>
@@ -2764,6 +2926,7 @@ public class ParatextSyncRunnerTests
 
             RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
             RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>());
+            RealtimeService.AddRepository("biblical_terms", OTType.Json0, new MemoryRepository<BiblicalTerm>());
             if (noteOnFirstBook && books.Length > 0)
                 AddParatextNoteThreadData(books[0]);
             else
