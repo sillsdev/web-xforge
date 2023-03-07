@@ -21,6 +21,7 @@ public class SyncMetrics : IIdentifiable
     public string UserRef { get; set; }
 
     // Sync Statistics
+    public SyncMetricInfo BiblicalTerms { get; set; } = new SyncMetricInfo();
     public SyncMetricInfo Books { get; set; } = new SyncMetricInfo();
     public NoteSyncMetricInfo Notes { get; set; } = new NoteSyncMetricInfo();
     public SyncMetricInfo NoteThreads { get; set; } = new SyncMetricInfo();

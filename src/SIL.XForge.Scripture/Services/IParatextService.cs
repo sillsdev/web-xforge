@@ -71,6 +71,12 @@ public interface IParatextService
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     );
     int UpdateCommentTag(UserSecret userSecret, string paratextId, NoteTag noteTag);
+    Task<IReadOnlyList<BiblicalTerm>> GetBiblicalTermsAsync(
+        UserSecret userSecret,
+        string paratextId,
+        IEnumerable<int> books
+    );
+    void UpdateBiblicalTerms(UserSecret userSecret, string paratextId, IReadOnlyList<BiblicalTerm> biblicalTerms);
     string? GetLatestSharedVersion(UserSecret userSecret, string paratextId);
     string GetRepoRevision(UserSecret userSecret, string paratextId);
     void SetRepoToRevision(UserSecret userSecret, string paratextId, string desiredRevision);
