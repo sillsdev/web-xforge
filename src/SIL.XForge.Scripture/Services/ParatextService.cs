@@ -1281,6 +1281,8 @@ public class ParatextService : DisposableBase, IParatextService
         foreach (string threadId in newThreadIds)
         {
             CommentThread thread = commentThreads.Single(ct => ct.Id == threadId);
+            if (thread.Comments.All(c => c.Deleted))
+                continue;
             Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
             NoteThreadChange newThread = new NoteThreadChange(
                 threadId,
@@ -2186,10 +2188,13 @@ public class ParatextService : DisposableBase, IParatextService
         List<List<Paratext.Data.ProjectComments.Comment>> changes =
             new List<List<Paratext.Data.ProjectComments.Comment>>();
         IEnumerable<IDocument<NoteThread>> activeThreadDocs = noteThreadDocs.Where(t => t.Data != null);
+        List<string> matchedCommentThreads = new List<string>();
         foreach (IDocument<NoteThread> threadDoc in activeThreadDocs)
         {
             List<Paratext.Data.ProjectComments.Comment> thread = new List<Paratext.Data.ProjectComments.Comment>();
             CommentThread existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
+            if (existingThread != null)
+                matchedCommentThreads.Add(existingThread.Id);
             List<(int, string)> threadNoteParatextUserRefs = new List<(int, string)>();
             for (int i = 0; i < threadDoc.Data.Notes.Count; i++)
             {
@@ -2251,13 +2256,25 @@ public class ParatextService : DisposableBase, IParatextService
                 await UpdateNoteSyncUserAsync(threadDoc, threadNoteParatextUserRefs);
             }
         }
+        // handle deleted note threads
+        IEnumerable<CommentThread> deletedThreads = commentThreads.Where(t => !matchedCommentThreads.Contains(t.Id));
+        foreach (CommentThread thread in deletedThreads)
+        {
+            var deletedCommentsInThread = new List<Paratext.Data.ProjectComments.Comment>();
+            foreach (Paratext.Data.ProjectComments.Comment comment in thread.Comments)
+            {
+                comment.Deleted = true;
+                deletedCommentsInThread.Add(comment);
+            }
+            changes.Add(deletedCommentsInThread);
+        }
         return changes;
     }
 
     private ChangeType GetCommentChangeType(
         Paratext.Data.ProjectComments.Comment comment,
         Note note,
-        Paratext.Data.ProjectComments.CommentTag commentTag,
+        CommentTag commentTag,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
