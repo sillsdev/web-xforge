@@ -5,5 +5,5 @@
     "outDir": "../lib/esm/scriptureforge"
   },
   "references": [{ "path": "../common/tsconfig.build-esm.json" }],
-  "exclude": ["realtime-server.ts", "**/*.spec.ts"]
+  "exclude": ["**/*.spec.ts"]
 }
