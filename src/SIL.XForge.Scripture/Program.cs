@@ -22,6 +22,8 @@ public class Program
             .AddJsonFile($"hosting.{environment}.json", true, true)
             .Build();
 
+        Migrator.RunMigrations(environment);
+
         return builder
             .ConfigureAppConfiguration(
                 (context, config) =>
