@@ -26,7 +26,7 @@ const SF_DOC_SERVICES: DocService[] = [
 /**
  * This class represents the SF real-time server.
  */
-class SFRealtimeServer extends RealtimeServer {
+export default class SFRealtimeServer extends RealtimeServer {
   constructor(siteId: string, migrationsDisabled: boolean, db: ShareDB.DB, schemaVersions: SchemaVersionRepository) {
     super(siteId, migrationsDisabled, SF_DOC_SERVICES, SF_PROJECTS_COLLECTION, db, schemaVersions);
     this.use('query', (context: ShareDB.middleware.QueryContext, next: (err?: any) => void) => {
@@ -52,5 +52,3 @@ class SFRealtimeServer extends RealtimeServer {
     });
   }
 }
-
-export = SFRealtimeServer;

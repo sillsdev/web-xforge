@@ -58,8 +58,10 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
   ShareDB.logger.setMethods({ warn: reportError, error: reportError });
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const RealtimeServerType: RealtimeServerConstructor = require(`../${options.appModuleName}/realtime-server`);
+    const RealtimeServerType: RealtimeServerConstructor =
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      require(`../${options.appModuleName}/realtime-server`).default;
+
     const DBType = MetadataDB(ShareDBMongo);
     const client = await MongoClient.connect(options.connectionString);
     const db = client.db();
@@ -70,7 +72,6 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
       new SchemaVersionRepository(db)
     );
     await server.createIndexes(db);
-    await server.migrateIfNecessary();
 
     streamListener = new WebSocketStreamListener(
       options.audience,
