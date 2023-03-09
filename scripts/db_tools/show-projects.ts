@@ -1,4 +1,5 @@
-#!./node_modules/.bin/ts-node
+#!/usr/bin/env -S bash -c '"$(dirname "$0")"/node_modules/.bin/ts-node "$(dirname "$0")/$(basename "$0")" "$@"'
+// The above causes the local ts-node to be used even if run from another directory. Setup: npm ci
 //
 // Show project metadata and data
 //
@@ -161,7 +162,6 @@ class ProjectInquirer {
     try {
       const db: Db = client.db();
       const textsCollection: Collection<any> = db.collection('texts');
-      const textsInDB: any[] = await textsCollection.find().toArray();
       const projectCollection: Collection<any> = db.collection('sf_projects');
       let projectsInDB: any[] = await projectCollection.find().toArray();
       if (this.limitProj != null) {
@@ -178,7 +178,8 @@ class ProjectInquirer {
         return;
       }
       projectsInDB.forEach((projDoc: any) => metadata.set(projDoc._id, projDoc));
-      metadata.forEach(async (projDoc: any, sfId: string) => {
+
+      for (const [sfId, projDoc] of metadata.entries()) {
         const books: BookMetadata = this.getProjectBookMetadata(projDoc);
         let booksToExamine: string[] = Array.from(books.keys());
         if (this.limitBook) {
@@ -197,6 +198,8 @@ class ProjectInquirer {
               chapters = chapters.filter((chapNum: number) => chapNum === this.limitChapter);
             }
             for (const chapNum of chapters) {
+              const textId = `${sfId}:${bookAbbr}:${chapNum}:target`;
+              const textsInDB: any[] = await textsCollection.find({ _id: textId }).toArray();
               const chapText = JSON.stringify(this.getChapterText(textsInDB, sfId, bookAbbr, chapNum), null, '  ');
               optionalBooksDisplay = `${optionalBooksDisplay}\n${sfId} ${colored(
                 colors.darkGrey,
@@ -227,7 +230,7 @@ class ProjectInquirer {
             projDoc.name
           }${optionalBooksDisplay}`
         );
-      });
+      }
       return;
     } finally {
       client.close();
