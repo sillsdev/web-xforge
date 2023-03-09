@@ -149,3 +149,9 @@ app-project-select {
   font-weight: 500;
   margin-bottom: 0;
 }
+
+// Without this rule the h2 is bolder than the card headings and looks out of place
+// Once Material typography is set up properly this may not be needed
+#exporting-answers-heading {
+  font-weight: normal;
+}

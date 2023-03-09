@@ -145,7 +145,7 @@
                 </mat-hint>
               </div>
               <div>
-                <h2 class="sharing-heading">{{ t("exporting_answers") }}</h2>
+                <h2 id="exporting-answers-heading">{{ t("exporting_answers") }}</h2>
                 <p class="helper-text">{{ t("export_checking_answers") }}</p>
                 <div class="tool-setting">
                   <mat-radio-group
@@ -175,6 +175,38 @@
                 </div>
               </div>
             </ng-container>
+          </mat-card-content>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <mat-card-title>{{ t("sharing") }}</mat-card-title>
+            <mat-hint class="helper-text">
+              Select which users can invite others to join the project. Admins can always invite people on the users
+              page.
+            </mat-hint>
+            <div class="tool-setting">
+              <div class="tool-setting-field checkbox-field">
+                <mat-checkbox formControlName="translateShareEnabled" id="checkbox-translate-share">
+                  Allow users with view access to invite others to join this project with view access
+                </mat-checkbox>
+                <app-write-status
+                  [state]="getControlState('translateShareEnabled')"
+                  [formGroup]="form"
+                  id="translate-share-status"
+                ></app-write-status>
+              </div>
+            </div>
+            <div class="tool-setting" *ngIf="isCheckingEnabled">
+              <div class="tool-setting-field checkbox-field">
+                <mat-checkbox formControlName="checkingShareEnabled" id="checkbox-checking-share">
+                  Allow Community Checkers to invite others to join this project as Community Checkers
+                </mat-checkbox>
+                <app-write-status
+                  [state]="getControlState('checkingShareEnabled')"
+                  [formGroup]="form"
+                  id="checking-share-status"
+                ></app-write-status>
+              </div>
+            </div>
           </mat-card-content>
         </form>
       </mat-card>
