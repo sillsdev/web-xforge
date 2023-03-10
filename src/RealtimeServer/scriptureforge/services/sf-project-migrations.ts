@@ -162,11 +162,6 @@ class SFProjectMigration7 implements Migration {
   }
 }
 
-/**
- * This migration removes the shareLevel property from the translateConfig and checkingConfig objects.
- * Project admins now select whether whether a share link can be used by only one person or by anyone at the time the
- * link is created (rather than configuring it on the project).
- */
 class SFProjectMigration8 implements Migration {
   static readonly VERSION = 8;
 
@@ -186,6 +181,11 @@ class SFProjectMigration8 implements Migration {
   }
 }
 
+/**
+ * This migration removes the shareLevel property from the translateConfig and checkingConfig objects.
+ * Project admins now select whether a share link can be used by only one person or by anyone at the time the
+ * link is created (rather than configuring it on the project).
+ */
 class SFProjectMigration9 implements Migration {
   static readonly VERSION = 9;
 
