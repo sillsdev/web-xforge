@@ -17,8 +17,9 @@ if (process.argv.length !== 4) {
 const stage = process.argv[2];
 const version = process.argv[3];
 
-if (/\d+\.\d+\.\d+/.test(version) === false) {
-  console.error('Version must be in the form of x.y.z');
+// QA uses version numbers of the form 123, while live uses version numbers of the form 1.2.3
+if (/\d+(?:\.\d+)*/.test(version) === false) {
+  console.error('Version must contain one or more numbers separated by dots');
   process.exit(1);
 }
 
