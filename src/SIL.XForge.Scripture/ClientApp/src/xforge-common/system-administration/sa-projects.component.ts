@@ -3,6 +3,7 @@ import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { BehaviorSubject } from 'rxjs';
+import { I18nService } from 'xforge-common/i18n.service';
 import { DataLoadingComponent } from '../data-loading-component';
 import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
@@ -61,6 +62,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
 
   constructor(
     noticeService: NoticeService,
+    readonly i18n: I18nService,
     private readonly projectService: ProjectService,
     private readonly userService: UserService
   ) {

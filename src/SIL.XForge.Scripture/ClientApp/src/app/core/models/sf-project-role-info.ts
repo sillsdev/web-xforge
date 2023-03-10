@@ -4,17 +4,13 @@ import { isTranslateRole, SFProjectRole } from 'realtime-server/lib/esm/scriptur
 import { ProjectRoleInfo } from 'xforge-common/models/project-role-info';
 
 export const SF_PROJECT_ROLES: ProjectRoleInfo[] = [
-  { role: SFProjectRole.ParatextAdministrator, displayName: 'Administrator', canBeShared: false },
-  { role: SFProjectRole.ParatextTranslator, displayName: 'Translator', canBeShared: false },
-  {
-    role: SFProjectRole.ParatextConsultant,
-    displayName: 'Consultant/Reviewer/Archivist/Typesetter',
-    canBeShared: false
-  },
-  { role: SFProjectRole.ParatextObserver, displayName: 'Observer', canBeShared: false },
-  { role: SFProjectRole.Reviewer, displayName: 'Reviewer', canBeShared: true },
-  { role: SFProjectRole.CommunityChecker, displayName: 'Community Checker', canBeShared: true },
-  { role: SFProjectRole.Observer, displayName: 'View Translation', canBeShared: true }
+  { role: SFProjectRole.ParatextAdministrator, canBeShared: false },
+  { role: SFProjectRole.ParatextTranslator, canBeShared: false },
+  { role: SFProjectRole.ParatextConsultant, canBeShared: false },
+  { role: SFProjectRole.ParatextObserver, canBeShared: false },
+  { role: SFProjectRole.Reviewer, canBeShared: true },
+  { role: SFProjectRole.CommunityChecker, canBeShared: true },
+  { role: SFProjectRole.Observer, canBeShared: true }
 ];
 
 export function canAccessTranslateApp(role?: SFProjectRole): boolean {
