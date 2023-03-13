@@ -24,6 +24,7 @@ public class MemoryRealtimeService : IRealtimeService
             options => options.ProjectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)
         );
         // services.Configure<OutOfProcessNodeJSServiceOptions>(options => options.TimeoutMS = -1);
+        services.AddSingleton<IExceptionHandler, MemoryExceptionHandler>();
         services.AddSingleton<IJsonService, RealtimeJsonService>();
         IServiceProvider sp = services.BuildServiceProvider();
         return sp.GetRequiredService<INodeJSService>();

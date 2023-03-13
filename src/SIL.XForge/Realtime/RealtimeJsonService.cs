@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,19 +19,30 @@ public class RealtimeJsonService : IJsonService
     {
         NamingStrategy = new CamelCaseNamingStrategy(),
     };
+    private readonly IExceptionHandler _exceptionHandler;
+
+    public RealtimeJsonService(IExceptionHandler exceptionHandler) => _exceptionHandler = exceptionHandler;
 
     /// <inheritdoc />
     public ValueTask<T> DeserializeAsync<T>(Stream stream, CancellationToken cancellationToken = default)
     {
-        using var sr = new StreamReader(stream, System.Text.Encoding.Default, true, 1024, false);
-        using var reader = new JsonTextReader(sr) { CloseInput = true };
-        var serializer = new JsonSerializer
+        try
         {
-            ContractResolver = _contractResolver,
-            NullValueHandling = NullValueHandling.Ignore,
-            MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-        };
-        return ValueTask.FromResult(serializer.Deserialize<T>(reader));
+            using var sr = new StreamReader(stream, System.Text.Encoding.Default, true, 1024, false);
+            using var reader = new JsonTextReader(sr) { CloseInput = true };
+            var serializer = new JsonSerializer
+            {
+                ContractResolver = _contractResolver,
+                NullValueHandling = NullValueHandling.Ignore,
+                MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
+            };
+            return ValueTask.FromResult(serializer.Deserialize<T>(reader));
+        }
+        catch (Exception e)
+        {
+            _exceptionHandler.ReportException(e);
+            return default;
+        }
     }
 
     /// <inheritdoc />

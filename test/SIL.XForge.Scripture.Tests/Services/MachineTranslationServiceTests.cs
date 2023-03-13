@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
 using SIL.Machine.WebApi;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
@@ -456,7 +457,7 @@ public class MachineTranslationServiceTests
     {
         public TestEnvironment(HttpClient? httpClient = default)
         {
-            var exceptionHandler = new MockExceptionHandler();
+            var exceptionHandler = new MemoryExceptionHandler();
             var httpClientFactory = Substitute.For<IHttpClientFactory>();
             httpClientFactory.CreateClient(Arg.Any<string>()).Returns(httpClient);
 
