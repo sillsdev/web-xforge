@@ -1210,6 +1210,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
               this.target?.formatEmbed(threadId, 'note-thread-embed', { ['highlight']: false });
               this.updateReadNotes(threadId);
             }
+            // stops the event from causing the segment to be selected
+            event.stopPropagation();
           })
         )
       );
