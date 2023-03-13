@@ -6,6 +6,12 @@
     "translate": "Traducir",
     "users": "Usuarios"
   },
+  "biblical_terms": {
+    "term": "Término",
+    "category": "Categoría",
+    "gloss": "Glosa",
+    "renderings": "Traducciones"
+  },
   "chapter_nav": {
     "previous_chapter": "Capítulo anterior",
     "next_chapter": "Capítulo siguiente"

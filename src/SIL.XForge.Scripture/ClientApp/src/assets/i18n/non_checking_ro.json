@@ -6,6 +6,12 @@
     "translate": "Traducere",
     "users": "Utilizatori"
   },
+  "biblical_terms": {
+    "term": "Cuvânt",
+    "category": "Categoria",
+    "gloss": "Traducere cuvânt cu cuvânt",
+    "renderings": "Traducerile"
+  },
   "chapter_nav": {
     "previous_chapter": "Capitolul anterior",
     "next_chapter": "Capitolul următor"

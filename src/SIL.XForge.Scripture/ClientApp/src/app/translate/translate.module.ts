@@ -4,6 +4,7 @@ import { TranslocoModule } from '@ngneat/transloco';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SharedModule } from '../shared/shared.module';
+import { BiblicalTermsComponent } from './biblical-terms/biblical-terms.component';
 import { EditorComponent } from './editor/editor.component';
 import { MultiViewerComponent } from './editor/multi-viewer/multi-viewer.component';
 import { NoteDialogComponent } from './editor/note-dialog/note-dialog.component';
@@ -15,6 +16,7 @@ import { TranslateRoutingModule } from './translate-routing.module';
 
 @NgModule({
   declarations: [
+    BiblicalTermsComponent,
     EditorComponent,
     MultiViewerComponent,
     NoteDialogComponent,

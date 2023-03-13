@@ -6,6 +6,12 @@
     "translate": "ꤚꤢ꤭ꤕꤟꤥ꤬ꤓꤢꤩ꤬",
     "users": "ꤕꤚꤟꤢꤧ꤬ꤔꤢꤪ꤭ꤢꤩ꤬ ꤒꤢ꤬ꤟꤢꤩ꤬"
   },
+  "biblical_terms": {
+    "term": "Term",
+    "category": "Category",
+    "gloss": "Gloss",
+    "renderings": "Renderings"
+  },
   "chapter_nav": {
     "previous_chapter": "ꤢ꤬ꤗꤟꤢ꤭ꤘꤢꤨ꤬ ꤘꤣꤋꤛꤢꤩ꤭",
     "next_chapter": "ꤢ꤬ꤗꤟꤢ꤭ꤘꤢꤨ꤬ ꤘꤣꤑꤢꤩ꤭"

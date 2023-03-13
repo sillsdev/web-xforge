@@ -1,0 +1,16 @@
+/* Some terms are exceptionally long */
+.mat-column-term {
+  overflow: hidden;
+}
+
+/* Fix the menu appearing below the table header */
+.mat-header-cell {
+  z-index: inherit !important;
+}
+
+/* Fix the height of the biblical terms table */
+.table-container {
+  height: 150px;
+  overflow-y: auto;
+  margin-top: 10px;
+}

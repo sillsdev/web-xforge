@@ -440,17 +440,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.projectDoc?.id;
   }
 
+  get sourceProjectId(): string | undefined {
+    return this.projectDoc?.data?.translateConfig.source?.projectRef;
+  }
+
   private get userRole(): string | undefined {
     return this.projectDoc?.data?.userRoles[this.userService.currentUserId];
   }
 
   private get hasSource(): boolean {
-    const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
-    if (this.text == null || this.currentUser === undefined || sourceId === undefined) {
+    if (this.text == null || this.currentUser === undefined || this.sourceProjectId === undefined) {
       return false;
     } else {
       const projects = this.currentUser.sites[environment.siteId].projects;
-      return this.text.hasSource && projects.includes(sourceId);
+      return this.text.hasSource && projects.includes(this.sourceProjectId);
     }
   }
 
@@ -499,11 +502,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.userService.currentUserId
           );
 
-          const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
-          if (sourceId != null) {
-            const userOnProject: boolean = !!this.currentUser?.sites[environment.siteId].projects.includes(sourceId);
+          if (this.sourceProjectId != null) {
+            const userOnProject: boolean = !!this.currentUser?.sites[environment.siteId].projects.includes(
+              this.sourceProjectId
+            );
             // Only get the project doc if the user is on the project to avoid an error.
-            this.sourceProjectDoc = userOnProject ? await this.projectService.getProfile(sourceId) : undefined;
+            this.sourceProjectDoc = userOnProject
+              ? await this.projectService.getProfile(this.sourceProjectId)
+              : undefined;
           }
 
           if (this.projectUserConfigChangesSub != null) {
@@ -620,11 +626,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.projectUserConfigDoc.data.selectedChapterNum !== this._chapter ||
             this.projectUserConfigDoc.data.selectedSegment !== this.target.segmentRef)
         ) {
-          const sourceProjectRef = this.projectDoc?.data?.translateConfig.source?.projectRef;
-          if ((prevSegment == null || this.translator == null) && sourceProjectRef !== undefined) {
-            await this.translationEngineService.trainSelectedSegment(this.projectUserConfigDoc.data, sourceProjectRef);
+          if ((prevSegment == null || this.translator == null) && this.sourceProjectId !== undefined) {
+            await this.translationEngineService.trainSelectedSegment(
+              this.projectUserConfigDoc.data,
+              this.sourceProjectId
+            );
           } else {
-            await this.trainSegment(prevSegment, sourceProjectRef);
+            await this.trainSegment(prevSegment, this.sourceProjectId);
           }
           await this.projectUserConfigDoc.submitJson0Op(op => {
             op.set<string>(puc => puc.selectedTask!, 'translate');
@@ -986,10 +994,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const elem: HTMLElement = this.targetContainer.nativeElement;
     const bounds = elem.getBoundingClientRect();
     // add bottom padding
-    const top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
+    let top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
     if (this.target.editor != null && this.targetFocused) {
       // reset scroll position
       this.target.editor.scrollingContainer.scrollTop = 0;
+    }
+    // Add the Biblical Terms panel
+    if (!this.mediaObserver.isActive('xs')) {
+      top += 160;
     }
     this.textHeight = `calc(100vh - ${top}px)`;
     if (this.targetFocused && this.dialogService.openDialogCount < 1) {

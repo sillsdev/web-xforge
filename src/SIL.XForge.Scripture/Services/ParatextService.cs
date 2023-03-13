@@ -1365,6 +1365,8 @@ public class ParatextService : DisposableBase, IParatextService
         using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret)!, paratextId);
         if (scrText is null)
         {
+            // Log the error and return the empty biblical terms collection. Biblical Terms will be disabled.
+            _logger.LogError("The Paratext Project is not accessible in Scripture Forge");
             return biblicalTerms;
         }
 
@@ -1386,9 +1388,11 @@ public class ParatextService : DisposableBase, IParatextService
                     .FirstOrDefaultAsync();
                 if (string.IsNullOrWhiteSpace(biblicalTermsProjectParatextId))
                 {
-                    throw new ArgumentException(
+                    // Log the error and return the empty biblical terms collection. Biblical Terms will be disabled.
+                    _logger.LogError(
                         "The Biblical Terms Project defined in Paratext is not accessible in Scripture Forge"
                     );
+                    return biblicalTerms;
                 }
 
                 // Load the biblical terms project
@@ -1398,9 +1402,11 @@ public class ParatextService : DisposableBase, IParatextService
                 );
                 if (biblicalTermsScrText is null)
                 {
-                    throw new ArgumentException(
+                    // Log the error and return the empty biblical terms collection. Biblical Terms will be disabled.
+                    _logger.LogError(
                         "You do not have permission to read the Biblical Terms Project defined in Paratext"
                     );
+                    return biblicalTerms;
                 }
 
                 Enum<BiblicalTermsListType> listType = string.IsNullOrEmpty(biblicalTermsListParts[0])
@@ -1425,7 +1431,9 @@ public class ParatextService : DisposableBase, IParatextService
             // Do not specify biblical terms if no renderings are specified
             if (!termRenderings.SomeRenderingsPresent)
             {
-                throw new ArgumentException("No Biblical Term Renderings are defined for the Project in Paratext");
+                // Log the error and return the empty biblical terms collection. Biblical Terms will be disabled.
+                _logger.LogError("No Biblical Term Renderings are defined for the Project in Paratext");
+                return biblicalTerms;
             }
 
             // Load the biblical terms from the project settings (i.e. the terms this project's are based on)
@@ -1458,7 +1466,7 @@ public class ParatextService : DisposableBase, IParatextService
                         Gloss = termLocalization.Gloss,
                         Notes = termLocalization.Notes,
                     };
-                    definitions.Add(language, biblicalTermDefinition);
+                    definitions.Add(FixLanguageCode(language), biblicalTermDefinition);
                 }
 
                 BiblicalTerm biblicalTerm = new BiblicalTerm
@@ -1830,6 +1838,21 @@ public class ParatextService : DisposableBase, IParatextService
             UserRoles.TeamMember => SFProjectRole.Translator,
             UserRoles.Observer => SFProjectRole.PTObserver,
             _ => string.Empty,
+        };
+
+    /// <summary>
+    /// Converts a Paratext language code into a language-country codes for the frontend.
+    /// </summary>
+    /// <param name="languageCode">The Paratext Language code</param>
+    /// <returns>The language-country code</returns>
+    private static string FixLanguageCode(string languageCode) =>
+        languageCode.ToLower() switch
+        {
+            "zh-hans" => "zh-CN",
+            "zh-hant" => "zh-TW",
+            "pt" => "pt-PT",
+            "" => string.Empty,
+            _ => char.ToLower(languageCode[0]) + (languageCode.Length == 1 ? string.Empty : languageCode[1..]),
         };
 
     /// <summary>

@@ -6,6 +6,12 @@
     "translate": "Translate",
     "users": "Users"
   },
+  "biblical_terms": {
+    "term": "词条",
+    "category": "类别",
+    "gloss": "译词",
+    "renderings": "译法"
+  },
   "chapter_nav": {
     "previous_chapter": "Previous chapter",
     "next_chapter": "Next chapter"

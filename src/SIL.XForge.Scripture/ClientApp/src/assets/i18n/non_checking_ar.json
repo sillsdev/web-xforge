@@ -6,6 +6,12 @@
     "translate": "الترجمة",
     "users": "المُستخدمون"
   },
+  "biblical_terms": {
+    "term": "مصطلح",
+    "category": "فئة",
+    "gloss": "توضيح",
+    "renderings": "مرادفات"
+  },
   "chapter_nav": {
     "previous_chapter": "الأصحاح / الفصل السابق",
     "next_chapter": "الأصحاح / الفصل التالي"

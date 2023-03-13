@@ -6,6 +6,12 @@
     "translate": "Tərcümə etmək",
     "users": "İstifadəçilər"
   },
+  "biblical_terms": {
+    "term": "Termin",
+    "category": "Kateqoriya",
+    "gloss": "Şərh",
+    "renderings": "Tərcümələr"
+  },
   "chapter_nav": {
     "previous_chapter": "Əvvəlki fəsil",
     "next_chapter": "Növbəti fəsil"
