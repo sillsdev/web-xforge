@@ -4,9 +4,9 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 
-namespace SIL.XForge.Scripture.Services;
+namespace SIL.XForge.Realtime;
 
-public class MockExceptionHandler : IExceptionHandler
+public class MemoryExceptionHandler : IExceptionHandler
 {
     public void ReportException(Exception exception) { }
 
