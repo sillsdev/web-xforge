@@ -6,6 +6,12 @@
     "translate": "Перевести",
     "users": "Пользователи"
   },
+  "biblical_terms": {
+    "term": "Термин",
+    "category": "Категория",
+    "gloss": "Глосса",
+    "renderings": "Переводы"
+  },
   "chapter_nav": {
     "previous_chapter": "Предыдущая глава",
     "next_chapter": "Следующая глава"

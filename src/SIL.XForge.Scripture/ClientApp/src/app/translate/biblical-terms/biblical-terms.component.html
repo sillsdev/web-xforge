@@ -1,0 +1,21 @@
+<ng-container *transloco="let t; read: 'biblical_terms'">
+  <div class="table-container">
+    <table
+      mat-table
+      [dataSource]="rows"
+      matSort
+      (matSortChange)="sortData($event)"
+      matSortActive="term"
+      matSortDirection="asc"
+      matSortDisableClear
+    >
+      <ng-container [matColumnDef]="column" *ngFor="let column of columnsToDisplay">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ t(column) }}</th>
+        <td mat-cell *matCellDef="let row">{{ row[column] }}</td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnsToDisplay; sticky: true"></tr>
+      <tr mat-row *matRowDef="let myRowData; columns: columnsToDisplay"></tr>
+    </table>
+  </div>
+</ng-container>

@@ -62,6 +62,7 @@
             [fontSize]="sourceFontSize"
           ></app-text>
         </div>
+        <app-biblical-terms [bookNum]="bookNum" [chapter]="chapter" [projectId]="sourceProjectId"></app-biblical-terms>
       </div>
       <div
         id="target-text-area"
@@ -137,6 +138,12 @@
             </button>
           </div>
         </div>
+        <app-biblical-terms
+          [bookNum]="bookNum"
+          [chapter]="chapter"
+          [projectId]="projectId"
+          fxHide.xs
+        ></app-biblical-terms>
       </div>
     </div>
   </div>
