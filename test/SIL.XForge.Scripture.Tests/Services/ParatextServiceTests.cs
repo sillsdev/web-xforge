@@ -646,9 +646,8 @@ public class ParatextServiceTests
         updateNotesXml = TestEnvironment.GetUpdateNotesXml(threadId, env.User01, date, content, verseRef, true);
         syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesXml);
 
-        Assert.That(thread.Comments.Count, Is.EqualTo(1));
-        comment = thread.Comments.First();
-        Assert.That(comment.Deleted, Is.True, "Comment should be marked deleted");
+        thread = env.ProjectCommentManager.FindThread(threadId);
+        Assert.That(thread, Is.Null);
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
 
         // PT username is not written to server logs
@@ -2156,7 +2155,7 @@ public class ParatextServiceTests
             env.TagCount
         );
         thread = env.ProjectCommentManager.FindThread(threadId);
-        Assert.That(thread.Comments.Single().Deleted, Is.True);
+        Assert.That(thread, Is.Null);
     }
 
     [Test]
