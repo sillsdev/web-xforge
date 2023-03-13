@@ -1990,7 +1990,8 @@ public class ParatextService : DisposableBase, IParatextService
                 }
                 else if (comment.Deleted)
                 {
-                    existingComment.Deleted = true;
+                    // Permanently remove the comment
+                    manager.RemoveComment(comment);
                     syncMetricInfo.Deleted++;
                 }
                 else
@@ -2196,6 +2197,7 @@ public class ParatextService : DisposableBase, IParatextService
             if (existingThread != null)
                 matchedCommentThreads.Add(existingThread.Id);
             List<(int, string)> threadNoteParatextUserRefs = new List<(int, string)>();
+            List<string> matchedCommentIds = new List<string>();
             for (int i = 0; i < threadDoc.Data.Notes.Count; i++)
             {
                 Note note = threadDoc.Data.Notes[i];
@@ -2203,6 +2205,7 @@ public class ParatextService : DisposableBase, IParatextService
                     existingThread == null ? null : GetMatchingCommentFromNote(note, existingThread, ptProjectUsers);
                 if (matchedComment != null)
                 {
+                    matchedCommentIds.Add(matchedComment.Id);
                     var comment = (Paratext.Data.ProjectComments.Comment)matchedComment.Clone();
                     bool commentUpdated = false;
                     if (note.Content != comment.Contents?.InnerXml)
@@ -2210,11 +2213,6 @@ public class ParatextService : DisposableBase, IParatextService
                         if (comment.Contents == null)
                             comment.AddTextToContent("", false);
                         comment.Contents.InnerXml = note.Content;
-                        commentUpdated = true;
-                    }
-                    if (note.Deleted && !comment.Deleted)
-                    {
-                        comment.Deleted = true;
                         commentUpdated = true;
                     }
                     if (commentUpdated)
@@ -2247,6 +2245,19 @@ public class ParatextService : DisposableBase, IParatextService
                     {
                         threadNoteParatextUserRefs.Add((i, ptProjectUser.OpaqueUserId));
                     }
+                }
+            }
+
+            if (existingThread != null)
+            {
+                IEnumerable<Paratext.Data.ProjectComments.Comment> deletedComments = existingThread.Comments.Where(
+                    c => !matchedCommentIds.Contains(c.Id)
+                );
+                foreach (Paratext.Data.ProjectComments.Comment deleted in deletedComments)
+                {
+                    var comment = (Paratext.Data.ProjectComments.Comment)deleted.Clone();
+                    comment.Deleted = true;
+                    thread.Add(comment);
                 }
             }
             if (thread.Count > 0)

@@ -2745,6 +2745,21 @@ describe('EditorComponent', () => {
       expect(noteThreadEmbedCount).toEqual(4);
       env.dispose();
     }));
+
+    it('should remove note thread icon from editor when thread is deleted', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const threadId = 'thread02';
+      const segmentRef = 'verse_1_3';
+      let thread2Elem: HTMLElement | null = env.getNoteThreadIconElement(segmentRef, threadId);
+      expect(thread2Elem).not.toBeNull();
+      env.deleteNoteThread('project01', segmentRef, threadId);
+      thread2Elem = env.getNoteThreadIconElement(segmentRef, threadId);
+      expect(thread2Elem).toBeNull();
+      env.dispose();
+    }));
   });
 
   describe('Translation Suggestions disabled', () => {
@@ -3850,8 +3865,19 @@ class TestEnvironment {
   }
 
   resolveNote(projectId: string, threadId: string): void {
-    const nodeDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
-    nodeDoc.submitJson0Op(op => op.set(n => n.status, NoteStatus.Resolved));
+    const noteDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
+    noteDoc.submitJson0Op(op => op.set(n => n.status, NoteStatus.Resolved));
+    this.realtimeService.updateAllSubscribeQueries();
+    this.wait();
+  }
+
+  deleteNoteThread(projectId: string, segmentRef: string, threadId: string): void {
+    const noteThreadIconElem: HTMLElement = this.getNoteThreadIconElement(segmentRef, threadId)!;
+    noteThreadIconElem.click();
+    this.wait();
+    const noteDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
+    noteDoc.delete();
+    this.mockNoteDialogRef.close(true);
     this.realtimeService.updateAllSubscribeQueries();
     this.wait();
   }

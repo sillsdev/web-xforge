@@ -2073,8 +2073,9 @@ public class ParatextServiceTests
                 new ThreadComponents
                 {
                     threadNum = 1,
-                    noteCount = 1,
-                    username = env.Username01
+                    noteCount = 2,
+                    username = env.Username01,
+                    isDeleted = true
                 }
             }
         );
@@ -2082,7 +2083,7 @@ public class ParatextServiceTests
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, threadId);
 
-        // Delete a comment
+        // One comment is marked deleted, the other is permanently deleted
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
             new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
