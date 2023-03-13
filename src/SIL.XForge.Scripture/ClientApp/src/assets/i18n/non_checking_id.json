@@ -6,6 +6,12 @@
     "translate": "Menerjemahkan",
     "users": "Pengguna"
   },
+  "biblical_terms": {
+    "term": "Istilah",
+    "category": "Kategori",
+    "gloss": "Petunjuk Arti",
+    "renderings": "Padanan"
+  },
   "chapter_nav": {
     "previous_chapter": "Pasal sebelumnya",
     "next_chapter": "Pasal berikutnya"

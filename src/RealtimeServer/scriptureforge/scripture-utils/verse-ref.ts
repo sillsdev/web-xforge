@@ -123,6 +123,12 @@ export class VerseRef {
   private _versification?: ScrVers;
 
   constructor(book?: number | string, chapter?: number | string, verse?: number | string, versification?: ScrVers) {
+    // Allow the first parameter to be in BBBCCCVVV format
+    if (book != null && typeof book === 'number' && chapter == null && verse == null) {
+      verse = book % VerseRef.chapterDigitShifter;
+      chapter = Math.floor((book % VerseRef.bookDigitShifter) / VerseRef.chapterDigitShifter);
+      book = Math.floor(book / VerseRef.bookDigitShifter);
+    }
     if (book != null && chapter != null && verse != null) {
       if (typeof book === 'string') {
         this.book = book;
