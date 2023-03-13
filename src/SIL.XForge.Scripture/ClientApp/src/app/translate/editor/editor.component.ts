@@ -823,6 +823,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.target == null || this.bookNum == null || !this.showAddCommentUI) {
       return;
     }
+    if (!this.isUsfmValid || !this.dataInSync || this.target.areOpsCorrupted) {
+      this.noticeService.show(translate('editor.navigate_to_a_valid_text'));
+      return;
+    }
     let verseRef: VerseRef | undefined = this.commenterSelectedVerseRef;
     if (verseRef == null) {
       const defaultSegmentRef: string | undefined = this.target.firstVerseSegment;
