@@ -2601,6 +2601,32 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('cannot insert a note when editor content unavailable', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.onlineStatus = false;
+      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      const subject: Subject<void> = new Subject<void>();
+      const promise = new Promise<TextDoc>(resolve => {
+        subject.subscribe(() => resolve(textDoc));
+      });
+      when(mockedSFProjectService.getText(anything())).thenReturn(promise);
+      env.wait();
+      env.insertNoteButton.nativeElement.click();
+      env.wait();
+      verify(mockedNoticeService.show(anything())).once();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).never();
+      subject.next();
+      subject.complete();
+      env.wait();
+      env.insertNoteButton.nativeElement.click();
+      env.wait();
+      verify(mockedNoticeService.show(anything())).once();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      expect().nothing();
+      env.dispose();
+    }));
+
     it('can insert note on verse at cursor position', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();

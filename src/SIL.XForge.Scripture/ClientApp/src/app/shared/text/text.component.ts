@@ -434,6 +434,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return undefined;
   }
 
+  get contentShowing(): boolean {
+    return this.id != null && this.viewModel.isLoaded && !this.viewModel.isEmpty;
+  }
+
   /**
    * Is presence enabled and currently available to use
    */
@@ -446,10 +450,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
    */
   private get isPresenceEnabled(): boolean {
     return this.enablePresence;
-  }
-
-  private get contentShowing(): boolean {
-    return this.id != null && this.viewModel.isLoaded && !this.viewModel.isEmpty;
   }
 
   ngAfterViewInit(): void {
