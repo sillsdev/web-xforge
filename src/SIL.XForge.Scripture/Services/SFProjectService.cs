@@ -271,22 +271,22 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
-                bool hasExistingMachineProject = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
-                await projectDoc.SubmitJson0OpAsync(op =>
-                {
-                    UpdateSetting(
-                        op,
-                        p => p.TranslateConfig.TranslationSuggestionsEnabled,
-                        settings.TranslationSuggestionsEnabled
-                    );
-                    UpdateSetting(op, p => p.TranslateConfig.Source, source, unsetSourceProject);
-                    UpdateSetting(op, p => p.TranslateConfig.ShareEnabled, settings.TranslateShareEnabled);
+        bool hasExistingMachineProject = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
+        await projectDoc.SubmitJson0OpAsync(op =>
+        {
+            UpdateSetting(
+                op,
+                p => p.TranslateConfig.TranslationSuggestionsEnabled,
+                settings.TranslationSuggestionsEnabled
+            );
+            UpdateSetting(op, p => p.TranslateConfig.Source, source, unsetSourceProject);
+            UpdateSetting(op, p => p.TranslateConfig.ShareEnabled, settings.TranslateShareEnabled);
 
             UpdateSetting(op, p => p.CheckingConfig.CheckingEnabled, settings.CheckingEnabled);
             UpdateSetting(op, p => p.CheckingConfig.UsersSeeEachOthersResponses, settings.UsersSeeEachOthersResponses);
             UpdateSetting(op, p => p.CheckingConfig.ShareEnabled, settings.CheckingShareEnabled);
             UpdateSetting(op, p => p.CheckingConfig.AnswerExportMethod, settings.CheckingAnswerExport);
-                });
+        });
 
         bool suggestionsEnabledSet = settings.TranslationSuggestionsEnabled != null;
         bool sourceParatextIdSet = settings.SourceParatextId != null || unsetSourceProject;
@@ -360,6 +360,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         await _syncService.CancelSyncAsync(curUserId, projectId);
     }
+
+    public new async Task<SFProject> GetProjectAsync(string projectId) => await base.GetProjectAsync(projectId);
 
     public async Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale, string role)
     {
@@ -455,11 +457,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
     /// <summary> Get the link sharing key for a project if it exists, otherwise create a new one. </summary>
     public async Task<string> GetLinkSharingKeyAsync(
-            string curUserId,
-            string projectId,
-            string role,
-            string shareLinkType
-        )
+        string curUserId,
+        string projectId,
+        string role,
+        string shareLinkType
+    )
     {
         SFProject project = await GetProjectAsync(projectId);
         if (!CanUserShareRole(curUserId, project, role))
@@ -501,6 +503,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         // Generate a new link sharing key for the given role
         key = _securityService.GenerateKey();
+
         await ProjectSecrets.UpdateAsync(
             p => p.Id == projectId,
             update =>
@@ -510,6 +513,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     {
                         Key = key,
                         ProjectRole = role,
+
                         ShareLinkType = shareLinkType,
                     }
                 )
@@ -603,7 +607,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
     /// <summary> Check that a share link is valid for a project and add the user to the project. </summary>
     /// <returns>Returns the projectId, which is used by the Angular join component to navigate to the project</returns>
-    public async Task<string> CheckLinkSharingAsync(string curUserId, string shareKey)
+    public async Task<string> JoinWithShareKeyAsync(string curUserId, string shareKey)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         ProjectSecret projectSecret = ProjectSecrets
@@ -614,8 +618,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         string projectId = projectSecret.Id;
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
-        if (projectSecretShareKey == null)
-            throw new ForbiddenException();
 
         if (projectSecretShareKey.RecipientUserId != null)
         {
@@ -634,48 +636,29 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         IDocument<User> userDoc = await conn.FetchAsync<User>(curUserId);
         // Attempt to get the role for the user from the Paratext registry
         Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
-        if (attempt.TryResult(out stringprojectRole))
-                {
-                    await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, projectSecretShareKey.Key);
-                    return projectId;
+        if (attempt.TryResult(out string projectRole))
+        {
+            await AddUserToProjectAsync(conn, projectDoc, userDoc, projectRole, projectSecretShareKey.Key);
+            return projectId;
         }
 
-        // Get the project role that is specified in the shareKey
-        if (projectSecretShareKey.ProjectRole == null)
+        // Ensure the share key is valid for everyone else
+        if (!await CheckShareKeyValidity(shareKey))
             throw new ForbiddenException();
 
         if (projectSecretShareKey.ShareLinkType == ShareLinkType.Anyone)
-                {
-                    string[] availableRoles = new Dictionary<string, bool>
-                    {
-                        {
-                            SFProjectRole.CommunityChecker,
-                            project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled
-                        },
-                { SFProjectRole.Viewer, project.TranslateConfig.ShareEnabled },
-                        { SFProjectRole.Commenter, project.TranslateConfig.ShareEnabled },
-                    }
-                        .Where(entry => entry.Value)
-                        .Select(entry => entry.Key)
-                        .ToArray();
-
-            if (availableRoles.Contains(projectSecretShareKey.ProjectRole))
-            {
-                await AddUserToProjectAsync(
-                    conn,
-                    projectDoc,
-                    userDoc,
-                    projectSecretShareKey.ProjectRole,
-                    projectSecretShareKey.Key
-                );
-                return projectId;
-            }
+        {
+            await AddUserToProjectAsync(
+                conn,
+                projectDoc,
+                userDoc,
+                projectSecretShareKey.ProjectRole,
+                projectSecretShareKey.Key
+            );
+            return projectId;
         }
         // Look for a valid specific user share key.
-        if (
-            projectSecretShareKey.ExpirationTime > DateTime.UtcNow
-            && projectSecretShareKey.ShareLinkType == ShareLinkType.Recipient
-        )
+        if (projectSecretShareKey.ShareLinkType == ShareLinkType.Recipient)
         {
             await AddUserToProjectAsync(
                 conn,
@@ -687,6 +670,57 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             return projectId;
         }
         throw new ForbiddenException();
+    }
+
+    public async Task<bool> CheckShareKeyValidity(string shareKey)
+    {
+        ProjectSecret projectSecret = GetProjectSecret(shareKey);
+        ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
+        SFProject project = await GetProjectAsync(projectSecret.Id);
+
+        if (projectSecretShareKey.ProjectRole == null)
+        {
+            return false;
+        }
+
+        if (projectSecretShareKey.ShareLinkType == ShareLinkType.Anyone)
+        {
+            string[] availableRoles = new Dictionary<string, bool>
+            {
+                {
+                    SFProjectRole.CommunityChecker,
+                    project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled
+                },
+                { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled },
+                { SFProjectRole.Reviewer, project.TranslateConfig.ShareEnabled }
+            }
+                .Where(entry => entry.Value)
+                .Select(entry => entry.Key)
+                .ToArray();
+
+            if (!availableRoles.Contains(projectSecretShareKey.ProjectRole))
+            {
+                return false;
+            }
+        }
+        else if (
+            projectSecretShareKey.ExpirationTime < DateTime.UtcNow
+            && projectSecretShareKey.ShareLinkType == ShareLinkType.Recipient
+        )
+        {
+            return false;
+        }
+        return true;
+    }
+
+    public SFProjectSecret GetProjectSecret(string shareKey)
+    {
+        SFProjectSecret projectSecret = ProjectSecrets
+            .Query()
+            .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
+        if (projectSecret == null)
+            throw new DataNotFoundException("Invalid share key");
+        return projectSecret;
     }
 
     /// <summary> Determine if the specified project is an active source project. </summary>
@@ -758,27 +792,27 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             await UpdatePermissionsAsync(userDoc.Id, projectDoc, CancellationToken.None);
         }
 
-            // Add to the source project, if required
-            string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
-            string sourceParatextId = projectDoc.Data.TranslateConfig.Source?.ParatextId;
-            if (!string.IsNullOrWhiteSpace(sourceProjectId) && !string.IsNullOrWhiteSpace(sourceParatextId))
+        // Add to the source project, if required
+        string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
+        string sourceParatextId = projectDoc.Data.TranslateConfig.Source?.ParatextId;
+        if (!string.IsNullOrWhiteSpace(sourceProjectId) && !string.IsNullOrWhiteSpace(sourceParatextId))
+        {
+            // Load the source project role from MongoDB
+            IDocument<SFProject> sourceProjectDoc = await TryGetProjectDocAsync(sourceProjectId, conn);
+            if (sourceProjectDoc == null)
+                return;
+            if (sourceProjectDoc.IsLoaded && !sourceProjectDoc.Data.UserRoles.ContainsKey(userDoc.Id))
             {
-                // Load the source project role from MongoDB
-                IDocument<SFProject> sourceProjectDoc = await TryGetProjectDocAsync(sourceProjectId, conn);
-                if (sourceProjectDoc == null)
-                    return;
-                if (sourceProjectDoc.IsLoaded && !sourceProjectDoc.Data.UserRoles.ContainsKey(userDoc.Id))
+                // Not found in Mongo, so load the project role from Paratext
+                Attempt<string> attempt = await TryGetProjectRoleAsync(sourceProjectDoc.Data, userDoc.Id);
+                if (attempt.TryResult(out string sourceProjectRole))
                 {
-                    // Not found in Mongo, so load the project role from Paratext
-                    Attempt<string> attempt = await TryGetProjectRoleAsync(sourceProjectDoc.Data, userDoc.Id);
-                    if (attempt.TryResult(out string sourceProjectRole))
-                    {
-                        // If they are in Paratext, add the user to the source project
-                        await this.AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole, shareKey);
-                    }
+                    // If they are in Paratext, add the user to the source project
+                    await this.AddUserToProjectAsync(conn, sourceProjectDoc, userDoc, sourceProjectRole, shareKey);
                 }
             }
         }
+    }
 
     /// <summary>
     /// Update all user permissions on books and chapters in an SF project, from PT project permissions. For Paratext
