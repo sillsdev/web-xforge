@@ -2159,6 +2159,48 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task UpdateParatextComments_ThrowsIfNotMatchingComment()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        string threadId = "thread1";
+        var thread = new ThreadComponents
+        {
+            threadNum = 1,
+            noteCount = 1,
+            username = env.Username01,
+            isNew = false
+        };
+        env.AddNoteThreadData(new[] { thread });
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, threadId);
+
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
+        {
+            {
+                env.Username01,
+                new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+            }
+        };
+        // The comment thread must exist if the Note Thread is not new
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.UpdateParatextCommentsAsync(
+                    userSecret,
+                    paratextId,
+                    40,
+                    new[] { noteThreadDoc },
+                    ptProjectUsers,
+                    env.TagCount
+                )
+        );
+    }
+
+    [Test]
     public void GetParatextSettings_RetrievesTagIcons()
     {
         var env = new TestEnvironment();
@@ -4056,8 +4098,8 @@ public class ParatextServiceTests
                     ThreadNoteComponents note = new ThreadNoteComponents
                     {
                         status = NoteStatus.Todo,
-                        tagsAdded = new[] { Paratext.Data.ProjectComments.CommentTag.toDoTagId.ToString() },
-                        assignedPTUser = Paratext.Data.ProjectComments.CommentThread.unassignedUser
+                        tagsAdded = new[] { CommentTag.toDoTagId.ToString() },
+                        assignedPTUser = CommentThread.unassignedUser
                     };
                     if (comp.notes != null)
                         note = comp.notes[i - 1];
