@@ -79,7 +79,7 @@ interface xForgeAuth0Parameters extends AuthorizationParams {
 })
 export class AuthService {
   readonly ptLinkedToAnotherUserKey: string = 'paratext-linked-to-another-user';
-  private _loggedInState: BehaviorSubject<LoginResult | undefined> = new BehaviorSubject<LoginResult | undefined>(
+  private _loggedInState$: BehaviorSubject<LoginResult | undefined> = new BehaviorSubject<LoginResult | undefined>(
     undefined
   );
   private refreshSubscription?: Subscription;
@@ -128,7 +128,7 @@ export class AuthService {
       .subscribe(() => this.locationService.go('/'));
 
     this.tryLogIn().then(loginResult => {
-      this._loggedInState.next(loginResult);
+      this._loggedInState$.next(loginResult);
     });
   }
 
@@ -149,10 +149,10 @@ export class AuthService {
   }
 
   get isLoggedIn(): Promise<boolean> {
-    const state: LoginResult | undefined = this._loggedInState.getValue();
+    const state: LoginResult | undefined = this._loggedInState$.getValue();
     if (state == null) {
       return new Promise<boolean>(resolve =>
-        this._loggedInState
+        this._loggedInState$
           .pipe(
             filter(result => result != null),
             take(1)
@@ -166,10 +166,10 @@ export class AuthService {
   }
 
   get isNewlyLoggedIn(): Promise<boolean> {
-    const state: LoginResult | undefined = this._loggedInState.getValue();
+    const state: LoginResult | undefined = this._loggedInState$.getValue();
     if (state == null) {
       return new Promise<boolean>(resolve =>
-        this._loggedInState
+        this._loggedInState$
           .pipe(
             filter(result => result != null),
             take(1)
@@ -182,8 +182,8 @@ export class AuthService {
     return Promise.resolve(state.newlyLoggedIn);
   }
 
-  get loggedInState(): Observable<LoginResult> {
-    return this._loggedInState.asObservable().pipe(filter(state => state != null)) as Observable<LoginResult>;
+  get loggedInState$(): Observable<LoginResult> {
+    return this._loggedInState$.asObservable().pipe(filter(state => state != null)) as Observable<LoginResult>;
   }
 
   private get isLoginUrl(): boolean {
@@ -329,7 +329,7 @@ export class AuthService {
     if (!environment.production) {
       await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
     }
-    this._loggedInState.next({ loggedIn: true, newlyLoggedIn: true });
+    this._loggedInState$.next({ loggedIn: true, newlyLoggedIn: true });
     return true;
   }
 

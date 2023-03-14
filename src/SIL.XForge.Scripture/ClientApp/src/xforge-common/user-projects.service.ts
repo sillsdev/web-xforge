@@ -30,7 +30,7 @@ export class SFUserProjectsService extends SubscriptionDisposable {
   }
 
   private async setup(): Promise<void> {
-    this.subscribe(this.authService.loggedInState, async (state: LoginResult) => {
+    this.subscribe(this.authService.loggedInState$, async (state: LoginResult) => {
       if (!state.loggedIn) {
         return;
       }
