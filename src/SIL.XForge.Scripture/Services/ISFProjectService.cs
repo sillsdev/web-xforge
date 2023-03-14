@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using SIL.XForge.Models;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Services;
+
 public interface ISFProjectService : IProjectService
 {
     Task<string> CreateProjectAsync(string curUserId, SFProjectCreateSettings settings);
@@ -18,10 +18,13 @@ public interface ISFProjectService : IProjectService
     Task CancelSyncAsync(string curUserId, string projectId);
     Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale, string role);
     Task<string> GetLinkSharingKeyAsync(string curUserId, string projectId, string role, string shareLinkType);
-    Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey);
+    Task<bool> CheckShareKeyValidity(string shareKey);
+    Task<SFProject> GetProjectAsync(string projectId);
+    SFProjectSecret GetProjectSecret(string shareKey);
+    Task<bool> ReserveLinkSharingKeyAsync(string curUserId, string shareKey);
     Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email);
     Task UninviteUserAsync(string curUserId, string projectId, string email);
-    Task<string> CheckLinkSharingAsync(string curUserId, string shareKey = null);
+    Task<string> JoinWithShareKeyAsync(string curUserId, string shareKey);
     Task<IReadOnlyList<InviteeStatus>> InvitedUsersAsync(string curUserId, string projectId);
     bool IsSourceProject(string projectId);
     Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId);

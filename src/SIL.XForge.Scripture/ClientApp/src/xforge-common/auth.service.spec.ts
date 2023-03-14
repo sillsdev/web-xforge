@@ -5,7 +5,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { anyString, anything, capture, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { GenericError, RedirectLoginOptions, TimeoutError } from '@auth0/auth0-spa-js';
+import { GenericError, GetTokenSilentlyVerboseResponse, RedirectLoginOptions, TimeoutError } from '@auth0/auth0-spa-js';
 import { Auth0Client } from '@auth0/auth0-spa-js';
 import { MockConsole } from 'xforge-common/mock-console';
 import { filter, take } from 'rxjs/operators';
@@ -20,7 +20,7 @@ import {
   XF_ROLE_CLAIM,
   XF_USER_ID_CLAIM
 } from './auth.service';
-import { Auth0Service } from './auth0.service';
+import { Auth0Service, TransparentAuthenticationCookie } from './auth0.service';
 import { BugsnagService } from './bugsnag.service';
 import { CommandError, CommandErrorCode, CommandService } from './command.service';
 import { ErrorReportingService } from './error-reporting.service';
@@ -151,10 +151,12 @@ describe('AuthService', () => {
     expect(env.accessToken).withContext('logged out accessToken').toBeUndefined();
     expect(env.service.expiresAt).withContext('logged out expiresAt').toBeUndefined();
     verify(mockedWebAuth.logout(anything())).once();
+    verify(mockedCookieService.deleteAll('/')).once();
+    verify(mockedDialogService.confirm(anything(), anything(), anything())).never();
     const [logoutOptions] = capture(mockedWebAuth.logout).last();
     expect(logoutOptions).withContext('logged out logoutOptions').toBeDefined();
     if (logoutOptions != null) {
-      expect(logoutOptions.returnTo).withContext('logged out returnTo').toBeDefined();
+      expect(logoutOptions.logoutParams!.returnTo).withContext('logged out returnTo').toBeDefined();
     }
   }));
 
@@ -221,9 +223,9 @@ describe('AuthService', () => {
     expect(authOptions).toBeDefined();
     if (authOptions != null) {
       expect(authOptions.appState).toEqual(`{"returnUrl":"${returnUrl}"}`);
-      expect(authOptions.language).toEqual(env.language);
-      expect(authOptions.login_hint).toEqual(env.language);
-      expect(authOptions.mode).toBeUndefined();
+      expect(authOptions.authorizationParams!.language).toEqual(env.language);
+      expect(authOptions.authorizationParams!.login_hint).toEqual(env.language);
+      expect(authOptions.authorizationParams!.mode).toBeUndefined();
     }
   }));
 
@@ -240,9 +242,9 @@ describe('AuthService', () => {
     ).last()[0];
     expect(authOptions).toBeDefined();
     if (authOptions != null) {
-      expect(authOptions.language).toEqual(env.language);
-      expect(authOptions.login_hint).toEqual(env.language);
-      expect(authOptions.mode).toBeUndefined();
+      expect(authOptions.authorizationParams!.language).toEqual(env.language);
+      expect(authOptions.authorizationParams!.login_hint).toEqual(env.language);
+      expect(authOptions.authorizationParams!.mode).toBeUndefined();
     }
   }));
 
@@ -259,9 +261,9 @@ describe('AuthService', () => {
     ).last()[0];
     expect(authOptions).toBeDefined();
     if (authOptions != null) {
-      expect(authOptions.language).toEqual(env.language);
-      expect(authOptions.login_hint).toEqual(env.language);
-      expect(authOptions.mode).toEqual('signUp');
+      expect(authOptions.authorizationParams!.language).toEqual(env.language);
+      expect(authOptions.authorizationParams!.login_hint).toEqual(env.language);
+      expect(authOptions.authorizationParams!.mode).toEqual('signUp');
     }
   }));
 
@@ -280,9 +282,9 @@ describe('AuthService', () => {
     ).last()[0];
     expect(authOptions).toBeDefined();
     if (authOptions != null) {
-      expect(authOptions.language).toEqual(env.language);
-      expect(authOptions.login_hint).toEqual(locale);
-      expect(authOptions.mode).toEqual('signUp');
+      expect(authOptions.authorizationParams!.language).toEqual(env.language);
+      expect(authOptions.authorizationParams!.login_hint).toEqual(locale);
+      expect(authOptions.authorizationParams!.mode).toEqual('signUp');
     }
   }));
 
@@ -298,8 +300,8 @@ describe('AuthService', () => {
     ).last()[0];
     expect(authOptions).toBeDefined();
     if (authOptions != null) {
-      expect(authOptions.enablePasswordless).toEqual(true);
-      expect(authOptions.promptPasswordlessLogin).toBeUndefined();
+      expect(authOptions.authorizationParams!.enablePasswordless).toEqual(true);
+      expect(authOptions.authorizationParams!.promptPasswordlessLogin).toBeUndefined();
     }
   }));
 
@@ -316,8 +318,8 @@ describe('AuthService', () => {
     ).last()[0];
     expect(authOptions).toBeDefined();
     if (authOptions != null) {
-      expect(authOptions.enablePasswordless).toEqual(true);
-      expect(authOptions.promptPasswordlessLogin).toEqual(true);
+      expect(authOptions.authorizationParams!.enablePasswordless).toEqual(true);
+      expect(authOptions.authorizationParams!.promptPasswordlessLogin).toEqual(true);
     }
   }));
 
@@ -338,8 +340,8 @@ describe('AuthService', () => {
       const state = JSON.parse(authOptions.appState!);
       expect(state.returnUrl).toEqual(returnUrl);
       expect(state.linking).toBe(true);
-      expect(authOptions.language).toEqual(env.language);
-      expect(authOptions.login_hint).toEqual(env.language);
+      expect(authOptions.authorizationParams!.ui_locales).toEqual(env.language);
+      expect(authOptions.authorizationParams!.login_hint).toEqual(env.language);
     }
     env.discardTokenExpiryTimer();
   }));
@@ -571,6 +573,31 @@ describe('AuthService', () => {
     expect(env.service.expiresAt).toBeGreaterThan(0);
     env.discardTokenExpiryTimer();
   }));
+
+  it('prompt on log out if transparent authentication cookie is set', fakeAsync(() => {
+    const env = new TestEnvironment({ isOnline: true, isLoggedIn: true, setTransparentAuthenticationCookie: true });
+    expect(env.isAuthenticated).toBe(true);
+    env.service.logOut();
+    verify(mockedDialogService.confirm(anything(), anything(), anything())).once();
+    env.discardTokenExpiryTimer();
+  }));
+
+  it('should authenticate transparently when joining', fakeAsync(() => {
+    const callback = (env: TestEnvironment): void => {
+      when(mockedLocationService.pathname).thenReturn('/join/shareKey');
+      when(mockedAuth0Service.tryTransparentAuthentication()).thenResolve(env.validToken);
+    };
+    const env = new TestEnvironment({
+      isOnline: true,
+      setTransparentAuthenticationCookie: true,
+      callback
+    });
+    verify(mockedAuth0Service.tryTransparentAuthentication()).once();
+    verify(mockedWebAuth.getTokenSilently(anything())).never();
+    verify(mockedWebAuth.loginWithRedirect(anything())).never();
+    expect(env.isAuthenticated).toBeTrue();
+    env.discardTokenExpiryTimer();
+  }));
 });
 
 interface TestEnvironmentConstructorArgs {
@@ -578,6 +605,7 @@ interface TestEnvironmentConstructorArgs {
   isLoggedIn?: boolean;
   isNewlyLoggedIn?: boolean;
   loginState?: AuthState;
+  setTransparentAuthenticationCookie?: boolean;
   accountLinkingResponse?: CommandError;
   callback?: (env: TestEnvironment) => void;
 }
@@ -622,6 +650,7 @@ class TestEnvironment {
     isLoggedIn,
     isNewlyLoggedIn,
     loginState = { returnUrl: '' },
+    setTransparentAuthenticationCookie,
     accountLinkingResponse,
     callback
   }: TestEnvironmentConstructorArgs = {}) {
@@ -652,6 +681,9 @@ class TestEnvironment {
     } else {
       this.setLoginRequiredResponse();
     }
+    when(mockedCookieService.check(TransparentAuthenticationCookie)).thenReturn(
+      setTransparentAuthenticationCookie === true
+    );
     when(mockedCookieService.get(anyString())).thenReturn(aspCultureCookieValue(this.language));
     when(mockedLocalSettingsService.remoteChanges$).thenReturn(this._localeSettingsRemoveChanges);
     when(mockedLocalSettingsService.get(anyString())).thenCall(key => this.localSettings.get(key));
@@ -728,6 +760,17 @@ class TestEnvironment {
     return isNewlyLoggedIn;
   }
 
+  get validToken(): GetTokenSilentlyVerboseResponse {
+    return {
+      id_token: '12345',
+      access_token: TestEnvironment.encodeAccessToken({
+        [XF_ROLE_CLAIM]: SystemRole.SystemAdmin,
+        [XF_USER_ID_CLAIM]: TestEnvironment.userId
+      }),
+      expires_in: this.tokenExpiryTimer
+    };
+  }
+
   /**
    * Force the timer set for scheduled renewals to expire
    */
@@ -762,14 +805,7 @@ class TestEnvironment {
   setLoginResponse(auth0Response?: AuthDetails | undefined): void {
     if (auth0Response == null) {
       auth0Response = {
-        token: {
-          id_token: '12345',
-          access_token: TestEnvironment.encodeAccessToken({
-            [XF_ROLE_CLAIM]: SystemRole.SystemAdmin,
-            [XF_USER_ID_CLAIM]: TestEnvironment.userId
-          }),
-          expires_in: this.tokenExpiryTimer
-        },
+        token: this.validToken,
         idToken: { __raw: '1', sub: '7890', email: 'test@example.com' },
         loginResult: {
           appState: this._authLoginState
