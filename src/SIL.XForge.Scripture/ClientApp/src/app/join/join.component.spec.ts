@@ -20,6 +20,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { DebugElement } from '@angular/core';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
+import { NoticeComponent } from '../shared/notice/notice.component';
 import { JoinComponent } from './join.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -34,7 +35,7 @@ const mockedSFProjectService = mock(SFProjectService);
 
 describe('JoinComponent', () => {
   configureTestingModule(() => ({
-    declarations: [JoinComponent],
+    declarations: [JoinComponent, NoticeComponent],
     imports: [
       HttpClientTestingModule,
       NoopAnimationsModule,
@@ -92,7 +93,7 @@ describe('JoinComponent', () => {
 
   it('check sharing link skipped offline', fakeAsync(() => {
     when(mockedDialogService.message(anything())).thenResolve();
-    new TestEnvironment({ isOnline: false });
+    new TestEnvironment({ isOnline: false, isLoggedIn: true });
     verify(mockedSFProjectService.onlineJoinWithShareKey(anything())).never();
     verify(mockedDialogService.message(anything())).once();
     verify(mockedRouter.navigateByUrl('/projects', anything())).once();
@@ -185,6 +186,24 @@ describe('JoinComponent', () => {
       verify(mockedDialogService.message(anything(), anything())).once();
       expect(env.submitButton.nativeElement.disabled).toBeFalse();
     }));
+
+    it('disable and enable form when online state changes', fakeAsync(() => {
+      const env = new TestEnvironment();
+
+      expect(env.offlineNotice).withContext('init').toBeFalsy();
+      expect(env.displayNameInput.nativeElement.disabled).withContext('init').toBeFalse();
+      expect(env.submitButton.nativeElement.disabled).withContext('init').toBeFalse();
+
+      env.onlineStatus = false;
+      expect(env.offlineNotice).withContext('offline').toBeTruthy();
+      expect(env.displayNameInput.nativeElement.disabled).withContext('offline').toBeTrue();
+      expect(env.submitButton.nativeElement.disabled).withContext('offline').toBeTrue();
+
+      env.onlineStatus = true;
+      expect(env.offlineNotice).withContext('online').toBeFalsy();
+      expect(env.displayNameInput.nativeElement.disabled).withContext('online').toBeFalse();
+      expect(env.submitButton.nativeElement.disabled).withContext('online').toBeFalse();
+    }));
   });
 });
 
@@ -200,7 +219,7 @@ class TestEnvironment {
   readonly component: JoinComponent;
   readonly fixture: ComponentFixture<JoinComponent>;
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
-  private readonly isOnline: BehaviorSubject<boolean>;
+  private readonly isOnline$: BehaviorSubject<boolean>;
 
   constructor({
     isOnline = true,
@@ -217,8 +236,9 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineJoinWithShareKey(anything())).thenResolve('project01');
     when(mockedDialogService.message(anything())).thenResolve();
 
-    this.isOnline = new BehaviorSubject<boolean>(isOnline);
-    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
+    this.isOnline$ = new BehaviorSubject<boolean>(isOnline);
+    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline$.asObservable());
+    when(mockedPwaService.isOnline).thenCall(() => this.isOnline$.getValue());
     when(mockedLocationService.origin).thenReturn('/');
     when(mockedAnonymousService.checkShareKey(anything())).thenResolve({
       shareKey,
@@ -270,7 +290,13 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('button[type="submit"]'));
   }
 
+  get offlineNotice(): DebugElement {
+    return this.fixture.debugElement.query(By.css('app-notice'));
+  }
+
   set onlineStatus(hasConnection: boolean) {
-    this.isOnline.next(hasConnection);
+    this.isOnline$.next(hasConnection);
+    tick();
+    this.fixture.detectChanges();
   }
 }
