@@ -17,7 +17,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
-import { AuthService } from 'xforge-common/auth.service';
+import { AuthService, LoginResult } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -442,6 +442,22 @@ describe('AppComponent', () => {
     verify(mockedAuthService.checkOnlineAuth()).once();
   }));
 
+  it('should continue init if login state changes', fakeAsync(() => {
+    const env = new TestEnvironment('online', false);
+    expect(env.component.isLoggedIn).toBeFalse();
+    expect(env.component.canSeeSettings$).toBeUndefined();
+    expect(env.component.canSeeUsers$).toBeUndefined();
+    expect(env.component.canSync$).toBeUndefined();
+    expect(env.component.canSeeAdminPages$).toBeUndefined();
+
+    env.triggerLogin();
+    expect(env.component.isLoggedIn).toBeTrue();
+    expect(env.component.canSeeSettings$).toBeDefined();
+    expect(env.component.canSeeUsers$).toBeDefined();
+    expect(env.component.canSync$).toBeDefined();
+    expect(env.component.canSeeAdminPages$).toBeDefined();
+  }));
+
   describe('Community Checking', () => {
     it('no books showing in the menu', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -587,6 +603,10 @@ class TestEnvironment {
   readonly canSeeSettings$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   readonly canSeeUsers$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   readonly hasUpdate$: Subject<any> = new Subject<any>();
+  readonly loggedInState$: BehaviorSubject<LoginResult> = new BehaviorSubject<LoginResult>({
+    loggedIn: true,
+    newlyLoggedIn: false
+  });
   readonly mockedProjectDeletedDialogRef = mock<MdcDialogRef<ProjectDeletedDialogComponent>>(MdcDialogRef);
   readonly projectDeletedDialogRefAfterClosed$: Subject<string> = new Subject<string>();
   readonly comesOnline$: Subject<void> = new Subject<void>();
@@ -595,7 +615,13 @@ class TestEnvironment {
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor(initialConnectionStatus?: 'online' | 'offline') {
+  constructor(initialConnectionStatus?: 'online' | 'offline', isLoggedIn: boolean = true) {
+    if (!isLoggedIn) {
+      this.loggedInState$.next({
+        loggedIn: false,
+        newlyLoggedIn: false
+      });
+    }
     this.addUser('user01', 'User 01', 'paratext|user01');
     this.addUser('user02', 'User 02', 'auth0|user02');
     this.addUser('user03', 'User 03', 'sms|user03');
@@ -639,7 +665,8 @@ class TestEnvironment {
     when(mockedSFProjectService.getProfile(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
-    when(mockedAuthService.isLoggedIn).thenResolve(true);
+    when(mockedAuthService.isLoggedIn).thenCall(() => this.loggedInState$.getValue().loggedIn);
+    when(mockedAuthService.loggedInState).thenReturn(this.loggedInState$);
     this.setCurrentUser('user01');
     when(mockedUserService.currentProjectId(anything())).thenReturn('project01');
     when(mockedSettingsAuthGuard.allowTransition(anything())).thenReturn(this.canSeeSettings$);
@@ -783,6 +810,11 @@ class TestEnvironment {
       data: newQuestion
     });
     this.realtimeService.updateAllSubscribeQueries();
+    this.wait();
+  }
+
+  triggerLogin(): void {
+    this.loggedInState$.next({ loggedIn: true, newlyLoggedIn: false });
     this.wait();
   }
 

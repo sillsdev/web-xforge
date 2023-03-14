@@ -244,7 +244,9 @@ export class I18nService {
       italicsEnd: '</em>',
       newLine: '<br />',
       spanStart: params['spanClass'] ? `<span class="${params['spanClass']}">` : '<span>',
-      spanEnd: '</span>'
+      spanEnd: '</span>',
+      underlineStart: '<u>',
+      underlineEnd: '</u>'
     });
   }
 

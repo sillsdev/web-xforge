@@ -26,7 +26,6 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../shared.module';
 import { ShareControlComponent } from './share-control.component';
-import { ShareComponent } from './share.component';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);

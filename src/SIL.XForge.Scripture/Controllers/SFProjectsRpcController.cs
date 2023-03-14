@@ -116,7 +116,7 @@ public class SFProjectsRpcController : RpcControllerBase
                     { "method", "UpdateSettings" },
                     { "projectId", projectId },
                     { "CheckingAnswerExport", settings?.CheckingAnswerExport },
-                        { "SourceParatextId", settings?.SourceParatextId },
+                    { "SourceParatextId", settings?.SourceParatextId },
                     { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
                     { "CheckingShareEnabled", settings?.CheckingShareEnabled?.ToString() },
                     { "TranslateShareEnabled", settings?.TranslateShareEnabled?.ToString() },
@@ -339,11 +339,11 @@ public class SFProjectsRpcController : RpcControllerBase
         }
     }
 
-    public async Task<IRpcMethodResult> CheckLinkSharing(string shareKey)
+    public async Task<IRpcMethodResult> JoinWithShareKey(string shareKey)
+    {
+        try
         {
-            try
-            {
-                return Ok(await _projectService.CheckLinkSharingAsync(UserId, shareKey));
+            return Ok(await _projectService.JoinWithShareKeyAsync(UserId, shareKey));
         }
         catch (ForbiddenException)
         {
@@ -384,6 +384,25 @@ public class SFProjectsRpcController : RpcControllerBase
                     { "role", role },
                     { "shareLinkType", shareLinkType },
                 }
+            );
+            throw;
+        }
+    }
+
+    public async Task<IRpcMethodResult> ReserveLinkSharingKey(string shareKey)
+    {
+        try
+        {
+            return Ok(await _projectService.ReserveLinkSharingKeyAsync(UserId, shareKey));
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "ReserveLinkSharingKey" }, { "shareKey", shareKey }, }
             );
             throw;
         }

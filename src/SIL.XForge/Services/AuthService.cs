@@ -40,6 +40,19 @@ public class AuthService : DisposableBase, IAuthService
 
     public Task<string> GetUserAsync(string authId) => CallApiAsync(HttpMethod.Get, $"users/{authId}");
 
+    public Task<string> GenerateTransparentUser(string name, string username, string password, string language)
+    {
+        var content = new JObject(
+            new JProperty("name", name),
+            new JProperty("username", username),
+            new JProperty("email", $"{username}@users.noreply.scriptureforge.org"),
+            new JProperty("password", password),
+            new JProperty("connection", "Transparent-Authentication"),
+            new JProperty("user_metadata", new JObject(new JProperty("interface_language", language)))
+        );
+        return CallApiAsync(HttpMethod.Post, "users", content);
+    }
+
     public Task LinkAccounts(string primaryAuthId, string secondaryAuthId)
     {
         var content = new JObject(new JProperty("provider", "oauth2"), new JProperty("user_id", secondaryAuthId));
