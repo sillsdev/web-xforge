@@ -57,7 +57,7 @@ export class TranslationLoader implements TranslocoLoader {
   }
 }
 
-function pad(number: number) {
+function pad(number: number): string {
   return number.toString().padStart(2, '0');
 }
 
@@ -124,7 +124,7 @@ export class I18nService {
     return this.currentLocale;
   }
 
-  get localeCode() {
+  get localeCode(): string {
     return this.currentLocale.canonicalTag;
   }
 
@@ -144,13 +144,13 @@ export class I18nService {
     return this.currentLocale.direction === 'ltr' ? 'left' : 'right';
   }
 
-  get locales() {
+  get locales(): Locale[] {
     return I18nService.locales.filter(
       locale => locale.production || this.featureFlags.showNonPublishedLocalizations.enabled
     );
   }
 
-  setLocale(tag: string, authService: AuthService) {
+  setLocale(tag: string, authService: AuthService): void {
     const locale = I18nService.getLocale(tag);
     if (locale == null) {
       throw new Error(`Cannot set locale to non-existent locale ${tag}`);
@@ -202,14 +202,14 @@ export class I18nService {
     this.document.body.setAttribute('dir', this.direction);
   }
 
-  localizeBook(book: number | string) {
+  localizeBook(book: number | string): string {
     if (typeof book === 'number') {
       book = Canon.bookNumberToId(book);
     }
     return this.transloco.translate(`canon.book_names.${book}`);
   }
 
-  localizeReference(verse: VerseRef) {
+  localizeReference(verse: VerseRef): string {
     // Add RTL mark before colon and hyphen characters, if in a RTL script.
     // See https://software.sil.org/arabicfonts/support/faq/ for description of this solution, under the section
     // "How do I get correct display for “Chapter:Verse” references using a regular “Roman” colon?"
@@ -231,7 +231,7 @@ export class I18nService {
     return this.transloco.selectTranslate<string>(key, params);
   }
 
-  translateAndInsertTags(key: I18nKey, params: object = {}) {
+  translateAndInsertTags(key: I18nKey, params: object = {}): string {
     return this.transloco.translate(key, {
       ...params,
       boldStart: '<strong>',
@@ -241,11 +241,13 @@ export class I18nService {
       newLine: '<br />',
       newLinePlain: '\r\n',
       spanStart: params['spanClass'] ? `<span class="${params['spanClass']}">` : '<span>',
-      spanEnd: '</span>'
+      spanEnd: '</span>',
+      underlineStart: '<u>',
+      underlineEnd: '</u>'
     });
   }
 
-  formatDate(date: Date) {
+  formatDate(date: Date): string {
     // fall back to en in the event the language code isn't valid
     const format = I18nService.dateFormats[this.localeCode] || {};
     return typeof format === 'function'

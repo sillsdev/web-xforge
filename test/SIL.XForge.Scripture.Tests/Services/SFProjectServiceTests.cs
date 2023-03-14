@@ -40,7 +40,7 @@ public class SFProjectServiceTests
     private const string User05 = "user05";
     private const string User06 = "user06";
     private const string User07 = "user07";
-        private const string LinkExpiredUser = "linkexpireduser";
+    private const string LinkExpiredUser = "linkexpireduser";
     private const string SiteId = "xf";
     private const string PTProjectIdNotYetInSF = "paratext_notYetInSF";
 
@@ -233,28 +233,28 @@ public class SFProjectServiceTests
         Assert.That(projectSecret.ShareKeys.Single(sk => sk.Email == email).ProjectRole, Is.EqualTo(role));
     }
 
-        [Test]
-        public async Task InviteAsync_LinkSharingEnabled_UserInvited()
-        {
-            var env = new TestEnvironment();
-            SFProject project = env.GetProject(Project02);
-            Assert.That(project.CheckingConfig.ShareEnabled, Is.True, "setup");
-            const string email = "newuser@example.com";
-            const string role = SFProjectRole.CommunityChecker;
-            // SUT
-            await env.Service.InviteAsync(User02, Project02, email, "en", role);
-            await env.EmailService
-                .Received(1)
-                .SendEmailAsync(
-                    email,
-                    Arg.Any<string>(),
-                    Arg.Is<string>(
-                        body => body.Contains($"http://localhost/projects/{Project02}?sharing=true&shareKey=1234abc")
-                    )
-                );
-            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project02);
-            Assert.That(projectSecret.ShareKeys.Single(sk => sk.Key == "1234abc").ProjectRole, Is.EqualTo(role));
-        }
+    [Test]
+    public async Task InviteAsync_LinkSharingEnabled_UserInvited()
+    {
+        var env = new TestEnvironment();
+        SFProject project = env.GetProject(Project02);
+        Assert.That(project.CheckingConfig.ShareEnabled, Is.True, "setup");
+        const string email = "newuser@example.com";
+        const string role = SFProjectRole.CommunityChecker;
+        // SUT
+        await env.Service.InviteAsync(User02, Project02, email, "en", role);
+        await env.EmailService
+            .Received(1)
+            .SendEmailAsync(
+                email,
+                Arg.Any<string>(),
+                Arg.Is<string>(
+                    body => body.Contains($"http://localhost/projects/{Project02}?sharing=true&shareKey=1234abc")
+                )
+            );
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project02);
+        Assert.That(projectSecret.ShareKeys.Single(sk => sk.Key == "1234abc").ProjectRole, Is.EqualTo(role));
+    }
 
     [Test]
     public async Task InviteAsync_SharingDisabled_ForbiddenError()
@@ -302,7 +302,7 @@ public class SFProjectServiceTests
         Assert.ThrowsAsync<ForbiddenException>(() => env.Service.InviteAsync(User03, Project03, email, "en", role));
     }
 
-        [Test]
+    [Test]
     public async Task ReserveLinkSharingKeyAsync_GenerateNewKeyIfReserved()
     {
         var env = new TestEnvironment();
@@ -341,27 +341,49 @@ public class SFProjectServiceTests
     }
 
     [Test]
-        public async Task GetLinkSharingKeyAsync_LinkDoesNotExist_NewShareKeyCreated()
-        {
-            var env = new TestEnvironment();
-            await env.Service.UpdateSettingsAsync(User01, Project03, new SFProjectSettings { });
-            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
-            Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == null), Is.False);
-            env.SecurityService.GenerateKey().Returns("newkey");
+    public void GetProjectSecret_ReturnsSecret()
+    {
+        var env = new TestEnvironment();
+        var shareKey = "abcd";
 
-            string shareLink = await env.Service.GetLinkSharingKeyAsync(
-                User02,
-                Project03,
-                SFProjectRole.CommunityChecker,
-                ShareLinkType.Anyone
-            );
-            Assert.That(shareLink, Is.EqualTo("newkey"));
-            projectSecret = env.ProjectSecrets.Get(Project03);
-            Assert.That(
-                projectSecret.ShareKeys.Single(sk => sk.Email == null && sk.ExpirationTime == null).Key,
-                Is.EqualTo("newkey")
-            );
-        }
+        // SUT
+        SFProjectSecret projectSecret = env.Service.GetProjectSecret(shareKey);
+
+        Assert.AreEqual(projectSecret.Id, Project01);
+    }
+
+    [Test]
+    public void GetProjectSecret_ThrowsOnNotFound()
+    {
+        var env = new TestEnvironment();
+        var shareKey = "invalid";
+
+        // SUT
+        Assert.Throws<DataNotFoundException>(() => env.Service.GetProjectSecret(shareKey));
+    }
+
+    [Test]
+    public async Task GetLinkSharingKeyAsync_LinkDoesNotExist_NewShareKeyCreated()
+    {
+        var env = new TestEnvironment();
+        await env.Service.UpdateSettingsAsync(User01, Project03, new SFProjectSettings { });
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
+        Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == null), Is.False);
+        env.SecurityService.GenerateKey().Returns("newkey");
+
+        string shareLink = await env.Service.GetLinkSharingKeyAsync(
+            User02,
+            Project03,
+            SFProjectRole.CommunityChecker,
+            ShareLinkType.Anyone
+        );
+        Assert.That(shareLink, Is.EqualTo("newkey"));
+        projectSecret = env.ProjectSecrets.Get(Project03);
+        Assert.That(
+            projectSecret.ShareKeys.Single(sk => sk.Email == null && sk.ExpirationTime == null).Key,
+            Is.EqualTo("newkey")
+        );
+    }
 
     [Test]
     public async Task GetLinkSharingKeyAsync_LinkExists_ReturnsExistingKey()
@@ -380,28 +402,23 @@ public class SFProjectServiceTests
     }
 
     [Test]
-        public async Task GetLinkSharingKeyAsync_LinkHasExpired_NewShareKeyCreated()
-        {
-            var env = new TestEnvironment();
-            const string role = SFProjectRole.SFObserver;
-            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
+    public async Task GetLinkSharingKeyAsync_LinkHasExpired_NewShareKeyCreated()
+    {
+        var env = new TestEnvironment();
+        const string role = SFProjectRole.SFObserver;
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
 
-            Assert.That(
-                projectSecret.ShareKeys.Any(sk => sk.Key == "expiredKey" && sk.ExpirationTime < DateTime.Now),
-                Is.True,
-                "setup - a link sharing key should exist"
-            );
-            env.SecurityService.GenerateKey().Returns("newkey");
-            string shareLink = await env.Service.GetLinkSharingKeyAsync(
-                User07,
-                Project06,
-                role,
-                ShareLinkType.Recipient
-            );
-            Assert.That(shareLink, Is.EqualTo("newkey"));
-        }
+        Assert.That(
+            projectSecret.ShareKeys.Any(sk => sk.Key == "expiredKey" && sk.ExpirationTime < DateTime.Now),
+            Is.True,
+            "setup - a link sharing key should exist"
+        );
+        env.SecurityService.GenerateKey().Returns("newkey");
+        string shareLink = await env.Service.GetLinkSharingKeyAsync(User07, Project06, role, ShareLinkType.Recipient);
+        Assert.That(shareLink, Is.EqualTo("newkey"));
+    }
 
-        [Test]
+    [Test]
     public async Task GetLinkSharingKeyAsync_LinkHasExpired_NewShareKeyCreated()
     {
         var env = new TestEnvironment();
@@ -425,13 +442,12 @@ public class SFProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
         Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(1));
         Assert.ThrowsAsync<ForbiddenException>(
-            async () =>
-                await env.Service.GetLinkSharingKeyAsync(
-                    User02,
-                    Project01,
-                    SFProjectRole.CommunityChecker,
-                    ShareLinkType.Anyone
-                )
+            async () => await env.Service.GetLinkSharingKeyAsync(
+            User02,
+            Project01,
+            SFProjectRole.CommunityChecker,
+            ShareLinkType.Anyone
+        )
         );
         projectSecret = env.ProjectSecrets.Get(Project01);
         Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(1));
@@ -461,54 +477,53 @@ public class SFProjectServiceTests
         );
     }
 
-        [Test]
-        public async Task GetLinkSharingKeyAsync_UserInvitesReviewer_SucceedsForAdmins()
-        {
-            var env = new TestEnvironment();
-            string key = await env.Service.GetLinkSharingKeyAsync(
-                User01,
-                Project01,
-                SFProjectRole.Reviewer,
-                ShareLinkType.Anyone
-            );
-            Assert.That(key, Is.Not.Null);
-            Assert.ThrowsAsync<ForbiddenException>(
-                () =>
-                    env.Service.GetLinkSharingKeyAsync(User02, Project01, SFProjectRole.Reviewer, ShareLinkType.Anyone)
+    [Test]
+    public async Task GetLinkSharingKeyAsync_UserInvitesReviewer_SucceedsForAdmins()
+    {
+        var env = new TestEnvironment();
+        string key = await env.Service.GetLinkSharingKeyAsync(
+            User01,
+            Project01,
+            SFProjectRole.Reviewer,
+            ShareLinkType.Anyone
+        );
+        Assert.That(key, Is.Not.Null);
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.GetLinkSharingKeyAsync(User02, Project01, SFProjectRole.Reviewer, ShareLinkType.Anyone)
         );
     }
 
     [Test]
-    public void CheckLinkSharingAsync_LinkSharingDisabledAndUserOnProject_Success()
+    public void JoinWithShareKeyAsync_LinkSharingDisabledAndUserOnProject_Success()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project01);
         Assert.That(project.UserRoles.ContainsKey(User02), Is.True, "setup");
-        Assert.DoesNotThrowAsync(() => env.Service.CheckLinkSharingAsync(User02, "abcd"));
-    }
-
-        [Test]
-        public async Task CheckLinkSharingAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
-        {
-            var env = new TestEnvironment();
-            SFProject project = env.GetProject(Project02);
-            Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
-            await env.Service.UpdateSettingsAsync(
-                User02,
-                Project02,
-                new SFProjectSettings { CheckingShareEnabled = false }
-            );
-            Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckLinkSharingAsync(User03, "linksharing02"));
+        Assert.DoesNotThrowAsync(() => env.Service.JoinWithShareKeyAsync(User02, "abcd"));
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_LinkSharingEnabled_UserJoined()
+    public async Task JoinWithShareKeyAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
+    {
+        var env = new TestEnvironment();
+        SFProject project = env.GetProject(Project02);
+        Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
+        await env.Service.UpdateSettingsAsync(
+            User02,
+            Project02,
+            new SFProjectSettings { CheckingShareEnabled = false }
+        );
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.JoinWithShareKeyAsync(User03, "linksharing02"));
+    }
+
+    [Test]
+    public async Task JoinWithShareKeyAsync_LinkSharingEnabled_UserJoined()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
 
-        await env.Service.CheckLinkSharingAsync(User03, "linksharing02");
+        await env.Service.JoinWithShareKeyAsync(User03, "linksharing02");
         project = env.GetProject(Project02);
         Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True);
         Assert.That(userRole, Is.EqualTo(SFProjectRole.CommunityChecker));
@@ -517,7 +532,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_LinkSharingEnabledAndUserHasPTRole_UserJoined()
+    public async Task JoinWithShareKeyAsync_LinkSharingEnabledAndUserHasPTRole_UserJoined()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project04);
@@ -526,7 +541,7 @@ public class SFProjectServiceTests
             .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(new Attempt<string>(SFProjectRole.Translator)));
 
-        await env.Service.CheckLinkSharingAsync(User03, "linksharing04");
+        await env.Service.JoinWithShareKeyAsync(User03, "linksharing04");
         project = env.GetProject(Project04);
         Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True);
         Assert.That(userRole, Is.EqualTo(SFProjectRole.Translator));
@@ -535,7 +550,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_LinkSharingEnabledAndShareKeyExists_UserJoined()
+    public async Task JoinWithShareKeyAsync_LinkSharingEnabledAndShareKeyExists_UserJoined()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
@@ -544,14 +559,14 @@ public class SFProjectServiceTests
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "existingkeyuser03"), Is.True, "setup");
 
-        await env.Service.CheckLinkSharingAsync(User03, "existingkeyuser03");
-            project = env.GetProject(Project02);
+        await env.Service.JoinWithShareKeyAsync(User03, "existingkeyuser03");
+        project = env.GetProject(Project02);
 
-            Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
-        }
+        Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
+    }
 
     [Test]
-    public async Task CheckLinkSharingAsync_SpecificSharingAlternateUser_UserJoined()
+    public async Task JoinWithShareKeyAsync_SpecificSharingAlternateUser_UserJoined()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project03);
@@ -567,10 +582,10 @@ public class SFProjectServiceTests
         );
 
         // Use the sharekey linked to user03
-        await env.Service.CheckLinkSharingAsync(User04, "key1234");
-            project = env.GetProject(Project03);
+        await env.Service.JoinWithShareKeyAsync(User04, "key1234");
+        project = env.GetProject(Project03);
 
-            Assert.That(project.UserRoles.ContainsKey(User04), Is.True, "User should have been added to project");
+        Assert.That(project.UserRoles.ContainsKey(User04), Is.True, "User should have been added to project");
 
         invitees = await env.Service.InvitedUsersAsync(User01, Project03);
         Assert.That(
@@ -580,7 +595,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_SpecificSharingLinkExpired_ForbiddenError()
+    public async Task JoinWithShareKeyAsync_SpecificSharingLinkExpired_ForbiddenError()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project03);
@@ -590,7 +605,7 @@ public class SFProjectServiceTests
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "expired@example.com"), Is.True, "setup");
 
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.CheckLinkSharingAsync(LinkExpiredUser, "keyexp"),
+            () => env.Service.JoinWithShareKeyAsync(LinkExpiredUser, "keyexp"),
             "The user should be forbidden to join the project: Email was in ShareKeys, but code was expired."
         );
 
@@ -604,7 +619,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void CheckLinkSharingAsync_SpecificSharingAndWrongCode_ForbiddenError()
+    public void JoinWithShareKeyAsync_SpecificSharingAndWrongCode_ForbiddenError()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project03);
@@ -614,13 +629,13 @@ public class SFProjectServiceTests
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "user03@example.com"), Is.True, "setup");
 
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.CheckLinkSharingAsync(User03, "badcode"),
+            () => env.Service.JoinWithShareKeyAsync(User03, "badcode"),
             "The user should be forbidden to join the project: Email address was in ShareKeys list, but wrong code was given."
         );
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_SpecificSharingAndRightKey_UserJoined()
+    public async Task JoinWithShareKeyAsync_SpecificSharingAndRightKey_UserJoined()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project03);
@@ -630,30 +645,30 @@ public class SFProjectServiceTests
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
         Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(4), "setup");
 
-        await env.Service.CheckLinkSharingAsync(User03, "key1234");
+        await env.Service.JoinWithShareKeyAsync(User03, "key1234");
 
-            project = env.GetProject(Project03);
+        project = env.GetProject(Project03);
 
-            Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
-        }
-
-        [Test]
-        public async Task CheckLinkSharingAsync_SpecificSharingAndRecipientPreviouslyJoined()
-        {
-            var env = new TestEnvironment();
-            SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
-
-            Assert.That(
-                projectSecret.ShareKeys.Any(sk => sk.Key == "usedKey" && sk.RecipientUserId == User02),
-            Is.True,
-            "setup"
-            );
-
-            Assert.That(await env.Service.CheckLinkSharingAsync(User02, "usedKey"), Is.EqualTo(Project06));
+        Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_ShareDisabledAndKeyValid_UserJoined()
+    public async Task JoinWithShareKeyAsync_SpecificSharingAndRecipientPreviouslyJoined()
+    {
+        var env = new TestEnvironment();
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
+
+        Assert.That(
+            projectSecret.ShareKeys.Any(sk => sk.Key == "usedKey" && sk.RecipientUserId == User02),
+            Is.True,
+            "setup"
+        );
+
+        Assert.That(await env.Service.JoinWithShareKeyAsync(User02, "usedKey"), Is.EqualTo(Project06));
+    }
+
+    [Test]
+    public async Task JoinWithShareKeyAsync_ShareDisabledAndKeyValid_UserJoined()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project03);
@@ -670,15 +685,15 @@ public class SFProjectServiceTests
         );
         project = env.GetProject(Project03);
         Assert.That(project.CheckingConfig.ShareEnabled, Is.False, "setup");
-        await env.Service.CheckLinkSharingAsync(User03, "key1234");
+        await env.Service.JoinWithShareKeyAsync(User03, "key1234");
 
-            project = env.GetProject(Project03);
+        project = env.GetProject(Project03);
 
-            Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
-        }
+        Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
+    }
 
     [Test]
-    public async Task CheckLinkSharingAsync_PTUserHasPTPermissions()
+    public async Task JoinWithShareKeyAsync_PTUserHasPTPermissions()
     {
         // If a user is invited to a project, and goes to the invitation link, the user being added to the project
         // should have their PT permissions for text books and chapters.
@@ -772,7 +787,7 @@ public class SFProjectServiceTests
             .Returns(Task.FromResult(ptSourcePermissions));
 
         // SUT
-        await env.Service.CheckLinkSharingAsync(User03, shareKeyCode);
+        await env.Service.JoinWithShareKeyAsync(User03, shareKeyCode);
 
         project = env.GetProject(Project05);
         Assert.That(
@@ -806,7 +821,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_NonPTUser()
+    public async Task JoinWithShareKeyAsync_NonPTUser()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project05);
@@ -824,7 +839,7 @@ public class SFProjectServiceTests
         Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User04), Is.False, "setup");
 
         // SUT
-        await env.Service.CheckLinkSharingAsync(User04, "key12345");
+        await env.Service.JoinWithShareKeyAsync(User04, "key12345");
 
         project = env.GetProject(Project05);
         Assert.That(project.UserRoles.TryGetValue(User04, out string userRole), Is.True, "user was added to project");
@@ -859,7 +874,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_PTUserButNotOfThisProjectAndCannotReadResource()
+    public async Task JoinWithShareKeyAsync_PTUserButNotOfThisProjectAndCannotReadResource()
     {
         // The user joining the project _is_ a PT user, but they do not have a PT role on this particular project.
         // Further, they do not have permission to read the DBL resource.
@@ -975,7 +990,7 @@ public class SFProjectServiceTests
             .Returns(Task.FromResult(ptSourcePermissions));
 
         // SUT
-        await env.Service.CheckLinkSharingAsync(User03, "key12345");
+        await env.Service.JoinWithShareKeyAsync(User03, "key12345");
 
         project = env.GetProject(Project05);
         Assert.That(
@@ -1049,7 +1064,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_PTUserButNotOfThisProjectYetReadsResource()
+    public async Task JoinWithShareKeyAsync_PTUserButNotOfThisProjectYetReadsResource()
     {
         // The user joining the project _is_ a PT user, but they do not have a PT role on this particular project.
         // Though they do have permission to read the DBL resource.
@@ -1160,7 +1175,7 @@ public class SFProjectServiceTests
             .Returns(Task.FromResult(ptSourcePermissions));
 
         // SUT
-        await env.Service.CheckLinkSharingAsync(User03, "key12345");
+        await env.Service.JoinWithShareKeyAsync(User03, "key12345");
 
         project = env.GetProject(Project05);
         Assert.That(
@@ -1238,13 +1253,13 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void CheckLinkSharingAsync_ObserverInvitedToProject_AddedToProject()
+    public void JoinWithShareKeyAsync_ObserverInvitedToProject_AddedToProject()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project04);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
 
-        Assert.DoesNotThrowAsync(() => env.Service.CheckLinkSharingAsync(User03, "linksharing04"));
+        Assert.DoesNotThrowAsync(() => env.Service.JoinWithShareKeyAsync(User03, "linksharing04"));
         project = env.GetProject(Project04);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "user should be added to project");
     }
@@ -1430,32 +1445,28 @@ public class SFProjectServiceTests
     }
 
     [Test]
-        public async Task RemoveUser_RemoveAnyShareKeys()
-        {
-            var env = new TestEnvironment();
-            string requestingUser = User07;
-            string userToRemove = User02;
-            string projectId = Project06;
+    public async Task RemoveUser_RemoveAnyShareKeys()
+    {
+        var env = new TestEnvironment();
+        string requestingUser = User07;
+        string userToRemove = User02;
+        string projectId = Project06;
 
-            SFProjectSecret projectSecret = env.ProjectSecrets.Get(projectId);
+        Assert.That(
+            env.ProjectSecrets.Get(projectId).ShareKeys.Any(sk => sk.RecipientUserId == userToRemove),
+            Is.True,
+            "setup"
+        );
 
-            Assert.That(
-                env.ProjectSecrets.Get(projectId).ShareKeys.Any(sk => sk.RecipientUserId == userToRemove),
-                Is.True,
-                "setup"
-            );
+        await env.Service.RemoveUserAsync(requestingUser, projectId, userToRemove);
 
-            await env.Service.RemoveUserAsync(requestingUser, projectId, userToRemove);
+        Assert.That(
+            env.ProjectSecrets.Get(projectId).ShareKeys.Any(sk => sk.RecipientUserId == userToRemove),
+            Is.False
+        );
+    }
 
-            projectSecret = env.ProjectSecrets.Get(projectId);
-
-            Assert.That(
-                env.ProjectSecrets.Get(projectId).ShareKeys.Any(sk => sk.RecipientUserId == userToRemove),
-                Is.False
-            );
-        }
-
-        [Test]
+    [Test]
     public void UninviteUser_BadProject_Error()
     {
         var env = new TestEnvironment();
@@ -1560,11 +1571,11 @@ public class SFProjectServiceTests
             .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(Attempt.Success(SFProjectRole.Translator)));
 
-            await env.Service.AddUserAsync(User03, Project03, null);
-            project = env.GetProject(Project03);
+        await env.Service.AddUserAsync(User03, Project03, null);
+        project = env.GetProject(Project03);
 
-            Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
-        }
+        Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
+    }
 
     [Test]
     public void AddUserAsync_SourceProjectUnavailable_SkipProject()
@@ -2644,99 +2655,95 @@ public class SFProjectServiceTests
         Assert.AreEqual(languageTag02, env.GetProject(Project04).TranslateConfig.Source.WritingSystem.Tag);
     }
 
-        private class TestEnvironment
+    private class TestEnvironment
+    {
+        public TestEnvironment()
         {
-            public TestEnvironment()
-            {
-                RealtimeService = new SFMemoryRealtimeService();
-                RealtimeService.AddRepository(
-                    "users",
-                    OTType.Json0,
-                    new MemoryRepository<User>(
-                        new[]
+            RealtimeService = new SFMemoryRealtimeService();
+            RealtimeService.AddRepository(
+                "users",
+                OTType.Json0,
+                new MemoryRepository<User>(
+                    new[]
+                    {
+                        new User
                         {
-                            new User
+                            Id = User01,
+                            Email = "user01@example.com",
+                            ParatextId = "pt-user01",
+                            Role = SystemRole.User,
+                            Sites = new Dictionary<string, Site>
                             {
-                                Id = User01,
-                                Email = "user01@example.com",
-                                ParatextId = "pt-user01",
-                                Role = SystemRole.User,
-                                Sites = new Dictionary<string, Site>
                                 {
-                                    {
-                                        SiteId,
-                                        new Site { Projects = { Project01, Project03, SourceOnly } }
-                                    }
-                                }
-                            },
-                            new User
-                            {
-                                Id = User02,
-                                Email = "user02@example.com",
-                                ParatextId = "pt-user02",
-                                Role = SystemRole.User,
-                                Sites = new Dictionary<string, Site>
-                                {
-                                    {
-                                        SiteId,
-                                        new Site
-                                        {
-                                            Projects = { Project01, Project02, Project03, Project04, Project06 }
-                                        }
-                                    }
-                                }
-                            },
-                            new User
-                            {
-                                Id = User03,
-                                Email = "user03@example.com",
-                                ParatextId = "pt-user03",
-                                Role = SystemRole.User,
-                                Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
-                            },
-                            new User
-                            {
-                                Id = User04,
-                                Email = "user04@example.com",
-                                Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
-                                Role = SystemRole.SystemAdmin
-                            },
-                            new User
-                            {
-                                Id = LinkExpiredUser,
-                                Email = "expired@example.com",
-                                Role = SystemRole.User,
-                                Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
-                            },
-                            new User
-                            {
-                                Id = User05,
-                                Email = "user05@example.com",
-                                ParatextId = "pt-user05",
-                                Role = SystemRole.User,
-                                Sites = new Dictionary<string, Site>
-                                {
-                                    {
-                                        SiteId,
-                                        new Site { Projects = { Project01 } }
-                                    }
-                                }
-                            },
-                            new User
-                            {
-                                Id = User06,
-                                Email = "user06@example.com",
-                                Role = SystemRole.User,
-                                Sites = new Dictionary<string, Site>
-                                {
-                                    {
-                                        SiteId,
-                                        new Site { Projects = { Project01 } }
-                                    }
+                                    SiteId,
+                                    new Site { Projects = { Project01, Project03, SourceOnly } }
                                 }
                             }
                         },
                         new User
+                        {
+                            Id = User02,
+                            Email = "user02@example.com",
+                            ParatextId = "pt-user02",
+                            Role = SystemRole.User,
+                            Sites = new Dictionary<string, Site>
+                            {
+                                {
+                                    SiteId,
+                                    new Site { Projects = { Project01, Project02, Project03, Project04, Project06 } }
+                                }
+                            }
+                        },
+                        new User
+                        {
+                            Id = User03,
+                            Email = "user03@example.com",
+                            ParatextId = "pt-user03",
+                            Role = SystemRole.User,
+                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
+                        },
+                        new User
+                        {
+                            Id = User04,
+                            Email = "user04@example.com",
+                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } },
+                            Role = SystemRole.SystemAdmin
+                        },
+                        new User
+                        {
+                            Id = LinkExpiredUser,
+                            Email = "expired@example.com",
+                            Role = SystemRole.User,
+                            Sites = new Dictionary<string, Site> { { SiteId, new Site() } }
+                        },
+                        new User
+                        {
+                            Id = User05,
+                            Email = "user05@example.com",
+                            ParatextId = "pt-user05",
+                            Role = SystemRole.User,
+                            Sites = new Dictionary<string, Site>
+                            {
+                                {
+                                    SiteId,
+                                    new Site { Projects = { Project01 } }
+                                }
+                            }
+                        },
+                        new User
+                        {
+                            Id = User06,
+                            Email = "user06@example.com",
+                            Role = SystemRole.User,
+                            Sites = new Dictionary<string, Site>
+                            {
+                                {
+                                    SiteId,
+                                    new Site { Projects = { Project01 } }
+                                }
+                            }
+                        }
+                        },new User
                         {
                             Id = User07,
                             Email = "user07@example.com",
@@ -2949,86 +2956,86 @@ public class SFProjectServiceTests
                             CheckingConfig = new CheckingConfig { CheckingEnabled = false, ShareEnabled = true, },
                             UserRoles =
                             {
-                                    { User01, SFProjectRole.CommunityChecker },
-                                    { User02, SFProjectRole.CommunityChecker },
-                                    { User07, SFProjectRole.Administrator }
-                                }
-                            },
-                            new SFProject
+                                { User01, SFProjectRole.CommunityChecker },
+                                { User02, SFProjectRole.CommunityChecker },
+                                { User07, SFProjectRole.Administrator }
+                            }
+                        },
+                        new SFProject
+                        {
+                            Id = Resource01,
+                            ParatextId = Resource01PTId,
+                            Name = "resource project",
+                            ShortName = "RES",
+                            Texts =
                             {
-                                Id = Resource01,
-                                ParatextId = Resource01PTId,
-                                Name = "resource project",
-                                ShortName = "RES",
-                                Texts =
+                                new TextInfo
                                 {
-                                    new TextInfo
+                                    BookNum = 40,
+                                    Chapters =
                                     {
-                                        BookNum = 40,
-                                        Chapters =
+                                        new Chapter
                                         {
-                                            new Chapter
-                                            {
-                                                Number = 1,
-                                                LastVerse = 3,
-                                                IsValid = true,
-                                                Permissions = { }
-                                            }
+                                            Number = 1,
+                                            LastVerse = 3,
+                                            IsValid = true,
+                                            Permissions = { }
                                         }
-                                    },
-                                    new TextInfo
+                                    }
+                                },
+                                new TextInfo
+                                {
+                                    BookNum = 41,
+                                    Chapters =
                                     {
-                                        BookNum = 41,
-                                        Chapters =
+                                        new Chapter
                                         {
-                                            new Chapter
-                                            {
-                                                Number = 1,
-                                                LastVerse = 3,
-                                                IsValid = true,
-                                                Permissions = { }
-                                            },
-                                            new Chapter
-                                            {
-                                                Number = 2,
-                                                LastVerse = 3,
-                                                IsValid = true,
-                                                Permissions = { }
-                                            }
+                                            Number = 1,
+                                            LastVerse = 3,
+                                            IsValid = true,
+                                            Permissions = { }
+                                        },
+                                        new Chapter
+                                        {
+                                            Number = 2,
+                                            LastVerse = 3,
+                                            IsValid = true,
+                                            Permissions = { }
                                         }
                                     }
                                 }
-                            },
-                            new SFProject
-                            {
-                                Id = SourceOnly,
-                                ParatextId = "pt_source_no_suggestions",
-                                Name = "Source Only Project",
-                                ShortName = "DSP",
-                                UserRoles = { { User01, SFProjectRole.Administrator } }
                             }
-                        }
-                    )
-                );
-                RealtimeService.AddRepository(
-                    "sf_project_user_configs",
-                    OTType.Json0,
-                    new MemoryRepository<SFProjectUserConfig>(
-                        new[]
+                        },
+                        new SFProject
                         {
-                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
-                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User02) },
-                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User05) },
-                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User06) },
-                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project02, User02) },
-                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User01) },
-                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User02) },
-                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project04, User01) },
-                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project04, User02) },
-                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project05, User01) },
-                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project05, User02) },
-                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project06, User01) },
-                            new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project06, User02) },
+                            Id = SourceOnly,
+                            ParatextId = "pt_source_no_suggestions",
+                            Name = "Source Only Project",
+                            ShortName = "DSP",
+                            UserRoles = { { User01, SFProjectRole.Administrator } }
+                        }
+                    }
+                )
+            );
+            RealtimeService.AddRepository(
+                "sf_project_user_configs",
+                OTType.Json0,
+                new MemoryRepository<SFProjectUserConfig>(
+                    new[]
+                    {
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User01) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User02) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User05) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project01, User06) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project02, User02) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User01) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project03, User02) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project04, User01) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project04, User02) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project05, User01) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project05, User02) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project06, User01) },
+                        new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(Project06, User02) },
                         new SFProjectUserConfig { Id = SFProjectUserConfig.GetDocId(SourceOnly, User01) }
                     }
                 )

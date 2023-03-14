@@ -72,7 +72,9 @@ describe('I18nService', () => {
           newLine: '<br />',
           newLinePlain: '\r\n',
           spanStart: '<span class="text">',
-          spanEnd: '</span>'
+          spanEnd: '</span>',
+          underlineStart: '<u>',
+          underlineEnd: '</u>'
         })
       )
     ).once();
