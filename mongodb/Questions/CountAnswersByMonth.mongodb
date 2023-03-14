@@ -1,0 +1,39 @@
+use('xforge');
+
+// Get the number of answers per month across all projects
+
+const answersByMonth = db.questions.aggregate([
+  {$match: {
+    answers: { $exists: true }
+  }},
+  {$project: {
+    answers: 1
+  }},
+  {$unwind: '$answers'},
+  {$project: {
+    dateString: { $dateToString: { format: '%Y-%m', date: {$dateFromString: { dateString: '$answers.dateCreated' } } } }
+  }},
+  {$group: {
+    _id: '$dateString',
+    count: { $sum: 1 },
+  }},
+  {$sort: { _id: 1 }}
+]).toArray();
+
+const startYear = answersByMonth[0]._id.substring(0, 4) * 1;
+const startMonth = answersByMonth[0]._id.substring(5, 7) * 1;
+
+const endYear = answersByMonth[answersByMonth.length - 1]._id.substring(0, 4) * 1;
+const endMonth = answersByMonth[answersByMonth.length - 1]._id.substring(5, 7) * 1;
+
+for (let i = startYear; i <= endYear; i++) {
+  let start = i === startYear ? startMonth : 1;
+  let end = i === endYear ? endMonth : 12;
+  for (let j = start; j <= end; j++) {
+    const dateString = `${i}-${j < 10 ? '0' + j : j}`;
+    const answer = answersByMonth.find(a => a._id === dateString);
+    console.log(`${dateString}\t${answer ? answer.count : 0}`)
+  }
+}
+
+answersByMonth
