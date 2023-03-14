@@ -1,0 +1,10 @@
+using System.Threading.Tasks;
+using SIL.XForge.Scripture.Models;
+
+namespace SIL.XForge.Scripture.Services;
+
+public interface IAnonymousService
+{
+    Task<AnonymousShareKeyResponse> CheckSharingKey(string shareKey);
+    Task<TransparentAuthenticationCredentials> GenerateAccount(string shareKey, string displayName, string language);
+}

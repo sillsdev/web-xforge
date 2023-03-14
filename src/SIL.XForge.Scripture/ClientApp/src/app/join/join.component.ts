@@ -9,7 +9,20 @@ import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { AuthService } from 'xforge-common/auth.service';
+import { AnonymousService } from 'xforge-common/anonymous.service';
+import { LocationService } from 'xforge-common/location.service';
+import { UntypedFormControl, Validators } from '@angular/forms';
+import { XFValidators } from 'xforge-common/xfvalidators';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { SFProjectService } from '../core/sf-project.service';
+
+export interface AnonymousShareKeyDetails {
+  projectName: string;
+  role: string;
+}
+export interface AnonymousShareKeyResponse extends AnonymousShareKeyDetails {
+  shareKey: string;
+}
 
 @Component({
   selector: 'app-join',
@@ -17,12 +30,19 @@ import { SFProjectService } from '../core/sf-project.service';
   styleUrls: ['./join.component.scss']
 })
 export class JoinComponent extends DataLoadingComponent {
+  name: UntypedFormControl = new UntypedFormControl('');
+  joiningProgress: boolean = false;
+  private joiningResponse?: AnonymousShareKeyResponse;
+
   constructor(
+    private readonly anonymousService: AnonymousService,
     private readonly authService: AuthService,
     private readonly dialogService: DialogService,
-    private readonly i18nService: I18nService,
+    readonly i18nService: I18nService,
+    private readonly locationService: LocationService,
     private readonly projectService: SFProjectService,
     private readonly pwaService: PwaService,
+    private readonly reportingService: ErrorReportingService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     noticeService: NoticeService
@@ -45,7 +65,7 @@ export class JoinComponent extends DataLoadingComponent {
       if (this.authService.currentUserId == null) {
         this.i18nService.setLocale(joining.locale, this.authService);
       }
-      this.checkLinkSharing(joining.shareKey);
+      this.checkShareKey(joining.shareKey);
     });
     const showOfflineMessage$ = combineLatest([joining$, this.pwaService.onlineStatus$]).pipe(
       filter(([_, isOnline]) => !isOnline)
@@ -53,32 +73,92 @@ export class JoinComponent extends DataLoadingComponent {
     this.subscribe(showOfflineMessage$, () => this.showOfflineMessage());
   }
 
-  private async checkLinkSharing(shareKey: string): Promise<void> {
-    this.loadingStarted();
+  get inviteText(): string {
+    if (this.joiningResponse == null) {
+      return '';
+    }
+    return this.i18nService.translateAndInsertTags('join.invited_to_join', {
+      projectName: this.joiningResponse.projectName,
+      role: this.i18nService.localizeRole(this.joiningResponse.role)
+    });
+  }
+
+  async joinProject(): Promise<void> {
+    if (!this.name.valid || this.joiningResponse == null) {
+      return;
+    }
+    this.joiningProgress = true;
+    try {
+      this.name.disable();
+      await this.anonymousService.generateAccount(
+        this.joiningResponse.shareKey,
+        this.name.value,
+        this.i18nService.localeCode
+      );
+      await this.authService.tryTransparentAuthentication();
+      if (await this.authService.isLoggedIn) {
+        await this.joinWithShareKey(this.joiningResponse.shareKey);
+      } else {
+        this.reportingService.silentError('Unable to login after generating transparent user account');
+        await this.dialogService.message('join.error_occurred_login', 'error_messages.try_again');
+        this.name.enable();
+      }
+    } catch (e) {
+      await this.invalidShareLink();
+    }
+    this.joiningProgress = false;
+  }
+
+  logIn(): void {
+    if (this.joiningProgress) {
+      return;
+    }
+    this.authService.logIn({ returnUrl: this.locationService.pathname, signUp: false });
+  }
+
+  private async joinWithShareKey(shareKey: string): Promise<void> {
     // if the link has sharing turned on, check if the current user needs to be added to the project
     try {
       // It doesn't matter if they are logged in, but we do need to wait for authentication to complete
       // If that fails the user will be redirected to auth0 to sign up
       await this.authService.isLoggedIn;
-      const projectId = await this.projectService.onlineCheckLinkSharing(shareKey);
+      const projectId = await this.projectService.onlineJoinWithShareKey(shareKey);
       this.router.navigateByUrl(`/projects/${projectId}`, { replaceUrl: true });
     } catch (err) {
       if (
         err instanceof CommandError &&
         (err.code === CommandErrorCode.Forbidden || err.code === CommandErrorCode.NotFound)
       ) {
-        await this.dialogService.message('project.project_link_is_invalid');
+        await this.invalidShareLink();
       } else {
         throw err;
       }
       this.router.navigateByUrl('/projects', { replaceUrl: true });
-    } finally {
+    }
+  }
+
+  private async checkShareKey(shareKey: string): Promise<void> {
+    this.loadingStarted();
+    const isLoggedIn: boolean = await this.authService.isLoggedIn;
+    if (isLoggedIn) {
+      await this.joinWithShareKey(shareKey);
+    }
+    this.name.setValidators([Validators.required, XFValidators.someNonWhitespace]);
+    try {
+      this.joiningResponse = await this.anonymousService.checkShareKey(shareKey);
       this.loadingFinished();
+    } catch {
+      await this.invalidShareLink();
     }
   }
 
   private async showOfflineMessage(): Promise<void> {
-    await this.dialogService.message('project.please_connect_to_use_link');
+    await this.dialogService.message('join.please_connect_to_use_link');
     this.router.navigateByUrl('/projects', { replaceUrl: true });
+  }
+
+  private async invalidShareLink(): Promise<void> {
+    await this.dialogService.message('join.project_link_is_invalid');
+    this.locationService.go(this.locationService.origin);
   }
 }
