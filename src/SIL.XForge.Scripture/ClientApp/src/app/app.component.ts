@@ -294,7 +294,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   async ngOnInit(): Promise<void> {
-    this.authService.loggedInState.subscribe(async (state: LoginResult) => {
+    this.authService.loggedInState$.subscribe(async (state: LoginResult) => {
       if (!state.loggedIn) {
         this.loadingFinished();
         return;
