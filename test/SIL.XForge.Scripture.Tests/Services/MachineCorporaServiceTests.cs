@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
 using NUnit.Framework;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 
@@ -364,7 +365,7 @@ public class MachineCorporaServiceTests
     {
         public TestEnvironment(HttpClient? httpClient = default)
         {
-            var exceptionHandler = new MockExceptionHandler();
+            var exceptionHandler = new MemoryExceptionHandler();
             FileSystemService = Substitute.For<IFileSystemService>();
             var httpClientFactory = Substitute.For<IHttpClientFactory>();
             httpClientFactory.CreateClient(Arg.Any<string>()).Returns(httpClient);

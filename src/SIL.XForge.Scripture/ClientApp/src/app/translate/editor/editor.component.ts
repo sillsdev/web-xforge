@@ -912,6 +912,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
     const result: boolean | undefined = await dialogRef.afterClosed().toPromise();
     if (result === true) {
+      this.toggleNoteThreadVerses(false);
       this.toggleNoteThreadVerses(true);
     }
   }
@@ -1210,6 +1211,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
               this.target?.formatEmbed(threadId, 'note-thread-embed', { ['highlight']: false });
               this.updateReadNotes(threadId);
             }
+            // stops the event from causing the segment to be selected
+            event.stopPropagation();
           })
         )
       );

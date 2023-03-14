@@ -34,7 +34,7 @@
               (selectionChange)="updateRole(row, $event.value)"
             >
               <mat-option *ngFor="let projectRole of projectRoles" [value]="projectRole">
-                {{ projectRole.displayName }}
+                {{ i18n.localizeRole(projectRole.role) }}
               </mat-option>
             </mat-select>
           </mat-form-field>

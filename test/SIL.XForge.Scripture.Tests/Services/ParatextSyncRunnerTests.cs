@@ -401,8 +401,9 @@ public class ParatextSyncRunnerTests
         var env = new TestEnvironment();
         env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
         env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
-        env.AddParatextNoteThreadData(new Book("MRK", 2));
-        Assert.That(env.ContainsNote(2), Is.True);
+        Book[] books = new[] { new Book("MRK", 2) };
+        env.AddParatextNoteThreadData(books);
+        Assert.That(env.ContainsNote(1), Is.True);
 
         await env.Runner.RunAsync("project02", "user01", "project02", false, CancellationToken.None);
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -412,7 +413,7 @@ public class ParatextSyncRunnerTests
                 Arg.Any<UserSecret>(),
                 "target",
                 41,
-                Arg.Is<IEnumerable<IDocument<NoteThread>>>(threads => threads.Any(t => t.Id == "project01:thread02")),
+                Arg.Is<IEnumerable<IDocument<NoteThread>>>(threads => threads.Any(t => t.Id == "project01:thread01")),
                 Arg.Any<Dictionary<int, ChapterDelta>>(),
                 Arg.Any<Dictionary<string, ParatextUserProfile>>()
             );
@@ -425,7 +426,7 @@ public class ParatextSyncRunnerTests
 
         Assert.That(env.ContainsQuestion("MAT", 2), Is.True);
         Assert.That(env.ContainsQuestion("MRK", 2), Is.False);
-        Assert.That(env.ContainsNote(2), Is.True);
+        Assert.That(env.ContainsNote(1), Is.True);
         env.VerifyProjectSync(true);
 
         // Verify the sync metrics
@@ -463,7 +464,8 @@ public class ParatextSyncRunnerTests
         env.SetupSFData(true, true, false, false, new Book("MAT", 2), new Book("MRK", 2));
         env.SetupPTData(new Book("MAT", 2), new Book("LUK", 2));
         // Need to make sure we have notes BEFORE the sync
-        env.AddParatextNoteThreadData(new Book("MRK", 2));
+        Book[] books = new[] { new Book("MAT", 2), new Book("MRK", 2) };
+        env.AddParatextNoteThreadData(books);
 
         // Expectations of setup
         Assert.That(env.ContainsText("project01", "MRK", 1), Is.True);
@@ -623,7 +625,7 @@ public class ParatextSyncRunnerTests
         SFProject project = env.GetProject();
         Assert.That(project.TranslateConfig.DefaultNoteTagId, Is.Null);
         // introduce a PT note thread
-        env.AddParatextNoteThreadData(books[0]);
+        env.AddParatextNoteThreadData(books);
         env.SetupPTData(books);
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -634,7 +636,7 @@ public class ParatextSyncRunnerTests
             .UpdateCommentTag(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<NoteTag>());
 
         // introduce an SF note thread
-        env.AddParatextNoteThreadData(books[0], true);
+        env.AddParatextNoteThreadData(books, true);
         env.ParatextService
             .UpdateCommentTag(Arg.Any<UserSecret>(), "target", Arg.Any<NoteTag>())
             .Returns(env.translateNoteTagId);
@@ -1643,14 +1645,6 @@ public class ParatextSyncRunnerTests
         env.SetupSFData(true, false, false, true, book);
         env.SetupPTData(book);
         env.SetupNoteChanges("thread01", "MAT 1:1", false);
-        await env.ParatextService.UpdateParatextCommentsAsync(
-            Arg.Any<UserSecret>(),
-            default,
-            default,
-            Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
-            Arg.Any<Dictionary<string, ParatextUserProfile>>(),
-            default
-        );
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
         await env.ParatextService
@@ -1665,6 +1659,45 @@ public class ParatextSyncRunnerTests
             );
 
         SFProject project = env.GetProject();
+        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+    }
+
+    [Test]
+    [Ignore("Not ready to sync notes back to paratext.")]
+    public async Task SyncAsync_AddParatextComments()
+    {
+        var env = new TestEnvironment();
+        var book = new Book("MAT", 1, true);
+        env.SetupSFData(true, false, false, true, book);
+        env.SetupPTData(book);
+        Book[] books = new[] { book };
+        env.AddParatextNoteThreadData(books, true, true);
+
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+        await env.ParatextService
+            .Received(1)
+            .UpdateParatextCommentsAsync(
+                Arg.Any<UserSecret>(),
+                "target",
+                40,
+                Arg.Is<IEnumerable<IDocument<NoteThread>>>(t => t.Single().Id == "project01:thread01"),
+                Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                Arg.Any<int>()
+            );
+
+        env.ParatextService
+            .Received(1)
+            .GetNoteThreadChanges(
+                Arg.Any<UserSecret>(),
+                "target",
+                40,
+                Arg.Is<IEnumerable<IDocument<NoteThread>>>(t => t.Single().Data.Notes.All(n => n.OwnerRef == "user03")),
+                Arg.Any<Dictionary<int, ChapterDelta>>(),
+                Arg.Any<Dictionary<string, ParatextUserProfile>>()
+            );
+        SFProject project = env.GetProject();
+        NoteThread noteThread = env.GetNoteThread("project01", "thread01");
+        Assert.That(noteThread.Notes[0].OwnerRef, Is.EqualTo("user03"));
         Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
     }
 
@@ -1927,7 +1960,7 @@ public class ParatextSyncRunnerTests
         var book = new Book("MAT", 3, true);
         env.SetupSFData(true, false, false, true, book);
         env.SetupPTData(book);
-        string threadId = $"thread03";
+        string threadId = $"thread01";
         NoteThread thread03 = env.GetNoteThread(projectId, threadId);
         Note note = thread03.Notes[0];
         string origNoteData = note.NoteToString();
@@ -2217,8 +2250,8 @@ public class ParatextSyncRunnerTests
             1
         );
 
-        // Only one user should have been added, although two are present
-        Assert.AreEqual(2, env.GetProject().UserRoles.Count);
+        // Only one user should have been added, although three are present
+        Assert.AreEqual(3, env.GetProject().UserRoles.Count);
         await env.SFProjectService.Received(1).AddUserAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
 
         // Check that the resource users metrics have been updated
@@ -2431,8 +2464,8 @@ public class ParatextSyncRunnerTests
         public bool ContainsQuestion(string projectId, string bookId, int chapter) =>
             RealtimeService.GetRepository<Question>().Contains($"{projectId}:question{bookId}{chapter}");
 
-        public bool ContainsNote(int chapter) =>
-            RealtimeService.GetRepository<NoteThread>().Contains($"project01:thread0{chapter}");
+        public bool ContainsNote(int threadNum) =>
+            RealtimeService.GetRepository<NoteThread>().Contains($"project01:thread0{threadNum}");
 
         public Question GetQuestion(string bookId, int chapter) =>
             RealtimeService.GetRepository<Question>().Get($"project01:question{bookId}{chapter}");
@@ -2592,7 +2625,8 @@ public class ParatextSyncRunnerTests
                     UserRoles = new Dictionary<string, string>
                     {
                         { "user01", SFProjectRole.Administrator },
-                        { "user02", SFProjectRole.Translator }
+                        { "user02", SFProjectRole.Translator },
+                        { "user03", SFProjectRole.Reviewer }
                     },
                     ParatextId = "target",
                     IsRightToLeft = false,
@@ -2765,7 +2799,10 @@ public class ParatextSyncRunnerTests
             RealtimeService.AddRepository("texts", OTType.RichText, new MemoryRepository<TextData>());
             RealtimeService.AddRepository("questions", OTType.Json0, new MemoryRepository<Question>());
             if (noteOnFirstBook && books.Length > 0)
-                AddParatextNoteThreadData(books[0]);
+            {
+                Book[] book = new[] { books[0] };
+                AddParatextNoteThreadData(book);
+            }
             else
                 SetupEmptyNoteThreads();
             foreach (Book book in books)
@@ -3117,7 +3154,7 @@ public class ParatextSyncRunnerTests
             var book = new Book("MAT", 3, true);
             SetupSFData(true, false, false, true, book);
             SetupPTData(book);
-            string threadId = $"thread03";
+            string threadId = $"thread01";
             NoteThread thread03 = GetNoteThread(projectId, threadId);
             Note note = thread03.Notes[0];
             // Check that the updated data that we will be checking for, is not already set in SF DB.
@@ -3135,53 +3172,53 @@ public class ParatextSyncRunnerTests
             Assert.That(datumGetter(note), Is.EqualTo(newData));
         }
 
-        public void AddParatextNoteThreadData(Book book, bool publishedToSF = false)
+        public void AddParatextNoteThreadData(Book[] books, bool publishedToSF = false, bool fromCommenter = false)
         {
-            int chapter = book.HighestTargetChapter;
-            string threadId = $"thread0{chapter}";
-            int tagId = CommentTag.toDoTagId;
-            RealtimeService.AddRepository(
-                "note_threads",
-                OTType.Json0,
-                new MemoryRepository<NoteThread>(
-                    new[]
+            NoteThread[] noteThreads = new NoteThread[books.Length];
+            for (int i = 0; i < books.Length; i++)
+            {
+                string threadId = $"thread0{i + 1}";
+                Book book = books[i];
+                int chapter = book.HighestTargetChapter;
+                int tagId = CommentTag.toDoTagId;
+
+                noteThreads[i] = new NoteThread
+                {
+                    Id = $"project01:{threadId}",
+                    DataId = threadId,
+                    ProjectRef = "project01",
+                    OwnerRef = fromCommenter ? "user03" : "user01",
+                    VerseRef = new VerseRefData(Canon.BookIdToNumber(book.Id), chapter, 1),
+                    OriginalContextBefore = "Context before ",
+                    OriginalContextAfter = " context after",
+                    OriginalSelectedText = "Scripture text in project",
+                    PublishedToSF = publishedToSF,
+                    Notes = new List<Note>()
                     {
-                        new NoteThread
+                        new Note
                         {
-                            Id = $"project01:{threadId}",
-                            DataId = threadId,
-                            ProjectRef = "project01",
-                            OwnerRef = "user01",
-                            VerseRef = new VerseRefData(Canon.BookIdToNumber(book.Id), chapter, 1),
-                            OriginalContextBefore = "Context before ",
-                            OriginalContextAfter = " context after",
-                            OriginalSelectedText = "Scripture text in project",
-                            PublishedToSF = publishedToSF,
-                            Notes = new List<Note>()
-                            {
-                                new Note
-                                {
-                                    DataId = "n01",
-                                    ThreadId = threadId,
-                                    SyncUserRef = "syncuser01",
-                                    Content = "Paratext note 1.",
-                                    TagId = tagId,
-                                    DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
-                                },
-                                new Note
-                                {
-                                    DataId = "n02",
-                                    ThreadId = threadId,
-                                    SyncUserRef = "syncuser02",
-                                    Content = "Paratext note 2.",
-                                    TagId = tagId,
-                                    DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
-                                },
-                            }
-                        }
+                            DataId = "n01",
+                            ThreadId = threadId,
+                            OwnerRef = fromCommenter ? "user03" : "user01",
+                            SyncUserRef = "syncuser01",
+                            Content = "Paratext note 1.",
+                            TagId = tagId,
+                            DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
+                        },
+                        new Note
+                        {
+                            DataId = "n02",
+                            ThreadId = threadId,
+                            OwnerRef = fromCommenter ? "user03" : "user02",
+                            SyncUserRef = "syncuser02",
+                            Content = "Paratext note 2.",
+                            TagId = tagId,
+                            DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
+                        },
                     }
-                )
-            );
+                };
+            }
+            RealtimeService.AddRepository("note_threads", OTType.Json0, new MemoryRepository<NoteThread>(noteThreads));
         }
 
         public async Task SetThreadNotesAsync(string sfProjectId, string threadId, List<Note> notes)

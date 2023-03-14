@@ -221,14 +221,13 @@ export class NoteDialogComponent implements OnInit {
     );
     if (!confirmed) return;
 
-    if (this.notesToDisplay.length === 1) {
-      if (this.threadDoc!.data!.notes.length === 1 && this.threadDoc!.data!.notes[0].dataId === note.dataId) {
-        // only delete the thread if deleting the last note in the thread
-        await this.threadDoc!.delete();
-        this.dialogRef.close(true);
-        return;
-      }
+    if (this.notesToDisplay.length === 1 && this.notesToDisplay[0].dataId === note.dataId) {
+      // only delete the thread if deleting the only note in the thread
+      await this.threadDoc!.delete();
+      this.dialogRef.close(true);
+      return;
     }
+
     const index: number = this.threadDoc!.data!.notes.findIndex(n => n.dataId === note.dataId);
     if (index >= 0) {
       await this.threadDoc!.submitJson0Op(op => op.remove(nt => nt.notes, index));
