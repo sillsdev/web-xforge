@@ -1,0 +1,44 @@
+use('xforge');
+
+// Queries all the metrics across projects to determine trends in edits and suggestions.
+
+// Suggested properties of metrics to sum over time:
+// - productiveCharacterCount
+// - suggestionAcceptedCount
+// - suggestionTotalCount
+// - timeEditActive
+const property = 'suggestionTotalCount';
+
+const resultsByMonth = db.translate_metrics.aggregate([
+  {$match: {
+    [property]: { $exists: true }
+  }},
+  {$project: {
+    _id: 0,
+    [property]: 1,
+    dateString: { $dateToString: { format: '%Y-%m', date: '$timestamp' } }
+  }},
+  {$group: {
+    _id: '$dateString',
+    count: { $sum: '$' + property },
+  }},
+  {$sort: { _id: 1 }}
+]).toArray();
+
+const startYear = resultsByMonth[0]._id.substring(0, 4) * 1;
+const startMonth = resultsByMonth[0]._id.substring(5, 7) * 1;
+
+const endYear = resultsByMonth[resultsByMonth.length - 1]._id.substring(0, 4) * 1;
+const endMonth = resultsByMonth[resultsByMonth.length - 1]._id.substring(5, 7) * 1;
+
+for (let i = startYear; i <= endYear; i++) {
+  let start = i === startYear ? startMonth : 1;
+  let end = i === endYear ? endMonth : 12;
+  for (let j = start; j <= end; j++) {
+    const dateString = `${i}-${j < 10 ? '0' + j : j}`;
+    const answer = resultsByMonth.find(a => a._id === dateString);
+    console.log(`${dateString}\t${answer ? answer.count : 0}`)
+  }
+}
+
+resultsByMonth
