@@ -32,6 +32,7 @@ import { TranslateModule } from './translate/translate.module';
 import { UsersModule } from './users/users.module';
 import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
 import { JoinComponent } from './join/join.component';
+import { SharedModule } from './shared/shared.module';
 
 @NgModule({
   declarations: [
@@ -68,7 +69,8 @@ import { JoinComponent } from './join/join.component';
     UICommonModule,
     XForgeCommonModule,
     TranslocoModule,
-    AppRoutingModule
+    AppRoutingModule,
+    SharedModule
   ],
   providers: [CookieService, DatePipe, { provide: ErrorHandler, useClass: ExceptionHandlingService }],
   bootstrap: [AppComponent]
