@@ -1,5 +1,10 @@
 import { WritingSystem } from '../../common/models/writing-system';
 
+export enum TranslateShareLevel {
+  Anyone = 'anyone',
+  Specific = 'specific'
+}
+
 export interface TranslateConfig {
   translationSuggestionsEnabled: boolean;
   source?: TranslateSource;

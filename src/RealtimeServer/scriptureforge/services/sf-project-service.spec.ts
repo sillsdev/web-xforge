@@ -1,6 +1,7 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
+import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 import { SF_PROJECT_PROFILES_COLLECTION, SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
@@ -9,7 +10,6 @@ import { CheckingAnswerExport } from '../models/checking-config';
 import { SystemRole } from '../../common/models/system-role';
 import { ParatextUserProfile } from '../models/paratext-user-profile';
 import { SFProjectService } from './sf-project-service';
-import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 
 describe('SFProjectService', () => {
   it('allows user on project to see profile', async () => {
