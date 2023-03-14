@@ -31,7 +31,7 @@ export interface AnonymousShareKeyResponse extends AnonymousShareKeyDetails {
 })
 export class JoinComponent extends DataLoadingComponent {
   name: UntypedFormControl = new UntypedFormControl('');
-  joiningProgress: boolean = false;
+  joiningProgress?: 'joining' | 'unavailable';
   private joiningResponse?: AnonymousShareKeyResponse;
 
   constructor(
@@ -67,10 +67,11 @@ export class JoinComponent extends DataLoadingComponent {
       }
       this.checkShareKey(joining.shareKey);
     });
-    const showOfflineMessage$ = combineLatest([joining$, this.pwaService.onlineStatus$]).pipe(
-      filter(([_, isOnline]) => !isOnline)
-    );
-    this.subscribe(showOfflineMessage$, () => this.showOfflineMessage());
+    this.subscribe(this.pwaService.onlineStatus$, () => this.showOfflineMessage());
+  }
+
+  get isFormEnabled(): boolean {
+    return this.joiningProgress == null;
   }
 
   get inviteText(): string {
@@ -83,11 +84,19 @@ export class JoinComponent extends DataLoadingComponent {
     });
   }
 
+  get isJoining(): boolean {
+    return this.joiningProgress === 'joining';
+  }
+
+  get isOnline(): boolean {
+    return this.pwaService.isOnline;
+  }
+
   async joinProject(): Promise<void> {
     if (!this.name.valid || this.joiningResponse == null) {
       return;
     }
-    this.joiningProgress = true;
+    this.joiningProgress = 'joining';
     try {
       this.name.disable();
       await this.anonymousService.generateAccount(
@@ -106,11 +115,11 @@ export class JoinComponent extends DataLoadingComponent {
     } catch (e) {
       await this.invalidShareLink();
     }
-    this.joiningProgress = false;
+    this.joiningProgress = undefined;
   }
 
   logIn(): void {
-    if (this.joiningProgress) {
+    if (this.joiningProgress != null) {
       return;
     }
     this.authService.logIn({ returnUrl: this.locationService.pathname, signUp: false });
@@ -153,8 +162,19 @@ export class JoinComponent extends DataLoadingComponent {
   }
 
   private async showOfflineMessage(): Promise<void> {
-    await this.dialogService.message('join.please_connect_to_use_link');
-    this.router.navigateByUrl('/projects', { replaceUrl: true });
+    if (this.pwaService.isOnline) {
+      this.name.enable();
+      this.joiningProgress = undefined;
+      return;
+    }
+    if (await this.authService.isLoggedIn) {
+      await this.dialogService.message('join.please_connect_to_use_link');
+      this.router.navigateByUrl('/projects', { replaceUrl: true });
+      return;
+    } else {
+      this.name.disable();
+      this.joiningProgress = 'unavailable';
+    }
   }
 
   private async invalidShareLink(): Promise<void> {
