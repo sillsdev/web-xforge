@@ -13,6 +13,12 @@ public class Note : Comment
     /// may read "unknownConflictType".
     /// </summary>
     public string ConflictType { get; set; }
+
+    /// <summary> Indicates whether a note is marked deleted. </summary>
+    /// <remarks>
+    /// This property is an artifact of the legacy DataAccessServer and should not be set to true
+    /// except for marking a note with the corresponding Paratext comment.
+    /// </remarks>
     public bool Deleted { get; set; }
     public string Status { get; set; }
     public int? TagId { get; set; }

@@ -646,9 +646,8 @@ public class ParatextServiceTests
         updateNotesXml = TestEnvironment.GetUpdateNotesXml(threadId, env.User01, date, content, verseRef, true);
         syncMetricInfo = env.Service.PutNotes(userSecret, ptProjectId, updateNotesXml);
 
-        Assert.That(thread.Comments.Count, Is.EqualTo(1));
-        comment = thread.Comments.First();
-        Assert.That(comment.Deleted, Is.True, "Comment should be marked deleted");
+        thread = env.ProjectCommentManager.FindThread(threadId);
+        Assert.That(thread, Is.Null);
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
 
         // PT username is not written to server logs
@@ -1804,6 +1803,47 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public void GetNoteThreadChanges_DeletedThreadIgnored()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        env.AddParatextComments(
+            new[]
+            {
+                new ThreadComponents
+                {
+                    threadNum = 1,
+                    noteCount = 1,
+                    username = env.Username01,
+                    isDeleted = true
+                }
+            }
+        );
+
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
+        Dictionary<string, ParatextUserProfile> syncUsers = new Dictionary<string, ParatextUserProfile>
+        {
+            {
+                env.Username01,
+                new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+            }
+        };
+        IEnumerable<IDocument<NoteThread>> emptyDocs = Array.Empty<IDocument<NoteThread>>();
+        IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
+            userSecret,
+            paratextId,
+            40,
+            emptyDocs,
+            chapterDeltas,
+            syncUsers
+        );
+        Assert.That(changes.Count(), Is.EqualTo(0));
+    }
+
+    [Test]
     public async Task UpdateParatextComments_AddsComment()
     {
         var env = new TestEnvironment();
@@ -2032,8 +2072,9 @@ public class ParatextServiceTests
                 new ThreadComponents
                 {
                     threadNum = 1,
-                    noteCount = 1,
-                    username = env.Username01
+                    noteCount = 2,
+                    username = env.Username01,
+                    isDeleted = true
                 }
             }
         );
@@ -2041,7 +2082,7 @@ public class ParatextServiceTests
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, threadId);
 
-        // Delete a comment
+        // One comment is marked deleted, the other is permanently deleted
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
             new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
@@ -2071,6 +2112,50 @@ public class ParatextServiceTests
 
         // PT username is not written to server logs
         env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
+    }
+
+    [Test]
+    public async Task UpdateParatextComments_DeletesThread()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        string threadId = "thread1";
+        env.AddParatextComments(
+            new[]
+            {
+                new ThreadComponents
+                {
+                    threadNum = 1,
+                    noteCount = 1,
+                    username = env.Username01
+                }
+            }
+        );
+        CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
+        Assert.That(thread, Is.Not.Null);
+
+        var ptProjectUsers = new Dictionary<string, ParatextUserProfile>
+        {
+            {
+                env.Username01,
+                new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+            }
+        };
+
+        IEnumerable<IDocument<NoteThread>> emptyDocs = Array.Empty<IDocument<NoteThread>>();
+        await env.Service.UpdateParatextCommentsAsync(
+            userSecret,
+            paratextId,
+            40,
+            emptyDocs,
+            ptProjectUsers,
+            env.TagCount
+        );
+        thread = env.ProjectCommentManager.FindThread(threadId);
+        Assert.That(thread, Is.Null);
     }
 
     [Test]

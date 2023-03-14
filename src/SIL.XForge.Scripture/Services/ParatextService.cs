@@ -1281,6 +1281,8 @@ public class ParatextService : DisposableBase, IParatextService
         foreach (string threadId in newThreadIds)
         {
             CommentThread thread = commentThreads.Single(ct => ct.Id == threadId);
+            if (thread.Comments.All(c => c.Deleted))
+                continue;
             Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
             NoteThreadChange newThread = new NoteThreadChange(
                 threadId,
@@ -1988,7 +1990,8 @@ public class ParatextService : DisposableBase, IParatextService
                 }
                 else if (comment.Deleted)
                 {
-                    existingComment.Deleted = true;
+                    // Permanently remove the comment
+                    manager.RemoveComment(comment);
                     syncMetricInfo.Deleted++;
                 }
                 else
@@ -2186,11 +2189,15 @@ public class ParatextService : DisposableBase, IParatextService
         List<List<Paratext.Data.ProjectComments.Comment>> changes =
             new List<List<Paratext.Data.ProjectComments.Comment>>();
         IEnumerable<IDocument<NoteThread>> activeThreadDocs = noteThreadDocs.Where(t => t.Data != null);
+        List<string> matchedCommentThreads = new List<string>();
         foreach (IDocument<NoteThread> threadDoc in activeThreadDocs)
         {
             List<Paratext.Data.ProjectComments.Comment> thread = new List<Paratext.Data.ProjectComments.Comment>();
             CommentThread existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
+            if (existingThread != null)
+                matchedCommentThreads.Add(existingThread.Id);
             List<(int, string)> threadNoteParatextUserRefs = new List<(int, string)>();
+            List<string> matchedCommentIds = new List<string>();
             for (int i = 0; i < threadDoc.Data.Notes.Count; i++)
             {
                 Note note = threadDoc.Data.Notes[i];
@@ -2198,6 +2205,7 @@ public class ParatextService : DisposableBase, IParatextService
                     existingThread == null ? null : GetMatchingCommentFromNote(note, existingThread, ptProjectUsers);
                 if (matchedComment != null)
                 {
+                    matchedCommentIds.Add(matchedComment.Id);
                     var comment = (Paratext.Data.ProjectComments.Comment)matchedComment.Clone();
                     bool commentUpdated = false;
                     if (note.Content != comment.Contents?.InnerXml)
@@ -2205,11 +2213,6 @@ public class ParatextService : DisposableBase, IParatextService
                         if (comment.Contents == null)
                             comment.AddTextToContent("", false);
                         comment.Contents.InnerXml = note.Content;
-                        commentUpdated = true;
-                    }
-                    if (note.Deleted && !comment.Deleted)
-                    {
-                        comment.Deleted = true;
                         commentUpdated = true;
                     }
                     if (commentUpdated)
@@ -2244,6 +2247,19 @@ public class ParatextService : DisposableBase, IParatextService
                     }
                 }
             }
+
+            if (existingThread != null)
+            {
+                IEnumerable<Paratext.Data.ProjectComments.Comment> deletedComments = existingThread.Comments.Where(
+                    c => !matchedCommentIds.Contains(c.Id)
+                );
+                foreach (Paratext.Data.ProjectComments.Comment deleted in deletedComments)
+                {
+                    var comment = (Paratext.Data.ProjectComments.Comment)deleted.Clone();
+                    comment.Deleted = true;
+                    thread.Add(comment);
+                }
+            }
             if (thread.Count > 0)
             {
                 changes.Add(thread);
@@ -2251,13 +2267,25 @@ public class ParatextService : DisposableBase, IParatextService
                 await UpdateNoteSyncUserAsync(threadDoc, threadNoteParatextUserRefs);
             }
         }
+        // handle deleted note threads
+        IEnumerable<CommentThread> deletedThreads = commentThreads.Where(t => !matchedCommentThreads.Contains(t.Id));
+        foreach (CommentThread thread in deletedThreads)
+        {
+            var deletedCommentsInThread = new List<Paratext.Data.ProjectComments.Comment>();
+            foreach (Paratext.Data.ProjectComments.Comment comment in thread.Comments)
+            {
+                comment.Deleted = true;
+                deletedCommentsInThread.Add(comment);
+            }
+            changes.Add(deletedCommentsInThread);
+        }
         return changes;
     }
 
     private ChangeType GetCommentChangeType(
         Paratext.Data.ProjectComments.Comment comment,
         Note note,
-        Paratext.Data.ProjectComments.CommentTag commentTag,
+        CommentTag commentTag,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {

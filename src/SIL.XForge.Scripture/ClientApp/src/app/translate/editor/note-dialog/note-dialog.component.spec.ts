@@ -5,9 +5,10 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { cloneDeep } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import {
   AssignedUsers,
   NoteConflictType,
@@ -459,6 +460,32 @@ describe('NoteDialogComponent', () => {
     env.clickDeleteNote();
     verify(mockedDialogService.confirm(anything(), anything())).once();
     expect(noteThread.data).toBeUndefined();
+    expect(env.dialogResult).toBe(true);
+  }));
+
+  it('deletes the thread if the deleted note is the only active note', fakeAsync(() => {
+    const noteThread: NoteThread = cloneDeep(TestEnvironment.defaultNoteThread);
+    const note: Note = {
+      dataId: 'note02',
+      threadId: noteThread.dataId,
+      ownerRef: 'user01',
+      content: 'deleted note',
+      dateCreated: '',
+      dateModified: '',
+      deleted: true,
+      type: NoteType.Normal,
+      status: NoteStatus.Resolved,
+      conflictType: NoteConflictType.DefaultValue
+    };
+    noteThread.notes.push(note);
+    env = new TestEnvironment({ noteThread });
+    expect(env.notes.length).toEqual(1);
+    const threadDoc: NoteThreadDoc = env.getNoteThreadDoc('thread01');
+    expect(threadDoc).toBeTruthy();
+    expect(env.noteHasEditActions(1)).toBe(true);
+    env.clickDeleteNote();
+    verify(mockedDialogService.confirm(anything(), anything())).once();
+    expect(threadDoc.data).toBeUndefined();
     expect(env.dialogResult).toBe(true);
   }));
 });

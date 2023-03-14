@@ -912,6 +912,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
     const result: boolean | undefined = await dialogRef.afterClosed().toPromise();
     if (result === true) {
+      this.toggleNoteThreadVerses(false);
       this.toggleNoteThreadVerses(true);
     }
   }
