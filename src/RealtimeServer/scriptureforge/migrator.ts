@@ -24,7 +24,8 @@ if (/\d+(?:\.\d+)*/.test(version) === false) {
 }
 
 const baseSettings = JSON.parse(fs.readFileSync('appsettings.json', 'utf8'));
-const stageSettings = JSON.parse(fs.readFileSync(`appsettings.${stage}.json`, 'utf8'));
+const settingsFile = stage === 'Production' ? 'appsettings.json' : `appsettings.${stage}.json`;
+const stageSettings = JSON.parse(fs.readFileSync(settingsFile, 'utf8'));
 
 const bugsnagApiKey = stageSettings.Bugsnag.ApiKey ?? baseSettings.Bugsnag.ApiKey;
 const bugsnagReleaseStage = stageSettings.Bugsnag.ReleaseStage ?? baseSettings.Bugsnag.ReleaseStage;
