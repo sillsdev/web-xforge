@@ -126,7 +126,7 @@ export class NoteDialogComponent implements OnInit {
     }
     return sortBy(
       this.threadDoc.data.notes.filter(n => !n.deleted && n.dataId !== this.noteBeingEdited?.dataId),
-      n => n.dateCreated
+      n => new Date(n.dateCreated)
     );
   }
 
