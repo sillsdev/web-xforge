@@ -507,7 +507,7 @@ describe('NoteDialogComponent', () => {
       if (note.dataId === 'note04') {
         note.dateCreated = '2023-03-15T11:00:00+13:00';
       } else {
-        note.dateCreated = new Date(currentTime + minutes).toISOString();
+        note.dateCreated = new Date(currentTime + minutes).toJSON();
       }
       minutes += 60000;
     }
