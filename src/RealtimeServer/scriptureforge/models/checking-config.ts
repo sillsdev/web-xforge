@@ -15,4 +15,5 @@ export interface CheckingConfig {
   shareEnabled: boolean;
   shareLevel: CheckingShareLevel;
   answerExportMethod: CheckingAnswerExport;
+  noteTagId?: number;
 }
