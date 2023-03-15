@@ -223,6 +223,8 @@
   },
   "settings": {
     "anyone_with_a_link": "Oricine cu un link",
+    "biblical_terms_will_be_enabled": "Biblical Terms will be displayed and able to be updated",
+    "biblical_terms": "Enable Biblical Terms",
     "community_checking_settings": "Community Checking Settings",
     "connect_network_to_change_settings": "Setările proiectului nu pot fi modificate în timp vă aflați offline. Vă rugăm să vă conectați la internet pentru a face modificări.",
     "danger_zone": "Zonă periculoasă",

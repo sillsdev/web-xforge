@@ -32,7 +32,23 @@ class SFProjectUserConfigMigration2 implements Migration {
   }
 }
 
+class SFProjectUserConfigMigration3 implements Migration {
+  static readonly VERSION = 3;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    if (doc.data.biblicalTerms == null) {
+      const op: ObjectInsertOp = { p: ['biblicalTermsEnabled'], oi: false };
+      await submitMigrationOp(SFProjectUserConfigMigration3.VERSION, doc, [op]);
+    }
+  }
+
+  migrateOp(_op: RawOp): void {
+    //do nothing
+  }
+}
+
 export const SF_PROJECT_USER_CONFIG_MIGRATIONS: MigrationConstructor[] = [
   SFProjectUserConfigMigration1,
-  SFProjectUserConfigMigration2
+  SFProjectUserConfigMigration2,
+  SFProjectUserConfigMigration3
 ];

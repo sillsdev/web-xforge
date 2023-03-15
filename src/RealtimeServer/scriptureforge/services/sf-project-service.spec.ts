@@ -98,6 +98,7 @@ class TestEnvironment {
       sync: {
         queuedCount: 0
       },
+      biblicalTermsEnabled: false,
       editable: true,
       checkingConfig: {
         checkingEnabled: false,

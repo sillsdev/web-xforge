@@ -30,6 +30,7 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
 export class SettingsComponent extends DataLoadingComponent implements OnInit {
   translationSuggestionsEnabled = new UntypedFormControl(false);
   sourceParatextId = new UntypedFormControl(undefined);
+  biblicalTermsEnabled = new UntypedFormControl(false);
   translateShareEnabled = new UntypedFormControl(false);
   translateShareLevel = new UntypedFormControl(undefined);
   checkingEnabled = new UntypedFormControl(false);
@@ -45,6 +46,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   form = new UntypedFormGroup({
     translationSuggestionsEnabled: this.translationSuggestionsEnabled,
     sourceParatextId: this.sourceParatextId,
+    biblicalTermsEnabled: this.biblicalTermsEnabled,
     translateShareEnabled: this.translateShareEnabled,
     translateShareLevel: this.translateShareLevel,
     checkingEnabled: this.checkingEnabled,
@@ -268,6 +270,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
+    if (newValue.biblicalTermsEnabled !== this.previousFormValues.biblicalTermsEnabled) {
+      this.updateSetting(newValue, 'biblicalTermsEnabled');
+    }
+
     this.updateCheckingConfig(newValue);
   }
 
@@ -348,6 +354,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.previousFormValues = {
       translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
       sourceParatextId: curSource != null ? curSource.paratextId : undefined,
+      biblicalTermsEnabled: this.projectDoc.data.biblicalTermsEnabled,
       translateShareEnabled: !!this.projectDoc.data.translateConfig.shareEnabled,
       translateShareLevel: this.projectDoc.data.translateConfig.shareLevel,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,

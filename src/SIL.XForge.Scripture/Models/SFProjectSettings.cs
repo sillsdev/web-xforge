@@ -9,6 +9,7 @@ public class SFProjectSettings
     // translate settings
     public bool? TranslationSuggestionsEnabled { get; set; }
     public string SourceParatextId { get; set; }
+    public bool? BiblicalTermsEnabled { get; set; }
     public bool? TranslateShareEnabled { get; set; }
     public string TranslateShareLevel { get; set; }
 

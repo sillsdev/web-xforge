@@ -71,6 +71,22 @@
                 [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
               ></mat-hint>
             </div>
+            <div class="tool-setting">
+              <div class="tool-setting-field checkbox-field">
+                <mat-checkbox formControlName="biblicalTermsEnabled" id="checkbox-biblical-terms">
+                  {{ t("biblical_terms") }}
+                </mat-checkbox>
+                <app-write-status
+                  [state]="getControlState('biblicalTermsEnabled')"
+                  [formGroup]="form"
+                  id="biblical-terms-status"
+                ></app-write-status>
+              </div>
+              <mat-hint
+                class="helper-text checkbox-helper-text"
+                [innerHTML]="i18n.translateAndInsertTags('settings.biblical_terms_will_be_enabled')"
+              ></mat-hint>
+            </div>
             <h2 class="sharing-heading">{{ t("sharing") }}</h2>
             <div class="tool-setting">
               <div class="tool-setting-field checkbox-field">

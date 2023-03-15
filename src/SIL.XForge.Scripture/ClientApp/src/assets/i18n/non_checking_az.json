@@ -223,6 +223,8 @@
   },
   "settings": {
     "anyone_with_a_link": "Keçid ilə hər bir kəs",
+    "biblical_terms_will_be_enabled": "Biblical Terms will be displayed and able to be updated",
+    "biblical_terms": "Enable Biblical Terms",
     "community_checking_settings": "Community Checking Settings",
     "connect_network_to_change_settings": "Şəbəkədə olmayan zaman layihə parametrləri deyişdirmək mümkün deyil. Xahiş edirik, deyişliklər etmək üçün internetə qoşulun.",
     "danger_zone": "Təhlükə Zonası",

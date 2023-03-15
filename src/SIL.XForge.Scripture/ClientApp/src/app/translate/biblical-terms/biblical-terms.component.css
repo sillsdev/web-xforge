@@ -8,6 +8,11 @@
   z-index: inherit !important;
 }
 
+/* Stretch the table across the page */
+.mat-table {
+  width: 100%;
+}
+
 /* Fix the height of the biblical terms table */
 .table-container {
   height: 150px;

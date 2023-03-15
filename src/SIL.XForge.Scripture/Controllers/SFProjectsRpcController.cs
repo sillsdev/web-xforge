@@ -118,6 +118,7 @@ public class SFProjectsRpcController : RpcControllerBase
                     { "CheckingShareLevel", settings?.CheckingShareLevel },
                     { "CheckingAnswerExport", settings?.CheckingAnswerExport },
                     { "SourceParatextId", settings?.SourceParatextId },
+                    { "BiblicalTermsEnabled", settings?.BiblicalTermsEnabled?.ToString() },
                     { "TranslateShareLevel", settings?.TranslateShareLevel },
                     { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
                     { "CheckingShareEnabled", settings?.CheckingShareEnabled?.ToString() },

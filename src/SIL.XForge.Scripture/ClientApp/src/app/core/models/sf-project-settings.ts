@@ -8,6 +8,7 @@ import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/mod
 export interface SFProjectSettings {
   translationSuggestionsEnabled?: boolean;
   sourceParatextId?: string;
+  biblicalTermsEnabled?: boolean;
   translateShareEnabled?: boolean;
   translateShareLevel?: TranslateShareLevel;
 

@@ -185,6 +185,21 @@ describe('SFProjectMigrations', () => {
   });
 });
 
+describe('version 9', () => {
+  it('adds biblical terms enabled property', async () => {
+    const env = new TestEnvironment(8);
+    const conn = env.server.connect();
+    await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
+    let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+    expect(projectDoc.data.biblicalTermsEnabled).not.toBeDefined();
+
+    await env.server.migrateIfNecessary();
+
+    projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+    expect(projectDoc.data.biblicalTermsEnabled).toBe(false);
+  });
+});
+
 class TestEnvironment {
   readonly db: ShareDBMingo;
   readonly mockedSchemaVersionRepository = mock(SchemaVersionRepository);

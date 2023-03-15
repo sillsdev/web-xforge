@@ -95,6 +95,7 @@ class TestEnvironment {
         ownerRef: this.projectAdminId,
         isTargetTextRight: false,
         confidenceThreshold: 0.2,
+        biblicalTermsEnabled: false,
         translationSuggestionsEnabled: true,
         numSuggestions: 1,
         selectedSegment: '',
@@ -124,6 +125,7 @@ class TestEnvironment {
       },
       texts: [],
       noteTags: [],
+      biblicalTermsEnabled: false,
       editable: true,
       sync: { queuedCount: 0 },
       userRoles: {

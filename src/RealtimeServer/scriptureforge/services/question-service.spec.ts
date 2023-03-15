@@ -109,6 +109,7 @@ class TestEnvironment {
         ownerRef: 'projectAdmin',
         isTargetTextRight: false,
         confidenceThreshold: 0.2,
+        biblicalTermsEnabled: false,
         translationSuggestionsEnabled: true,
         numSuggestions: 1,
         selectedSegment: '',
@@ -139,6 +140,7 @@ class TestEnvironment {
         ownerRef: 'checker',
         isTargetTextRight: false,
         confidenceThreshold: 0.2,
+        biblicalTermsEnabled: false,
         translationSuggestionsEnabled: true,
         numSuggestions: 1,
         selectedSegment: '',
@@ -169,6 +171,7 @@ class TestEnvironment {
       texts: [],
       noteTags: [],
       sync: { queuedCount: 0 },
+      biblicalTermsEnabled: false,
       editable: true,
       userRoles: {
         projectAdmin: SFProjectRole.ParatextAdministrator,

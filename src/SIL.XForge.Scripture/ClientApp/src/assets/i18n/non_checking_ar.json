@@ -223,6 +223,8 @@
   },
   "settings": {
     "anyone_with_a_link": "أي شخص لديه الرابط",
+    "biblical_terms_will_be_enabled": "Biblical Terms will be displayed and able to be updated",
+    "biblical_terms": "Enable Biblical Terms",
     "community_checking_settings": "إعدادات المراجعة المجتمعية",
     "connect_network_to_change_settings": "لا يمكن تغيير إعدادات المشروع عند عدم الاتصال بالإنترنت. الرجاء الاتصال بالإنترنت لإجراء التغييرات.",
     "danger_zone": "منطقة خطر",

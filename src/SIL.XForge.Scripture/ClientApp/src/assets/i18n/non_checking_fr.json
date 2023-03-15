@@ -223,6 +223,8 @@
   },
   "settings": {
     "anyone_with_a_link": "Toute personne ayant le lien",
+    "biblical_terms_will_be_enabled": "Biblical Terms will be displayed and able to be updated",
+    "biblical_terms": "Enable Biblical Terms",
     "community_checking_settings": "Paramètres de Vérification par la communauté",
     "connect_network_to_change_settings": "Les paramètres du projet ne peuvent pas être modifiés lorsque vous êtes hors connexion. Veuillez vous connecter à Internet pour effectuer des modifications.",
     "danger_zone": "Attention danger",

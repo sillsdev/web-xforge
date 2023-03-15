@@ -130,6 +130,7 @@ class TestEnvironment {
       texts: [],
       noteTags: [],
       sync: { queuedCount: 0 },
+      biblicalTermsEnabled: false,
       editable: true,
       userRoles: {
         translator: SFProjectRole.ParatextTranslator,

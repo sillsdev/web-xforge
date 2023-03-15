@@ -279,6 +279,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 p => p.TranslateConfig.TranslationSuggestionsEnabled,
                 settings.TranslationSuggestionsEnabled
             );
+            UpdateSetting(op, p => p.BiblicalTermsEnabled, settings.BiblicalTermsEnabled);
             UpdateSetting(op, p => p.TranslateConfig.Source, source, unsetSourceProject);
             UpdateSetting(op, p => p.TranslateConfig.ShareEnabled, settings.TranslateShareEnabled);
             UpdateSetting(op, p => p.TranslateConfig.ShareLevel, settings.TranslateShareLevel);
