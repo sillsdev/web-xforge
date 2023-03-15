@@ -498,6 +498,23 @@ describe('NoteDialogComponent', () => {
     expect(threadDoc.data).toBeUndefined();
     expect(env.dialogResult).toBe(true);
   }));
+
+  it('show notes in correct date order', fakeAsync(() => {
+    const noteThread = TestEnvironment.getNoteThread();
+    const currentTime = new Date('2023-03-14T23:00:00Z').getTime();
+    let minutes = 0;
+    for (const note of noteThread.notes) {
+      if (note.dataId === 'note04') {
+        note.dateCreated = '2023-03-15T11:00:00+13:00';
+      } else {
+        note.dateCreated = new Date(currentTime + minutes).toISOString();
+      }
+      minutes += 60000;
+    }
+    env = new TestEnvironment({ noteThread });
+    expect(noteThread.notes[3].content).toEqual('note04');
+    expect(env.notes[0].nativeElement.querySelector('.note-content').textContent).toEqual('note04');
+  }));
 });
 
 @Directive({
@@ -904,10 +921,6 @@ class TestEnvironment {
   getNoteThreadDoc(threadId: string): NoteThreadDoc {
     const id: string = [TestEnvironment.PROJECT01, threadId].join(':');
     return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, id);
-  }
-
-  getProjectProfileDoc(projectId: string): SFProjectProfileDoc {
-    return this.realtimeService.get<SFProjectDoc>(SFProjectProfileDoc.COLLECTION, projectId);
   }
 
   getProjectUserConfigDoc(projectId: string, userId: string): SFProjectUserConfigDoc {
