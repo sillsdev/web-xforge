@@ -2515,7 +2515,7 @@ describe('EditorComponent', () => {
         env.setCurrentUser(user);
         tick();
         env.fixture.detectChanges();
-        expect(env.insertNoteButton).toBeTruthy();
+        expect(env.insertNoteFab).toBeTruthy();
       }
 
       const usersWhoCannotInsertNotes = ['user06', 'user07'];
@@ -2523,7 +2523,7 @@ describe('EditorComponent', () => {
         env.setCurrentUser(user);
         tick();
         env.fixture.detectChanges();
-        expect(env.insertNoteButton).toBeNull();
+        expect(env.insertNoteFab).toBeNull();
       }
       env.dispose();
     }));
@@ -3262,10 +3262,6 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.floating-note-button'));
   }
 
-  get insertNoteButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#create-note-btn'));
-  }
-
   get insertNoteFab(): DebugElement {
     return this.fixture.debugElement.query(By.css('.insert-note-fab > button'));
   }
@@ -3552,9 +3548,9 @@ class TestEnvironment {
 
   setSelectionAndInsertNote(segmentRef: string | undefined): void {
     if (segmentRef != null) {
-      this.selectSegment(segmentRef);
+      this.getSegmentElement(segmentRef)!.click();
     }
-    this.insertNoteButton.nativeElement.click();
+    this.insertNoteFab.nativeElement.click();
     tick();
     this.fixture.detectChanges();
   }
