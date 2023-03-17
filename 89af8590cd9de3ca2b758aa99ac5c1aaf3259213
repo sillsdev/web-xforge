@@ -1,0 +1,7 @@
+This commit has a completely incorrect description. The heading
+"Simplify usage of confirmation dialog" is correct. The issue numbers
+are wrong, and the description underneath (that goes with those issue
+numbers) is also wrong. Somehow when merging it I mixed it up with
+another PR. At this point it's already on QA and it seems like it
+wouldn't be easy  to go back and edit the description.
+- NP
