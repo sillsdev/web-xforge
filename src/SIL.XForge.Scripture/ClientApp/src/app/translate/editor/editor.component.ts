@@ -1670,12 +1670,37 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const thisRange = this.target.segment.range;
-    const thisBounds = this.target.editor.selection.getBounds(thisRange.index);
+    const targetRange = this.target.segment.range;
+    const targetSelectionBounds = this.target.editor.selection.getBounds(targetRange.index);
 
-    const otherRange = this.source.segment.range;
-    const otherBounds = this.source.editor.selection.getBounds(otherRange.index);
-    this.source.editor.scrollingContainer.scrollTop += otherBounds.top - thisBounds.top;
+    const sourceRange = this.source.segment.range;
+    const sourceSelectionBounds = this.source.editor.selection.getBounds(sourceRange.index, sourceRange.length);
+
+    const scrollContainer = this.source.editor.scrollingContainer;
+    let newScrollTop: number = scrollContainer.scrollTop + sourceSelectionBounds.top - targetSelectionBounds.top;
+
+    // Check to see if the top of source selection would be visible after the scroll adjustment
+    const sourceTopPosition =
+      scrollContainer.scrollTop -
+      -sourceSelectionBounds.top -
+      scrollContainer.getBoundingClientRect().top -
+      newScrollTop;
+
+    // Check to see if the bottom of source selection would be visible after the scroll adjustment
+    const sourceBottomPosition =
+      targetSelectionBounds.top +
+      sourceSelectionBounds.height -
+      scrollContainer.clientHeight -
+      scrollContainer.getBoundingClientRect().top;
+
+    // Adjust the scroll to ensure the selection fits within the container
+    // Only adjust the bottom position so long as that doesn't hide the top position i.e. a long verse(s)
+    if (sourceTopPosition < 0) {
+      newScrollTop += sourceTopPosition;
+    } else if (sourceBottomPosition > 0 && sourceTopPosition - sourceBottomPosition > 0) {
+      newScrollTop += sourceBottomPosition;
+    }
+    this.source.editor.scrollingContainer.scrollTop = newScrollTop;
   }
 
   onViewerClicked(viewer: MultiCursorViewer): void {
