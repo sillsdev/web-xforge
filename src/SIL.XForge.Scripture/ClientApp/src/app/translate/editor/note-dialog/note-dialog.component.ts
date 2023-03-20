@@ -1,27 +1,20 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
-import { cloneDeep, sortBy } from 'lodash-es';
-import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { sortBy } from 'lodash-es';
+import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
-import {
-  AssignedUsers,
-  NoteConflictType,
-  NoteStatus,
-  NoteThread,
-  NoteType
-} from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { AssignedUsers, NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
-import { objectId } from 'xforge-common/utils';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { NoteThreadDoc, defaultNoteThreadIcon } from '../../../core/models/note-thread-doc';
+import { defaultNoteThreadIcon, NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -34,6 +27,12 @@ export interface NoteDialogData {
   textDocId: TextDocId;
   projectId: string;
   verseRef?: VerseRef;
+}
+
+export interface NoteDialogResult {
+  deleted?: boolean;
+  noteContent?: string;
+  noteDataId?: string;
 }
 
 // TODO: Implement a diff - there is an accepted solution here that might be a good starting point:
@@ -51,11 +50,11 @@ export class NoteDialogComponent implements OnInit {
   private projectProfileDoc?: SFProjectProfileDoc;
   private textDoc?: TextDoc;
   private paratextProjectUsers?: ParatextUserProfile[];
-  private noteBeingEdited?: Note;
+  private noteIdBeingEdited?: string;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
 
   constructor(
-    private readonly dialogRef: MatDialogRef<NoteDialogComponent, boolean>,
+    private readonly dialogRef: MatDialogRef<NoteDialogComponent, NoteDialogResult | undefined>,
     @Inject(MAT_DIALOG_DATA) private readonly data: NoteDialogData,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
@@ -87,7 +86,6 @@ export class NoteDialogComponent implements OnInit {
     }
 
     this.projectUserConfigDoc = await this.projectService.getUserConfig(this.projectId, this.userService.currentUserId);
-    this.noteBeingEdited = this.getNoteTemplate(this.threadId);
   }
 
   get noteThreadAssignedUserRef(): string {
@@ -129,7 +127,7 @@ export class NoteDialogComponent implements OnInit {
       return [];
     }
     return sortBy(
-      this.threadDoc.data.notes.filter(n => !n.deleted && n.dataId !== this.noteBeingEdited?.dataId),
+      this.threadDoc.data.notes.filter(n => !n.deleted && n.dataId !== this.noteIdBeingEdited),
       n => new Date(n.dateCreated)
     );
   }
@@ -214,7 +212,7 @@ export class NoteDialogComponent implements OnInit {
   }
 
   editNote(note: Note): void {
-    this.noteBeingEdited = cloneDeep(note);
+    this.noteIdBeingEdited = note.dataId;
     this.currentNoteContent = note.content ?? '';
   }
 
@@ -228,7 +226,7 @@ export class NoteDialogComponent implements OnInit {
     if (this.notesToDisplay.length === 1 && this.notesToDisplay[0].dataId === note.dataId) {
       // only delete the thread if deleting the only note in the thread
       await this.threadDoc!.delete();
-      this.dialogRef.close(true);
+      this.dialogRef.close({ deleted: true });
       return;
     }
 
@@ -238,7 +236,7 @@ export class NoteDialogComponent implements OnInit {
     }
 
     if (this.notesToDisplay.length === 0) {
-      this.dialogRef.close(true);
+      this.dialogRef.close();
     }
   }
 
@@ -296,7 +294,7 @@ export class NoteDialogComponent implements OnInit {
     return (
       this.isAddNotesEnabled &&
       note.dataId === this.lastNoteId &&
-      this.noteBeingEdited?.dataId === '' &&
+      this.noteIdBeingEdited == null &&
       SF_PROJECT_RIGHTS.hasRight(
         this.projectProfileDoc.data,
         this.userService.currentUserId,
@@ -315,8 +313,7 @@ export class NoteDialogComponent implements OnInit {
     const selectedText: string = reattachedParts[1];
     const contextBefore: string = reattachedParts[3];
     const contextAfter: string = reattachedParts[4];
-    const reattachedText: string = contextBefore + '<b>' + selectedText + '</b>' + contextAfter;
-    return reattachedText;
+    return contextBefore + '<b>' + selectedText + '</b>' + contextAfter;
   }
 
   reattachedVerse(note: Note): string {
@@ -345,90 +342,11 @@ export class NoteDialogComponent implements OnInit {
   }
 
   async submit(): Promise<void> {
-    if (
-      this.noteBeingEdited == null ||
-      this.currentNoteContent == null ||
-      this.currentNoteContent.trim().length === 0
-    ) {
+    if (this.currentNoteContent == null || this.currentNoteContent.trim().length === 0) {
       this.dialogRef.close();
       return;
     }
-    const verseRef: VerseRef | undefined = this.verseRef;
-    if (verseRef == null) return;
 
-    const currentDate = new Date().toJSON();
-    if (this.noteBeingEdited.dataId === '') {
-      this.noteBeingEdited.dataId = objectId();
-      this.noteBeingEdited.dateCreated = currentDate;
-    }
-    this.noteBeingEdited.dateModified = currentDate;
-    this.noteBeingEdited.content = this.currentNoteContent;
-
-    await this.saveChanges(fromVerseRef(verseRef));
-  }
-
-  private async saveChanges(verseRef: VerseRefData): Promise<void> {
-    if (this.noteBeingEdited == null) {
-      this.dialogRef.close(false);
-      return;
-    }
-    if (this.noteBeingEdited.threadId === '') {
-      // create a new thread
-      const threadId: string = objectId();
-      this.noteBeingEdited.threadId = threadId;
-      this.noteBeingEdited.tagId = this.defaultNoteTagId;
-
-      const noteThread: NoteThread = {
-        dataId: threadId,
-        verseRef: verseRef,
-        projectRef: this.projectId,
-        ownerRef: this.userService.currentUserId,
-        notes: [this.noteBeingEdited],
-        position: { start: 0, length: 0 },
-        originalContextBefore: '',
-        originalSelectedText: this.segmentText,
-        originalContextAfter: '',
-        status: NoteStatus.Todo,
-        publishedToSF: true
-      };
-      await this.projectService.createNoteThread(this.projectId, noteThread);
-      await this.updateNoteReadRefs(this.noteBeingEdited.dataId);
-      this.dialogRef.close(true);
-      return;
-    }
-
-    // updated the existing note
-    const noteIndex: number = this.threadDoc!.data!.notes.findIndex(n => n.dataId === this.noteBeingEdited!.dataId);
-    if (noteIndex >= 0) {
-      await this.threadDoc!.submitJson0Op(op => {
-        op.set(t => t.notes[noteIndex].content, this.noteBeingEdited!.content);
-        op.set(t => t.notes[noteIndex].dateModified, this.noteBeingEdited!.dateModified);
-      });
-    } else {
-      await this.threadDoc!.submitJson0Op(op => op.add(t => t.notes, this.noteBeingEdited));
-      await this.updateNoteReadRefs(this.noteBeingEdited.dataId);
-    }
-    this.dialogRef.close(true);
-  }
-
-  private async updateNoteReadRefs(noteId: string): Promise<void> {
-    if (this.projectUserConfigDoc?.data == null || this.projectUserConfigDoc.data.noteRefsRead.includes(noteId)) return;
-    await this.projectUserConfigDoc.submitJson0Op(op => op.add(puc => puc.noteRefsRead, noteId));
-  }
-
-  private getNoteTemplate(threadId: string | undefined): Note {
-    return {
-      dataId: '',
-      // thread id is the empty string when the note belongs to a new thread
-      threadId: threadId ?? '',
-      ownerRef: this.userService.currentUserId,
-      content: '',
-      dateCreated: '',
-      dateModified: '',
-      conflictType: NoteConflictType.DefaultValue,
-      type: NoteType.Normal,
-      status: NoteStatus.Todo,
-      deleted: false
-    };
+    this.dialogRef.close({ noteContent: this.currentNoteContent, noteDataId: this.noteIdBeingEdited });
   }
 }

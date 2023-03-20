@@ -117,4 +117,11 @@ app-text {
     display: block;
     margin-bottom: 10px;
   }
+  mat-form-field {
+    width: 100%;
+  }
+  .fab-action-buttons {
+    display: flex;
+    justify-content: flex-end;
+  }
 }
