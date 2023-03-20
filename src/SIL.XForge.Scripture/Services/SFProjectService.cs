@@ -414,7 +414,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                         Key = _securityService.GenerateKey(),
                         ExpirationTime = expTime,
                         ProjectRole = role,
-                        ShareLinkType = ShareLinkType.Recipient
+                        ShareLinkType = ShareLinkType.Recipient,
                     }
                 )
         );
@@ -473,15 +473,15 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 SFProjectRole.CommunityChecker,
                 project.CheckingConfig.CheckingEnabled && (isProjectAdmin || project.CheckingConfig.ShareEnabled)
             },
-            { SFProjectRole.SFObserver, isProjectAdmin || (project.TranslateConfig.ShareEnabled) },
-            { SFProjectRole.Reviewer, isProjectAdmin || (project.TranslateConfig.ShareEnabled) }
+            { SFProjectRole.SFObserver, isProjectAdmin || project.TranslateConfig.ShareEnabled },
+            { SFProjectRole.Reviewer, isProjectAdmin || project.TranslateConfig.ShareEnabled }
         }
             .Where(entry => entry.Value)
             .Select(entry => entry.Key)
             .ToArray();
 
         if (!availableRoles.Contains(role))
-            return null;
+            throw new ForbiddenException();
 
         SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
         // Link sharing keys have Email set to null and ExpirationTime set to null.
@@ -511,15 +511,15 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     {
                         Key = key,
                         ProjectRole = role,
-                        ExpirationTime = (shareLinkType == ShareLinkType.Recipient ? expTime : null),
-                        ShareLinkType = shareLinkType
+                        ExpirationTime = shareLinkType == ShareLinkType.Recipient ? expTime : null,
+                        ShareLinkType = shareLinkType,
                     }
                 )
         );
         return key;
     }
 
-    public async Task<bool> ReserveLinkSharingKeyAsync(string curUserId, string shareKey)
+    public async Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey)
     {
         ProjectSecret projectSecret = ProjectSecrets
             .Query()
@@ -527,7 +527,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (projectSecret == null)
             throw new DataNotFoundException("Unable to locate shareKey");
 
-        String projectId = projectSecret.Id;
+        string projectId = projectSecret.Id;
         SFProject project = await GetProjectAsync(projectId);
         if (!IsProjectAdmin(project, curUserId))
             throw new ForbiddenException();
@@ -537,7 +537,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             p => p.Id == project.Id,
             update => update.Set(p => p.ShareKeys[index].Reserved, true)
         );
-        return true;
     }
 
     /// <summary>Cancel an outstanding project invitation.</summary>
@@ -602,6 +601,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     }
 
     /// <summary> Check that a share link is valid for a project and add the user to the project. </summary>
+    /// <returns>Returns the projectId, which is used by the Angular join component to navigate to the project</returns>
     public async Task<string> CheckLinkSharingAsync(string curUserId, string shareKey)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
@@ -611,8 +611,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (projectSecret == null)
             throw new ForbiddenException();
 
-        String projectId = projectSecret.Id;
+        string projectId = projectSecret.Id;
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
+        if (projectSecretShareKey == null)
+            throw new ForbiddenException();
 
         if (projectSecretShareKey.RecipientUserId != null)
         {
@@ -650,7 +652,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled
                 },
                 { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled },
-                { SFProjectRole.Reviewer, project.TranslateConfig.ShareEnabled }
+                { SFProjectRole.Reviewer, project.TranslateConfig.ShareEnabled },
             }
                 .Where(entry => entry.Value)
                 .Select(entry => entry.Key)
