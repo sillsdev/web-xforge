@@ -1,4 +1,4 @@
-import { Component, Inject, ViewChild } from '@angular/core';
+import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSlider } from '@angular/material/slider';
@@ -6,7 +6,9 @@ import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { SFProjectService } from '../../core/sf-project.service';
 
 export const CONFIDENCE_THRESHOLD_TIMEOUT = 500;
 
@@ -18,31 +20,39 @@ export interface SuggestionsSettingsDialogData {
   templateUrl: './suggestions-settings-dialog.component.html',
   styleUrls: ['./suggestions-settings-dialog.component.scss']
 })
-export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
+export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild('confidenceThresholdSlider') confidenceThresholdSlider?: MatSlider;
   open: boolean = false;
 
   suggestionsEnabledSwitch = new UntypedFormControl();
-  suggestionsSwitchFormGroup = new UntypedFormGroup({
-    suggestionsEnabledSwitch: this.suggestionsEnabledSwitch
+  biblicalTermsEnabledSwitch = new UntypedFormControl();
+  transliterateBiblicalTermsSwitch = new UntypedFormControl();
+  form = new UntypedFormGroup({
+    suggestionsEnabledSwitch: this.suggestionsEnabledSwitch,
+    biblicalTermsEnabledSwitch: this.biblicalTermsEnabledSwitch,
+    transliterateBiblicalTermsSwitch: this.transliterateBiblicalTermsSwitch
   });
 
+  private projectDoc?: SFProjectDoc;
   private readonly projectUserConfigDoc: SFProjectUserConfigDoc;
   private confidenceThreshold$ = new BehaviorSubject<number>(20);
 
   constructor(
-    dialogRef: MatDialogRef<SuggestionsSettingsDialogComponent>,
+    private dialogRef: MatDialogRef<SuggestionsSettingsDialogComponent>,
     @Inject(MAT_DIALOG_DATA) data: SuggestionsSettingsDialogData,
+    private readonly projectService: SFProjectService,
     readonly pwaService: PwaService
   ) {
     super();
     this.projectUserConfigDoc = data.projectUserConfigDoc;
+  }
 
-    dialogRef.afterOpened().subscribe(() => {
+  async ngOnInit(): Promise<void> {
+    this.dialogRef.afterOpened().subscribe(() => {
       if (this.confidenceThresholdSlider != null) {
         this.confidenceThresholdSlider.disabled = false; // cannot set value when slider is disabled
         this.confidenceThresholdSlider.value = this.projectUserConfigDoc.data!.confidenceThreshold * 100;
-        this.confidenceThresholdSlider.disabled = this.settingsDisabled;
+        this.confidenceThresholdSlider.disabled = this.translationSuggestionsDisabled;
       }
       this.open = true;
     });
@@ -50,6 +60,7 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
     if (this.projectUserConfigDoc.data != null) {
       const percent = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
       this.confidenceThreshold$.next(percent);
+      this.projectDoc = await this.projectService.get(this.projectUserConfigDoc.data.projectRef);
     }
 
     this.subscribe(
@@ -67,13 +78,61 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
         op.set<boolean>(puc => puc.translationSuggestionsEnabled, this.suggestionsEnabledSwitch.value)
       );
     });
-    this.subscribe(this.pwaService.onlineStatus$, isOnline => {
-      isOnline ? this.suggestionsSwitchFormGroup.enable() : this.suggestionsEnabledSwitch.disable();
+
+    this.biblicalTermsEnabledSwitch.setValue(this.biblicalTermsEnabled);
+    this.subscribe(this.biblicalTermsEnabledSwitch.valueChanges, () => {
+      if (this.biblicalTermsEnabledSwitch.value) {
+        this.transliterateBiblicalTermsSwitch.enable();
+      } else {
+        this.transliterateBiblicalTermsSwitch.disable();
+      }
+      this.projectUserConfigDoc.submitJson0Op(op =>
+        op.set<boolean>(puc => puc.biblicalTermsEnabled, this.biblicalTermsEnabledSwitch.value)
+      );
     });
+
+    this.transliterateBiblicalTermsSwitch.setValue(this.transliterateBiblicalTerms);
+    this.subscribe(this.transliterateBiblicalTermsSwitch.valueChanges, () => {
+      this.projectUserConfigDoc.submitJson0Op(op =>
+        op.set<boolean>(puc => puc.transliterateBiblicalTerms, this.transliterateBiblicalTermsSwitch.value)
+      );
+    });
+
+    this.subscribe(this.pwaService.onlineStatus$, isOnline => {
+      isOnline ? this.form.enable() : this.form.disable();
+    });
+
+    this.subscribe(this.projectDoc!.changes$, () => {
+      this.updateSwitchDisabledStates();
+    });
+    this.updateSwitchDisabledStates();
   }
 
-  get settingsDisabled(): boolean {
-    return !this.translationSuggestionsUserEnabled || !this.pwaService.isOnline;
+  // This one!
+  get translationSettingsDisabled(): boolean {
+    return !this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled || !this.pwaService.isOnline;
+  }
+
+  get translationSuggestionsDisabled(): boolean {
+    return this.translationSettingsDisabled || !this.translationSuggestionsUserEnabled;
+  }
+
+  // This one!
+  get biblicalTermsSettingsDisabled(): boolean {
+    return !this.projectDoc?.data?.biblicalTermsEnabled || !this.pwaService.isOnline;
+  }
+
+  get biblicalTermsEnabled(): boolean {
+    return this.projectUserConfigDoc.data == null ? true : this.projectUserConfigDoc.data.biblicalTermsEnabled;
+  }
+
+  get transliterateBiblicalTerms(): boolean {
+    return this.projectUserConfigDoc.data == null ? true : this.projectUserConfigDoc.data.transliterateBiblicalTerms;
+  }
+
+  // This one!
+  get transliterateBiblicalTermsDisabled(): boolean {
+    return this.biblicalTermsSettingsDisabled || !this.biblicalTermsEnabled;
   }
 
   get translationSuggestionsUserEnabled(): boolean {
@@ -94,5 +153,24 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
 
   set confidenceThreshold(value: number) {
     this.confidenceThreshold$.next(value);
+  }
+
+  updateSwitchDisabledStates(): void {
+    if (this.pwaService.isOnline && this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled === true) {
+      this.suggestionsEnabledSwitch.enable();
+    } else {
+      this.suggestionsEnabledSwitch.disable();
+    }
+    if (this.pwaService.isOnline && this.projectDoc?.data?.biblicalTermsEnabled === true) {
+      this.biblicalTermsEnabledSwitch.enable();
+      if (this.projectUserConfigDoc.data?.biblicalTermsEnabled) {
+        this.transliterateBiblicalTermsSwitch.enable();
+      } else {
+        this.transliterateBiblicalTermsSwitch.disable();
+      }
+    } else {
+      this.biblicalTermsEnabledSwitch.disable();
+      this.transliterateBiblicalTermsSwitch.disable();
+    }
   }
 }

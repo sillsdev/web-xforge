@@ -21,6 +21,7 @@ import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } f
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import {
   AssignedUsers,
@@ -61,6 +62,7 @@ import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/gene
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { MediaObserver } from '@angular/flex-layout';
+import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -73,6 +75,7 @@ import { RemoteTranslationEngine } from '../../machine-api/remote-translation-en
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
+import { BiblicalTermsComponent } from '../biblical-terms/biblical-terms.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { NoteDialogComponent } from './note-dialog/note-dialog.component';
@@ -111,7 +114,7 @@ class MockConsole {
 
 describe('EditorComponent', () => {
   configureTestingModule(() => ({
-    declarations: [EditorComponent, SuggestionsComponent, TrainingProgressComponent],
+    declarations: [BiblicalTermsComponent, EditorComponent, SuggestionsComponent, TrainingProgressComponent],
     imports: [
       NoopAnimationsModule,
       RouterTestingModule.withRoutes(ROUTES),
@@ -2986,8 +2989,11 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('shows translation suggestions settings when suggestions are enabled for the project', fakeAsync(() => {
-      const projectConfig = { translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true } };
+    it('shows translator settings when suggestions are enabled for the project', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true },
+        biblicalTermsEnabled: false
+      };
       const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
 
       const env = new TestEnvironment();
@@ -2999,8 +3005,27 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('hides translation suggestions settings when suggestions are disabled for the project', fakeAsync(() => {
-      const projectConfig = { translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false } };
+    it('shows translator settings when biblical terms are enabled for the project', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
+        biblicalTermsEnabled: true
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.updateParams(navigationParams);
+      env.wait();
+      expect(env.suggestionsSettingsButton).toBeTruthy();
+      env.dispose();
+    }));
+
+    it('hides translator settings when suggestions and biblical terms are disabled for the project', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
+        biblicalTermsEnabled: false
+      };
       const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
 
       const env = new TestEnvironment();
@@ -3009,6 +3034,80 @@ describe('EditorComponent', () => {
       env.updateParams(navigationParams);
       env.wait();
       expect(env.suggestionsSettingsButton).toBeFalsy();
+      env.dispose();
+    }));
+
+    it('shows target biblical terms when enabled for the target project and target user project', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
+        biblicalTermsEnabled: true
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig({ biblicalTermsEnabled: true });
+      env.updateParams(navigationParams);
+      env.wait();
+      expect(env.targetBiblicalTerms).toBeTruthy();
+      env.dispose();
+    }));
+
+    it('shows source biblical terms when enabled for the target project and target user project', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
+        biblicalTermsEnabled: true
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setupProject(projectConfig, 'project01');
+      env.setProjectUserConfig({ biblicalTermsEnabled: true });
+      env.updateParams(navigationParams);
+      env.wait();
+      expect(env.getProjectDoc('project01').data?.biblicalTermsEnabled).toBeTrue();
+      expect(env.getProjectDoc('project02').data?.biblicalTermsEnabled).toBeFalse();
+      expect(env.sourceBiblicalTerms).toBeTruthy();
+      env.dispose();
+    }));
+
+    it('shows source biblical terms when enabled for the source project and target user project', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
+        biblicalTermsEnabled: true
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setupProject(projectConfig, 'project02');
+      env.setProjectUserConfig({ biblicalTermsEnabled: true });
+      env.updateParams(navigationParams);
+      env.wait();
+      expect(env.getProjectDoc('project01').data?.biblicalTermsEnabled).toBeFalse();
+      expect(env.getProjectDoc('project02').data?.biblicalTermsEnabled).toBeTrue();
+      expect(env.sourceBiblicalTerms).toBeTruthy();
+      env.dispose();
+    }));
+
+    it('hides source biblical terms when there is an error syncing them', fakeAsync(() => {
+      const targetProjectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
+        biblicalTermsEnabled: true
+      };
+      const sourceProjectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
+        biblicalTermsEnabled: false,
+        biblicalTermsMessage: 'An error occurred'
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      const env = new TestEnvironment();
+      env.setupProject(targetProjectConfig, 'project01');
+      env.setupProject(sourceProjectConfig, 'project02');
+      env.setProjectUserConfig({ biblicalTermsEnabled: true });
+      env.updateParams(navigationParams);
+      env.wait();
+      expect(env.sourceBiblicalTerms).toBeFalsy();
       env.dispose();
     }));
   });
@@ -3087,6 +3186,7 @@ class TestEnvironment {
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     sync: { queuedCount: 0, dataInSync: true },
+    biblicalTermsEnabled: false,
     editable: true,
     texts: [
       {
@@ -3260,6 +3360,11 @@ class TestEnvironment {
         [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo
       })
     );
+    when(mockedSFProjectService.queryBiblicalTerms(anything())).thenCall(sfProjectId =>
+      this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, {
+        [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
+      })
+    );
 
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus$).thenReturn(of(true));
@@ -3347,6 +3452,14 @@ class TestEnvironment {
 
   get sourceTextEditor(): HTMLElement {
     return this.sourceTextArea.query(By.css('.ql-container')).nativeElement;
+  }
+
+  get sourceBiblicalTerms(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#source-biblical-terms'));
+  }
+
+  get targetBiblicalTerms(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#target-biblical-terms'));
   }
 
   get invalidWarning(): DebugElement {
@@ -3443,6 +3556,12 @@ class TestEnvironment {
     }
     if (data.isRightToLeft != null) {
       projectProfileData.isRightToLeft = data.isRightToLeft;
+    }
+    if (data.biblicalTermsEnabled != null) {
+      projectProfileData.biblicalTermsEnabled = data.biblicalTermsEnabled;
+    }
+    if (data.biblicalTermsMessage != null) {
+      projectProfileData.biblicalTermsMessage = data.biblicalTermsMessage;
     }
     if (data.editable != null) {
       projectProfileData.editable = data.editable;

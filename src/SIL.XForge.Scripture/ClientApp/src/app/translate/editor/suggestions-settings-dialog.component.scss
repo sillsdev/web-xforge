@@ -2,8 +2,29 @@
   margin-top: 15px;
 }
 
-.suggestions-switch {
+.switch {
   column-gap: 12px;
+  margin-bottom: 15px;
+}
+
+.row {
+  column-gap: 12px;
+  margin-left: 12px;
+  margin-right: 12px;
+  margin-bottom: 25px;
+  flex-direction: row;
+  box-sizing: border-box;
+  display: flex;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 1e-9px;
+}
+
+.col {
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0%;
+  box-sizing: border-box;
 }
 
 mat-dialog-content.content-padding {

@@ -3,9 +3,10 @@
     <div class="toolbar" fxLayout="row" fxLayoutAlign="start center">
       <div fxFlex fxLayout="row wrap">
         <app-chapter-nav [bookNum]="bookNum" [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
-        <ng-container *ngIf="showSource">
-          <div class="toolbar-separator" [fxHide.xs]="!translationSuggestionsProjectEnabled">&nbsp;</div>
+        <ng-container *ngIf="showSource || suggestionsSettingsEnabled">
+          <div class="toolbar-separator" [fxHide.xs]="!suggestionsSettingsEnabled">&nbsp;</div>
           <button
+            *ngIf="showSource"
             mat-icon-button
             appBlurOnClick
             type="button"
@@ -16,7 +17,7 @@
             <mat-icon>swap_horiz</mat-icon>
           </button>
           <button
-            *ngIf="translationSuggestionsProjectEnabled"
+            *ngIf="suggestionsSettingsEnabled"
             mat-icon-button
             appBlurOnClick
             type="button"
@@ -41,7 +42,7 @@
     <div [fxLayout]="isTargetTextRight ? 'row' : 'row-reverse'" class="both-editors-wrapper">
       <div id="source-text-area" [fxShow.gt-xs]="showSource" fxHide.xs class="text-area">
         <div class="language-label" mdcSubtitle1>{{ sourceLabel }}</div>
-        <div #sourceContainer class="text-container" [style.height]="textHeight">
+        <div #sourceContainer class="text-container" [style.height]="sourceTextHeight">
           <app-text
             #source
             [isReadOnly]="true"
@@ -52,7 +53,14 @@
             [fontSize]="sourceFontSize"
           ></app-text>
         </div>
-        <app-biblical-terms [bookNum]="bookNum" [chapter]="chapter" [projectId]="sourceProjectId"></app-biblical-terms>
+        <app-biblical-terms
+          *ngIf="biblicalTermsEnabledForSource"
+          id="source-biblical-terms"
+          [bookNum]="bookNum"
+          [chapter]="chapter"
+          [configProjectId]="projectId"
+          [projectId]="sourceProjectId"
+        ></app-biblical-terms>
       </div>
       <div
         id="target-text-area"
@@ -80,7 +88,7 @@
         <div
           #targetContainer
           class="text-container"
-          [style.height]="textHeight"
+          [style.height]="targetTextHeight"
           [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'"
         >
           <app-text
@@ -129,8 +137,11 @@
           </div>
         </div>
         <app-biblical-terms
+          *ngIf="biblicalTermsEnabledForTarget"
+          id="target-biblical-terms"
           [bookNum]="bookNum"
           [chapter]="chapter"
+          [configProjectId]="projectId"
           [projectId]="projectId"
           fxHide.xs
         ></app-biblical-terms>

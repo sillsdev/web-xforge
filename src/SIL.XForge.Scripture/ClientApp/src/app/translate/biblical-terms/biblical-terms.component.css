@@ -1,3 +1,8 @@
+/* Space out the cells a little bit */
+.mat-cell {
+  padding: 5px;
+}
+
 /* Some terms are exceptionally long */
 .mat-column-term {
   overflow: hidden;
@@ -5,7 +10,13 @@
 
 /* Fix the menu appearing below the table header */
 .mat-header-cell {
+  padding: 5px;
   z-index: inherit !important;
+}
+
+/* Stretch the table across the page */
+.mat-table {
+  width: 100%;
 }
 
 /* Fix the height of the biblical terms table */

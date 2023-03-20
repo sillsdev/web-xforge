@@ -223,6 +223,8 @@
   },
   "settings": {
     "anyone_with_a_link": "Qualquer pessoa com um link",
+    "biblical_terms_will_be_enabled": "Biblical Terms will be displayed and can be updated in Scripture Forge",
+    "biblical_terms": "Enable Biblical Terms",
     "community_checking_settings": "Configurações de Verificação da Comunidade",
     "connect_network_to_change_settings": "As configurações do projeto não podem ser alteradas quando estiver offline. Por favor, conecte-se à internet para fazer alterações.",
     "danger_zone": "Zona de Perigo",
@@ -258,13 +260,15 @@
   },
   "suggestions_settings_dialog": {
     "better": "Melhor",
+    "biblical_terms": "Show/Hide Biblical Terms",
     "close": "Fechar",
     "more": "Mais",
     "number_of_suggestions": "Número de sugestões",
     "settings_not_available_offline": "Essas configurações não estão disponíveis enquanto você está offline.",
     "suggestion_confidence": "Confiança da sugestão",
     "translation_suggestions": "Sugestões de tradução",
-    "translation_suggestions_settings": "Configurações de sugestões de tradução"
+    "translator_settings": "Translator settings",
+    "transliterate_biblical_terms": "Transliterate Biblical Terms"
   },
   "sync": {
     "cancel": "Cancelar",

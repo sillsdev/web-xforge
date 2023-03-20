@@ -1,40 +1,68 @@
 <ng-container *transloco="let t; read: 'suggestions_settings_dialog'">
-  <h1 mat-dialog-title>{{ t("translation_suggestions_settings") }}</h1>
+  <h1 mat-dialog-title>{{ t("translator_settings") }}</h1>
   <mat-dialog-content class="content-padding" fxLayout="column" fxLayoutGap="25px">
     <div class="offline-text" *ngIf="!pwaService.isOnline">{{ t("settings_not_available_offline") }}</div>
-    <mdc-form-field [formGroup]="suggestionsSwitchFormGroup" class="suggestions-switch">
-      <mdc-switch id="suggestions-enabled-switch" *ngIf="open" formControlName="suggestionsEnabledSwitch"></mdc-switch>
-      <label>{{ t("translation_suggestions") }}</label>
-    </mdc-form-field>
-    <mdc-select
-      id="num-suggestions-select"
-      [disabled]="settingsDisabled"
-      [(ngModel)]="numSuggestions"
-      placeholder="{{ t('number_of_suggestions') }}"
-    >
-      <mdc-menu>
-        <mdc-list>
-          <mdc-list-item *ngFor="let value of ['1', '2', '3', '4', '5']" [value]="value">
-            {{ value }}
-          </mdc-list-item>
-        </mdc-list>
-      </mdc-menu>
-    </mdc-select>
-    <mdc-form-field class="suggestions-confidence-field">
-      <label mdcSubtitle2>{{ t("suggestion_confidence") }}</label>
-      <div class="slider-labels" fxLayout="row" fxLayoutAlign="space-between">
-        <span mdcCaption>{{ t("more") }}</span> <span mdcCaption>{{ confidenceThreshold }}%</span>
-        <span mdcCaption>{{ t("better") }}</span>
+    <div class="row">
+      <div class="col">
+        <mdc-form-field [formGroup]="form" class="switch">
+          <mdc-switch
+            id="suggestions-enabled-switch"
+            *ngIf="open"
+            formControlName="suggestionsEnabledSwitch"
+          ></mdc-switch>
+          <label for="suggestions-enabled-switch">{{ t("translation_suggestions") }}</label>
+        </mdc-form-field>
+        <mdc-select
+          id="num-suggestions-select"
+          [disabled]="translationSuggestionsDisabled"
+          [(ngModel)]="numSuggestions"
+          placeholder="{{ t('number_of_suggestions') }}"
+        >
+          <mdc-menu>
+            <mdc-list>
+              <mdc-list-item *ngFor="let value of ['1', '2', '3', '4', '5']" [value]="value">
+                {{ value }}
+              </mdc-list-item>
+            </mdc-list>
+          </mdc-menu>
+        </mdc-select>
       </div>
-      <mat-slider
-        #confidenceThresholdSlider
-        [disabled]="settingsDisabled"
-        [min]="0"
-        [max]="100"
-        [(ngModel)]="confidenceThreshold"
-        (input)="confidenceThreshold = $event.value ?? 0"
-      ></mat-slider>
-    </mdc-form-field>
+      <div class="col">
+        <mdc-form-field class="suggestions-confidence-field">
+          <label mdcSubtitle2>{{ t("suggestion_confidence") }}</label>
+          <div class="slider-labels" fxLayout="row" fxLayoutAlign="space-between">
+            <span mdcCaption>{{ t("more") }}</span> <span mdcCaption>{{ confidenceThreshold }}%</span>
+            <span mdcCaption>{{ t("better") }}</span>
+          </div>
+          <mat-slider
+            #confidenceThresholdSlider
+            [disabled]="translationSuggestionsDisabled"
+            [min]="0"
+            [max]="100"
+            [(ngModel)]="confidenceThreshold"
+            (input)="confidenceThreshold = $event.value ?? 0"
+          ></mat-slider>
+        </mdc-form-field>
+      </div>
+    </div>
+    <div class="row">
+      <mdc-form-field [formGroup]="form" class="switch col">
+        <mdc-switch
+          id="biblical-terms-enabled-switch"
+          *ngIf="open"
+          formControlName="biblicalTermsEnabledSwitch"
+        ></mdc-switch>
+        <label for="biblical-terms-enabled-switch">{{ t("biblical_terms") }}</label>
+      </mdc-form-field>
+      <mdc-form-field [formGroup]="form" class="switch col">
+        <mdc-switch
+          id="transliterate-biblical-terms-switch"
+          *ngIf="open"
+          formControlName="transliterateBiblicalTermsSwitch"
+        ></mdc-switch>
+        <label for="transliterate-biblical-terms-switch">{{ t("transliterate_biblical_terms") }}</label>
+      </mdc-form-field>
+    </div>
   </mat-dialog-content>
   <mat-dialog-actions fxLayoutAlign="end">
     <button mat-button mat-dialog-close>{{ t("close") }}</button>

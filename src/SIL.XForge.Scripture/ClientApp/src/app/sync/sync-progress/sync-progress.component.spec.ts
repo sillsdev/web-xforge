@@ -167,6 +167,7 @@ class TestEnvironment {
           lastSyncSuccessful: true,
           dateLastSuccessfulSync: date.toJSON()
         },
+        biblicalTermsEnabled: false,
         editable: true,
         texts: [],
         noteTags: [],
@@ -201,6 +202,7 @@ class TestEnvironment {
             lastSyncSuccessful: true,
             dateLastSuccessfulSync: date.toJSON()
           },
+          biblicalTermsEnabled: false,
           editable: true,
           texts: [],
           noteTags: [],
