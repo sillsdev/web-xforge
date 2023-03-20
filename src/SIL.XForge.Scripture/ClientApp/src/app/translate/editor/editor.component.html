@@ -113,12 +113,24 @@
             (showChange)="showSuggestions = $event"
           ></app-suggestions>
           <ng-template #fabBottomSheet>
-            <div class="fab-bottom-sheet">
+            <div class="fab-bottom-sheet" [dir]="direction">
               <b>{{ currentSegmentReference }}</b>
-              <button mat-flat-button (click)="insertNote()" color="accent">
+              <button *ngIf="!addingMobileNote" mat-flat-button (click)="toggleAddingMobileNote()" color="accent">
                 <mat-icon>add_comment</mat-icon>
                 {{ t("add_comment") }}
               </button>
+              <form *ngIf="addingMobileNote">
+                <mat-form-field class="full-width" appearance="outline">
+                  <mat-label>{{ t("your_comment") }}</mat-label>
+                  <textarea #mobileNoteTextarea matInput [formControl]="mobileNoteControl"></textarea>
+                </mat-form-field>
+                <div class="fab-action-buttons">
+                  <button mat-button class="close-button" (click)="toggleAddingMobileNote()">{{ t("cancel") }}</button>
+                  <button mat-flat-button class="save-button" color="primary" (click)="saveMobileNote()">
+                    {{ t("save") }}
+                  </button>
+                </div>
+              </form>
             </div>
           </ng-template>
           <div *ngIf="canInsertNote" #fabButton class="insert-note-fab" [style.left]="insertNoteFabLeft">
