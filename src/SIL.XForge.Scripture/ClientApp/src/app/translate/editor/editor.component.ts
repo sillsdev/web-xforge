@@ -18,7 +18,7 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -36,21 +36,24 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
-import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
+import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { NoteType } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
+import { UntypedFormControl, Validators } from '@angular/forms';
+import { XFValidators } from 'xforge-common/xfvalidators';
+import { NoteConflictType, NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
-import { Delta } from '../../core/models/text-doc';
-import { TextDocId } from '../../core/models/text-doc';
+import { Delta, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
@@ -67,11 +70,11 @@ import {
   formatFontSizeToRems,
   getVerseRefFromSegmentRef,
   threadIdFromMouseEvent,
-  verseRefFromMouseEvent,
-  VERSE_REGEX
+  VERSE_REGEX,
+  verseRefFromMouseEvent
 } from '../../shared/utils';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
-import { NoteDialogComponent, NoteDialogData } from './note-dialog/note-dialog.component';
+import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import {
   SuggestionsSettingsDialogComponent,
   SuggestionsSettingsDialogData
@@ -80,6 +83,12 @@ import { Suggestion } from './suggestions.component';
 import { TranslateMetricsSession } from './translate-metrics-session';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
+
+export interface SaveNoteParameters {
+  content: string;
+  dataId?: string;
+  threadId?: string;
+}
 
 const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
 
@@ -102,11 +111,13 @@ const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
   styleUrls: ['./editor.component.scss']
 })
 export class EditorComponent extends DataLoadingComponent implements OnDestroy, AfterViewInit {
+  addingMobileNote: boolean = false;
   suggestions: Suggestion[] = [];
   showSuggestions: boolean = false;
   chapters: number[] = [];
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
+  mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
   textHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
@@ -116,6 +127,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   @ViewChild('target') target?: TextComponent;
   @ViewChild('fabButton') insertNoteFab?: ElementRef<HTMLElement>;
   @ViewChild('fabBottomSheet') TemplateBottomSheet?: TemplateRef<any>;
+  @ViewChild('mobileNoteTextarea') mobileNoteTextarea?: ElementRef<HTMLTextAreaElement>;
 
   private translationEngine?: RemoteTranslationEngine;
   private isTranslating: boolean = false;
@@ -175,6 +187,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     this.segmentUpdated$ = new Subject<void>();
     this.subscribe(this.segmentUpdated$.pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT)), () => this.updateSuggestions());
+    this.mobileNoteControl.setValidators([Validators.required, XFValidators.someNonWhitespace]);
   }
 
   get sourceLabel(): string {
@@ -353,6 +366,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.i18n.localizeReference(verseRef);
   }
 
+  get direction(): 'ltr' | 'rtl' {
+    return this.i18n.direction;
+  }
+
   get fontSize(): string | undefined {
     return formatFontSizeToRems(this.projectDoc?.data?.defaultFontSize);
   }
@@ -406,6 +423,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   set showInsertNoteFab(value: boolean) {
     if (this.insertNoteFab == null || this.TemplateBottomSheet == null) return;
+    this.addingMobileNote = false;
     if (this.mediaObserver.isActive('lt-lg')) {
       this.insertNoteFab.nativeElement.style.visibility = 'hidden';
       if (value) {
@@ -844,6 +862,88 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
+  async saveMobileNote(): Promise<void> {
+    if (!this.mobileNoteControl.valid || this.projectId == null) {
+      return;
+    }
+
+    await this.saveNote({ content: this.mobileNoteControl.value });
+    this.addingMobileNote = false;
+    this.resetInsertNoteFab();
+  }
+
+  async saveNote(params: SaveNoteParameters): Promise<void> {
+    if (this.projectId == null) {
+      return;
+    }
+    const segmentRef: string | undefined = this.target?.currentSegmentOrDefault;
+    if (segmentRef == null || this.bookNum == null) {
+      return;
+    }
+    const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
+    if (verseRef == null) {
+      return;
+    }
+    const currentDate = new Date().toJSON();
+    // Configure the note
+    const note: Note = {
+      dateCreated: currentDate,
+      dateModified: currentDate,
+      threadId: params.threadId ?? '',
+      dataId: params.dataId ?? objectId(),
+      tagId: this.projectDoc?.data?.translateConfig.defaultNoteTagId,
+      ownerRef: this.userService.currentUserId,
+      content: params.content,
+      conflictType: NoteConflictType.DefaultValue,
+      type: NoteType.Normal,
+      status: NoteStatus.Todo,
+      deleted: false
+    };
+    if (params.threadId == null) {
+      const threadId: string = objectId();
+      note.threadId = threadId;
+      // Create a new thread
+      const noteThread: NoteThread = {
+        dataId: threadId,
+        verseRef: fromVerseRef(verseRef),
+        projectRef: this.projectId,
+        ownerRef: this.userService.currentUserId,
+        notes: [note],
+        position: { start: 0, length: 0 },
+        originalContextBefore: '',
+        originalSelectedText: this.target?.segmentText!,
+        originalContextAfter: '',
+        status: NoteStatus.Todo,
+        publishedToSF: true
+      };
+      await this.projectService.createNoteThread(this.projectId, noteThread);
+      await this.updateNoteReadRefs(note.dataId);
+    } else {
+      // updated the existing note
+      const threadDoc: NoteThreadDoc = await this.projectService.getNoteThread(this.projectId + ':' + params.threadId);
+      const noteIndex: number = threadDoc.data!.notes.findIndex(n => n.dataId === params.dataId);
+      if (noteIndex >= 0) {
+        await threadDoc!.submitJson0Op(op => {
+          op.set(t => t.notes[noteIndex].content, params.content);
+          op.set(t => t.notes[noteIndex].dateModified, currentDate);
+        });
+      } else {
+        await threadDoc.submitJson0Op(op => op.add(t => t.notes, note));
+        await this.updateNoteReadRefs(note.dataId);
+      }
+    }
+    this.toggleNoteThreadVerses(false);
+    this.toggleNoteThreadVerses(true);
+  }
+
+  toggleAddingMobileNote(): void {
+    this.addingMobileNote = !this.addingMobileNote;
+    if (this.addingMobileNote) {
+      this.mobileNoteControl.reset();
+      setTimeout(() => this.mobileNoteTextarea?.nativeElement.focus(), 100);
+    }
+  }
+
   /** Insert or remove note thread embeds into the quill editor. */
   private toggleNoteThreadVerses(toggleOn: boolean): void {
     if (
@@ -894,17 +994,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       textDocId: new TextDocId(this.projectDoc!.id, this.bookNum, this.chapter),
       verseRef
     };
-    const dialogRef = this.dialogService.openMatDialog<NoteDialogComponent, NoteDialogData, boolean>(
+    const dialogRef = this.dialogService.openMatDialog<
       NoteDialogComponent,
-      {
-        autoFocus: true,
-        width: '600px',
-        disableClose: true,
-        data: noteDialogData
-      }
-    );
-    const result: boolean | undefined = await dialogRef.afterClosed().toPromise();
-    if (result === true) {
+      NoteDialogData,
+      NoteDialogResult | undefined
+    >(NoteDialogComponent, {
+      autoFocus: true,
+      width: '600px',
+      disableClose: true,
+      data: noteDialogData
+    });
+    const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
+    if (result?.noteContent != null) {
+      await this.saveNote({ content: result.noteContent, threadId, dataId: result.noteDataId });
+    } else if (result?.deleted) {
       this.toggleNoteThreadVerses(false);
       this.toggleNoteThreadVerses(true);
     }
@@ -929,6 +1032,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       });
     }
+  }
+
+  private async updateNoteReadRefs(noteId: string): Promise<void> {
+    if (this.projectUserConfigDoc?.data == null || this.projectUserConfigDoc.data.noteRefsRead.includes(noteId)) return;
+    await this.projectUserConfigDoc.submitJson0Op(op => op.add(puc => puc.noteRefsRead, noteId));
   }
 
   private setupTranslationEngine(): void {
@@ -1288,6 +1396,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private resetInsertNoteFab(): void {
+    if (this.addingMobileNote) {
+      return;
+    }
     this.showInsertNoteFab = false;
     if (this.target != null && this.commenterSelectedVerseRef != null) {
       this.target.toggleVerseSelection(this.commenterSelectedVerseRef);

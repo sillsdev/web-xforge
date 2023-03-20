@@ -86,6 +86,7 @@
   "editor": {
     "add_comment": "Add Comment",
     "anonymous": "Anonymous",
+    "cancel": "Cancel",
     "cannot_edit_chapter_formatting_invalid": "This chapter cannot be edited because the formatting is invalid. Please fix the formatting in Paratext.",
     "configure_translation_suggestions": "Configure translation suggestions",
     "insert_note": "Insert note",
@@ -93,11 +94,13 @@
     "no_permission_edit_chapter": "You don't have permission to edit this chapter, even though you have the {{ userRole }} role. Permissions can only be changed in Paratext.",
     "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "project_text_not_editable": "Text in this project is not editable. This setting can be changed in Paratext.",
+    "save": "Save",
     "swap_source_and_target": "Swap source and target",
     "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "To report an issue, email {{ issueEmailLink }}.",
-    "verse_too_long_for_suggestions": "This verse is too long to generate suggestions."
+    "verse_too_long_for_suggestions": "This verse is too long to generate suggestions.",
+    "your_comment": "Your comment"
   },
   "import_questions_confirmation_dialog": {
     "done": "Done",
