@@ -398,18 +398,20 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task GetLinkSharingKeyAsync_LinkSharingDisabled_ForbiddenError()
+    public void GetLinkSharingKeyAsync_LinkSharingDisabled_ForbiddenError()
     {
         var env = new TestEnvironment();
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
         Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(1));
-        string key = await env.Service.GetLinkSharingKeyAsync(
-            User02,
-            Project01,
-            SFProjectRole.CommunityChecker,
-            ShareLinkType.Anyone
+        Assert.ThrowsAsync<ForbiddenException>(
+            async () =>
+                await env.Service.GetLinkSharingKeyAsync(
+                    User02,
+                    Project01,
+                    SFProjectRole.CommunityChecker,
+                    ShareLinkType.Anyone
+                )
         );
-        Assert.That(key, Is.Null);
         projectSecret = env.ProjectSecrets.Get(Project01);
         Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(1));
     }
@@ -522,7 +524,6 @@ public class SFProjectServiceTests
 
         await env.Service.CheckLinkSharingAsync(User03, "existingkeyuser03");
         project = env.GetProject(Project02);
-        projectSecret = env.ProjectSecrets.Get(Project02);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
     }
 
@@ -545,7 +546,6 @@ public class SFProjectServiceTests
         // Use the sharekey linked to user03
         await env.Service.CheckLinkSharingAsync(User04, "key1234");
         project = env.GetProject(Project03);
-        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
         Assert.That(project.UserRoles.ContainsKey(User04), Is.True, "User should have been added to project");
 
         invitees = await env.Service.InvitedUsersAsync(User01, Project03);
@@ -609,7 +609,6 @@ public class SFProjectServiceTests
         await env.Service.CheckLinkSharingAsync(User03, "key1234");
 
         project = env.GetProject(Project03);
-        projectSecret = env.ProjectSecrets.Get(Project03);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
     }
 
@@ -649,7 +648,6 @@ public class SFProjectServiceTests
         await env.Service.CheckLinkSharingAsync(User03, "key1234");
 
         project = env.GetProject(Project03);
-        projectSecret = env.ProjectSecrets.Get(Project03);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
     }
 
@@ -1512,7 +1510,6 @@ public class SFProjectServiceTests
 
         await env.Service.AddUserAsync(User03, Project03, null);
         project = env.GetProject(Project03);
-        projectSecret = env.ProjectSecrets.Get(Project03);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
     }
 
@@ -1691,14 +1688,14 @@ public class SFProjectServiceTests
                 sk =>
                     sk.Key == "toBeReservedKey"
                     && sk.ShareLinkType == ShareLinkType.Recipient
-                    && sk.ProjectRole == SFProjectRole.CommunityChecker
+                    && sk.ProjectRole == SFProjectRole.Reviewer
                     && sk.Reserved == null
             ),
             Is.True,
             "setup"
         );
 
-        Assert.That(await env.Service.ReserveLinkSharingKeyAsync(User07, "toBeReservedKey"), Is.True);
+        await env.Service.ReserveLinkSharingKeyAsync(User07, "toBeReservedKey");
 
         projectSecret = env.ProjectSecrets.Get(Project06);
 
@@ -1707,7 +1704,7 @@ public class SFProjectServiceTests
                 sk =>
                     sk.Key == "toBeReservedKey"
                     && sk.ShareLinkType == ShareLinkType.Recipient
-                    && sk.ProjectRole == SFProjectRole.CommunityChecker
+                    && sk.ProjectRole == SFProjectRole.Reviewer
                     && sk.Reserved == true
             ),
             Is.True
@@ -3155,7 +3152,7 @@ public class SFProjectServiceTests
                             {
                                 Key = "toBeReservedKey",
                                 ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.CommunityChecker,
+                                ProjectRole = SFProjectRole.Reviewer,
                                 ShareLinkType = ShareLinkType.Recipient,
                             },
                         }

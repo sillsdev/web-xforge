@@ -221,8 +221,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     );
   }
 
-  async onlineReserveLinkSharingKey(shareKey: string): Promise<string> {
-    return (await this.onlineInvoke<string>('reserveLinkSharingKey', { shareKey }))!;
+  async onlineReserveLinkSharingKey(shareKey: string): Promise<void> {
+    await this.onlineInvoke<void>('reserveLinkSharingKey', { shareKey });
   }
 
   transceleratorQuestions(projectId: string, cancel: Subject<void>): RetryingRequest<TransceleratorQuestion[]> {

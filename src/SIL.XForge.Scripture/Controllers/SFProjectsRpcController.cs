@@ -393,7 +393,8 @@ public class SFProjectsRpcController : RpcControllerBase
     {
         try
         {
-            return Ok(await _projectService.ReserveLinkSharingKeyAsync(UserId, shareKey));
+            await _projectService.ReserveLinkSharingKeyAsync(UserId, shareKey);
+            return Ok();
         }
         catch (DataNotFoundException dnfe)
         {
