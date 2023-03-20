@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -560,7 +560,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     {
         LogMetric("Getting Paratext biblical terms");
         await NotifySyncProgress(syncPhase, 0);
-        IReadOnlyList<BiblicalTerm> biblicalTerms = await _paratextService.GetBiblicalTermsAsync(
+        (IReadOnlyList<BiblicalTerm> biblicalTerms, string message) = await _paratextService.GetBiblicalTermsAsync(
             _userSecret,
             paratextId,
             _projectDoc.Data.Texts.Select(t => t.BookNum)
@@ -571,6 +571,23 @@ public class ParatextSyncRunner : IParatextSyncRunner
         await NotifySyncProgress(syncPhase, 25);
         biblicalTermDocs.Clear();
         biblicalTermDocs.AddRange(await FetchBiblicalTermDocsAsync());
+
+        // If the user had an error, but there are already Biblical Terms, just leave them as is.
+        // We should record the error but not disable biblical terms
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            await _projectDoc.SubmitJson0OpAsync(op =>
+            {
+                op.Set(p => p.BiblicalTermsMessage, message);
+
+                // If there are no Biblical Terms, disable Biblical Terms
+                if (!biblicalTermDocs.Any())
+                {
+                    op.Set(p => p.BiblicalTermsEnabled, false);
+                }
+            });
+            return;
+        }
 
         // Update the renderings
         LogMetric("Updating Paratext biblical terms");
@@ -609,11 +626,23 @@ public class ParatextSyncRunner : IParatextSyncRunner
     {
         LogMetric("Getting Paratext biblical terms");
         await NotifySyncProgress(syncPhase, 0);
-        IReadOnlyList<BiblicalTerm> biblicalTerms = await _paratextService.GetBiblicalTermsAsync(
+        (IReadOnlyList<BiblicalTerm> biblicalTerms, string message) = await _paratextService.GetBiblicalTermsAsync(
             _userSecret,
             paratextId,
             _projectDoc.Data.Texts.Select(t => t.BookNum)
         );
+
+        // If the user had an error, but there are already Biblical Terms, just leave them as is.
+        // We should record the error but not disable biblical terms
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.BiblicalTermsMessage, message));
+            return;
+        }
+        else
+        {
+            await _projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.BiblicalTermsMessage));
+        }
 
         var tasks = new List<Task>();
 

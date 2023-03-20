@@ -1,6 +1,7 @@
 <ng-container *transloco="let t; read: 'biblical_terms'">
   <div class="table-container">
     <table
+      #biblicalTerms
       mat-table
       [dataSource]="rows"
       matSort

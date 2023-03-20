@@ -71,7 +71,7 @@ public interface IParatextService
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     );
     int UpdateCommentTag(UserSecret userSecret, string paratextId, NoteTag noteTag);
-    Task<IReadOnlyList<BiblicalTerm>> GetBiblicalTermsAsync(
+    Task<(IReadOnlyList<BiblicalTerm> biblicalTerms, string message)> GetBiblicalTermsAsync(
         UserSecret userSecret,
         string paratextId,
         IEnumerable<int> books

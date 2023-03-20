@@ -1,25 +1,33 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Sort } from '@angular/material/sort';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { BehaviorSubject, merge, Subscription } from 'rxjs';
-import { BiblicalTermDoc } from 'src/app/core/models/biblical-term-doc';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectService } from '../../core/sf-project.service';
+import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
+import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 
 class Row {
   private static readonly defaultLocaleCode = I18nService.defaultLocale.canonicalTag;
 
-  constructor(public readonly biblicalTermDoc: BiblicalTermDoc, public readonly i18n: I18nService) {}
+  constructor(
+    public readonly biblicalTermDoc: BiblicalTermDoc,
+    public readonly i18n: I18nService,
+    private readonly projectUserConfigDoc?: SFProjectUserConfigDoc
+  ) {}
 
   get id(): string {
     return this.biblicalTermDoc.id;
   }
 
   get term(): string {
-    return this.biblicalTermDoc.data?.termId ?? '';
+    return this.projectUserConfigDoc?.data?.transliterateBiblicalTerms
+      ? this.biblicalTermDoc.data?.transliteration ?? ''
+      : this.biblicalTermDoc.data?.termId ?? '';
   }
 
   get category(): string {
@@ -62,12 +70,17 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   private bookNum$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
   private _chapter?: number;
   private chapter$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
+  private configProjectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
+  private projectUserConfigDoc?: SFProjectUserConfigDoc;
+
+  @ViewChild('biblicalTerms', { read: ElementRef }) biblicalTerms?: ElementRef;
 
   constructor(
     noticeService: NoticeService,
     private readonly i18n: I18nService,
-    private readonly projectService: SFProjectService
+    private readonly projectService: SFProjectService,
+    private readonly userService: UserService
   ) {
     super(noticeService);
   }
@@ -86,6 +99,13 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     }
     this._chapter = chapter;
     this.chapter$.next(chapter);
+  }
+
+  @Input() set configProjectId(id: string | undefined) {
+    if (id == null) {
+      return;
+    }
+    this.configProjectId$.next(id);
   }
 
   @Input() set projectId(id: string | undefined) {
@@ -115,8 +135,16 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   }
 
   ngOnInit(): void {
+    this.subscribe(this.configProjectId$, async configProjectId => {
+      this.projectUserConfigDoc = await this.projectService.getUserConfig(
+        configProjectId,
+        this.userService.currentUserId
+      );
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0);
+    });
     this.subscribe(this.projectId$, async projectId => {
       this.loadBiblicalTerms(projectId);
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0);
     });
     this.subscribe(this.bookNum$, bookNum => {
       this.filterBiblicalTerms(bookNum, this._chapter ?? 0);
@@ -141,6 +169,9 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     }
     this.loadingStarted();
 
+    // Scroll biblical terms to the top
+    this.biblicalTerms?.nativeElement.scrollIntoView();
+
     const rows: Row[] = [];
     for (const biblicalTermDoc of this.biblicalTermQuery?.docs || []) {
       let displayTerm = false;
@@ -152,7 +183,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         }
       }
       if (displayTerm) {
-        rows.push(new Row(biblicalTermDoc, this.i18n));
+        rows.push(new Row(biblicalTermDoc, this.i18n, this.projectUserConfigDoc));
       }
     }
     this.rows = rows;

@@ -107,7 +107,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   chapters: number[] = [];
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
-  textHeight: string = '';
+  sourceTextHeight: string = '';
+  targetTextHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
 
@@ -226,6 +227,30 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.projectDoc != null &&
       this.projectDoc.data != null &&
       this.projectDoc.data.translateConfig.translationSuggestionsEnabled
+    );
+  }
+
+  get suggestionsSettingsEnabled(): boolean {
+    return (
+      this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled === true ||
+      this.projectDoc?.data?.biblicalTermsEnabled === true
+    );
+  }
+
+  get biblicalTermsEnabledForSource(): boolean {
+    // Return true if the source project has biblical terms enabled, or if the target has it enabled and the source has
+    // Biblical Terms - determined by the absence of a Biblical Terms Error Message.
+    return (
+      (this.sourceProjectDoc?.data?.biblicalTermsEnabled === true &&
+        this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true) ||
+      (this.biblicalTermsEnabledForTarget && this.sourceProjectDoc?.data?.biblicalTermsMessage == null)
+    );
+  }
+
+  get biblicalTermsEnabledForTarget(): boolean {
+    return (
+      this.projectDoc?.data?.biblicalTermsEnabled === true &&
+      this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true
     );
   }
 
@@ -994,16 +1019,23 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const elem: HTMLElement = this.targetContainer.nativeElement;
     const bounds = elem.getBoundingClientRect();
     // add bottom padding
-    let top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
+    let sourceTop = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
+    let targetTop = sourceTop;
     if (this.target.editor != null && this.targetFocused) {
       // reset scroll position
       this.target.editor.scrollingContainer.scrollTop = 0;
     }
-    // Add the Biblical Terms panel
+    // Add the Biblical Terms panels
     if (!this.mediaObserver.isActive('xs')) {
-      top += 160;
+      if (this.biblicalTermsEnabledForSource) {
+        sourceTop += 160;
+      }
+      if (this.biblicalTermsEnabledForTarget) {
+        targetTop += 160;
+      }
     }
-    this.textHeight = `calc(100vh - ${top}px)`;
+    this.sourceTextHeight = `calc(100vh - ${sourceTop}px)`;
+    this.targetTextHeight = `calc(100vh - ${targetTop}px)`;
     if (this.targetFocused && this.dialogService.openDialogCount < 1) {
       setTimeout(() => {
         // reset focus, which causes Quill to scroll to the selection

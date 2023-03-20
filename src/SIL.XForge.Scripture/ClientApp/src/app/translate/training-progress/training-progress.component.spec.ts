@@ -170,6 +170,7 @@ class TestEnvironment {
           answerExportMethod: CheckingAnswerExport.MarkedForExport
         },
         sync: { queuedCount: 0 },
+        biblicalTermsEnabled: false,
         editable: true,
         userRoles: {
           user01: SFProjectRole.ParatextTranslator,

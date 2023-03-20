@@ -2345,39 +2345,42 @@ public class ParatextSyncRunnerTests
             .GetBiblicalTermsAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IEnumerable<int>>())
             .Returns(
                 Task.FromResult(
-                    new[]
-                    {
-                        // This Biblical Term will be updated
-                        new BiblicalTerm
+                    (
+                        new[]
                         {
-                            TermId = "termId01",
-                            Transliteration = "transliteration02",
-                            Renderings = new[] { "rendering02", "rendering03" },
-                            Description = "description02",
-                            Language = "language02",
-                            Links = new[] { "link02", "link03" },
-                            References = new[] { VerseRef.GetBBBCCCVVV(2, 2, 2), VerseRef.GetBBBCCCVVV(3, 3, 3) },
-                            Definitions = new Dictionary<string, BiblicalTermDefinition>
+                            // This Biblical Term will be updated
+                            new BiblicalTerm
                             {
-                                ["en"] = new BiblicalTermDefinition
+                                TermId = "termId01",
+                                Transliteration = "transliteration02",
+                                Renderings = new[] { "rendering02", "rendering03" },
+                                Description = "description02",
+                                Language = "language02",
+                                Links = new[] { "link02", "link03" },
+                                References = new[] { VerseRef.GetBBBCCCVVV(2, 2, 2), VerseRef.GetBBBCCCVVV(3, 3, 3) },
+                                Definitions = new Dictionary<string, BiblicalTermDefinition>
                                 {
-                                    Categories = new[] { "category02_en", "category03_en" },
-                                    Domains = new[] { "domain02_en", "domain03_en" },
-                                    Gloss = "gloss02_en",
-                                    Notes = "notes02_en",
-                                },
-                                ["de"] = new BiblicalTermDefinition
-                                {
-                                    Categories = new[] { "category01_de", "category02_de" },
-                                    Domains = new[] { "domain01_de", "domain02_de" },
-                                    Gloss = "gloss01_de",
-                                    Notes = "notes01_de",
+                                    ["en"] = new BiblicalTermDefinition
+                                    {
+                                        Categories = new[] { "category02_en", "category03_en" },
+                                        Domains = new[] { "domain02_en", "domain03_en" },
+                                        Gloss = "gloss02_en",
+                                        Notes = "notes02_en",
+                                    },
+                                    ["de"] = new BiblicalTermDefinition
+                                    {
+                                        Categories = new[] { "category01_de", "category02_de" },
+                                        Domains = new[] { "domain01_de", "domain02_de" },
+                                        Gloss = "gloss01_de",
+                                        Notes = "notes01_de",
+                                    },
                                 },
                             },
-                        },
-                        // This Biblical Term will be added
-                        new BiblicalTerm { TermId = "termId03" },
-                    } as IReadOnlyList<BiblicalTerm>
+                            // This Biblical Term will be added
+                            new BiblicalTerm { TermId = "termId03" },
+                        } as IReadOnlyList<BiblicalTerm>,
+                        string.Empty
+                    )
                 )
             );
         env.GuidService.NewObjectId().Returns("dataId03");
@@ -2519,6 +2522,11 @@ public class ParatextSyncRunnerTests
                 { "pt01", SFProjectRole.Administrator },
                 { "pt02", SFProjectRole.Translator }
             };
+            ParatextService
+                .GetBiblicalTermsAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IEnumerable<int>>())
+                .Returns(
+                    Task.FromResult<(IReadOnlyList<BiblicalTerm>, string)>((Array.Empty<BiblicalTerm>(), string.Empty))
+                );
             ParatextService
                 .GetProjectRolesAsync(
                     Arg.Any<UserSecret>(),
