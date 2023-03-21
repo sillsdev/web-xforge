@@ -239,7 +239,6 @@ export class I18nService {
       italicsStart: '<em>',
       italicsEnd: '</em>',
       newLine: '<br />',
-      newLinePlain: '\r\n',
       spanStart: params['spanClass'] ? `<span class="${params['spanClass']}">` : '<span>',
       spanEnd: '</span>'
     });

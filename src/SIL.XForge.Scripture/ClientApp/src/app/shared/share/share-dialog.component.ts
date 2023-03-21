@@ -44,7 +44,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   shareLinkType: ShareLinkType = ShareLinkType.Anyone;
 
   private readonly projectId?: string;
-  private linkSharingKey: string = '';
+  private linkSharingKey: string | undefined;
   private linkSharingReady: boolean = false;
   private projectDoc?: SFProjectProfileDoc;
 
@@ -100,7 +100,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   }
 
   get isLinkReady(): boolean {
-    return this.linkSharingReady && this.sharableLink !== '';
+    return this.linkSharingReady && this.sharableLink != null;
   }
 
   get isRecipientOnlyLink(): boolean {
@@ -111,7 +111,10 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     return this.projectDoc?.data?.name ?? '';
   }
 
-  get sharableLink(): string {
+  get sharableLink(): string | undefined {
+    if (this.linkSharingKey == null) {
+      return '';
+    }
     return this.projectService.generateSharingUrl(this.linkSharingKey, this.shareLocaleCode.canonicalTag);
   }
 
@@ -140,7 +143,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   }
 
   copyLink(): void {
-    this.navigator.clipboard.writeText(this.sharableLink).then(async () => {
+    this.navigator.clipboard.writeText(this.sharableLink!).then(async () => {
       await this.noticeService.show(translate('share_control.link_copied'));
       await this.reserveShareLink();
     });
@@ -160,7 +163,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
       .share({
         title: translate('share_control.share_title', params),
         url: this.sharableLink,
-        text: this.i18n.translateAndInsertTags(
+        text: translate(
           this.shareLinkType === ShareLinkType.Anyone
             ? 'share_control.share_text_anyone'
             : 'share_control.share_text_single',
@@ -206,7 +209,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   }
 
   private async reserveShareLink(): Promise<void> {
-    if (this.shareLinkType !== ShareLinkType.Recipient) {
+    if (this.shareLinkType !== ShareLinkType.Recipient || this.linkSharingKey == null) {
       return;
     }
     await this.projectService.onlineReserveLinkSharingKey(this.linkSharingKey);

@@ -29,8 +29,11 @@ export class JoinComponent extends DataLoadingComponent {
   ) {
     super(noticeService);
     const joining$ = this.route.params.pipe(
-      map(params => ({ shareKey: params['shareKey'] as string, locale: (params['locale'] as string) ?? 'en' })),
-      filter(key => key.shareKey != null && key.locale != null)
+      map(params => ({
+        shareKey: params['shareKey'] as string,
+        locale: (params['locale'] as string | undefined) ?? I18nService.defaultLocale.canonicalTag
+      })),
+      filter(key => typeof key.shareKey === 'string')
     );
     const checkLinkSharing$ = combineLatest([joining$, this.pwaService.onlineStatus$]).pipe(
       filter(([_, isOnline]) => isOnline),
