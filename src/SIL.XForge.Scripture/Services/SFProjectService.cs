@@ -493,7 +493,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     && sk.ShareLinkType == shareLinkType
                     && sk.RecipientUserId == null
                     && sk.Reserved == null
-                    && (sk.ExpirationTime == null || sk.ExpirationTime > DateTime.UtcNow)
+                    && sk.ExpirationTime == null
             )
             ?.Key;
         if (!string.IsNullOrEmpty(key))
@@ -501,7 +501,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         // Generate a new link sharing key for the given role
         key = _securityService.GenerateKey();
-        DateTime expTime = DateTime.UtcNow.AddDays(14);
         await ProjectSecrets.UpdateAsync(
             p => p.Id == projectId,
             update =>
@@ -511,7 +510,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     {
                         Key = key,
                         ProjectRole = role,
-                        ExpirationTime = shareLinkType == ShareLinkType.Recipient ? expTime : null,
                         ShareLinkType = shareLinkType,
                     }
                 )
@@ -535,7 +533,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         int index = projectSecret.ShareKeys.FindIndex(sk => sk.Key == shareKey);
         await ProjectSecrets.UpdateAsync(
             p => p.Id == project.Id,
-            update => update.Set(p => p.ShareKeys[index].Reserved, true)
+            update =>
+                update
+                    .Set(p => p.ShareKeys[index].Reserved, true)
+                    .Set(p => p.ShareKeys[index].ExpirationTime, DateTime.UtcNow.AddDays(14))
         );
     }
 

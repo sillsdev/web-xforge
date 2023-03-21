@@ -334,7 +334,6 @@ public class SFProjectServiceTests
                     sk.Key == "newKey"
                     && sk.ShareLinkType == ShareLinkType.Recipient
                     && sk.ProjectRole == SFProjectRole.SFObserver
-                    && sk.ExpirationTime > DateTime.Now
                     && sk.Reserved == null
             ),
             Is.True
@@ -1689,6 +1688,7 @@ public class SFProjectServiceTests
                     sk.Key == "toBeReservedKey"
                     && sk.ShareLinkType == ShareLinkType.Recipient
                     && sk.ProjectRole == SFProjectRole.Reviewer
+                    && sk.ExpirationTime == null
                     && sk.Reserved == null
             ),
             Is.True,
@@ -1705,6 +1705,7 @@ public class SFProjectServiceTests
                     sk.Key == "toBeReservedKey"
                     && sk.ShareLinkType == ShareLinkType.Recipient
                     && sk.ProjectRole == SFProjectRole.Reviewer
+                    && sk.ExpirationTime > DateTime.Now
                     && sk.Reserved == true
             ),
             Is.True
@@ -3151,7 +3152,6 @@ public class SFProjectServiceTests
                             new ShareKey
                             {
                                 Key = "toBeReservedKey",
-                                ExpirationTime = currentTime.AddDays(1),
                                 ProjectRole = SFProjectRole.Reviewer,
                                 ShareLinkType = ShareLinkType.Recipient,
                             },
