@@ -33,7 +33,7 @@
           type="button"
           id="create-note-btn"
           (click)="insertNote()"
-          title="{{ t('insert_note') }}"
+          title="{{ insertNoteLabel }}"
         >
           <mat-icon>add_comment</mat-icon>
         </button>
@@ -127,12 +127,12 @@
               <b>{{ currentSegmentReference }}</b>
               <button mat-flat-button (click)="insertNote()" color="accent">
                 <mat-icon>add_comment</mat-icon>
-                {{ t("insert_note") }}
+                {{ t("add_comment") }}
               </button>
             </div>
           </ng-template>
           <div #fabButton class="insert-note-fab" [style.left]="insertNoteFabLeft">
-            <button mat-mini-fab title="{{ t('insert_note') }}" (click)="insertNote()">
+            <button mat-mini-fab title="{{ insertNoteLabel }}" (click)="insertNote()">
               <mat-icon>add_comment</mat-icon>
             </button>
           </div>
