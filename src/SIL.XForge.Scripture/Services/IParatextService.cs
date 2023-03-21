@@ -59,6 +59,7 @@ public interface IParatextService
         string paratextId,
         int bookNum,
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
+        IReadOnlyDictionary<string, string> userIdsToUsernames,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
         int sfNoteTagId
     );
