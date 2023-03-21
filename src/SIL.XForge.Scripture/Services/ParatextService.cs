@@ -12,6 +12,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
@@ -72,6 +73,9 @@ public class ParatextService : DisposableBase, IParatextService
         new ConcurrentDictionary<string, SemaphoreSlim>();
     private readonly IHgWrapper _hgHelper;
     private readonly IWebHostEnvironment _env;
+
+    /// <summary> An expression to match the SF user label that looks like [User 05 - xForge] </summary>
+    private readonly string _sfUserLabel = @"\[.+\s-\s.+\]";
 
     public ParatextService(
         IWebHostEnvironment env,
@@ -694,7 +698,7 @@ public class ParatextService : DisposableBase, IParatextService
         {
             foreach (string sfUserId in sfProject.UserRoles.Keys)
             {
-                permissions.Add(sfUserId, await this.GetResourcePermissionAsync(sfProject.ParatextId, sfUserId, token));
+                permissions.Add(sfUserId, await GetResourcePermissionAsync(sfProject.ParatextId, sfUserId, token));
             }
         }
         else
@@ -709,7 +713,7 @@ public class ParatextService : DisposableBase, IParatextService
                 if (
                     !ptUsernameMapping.TryGetValue(uid, out string userName)
                     || string.IsNullOrWhiteSpace(userName)
-                    || scrText.Permissions.GetRole(userName) == Paratext.Data.Users.UserRoles.None
+                    || scrText.Permissions.GetRole(userName) == UserRoles.None
                 )
                 {
                     permissions.Add(uid, TextInfoPermission.None);
@@ -729,7 +733,7 @@ public class ParatextService : DisposableBase, IParatextService
                     {
                         // Book level
                         IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
-                            Paratext.Data.Users.PermissionSet.Merged,
+                            PermissionSet.Merged,
                             userName
                         );
                         if (editable == null || !editable.Any())
@@ -752,7 +756,7 @@ public class ParatextService : DisposableBase, IParatextService
                             book,
                             scrText.Settings.Versification,
                             userName,
-                            Paratext.Data.Users.PermissionSet.Merged
+                            PermissionSet.Merged
                         );
                         if (editable?.Contains(chapter) ?? false)
                         {
@@ -1312,6 +1316,7 @@ public class ParatextService : DisposableBase, IParatextService
         string paratextId,
         int bookNum,
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
+        IReadOnlyDictionary<string, string> userIdsToUsernames,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
         int sfNoteTagId
     )
@@ -1323,6 +1328,7 @@ public class ParatextService : DisposableBase, IParatextService
             commentThreads,
             username,
             sfNoteTagId,
+            userIdsToUsernames,
             ptProjectUsers
         );
 
@@ -2179,6 +2185,7 @@ public class ParatextService : DisposableBase, IParatextService
         IEnumerable<CommentThread> commentThreads,
         string defaultUsername,
         int sfNoteTagId,
+        IReadOnlyDictionary<string, string> userIdsToUsernames,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
@@ -2204,11 +2211,18 @@ public class ParatextService : DisposableBase, IParatextService
                     matchedCommentIds.Add(matchedComment.Id);
                     var comment = (Paratext.Data.ProjectComments.Comment)matchedComment.Clone();
                     bool commentUpdated = false;
-                    if (note.Content != comment.Contents?.InnerXml)
+                    string equivalentCommentContent = GetCommentContentsFromNote(
+                        note,
+                        userIdsToUsernames,
+                        ptProjectUsers
+                    );
+                    // Replace whitespace characters between xml tags
+                    string commentWithoutWhiteSpace = Regex.Replace(comment.Contents.InnerXml.Trim(), @">\W+<", "><");
+                    if (equivalentCommentContent != commentWithoutWhiteSpace)
                     {
                         if (comment.Contents == null)
-                            comment.AddTextToContent("", false);
-                        comment.Contents.InnerXml = note.Content;
+                            comment.AddTextToContent(string.Empty, false);
+                        comment.Contents.InnerXml = equivalentCommentContent;
                         commentUpdated = true;
                     }
                     if (commentUpdated)
@@ -2240,7 +2254,15 @@ public class ParatextService : DisposableBase, IParatextService
                         ContextAfter = threadDoc.Data.OriginalContextAfter
                     };
                     bool isFirstComment = i == 0;
-                    PopulateCommentFromNote(note, comment, sfNoteTagId, isFirstComment);
+                    // TODO: Add the SF reviewer name to the content
+                    PopulateCommentFromNote(
+                        note,
+                        comment,
+                        userIdsToUsernames,
+                        ptProjectUsers,
+                        sfNoteTagId,
+                        isFirstComment
+                    );
                     thread.Add(comment);
                     if (note.SyncUserRef == null)
                     {
@@ -2297,7 +2319,8 @@ public class ParatextService : DisposableBase, IParatextService
         bool typeChanged = comment.Type.InternalValue != note.Type;
         bool conflictTypeChanged = comment.ConflictType.InternalValue != note.ConflictType;
         bool acceptedChangeXmlChanged = comment.AcceptedChangeXmlStr != note.AcceptedChangeXml;
-        bool contentChanged = comment.Contents?.InnerXml != note.Content;
+        string equivalentNoteContent = GetNoteContentFromComment(comment);
+        bool contentChanged = note.Content != equivalentNoteContent;
         bool tagChanged = commentTag?.Id != note.TagId;
         bool assignedUserChanged = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers) != note.Assignment;
         if (
@@ -2313,9 +2336,83 @@ public class ParatextService : DisposableBase, IParatextService
         return ChangeType.None;
     }
 
+    /// <summary>
+    /// Convert the note content to its comment equivalent. The primary use case
+    /// is to add the SF user label to the content.
+    /// </summary>
+    private string GetCommentContentsFromNote(
+        Note note,
+        IReadOnlyDictionary<string, string> userIdsToUsernames,
+        Dictionary<string, ParatextUserProfile> ptProjectUsers
+    )
+    {
+        string ownerId = note.OwnerRef;
+        StringBuilder sb = new StringBuilder();
+        userIdsToUsernames.TryGetValue(ownerId, out string username);
+        if (!string.IsNullOrEmpty(username) && !ptProjectUsers.TryGetValue(username, out _))
+        {
+            sb.Append("<p>");
+            sb.Append($"[{username} - {_siteOptions.Value.Name}]");
+            sb.Append("</p>");
+            if (!note.Content.StartsWith("<p>"))
+            {
+                // Add the paragraph style to the content
+                sb.Append("<p>");
+                sb.Append(note.Content);
+                sb.Append("</p>");
+            }
+            else
+                sb.Append(note.Content);
+        }
+        else
+            sb.Append(note.Content);
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Convert the content from a comment to its note equivalent. The primary use case
+    /// is to remove the SF user label from the comment.
+    /// </summary>
+    private string GetNoteContentFromComment(Paratext.Data.ProjectComments.Comment comment)
+    {
+        string content = comment.Contents?.OuterXml;
+        if (string.IsNullOrEmpty(content))
+            return content;
+        XDocument doc = XDocument.Parse(content);
+        XElement contentNode = (XElement)doc.FirstNode;
+        XElement[] elements = contentNode.Elements().ToArray();
+        if (!elements.Any())
+            return contentNode.Value;
+
+        int paragraphNodeCount = ((XElement)doc.FirstNode).Elements("p").Count();
+        StringBuilder sb = new StringBuilder();
+        bool isReviewer = false;
+        for (int i = 0; i < elements.Length; i++)
+        {
+            XElement elem = elements[i];
+            XNode node = elem.FirstNode;
+            if (node is XText text)
+            {
+                // check if this text matches the note label
+                if (Regex.IsMatch(text.Value, _sfUserLabel))
+                    isReviewer = true;
+            }
+            if (i == 0 && isReviewer)
+                continue;
+            // If there is only one paragraph node other than the SF user label then omit the paragraph tags
+            if (isReviewer && paragraphNodeCount <= 2)
+                sb.Append(elem.Value);
+            else
+                sb.Append(elem.ToString());
+        }
+        return sb.ToString();
+    }
+
     private void PopulateCommentFromNote(
         Note note,
         Paratext.Data.ProjectComments.Comment comment,
+        IReadOnlyDictionary<string, string> userIdsToUsernames,
+        Dictionary<string, ParatextUserProfile> ptProjectUsers,
         int sfNoteTagId,
         bool isFirstComment
     )
@@ -2325,7 +2422,11 @@ public class ParatextService : DisposableBase, IParatextService
         comment.Deleted = note.Deleted;
 
         if (!string.IsNullOrEmpty(note.Content))
-            comment.GetOrCreateCommentNode().InnerXml = note.Content;
+            comment.GetOrCreateCommentNode().InnerXml = GetCommentContentsFromNote(
+                note,
+                userIdsToUsernames,
+                ptProjectUsers
+            );
         if (!_userSecretRepository.Query().Any(u => u.Id == note.OwnerRef))
             comment.ExternalUser = note.OwnerRef;
         comment.TagsAdded =
@@ -2343,6 +2444,7 @@ public class ParatextService : DisposableBase, IParatextService
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
+        string noteContent = GetNoteContentFromComment(comment);
         return new Note
         {
             DataId = noteId,
@@ -2352,7 +2454,7 @@ public class ParatextService : DisposableBase, IParatextService
             // The owner is unknown at this point and is determined when submitting the ops to the note thread docs
             OwnerRef = "",
             SyncUserRef = FindOrCreateParatextUser(comment.User, ptProjectUsers)?.OpaqueUserId,
-            Content = comment.Contents?.InnerXml,
+            Content = noteContent,
             AcceptedChangeXml = comment.AcceptedChangeXmlStr,
             DateCreated = DateTime.Parse(comment.Date),
             DateModified = DateTime.Parse(comment.Date),
