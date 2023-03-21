@@ -1652,6 +1652,7 @@ public class ParatextSyncRunnerTests
                 "target",
                 40,
                 Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
+                Arg.Any<Dictionary<string, string>>(),
                 Arg.Any<Dictionary<string, ParatextUserProfile>>(),
                 Arg.Any<int>()
             )
@@ -1665,6 +1666,7 @@ public class ParatextSyncRunnerTests
                 "target",
                 40,
                 Arg.Is<IEnumerable<IDocument<NoteThread>>>(t => t.Count() == 1 && t.First().Id == "project01:thread01"),
+                Arg.Any<Dictionary<string, string>>(),
                 Arg.Any<Dictionary<string, ParatextUserProfile>>(),
                 Arg.Any<int>()
             );
@@ -1691,6 +1693,7 @@ public class ParatextSyncRunnerTests
                 "target",
                 40,
                 Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
+                Arg.Any<Dictionary<string, string>>(),
                 Arg.Any<Dictionary<string, ParatextUserProfile>>(),
                 Arg.Any<int>()
             )
@@ -1704,6 +1707,7 @@ public class ParatextSyncRunnerTests
                 "target",
                 40,
                 Arg.Is<IEnumerable<IDocument<NoteThread>>>(t => t.Single().Id == "project01:thread01"),
+                Arg.Any<Dictionary<string, string>>(),
                 Arg.Any<Dictionary<string, ParatextUserProfile>>(),
                 Arg.Any<int>()
             );
@@ -2355,6 +2359,7 @@ public class ParatextSyncRunnerTests
                     new SyncMetrics { Id = "project05" },
                 }
             );
+            UserService = Substitute.For<IUserService>();
             SFProjectService = Substitute.For<ISFProjectService>();
             MachineProjectService = Substitute.For<IMachineProjectService>();
             ParatextService = Substitute.For<IParatextService>();
@@ -2414,6 +2419,7 @@ public class ParatextSyncRunnerTests
 
             Runner = new ParatextSyncRunner(
                 userSecrets,
+                UserService,
                 _projectSecrets,
                 _syncMetrics,
                 SFProjectService,
@@ -2428,6 +2434,7 @@ public class ParatextSyncRunnerTests
         }
 
         public ParatextSyncRunner Runner { get; }
+        public IUserService UserService { get; }
         public ISFProjectService SFProjectService { get; }
         public IMachineProjectService MachineProjectService { get; }
         public IParatextNotesMapper NotesMapper { get; }
