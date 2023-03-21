@@ -70,6 +70,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     );
 
     private readonly IRepository<UserSecret> _userSecrets;
+    private readonly IUserService _userService;
     private readonly IRepository<SFProjectSecret> _projectSecrets;
     private readonly IRepository<SyncMetrics> _syncMetricsRepository;
     private readonly ISFProjectService _projectService;
@@ -87,9 +88,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private SFProjectSecret _projectSecret;
     private SyncMetrics _syncMetrics;
     private Dictionary<string, ParatextUserProfile> _currentPtSyncUsers;
+    private Dictionary<string, string> _userIdsToUsernames;
 
     public ParatextSyncRunner(
         IRepository<UserSecret> userSecrets,
+        IUserService userService,
         IRepository<SFProjectSecret> projectSecrets,
         IRepository<SyncMetrics> syncMetricsRepository,
         ISFProjectService projectService,
@@ -103,6 +106,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     )
     {
         _userSecrets = userSecrets;
+        _userService = userService;
         _projectSecrets = projectSecrets;
         _syncMetricsRepository = syncMetricsRepository;
         _projectService = projectService;
@@ -536,6 +540,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     paratextId,
                     text.BookNum,
                     noteThreadDocs,
+                    _userIdsToUsernames,
                     _currentPtSyncUsers,
                     sfNoteTagId
                 );
@@ -721,6 +726,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
             Log($"Could not find project secret.", projectSFId, userId);
             return false;
         }
+        _userIdsToUsernames = await _userService.UsernamesFromUserIds(
+            userId,
+            _projectDoc.Data.UserRoles.Keys.ToArray()
+        );
         _currentPtSyncUsers = _projectDoc.Data.ParatextUsers.ToDictionary(u => u.Username);
 
         if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
