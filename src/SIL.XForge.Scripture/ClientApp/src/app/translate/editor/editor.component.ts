@@ -107,8 +107,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   chapters: number[] = [];
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
-  sourceTextHeight: string = '';
-  targetTextHeight: string = '';
+  textHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
 
@@ -158,7 +157,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly projectService: SFProjectService,
     noticeService: NoticeService,
     private readonly dialogService: DialogService,
-    private readonly mediaObserver: MediaObserver,
+    readonly mediaObserver: MediaObserver,
     private readonly pwaService: PwaService,
     private readonly translationEngineService: TranslationEngineService,
     private readonly i18n: I18nService,
@@ -1019,23 +1018,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const elem: HTMLElement = this.targetContainer.nativeElement;
     const bounds = elem.getBoundingClientRect();
     // add bottom padding
-    let sourceTop = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
-    let targetTop = sourceTop;
+    let top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
     if (this.target.editor != null && this.targetFocused) {
       // reset scroll position
       this.target.editor.scrollingContainer.scrollTop = 0;
     }
-    // Add the Biblical Terms panels
-    if (!this.mediaObserver.isActive('xs')) {
-      if (this.biblicalTermsEnabledForSource) {
-        sourceTop += 160;
-      }
-      if (this.biblicalTermsEnabledForTarget) {
-        targetTop += 160;
-      }
-    }
-    this.sourceTextHeight = `calc(100vh - ${sourceTop}px)`;
-    this.targetTextHeight = `calc(100vh - ${targetTop}px)`;
+    this.textHeight = `calc(100vh - ${top}px)`;
     if (this.targetFocused && this.dialogService.openDialogCount < 1) {
       setTimeout(() => {
         // reset focus, which causes Quill to scroll to the selection
