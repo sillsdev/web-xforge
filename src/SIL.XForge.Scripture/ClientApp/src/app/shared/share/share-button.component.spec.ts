@@ -4,7 +4,6 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
-import { I18nService } from 'xforge-common/i18n.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -14,26 +13,22 @@ import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ShareControlComponent } from './share-control.component';
-import { ShareDialogComponent } from './share-dialog.component';
 import { ShareButtonComponent } from './share-button.component';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedUserService = mock(UserService);
 const mockedPwaService = mock(PwaService);
-const mockedI18nService = mock(I18nService);
 
 describe('ShareButtonComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [DialogTestModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), UICommonModule],
     declarations: [ShareButtonComponent],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: UserService, useMock: mockedUserService },
-      { provide: PwaService, useMock: mockedPwaService },
-      { provide: I18nService, useMock: mockedI18nService }
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -50,9 +45,7 @@ describe('ShareButtonComponent', () => {
 });
 
 @NgModule({
-  imports: [NoopAnimationsModule, UICommonModule, TestTranslocoModule],
-  exports: [ShareDialogComponent, ShareControlComponent],
-  declarations: [ShareDialogComponent, ShareControlComponent]
+  imports: [NoopAnimationsModule, UICommonModule, TestTranslocoModule]
 })
 class DialogTestModule {}
 
@@ -81,7 +74,7 @@ class TestEnvironment {
   }
 
   get closeButton(): HTMLButtonElement {
-    return this.overlayContainerElement.querySelector('#close-btn') as HTMLButtonElement;
+    return this.overlayContainerElement.querySelector('button[mat-dialog-close]') as HTMLButtonElement;
   }
 
   clickElement(element: HTMLElement): void {

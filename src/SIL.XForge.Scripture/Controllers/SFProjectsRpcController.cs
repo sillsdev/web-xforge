@@ -115,10 +115,8 @@ public class SFProjectsRpcController : RpcControllerBase
                 {
                     { "method", "UpdateSettings" },
                     { "projectId", projectId },
-                    { "CheckingShareLevel", settings?.CheckingShareLevel },
                     { "CheckingAnswerExport", settings?.CheckingAnswerExport },
                     { "SourceParatextId", settings?.SourceParatextId },
-                    { "TranslateShareLevel", settings?.TranslateShareLevel },
                     { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
                     { "CheckingShareEnabled", settings?.CheckingShareEnabled?.ToString() },
                     { "TranslateShareEnabled", settings?.TranslateShareEnabled?.ToString() },
@@ -341,12 +339,11 @@ public class SFProjectsRpcController : RpcControllerBase
         }
     }
 
-    public async Task<IRpcMethodResult> CheckLinkSharing(string projectId, string shareKey)
+    public async Task<IRpcMethodResult> CheckLinkSharing(string shareKey)
     {
         try
         {
-            await _projectService.CheckLinkSharingAsync(UserId, projectId, shareKey);
-            return Ok();
+            return Ok(await _projectService.CheckLinkSharingAsync(UserId, shareKey));
         }
         catch (ForbiddenException)
         {
@@ -359,21 +356,19 @@ public class SFProjectsRpcController : RpcControllerBase
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "CheckLinkSharing" }, { "projectId", projectId }, }
+                new Dictionary<string, string> { { "method", "CheckLinkSharing" }, { "shareKey", shareKey }, }
             );
             throw;
         }
     }
 
-    public async Task<IRpcMethodResult> CheckLinkSharing(string projectId) => await CheckLinkSharing(projectId, null);
-
     public IRpcMethodResult IsSourceProject(string projectId) => Ok(_projectService.IsSourceProject(projectId));
 
-    public async Task<IRpcMethodResult> LinkSharingKey(string projectId, string role)
+    public async Task<IRpcMethodResult> LinkSharingKey(string projectId, string role, string shareLinkType)
     {
         try
         {
-            return Ok(await _projectService.GetLinkSharingKeyAsync(UserId, projectId, role));
+            return Ok(await _projectService.GetLinkSharingKeyAsync(UserId, projectId, role, shareLinkType));
         }
         catch (DataNotFoundException dnfe)
         {
@@ -387,7 +382,28 @@ public class SFProjectsRpcController : RpcControllerBase
                     { "method", "LinkSharingKey" },
                     { "projectId", projectId },
                     { "role", role },
+                    { "shareLinkType", shareLinkType },
                 }
+            );
+            throw;
+        }
+    }
+
+    public async Task<IRpcMethodResult> ReserveLinkSharingKey(string shareKey)
+    {
+        try
+        {
+            await _projectService.ReserveLinkSharingKeyAsync(UserId, shareKey);
+            return Ok();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string> { { "method", "ReserveLinkSharingKey" }, { "shareKey", shareKey }, }
             );
             throw;
         }

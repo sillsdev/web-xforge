@@ -9,7 +9,6 @@ export interface TranslateConfig {
   translationSuggestionsEnabled: boolean;
   source?: TranslateSource;
   shareEnabled: boolean;
-  shareLevel: TranslateShareLevel;
   defaultNoteTagId?: number;
 }
 

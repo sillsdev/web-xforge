@@ -2,10 +2,8 @@ import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, Output, 
 import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { CheckingShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -23,6 +21,7 @@ import {
   SF_PROJECT_ROLES
 } from '../../core/models/sf-project-role-info';
 import { SFProjectService } from '../../core/sf-project.service';
+import { ShareLinkType } from './share-dialog.component';
 
 /** UI to share project access with new users, such as by sending an invitation email. */
 @Component({
@@ -96,12 +95,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
   }
 
   get shareLink(): string {
-    if (this.linkSharingKey === '') {
-      return '';
-    }
-    return (
-      this.locationService.origin + '/projects/' + this._projectId + '?sharing=true&shareKey=' + this.linkSharingKey
-    );
+    return this.projectService.generateSharingUrl(this.linkSharingKey);
   }
 
   get shareRole(): SFProjectRole {
@@ -117,19 +111,18 @@ export class ShareControlComponent extends SubscriptionDisposable {
     if (project == null) {
       return false;
     }
-    const linkSharingSettings = {
-      [SFProjectRole.CommunityChecker]:
-        project.checkingConfig.shareEnabled && project.checkingConfig.shareLevel === CheckingShareLevel.Anyone,
-      [SFProjectRole.Observer]:
-        project.translateConfig.shareEnabled && project.translateConfig.shareLevel === TranslateShareLevel.Anyone,
-      [SFProjectRole.Reviewer]:
-        project.translateConfig.shareEnabled && project.translateConfig.shareLevel === TranslateShareLevel.Anyone
-    };
-    return linkSharingSettings[this.shareRole] === true && this.userShareableRoles.includes(this.shareRole);
-  }
 
-  get showLinkSharingUnavailable(): boolean {
-    return this.isLinkSharingEnabled && !this.isAppOnline && !this.shareLink;
+    // Admin users can always share
+    if (this.isProjectAdmin) {
+      return true;
+    }
+
+    const linkSharingSettings = {
+      [SFProjectRole.CommunityChecker]: project.checkingConfig.shareEnabled,
+      [SFProjectRole.Observer]: project.translateConfig.shareEnabled,
+      [SFProjectRole.Reviewer]: project.translateConfig.shareEnabled
+    };
+    return linkSharingSettings[this.shareRole] && this.userShareableRoles.includes(this.shareRole);
   }
 
   private get userShareableRoles(): string[] {
@@ -175,15 +168,6 @@ export class ShareControlComponent extends SubscriptionDisposable {
     return roles.some(role => role === SF_DEFAULT_TRANSLATE_SHARE_ROLE) ? SF_DEFAULT_TRANSLATE_SHARE_ROLE : roles[0];
   }
 
-  copyShareLink(): void {
-    if (this.shareLinkField == null) {
-      return;
-    }
-    this.shareLinkField.nativeElement.select();
-    document.execCommand('copy');
-    this.noticeService.show(translate('share_control.link_copied'));
-  }
-
   async onEmailInput(): Promise<void> {
     if (this._projectId == null || this.email.invalid) {
       return;
@@ -205,7 +189,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
     );
     this.isSubmitted = false;
     this.isAlreadyInvited = false;
-    let message = '';
+    let message: string;
     if (response === this.alreadyProjectMemberResponse) {
       message = translate('share_control.not_inviting_already_member');
     } else {
@@ -220,7 +204,11 @@ export class ShareControlComponent extends SubscriptionDisposable {
   private async updateFormEnabledStateAndLinkSharingKey() {
     if (this.pwaService.isOnline) {
       if (this._projectId != null && this.shareRole != null) {
-        this.linkSharingKey = await this.projectService.onlineGetLinkSharingKey(this._projectId, this.shareRole);
+        this.linkSharingKey = await this.projectService.onlineGetLinkSharingKey(
+          this._projectId,
+          this.shareRole,
+          ShareLinkType.Recipient
+        );
       }
       this.sendInviteForm.enable({ emitEvent: false });
     } else {

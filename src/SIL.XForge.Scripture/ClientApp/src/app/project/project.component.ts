@@ -2,20 +2,17 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
-import { combineLatest } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
+import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
-import { selectValidProject } from '../start/start.component';
 
 @Component({
   selector: 'app-projects',
@@ -37,54 +34,38 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    const userProjects: string[] | undefined = (await this.userService.getCurrentUser()).data?.sites[environment.siteId]
-      .projects;
+    // Redirect old sharing links
+    if ((this.route.snapshot.queryParams['sharing'] as string) === 'true') {
+      const shareKey = this.route.snapshot.queryParams['shareKey'] as string;
+      this.router.navigateByUrl(`/join/${shareKey}`, { replaceUrl: true });
+      return;
+    }
     const projectId$ = this.route.params.pipe(
       map(params => params['projectId'] as string),
       distinctUntilChanged(),
       filter(projectId => projectId != null)
     );
 
-    const navigateToProject$ = projectId$.pipe(
-      filter(id => !!userProjects?.includes(id) || this.route.snapshot.queryParams['sharing'] == null)
-    );
-    this.subscribe(navigateToProject$, projectId => this.navigateToProject(projectId));
-    const checkLinkSharing$ = combineLatest([projectId$, this.pwaService.onlineStatus$]).pipe(
-      filter(([_, isOnline]) => isOnline && (this.route.snapshot.queryParams['sharing'] as string) === 'true'),
-      map(([projectId, _]) => projectId)
-    );
-    this.subscribe(checkLinkSharing$, projectId => this.checkLinkSharing(projectId));
-    const showOfflineMessage$ = combineLatest([projectId$, this.pwaService.onlineStatus$]).pipe(
-      filter(
-        ([id, isOnline]) =>
-          !userProjects?.includes(id) && !isOnline && (this.route.snapshot.queryParams['sharing'] as string) === 'true'
-      )
-    );
-    this.subscribe(showOfflineMessage$, () => this.showOfflineMessage());
-  }
+    // Can only navigate to the project if the user is on the project
+    // Race condition can occur with the user doc sites so listen to remote changes
+    const userDoc = await this.userService.getCurrentUser();
+    const navigateToProject$: Observable<string> = new Observable(subscriber => {
+      let projectId: string | undefined;
+      this.subscribe(projectId$, id => {
+        projectId = id;
+        subscriber.next(projectId);
+      });
+      this.subscribe(userDoc.remoteChanges$, () => {
+        subscriber.next(projectId);
+      });
+    });
 
-  private async checkLinkSharing(projectId: string): Promise<void> {
-    this.loadingStarted();
-    // if the link has sharing turned on, check if the current user needs to be added to the project
-    const shareKey = this.route.snapshot.queryParams['shareKey'] as string;
-    try {
-      await this.projectService.onlineCheckLinkSharing(projectId, shareKey);
-    } catch (err) {
-      if (
-        err instanceof CommandError &&
-        (err.code === CommandErrorCode.Forbidden || err.code === CommandErrorCode.NotFound)
-      ) {
-        await this.projectService.localDelete(projectId);
-        await this.dialogService.message('project.project_link_is_invalid');
-        this.router.navigateByUrl('/projects', { replaceUrl: true });
+    this.subscribe(navigateToProject$, projectId => {
+      if (!userDoc.data?.sites[environment.siteId].projects?.includes(projectId)) {
         return;
-      } else {
-        throw err;
       }
-    } finally {
-      this.loadingFinished();
-    }
-    this.navigateToProject(projectId);
+      this.navigateToProject(projectId);
+    });
   }
 
   private async navigateToProject(projectId: string): Promise<void> {
@@ -130,17 +111,5 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
       }
     }
     this.loadingFinished();
-  }
-
-  private async showOfflineMessage(): Promise<void> {
-    await this.dialogService.message('project.please_connect_to_use_link');
-    const userDoc: UserDoc = await this.userService.getCurrentUser();
-    const currentProjectId: string | undefined = this.userService.currentProjectId(userDoc);
-    const projectId: string | undefined = selectValidProject(userDoc, currentProjectId);
-    if (projectId == null) {
-      this.router.navigateByUrl('/projects', { replaceUrl: true });
-    } else {
-      this.navigateToProject(projectId);
-    }
   }
 }

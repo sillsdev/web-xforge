@@ -6,15 +6,10 @@ import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
-import {
-  CheckingAnswerExport,
-  CheckingConfig,
-  CheckingShareLevel
-} from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { CheckingAnswerExport, CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -38,7 +33,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_PROJECT_ROLES } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ShareControlComponent } from '../../shared/share/share-control.component';
+import { SharedModule } from '../../shared/shared.module';
 import { CollaboratorsComponent } from './collaborators.component';
 
 const mockedAuthService = mock(AuthService);
@@ -54,13 +49,14 @@ const mockedDialogService = mock(DialogService);
 
 describe('CollaboratorsComponent', () => {
   configureTestingModule(() => ({
-    declarations: [CollaboratorsComponent, ShareControlComponent],
+    declarations: [CollaboratorsComponent],
     imports: [
       NoopAnimationsModule,
       AvatarTestingModule,
       UICommonModule,
       TestTranslocoModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      SharedModule
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
@@ -420,7 +416,6 @@ describe('CollaboratorsComponent', () => {
     const checkingConfig: CheckingConfig = {
       checkingEnabled: true,
       shareEnabled: true,
-      shareLevel: CheckingShareLevel.Anyone,
       usersSeeEachOthersResponses: false,
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     };
@@ -492,7 +487,9 @@ class TestEnvironment {
     when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
-    when(mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything())).thenResolve('linkSharingKey01');
+    when(mockedProjectService.onlineGetLinkSharingKey(this.project01Id, anything(), anything())).thenResolve(
+      'linkSharingKey01'
+    );
     when(mockedProjectService.onlineSetUserProjectPermissions(this.project01Id, 'user02', anything())).thenCall(
       (projectId: string, userId: string, permissions: string[]) => {
         const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, projectId);
@@ -520,14 +517,6 @@ class TestEnvironment {
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
     this.fixture = TestBed.createComponent(CollaboratorsComponent);
     this.component = this.fixture.componentInstance;
-  }
-
-  get emailInput(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('#email-input');
-  }
-
-  get inviteButton(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('#btn-invite');
   }
 
   get offlineMessage(): DebugElement {
@@ -627,14 +616,6 @@ class TestEnvironment {
     tick();
   }
 
-  setTextFieldValue(element: HTMLElement, value: string) {
-    const inputElem = element.querySelector('input') as HTMLInputElement;
-    inputElem.value = value;
-    inputElem.dispatchEvent(new Event('input'));
-    this.fixture.detectChanges();
-    tick();
-  }
-
   setupProjectData(userRoles?: { [userRef: string]: string }): void {
     if (userRoles === undefined) {
       userRoles = {
@@ -667,14 +648,12 @@ class TestEnvironment {
       sync: { queuedCount: 0 },
       translateConfig: {
         translationSuggestionsEnabled: false,
-        shareEnabled: false,
-        shareLevel: TranslateShareLevel.Specific
+        shareEnabled: false
       },
       checkingConfig: {
         checkingEnabled: false,
         usersSeeEachOthersResponses: false,
         shareEnabled: false,
-        shareLevel: CheckingShareLevel.Specific,
         answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
       noteTags: [],

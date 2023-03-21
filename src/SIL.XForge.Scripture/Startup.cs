@@ -66,6 +66,7 @@ public class Startup
         "connect-project",
         "login",
         "projects",
+        "join",
         "system-administration",
         "favicon.ico",
         "assets"
