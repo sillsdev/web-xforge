@@ -2673,6 +2673,21 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('shows the correct combined verse ref for a new note', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.wait();
+
+      const segmentRef = 'verse_1_2-3';
+      env.setSelectionAndInsertNote(segmentRef);
+      const verseRef = new VerseRef('LUK', 1, '2-3');
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      const [, config] = capture(mockedMatDialog.open).last();
+      expect((config!.data! as NoteDialogData).verseRef!.equals(verseRef)).toBeTrue();
+      env.dispose();
+    }));
+
     it('does not allow selecting section headings', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
