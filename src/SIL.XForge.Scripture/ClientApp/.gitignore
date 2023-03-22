@@ -33,6 +33,7 @@
 /libpeerconnection.log
 npm-debug.log
 testem.log
+/documentation.json
 
 # System Files
 .DS_Store
