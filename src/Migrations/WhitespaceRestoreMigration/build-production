@@ -1,0 +1,20 @@
+#!/bin/bash
+# Build for running on another computer.
+# Usage: ./build-production
+
+set -u
+
+scriptDir="$(dirname "$0")"
+cd "${scriptDir}"
+# Derive the name of the program from the name of the directory of the script.
+programName="$(basename "$(pwd)")"
+outputProductName="${programName}"
+outputDir="bin/${outputProductName}"
+
+if ! grep 'RuntimeIdentifier' ../../SIL.XForge.Scripture/SIL.XForge.Scripture.csproj >/dev/null; then
+  echo "Adding '<RuntimeIdentifier>linux-x64</RuntimeIdentifier>' to ../../SIL.XForge.Scripture/SIL.XForge.Scripture.csproj ."
+  perl -pi -e 's#</TargetFramework>#</TargetFramework>\n    <RuntimeIdentifier>linux-x64</RuntimeIdentifier>#' ../../SIL.XForge.Scripture/SIL.XForge.Scripture.csproj
+fi
+
+dotnet publish --runtime "linux-x64" --self-contained true --output "${outputDir}" || echo "Warning: Non-zero exit code."
+ls -ld "${outputDir}"
