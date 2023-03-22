@@ -489,8 +489,8 @@ public class DeltaUsxMapper : IDeltaUsxMapper
 
     /// <summary>
     /// It may be that this method is taking USX, leaving alone all chapters not specified and valid in
-    /// chapterDeltas, and then replacing all chapters in the USX, that are in chapterDeltas and valid, with
-    /// the data from the chapterDeltas.
+    /// chapterDeltas, leaving alone most chapters not already present in oldUsxDoc, and then replacing
+    /// all chapters in the USX, that are in chapterDeltas and valid, with the data from the chapterDeltas.
     /// </summary>
     public XDocument ToUsx(XDocument oldUsxDoc, IEnumerable<ChapterDelta> chapterDeltas)
     {

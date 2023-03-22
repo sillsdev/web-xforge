@@ -120,26 +120,15 @@
       "problemMatcher": "$msCompile"
     },
     {
-      "label": "build-migrator-sync-user-to-pt-user",
+      "label": "build-migrator",
       "command": "dotnet",
       "args": ["build", "/property:GenerateFullPaths=true"],
       "type": "shell",
       "group": "build",
       "options": {
-        "cwd": "${workspaceRoot}/src/Migrations/SyncUserToPTUser"
+        "cwd": "${workspaceRoot}/src/Migrations/WhitespaceRestoreMigration"
       },
       "problemMatcher": "$msCompile"
     }
-    // {
-    //   "label": "build-migrator-foo",
-    //   "command": "dotnet",
-    //   "args": ["build", "/property:GenerateFullPaths=true"],
-    //   "type": "shell",
-    //   "group": "build",
-    //   "options": {
-    //     "cwd": "${workspaceRoot}/src/Migrations/Foo"
-    //   },
-    //   "problemMatcher": "$msCompile"
-    // },
   ]
 }
