@@ -442,16 +442,6 @@ describe('AppComponent', () => {
     verify(mockedAuthService.checkOnlineAuth()).once();
   }));
 
-  it('non auth0 connection users cannot edit name', fakeAsync(() => {
-    const env = new TestEnvironment('online');
-    env.init();
-
-    env.avatarIcon.nativeElement.click();
-    env.wait();
-    expect(env.userMenu).not.toBeNull();
-    expect(env.editNameIcon).toBeNull();
-  }));
-
   describe('Community Checking', () => {
     it('no books showing in the menu', fakeAsync(() => {
       const env = new TestEnvironment();
@@ -567,6 +557,17 @@ describe('AppComponent', () => {
     it('can edit sms user name online', fakeAsync(() => {
       const env = new TestEnvironment('online');
       env.setCurrentUser('user03');
+      env.init();
+
+      env.avatarIcon.nativeElement.click();
+      env.wait();
+      expect(env.userMenu).not.toBeNull();
+      env.clickEditDisplayName();
+      verify(mockedUserService.editDisplayName(false)).once();
+    }));
+
+    it('non auth0 connection users can edit name', fakeAsync(() => {
+      const env = new TestEnvironment('online');
       env.init();
 
       env.avatarIcon.nativeElement.click();
@@ -736,10 +737,6 @@ class TestEnvironment {
     return this.fixture.debugElement.queryAll(By.css('#menu-drawer .mat-list-item'));
   }
 
-  get helpMenuList(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#help-menu-list'));
-  }
-
   get userMenu(): DebugElement {
     return this.fixture.debugElement.query(By.css('#user-menu'));
   }
@@ -772,10 +769,6 @@ class TestEnvironment {
     return this.menuDrawer != null;
   }
 
-  get currentUserDisplayName(): string {
-    return this.currentUserDoc.data!.displayName;
-  }
-
   get currentUserDoc(): UserDoc {
     return this.realtimeService.get(UserDoc.COLLECTION, 'user01');
   }
@@ -787,10 +780,7 @@ class TestEnvironment {
 
   get lastSyncFailedBadgeIsPresent(): boolean {
     const iconIfBadgeHidden = this.menuDrawer.query(By.css('#sync-icon.mat-badge-hidden'));
-    if (iconIfBadgeHidden != null) {
-      return false;
-    }
-    return true;
+    return iconIfBadgeHidden == null;
   }
 
   getMenuItemText(index: number): string {
@@ -835,21 +825,21 @@ class TestEnvironment {
     this.wait();
   }
 
-  goFullyOffline() {
+  goFullyOffline(): void {
     this.setBrowserOnlineStatus(false);
     this.setWebSocketOnlineStatus(false);
   }
 
-  goFullyOnline() {
+  goFullyOnline(): void {
     this.setBrowserOnlineStatus(true);
     this.setWebSocketOnlineStatus(true);
   }
 
-  setBrowserOnlineStatus(status: boolean) {
+  setBrowserOnlineStatus(status: boolean): void {
     this.browserOnline$.next(status);
   }
 
-  setWebSocketOnlineStatus(status: boolean) {
+  setWebSocketOnlineStatus(status: boolean): void {
     this.webSocketOnline$.next(status);
   }
 
@@ -858,19 +848,19 @@ class TestEnvironment {
     this.wait();
   }
 
-  allowUserToSeeSettings(canSeeSettings: boolean = true) {
+  allowUserToSeeSettings(canSeeSettings: boolean = true): void {
     this.canSeeSettings$.next(canSeeSettings);
     this.fixture.detectChanges();
     tick();
   }
 
-  allowUserToSeeUsers(canSeeUsers: boolean = true) {
+  allowUserToSeeUsers(canSeeUsers: boolean = true): void {
     this.canSeeUsers$.next(canSeeUsers);
     this.fixture.detectChanges();
     tick();
   }
 
-  allowUserToSync(canSync: boolean = true) {
+  allowUserToSync(canSync: boolean = true): void {
     this.canSync$.next(canSync);
     this.fixture.detectChanges();
     tick();
@@ -942,7 +932,7 @@ class TestEnvironment {
     this.wait();
   }
 
-  confirmProjectDeletedDialog() {
+  confirmProjectDeletedDialog(): void {
     this.ngZone.run(() => this.projectDeletedDialogRefAfterClosed$.next('close'));
   }
 
