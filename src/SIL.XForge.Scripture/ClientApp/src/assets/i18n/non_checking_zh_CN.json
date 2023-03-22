@@ -6,11 +6,20 @@
     "translate": "Translate",
     "users": "Users"
   },
+  "biblical_term_dialog": {
+    "cancel": "取消",
+    "description": "描述",
+    "edit_renderings": "编辑译法",
+    "renderings": "译法",
+    "save": "保存",
+    "term": "词汇／定义"
+  },
   "biblical_terms": {
-    "term": "词条",
+    "actions": "Actions",
     "category": "类别",
     "gloss": "译词",
-    "renderings": "译法"
+    "renderings": "译法",
+    "term": "词条"
   },
   "chapter_nav": {
     "previous_chapter": "Previous chapter",

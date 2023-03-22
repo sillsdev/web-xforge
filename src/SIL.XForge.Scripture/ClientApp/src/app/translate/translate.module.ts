@@ -5,6 +5,7 @@ import { AngularSplitModule } from 'angular-split';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SharedModule } from '../shared/shared.module';
+import { BiblicalTermDialogComponent } from './biblical-terms/biblical-term-dialog.component';
 import { BiblicalTermsComponent } from './biblical-terms/biblical-terms.component';
 import { EditorComponent } from './editor/editor.component';
 import { MultiViewerComponent } from './editor/multi-viewer/multi-viewer.component';
@@ -17,6 +18,7 @@ import { TranslateRoutingModule } from './translate-routing.module';
 
 @NgModule({
   declarations: [
+    BiblicalTermDialogComponent,
     BiblicalTermsComponent,
     EditorComponent,
     MultiViewerComponent,

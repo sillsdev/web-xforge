@@ -6,11 +6,20 @@
     "translate": "Перевести",
     "users": "Пользователи"
   },
+  "biblical_term_dialog": {
+    "cancel": "Отменить",
+    "description": "Описание",
+    "edit_renderings": "Редактировать переводы",
+    "renderings": "Переводы",
+    "save": "Сохранить",
+    "term": "Термин/Определение"
+  },
   "biblical_terms": {
-    "term": "Термин",
+    "actions": "Actions",
     "category": "Категория",
     "gloss": "Глосса",
-    "renderings": "Переводы"
+    "renderings": "Переводы",
+    "term": "Термин"
   },
   "chapter_nav": {
     "previous_chapter": "Предыдущая глава",

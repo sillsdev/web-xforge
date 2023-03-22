@@ -1,0 +1,56 @@
+@import 'src/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
+
+/* Space out the cells a little bit */
+.mat-cell {
+  padding: 5px;
+}
+
+/* Some terms are exceptionally long */
+.mat-column-term {
+  overflow: hidden;
+}
+
+/* Fix the menu appearing below the table header */
+.mat-header-cell {
+  padding: 5px;
+  z-index: 2 !important;
+}
+
+/* Stretch the table across the page */
+.mat-table {
+  width: 100%;
+}
+
+/* Show the actions button in the center (there is no sort header on this cell) */
+.mat-column-id {
+  text-align: center;
+}
+
+/* Hide the category on XS, SM, MD, and LG devices */
+.mat-column-category {
+  @include media-breakpoint-down(lg) {
+    display: none;
+  }
+}
+
+/* Show the category on SM, MD, and LG devices if there is no source visible */
+:host-context(.text-area-full-width) .mat-column-category {
+  @include media-breakpoint-between(sm, lg) {
+    display: table-cell;
+  }
+}
+
+/* Hide the gloss on SM devices */
+.mat-column-gloss {
+  @include media-breakpoint-only(sm) {
+    display: none;
+  }
+}
+
+/* Show the gloss on SM devices if there is no source visible */
+:host-context(.text-area-full-width) .mat-column-gloss {
+  @include media-breakpoint-only(sm) {
+    display: table-cell;
+  }
+}

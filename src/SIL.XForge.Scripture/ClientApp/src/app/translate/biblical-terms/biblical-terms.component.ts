@@ -5,11 +5,14 @@ import { BehaviorSubject, merge, Subscription } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
+import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
+import { RealtimeService } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { BiblicalTermDialogComponent, BiblicalTermDialogData } from './biblical-term-dialog.component';
 
 class Row {
   private static readonly defaultLocaleCode = I18nService.defaultLocale.canonicalTag;
@@ -58,10 +61,10 @@ class Row {
 @Component({
   selector: 'app-biblical-terms',
   templateUrl: './biblical-terms.component.html',
-  styleUrls: ['./biblical-terms.component.css']
+  styleUrls: ['./biblical-terms.component.scss']
 })
 export class BiblicalTermsComponent extends DataLoadingComponent implements OnDestroy, OnInit {
-  columnsToDisplay = ['term', 'category', 'gloss', 'renderings'];
+  columnsToDisplay = ['term', 'category', 'gloss', 'renderings', 'id'];
   rows: Row[] = [];
 
   private biblicalTermQuery?: RealtimeQuery<BiblicalTermDoc>;
@@ -78,8 +81,10 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
 
   constructor(
     noticeService: NoticeService,
+    private readonly dialogService: DialogService,
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
+    private readonly realtimeService: RealtimeService,
     private readonly userService: UserService
   ) {
     super(noticeService);
@@ -151,6 +156,14 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     });
     this.subscribe(this.chapter$, chapter => {
       this.filterBiblicalTerms(this._bookNum ?? 0, chapter);
+    });
+  }
+
+  async editRendering(id: string): Promise<void> {
+    var biblicalTermDoc = await this.realtimeService.subscribe<BiblicalTermDoc>(BiblicalTermDoc.COLLECTION, id);
+    this.dialogService.openMatDialog<BiblicalTermDialogComponent, BiblicalTermDialogData>(BiblicalTermDialogComponent, {
+      data: { biblicalTermDoc, projectUserConfigDoc: this.projectUserConfigDoc },
+      width: '80vw'
     });
   }
 
