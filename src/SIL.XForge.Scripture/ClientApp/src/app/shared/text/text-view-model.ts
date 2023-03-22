@@ -523,7 +523,6 @@ export class TextViewModel {
         const style = op.attributes == null || op.attributes.para == null ? null : (op.attributes.para.style as string);
         if (style == null || canParaContainVerseText(style)) {
           // paragraph
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           for (const _ch of op.insert) {
             if (curSegment != null) {
               paraSegments.push(curSegment);
