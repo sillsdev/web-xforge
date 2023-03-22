@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
 import { I18nKey } from 'xforge-common/i18n.service';
 import { TranslocoService } from '@ngneat/transloco';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-notice',
@@ -14,10 +15,10 @@ export class NoticeComponent {
   @Input() outline: boolean = false;
 
   constructor(private readonly transloco: TranslocoService) {}
-  get notice(): string {
+  get notice(): Observable<string> | null {
     if (this.text == null) {
-      return '';
+      return null;
     }
-    return this.transloco.translate(this.text);
+    return this.transloco.selectTranslate(this.text);
   }
 }

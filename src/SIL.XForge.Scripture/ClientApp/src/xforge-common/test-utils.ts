@@ -151,3 +151,11 @@ export function getAudioBlob(): Blob {
   const byteArray = new Uint8Array(byteNumbers);
   return new Blob([byteArray], { type: 'audio/wav' });
 }
+
+export function arrayOfIntsFromZero(size: number): number[] {
+  return Array.from({ length: size }, (_, i) => i);
+}
+
+export function arrayOfIntsFromOne(size: number): number[] {
+  return Array.from({ length: size }, (_, i) => i + 1);
+}
