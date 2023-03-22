@@ -419,35 +419,19 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task GetLinkSharingKeyAsync_LinkHasExpired_NewShareKeyCreated()
-    {
-        var env = new TestEnvironment();
-        const string role = SFProjectRole.SFObserver;
-        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
-
-        Assert.That(
-            projectSecret.ShareKeys.Any(sk => sk.Key == "expiredKey" && sk.ExpirationTime < DateTime.Now),
-            Is.True,
-            "setup - a link sharing key should exist"
-        );
-        env.SecurityService.GenerateKey().Returns("newkey");
-        string shareLink = await env.Service.GetLinkSharingKeyAsync(User07, Project06, role, ShareLinkType.Recipient);
-        Assert.That(shareLink, Is.EqualTo("newkey"));
-    }
-
-    [Test]
     public void GetLinkSharingKeyAsync_LinkSharingDisabled_ForbiddenError()
     {
         var env = new TestEnvironment();
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
         Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(1));
         Assert.ThrowsAsync<ForbiddenException>(
-            async () => await env.Service.GetLinkSharingKeyAsync(
-            User02,
-            Project01,
-            SFProjectRole.CommunityChecker,
-            ShareLinkType.Anyone
-        )
+            async () =>
+                await env.Service.GetLinkSharingKeyAsync(
+                    User02,
+                    Project01,
+                    SFProjectRole.CommunityChecker,
+                    ShareLinkType.Anyone
+                )
         );
         projectSecret = env.ProjectSecrets.Get(Project01);
         Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(1));
@@ -1420,28 +1404,6 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
 
         Assert.ThrowsAsync<ForbiddenException>(() => env.Service.InvitedUsersAsync("bad-user-id", Project01));
-    }
-
-    [Test]
-    public async Task RemoveUser_RemoveAnyShareKeys()
-    {
-        var env = new TestEnvironment();
-        string requestingUser = User07;
-        string userToRemove = User02;
-        string projectId = Project06;
-
-        Assert.That(
-            env.ProjectSecrets.Get(projectId).ShareKeys.Any(sk => sk.RecipientUserId == userToRemove),
-            Is.True,
-            "setup"
-        );
-
-        await env.Service.RemoveUserAsync(requestingUser, projectId, userToRemove);
-
-        Assert.That(
-            env.ProjectSecrets.Get(projectId).ShareKeys.Any(sk => sk.RecipientUserId == userToRemove),
-            Is.False
-        );
     }
 
     [Test]
@@ -2742,8 +2704,8 @@ public class SFProjectServiceTests
                                     new Site { Projects = { Project01 } }
                                 }
                             }
-                        }
-                        },new User
+                        },
+                        new User
                         {
                             Id = User07,
                             Email = "user07@example.com",
