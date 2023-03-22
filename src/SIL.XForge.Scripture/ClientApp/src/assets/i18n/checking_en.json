@@ -334,7 +334,7 @@
     "share_a_link": "Share a link",
     "share_title": "You've been invited to the project {{ projectName }} on {{ siteName }}",
     "send": "Send",
-    "share_not_available_offline": "Inviting  is unavailable while offline."
+    "share_not_available_offline": "Inviting is unavailable while offline."
   },
   "share_dialog": {
     "anyone": "Anyone with the link",

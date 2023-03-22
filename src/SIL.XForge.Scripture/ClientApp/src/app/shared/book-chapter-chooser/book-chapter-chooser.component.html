@@ -1,0 +1,36 @@
+<ng-container *transloco="let t; read: 'chapter_nav'">
+  <mat-form-field appearance="outline" id="book-select">
+    <mat-select [value]="book" (valueChange)="bookChanged($event)" panelClass="book-select-menu">
+      <mat-option *ngFor="let b of books" [value]="b">{{ bookName(b) }}</mat-option>
+    </mat-select>
+    <!-- <select matNativeControl [(ngModel)]="book" (valueChange)="bookChanged()" panelClass="book-select-menu">
+      <option *ngFor="let b of books" [value]="b">{{ bookName(b) }}</option>
+    </select> -->
+  </mat-form-field>
+  <mat-form-field appearance="outline" id="chapter-select">
+    <mat-select [value]="chapter" (valueChange)="chapterChanged($event)" panelClass="chapter-select-menu">
+      <mat-option *ngFor="let c of chapters" [value]="c">{{ c }}</mat-option>
+    </mat-select>
+    <!-- <select matNativeControl [(ngModel)]="chapter" (valueChange)="chapterChanged()" panelClass="chapter-select-menu">
+      <option *ngFor="let c of chapters" [value]="c">{{ c }}</option>
+    </select> -->
+  </mat-form-field>
+  <button
+    mat-icon-button
+    (click)="prevChapter()"
+    [disabled]="isPrevChapterDisabled()"
+    title="{{ t('previous_chapter') }}"
+    fxHide.xs
+  >
+    <mat-icon>keyboard_arrow_{{ i18n.backwardDirectionWord }}</mat-icon>
+  </button>
+  <button
+    mat-icon-button
+    (click)="nextChapter()"
+    [disabled]="isNextChapterDisabled()"
+    title="{{ t('next_chapter') }}"
+    fxHide.xs
+  >
+    <mat-icon>keyboard_arrow_{{ i18n.forwardDirectionWord }}</mat-icon>
+  </button>
+</ng-container>

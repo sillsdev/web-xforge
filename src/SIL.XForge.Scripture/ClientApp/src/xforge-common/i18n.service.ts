@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, InjectionToken, Optional } from '@angular/core';
 import { HashMap, Translation, TranslocoLoader } from '@ngneat/transloco';
 import { TranslocoConfig, TranslocoService } from '@ngneat/transloco';
 import merge from 'lodash-es/merge';
@@ -36,6 +36,8 @@ export type I18nKey = ObjectPaths<typeof en>;
 // pt_read and pt_write_note in the SFProjectRole definition causes the type system to correctly conclude that there are
 // not corresponding localization strings for all of the roles we have defined. Determining the proper way to reconcile
 // this mismatch is left to be solved at another time.
+
+export const IGNORE_COOKIE_LOCALE = new InjectionToken<boolean>('IGNORE_COOKIE_LOCALE');
 
 @Injectable()
 export class TranslationLoader implements TranslocoLoader {
@@ -105,14 +107,15 @@ export class I18nService {
     private readonly cookieService: CookieService,
     private readonly reportingService: ErrorReportingService,
     private readonly featureFlags: FeatureFlagService,
-    @Inject(DOCUMENT) private readonly document: Document
+    @Inject(DOCUMENT) private readonly document: Document,
+    @Optional() @Inject(IGNORE_COOKIE_LOCALE) ignoreCookieLocale: boolean = false
   ) {
     // Note that if the user is already logged in, and the user has a different interface language specified in their
     // Auth0 profile, then the locale from the URL will end up being overridden.
     const urlLocale = new URLSearchParams(locationService.search).get('locale');
     if (urlLocale != null) {
       this.trySetLocale(urlLocale);
-    } else {
+    } else if (!ignoreCookieLocale) {
       const cookieLocale = this.cookieService.get(ASP_CULTURE_COOKIE_NAME);
       if (cookieLocale != null) {
         this.trySetLocale(getAspCultureCookieLanguage(cookieLocale));

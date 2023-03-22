@@ -9,8 +9,10 @@ import { ShareDialogComponent } from './share/share-dialog.component';
 import { ShareButtonComponent } from './share/share-button.component';
 import { TextComponent } from './text/text.component';
 import { NoticeComponent } from './notice/notice.component';
+import { BookChapterChooserComponent } from './book-chapter-chooser/book-chapter-chooser.component';
 
 const componentExports = [
+  BookChapterChooserComponent,
   ChapterNavComponent,
   NoticeComponent,
   ShareButtonComponent,
