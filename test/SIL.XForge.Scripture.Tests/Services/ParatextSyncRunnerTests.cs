@@ -1637,7 +1637,6 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
-    [Ignore("Not ready to sync notes back to paratext.")]
     public async Task SyncAsync_UpdatesParatextComments()
     {
         var env = new TestEnvironment();
@@ -1645,6 +1644,17 @@ public class ParatextSyncRunnerTests
         env.SetupSFData(true, false, false, true, book);
         env.SetupPTData(book);
         env.SetupNoteChanges("thread01", "MAT 1:1", false);
+        SyncMetricInfo info = new SyncMetricInfo(0, 0, 1);
+        env.ParatextService
+            .UpdateParatextCommentsAsync(
+                Arg.Any<UserSecret>(),
+                "target",
+                40,
+                Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
+                Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                Arg.Any<int>()
+            )
+            .Returns(Task.FromResult(info));
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
         await env.ParatextService
@@ -1660,10 +1670,11 @@ public class ParatextSyncRunnerTests
 
         SFProject project = env.GetProject();
         Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.ParatextNotes, Is.EqualTo(info));
     }
 
     [Test]
-    [Ignore("Not ready to sync notes back to paratext.")]
     public async Task SyncAsync_AddParatextComments()
     {
         var env = new TestEnvironment();
@@ -1672,6 +1683,17 @@ public class ParatextSyncRunnerTests
         env.SetupPTData(book);
         Book[] books = new[] { book };
         env.AddParatextNoteThreadData(books, true, true);
+        SyncMetricInfo info = new SyncMetricInfo(1, 0, 0);
+        env.ParatextService
+            .UpdateParatextCommentsAsync(
+                Arg.Any<UserSecret>(),
+                "target",
+                40,
+                Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
+                Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                Arg.Any<int>()
+            )
+            .Returns(Task.FromResult(info));
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
         await env.ParatextService
@@ -1699,6 +1721,8 @@ public class ParatextSyncRunnerTests
         NoteThread noteThread = env.GetNoteThread("project01", "thread01");
         Assert.That(noteThread.Notes[0].OwnerRef, Is.EqualTo("user03"));
         Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.ParatextNotes, Is.EqualTo(info));
     }
 
     [Test]
