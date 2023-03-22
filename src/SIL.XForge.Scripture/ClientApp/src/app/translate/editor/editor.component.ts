@@ -110,7 +110,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   textHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
-  insertNoteLabel: string = '';
 
   @ViewChild('targetContainer') targetContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
@@ -1297,7 +1296,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this._chapter = chapter;
     this.changeText();
     this.toggleNoteThreadVerses(true);
-    this.insertNoteLabel = translate(this.showAddCommentUI ? 'editor.add_comment' : 'editor.insert_note');
   }
 
   private resetInsertNoteFab(): void {

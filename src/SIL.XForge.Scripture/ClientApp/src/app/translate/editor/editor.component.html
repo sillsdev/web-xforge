@@ -33,7 +33,7 @@
           type="button"
           id="create-note-btn"
           (click)="insertNote()"
-          title="{{ insertNoteLabel }}"
+          title="{{ t('editor.add_comment') }}"
         >
           <mat-icon>add_comment</mat-icon>
         </button>
@@ -132,7 +132,7 @@
             </div>
           </ng-template>
           <div #fabButton class="insert-note-fab" [style.left]="insertNoteFabLeft">
-            <button mat-mini-fab title="{{ insertNoteLabel }}" (click)="insertNote()">
+            <button mat-mini-fab title="{{ t('editor.add_comment') }}" (click)="insertNote()">
               <mat-icon>add_comment</mat-icon>
             </button>
           </div>
