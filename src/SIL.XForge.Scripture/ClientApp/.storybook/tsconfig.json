@@ -1,0 +1,16 @@
+{
+  "extends": "../src/tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "allowSyntheticDefaultImports": true
+  },
+  "exclude": [
+    "../src/test.ts",
+    "../src/**/*.spec.ts",
+    "../projects/**/*.spec.ts",
+    "../src/xforge-common/test-utils.ts",
+    "../src/xforge-common/mock-console.ts"
+  ],
+  "include": ["../src/**/*", "../projects/**/*"],
+  "files": ["./typings.d.ts"]
+}
