@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
@@ -8,7 +9,9 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using NSubstitute;
+using NSubstitute.Core;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Paratext.Data.ProjectComments;
@@ -2283,6 +2286,309 @@ public class ParatextSyncRunnerTests
         Assert.That(syncMetrics.ResourceUsers, Is.EqualTo(new SyncMetricInfo(1, 0, 0)));
     }
 
+    [Test]
+    public async Task UpdateParatextBook_Unchanged()
+    {
+        TestEnvironment env = new();
+        env.Runner._syncMetrics = Substitute.For<SyncMetrics>();
+
+        string bookUsx =
+            @"<usx version=""3.0"">
+  <book code=""RUT"" style=""id"">- American Standard Version</book>
+  <para style=""h"">Ruth</para>
+  <chapter number=""1"" style=""c"" />
+  <para style=""p"">
+    <verse number=""1"" style=""v"" />
+And it came to pass in the days <verse number=""2"" style=""v"" />And the name of the man</para>
+  <chapter number=""2"" style=""c"" />
+  <para style=""p"">
+    <verse number=""1"" style=""v"" />
+And Naomi had a kinsman of her husband <verse number=""2"" style=""v"" />And Ruth the</para>
+</usx>";
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>()).Returns(bookUsx);
+        // ToUsx returns the XDocument unchanged.
+        env.DeltaUsxMapper
+            .ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>())
+            .Returns((CallInfo callInfo) => callInfo.Arg<XDocument>());
+
+        // SUT
+        await env.Runner.UpdateParatextBook(
+            Substitute.For<TextInfo>(),
+            "some-paratext-id",
+            Substitute.For<SortedList<int, IDocument<TextData>>>()
+        );
+
+        // The usx was unchanged by content of chapter deltas, so we don't write something new.
+        await env.ParatextService
+            .DidNotReceive()
+            .PutBookText(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<int>(),
+                Arg.Any<XDocument>(),
+                Arg.Any<Dictionary<int, string>>()
+            );
+    }
+
+    [Test]
+    public async Task UpdateParatextBook_Changed()
+    {
+        TestEnvironment env = new();
+        env.Runner._syncMetrics = Substitute.For<SyncMetrics>();
+
+        string bookUsx =
+            @"<usx version=""3.0"">
+<book code=""RUT"" style=""id"" />
+<chapter number=""1"" style=""c"" />
+<para style=""p"">
+<verse number=""1"" style=""v"" />
+And it came to pass in the days
+</para>
+</usx>";
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>()).Returns(bookUsx);
+        // Different content
+        string revisedUsx =
+            @"<usx version=""3.0"">
+<book code=""RUT"" style=""id"" /><chapter number=""1"" style=""c"" /><para style=""p""><verse number=""1"" style=""v"" />And it came to pass DIFFERENT</para></usx>";
+
+        // Unfortunately, the means to craft the ToUsx return value is closely related to what we are
+        // testing in the SUT. And so whether the revision is "different" relates to how we compose it here.
+        XDocument revisedXDoc = XDocument.Parse(revisedUsx, LoadOptions.PreserveWhitespace);
+        Assert.That(revisedXDoc.ToString(), Is.EqualTo(revisedUsx), "setup");
+        env.DeltaUsxMapper.ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>()).Returns(revisedXDoc);
+
+        // SUT
+        await env.Runner.UpdateParatextBook(
+            Substitute.For<TextInfo>(),
+            "some-paratext-project-id",
+            Substitute.For<SortedList<int, IDocument<TextData>>>()
+        );
+
+        // The usx was changed by the content of chapter deltas, so we do write something new.
+        await env.ParatextService
+            .Received()
+            .PutBookText(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<int>(),
+                revisedXDoc,
+                Arg.Any<Dictionary<int, string>>()
+            );
+    }
+
+    [Test]
+    public async Task UpdateParatextBook_SpacesBetweenChars_Unchanged()
+    {
+        TestEnvironment env = new();
+        env.Runner._syncMetrics = Substitute.For<SyncMetrics>();
+
+        string bookUsx =
+            @"<usx version=""3.0"">
+  <book code=""RUT"" style=""id"">- American Standard Version</book>
+  <chapter number=""1"" style=""c"" />
+  <para style=""p"">
+    <verse number=""1"" style=""v"" />
+And it came to <char style=""w"">pass</char> <char style=""w"">in</char> the days</para>
+</usx>";
+        env.ParatextService.GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>()).Returns(bookUsx);
+        // Unchanged
+        env.DeltaUsxMapper
+            .ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>())
+            .Returns((CallInfo callInfo) => callInfo.Arg<XDocument>());
+
+        // SUT
+        await env.Runner.UpdateParatextBook(
+            Substitute.For<TextInfo>(),
+            "some-paratext-id",
+            Substitute.For<SortedList<int, IDocument<TextData>>>()
+        );
+
+        // The usx was unchanged by content of chapter deltas, so we don't write something new.
+        // Importantly, the space between <char> elements should not have been removed (as in SF-1444).
+        await env.ParatextService
+            .DidNotReceive()
+            .PutBookText(
+                Arg.Any<UserSecret>(),
+                Arg.Any<string>(),
+                Arg.Any<int>(),
+                Arg.Any<XDocument>(),
+                Arg.Any<Dictionary<int, string>>()
+            );
+    }
+
+    [Test]
+    public void GetBookUsx_ExpectedFormatting()
+    {
+        TestEnvironment env = new();
+
+        string bookUsxFromParatextData =
+            @"<usx version=""3.0"">
+  <book code=""RUT"" style=""id"">- American Standard Version</book>
+  <chapter number=""1"" style=""c"" />
+  <para style=""p"">
+    <verse number=""1"" style=""v"" />
+And it came to <char style=""w"">pass</char> <char style=""w"">in</char> the days </para>
+</usx>";
+        env.ParatextService
+            .GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>())
+            .Returns(bookUsxFromParatextData);
+
+        // SUT
+        XDocument result = env.Runner.GetBookUsx("some-pt-project-id", 1);
+
+        string expectedUsx =
+            @"<usx version=""3.0""><book code=""RUT"" style=""id"">- American Standard Version</book><chapter number=""1"" style=""c"" /><para style=""p""><verse number=""1"" style=""v"" />And it came to <char style=""w"">pass</char> <char style=""w"">in</char> the days </para></usx>";
+        string actualUsx = TestEnvironment.XDocumentToStringUnformatted(result);
+        Assert.That(actualUsx, Is.EqualTo(expectedUsx), "is formatted as desired");
+    }
+
+    [Test]
+    public void GetBookUsx_ExpectedFormatting2()
+    {
+        TestEnvironment env = new();
+
+        // This is a real sample from ASV, as converted to USX by ParatextData.
+        string bookUsxFromParatextData =
+            "<usx version=\"3.0\">\r\n  <book code=\"1SA\" style=\"id\">- American Standard Version</book>\r\n  <para style=\"h\">1 Samuel</para>\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <para style=\"p\">\r\n    <verse number=\"1\" style=\"v\" />\r\n    <char style=\"w\" strong=\"H1961\">Now</char> <char style=\"w\" strong=\"H1961\">there</char> <char style=\"w\" strong=\"H8034\">was</char> ... <char style=\"w\" strong=\"H1961\">an</char> <char style=\"w\" strong=\"H0673\">Ephraimite</char>: <verse number=\"2\" style=\"v\" /><char style=\"w\" strong=\"H0802\">and</char> <char style=\"w\" strong=\"H8147\">he</char></para>\r\n</usx>";
+        env.ParatextService
+            .GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>())
+            .Returns(bookUsxFromParatextData);
+
+        // SUT
+        XDocument result = env.Runner.GetBookUsx("some-pt-project-id", 1);
+
+        string expectedUsx =
+            "<usx version=\"3.0\"><book code=\"1SA\" style=\"id\">- American Standard Version</book><para style=\"h\">1 Samuel</para><chapter number=\"1\" style=\"c\" /><para style=\"p\"><verse number=\"1\" style=\"v\" /><char style=\"w\" strong=\"H1961\">Now</char> <char style=\"w\" strong=\"H1961\">there</char> <char style=\"w\" strong=\"H8034\">was</char> ... <char style=\"w\" strong=\"H1961\">an</char> <char style=\"w\" strong=\"H0673\">Ephraimite</char>: <verse number=\"2\" style=\"v\" /><char style=\"w\" strong=\"H0802\">and</char> <char style=\"w\" strong=\"H8147\">he</char></para></usx>";
+        string actualUsx = TestEnvironment.XDocumentToStringUnformatted(result);
+        Assert.That(actualUsx, Is.EqualTo(expectedUsx), "is formatted as desired");
+    }
+
+    [Test]
+    public void GetBookUsx_SequentialNewlines_ExpectedFormatting()
+    {
+        TestEnvironment env = new();
+
+        // Suppose the text has sequential newlines. (Notice that after the opening usx element tag, the CRLF sequence
+        // occurs twice, with no content between them.)
+        string bookUsxFromParatextData =
+            "<usx version=\"3.0\">\r\n\r\n  <book code=\"1SA\" style=\"id\" />\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <para style=\"p\">\r\n    <verse number=\"1\" style=\"v\" />\r\n    <char style=\"w\" strong=\"H1961\">Now</char> <char style=\"w\" strong=\"H1961\">there</char></para>\r\n</usx>";
+        env.ParatextService
+            .GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>())
+            .Returns(bookUsxFromParatextData);
+
+        // SUT
+        XDocument result = env.Runner.GetBookUsx("some-pt-project-id", 1);
+
+        string expectedUsx =
+            "<usx version=\"3.0\"><book code=\"1SA\" style=\"id\" /><chapter number=\"1\" style=\"c\" /><para style=\"p\"><verse number=\"1\" style=\"v\" /><char style=\"w\" strong=\"H1961\">Now</char> <char style=\"w\" strong=\"H1961\">there</char></para></usx>";
+        string actualUsx = TestEnvironment.XDocumentToStringUnformatted(result);
+        Assert.That(actualUsx, Is.EqualTo(expectedUsx), "is formatted as desired");
+    }
+
+    [Test]
+    public void GetBookUsx_InitialSpace_ExpectedFormatting()
+    {
+        TestEnvironment env = new();
+
+        // Suppose the usx element has whitespace before it.
+        string bookUsxFromParatextData =
+            "    <usx version=\"3.0\">\r\n  <book code=\"1SA\" style=\"id\" />\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <para style=\"p\">\r\n    <verse number=\"1\" style=\"v\" />\r\n    <char style=\"w\" strong=\"H1961\">Now</char> <char style=\"w\" strong=\"H1961\">there</char></para>\r\n</usx>";
+        env.ParatextService
+            .GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>())
+            .Returns(bookUsxFromParatextData);
+
+        // SUT
+        XDocument result = env.Runner.GetBookUsx("some-pt-project-id", 1);
+
+        string expectedUsx =
+            "<usx version=\"3.0\"><book code=\"1SA\" style=\"id\" /><chapter number=\"1\" style=\"c\" /><para style=\"p\"><verse number=\"1\" style=\"v\" /><char style=\"w\" strong=\"H1961\">Now</char> <char style=\"w\" strong=\"H1961\">there</char></para></usx>";
+        string actualUsx = TestEnvironment.XDocumentToStringUnformatted(result);
+        Assert.That(actualUsx, Is.EqualTo(expectedUsx), "the initial whitespace is removed");
+    }
+
+    [Test]
+    public void GetBookUsx_InitialNewline_ExpectedFormatting()
+    {
+        TestEnvironment env = new();
+
+        // Suppose the usx element has a newline before it.
+        string bookUsxFromParatextData =
+            "\r\n<usx version=\"3.0\">\r\n  <book code=\"1SA\" style=\"id\" />\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <para style=\"p\">\r\n    <verse number=\"1\" style=\"v\" />\r\n    <char style=\"w\" strong=\"H1961\">Now</char> <char style=\"w\" strong=\"H1961\">there</char></para>\r\n</usx>";
+        env.ParatextService
+            .GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>())
+            .Returns(bookUsxFromParatextData);
+
+        // SUT
+        XDocument result = env.Runner.GetBookUsx("some-pt-project-id", 1);
+
+        string expectedUsx =
+            "<usx version=\"3.0\"><book code=\"1SA\" style=\"id\" /><chapter number=\"1\" style=\"c\" /><para style=\"p\"><verse number=\"1\" style=\"v\" /><char style=\"w\" strong=\"H1961\">Now</char> <char style=\"w\" strong=\"H1961\">there</char></para></usx>";
+        string actualUsx = TestEnvironment.XDocumentToStringUnformatted(result);
+        Assert.That(actualUsx, Is.EqualTo(expectedUsx), "the initial whitespace is removed");
+    }
+
+    [Test]
+    public void GetBookUsx_InitialWhitespace_ExpectedFormatting()
+    {
+        TestEnvironment env = new();
+
+        // Suppose the usx element has a mix of whitespace before it
+        string bookUsxFromParatextData =
+            "    \r\n    \r\n    <usx version=\"3.0\">\r\n  <book code=\"1SA\" style=\"id\" />\r\n  <chapter number=\"1\" style=\"c\" />\r\n  <para style=\"p\">\r\n    <verse number=\"1\" style=\"v\" />\r\n    <char style=\"w\" strong=\"H1961\">Now</char> <char style=\"w\" strong=\"H1961\">there</char></para>\r\n</usx>";
+        env.ParatextService
+            .GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>())
+            .Returns(bookUsxFromParatextData);
+
+        // SUT
+        XDocument result = env.Runner.GetBookUsx("some-pt-project-id", 1);
+
+        string expectedUsx =
+            "<usx version=\"3.0\"><book code=\"1SA\" style=\"id\" /><chapter number=\"1\" style=\"c\" /><para style=\"p\"><verse number=\"1\" style=\"v\" /><char style=\"w\" strong=\"H1961\">Now</char> <char style=\"w\" strong=\"H1961\">there</char></para></usx>";
+        string actualUsx = TestEnvironment.XDocumentToStringUnformatted(result);
+        Assert.That(actualUsx, Is.EqualTo(expectedUsx), "the initial whitespace is removed");
+    }
+
+    [Test]
+    public void GetParatextChaptersAsDeltas_BeginsWithExpectedContent()
+    {
+        IGuidService _mapperGuidService;
+        ILogger<DeltaUsxMapper> _logger;
+        IExceptionHandler _exceptionHandler;
+        _mapperGuidService = new TestGuidService();
+        _logger = Substitute.For<ILogger<DeltaUsxMapper>>();
+        _exceptionHandler = Substitute.For<IExceptionHandler>();
+
+        DeltaUsxMapper mapper = new(_mapperGuidService, _logger, _exceptionHandler);
+        TestEnvironment env = new(false, mapper);
+
+        TextInfo textInfo = new() { BookNum = 8, Chapters = null };
+        string bookUsxFromParatextData =
+            @"<usx version=""3.0"">
+  <book code=""RUT"" style=""id"">- American Standard Version</book>
+  <chapter number=""1"" style=""c"" />
+  <para style=""p"">
+    <verse number=""1"" style=""v"" />
+And it came to <char style=""w"">pass</char> <char style=""w"">in</char> the days </para>
+</usx>";
+        env.ParatextService
+            .GetBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>())
+            .Returns(bookUsxFromParatextData);
+
+        // SUT
+        Dictionary<int, ChapterDelta> chapterDeltas = env.Runner.GetParatextChaptersAsDeltas(
+            textInfo,
+            "some-paratext-project-id"
+        );
+        List<JToken> ops = chapterDeltas.First().Value.Delta.Ops;
+        Assert.That(ops[0].First().Path, Is.EqualTo("insert"), "first op unexpectedly not an insert");
+
+        Assert.That(
+            ops[0]["insert"].Type,
+            Is.EqualTo(JTokenType.Object),
+            "first op in list should be inserting an object, not a string like newline"
+        );
+    }
+
     private class Book
     {
         public Book(string bookId, int highestChapter, bool hasSource = true)
@@ -2317,7 +2623,7 @@ public class ParatextSyncRunnerTests
         /// </summary>
         /// <param name="substituteRealtimeService">If set to <c>true</c> use a substitute realtime service rather
         /// than the <see cref="SFMemoryRealtimeService" />.</param>
-        public TestEnvironment(bool substituteRealtimeService = false)
+        public TestEnvironment(bool substituteRealtimeService = false, IDeltaUsxMapper deltaUsxMapper = null)
         {
             var userSecrets = new MemoryRepository<UserSecret>(
                 new[]
@@ -2402,7 +2708,7 @@ public class ParatextSyncRunnerTests
             Connection = Substitute.For<IConnection>();
             SubstituteRealtimeService = Substitute.For<IRealtimeService>();
             SubstituteRealtimeService.ConnectAsync().Returns(Task.FromResult(Connection));
-            DeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
+            DeltaUsxMapper = deltaUsxMapper ?? Substitute.For<IDeltaUsxMapper>();
             NotesMapper = Substitute.For<IParatextNotesMapper>();
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
             MockLogger = new MockLogger<ParatextSyncRunner>();
@@ -3373,6 +3679,24 @@ public class ParatextSyncRunnerTests
                 lastSyncSuccess: true,
                 syncedToRepositoryVersion: finalDBSyncedToRepositoryVersion
             );
+        }
+
+        /// <summary>
+        /// XDocument.ToString() sometimes pretty-prints the output, such as with indentation that is not from actual
+        /// text nodes in the document. Conversely, this method returns a string representation of an XDocument without
+        /// formatting, which can be useful when paying attention to what whitespace is really in the XDocument.
+        /// </summary>
+        public static string XDocumentToStringUnformatted(XDocument inputUsx)
+        {
+            using MemoryStream stream = new();
+            inputUsx.Save(stream, SaveOptions.DisableFormatting);
+            byte[] rawBytes = stream.ToArray();
+            string usx = System.Text.Encoding.UTF8.GetString(rawBytes);
+            // The usx element starts after a BOM and xml declaration.
+            string endOfDeclaration = "?>";
+            int start = usx.IndexOf(endOfDeclaration) + endOfDeclaration.Length;
+            usx = usx[start..];
+            return usx;
         }
 
         /// <summary>Cause mocks to report that the project dirs exist for specified project
