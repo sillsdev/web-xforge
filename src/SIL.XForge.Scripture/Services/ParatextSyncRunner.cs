@@ -85,7 +85,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private UserSecret _userSecret;
     private IDocument<SFProject> _projectDoc;
     private SFProjectSecret _projectSecret;
-    private SyncMetrics _syncMetrics;
+    internal SyncMetrics _syncMetrics;
     private Dictionary<string, ParatextUserProfile> _currentPtSyncUsers;
 
     public ParatextSyncRunner(
@@ -741,17 +741,38 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
     internal void CloseConnection() => _conn?.Dispose();
 
-    private async Task UpdateParatextBook(
+    /// <summary>
+    /// Returns an XDocument for the USX of a book in a Paratext project repo.
+    /// </summary>
+    internal XDocument GetBookUsx(string ptProjectId, int bookNum)
+    {
+        string bookUsx = _paratextService.GetBookText(_userSecret, ptProjectId, bookNum);
+
+        // XDocument.Parse() is sensitive to whether it perceives the input as indented. It also seems to allow
+        // preserving all whitespace or no whitespace. We need to preserve some whitespace so USX like
+        // "<char>In</char> <char>the</char>" does not lose the space between "char" elements. But we don't want to
+        // preserve other whitespace, like indentation, or newlines between elements, which then get into the
+        // text docs. As such, process the USX to remove undesired whitespace, while leaving desired whitespace intact,
+        // adjust the USX so XDocument.Parse perceives it as indented, and request XDocument.Parse to preserve
+        // whitespace.
+
+        // Remove whitespace at the beginning of (most) lines. Remove line breaks.
+        bookUsx = Regex.Replace(bookUsx, @"\r?\n\s*", "", RegexOptions.CultureInvariant);
+
+        // If XDocument.Parse perceives the input as not indented, requesting PreserveWhitespace will have no effect.
+        // Put a newline after the opening usx element tag to cause the USX to be perceived as indented.
+        bookUsx = Regex.Replace(bookUsx, "(<usx.*?>)", "$1\n");
+        return XDocument.Parse(bookUsx, LoadOptions.PreserveWhitespace);
+    }
+
+    ///<summary>Apply changes in text docs to Paratext project repo.</summary>
+    internal async Task UpdateParatextBook(
         TextInfo text,
         string paratextId,
         SortedList<int, IDocument<TextData>> textDocs
     )
     {
-        string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
-
-        // XDocument.Parse ignores whitespace added during USX generation. The unnecessary whitespace can
-        // occasionally cause inaccurate comparisons with XNode.DeepEquals, and so we must remove it.
-        var oldUsxDoc = XDocument.Parse(bookText);
+        XDocument oldUsxDoc = GetBookUsx(paratextId, text.BookNum);
         XDocument newUsxDoc = _deltaUsxMapper.ToUsx(
             oldUsxDoc,
             text.Chapters
@@ -906,8 +927,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         ISet<int>? chaptersToInclude = null
     )
     {
-        string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
-        var usxDoc = XDocument.Parse(bookText);
+        XDocument usxDoc = GetBookUsx(paratextId, text.BookNum);
         var tasks = new List<Task>();
         Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc).ToDictionary(cd => cd.Number);
         var chapters = new List<Chapter>();
@@ -1672,8 +1692,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
     private Dictionary<int, ChapterDelta> GetDeltasByChapter(TextInfo text, string paratextId)
     {
-        string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
-        XDocument usxDoc = XDocument.Parse(bookText);
+        XDocument usxDoc = GetBookUsx(paratextId, text.BookNum);
         Dictionary<int, ChapterDelta> chapterDeltas = _deltaUsxMapper
             .ToChapterDeltas(usxDoc)
             .ToDictionary(cd => cd.Number);
