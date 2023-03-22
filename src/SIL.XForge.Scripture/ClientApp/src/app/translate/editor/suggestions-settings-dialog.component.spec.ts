@@ -7,17 +7,13 @@ import { MatSlider } from '@angular/material/slider';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import cloneDeep from 'lodash-es/cloneDeep';
-import {
-  CheckingAnswerExport,
-  CheckingShareLevel
-} from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig,
   SF_PROJECT_USER_CONFIGS_COLLECTION
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { TranslateShareLevel } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -313,14 +309,12 @@ class TestEnvironment {
         writingSystem: { tag: 'qaa' },
         translateConfig: {
           translationSuggestionsEnabled: user1Config.translationSuggestionsEnabled,
-          shareEnabled: true,
-          shareLevel: TranslateShareLevel.Specific
+          shareEnabled: true
         },
         checkingConfig: {
           checkingEnabled: false,
           usersSeeEachOthersResponses: true,
           shareEnabled: true,
-          shareLevel: CheckingShareLevel.Specific,
           answerExportMethod: CheckingAnswerExport.MarkedForExport
         },
         texts: [],

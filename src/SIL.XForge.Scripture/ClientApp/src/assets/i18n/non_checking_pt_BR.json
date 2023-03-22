@@ -6,11 +6,20 @@
     "translate": "Traduzir",
     "users": "Usuários"
   },
+  "biblical_term_dialog": {
+    "cancel": "Cancelar",
+    "description": "Descrição",
+    "edit_renderings": "Editar renderizações",
+    "renderings": "Renderizações",
+    "save": "Salvar",
+    "term": "Termo/Definição"
+  },
   "biblical_terms": {
-    "term": "Termo",
+    "actions": "Actions",
     "category": "Categoria",
     "gloss": "Glosa",
-    "renderings": "Renderizações"
+    "renderings": "Renderizações",
+    "term": "Termo"
   },
   "chapter_nav": {
     "previous_chapter": "Capítulo Anterior",

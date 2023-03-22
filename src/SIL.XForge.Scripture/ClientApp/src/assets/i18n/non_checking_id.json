@@ -6,11 +6,20 @@
     "translate": "Menerjemahkan",
     "users": "Pengguna"
   },
+  "biblical_term_dialog": {
+    "cancel": "Batal",
+    "description": "Penjelasan",
+    "edit_renderings": "Sunting Padanan",
+    "renderings": "Padanan",
+    "save": "Simpan",
+    "term": "Istilah/Definisi"
+  },
   "biblical_terms": {
-    "term": "Istilah",
+    "actions": "Actions",
     "category": "Kategori",
     "gloss": "Petunjuk Arti",
-    "renderings": "Padanan"
+    "renderings": "Padanan",
+    "term": "Istilah"
   },
   "chapter_nav": {
     "previous_chapter": "Pasal sebelumnya",

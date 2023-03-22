@@ -205,9 +205,9 @@ describe('SFProjectMigrations', () => {
   });
 });
 
-describe('version 9', () => {
+describe('version 10', () => {
   it('adds biblical terms properties', async () => {
-    const env = new TestEnvironment(8);
+    const env = new TestEnvironment(9);
     const conn = env.server.connect();
     await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
     let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');

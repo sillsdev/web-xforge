@@ -6,11 +6,20 @@
     "translate": "ꤚꤢ꤭ꤕꤟꤥ꤬ꤓꤢꤩ꤬",
     "users": "ꤕꤚꤟꤢꤧ꤬ꤔꤢꤪ꤭ꤢꤩ꤬ ꤒꤢ꤬ꤟꤢꤩ꤬"
   },
+  "biblical_term_dialog": {
+    "cancel": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭",
+    "description": "Description",
+    "edit_renderings": "Edit Renderings",
+    "renderings": "Renderings",
+    "save": "ꤙꤢꤩ꤬ꤘꤝꤥ",
+    "term": "Term/Definition"
+  },
   "biblical_terms": {
-    "term": "Term",
+    "actions": "Actions",
     "category": "Category",
     "gloss": "Gloss",
-    "renderings": "Renderings"
+    "renderings": "Renderings",
+    "term": "Term"
   },
   "chapter_nav": {
     "previous_chapter": "ꤢ꤬ꤗꤟꤢ꤭ꤘꤢꤨ꤬ ꤘꤣꤋꤛꤢꤩ꤭",

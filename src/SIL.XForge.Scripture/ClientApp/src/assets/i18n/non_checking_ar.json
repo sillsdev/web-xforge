@@ -6,11 +6,20 @@
     "translate": "الترجمة",
     "users": "المُستخدمون"
   },
+  "biblical_term_dialog": {
+    "cancel": "إلغاء",
+    "description": "وصف",
+    "edit_renderings": "تحرير المرادفات",
+    "renderings": "مرادفات",
+    "save": "حفظ",
+    "term": "مصطلح/تعريف"
+  },
   "biblical_terms": {
-    "term": "مصطلح",
+    "actions": "Actions",
     "category": "فئة",
     "gloss": "توضيح",
-    "renderings": "مرادفات"
+    "renderings": "مرادفات",
+    "term": "مصطلح"
   },
   "chapter_nav": {
     "previous_chapter": "الأصحاح / الفصل السابق",

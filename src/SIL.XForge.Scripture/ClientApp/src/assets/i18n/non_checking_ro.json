@@ -6,11 +6,20 @@
     "translate": "Traducere",
     "users": "Utilizatori"
   },
+  "biblical_term_dialog": {
+    "cancel": "Renunță",
+    "description": "Descriere",
+    "edit_renderings": "Editare traduceri",
+    "renderings": "Traducerile",
+    "save": "Salvează",
+    "term": "Cuvânt/Definiție"
+  },
   "biblical_terms": {
-    "term": "Cuvânt",
+    "actions": "Actions",
     "category": "Categoria",
     "gloss": "Traducere cuvânt cu cuvânt",
-    "renderings": "Traducerile"
+    "renderings": "Traducerile",
+    "term": "Cuvânt"
   },
   "chapter_nav": {
     "previous_chapter": "Capitolul anterior",

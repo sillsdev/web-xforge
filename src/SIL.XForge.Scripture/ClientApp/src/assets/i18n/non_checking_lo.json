@@ -6,11 +6,19 @@
     "translate": "Translate",
     "users": "Users"
   },
+  "biblical_term_dialog": {
+    "cancel": "ຍົກເລີກ",
+    "description": "Description",
+    "edit_renderings": "Edit Renderings",
+    "renderings": "Renderings",
+    "save": "ວັກທີ່ມີຄຳຖາມ",
+    "term": "Term/Definition"
+  },
   "biblical_terms": {
-    "term": "Term",
     "category": "Category",
     "gloss": "Gloss",
-    "renderings": "Renderings"
+    "renderings": "Renderings",
+    "term": "Term"
   },
   "chapter_nav": {
     "previous_chapter": "Previous chapter",

@@ -6,11 +6,20 @@
     "translate": "Tərcümə etmək",
     "users": "İstifadəçilər"
   },
+  "biblical_term_dialog": {
+    "cancel": "Ləğv etmək",
+    "description": "Təsvir",
+    "edit_renderings": "Tərcümələri redaktə et",
+    "renderings": "Tərcümələr",
+    "save": "Yadda saxlamaq",
+    "term": "Termin/Tərif"
+  },
   "biblical_terms": {
-    "term": "Termin",
+    "actions": "Actions",
     "category": "Kateqoriya",
     "gloss": "Şərh",
-    "renderings": "Tərcümələr"
+    "renderings": "Tərcümələr",
+    "term": "Termin"
   },
   "chapter_nav": {
     "previous_chapter": "Əvvəlki fəsil",
