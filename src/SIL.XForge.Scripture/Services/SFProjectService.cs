@@ -513,7 +513,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     {
                         Key = key,
                         ProjectRole = role,
-
                         ShareLinkType = shareLinkType,
                     }
                 )
