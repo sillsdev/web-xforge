@@ -6,11 +6,18 @@
   <mat-dialog-content class="content-padding" [ngClass]="{ rtl: isRtl, ltr: !isRtl }">
     <div class="text-row">
       <div class="text">
-        <div *ngIf="!isNewNote" class="note-text" [innerHTML]="noteContextText"></div>
+        <div *ngIf="!isNewNote" class="note-text" [innerHTML]="getNoteContextText()"></div>
         <div *ngIf="isNewNote" class="note-text" [innerHTML]="segmentText"></div>
         <div *ngIf="showSegmentText" class="segment-text" [innerHTML]="segmentText"></div>
       </div>
-      <button *ngIf="!isNewNote" mat-icon-button [matMenuTriggerFor]="menu"><mat-icon>more_vert</mat-icon></button>
+      <button
+        *ngIf="!isNewNote && isSegmentDifferentFromContext"
+        id="text-menu-button"
+        mat-icon-button
+        [matMenuTriggerFor]="menu"
+      >
+        <mat-icon>more_vert</mat-icon>
+      </button>
       <mat-menu #menu="matMenu">
         <button mat-menu-item (click)="toggleSegmentText()">
           <mat-icon>compare</mat-icon>

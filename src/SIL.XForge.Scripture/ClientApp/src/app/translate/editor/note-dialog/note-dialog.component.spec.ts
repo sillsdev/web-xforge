@@ -81,12 +81,24 @@ describe('NoteDialogComponent', () => {
   it('show selected text and toggle visibility of related segment', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
 
+    expect(env.textMenuButton).toBeTruthy();
+    expect(env.component.isSegmentDifferentFromContext).toBeTrue();
     expect(env.noteText.nativeElement.textContent).toEqual('before selection selected text after selection');
     expect(env.segmentText).toBeNull();
     env.toggleSegmentButton();
     expect(env.segmentText.nativeElement.textContent).toEqual(
       `target: chapter 1, verse 7.\ntarget: chapter 1, verse 7 - 2nd paragraph.`
     );
+  }));
+
+  it('only show note context if different from segment text', fakeAsync(() => {
+    const noteThread = TestEnvironment.getNoteThread();
+    noteThread.originalContextBefore = 'target: chapter 1, ';
+    noteThread.originalSelectedText = 'verse 7.\ntarget: chapter 1, verse 7 ';
+    noteThread.originalContextAfter = '- 2nd paragraph.';
+    env = new TestEnvironment({ noteThread });
+    expect(env.textMenuButton).toBeFalsy();
+    expect(env.component.isSegmentDifferentFromContext).toBeFalse();
   }));
 
   it('should not show deleted notes', fakeAsync(() => {
@@ -862,6 +874,10 @@ class TestEnvironment {
 
   get saveButton(): DebugElement {
     return this.overlayContainerElement.query(By.css('button.save-button'));
+  }
+
+  get textMenuButton(): DebugElement {
+    return this.overlayContainerElement.query(By.css('#text-menu-button'));
   }
 
   private get overlayContainerElement(): DebugElement {

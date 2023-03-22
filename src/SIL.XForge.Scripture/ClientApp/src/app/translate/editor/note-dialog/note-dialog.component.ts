@@ -120,6 +120,10 @@ export class NoteDialogComponent implements OnInit {
     return this.projectProfileDoc.data.isRightToLeft ?? false;
   }
 
+  get isSegmentDifferentFromContext(): boolean {
+    return this.getNoteContextText(true) !== this.segmentText;
+  }
+
   get notesToDisplay(): Note[] {
     if (this.threadDoc?.data == null) {
       return [];
@@ -133,19 +137,6 @@ export class NoteDialogComponent implements OnInit {
   get verseRefDisplay(): string {
     const verseRef: VerseRef | undefined = this.verseRef;
     return verseRef == null ? '' : this.i18n.localizeReference(verseRef);
-  }
-
-  get noteContextText(): string {
-    if (this.threadDoc?.data == null) {
-      return '';
-    }
-    return (
-      this.threadDoc.data.originalContextBefore +
-      '<b>' +
-      this.threadDoc.data.originalSelectedText +
-      '</b>' +
-      this.threadDoc.data.originalContextAfter
-    );
   }
 
   get segmentText(): string {
@@ -179,6 +170,19 @@ export class NoteDialogComponent implements OnInit {
       return '';
     }
     return this.parseNote(note.content);
+  }
+
+  getNoteContextText(plainText: boolean = false): string {
+    if (this.threadDoc?.data == null) {
+      return '';
+    }
+    return (
+      this.threadDoc.data.originalContextBefore +
+      (plainText ? '' : '<b>') +
+      this.threadDoc.data.originalSelectedText +
+      (plainText ? '' : '</b>') +
+      this.threadDoc.data.originalContextAfter
+    );
   }
 
   private get projectId(): string {
