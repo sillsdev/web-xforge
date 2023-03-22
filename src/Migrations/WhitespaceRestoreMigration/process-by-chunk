@@ -1,0 +1,73 @@
+#!/bin/bash
+set -ueo pipefail
+
+usage() {
+  echo "Usage: $(basename "$0") "'--chunk-size=5 --command="echo Processing chunk: \${chunk}" --ids="1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20"'
+  exit 1
+}
+
+chunk_size=""
+ids=""
+command=""
+
+# Parse command-line arguments
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --chunk-size=*)
+      chunk_size="${1#*=}"
+      shift 1
+      ;;
+    --command=*)
+      command="${1#*=}"
+      shift 1
+      ;;
+    --ids=*)
+      ids="${1#*=}"
+      shift 1
+      ;;
+    *)
+      echo "Invalid argument: $1"
+      exit 1
+      ;;
+  esac
+done
+
+# Check if required arguments are provided
+if [[ -z "$ids" ]]; then
+  echo "Missing argument: --ids"
+  usage
+fi
+
+if [[ -z "$command" ]]; then
+  echo "Missing argument: --command"
+  usage
+fi
+
+if [[ -z "$chunk_size" ]]; then
+  echo "Missing argument: --chunk-size"
+  usage
+fi
+
+# Split the space-delimited IDs into an array
+id_array=($ids)
+
+total_ids=${#id_array[@]}
+start_index=0
+
+# Process the IDs in chunks of size 'chunk_size'
+while [[ $start_index -lt $total_ids ]]; do
+  end_index=$((start_index + chunk_size - 1))
+  # Ensure the end index doesn't exceed the total number of IDs
+  if [[ $end_index -ge $total_ids ]]; then
+    end_index=$((total_ids - 1))
+  fi
+
+  # Extract the chunk of IDs
+  chunk="${id_array[@]:start_index:end_index-start_index+1}"
+
+  # Execute the command for the chunk
+  eval "$command"
+
+  # Move the start index to the next chunk
+  start_index=$((end_index + 1))
+done
