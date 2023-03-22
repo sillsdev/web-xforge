@@ -42,8 +42,8 @@ public interface IParatextService
         CancellationToken token = default
     );
     bool ResourceDocsNeedUpdating(SFProject project, ParatextResource resource);
-
     IReadOnlyList<int> GetBookList(UserSecret userSecret, string paratextId);
+
     string GetBookText(UserSecret userSecret, string paratextId, int bookNum);
     Task<int> PutBookText(
         UserSecret userSecret,
