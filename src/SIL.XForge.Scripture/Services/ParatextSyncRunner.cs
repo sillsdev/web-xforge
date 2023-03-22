@@ -95,7 +95,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private UserSecret _userSecret;
     private IDocument<SFProject> _projectDoc;
     private SFProjectSecret _projectSecret;
-    private SyncMetrics _syncMetrics;
+    internal SyncMetrics _syncMetrics;
     private Dictionary<string, ParatextUserProfile> _currentPtSyncUsers;
     private Dictionary<string, string> _userIdsToDisplayNames;
 
@@ -924,7 +924,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
 
             LogMetric("Updating thread docs - get deltas");
-            Dictionary<int, ChapterDelta> chapterDeltas = GetDeltasByChapter(text, targetParatextId);
+            Dictionary<int, ChapterDelta> chapterDeltas = GetParatextChaptersAsDeltas(text, targetParatextId);
 
             LogMetric("Updating thread docs - updating");
 
@@ -1028,17 +1028,38 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
     internal void CloseConnection() => _conn?.Dispose();
 
-    private async Task UpdateParatextBook(
+    /// <summary>
+    /// Returns an XDocument for the USX of a book in a Paratext project repo.
+    /// </summary>
+    internal XDocument GetBookUsx(string ptProjectId, int bookNum)
+    {
+        string bookUsx = _paratextService.GetBookText(_userSecret, ptProjectId, bookNum);
+
+        // XDocument.Parse() is sensitive to whether it perceives the input as indented. It also seems to lack
+        // flexibility in what whitespace is preserved. We need to preserve some whitespace so USX like
+        // "<char>In</char> <char>the</char>" does not lose the space between "char" elements. But we don't want to
+        // preserve other whitespace, like indentation, or newlines between elements, which then get into the
+        // text docs. Therefore, process the USX to remove undesired whitespace, while leaving desired whitespace
+        // intact, and request XDocument.Parse to preserve whitespace.
+
+        // Remove whitespace at the beginning of the text.
+        bookUsx = Regex.Replace(bookUsx, @"^\s*", "", RegexOptions.CultureInvariant);
+        // Remove whitespace at the beginning of the rest of the lines, and remove line breaks.
+        bookUsx = Regex.Replace(bookUsx, @"\r?\n\s*", "", RegexOptions.CultureInvariant);
+
+        // When the input to XDocument.Parse is one line with no initial whitespace, it does perceive this input
+        // as "indented", and so honours the request to preserve whitespace.
+        return XDocument.Parse(bookUsx, LoadOptions.PreserveWhitespace);
+    }
+
+    ///<summary>Apply changes in text docs to Paratext project repo.</summary>
+    internal async Task UpdateParatextBook(
         TextInfo text,
         string paratextId,
         SortedList<int, IDocument<TextData>> textDocs
     )
     {
-        string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
-
-        // XDocument.Parse ignores whitespace added during USX generation. The unnecessary whitespace can
-        // occasionally cause inaccurate comparisons with XNode.DeepEquals, and so we must remove it.
-        var oldUsxDoc = XDocument.Parse(bookText);
+        XDocument oldUsxDoc = GetBookUsx(paratextId, text.BookNum);
         XDocument newUsxDoc = _deltaUsxMapper.ToUsx(
             oldUsxDoc,
             text.Chapters.OrderBy(c => c.Number)
@@ -1192,10 +1213,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
         ISet<int>? chaptersToInclude = null
     )
     {
-        string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
-        var usxDoc = XDocument.Parse(bookText);
+        Dictionary<int, ChapterDelta> deltas = GetParatextChaptersAsDeltas(text, paratextId);
         var tasks = new List<Task>();
-        Dictionary<int, ChapterDelta> deltas = _deltaUsxMapper.ToChapterDeltas(usxDoc).ToDictionary(cd => cd.Number);
         var chapters = new List<Chapter>();
         List<int> chaptersToRemove = textDocs.Keys.Where(c => !deltas.ContainsKey(c)).ToList();
         foreach (KeyValuePair<int, ChapterDelta> kvp in deltas)
@@ -2049,10 +2068,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private IDocument<NoteThread> GetNoteThreadDoc(string dataId) =>
         _conn.Get<NoteThread>($"{_projectDoc.Id}:{dataId}");
 
-    private Dictionary<int, ChapterDelta> GetDeltasByChapter(TextInfo text, string paratextId)
+    /// <summary>Get chapter texts from Paratext project repository, as deltas.</summary>
+    internal Dictionary<int, ChapterDelta> GetParatextChaptersAsDeltas(TextInfo text, string paratextId)
     {
-        string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
-        XDocument usxDoc = XDocument.Parse(bookText);
+        XDocument usxDoc = GetBookUsx(paratextId, text.BookNum);
         Dictionary<int, ChapterDelta> chapterDeltas = _deltaUsxMapper
             .ToChapterDeltas(usxDoc)
             .ToDictionary(cd => cd.Number);

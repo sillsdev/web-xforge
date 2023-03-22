@@ -1083,6 +1083,8 @@ public class ParatextService : DisposableBase, IParatextService
                 out string usfm
             );
             log.AppendLine($"Created usfm of {usfm}");
+            // Among other things, normalizing the USFM will remove trailing spaces at the end of verses,
+            // which may cause some churn. This is similar to running "Standardize whitespace" in Paratext.
             usfm = UsfmToken.NormalizeUsfm(scrText.ScrStylesheet(bookNum), usfm, false, scrText.RightToLeft, scrText);
             log.AppendLine($"Normalized usfm to {usfm}");
 
