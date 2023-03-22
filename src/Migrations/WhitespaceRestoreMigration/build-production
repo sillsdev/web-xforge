@@ -1,0 +1,15 @@
+#!/bin/bash
+# Build for running on another computer.
+# Usage: ./build-production
+# May require adding <RuntimeIdentifier>linux-x64</RuntimeIdentifier> to SIL.XForge.Scripture.csproj.
+
+set -ueo pipefail
+
+scriptDir="$(dirname "$0")"
+cd "${scriptDir}"
+# Derive the name of the program from the name of the directory of the script.
+programName="$(basename "$(pwd)")"
+outputProductName="${programName}-$(date '+%Y%m%d-%H%M%S')"
+outputDir="bin/${outputProductName}"
+dotnet publish --runtime "linux-x64" --self-contained true --output "${outputDir}"
+ls -ld "${outputDir}"
