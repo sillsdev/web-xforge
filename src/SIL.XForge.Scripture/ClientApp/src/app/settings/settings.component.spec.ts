@@ -327,7 +327,6 @@ describe('SettingsComponent', () => {
 
         env.setBasedOnValue('paratextId01');
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const [_, secondArg] = capture(mockedSFProjectService.onlineUpdateSettings).last();
         expect(secondArg).toEqual({ sourceParatextId: 'paratextId01', translationSuggestionsEnabled: true });
       }));
