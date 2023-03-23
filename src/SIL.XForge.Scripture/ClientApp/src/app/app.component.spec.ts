@@ -542,31 +542,7 @@ describe('AppComponent', () => {
       verify(mockedSFProjectService.localDelete(projectId)).once();
     }));
 
-    it('auth0 users can edit name online', fakeAsync(() => {
-      const env = new TestEnvironment('online');
-      env.setCurrentUser('user02');
-      env.init();
-
-      env.avatarIcon.nativeElement.click();
-      env.wait();
-      expect(env.userMenu).not.toBeNull();
-      env.clickEditDisplayName();
-      verify(mockedUserService.editDisplayName(false)).once();
-    }));
-
-    it('can edit sms user name online', fakeAsync(() => {
-      const env = new TestEnvironment('online');
-      env.setCurrentUser('user03');
-      env.init();
-
-      env.avatarIcon.nativeElement.click();
-      env.wait();
-      expect(env.userMenu).not.toBeNull();
-      env.clickEditDisplayName();
-      verify(mockedUserService.editDisplayName(false)).once();
-    }));
-
-    it('non auth0 connection users can edit name', fakeAsync(() => {
+    it('users can edit their display name', fakeAsync(() => {
       const env = new TestEnvironment('online');
       env.init();
 
