@@ -549,7 +549,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             if (settings.Editable && !_paratextService.IsResource(paratextId))
             {
                 LogMetric("Updating Paratext book");
-                await UpdateParatextBook(text, paratextId, targetTextDocs);
+                await UpdateParatextBookAsync(text, paratextId, targetTextDocs);
             }
 
             questionDocsByBook[text.BookNum] = questionDocs
@@ -1053,7 +1053,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     }
 
     ///<summary>Apply changes in text docs to Paratext project repo.</summary>
-    internal async Task UpdateParatextBook(
+    internal async Task UpdateParatextBookAsync(
         TextInfo text,
         string paratextId,
         SortedList<int, IDocument<TextData>> textDocs
