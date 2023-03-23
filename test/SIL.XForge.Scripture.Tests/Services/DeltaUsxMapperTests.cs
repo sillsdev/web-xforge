@@ -1,6 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -3405,11 +3411,70 @@ public class DeltaUsxMapperTests
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
+    [Test]
+    public async Task RoundTrip_Hebrew() => await RoundTripTestHelper("heb_usfm");
+
+    private async Task RoundTripTestHelper(string project)
+    {
+        string zipFilePath = Path.Combine(GetPathToTestProject(), "SampleData", $"{project}.zip");
+        await using FileStream zipFileStream = new FileStream(zipFilePath, FileMode.Open, FileAccess.Read);
+        using ZipArchive archive = new ZipArchive(zipFileStream, ZipArchiveMode.Read);
+        Assert.That(archive.Entries.Any(), "setup. unexpected input size.");
+        foreach (ZipArchiveEntry entry in archive.Entries)
+        {
+            string bookCode = Regex.Match(entry.Name, @".*-([A-Z0-9]{3}).*\.usfm").Groups[1].Value;
+            if (entry.Name.EndsWith(".usfm", StringComparison.OrdinalIgnoreCase) && bookCode is not ("FRT" or "INT"))
+            {
+                await using Stream entryStream = entry.Open();
+                using StreamReader reader = new StreamReader(entryStream);
+
+                // Read and stream the contents of the text file
+                string bookUsfm = await reader.ReadToEndAsync();
+                XmlDocument bookUsxLoading = Paratext.Data.UsfmToUsx.ConvertToXmlDocument(
+                    new Paratext.Data.MockScrStylesheet("usfm.sty"),
+                    bookUsfm
+                );
+                using XmlNodeReader nodeReader = new(bookUsxLoading);
+                nodeReader.MoveToContent();
+                XDocument bookUsx = XDocument.Load(nodeReader);
+                // Record the usx version string to make it match when later compared.
+                string usxVersion = bookUsx.Elements("usx").First().Attribute("version")!.Value;
+                // Record any text in the book node, which some books have, like <book code="GEN">- American Standard
+                // Version</book>
+                string? bookDesc = bookUsx.Elements("usx").Elements("book").First().FirstNode?.ToString();
+                DeltaUsxMapper mapper = new(_mapperGuidService, _logger, _exceptionHandler);
+
+                // SUT part 1
+                List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(bookUsx).ToList();
+
+                IEnumerable<XElement> chaptersToProcess = bookUsx
+                    .Elements("usx")
+                    .Elements("chapter")
+                    .Select(x => Chapter(x.Attribute("number")!.Value));
+
+                // SUT part 2
+                XDocument roundTrippedUsx = mapper.ToUsx(
+                    Usx(bookCode, bookDesc, usxVersion, chaptersToProcess),
+                    chapterDeltas
+                );
+                Assert.IsTrue(XNode.DeepEquals(roundTrippedUsx, bookUsx), $"Trouble in {entry.Name}");
+            }
+        }
+    }
+
+    private static string GetPathToTestProject() =>
+        new FileInfo(Assembly.GetExecutingAssembly().Location).Directory.Parent.Parent.Parent.FullName;
+
+    private static XDocument Usx(string code, string? bookInnerText, string usxVersion, params object[] elems) =>
+        new XDocument(new XElement("usx", new XAttribute("version", usxVersion), Book(code, bookInnerText), elems));
+
     private static XDocument Usx(string code, params object[] elems) =>
         new XDocument(new XElement("usx", new XAttribute("version", "2.5"), Book(code), elems));
 
-    private static XElement Book(string code) =>
-        new XElement("book", new XAttribute("code", code), new XAttribute("style", "id"));
+    private static XElement Book(string code, string? innerText = null) =>
+        innerText == null
+            ? new XElement("book", new XAttribute("code", code), new XAttribute("style", "id"))
+            : new XElement("book", new XAttribute("code", code), new XAttribute("style", "id"), innerText);
 
     private static XElement Para(string style, params object[] contents)
     {
