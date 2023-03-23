@@ -422,11 +422,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   /**
-   * Determines whether the comment adding UI should be shown. This will be true any time the user has the right to add
-   * notes but not a role that has the general right to edit the text. (Unless the feature flag is turned off)
+   * Determines whether the comment adding UI should be shown
+   * This will be true any time the user has the right to add notes
    */
   get showAddCommentUI(): boolean {
-    if (!this.isAddNotesEnabled || this.userHasGeneralEditRight || this.projectDoc?.data == null) return false;
+    if (!this.isAddNotesEnabled || this.projectDoc?.data == null) return false;
 
     return SF_PROJECT_RIGHTS.hasRight(
       this.projectDoc.data,
@@ -820,23 +820,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   insertNote(): void {
-    if (this.target == null || this.bookNum == null) {
+    if (this.target == null || this.bookNum == null || !this.showAddCommentUI) {
       return;
     }
-    if (this.showAddCommentUI) {
-      let verseRef: VerseRef | undefined = this.commenterSelectedVerseRef;
-      if (verseRef == null) {
-        const defaultSegmentRef: string | undefined = this.target.firstVerseSegment;
-        if (defaultSegmentRef == null) return;
-        verseRef = getVerseRefFromSegmentRef(this.bookNum, defaultSegmentRef);
-      }
-      this.showNoteThread(undefined, verseRef);
-    } else {
-      const segmentRef: string | undefined = this.target.currentSegmentOrDefault;
-      if (segmentRef == null) return;
-      const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
-      this.showNoteThread(undefined, verseRef);
+    let verseRef: VerseRef | undefined = this.commenterSelectedVerseRef;
+    if (verseRef == null) {
+      const defaultSegmentRef: string | undefined = this.target.firstVerseSegment;
+      if (defaultSegmentRef == null) return;
+      verseRef = getVerseRefFromSegmentRef(this.bookNum, defaultSegmentRef);
     }
+    this.showNoteThread(undefined, verseRef);
     this.showInsertNoteFab = false;
   }
 
