@@ -526,16 +526,16 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 // Only update the note tag if there are SF note threads in the project
                 if (noteThreadDocs.Any(d => d.Data.PublishedToSF == true))
                     await UpdateTranslateNoteTag(paratextId);
-                // TODO: Sync Note changes back to Paratext, and record sync metric info
-                // int sfNoteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? NoteTag.notSetId;
-                // await _paratextService.UpdateParatextCommentsAsync(
-                //     _userSecret,
-                //     paratextId,
-                //     text.BookNum,
-                //     noteThreadDocs,
-                //     _currentPtSyncUsers,
-                //     sfNoteTagId
-                // );
+
+                int sfNoteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? NoteTag.notSetId;
+                _syncMetrics.ParatextNotes += await _paratextService.UpdateParatextCommentsAsync(
+                    _userSecret,
+                    paratextId,
+                    text.BookNum,
+                    noteThreadDocs,
+                    _currentPtSyncUsers,
+                    sfNoteTagId
+                );
             }
         }
     }
