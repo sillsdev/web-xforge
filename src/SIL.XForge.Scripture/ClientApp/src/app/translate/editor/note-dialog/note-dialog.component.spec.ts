@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
+import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
@@ -33,7 +33,12 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, matDialogCloseDelay, TestTranslocoModule } from 'xforge-common/test-utils';
+import {
+  ChildViewContainerComponent,
+  configureTestingModule,
+  matDialogCloseDelay,
+  TestTranslocoModule
+} from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
@@ -517,27 +522,10 @@ describe('NoteDialogComponent', () => {
   }));
 });
 
-@Directive({
-  // es lint complains that a directive should be used as an attribute
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'appViewContainerDirective'
-})
-class ViewContainerDirective {
-  constructor(public viewContainerRef: ViewContainerRef) {}
-}
-
-@Component({
-  selector: 'app-view-container',
-  template: '<appViewContainerDirective></appViewContainerDirective>'
-})
-class ChildViewContainerComponent {
-  @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
-}
-
 @NgModule({
   imports: [CommonModule, UICommonModule, TranslateModule, TestTranslocoModule],
-  declarations: [ViewContainerDirective, ChildViewContainerComponent],
-  exports: [ViewContainerDirective, ChildViewContainerComponent]
+  declarations: [],
+  exports: []
 })
 class DialogTestModule {}
 

@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CookieService } from 'ngx-cookie-service';
+import { DeltaStatic } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -18,7 +19,7 @@ import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
@@ -338,31 +339,10 @@ describe('TextChooserDialogComponent', () => {
   }));
 });
 
-@Directive({
-  // es lint complains that a directive should be used as an attribute
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'viewContainerDirective'
-})
-class ViewContainerDirective {
-  constructor(public viewContainerRef: ViewContainerRef) {}
-}
-
-@Component({
-  selector: 'app-view-container',
-  template: '<viewContainerDirective></viewContainerDirective>'
-})
-class ChildViewContainerComponent {
-  @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
-
-  get childViewContainer(): ViewContainerRef {
-    return this.viewContainer.viewContainerRef;
-  }
-}
-
 @NgModule({
   imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule],
-  exports: [ViewContainerDirective, ChildViewContainerComponent],
-  declarations: [ViewContainerDirective, ChildViewContainerComponent]
+  exports: [],
+  declarations: []
 })
 class DialogTestModule {}
 
@@ -522,54 +502,54 @@ class TestEnvironment {
     return this.select('#cancel-button') as HTMLButtonElement;
   }
 
-  get headingText() {
+  get headingText(): string {
     return this.select('.select-chapter h2').textContent!;
   }
 
-  get selectChapter() {
+  get selectChapter(): HTMLButtonElement {
     return this.select('.select-chapter') as HTMLButtonElement;
   }
 
-  get errorMessage() {
+  get errorMessage(): Element {
     return this.select('.error-message');
   }
 
-  get selectedText() {
+  get selectedText(): string {
     // trim because template adds white space around the text
     return this.select('.selection-preview').textContent!.trim();
   }
 
-  get editor() {
+  get editor(): Element {
     return this.select('quill-editor');
   }
 
-  select(query: string) {
+  select(query: string): Element {
     return this.overlayContainerElement.querySelector(query)!;
   }
 
-  fireSelectionChange() {
+  fireSelectionChange(): void {
     this.selectionChangeHandler();
     tick(100); // event handler debounce time
     this.fixture.detectChanges();
   }
 
-  closeDialog() {
+  closeDialog(): void {
     this.cancelButton.click();
     flush();
   }
 
-  click(button: HTMLButtonElement) {
+  click(button: HTMLButtonElement): void {
     button.click();
     this.fixture.detectChanges();
   }
 
-  elementFromHtml(html: string) {
+  elementFromHtml(html: string): Element {
     const div = document.createElement('div');
     div.innerHTML = html;
     return div.firstChild! as Element;
   }
 
-  static get delta() {
+  static get delta(): DeltaStatic {
     const delta = new Delta();
     delta.insert({ chapter: { number: '1', style: 'c' } });
     delta.insert('heading text', { para: { style: 'p' } });

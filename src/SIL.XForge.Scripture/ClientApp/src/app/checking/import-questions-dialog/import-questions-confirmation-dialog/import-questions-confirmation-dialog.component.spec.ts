@@ -1,9 +1,9 @@
 import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { CommonModule } from '@angular/common';
-import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import {
   EditedQuestion,
@@ -68,31 +68,10 @@ describe('ImportQuestionsConfirmationDialogComponent', () => {
   }));
 });
 
-@Directive({
-  // es lint complains that a directive should be used as an attribute
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'viewContainerDirective'
-})
-class ViewContainerDirective {
-  constructor(public viewContainerRef: ViewContainerRef) {}
-}
-
-@Component({
-  selector: 'app-view-container',
-  template: '<viewContainerDirective></viewContainerDirective>'
-})
-class ChildViewContainerComponent {
-  @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
-
-  get childViewContainer(): ViewContainerRef {
-    return this.viewContainer.viewContainerRef;
-  }
-}
-
 @NgModule({
   imports: [CommonModule, UICommonModule, TestTranslocoModule],
-  declarations: [ViewContainerDirective, ChildViewContainerComponent, ImportQuestionsConfirmationDialogComponent],
-  exports: [ViewContainerDirective, ChildViewContainerComponent, ImportQuestionsConfirmationDialogComponent]
+  declarations: [ImportQuestionsConfirmationDialogComponent],
+  exports: [ImportQuestionsConfirmationDialogComponent]
 })
 class DialogTestModule {}
 
@@ -141,7 +120,7 @@ class TestEnvironment {
     return this.dialogRef.afterClosed().toPromise();
   }
 
-  click(element: HTMLElement) {
+  click(element: HTMLElement): void {
     element.click();
     this.update();
   }
@@ -161,7 +140,7 @@ class TestEnvironment {
     return promiseForResult;
   }
 
-  private update() {
+  private update(): void {
     tick();
     this.fixture.detectChanges();
     flush();

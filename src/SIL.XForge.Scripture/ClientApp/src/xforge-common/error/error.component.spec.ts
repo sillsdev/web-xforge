@@ -1,8 +1,8 @@
 import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
 import { CommonModule } from '@angular/common';
-import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { configureTestingModule, TestTranslocoModule } from '../test-utils';
+import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { ErrorAlert, ErrorComponent } from './error.component';
 
@@ -41,31 +41,10 @@ describe('ErrorComponent', () => {
   }));
 });
 
-@Directive({
-  // es lint complains that a directive should be used as an attribute
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'viewContainerDirective'
-})
-class ViewContainerDirective {
-  constructor(public viewContainerRef: ViewContainerRef) {}
-}
-
-@Component({
-  selector: 'app-view-container',
-  template: '<viewContainerDirective></viewContainerDirective>'
-})
-class ChildViewContainerComponent {
-  @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
-
-  get childViewContainer(): ViewContainerRef {
-    return this.viewContainer.viewContainerRef;
-  }
-}
-
 @NgModule({
   imports: [CommonModule, UICommonModule, TestTranslocoModule],
-  declarations: [ViewContainerDirective, ChildViewContainerComponent, ErrorComponent],
-  exports: [ViewContainerDirective, ChildViewContainerComponent, ErrorComponent]
+  declarations: [ErrorComponent],
+  exports: [ErrorComponent]
 })
 class DialogTestModule {}
 
