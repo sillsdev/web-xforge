@@ -2678,7 +2678,7 @@ public class ParatextSyncRunnerTests
         env.DeltaUsxMapper.ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>())
             .Returns((CallInfo callInfo) => callInfo.Arg<XDocument>());
         // SUT
-        await env.Runner.UpdateParatextBook(
+        await env.Runner.UpdateParatextBookAsync(
             Substitute.For<TextInfo>(),
             "some-paratext-id",
             Substitute.For<SortedList<int, IDocument<TextData>>>()
@@ -2724,7 +2724,7 @@ public class ParatextSyncRunnerTests
         Assert.That(revisedXDoc.ToString(), Is.EqualTo(revisedUsx), "setup");
         env.DeltaUsxMapper.ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>()).Returns(revisedXDoc);
         // SUT
-        await env.Runner.UpdateParatextBook(
+        await env.Runner.UpdateParatextBookAsync(
             Substitute.For<TextInfo>(),
             "some-paratext-project-id",
             Substitute.For<SortedList<int, IDocument<TextData>>>()
@@ -2759,7 +2759,7 @@ public class ParatextSyncRunnerTests
         env.DeltaUsxMapper.ToUsx(Arg.Any<XDocument>(), Arg.Any<IEnumerable<ChapterDelta>>())
             .Returns((CallInfo callInfo) => callInfo.Arg<XDocument>());
         // SUT
-        await env.Runner.UpdateParatextBook(
+        await env.Runner.UpdateParatextBookAsync(
             Substitute.For<TextInfo>(),
             "some-paratext-id",
             Substitute.For<SortedList<int, IDocument<TextData>>>()
