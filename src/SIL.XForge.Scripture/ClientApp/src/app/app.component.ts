@@ -51,11 +51,6 @@ declare function gtag(...args: any): void;
 
 export const CONNECT_PROJECT_OPTION = '*connect-project*';
 
-export interface QuestionQuery {
-  bookNum: number;
-  query: RealtimeQuery;
-}
-
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -255,12 +250,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       return false;
     }
     return getAuthType(this.currentUser.authId) === AuthType.Account;
-  }
-
-  get canUpdateDisplayName(): boolean {
-    if (this.currentUser == null) return false;
-    const authType: AuthType = getAuthType(this.currentUser.authId);
-    return authType === AuthType.Account || authType === AuthType.SMS;
   }
 
   get selectedProjectId(): string | undefined {
