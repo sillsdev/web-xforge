@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Linq;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
@@ -3405,11 +3408,79 @@ public class DeltaUsxMapperTests
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
+    [Test]
+    public void RoundTrip_Hebrew() => RoundTripTestHelper("hebrew");
+
+    public void RoundTripTestHelper(string project)
+    {
+        DirectoryInfo codeRepoRoot = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.Parent.Parent;
+        var usfmFiles = new DirectoryInfo(Path.Combine(codeRepoRoot.FullName, "samples", project))
+            .GetFiles("*.usfm")
+            .OrderBy((FileInfo file) => file.FullName, StringComparer.Ordinal)
+            .Select(
+                file =>
+                    new
+                    {
+                        bookPath = file.FullName,
+                        bookCode = Regex.Match(file.FullName, @".*-([A-Z0-9]{3}).*\.usfm").Groups[1].Value
+                    }
+            )
+            // Exclude peripheral books that are not part of the usx-sf.rnc schema.
+            .Where(file => file.bookCode != "FRT" && file.bookCode != "INT");
+
+        Assert.That(usfmFiles.Count() > 0, "setup. unexpected input size.");
+
+        foreach (var inputFile in usfmFiles)
+        {
+            string bookUsfm = File.ReadAllText(inputFile.bookPath);
+            XmlDocument bookUsxLoading = Paratext.Data.UsfmToUsx.ConvertToXmlDocument(
+                new Paratext.Data.MockScrStylesheet("usfm.sty"),
+                bookUsfm
+            );
+            using XmlNodeReader reader = new(bookUsxLoading);
+            reader.MoveToContent();
+            XDocument bookUsx = XDocument.Load(reader);
+            // Record the usx version string to make it match when later compared.
+            string usxVersion = bookUsx.Elements("usx").First().Attribute("version").Value;
+            // Record any text in the book node, which some books have, like <book code="GEN">- American Standard
+            // Version</book>
+            string? bookDesc = bookUsx.Elements("usx").Elements("book").First().FirstNode?.ToString();
+            DeltaUsxMapper mapper = new(_mapperGuidService, _logger, _exceptionHandler);
+
+            // SUT part 1
+            List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(bookUsx).ToList();
+
+            IEnumerable<XElement> chaptersToProcess = bookUsx
+                .Elements("usx")
+                .Elements("chapter")
+                .Select(x => Chapter(x.Attribute("number").Value));
+
+            // SUT part 2
+            XDocument roundTrippedUsx = mapper.ToUsx(
+                Usx(inputFile.bookCode, bookDesc, usxVersion, chaptersToProcess),
+                chapterDeltas
+            );
+            Assert.IsTrue(XNode.DeepEquals(roundTrippedUsx, bookUsx), $"Trouble in {inputFile.bookPath}");
+        }
+    }
+
+    private static XDocument Usx(string code, string? bookInnerText, string usxVersion, params object[] elems) =>
+        new XDocument(new XElement("usx", new XAttribute("version", usxVersion), Book(code, bookInnerText), elems));
+
     private static XDocument Usx(string code, params object[] elems) =>
         new XDocument(new XElement("usx", new XAttribute("version", "2.5"), Book(code), elems));
 
-    private static XElement Book(string code) =>
-        new XElement("book", new XAttribute("code", code), new XAttribute("style", "id"));
+    private static XElement Book(string code, string? innerText = null)
+    {
+        if (innerText == null)
+        {
+            return new XElement("book", new XAttribute("code", code), new XAttribute("style", "id"));
+        }
+        else
+        {
+            return new XElement("book", new XAttribute("code", code), new XAttribute("style", "id"), innerText);
+        }
+    }
 
     private static XElement Para(string style, params object[] contents)
     {
