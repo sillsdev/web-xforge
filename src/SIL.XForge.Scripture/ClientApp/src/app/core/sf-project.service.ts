@@ -154,9 +154,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   generateSharingUrl(shareKey: string, localeCode?: string): string {
-    if (shareKey === '') {
-      return '';
-    }
     let url = `${this.locationService.origin}/join/${shareKey}`;
     if (localeCode != null) {
       url += `/${localeCode}`;
@@ -194,8 +191,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return (await this.onlineInvoke<InviteeStatus[]>('invitedUsers', { projectId }))!;
   }
 
-  /** Get added into project, with optionally specified shareKey code. */
-  async onlineCheckLinkSharing(shareKey?: string): Promise<string> {
+  /** Get added into project with specified shareKey code. */
+  async onlineCheckLinkSharing(shareKey: string): Promise<string> {
     return (await this.onlineInvoke<string>('checkLinkSharing', { shareKey }))!;
   }
 

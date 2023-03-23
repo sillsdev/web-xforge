@@ -241,16 +241,17 @@ export class AuthService {
    * Check if the user is in the process of joining a project from a share link
    */
   private get isJoining(): boolean {
-    return this.checkShareKeyAvailable() !== false;
+    return this.getShareKeyFromLocation() != null;
   }
 
   /**
-   * An active route isn't available yet, so we need to get the share key, if available, from the path name
+   * An active route isn't available yet, so we need to get the share key, if available, from the path name.
+   * @returns The share key if available, otherwise null
    */
-  private checkShareKeyAvailable(): false | string {
+  private getShareKeyFromLocation(): string | null {
     const path: string[] = this.locationService.pathname.split('/').filter(p => p !== '');
     if (path[0] !== 'join' || path[1] == null) {
-      return false;
+      return null;
     }
     return path[1];
   }

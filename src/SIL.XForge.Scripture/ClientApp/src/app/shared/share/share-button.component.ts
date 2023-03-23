@@ -26,6 +26,7 @@ export class ShareButtonComponent implements OnInit {
   openDialog(): void {
     this.dialogService.openMatDialog(ShareDialogComponent, {
       width: '480px',
+      autoFocus: false,
       data: {
         projectId: this.projectId,
         defaultRole: this.defaultRole

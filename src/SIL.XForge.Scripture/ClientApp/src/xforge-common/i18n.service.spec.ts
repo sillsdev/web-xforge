@@ -70,7 +70,6 @@ describe('I18nService', () => {
           italicsStart: '<em>',
           italicsEnd: '</em>',
           newLine: '<br />',
-          newLinePlain: '\r\n',
           spanStart: '<span class="text">',
           spanEnd: '</span>'
         })

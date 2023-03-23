@@ -132,7 +132,7 @@ describe('ShareDialogComponent', () => {
     const expectedShareData: ShareData = {
       title: "You've been invited to the project Share Project on Scripture Forge",
       url: 'https://scriptureforge.org/join/linkSharing01/en',
-      text: "You've been invited to join the Share Project project on Scripture Forge.\r\nJust click the link below, choose how to log in, and you will be ready to start."
+      text: "You've been invited to join the Share Project project on Scripture Forge.\nJust click the link below, choose how to log in, and you will be ready to start."
     };
     expect(env.shareData).toEqual(expectedShareData);
   }));
