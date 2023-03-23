@@ -2972,13 +2972,9 @@ public class ParatextSyncRunnerTests
     [Test]
     public void GetParatextChaptersAsDeltas_BeginsWithExpectedContent()
     {
-        IGuidService mapperGuidService;
-        ILogger<DeltaUsxMapper> logger;
-        IExceptionHandler exceptionHandler;
-        mapperGuidService = new TestGuidService();
-        logger = Substitute.For<ILogger<DeltaUsxMapper>>();
-        exceptionHandler = Substitute.For<IExceptionHandler>();
-
+        IGuidService mapperGuidService = new TestGuidService();
+        ILogger<DeltaUsxMapper> logger = Substitute.For<ILogger<DeltaUsxMapper>>();
+        IExceptionHandler exceptionHandler = Substitute.For<IExceptionHandler>();
         DeltaUsxMapper mapper = new(mapperGuidService, logger, exceptionHandler);
         TestEnvironment env = new(false, mapper);
 
@@ -3017,22 +3013,18 @@ public class ParatextSyncRunnerTests
         // writes chapter deltas back to Paratext data on disk. Test that core methods involved in this process
         // roundtrip data successfully. Using a real DeltaUsxMapper, this is an integration test.
 
-        IGuidService mapperGuidService;
-        ILogger<DeltaUsxMapper> logger;
-        IExceptionHandler exceptionHandler;
-        mapperGuidService = new TestGuidService();
-        logger = Substitute.For<ILogger<DeltaUsxMapper>>();
-        exceptionHandler = Substitute.For<IExceptionHandler>();
-
+        IGuidService mapperGuidService = new TestGuidService();
+        ILogger<DeltaUsxMapper> logger = Substitute.For<ILogger<DeltaUsxMapper>>();
+        IExceptionHandler exceptionHandler = Substitute.For<IExceptionHandler>();
         DeltaUsxMapper mapper = new(mapperGuidService, logger, exceptionHandler);
         TestEnvironment env = new(false, mapper);
 
         // Not using something like SetupSFData() because DeltaUsxMapper is not a substitute.
-        Book[] books = { new Book("RUT", 8) };
+        Book[] books = [new Book("RUT", 8)];
         TextInfo textInfo = new() { BookNum = 8, Chapters = null };
 
-        SFProject[] sfProjects = new[]
-        {
+        SFProject[] sfProjects =
+        [
             new SFProject
             {
                 Id = "project01",
@@ -3072,14 +3064,14 @@ public class ParatextSyncRunnerTests
                     SyncedToRepositoryVersion = "beforeSR",
                     DataInSync = true
                 },
-                ParatextUsers = new List<ParatextUserProfile>
-                {
+                ParatextUsers =
+                [
                     new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "User 1" },
                     new ParatextUserProfile { OpaqueUserId = "syncuser02", Username = "User 2" }
-                },
-                NoteTags = new List<NoteTag>()
+                ],
+                NoteTags = []
             },
-        };
+        ];
         env.RealtimeService.AddRepository("sf_projects", OTType.Json0, new MemoryRepository<SFProject>(sfProjects));
 
         // ParatextData will give us Paratext data in USX. Suppose it is the following.
