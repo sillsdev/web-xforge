@@ -54,7 +54,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
         await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
@@ -107,7 +107,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
         await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
@@ -202,7 +202,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
         await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
@@ -278,7 +278,7 @@ public class MachineProjectServiceTests
             .Returns(Task.FromResult(Corpus01));
         await env.ProjectSecrets.UpdateAsync(
             Project01,
-            u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = TranslationEngine01 })
+            u => u.Set(p => p.MachineData, new ServalData { TranslationEngineId = TranslationEngine01 })
         );
 
         // SUT
@@ -334,7 +334,7 @@ public class MachineProjectServiceTests
             u =>
                 u.Add(
                     p => p.MachineData.Corpora[Corpus01].Files,
-                    new MachineCorpusFile
+                    new ServalCorpusFile
                     {
                         FileChecksum = "a_previous_checksum",
                         FileId = "File03",
@@ -371,7 +371,7 @@ public class MachineProjectServiceTests
             u =>
                 u.Add(
                     p => p.MachineData.Corpora[Corpus01].Files,
-                    new MachineCorpusFile
+                    new ServalCorpusFile
                     {
                         FileChecksum = checksum,
                         FileId = "File03",
@@ -397,7 +397,7 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
         bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
@@ -437,7 +437,7 @@ public class MachineProjectServiceTests
             .Throws(new HttpRequestException());
         await env.ProjectSecrets.UpdateAsync(
             Project01,
-            u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = TranslationEngine01 })
+            u => u.Set(p => p.MachineData, new ServalData { TranslationEngineId = TranslationEngine01 })
         );
 
         // SUT
@@ -479,7 +479,7 @@ public class MachineProjectServiceTests
             u =>
                 u.Add(
                     p => p.MachineData.Corpora[Corpus01].Files,
-                    new MachineCorpusFile
+                    new ServalCorpusFile
                     {
                         FileChecksum = "a_previous_checksum",
                         FileId = "File03",
@@ -544,7 +544,7 @@ public class MachineProjectServiceTests
             u =>
                 u.Add(
                         p => p.MachineData.Corpora[Corpus01].Files,
-                        new MachineCorpusFile
+                        new ServalCorpusFile
                         {
                             FileChecksum = "a_previous_checksum",
                             FileId = "File03",
@@ -554,7 +554,7 @@ public class MachineProjectServiceTests
                     )
                     .Add(
                         p => p.MachineData.Corpora[Corpus01].Files,
-                        new MachineCorpusFile
+                        new ServalCorpusFile
                         {
                             FileChecksum = "another_previous_checksum",
                             FileId = "File04",
@@ -622,7 +622,7 @@ public class MachineProjectServiceTests
             u =>
                 u.Add(
                         p => p.MachineData.Corpora[Corpus01].Files,
-                        new MachineCorpusFile
+                        new ServalCorpusFile
                         {
                             FileChecksum = "a_previous_checksum",
                             FileId = "File03",
@@ -632,7 +632,7 @@ public class MachineProjectServiceTests
                     )
                     .Add(
                         p => p.MachineData.Corpora[Corpus01].Files,
-                        new MachineCorpusFile
+                        new ServalCorpusFile
                         {
                             FileChecksum = "another_previous_checksum",
                             FileId = "File04",
@@ -668,7 +668,7 @@ public class MachineProjectServiceTests
             TextCorpusFactory = Substitute.For<ITextCorpusFactory>();
 
             FeatureManager = Substitute.For<IFeatureManager>();
-            FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(true));
+            FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(true));
             FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(true));
 
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
@@ -678,19 +678,19 @@ public class MachineProjectServiceTests
                     new SFProjectSecret
                     {
                         Id = Project02,
-                        MachineData = new MachineData
+                        MachineData = new ServalData
                         {
                             TranslationEngineId = TranslationEngine02,
-                            Corpora = new Dictionary<string, MachineCorpus>
+                            Corpora = new Dictionary<string, ServalCorpus>
                             {
                                 {
                                     Corpus01,
-                                    new MachineCorpus
+                                    new ServalCorpus
                                     {
-                                        Files = new List<MachineCorpusFile>
+                                        Files = new List<ServalCorpusFile>
                                         {
-                                            new MachineCorpusFile { FileId = File01 },
-                                            new MachineCorpusFile { FileId = File02 },
+                                            new ServalCorpusFile { FileId = File01 },
+                                            new ServalCorpusFile { FileId = File02 },
                                         },
                                     }
                                 },

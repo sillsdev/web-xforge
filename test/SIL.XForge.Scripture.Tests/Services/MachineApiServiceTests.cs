@@ -39,7 +39,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.Builds
             .GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None)
             .Returns(Task.FromResult<Build>(null));
@@ -61,7 +61,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // NOTE: It is not possible to test No Build Running, as the Subscription Change cannot be modified
         env.Builds
@@ -118,7 +118,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
@@ -202,7 +202,7 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
         BuildDto? actual = await env.Service.GetBuildAsync(
@@ -292,7 +292,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.Builds
             .GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None)
             .Returns(Task.FromResult<Build>(null));
@@ -313,7 +313,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // NOTE: It is not possible to test No Build Running, as the Subscription Change cannot be modified
         env.Builds
@@ -369,7 +369,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
@@ -419,7 +419,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.Engines
             .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult<Engine>(null));
@@ -467,7 +467,7 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
         BuildDto? actual = await env.Service.GetCurrentBuildAsync(
@@ -557,7 +557,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
@@ -595,7 +595,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.Engines
             .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult<Engine>(null));
@@ -678,7 +678,7 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
         EngineDto actual = await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
@@ -764,7 +764,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
@@ -814,7 +814,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.Engines
             .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult<Engine>(null));
@@ -900,7 +900,7 @@ public class MachineApiServiceTests
                     )
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
         WordGraphDto actual = await env.Service.GetWordGraphAsync(
@@ -973,7 +973,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
@@ -1011,7 +1011,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.Engines
             .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult<Engine>(null));
@@ -1091,7 +1091,7 @@ public class MachineApiServiceTests
                     }
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
         BuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
@@ -1204,7 +1204,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.Engines
             .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult<Engine>(null));
@@ -1274,7 +1274,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         var segmentPair = new SegmentPairDto();
 
         // SUT
@@ -1334,7 +1334,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
@@ -1374,7 +1374,7 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.Engines
             .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult<Engine>(null));
@@ -1462,7 +1462,7 @@ public class MachineApiServiceTests
                     )
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
         TranslationResultDto actual = await env.Service.TranslateAsync(
@@ -1592,7 +1592,7 @@ public class MachineApiServiceTests
         // Set up test environment
         int n = 1;
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
         env.Engines
             .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
             .Returns(Task.FromResult<Engine>(null));
@@ -1676,7 +1676,7 @@ public class MachineApiServiceTests
                     }.AsEnumerable()
                 )
             );
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(false));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
         TranslationResultDto[] actual = await env.Service.TranslateNAsync(
@@ -1782,7 +1782,7 @@ public class MachineApiServiceTests
             EngineService = Substitute.For<IEngineService>();
             ExceptionHandler = Substitute.For<IExceptionHandler>();
             FeatureManager = Substitute.For<IFeatureManager>();
-            FeatureManager.IsEnabledAsync(FeatureFlags.MachineApi).Returns(Task.FromResult(true));
+            FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(true));
             FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(true));
 
             MachineBuildService = Substitute.For<IMachineBuildService>();
@@ -1794,7 +1794,7 @@ public class MachineApiServiceTests
                     new SFProjectSecret
                     {
                         Id = Project01,
-                        MachineData = new MachineData { TranslationEngineId = TranslationEngine01 },
+                        MachineData = new ServalData { TranslationEngineId = TranslationEngine01 },
                     },
                     new SFProjectSecret { Id = Project02 },
                 }

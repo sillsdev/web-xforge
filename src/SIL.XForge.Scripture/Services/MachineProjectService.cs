@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -8,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
+using Serval.Client;
 using SIL.Machine.Corpora;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.DataAccess;
@@ -17,52 +19,51 @@ using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
-using Project = SIL.Machine.WebApi.Models.Project;
+
+// Disable notice "The logging message template should not vary between calls to..."
+#pragma warning disable CA2254
 
 namespace SIL.XForge.Scripture.Services;
 
 /// <summary>
 /// Provides functionality to add, remove, and build Machine projects in both
-/// the In-Process Machine and Machine API implementations.
+/// the In-Process Machine and Serval implementations.
 /// </summary>
 public class MachineProjectService : IMachineProjectService
 {
+    private readonly IDataFilesClient _dataFilesClient;
     private readonly IEngineService _engineService;
     private readonly IFeatureManager _featureManager;
     private readonly ILogger<MachineProjectService> _logger;
-    private readonly IMachineBuildService _machineBuildService;
-    private readonly IMachineCorporaService _machineCorporaService;
-    private readonly IMachineTranslationService _machineTranslationService;
     private readonly IParatextService _paratextService;
     private readonly IRepository<SFProjectSecret> _projectSecrets;
     private readonly IRealtimeService _realtimeService;
     private readonly ITextCorpusFactory _textCorpusFactory;
+    private readonly ITranslationEnginesClient _translationEnginesClient;
     private readonly IRepository<UserSecret> _userSecrets;
 
     public MachineProjectService(
+        IDataFilesClient dataFilesClient,
         IEngineService engineService,
         IFeatureManager featureManager,
         ILogger<MachineProjectService> logger,
-        IMachineBuildService machineBuildService,
-        IMachineCorporaService machineCorporaService,
-        IMachineTranslationService machineTranslationService,
         IParatextService paratextService,
         IRepository<SFProjectSecret> projectSecrets,
         IRealtimeService realtimeService,
         ITextCorpusFactory textCorpusFactory,
+        ITranslationEnginesClient translationEnginesClient,
         IRepository<UserSecret> userSecrets
     )
     {
+        _dataFilesClient = dataFilesClient;
         _engineService = engineService;
         _featureManager = featureManager;
         _logger = logger;
-        _machineBuildService = machineBuildService;
-        _machineCorporaService = machineCorporaService;
-        _machineTranslationService = machineTranslationService;
         _paratextService = paratextService;
         _projectSecrets = projectSecrets;
         _realtimeService = realtimeService;
         _textCorpusFactory = textCorpusFactory;
+        _translationEnginesClient = translationEnginesClient;
         _userSecrets = userSecrets;
     }
 
@@ -76,7 +77,7 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // Add the project to the in process Machine instance
-        var machineProject = new Project
+        var machineProject = new Machine.WebApi.Models.Project
         {
             Id = sfProjectId,
             SourceLanguageTag = project.TranslateConfig.Source.WritingSystem.Tag,
@@ -90,7 +91,7 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // Ensure that the Machine API feature flag is enabled
-        if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             _logger.LogInformation("Machine API feature flag is not enabled");
             return;
@@ -105,7 +106,7 @@ public class MachineProjectService : IMachineProjectService
         )
         {
             // We do not need the returned project secret
-            _ = await CreateMachineApiProjectAsync(project, cancellationToken);
+            _ = await CreateServalProjectAsync(project, cancellationToken);
         }
     }
 
@@ -118,7 +119,7 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // Ensure that the Machine API feature flag is enabled
-        if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             _logger.LogInformation("Machine API feature flag is not enabled");
             return;
@@ -131,14 +132,14 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // Ensure we have a translation engine id
-        if (string.IsNullOrWhiteSpace(projectSecret.MachineData?.TranslationEngineId))
+        if (string.IsNullOrWhiteSpace(projectSecret.ServalData?.TranslationEngineId))
         {
             // We do not have one, likely because the translation is a back translation
             // We can only get the language tags for back translations from the ScrText,
             // which is not present until after the first sync (not from the Registry).
 
             // Load the project from the realtime service
-            using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
+            await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
             IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(sfProjectId);
             if (!projectDoc.IsLoaded)
             {
@@ -182,9 +183,9 @@ public class MachineProjectService : IMachineProjectService
                 }
             }
 
-            // Create the Machine API project
+            // Create the Serval project
             // The returned project secret will have the translation engine id
-            projectSecret = await CreateMachineApiProjectAsync(projectDoc.Data, cancellationToken);
+            projectSecret = await CreateServalProjectAsync(projectDoc.Data, cancellationToken);
         }
 
         // Sync the corpus
@@ -192,8 +193,8 @@ public class MachineProjectService : IMachineProjectService
         {
             // If the corpus was updated, start the build
             // We do not need the build ID for tracking as we use GetCurrentBuildAsync for that
-            _ = await _machineBuildService.StartBuildAsync(
-                projectSecret.MachineData!.TranslationEngineId,
+            _ = await _translationEnginesClient.StartBuildAsync(
+                projectSecret.ServalData!.TranslationEngineId,
                 cancellationToken
             );
         }
@@ -208,7 +209,7 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // Ensure that the Machine API feature flag is enabled
-        if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             _logger.LogInformation("Machine API feature flag is not enabled");
             return;
@@ -221,20 +222,24 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // Ensure we have a translation engine id
-        if (string.IsNullOrWhiteSpace(projectSecret.MachineData?.TranslationEngineId))
+        if (string.IsNullOrWhiteSpace(projectSecret.ServalData?.TranslationEngineId))
         {
             _logger.LogInformation($"No Translation Engine Id specified for project {sfProjectId}");
             return;
         }
 
         // Remove the corpus files
-        foreach ((string corpusId, _) in projectSecret.MachineData.Corpora)
+        foreach ((string corpusId, _) in projectSecret.ServalData.Corpora)
         {
-            foreach (string fileId in projectSecret.MachineData.Corpora[corpusId].Files.Select(f => f.FileId))
+            foreach (
+                string fileId in projectSecret.ServalData.Corpora[corpusId].SourceFiles
+                    .Concat(projectSecret.ServalData.Corpora[corpusId].TargetFiles)
+                    .Select(f => f.FileId)
+            )
             {
                 try
                 {
-                    await _machineCorporaService.DeleteCorpusFileAsync(corpusId, fileId, cancellationToken);
+                    await _dataFilesClient.DeleteAsync(fileId, cancellationToken);
                 }
                 catch (HttpRequestException e)
                 {
@@ -257,15 +262,11 @@ public class MachineProjectService : IMachineProjectService
                 }
             }
 
-            // Remove the corpus from the translation engine
-            string translationEngineId = projectSecret.MachineData.TranslationEngineId;
+            // Delete the corpus
+            string translationEngineId = projectSecret.ServalData.TranslationEngineId;
             try
             {
-                await _machineCorporaService.RemoveCorpusFromTranslationEngineAsync(
-                    translationEngineId,
-                    corpusId,
-                    cancellationToken
-                );
+                await _translationEnginesClient.DeleteCorpusAsync(translationEngineId, corpusId, cancellationToken);
             }
             catch (HttpRequestException e)
             {
@@ -286,38 +287,14 @@ public class MachineProjectService : IMachineProjectService
                     _logger.LogError(e, message);
                 }
             }
-
-            // Delete the corpus
-            try
-            {
-                await _machineCorporaService.DeleteCorpusAsync(corpusId, cancellationToken);
-            }
-            catch (HttpRequestException e)
-            {
-                // A 404 means that the corpus does not exist
-                string message;
-                if (e.StatusCode == HttpStatusCode.NotFound)
-                {
-                    message = $"Corpus {corpusId} for project {sfProjectId} was missing or already deleted.";
-                    _logger.LogInformation(message);
-                }
-                else
-                {
-                    message = $"Ignored exception while deleting corpus {corpusId} for project {sfProjectId}.";
-                    _logger.LogError(e, message);
-                }
-            }
         }
 
-        // Remove the project from the Machine API
-        await _machineTranslationService.DeleteTranslationEngineAsync(
-            projectSecret.MachineData.TranslationEngineId,
-            cancellationToken
-        );
+        // Remove the project from Serval
+        await _translationEnginesClient.DeleteAsync(projectSecret.ServalData.TranslationEngineId, cancellationToken);
     }
 
     /// <summary>
-    /// Syncs the project corpora from MongoDB to the Machine API via <see cref="SFTextCorpusFactory"/>
+    /// Syncs the project corpora from MongoDB to Serval via <see cref="SFTextCorpusFactory"/>
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
     /// <param name="sfProjectId">The project identifier.</param>
@@ -327,9 +304,9 @@ public class MachineProjectService : IMachineProjectService
     /// <exception cref="ArgumentException">One of the arguments was an invalid identifier.</exception>
     /// <remarks>
     /// Notes:
-    ///  - If the corpus was updated, then you should start the Build with <see cref="MachineBuildService"/>.
+    ///  - If the corpus was updated, then you should start the Build with <see cref="BuildProjectAsync"/>.
     ///  - If the Machine API feature flag is disabled, false is returned and an information message logged.
-    ///  - If a corpus is not configured on the Machine API, one is created and recorded in the project secret.
+    ///  - If a corpus is not configured on Serval, one is created and recorded in the project secret.
     /// </remarks>
     public async Task<bool> SyncProjectCorporaAsync(
         string curUserId,
@@ -341,7 +318,7 @@ public class MachineProjectService : IMachineProjectService
         bool corpusUpdated = false;
 
         // Ensure that the Machine API feature flag is enabled
-        if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             _logger.LogInformation("Machine API feature flag is not enabled");
             return false;
@@ -360,67 +337,123 @@ public class MachineProjectService : IMachineProjectService
             throw new ArgumentException("The project secret cannot be found.");
         }
 
+        // Ensure we have serval data
+        if (projectSecret.ServalData is null)
+        {
+            throw new ArgumentException("The Serval data cannot be found.");
+        }
+
         // Ensure we have a translation engine ID
-        if (string.IsNullOrWhiteSpace(projectSecret.MachineData?.TranslationEngineId))
+        if (string.IsNullOrWhiteSpace(projectSecret.ServalData?.TranslationEngineId))
         {
             throw new ArgumentException("The translation engine ID cannot be found.");
         }
 
-        // Ensure that there is a corpus
-        string corpusId;
-        if (string.IsNullOrWhiteSpace(projectSecret.MachineData.Corpora.Keys.FirstOrDefault()))
-        {
-            corpusId = await _machineCorporaService.CreateCorpusAsync(sfProjectId, paratext: false, cancellationToken);
-            await _machineCorporaService.AddCorpusToTranslationEngineAsync(
-                projectSecret.MachineData.TranslationEngineId,
-                corpusId,
-                pretranslate: false,
-                cancellationToken
-            );
+        // See if there is a corpus
+        string? corpusId = projectSecret.ServalData.Corpora.Keys.FirstOrDefault();
 
-            // Store the Corpus ID
-            projectSecret = await _projectSecrets.UpdateAsync(
-                sfProjectId,
-                u =>
-                    u.Set(
-                        p => p.MachineData.Corpora[corpusId],
-                        new MachineCorpus { Files = new List<MachineCorpusFile>() }
-                    )
-            );
-        }
-        else
+        // Get the files we have already synced
+        var oldSourceCorpusFiles = new List<ServalCorpusFile>();
+        if (!string.IsNullOrWhiteSpace(corpusId))
         {
-            corpusId = projectSecret.MachineData.Corpora.Keys.First();
+            oldSourceCorpusFiles = projectSecret.ServalData.Corpora[corpusId].SourceFiles;
         }
-
-        // Get the corpus files on the server
-        IList<MachineApiCorpusFile> serverCorpusFiles = await _machineCorporaService.GetCorpusFilesAsync(
-            corpusId,
-            cancellationToken
-        );
 
         // Reuse the SFTextCorpusFactory implementation
         ITextCorpus? textCorpus = await _textCorpusFactory.CreateAsync(new[] { sfProjectId }, TextCorpusType.Source);
-        corpusUpdated |= await SyncTextCorpusAsync(
-            corpusId,
-            project,
-            projectSecret,
+        var newSourceCorpusFiles = new List<ServalCorpusFile>();
+        corpusUpdated |= await UploadNewCorpusFilesAsync(
+            project.Id,
             textCorpus,
-            TextCorpusType.Source,
-            serverCorpusFiles,
+            oldSourceCorpusFiles,
+            newSourceCorpusFiles,
             cancellationToken
         );
 
+        // Get the files we have already synced
+        var oldTargetCorpusFiles = new List<ServalCorpusFile>();
+        if (!string.IsNullOrWhiteSpace(corpusId))
+        {
+            oldTargetCorpusFiles = projectSecret.ServalData.Corpora[corpusId].TargetFiles;
+        }
+
         textCorpus = await _textCorpusFactory.CreateAsync(new[] { sfProjectId }, TextCorpusType.Target);
-        corpusUpdated |= await SyncTextCorpusAsync(
-            corpusId,
-            project,
-            projectSecret,
+        List<ServalCorpusFile> newTargetCorpusFiles = new List<ServalCorpusFile>();
+        corpusUpdated |= await UploadNewCorpusFilesAsync(
+            project.Id,
             textCorpus,
-            TextCorpusType.Target,
-            serverCorpusFiles,
+            oldTargetCorpusFiles,
+            newTargetCorpusFiles,
             cancellationToken
         );
+
+        // If the corpus should be updated
+        if (corpusUpdated)
+        {
+            // Delete the old corpus and its files, if it exists
+            TranslationCorpus corpus;
+            if (!string.IsNullOrWhiteSpace(corpusId))
+            {
+                // Delete the corpus files that are not a part of the new corpus
+                corpus = await _translationEnginesClient.GetCorpusAsync(
+                    projectSecret.ServalData.TranslationEngineId,
+                    corpusId,
+                    cancellationToken
+                );
+                foreach (
+                    var fileId in corpus.SourceFiles
+                        .Concat(corpus.TargetFiles)
+                        .Where(
+                            f =>
+                                !newSourceCorpusFiles
+                                    .Concat(newTargetCorpusFiles)
+                                    .Select(c => c.FileId)
+                                    .Contains(f.File.Id)
+                        )
+                        .Select(f => f.File.Id)
+                )
+                {
+                    await _dataFilesClient.DeleteAsync(fileId, cancellationToken);
+                }
+
+                // Delete the old corpus
+                await _translationEnginesClient.DeleteCorpusAsync(
+                    projectSecret.ServalData.TranslationEngineId,
+                    corpusId,
+                    cancellationToken
+                );
+            }
+
+            // Create the new corpus
+            TranslationCorpusConfig corpusConfig = new TranslationCorpusConfig
+            {
+                Name = sfProjectId,
+                Pretranslate = false,
+                SourceFiles = newSourceCorpusFiles
+                    .Select(f => new TranslationCorpusFileConfig { FileId = f.FileId, TextId = f.TextId })
+                    .ToList(),
+                SourceLanguage = project.TranslateConfig.Source.WritingSystem.Tag,
+                TargetFiles = newTargetCorpusFiles
+                    .Select(f => new TranslationCorpusFileConfig { FileId = f.FileId, TextId = f.TextId })
+                    .ToList(),
+                TargetLanguage = project.WritingSystem.Tag,
+            };
+            corpus = await _translationEnginesClient.AddCorpusAsync(
+                projectSecret.ServalData.TranslationEngineId,
+                corpusConfig,
+                cancellationToken
+            );
+
+            // Update the project secret with the new corpus information
+            await _projectSecrets.UpdateAsync(
+                sfProjectId,
+                u =>
+                    u.Set(
+                        p => p.ServalData.Corpora[corpus.Id],
+                        new ServalCorpus { SourceFiles = newSourceCorpusFiles, TargetFiles = newTargetCorpusFiles }
+                    )
+            );
+        }
 
         return corpusUpdated;
     }
@@ -429,7 +462,7 @@ public class MachineProjectService : IMachineProjectService
     /// Gets the segments from the text with Unix/Linux line endings.
     /// </summary>
     /// <param name="text">The IText</param>
-    /// <returns>The text file data to be uploaded to the Machine API.</returns>
+    /// <returns>The text file data to be uploaded to Serval.</returns>
     private static string GetTextFileData(IText text)
     {
         var sb = new StringBuilder();
@@ -472,7 +505,7 @@ public class MachineProjectService : IMachineProjectService
             // Strip the last comma, or the tab if there are no flags
             sb.Length--;
 
-            // Append the Unix EOL to ensure consistency as this text data is uploaded to the Machine API
+            // Append the Unix EOL to ensure consistency as this text data is uploaded to Serval
             sb.Append('\n');
         }
 
@@ -480,74 +513,63 @@ public class MachineProjectService : IMachineProjectService
     }
 
     /// <summary>
-    /// Creates a project in the Machine API.
+    /// Creates a project in Serval.
     /// </summary>
     /// <param name="sfProject">The Scripture Forge project</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The asynchronous task.</returns>
     /// <exception cref="ArgumentException">The translation engine could not be created.</exception>
-    private async Task<SFProjectSecret> CreateMachineApiProjectAsync(
+    private async Task<SFProjectSecret> CreateServalProjectAsync(
         SFProject sfProject,
         CancellationToken cancellationToken
     )
     {
-        // Add the project to the Machine API
-        string translationEngineId = await _machineTranslationService.CreateTranslationEngineAsync(
-            name: sfProject.Id,
-            sourceLanguageTag: sfProject.TranslateConfig.Source.WritingSystem.Tag,
-            targetLanguageTag: sfProject.WritingSystem.Tag,
-            smtTransfer: true,
+        TranslationEngineConfig engineConfig = new TranslationEngineConfig
+        {
+            Name = sfProject.Id,
+            SourceLanguage = sfProject.TranslateConfig.Source.WritingSystem.Tag,
+            TargetLanguage = sfProject.WritingSystem.Tag,
+            Type = "SmtTransfer",
+        };
+        // Add the project to Serval
+        TranslationEngine translationEngine = await _translationEnginesClient.CreateAsync(
+            engineConfig,
             cancellationToken
         );
-        if (string.IsNullOrWhiteSpace(translationEngineId))
+        if (string.IsNullOrWhiteSpace(translationEngine.Id))
         {
-            throw new ArgumentException("Translation Engine ID from the Machine API is missing.");
+            throw new ArgumentException("Translation Engine ID from Serval is missing.");
         }
 
         // Store the Translation Engine ID
         return await _projectSecrets.UpdateAsync(
             sfProject.Id,
-            u => u.Set(p => p.MachineData, new MachineData { TranslationEngineId = translationEngineId })
+            u => u.Set(p => p.ServalData, new ServalData { TranslationEngineId = translationEngine.Id })
         );
     }
 
     /// <summary>
-    /// Syncs an <see cref="ITextCorpus"/> with a corpus on the Machine APU, creating and updating corpus
-    /// files on the corpus as necessary, and recording the details in the <see cref="projectSecret"/>.
+    /// Syncs an <see cref="ITextCorpus"/> to Serval, creating files on Serval as necessary.
     /// </summary>
-    /// <param name="corpusId">The corpus identifier.</param>
-    /// <param name="project">The project.</param>
-    /// <param name="projectSecret">The project secret.</param>
+    /// <param name="projectId">The project identifier.</param>
     /// <param name="textCorpus">The text corpus created by <see cref="SFTextCorpusFactory"/>.</param>
-    /// <param name="type">The type can be either Source or Target.</param>
-    /// <param name="serverCorpusFiles">The corpus files already on the server, from the Machine API.</param>
+    /// <param name="oldCorpusFiles">The existing corpus files (optional).</param>
+    /// <param name="newCorpusFiles">The updated list of corpus files.</param>
     /// <param name="cancellationToken"></param>
     /// <returns><c>true</c> if the corpus was created or updated; otherwise, <c>false</c>.</returns>
     /// <remarks>
-    /// The project secret is updated with the corpus file details added or updated on the Machine API.
+    /// The project secret is updated with the corpus file details added to or removed from Serval.
     /// </remarks>
-    private async Task<bool> SyncTextCorpusAsync(
-        string corpusId,
-        SFProject project,
-        SFProjectSecret projectSecret,
+    private async Task<bool> UploadNewCorpusFilesAsync(
+        string projectId,
         ITextCorpus? textCorpus,
-        TextCorpusType type,
-        IList<MachineApiCorpusFile> serverCorpusFiles,
+        ICollection<ServalCorpusFile>? oldCorpusFiles,
+        IList<ServalCorpusFile> newCorpusFiles,
         CancellationToken cancellationToken
     )
     {
         // Used to return whether or not the corpus files were created or updated
         bool corpusUpdated = false;
-
-        // Get the language tag
-        string languageTag =
-            type == TextCorpusType.Target
-                ? project.WritingSystem.Tag
-                : project.TranslateConfig.Source.WritingSystem.Tag;
-
-        // Get the files we have already synced
-        List<MachineCorpusFile> previousCorpusFiles =
-            projectSecret.MachineData?.Corpora[corpusId].Files ?? new List<MachineCorpusFile>();
 
         // Sync each text
         foreach (IText text in textCorpus?.Texts ?? Array.Empty<IText>())
@@ -556,90 +578,41 @@ public class MachineProjectService : IMachineProjectService
             if (!string.IsNullOrWhiteSpace(textFileData))
             {
                 // Remove the project id from the start of the text id (if present)
-                string textId = text.Id.StartsWith($"{project.Id}_") ? text.Id[(project.Id.Length + 1)..] : text.Id;
-
-                // If the writing system is the same, we need to differentiate the texts.
-                // Note that if the writing system is different, the same text id is required for source and target
-                // texts to allow them to be aligned in the ParallelTextCorpus
-                if (project.WritingSystem.Tag == project.TranslateConfig.Source.WritingSystem.Tag)
-                {
-                    textId = $"{text.Id}_{type.ToString().ToLowerInvariant()}";
-                }
+                string textId = text.Id.StartsWith($"{projectId}_") ? text.Id[(projectId.Length + 1)..] : text.Id;
 
                 // See if the corpus exists, and delete it if it does
                 bool uploadText = false;
                 string checksum = StringUtils.ComputeMd5Hash(textFileData);
-                MachineCorpusFile? previousCorpusFile = previousCorpusFiles.FirstOrDefault(
-                    c => c.TextId == textId && c.LanguageTag == languageTag
-                );
-                if (previousCorpusFile is null)
+                ServalCorpusFile? previousCorpusFile = oldCorpusFiles?.FirstOrDefault(c => c.TextId == textId);
+                if (previousCorpusFile is null || previousCorpusFile.FileChecksum != checksum)
                 {
                     uploadText = true;
                 }
-                else if (previousCorpusFile.FileChecksum != checksum)
-                {
-                    // Only delete the file if it is present in the Machine API
-                    if (serverCorpusFiles.Any(c => c.Id == previousCorpusFile.FileId))
-                    {
-                        await _machineCorporaService.DeleteCorpusFileAsync(
-                            corpusId,
-                            previousCorpusFile.FileId,
-                            cancellationToken
-                        );
-                    }
 
-                    uploadText = true;
-                }
-
-                // Upload the file if it is not there, or has changed
+                // Upload the file if it is not there or has changed
                 if (uploadText)
                 {
-                    string fileId = await _machineCorporaService.UploadCorpusTextAsync(
-                        corpusId,
-                        languageTag,
+                    DataFile dataFile = await _dataFilesClient.CreateAsync(
+                        new FileParameter(new MemoryStream(Encoding.UTF8.GetBytes(textFileData))),
+                        FileFormat.Text,
                         textId,
-                        textFileData,
                         cancellationToken
                     );
 
-                    // Record the fileId and checksum, matching the text id
-                    // We coalesce to -1, as FindIndex returns -1 if not found
-                    int index =
-                        projectSecret.MachineData?.Corpora[corpusId].Files.FindIndex(
-                            f => f.TextId == textId && f.LanguageTag == languageTag
-                        ) ?? -1;
-
-                    if (previousCorpusFile is null || index == -1)
-                    {
-                        // Add the file information to the project secret
-                        projectSecret = await _projectSecrets.UpdateAsync(
-                            projectSecret,
-                            u =>
-                                u.Add(
-                                    p => p.MachineData.Corpora[corpusId].Files,
-                                    new MachineCorpusFile
-                                    {
-                                        FileChecksum = checksum,
-                                        FileId = fileId,
-                                        LanguageTag = languageTag,
-                                        TextId = textId,
-                                    }
-                                )
-                        );
-                    }
-                    else
-                    {
-                        // Update the file information in the project secret
-                        projectSecret = await _projectSecrets.UpdateAsync(
-                            projectSecret,
-                            u =>
-                                u.Set(p => p.MachineData.Corpora[corpusId].Files[index].FileChecksum, checksum)
-                                    .Set(p => p.MachineData.Corpora[corpusId].Files[index].FileId, fileId)
-                                    .Set(p => p.MachineData.Corpora[corpusId].Files[index].LanguageTag, languageTag)
-                        );
-                    }
+                    newCorpusFiles.Add(
+                        new ServalCorpusFile
+                        {
+                            FileChecksum = checksum,
+                            FileId = dataFile.Id,
+                            TextId = textId,
+                        }
+                    );
 
                     corpusUpdated = true;
+                }
+                else
+                {
+                    newCorpusFiles.Add(previousCorpusFile);
                 }
             }
         }
