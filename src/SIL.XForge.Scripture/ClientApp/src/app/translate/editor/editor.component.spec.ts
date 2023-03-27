@@ -2594,7 +2594,7 @@ describe('EditorComponent', () => {
       expect(env.component.canEdit).toBeFalse();
       expect(env.component.isUsfmValid).toBeFalse();
       expect(env.component.isInsertNoteFabEnabled).toBeTrue();
-      env.insertNoteButton.nativeElement.click();
+      env.insertNoteFab.nativeElement.click();
       env.wait();
       verify(mockedNoticeService.show(anything())).once();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).never();
@@ -2612,14 +2612,14 @@ describe('EditorComponent', () => {
       });
       when(mockedSFProjectService.getText(anything())).thenReturn(promise);
       env.wait();
-      env.insertNoteButton.nativeElement.click();
+      env.insertNoteFab.nativeElement.click();
       env.wait();
       verify(mockedNoticeService.show(anything())).once();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).never();
       subject.next();
       subject.complete();
       env.wait();
-      env.insertNoteButton.nativeElement.click();
+      env.insertNoteFab.nativeElement.click();
       env.wait();
       verify(mockedNoticeService.show(anything())).once();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
