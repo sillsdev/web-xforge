@@ -823,7 +823,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.target == null || this.bookNum == null || !this.showAddCommentUI) {
       return;
     }
-    if (!this.isUsfmValid || !this.dataInSync || this.target.areOpsCorrupted || !this.target.contentShowing) {
+    if (!this.target.contentShowing) {
       this.noticeService.show(translate('editor.navigate_to_a_valid_text'));
       return;
     }

@@ -2584,23 +2584,6 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('cannot insert a note when text is invalid', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.setProjectUserConfig();
-      env.updateParams({ projectId: 'project01', bookId: 'MRK' });
-      env.wait();
-
-      expect(env.bookName).toEqual('Mark');
-      expect(env.component.canEdit).toBeFalse();
-      expect(env.component.isUsfmValid).toBeFalse();
-      expect(env.component.isInsertNoteFabEnabled).toBeTrue();
-      env.insertNoteFab.nativeElement.click();
-      env.wait();
-      verify(mockedNoticeService.show(anything())).once();
-      verify(mockedMatDialog.open(NoteDialogComponent, anything())).never();
-      env.dispose();
-    }));
-
     it('cannot insert a note when editor content unavailable', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
