@@ -1649,10 +1649,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (thread.data == null || this.projectUserConfigDoc?.data == null) return false;
     // look for any note that has not been read and was authored by another user
     const noteRefsRead: string[] = this.projectUserConfigDoc.data.noteRefsRead;
-    const unreadNoteIndex: number = thread.data.notes.findIndex(
+    return thread.data.notes.some(
       n => n.ownerRef !== this.userService.currentUserId && !noteRefsRead.includes(n.dataId)
     );
-    return unreadNoteIndex > -1;
   }
 
   private syncScroll(): void {

@@ -3573,9 +3573,10 @@ class TestEnvironment {
     const note = this.targetTextEditor.querySelector(`usx-segment display-note[data-thread-id=${threadId}]`);
     expect(note).withContext('note thread highlight').not.toBeNull();
     const thread: HTMLElement | null = this.targetTextEditor.querySelector(
-      `usx-segment display-note[data-thread-id=${threadId}].note-thread-highlight`
+      `usx-segment display-note[data-thread-id=${threadId}]`
     );
-    return thread != null;
+    expect(thread).withContext('note thread highlight').not.toBeNull();
+    return thread!.classList.contains('note-thread-highlight');
   }
 
   openNoteDialogAndEdit(segmentRef: string, thread: NoteThread): void {
