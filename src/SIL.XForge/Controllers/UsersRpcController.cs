@@ -165,7 +165,4 @@ public class UsersRpcController : RpcControllerBase
             throw;
         }
     }
-
-    [Obsolete("Only here for clients still running a front end that still calls it")]
-    public IRpcMethodResult CheckUserNeedsMigrating(string userId) => Ok(false);
 }
