@@ -890,7 +890,7 @@ describe('EditorComponent', () => {
       expect(env.component.sourceLabel).toEqual('SRC');
       expect(env.component.targetLabel).toEqual('TRG');
       expect(env.component.target!.segmentRef).toEqual('');
-      var selection = env.targetEditor.getSelection();
+      let selection = env.targetEditor.getSelection();
       expect(selection).toBeNull();
       expect(env.component.canEdit).toBe(true);
       expect(env.isSourceAreaHidden).toBe(true);
@@ -2555,6 +2555,37 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('shows insert new note from mobile viewport', fakeAsync(() => {
+      const content: string = 'content in the thread';
+      const userId: string = 'user05';
+      const segmentRef: string = 'verse_1_2';
+      const verseRef: VerseRef = new VerseRef('MAT', 1, '2');
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({
+        selectedBookNum: verseRef.bookNum,
+        selectedChapterNum: verseRef.chapterNum,
+        selectedSegment: 'verse_1_3'
+      });
+      env.setCurrentUser(userId);
+      env.wait();
+
+      // Allow check for mobile viewports to return TRUE
+      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+      env.clickSegmentRef(segmentRef);
+      env.insertNoteFabMobile!.click();
+      env.wait();
+      env.component.mobileNoteControl.setValue(content);
+      env.saveMobileNote!.click();
+      env.wait();
+      const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
+      expect(noteThread.verseRef).toEqual(fromVerseRef(verseRef));
+      expect(noteThread.publishedToSF).toBe(true);
+      expect(noteThread.notes[0].ownerRef).toEqual(userId);
+      expect(noteThread.notes[0].content).toEqual(content);
+
+      env.dispose();
+    }));
+
     it('can open insert note dialog on default verse', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
@@ -3323,6 +3354,10 @@ class TestEnvironment {
     return document.querySelector('.fab-bottom-sheet form textarea');
   }
 
+  get saveMobileNote(): HTMLButtonElement | null {
+    return document.querySelector('.fab-bottom-sheet .save-button');
+  }
+
   get sharingButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('app-share-button'));
   }
@@ -3386,6 +3421,12 @@ class TestEnvironment {
   set onlineStatus(value: boolean) {
     when(mockedPwaService.isOnline).thenReturn(value);
     when(mockedPwaService.onlineStatus$).thenReturn(of(value));
+  }
+
+  clickSegmentRef(segmentRef: string): void {
+    const range = this.component.target!.getSegmentRange(segmentRef);
+    this.targetEditor.setSelection(range!.index, 0, 'user');
+    this.getSegmentElement(segmentRef)!.click();
   }
 
   deleteText(textId: string): void {
@@ -3558,8 +3599,7 @@ class TestEnvironment {
 
   setSelectionAndInsertNote(segmentRef: string | undefined): void {
     if (segmentRef != null) {
-      this.getSegmentElement(segmentRef)!.click();
-      this.component.target!.segmentRef = segmentRef;
+      this.clickSegmentRef(segmentRef);
     }
     this.insertNoteFab.nativeElement.click();
     tick();
