@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -241,11 +240,11 @@ public class MachineProjectService : IMachineProjectService
                 {
                     await _dataFilesClient.DeleteAsync(fileId, cancellationToken);
                 }
-                catch (HttpRequestException e)
+                catch (ServalApiException e)
                 {
                     // A 404 means that the file does not exist
                     string message;
-                    if (e.StatusCode == HttpStatusCode.NotFound)
+                    if (e.StatusCode == (int)HttpStatusCode.NotFound)
                     {
                         message =
                             $"Corpora file {fileId} in corpus {corpusId} for project {sfProjectId}"
@@ -268,11 +267,11 @@ public class MachineProjectService : IMachineProjectService
             {
                 await _translationEnginesClient.DeleteCorpusAsync(translationEngineId, corpusId, cancellationToken);
             }
-            catch (HttpRequestException e)
+            catch (ServalApiException e)
             {
                 // A 404 means that the translation engine does not exist
                 string message;
-                if (e.StatusCode == HttpStatusCode.NotFound)
+                if (e.StatusCode == (int)HttpStatusCode.NotFound)
                 {
                     message =
                         $"Translation Engine {translationEngineId} for project {sfProjectId}"
@@ -448,10 +447,16 @@ public class MachineProjectService : IMachineProjectService
             await _projectSecrets.UpdateAsync(
                 sfProjectId,
                 u =>
+                {
+                    if (!string.IsNullOrWhiteSpace(corpusId))
+                    {
+                        u.Unset(p => p.ServalData.Corpora[corpusId]);
+                    }
                     u.Set(
                         p => p.ServalData.Corpora[corpus.Id],
                         new ServalCorpus { SourceFiles = newSourceCorpusFiles, TargetFiles = newTargetCorpusFiles }
-                    )
+                    );
+                }
             );
         }
 

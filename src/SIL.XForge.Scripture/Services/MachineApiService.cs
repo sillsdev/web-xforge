@@ -18,6 +18,15 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using MachinePhrase = SIL.Machine.Translation.Phrase;
+using MachineTranslationResult = SIL.Machine.Translation.TranslationResult;
+using MachineWordGraph = SIL.Machine.Translation.WordGraph;
+using MachineWordGraphArc = SIL.Machine.Translation.WordGraphArc;
+// Until the In-Process Machine distinguish its objects from Serval
+using Phrase = Serval.Client.Phrase;
+using TranslationResult = Serval.Client.TranslationResult;
+using WordGraph = Serval.Client.WordGraph;
+using WordGraphArc = Serval.Client.WordGraphArc;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -224,14 +233,14 @@ public class MachineApiService : IMachineApiService
         return UpdateDto(engineDto, sfProjectId);
     }
 
-    public async Task<Serval.Client.WordGraph> GetWordGraphAsync(
+    public async Task<WordGraph> GetWordGraphAsync(
         string curUserId,
         string sfProjectId,
         string[] segment,
         CancellationToken cancellationToken
     )
     {
-        Serval.Client.WordGraph? wordGraphDto = null;
+        WordGraph? wordGraphDto = null;
 
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
@@ -274,7 +283,7 @@ public class MachineApiService : IMachineApiService
         if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
         {
             Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
-            Machine.Translation.WordGraph wordGraph = await _engineService.GetWordGraphAsync(engine.Id, segment);
+            MachineWordGraph wordGraph = await _engineService.GetWordGraphAsync(engine.Id, segment);
             wordGraphDto = CreateDto(wordGraph);
         }
 
@@ -397,21 +406,25 @@ public class MachineApiService : IMachineApiService
             Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
             await _engineService.TrainSegmentAsync(
                 engine.Id,
-                new[] { segmentPair.SourceSegment },
-                new[] { segmentPair.TargetSegment },
+                string.IsNullOrWhiteSpace(segmentPair.SourceSegment)
+                    ? Array.Empty<string>()
+                    : segmentPair.SourceSegment.Split(' '),
+                string.IsNullOrWhiteSpace(segmentPair.TargetSegment)
+                    ? Array.Empty<string>()
+                    : segmentPair.TargetSegment.Split(' '),
                 segmentPair.SentenceStart
             );
         }
     }
 
-    public async Task<Serval.Client.TranslationResult> TranslateAsync(
+    public async Task<TranslationResult> TranslateAsync(
         string curUserId,
         string sfProjectId,
         string[] segment,
         CancellationToken cancellationToken
     )
     {
-        Serval.Client.TranslationResult? translationResultDto = null;
+        TranslationResult? translationResultDto = null;
 
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
@@ -454,10 +467,7 @@ public class MachineApiService : IMachineApiService
         if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
         {
             Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
-            Machine.Translation.TranslationResult translationResult = await _engineService.TranslateAsync(
-                engine.Id,
-                segment
-            );
+            MachineTranslationResult translationResult = await _engineService.TranslateAsync(engine.Id, segment);
             translationResultDto = CreateDto(translationResult);
         }
 
@@ -470,7 +480,7 @@ public class MachineApiService : IMachineApiService
         return translationResultDto;
     }
 
-    public async Task<Serval.Client.TranslationResult[]> TranslateNAsync(
+    public async Task<TranslationResult[]> TranslateNAsync(
         string curUserId,
         string sfProjectId,
         int n,
@@ -478,8 +488,7 @@ public class MachineApiService : IMachineApiService
         CancellationToken cancellationToken
     )
     {
-        IEnumerable<Serval.Client.TranslationResult> translationResultsDto =
-            Array.Empty<Serval.Client.TranslationResult>();
+        IEnumerable<TranslationResult> translationResultsDto = Array.Empty<TranslationResult>();
 
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
@@ -523,7 +532,7 @@ public class MachineApiService : IMachineApiService
         if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
         {
             Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
-            IEnumerable<Machine.Translation.TranslationResult> translationResults = await _engineService.TranslateAsync(
+            IEnumerable<MachineTranslationResult> translationResults = await _engineService.TranslateAsync(
                 engine.Id,
                 n,
                 segment
@@ -538,7 +547,7 @@ public class MachineApiService : IMachineApiService
         new TranslationBuild
         {
             Id = build.Id,
-            DateFinished = build.DateFinished,
+            DateFinished = new DateTimeOffset(build.DateFinished, TimeSpan.Zero),
             Revision = build.Revision,
             PercentCompleted = build.PercentCompleted,
             Message = build.Message,
@@ -548,13 +557,16 @@ public class MachineApiService : IMachineApiService
     private static TranslationEngine CreateDto(Engine engine) =>
         new TranslationEngine
         {
+            Id = engine.Id,
             Confidence = engine.Confidence,
+            CorpusSize = engine.TrainedSegmentCount,
+            ModelRevision = engine.Revision,
             SourceLanguage = engine.SourceLanguageTag,
             TargetLanguage = engine.TargetLanguageTag,
         };
 
-    private static Serval.Client.Phrase CreateDto(Machine.Translation.Phrase phrase) =>
-        new Serval.Client.Phrase
+    private static Phrase CreateDto(MachinePhrase phrase) =>
+        new Phrase
         {
             SourceSegmentStart = phrase.SourceSegmentRange.Start,
             SourceSegmentEnd = phrase.SourceSegmentRange.End,
@@ -562,49 +574,47 @@ public class MachineApiService : IMachineApiService
             Confidence = phrase.Confidence,
         };
 
-    private static Serval.Client.TranslationResult CreateDto(Machine.Translation.TranslationResult translationResult) =>
-        new Serval.Client.TranslationResult
+    private static TranslationResult CreateDto(MachineTranslationResult translationResult) =>
+        new TranslationResult
         {
             Tokens = translationResult.TargetSegment.ToArray(),
             Confidences = translationResult.WordConfidences.Select(c => (float)c).ToArray(),
-            Sources = translationResult.WordSources.Select(CreateDto).ToArray(),
+            Sources = translationResult.WordSources.Select(CreateDto).ToList(),
             Alignment = CreateDto(translationResult.Alignment),
             Phrases = translationResult.Phrases.Select(CreateDto).ToArray(),
         };
 
-    private static Serval.Client.TranslationSources CreateDto(Machine.Translation.TranslationSources translationSources)
+    private static IList<TranslationSource> CreateDto(TranslationSources translationSources)
     {
-        // The two enums have different values, so we must map manually
-        // TODO: When Serval.Client has updated, change to None
-        Serval.Client.TranslationSources newTranslationSources = 0;
-        if (
-            (translationSources & Machine.Translation.TranslationSources.Smt)
-            == Machine.Translation.TranslationSources.Smt
-        )
-            newTranslationSources |= Serval.Client.TranslationSources.Smt;
-        if (
-            (translationSources & Machine.Translation.TranslationSources.Transfer)
-            == Machine.Translation.TranslationSources.Transfer
-        )
-            newTranslationSources |= Serval.Client.TranslationSources.Transfer;
-        if (
-            (translationSources & Machine.Translation.TranslationSources.Prefix)
-            == Machine.Translation.TranslationSources.Prefix
-        )
-            newTranslationSources |= Serval.Client.TranslationSources.Prefix;
-        return newTranslationSources;
+        var translationSourceList = new List<TranslationSource>();
+        if ((translationSources & TranslationSources.Smt) == TranslationSources.Smt)
+        {
+            translationSourceList.Add(TranslationSource.Primary);
+        }
+
+        if ((translationSources & TranslationSources.Prefix) == TranslationSources.Prefix)
+        {
+            translationSourceList.Add(TranslationSource.Human);
+        }
+
+        if ((translationSources & TranslationSources.Transfer) == TranslationSources.Transfer)
+        {
+            translationSourceList.Add(TranslationSource.Secondary);
+        }
+
+        return translationSourceList;
     }
 
-    private static Serval.Client.WordGraph CreateDto(Machine.Translation.WordGraph wordGraph) =>
-        new Serval.Client.WordGraph
+    private static WordGraph CreateDto(MachineWordGraph wordGraph) =>
+        new WordGraph
         {
             InitialStateScore = (float)wordGraph.InitialStateScore,
             FinalStates = wordGraph.FinalStates.ToArray(),
             Arcs = wordGraph.Arcs.Select(CreateDto).ToArray(),
         };
 
-    private static Serval.Client.WordGraphArc CreateDto(Machine.Translation.WordGraphArc arc) =>
-        new Serval.Client.WordGraphArc
+    private static WordGraphArc CreateDto(MachineWordGraphArc arc) =>
+        new WordGraphArc
         {
             PrevState = arc.PrevState,
             NextState = arc.NextState,

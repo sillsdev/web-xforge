@@ -7,7 +7,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Polly.CircuitBreaker;
-using SIL.Machine.WebApi;
+using Serval.Client;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 
@@ -27,10 +27,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetBuildAsync(User01, Project01, Build01, null, CancellationToken.None)
-            .Throws(new DataNotFoundException("Entity Deleted"));
+            .Throws(ServalApiExceptions.NotFound);
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetBuildAsync(
             Project01,
             Build01,
             minRevision: null,
@@ -50,7 +50,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetBuildAsync(
             Project01,
             Build01,
             minRevision: null,
@@ -69,17 +69,18 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetBuildAsync(User01, Project01, Build01, null, CancellationToken.None)
-            .Returns(Task.FromResult<BuildDto>(null));
+            .Throws(ServalApiExceptions.TimeOut);
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetBuildAsync(
             Project01,
             Build01,
             minRevision: null,
             CancellationToken.None
         );
 
-        Assert.IsInstanceOf<NoContentResult>(actual.Result);
+        Assert.IsInstanceOf<ObjectResult>(actual.Result);
+        Assert.AreEqual(408, (actual.Result as ObjectResult)?.StatusCode);
     }
 
     [Test]
@@ -89,10 +90,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetBuildAsync(User01, Project01, Build01, null, CancellationToken.None)
-            .Throws(new ForbiddenException());
+            .Throws(ServalApiExceptions.Forbidden);
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetBuildAsync(
             Project01,
             Build01,
             minRevision: null,
@@ -112,7 +113,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<TranslationBuild> actual = await env.Controller.GetBuildAsync(
             Project01,
             Build01,
             minRevision: null,
@@ -129,10 +130,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetBuildAsync(User01, Project01, Build01, null, CancellationToken.None)
-            .Returns(Task.FromResult(new BuildDto()));
+            .Returns(Task.FromResult(new TranslationBuild()));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetBuildAsync(
             Project01,
             Build01,
             minRevision: null,
@@ -149,17 +150,17 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
-            .Throws(new DataNotFoundException("Entity Deleted"));
+            .Throws(ServalApiExceptions.NoContent);
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetBuildAsync(
             Project01,
             buildId: null,
             minRevision: null,
             CancellationToken.None
         );
 
-        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+        Assert.IsInstanceOf<NoContentResult>(actual.Result);
     }
 
     [Test]
@@ -172,7 +173,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetBuildAsync(
             Project01,
             buildId: null,
             minRevision: null,
@@ -191,17 +192,17 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
-            .Returns(Task.FromResult<BuildDto>(null));
+            .Throws(ServalApiExceptions.NotFound);
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetBuildAsync(
             Project01,
             buildId: null,
             minRevision: null,
             CancellationToken.None
         );
 
-        Assert.IsInstanceOf<NoContentResult>(actual.Result);
+        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
     }
 
     [Test]
@@ -211,10 +212,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
-            .Throws(new ForbiddenException());
+            .Throws(ServalApiExceptions.Forbidden);
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetBuildAsync(
             Project01,
             buildId: null,
             minRevision: null,
@@ -234,7 +235,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetBuildAsync(
             Project01,
             buildId: null,
             minRevision: null,
@@ -251,10 +252,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetCurrentBuildAsync(User01, Project01, null, CancellationToken.None)
-            .Returns(Task.FromResult(new BuildDto()));
+            .Returns(Task.FromResult(new TranslationBuild()));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<TranslationBuild?> actual = await env.Controller.GetBuildAsync(
             Project01,
             buildId: null,
             minRevision: null,
@@ -274,7 +275,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<EngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
+        ActionResult<TranslationEngine> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
@@ -288,10 +289,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetEngineAsync(User01, Project01, CancellationToken.None)
-            .Throws(new ForbiddenException());
+            .Throws(ServalApiExceptions.Forbidden);
 
         // SUT
-        ActionResult<EngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
+        ActionResult<TranslationEngine> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
 
         Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
@@ -306,7 +307,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<EngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
+        ActionResult<TranslationEngine> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
 
         Assert.IsInstanceOf<NotFoundResult>(actual.Result);
     }
@@ -318,10 +319,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetEngineAsync(User01, Project01, CancellationToken.None)
-            .Returns(Task.FromResult(new EngineDto()));
+            .Returns(Task.FromResult(new TranslationEngine()));
 
         // SUT
-        ActionResult<EngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
+        ActionResult<TranslationEngine> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
     }
@@ -336,7 +337,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<WordGraphDto> actual = await env.Controller.GetWordGraphAsync(
+        ActionResult<WordGraph> actual = await env.Controller.GetWordGraphAsync(
             Project01,
             Array.Empty<string>(),
             CancellationToken.None
@@ -354,10 +355,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
-            .Throws(new ForbiddenException());
+            .Throws(ServalApiExceptions.Forbidden);
 
         // SUT
-        ActionResult<WordGraphDto> actual = await env.Controller.GetWordGraphAsync(
+        ActionResult<WordGraph> actual = await env.Controller.GetWordGraphAsync(
             Project01,
             Array.Empty<string>(),
             CancellationToken.None
@@ -376,7 +377,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<WordGraphDto> actual = await env.Controller.GetWordGraphAsync(
+        ActionResult<WordGraph> actual = await env.Controller.GetWordGraphAsync(
             Project01,
             Array.Empty<string>(),
             CancellationToken.None
@@ -392,10 +393,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
-            .Returns(Task.FromResult(new WordGraphDto()));
+            .Returns(Task.FromResult(new WordGraph()));
 
         // SUT
-        ActionResult<WordGraphDto> actual = await env.Controller.GetWordGraphAsync(
+        ActionResult<WordGraph> actual = await env.Controller.GetWordGraphAsync(
             Project01,
             Array.Empty<string>(),
             CancellationToken.None
@@ -414,7 +415,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<BuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+        ActionResult<TranslationBuild> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
@@ -428,10 +429,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .StartBuildAsync(User01, Project01, CancellationToken.None)
-            .Throws(new ForbiddenException());
+            .Throws(ServalApiExceptions.Forbidden);
 
         // SUT
-        ActionResult<BuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+        ActionResult<TranslationBuild> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
 
         Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
@@ -446,7 +447,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<BuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+        ActionResult<TranslationBuild> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
 
         Assert.IsInstanceOf<NotFoundResult>(actual.Result);
     }
@@ -458,10 +459,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .StartBuildAsync(User01, Project01, CancellationToken.None)
-            .Returns(Task.FromResult(new BuildDto()));
+            .Returns(Task.FromResult(new TranslationBuild()));
 
         // SUT
-        ActionResult<BuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+        ActionResult<TranslationBuild> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
     }
@@ -471,7 +472,7 @@ public class MachineApiControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var segmentPair = new SegmentPairDto();
+        var segmentPair = new SegmentPair();
         env.MachineApiService
             .TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None)
             .Throws(new BrokenCircuitException());
@@ -489,10 +490,10 @@ public class MachineApiControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var segmentPair = new SegmentPairDto();
+        var segmentPair = new SegmentPair();
         env.MachineApiService
             .TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None)
-            .Throws(new ForbiddenException());
+            .Throws(ServalApiExceptions.Forbidden);
 
         // SUT
         ActionResult actual = await env.Controller.TrainSegmentAsync(Project01, segmentPair, CancellationToken.None);
@@ -505,7 +506,7 @@ public class MachineApiControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var segmentPair = new SegmentPairDto();
+        var segmentPair = new SegmentPair();
         env.MachineApiService
             .TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None)
             .Throws(new DataNotFoundException(string.Empty));
@@ -521,7 +522,7 @@ public class MachineApiControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var segmentPair = new SegmentPairDto();
+        var segmentPair = new SegmentPair();
 
         // SUT
         ActionResult actual = await env.Controller.TrainSegmentAsync(Project01, segmentPair, CancellationToken.None);
@@ -542,7 +543,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<TranslationResultDto> actual = await env.Controller.TranslateAsync(
+        ActionResult<TranslationResult> actual = await env.Controller.TranslateAsync(
             Project01,
             Array.Empty<string>(),
             CancellationToken.None
@@ -560,10 +561,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
-            .Throws(new ForbiddenException());
+            .Throws(ServalApiExceptions.Forbidden);
 
         // SUT
-        ActionResult<TranslationResultDto> actual = await env.Controller.TranslateAsync(
+        ActionResult<TranslationResult> actual = await env.Controller.TranslateAsync(
             Project01,
             Array.Empty<string>(),
             CancellationToken.None
@@ -582,7 +583,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<TranslationResultDto> actual = await env.Controller.TranslateAsync(
+        ActionResult<TranslationResult> actual = await env.Controller.TranslateAsync(
             Project01,
             Array.Empty<string>(),
             CancellationToken.None
@@ -598,10 +599,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationResultDto()));
+            .Returns(Task.FromResult(new TranslationResult()));
 
         // SUT
-        ActionResult<TranslationResultDto> actual = await env.Controller.TranslateAsync(
+        ActionResult<TranslationResult> actual = await env.Controller.TranslateAsync(
             Project01,
             Array.Empty<string>(),
             CancellationToken.None
@@ -621,7 +622,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<TranslationResultDto[]> actual = await env.Controller.TranslateNAsync(
+        ActionResult<TranslationResult[]> actual = await env.Controller.TranslateNAsync(
             Project01,
             n,
             Array.Empty<string>(),
@@ -641,10 +642,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
-            .Throws(new ForbiddenException());
+            .Throws(ServalApiExceptions.Forbidden);
 
         // SUT
-        ActionResult<TranslationResultDto[]> actual = await env.Controller.TranslateNAsync(
+        ActionResult<TranslationResult[]> actual = await env.Controller.TranslateNAsync(
             Project01,
             n,
             Array.Empty<string>(),
@@ -665,7 +666,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<TranslationResultDto[]> actual = await env.Controller.TranslateNAsync(
+        ActionResult<TranslationResult[]> actual = await env.Controller.TranslateNAsync(
             Project01,
             n,
             Array.Empty<string>(),
@@ -683,10 +684,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
-            .Returns(Task.FromResult(Array.Empty<TranslationResultDto>()));
+            .Returns(Task.FromResult(Array.Empty<TranslationResult>()));
 
         // SUT
-        ActionResult<TranslationResultDto[]> actual = await env.Controller.TranslateNAsync(
+        ActionResult<TranslationResult[]> actual = await env.Controller.TranslateNAsync(
             Project01,
             n,
             Array.Empty<string>(),

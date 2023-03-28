@@ -77,6 +77,10 @@ public class MachineApiController : ControllerBase
             _exceptionHandler.ReportException(e);
             return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
         }
+        catch (ServalApiException e)
+        {
+            return GetStatusCode(e);
+        }
         catch (DataNotFoundException)
         {
             return NotFound();
@@ -106,6 +110,10 @@ public class MachineApiController : ControllerBase
         {
             _exceptionHandler.ReportException(e);
             return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (ServalApiException e)
+        {
+            return GetStatusCode(e);
         }
         catch (DataNotFoundException)
         {
@@ -139,6 +147,10 @@ public class MachineApiController : ControllerBase
             _exceptionHandler.ReportException(e);
             return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
         }
+        catch (ServalApiException e)
+        {
+            return GetStatusCode(e);
+        }
         catch (DataNotFoundException)
         {
             return NotFound();
@@ -168,6 +180,10 @@ public class MachineApiController : ControllerBase
         {
             _exceptionHandler.ReportException(e);
             return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (ServalApiException e)
+        {
+            return GetStatusCode(e);
         }
         catch (DataNotFoundException)
         {
@@ -201,6 +217,10 @@ public class MachineApiController : ControllerBase
             _exceptionHandler.ReportException(e);
             return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
         }
+        catch (ServalApiException e)
+        {
+            return GetStatusCode(e);
+        }
         catch (DataNotFoundException)
         {
             return NotFound();
@@ -232,6 +252,10 @@ public class MachineApiController : ControllerBase
         {
             _exceptionHandler.ReportException(e);
             return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (ServalApiException e)
+        {
+            return GetStatusCode(e);
         }
         catch (DataNotFoundException)
         {
@@ -267,6 +291,10 @@ public class MachineApiController : ControllerBase
             _exceptionHandler.ReportException(e);
             return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
         }
+        catch (ServalApiException e)
+        {
+            return GetStatusCode(e);
+        }
         catch (DataNotFoundException)
         {
             return NotFound();
@@ -276,4 +304,18 @@ public class MachineApiController : ControllerBase
             return Forbid();
         }
     }
+
+    /// <summary>
+    /// Gets the test friendly Action Result matching the Serval API exception.
+    /// </summary>
+    /// <param name="e">The Serval API exception.</param>
+    /// <returns>The Action Result.</returns>
+    private ActionResult GetStatusCode(ServalApiException e) =>
+        e.StatusCode switch
+        {
+            StatusCodes.Status204NoContent => NoContent(),
+            StatusCodes.Status403Forbidden => Forbid(),
+            StatusCodes.Status404NotFound => NotFound(),
+            _ => StatusCode(e.StatusCode, e.Response),
+        };
 }
