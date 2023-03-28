@@ -22,10 +22,15 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         return schemas;
     }
 
+    ///<summary>
+    /// Paragraph, Poetry, and List styles. This indicates paragraph styles that can contain verse text. For example, s
+    /// is not included in the set, because it cannot contain verse text. See also text-view-model.ts PARA_STYLES.
+    ///</summary>
     private static readonly HashSet<string> ParagraphPoetryListStyles = new HashSet<string>
     {
         // Paragraphs
         "p",
+        "nb",
         "m",
         "po",
         "pr",
