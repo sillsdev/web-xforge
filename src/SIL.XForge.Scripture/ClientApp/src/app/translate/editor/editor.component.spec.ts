@@ -15,6 +15,7 @@ import {
   WordGraph,
   WordGraphArc
 } from '@sillsdev/machine';
+import { AngularSplitModule } from 'angular-split';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
@@ -116,6 +117,7 @@ describe('EditorComponent', () => {
   configureTestingModule(() => ({
     declarations: [BiblicalTermsComponent, EditorComponent, SuggestionsComponent, TrainingProgressComponent],
     imports: [
+      AngularSplitModule,
       NoopAnimationsModule,
       RouterTestingModule.withRoutes(ROUTES),
       SharedModule,

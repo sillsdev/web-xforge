@@ -132,7 +132,7 @@
                   </button>
                 </div>
               </ng-template>
-              <div *ngIf="canInsertNote"  #fabButton class="insert-note-fab" [style.left]="insertNoteFabLeft">
+              <div *ngIf="canInsertNote" #fabButton class="insert-note-fab" [style.left]="insertNoteFabLeft">
                 <button mat-mini-fab title="{{ t('insert_note') }}" (click)="insertNote()">
                   <mat-icon>add_comment</mat-icon>
                 </button>
