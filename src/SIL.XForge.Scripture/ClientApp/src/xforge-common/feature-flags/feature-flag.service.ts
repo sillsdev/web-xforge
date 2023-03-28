@@ -23,7 +23,7 @@ class LocalStorageFlagStore implements FeatureFlagStore {
     this._enabled = typeof valueFromStore === 'boolean' ? valueFromStore : defaultValue;
   }
 
-  get enabled() {
+  get enabled(): boolean {
     return this._enabled;
   }
 
@@ -64,6 +64,16 @@ export class FeatureFlagService {
   allowAddingNotes: FeatureFlag = new FeatureFlag(
     new LocalStorageFlagStore('ALLOW_ADDING_NOTES'),
     'Allow adding notes'
+  );
+
+  preventOpSubmission: FeatureFlag = new FeatureFlag(
+    new LocalStorageFlagStore('PREVENT_OP_SUBMISSION'),
+    'Prevent op submission (intentionally breaks things)'
+  );
+
+  preventOpAcknowledgement: FeatureFlag = new FeatureFlag(
+    new LocalStorageFlagStore('PREVENT_OP_ACKNOWLEDGEMENT'),
+    'Prevent op acknowledgement (intentionally breaks things)'
   );
 
   get featureFlags(): FeatureFlag[] {

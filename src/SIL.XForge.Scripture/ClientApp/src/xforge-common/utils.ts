@@ -112,7 +112,7 @@ export function getI18nLocales(): Locale[] {
   }));
 }
 
-export function browserLinks() {
+export function browserLinks(): { chromeLink: string; firefoxLink: string; safariLink: string } {
   return {
     chromeLink: getLinkHTML(translate('error.chrome'), 'https://www.google.com/chrome/'),
     firefoxLink: getLinkHTML(translate('error.firefox'), 'https://firefox.com'),
@@ -120,10 +120,20 @@ export function browserLinks() {
   };
 }
 
-export function getLinkHTML(text: string, href: string) {
+export function getLinkHTML(text: string, href: string): string {
   const a = document.createElement('a');
   a.href = href;
   a.setAttribute('target', '_blank');
   a.textContent = text;
   return a.outerHTML;
+}
+
+/** Attempts to parse a value as JSON. If the value is not a string or cannot be parsed, returns null. */
+export function tryParseJSON(data: unknown): unknown {
+  if (typeof data !== 'string') return null;
+  try {
+    return JSON.parse(data);
+  } catch {
+    return null;
+  }
 }
