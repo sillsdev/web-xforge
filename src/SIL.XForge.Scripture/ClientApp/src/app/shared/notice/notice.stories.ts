@@ -13,23 +13,24 @@ const Template: Story = args => ({
   moduleMetadata: {
     imports: [UICommonModule, BrowserAnimationsModule, CommonModule]
   },
-  props: args
+  props: args,
+  template: `<app-notice [icon]="icon" [type]="type" [outline]="outline">{{ text }}</app-notice>`
 });
 
 export const Basic = Template.bind({});
-Basic.args = { text: 'share_control.invitation_sent' };
+Basic.args = { text: 'This is a notice' };
 
 export const BasicWithIcon = Template.bind({});
 BasicWithIcon.args = { ...Basic.args, icon: 'info' };
 
 export const Warning = Template.bind({});
-Warning.args = { text: 'share_control.share_not_available_offline', type: 'warning' };
+Warning.args = { text: 'This is a warning', type: 'warning' };
 
 export const WarningWithIcon = Template.bind({});
 WarningWithIcon.args = { ...Warning.args, icon: 'warning' };
 
 export const Error = Template.bind({});
-Error.args = { text: 'share_control.email_invalid', type: 'error' };
+Error.args = { text: 'This is an error', type: 'error' };
 
 export const ErrorWithIcon = Template.bind({});
 ErrorWithIcon.args = { ...Error.args, icon: 'error' };
@@ -39,3 +40,9 @@ Outline.args = { ...Basic.args, outline: true };
 
 export const IconAndOutline = Template.bind({});
 IconAndOutline.args = { ...Basic.args, icon: 'info', outline: true };
+
+export const WrappingNoticeWithIcon = Template.bind({});
+WrappingNoticeWithIcon.args = { text: 'This is a notice that wraps to multiple lines', icon: 'info' };
+WrappingNoticeWithIcon.parameters = {
+  viewport: { defaultViewport: 'mobile1' }
+};
