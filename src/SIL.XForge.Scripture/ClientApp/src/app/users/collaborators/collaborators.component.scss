@@ -42,13 +42,15 @@ mdc-text-field {
   width: 65px !important;
 }
 
-.mat-column-name {
+.mat-column-name,
+.mat-column-role {
   padding-right: 0.5em;
   word-break: break-word;
 }
 
-.mat-column-projects {
-  word-break: break-word;
+// Allow the questions permission label to wrap on whitespace to prevent layout issues
+.mat-column-questions_permission .mat-checkbox ::ng-deep label {
+  white-space: initial;
 }
 
 .current-user-label {

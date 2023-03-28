@@ -57,7 +57,7 @@ export class TranslationLoader implements TranslocoLoader {
   }
 }
 
-function pad(number: number) {
+function pad(number: number): string {
   return number.toString().padStart(2, '0');
 }
 
@@ -124,7 +124,7 @@ export class I18nService {
     return this.currentLocale;
   }
 
-  get localeCode() {
+  get localeCode(): string {
     return this.currentLocale.canonicalTag;
   }
 
@@ -144,13 +144,13 @@ export class I18nService {
     return this.currentLocale.direction === 'ltr' ? 'left' : 'right';
   }
 
-  get locales() {
+  get locales(): Locale[] {
     return I18nService.locales.filter(
       locale => locale.production || this.featureFlags.showNonPublishedLocalizations.enabled
     );
   }
 
-  setLocale(tag: string, authService: AuthService) {
+  setLocale(tag: string, authService: AuthService): void {
     const locale = I18nService.getLocale(tag);
     if (locale == null) {
       throw new Error(`Cannot set locale to non-existent locale ${tag}`);
@@ -202,14 +202,14 @@ export class I18nService {
     this.document.body.setAttribute('dir', this.direction);
   }
 
-  localizeBook(book: number | string) {
+  localizeBook(book: number | string): string {
     if (typeof book === 'number') {
       book = Canon.bookNumberToId(book);
     }
     return this.transloco.translate(`canon.book_names.${book}`);
   }
 
-  localizeReference(verse: VerseRef) {
+  localizeReference(verse: VerseRef): string {
     // Add RTL mark before colon and hyphen characters, if in a RTL script.
     // See https://software.sil.org/arabicfonts/support/faq/ for description of this solution, under the section
     // "How do I get correct display for “Chapter:Verse” references using a regular “Roman” colon?"
@@ -220,7 +220,11 @@ export class I18nService {
   }
 
   localizeRole(role: string): string {
-    return this.transloco.translate(`roles.${role}`);
+    // The pt_consultant role has a long name with slashes in it and no spaces. This can lead to layout issues because
+    // there aren't spaces to break the line. Insert a zero-width space after each slash.
+    // According to https://unicode.org/reports/tr14/#ZW, regarding ZERO WIDTH SPACE:
+    // "This character is used to enable additional (invisible) break opportunities wherever SPACE cannot be used."
+    return this.transloco.translate(`roles.${role}`).split('/').join('/\u200B');
   }
 
   localizeRoleDescription(role: string): string {
@@ -231,7 +235,7 @@ export class I18nService {
     return this.transloco.selectTranslate<string>(key, params);
   }
 
-  translateAndInsertTags(key: I18nKey, params: object = {}) {
+  translateAndInsertTags(key: I18nKey, params: object = {}): string {
     return this.transloco.translate(key, {
       ...params,
       boldStart: '<strong>',
@@ -244,7 +248,7 @@ export class I18nService {
     });
   }
 
-  formatDate(date: Date) {
+  formatDate(date: Date): string {
     // fall back to en in the event the language code isn't valid
     const format = I18nService.dateFormats[this.localeCode] || {};
     return typeof format === 'function'
