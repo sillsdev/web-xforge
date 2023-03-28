@@ -10,7 +10,7 @@
   "related_applications": [
     {
       "platform": "play",
-      "id": "org.sil.xforge.scripture"
+      "id": "org.sil.scriptureforge"
     }
   ],
   "scope": "/",
