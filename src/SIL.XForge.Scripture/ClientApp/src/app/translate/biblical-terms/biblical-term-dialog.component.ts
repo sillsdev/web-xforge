@@ -42,7 +42,7 @@ export class BiblicalTermDialogComponent extends SubscriptionDisposable {
   }
 
   submit(): void {
-    const renderings = this.renderings.value.split(/\r?\n/);
+    const renderings = this.renderings.value.split(/\r?\n/).map((rendering: string) => rendering.trim());
     const renderingsChanged = renderings.join('\n') !== this.biblicalTermDoc?.data?.renderings.join('\n');
     const description = this.description.value;
     this.biblicalTermDoc?.submitJson0Op(op => {
@@ -67,8 +67,7 @@ export class BiblicalTermDialogComponent extends SubscriptionDisposable {
       gloss = this.biblicalTermDoc?.data.definitions[I18nService.defaultLocale.canonicalTag].gloss;
       notes = this.biblicalTermDoc?.data.definitions[I18nService.defaultLocale.canonicalTag].notes;
     } else {
-      // The Biblical Term document is null
-      return '';
+      return term;
     }
 
     return `${term} --- ${gloss} --- ${notes}`;
