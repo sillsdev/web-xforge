@@ -63,20 +63,14 @@
           </mat-selection-list>
         </mat-menu>
       </div>
-      <app-notice
-        *ngIf="isRecipientOnlyLink"
-        icon="info"
-        [outline]="true"
-        text="share_dialog.recipient_only_notice"
-      ></app-notice>
+      <app-notice *ngIf="isRecipientOnlyLink" icon="info" [outline]="true">
+        {{ t("recipient_only_notice") }}
+      </app-notice>
     </ng-container>
   </div>
-  <app-notice
-    *ngIf="showLinkSharingUnavailable"
-    type="error"
-    icon="cloud_off"
-    text="share_dialog.link_sharing_not_available_offline"
-  ></app-notice>
+  <app-notice *ngIf="showLinkSharingUnavailable" type="error" icon="cloud_off">
+    {{ t("link_sharing_not_available_offline") }}
+  </app-notice>
   <div mat-dialog-actions>
     <button
       id="share-btn"
