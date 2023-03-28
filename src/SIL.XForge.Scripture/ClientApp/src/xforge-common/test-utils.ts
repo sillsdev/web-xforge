@@ -1,3 +1,4 @@
+import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
 import { TestBed, TestModuleMetadata } from '@angular/core/testing';
 import { HAMMER_LOADER } from '@angular/platform-browser';
 import { TranslocoTestingModule } from '@ngneat/transloco';
@@ -14,7 +15,7 @@ import { en } from './i18n.service';
  *
  * @param {() => TestModuleMetadata} createModuleDef A function that creates the test module definition.
  */
-export const configureTestingModule = (createModuleDef: () => TestModuleMetadata) => {
+export const configureTestingModule = (createModuleDef: () => TestModuleMetadata): void => {
   const mocks: any[] = [];
 
   let moduleDef: TestModuleMetadata;
@@ -151,3 +152,31 @@ export function getAudioBlob(): Blob {
   const byteArray = new Uint8Array(byteNumbers);
   return new Blob([byteArray], { type: 'audio/wav' });
 }
+
+@Directive({
+  // es lint complains that a directive should be used as an attribute
+  // eslint-disable-next-line @angular-eslint/directive-selector
+  selector: 'viewContainerDirective'
+})
+export class ViewContainerDirective {
+  constructor(public viewContainerRef: ViewContainerRef) {}
+}
+
+@Component({
+  selector: 'app-view-container',
+  template: '<viewContainerDirective></viewContainerDirective>'
+})
+export class ChildViewContainerComponent {
+  @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
+
+  get childViewContainer(): ViewContainerRef {
+    return this.viewContainer.viewContainerRef;
+  }
+}
+
+@NgModule({
+  imports: [],
+  declarations: [ChildViewContainerComponent, ViewContainerDirective],
+  exports: [ViewContainerDirective]
+})
+export class ChildViewContainerModule {}

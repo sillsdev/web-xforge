@@ -1,6 +1,6 @@
 import { MdcDialogRef } from '@angular-mdc/web';
 import { CommonModule } from '@angular/common';
-import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { UntypedFormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
@@ -20,7 +20,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { TestingRetryingRequestService } from 'xforge-common/testing-retrying-request.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -450,41 +450,10 @@ describe('ImportQuestionsDialogComponent', () => {
   }));
 });
 
-@Directive({
-  // es lint complains that a directive should be used as an attribute
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'viewContainerDirective'
-})
-class ViewContainerDirective {
-  constructor(public viewContainerRef: ViewContainerRef) {}
-}
-
-@Component({
-  selector: 'app-view-container',
-  template: '<viewContainerDirective></viewContainerDirective>'
-})
-class ChildViewContainerComponent {
-  @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
-
-  get childViewContainer(): ViewContainerRef {
-    return this.viewContainer.viewContainerRef;
-  }
-}
-
 @NgModule({
   imports: [CommonModule, UICommonModule, TestTranslocoModule, NoopAnimationsModule, ngfModule],
-  declarations: [
-    ViewContainerDirective,
-    ChildViewContainerComponent,
-    ScriptureChooserDialogComponent,
-    ImportQuestionsDialogComponent
-  ],
-  exports: [
-    ViewContainerDirective,
-    ChildViewContainerComponent,
-    ScriptureChooserDialogComponent,
-    ImportQuestionsDialogComponent
-  ]
+  declarations: [ScriptureChooserDialogComponent, ImportQuestionsDialogComponent],
+  exports: [ScriptureChooserDialogComponent, ImportQuestionsDialogComponent]
 })
 class DialogTestModule {}
 
@@ -679,13 +648,13 @@ class TestEnvironment {
     this.click(this.overlayContainerElement.querySelector('#from-btn') as HTMLInputElement);
   }
 
-  setOnline(value: boolean) {
+  setOnline(value: boolean): void {
     this.online$.next(value);
     tick();
     this.fixture.detectChanges();
   }
 
-  setControlValue(control: UntypedFormControl, value: string) {
+  setControlValue(control: UntypedFormControl, value: string): void {
     control.setValue(value);
     tick();
     this.fixture.detectChanges();
@@ -716,14 +685,14 @@ class TestEnvironment {
     tick();
   }
 
-  selectFileWithContents(contents: string[][], filename = 'filename.csv') {
+  selectFileWithContents(contents: string[][], filename = 'filename.csv'): void {
     when(mockedCsvService.parse(anything())).thenResolve(contents);
     this.component.fileSelected({ name: filename } as File);
     tick();
     this.fixture.detectChanges();
   }
 
-  click(element: HTMLElement) {
+  click(element: HTMLElement): void {
     element.click();
     tick();
     this.fixture.detectChanges();

@@ -1,6 +1,11 @@
-import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
+import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { configureTestingModule, matDialogCloseDelay, TestTranslocoModule } from 'xforge-common/test-utils';
+import {
+  ChildViewContainerComponent,
+  configureTestingModule,
+  matDialogCloseDelay,
+  TestTranslocoModule
+} from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -39,31 +44,10 @@ describe('TextNoteDialogComponent', () => {
   }));
 });
 
-@Directive({
-  // es lint complains that a directive should be used as an attribute
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'viewContainerDirective'
-})
-class ViewContainerDirective {
-  constructor(public viewContainerRef: ViewContainerRef) {}
-}
-
-@Component({
-  selector: 'app-view-container',
-  template: '<viewContainerDirective></viewContainerDirective>'
-})
-class ChildViewContainerComponent {
-  @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
-
-  get childViewContainer(): ViewContainerRef {
-    return this.viewContainer.viewContainerRef;
-  }
-}
-
 @NgModule({
   imports: [UICommonModule, TestTranslocoModule],
-  declarations: [ViewContainerDirective, ChildViewContainerComponent, TextNoteDialogComponent],
-  exports: [ViewContainerDirective, ChildViewContainerComponent, TextNoteDialogComponent]
+  declarations: [TextNoteDialogComponent],
+  exports: [TextNoteDialogComponent]
 })
 class DialogTestModule {}
 

@@ -1,11 +1,11 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
-import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
 import { CookieService } from 'ngx-cookie-service';
 import { mock } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { DeleteProjectDialogComponent } from './delete-project-dialog.component';
 
@@ -23,7 +23,6 @@ describe('DeleteProjectDialogComponent', () => {
 
   let dialog: MdcDialog;
   let viewContainerFixture: ComponentFixture<ChildViewContainerComponent>;
-  let testViewContainerRef: ViewContainerRef;
 
   it('should allow user to delete the project', fakeAsync(() => {
     const env = new TestEnvironment();
@@ -63,7 +62,7 @@ describe('DeleteProjectDialogComponent', () => {
 
     constructor() {
       this.afterCloseCallback = jasmine.createSpy('afterClose callback');
-      const config: MdcDialogConfig = { data: { name: 'project01' }, viewContainerRef: testViewContainerRef };
+      const config: MdcDialogConfig = { data: { name: 'project01' } };
       this.dialogRef = dialog.open(DeleteProjectDialogComponent, config);
       this.dialogRef.afterClosed().subscribe(this.afterCloseCallback);
       this.component = this.dialogRef.componentInstance;
@@ -87,7 +86,7 @@ describe('DeleteProjectDialogComponent', () => {
       return this.overlayContainerElement.querySelector('#project-entry') as HTMLElement;
     }
 
-    inputValue(element: HTMLElement, value: string) {
+    inputValue(element: HTMLElement, value: string): void {
       const inputElem = element.querySelector('input') as HTMLInputElement;
       inputElem.value = value;
       inputElem.dispatchEvent(new Event('input'));
@@ -95,7 +94,7 @@ describe('DeleteProjectDialogComponent', () => {
       tick();
     }
 
-    clickElement(element: HTMLElement) {
+    clickElement(element: HTMLElement): void {
       element.click();
       this.fixture.detectChanges();
       tick();
@@ -108,34 +107,12 @@ describe('DeleteProjectDialogComponent', () => {
 
   beforeEach(() => {
     viewContainerFixture = TestBed.createComponent(ChildViewContainerComponent);
-    testViewContainerRef = viewContainerFixture.componentInstance.childViewContainer;
   });
 });
 
-@Directive({
-  // es lint complains that a directive should be used as an attribute
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'viewContainerDirective'
-})
-class ViewContainerDirective {
-  constructor(public viewContainerRef: ViewContainerRef) {}
-}
-
-@Component({
-  selector: 'app-view-container',
-  template: '<viewContainerDirective></viewContainerDirective>'
-})
-class ChildViewContainerComponent {
-  @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
-
-  get childViewContainer(): ViewContainerRef {
-    return this.viewContainer.viewContainerRef;
-  }
-}
-
 @NgModule({
   imports: [UICommonModule, TestTranslocoModule],
-  declarations: [ViewContainerDirective, ChildViewContainerComponent, DeleteProjectDialogComponent],
-  exports: [ViewContainerDirective, ChildViewContainerComponent, DeleteProjectDialogComponent]
+  declarations: [DeleteProjectDialogComponent],
+  exports: [DeleteProjectDialogComponent]
 })
 class DialogTestModule {}
