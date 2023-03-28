@@ -23,6 +23,9 @@ import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModul
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { UserDoc } from 'xforge-common/models/user-doc';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { CheckingModule } from '../checking/checking.module';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
@@ -464,12 +467,28 @@ class TestEnvironment {
       id: TestEnvironment.PROJECT01,
       data: TestEnvironment.testProject
     });
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: 'user01',
+      data: {
+        name: 'User 01',
+        email: 'user1@example.com',
+        role: SystemRole.User,
+        isDisplayNameConfirmed: true,
+        avatarUrl: '',
+        authId: 'auth01',
+        displayName: 'name',
+        sites: {}
+      }
+    });
 
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
     when(mockedProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    );
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
 
     const dialogRef = TestBed.inject(MatDialog).open(TextChooserDialogComponent, { data: config });

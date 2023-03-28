@@ -244,6 +244,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private highlightMarkerTop: number = 0;
   private highlightMarkerHeight: number = 0;
   private _placeholder?: string;
+  private currentUserDoc?: UserDoc;
   private readonly cursorColorStorageKey = 'cursor_color';
   private displayMessage: string = '';
   private localPresenceChannel?: LocalPresence<PresenceData>;
@@ -272,6 +273,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       localStorage.setItem(this.cursorColorStorageKey, localCursorColor);
     }
     this.cursorColor = localCursorColor;
+    this.userService.getCurrentUser().then((userDoc: UserDoc) => {
+      this.currentUserDoc = userDoc;
+      this.subscribe(this.currentUserDoc.changes$, () => this.submitLocalPresenceChannel(true));
+    });
   }
 
   @Input() set isReadOnly(value: boolean) {
@@ -282,7 +287,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.areOpsCorrupted;
   }
 
-  get placeholder() {
+  get placeholder(): string {
     if (this._id == null && this._placeholder != null) {
       return this._placeholder;
     }
@@ -347,10 +352,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (value !== this.segmentRef) {
       this.setSegment(value);
     }
-  }
-
-  get hasFocus(): boolean {
-    return this._editor == null ? false : this._editor.hasFocus();
   }
 
   get editor(): Quill | undefined {
@@ -526,20 +527,12 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.getSegmentRange(ref);
   }
 
-  getRelatedSegmentRefs(ref: string): string[] {
-    return this.viewModel.getRelatedSegmentRefs(ref);
-  }
-
   getSegmentText(ref: string): string {
     return this.viewModel.getSegmentText(ref);
   }
 
   getSegmentContents(ref: string): DeltaStatic | undefined {
     return this.viewModel.getSegmentContents(ref);
-  }
-
-  hasSegmentRange(ref: string): boolean {
-    return this.viewModel.hasSegmentRange(ref);
   }
 
   getVerseSegments(verseRef?: VerseRef): string[] {
@@ -652,7 +645,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       } else {
         // The embed starts in a later segment. Subtract the text-only length of this segment from the start index.
         startTextPosInVerse -= segmentTextLength + nextSegmentMarkerLength;
-        continue;
       }
     }
 
@@ -680,7 +672,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return embedSegmentRef;
   }
 
-  formatEmbed(embedId: string, embedName: string, format: any) {
+  formatEmbed(embedId: string, embedName: string, format: any): void {
     const position: number | undefined = this.embeddedElements.get(embedId);
     if (position != null && this.editor != null) {
       this.editor.formatText(position, 1, embedName, format, 'api');
@@ -833,20 +825,17 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   /** Is a given selection range valid for editing the current segment? */
   isValidSelectionForCurrentSegment(sel: RangeStatic): boolean {
     const newSel: RangeStatic | null = this.conformToValidSelectionForCurrentSegment(sel);
-    if (newSel == null || sel.index !== newSel.index || sel.length !== newSel.length) {
-      return false;
-    }
-    return true;
+    return !(newSel == null || sel.index !== newSel.index || sel.length !== newSel.length);
   }
 
   /**
    * Both onBlur and focusout are used as sometimes touch devices can trigger one but not the other with Quill
    */
-  toggleFocus(focus: boolean) {
+  toggleFocus(focus: boolean): void {
     this.focused.emit(focus);
   }
 
-  private applyEditorStyles() {
+  private applyEditorStyles(): void {
     if (this._editor != null) {
       const container = this._editor.container as HTMLElement;
       for (const style in this.editorStyles) {
@@ -1155,7 +1144,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   private async submitLocalPresenceChannel(active: boolean | null): Promise<void> {
-    if (!this.isPresenceActive || this.localPresenceChannel == null) {
+    if (!this.isPresenceActive || this.localPresenceChannel == null || this.currentUserDoc == null) {
       return;
     }
 
@@ -1163,14 +1152,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (active != null) {
       // In this particular instance, we can send extra information on the presence object. This ability will vary
       // depending on type.
-      const currentUserDoc: UserDoc = await this.userService.getCurrentUser();
       // If the avatar src is empty ('') then it generates one with the same background and cursor color
       // Do this for email/password accounts
-      const authType: AuthType = getAuthType(currentUserDoc.data?.authId ?? '');
-      const avatarUrl: string = authType === AuthType.Unknown ? '' : currentUserDoc.data?.avatarUrl ?? '';
+      const authType: AuthType = getAuthType(this.currentUserDoc.data?.authId ?? '');
+      const avatarUrl: string = authType === AuthType.Unknown ? '' : this.currentUserDoc.data?.avatarUrl ?? '';
       presenceData = {
         viewer: {
-          displayName: currentUserDoc.data?.displayName || this.transloco.translate('editor.anonymous'),
+          displayName: this.currentUserDoc.data?.displayName || this.transloco.translate('editor.anonymous'),
           avatarUrl,
           cursorColor: this.cursorColor,
           activeInEditor: active
@@ -1439,13 +1427,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return editPositions;
   }
 
-  private getVerseEndIndex(baseRef: string): number | undefined {
-    // Look for the related segments of the base verse, and use the final related verse to determine the end index
-    const relatedRefs: string[] = this.viewModel.getRelatedSegmentRefs(baseRef);
-    const rangeLast: RangeStatic | undefined = this.viewModel.getSegmentRange(relatedRefs[relatedRefs.length - 1]);
-    return rangeLast == null ? undefined : rangeLast.index + rangeLast.length;
-  }
-
   /** Modify the current selection, if needed, to make the selection valid for editing the current segment. */
   private adjustSelection(): void {
     if (this._editor == null) {
@@ -1575,7 +1556,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
   }
 
-  private async setLangFromText() {
+  private async setLangFromText(): Promise<void> {
     if (this.id == null) {
       return;
     }

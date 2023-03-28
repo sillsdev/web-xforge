@@ -12,6 +12,8 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { User } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -431,6 +433,19 @@ class TestEnvironment {
   constructor() {
     this.addTextDoc(new TextDocId('project02', 40, 1, 'target'));
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: 'user01',
+      data: {
+        name: 'User 01',
+        email: 'user1@example.com',
+        role: SystemRole.User,
+        isDisplayNameConfirmed: true,
+        avatarUrl: '',
+        authId: 'auth01',
+        displayName: 'name',
+        sites: {}
+      }
+    });
 
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
@@ -439,7 +454,9 @@ class TestEnvironment {
     when(mockedSFProjectService.getProfile(anything())).thenResolve({} as SFProjectProfileDoc);
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus$).thenReturn(of(true));
-    when(mockedUserService.getCurrentUser()).thenResolve({ data: { displayName: 'name' } } as UserDoc);
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+    );
 
     this.sourceFixture = TestBed.createComponent(TextComponent);
     this.source = this.sourceFixture.componentInstance;

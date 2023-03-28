@@ -12,6 +12,9 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { UserDoc } from 'xforge-common/models/user-doc';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -147,11 +150,27 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId('project01', 40, 2, 'target'));
     this.addCombinedVerseTextDoc(new TextDocId('project01', 41, 1, 'target'));
     this.setupProject('project01');
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: 'user01',
+      data: {
+        name: 'User 01',
+        email: 'user1@example.com',
+        role: SystemRole.User,
+        isDisplayNameConfirmed: true,
+        avatarUrl: '',
+        authId: 'auth01',
+        displayName: 'name',
+        sites: {}
+      }
+    });
     when(mockedSFProjectService.getProfile('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
     );
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    );
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
     when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
 
@@ -165,11 +184,6 @@ class TestEnvironment {
 
   get quillEditor(): HTMLElement {
     return document.getElementsByClassName('ql-container')[0] as HTMLElement;
-  }
-
-  get quillPlaceHolderText(): string {
-    const editor = this.quillEditor.querySelector('.ql-editor');
-    return editor == null ? '' : editor.attributes['data-placeholder'];
   }
 
   set onlineStatus(hasConnection: boolean) {
