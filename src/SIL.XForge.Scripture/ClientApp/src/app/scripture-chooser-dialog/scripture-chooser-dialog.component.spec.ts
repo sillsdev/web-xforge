@@ -1,6 +1,6 @@
 import { MatDialog, MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
+import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { fakeAsync, flush } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
@@ -12,7 +12,7 @@ import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils
 import { mock } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
@@ -417,27 +417,6 @@ describe('ScriptureChooserDialog', () => {
     expect(env.component.selection.chapter).toBeUndefined();
   }));
 
-  @Directive({
-    // es lint complains that a directive should be used as an attribute
-    // eslint-disable-next-line @angular-eslint/directive-selector
-    selector: 'viewContainerDirective'
-  })
-  class ViewContainerDirective {
-    constructor(public viewContainerRef: ViewContainerRef) {}
-  }
-
-  @Component({
-    selector: 'app-view-container',
-    template: '<viewContainerDirective></viewContainerDirective>'
-  })
-  class ChildViewContainerComponent {
-    @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
-
-    get childViewContainer(): ViewContainerRef {
-      return this.viewContainer.viewContainerRef;
-    }
-  }
-
   @NgModule({
     imports: [
       BrowserModule,
@@ -448,8 +427,8 @@ describe('ScriptureChooserDialog', () => {
       TestTranslocoModule,
       NoopAnimationsModule
     ],
-    declarations: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
-    exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent]
+    declarations: [ScriptureChooserDialogComponent],
+    exports: [ScriptureChooserDialogComponent]
   })
   class TestModule {}
 

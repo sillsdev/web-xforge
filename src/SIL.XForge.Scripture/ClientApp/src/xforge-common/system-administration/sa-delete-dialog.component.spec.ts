@@ -1,11 +1,11 @@
 import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { CommonModule } from '@angular/common';
-import { Component, DebugElement, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
+import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AvatarTestingModule } from '../avatar/avatar-testing.module';
-import { configureTestingModule } from '../test-utils';
+import { ChildViewContainerComponent, configureTestingModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
 
@@ -29,31 +29,10 @@ describe('DeleteDialogComponent', () => {
   }));
 });
 
-@Directive({
-  // es lint complains that a directive should be used as an attribute
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'viewContainerDirective'
-})
-class ViewContainerDirective {
-  constructor(public viewContainerRef: ViewContainerRef) {}
-}
-
-@Component({
-  selector: 'app-view-container',
-  template: '<viewContainerDirective></viewContainerDirective>'
-})
-class ChildViewContainerComponent {
-  @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
-
-  get childViewContainer(): ViewContainerRef {
-    return this.viewContainer.viewContainerRef;
-  }
-}
-
 @NgModule({
   imports: [AvatarTestingModule, CommonModule, UICommonModule],
-  declarations: [ViewContainerDirective, ChildViewContainerComponent, SaDeleteDialogComponent],
-  exports: [ViewContainerDirective, ChildViewContainerComponent, SaDeleteDialogComponent]
+  declarations: [SaDeleteDialogComponent],
+  exports: [SaDeleteDialogComponent]
 })
 class TestModule {}
 

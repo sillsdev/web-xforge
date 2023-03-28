@@ -1,7 +1,7 @@
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CookieService } from 'ngx-cookie-service';
@@ -20,7 +20,12 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
+import {
+  ChildViewContainerComponent,
+  configureTestingModule,
+  getAudioBlob,
+  TestTranslocoModule
+} from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -522,31 +527,10 @@ describe('QuestionDialogComponent', () => {
   }));
 });
 
-@Directive({
-  // es lint complains that a directive should be used as an attribute
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'viewContainerDirective'
-})
-class ViewContainerDirective {
-  constructor(public viewContainerRef: ViewContainerRef) {}
-}
-
-@Component({
-  selector: 'app-view-container',
-  template: '<viewContainerDirective></viewContainerDirective>'
-})
-class ChildViewContainerComponent {
-  @ViewChild(ViewContainerDirective, { static: true }) viewContainer!: ViewContainerDirective;
-
-  get childViewContainer(): ViewContainerRef {
-    return this.viewContainer.viewContainerRef;
-  }
-}
-
 @NgModule({
   imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule, NoopAnimationsModule],
-  declarations: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent],
-  exports: [ViewContainerDirective, ChildViewContainerComponent, ScriptureChooserDialogComponent]
+  declarations: [ScriptureChooserDialogComponent],
+  exports: [ScriptureChooserDialogComponent]
 })
 class DialogTestModule {}
 
@@ -677,7 +661,7 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector('#question-scripture-end-helper-text') as HTMLElement;
   }
 
-  inputValue(element: HTMLElement, value: string) {
+  inputValue(element: HTMLElement, value: string): void {
     const inputElem = element.querySelector('input, textarea') as HTMLInputElement | HTMLTextAreaElement;
     inputElem.value = value;
     inputElem.dispatchEvent(new Event('input'));
@@ -685,7 +669,7 @@ class TestEnvironment {
     tick();
   }
 
-  clickElement(element: HTMLElement) {
+  clickElement(element: HTMLElement): void {
     element.click();
     this.fixture.detectChanges();
     tick();
@@ -696,7 +680,7 @@ class TestEnvironment {
     return segment.classList.toString().includes('highlight-segment');
   }
 
-  setAudioStatus(status: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded') {
+  setAudioStatus(status: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded'): void {
     const audio: AudioAttachment = { status: status };
     this.component.processAudio(audio);
   }
