@@ -33,6 +33,7 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { environment } from '../environments/environment';
 import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
 import { QuestionDoc } from './core/models/question-doc';
@@ -83,6 +84,7 @@ describe('AppComponent', () => {
       DialogTestModule,
       HttpClientTestingModule,
       UICommonModule,
+      NoopAnimationsModule,
       RouterTestingModule.withRoutes(ROUTES),
       TestTranslocoModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
@@ -561,7 +563,7 @@ describe('AppComponent', () => {
       env.avatarIcon.nativeElement.click();
       env.wait();
       expect(env.userMenu).not.toBeNull();
-      expect(env.editNameIcon).not.toBeNull();
+      expect(env.editNameButton).not.toBeNull();
       env.clickEditDisplayName();
       verify(mockedNoticeService.show(anything())).once();
       verify(mockedUserService.editDisplayName(anything())).never();
@@ -701,10 +703,6 @@ class TestEnvironment {
     ];
   }
 
-  get overlayContainerElement(): HTMLElement {
-    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
-  }
-
   get menuDrawer(): DebugElement {
     return this.fixture.debugElement.query(By.css('#menu-drawer'));
   }
@@ -714,19 +712,19 @@ class TestEnvironment {
   }
 
   get userMenu(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#user-menu'));
+    return this.fixture.debugElement.query(By.css('.user-menu'));
   }
 
-  get editNameIcon(): DebugElement {
+  get editNameButton(): DebugElement {
     return this.userMenu.query(By.css('#edit-name-btn'));
   }
 
   get navBar(): DebugElement {
-    return this.fixture.debugElement.query(By.css('mdc-top-app-bar'));
+    return this.fixture.debugElement.query(By.css('mat-toolbar'));
   }
 
   get avatarIcon(): DebugElement {
-    return this.navBar.query(By.css('.avatar-icon'));
+    return this.navBar.query(By.css('app-avatar'));
   }
 
   get refreshButton(): DebugElement {
@@ -860,7 +858,7 @@ class TestEnvironment {
   }
 
   clickEditDisplayName(): void {
-    this.editNameIcon.nativeElement.click();
+    this.editNameButton.nativeElement.click();
     tick();
     this.fixture.detectChanges();
   }

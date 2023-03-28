@@ -13,7 +13,7 @@
 
   > mat-progress-bar {
     position: absolute;
-    z-index: 10;
+    z-index: 8;
   }
 
   > mdc-drawer {
@@ -48,55 +48,15 @@
     position: absolute;
 
     &.overlay-drawer {
-      z-index: 7;
-    }
-
-    mdc-top-app-bar-title {
-      cursor: pointer;
-    }
-
-    mdc-top-app-bar-section {
-      mdc-menu {
-        min-width: 200px;
-        text-align: start; // Needed for some menu items in Chrome but not Firefox
-        a {
-          width: 100%;
-          color: var(--mdc-theme-text-primary-on-background);
-        }
-        .version {
-          color: var(--mdc-theme-text-secondary-on-background);
-        }
-      }
-      &.display-behind {
-        z-index: 0;
-      }
-    }
-
-    .mdc-top-app-bar--short-collapsed {
-      width: 255px !important;
-    }
-
-    .mdc-top-app-bar__row {
-      height: 56px;
-    }
-
-    .mdc-top-app-bar__section {
-      padding: 4px;
-      .refresh-message {
-        margin: auto;
-        padding: 0px 8px;
-      }
-      .mat-raised-button {
-        margin-right: 8px;
-      }
+      z-index: 6;
     }
   }
 
-  .mdc-top-app-bar-adjust {
+  .top-app-bar-adjust {
     margin-top: top-app-bar.$mobile-row-height;
   }
 
-  .mdc-top-app-bar-adjust-double {
+  .top-app-bar-adjust-double {
     margin-top: top-app-bar.$mobile-row-height * 2;
   }
 
@@ -119,44 +79,120 @@
   }
 }
 
-.user-menu-name {
-  white-space: nowrap;
-  color: $purpleLight;
-}
-#edit-name-btn {
-  color: $purpleLight;
-}
-
-a {
-  text-decoration: none;
-}
-
 .checking-unavailable {
   text-align: center;
+}
+
+header {
+  width: 100%;
+  z-index: 7;
+
+  .title {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    column-gap: 1em;
+  }
+
+  .update-banner {
+    display: flex;
+    gap: 8px;
+  }
+
+  .refresh-message {
+    margin: auto;
+    font-weight: initial;
+    white-space: initial;
+    line-height: initial;
+    font-size: 1rem;
+  }
 }
 
 .avatar-icon {
   @include icon-button.icon-size(32px, 32px, 8px);
 }
 
-.locale-disabled::after {
-  content: ' *';
-}
+::ng-deep .mat-menu-panel {
+  // For menu items that should be most styled like the others, but cannot be clicked
+  .pseudo-menu-item {
+    padding: 0 16px;
+    line-height: 36px;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.87);
+    mat-icon {
+      margin: initial;
+    }
+  }
 
-.active-locale {
-  font-weight: bold;
-}
+  &.help-menu {
+    max-width: unset;
+  }
 
-.locale-menu {
-  mdc-list-item:not(.active-locale) mdc-icon {
-    visibility: hidden;
+  &.user-menu {
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      height: auto;
+    }
+    .name-and-edit-button {
+      display: flex;
+      flex-direction: row;
+      column-gap: 5px;
+      align-items: center;
+      color: $purpleLight;
+    }
+    .user-menu-name {
+      line-height: 1.5rem;
+      font-weight: bold;
+    }
+  }
+
+  &.locale-menu {
+    .locale-disabled::after {
+      content: ' *';
+    }
+
+    .active-locale {
+      font-weight: bold;
+    }
+
+    .mat-menu-item:not(.active-locale) mat-icon {
+      visibility: hidden;
+    }
+
+    .mat-menu-item {
+      font-family: $languageFonts;
+    }
   }
 }
 
-.locale-menu .mdc-list-item {
-  white-space: nowrap;
-  font-family: $languageFonts;
-  column-gap: 0.5em;
+.mat-toolbar {
+  min-height: initial;
+}
+
+.mat-toolbar-row {
+  height: 56px;
+  padding: 0 6px;
+}
+
+.mat-toolbar .toolbar-spacer {
+  flex: 1 1 auto;
+}
+
+.mat-toolbar .mat-icon-button {
+  width: 50px;
+  height: 50px;
+
+  app-avatar {
+    display: flex;
+    justify-content: center;
+  }
+}
+
+::ng-deep .mat-menu-item.report-issue {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.6;
 }
 
 .online-status {
@@ -164,18 +200,6 @@ a {
   column-gap: 10px;
   justify-content: center;
   align-items: center;
-  padding-bottom: 8px;
-}
-
-:host,
-.mdc-menu {
-  .mdc-list-item.list-item-disabled {
-    &,
-    mdc-icon {
-      color: var(--mdc-theme-text-disabled-on-background);
-      fill: var(--mdc-theme-text-disabled-on-background);
-    }
-  }
 }
 
 .translate-icon {
