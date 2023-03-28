@@ -30,6 +30,9 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { DialogService } from 'xforge-common/dialog.service';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -590,6 +593,19 @@ class TestEnvironment {
       },
       viewContainerRef
     };
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: 'user01',
+      data: {
+        name: 'User 01',
+        email: 'user1@example.com',
+        role: SystemRole.User,
+        isDisplayNameConfirmed: true,
+        avatarUrl: '',
+        authId: 'auth01',
+        displayName: 'name',
+        sites: {}
+      }
+    });
 
     this.dialogRef = TestBed.inject(MatDialog).open(QuestionDialogComponent, config);
     this.afterCloseCallback = jasmine.createSpy('afterClose callback');
@@ -614,6 +630,9 @@ class TestEnvironment {
       createStorageFileData(QuestionDoc.COLLECTION, 'question01', '/path/to/audio.mp3', getAudioBlob())
     );
     when(mockedPwaService.onlineStatus$).thenReturn(of(true));
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+    );
     this.fixture.detectChanges();
   }
 

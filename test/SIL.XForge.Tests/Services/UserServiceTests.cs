@@ -102,6 +102,34 @@ public class UserServiceTests
     }
 
     [Test]
+    public async Task PushAuthUserProfile_Metadata_AvatarSet()
+    {
+        var env = new TestEnvironment();
+
+        JObject userProfile = TestEnvironment.CreateUserProfile("user03", "auth03", env.IssuedAt);
+        string primaryAvatar = "https://example.com/avatar.png";
+        string customAvatar = "https://example.com/avatar-custom.png";
+        userProfile["picture"] = primaryAvatar;
+        userProfile["user_metadata"] = new JObject(new JProperty("picture", customAvatar));
+        await env.Service.UpdateUserFromProfileAsync("user03", userProfile.ToString());
+        User user3 = env.GetUser("user03");
+        Assert.That(user3.AvatarUrl, Is.EqualTo(customAvatar));
+    }
+
+    [Test]
+    public async Task PushAuthUserProfile_Metadata_AvatarNotSet()
+    {
+        var env = new TestEnvironment();
+
+        JObject userProfile = TestEnvironment.CreateUserProfile("user03", "auth03", env.IssuedAt);
+        string primaryAvatar = "https://example.com/avatar.png";
+        userProfile["picture"] = primaryAvatar;
+        await env.Service.UpdateUserFromProfileAsync("user03", userProfile.ToString());
+        User user3 = env.GetUser("user03");
+        Assert.That(user3.AvatarUrl, Is.EqualTo(primaryAvatar));
+    }
+
+    [Test]
     public async Task LinkParatextAccountAsync()
     {
         var env = new TestEnvironment();
