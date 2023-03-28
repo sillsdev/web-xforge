@@ -4,6 +4,15 @@
   "theme_color": "#343a31",
   "background_color": "#ffffff",
   "display": "standalone",
+  "description": "A free set of tools to do more with your Paratext project, wherever you are.",
+  "orientation": "portrait-primary",
+  "categories": ["productivity"],
+  "related_applications": [
+    {
+      "platform": "play",
+      "id": "org.sil.xforge.scripture"
+    }
+  ],
   "scope": "/",
   "start_url": "/projects",
   "icons": [
