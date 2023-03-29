@@ -44,24 +44,24 @@ public static class MachineServiceCollectionExtensions
         services.AddSingleton<IBuildHandler, SFBuildHandler>();
 
         // Setup the Machine API
-        var machineOptions = configuration.GetOptions<MachineOptions>();
+        var servalOptions = configuration.GetOptions<ServalOptions>();
         services.AddAccessTokenManagement(options =>
         {
             options.Client.Clients.Add(
                 MachineApi.HttpClientName,
                 new ClientCredentialsTokenRequest
                 {
-                    Address = machineOptions.TokenUrl,
-                    ClientId = machineOptions.ClientId,
-                    ClientSecret = machineOptions.ClientSecret,
-                    Parameters = new Parameters { { "audience", machineOptions.Audience } },
+                    Address = servalOptions.TokenUrl,
+                    ClientId = servalOptions.ClientId,
+                    ClientSecret = servalOptions.ClientSecret,
+                    Parameters = new Parameters { { "audience", servalOptions.Audience } },
                 }
             );
         });
         services
             .AddClientAccessTokenHttpClient(
                 MachineApi.HttpClientName,
-                configureClient: client => client.BaseAddress = new Uri(machineOptions.ApiServer)
+                configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer)
             )
             .ConfigurePrimaryHttpMessageHandler(() =>
             {
