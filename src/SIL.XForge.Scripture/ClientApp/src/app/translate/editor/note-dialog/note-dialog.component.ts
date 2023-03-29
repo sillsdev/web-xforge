@@ -21,6 +21,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { NoteThreadDoc, defaultNoteThreadIcon } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -53,6 +54,7 @@ export class NoteDialogComponent implements OnInit {
   private paratextProjectUsers?: ParatextUserProfile[];
   private noteBeingEdited?: Note;
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
+  private userRole?: string;
 
   constructor(
     private readonly dialogRef: MatDialogRef<NoteDialogComponent, boolean>,
@@ -74,9 +76,12 @@ export class NoteDialogComponent implements OnInit {
     }
 
     this.projectProfileDoc = await this.projectService.getProfile(this.projectId);
-    const userRole = this.projectProfileDoc?.data?.userRoles[this.userService.currentUserId];
-    if (userRole != null) {
-      const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(this.projectId, userRole);
+    this.userRole = this.projectProfileDoc?.data?.userRoles[this.userService.currentUserId];
+    if (this.userRole != null) {
+      const projectDoc: SFProjectDoc | undefined = await this.projectService.tryGetForRole(
+        this.projectId,
+        this.userRole
+      );
       if (this.threadDoc != null && projectDoc != null && projectDoc.data?.paratextUsers != null) {
         this.paratextProjectUsers = projectDoc.data.paratextUsers;
         this.isAssignedToOtherUser = this.threadDoc.isAssignedToOtherUser(
@@ -88,6 +93,10 @@ export class NoteDialogComponent implements OnInit {
 
     this.projectUserConfigDoc = await this.projectService.getUserConfig(this.projectId, this.userService.currentUserId);
     this.noteBeingEdited = this.getNoteTemplate(this.threadId);
+  }
+
+  get canViewAssignedUser(): boolean {
+    return isParatextRole(this.userRole);
   }
 
   get noteThreadAssignedUserRef(): string {
