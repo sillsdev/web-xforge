@@ -2575,7 +2575,7 @@ describe('EditorComponent', () => {
       env.insertNoteFabMobile!.click();
       env.wait();
       env.component.mobileNoteControl.setValue(content);
-      env.saveMobileNote!.click();
+      env.saveMobileNoteButton!.click();
       env.wait();
       const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
       expect(noteThread.verseRef).toEqual(fromVerseRef(verseRef));
@@ -3380,7 +3380,7 @@ class TestEnvironment {
     return document.querySelector('.fab-bottom-sheet form textarea');
   }
 
-  get saveMobileNote(): HTMLButtonElement | null {
+  get saveMobileNoteButton(): HTMLButtonElement | null {
     return document.querySelector('.fab-bottom-sheet .save-button');
   }
 
