@@ -364,7 +364,7 @@ describe('NoteDialogComponent', () => {
       TestEnvironment.PROJECT01,
       'user01'
     );
-    expect(projectUserConfigDoc.data!.noteRefsRead).toContain(noteThread.notes[0].dataId);
+    expect(projectUserConfigDoc.data!.noteRefsRead).not.toContain(noteThread.notes[0].dataId);
   }));
 
   it('show sf note tag on notes with undefined tag id', fakeAsync(() => {
@@ -417,7 +417,7 @@ describe('NoteDialogComponent', () => {
       TestEnvironment.PROJECT01,
       'user01'
     );
-    expect(projectUserConfigDoc.data!.noteRefsRead).toContain(noteThread.data!.notes[5].dataId);
+    expect(projectUserConfigDoc.data!.noteRefsRead).not.toContain(noteThread.data!.notes[5].dataId);
   }));
 
   it('allows user to edit the last note in the thread', fakeAsync(() => {

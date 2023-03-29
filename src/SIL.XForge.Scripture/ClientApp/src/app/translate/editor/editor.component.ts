@@ -1646,11 +1646,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private hasNewContent(thread: NoteThreadDoc): boolean {
-    const noteId: string | undefined = thread.data?.notes[thread.data?.notes.length - 1].dataId;
-    if (noteId == null || this.projectUserConfigDoc?.data == null) {
-      return false;
-    }
-    return !this.projectUserConfigDoc.data.noteRefsRead.includes(noteId);
+    if (thread.data == null || this.projectUserConfigDoc?.data == null) return false;
+    // look for any note that has not been read and was authored by another user
+    const noteRefsRead: string[] = this.projectUserConfigDoc.data.noteRefsRead;
+    return thread.data.notes.some(
+      n => n.ownerRef !== this.userService.currentUserId && !noteRefsRead.includes(n.dataId)
+    );
   }
 
   private syncScroll(): void {
