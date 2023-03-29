@@ -305,7 +305,7 @@ describe('NoteDialogComponent', () => {
 
   it('hides assigned user for non-paratext users', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread(), currentUserId: 'user02' });
-    expect(env.threadAssignedUser.nativeElement.textContent).toContain('Team');
+    expect(env.threadAssignedUser).toBeFalsy();
     expect(env.notes[0].nativeElement.querySelector('.assigned-user').textContent).toContain('Paratext user');
     expect(env.notes[1].nativeElement.querySelector('.assigned-user').textContent).toContain('Team');
   }));
