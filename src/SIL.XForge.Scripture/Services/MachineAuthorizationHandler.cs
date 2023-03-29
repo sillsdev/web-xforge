@@ -20,25 +20,22 @@ public class MachineAuthorizationHandler : IAuthorizationHandler
 
     public async Task HandleAsync(AuthorizationHandlerContext context)
     {
-        string projectId = null;
-        switch (context.Resource)
+        string projectId = context.Resource switch
         {
-            case Project project:
-                projectId = project.Id;
-                break;
-            case Engine engine:
-                projectId = engine.Projects.First();
-                break;
-        }
+            Project project => project.Id,
+            Engine engine => engine.Projects.First(),
+            _ => null,
+        };
         if (projectId != null)
         {
             Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(projectId);
             if (attempt.TryResult(out SFProject project))
             {
-                string userId = context.User.FindFirst(XFClaimTypes.UserId)?.Value;
+                string? userId = context.User.FindFirst(XFClaimTypes.UserId)?.Value;
                 if (
-                    project.UserRoles.TryGetValue(userId, out string role)
-                    && (role == SFProjectRole.Administrator || role == SFProjectRole.Translator)
+                    !string.IsNullOrWhiteSpace(userId)
+                    && project.UserRoles.TryGetValue(userId, out string role)
+                    && role is SFProjectRole.Administrator or SFProjectRole.Translator
                 )
                 {
                     List<IAuthorizationRequirement> pendingRequirements = context.PendingRequirements.ToList();
