@@ -21,13 +21,17 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoteThreadDoc, defaultNoteThreadIcon } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { canInsertNote, formatFontSizeToRems } from '../../../shared/utils';
+import { environment } from '../../../../environments/environment';
+
+const COMMENTER_LABEL_REGEX = /<p>\[.+\s-\s.+\]<\/p>\s*<p>(.+)<\/p>/s;
 
 export interface NoteDialogData {
   threadId?: string;
@@ -52,7 +56,6 @@ export class NoteDialogComponent implements OnInit {
   private textDoc?: TextDoc;
   private paratextProjectUsers?: ParatextUserProfile[];
   private noteBeingEdited?: Note;
-  private projectUserConfigDoc?: SFProjectUserConfigDoc;
 
   constructor(
     private readonly dialogRef: MatDialogRef<NoteDialogComponent, boolean>,
@@ -86,7 +89,6 @@ export class NoteDialogComponent implements OnInit {
       }
     }
 
-    this.projectUserConfigDoc = await this.projectService.getUserConfig(this.projectId, this.userService.currentUserId);
     this.noteBeingEdited = this.getNoteTemplate(this.threadId);
   }
 
@@ -156,6 +158,11 @@ export class NoteDialogComponent implements OnInit {
     return this.isAddNotesEnabled && canInsertNote(this.projectProfileDoc.data, this.userService.currentUserId);
   }
 
+  private get isParatextRole(): boolean {
+    if (this.projectProfileDoc?.data == null) return false;
+    return isParatextRole(this.projectProfileDoc.data.userRoles[this.userService.currentUserId]);
+  }
+
   private get defaultNoteTagId(): number | undefined {
     return this.projectProfileDoc?.data?.translateConfig.defaultNoteTagId;
   }
@@ -215,7 +222,7 @@ export class NoteDialogComponent implements OnInit {
 
   editNote(note: Note): void {
     this.noteBeingEdited = cloneDeep(note);
-    this.currentNoteContent = note.content ?? '';
+    this.currentNoteContent = this.stripSFUserLabel(note.content ?? '');
   }
 
   async deleteNote(note: Note): Promise<void> {
@@ -243,15 +250,9 @@ export class NoteDialogComponent implements OnInit {
   }
 
   parseNote(content: string | undefined): string {
-    // See also PT CommentEditHelper.cs and CommentEditHelperTests.cs for info and examples on how conflict
-    // information is interpreted.
+    content = this.stripSFUserLabel(content ?? '');
 
     const replace = new Map<RegExp, string>();
-    replace.set(/<bold><color name="red">(.*?)<\/color><\/bold>/gim, '<span class="conflict-text-newer">$1</span>');
-    replace.set(
-      /<strikethrough><color name="red">(.*?)<\/color><\/strikethrough>/gim,
-      '<span class="conflict-text-older">$1</span>'
-    );
     replace.set(/<bold>(.*)<\/bold>/gim, '<b>$1</b>'); // Bold style
     replace.set(/<italic>(.*)<\/italic>/gim, '<i>$1</i>'); // Italic style
     replace.set(/<p>(.*)<\/p>/gim, '$1<br />'); // Turn paragraphs into line breaks
@@ -362,7 +363,7 @@ export class NoteDialogComponent implements OnInit {
       this.noteBeingEdited.dateCreated = currentDate;
     }
     this.noteBeingEdited.dateModified = currentDate;
-    this.noteBeingEdited.content = this.currentNoteContent;
+    this.noteBeingEdited.content = await this.refineNoteContent(this.currentNoteContent);
 
     await this.saveChanges(fromVerseRef(verseRef));
   }
@@ -407,6 +408,18 @@ export class NoteDialogComponent implements OnInit {
       await this.threadDoc!.submitJson0Op(op => op.add(t => t.notes, this.noteBeingEdited));
     }
     this.dialogRef.close(true);
+  }
+
+  /** Add the commenter name label to the note content if applicable. */
+  private async refineNoteContent(content: string): Promise<string> {
+    if (this.isParatextRole) return content;
+    const userDoc: UserDoc = await this.userService.getCurrentUser();
+    return `<p>[${userDoc.data?.displayName} - ${environment.siteName}]</p><p>${content}</p>`;
+  }
+
+  private stripSFUserLabel(content: string): string {
+    const matchArray: RegExpExecArray | null = COMMENTER_LABEL_REGEX.exec(content);
+    return matchArray == null ? content : matchArray[1];
   }
 
   private getNoteTemplate(threadId: string | undefined): Note {
