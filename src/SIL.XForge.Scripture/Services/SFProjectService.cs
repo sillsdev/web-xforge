@@ -721,7 +721,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <param name="projectId">The project identifier.</param>
     /// <returns>The asynchronous task.</returns>
     /// <remarks>
-    /// This public method exists for the Machine API Migration utility.
+    /// This public method exists for the Serval Migration utility.
     /// </remarks>
     public async Task EnsureWritingSystemTagIsSetAsync(string curUserId, string projectId)
     {
@@ -1183,12 +1183,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// </exception>
     /// <remarks>
     /// A issue was introduced in an early version of ScriptureForge where the writing system tag was not set when
-    /// the project was created. This issue has since been fixed. The Machine API requires the writing system tag
-    /// to be specified, and so this method should be called before a project is created in the Machine API to
-    /// ensure that it can be created without error. If the writing system tag is already set, it is not modified.
+    /// the project was created. This issue has since been fixed. Serval requires the writing system tag to be
+    /// specified, and so this method should be called before a project is created in Serval to ensure
+    /// that it can be created without error. If the writing system tag is already set, it is not modified.
     /// If this is a back translation, the writing system tag will not be set here, but will be set on the first
     /// project build in <see cref="MachineProjectService"/>, as if this method does not update the writing system
-    /// tags, the Machine API Translation Engine creation will be delayed until first build.
+    /// tags, the Serval Translation Engine creation will be delayed until first build.
     /// </remarks>
     private async Task EnsureWritingSystemTagIsSetAsync(
         string curUserId,
