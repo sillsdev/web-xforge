@@ -1,9 +1,9 @@
 namespace SIL.XForge.Configuration;
 
 /// <summary>
-/// Configuration options for the Machine API.
+/// Configuration options for Serval.
 /// </summary>
-public class MachineOptions
+public class ServalOptions
 {
     public string ApiServer { get; set; } = string.Empty;
     public string Audience { get; set; } = string.Empty;

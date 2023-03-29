@@ -89,10 +89,10 @@ public class MachineProjectService : IMachineProjectService
             await _engineService.AddProjectAsync(machineProject);
         }
 
-        // Ensure that the Machine API feature flag is enabled
+        // Ensure that the Serval feature flag is enabled
         if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            _logger.LogInformation("Machine API feature flag is not enabled");
+            _logger.LogInformation("Serval feature flag is not enabled");
             return;
         }
 
@@ -117,10 +117,10 @@ public class MachineProjectService : IMachineProjectService
             await _engineService.StartBuildByProjectIdAsync(sfProjectId);
         }
 
-        // Ensure that the Machine API feature flag is enabled
+        // Ensure that the Serval feature flag is enabled
         if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            _logger.LogInformation("Machine API feature flag is not enabled");
+            _logger.LogInformation("Serval feature flag is not enabled");
             return;
         }
 
@@ -207,10 +207,10 @@ public class MachineProjectService : IMachineProjectService
             await _engineService.RemoveProjectAsync(sfProjectId);
         }
 
-        // Ensure that the Machine API feature flag is enabled
+        // Ensure that the Serval feature flag is enabled
         if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            _logger.LogInformation("Machine API feature flag is not enabled");
+            _logger.LogInformation("Serval feature flag is not enabled");
             return;
         }
 
@@ -304,7 +304,7 @@ public class MachineProjectService : IMachineProjectService
     /// <remarks>
     /// Notes:
     ///  - If the corpus was updated, then you should start the Build with <see cref="BuildProjectAsync"/>.
-    ///  - If the Machine API feature flag is disabled, false is returned and an information message logged.
+    ///  - If the Serval feature flag is disabled, false is returned and an information message logged.
     ///  - If a corpus is not configured on Serval, one is created and recorded in the project secret.
     /// </remarks>
     public async Task<bool> SyncProjectCorporaAsync(
@@ -316,10 +316,10 @@ public class MachineProjectService : IMachineProjectService
         // Used to return whether or not the corpus was updated
         bool corpusUpdated = false;
 
-        // Ensure that the Machine API feature flag is enabled
+        // Ensure that the Serval feature flag is enabled
         if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            _logger.LogInformation("Machine API feature flag is not enabled");
+            _logger.LogInformation("Serval feature flag is not enabled");
             return false;
         }
 
