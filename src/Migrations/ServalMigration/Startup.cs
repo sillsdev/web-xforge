@@ -12,10 +12,10 @@ using Microsoft.FeatureManagement;
 using SIL.XForge.Configuration;
 using SIL.XForge.Scripture;
 
-namespace MachineApiMigration;
+namespace ServalMigration;
 
 /// <summary>
-/// Configurations and services needed to bootstrap the Machine API Migration app.
+/// Configurations and services needed to bootstrap the Serval Migration app.
 /// This was copied and modified from `SIL.XForge.Scripture/Startup.cs`.
 /// </summary>
 public class Startup
@@ -80,6 +80,7 @@ public class Startup
         services.AddSFRealtimeServer(LoggerFactory, Configuration, nodeOptions: null, Program.MigrationsDisabled);
         services.AddSFServices();
         services.AddSFDataAccess(Configuration);
+        services.AddSignalR();
         services.Configure<RequestLocalizationOptions>(opts =>
         {
             var supportedCultures = new List<CultureInfo>();
@@ -97,7 +98,7 @@ public class Startup
         services.AddLocalization(options => options.ResourcesPath = "Resources");
         services.AddSFMachine(Configuration, Environment);
 
-        services.AddSingleton<MachineApiMigrator>();
+        services.AddSingleton<ServalMigrator>();
 
         containerBuilder.Populate(services);
         ApplicationContainer = containerBuilder.Build();
