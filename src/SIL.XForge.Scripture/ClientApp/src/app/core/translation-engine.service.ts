@@ -120,7 +120,7 @@ export class TranslationEngineService extends SubscriptionDisposable {
     chapterNum: number,
     segment: string,
     checksum?: number
-  ) {
+  ): Promise<void> {
     const targetDoc = await this.projectService.getText(getTextDocId(projectRef, bookNum, chapterNum, 'target'));
     const targetText = targetDoc.getSegmentText(segment);
     if (targetText === '') {

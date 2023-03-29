@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Polly.CircuitBreaker;
+using Serval.Client;
 using SIL.Machine.Annotations;
 using SIL.Machine.Threading;
 using SIL.Machine.Translation;
@@ -19,6 +21,15 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
+using MachinePhrase = SIL.Machine.Translation.Phrase;
+using MachineTranslationResult = SIL.Machine.Translation.TranslationResult;
+using MachineWordGraph = SIL.Machine.Translation.WordGraph;
+using MachineWordGraphArc = SIL.Machine.Translation.WordGraphArc;
+// Until the In-Process Machine distinguishes its objects from Serval
+using Phrase = Serval.Client.Phrase;
+using TranslationResult = Serval.Client.TranslationResult;
+using WordGraph = Serval.Client.WordGraph;
+using WordGraphArc = Serval.Client.WordGraphArc;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -33,11 +44,10 @@ public class MachineApiService : IMachineApiService
     private readonly IEngineService _engineService;
     private readonly IExceptionHandler _exceptionHandler;
     private readonly IFeatureManager _featureManager;
-    private readonly IMachineBuildService _machineBuildService;
     private readonly IMachineProjectService _machineProjectService;
-    private readonly IMachineTranslationService _machineTranslationService;
     private readonly DataAccess.IRepository<SFProjectSecret> _projectSecrets;
     private readonly IRealtimeService _realtimeService;
+    private readonly ITranslationEnginesClient _translationEnginesClient;
 
     public MachineApiService(
         IBuildRepository builds,
@@ -46,11 +56,10 @@ public class MachineApiService : IMachineApiService
         IEngineService engineService,
         IExceptionHandler exceptionHandler,
         IFeatureManager featureManager,
-        IMachineBuildService machineBuildService,
         IMachineProjectService machineProjectService,
-        IMachineTranslationService machineTranslationService,
         DataAccess.IRepository<SFProjectSecret> projectSecrets,
-        IRealtimeService realtimeService
+        IRealtimeService realtimeService,
+        ITranslationEnginesClient translationEnginesClient
     )
     {
         // In Process Machine Dependencies
@@ -63,12 +72,11 @@ public class MachineApiService : IMachineApiService
         _exceptionHandler = exceptionHandler;
         _featureManager = featureManager;
 
-        // Machine API Dependencies
-        _machineBuildService = machineBuildService;
+        // Serval Dependencies
         _machineProjectService = machineProjectService;
-        _machineTranslationService = machineTranslationService;
         _projectSecrets = projectSecrets;
         _realtimeService = realtimeService;
+        _translationEnginesClient = translationEnginesClient;
     }
 
     public async Task<BuildDto?> GetBuildAsync(
@@ -79,7 +87,7 @@ public class MachineApiService : IMachineApiService
         CancellationToken cancellationToken
     )
     {
-        BuildDto? buildDto;
+        BuildDto? buildDto = null;
 
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
@@ -90,21 +98,29 @@ public class MachineApiService : IMachineApiService
         {
             buildDto = await GetInProcessBuildAsync(BuildLocatorType.Id, buildId, minRevision, cancellationToken);
         }
-        else if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+        else if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            // Execute the Machine API, if it is enabled
+            // Execute on Serval, if it is enabled
             string translationEngineId = await GetTranslationIdAsync(sfProjectId);
             if (string.IsNullOrWhiteSpace(translationEngineId))
             {
                 throw new DataNotFoundException("The translation engine is not configured");
             }
 
-            buildDto = await _machineBuildService.GetBuildAsync(
-                translationEngineId,
-                buildId,
-                minRevision,
-                cancellationToken
-            );
+            try
+            {
+                TranslationBuild translationBuild = await _translationEnginesClient.GetBuildAsync(
+                    translationEngineId,
+                    buildId,
+                    minRevision,
+                    cancellationToken
+                );
+                buildDto = CreateDto(translationBuild);
+            }
+            catch (ServalApiException e)
+            {
+                ProcessServalApiException(e);
+            }
         }
         else
         {
@@ -128,7 +144,7 @@ public class MachineApiService : IMachineApiService
         CancellationToken cancellationToken
     )
     {
-        BuildDto? buildDto;
+        BuildDto? buildDto = null;
 
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
@@ -140,20 +156,28 @@ public class MachineApiService : IMachineApiService
             Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
             buildDto = await GetInProcessBuildAsync(BuildLocatorType.Engine, engine.Id, minRevision, cancellationToken);
         }
-        else if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+        else if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            // Otherwise, execute the Machine API, if it is enabled
+            // Otherwise execute on Serval, if it is enabled
             string translationEngineId = await GetTranslationIdAsync(sfProjectId);
             if (string.IsNullOrWhiteSpace(translationEngineId))
             {
                 throw new DataNotFoundException("The translation engine is not configured");
             }
 
-            buildDto = await _machineBuildService.GetCurrentBuildAsync(
-                translationEngineId,
-                minRevision,
-                cancellationToken
-            );
+            try
+            {
+                TranslationBuild translationBuild = await _translationEnginesClient.GetCurrentBuildAsync(
+                    translationEngineId,
+                    minRevision,
+                    cancellationToken
+                );
+                buildDto = CreateDto(translationBuild);
+            }
+            catch (ServalApiException e)
+            {
+                ProcessServalApiException(e);
+            }
         }
         else
         {
@@ -181,20 +205,23 @@ public class MachineApiService : IMachineApiService
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
 
-        // Execute the Machine API, if it is enabled
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+        // Execute on Serval, if it is enabled
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             string translationEngineId = await GetTranslationIdAsync(sfProjectId);
             if (!string.IsNullOrWhiteSpace(translationEngineId))
             {
                 try
                 {
-                    MachineApiTranslationEngine translationEngine =
-                        await _machineTranslationService.GetTranslationEngineAsync(
-                            translationEngineId,
-                            cancellationToken
-                        );
+                    TranslationEngine translationEngine = await _translationEnginesClient.GetAsync(
+                        translationEngineId,
+                        cancellationToken
+                    );
                     engineDto = CreateDto(translationEngine);
+                }
+                catch (ServalApiException e)
+                {
+                    ProcessServalApiException(e);
                 }
                 catch (BrokenCircuitException e)
                 {
@@ -223,7 +250,7 @@ public class MachineApiService : IMachineApiService
             engineDto = CreateDto(engine);
         }
 
-        // This will be null if the Machine API is down, or if all feature flags are false
+        // This will be null if Serval is down, or if all feature flags are false
         if (engineDto is null)
         {
             throw new DataNotFoundException("No translation engine could be retrieved");
@@ -245,19 +272,24 @@ public class MachineApiService : IMachineApiService
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
 
-        // Execute the Machine API, if it is enabled
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+        // Execute on Serval, if it is enabled
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             string translationEngineId = await GetTranslationIdAsync(sfProjectId);
             if (!string.IsNullOrWhiteSpace(translationEngineId))
             {
                 try
                 {
-                    wordGraphDto = await _machineTranslationService.GetWordGraphAsync(
+                    WordGraph wordGraph = await _translationEnginesClient.GetWordGraphAsync(
                         translationEngineId,
-                        segment,
+                        string.Join(' ', segment),
                         cancellationToken
                     );
+                    wordGraphDto = CreateDto(wordGraph);
+                }
+                catch (ServalApiException e)
+                {
+                    ProcessServalApiException(e);
                 }
                 catch (BrokenCircuitException e)
                 {
@@ -283,11 +315,11 @@ public class MachineApiService : IMachineApiService
         if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
         {
             Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
-            WordGraph wordGraph = await _engineService.GetWordGraphAsync(engine.Id, segment);
+            MachineWordGraph wordGraph = await _engineService.GetWordGraphAsync(engine.Id, segment);
             wordGraphDto = CreateDto(wordGraph);
         }
 
-        // This will be null if the Machine API is down, or if all feature flags are false
+        // This will be null if Serval is down, or if all feature flags are false
         if (wordGraphDto is null)
         {
             throw new DataNotFoundException("No translation engine could be retrieved");
@@ -307,8 +339,8 @@ public class MachineApiService : IMachineApiService
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
 
-        // Execute the Machine API, if it is enabled
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+        // Execute on Serval, if it is enabled
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             string translationEngineId = await GetTranslationIdAsync(sfProjectId);
             if (!string.IsNullOrWhiteSpace(translationEngineId))
@@ -317,7 +349,15 @@ public class MachineApiService : IMachineApiService
                 {
                     // We do not need the success boolean result, as we will still rebuild if no files have changed
                     _ = await _machineProjectService.SyncProjectCorporaAsync(curUserId, sfProjectId, cancellationToken);
-                    buildDto = await _machineBuildService.StartBuildAsync(translationEngineId, cancellationToken);
+                    TranslationBuild translationBuild = await _translationEnginesClient.StartBuildAsync(
+                        translationEngineId,
+                        cancellationToken
+                    );
+                    buildDto = CreateDto(translationBuild);
+                }
+                catch (ServalApiException e)
+                {
+                    ProcessServalApiException(e);
                 }
                 catch (BrokenCircuitException e)
                 {
@@ -347,7 +387,7 @@ public class MachineApiService : IMachineApiService
             buildDto = CreateDto(build);
         }
 
-        // This will be null if the Machine API is down, or if all feature flags are false
+        // This will be null if Serval is down, or if all feature flags are false
         if (buildDto is null)
         {
             throw new DataNotFoundException("No translation engine could be retrieved");
@@ -366,17 +406,17 @@ public class MachineApiService : IMachineApiService
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
 
-        // Execute the Machine API, if it is enabled
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+        // Execute on Serval, if it is enabled
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             string translationEngineId = await GetTranslationIdAsync(sfProjectId);
             if (!string.IsNullOrWhiteSpace(translationEngineId))
             {
                 try
                 {
-                    await _machineTranslationService.TrainSegmentAsync(
+                    await _translationEnginesClient.TrainSegmentAsync(
                         translationEngineId,
-                        segmentPair,
+                        GetSegmentPair(segmentPair),
                         cancellationToken
                     );
                 }
@@ -425,19 +465,20 @@ public class MachineApiService : IMachineApiService
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
 
-        // Execute the Machine API, if it is enabled
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+        // Execute on Serval, if it is enabled
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             string translationEngineId = await GetTranslationIdAsync(sfProjectId);
             if (!string.IsNullOrWhiteSpace(translationEngineId))
             {
                 try
                 {
-                    translationResultDto = await _machineTranslationService.TranslateAsync(
+                    TranslationResult translationResult = await _translationEnginesClient.TranslateAsync(
                         translationEngineId,
-                        segment,
+                        string.Join(' ', segment),
                         cancellationToken
                     );
+                    translationResultDto = CreateDto(translationResult);
                 }
                 catch (BrokenCircuitException e)
                 {
@@ -463,11 +504,11 @@ public class MachineApiService : IMachineApiService
         if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
         {
             Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
-            TranslationResult translationResult = await _engineService.TranslateAsync(engine.Id, segment);
+            MachineTranslationResult translationResult = await _engineService.TranslateAsync(engine.Id, segment);
             translationResultDto = CreateDto(translationResult);
         }
 
-        // This will be null if the Machine API is down, or if all feature flags are false
+        // This will be null if Serval is down, or if all feature flags are false
         if (translationResultDto is null)
         {
             throw new DataNotFoundException("No translation engine could be retrieved");
@@ -484,25 +525,26 @@ public class MachineApiService : IMachineApiService
         CancellationToken cancellationToken
     )
     {
-        TranslationResultDto[] translationResultsDto = Array.Empty<TranslationResultDto>();
+        IEnumerable<TranslationResultDto> translationResultsDto = Array.Empty<TranslationResultDto>();
 
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
 
-        // Execute the Machine API, if it is enabled
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+        // Execute on Serval, if it is enabled
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             string translationEngineId = await GetTranslationIdAsync(sfProjectId);
             if (!string.IsNullOrWhiteSpace(translationEngineId))
             {
                 try
                 {
-                    translationResultsDto = await _machineTranslationService.TranslateNAsync(
+                    IList<TranslationResult> translationResults = await _translationEnginesClient.TranslateNAsync(
                         translationEngineId,
                         n,
-                        segment,
+                        string.Join(' ', segment),
                         cancellationToken
                     );
+                    translationResultsDto = translationResults.Select(CreateDto);
                 }
                 catch (BrokenCircuitException e)
                 {
@@ -528,15 +570,15 @@ public class MachineApiService : IMachineApiService
         if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
         {
             Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
-            IEnumerable<TranslationResult> translationResults = await _engineService.TranslateAsync(
+            IEnumerable<MachineTranslationResult> translationResults = await _engineService.TranslateAsync(
                 engine.Id,
                 n,
                 segment
             );
-            translationResultsDto = translationResults.Select(CreateDto).ToArray();
+            translationResultsDto = translationResults.Select(CreateDto);
         }
 
-        return translationResultsDto;
+        return translationResultsDto.ToArray();
     }
 
     private static BuildDto CreateDto(Build build) =>
@@ -549,27 +591,37 @@ public class MachineApiService : IMachineApiService
             State = build.State,
         };
 
-    private static EngineDto CreateDto(MachineApiTranslationEngine translationEngine) =>
-        new EngineDto
+    private static BuildDto CreateDto(TranslationBuild translationBuild) =>
+        new BuildDto
         {
-            Confidence = translationEngine.Confidence,
-            IsShared = false,
-            SourceLanguageTag = translationEngine.SourceLanguageTag,
-            TargetLanguageTag = translationEngine.TargetLanguageTag,
-            TrainedSegmentCount = translationEngine.CorpusSize,
+            Id = translationBuild.Id,
+            Revision = translationBuild.Revision,
+            PercentCompleted = translationBuild.PercentCompleted ?? 0.0,
+            Message = translationBuild.Message,
+            State = translationBuild.State.ToString().ToUpperInvariant(),
         };
 
     private static EngineDto CreateDto(Engine engine) =>
         new EngineDto
         {
+            Id = engine.Id,
             Confidence = engine.Confidence,
-            IsShared = false,
+            TrainedSegmentCount = engine.TrainedSegmentCount,
             SourceLanguageTag = engine.SourceLanguageTag,
             TargetLanguageTag = engine.TargetLanguageTag,
-            TrainedSegmentCount = engine.TrainedSegmentCount,
         };
 
-    private static PhraseDto CreateDto(Phrase phrase) =>
+    private static EngineDto CreateDto(TranslationEngine translationEngine) =>
+        new EngineDto
+        {
+            Id = translationEngine.Id,
+            Confidence = translationEngine.Confidence,
+            TrainedSegmentCount = translationEngine.CorpusSize,
+            SourceLanguageTag = translationEngine.SourceLanguage,
+            TargetLanguageTag = translationEngine.TargetLanguage,
+        };
+
+    private static PhraseDto CreateDto(MachinePhrase phrase) =>
         new PhraseDto
         {
             SourceSegmentRange = CreateDto(phrase.SourceSegmentRange),
@@ -577,9 +629,17 @@ public class MachineApiService : IMachineApiService
             Confidence = phrase.Confidence,
         };
 
+    private static PhraseDto CreateDto(Phrase phrase) =>
+        new PhraseDto
+        {
+            SourceSegmentRange = CreateRangeDto(phrase),
+            TargetSegmentCut = phrase.TargetSegmentCut,
+            Confidence = phrase.Confidence,
+        };
+
     private static RangeDto CreateDto(Range<int> range) => new RangeDto { Start = range.Start, End = range.End };
 
-    private static TranslationResultDto CreateDto(TranslationResult translationResult) =>
+    private static TranslationResultDto CreateDto(MachineTranslationResult translationResult) =>
         new TranslationResultDto
         {
             Target = translationResult.TargetSegment.ToArray(),
@@ -589,7 +649,38 @@ public class MachineApiService : IMachineApiService
             Phrases = translationResult.Phrases.Select(CreateDto).ToArray(),
         };
 
-    private static WordGraphDto CreateDto(WordGraph wordGraph) =>
+    private static TranslationResultDto CreateDto(TranslationResult translationResult) =>
+        new TranslationResultDto
+        {
+            Target = translationResult.Tokens.ToArray(),
+            Confidences = translationResult.Confidences.ToArray(),
+            Sources = translationResult.Sources.Select(CreateDto).ToArray(),
+            Alignment = translationResult.Alignment.Select(CreateDto).ToArray(),
+            Phrases = translationResult.Phrases.Select(CreateDto).ToArray(),
+        };
+
+    private static TranslationSources CreateDto(IList<TranslationSource> translationSourceList)
+    {
+        TranslationSources translationSources = TranslationSources.None;
+        if (translationSourceList.Contains(TranslationSource.Primary))
+        {
+            translationSources |= TranslationSources.Smt;
+        }
+
+        if (translationSourceList.Contains(TranslationSource.Secondary))
+        {
+            translationSources |= TranslationSources.Transfer;
+        }
+
+        if (translationSourceList.Contains(TranslationSource.Human))
+        {
+            translationSources |= TranslationSources.Prefix;
+        }
+
+        return translationSources;
+    }
+
+    private static WordGraphDto CreateDto(MachineWordGraph wordGraph) =>
         new WordGraphDto
         {
             InitialStateScore = (float)wordGraph.InitialStateScore,
@@ -597,7 +688,15 @@ public class MachineApiService : IMachineApiService
             Arcs = wordGraph.Arcs.Select(CreateDto).ToArray(),
         };
 
-    private static WordGraphArcDto CreateDto(WordGraphArc arc) =>
+    private static WordGraphDto CreateDto(WordGraph wordGraph) =>
+        new WordGraphDto
+        {
+            InitialStateScore = wordGraph.InitialStateScore,
+            FinalStates = wordGraph.FinalStates.ToArray(),
+            Arcs = wordGraph.Arcs.Select(CreateDto).ToArray(),
+        };
+
+    private static WordGraphArcDto CreateDto(MachineWordGraphArc arc) =>
         new WordGraphArcDto
         {
             PrevState = arc.PrevState,
@@ -608,6 +707,19 @@ public class MachineApiService : IMachineApiService
             SourceSegmentRange = CreateDto(arc.SourceSegmentRange),
             Sources = arc.WordSources.ToArray(),
             Alignment = CreateDto(arc.Alignment),
+        };
+
+    private static WordGraphArcDto CreateDto(WordGraphArc arc) =>
+        new WordGraphArcDto
+        {
+            PrevState = arc.PrevState,
+            NextState = arc.NextState,
+            Score = arc.Score,
+            Words = arc.Tokens.ToArray(),
+            Confidences = arc.Confidences.ToArray(),
+            SourceSegmentRange = CreateRangeDto(arc),
+            Sources = arc.Sources.Select(CreateDto).ToArray(),
+            Alignment = arc.Alignment.Select(CreateDto).ToArray(),
         };
 
     private static AlignedWordPairDto[] CreateDto(WordAlignmentMatrix matrix)
@@ -627,10 +739,51 @@ public class MachineApiService : IMachineApiService
         return wordPairs.ToArray();
     }
 
+    private static AlignedWordPairDto CreateDto(AlignedWordPair alignedWordPair) =>
+        new AlignedWordPairDto { SourceIndex = alignedWordPair.SourceIndex, TargetIndex = alignedWordPair.TargetIndex };
+
+    private static RangeDto CreateRangeDto(Phrase phrase) =>
+        new RangeDto { Start = phrase.SourceSegmentStart, End = phrase.SourceSegmentEnd };
+
+    private static RangeDto CreateRangeDto(WordGraphArc arc) =>
+        new RangeDto { Start = arc.SourceSegmentStart, End = arc.SourceSegmentEnd };
+
+    private static SegmentPair GetSegmentPair(SegmentPairDto segmentPairDto) =>
+        new SegmentPair
+        {
+            SentenceStart = segmentPairDto.SentenceStart,
+            SourceSegment = string.Join(' ', segmentPairDto.SourceSegment ?? Array.Empty<string>()),
+            TargetSegment = string.Join(' ', segmentPairDto.TargetSegment ?? Array.Empty<string>()),
+        };
+
+    /// <summary>
+    /// This method maps Serval API exceptions to the exceptions that Machine.js understands.
+    /// </summary>
+    /// <param name="e">The Serval API Exception</param>
+    /// <exception cref="DataNotFoundException">Entity Deleted.</exception>
+    /// <exception cref="ForbiddenException">Access Denied.</exception>
+    /// <remarks>If this method returns, it is expected that the DTO will be null.</remarks>
+    private static void ProcessServalApiException(ServalApiException e)
+    {
+        switch (e.StatusCode)
+        {
+            case StatusCodes.Status204NoContent:
+                throw new DataNotFoundException("Entity Deleted");
+            case StatusCodes.Status403Forbidden:
+                throw new ForbiddenException();
+            case StatusCodes.Status404NotFound:
+                throw new DataNotFoundException("Entity Deleted");
+            case StatusCodes.Status408RequestTimeout:
+                return;
+            default:
+                throw e;
+        }
+    }
+
     private static BuildDto UpdateDto(BuildDto buildDto, string sfProjectId)
     {
         buildDto.Href = MachineApi.GetBuildHref(sfProjectId, buildDto.Id);
-        buildDto.Engine = new ResourceDto { Href = MachineApi.GetEngineHref(sfProjectId), Id = sfProjectId };
+        buildDto.Engine = new ResourceDto { Id = sfProjectId, Href = MachineApi.GetEngineHref(sfProjectId) };
 
         // We use this special ID format so that the DTO ID can be an optional URL parameter
         buildDto.Id = $"{sfProjectId}.{buildDto.Id}";
@@ -705,12 +858,7 @@ public class MachineApiService : IMachineApiService
     private async Task<Engine> GetInProcessEngineAsync(string sfProjectId, CancellationToken cancellationToken)
     {
         Engine? engine = await _engines.GetByLocatorAsync(EngineLocatorType.Project, sfProjectId, cancellationToken);
-        if (engine is null)
-        {
-            throw new DataNotFoundException("The engine does not exist.");
-        }
-
-        return engine;
+        return engine ?? throw new DataNotFoundException("The engine does not exist.");
     }
 
     private async Task<string> GetTranslationIdAsync(string sfProjectId)
@@ -722,12 +870,7 @@ public class MachineApiService : IMachineApiService
         }
 
         // Ensure we have a translation engine ID
-        string? translationEngineId = projectSecret.MachineData?.TranslationEngineId;
-        if (string.IsNullOrWhiteSpace(translationEngineId))
-        {
-            return string.Empty;
-        }
-
-        return translationEngineId;
+        string? translationEngineId = projectSecret.ServalData?.TranslationEngineId;
+        return string.IsNullOrWhiteSpace(translationEngineId) ? string.Empty : translationEngineId;
     }
 }
