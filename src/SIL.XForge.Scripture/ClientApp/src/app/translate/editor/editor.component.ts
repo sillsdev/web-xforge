@@ -47,6 +47,7 @@ import { UntypedFormControl, Validators } from '@angular/forms';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { NoteConflictType, NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { getNoteThreadDocId } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
@@ -873,7 +874,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     await this.saveNote({ content: this.mobileNoteControl.value });
     this.addingMobileNote = false;
-    this.resetInsertNoteFab();
+    this.bottomSheetRef?.dismiss();
   }
 
   async saveNote(params: SaveNoteParameters): Promise<void> {
@@ -888,7 +889,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (verseRef == null) {
       return;
     }
-    const currentDate = new Date().toJSON();
+    const currentDate: string = new Date().toJSON();
     // Configure the note
     const note: Note = {
       dateCreated: currentDate,
@@ -924,7 +925,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       await this.updateNoteReadRefs(note.dataId);
     } else {
       // updated the existing note
-      const threadDoc: NoteThreadDoc = await this.projectService.getNoteThread(this.projectId + ':' + params.threadId);
+      const threadDoc: NoteThreadDoc = await this.projectService.getNoteThread(
+        getNoteThreadDocId(this.projectId, params.threadId)
+      );
       const noteIndex: number = threadDoc.data!.notes.findIndex(n => n.dataId === params.dataId);
       if (noteIndex >= 0) {
         await threadDoc!.submitJson0Op(op => {
@@ -944,6 +947,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.addingMobileNote = !this.addingMobileNote;
     if (this.addingMobileNote) {
       this.mobileNoteControl.reset();
+      // On-screen keyboards appearing can interfere with the resize height logic which then changes the focus
+      // Waiting for 100ms was found to be a good amount of time for that to be resolved
       setTimeout(() => this.mobileNoteTextarea?.nativeElement.focus(), 100);
     }
   }
