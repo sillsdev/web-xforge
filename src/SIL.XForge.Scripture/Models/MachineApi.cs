@@ -5,6 +5,7 @@ namespace SIL.XForge.Scripture.Models;
 /// </summary>
 public static class MachineApi
 {
+    public const string HttpClientName = "machine_api";
     public const string Namespace = "machine-api/v2";
     public const string StartBuild = "translation/builds";
     public const string GetBuild = "translation/builds/{locatorType}:{sfProjectId}.{buildId?}";
