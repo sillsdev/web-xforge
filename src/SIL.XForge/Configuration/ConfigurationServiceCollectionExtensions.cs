@@ -13,7 +13,7 @@ public static class ConfigurationServiceCollectionExtensions
         services.AddOptions<RealtimeOptions>(configuration);
         services.AddOptions<AuthOptions>(configuration);
         services.AddOptions<AudioOptions>(configuration);
-        services.AddOptions<MachineOptions>(configuration);
+        services.AddOptions<ServalOptions>(configuration);
         return services;
     }
 
