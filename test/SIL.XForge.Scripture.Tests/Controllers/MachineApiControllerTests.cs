@@ -614,7 +614,7 @@ public class MachineApiControllerTests
     public async Task TranslateNAsync_MachineApiDown()
     {
         // Set up test environment
-        int n = 1;
+        const int n = 1;
         var env = new TestEnvironment();
         env.MachineApiService
             .TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
@@ -637,7 +637,7 @@ public class MachineApiControllerTests
     public async Task TranslateNAsync_NoPermission()
     {
         // Set up test environment
-        int n = 1;
+        const int n = 1;
         var env = new TestEnvironment();
         env.MachineApiService
             .TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
@@ -658,7 +658,7 @@ public class MachineApiControllerTests
     public async Task TranslateNAsync_NoProject()
     {
         // Set up test environment
-        int n = 1;
+        const int n = 1;
         var env = new TestEnvironment();
         env.MachineApiService
             .TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
@@ -679,7 +679,7 @@ public class MachineApiControllerTests
     public async Task TranslateNAsync_Success()
     {
         // Set up test environment
-        int n = 1;
+        const int n = 1;
         var env = new TestEnvironment();
         env.MachineApiService
             .TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
