@@ -1,6 +1,6 @@
 {
   "profiles": {
-    "MachineApiMigration": {
+    "ServalMigration": {
       "commandName": "Project",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
