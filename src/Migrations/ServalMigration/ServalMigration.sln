@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33205.214
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MachineApiMigration", "MachineApiMigration.csproj", "{FCE29858-6EF8-46CF-AB9A-390DA472F53E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServalMigration", "ServalMigration.csproj", "{FCE29858-6EF8-46CF-AB9A-390DA472F53E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SIL.XForge", "..\..\SIL.XForge\SIL.XForge.csproj", "{665D56C2-6609-4477-91D0-16590AAEDDFD}"
 EndProject
