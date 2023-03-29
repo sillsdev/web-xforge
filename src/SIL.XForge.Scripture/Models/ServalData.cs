@@ -3,12 +3,12 @@ using System.Collections.Generic;
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>
-/// Machine API Data
+/// Serval Data.
 /// </summary>
-public class MachineData
+public class ServalData
 {
     /// <summary>
-    /// Gets or sets the Machine API Translation Engine Id for the project.
+    /// Gets or sets the Serval Translation Engine Id for the project.
     /// </summary>
     /// <value>
     /// The Translation Engine Id.
@@ -19,7 +19,7 @@ public class MachineData
     public string TranslationEngineId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the corpora uploaded to the Machine API.
+    /// Gets or sets the corpora uploaded to Serval.
     /// </summary>
     /// <value>
     /// The machine corpora.
@@ -27,5 +27,5 @@ public class MachineData
     /// <remarks>
     /// The dictionary key is the corpus ID.
     /// </remarks>
-    public Dictionary<string, MachineCorpus> Corpora { get; set; } = new Dictionary<string, MachineCorpus>();
+    public Dictionary<string, ServalCorpus> Corpora { get; set; } = new Dictionary<string, ServalCorpus>();
 }

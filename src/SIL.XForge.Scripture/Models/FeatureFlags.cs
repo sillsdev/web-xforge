@@ -5,6 +5,6 @@ namespace SIL.XForge.Scripture.Models;
 /// </summary>
 public static class FeatureFlags
 {
-    public const string MachineApi = "MachineApi";
+    public const string Serval = "Serval";
     public const string MachineInProcess = "MachineInProcess";
 }
