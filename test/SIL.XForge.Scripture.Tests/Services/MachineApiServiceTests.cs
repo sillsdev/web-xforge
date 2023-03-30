@@ -670,7 +670,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         const string sourceLanguageTag = "en_US";
         const string targetLanguageTag = "en_NZ";
-        const int confidence = 100;
+        const double confidence = 0.96;
         const int corpusSize = 472;
         env.Engines
             .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
@@ -711,7 +711,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         const string sourceLanguageTag = "en_US";
         const string targetLanguageTag = "en_NZ";
-        const int confidence = 100;
+        const double confidence = 96.0;
         const int corpusSize = 472;
         env.TranslationEnginesClient
             .GetAsync(TranslationEngine01, CancellationToken.None)
@@ -737,7 +737,7 @@ public class MachineApiServiceTests
         // SUT
         EngineDto actual = await env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
 
-        Assert.AreEqual(confidence, actual.Confidence);
+        Assert.AreEqual(confidence / 100.0, actual.Confidence);
         Assert.AreEqual(corpusSize, actual.TrainedSegmentCount);
         Assert.AreEqual(sourceLanguageTag, actual.SourceLanguageTag);
         Assert.AreEqual(targetLanguageTag, actual.TargetLanguageTag);

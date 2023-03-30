@@ -615,7 +615,7 @@ public class MachineApiService : IMachineApiService
         new EngineDto
         {
             Id = translationEngine.Id,
-            Confidence = translationEngine.Confidence,
+            Confidence = translationEngine.Confidence / 100.0,
             TrainedSegmentCount = translationEngine.CorpusSize,
             SourceLanguageTag = translationEngine.SourceLanguage,
             TargetLanguageTag = translationEngine.TargetLanguage,
