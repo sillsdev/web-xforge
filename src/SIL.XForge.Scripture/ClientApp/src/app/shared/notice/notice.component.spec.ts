@@ -7,28 +7,27 @@ import { NoticeComponent } from './notice.component';
 
 describe('NoticeComponent', () => {
   it('should create', () => {
-    const template = '<app-notice text="app.online"></app-notice>';
+    const template = '<app-notice>This is a notice</app-notice>';
     const env = new TestEnvironment(template);
     expect(env.fixture.componentInstance).toBeTruthy();
-    expect(env.noticeText).toEqual('app.online');
     expect(env.icon).toBeFalsy();
     expect(env.container.classes['normal']).toBeTrue();
   });
 
   it('should show icon', () => {
-    const template = '<app-notice text="app.online" icon="info"></app-notice>';
+    const template = '<app-notice icon="info">This is a notice</app-notice>';
     const env = new TestEnvironment(template);
     expect(env.icon).toBeTruthy();
   });
 
   it('should set error class', () => {
-    const template = '<app-notice text="app.online" type="error"></app-notice>';
+    const template = '<app-notice type="error">This is an error</app-notice>';
     const env = new TestEnvironment(template);
     expect(env.container.classes['error']).toBeTrue();
   });
 
   it('should set warning class', () => {
-    const template = '<app-notice text="app.online" type="warning"></app-notice>';
+    const template = '<app-notice type="warning">This is a warning</app-notice>';
     const env = new TestEnvironment(template);
     expect(env.container.classes['warning']).toBeTrue();
   });
