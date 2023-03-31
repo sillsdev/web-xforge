@@ -588,6 +588,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.onTargetDeleteSub != null) {
       this.onTargetDeleteSub.unsubscribe();
     }
+    this.bottomSheet?.dismiss();
   }
 
   async onTargetUpdated(
