@@ -69,8 +69,7 @@ public class UserService : IUserService
             );
             await userDoc.SubmitJson0OpAsync(op =>
             {
-                string picture =
-                    userProfile["user_metadata"] == null ? null : (string)userProfile["user_metadata"]["picture"];
+                string picture = (string)userProfile["user_metadata"]?["picture"];
                 string avatarUrl = string.IsNullOrWhiteSpace(picture) ? (string)userProfile["picture"] : picture;
                 op.Set(u => u.Name, name);
                 op.Set(u => u.Email, (string)userProfile["email"]);
