@@ -922,7 +922,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         publishedToSF: true
       };
       await this.projectService.createNoteThread(this.projectId, noteThread);
-      await this.updateNoteReadRefs(note.dataId);
     } else {
       // updated the existing note
       const threadDoc: NoteThreadDoc = await this.projectService.getNoteThread(
