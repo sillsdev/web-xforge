@@ -2,23 +2,22 @@ import { userEvent, within } from '@storybook/testing-library';
 import { CommonModule } from '@angular/common';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Meta, Story } from '@storybook/angular';
-import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { expect } from '@storybook/jest';
 import { arrayOfIntsFromOne } from 'xforge-common/test-utils';
 import { getOverlay } from '../../../../.storybook/story-utils';
 import { BookChapterChooserComponent } from './book-chapter-chooser.component';
 
+const CANON_SIZE = 66; // all books we currently localize
+
 export default {
   title: 'Shared/Book & Chapter Chooser',
   component: BookChapterChooserComponent,
   argTypes: {
     book: {
-      options: arrayOfIntsFromOne(Canon.allBookIds.length),
+      options: arrayOfIntsFromOne(CANON_SIZE),
       control: 'select'
-    },
-    chapter: { control: 'select', options: arrayOfIntsFromOne(10) },
-    chapters: { control: 'array' }
+    }
   }
 } as Meta<BookChapterChooserComponent>;
 
@@ -30,7 +29,7 @@ const Template: Story = args => ({
 });
 
 const defaultArgs = {
-  books: arrayOfIntsFromOne(66),
+  books: arrayOfIntsFromOne(CANON_SIZE),
   book: 1,
   chapters: arrayOfIntsFromOne(50),
   chapter: 1
