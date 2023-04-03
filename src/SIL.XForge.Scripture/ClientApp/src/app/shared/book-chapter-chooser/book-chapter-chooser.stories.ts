@@ -56,14 +56,13 @@ ClickToLastChapter.play = async ({ canvasElement, args }) => {
   const canvas = within(canvasElement);
   const nextButton = await canvas.findByTitle('Next chapter');
   const prevButton = await canvas.findByTitle('Previous chapter');
-  // Jest types aren't working
-  (expect(prevButton) as any).toBeDisabled();
+  expect(prevButton).toBeDisabled();
   for (const _chapter of args.chapters.slice(1)) {
-    (expect(nextButton) as any).not.toBeDisabled();
+    expect(nextButton).not.toBeDisabled();
     await userEvent.click(nextButton);
-    (expect(prevButton) as any).not.toBeDisabled();
+    expect(prevButton).not.toBeDisabled();
   }
-  (expect(nextButton) as any).toBeDisabled();
+  expect(nextButton).toBeDisabled();
 };
 
 export const Mobile = Template.bind({});
