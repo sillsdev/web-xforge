@@ -31,7 +31,8 @@ import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { canInsertNote, formatFontSizeToRems } from '../../../shared/utils';
 import { environment } from '../../../../environments/environment';
 
-const COMMENTER_LABEL_REGEX = /<p>\[.+\s-\s.+\]<\/p>\s*<p>(.+)<\/p>/s;
+// Regular expression to match the comment label i.e. [Commenter User - Scripture Forge]
+const COMMENTER_LABEL_REGEX = /^<p>\[[^\]]+\s-\s[^\]]+\]<\/p>\s*<p>(.+)<\/p>/s;
 
 export interface NoteDialogData {
   threadId?: string;
