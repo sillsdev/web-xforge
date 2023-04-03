@@ -1,3 +1,4 @@
+import { DecoratorFunction } from '@storybook/csf';
 import { HttpClientModule } from '@angular/common/http';
 import { ApplicationRef, APP_INITIALIZER, NgModule } from '@angular/core';
 import {
@@ -23,8 +24,6 @@ function localizationInit(transloco: TranslocoService, applicationRef: Applicati
   return () => {
     translocoService = transloco;
 
-    if (selectedLocale != null) translocoService.setActiveLang(selectedLocale);
-
     transloco.langChanges$
       .pipe(
         distinctUntilChanged(),
@@ -35,10 +34,12 @@ function localizationInit(transloco: TranslocoService, applicationRef: Applicati
         })
       )
       .subscribe();
+
+    if (selectedLocale != null) translocoService.setActiveLang(selectedLocale);
   };
 }
 
-export const I18nStoryDecorator: any = (Story: any, context: any) => {
+export const I18nStoryDecorator: DecoratorFunction = (Story, context) => {
   // In some cases the locale has been known to be the empty string, so make sure not to set it to that.
   const locale = context.globals.locale || I18nService.defaultLocale.canonicalTag;
   selectedLocale = locale;

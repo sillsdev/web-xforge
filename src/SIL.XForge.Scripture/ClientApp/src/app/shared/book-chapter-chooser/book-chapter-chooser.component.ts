@@ -1,6 +1,10 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { I18nService } from 'xforge-common/i18n.service';
 
+/**
+ * This component is used to choose a book and chapter. Actual navigation on the basis of the selection is the
+ * responsibility of the host component.
+ */
 @Component({
   selector: 'app-book-chapter-chooser',
   templateUrl: './book-chapter-chooser.component.html',
@@ -17,8 +21,8 @@ export class BookChapterChooserComponent {
 
   constructor(readonly i18n: I18nService) {}
 
-  bookName(b: number): string {
-    return b == null ? '' : this.i18n.localizeBook(b);
+  bookName(book: number): string {
+    return this.i18n.localizeBook(book);
   }
 
   chapterChanged(chapter: number): void {

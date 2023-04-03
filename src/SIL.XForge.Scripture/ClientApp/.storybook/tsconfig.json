@@ -7,10 +7,10 @@
   "exclude": [
     "../src/test.ts",
     "../src/**/*.spec.ts",
-    "../projects/**/*.spec.ts",
+    // Prevent test util files that don't end with .spec.ts from causing failures when building Storybook
     "../src/xforge-common/test-utils.ts",
     "../src/xforge-common/mock-console.ts"
   ],
-  "include": ["../src/**/*", "../projects/**/*", "./jest-setup.ts"],
+  "include": ["../src/**/*", "./jest-setup.ts"],
   "files": ["./typings.d.ts"]
 }
