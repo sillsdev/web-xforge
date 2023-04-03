@@ -61,6 +61,7 @@ import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/gene
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { MediaObserver } from '@angular/flex-layout';
+import { getNoteThreadDocId } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -2660,7 +2661,6 @@ describe('EditorComponent', () => {
       const content: string = 'content in the thread';
       env.mockNoteDialogRef.close({ noteContent: content });
       env.wait();
-      expect(env.isNoteIconHighlighted(threadId)).toBeFalse();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       const [, config] = capture(mockedMatDialog.open).last();
       const noteVerseRef: VerseRef = (config as MatDialogConfig).data!.verseRef;
@@ -2673,8 +2673,7 @@ describe('EditorComponent', () => {
       expect(noteThread.notes[0].ownerRef).toEqual(userId);
       expect(noteThread.notes[0].content).toEqual(content);
       expect(noteThread.notes[0].tagId).toEqual(2);
-      const projectUserConfigDoc: SFProjectUserConfigDoc = env.getProjectUserConfigDoc(userId);
-      expect(projectUserConfigDoc.data!.noteRefsRead).toContain(noteThread.notes[0].dataId);
+      expect(env.isNoteIconHighlighted(noteThread.dataId)).toBeFalse();
 
       env.dispose();
     }));
@@ -3327,6 +3326,16 @@ class TestEnvironment {
         [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo
       })
     );
+    when(mockedSFProjectService.createNoteThread(anything(), anything())).thenCall(
+      (projectId: string, noteThread: NoteThread) => {
+        this.realtimeService.create(
+          NoteThreadDoc.COLLECTION,
+          getNoteThreadDocId(projectId, noteThread.dataId),
+          noteThread
+        );
+        tick();
+      }
+    );
 
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus$).thenReturn(of(true));
@@ -3614,10 +3623,8 @@ class TestEnvironment {
   }
 
   isNoteIconHighlighted(threadId: string): boolean {
-    const note = this.targetTextEditor.querySelector(`usx-segment display-note[data-thread-id=${threadId}]`);
-    expect(note).withContext('note thread highlight').not.toBeNull();
     const thread: HTMLElement | null = this.targetTextEditor.querySelector(
-      `usx-segment display-note[data-thread-id=${threadId}]`
+      `usx-segment display-note[data-thread-id='${threadId}']`
     );
     expect(thread).withContext('note thread highlight').not.toBeNull();
     return thread!.classList.contains('note-thread-highlight');
