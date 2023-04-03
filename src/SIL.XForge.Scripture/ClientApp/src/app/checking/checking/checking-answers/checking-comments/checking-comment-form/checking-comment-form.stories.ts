@@ -32,5 +32,5 @@ InvalidForm.play = async ({ canvasElement }) => {
   const saveButton = await canvas.getByRole('button', { name: /Save/i });
   await userEvent.click(saveButton);
   const error = await canvas.getByText(/You need to enter your comment before saving/i);
-  (expect(error) as any).toBeInTheDocument();
+  expect(error).toBeInTheDocument();
 };

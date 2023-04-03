@@ -11,6 +11,6 @@
     "../src/xforge-common/test-utils.ts",
     "../src/xforge-common/mock-console.ts"
   ],
-  "include": ["../src/**/*", "../projects/**/*"],
+  "include": ["../src/**/*", "../projects/**/*", "./jest-setup.ts"],
   "files": ["./typings.d.ts"]
 }
