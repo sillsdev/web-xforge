@@ -59,7 +59,7 @@ ClickToLastChapter.play = async ({ canvasElement, args }) => {
   expect(prevButton).toBeDisabled();
   for (const _chapter of args.chapters.slice(1)) {
     expect(nextButton).not.toBeDisabled();
-    await userEvent.click(nextButton);
+    userEvent.click(nextButton);
     expect(prevButton).not.toBeDisabled();
   }
   expect(nextButton).toBeDisabled();
@@ -76,7 +76,7 @@ SelectBook.args = { ...defaultArgs };
 SelectBook.play = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   const [bookSelect, _chapterSelect] = await canvas.findAllByRole('combobox');
-  await userEvent.click(bookSelect);
+  userEvent.click(bookSelect);
   const overlay = within(getOverlay(canvasElement));
   const menu = await overlay.findByRole('listbox');
   const book2 = await within(menu).findByText('Exodus');
@@ -88,9 +88,9 @@ SelectChapter.args = { ...defaultArgs };
 SelectChapter.play = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
   const [_bookSelect, chapterSelect] = await canvas.findAllByRole('combobox');
-  await userEvent.click(chapterSelect);
+  userEvent.click(chapterSelect);
   const overlay = within(getOverlay(canvasElement));
   const menu = await overlay.findByRole('listbox');
   const chapter2 = await within(menu).findByText('2');
-  await userEvent.click(chapter2);
+  userEvent.click(chapter2);
 };

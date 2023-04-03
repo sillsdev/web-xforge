@@ -29,8 +29,8 @@ EditForm.args = { text: 'This is a comment' };
 export const InvalidForm = Template.bind({});
 InvalidForm.play = async ({ canvasElement }) => {
   const canvas = within(canvasElement);
-  const saveButton = await canvas.getByRole('button', { name: /Save/i });
-  await userEvent.click(saveButton);
-  const error = await canvas.getByText(/You need to enter your comment before saving/i);
+  const saveButton = canvas.getByRole('button', { name: /Save/i });
+  userEvent.click(saveButton);
+  const error = canvas.getByText(/You need to enter your comment before saving/i);
   expect(error).toBeInTheDocument();
 };
