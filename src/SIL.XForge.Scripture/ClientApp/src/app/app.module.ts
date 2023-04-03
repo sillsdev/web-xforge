@@ -13,6 +13,8 @@ import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browse
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature-flags.component';
+import { OverlayContainer } from '@angular/cdk/overlay';
+import { InAppRootOverlayContainer } from 'xforge-common/overlay-container';
 import { environment } from '../environments/environment';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -70,7 +72,12 @@ import { JoinComponent } from './join/join.component';
     TranslocoModule,
     AppRoutingModule
   ],
-  providers: [CookieService, DatePipe, { provide: ErrorHandler, useClass: ExceptionHandlingService }],
+  providers: [
+    CookieService,
+    DatePipe,
+    { provide: ErrorHandler, useClass: ExceptionHandlingService },
+    { provide: OverlayContainer, useClass: InAppRootOverlayContainer }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule {}

@@ -153,3 +153,15 @@ button.mdc-icon-button {
 body[dir='rtl'] .mirror-rtl {
   transform: scaleX(-1);
 }
+
+app-root {
+  &:has(.mdc-drawer--open):has(.cdk-overlay-container) {
+    mdc-drawer {
+      z-index: 1002;
+
+      + .mdc-drawer-scrim {
+        z-index: 1001;
+      }
+    }
+  }
+}
