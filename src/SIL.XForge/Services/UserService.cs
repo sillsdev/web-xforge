@@ -52,6 +52,9 @@ public class UserService : IUserService
         var userProfile = JObject.Parse(userProfileJson);
         var identities = (JArray)userProfile["identities"];
         JObject ptIdentity = identities.OfType<JObject>().FirstOrDefault(i => (string)i["connection"] == "paratext");
+        bool isAnonymousUser =
+            identities.OfType<JObject>().FirstOrDefault(i => (string)i["connection"] == "Transparent-Authentication")
+            != null;
         Regex emailRegex = new Regex(EMAIL_PATTERN);
         await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
         {
@@ -65,7 +68,8 @@ public class UserService : IUserService
                         DisplayName =
                             string.IsNullOrWhiteSpace(name) || emailRegex.IsMatch(name)
                                 ? (string)userProfile["nickname"]
-                                : name
+                                : name,
+                        IsDisplayNameConfirmed = isAnonymousUser,
                     }
             );
             await userDoc.SubmitJson0OpAsync(op =>
