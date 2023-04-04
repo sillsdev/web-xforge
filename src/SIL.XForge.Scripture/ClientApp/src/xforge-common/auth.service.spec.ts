@@ -577,7 +577,9 @@ describe('AuthService', () => {
   it('prompt on log out if transparent authentication cookie is set', fakeAsync(() => {
     const env = new TestEnvironment({ isOnline: true, isLoggedIn: true, setTransparentAuthenticationCookie: true });
     expect(env.isAuthenticated).toBe(true);
+    expect(env.isLoggedInUserAnonymous).toBe(true);
     env.service.logOut();
+    tick();
     verify(mockedDialogService.confirm(anything(), anything(), anything())).once();
     env.discardTokenExpiryTimer();
   }));
@@ -751,6 +753,13 @@ class TestEnvironment {
     this.service.isLoggedIn.then(loggedIn => (isLoggedIn = loggedIn));
     tick();
     return isLoggedIn;
+  }
+
+  get isLoggedInUserAnonymous(): boolean {
+    let isLoggedInUserAnonymous = false;
+    this.service.isLoggedInUserAnonymous.then(anonymous => (isLoggedInUserAnonymous = anonymous));
+    tick();
+    return isLoggedInUserAnonymous;
   }
 
   get isNewlyLoggedIn(): boolean {

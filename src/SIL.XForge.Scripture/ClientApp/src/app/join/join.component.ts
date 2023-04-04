@@ -79,8 +79,7 @@ export class JoinComponent extends DataLoadingComponent {
       return '';
     }
     return this.i18nService.translateAndInsertTags('join.invited_to_join', {
-      projectName: this.joiningResponse.projectName,
-      role: this.i18nService.localizeRole(this.joiningResponse.role)
+      projectName: this.joiningResponse.projectName
     });
   }
 

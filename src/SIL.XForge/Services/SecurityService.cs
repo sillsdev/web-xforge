@@ -7,13 +7,13 @@ namespace SIL.XForge.Services;
 public class SecurityService : ISecurityService
 {
     /// <summary>Return a random 16-character base-64 string that is safe to use in URLs.</summary>
-    /// <param name="bytes">Bytes of data to generate the key from
+    /// <param name="length">Length of data to generate the key from</param>
     /// <remarks>
     /// For example, 12 bytes of data will become 16 bytes of base-64 text
     /// </remarks>
-    public string GenerateKey(int bytes = 12)
+    public string GenerateKey(int length = 12)
     {
-        System.Span<byte> data = stackalloc byte[bytes];
+        System.Span<byte> data = length <= 128 ? stackalloc byte[length] : new byte[length];
         RandomNumberGenerator.Fill(data);
         return WebEncoders.Base64UrlEncode(data);
     }
