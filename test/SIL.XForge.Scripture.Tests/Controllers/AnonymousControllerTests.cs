@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
-using SIL.XForge.Scripture.Models;
+using SIL.XForge.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 
