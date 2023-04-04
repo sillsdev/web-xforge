@@ -1226,7 +1226,6 @@ public class ParatextSyncRunnerTests
                 x =>
                     x.InitAsync(
                         Arg.Any<UserSecret>(),
-                        Arg.Any<SFProjectSecret>(),
                         Arg.Any<List<User>>(),
                         Arg.Any<SFProject>(),
                         Arg.Any<CancellationToken>()
@@ -1301,7 +1300,6 @@ public class ParatextSyncRunnerTests
                 x =>
                     x.InitAsync(
                         Arg.Any<UserSecret>(),
-                        Arg.Any<SFProjectSecret>(),
                         Arg.Any<List<User>>(),
                         Arg.Any<SFProject>(),
                         Arg.Any<CancellationToken>()

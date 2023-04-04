@@ -33,11 +33,10 @@ public class ParatextNotesMapper : IParatextNotesMapper
     private readonly IUserService _userService;
     private readonly IStringLocalizer<SharedResource> _localizer;
     private readonly IOptions<SiteOptions> _siteOptions;
-    private UserSecret _currentUserSecret;
-    private string _currentParatextUsername;
-    private SFProjectSecret _projectSecret;
-    private IGuidService _guidService;
-    private HashSet<string> _ptProjectUsersWhoCanWriteNotes;
+    private UserSecret? _currentUserSecret;
+    private string? _currentParatextUsername;
+    private readonly IGuidService _guidService;
+    private HashSet<string> _ptProjectUsersWhoCanWriteNotes = new HashSet<string>();
 
     public ParatextNotesMapper(
         IRepository<UserSecret> userSecrets,
@@ -58,7 +57,6 @@ public class ParatextNotesMapper : IParatextNotesMapper
 
     public async Task InitAsync(
         UserSecret currentUserSecret,
-        SFProjectSecret projectSecret,
         List<User> ptUsers,
         SFProject project,
         CancellationToken token
@@ -66,7 +64,6 @@ public class ParatextNotesMapper : IParatextNotesMapper
     {
         _currentUserSecret = currentUserSecret;
         _currentParatextUsername = _paratextService.GetParatextUsername(currentUserSecret);
-        _projectSecret = projectSecret;
         _ptProjectUsersWhoCanWriteNotes = new HashSet<string>();
         IReadOnlyDictionary<string, string> roles = await _paratextService.GetProjectRolesAsync(
             currentUserSecret,
@@ -77,14 +74,14 @@ public class ParatextNotesMapper : IParatextNotesMapper
         {
             SFProjectRole.Administrator,
             SFProjectRole.Translator,
-            SFProjectRole.Consultant
+            SFProjectRole.Consultant,
         };
-        foreach (User user in ptUsers)
-        {
-            // Populate the list with all Paratext users belonging to the project and who can write notes
-            if (roles.TryGetValue(user.ParatextId, out string role) && ptRolesCanWriteNote.Contains(role))
-                _ptProjectUsersWhoCanWriteNotes.Add(user.Id);
-        }
+
+        // Populate the list with all Paratext users belonging to the project and who can write notes
+        _ptProjectUsersWhoCanWriteNotes = ptUsers
+            .Where(u => roles.TryGetValue(u.ParatextId, out string role) && ptRolesCanWriteNote.Contains(role))
+            .Select(u => u.Id)
+            .ToHashSet();
     }
 
     public async Task<XElement> GetNotesChangelistAsync(
@@ -98,8 +95,9 @@ public class ParatextNotesMapper : IParatextNotesMapper
     {
         // Usernames of SF community checker users. Paratext users are mapped to null.
         Dictionary<string, string> checkerUsernames = new Dictionary<string, string>();
-        var version = (string)oldNotesElem.Attribute("version");
+        var version = (string)oldNotesElem.Attribute("version") ?? "1.1";
         Dictionary<string, XElement> oldCommentElems = GetOldCommentElements(oldNotesElem, ptProjectUsers);
+        List<XElement> commentsToDelete = new List<XElement>();
 
         var notesElem = new XElement("notes", new XAttribute("version", version));
         if (answerExportMethod != CheckingAnswerExport.None)
@@ -136,13 +134,13 @@ public class ParatextNotesMapper : IParatextNotesMapper
                     answerPrefixContents.Add(new XElement("span", new XAttribute("style", "bold"), qText));
                     if (!string.IsNullOrEmpty(answer.ScriptureText))
                     {
-                        string scriptureRef = answer.VerseRef.ToString();
+                        string scriptureRef = answer.VerseRef?.ToString();
                         string scriptureText = $"{answer.ScriptureText.Trim()} ({scriptureRef})";
                         answerPrefixContents.Add(
                             new XElement("span", new XAttribute("style", "italic"), scriptureText)
                         );
                     }
-                    string username = await TryGetCommunityCheckerUsername(
+                    string? username = await TryGetCommunityCheckerUsername(
                         answer.OwnerRef,
                         userRoles,
                         checkerUsernames
@@ -152,6 +150,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
 
                     string answerSyncUserId = await AddCommentIfChangedAsync(
                         oldCommentElems,
+                        commentsToDelete,
                         threadElem,
                         answer,
                         ptProjectUsers,
@@ -166,7 +165,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
                     {
                         Comment comment = answer.Comments[k];
                         var commentPrefixContents = new List<object>();
-                        string commentUsername = await TryGetCommunityCheckerUsername(
+                        string? commentUsername = await TryGetCommunityCheckerUsername(
                             comment.OwnerRef,
                             userRoles,
                             checkerUsernames
@@ -175,6 +174,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
                             commentPrefixContents.Add($"[{commentUsername} - {_siteOptions.Value.Name}]");
                         string commentSyncUserId = await AddCommentIfChangedAsync(
                             oldCommentElems,
+                            commentsToDelete,
                             threadElem,
                             comment,
                             ptProjectUsers,
@@ -198,7 +198,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
             }
         }
 
-        AddDeletedNotes(notesElem, oldCommentElems.Values);
+        AddDeletedNotes(notesElem, commentsToDelete);
         return notesElem;
     }
 
@@ -206,7 +206,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
     /// Get the Paratext Comment elements from a project that are associated with Community Checking answers.
     /// </summary>
     private Dictionary<string, XElement> GetOldCommentElements(
-        XElement ptNotesElement,
+        XContainer ptNotesElement,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
@@ -215,7 +215,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
         foreach (XElement threadElem in ptNotesElement.Elements("thread"))
         {
             var threadId = (string)threadElem.Attribute("id");
-            if (threadId.StartsWith("ANSWER_"))
+            if (threadId?.StartsWith("ANSWER_") == true)
             {
                 foreach (XElement commentElem in threadElem.Elements("comment"))
                 {
@@ -233,15 +233,16 @@ public class ParatextNotesMapper : IParatextNotesMapper
 
     private async Task<string> AddCommentIfChangedAsync(
         Dictionary<string, XElement> oldCommentElems,
+        ICollection<XElement> commentsToDelete,
         XElement threadElem,
         Comment comment,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
-        IReadOnlyList<object> prefixContent = null,
+        IReadOnlyCollection<object>? prefixContent = null,
         int tagId = NoteTag.notSetId,
         bool setCheckingTag = false
     )
     {
-        (string syncUserId, string user, bool canWritePTNoteOnProject) = await GetSyncUserAsync(
+        (string syncUserId, string user, bool canWritePtNoteOnProject) = await GetSyncUserAsync(
             comment.SyncUserRef,
             comment.OwnerRef,
             ptProjectUsers
@@ -250,7 +251,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
         var commentElem = new XElement("comment");
         commentElem.Add(new XAttribute("user", user));
         // if the user is not a Paratext user on the project, then set external user id
-        if (!canWritePTNoteOnProject)
+        if (!canWritePtNoteOnProject)
             commentElem.Add(new XAttribute("extUser", comment.OwnerRef));
         commentElem.Add(new XAttribute("date", FormatCommentDate(comment.DateCreated)));
         var contentElem = new XElement("content");
@@ -276,18 +277,32 @@ public class ParatextNotesMapper : IParatextNotesMapper
         }
 
         var threadId = (string)threadElem.Attribute("id");
+        if (threadId == null)
+        {
+            return syncUserId;
+        }
+
         string key = GetCommentKey(threadId, commentElem, ptProjectUsers);
-        if (IsCommentNewOrChanged(oldCommentElems, key, commentElem, setCheckingTag))
-            threadElem.Add(commentElem);
+        switch (comment.Deleted)
+        {
+            case true when oldCommentElems.TryGetValue(key, out XElement oldCommentElem):
+                commentsToDelete.Add(oldCommentElem);
+                break;
+            case false when IsCommentNewOrChanged(oldCommentElems, key, commentElem, setCheckingTag):
+                threadElem.Add(commentElem);
+                break;
+        }
+
         oldCommentElems.Remove(key);
+
         return syncUserId;
     }
 
-    private static void AddDeletedNotes(XElement notesElem, IEnumerable<XElement> commentsToDelete)
+    private static void AddDeletedNotes(XContainer notesElem, IEnumerable<XElement> commentsToDelete)
     {
         foreach (XElement oldCommentElem in commentsToDelete)
         {
-            XElement oldThreadElem = oldCommentElem.Parent;
+            XElement oldThreadElem = oldCommentElem.Parent!;
             var threadId = (string)oldThreadElem.Attribute("id");
             XElement threadElem = notesElem
                 .Elements("thread")
@@ -308,8 +323,8 @@ public class ParatextNotesMapper : IParatextNotesMapper
     /// <summary>
     /// Gets the Paratext user for a comment from the specified sync user id and owner id.
     /// </summary>
-    private async Task<(string SyncUserId, string ParatextUsername, bool CanWritePTNoteOnProject)> GetSyncUserAsync(
-        string syncUserRef,
+    private async Task<(string SyncUserId, string ParatextUsername, bool CanWritePtNoteOnProject)> GetSyncUserAsync(
+        string? syncUserRef,
         string ownerRef,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
@@ -323,7 +338,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
                 paratextUsername = _paratextService.GetParatextUsername(userSecret);
         }
 
-        bool canWritePTNoteOnProject = paratextUsername != null;
+        bool canWritePtNoteOnProject = paratextUsername != null;
 
         ParatextUserProfile ptProjectUser =
             syncUserRef == null ? null : ptProjectUsers.Values.SingleOrDefault(s => s.OpaqueUserId == syncUserRef);
@@ -333,9 +348,9 @@ public class ParatextNotesMapper : IParatextNotesMapper
             // the comment has never been synced before (or syncUser is missing)
             // if the owner is not a PT user on the project, then use the current user's PT username
             paratextUsername ??= _currentParatextUsername;
-            ptProjectUser = FindOrCreateParatextUser(paratextUsername, ptProjectUsers);
+            ptProjectUser = FindOrCreateParatextUser(paratextUsername!, ptProjectUsers);
         }
-        return (ptProjectUser.OpaqueUserId, ptProjectUser.Username, canWritePTNoteOnProject);
+        return (ptProjectUser.OpaqueUserId, ptProjectUser.Username, canWritePtNoteOnProject);
     }
 
     private static bool IsCommentNewOrChanged(
@@ -355,7 +370,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
 
     private ParatextUserProfile FindOrCreateParatextUser(
         string paratextUsername,
-        Dictionary<string, ParatextUserProfile> ptProjectUsers
+        IDictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
         if (!ptProjectUsers.TryGetValue(paratextUsername, out ParatextUserProfile ptProjectUser))
@@ -365,7 +380,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
             ptProjectUser = new ParatextUserProfile
             {
                 OpaqueUserId = _guidService.NewObjectId(),
-                Username = paratextUsername
+                Username = paratextUsername,
             };
             // Add the sync user to the dictionary
             ptProjectUsers.Add(paratextUsername, ptProjectUser);
@@ -376,10 +391,10 @@ public class ParatextNotesMapper : IParatextNotesMapper
     /// <summary>
     /// Gets the username for a community checker, or null if the user has a paratext role on the project.
     /// </summary>
-    private async Task<string> TryGetCommunityCheckerUsername(
+    private async Task<string?> TryGetCommunityCheckerUsername(
         string userId,
-        Dictionary<string, string> userRoles,
-        Dictionary<string, string> checkerUsernames
+        IReadOnlyDictionary<string, string> userRoles,
+        IDictionary<string, string> checkerUsernames
     )
     {
         if (checkerUsernames.TryGetValue(userId, out string username))
@@ -392,6 +407,11 @@ public class ParatextNotesMapper : IParatextNotesMapper
             return null;
         }
 
+        if (_currentUserSecret == null)
+        {
+            return null;
+        }
+
         // the user is an SF community checker
         username = await _userService.GetUsernameFromUserId(_currentUserSecret.Id, userId);
         checkerUsernames.Add(userId, username);
@@ -401,11 +421,11 @@ public class ParatextNotesMapper : IParatextNotesMapper
     private string GetCommentKey(
         string threadId,
         XElement commentElem,
-        Dictionary<string, ParatextUserProfile> ptProjectUsers
+        IDictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
         var user = (string)commentElem.Attribute("user");
-        ParatextUserProfile ptProjectUser = FindOrCreateParatextUser(user, ptProjectUsers);
+        ParatextUserProfile ptProjectUser = FindOrCreateParatextUser(user!, ptProjectUsers);
         var extUser = (string)commentElem.Attribute("extUser") ?? "";
         var date = (string)commentElem.Attribute("date");
         return $"{threadId}|{ptProjectUser.OpaqueUserId}|{extUser}|{date}";

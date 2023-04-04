@@ -51,9 +51,9 @@ public class ParatextNotesMapperTests
             XElement.Parse(oldNotesText),
             await TestEnvironment.GetQuestionDocsAsync(conn),
             ptProjectUsers,
-            TestEnvironment.userRoles,
+            TestEnvironment.UserRoles,
             CheckingAnswerExport.All,
-            env.checkingNoteTagId
+            TestEnvironment.CheckingNoteTagId
         );
 
         const string expectedNotesText =
@@ -143,7 +143,7 @@ public class ParatextNotesMapperTests
         const string oldNotesText = @"<notes version=""1.1""></notes>";
         Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
 
-        Dictionary<string, string> userRoles = TestEnvironment.userRoles;
+        Dictionary<string, string> userRoles = TestEnvironment.UserRoles;
         userRoles["user03"] = SFProjectRole.CommunityChecker;
         XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
             XElement.Parse(oldNotesText),
@@ -151,7 +151,7 @@ public class ParatextNotesMapperTests
             ptProjectUsers,
             userRoles,
             CheckingAnswerExport.All,
-            env.checkingNoteTagId
+            TestEnvironment.CheckingNoteTagId
         );
 
         // User 03 is listed as a community checker because they are not a PT user on the particular project
@@ -250,9 +250,9 @@ public class ParatextNotesMapperTests
             XElement.Parse(oldNotesText),
             await TestEnvironment.GetQuestionDocsAsync(conn),
             ptProjectUsers,
-            TestEnvironment.userRoles,
+            TestEnvironment.UserRoles,
             CheckingAnswerExport.All,
-            env.checkingNoteTagId
+            TestEnvironment.CheckingNoteTagId
         );
 
         const string expectedNotesText =
@@ -358,9 +358,9 @@ public class ParatextNotesMapperTests
             XElement.Parse(oldNotesText),
             await TestEnvironment.GetQuestionDocsAsync(conn),
             ptProjectUsers,
-            TestEnvironment.userRoles,
+            TestEnvironment.UserRoles,
             CheckingAnswerExport.All,
-            env.checkingNoteTagId
+            TestEnvironment.CheckingNoteTagId
         );
 
         // User 3 is a PT user but does not have a role on this particular PT project, according to the PT
@@ -448,7 +448,7 @@ public class ParatextNotesMapperTests
         var env = new TestEnvironment();
         env.SetParatextProjectRoles(true);
         await env.InitMapperAsync(true, true);
-        env.AddData("syncuser01", "syncuser03", null, "syncuser03");
+        env.AddData("syncUser01", "syncUser03", null, "syncUser03");
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         const string oldNotesText =
@@ -500,9 +500,9 @@ public class ParatextNotesMapperTests
             XElement.Parse(oldNotesText),
             await TestEnvironment.GetQuestionDocsAsync(conn),
             ptProjectUsers,
-            TestEnvironment.userRoles,
+            TestEnvironment.UserRoles,
             CheckingAnswerExport.All,
-            env.checkingNoteTagId
+            TestEnvironment.CheckingNoteTagId
         );
 
         const string expectedNotesText =
@@ -563,7 +563,7 @@ public class ParatextNotesMapperTests
         var env = new TestEnvironment();
         env.SetParatextProjectRoles(true);
         await env.InitMapperAsync(true, true);
-        env.AddData("syncuser01", "syncuser03", "syncuser03", "syncuser03");
+        env.AddData("syncUser01", "syncUser01", "syncUser03", "syncUser01");
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         const string oldNotesText =
@@ -585,7 +585,7 @@ public class ParatextNotesMapperTests
                         </thread>
                         <thread id=""ANSWER_answer02"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
@@ -594,13 +594,13 @@ public class ParatextNotesMapperTests
                                 </content>
                                 <tagAdded>3</tagAdded>
                             </comment>
-                            <comment user=""PT User 3"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
                                     <p>[User 02 - xForge]</p>
                                     <p>Test comment 2.</p>
                                 </content>
                             </comment>
-                            <comment user=""PT User 1"" date=""2019-01-02T10:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T10:00:00.0000000+00:00"">
                                 <content>Test comment 3.</content>
                             </comment>
                         </thread>
@@ -621,9 +621,9 @@ public class ParatextNotesMapperTests
             XElement.Parse(oldNotesText),
             await TestEnvironment.GetQuestionDocsAsync(conn),
             ptProjectUsers,
-            TestEnvironment.userRoles,
+            TestEnvironment.UserRoles,
             CheckingAnswerExport.All,
-            env.checkingNoteTagId
+            TestEnvironment.CheckingNoteTagId
         );
 
         const string expectedNotesText =
@@ -637,7 +637,7 @@ public class ParatextNotesMapperTests
                         </thread>
                         <thread id=""ANSWER_answer04"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p>[User 04 - xForge]</p>
@@ -648,7 +648,7 @@ public class ParatextNotesMapperTests
                         </thread>
                         <thread id=""ANSWER_answer05"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 3"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
                                 <content>
                                     <p><span style=""bold"">Test question?</span></p>
                                     <p>[User 04 - xForge]</p>
@@ -659,7 +659,7 @@ public class ParatextNotesMapperTests
                         </thread>
                         <thread id=""ANSWER_answer02"">
                             <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
-                            <comment user=""PT User 1"" date=""2019-01-02T10:00:00.0000000+00:00"" deleted=""true"">
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T10:00:00.0000000+00:00"" deleted=""true"">
                                 <content>Test comment 3.</content>
                             </comment>
                         </thread>
@@ -679,6 +679,103 @@ public class ParatextNotesMapperTests
     }
 
     [Test]
+    public async Task GetNotesChangelistAsync_DoesDeleteParatextNotes()
+    {
+        var env = new TestEnvironment();
+        env.SetParatextProjectRoles(true);
+        await env.InitMapperAsync(true, true);
+        env.AddData("syncUser01", "syncUser01", "syncUser03", "syncUser01");
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        const string oldNotesText =
+            @"
+                    <notes version=""1.1"">
+                        <thread id=""ANSWER_answer01"">
+                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-01T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p>[User 02 - xForge]</p>
+                                    <p>Test answer 1.</p>
+                                </content>
+                                <tagAdded>3</tagAdded>
+                            </comment>
+                            <comment user=""PT User 3"" date=""2019-01-01T09:00:00.0000000+00:00"">
+                                <content>Test comment 1.</content>
+                            </comment>
+                        </thread>
+                        <thread id=""ANSWER_answer02"">
+                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-02T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p><span style=""italic"">This is some scripture. (MAT 1:2-3)</span></p>
+                                    <p>[User 04 - xForge]</p>
+                                    <p>Test answer 2.</p>
+                                </content>
+                                <tagAdded>3</tagAdded>
+                            </comment>
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
+                                <content>
+                                    <p>[User 02 - xForge]</p>
+                                    <p>Test comment 2.</p>
+                                </content>
+                            </comment>
+                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T11:00:00.0000000+00:00"">
+                                <content>
+                                    <p>A Paratext Only Comment.</p>
+                                </content>
+                            </comment>
+                        </thread>
+                        <thread id=""ANSWER_answer04"">
+                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-04T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p>[User 04 - xForge]</p>
+                                    <p>Test answer 4 is marked for export</p>
+                                </content>
+                                <tagAdded>3</tagAdded>
+                            </comment>
+                        </thread>
+                        <thread id=""ANSWER_answer05"">
+                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">Test question?</span></p>
+                                    <p>[User 04 - xForge]</p>
+                                    <p>Test answer 5 is resolved</p>
+                                </content>
+                                <tagAdded>3</tagAdded>
+                            </comment>
+                        </thread>
+                        <thread id=""ANSWER_answer06"">
+                            <selection verseRef=""MAT 1:1"" startPos=""0"" selectedText="""" />
+                            <comment user=""PT User 1"" extUser=""user04"" date=""2019-01-05T08:00:00.0000000+00:00"">
+                                <content>
+                                    <p><span style=""bold"">A Paratext Only Question and Answer</span></p>
+                                    <p>[User 04 - xForge]</p>
+                                    <p>Test answer 6 is only in Paratext</p>
+                                </content>
+                                <tagAdded>3</tagAdded>
+                            </comment>
+                        </thread>
+                    </notes>";
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
+        XElement notesElem = await env.Mapper.GetNotesChangelistAsync(
+            XElement.Parse(oldNotesText),
+            await TestEnvironment.GetQuestionDocsAsync(conn),
+            ptProjectUsers,
+            TestEnvironment.UserRoles,
+            CheckingAnswerExport.All,
+            TestEnvironment.CheckingNoteTagId
+        );
+
+        const string expectedNotesText = @"<notes version=""1.1"" />";
+        Assert.That(XNode.DeepEquals(notesElem, XElement.Parse(expectedNotesText)), Is.True);
+    }
+
+    [Test]
     public async Task GetNotesChangelistAsync_ExportAllNotes()
     {
         var env = new TestEnvironment();
@@ -693,9 +790,9 @@ public class ParatextNotesMapperTests
             XElement.Parse(oldNotesText),
             await TestEnvironment.GetQuestionDocsAsync(conn),
             ptProjectUsers,
-            TestEnvironment.userRoles,
+            TestEnvironment.UserRoles,
             CheckingAnswerExport.All,
-            env.checkingNoteTagId
+            TestEnvironment.CheckingNoteTagId
         );
 
         const string expectedNotesText =
@@ -774,9 +871,9 @@ public class ParatextNotesMapperTests
             XElement.Parse(oldNotesText),
             await TestEnvironment.GetQuestionDocsAsync(conn),
             ptProjectUsers,
-            TestEnvironment.userRoles,
+            TestEnvironment.UserRoles,
             CheckingAnswerExport.None,
-            env.checkingNoteTagId
+            TestEnvironment.CheckingNoteTagId
         );
 
         const string expectedNotesText = @"<notes version=""1.1"" />";
@@ -798,9 +895,9 @@ public class ParatextNotesMapperTests
             XElement.Parse(oldNotesText),
             await TestEnvironment.GetQuestionDocsAsync(conn),
             ptProjectUsers,
-            TestEnvironment.userRoles,
+            TestEnvironment.UserRoles,
             CheckingAnswerExport.MarkedForExport,
-            env.checkingNoteTagId
+            TestEnvironment.CheckingNoteTagId
         );
 
         const string expectedNotesText =
@@ -823,14 +920,15 @@ public class ParatextNotesMapperTests
 
     private class TestEnvironment
     {
-        public static readonly Dictionary<string, string> userRoles = new Dictionary<string, string>
+        public static readonly Dictionary<string, string> UserRoles = new Dictionary<string, string>
         {
             { "user01", SFProjectRole.Administrator },
             { "user02", SFProjectRole.CommunityChecker },
             { "user03", SFProjectRole.Translator },
-            { "user04", SFProjectRole.CommunityChecker }
+            { "user04", SFProjectRole.CommunityChecker },
         };
-        public readonly int checkingNoteTagId = 3;
+
+        public const int CheckingNoteTagId = 3;
 
         public TestEnvironment()
         {
@@ -838,7 +936,7 @@ public class ParatextNotesMapperTests
                 new[]
                 {
                     new UserSecret { Id = "user01" },
-                    new UserSecret { Id = "user03" }
+                    new UserSecret { Id = "user03" },
                 }
             );
 
@@ -854,7 +952,7 @@ public class ParatextNotesMapperTests
                 { "user01", "User 01" },
                 { "user02", "User 02" },
                 { "user03", "User 03" },
-                { "user04", "User 04" }
+                { "user04", "User 04" },
             };
             UserService
                 .GetUsernameFromUserId(Arg.Any<string>(), Arg.Any<string>())
@@ -864,26 +962,25 @@ public class ParatextNotesMapperTests
                 new LocalizationOptions { ResourcesPath = "Resources" }
             );
             var factory = new ResourceManagerStringLocalizerFactory(options, NullLoggerFactory.Instance);
-            Localizer = new StringLocalizer<SharedResource>(factory);
+            var localizer = new StringLocalizer<SharedResource>(factory);
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();
             siteOptions.Value.Returns(new SiteOptions { Name = "xForge", });
             Mapper = new ParatextNotesMapper(
                 UserSecrets,
                 ParatextService,
                 UserService,
-                Localizer,
+                localizer,
                 siteOptions,
                 new TestGuidService()
             );
         }
 
         public ParatextNotesMapper Mapper { get; }
-        public MemoryRepository<UserSecret> UserSecrets { get; }
+        private MemoryRepository<UserSecret> UserSecrets { get; }
         public SFMemoryRealtimeService RealtimeService { get; }
-        public IParatextService ParatextService { get; }
-        public IUserService UserService { get; }
-        public IStringLocalizer<SharedResource> Localizer { get; }
-        public IEnumerable<ParatextUserProfile> PtProjectUsers { get; set; }
+        private IParatextService ParatextService { get; }
+        private IUserService UserService { get; }
+        public IEnumerable<ParatextUserProfile> PtProjectUsers { get; private set; } = new List<ParatextUserProfile>();
 
         public async Task InitMapperAsync(bool includeSyncUsers, bool twoPtUsersOnProject)
         {
@@ -891,7 +988,6 @@ public class ParatextNotesMapperTests
             PtProjectUsers = project.ParatextUsers;
             await Mapper.InitAsync(
                 UserSecrets.Get("user01"),
-                ProjectSecret(),
                 ParatextUsersOnProject(twoPtUsersOnProject),
                 project,
                 CancellationToken.None
@@ -899,13 +995,12 @@ public class ParatextNotesMapperTests
         }
 
         public void AddData(
-            string answerSyncUserId1,
-            string answerSyncUserId2,
-            string commentSyncUserId1,
-            string commentSyncUserId2,
+            string? answerSyncUserId1,
+            string? answerSyncUserId2,
+            string? commentSyncUserId1,
+            string? commentSyncUserId2,
             bool useAudioResponses = false
-        )
-        {
+        ) =>
             RealtimeService.AddRepository(
                 "questions",
                 OTType.Json0,
@@ -935,9 +1030,9 @@ public class ParatextNotesMapperTests
                                             OwnerRef = "user03",
                                             SyncUserRef = commentSyncUserId1,
                                             DateCreated = new DateTime(2019, 1, 1, 9, 0, 0, DateTimeKind.Utc),
-                                            Text = "Test comment 1."
-                                        }
-                                    }
+                                            Text = "Test comment 1.",
+                                        },
+                                    },
                                 },
                                 new Answer
                                 {
@@ -956,9 +1051,29 @@ public class ParatextNotesMapperTests
                                             OwnerRef = "user02",
                                             SyncUserRef = commentSyncUserId2,
                                             DateCreated = new DateTime(2019, 1, 2, 9, 0, 0, DateTimeKind.Utc),
-                                            Text = "Test comment 2."
-                                        }
-                                    }
+                                            Text = "Test comment 2.",
+                                        },
+                                        new Comment
+                                        {
+                                            DataId = "comment03",
+                                            OwnerRef = "user02",
+                                            SyncUserRef = commentSyncUserId2,
+                                            DateCreated = new DateTime(2019, 1, 2, 10, 0, 0, DateTimeKind.Utc),
+                                            Text = "Test comment 3.",
+                                            Deleted = true,
+                                        },
+                                    },
+                                },
+                                new Answer
+                                {
+                                    DataId = "answer03",
+                                    OwnerRef = "user02",
+                                    SyncUserRef = answerSyncUserId2,
+                                    DateCreated = new DateTime(2019, 1, 3, 8, 0, 0, DateTimeKind.Utc),
+                                    Text = "Test answer 3 is deleted",
+                                    VerseRef = new VerseRefData(40, 1, "2-3"),
+                                    Status = AnswerStatus.Exportable,
+                                    Deleted = true,
                                 },
                                 new Answer
                                 {
@@ -968,7 +1083,7 @@ public class ParatextNotesMapperTests
                                     DateCreated = new DateTime(2019, 1, 4, 8, 0, 0, DateTimeKind.Utc),
                                     Text = "Test answer 4 is marked for export",
                                     VerseRef = new VerseRefData(40, 1, "2-3"),
-                                    Status = AnswerStatus.Exportable
+                                    Status = AnswerStatus.Exportable,
                                 },
                                 new Answer
                                 {
@@ -978,14 +1093,13 @@ public class ParatextNotesMapperTests
                                     DateCreated = new DateTime(2019, 1, 5, 8, 0, 0, DateTimeKind.Utc),
                                     Text = "Test answer 5 is resolved",
                                     VerseRef = new VerseRefData(40, 1, "2-3"),
-                                    Status = AnswerStatus.Resolved
-                                }
-                            }
-                        }
+                                    Status = AnswerStatus.Resolved,
+                                },
+                            },
+                        },
                     }
                 )
             );
-        }
 
         public static async Task<IEnumerable<IDocument<Question>>> GetQuestionDocsAsync(IConnection conn)
         {
@@ -993,28 +1107,11 @@ public class ParatextNotesMapperTests
             return new[] { questionDoc };
         }
 
-        public static async Task<IEnumerable<IDocument<NoteThread>>> GetNoteThreadDocsAsync(
-            IConnection conn,
-            string[] threadIds
-        )
-        {
-            IDocument<NoteThread>[] noteThreadDocs = new IDocument<NoteThread>[threadIds.Length];
-            var tasks = new List<Task>();
-            for (int i = 0; i < threadIds.Length; i++)
-            {
-                async Task fetchNoteThread(int index) =>
-                    noteThreadDocs[index] = await conn.FetchAsync<NoteThread>("project01:" + threadIds[index]);
-                tasks.Add(fetchNoteThread(i));
-            }
-            await Task.WhenAll(tasks);
-            return noteThreadDocs;
-        }
-
         public void SetParatextProjectRoles(bool twoPtUserOnProject)
         {
             Dictionary<string, string> ptUserRoles = new Dictionary<string, string>
             {
-                ["ptuser01"] = SFProjectRole.Administrator
+                ["ptuser01"] = SFProjectRole.Administrator,
             };
             if (twoPtUserOnProject)
                 ptUserRoles["ptuser03"] = SFProjectRole.Translator;
@@ -1028,25 +1125,23 @@ public class ParatextNotesMapperTests
             var ptProjectUsers = new List<ParatextUserProfile>();
             if (includeSyncUsers)
             {
-                ptProjectUsers.Add(new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = "PT User 1" });
-                ptProjectUsers.Add(new ParatextUserProfile { OpaqueUserId = "syncuser03", Username = "PT User 3" });
+                ptProjectUsers.Add(new ParatextUserProfile { OpaqueUserId = "syncUser01", Username = "PT User 1" });
+                ptProjectUsers.Add(new ParatextUserProfile { OpaqueUserId = "syncUser03", Username = "PT User 3" });
             }
             return new SFProject
             {
                 Id = "project01",
                 ParatextId = "paratextId",
                 ParatextUsers = ptProjectUsers,
-                UserRoles = userRoles
+                UserRoles = UserRoles,
             };
         }
-
-        private static SFProjectSecret ProjectSecret() => new SFProjectSecret { Id = "project01", };
 
         private static List<User> ParatextUsersOnProject(bool twoPtUsersOnProject)
         {
             var ptUsers = new List<User>
             {
-                new User { Id = "user01", ParatextId = "ptuser01" }
+                new User { Id = "user01", ParatextId = "ptuser01" },
             };
             if (twoPtUsersOnProject)
                 ptUsers.Add(new User { Id = "user03", ParatextId = "ptuser03" });
