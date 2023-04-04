@@ -607,7 +607,8 @@ class TestEnvironment {
   readonly hasUpdate$: Subject<any> = new Subject<any>();
   readonly loggedInState$: BehaviorSubject<LoginResult> = new BehaviorSubject<LoginResult>({
     loggedIn: true,
-    newlyLoggedIn: false
+    newlyLoggedIn: false,
+    anonymousUser: false
   });
   readonly mockedProjectDeletedDialogRef = mock<MdcDialogRef<ProjectDeletedDialogComponent>>(MdcDialogRef);
   readonly projectDeletedDialogRefAfterClosed$: Subject<string> = new Subject<string>();
@@ -621,7 +622,8 @@ class TestEnvironment {
     if (!isLoggedIn) {
       this.loggedInState$.next({
         loggedIn: false,
-        newlyLoggedIn: false
+        newlyLoggedIn: false,
+        anonymousUser: false
       });
     }
     this.addUser('user01', 'User 01', 'paratext|user01');
@@ -812,7 +814,7 @@ class TestEnvironment {
   }
 
   triggerLogin(): void {
-    this.loggedInState$.next({ loggedIn: true, newlyLoggedIn: false });
+    this.loggedInState$.next({ loggedIn: true, newlyLoggedIn: false, anonymousUser: false });
     this.wait();
   }
 

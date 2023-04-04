@@ -58,6 +58,7 @@ export interface AuthDetails {
 export interface LoginResult {
   loggedIn: boolean;
   newlyLoggedIn: boolean;
+  anonymousUser: boolean;
 }
 
 interface LoginParams {
@@ -146,6 +147,23 @@ export class AuthService {
 
   get expiresAt(): number | undefined {
     return this.localSettings.get(EXPIRES_AT_SETTING);
+  }
+
+  get isLoggedInUserAnonymous(): Promise<boolean> {
+    const state: LoginResult | undefined = this._loggedInState$.getValue();
+    if (state == null) {
+      return new Promise<boolean>(resolve =>
+        this._loggedInState$
+          .pipe(
+            filter(result => result != null),
+            take(1)
+          )
+          .subscribe(result => {
+            resolve(result!.anonymousUser);
+          })
+      );
+    }
+    return Promise.resolve(state.anonymousUser);
   }
 
   get isLoggedIn(): Promise<boolean> {
@@ -282,7 +300,7 @@ export class AuthService {
 
   async logOut(): Promise<void> {
     let proceedWithLogout: boolean = true;
-    if (this.cookieService.check(TransparentAuthenticationCookie)) {
+    if (await this.isLoggedInUserAnonymous) {
       proceedWithLogout = await this.dialogService.confirm(
         'warnings.login_cookie_deletion',
         'warnings.logout',
@@ -329,7 +347,7 @@ export class AuthService {
     if (!environment.production) {
       await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
     }
-    this._loggedInState$.next({ loggedIn: true, newlyLoggedIn: true });
+    this._loggedInState$.next({ loggedIn: true, newlyLoggedIn: true, anonymousUser: true });
     return true;
   }
 
@@ -373,7 +391,7 @@ export class AuthService {
     try {
       // If logging in then send them straight to auth0
       if (this.isLoginUrl) {
-        return { loggedIn: false, newlyLoggedIn: false };
+        return { loggedIn: false, newlyLoggedIn: false, anonymousUser: false };
       }
       // If we have no valid auth0 data then we have to validate online first
       if (
@@ -396,10 +414,14 @@ export class AuthService {
         }
       }
       await this.remoteStore.init(() => this.getAccessToken());
-      return { loggedIn: true, newlyLoggedIn: false };
+      return {
+        loggedIn: true,
+        newlyLoggedIn: false,
+        anonymousUser: this.cookieService.check(TransparentAuthenticationCookie)
+      };
     } catch (error) {
       await this.handleLoginError('tryLogIn', error);
-      return { loggedIn: false, newlyLoggedIn: false };
+      return { loggedIn: false, newlyLoggedIn: false, anonymousUser: false };
     }
   }
 
@@ -409,27 +431,27 @@ export class AuthService {
         // Try and login transparently if a share key is available
         if (this.isJoining) {
           if (await this.tryTransparentAuthentication()) {
-            return { loggedIn: true, newlyLoggedIn: true };
+            return { loggedIn: true, newlyLoggedIn: true, anonymousUser: true };
           }
-          return { loggedIn: false, newlyLoggedIn: false };
+          return { loggedIn: false, newlyLoggedIn: false, anonymousUser: false };
         } else if (!this.isCallbackUrl()) {
           // Check if this is a valid callback from auth0
           // Check session with auth0 as it may be able to renew silently
           const token = await this.checkSession();
           if (token == null) {
             this.clearState();
-            return { loggedIn: false, newlyLoggedIn: false };
+            return { loggedIn: false, newlyLoggedIn: false, anonymousUser: false };
           }
           await this.localLogIn(token.access_token, token.id_token, token.expires_in);
           await this.remoteStore.init(() => this.getAccessToken());
-          return { loggedIn: true, newlyLoggedIn: false };
+          return { loggedIn: true, newlyLoggedIn: false, anonymousUser: false };
         }
         // Handle the callback response from auth0
         const loginResult: RedirectLoginResult = await this.auth0.handleRedirectCallback();
         const token = await this.checkSession();
         if (token == null) {
           this.clearState();
-          return { loggedIn: false, newlyLoggedIn: false };
+          return { loggedIn: false, newlyLoggedIn: false, anonymousUser: false };
         }
         const authDetails: AuthDetails = {
           loginResult,
@@ -438,15 +460,19 @@ export class AuthService {
         };
         if (!(await this.handleOnlineAuth(authDetails))) {
           this.clearState();
-          return { loggedIn: false, newlyLoggedIn: false };
+          return { loggedIn: false, newlyLoggedIn: false, anonymousUser: false };
         } else {
-          return { loggedIn: true, newlyLoggedIn: true };
+          return { loggedIn: true, newlyLoggedIn: true, anonymousUser: false };
         }
       }
-      return { loggedIn: true, newlyLoggedIn: false };
+      return {
+        loggedIn: true,
+        newlyLoggedIn: false,
+        anonymousUser: this.cookieService.check(TransparentAuthenticationCookie)
+      };
     } catch (error) {
       await this.handleLoginError('tryOnlineLogIn', error);
-      return { loggedIn: false, newlyLoggedIn: false };
+      return { loggedIn: false, newlyLoggedIn: false, anonymousUser: false };
     }
   }
 

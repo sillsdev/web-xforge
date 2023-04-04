@@ -217,6 +217,16 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
             FileSystemService.DeleteFile(filePath);
     }
 
+    public async Task<TModel> GetProjectAsync(string projectId)
+    {
+        Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
+        if (!projectAttempt.TryResult(out TModel project))
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+        return project;
+    }
+
     public async Task SetSyncDisabledAsync(string curUserId, string systemRole, string projectId, bool isDisabled)
     {
         if (systemRole != SystemRole.SystemAdmin)
@@ -311,16 +321,6 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
     protected string GetAudioDir(string projectId) => Path.Combine(SiteOptions.Value.SiteDir, "audio", projectId);
 
     protected abstract Task<Attempt<string>> TryGetProjectRoleAsync(TModel project, string userId);
-
-    protected async Task<TModel> GetProjectAsync(string projectId)
-    {
-        Attempt<TModel> projectAttempt = await RealtimeService.TryGetSnapshotAsync<TModel>(projectId);
-        if (!projectAttempt.TryResult(out TModel project))
-        {
-            throw new DataNotFoundException("The project does not exist.");
-        }
-        return project;
-    }
 
     protected async Task<IDocument<TModel>> GetProjectDocAsync(string projectId, IConnection conn)
     {

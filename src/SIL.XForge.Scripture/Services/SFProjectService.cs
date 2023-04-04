@@ -361,8 +361,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await _syncService.CancelSyncAsync(curUserId, projectId);
     }
 
-    public new async Task<SFProject> GetProjectAsync(string projectId) => await base.GetProjectAsync(projectId);
-
     public async Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale, string role)
     {
         SFProject project = await GetProjectAsync(projectId);
@@ -642,8 +640,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         // Ensure the share key is valid for everyone else
-        if (!await CheckShareKeyValidity(shareKey))
-            throw new ForbiddenException();
+        await CheckShareKeyValidity(shareKey);
 
         if (projectSecretShareKey.ShareLinkType == ShareLinkType.Anyone)
         {
@@ -671,17 +668,17 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         throw new ForbiddenException();
     }
 
-    public async Task<bool> CheckShareKeyValidity(string shareKey)
+    public async Task<ValidShareKey> CheckShareKeyValidity(string shareKey)
     {
-        ProjectSecret projectSecret = GetProjectSecret(shareKey);
+        SFProjectSecret projectSecret = GetProjectSecretByShareKey(shareKey);
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
-        SFProject project = await GetProjectAsync(projectSecret.Id);
 
-        if (projectSecretShareKey.ProjectRole == null)
+        if (string.IsNullOrWhiteSpace(projectSecretShareKey?.ProjectRole))
         {
-            return false;
+            throw new ForbiddenException();
         }
 
+        SFProject project = await GetProjectAsync(projectSecret.Id);
         if (projectSecretShareKey.ShareLinkType == ShareLinkType.Anyone)
         {
             string[] availableRoles = new Dictionary<string, bool>
@@ -691,7 +688,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled
                 },
                 { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled },
-                { SFProjectRole.Reviewer, project.TranslateConfig.ShareEnabled }
+                { SFProjectRole.Reviewer, project.TranslateConfig.ShareEnabled },
             }
                 .Where(entry => entry.Value)
                 .Select(entry => entry.Key)
@@ -699,7 +696,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
             if (!availableRoles.Contains(projectSecretShareKey.ProjectRole))
             {
-                return false;
+                throw new ForbiddenException();
             }
         }
         else if (
@@ -707,12 +704,17 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             && projectSecretShareKey.ShareLinkType == ShareLinkType.Recipient
         )
         {
-            return false;
+            throw new ForbiddenException();
         }
-        return true;
+        return new ValidShareKey()
+        {
+            Project = project,
+            ProjectSecret = projectSecret,
+            ShareKey = projectSecretShareKey
+        };
     }
 
-    public SFProjectSecret GetProjectSecret(string shareKey)
+    public SFProjectSecret GetProjectSecretByShareKey(string shareKey)
     {
         SFProjectSecret projectSecret = ProjectSecrets
             .Query()
