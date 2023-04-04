@@ -427,7 +427,8 @@ export class NoteDialogComponent implements OnInit {
   }
 
   private stripSFUserLabel(content: string): string {
-    const matchArray: RegExpExecArray | null = COMMENTER_LABEL_REGEX.exec(content);
+    // trim whitespace since the content gets an extra new line character after being exported to PT
+    const matchArray: RegExpExecArray | null = COMMENTER_LABEL_REGEX.exec(content.trim());
     return matchArray == null ? content : matchArray[1];
   }
 
