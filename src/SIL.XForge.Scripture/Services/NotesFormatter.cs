@@ -74,6 +74,14 @@ public static class NotesFormatter
             commentElem.Add(new XAttribute("extUser", comment.ExternalUser));
         if (comment.Deleted)
             commentElem.Add(new XAttribute("deleted", "true"));
+        if (comment.TagsAdded is not null)
+        {
+            foreach (string tagAdded in comment.TagsAdded)
+            {
+                commentElem.Add(new XElement("tagAdded", tagAdded));
+            }
+        }
+
         commentElem.Add(FormatContent(comment.Contents));
         return commentElem;
     }
@@ -98,7 +106,7 @@ public static class NotesFormatter
     private static XElement FormatParagraph(XmlNode paraNode)
     {
         XElement paraElem = new XElement("p");
-        if (paraNode.ChildNodes.Count == 1 && paraNode.FirstChild.NodeType == XmlNodeType.Text)
+        if (paraNode.ChildNodes.Count == 1 && paraNode.FirstChild?.NodeType == XmlNodeType.Text)
             paraElem.Value = paraNode.InnerText;
         else
         {
@@ -177,8 +185,8 @@ public static class NotesFormatter
             comment.Date = commentDate;
         comment.ExternalUser = commentElem.Attribute("extUser")?.Value;
         comment.Deleted = commentElem.Attribute("deleted")?.Value == "true";
-        if (commentElem.Element("tagsAdded") != null)
-            comment.TagsAdded = new[] { commentElem.Element("tagsAdded").Value };
+        if (commentElem.Elements("tagAdded").Any())
+            comment.TagsAdded = commentElem.Elements("tagAdded").Select(t => t.Value).ToArray();
         ParseContents(commentElem.Element("content"), comment);
     }
 
