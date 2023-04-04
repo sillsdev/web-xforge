@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -19,9 +21,23 @@ public class AnonymousServiceTests
     {
         var env = new TestEnvironment();
         string shareKey = "key02";
-        env.SFProjectService.GetProjectSecret(shareKey).Returns(env.ProjectSecrets.Get(Project01));
-        env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(env.Projects.Get(Project01)));
-        env.SFProjectService.CheckShareKeyValidity(shareKey).Returns(Task.FromResult(true));
+        SFProject project = env.Projects.Get(Project01);
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
+        ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
+        env.SFProjectService.GetProjectSecretByShareKey(shareKey).Returns(projectSecret);
+        env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(project));
+        env.SFProjectService
+            .CheckShareKeyValidity(shareKey)
+            .Returns(
+                Task.FromResult(
+                    new ValidShareKey()
+                    {
+                        Project = project,
+                        ProjectSecret = projectSecret,
+                        ShareKey = projectSecretShareKey
+                    }
+                )
+            );
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckSharingKey(shareKey));
@@ -32,9 +48,9 @@ public class AnonymousServiceTests
     {
         var env = new TestEnvironment();
         string shareKey = "key01";
-        env.SFProjectService.GetProjectSecret(shareKey).Returns(env.ProjectSecrets.Get(Project01));
+        env.SFProjectService.GetProjectSecretByShareKey(shareKey).Returns(env.ProjectSecrets.Get(Project01));
         env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(env.Projects.Get(Project01)));
-        env.SFProjectService.CheckShareKeyValidity(shareKey).Returns(Task.FromResult(false));
+        env.SFProjectService.CheckShareKeyValidity(shareKey).Throws(new ForbiddenException());
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckSharingKey(shareKey));
@@ -45,9 +61,23 @@ public class AnonymousServiceTests
     {
         var env = new TestEnvironment();
         string shareKey = "key01";
-        env.SFProjectService.GetProjectSecret(shareKey).Returns(env.ProjectSecrets.Get(Project01));
-        env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(env.Projects.Get(Project01)));
-        env.SFProjectService.CheckShareKeyValidity(shareKey).Returns(Task.FromResult(true));
+        SFProject project = env.Projects.Get(Project01);
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
+        ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
+        env.SFProjectService.GetProjectSecretByShareKey(shareKey).Returns(projectSecret);
+        env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(project));
+        env.SFProjectService
+            .CheckShareKeyValidity(shareKey)
+            .Returns(
+                Task.FromResult(
+                    new ValidShareKey()
+                    {
+                        Project = project,
+                        ProjectSecret = projectSecret,
+                        ShareKey = projectSecretShareKey
+                    }
+                )
+            );
 
         // SUT
         AnonymousShareKeyResponse? result = await env.Service.CheckSharingKey(shareKey);
@@ -59,7 +89,7 @@ public class AnonymousServiceTests
     }
 
     [Test]
-    public async Task CheckSharingKey_GenerateTransparentUser()
+    public async Task CheckSharingKey_GenerateAnonymousUser()
     {
         var env = new TestEnvironment();
         string shareKey = "key01";
@@ -67,9 +97,9 @@ public class AnonymousServiceTests
         string language = "en";
         string username = "generatedKey";
         string password = "longerGeneratedKey";
-        env.SFProjectService.GetProjectSecret(shareKey).Returns(env.ProjectSecrets.Get(Project01));
+        env.SFProjectService.GetProjectSecretByShareKey(shareKey).Returns(env.ProjectSecrets.Get(Project01));
         env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(env.Projects.Get(Project01)));
-        env.SFProjectService.CheckShareKeyValidity(shareKey).Returns(Task.FromResult(true));
+        env.SFProjectService.CheckShareKeyValidity(shareKey).Returns(Task.FromResult(new ValidShareKey()));
         env.SecurityService.GenerateKey().Returns(username);
         env.SecurityService.GenerateKey(16).Returns(password);
 
@@ -86,15 +116,15 @@ public class AnonymousServiceTests
     }
 
     [Test]
-    public void CheckSharingKey_GenerateTransparentUserThrowsWhenKeyNotValid()
+    public void CheckSharingKey_GenerateAnonymousUserThrowsWhenKeyNotValid()
     {
         var env = new TestEnvironment();
         string shareKey = "key01";
         string displayName = "Test User";
         string language = "en";
-        env.SFProjectService.GetProjectSecret(shareKey).Returns(env.ProjectSecrets.Get(Project01));
+        env.SFProjectService.GetProjectSecretByShareKey(shareKey).Returns(env.ProjectSecrets.Get(Project01));
         env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(env.Projects.Get(Project01)));
-        env.SFProjectService.CheckShareKeyValidity(shareKey).Returns(Task.FromResult(false));
+        env.SFProjectService.CheckShareKeyValidity(shareKey).Throws(new ForbiddenException());
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GenerateAccount(shareKey, displayName, language));
