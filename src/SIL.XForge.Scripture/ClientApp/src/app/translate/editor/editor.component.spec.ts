@@ -2725,6 +2725,28 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('can open dialog of the second note on the verse', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      expect(env.getNoteThreadIconElement('verse_1_3', 'thread02')).not.toBeNull();
+      env.mockNoteDialogRef.onClose = () => env.insertNoteThread('user01', 'MAT 1:3', 'threadnew01');
+      env.setSelectionAndInsertNote('verse_1_3');
+      env.mockNoteDialogRef.close(true);
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      env.wait();
+
+      const noteElement: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'threadnew01')!;
+      noteElement.click();
+      tick();
+      env.fixture.detectChanges();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).twice();
+
+      env.setSelectionAndInsertNote('verse_1_3');
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).thrice();
+      env.dispose();
+    }));
+
     it('reviewers can click to select verse', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();

@@ -204,7 +204,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   set targetFocused(focused: boolean) {
-    focused = this.dialogService.openDialogCount > 0 ? true : focused;
+    // both the note dialog and the bottom sheet causes the editor to lose focus,
+    // but the editor should still keep the highlighting in both situations
+    focused = this.dialogService.openDialogCount > 0 || this.bottomSheetRef != null ? true : focused;
     this._targetFocused = focused;
   }
 
@@ -1032,12 +1034,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       disableClose: true,
       data: noteDialogData
     });
+
+    // deselect the current verse selection so that the newly inserted note thread embed gets the correct formatting
+    // to prevent introducing erroneous usx-segment elements into the DOM
+    this.target?.toggleVerseSelection(verseRef!);
+    this.commenterSelectedVerseRef = undefined;
     const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
     if (result?.noteContent != null) {
       await this.saveNote({ content: result.noteContent, threadId, dataId: result.noteDataId });
-    } else if (result?.deleted) {
-      this.toggleNoteThreadVerses(false);
-      this.toggleNoteThreadVerses(true);
+      this.toggleNoteThreadVerseRefs$.next();
     }
   }
 
