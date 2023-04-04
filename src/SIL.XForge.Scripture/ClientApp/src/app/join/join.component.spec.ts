@@ -122,7 +122,7 @@ describe('JoinComponent', () => {
     it('invite text shows project and role', fakeAsync(() => {
       const env = new TestEnvironment();
       const [, details] = capture(mockedI18nService.translateAndInsertTags).first();
-      expect(details).toEqual({ projectName: 'Test Project', role: SFProjectRole.CommunityChecker });
+      expect(details).toEqual({ projectName: 'Test Project' });
       expect(env.joiningText).toBeTruthy();
     }));
 

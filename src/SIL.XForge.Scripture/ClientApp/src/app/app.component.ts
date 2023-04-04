@@ -76,6 +76,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   projectLabel = projectLabel;
 
   private currentUserDoc?: UserDoc;
+  private isLoggedInUserAnonymous: boolean = false;
   private _projectSelect?: MdcSelect;
   private projectDeletedDialogRef: MdcDialogRef<ProjectDeletedDialogComponent> | null = null;
   private _topAppBar?: MdcTopAppBar;
@@ -246,7 +247,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get canChangePassword(): boolean {
-    if (this.currentUser == null) {
+    if (this.currentUser == null || this.isLoggedInUserAnonymous) {
       return false;
     }
     return getAuthType(this.currentUser.authId) === AuthType.Account;
@@ -306,6 +307,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       }
 
       const isNewlyLoggedIn = await this.authService.isNewlyLoggedIn;
+      this.isLoggedInUserAnonymous = await this.authService.isLoggedInUserAnonymous;
       const isBrowserSupported = supportedBrowser();
       this.reportingService.addMeta({ isBrowserSupported });
       if (isNewlyLoggedIn && !isBrowserSupported) {

@@ -347,7 +347,7 @@ public class SFProjectServiceTests
         var shareKey = "abcd";
 
         // SUT
-        SFProjectSecret projectSecret = env.Service.GetProjectSecret(shareKey);
+        SFProjectSecret projectSecret = env.Service.GetProjectSecretByShareKey(shareKey);
 
         Assert.AreEqual(projectSecret.Id, Project01);
     }
@@ -359,7 +359,7 @@ public class SFProjectServiceTests
         var shareKey = "invalid";
 
         // SUT
-        Assert.Throws<DataNotFoundException>(() => env.Service.GetProjectSecret(shareKey));
+        Assert.Throws<DataNotFoundException>(() => env.Service.GetProjectSecretByShareKey(shareKey));
     }
 
     [Test]

@@ -339,6 +339,9 @@ public class SFProjectsRpcController : RpcControllerBase
         }
     }
 
+    [Obsolete("Only here for old clients that still call it. Removed 2023-04.")]
+    public async Task<IRpcMethodResult> CheckLinkSharing(string shareKey) => Ok(await JoinWithShareKey(shareKey));
+
     public async Task<IRpcMethodResult> JoinWithShareKey(string shareKey)
     {
         try
