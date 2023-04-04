@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Threading.Tasks;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
@@ -25,18 +24,18 @@ public class AnonymousService : IAnonymousService
 
     public async Task<AnonymousShareKeyResponse> CheckSharingKey(string shareKey)
     {
-        SFProjectSecret projectSecret = _projectService.GetProjectSecret(shareKey);
-        ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
-        if (projectSecretShareKey.RecipientUserId != null || !await _projectService.CheckShareKeyValidity(shareKey))
+        ValidShareKey validShareKey = await _projectService.CheckShareKeyValidity(shareKey);
+
+        // Ensure the key hasn't been used by another recipient
+        if (validShareKey.ShareKey.RecipientUserId != null)
         {
             throw new ForbiddenException();
         }
 
-        SFProject project = await _projectService.GetProjectAsync(projectSecret.Id);
         return new AnonymousShareKeyResponse
         {
-            ProjectName = project.Name,
-            Role = projectSecretShareKey.ProjectRole,
+            ProjectName = validShareKey.Project.Name,
+            Role = validShareKey.ShareKey.ProjectRole,
             ShareKey = shareKey
         };
     }
@@ -47,19 +46,14 @@ public class AnonymousService : IAnonymousService
         string language
     )
     {
-        await CheckSharingKey(shareKey);
+        await _projectService.CheckShareKeyValidity(shareKey);
         // Generate random username and password for the account
         var credentials = new TransparentAuthenticationCredentials
         {
             Username = _securityService.GenerateKey(),
             Password = _securityService.GenerateKey(16)
         };
-        _ = await _authService.GenerateTransparentUser(
-            displayName,
-            credentials.Username,
-            credentials.Password,
-            language
-        );
+        _ = await _authService.GenerateAnonymousUser(displayName, credentials, language);
         return credentials;
     }
 }

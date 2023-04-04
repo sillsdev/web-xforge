@@ -18,9 +18,9 @@ public interface ISFProjectService : IProjectService
     Task CancelSyncAsync(string curUserId, string projectId);
     Task<bool> InviteAsync(string curUserId, string projectId, string email, string locale, string role);
     Task<string> GetLinkSharingKeyAsync(string curUserId, string projectId, string role, string shareLinkType);
-    Task<bool> CheckShareKeyValidity(string shareKey);
+    Task<ValidShareKey> CheckShareKeyValidity(string shareKey);
     Task<SFProject> GetProjectAsync(string projectId);
-    SFProjectSecret GetProjectSecret(string shareKey);
+    SFProjectSecret GetProjectSecretByShareKey(string shareKey);
     Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey);
     Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email);
     Task UninviteUserAsync(string curUserId, string projectId, string email);
