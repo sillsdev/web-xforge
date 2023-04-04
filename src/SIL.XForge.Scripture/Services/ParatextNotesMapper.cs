@@ -202,7 +202,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
         return notesElem;
     }
 
-    /// <summar>
+    /// <summary>
     /// Get the Paratext Comment elements from a project that are associated with Community Checking answers.
     /// </summary>
     private Dictionary<string, XElement> GetOldCommentElements(
@@ -271,7 +271,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
         commentElem.Add(contentElem);
         if (tagId != NoteTag.notSetId)
         {
-            var tagsAddedElem = new XElement("tagsAdded", tagId);
+            var tagsAddedElem = new XElement("tagAdded", tagId);
             commentElem.Add(tagsAddedElem);
         }
 
@@ -339,9 +339,9 @@ public class ParatextNotesMapper : IParatextNotesMapper
     }
 
     private static bool IsCommentNewOrChanged(
-        Dictionary<string, XElement> oldCommentElems,
+        IReadOnlyDictionary<string, XElement> oldCommentElems,
         string key,
-        XElement commentElem,
+        XContainer commentElem,
         bool expectNoteTagSet
     )
     {
@@ -350,7 +350,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
             || !XNode.DeepEquals(oldCommentElem.Element("content"), commentElem.Element("content"))
         )
             return true;
-        return expectNoteTagSet && oldCommentElem.Element("tagsAdded") == null;
+        return expectNoteTagSet && !oldCommentElem.Elements("tagAdded").Any();
     }
 
     private ParatextUserProfile FindOrCreateParatextUser(

@@ -42,7 +42,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                     </notes>";
@@ -67,7 +67,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Test answer 1.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 3"" date=""2019-01-01T09:00:00.0000000+00:00"">
                                 <content>Test comment 1.</content>
@@ -82,7 +82,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 2.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
@@ -99,7 +99,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer05"">
@@ -110,7 +110,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 5 is resolved</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer03"">
@@ -121,7 +121,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                     </notes>";
@@ -166,7 +166,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Test answer 1.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user03"" date=""2019-01-01T09:00:00.0000000+00:00"">
                                 <content>
@@ -184,7 +184,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 2.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
@@ -201,7 +201,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer05"">
@@ -212,7 +212,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 5 is resolved</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                     </notes>";
@@ -241,7 +241,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                     </notes>";
@@ -266,7 +266,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>- xForge audio-only response -</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 3"" date=""2019-01-01T09:00:00.0000000+00:00"">
                                 <content>Test comment 1.</content>
@@ -281,7 +281,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 2.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
@@ -298,7 +298,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer05"">
@@ -309,7 +309,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 5 is resolved</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer03"">
@@ -320,7 +320,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                     </notes>";
@@ -349,7 +349,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                     </notes>";
@@ -379,7 +379,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Test answer 1.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user03"" date=""2019-01-01T09:00:00.0000000+00:00"">
                                 <content>Test comment 1.</content>
@@ -394,7 +394,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 2.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
@@ -411,7 +411,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer05"">
@@ -422,7 +422,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 5 is resolved</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer03"">
@@ -433,7 +433,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                     </notes>";
@@ -462,7 +462,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Old test answer 1.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer02"">
@@ -474,14 +474,14 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 2.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 3"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
                                     <p>[User 02 - xForge]</p>
                                     <p>Old test comment 2.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer04"">
@@ -516,7 +516,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Test answer 1.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 3"" date=""2019-01-01T09:00:00.0000000+00:00"">
                                 <content>Test comment 1.</content>
@@ -539,7 +539,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer05"">
@@ -550,7 +550,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 5 is resolved</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                     </notes>";
@@ -577,7 +577,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Test answer 1.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 3"" date=""2019-01-01T09:00:00.0000000+00:00"">
                                 <content>Old test comment 1.</content>
@@ -592,7 +592,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 2.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 3"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
@@ -612,7 +612,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                     </notes>";
@@ -643,7 +643,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer05"">
@@ -654,7 +654,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 5 is resolved</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer02"">
@@ -671,7 +671,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Test answer 3.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                     </notes>";
@@ -709,7 +709,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 02 - xForge]</p>
                                     <p>Test answer 1.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 3"" date=""2019-01-01T09:00:00.0000000+00:00"">
                                 <content>Test comment 1.</content>
@@ -724,7 +724,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 2.</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                             <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T09:00:00.0000000+00:00"">
                                 <content>
@@ -741,7 +741,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                         <thread id=""ANSWER_answer05"">
@@ -752,7 +752,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 5 is resolved</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                     </notes>";
@@ -814,7 +814,7 @@ public class ParatextNotesMapperTests
                                     <p>[User 04 - xForge]</p>
                                     <p>Test answer 4 is marked for export</p>
                                 </content>
-                                <tagsAdded>3</tagsAdded>
+                                <tagAdded>3</tagAdded>
                             </comment>
                         </thread>
                     </notes>";
