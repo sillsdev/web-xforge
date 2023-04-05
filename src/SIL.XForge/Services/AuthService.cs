@@ -48,7 +48,7 @@ public class AuthService : DisposableBase, IAuthService
 
     public Task UpdateAvatar(string authId, string url)
     {
-        var content = new JObject(new JProperty("picture", url));
+        var content = new JObject(new JProperty("user_metadata", new JObject(new JProperty("picture", url))));
         return CallApiAsync(new HttpMethod("PATCH"), $"users/{authId}", content);
     }
 

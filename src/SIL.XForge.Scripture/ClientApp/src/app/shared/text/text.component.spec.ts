@@ -26,6 +26,8 @@ import { UserService } from 'xforge-common/user.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { LocalPresence } from 'sharedb/lib/sharedb';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { User } from 'realtime-server/common/models/user';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -39,7 +41,6 @@ import {
   getTextDoc
 } from '../test-utils';
 import { PresenceData, PRESENCE_EDITOR_ACTIVE_TIMEOUT, RemotePresences, TextComponent } from './text.component';
-import { TextViewModel } from './text-view-model';
 import { TextNoteDialogComponent, TextNoteType } from './text-note-dialog/text-note-dialog.component';
 
 const mockedBugsnagService = mock(BugsnagService);
@@ -294,7 +295,6 @@ describe('TextComponent', () => {
       expect(onSelectionChangedSpy).toHaveBeenCalledTimes(1);
       expect(localPresenceSubmitSpy).toHaveBeenCalledTimes(0);
       expect(cursorRemoveSpy).toHaveBeenCalledTimes(1);
-      verify(mockedUserService.getCurrentUser()).never();
     }));
 
     it('should clear doc presence on blur', fakeAsync(() => {
@@ -322,10 +322,27 @@ describe('TextComponent', () => {
     }));
 
     it('should use "Anonymous" when the displayName is undefined', fakeAsync(() => {
-      const env: TestEnvironment = new TestEnvironment();
+      const callback: (env: TestEnvironment) => void = (env: TestEnvironment) => {
+        env.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+          id: 'user02',
+          data: {
+            name: 'User 02',
+            email: 'user2@example.com',
+            role: SystemRole.User,
+            isDisplayNameConfirmed: true,
+            avatarUrl: '',
+            authId: 'auth02',
+            displayName: '',
+            sites: {}
+          }
+        });
+        when(mockedUserService.getCurrentUser()).thenCall(() =>
+          env.realtimeService.subscribe(UserDoc.COLLECTION, 'user02')
+        );
+      };
+      const env: TestEnvironment = new TestEnvironment({ callback });
       env.fixture.detectChanges();
       env.id = new TextDocId('project01', 40, 1);
-      when(mockedUserService.getCurrentUser()).thenResolve({ data: undefined } as UserDoc);
       tick();
       env.fixture.detectChanges();
 
@@ -475,6 +492,25 @@ describe('TextComponent', () => {
       presenceChannelReceiveSpy.calls.reset();
       tick(3000);
       expect(presenceChannelReceiveSpy).toHaveBeenCalledTimes(1);
+    }));
+
+    it('should update presence if the user data changes', fakeAsync(() => {
+      const currentAvatarUrl: string = 'https://example.com/avatar.png';
+      const updatedAvatarUrl: string = 'https://example.com/avatar-updated.png';
+      const env: TestEnvironment = new TestEnvironment();
+      env.fixture.detectChanges();
+      env.id = new TextDocId('project01', 40, 1);
+      tick();
+      env.fixture.detectChanges();
+      const presenceChannelSubmit = spyOn<any>(env.localPresenceChannel, 'submit');
+      const userDoc: UserDoc = env.getUserDoc('user01');
+      expect(userDoc.data?.avatarUrl).toEqual(currentAvatarUrl);
+
+      userDoc.submitJson0Op(op => op.set(u => u.avatarUrl, updatedAvatarUrl));
+      expect(userDoc.data?.avatarUrl).toEqual(updatedAvatarUrl);
+      expect(presenceChannelSubmit).toHaveBeenCalledTimes(1);
+
+      TestEnvironment.waitForPresenceTimer();
     }));
   });
 
@@ -1067,6 +1103,7 @@ interface PerformDropTestArgs {
 
 /** Arguments to TestEnvironment constructor. */
 interface TestEnvCtorArgs {
+  callback?: (env: TestEnvironment) => void;
   chapterNum?: number;
   textDoc?: RichText.DeltaOperation[];
   presenceEnabled?: boolean;
@@ -1091,11 +1128,11 @@ class MockDragEvent extends DragEvent {
     }
   }
 
-  public setTarget(newTarget: EventTarget | null) {
+  public setTarget(newTarget: EventTarget | null): void {
     this._target = newTarget;
   }
 
-  public setDataTransfer(newDataTransfer: DataTransfer | null) {
+  public setDataTransfer(newDataTransfer: DataTransfer | null): void {
     this._dataTransfer = newDataTransfer;
   }
 }
@@ -1142,7 +1179,7 @@ class TestEnvironment {
   private _onlineStatus = new BehaviorSubject<boolean>(true);
   private isOnline: boolean = true;
 
-  constructor({ textDoc, chapterNum, presenceEnabled = true }: TestEnvCtorArgs = {}) {
+  constructor({ textDoc, chapterNum, presenceEnabled = true, callback }: TestEnvCtorArgs = {}) {
     when(mockedPwaService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
     when(mockedPwaService.isOnline).thenCall(() => this.isOnline);
     when(mockedTranslocoService.translate<string>(anything())).thenCall(
@@ -1175,6 +1212,19 @@ class TestEnvironment {
       },
       { id: jhnTextDocId.toString(), data: getEmptyChapterDoc(jhnTextDocId), type: RichText.type.name }
     ]);
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: 'user01',
+      data: {
+        name: 'User 01',
+        email: 'user1@example.com',
+        role: SystemRole.User,
+        isDisplayNameConfirmed: true,
+        avatarUrl: 'https://example.com/avatar.png',
+        authId: 'auth01',
+        displayName: 'name',
+        sites: {}
+      }
+    });
 
     when(mockedProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
@@ -1182,7 +1232,13 @@ class TestEnvironment {
     when(mockedProjectService.getProfile(anything())).thenCall(() =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
     );
-    when(mockedUserService.getCurrentUser()).thenResolve({ data: { displayName: 'name' } } as UserDoc);
+    when(mockedUserService.getCurrentUser()).thenCall(() =>
+      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+    );
+
+    if (callback != null) {
+      callback(this);
+    }
 
     this.fixture = TestBed.createComponent(HostComponent);
     this.fixture.detectChanges();
@@ -1228,10 +1284,6 @@ class TestEnvironment {
     return document.getElementsByClassName('ql-container')[0] as HTMLElement;
   }
 
-  get viewModel(): TextViewModel {
-    return (this.component as any).viewModel;
-  }
-
   get remoteChannelPresences(): Record<string, PresenceData> {
     return (this.component as any).presenceChannel.remotePresences;
   }
@@ -1246,6 +1298,10 @@ class TestEnvironment {
 
   get localPresenceDoc(): LocalPresence<RangeStatic | null> {
     return (this.component as any).localPresenceDoc;
+  }
+
+  getUserDoc(userId: string): UserDoc {
+    return this.realtimeService.get<UserDoc>(UserDoc.COLLECTION, userId);
   }
 
   getSegment(segmentRef: string): HTMLElement | null {
@@ -1406,7 +1462,7 @@ class TestEnvironment {
 
   /** Write a presence into the sharedb remote presence list, and notify that a new remote presence has
    * appeared on the textdoc. */
-  addRemotePresence(remotePresenceId: string, range?: RangeStatic | null) {
+  addRemotePresence(remotePresenceId: string, range?: RangeStatic | null): void {
     const presenceData: PresenceData = {
       viewer: {
         activeInEditor: false,
