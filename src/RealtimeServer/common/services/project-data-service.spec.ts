@@ -245,6 +245,32 @@ describe('ProjectDataService', () => {
       )
     ).resolves.not.toThrow();
   });
+
+  it('handles updates to the deleted property as delete operations', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const userConn = clientConnect(env.server, 'user');
+    await expect(
+      submitJson0Op<TestData>(userConn, TEST_DATA_COLLECTION, 'test02', ops =>
+        ops
+          .add(d => d.children, { id: 'sub04', ownerRef: 'user', children: [] })
+          .insert(d => d.children[1].children, 0, { id: 'sub05', ownerRef: 'user' })
+      )
+    ).resolves.not.toThrow();
+
+    const adminConn = clientConnect(env.server, 'admin');
+    await expect(
+      submitJson0Op<TestData>(adminConn, TEST_DATA_COLLECTION, 'test02', ops =>
+        ops.set<number>(d => d.children[1].children[0].num!, 1)
+      )
+    ).rejects.toThrow();
+    await expect(
+      submitJson0Op<TestData>(adminConn, TEST_DATA_COLLECTION, 'test02', ops =>
+        ops.set<boolean>(d => d.children[1].children[0].deleted!, true)
+      )
+    ).resolves.not.toThrow();
+  });
 });
 
 enum TestProjectDomain {
@@ -256,6 +282,7 @@ enum TestProjectDomain {
 interface TestSubSubData extends OwnedData {
   id: string;
   num?: number;
+  deleted?: boolean;
 }
 
 interface TestSubData extends OwnedData {
@@ -290,7 +317,7 @@ class TestDataService extends ProjectDataService<TestData> {
 
       [TestProjectDomain.SubSubData, Operation.View],
       [TestProjectDomain.SubSubData, Operation.Create],
-      [TestProjectDomain.SubSubData, Operation.Edit],
+      [TestProjectDomain.SubSubData, Operation.EditOwn],
       [TestProjectDomain.SubSubData, Operation.Delete]
     ],
     user: [
