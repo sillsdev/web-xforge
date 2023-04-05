@@ -673,12 +673,14 @@ class TestEnvironment {
                 likes: [{ ownerRef: this.checkerUser.id }],
                 dateCreated: '',
                 dateModified: '',
+                deleted: false,
                 comments: [
                   {
                     dataId: 'c2Id',
                     ownerRef: this.checkerUser.id,
                     dateCreated: '',
-                    dateModified: ''
+                    dateModified: '',
+                    deleted: false
                   }
                 ]
               }
@@ -707,12 +709,14 @@ class TestEnvironment {
                 likes: [{ ownerRef: this.checkerUser.id }, { ownerRef: this.anotherUserId }],
                 dateCreated: '',
                 dateModified: '',
+                deleted: false,
                 comments: [
                   {
                     dataId: 'c1Id',
                     ownerRef: this.checkerUser.id,
                     dateCreated: '',
-                    dateModified: ''
+                    dateModified: '',
+                    deleted: false
                   }
                 ]
               }
@@ -742,12 +746,14 @@ class TestEnvironment {
                 likes: [{ ownerRef: this.checkerUser.id }],
                 dateCreated: '',
                 dateModified: '',
+                deleted: false,
                 comments: [
                   {
                     dataId: 'c3Id',
                     ownerRef: this.anotherUserId,
                     dateCreated: '',
-                    dateModified: ''
+                    dateModified: '',
+                    deleted: false
                   }
                 ]
               }

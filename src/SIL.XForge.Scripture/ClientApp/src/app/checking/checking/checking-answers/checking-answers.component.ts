@@ -206,10 +206,14 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
     if (this.shouldSeeAnswersList) {
       return this._questionDoc.data.answers.filter(
-        answer => answer.ownerRef === this.userService.currentUserId || this._answersToShow.includes(answer.dataId)
+        answer =>
+          (answer.ownerRef === this.userService.currentUserId || this._answersToShow.includes(answer.dataId)) &&
+          !answer.deleted
       );
     } else {
-      return this._questionDoc.data.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
+      return this._questionDoc.data.answers.filter(
+        answer => answer.ownerRef === this.userService.currentUserId && !answer.deleted
+      );
     }
   }
 
@@ -221,7 +225,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (this._questionDoc == null || this._questionDoc.data == null) {
       return [];
     }
-    return this._questionDoc.data.answers;
+    return this._questionDoc.data.answers.filter(answer => !answer.deleted);
   }
 
   get canSeeOtherUserResponses(): boolean {
@@ -236,7 +240,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (this._questionDoc == null || this._questionDoc.data == null) {
       return 0;
     }
-    return this._questionDoc.data.answers.filter(answer => answer.ownerRef === this.userService.currentUserId).length;
+    return this._questionDoc.data.answers.filter(
+      answer => answer.ownerRef === this.userService.currentUserId && !answer.deleted
+    ).length;
   }
 
   /** Answer belonging to current user, if any. Assumes they don't have more than one answer. */
@@ -244,7 +250,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (this._questionDoc == null || this._questionDoc.data == null) {
       return null;
     }
-    const answer = this._questionDoc.data.answers.find(ans => ans.ownerRef === this.userService.currentUserId);
+    const answer = this._questionDoc.data.answers.find(
+      ans => ans.ownerRef === this.userService.currentUserId && !ans.deleted
+    );
     return answer !== undefined ? answer : null;
   }
 
@@ -346,7 +354,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return;
     }
     const projectId = this._questionDoc.data.projectRef;
-    if (this._questionDoc.data.answers.length > 0) {
+    if (this._questionDoc.data.answers.filter(answer => !answer.deleted).length > 0) {
       const answeredDialogRef = this.dialog.open(QuestionAnsweredDialogComponent);
       const dialogResponse = (await answeredDialogRef.afterClosed().toPromise()) as string;
       if (dialogResponse === 'close') {
@@ -538,7 +546,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (this.questionDoc == null || this.questionDoc.data == null) {
       return;
     }
-    this._answersToShow = this.questionDoc.data.answers.map(answer => answer.dataId);
+    this._answersToShow = this.questionDoc.data.answers.filter(answer => !answer.deleted).map(answer => answer.dataId);
     this.refreshAnswersHighlightStatus();
     this.justEditedAnswer = false;
     if (showUnreadClicked) {
@@ -569,7 +577,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return;
     }
     this.cacheFileSource(this.questionDoc, this.questionDoc.data.dataId, this.questionDoc.data.audioUrl);
-    for (const answer of this.questionDoc.data.answers) {
+    for (const answer of this.questionDoc.data.answers.filter(answer => !answer.deleted)) {
       this.cacheFileSource(this.questionDoc, answer.dataId, answer.audioUrl);
     }
   }

@@ -7,7 +7,6 @@ export interface Note extends Comment {
   threadId: string;
   type: string;
   conflictType: string;
-  deleted: boolean;
   status: NoteStatus;
   tagId?: number;
   reattached?: string;
