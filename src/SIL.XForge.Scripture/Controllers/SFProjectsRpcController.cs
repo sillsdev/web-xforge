@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
 using SIL.XForge.Controllers;
+using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
@@ -362,6 +363,10 @@ public class SFProjectsRpcController : RpcControllerBase
         }
     }
 
+    [Obsolete("New endpoints only require the share key. Old clients would still provide the projectId")]
+    public async Task<IRpcMethodResult> CheckLinkSharing(string projectId, string shareKey) =>
+        await CheckLinkSharing(shareKey);
+
     public IRpcMethodResult IsSourceProject(string projectId) => Ok(_projectService.IsSourceProject(projectId));
 
     public async Task<IRpcMethodResult> LinkSharingKey(string projectId, string role, string shareLinkType)
@@ -388,6 +393,12 @@ public class SFProjectsRpcController : RpcControllerBase
             throw;
         }
     }
+
+    [Obsolete(
+        "New endpoints require the share link type. Old clients would only ever request a recipient link for email"
+    )]
+    public async Task<IRpcMethodResult> LinkSharingKey(string projectId, string role) =>
+        await LinkSharingKey(projectId, role, ShareLinkType.Recipient);
 
     public async Task<IRpcMethodResult> ReserveLinkSharingKey(string shareKey)
     {
