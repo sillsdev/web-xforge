@@ -34,12 +34,12 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
     );
   }
 
-  async updateAnswerFileCache() {
+  async updateAnswerFileCache(): Promise<void> {
     if (this.realtimeService.fileService == null || this.data == null) {
       return;
     }
 
-    for (const answer of this.data.answers) {
+    for (const answer of this.data.answers.filter(answer => !answer.deleted)) {
       await this.realtimeService.fileService.findOrUpdateCache(
         FileType.Audio,
         this.collection,
@@ -59,7 +59,7 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
       return obj<Question>().path(q => q.audioUrl!);
     } else {
       // otherwise, it is probably belongs to an answer
-      const answerIndex = this.data.answers.findIndex(a => a.dataId === dataId);
+      const answerIndex = this.data.answers.findIndex(a => a.dataId === dataId && !a.deleted);
       if (answerIndex !== -1) {
         return obj<Question>().path(q => q.answers[answerIndex].audioUrl!);
       }
@@ -75,7 +75,11 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
         (await this.realtimeService.offlineStore.get<Snapshot<Question>>(this.collection, this.id))?.data.answers || [];
       for (const answer of answers) {
         const file = await fileService.get(FileType.Audio, answer.dataId);
-        if (file != null && this.data?.answers.find(a => a.dataId === answer.dataId) == null) {
+        if (
+          file != null &&
+          (this.data?.answers.find(a => a.dataId === answer.dataId) == null ||
+            this.data?.answers.find(a => a.dataId === answer.dataId)?.deleted)
+        ) {
           await fileService.findOrUpdateCache(FileType.Audio, this.collection, answer.dataId);
         }
       }

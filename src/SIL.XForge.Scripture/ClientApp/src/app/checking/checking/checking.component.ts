@@ -522,6 +522,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
             likes: [],
             dateCreated: dateNow,
             dateModified: dateNow,
+            deleted: false,
             comments: [],
             status: AnswerStatus.None
           };
@@ -628,7 +629,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
               ownerRef: this.userService.currentUserId,
               text: '',
               dateCreated: dateNow,
-              dateModified: dateNow
+              dateModified: dateNow,
+              deleted: false
             };
           }
           comment.text = commentAction.text;
@@ -640,7 +642,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         if (this.projectUserConfigDoc != null) {
           this.projectUserConfigDoc.submitJson0Op(op => {
             if (commentAction.answer != null) {
-              for (const comm of commentAction.answer.comments) {
+              for (const comm of commentAction.answer.comments.filter(comment => !comment.deleted)) {
                 if (!this.questionsPanel!.hasUserReadComment(comm)) {
                   op.add(puc => puc.commentRefsRead, comm.dataId);
                 }
@@ -857,7 +859,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     if (this.questionFilterSelected === QuestionFilter.None) matchingQuestions = this.questionDocs.slice();
     else {
       const filterFunction = this.questionFilterFunctions[this.questionFilterSelected];
-      matchingQuestions = this.questionDocs.filter(q => (q.data == null ? false : filterFunction(q.data.answers)));
+      matchingQuestions = this.questionDocs.filter(q =>
+        q.data == null ? false : filterFunction(q.data.answers.filter(answer => !answer.deleted))
+      );
     }
     this.visibleQuestions = matchingQuestions;
     if (this.totalQuestions() === this.totalVisibleQuestions()) {
@@ -889,8 +893,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
+      const commentLength = activeQuestionDoc.data!.answers[answerIndex].comments.length;
       activeQuestionDoc
-        .submitJson0Op(op => op.remove(q => q.answers, answerIndex))
+        .submitJson0Op(op => {
+          op.set(q => q.answers[answerIndex].deleted, true);
+          for (let commentIndex = 0; commentIndex < commentLength; commentIndex++) {
+            op.set(q => q.answers[answerIndex].comments[commentIndex].deleted, true);
+          }
+        })
         .then(() => {
           if (this.projectDoc != null) {
             activeQuestionDoc.deleteFile(FileType.Audio, answer.dataId, answer.ownerRef);
@@ -979,7 +989,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     const answerIndex = this.getAnswerIndex(answer);
     const commentIndex = answer.comments.findIndex(c => c.dataId === comment.dataId);
     if (commentIndex >= 0) {
-      activeQuestionDoc.submitJson0Op(op => op.remove(q => q.answers[answerIndex].comments, commentIndex));
+      activeQuestionDoc.submitJson0Op(op => op.set(q => q.answers[answerIndex].comments[commentIndex].deleted, true));
     }
   }
 

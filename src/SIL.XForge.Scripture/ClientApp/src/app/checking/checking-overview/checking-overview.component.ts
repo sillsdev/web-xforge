@@ -93,9 +93,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
         if (canCreateQuestion) {
-          count += questionDoc.data.answers.length;
+          count += questionDoc.data.answers.filter(a => !a.deleted).length;
         } else {
-          count += questionDoc.data.answers.filter(a => a.ownerRef === currentUserId).length;
+          count += questionDoc.data.answers.filter(a => a.ownerRef === currentUserId && !a.deleted).length;
         }
       }
     }
@@ -109,7 +109,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     const currentUserId = this.userService.currentUserId;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
-        for (const answer of questionDoc.data.answers) {
+        for (const answer of questionDoc.data.answers.filter(answer => !answer.deleted)) {
           if (canCreateQuestion) {
             count += answer.likes.length;
           } else {
@@ -128,11 +128,11 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     const currentUserId = this.userService.currentUserId;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
-        for (const answer of questionDoc.data.answers) {
+        for (const answer of questionDoc.data.answers.filter(a => !a.deleted)) {
           if (canCreateQuestion) {
-            count += answer.comments.length;
+            count += answer.comments.filter(c => !c.deleted).length;
           } else {
-            count += answer.comments.filter(c => c.ownerRef === currentUserId).length;
+            count += answer.comments.filter(c => c.ownerRef === currentUserId && !c.deleted).length;
           }
         }
       }
@@ -304,7 +304,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     let count: number = 0;
     for (const q of this.getQuestionDocs(id)) {
       if (q.data != null) {
-        const answerCount = q.data.answers.length;
+        const answerCount = q.data.answers.filter(answer => !answer.deleted).length;
         count += answerCount;
       }
     }
@@ -315,7 +315,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return count != null && count > 0 ? translate('checking_overview.answer_count_label', { count: count }) : '';
   }
 
-  async setArchiveStatusForQuestionsInBook(text: TextInfo, archive: boolean) {
+  async setArchiveStatusForQuestionsInBook(text: TextInfo, archive: boolean): Promise<void> {
     if (await this.confirmArchiveQuestions(archive, this.i18n.localizeBook(text.bookNum))) {
       for (const chapter of text.chapters) {
         for (const questionDoc of this.getQuestionDocs(this.getTextDocIdType(text.bookNum, chapter.number), !archive)) {
@@ -325,7 +325,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     }
   }
 
-  async setArchiveStatusForQuestionsInChapter(text: TextInfo, chapter: Chapter, archive: boolean) {
+  async setArchiveStatusForQuestionsInChapter(text: TextInfo, chapter: Chapter, archive: boolean): Promise<void> {
     if (await this.confirmArchiveQuestions(archive, this.i18n.localizeBook(text.bookNum) + ' ' + chapter.number)) {
       for (const questionDoc of this.getQuestionDocs(this.getTextDocIdType(text.bookNum, chapter.number), !archive)) {
         if (questionDoc.data!.isArchived !== archive) this.setQuestionArchiveStatus(questionDoc, archive);
@@ -387,7 +387,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       return;
     }
     if (questionDoc != null && questionDoc.data != null) {
-      if (questionDoc.data.answers.length > 0) {
+      if (questionDoc.data.answers.filter(answer => !answer.deleted).length > 0) {
         const answeredDialogRef = this.dialogService.openMdcDialog(QuestionAnsweredDialogComponent);
         const response = (await answeredDialogRef.afterClosed().toPromise()) as string;
         if (response === 'close') {
@@ -436,7 +436,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return confirmation === true;
   }
 
-  private initTextsWithLoadingIndicator() {
+  private initTextsWithLoadingIndicator(): void {
     this.loadingStarted();
     try {
       this.initTexts();
