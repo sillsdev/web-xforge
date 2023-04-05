@@ -21,7 +21,7 @@ export class CheckingUtils {
     if (question == null) {
       return false;
     }
-    return question.answers.filter(answer => answer.ownerRef === userId).length > 0;
+    return question.answers.filter(answer => answer.ownerRef === userId && !answer.deleted).length > 0;
   }
 
   static hasUserReadQuestion(

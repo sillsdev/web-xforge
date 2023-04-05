@@ -93,9 +93,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
         if (canCreateQuestion) {
-          count += questionDoc.data.answers.filter(a => !a.deleted).length;
+          count += questionDoc.getAnswers().length;
         } else {
-          count += questionDoc.data.answers.filter(a => a.ownerRef === currentUserId && !a.deleted).length;
+          count += questionDoc.getAnswers(currentUserId).length;
         }
       }
     }
@@ -109,7 +109,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     const currentUserId = this.userService.currentUserId;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
-        for (const answer of questionDoc.data.answers.filter(answer => !answer.deleted)) {
+        for (const answer of questionDoc.getAnswers()) {
           if (canCreateQuestion) {
             count += answer.likes.length;
           } else {
@@ -128,7 +128,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     const currentUserId = this.userService.currentUserId;
     for (const questionDoc of this.allPublishedQuestions) {
       if (questionDoc.data != null) {
-        for (const answer of questionDoc.data.answers.filter(a => !a.deleted)) {
+        for (const answer of questionDoc.getAnswers()) {
           if (canCreateQuestion) {
             count += answer.comments.filter(c => !c.deleted).length;
           } else {
@@ -304,7 +304,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     let count: number = 0;
     for (const q of this.getQuestionDocs(id)) {
       if (q.data != null) {
-        const answerCount = q.data.answers.filter(answer => !answer.deleted).length;
+        const answerCount = q.getAnswers().length;
         count += answerCount;
       }
     }
@@ -387,7 +387,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       return;
     }
     if (questionDoc != null && questionDoc.data != null) {
-      if (questionDoc.data.answers.filter(answer => !answer.deleted).length > 0) {
+      if (questionDoc.getAnswers().length > 0) {
         const answeredDialogRef = this.dialogService.openMdcDialog(QuestionAnsweredDialogComponent);
         const response = (await answeredDialogRef.afterClosed().toPromise()) as string;
         if (response === 'close') {

@@ -8,11 +8,11 @@ class QuestionMigration1 implements Migration {
   async migrateDoc(doc: Doc): Promise<void> {
     const ops: Op[] = [];
     for (let i = 0; i < doc.data.answers.length; i++) {
-      if (doc.data.answers[i].deleted === undefined) {
+      if (doc.data.answers[i].deleted == null) {
         ops.push({ p: ['answers', i, 'deleted'], oi: false });
       }
       for (let j = 0; j < doc.data.answers[i].comments.length; j++) {
-        if (doc.data.answers[i].comments[j].deleted === undefined) {
+        if (doc.data.answers[i].comments[j].deleted == null) {
           ops.push({ p: ['answers', i, 'comments', j, 'deleted'], oi: false });
         }
       }

@@ -2284,7 +2284,7 @@ class TestEnvironment {
     const answers = questionDoc.data!.answers;
     const answerIndex = answers.findIndex(existingAnswer => existingAnswer.dataId === answerIdToDelete);
 
-    questionDoc.submitJson0Op(op => op.remove(q => q.answers, answerIndex));
+    questionDoc.submitJson0Op(op => op.set(q => q.answers[answerIndex].deleted, true));
 
     this.fixture.detectChanges();
     flush();
@@ -2340,7 +2340,7 @@ class TestEnvironment {
 
   simulateRemoteDeleteAnswer(questionId: string, answerIndex: number): void {
     const questionDoc = this.getQuestionDoc(questionId);
-    questionDoc.submitJson0Op(op => op.remove(q => q.answers, answerIndex), false);
+    questionDoc.submitJson0Op(op => op.set(q => q.answers[answerIndex].deleted, true), false);
     this.fixture.detectChanges();
     flush();
   }

@@ -859,9 +859,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     if (this.questionFilterSelected === QuestionFilter.None) matchingQuestions = this.questionDocs.slice();
     else {
       const filterFunction = this.questionFilterFunctions[this.questionFilterSelected];
-      matchingQuestions = this.questionDocs.filter(q =>
-        q.data == null ? false : filterFunction(q.data.answers.filter(answer => !answer.deleted))
-      );
+      matchingQuestions = this.questionDocs.filter(q => (q.data == null ? false : filterFunction(q.getAnswers())));
     }
     this.visibleQuestions = matchingQuestions;
     if (this.totalQuestions() === this.totalVisibleQuestions()) {
@@ -893,11 +891,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
-      const commentLength = activeQuestionDoc.data!.answers[answerIndex].comments.length;
+      const commentsLength: number = activeQuestionDoc.data!.answers[answerIndex].comments.length;
       activeQuestionDoc
         .submitJson0Op(op => {
           op.set(q => q.answers[answerIndex].deleted, true);
-          for (let commentIndex = 0; commentIndex < commentLength; commentIndex++) {
+          for (let commentIndex = 0; commentIndex < commentsLength; commentIndex++) {
             op.set(q => q.answers[answerIndex].comments[commentIndex].deleted, true);
           }
         })
