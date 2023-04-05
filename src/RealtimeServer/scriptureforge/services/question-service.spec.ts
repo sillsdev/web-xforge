@@ -195,6 +195,7 @@ class TestEnvironment {
           text: 'Answer.',
           dateModified: '',
           dateCreated: '',
+          deleted: false,
           likes: [],
           comments: [
             {
@@ -202,7 +203,8 @@ class TestEnvironment {
               ownerRef: 'projectAdmin',
               text: 'Comment.',
               dateModified: '',
-              dateCreated: ''
+              dateCreated: '',
+              deleted: false
             }
           ]
         }

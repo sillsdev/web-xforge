@@ -65,7 +65,7 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
   }
 
   get commentCount(): number {
-    return this.answer != null ? this.answer.comments.length : 0;
+    return this.answer != null ? this.answer.comments.filter(c => !c.deleted).length : 0;
   }
 
   get canAddComment(): boolean {
@@ -77,7 +77,12 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
   }
 
   getSortedComments(): Comment[] {
-    return this.answer != null ? sortBy(this.answer.comments, c => c.dateCreated) : [];
+    return this.answer != null
+      ? sortBy(
+          this.answer.comments.filter(c => !c.deleted),
+          c => c.dateCreated
+        )
+      : [];
   }
 
   editComment(comment: Comment): void {
@@ -139,11 +144,10 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
         if (this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null || this.answer == null) {
           return;
         }
+        const commentsLength = this.answer.comments.filter(comment => !comment.deleted).length;
         const defaultCommentsToShow =
-          this.answer.comments.length > this.maxCommentsToShow
-            ? this.maxCommentsToShow - 1
-            : this.answer.comments.length;
-        const commentsToShow = this.showAllComments ? this.answer.comments.length : defaultCommentsToShow;
+          commentsLength > this.maxCommentsToShow ? this.maxCommentsToShow - 1 : commentsLength;
+        const commentsToShow = this.showAllComments ? commentsLength : defaultCommentsToShow;
         const commentIdsToMarkRead: string[] = [];
         let commentNumber = 1;
         // Older comments are displayed above newer comments, so iterate over comments starting with the oldest

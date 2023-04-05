@@ -1985,7 +1985,7 @@ class TestEnvironment {
     return this.getFirstNumberFromElementText('#show-unread-answers-button');
   }
 
-  activateQuestion(dataId: string) {
+  activateQuestion(dataId: string): void {
     const questionDoc = this.getQuestionDoc(dataId);
     this.ngZone.run(() => this.component.questionsPanel!.activateQuestion(questionDoc));
     tick();
@@ -2078,7 +2078,8 @@ class TestEnvironment {
       ownerRef: ADMIN_USER.id,
       text: text,
       dateCreated: date,
-      dateModified: date
+      dateModified: date,
+      deleted: false
     };
     questionDoc.submitJson0Op(op => op.insert(q => q.answers[0].comments, 0, comment), false);
     return commentId;
@@ -2267,7 +2268,7 @@ class TestEnvironment {
   }
 
   /** Delete user's answer via the checking-answers.component. */
-  deleteAnswerOwnedBy(userId: string = CHECKER_USER.id) {
+  deleteAnswerOwnedBy(userId: string = CHECKER_USER.id): void {
     const usersAnswer = this.component.answersPanel!.questionDoc!.data!.answers.filter(
       answer => answer.ownerRef === userId
     )[0];
@@ -2278,7 +2279,7 @@ class TestEnvironment {
   }
 
   /** Delete answer by id behind the scenes */
-  deleteAnswer(answerIdToDelete: string) {
+  deleteAnswer(answerIdToDelete: string): void {
     const questionDoc = this.component.answersPanel!.questionDoc!;
     const answers = questionDoc.data!.answers;
     const answerIndex = answers.findIndex(existingAnswer => existingAnswer.dataId === answerIdToDelete);
@@ -2289,12 +2290,12 @@ class TestEnvironment {
     flush();
   }
 
-  setQuestionFilter(filter: QuestionFilter) {
+  setQuestionFilter(filter: QuestionFilter): void {
     this.component.setQuestionFilter(filter);
     this.waitForQuestionTimersToComplete();
   }
 
-  simulateNewRemoteAnswer(dataId: string = 'newAnswer1', text: string = 'new answer from another user') {
+  simulateNewRemoteAnswer(dataId: string = 'newAnswer1', text: string = 'new answer from another user'): void {
     // Another user on another computer adds a new answer.
     const date = new Date();
     date.setDate(date.getDate() - 1);
@@ -2311,6 +2312,7 @@ class TestEnvironment {
           likes: [],
           dateCreated: dateCreated,
           dateModified: dateCreated,
+          deleted: false,
           audioUrl: '/audio.mp3',
           comments: []
         }),
@@ -2364,7 +2366,7 @@ class TestEnvironment {
     flush();
   }
 
-  private setRouteSnapshot(bookId: string) {
+  private setRouteSnapshot(bookId: string): void {
     const snapshot = new ActivatedRouteSnapshot();
     snapshot.params = { bookId: bookId };
     when(mockedActivatedRoute.snapshot).thenReturn(snapshot);
@@ -2527,6 +2529,7 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateCreated,
       dateModified: dateCreated,
+      deleted: false,
       audioUrl: '/audio.mp3',
       comments: []
     });
@@ -2538,7 +2541,8 @@ class TestEnvironment {
         ownerRef: ADMIN_USER.id,
         text: 'Comment ' + commentNumber + ' on question 7',
         dateCreated: dateCreated,
-        dateModified: dateCreated
+        dateModified: dateCreated,
+        deleted: false
       });
     }
     johnQuestions[6].data!.answers.push({
@@ -2548,6 +2552,7 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateCreated,
       dateModified: dateCreated,
+      deleted: false,
       comments: a7Comments
     });
 
@@ -2558,7 +2563,8 @@ class TestEnvironment {
         ownerRef: CHECKER_USER.id,
         text: 'Comment ' + commentNumber + ' on question 8',
         dateCreated: dateCreated,
-        dateModified: dateCreated
+        dateModified: dateCreated,
+        deleted: false
       });
     }
     johnQuestions[7].data!.answers.push({
@@ -2568,6 +2574,7 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateCreated,
       dateModified: dateCreated,
+      deleted: false,
       comments: a8Comments,
       status: AnswerStatus.Exportable
     });
@@ -2580,6 +2587,7 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateCreated,
       dateModified: dateCreated,
+      deleted: false,
       audioUrl: '/audio.mp3',
       comments: [],
       status: AnswerStatus.Exportable
@@ -2593,6 +2601,7 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateCreated,
       dateModified: dateCreated,
+      deleted: false,
       audioUrl: '/audio.mp3',
       comments: [],
       status: AnswerStatus.Resolved
@@ -2606,6 +2615,7 @@ class TestEnvironment {
       likes: [],
       dateCreated: dateCreated,
       dateModified: dateCreated,
+      deleted: false,
       comments: []
     });
 

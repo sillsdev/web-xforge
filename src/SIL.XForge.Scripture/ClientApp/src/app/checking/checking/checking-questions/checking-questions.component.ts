@@ -182,9 +182,9 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     }
 
     if (this.project.checkingConfig.usersSeeEachOthersResponses || !this.canAddAnswer || this.isProjectAdmin) {
-      return questionDoc.data.answers;
+      return questionDoc.data.answers.filter(a => !a.deleted);
     } else {
-      return questionDoc.data.answers.filter(answer => answer.ownerRef === this.userService.currentUserId);
+      return questionDoc.data.answers.filter(a => a.ownerRef === this.userService.currentUserId && !a.deleted);
     }
   }
 
@@ -204,7 +204,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
       }
     }
     for (const answer of this.getAnswers(questionDoc)) {
-      for (const comment of answer.comments) {
+      for (const comment of answer.comments.filter(c => !c.deleted)) {
         if (!this.hasUserReadComment(comment)) {
           unread++;
         }
@@ -254,7 +254,10 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
             if (!this.hasUserReadAnswer(answer)) {
               op.add(puc => puc.answerRefsRead, answer.dataId);
             }
-            const comments = sortBy(answer.comments, c => c.dateCreated);
+            const comments = sortBy(
+              answer.comments.filter(c => !c.deleted),
+              c => c.dateCreated
+            );
             let readLimit = 3;
             if (comments.length > 3) {
               readLimit = 2;
