@@ -14,7 +14,7 @@ describe('QuestionMigrations', () => {
       const env = new TestEnvironment(0);
       const conn = env.server.connect();
       await createDoc(conn, QUESTIONS_COLLECTION, 'question01', {
-        answers: [{ comments: [{}, { deleted: true }] }, { comments: [{}, {}] }]
+        answers: [{ deleted: true, comments: [{}, { deleted: true }] }, { comments: [{}, {}] }]
       });
       await createDoc(conn, QUESTIONS_COLLECTION, 'question02', {
         answers: []
@@ -22,8 +22,10 @@ describe('QuestionMigrations', () => {
       await env.server.migrateIfNecessary();
 
       let questionDoc = await fetchDoc(conn, QUESTIONS_COLLECTION, 'question01');
+      expect(questionDoc.data.answers[0].deleted).toBe(true);
       expect(questionDoc.data.answers[0].comments[0].deleted).toBe(false);
       expect(questionDoc.data.answers[0].comments[1].deleted).toBe(true);
+      expect(questionDoc.data.answers[1].deleted).toBe(false);
       expect(questionDoc.data.answers[1].comments[0].deleted).toBe(false);
       expect(questionDoc.data.answers[1].comments[1].deleted).toBe(false);
       questionDoc = await fetchDoc(conn, QUESTIONS_COLLECTION, 'question02');

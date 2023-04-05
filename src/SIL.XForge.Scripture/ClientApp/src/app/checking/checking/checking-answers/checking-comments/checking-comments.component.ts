@@ -144,7 +144,7 @@ export class CheckingCommentsComponent extends SubscriptionDisposable implements
         if (this.projectUserConfigDoc == null || this.projectUserConfigDoc.data == null || this.answer == null) {
           return;
         }
-        const commentsLength = this.answer.comments.filter(comment => !comment.deleted).length;
+        const commentsLength: number = this.answer.comments.filter(comment => !comment.deleted).length;
         const defaultCommentsToShow =
           commentsLength > this.maxCommentsToShow ? this.maxCommentsToShow - 1 : commentsLength;
         const commentsToShow = this.showAllComments ? commentsLength : defaultCommentsToShow;

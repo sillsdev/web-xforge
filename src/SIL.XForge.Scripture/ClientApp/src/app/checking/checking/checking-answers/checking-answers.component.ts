@@ -211,9 +211,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
           !answer.deleted
       );
     } else {
-      return this._questionDoc.data.answers.filter(
-        answer => answer.ownerRef === this.userService.currentUserId && !answer.deleted
-      );
+      return this._questionDoc.getAnswers(this.userService.currentUserId);
     }
   }
 
@@ -225,7 +223,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (this._questionDoc == null || this._questionDoc.data == null) {
       return [];
     }
-    return this._questionDoc.data.answers.filter(answer => !answer.deleted);
+    return this._questionDoc.getAnswers();
   }
 
   get canSeeOtherUserResponses(): boolean {
@@ -240,9 +238,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (this._questionDoc == null || this._questionDoc.data == null) {
       return 0;
     }
-    return this._questionDoc.data.answers.filter(
-      answer => answer.ownerRef === this.userService.currentUserId && !answer.deleted
-    ).length;
+    return this._questionDoc.getAnswers(this.userService.currentUserId).length;
   }
 
   /** Answer belonging to current user, if any. Assumes they don't have more than one answer. */
@@ -251,7 +247,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return null;
     }
     const answer = this._questionDoc.data.answers.find(
-      ans => ans.ownerRef === this.userService.currentUserId && !ans.deleted
+      answer => answer.ownerRef === this.userService.currentUserId && !answer.deleted
     );
     return answer !== undefined ? answer : null;
   }
@@ -354,7 +350,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return;
     }
     const projectId = this._questionDoc.data.projectRef;
-    if (this._questionDoc.data.answers.filter(answer => !answer.deleted).length > 0) {
+    if (this._questionDoc.getAnswers().length > 0) {
       const answeredDialogRef = this.dialog.open(QuestionAnsweredDialogComponent);
       const dialogResponse = (await answeredDialogRef.afterClosed().toPromise()) as string;
       if (dialogResponse === 'close') {
@@ -546,7 +542,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     if (this.questionDoc == null || this.questionDoc.data == null) {
       return;
     }
-    this._answersToShow = this.questionDoc.data.answers.filter(answer => !answer.deleted).map(answer => answer.dataId);
+    this._answersToShow = this.questionDoc.getAnswers().map(answer => answer.dataId);
     this.refreshAnswersHighlightStatus();
     this.justEditedAnswer = false;
     if (showUnreadClicked) {
@@ -577,7 +573,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return;
     }
     this.cacheFileSource(this.questionDoc, this.questionDoc.data.dataId, this.questionDoc.data.audioUrl);
-    for (const answer of this.questionDoc.data.answers.filter(answer => !answer.deleted)) {
+    for (const answer of this.questionDoc.getAnswers()) {
       this.cacheFileSource(this.questionDoc, answer.dataId, answer.audioUrl);
     }
   }

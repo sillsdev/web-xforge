@@ -21,6 +21,20 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
     return this.data != null && fileType === FileType.Audio && !this.data.isArchived && this.data.dataId === dataId;
   }
 
+  /**
+   * Gets the answers for this question that have not been deleted.
+   *
+   * @param {string} ownerRef If set, this filters by the owner of the answer.
+   * @returns The answers as an array.
+   */
+  getAnswers(ownerRef: string | undefined = undefined): Answer[] {
+    return (
+      (ownerRef == null
+        ? this.data?.answers.filter(a => !a.deleted)
+        : this.data?.answers.filter(a => !a.deleted && a.ownerRef === ownerRef)) ?? []
+    );
+  }
+
   async updateFileCache(): Promise<void> {
     if (this.realtimeService.fileService == null || this.data == null) {
       return;
@@ -39,7 +53,7 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
       return;
     }
 
-    for (const answer of this.data.answers.filter(answer => !answer.deleted)) {
+    for (const answer of this.getAnswers()) {
       await this.realtimeService.fileService.findOrUpdateCache(
         FileType.Audio,
         this.collection,

@@ -679,7 +679,7 @@ public class ParatextNotesMapperTests
     }
 
     [Test]
-    public async Task GetNotesChangelistAsync_DoesDeleteParatextNotes()
+    public async Task GetNotesChangelistAsync_DoesNotDeleteParatextNotes()
     {
         var env = new TestEnvironment();
         env.SetParatextProjectRoles(true);
@@ -721,7 +721,7 @@ public class ParatextNotesMapperTests
                                     <p>Test comment 2.</p>
                                 </content>
                             </comment>
-                            <comment user=""PT User 1"" extUser=""user02"" date=""2019-01-02T11:00:00.0000000+00:00"">
+                            <comment user=""PT User 1"" date=""2019-01-02T11:00:00.0000000+00:00"">
                                 <content>
                                     <p>A Paratext Only Comment.</p>
                                 </content>
