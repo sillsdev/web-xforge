@@ -555,6 +555,10 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this.selectedProjectDoc?.data != null && this.selectedProjectDoc.data.sync.queuedCount > 0;
   }
 
+  get appName(): string {
+    return environment.siteName;
+  }
+
   private async refreshQuestionsQuery(projectId: string): Promise<void> {
     this.questionsQuery?.dispose();
     if (!this.hasCommunityCheckingPermission) return;
