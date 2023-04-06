@@ -349,6 +349,9 @@ export class NoteDialogComponent implements OnInit {
       return;
     }
 
-    this.dialogRef.close({ noteContent: this.currentNoteContent, noteDataId: this.noteIdBeingEdited });
+    this.dialogRef.close({
+      noteContent: this.currentNoteContent,
+      noteDataId: this.noteIdBeingEdited
+    });
   }
 }

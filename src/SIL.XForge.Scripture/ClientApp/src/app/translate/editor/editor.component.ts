@@ -425,7 +425,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   set showInsertNoteFab(value: boolean) {
     if (this.insertNoteFab == null || this.TemplateBottomSheet == null) return;
     this.addingMobileNote = false;
-    if (this.mediaObserver.isActive('lt-lg')) {
+    // Mobile users without editing rights will see a bottom sheet instead of a FAB
+    if (this.mediaObserver.isActive('lt-lg') && !this.hasEditRight) {
       this.insertNoteFab.nativeElement.style.visibility = 'hidden';
       if (value) {
         if (this.bottomSheetRef?.containerInstance == null) {
@@ -840,7 +841,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   insertNote(): void {
-    if (this.target == null || this.bookNum == null || !this.showAddCommentUI) {
+    if (this.target == null || this.bookNum == null || !this.showAddCommentUI || this.TemplateBottomSheet == null) {
       return;
     }
     if (!this.target.contentShowing) {
@@ -853,8 +854,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       if (defaultSegmentRef == null) return;
       verseRef = getVerseRefFromSegmentRef(this.bookNum, defaultSegmentRef);
     }
-    this.showNoteThread(undefined, verseRef);
-    this.showInsertNoteFab = false;
+    // Mobile users can use the bottom sheet to add new notes
+    if (this.mediaObserver.isActive('lt-lg')) {
+      this.toggleAddingMobileNote();
+      this.insertNoteFab!.nativeElement.style.visibility = 'hidden';
+      this.bottomSheetRef = this.bottomSheet.open(this.TemplateBottomSheet, { hasBackdrop: false });
+    } else {
+      this.showNoteThread(undefined, verseRef);
+      this.showInsertNoteFab = false;
+    }
   }
 
   removeEmbeddedElements(): void {
@@ -950,6 +958,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       // On-screen keyboards appearing can interfere with the resize height logic which then changes the focus
       // Waiting for 100ms was found to be a good amount of time for that to be resolved
       setTimeout(() => this.mobileNoteTextarea?.nativeElement.focus(), 100);
+    } else if (this.hasEditRight) {
+      this.bottomSheetRef?.dismiss();
+      this.insertNoteFab!.nativeElement.style.visibility = 'visible';
     }
   }
 
@@ -1405,7 +1416,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private resetInsertNoteFab(): void {
-    if (this.addingMobileNote) {
+    if (this.bottomSheetRef != null) {
       return;
     }
     this.showInsertNoteFab = false;

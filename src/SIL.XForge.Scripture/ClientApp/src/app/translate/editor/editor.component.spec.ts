@@ -2590,6 +2590,31 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('shows fab for users with editing rights but uses bottom sheet for adding new notes on mobile viewport', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
+      env.setCurrentUser('user04');
+      env.wait();
+
+      // Allow check for mobile viewports to return TRUE
+      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+      let verseSegment: HTMLElement = env.getSegmentElement('verse_1_2')!;
+      verseSegment.click();
+      env.wait();
+      expect(env.insertNoteFabMobile).toBeFalsy();
+      expect(env.insertNoteFab).toBeTruthy();
+      env.insertNoteFab.nativeElement.click();
+      env.wait();
+      expect(env.mobileNoteTextArea).toBeTruthy();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).never();
+      // Close the bottom sheet
+      verseSegment = env.getSegmentElement('verse_1_2')!;
+      verseSegment.click();
+      env.wait();
+
+      env.dispose();
+    }));
+
     it('can open insert note dialog on default verse', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
