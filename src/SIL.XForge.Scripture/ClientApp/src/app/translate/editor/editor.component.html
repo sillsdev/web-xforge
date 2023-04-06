@@ -61,6 +61,7 @@
               id="source-biblical-terms"
               [bookNum]="bookNum"
               [chapter]="chapter"
+              [verse]="verse"
               [configProjectId]="projectId"
               [projectId]="sourceProjectId"
             ></app-biblical-terms>
@@ -107,6 +108,7 @@
                 "
                 (loaded)="onTextLoaded('target')"
                 (focused)="targetFocused = $event"
+                (segmentRefChange)="onSegmentRefChange($event)"
                 (presenceChange)="onPresenceChange($event)"
                 [highlightSegment]="targetFocused && canEdit"
                 [enablePresence]="true"
@@ -144,6 +146,7 @@
               id="target-biblical-terms"
               [bookNum]="bookNum"
               [chapter]="chapter"
+              [verse]="verse"
               [configProjectId]="projectId"
               [projectId]="projectId"
             ></app-biblical-terms>

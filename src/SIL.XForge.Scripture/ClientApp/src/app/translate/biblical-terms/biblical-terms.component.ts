@@ -76,6 +76,8 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   private configProjectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
+  private _verse?: string;
+  private verse$: BehaviorSubject<string> = new BehaviorSubject<string>('');
 
   @ViewChild('biblicalTerms', { read: ElementRef }) biblicalTerms?: ElementRef;
 
@@ -120,6 +122,14 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.projectId$.next(id);
   }
 
+  @Input() set verse(verse: string | undefined) {
+    if (verse == null || verse === '') {
+      return;
+    }
+    this._verse = verse;
+    this.verse$.next(verse);
+  }
+
   ngOnDestroy(): void {
     super.ngOnDestroy();
     if (this.bookNum$ != null) {
@@ -127,6 +137,9 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     }
     if (this.chapter$ != null) {
       this.chapter$.unsubscribe();
+    }
+    if (this.verse$ != null) {
+      this.verse$.unsubscribe();
     }
     if (this.projectId$ != null) {
       this.projectId$.unsubscribe();
@@ -145,17 +158,20 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         configProjectId,
         this.userService.currentUserId
       );
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0);
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
     });
     this.subscribe(this.projectId$, async projectId => {
       this.loadBiblicalTerms(projectId);
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0);
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
     });
     this.subscribe(this.bookNum$, bookNum => {
-      this.filterBiblicalTerms(bookNum, this._chapter ?? 0);
+      this.filterBiblicalTerms(bookNum, this._chapter ?? 0, this._verse);
     });
     this.subscribe(this.chapter$, chapter => {
-      this.filterBiblicalTerms(this._bookNum ?? 0, chapter);
+      this.filterBiblicalTerms(this._bookNum ?? 0, chapter, this._verse);
+    });
+    this.subscribe(this.verse$, verse => {
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, verse);
     });
   }
 
@@ -176,8 +192,8 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     }
   }
 
-  private filterBiblicalTerms(bookNum: number, chapter: number): void {
-    if (bookNum === 0 || chapter === 0) {
+  private filterBiblicalTerms(bookNum: number, chapter: number, verse: string | undefined): void {
+    if (bookNum === 0 || chapter === 0 || verse == null) {
       return;
     }
     this.loadingStarted();
@@ -186,11 +202,19 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.biblicalTerms?.nativeElement.scrollIntoView();
 
     const rows: Row[] = [];
+    let verses: number[] = new VerseRef(bookNum, chapter, verse).verses;
     for (const biblicalTermDoc of this.biblicalTermQuery?.docs || []) {
       let displayTerm = false;
       for (const bbbcccvvv of biblicalTermDoc.data?.references || []) {
         var verseRef = new VerseRef(bbbcccvvv);
-        if (verseRef.bookNum === bookNum && verseRef.chapterNum === chapter) {
+        if (
+          verseRef.bookNum === bookNum &&
+          verseRef.chapterNum === chapter &&
+          (verses.length === 0 ||
+            verses[0] === 0 ||
+            verses.includes(verseRef.verseNum) ||
+            (verses.length === 2 && verseRef.verseNum >= verses[0] && verseRef.verseNum <= verses[1]))
+        ) {
           displayTerm = true;
           break;
         }
@@ -217,7 +241,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         this.biblicalTermQuery.remoteDocChanges$
       ),
       () => {
-        this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0);
+        this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
       }
     );
   }

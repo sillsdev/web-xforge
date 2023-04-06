@@ -5,7 +5,6 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { BiblicalTermDoc } from 'src/app/core/models/biblical-term-doc';
 import { I18nService } from 'xforge-common/i18n.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -13,6 +12,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -79,8 +79,42 @@ describe('BiblicalTermsComponent', () => {
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category03_en');
   }));
 
+  it('should filter biblical terms by verse', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '1');
+    env.setupProjectData('en');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
+    expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
+  }));
+
+  it('should exclude biblical terms not in the selected verse', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '2');
+    env.setupProjectData('en');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(0);
+  }));
+
+  it('should include biblical terms in verse ranges', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '1-2');
+    env.setupProjectData('en');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
+    expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
+  }));
+
+  it('should show biblical terms for partial verse', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '1a');
+    env.setupProjectData('en');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
+    expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
+  }));
+
   it('can use the user project configuration of a difference project', fakeAsync(() => {
-    const env = new TestEnvironment('project02', 3, 3, 'project01');
+    const env = new TestEnvironment('project02', 3, 3, '0', 'project01');
     env.setupProjectData('en');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
@@ -94,7 +128,13 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<BiblicalTermsComponent>;
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor(projectId: string, bookNum: number, chapter: number, configProjectId: string = projectId) {
+  constructor(
+    projectId: string,
+    bookNum: number,
+    chapter: number,
+    verse: string = '0',
+    configProjectId: string = projectId
+  ) {
     when(mockedProjectService.queryBiblicalTerms(anything())).thenCall(sfProjectId => {
       const parameters: QueryParameters = {
         [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
@@ -111,6 +151,7 @@ class TestEnvironment {
     this.component.projectId = projectId;
     this.component.bookNum = bookNum;
     this.component.chapter = chapter;
+    this.component.verse = verse;
   }
 
   get biblicalTermsCategory(): NodeList {

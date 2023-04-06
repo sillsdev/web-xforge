@@ -138,6 +138,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private targetLoaded: boolean = false;
   private _targetFocused: boolean = false;
   private _chapter?: number;
+  private _verse: string = '0';
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
   private onTargetDeleteSub?: Subscription;
@@ -261,6 +262,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get noteTags(): NoteTag[] {
     return this.projectDoc?.data?.noteTags ?? [];
+  }
+
+  get verse(): string {
+    return this._verse;
   }
 
   get chapter(): number | undefined {
@@ -776,6 +781,24 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       this.multiCursorViewers = multiCursorViewers;
     }
+  }
+
+  onSegmentRefChange(segmentRef: string): void {
+    // If the segment is empty or not in a valid verse, set the verse to zero
+    // so that it can propagate correctly to the biblical terms component
+    if (segmentRef == null || this.bookNum == null) {
+      this._verse = '0';
+      return;
+    }
+
+    const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
+    if (verseRef == null) {
+      this._verse = '0';
+      return;
+    }
+
+    // We use a string to account for partial (e.g. 12a) and compound (e.g. 3-4) verses
+    this._verse = verseRef.verse;
   }
 
   insertSuggestion(suggestionIndex: number, wordIndex: number, event: Event): void {
