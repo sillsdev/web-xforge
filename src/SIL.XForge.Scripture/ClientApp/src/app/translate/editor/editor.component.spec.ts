@@ -193,6 +193,7 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.chapter).toBe(2);
+      expect(env.component.verse).toBe('1');
       expect(env.component.target!.segmentRef).toEqual('verse_2_1');
       verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).never();
       const selection = env.targetEditor.getSelection();
@@ -2840,6 +2841,7 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.bookName).toEqual('Luke');
       expect(env.component.chapter).toBe(2);
+      expect(env.component.verse).toBe('1');
       expect(env.component.target!.segmentRef).toEqual('verse_2_1');
       const selection = env.targetEditor.getSelection();
       expect(selection!.index).toBe(50);
