@@ -115,7 +115,12 @@
           <ng-template #fabBottomSheet>
             <div class="fab-bottom-sheet" [dir]="direction">
               <b>{{ currentSegmentReference }}</b>
-              <button *ngIf="!addingMobileNote" mat-flat-button (click)="toggleAddingMobileNote()" color="accent">
+              <button
+                *ngIf="!addingMobileNote && !hasEditRight"
+                mat-flat-button
+                (click)="toggleAddingMobileNote()"
+                color="accent"
+              >
                 <mat-icon>add_comment</mat-icon>
                 {{ t("add_comment") }}
               </button>

@@ -343,12 +343,10 @@ describe('NoteDialogComponent', () => {
     env.enterNoteContent(noteContent);
     env.submit();
 
-    verify(mockedProjectService.createNoteThread('project01', anything())).once();
-    const [, noteThread] = capture(mockedProjectService.createNoteThread).last();
-    const verseData: VerseRefData = fromVerseRef(verseRef);
-    expect(noteThread.verseRef).toEqual(verseData);
-    expect(noteThread.notes[0].ownerRef).toEqual('user03');
-    expect(noteThread.notes[0].content).toEqual(`<p>[Display Name - Scripture Forge]</p><p>${noteContent}</p>`);
+    expect(env.dialogResult).toEqual({
+      noteContent: `<p>[Display Name - Scripture Forge]</p><p>${noteContent}</p>`,
+      noteDataId: undefined
+    });
   }));
 
   it('show sf note tag on notes with undefined tag id', fakeAsync(() => {
@@ -435,7 +433,11 @@ describe('NoteDialogComponent', () => {
     const newContent = 'new content in note';
     env.component.currentNoteContent = newContent;
     env.submit();
-    expect(noteThread.notes[0].content).toEqual(`<p>[Display Name - Scripture Forge]</p><p>${newContent}</p>`);
+
+    expect(env.dialogResult).toEqual({
+      noteContent: `<p>[Display Name - Scripture Forge]</p><p>${newContent}</p>`,
+      noteDataId: note.dataId
+    });
   }));
 
   it('allows user to delete the last note in the thread', fakeAsync(() => {
@@ -925,11 +927,6 @@ class TestEnvironment {
   getNoteThreadDoc(threadId: string): NoteThreadDoc {
     const id: string = [TestEnvironment.PROJECT01, threadId].join(':');
     return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, id);
-  }
-
-  getProjectUserConfigDoc(projectId: string, userId: string): SFProjectUserConfigDoc {
-    const id: string = getSFProjectUserConfigDocId(projectId, userId);
-    return this.realtimeService.get<SFProjectUserConfigDoc>(SFProjectUserConfigDoc.COLLECTION, id);
   }
 
   getNoteContent(index: number): string {

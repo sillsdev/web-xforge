@@ -23,6 +23,7 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { canInsertNote, formatFontSizeToRems } from '../../../shared/utils';
 import { environment } from '../../../../environments/environment';
+import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 
 // Regular expression to match the comment label i.e. [Commenter User - Scripture Forge]
 const COMMENTER_LABEL_REGEX = /^<p>\[[^\]]+\s-\s[^\]]+\]<\/p>\s*<p>(.+)<\/p>/s;
@@ -56,6 +57,7 @@ export class NoteDialogComponent implements OnInit {
   private textDoc?: TextDoc;
   private paratextProjectUsers?: ParatextUserProfile[];
   private noteIdBeingEdited?: string;
+  private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private userRole?: string;
 
   constructor(
@@ -358,6 +360,22 @@ export class NoteDialogComponent implements OnInit {
       return;
     }
 
-    this.dialogRef.close({ noteContent: this.currentNoteContent, noteDataId: this.noteIdBeingEdited });
+    this.dialogRef.close({
+      noteContent: await this.refineNoteContent(this.currentNoteContent),
+      noteDataId: this.noteIdBeingEdited
+    });
+  }
+
+  /** Add the commenter name label to the note content if applicable. */
+  private async refineNoteContent(content: string): Promise<string> {
+    if (this.isParatextRole) return content;
+    const userDoc: UserDoc = await this.userService.getCurrentUser();
+    return `<p>[${userDoc.data?.displayName} - ${environment.siteName}]</p><p>${content}</p>`;
+  }
+
+  private stripSFUserLabel(content: string): string {
+    // trim whitespace since the content gets an extra new line character after being exported to PT
+    const matchArray: RegExpExecArray | null = COMMENTER_LABEL_REGEX.exec(content.trim());
+    return matchArray == null ? content : matchArray[1];
   }
 }
