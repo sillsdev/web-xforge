@@ -21,6 +21,7 @@ import { BidiModule } from '@angular/cdk/bidi';
 import { NgModule } from '@angular/core';
 import { BREAKPOINT, FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
@@ -77,6 +78,7 @@ const modules = [
   MatSelectModule,
   MatSliderModule,
   MatTableModule,
+  MatToolbarModule,
   MatTooltipModule,
   MdcButtonModule,
   MdcCheckboxModule,

@@ -4,146 +4,95 @@
     color="accent"
     [class.mat-progress-bar--closed]="isAppLoading !== true"
   ></mat-progress-bar>
-  <header [class.overlay-drawer]="isDrawerPermanent">
-    <mdc-top-app-bar #topAppBar [fixed]="true" [scrollTarget]="appContent">
-      <mdc-top-app-bar-row>
-        <mdc-top-app-bar-section align="start">
-          <a *ngIf="!isDrawerPermanent && isProjectSelected" (click)="toggleDrawer()">
-            <mdc-icon mdcTopAppBarNavIcon>menu</mdc-icon>
+  <header [class.overlay-drawer]="!isDrawerPermanent" [dir]="i18n.direction">
+    <mat-toolbar color="primary">
+      <mat-toolbar-row>
+        <button mat-icon-button *ngIf="!isDrawerPermanent && isProjectSelected" (click)="toggleDrawer()">
+          <mat-icon>menu</mat-icon>
+        </button>
+        <span (click)="goHome()" class="title">
+          <button mat-icon-button>
+            <img id="nav-logo" src="/assets/images/logo-sf.svg" height="24" />
+          </button>
+          <span fxHide.xs>{{ appName }}</span>
+        </span>
+        <span class="toolbar-spacer"></span>
+
+        <button mat-icon-button title="{{ t('language') }}" [matMenuTriggerFor]="localeMenu">
+          <mat-icon>translate</mat-icon>
+        </button>
+        <mat-menu #localeMenu="matMenu" class="locale-menu">
+          <button
+            mat-menu-item
+            *ngFor="let locale of i18n.locales"
+            [class.active-locale]="locale.canonicalTag === i18n.localeCode"
+            (click)="setLocale(locale.canonicalTag)"
+          >
+            <mat-icon>check</mat-icon>
+            <span [class.locale-disabled]="!locale.production">{{ locale.localName }}</span>
+          </button>
+        </mat-menu>
+
+        <button mat-icon-button title="{{ t('help') }}" [matMenuTriggerFor]="helpMenu">
+          <mat-icon>help</mat-icon>
+        </button>
+        <mat-menu #helpMenu="matMenu" class="help-menu">
+          <a mat-menu-item target="_blank" [href]="urls.helps">{{ t("help") }}</a>
+          <a mat-menu-item target="_blank" [href]="urls.communityAnnouncementPage">{{ t("announcements") }}</a>
+          <a mat-menu-item target="_blank" [href]="urls.communitySupport">{{ t("community_support") }}</a>
+          <a mat-menu-item target="_blank" [href]="issueMailTo" class="report-issue">
+            {{ t("report_issue") }}
+            <span class="mat-hint">{{ t("report_issue_email", { email: issueEmail }) }}</span>
           </a>
-          <a (click)="goHome()">
-            <mdc-icon mdcTopAppBarNavIcon><img id="nav-logo" src="/assets/images/logo-sf.svg" height="30" /></mdc-icon>
-          </a>
-          <mdc-top-app-bar-title *ngIf="!topAppBar.isCollapsed()" (click)="goHome()" fxHide.xs>
-            Scripture Forge
-          </mdc-top-app-bar-title>
-        </mdc-top-app-bar-section>
-        <mdc-top-app-bar-section align="end" *ngIf="currentUser != null">
-          <!-- not in MVP <mdc-icon mdcTopAppBarActionItem title="Notifications">notifications</mdc-icon> -->
-          <div [hidden]="!isAppOnline">
-            <div mdcMenuSurfaceAnchor #langMenuAnchor *ngIf="i18n.locales.length >= 2">
-              <mdc-icon mdcTopAppBarActionItem title="{{ t('language') }}" (click)="langMenu.open = !langMenu.open">
-                translate
-              </mdc-icon>
-              <mdc-menu
-                #langMenu
-                anchorCorner="bottomStart"
-                [anchorElement]="langMenuAnchor"
-                [anchorMargin]="{ right: media.isActive('xs') ? -88 : 0 }"
-                class="locale-menu"
-              >
-                <mdc-list>
-                  <mdc-list-item
-                    *ngFor="let locale of i18n.locales"
-                    [class.active-locale]="locale.canonicalTag === i18n.localeCode"
-                    (click)="langMenu.open = false; setLocale(locale.canonicalTag)"
-                  >
-                    <!-- `langMenu.open = false` is workaround for menu not closing when click is on a span element -->
-                    <mdc-icon>check</mdc-icon>
-                    <span [class.locale-disabled]="!locale.production">{{ locale.localName }}</span>
-                  </mdc-list-item>
-                </mdc-list>
-              </mdc-menu>
+          <ng-container *ngIf="versionNumberClickCount >= 10 || featureFlags.showFeatureFlags.enabled">
+            <mat-divider></mat-divider>
+            <button mat-menu-item (click)="openFeatureFlagDialog()">Feature flags</button>
+          </ng-container>
+          <mat-divider></mat-divider>
+          <div
+            mat-menu-item
+            disabled="true"
+            (click)="versionNumberClickCount = versionNumberClickCount + 1"
+            id="version-number"
+          >
+            {{ t("product_version", { version: version }) }}
+          </div>
+        </mat-menu>
+
+        <button mat-icon-button title="{{ currentUser?.displayName }}" [matMenuTriggerFor]="userMenu">
+          <app-avatar id="avatarId" [user]="currentUser" [round]="true" [showOnlineStatus]="true"></app-avatar>
+        </button>
+        <mat-menu #userMenu="matMenu" class="user-menu">
+          <div class="pseudo-menu-item user-info">
+            <div>{{ t("logged_in_as") }}</div>
+            <div class="name-and-edit-button">
+              <div id="user-menu-name">{{ currentUser?.displayName }}</div>
+              <button mat-icon-button (click)="editName()" id="edit-name-btn">
+                <mat-icon>edit</mat-icon>
+              </button>
             </div>
           </div>
-          <div mdcMenuSurfaceAnchor #helpMenuAnchor>
-            <mdc-icon
-              id="helpMenuIcon"
-              mdcTopAppBarActionItem
-              title="{{ t('help') }}"
-              (click)="helpMenu.open = !helpMenu.open; versionNumberClickCount = 0"
-              >help</mdc-icon
-            >
-            <mdc-menu #helpMenu anchorCorner="bottomStart" [anchorElement]="helpMenuAnchor">
-              <mdc-list-group>
-                <mdc-list id="help-menu-list">
-                  <a mdc-list-item target="_blank" [href]="urls.helps">{{ t("help") }}</a>
-                  <a mdc-list-item target="_blank" [href]="urls.communityAnnouncementPage">{{ t("announcements") }}</a>
-                  <a mdc-list-item target="_blank" [href]="urls.communitySupport">{{ t("community_support") }}</a>
-                  <a mdc-list-item target="_blank" [href]="issueMailTo">
-                    <mdc-list-item-text
-                      >{{ t("report_issue") }}
-                      <mdc-list-item-secondary
-                        >{{ t("report_issue_email", { email: issueEmail }) }}
-                      </mdc-list-item-secondary>
-                    </mdc-list-item-text>
-                  </a>
-                  <ng-container *ngIf="versionNumberClickCount >= 10 || featureFlags.showFeatureFlags.enabled">
-                    <mdc-list-divider></mdc-list-divider>
-                    <mdc-list-item (click)="openFeatureFlagDialog()">Feature flags</mdc-list-item>
-                  </ng-container>
-                  <mdc-list-divider></mdc-list-divider>
-                  <div
-                    mdcListGroupSubheader
-                    class="version"
-                    (click)="versionNumberClickCount = versionNumberClickCount + 1"
-                  >
-                    {{ t("product_version", { version: version }) }}
-                  </div>
-                </mdc-list>
-              </mdc-list-group>
-            </mdc-menu>
+          <mat-divider></mat-divider>
+          <button mat-menu-item *ngIf="isSystemAdmin" [disabled]="!isAppOnline" appRouterLink="/system-administration">
+            {{ t("system_administration") }}
+          </button>
+          <button mat-menu-item appRouterLink="/projects" id="project-home-link">{{ t("project_home") }}</button>
+          <button mat-menu-item *ngIf="canChangePassword" (click)="changePassword()" [disabled]="!isAppOnline">
+            {{ t("change_password") }}
+          </button>
+          <button mat-menu-item (click)="logOut()" id="log-out-link">{{ t("log_out") }}</button>
+          <mat-divider></mat-divider>
+          <div class="pseudo-menu-item online-status">
+            <ng-container *ngIf="isAppOnline"><mat-icon>cloud</mat-icon> {{ t("online") }}</ng-container>
+            <ng-container *ngIf="!isAppOnline"><mat-icon>cloud_off</mat-icon> {{ t("offline") }}</ng-container>
           </div>
-          <div mdcMenuSurfaceAnchor #userMenuAnchor>
-            <mdc-icon
-              class="avatar-icon"
-              mdcTopAppBarActionItem
-              [title]="currentUser.displayName"
-              (click)="userMenu.open = !userMenu.open"
-            >
-              <app-avatar id="avatarId" [user]="currentUser" [round]="true" [showOnlineStatus]="true"></app-avatar>
-            </mdc-icon>
-            <mdc-menu
-              #userMenu
-              id="user-menu"
-              anchorCorner="bottomStart"
-              [anchorElement]="userMenuAnchor"
-              [defaultFocusState]="defaultFocusState"
-            >
-              <mdc-list-group>
-                <div class="mdc-list-group__subheader">
-                  {{ t("logged_in_as") }}
-                  <div fxLayout="row" fxLayoutAlign="start center">
-                    <strong class="user-menu-name">{{ currentUser.displayName }}</strong>
-                    <button id="edit-name-btn" mdcIconButton icon="edit" type="button" (click)="editName()"></button>
-                  </div>
-                </div>
-                <div>
-                  <mdc-list-divider></mdc-list-divider>
-                  <mdc-list>
-                    <mdc-list-item
-                      *ngIf="isSystemAdmin"
-                      appRouterLink="/system-administration"
-                      [disabled]="!isAppOnline"
-                    >
-                      {{ t("system_administration") }}
-                    </mdc-list-item>
-                    <mdc-list-item appRouterLink="/projects">{{ t("project_home") }}</mdc-list-item>
-                    <mdc-list-item *ngIf="canChangePassword" (click)="changePassword()" [disabled]="!isAppOnline">
-                      {{ t("change_password") }}
-                    </mdc-list-item>
-                    <mdc-list-item name="logout" (click)="logOut()"> {{ t("log_out") }} </mdc-list-item>
-                  </mdc-list>
-                </div>
-                <mdc-list-divider></mdc-list-divider>
-                <div class="online-status">
-                  <ng-container *ngIf="isAppOnline"><mdc-icon>cloud</mdc-icon> {{ t("online") }}</ng-container>
-                  <ng-container *ngIf="!isAppOnline"><mdc-icon>cloud_off</mdc-icon> {{ t("offline") }}</ng-container>
-                </div>
-              </mdc-list-group>
-            </mdc-menu>
-          </div>
-        </mdc-top-app-bar-section>
-      </mdc-top-app-bar-row>
-      <mdc-top-app-bar-row *ngIf="hasUpdate" class="update-banner">
-        <mdc-top-app-bar-section align="start" class="display-behind">
-          <span class="refresh-message">{{ t("update_is_available") }}</span>
-          <div>
-            <button mat-raised-button color="accent" (click)="reloadWithUpdates()">{{ t("refresh") }}</button>
-          </div>
-        </mdc-top-app-bar-section>
-      </mdc-top-app-bar-row>
-    </mdc-top-app-bar>
+        </mat-menu>
+      </mat-toolbar-row>
+      <mat-toolbar-row *ngIf="hasUpdate" class="update-banner">
+        <span class="refresh-message">{{ t("update_is_available") }}</span>
+        <button mat-raised-button color="accent" (click)="reloadWithUpdates()">{{ t("refresh") }}</button>
+      </mat-toolbar-row>
+    </mat-toolbar>
   </header>
   <mdc-drawer
     id="menu-drawer"
@@ -153,7 +102,10 @@
     (closed)="drawerCollapsed()"
   >
     <mdc-drawer-header>
-      <div [class.mdc-top-app-bar-adjust]="isDrawerPermanent"></div>
+      <div
+        [class.top-app-bar-adjust]="isDrawerPermanent"
+        [class.top-app-bar-adjust-double]="hasUpdate && isDrawerPermanent"
+      ></div>
       <mdc-select
         *ngIf="projectDocs != null"
         dir="auto"
@@ -292,8 +244,8 @@
   <div
     #appContent
     cdkScrollable
-    class="app-content mdc-top-app-bar-adjust"
-    [class.mdc-top-app-bar-adjust-double]="hasUpdate"
+    class="app-content top-app-bar-adjust"
+    [class.top-app-bar-adjust-double]="hasUpdate"
     [dir]="i18n.direction"
   >
     <div>
