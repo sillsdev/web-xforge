@@ -637,33 +637,35 @@ class TestEnvironment {
   static reattached: string = ['MAT 1:4', 'reattached text', '17', 'before selection ', ' after selection'].join(
     REATTACH_SEPARATOR
   );
-  static defaultNoteThread: NoteThread = {
-    originalContextBefore: '',
-    originalContextAfter: '',
-    originalSelectedText: '',
-    dataId: 'thread01',
-    ownerRef: 'user01',
-    position: { start: 0, length: 0 },
-    projectRef: TestEnvironment.PROJECT01,
-    verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
-    status: NoteStatus.Todo,
-    assignment: AssignedUsers.TeamUser,
-    notes: [
-      {
-        dataId: 'note01',
-        type: NoteType.Normal,
-        conflictType: NoteConflictType.DefaultValue,
-        threadId: 'thread01',
-        content: 'thread01',
-        deleted: false,
-        ownerRef: 'user01',
-        status: NoteStatus.Todo,
-        tagId: 1,
-        dateCreated: '',
-        dateModified: ''
-      }
-    ]
-  };
+  static get defaultNoteThread(): NoteThread {
+    return {
+      originalContextBefore: '',
+      originalContextAfter: '',
+      originalSelectedText: '',
+      dataId: 'thread01',
+      ownerRef: 'user01',
+      position: { start: 0, length: 0 },
+      projectRef: TestEnvironment.PROJECT01,
+      verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 },
+      status: NoteStatus.Todo,
+      assignment: AssignedUsers.TeamUser,
+      notes: [
+        {
+          dataId: 'note01',
+          type: NoteType.Normal,
+          conflictType: NoteConflictType.DefaultValue,
+          threadId: 'thread01',
+          content: 'thread01',
+          deleted: false,
+          ownerRef: 'user01',
+          status: NoteStatus.Todo,
+          tagId: 1,
+          dateCreated: '',
+          dateModified: ''
+        }
+      ]
+    };
+  }
   static getNoteThread(reattachedContent?: string, isInitialSFNote?: boolean): NoteThread {
     const type: NoteType = NoteType.Normal;
     const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
