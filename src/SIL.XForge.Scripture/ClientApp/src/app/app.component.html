@@ -49,7 +49,12 @@
             <button mat-menu-item (click)="openFeatureFlagDialog()">Feature flags</button>
           </ng-container>
           <mat-divider></mat-divider>
-          <div mat-menu-item disabled="true" (click)="versionNumberClickCount = versionNumberClickCount + 1">
+          <div
+            mat-menu-item
+            disabled="true"
+            (click)="versionNumberClickCount = versionNumberClickCount + 1"
+            id="version-number"
+          >
             {{ t("product_version", { version: version }) }}
           </div>
         </mat-menu>
@@ -61,7 +66,7 @@
           <div class="pseudo-menu-item user-info">
             <div>{{ t("logged_in_as") }}</div>
             <div class="name-and-edit-button">
-              <div class="user-menu-name">{{ currentUser?.displayName }}</div>
+              <div id="user-menu-name">{{ currentUser?.displayName }}</div>
               <button mat-icon-button (click)="editName()" id="edit-name-btn">
                 <mat-icon>edit</mat-icon>
               </button>
@@ -71,11 +76,11 @@
           <button mat-menu-item *ngIf="isSystemAdmin" [disabled]="!isAppOnline" appRouterLink="/system-administration">
             {{ t("system_administration") }}
           </button>
-          <button mat-menu-item appRouterLink="/projects">{{ t("project_home") }}</button>
+          <button mat-menu-item appRouterLink="/projects" id="project-home-link">{{ t("project_home") }}</button>
           <button mat-menu-item *ngIf="canChangePassword" (click)="changePassword()" [disabled]="!isAppOnline">
             {{ t("change_password") }}
           </button>
-          <button mat-menu-item (click)="logOut()">{{ t("log_out") }}</button>
+          <button mat-menu-item (click)="logOut()" id="log-out-link">{{ t("log_out") }}</button>
           <mat-divider></mat-divider>
           <div class="pseudo-menu-item online-status">
             <ng-container *ngIf="isAppOnline"><mat-icon>cloud</mat-icon> {{ t("online") }}</ng-container>
