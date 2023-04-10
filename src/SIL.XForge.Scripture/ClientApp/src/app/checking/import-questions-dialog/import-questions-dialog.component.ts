@@ -458,7 +458,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
         ' ' +
         change.sfVersionOfQuestion!.data!.text,
       after: this.referenceForDisplay(change.question) + ' ' + change.question.text,
-      answerCount: change.sfVersionOfQuestion?.getAnswers?.().length || 0,
+      answerCount: change.sfVersionOfQuestion?.getAnswers().length || 0,
       checked: true
     }));
 
