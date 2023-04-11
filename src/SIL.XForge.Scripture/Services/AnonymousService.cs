@@ -22,7 +22,7 @@ public class AnonymousService : IAnonymousService
         _securityService = securityService;
     }
 
-    public async Task<AnonymousShareKeyResponse> CheckSharingKey(string shareKey)
+    public async Task<AnonymousShareKeyResponse> CheckShareKey(string shareKey)
     {
         ValidShareKey validShareKey = await _projectService.CheckShareKeyValidity(shareKey);
 
