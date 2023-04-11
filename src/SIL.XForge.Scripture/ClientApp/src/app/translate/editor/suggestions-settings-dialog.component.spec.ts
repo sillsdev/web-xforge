@@ -8,7 +8,8 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig,
@@ -26,7 +27,7 @@ import {
   TestTranslocoModule
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -117,6 +118,17 @@ describe('SuggestionsSettingsDialogComponent', () => {
     env.closeDialog();
   }));
 
+  it('biblical terms is disabled if the user is an SF user', fakeAsync(() => {
+    const env = new TestEnvironment(true, true);
+    const projectProfileDoc = env.getProjectProfileDoc();
+    projectProfileDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.Observer));
+    env.openDialog();
+    expect(env.component!.biblicalTermsEnabled).toBe(true);
+
+    expect(env.biblicalTermsEnabledSwitch.disabled).toBe(true);
+    env.closeDialog();
+  }));
+
   it('transliterate biblical terms is disabled if biblical terms is disabled', fakeAsync(() => {
     const env = new TestEnvironment(true, true);
     env.openDialog();
@@ -148,6 +160,18 @@ describe('SuggestionsSettingsDialogComponent', () => {
     const env = new TestEnvironment(false);
     env.openDialog();
     expect(env.confidenceThresholdSlider.value).toEqual(50);
+    env.closeDialog();
+  }));
+
+  it('translation suggestions are disabled if the user cannot edit tests', fakeAsync(() => {
+    const env = new TestEnvironment(true, true);
+    const projectProfileDoc = env.getProjectProfileDoc();
+    projectProfileDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.ParatextObserver));
+    env.openDialog();
+    expect(env.component!.biblicalTermsEnabled).toBe(true);
+
+    expect(env.biblicalTermsEnabledSwitch.disabled).toBe(false);
+    expect(env.suggestionsEnabledSwitch.disabled).toBe(true);
     env.closeDialog();
   }));
 
@@ -205,8 +229,8 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
 
-    when(mockedProjectService.get(anything())).thenCall(sfProjectId =>
-      this.realtimeService.get(SFProjectDoc.COLLECTION, sfProjectId)
+    when(mockedProjectService.getProfile(anything())).thenCall(sfProjectId =>
+      this.realtimeService.get(SFProjectProfileDoc.COLLECTION, sfProjectId)
     );
 
     when(mockedPwaService.isOnline).thenCall(() => this.onlineStatus.getValue());
@@ -300,7 +324,7 @@ class TestEnvironment {
       id: getSFProjectUserConfigDocId(user1Config.projectRef, user1Config.ownerRef),
       data: user1Config
     });
-    this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
+    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: user1Config.projectRef,
       data: {
         name: 'Project 01',
@@ -322,9 +346,8 @@ class TestEnvironment {
         biblicalTermsEnabled: user1Config.biblicalTermsEnabled,
         editable: true,
         sync: { queuedCount: 0 },
-        userRoles: {},
-        userPermissions: {},
-        paratextUsers: []
+        userRoles: { user01: SFProjectRole.ParatextTranslator },
+        userPermissions: {}
       }
     });
   }
@@ -334,6 +357,10 @@ class TestEnvironment {
       SFProjectUserConfigDoc.COLLECTION,
       getSFProjectUserConfigDocId('project01', 'user01')
     );
+  }
+
+  getProjectProfileDoc(): SFProjectProfileDoc {
+    return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
   }
 
   clickSwitch(element: HTMLElement): void {

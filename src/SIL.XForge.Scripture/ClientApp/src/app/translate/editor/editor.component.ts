@@ -223,17 +223,19 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get translationSuggestionsProjectEnabled(): boolean {
-    return (
-      this.projectDoc != null &&
-      this.projectDoc.data != null &&
-      this.projectDoc.data.translateConfig.translationSuggestionsEnabled
-    );
+    return this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled === true;
   }
 
   get suggestionsSettingsEnabled(): boolean {
+    const userRole: string | undefined =
+      this.projectUserConfigDoc?.data?.ownerRef != null
+        ? this.projectDoc?.data?.userRoles[this.userService.currentUserId]
+        : undefined;
     return (
-      this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled === true ||
-      this.projectDoc?.data?.biblicalTermsEnabled === true
+      (this.showSource && this.translationSuggestionsProjectEnabled) ||
+      (this.projectDoc?.data?.biblicalTermsEnabled === true &&
+        userRole != null &&
+        SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.View))
     );
   }
 

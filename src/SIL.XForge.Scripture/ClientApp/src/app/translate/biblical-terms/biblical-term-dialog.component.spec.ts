@@ -11,7 +11,6 @@ import {
   SF_PROJECT_USER_CONFIGS_COLLECTION
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { BiblicalTermDoc } from 'src/app/core/models/biblical-term-doc';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -23,6 +22,7 @@ import {
   TestTranslocoModule
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { BiblicalTermDialogComponent, BiblicalTermDialogData } from './biblical-term-dialog.component';
