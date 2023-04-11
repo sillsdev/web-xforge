@@ -40,7 +40,7 @@ public class AnonymousServiceTests
             );
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckSharingKey(shareKey));
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckShareKey(shareKey));
     }
 
     [Test]
@@ -53,7 +53,7 @@ public class AnonymousServiceTests
         env.SFProjectService.CheckShareKeyValidity(shareKey).Throws(new ForbiddenException());
 
         // SUT
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckSharingKey(shareKey));
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckShareKey(shareKey));
     }
 
     [Test]
@@ -80,7 +80,7 @@ public class AnonymousServiceTests
             );
 
         // SUT
-        AnonymousShareKeyResponse? result = await env.Service.CheckSharingKey(shareKey);
+        AnonymousShareKeyResponse? result = await env.Service.CheckShareKey(shareKey);
 
         Assert.IsNotNull(result);
         Assert.AreEqual("Test Project 1", result.ProjectName);
