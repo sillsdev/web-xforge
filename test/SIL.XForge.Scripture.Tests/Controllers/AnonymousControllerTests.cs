@@ -8,6 +8,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using SIL.XForge.Models;
+using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 
@@ -20,19 +21,24 @@ public class AnonymousControllerTests
     public async Task GenerateAccount_CreatesCookie()
     {
         var env = new TestEnvironment();
-        string shareKey = "key01";
-        string displayName = "Test User";
-        string language = "en";
+        var request = new GenerateAccountRequest()
+        {
+            ShareKey = "key01",
+            DisplayName = "Test User",
+            Language = "en"
+        };
         var credentials = new TransparentAuthenticationCredentials { Username = "username", Password = "password" };
         var expectedCookie = new Cookie
         {
             Name = CookieConstants.TransparentAuthentication,
             Value = Uri.EscapeDataString(Newtonsoft.Json.JsonConvert.SerializeObject(credentials))
         };
-        env.AnonymousService.GenerateAccount(shareKey, displayName, language).Returns(Task.FromResult(credentials));
+        env.AnonymousService
+            .GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
+            .Returns(Task.FromResult(credentials));
 
         // SUT
-        await env.Controller.GenerateAccount(shareKey, displayName, language);
+        await env.Controller.GenerateAccount(request);
 
         var headers = env.Controller.Response.Headers;
         Assert.AreEqual(headers.ContainsKey("Set-Cookie"), true);
@@ -43,13 +49,18 @@ public class AnonymousControllerTests
     public void GenerateAccount_NotFound()
     {
         var env = new TestEnvironment();
-        string shareKey = "key01";
-        string displayName = "Test User";
-        string language = "en";
-        env.AnonymousService.GenerateAccount(shareKey, displayName, language).Throws(new ForbiddenException());
+        var request = new GenerateAccountRequest()
+        {
+            ShareKey = "key01",
+            DisplayName = "Test User",
+            Language = "en"
+        };
+        env.AnonymousService
+            .GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
+            .Throws(new ForbiddenException());
 
         // SUT
-        var actual = env.Controller.GenerateAccount(shareKey, displayName, language);
+        var actual = env.Controller.GenerateAccount(request);
         Assert.IsInstanceOf<NotFoundObjectResult>(actual.Result);
     }
 

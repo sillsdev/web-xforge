@@ -13,10 +13,9 @@ form {
   padding-top: 20px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  column-gap: 20px;
   @include media-breakpoint-only(xs) {
     flex-direction: column;
-    gap: 0;
     align-items: normal;
   }
 

@@ -7,7 +7,7 @@ namespace SIL.XForge.Services;
 public class SecurityService : ISecurityService
 {
     /// <summary>Return a random 16-character base-64 string that is safe to use in URLs.</summary>
-    /// <param name="length">Length of data to generate the key from</param>
+    /// <param name="length">Length of bytes to generate the key from</param>
     /// <remarks>
     /// For example, 12 bytes of data will become 16 bytes of base-64 text
     /// </remarks>
