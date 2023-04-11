@@ -15,8 +15,8 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, map, startWith, tap } from 'rxjs/operators';
-import { AuthService, LoginResult } from 'xforge-common/auth.service';
+import { distinctUntilChanged, filter, map, startWith, take, tap } from 'rxjs/operators';
+import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -289,149 +289,149 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   async ngOnInit(): Promise<void> {
-    this.authService.loggedInState$.subscribe(async (state: LoginResult) => {
-      if (!state.loggedIn) {
-        this.loadingFinished();
+    await this.authService.loggedInState$
+      .pipe(
+        filter(state => state.loggedIn),
+        take(1)
+      )
+      .toPromise();
+    this.loadingStarted();
+    this.currentUserDoc = await this.userService.getCurrentUser();
+    const userData = cloneDeep(this.currentUserDoc.data);
+    if (userData != null) {
+      this.reportingService.addMeta(userData, 'user');
+    }
+
+    const languageTag = this.currentUserDoc.data!.interfaceLanguage;
+    if (languageTag != null) {
+      this.i18n.trySetLocale(languageTag, this.authService);
+    }
+
+    const isNewlyLoggedIn = await this.authService.isNewlyLoggedIn;
+    this.isLoggedInUserAnonymous = await this.authService.isLoggedInUserAnonymous;
+    const isBrowserSupported = supportedBrowser();
+    this.reportingService.addMeta({ isBrowserSupported });
+    if (isNewlyLoggedIn && !isBrowserSupported) {
+      this.dialogService.openMdcDialog(SupportedBrowsersDialogComponent, {
+        autoFocus: false,
+        data: BrowserIssue.Upgrade
+      });
+    }
+
+    const projectDocs$ = this.userProjectsService.projectDocs$;
+
+    // retrieve the projectId from the current route. Since the nav menu is outside of the router outlet, it cannot
+    // use ActivatedRoute to get the params. Instead the nav menu, listens to router events and traverses the route
+    // tree to find the currently activated route
+    const projectId$: Observable<string | undefined> = this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      startWith(null),
+      map(() => {
+        let route = this.route.snapshot;
+        while (route.firstChild != null) {
+          route = route.firstChild;
+        }
+        return route;
+      }),
+      filter(r => r.outlet === 'primary'),
+      tap(r => {
+        // ensure that the task of the current view has been expanded
+        for (const segment of r.url) {
+          if (segment.path === 'translate') {
+            this.translateVisible = true;
+            break;
+          } else if (segment.path === 'checking') {
+            this.checkingVisible = true;
+            break;
+          }
+        }
+      }),
+      map(r => r.params['projectId'] as string | undefined),
+      distinctUntilChanged(),
+      tap(projectId => {
+        this.canSeeSettings$ = projectId == null ? of(false) : this.settingsAuthGuard.allowTransition(projectId);
+        this.canSeeUsers$ = projectId == null ? of(false) : this.usersAuthGuard.allowTransition(projectId);
+        this.canSync$ = projectId == null ? of(false) : this.syncAuthGuard.allowTransition(projectId);
+        this.canSeeAdminPages$ = combineLatest([this.canSeeSettings$, this.canSeeUsers$, this.canSync$]).pipe(
+          map(([settings, users, sync]) => settings || users || sync)
+        );
+        // the project deleted dialog should be closed by now, so we can reset its ref to null
+        if (projectId == null) {
+          this.projectDeletedDialogRef = null;
+        }
+      })
+    );
+
+    // select the current project
+    this.subscribe(combineLatest([projectDocs$, projectId$]), async ([projectDocs, projectId]) => {
+      this.projectDocs = projectDocs;
+      // if the project deleted dialog is displayed, don't do anything
+      if (this.projectDeletedDialogRef != null) {
         return;
       }
-      this.loadingStarted();
-      this.currentUserDoc = await this.userService.getCurrentUser();
-      const userData = cloneDeep(this.currentUserDoc.data);
-      if (userData != null) {
-        this.reportingService.addMeta(userData, 'user');
+      const selectedProjectDoc = projectId == null ? undefined : this.projectDocs.find(p => p.id === projectId);
+
+      if (this.selectedProjectDeleteSub != null) {
+        this.selectedProjectDeleteSub.unsubscribe();
+        this.selectedProjectDeleteSub = undefined;
       }
 
-      const languageTag = this.currentUserDoc.data!.interfaceLanguage;
-      if (languageTag != null) {
-        this.i18n.trySetLocale(languageTag, this.authService);
+      // check if the currently selected project has been deleted
+      if (
+        projectId != null &&
+        this.currentUserDoc != null &&
+        projectId === this.userService.currentProjectId(this.currentUserDoc) &&
+        (selectedProjectDoc == null || !selectedProjectDoc.isLoaded)
+      ) {
+        await this.userService.setCurrentProjectId(this.currentUserDoc, undefined);
+        this.navigateToStart();
+        return;
       }
 
-      const isNewlyLoggedIn = await this.authService.isNewlyLoggedIn;
-      this.isLoggedInUserAnonymous = await this.authService.isLoggedInUserAnonymous;
-      const isBrowserSupported = supportedBrowser();
-      this.reportingService.addMeta({ isBrowserSupported });
-      if (isNewlyLoggedIn && !isBrowserSupported) {
-        this.dialogService.openMdcDialog(SupportedBrowsersDialogComponent, {
-          autoFocus: false,
-          data: BrowserIssue.Upgrade
-        });
+      this.selectedProjectDoc = selectedProjectDoc;
+      this.setTopAppBarVariant();
+      if (this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded) {
+        return;
       }
+      this.userService.setCurrentProjectId(this.currentUserDoc!, this.selectedProjectDoc.id);
+      this.refreshQuestionsQuery(this.selectedProjectDoc.id);
 
-      const projectDocs$ = this.userProjectsService.projectDocs$;
-
-      // retrieve the projectId from the current route. Since the nav menu is outside of the router outlet, it cannot
-      // use ActivatedRoute to get the params. Instead the nav menu, listens to router events and traverses the route
-      // tree to find the currently activated route
-      const projectId$: Observable<string | undefined> = this.router.events.pipe(
-        filter(e => e instanceof NavigationEnd),
-        startWith(null),
-        map(() => {
-          let route = this.route.snapshot;
-          while (route.firstChild != null) {
-            route = route.firstChild;
-          }
-          return route;
-        }),
-        filter(r => r.outlet === 'primary'),
-        tap(r => {
-          // ensure that the task of the current view has been expanded
-          for (const segment of r.url) {
-            if (segment.path === 'translate') {
-              this.translateVisible = true;
-              break;
-            } else if (segment.path === 'checking') {
-              this.checkingVisible = true;
-              break;
-            }
-          }
-        }),
-        map(r => r.params['projectId'] as string | undefined),
-        distinctUntilChanged(),
-        tap(projectId => {
-          this.canSeeSettings$ = projectId == null ? of(false) : this.settingsAuthGuard.allowTransition(projectId);
-          this.canSeeUsers$ = projectId == null ? of(false) : this.usersAuthGuard.allowTransition(projectId);
-          this.canSync$ = projectId == null ? of(false) : this.syncAuthGuard.allowTransition(projectId);
-          this.canSeeAdminPages$ = combineLatest([this.canSeeSettings$, this.canSeeUsers$, this.canSync$]).pipe(
-            map(([settings, users, sync]) => settings || users || sync)
-          );
-          // the project deleted dialog should be closed by now, so we can reset its ref to null
-          if (projectId == null) {
-            this.projectDeletedDialogRef = null;
-          }
-        })
-      );
-
-      // select the current project
-      this.subscribe(combineLatest([projectDocs$, projectId$]), async ([projectDocs, projectId]) => {
-        this.projectDocs = projectDocs;
-        // if the project deleted dialog is displayed, don't do anything
-        if (this.projectDeletedDialogRef != null) {
-          return;
+      // handle remotely deleted project
+      this.selectedProjectDeleteSub = this.selectedProjectDoc.delete$.subscribe(() => {
+        if (this.userService.currentProjectId != null) {
+          this.showProjectDeletedDialog();
         }
-        const selectedProjectDoc = projectId == null ? undefined : this.projectDocs.find(p => p.id === projectId);
-
-        if (this.selectedProjectDeleteSub != null) {
-          this.selectedProjectDeleteSub.unsubscribe();
-          this.selectedProjectDeleteSub = undefined;
-        }
-
-        // check if the currently selected project has been deleted
-        if (
-          projectId != null &&
-          this.currentUserDoc != null &&
-          projectId === this.userService.currentProjectId(this.currentUserDoc) &&
-          (selectedProjectDoc == null || !selectedProjectDoc.isLoaded)
-        ) {
-          await this.userService.setCurrentProjectId(this.currentUserDoc, undefined);
-          this.navigateToStart();
-          return;
-        }
-
-        this.selectedProjectDoc = selectedProjectDoc;
-        this.setTopAppBarVariant();
-        if (this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded) {
-          return;
-        }
-        this.userService.setCurrentProjectId(this.currentUserDoc!, this.selectedProjectDoc.id);
-        this.refreshQuestionsQuery(this.selectedProjectDoc.id);
-
-        // handle remotely deleted project
-        this.selectedProjectDeleteSub = this.selectedProjectDoc.delete$.subscribe(() => {
-          if (this.userService.currentProjectId != null) {
-            this.showProjectDeletedDialog();
-          }
-        });
-
-        if (this.removedFromProjectSub != null) {
-          this.removedFromProjectSub.unsubscribe();
-        }
-        this.removedFromProjectSub = this.selectedProjectDoc.remoteChanges$.subscribe(() => {
-          if (
-            this.selectedProjectDoc?.data != null &&
-            this.currentUserDoc != null &&
-            !(this.currentUserDoc.id in this.selectedProjectDoc.data.userRoles)
-          ) {
-            // The user has been removed from the project
-            this.showProjectDeletedDialog();
-            this.projectService.localDelete(this.selectedProjectDoc.id);
-          }
-        });
-
-        if (!this.isTranslateEnabled) {
-          this.translateVisible = false;
-        }
-        if (!this.isCheckingEnabled) {
-          this.checkingVisible = false;
-        }
-        if (this._projectSelect != null) {
-          this._projectSelect.value = this.selectedProjectDoc.id;
-        }
-
-        this.checkDeviceStorage();
       });
 
-      this.loadingFinished();
+      if (this.removedFromProjectSub != null) {
+        this.removedFromProjectSub.unsubscribe();
+      }
+      this.removedFromProjectSub = this.selectedProjectDoc.remoteChanges$.subscribe(() => {
+        if (
+          this.selectedProjectDoc?.data != null &&
+          this.currentUserDoc != null &&
+          !(this.currentUserDoc.id in this.selectedProjectDoc.data.userRoles)
+        ) {
+          // The user has been removed from the project
+          this.showProjectDeletedDialog();
+          this.projectService.localDelete(this.selectedProjectDoc.id);
+        }
+      });
+
+      if (!this.isTranslateEnabled) {
+        this.translateVisible = false;
+      }
+      if (!this.isCheckingEnabled) {
+        this.checkingVisible = false;
+      }
+      if (this._projectSelect != null) {
+        this._projectSelect.value = this.selectedProjectDoc.id;
+      }
+
+      this.checkDeviceStorage();
     });
+
+    this.loadingFinished();
   }
 
   ngOnDestroy(): void {

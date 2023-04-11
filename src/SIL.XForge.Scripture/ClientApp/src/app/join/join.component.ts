@@ -11,7 +11,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { AnonymousService } from 'xforge-common/anonymous.service';
 import { LocationService } from 'xforge-common/location.service';
-import { UntypedFormControl, Validators } from '@angular/forms';
+import { FormControl, Validators } from '@angular/forms';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { SFProjectService } from '../core/sf-project.service';
@@ -30,8 +30,8 @@ export interface AnonymousShareKeyResponse extends AnonymousShareKeyDetails {
   styleUrls: ['./join.component.scss']
 })
 export class JoinComponent extends DataLoadingComponent {
-  name: UntypedFormControl = new UntypedFormControl('');
-  joiningProgress?: 'joining' | 'unavailable';
+  name: FormControl<string | null> = new FormControl<string | null>('');
+  status: 'input' | 'joining' | 'unavailable' = 'unavailable';
   private joiningResponse?: AnonymousShareKeyResponse;
 
   constructor(
@@ -67,11 +67,11 @@ export class JoinComponent extends DataLoadingComponent {
       }
       this.checkShareKey(joining.shareKey);
     });
-    this.subscribe(this.pwaService.onlineStatus$, () => this.showOfflineMessage());
+    this.subscribe(this.pwaService.onlineStatus$, () => this.updateOfflineJoiningStatus());
   }
 
   get isFormEnabled(): boolean {
-    return this.joiningProgress == null;
+    return this.status === 'input';
   }
 
   get inviteText(): string {
@@ -84,7 +84,7 @@ export class JoinComponent extends DataLoadingComponent {
   }
 
   get isJoining(): boolean {
-    return this.joiningProgress === 'joining';
+    return this.status === 'joining';
   }
 
   get isOnline(): boolean {
@@ -92,10 +92,10 @@ export class JoinComponent extends DataLoadingComponent {
   }
 
   async joinProject(): Promise<void> {
-    if (!this.name.valid || this.joiningResponse == null) {
+    if (!this.name.valid || this.name.value == null || this.joiningResponse == null) {
       return;
     }
-    this.joiningProgress = 'joining';
+    this.status = 'joining';
     try {
       this.name.disable();
       await this.anonymousService.generateAccount(
@@ -112,13 +112,13 @@ export class JoinComponent extends DataLoadingComponent {
         this.name.enable();
       }
     } catch (e) {
-      await this.invalidShareLink();
+      await this.informInvalidShareLinkAndRedirect();
     }
-    this.joiningProgress = undefined;
+    this.status = 'input';
   }
 
   logIn(): void {
-    if (this.joiningProgress != null) {
+    if (this.status != null) {
       return;
     }
     this.authService.logIn({ returnUrl: this.locationService.pathname, signUp: false });
@@ -137,7 +137,7 @@ export class JoinComponent extends DataLoadingComponent {
         err instanceof CommandError &&
         (err.code === CommandErrorCode.Forbidden || err.code === CommandErrorCode.NotFound)
       ) {
-        await this.invalidShareLink();
+        await this.informInvalidShareLinkAndRedirect();
       } else {
         throw err;
       }
@@ -150,20 +150,22 @@ export class JoinComponent extends DataLoadingComponent {
     const isLoggedIn: boolean = await this.authService.isLoggedIn;
     if (isLoggedIn) {
       await this.joinWithShareKey(shareKey);
+      return;
     }
     this.name.setValidators([Validators.required, XFValidators.someNonWhitespace]);
     try {
       this.joiningResponse = await this.anonymousService.checkShareKey(shareKey);
-      this.loadingFinished();
     } catch {
-      await this.invalidShareLink();
+      await this.informInvalidShareLinkAndRedirect();
+    } finally {
+      this.loadingFinished();
     }
   }
 
-  private async showOfflineMessage(): Promise<void> {
-    if (this.pwaService.isOnline) {
+  private async updateOfflineJoiningStatus(): Promise<void> {
+    if (this.pwaService.isOnline && this.status === 'unavailable') {
       this.name.enable();
-      this.joiningProgress = undefined;
+      this.status = 'input';
       return;
     }
     if (await this.authService.isLoggedIn) {
@@ -172,11 +174,11 @@ export class JoinComponent extends DataLoadingComponent {
       return;
     } else {
       this.name.disable();
-      this.joiningProgress = 'unavailable';
+      this.status = 'unavailable';
     }
   }
 
-  private async invalidShareLink(): Promise<void> {
+  private async informInvalidShareLinkAndRedirect(): Promise<void> {
     await this.dialogService.message('join.project_link_is_invalid');
     this.locationService.go(this.locationService.origin);
   }

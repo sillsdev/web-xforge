@@ -51,9 +51,9 @@ public class UserService : IUserService
         var userProfile = JObject.Parse(userProfileJson);
         var identities = (JArray)userProfile["identities"];
         JObject ptIdentity = identities.OfType<JObject>().FirstOrDefault(i => (string)i["connection"] == "paratext");
-        bool isAnonymousUser =
-            identities.OfType<JObject>().FirstOrDefault(i => (string)i["connection"] == "Transparent-Authentication")
-            != null;
+        bool isAnonymousUser = identities
+            .OfType<JObject>()
+            .Any(i => (string)i["connection"] == "Transparent-Authentication");
         Regex emailRegex = new Regex(EMAIL_PATTERN);
         await using (IConnection conn = await _realtimeService.ConnectAsync(curUserId))
         {
