@@ -2,11 +2,13 @@ import { Component, Inject, OnInit, ViewChild } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSlider } from '@angular/material/slider';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 
@@ -33,7 +35,7 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable i
     transliterateBiblicalTermsSwitch: this.transliterateBiblicalTermsSwitch
   });
 
-  private projectDoc?: SFProjectDoc;
+  private projectDoc?: SFProjectProfileDoc;
   private readonly projectUserConfigDoc: SFProjectUserConfigDoc;
   private confidenceThreshold$ = new BehaviorSubject<number>(20);
 
@@ -60,7 +62,7 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable i
     if (this.projectUserConfigDoc.data != null) {
       const percent = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
       this.confidenceThreshold$.next(percent);
-      this.projectDoc = await this.projectService.get(this.projectUserConfigDoc.data.projectRef);
+      this.projectDoc = await this.projectService.getProfile(this.projectUserConfigDoc.data.projectRef);
     }
 
     this.subscribe(
@@ -108,16 +110,23 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable i
     this.updateSwitchDisabledStates();
   }
 
-  // This one!
-  get translationSettingsDisabled(): boolean {
-    return !this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled || !this.pwaService.isOnline;
+  get translationSettingsEnabled(): boolean {
+    const userRole: string | undefined =
+      this.projectUserConfigDoc.data?.ownerRef != null
+        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data?.ownerRef]
+        : undefined;
+    return (
+      this.pwaService.isOnline &&
+      this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled === true &&
+      userRole != null &&
+      SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.Texts, Operation.Edit)
+    );
   }
 
   get translationSuggestionsDisabled(): boolean {
-    return this.translationSettingsDisabled || !this.translationSuggestionsUserEnabled;
+    return !this.translationSettingsEnabled || !this.translationSuggestionsUserEnabled;
   }
 
-  // This one!
   get biblicalTermsSettingsDisabled(): boolean {
     return !this.projectDoc?.data?.biblicalTermsEnabled || !this.pwaService.isOnline;
   }
@@ -156,12 +165,22 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable i
   }
 
   updateSwitchDisabledStates(): void {
-    if (this.pwaService.isOnline && this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled === true) {
+    if (this.translationSettingsEnabled) {
       this.suggestionsEnabledSwitch.enable();
     } else {
       this.suggestionsEnabledSwitch.disable();
     }
-    if (this.pwaService.isOnline && this.projectDoc?.data?.biblicalTermsEnabled === true) {
+
+    const userRole: string | undefined =
+      this.projectUserConfigDoc.data?.ownerRef != null
+        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data?.ownerRef]
+        : undefined;
+    if (
+      this.pwaService.isOnline &&
+      this.projectDoc?.data?.biblicalTermsEnabled === true &&
+      userRole != null &&
+      SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.View)
+    ) {
       this.biblicalTermsEnabledSwitch.enable();
       if (this.projectUserConfigDoc.data?.biblicalTermsEnabled) {
         this.transliterateBiblicalTermsSwitch.enable();
