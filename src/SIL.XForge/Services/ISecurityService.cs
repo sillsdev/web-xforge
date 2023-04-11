@@ -2,5 +2,5 @@ namespace SIL.XForge.Services;
 
 public interface ISecurityService
 {
-    string GenerateKey(int bytes = 12);
+    string GenerateKey(int length = 12);
 }

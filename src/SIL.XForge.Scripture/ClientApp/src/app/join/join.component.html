@@ -2,7 +2,7 @@
   <ng-container *ngIf="!isLoading">
     <h1>{{ t("join_a_project") }}</h1>
     <p [innerHTML]="inviteText"></p>
-    <app-notice *ngIf="!isOnline" type="error" icon="cloud_off" text="join.please_connect_to_use_link"></app-notice>
+    <app-notice *ngIf="!isOnline" type="error" icon="cloud_off">{{ t("please_connect_to_use_link") }}</app-notice>
     <form>
       <mat-form-field appearance="fill">
         <mat-label>{{ t("your_name") }}</mat-label>
