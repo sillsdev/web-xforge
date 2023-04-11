@@ -4,12 +4,14 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Controllers;
 
 [Route(UrlConstants.Anonymous)]
+[ApiController]
 [AllowAnonymous]
 public class AnonymousController : ControllerBase
 {
@@ -22,12 +24,12 @@ public class AnonymousController : ControllerBase
         _exceptionHandler = exceptionHandler;
     }
 
-    [HttpPost("checkShareKey")]
-    public async Task<IActionResult> CheckSharingKey([FromForm] string shareKey)
+    [HttpPost]
+    public async Task<IActionResult> CheckShareKey([FromBody] CheckShareKeyRequest content)
     {
         try
         {
-            return Ok(await _anonymousService.CheckSharingKey(shareKey));
+            return Ok(await _anonymousService.CheckShareKey(content.ShareKey));
         }
         catch (DataNotFoundException e)
         {
@@ -40,22 +42,22 @@ public class AnonymousController : ControllerBase
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "CheckSharingKey" }, { "shareKey", shareKey } }
+                new Dictionary<string, string> { { "method", "CheckShareKey" }, { "shareKey", content.ShareKey } }
             );
             throw;
         }
     }
 
-    [HttpPost("generateAccount")]
-    public async Task<IActionResult> GenerateAccount(
-        [FromForm] string shareKey,
-        [FromForm] string displayName,
-        [FromForm] string language
-    )
+    [HttpPost]
+    public async Task<IActionResult> GenerateAccount([FromBody] GenerateAccountRequest request)
     {
         try
         {
-            var credentials = await _anonymousService.GenerateAccount(shareKey, displayName, language);
+            var credentials = await _anonymousService.GenerateAccount(
+                request.ShareKey,
+                request.DisplayName,
+                request.Language
+            );
             // Store credentials in a cookie as a fallback to the auth0 tokens expiring so the user can log in again
             Response.Cookies.Append(
                 CookieConstants.TransparentAuthentication,
@@ -71,7 +73,13 @@ public class AnonymousController : ControllerBase
         catch (Exception)
         {
             _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string> { { "method", "CheckSharingKey" }, { "shareKey", shareKey } }
+                new Dictionary<string, string>
+                {
+                    { "method", "GenerateAccount" },
+                    { "shareKey", request.ShareKey },
+                    { "displayName", request.DisplayName },
+                    { "language", request.Language }
+                }
             );
             throw;
         }
