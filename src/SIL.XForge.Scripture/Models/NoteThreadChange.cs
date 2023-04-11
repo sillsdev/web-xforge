@@ -7,7 +7,7 @@ public enum ChangeType
     Added,
     Updated,
     Deleted,
-    None
+    None,
 }
 
 /// <summary>
@@ -20,9 +20,11 @@ public class NoteThreadChange
     public string SelectedText { get; set; }
     public string ContextBefore { get; set; }
     public string ContextAfter { get; set; }
-    public TextAnchor Position { get; set; }
+    public TextAnchor? Position { get; set; }
     public string Status { get; set; }
     public string Assignment { get; set; }
+    public string? BiblicalTermId { get; set; }
+    public BiblicalTermNoteHeadingInfo? ExtraHeadingInfo { get; set; }
 
     /// <summary> True if the thread has been permanently removed. </summary>
     public bool ThreadRemoved { get; set; }
@@ -34,19 +36,14 @@ public class NoteThreadChange
     /// <summary> IDs for notes that have been permanently removed. </summary>
     public List<string> NoteIdsRemoved { get; set; } = new List<string>();
 
-    public bool HasChange
-    {
-        get
-        {
-            return NotesAdded.Count > 0
-                || NotesUpdated.Count > 0
-                || NotesDeleted.Count > 0
-                || NoteIdsRemoved.Count > 0
-                || ThreadRemoved
-                || ThreadUpdated
-                || Position != null;
-        }
-    }
+    public bool HasChange =>
+        NotesAdded.Count > 0
+        || NotesUpdated.Count > 0
+        || NotesDeleted.Count > 0
+        || NoteIdsRemoved.Count > 0
+        || ThreadRemoved
+        || ThreadUpdated
+        || Position != null;
 
     public NoteThreadChange(
         string threadId,
@@ -55,7 +52,9 @@ public class NoteThreadChange
         string contextBefore,
         string contextAfter,
         string status,
-        string assignment
+        string assignment,
+        string? biblicalTermId = null,
+        BiblicalTermNoteHeadingInfo? extraHeadingInfo = null
     )
     {
         ThreadId = threadId;
@@ -65,6 +64,8 @@ public class NoteThreadChange
         ContextAfter = contextAfter;
         Assignment = assignment;
         Status = status;
+        BiblicalTermId = biblicalTermId;
+        ExtraHeadingInfo = extraHeadingInfo;
     }
 
     public void AddChange(Note changedNote, ChangeType type)
@@ -80,6 +81,7 @@ public class NoteThreadChange
             case ChangeType.Deleted:
                 NotesDeleted.Add(changedNote);
                 break;
+            case ChangeType.None:
             default:
                 break;
         }

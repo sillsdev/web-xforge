@@ -208,6 +208,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             var questionDocsByBook = new Dictionary<int, IReadOnlyList<IDocument<Question>>>();
             var noteThreadDocsByBook = new Dictionary<int, IEnumerable<IDocument<NoteThread>>>();
             var biblicalTermDocs = new List<IDocument<BiblicalTerm>>();
+            var biblicalTermNoteThreadDocs = new List<IDocument<NoteThread>>();
 
             // Update target Paratext books, notes and biblical terms, if this is not a resource
             if (!_paratextService.IsResource(targetParatextId))
@@ -217,7 +218,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     targetParatextId,
                     targetTextDocsByBook,
                     questionDocsByBook,
-                    noteThreadDocsByBook
+                    noteThreadDocsByBook,
+                    biblicalTermNoteThreadDocs
                 );
                 await GetAndUpdateParatextBiblicalTerms(SyncPhase.Phase3, targetParatextId, biblicalTermDocs);
             }
@@ -382,10 +384,12 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     targetParatextId,
                     targetTextDocsByBook,
                     questionDocsByBook,
-                    noteThreadDocsByBook
+                    noteThreadDocsByBook,
+                    biblicalTermNoteThreadDocs
                 );
             }
 
+            Dictionary<string, string> ptUsernamesToSFUserIds = await GetPTUsernameToSFUserIdsAsync(token);
             if (!_paratextService.IsResource(targetParatextId) || resourceNeedsUpdating)
             {
                 await UpdateDocsAsync(
@@ -396,9 +400,15 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     noteThreadDocsByBook,
                     targetBooks,
                     sourceBooks,
-                    token
+                    ptUsernamesToSFUserIds
                 );
-                await UpdateBiblicalTermsAsync(SyncPhase.Phase8, targetParatextId, biblicalTermDocs);
+                await UpdateBiblicalTermsAsync(
+                    SyncPhase.Phase8,
+                    targetParatextId,
+                    biblicalTermDocs,
+                    biblicalTermNoteThreadDocs,
+                    ptUsernamesToSFUserIds
+                );
             }
             LogMetric("Back from UpdateDocsAsync");
             await NotifySyncProgress(SyncPhase.Phase9, 20.0);
@@ -466,14 +476,17 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// <param name="paratextId">The Paratext ID.</param>
     /// <param name="textDocsByBook">The text documents with the book number as key.</param>
     /// <param name="questionDocsByBook">The question documents with the book number as key.</param>
+    /// <param name="noteThreadDocsByBook">The note thread documents with the book number as key.</param>
+    /// <param name="biblicalTermNoteThreadDocs">The note thread documents for the Biblical Terms</param>
     /// <returns>The task.</returns>
     /// <exception cref="ArgumentException">The Paratext project repository does not exist.</exception>
     private async Task GetAndUpdateParatextBooksAndNotes(
         SyncPhase syncPhase,
         string paratextId,
-        Dictionary<int, SortedList<int, IDocument<TextData>>> textDocsByBook,
-        Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook,
-        Dictionary<int, IEnumerable<IDocument<NoteThread>>> noteThreadDocsByBook
+        IDictionary<int, SortedList<int, IDocument<TextData>>> textDocsByBook,
+        IDictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook,
+        IDictionary<int, IEnumerable<IDocument<NoteThread>>> noteThreadDocsByBook,
+        List<IDocument<NoteThread>> biblicalTermNoteThreadDocs
     )
     {
         // Get the Text Data
@@ -532,7 +545,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     await UpdateParatextNotesAsync(text, questionDocsByBook[text.BookNum]);
                 }
                 IEnumerable<IDocument<NoteThread>> noteThreadDocs = noteDocs.Where(
-                    n => n.Data?.VerseRef.BookNum == text.BookNum
+                    n => n.Data?.VerseRef.BookNum == text.BookNum && n.Data?.BiblicalTermId == null
                 );
                 noteThreadDocsByBook[text.BookNum] = noteThreadDocs;
                 // Only update the note tag if there are SF note threads in the project
@@ -550,6 +563,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 );
             }
         }
+
+        // Get notes for Biblical Terms
+        LogMetric("Retrieving notes for Biblical Terms");
+        biblicalTermNoteThreadDocs.AddRange(noteDocs.Where(n => n.Data?.BiblicalTermId != null));
     }
 
     private async Task GetAndUpdateParatextBiblicalTerms(
@@ -621,9 +638,19 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private async Task UpdateBiblicalTermsAsync(
         SyncPhase syncPhase,
         string paratextId,
-        List<IDocument<BiblicalTerm>> biblicalTermDocs
+        IReadOnlyCollection<IDocument<BiblicalTerm>> biblicalTermDocs,
+        IEnumerable<IDocument<NoteThread>> biblicalTermNoteThreadDocs,
+        IReadOnlyDictionary<string, string> ptUsernamesToSFUserIds
     )
     {
+        LogMetric("Updating Biblical Terms thread docs");
+        await UpdateNoteThreadDocsAsync(
+            null,
+            biblicalTermNoteThreadDocs.ToDictionary(nt => nt.Data.DataId),
+            new Dictionary<int, ChapterDelta>(),
+            ptUsernamesToSFUserIds
+        );
+
         LogMetric("Getting Paratext biblical terms");
         await NotifySyncProgress(syncPhase, 0);
         (IReadOnlyList<BiblicalTerm> biblicalTerms, string message) = await _paratextService.GetBiblicalTermsAsync(
@@ -807,11 +834,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
         Dictionary<int, IEnumerable<IDocument<NoteThread>>> noteThreadDocsByBook,
         HashSet<int> targetBooks,
         HashSet<int> sourceBooks,
-        CancellationToken token
+        IReadOnlyDictionary<string, string> ptUsernamesToSFUserIds
     )
     {
-        Dictionary<string, string> ptUsernamesToSFUserIds = await GetPTUsernameToSFUserIdsAsync(token);
-
         // update source and target real-time docs
         double i = 0.0;
         foreach (int bookNum in targetBooks)
@@ -859,7 +884,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             if (noteThreadDocsByBook.TryGetValue(text.BookNum, out IEnumerable<IDocument<NoteThread>> noteThreadDocs))
             {
                 await UpdateNoteThreadDocsAsync(
-                    text,
+                    text.BookNum,
                     noteThreadDocs.ToDictionary(nt => nt.Data.DataId),
                     chapterDeltas,
                     ptUsernamesToSFUserIds
@@ -1215,16 +1240,16 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// Updates ParatextNoteThread docs for a book
     /// </summary>
     private async Task UpdateNoteThreadDocsAsync(
-        TextInfo text,
+        int? bookNum,
         Dictionary<string, IDocument<NoteThread>> noteThreadDocs,
         Dictionary<int, ChapterDelta> chapterDeltas,
-        Dictionary<string, string> usernamesToUserIds
+        IReadOnlyDictionary<string, string> usernamesToUserIds
     )
     {
         IEnumerable<NoteThreadChange> noteThreadChanges = _paratextService.GetNoteThreadChanges(
             _userSecret,
             _projectDoc.Data.ParatextId,
-            text.BookNum,
+            bookNum,
             noteThreadDocs.Values,
             chapterDeltas,
             _currentPtSyncUsers
@@ -1238,13 +1263,13 @@ public class ParatextSyncRunner : IParatextSyncRunner
             {
                 // Create a new ParatextNoteThread doc
                 IDocument<NoteThread> doc = GetNoteThreadDoc(change.ThreadId);
-                async Task createThreadDoc(NoteThreadChange change)
+                async Task CreateThreadDoc(NoteThreadChange change)
                 {
                     VerseRef verseRef = new VerseRef();
                     verseRef.Parse(change.VerseRefStr);
                     VerseRefData vrd = new VerseRefData(verseRef.BookNum, verseRef.ChapterNum, verseRef.Verse);
                     await doc.CreateAsync(
-                        new NoteThread()
+                        new NoteThread
                         {
                             DataId = change.ThreadId,
                             ProjectRef = _projectDoc.Id,
@@ -1254,12 +1279,14 @@ public class ParatextSyncRunner : IParatextSyncRunner
                             OriginalContextAfter = change.ContextAfter,
                             Position = change.Position,
                             Status = change.Status,
-                            Assignment = change.Assignment
+                            Assignment = change.Assignment,
+                            BiblicalTermId = change.BiblicalTermId,
+                            ExtraHeadingInfo = change.ExtraHeadingInfo,
                         }
                     );
                     await SubmitChangesOnNoteThreadDocAsync(doc, change, usernamesToUserIds);
                 }
-                tasks.Add(createThreadDoc(change));
+                tasks.Add(CreateThreadDoc(change));
                 _syncMetrics.NoteThreads.Added++;
             }
             else

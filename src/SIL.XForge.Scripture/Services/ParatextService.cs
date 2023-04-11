@@ -1181,16 +1181,17 @@ public class ParatextService : DisposableBase, IParatextService
     /// Returns a list of changes to apply to SF note threads to match the corresponding
     /// PT comment threads for a given book.
     /// </summary>
+    /// <remarks>If <paramref name="bookNum"/> is null, Note Thread Changes for Biblical Terms are returned</remarks>
     public IEnumerable<NoteThreadChange> GetNoteThreadChanges(
         UserSecret userSecret,
         string paratextId,
-        int bookNum,
+        int? bookNum,
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
         Dictionary<int, ChapterDelta> chapterDeltas,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
-        IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, paratextId, bookNum);
+        IEnumerable<CommentThread>? commentThreads = GetCommentThreads(userSecret, paratextId, bookNum);
         CommentTags commentTags = GetCommentTags(userSecret, paratextId);
         List<string> matchedThreadIds = new List<string>();
         List<NoteThreadChange> changes = new List<NoteThreadChange>();
@@ -1205,7 +1206,9 @@ public class ParatextService : DisposableBase, IParatextService
                 threadDoc.Data.OriginalContextBefore,
                 threadDoc.Data.OriginalContextAfter,
                 threadDoc.Data.Status,
-                threadDoc.Data.Assignment
+                threadDoc.Data.Assignment,
+                threadDoc.Data.BiblicalTermId,
+                threadDoc.Data.ExtraHeadingInfo
             );
             // Find the corresponding comment thread
             var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
@@ -1219,7 +1222,7 @@ public class ParatextService : DisposableBase, IParatextService
             matchedThreadIds.Add(existingThread.Id);
             foreach (Note note in threadDoc.Data.Notes)
             {
-                Paratext.Data.ProjectComments.Comment matchedComment = GetMatchingCommentFromNote(
+                Paratext.Data.ProjectComments.Comment? matchedComment = GetMatchingCommentFromNote(
                     note,
                     existingThread,
                     ptProjectUsers
@@ -1289,7 +1292,17 @@ public class ParatextService : DisposableBase, IParatextService
                 info.ContextBefore,
                 info.ContextAfter,
                 info.Status.InternalValue,
-                info.AssignedUser
+                info.AssignedUser,
+                info.BiblicalTermId,
+                info.ExtraHeadingInfo == null
+                    ? null
+                    : new BiblicalTermNoteHeadingInfo
+                    {
+                        Gloss = info.ExtraHeadingInfo.Gloss,
+                        Language = info.ExtraHeadingInfo.Language,
+                        Lemma = info.ExtraHeadingInfo.Lemma,
+                        Transliteration = info.ExtraHeadingInfo.Transliteration,
+                    }
             )
             {
                 Position = GetThreadTextAnchor(thread, chapterDeltas),
@@ -1312,14 +1325,14 @@ public class ParatextService : DisposableBase, IParatextService
     public async Task<SyncMetricInfo> UpdateParatextCommentsAsync(
         UserSecret userSecret,
         string paratextId,
-        int bookNum,
+        int? bookNum,
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
         int sfNoteTagId
     )
     {
-        string username = GetParatextUsername(userSecret);
-        IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, paratextId, bookNum);
+        string? username = GetParatextUsername(userSecret);
+        IEnumerable<CommentThread>? commentThreads = GetCommentThreads(userSecret, paratextId, bookNum);
         List<List<Paratext.Data.ProjectComments.Comment>> noteThreadChangeList = await SFNotesToCommentChangeListAsync(
             noteThreadDocs,
             commentThreads,
@@ -2134,7 +2147,7 @@ public class ParatextService : DisposableBase, IParatextService
         _hgHelper.Update(clonePath);
     }
 
-    private IEnumerable<CommentThread> GetCommentThreads(UserSecret userSecret, string paratextId, int bookNum)
+    private IEnumerable<CommentThread>? GetCommentThreads(UserSecret userSecret, string paratextId, int? bookNum)
     {
         ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
         if (scrText == null)
@@ -2143,10 +2156,18 @@ public class ParatextService : DisposableBase, IParatextService
         CommentManager manager = CommentManager.Get(scrText);
 
         // CommentThread.VerseRef calculates the reallocated location, however in Paratext a note can only be
-        // reallocated within the chapter, so for our query, we only need the first location
+        // reallocated within the chapter, so for our query, we only need the first location.
+        // A Biblical Term has a VerseRef, but it is usually not useful, so we exclude BT notes when getting a book's notes
+        // The VerseRef will still be stored for a BT note, as this is a PT requirement.
         return manager.FindThreads(
             commentThread =>
-                commentThread.Comments[0].VerseRef.BookNum == bookNum && !commentThread.Id.StartsWith("ANSWER_"),
+                (
+                    (
+                        bookNum != null
+                        && commentThread.Comments[0].VerseRef.BookNum == bookNum
+                        && !commentThread.IsBTNote
+                    ) || (bookNum == null && commentThread.IsBTNote)
+                ) && !commentThread.Id.StartsWith("ANSWER_"),
             false
         );
     }
@@ -2339,7 +2360,7 @@ public class ParatextService : DisposableBase, IParatextService
     }
 
     /// <summary> Get the corresponding Comment from a note. </summary>
-    private static Paratext.Data.ProjectComments.Comment GetMatchingCommentFromNote(
+    private static Paratext.Data.ProjectComments.Comment? GetMatchingCommentFromNote(
         Note note,
         CommentThread thread,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
@@ -2392,7 +2413,7 @@ public class ParatextService : DisposableBase, IParatextService
             for (int i = 0; i < threadDoc.Data.Notes.Count; i++)
             {
                 Note note = threadDoc.Data.Notes[i];
-                Paratext.Data.ProjectComments.Comment matchedComment =
+                Paratext.Data.ProjectComments.Comment? matchedComment =
                     existingThread == null ? null : GetMatchingCommentFromNote(note, existingThread, ptProjectUsers);
                 if (matchedComment != null)
                 {
@@ -2481,7 +2502,7 @@ public class ParatextService : DisposableBase, IParatextService
     private ChangeType GetCommentChangeType(
         Paratext.Data.ProjectComments.Comment comment,
         Note note,
-        CommentTag commentTag,
+        CommentTag? commentTag,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
@@ -2568,9 +2589,9 @@ public class ParatextService : DisposableBase, IParatextService
         };
     }
 
-    private static CommentTag GetCommentTag(
+    private static CommentTag? GetCommentTag(
         CommentThread thread,
-        Paratext.Data.ProjectComments.Comment comment,
+        Paratext.Data.ProjectComments.Comment? comment,
         CommentTags commentTags
     )
     {
@@ -2579,7 +2600,7 @@ public class ParatextService : DisposableBase, IParatextService
         CommentTag lastTodoTagUsed = null;
         foreach (Paratext.Data.ProjectComments.Comment threadComment in thread.Comments)
         {
-            bool tagAddedInUse = threadComment.TagsAdded != null && threadComment.TagsAdded.Length > 0;
+            bool tagAddedInUse = threadComment.TagsAdded is { Length: > 0 };
             if (tagAddedInUse)
             {
                 tagInUse = commentTags.Get(int.Parse(threadComment.TagsAdded[0]));

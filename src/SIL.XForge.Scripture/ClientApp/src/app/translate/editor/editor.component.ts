@@ -40,12 +40,12 @@ import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { BIBLICAL_TERM_TAG_ICON, NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { NoteType } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
-import { NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
+import { defaultNoteThreadIcon, NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -1379,9 +1379,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     const hasNewContent: boolean = this.hasNewContent(threadDoc);
     const otherAssigned: boolean = threadDoc.isAssignedToOtherUser(this.userService.currentUserId, this.paratextUsers);
-    const icon: NoteThreadIcon = otherAssigned
-      ? threadDoc.getIconGrayed(this.noteTags)
-      : threadDoc.getIcon(this.noteTags);
+    const icon: NoteThreadIcon =
+      threadDoc.data.biblicalTermId != null
+        ? defaultNoteThreadIcon(BIBLICAL_TERM_TAG_ICON)
+        : otherAssigned
+        ? threadDoc.getIconGrayed(this.noteTags)
+        : threadDoc.getIcon(this.noteTags);
 
     return {
       verseRef,
@@ -1673,13 +1676,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     ) {
       return [];
     }
-    // only show notes that are from this chapter and is not a conflict note
+    // only show notes that are from this chapter, are notes for biblical terms, and is not a conflict note
     return this.noteThreadQuery.docs.filter(
       nt =>
         nt.data != null &&
         nt.data.verseRef.bookNum === this.bookNum &&
         nt.data.verseRef.chapterNum === this.chapter &&
         nt.data.notes.length > 0 &&
+        nt.data.biblicalTermId == null &&
         nt.data.notes[0].type !== NoteType.Conflict
     );
   }
