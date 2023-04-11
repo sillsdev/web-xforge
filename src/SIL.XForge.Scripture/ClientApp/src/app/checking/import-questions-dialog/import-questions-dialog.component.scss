@@ -132,7 +132,7 @@
 }
 
 // below is to make denser
-::ng-deep {
+:host ::ng-deep {
   mat-form-field.mat-form-field.mat-form-field-appearance-outline
     > div.mat-form-field-wrapper
     > div.mat-form-field-flex
