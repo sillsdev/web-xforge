@@ -57,7 +57,7 @@ public interface IParatextService
     Task<SyncMetricInfo> UpdateParatextCommentsAsync(
         UserSecret userSecret,
         string paratextId,
-        int bookNum,
+        int? bookNum,
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
         int sfNoteTagId
@@ -65,7 +65,7 @@ public interface IParatextService
     IEnumerable<NoteThreadChange> GetNoteThreadChanges(
         UserSecret userSecret,
         string paratextId,
-        int bookNum,
+        int? bookNum,
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
         Dictionary<int, ChapterDelta> chapterDeltas,
         Dictionary<string, ParatextUserProfile> ptProjectUsers

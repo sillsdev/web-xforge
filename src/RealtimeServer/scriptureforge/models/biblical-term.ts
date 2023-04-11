@@ -1,17 +1,11 @@
 import { ProjectData, PROJECT_DATA_INDEX_PATHS } from '../../common/models/project-data';
+import { BiblicalTermDefinition } from './biblical-term-definition';
 
 export const BIBLICAL_TERM_COLLECTION = 'biblical_terms';
 export const BIBLICAL_TERM_INDEX_PATHS = PROJECT_DATA_INDEX_PATHS;
 
 export function getBiblicalTermDocId(projectId: string, dataId: string): string {
   return `${projectId}:${dataId}`;
-}
-
-export interface BiblicalTermDefinition {
-  categories: string[];
-  domains: string[];
-  gloss: string;
-  notes: string;
 }
 
 export interface BiblicalTerm extends ProjectData {

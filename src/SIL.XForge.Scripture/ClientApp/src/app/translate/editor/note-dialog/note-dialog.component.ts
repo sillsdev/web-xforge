@@ -4,7 +4,7 @@ import { translate } from '@ngneat/transloco';
 import { cloneDeep, sortBy } from 'lodash-es';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { BIBLICAL_TERM_TAG_ICON, NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   AssignedUsers,
   NoteConflictType,
@@ -109,6 +109,7 @@ export class NoteDialogComponent implements OnInit {
       const noteTag: NoteTag | undefined = this.noteTags.find(t => t.tagId === this.defaultNoteTagId);
       return defaultNoteThreadIcon(noteTag?.icon).url;
     }
+    if (this.threadDoc.data.biblicalTermId != null) return defaultNoteThreadIcon(BIBLICAL_TERM_TAG_ICON).url;
     return this.isAssignedToOtherUser
       ? this.threadDoc.getIconGrayed(this.noteTags).url
       : this.threadDoc.getIcon(this.noteTags).url;
