@@ -43,9 +43,6 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
-import { UserDoc } from 'xforge-common/models/user-doc';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { User } from 'realtime-server/lib/esm/common/models/user';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -350,21 +347,6 @@ describe('NoteDialogComponent', () => {
     expect(projectUserConfigDoc.data!.noteRefsRead).not.toContain(noteThread.notes[0].dataId);
   }));
 
-  it('reviewer inserts a note with name', fakeAsync(() => {
-    const verseRef = VerseRef.parse('MAT 1:3');
-    env = new TestEnvironment({ verseRef, currentUserId: 'user03' });
-    const noteContent = 'Reviewer note content';
-    env.enterNoteContent(noteContent);
-    env.submit();
-
-    verify(mockedProjectService.createNoteThread('project01', anything())).once();
-    const [, noteThread] = capture(mockedProjectService.createNoteThread).last();
-    const verseData: VerseRefData = fromVerseRef(verseRef);
-    expect(noteThread.verseRef).toEqual(verseData);
-    expect(noteThread.notes[0].ownerRef).toEqual('user03');
-    expect(noteThread.notes[0].content).toEqual(`<p>[Display Name - Scripture Forge]</p><p>${noteContent}</p>`);
-  }));
-
   it('show sf note tag on notes with undefined tag id', fakeAsync(() => {
     const noteThread: NoteThread = TestEnvironment.getNoteThread(undefined, true);
     env = new TestEnvironment({ noteThread });
@@ -437,33 +419,6 @@ describe('NoteDialogComponent', () => {
     env.submit();
     expect(noteThread.data!.notes[4].content).toEqual(content);
     expect(env.dialogResult).toBe(true);
-  }));
-
-  it('reviewer can edit last note with SF user label', fakeAsync(() => {
-    const noteThread = TestEnvironment.defaultNoteThread;
-    const content = 'reviewer note content';
-    const note: Note = {
-      dataId: 'note01',
-      type: NoteType.Normal,
-      conflictType: NoteConflictType.DefaultValue,
-      threadId: 'thread01',
-      content: `<p>[Display Name - Scripture Forge]</p><p>${content}</p>`,
-      deleted: false,
-      ownerRef: 'user03',
-      status: NoteStatus.Todo,
-      tagId: 1,
-      dateCreated: '',
-      dateModified: ''
-    };
-    noteThread.notes = [note];
-    env = new TestEnvironment({ noteThread, currentUserId: 'user03' });
-    expect(env.getNoteContent(0)).toEqual(content);
-    env.editButton.nativeElement.click();
-    expect(env.component.currentNoteContent).toEqual(content);
-    const newContent = 'new content in note';
-    env.component.currentNoteContent = newContent;
-    env.submit();
-    expect(noteThread.notes[0].content).toEqual(`<p>[Display Name - Scripture Forge]</p><p>${newContent}</p>`);
   }));
 
   it('allows user to delete the last note in the thread', fakeAsync(() => {
@@ -574,18 +529,7 @@ class TestEnvironment {
   };
   static userRoles: { [userId: string]: string } = {
     user01: SFProjectRole.ParatextAdministrator,
-    user02: SFProjectRole.Observer,
-    user03: SFProjectRole.Reviewer
-  };
-  static user: User = {
-    name: 'User Name',
-    displayName: 'Display Name',
-    role: SystemRole.User,
-    isDisplayNameConfirmed: true,
-    email: 'user@abc.com',
-    authId: 'auth0|user',
-    sites: {},
-    avatarUrl: ''
+    user02: SFProjectRole.Observer
   };
   static testProjectProfile: SFProjectProfile = {
     paratextId: 'pt01',
@@ -841,11 +785,6 @@ class TestEnvironment {
       });
     }
 
-    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
-      id: currentUserId,
-      data: TestEnvironment.user
-    });
-
     when(mockedProjectService.getNoteThread(anything())).thenCall(id =>
       this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, id)
     );
@@ -867,9 +806,6 @@ class TestEnvironment {
     );
 
     when(mockedUserService.currentUserId).thenReturn(currentUserId);
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, currentUserId)
-    );
     this.dialogRef
       .afterClosed()
       .toPromise()
@@ -958,10 +894,6 @@ class TestEnvironment {
   getProjectUserConfigDoc(projectId: string, userId: string): SFProjectUserConfigDoc {
     const id: string = getSFProjectUserConfigDocId(projectId, userId);
     return this.realtimeService.get<SFProjectUserConfigDoc>(SFProjectUserConfigDoc.COLLECTION, id);
-  }
-
-  getNoteContent(index: number): string {
-    return this.notes[index].query(By.css('.note-content')).nativeElement.textContent;
   }
 
   noteHasEditActions(noteNumber: number): boolean {
