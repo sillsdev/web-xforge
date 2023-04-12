@@ -7,9 +7,10 @@ public class NoteTag
     public const string sfNoteTagName = "Scripture Forge Note";
     public const string checkingTagIcon = "07conversation2";
     public const string checkingTagName = "Scripture Forge Community Checking";
+    public const int biblicalTermsId = -3;
     public const int notSetId = 0;
     public int TagId { get; set; }
-    public string Icon { get; set; }
-    public string Name { get; set; }
+    public string Icon { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
     public bool CreatorResolve { get; set; }
 }

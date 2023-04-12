@@ -567,6 +567,19 @@ public class ParatextSyncRunner : IParatextSyncRunner
         // Get notes for Biblical Terms
         LogMetric("Retrieving notes for Biblical Terms");
         biblicalTermNoteThreadDocs.AddRange(noteDocs.Where(n => n.Data?.BiblicalTermId != null));
+
+        // Update the biblical term notes
+        if (!_paratextService.IsResource(paratextId))
+        {
+            _syncMetrics.ParatextNotes += await _paratextService.UpdateParatextCommentsAsync(
+                _userSecret,
+                paratextId,
+                null,
+                biblicalTermNoteThreadDocs,
+                _currentPtSyncUsers,
+                NoteTag.biblicalTermsId
+            );
+        }
     }
 
     private async Task GetAndUpdateParatextBiblicalTerms(

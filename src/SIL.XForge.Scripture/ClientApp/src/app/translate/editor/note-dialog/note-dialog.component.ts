@@ -123,6 +123,10 @@ export class NoteDialogComponent implements OnInit {
     return this.data.threadId == null;
   }
 
+  get isBiblicalTermNote(): boolean {
+    return this.threadDoc?.data?.biblicalTermId != null;
+  }
+
   get isRtl(): boolean {
     if (this.projectProfileDoc?.data == null) {
       return false;
@@ -145,6 +149,7 @@ export class NoteDialogComponent implements OnInit {
   }
 
   get verseRefDisplay(): string {
+    if (this.isBiblicalTermNote) return translate('note_dialog.biblical_term');
     const verseRef: VerseRef | undefined = this.verseRef;
     return verseRef == null ? '' : this.i18n.localizeReference(verseRef);
   }
@@ -186,13 +191,22 @@ export class NoteDialogComponent implements OnInit {
     if (this.threadDoc?.data == null) {
       return '';
     }
-    return (
-      this.threadDoc.data.originalContextBefore +
-      (plainText ? '' : '<b>') +
-      this.threadDoc.data.originalSelectedText +
-      (plainText ? '' : '</b>') +
-      this.threadDoc.data.originalContextAfter
-    );
+    if (this.isBiblicalTermNote && this.threadDoc.data.extraHeadingInfo != null) {
+      let termLang = this.threadDoc.data.extraHeadingInfo.language === 'greek' ? 'grc' : 'hbo';
+      return (
+        `<span lang="${termLang}">${this.threadDoc.data.extraHeadingInfo.lemma}</span> ` +
+        `<span>(${this.threadDoc.data.extraHeadingInfo.transliteration})</span> ` +
+        `<span>${this.threadDoc.data.extraHeadingInfo.gloss}</span>`
+      );
+    } else {
+      return (
+        this.threadDoc.data.originalContextBefore +
+        (plainText ? '' : '<b>') +
+        this.threadDoc.data.originalSelectedText +
+        (plainText ? '' : '</b>') +
+        this.threadDoc.data.originalContextAfter
+      );
+    }
   }
 
   private get projectId(): string {

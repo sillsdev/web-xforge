@@ -165,6 +165,7 @@
     "other_viewers": "{{ count }} other viewers"
   },
   "note_dialog": {
+    "biblical_term": "Biblical Term",
     "close": "Close",
     "delete": "Delete",
     "hide_changes": "Hide changes",
