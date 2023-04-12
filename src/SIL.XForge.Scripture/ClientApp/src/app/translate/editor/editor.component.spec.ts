@@ -17,7 +17,7 @@ import {
 } from '@sillsdev/machine';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
-import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources } from 'quill';
+import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
@@ -1296,7 +1296,7 @@ describe('EditorComponent', () => {
       });
 
       // Type a character and observe the correct operations are returned
-      env.typeCharacters('t');
+      env.typeCharacters('t', { 'commenter-selection': true });
       contents = env.targetEditor.getContents();
       expect(contents.ops![verse2SegmentIndex].insert).toEqual('t');
       const expectedOps = [
@@ -1309,7 +1309,9 @@ describe('EditorComponent', () => {
         { retain: 1 }
       ];
       expect(textChangeOps).toEqual(expectedOps);
-
+      const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
+      const attributes: StringMap = textDoc.data!.ops![5].attributes!;
+      expect(Object.keys(attributes)).toEqual(['segment']);
       env.dispose();
     }));
   });
@@ -3698,9 +3700,9 @@ class TestEnvironment {
     tick();
   }
 
-  typeCharacters(str: string): number {
+  typeCharacters(str: string, attributes?: StringMap): number {
     const selection = this.targetEditor.getSelection()!;
-    const delta = new Delta().retain(selection.index).insert(str).delete(selection.length);
+    const delta = new Delta().retain(selection.index).insert(str, attributes).delete(selection.length);
     this.targetEditor.updateContents(delta, 'user');
     const selectionIndex = selection.index + str.length;
     this.targetEditor.setSelection(selectionIndex, 'user');

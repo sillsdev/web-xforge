@@ -482,6 +482,7 @@ export class TextViewModel {
           'note-thread-segment',
           'note-thread-count',
           'text-anchor',
+          'commenter-selection',
           'initial',
           'direction-segment',
           'direction-block',
