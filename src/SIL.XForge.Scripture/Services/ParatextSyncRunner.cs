@@ -733,7 +733,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         // Report on authentication success before other attempts.
         await PreflightAuthenticationReportAsync();
 
-        await _notesMapper.InitAsync(_userSecret, _projectSecret, paratextUsers, _projectDoc.Data, token);
+        await _notesMapper.InitAsync(_userSecret, paratextUsers, _projectDoc.Data, token);
 
         await NotifySyncProgress(SyncPhase.Phase1, 20.0);
         return true;

@@ -21,6 +21,20 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
     return this.data != null && fileType === FileType.Audio && !this.data.isArchived && this.data.dataId === dataId;
   }
 
+  /**
+   * Gets the answers for this question that have not been deleted.
+   *
+   * @param {string} ownerRef If set, this filters by the owner of the answer.
+   * @returns The answers as an array.
+   */
+  getAnswers(ownerRef: string | undefined = undefined): Answer[] {
+    return (
+      (ownerRef == null
+        ? this.data?.answers.filter(a => !a.deleted)
+        : this.data?.answers.filter(a => !a.deleted && a.ownerRef === ownerRef)) ?? []
+    );
+  }
+
   async updateFileCache(): Promise<void> {
     if (this.realtimeService.fileService == null || this.data == null) {
       return;
@@ -34,12 +48,12 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
     );
   }
 
-  async updateAnswerFileCache() {
+  async updateAnswerFileCache(): Promise<void> {
     if (this.realtimeService.fileService == null || this.data == null) {
       return;
     }
 
-    for (const answer of this.data.answers) {
+    for (const answer of this.getAnswers()) {
       await this.realtimeService.fileService.findOrUpdateCache(
         FileType.Audio,
         this.collection,
@@ -59,7 +73,7 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
       return obj<Question>().path(q => q.audioUrl!);
     } else {
       // otherwise, it is probably belongs to an answer
-      const answerIndex = this.data.answers.findIndex(a => a.dataId === dataId);
+      const answerIndex = this.data.answers.findIndex(a => a.dataId === dataId && !a.deleted);
       if (answerIndex !== -1) {
         return obj<Question>().path(q => q.answers[answerIndex].audioUrl!);
       }
@@ -75,7 +89,11 @@ export class QuestionDoc extends ProjectDataDoc<Question> {
         (await this.realtimeService.offlineStore.get<Snapshot<Question>>(this.collection, this.id))?.data.answers || [];
       for (const answer of answers) {
         const file = await fileService.get(FileType.Audio, answer.dataId);
-        if (file != null && this.data?.answers.find(a => a.dataId === answer.dataId) == null) {
+        if (
+          file != null &&
+          (this.data?.answers.find(a => a.dataId === answer.dataId) == null ||
+            this.data?.answers.find(a => a.dataId === answer.dataId)?.deleted)
+        ) {
           await fileService.findOrUpdateCache(FileType.Audio, this.collection, answer.dataId);
         }
       }

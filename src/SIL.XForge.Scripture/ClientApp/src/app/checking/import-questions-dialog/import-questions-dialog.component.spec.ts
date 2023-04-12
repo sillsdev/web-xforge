@@ -712,7 +712,8 @@ class TestEnvironment {
         } as Question,
         submitJson0Op: (_: any) => {
           this.editedTransceleratorQuestionIds.push(doc.id);
-        }
+        },
+        getAnswers: () => [] as Answer[]
       } as QuestionDoc);
     });
   }

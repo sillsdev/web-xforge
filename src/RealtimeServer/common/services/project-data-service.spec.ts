@@ -245,6 +245,52 @@ describe('ProjectDataService', () => {
       )
     ).resolves.not.toThrow();
   });
+
+  it('handles updates to the deleted property as delete operations', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const userConn = clientConnect(env.server, 'user');
+    await expect(
+      submitJson0Op<TestData>(userConn, TEST_DATA_COLLECTION, 'test02', ops =>
+        ops.insert(d => d.children[0].children, 0, { id: 'sub05', ownerRef: 'user' })
+      )
+    ).resolves.not.toThrow();
+
+    const adminConn = clientConnect(env.server, 'admin');
+    await expect(
+      submitJson0Op<TestData>(adminConn, TEST_DATA_COLLECTION, 'test02', ops =>
+        ops.set<number>(d => d.children[0].children[0].num!, 1)
+      )
+    ).rejects.toThrow();
+    await expect(
+      submitJson0Op<TestData>(adminConn, TEST_DATA_COLLECTION, 'test02', ops =>
+        ops.set<boolean>(d => d.children[0].children[0].deleted!, true)
+      )
+    ).resolves.not.toThrow();
+  });
+
+  it('denies updates to the deleted property if delete operations are not permitted', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const userOwnConn = clientConnect(env.server, 'userOwn');
+    await expect(
+      submitJson0Op<TestData>(userOwnConn, TEST_DATA_COLLECTION, 'test03', ops =>
+        ops.insert(d => d.children[0].children, 0, { id: 'sub05', ownerRef: 'userOwn' })
+      )
+    ).resolves.not.toThrow();
+    await expect(
+      submitJson0Op<TestData>(userOwnConn, TEST_DATA_COLLECTION, 'test03', ops =>
+        ops.set<number>(d => d.children[0].children[0].num!, 1)
+      )
+    ).resolves.not.toThrow();
+    await expect(
+      submitJson0Op<TestData>(userOwnConn, TEST_DATA_COLLECTION, 'test03', ops =>
+        ops.set<boolean>(d => d.children[0].children[0].deleted!, true)
+      )
+    ).rejects.toThrow();
+  });
 });
 
 enum TestProjectDomain {
@@ -256,6 +302,7 @@ enum TestProjectDomain {
 interface TestSubSubData extends OwnedData {
   id: string;
   num?: number;
+  deleted?: boolean;
 }
 
 interface TestSubData extends OwnedData {
@@ -290,7 +337,7 @@ class TestDataService extends ProjectDataService<TestData> {
 
       [TestProjectDomain.SubSubData, Operation.View],
       [TestProjectDomain.SubSubData, Operation.Create],
-      [TestProjectDomain.SubSubData, Operation.Edit],
+      [TestProjectDomain.SubSubData, Operation.EditOwn],
       [TestProjectDomain.SubSubData, Operation.Delete]
     ],
     user: [
@@ -322,8 +369,7 @@ class TestDataService extends ProjectDataService<TestData> {
 
       [TestProjectDomain.SubSubData, Operation.ViewOwn],
       [TestProjectDomain.SubSubData, Operation.Create],
-      [TestProjectDomain.SubSubData, Operation.EditOwn],
-      [TestProjectDomain.SubSubData, Operation.DeleteOwn]
+      [TestProjectDomain.SubSubData, Operation.EditOwn]
     ],
     observer: [
       [TestProjectDomain.TestData, Operation.View],

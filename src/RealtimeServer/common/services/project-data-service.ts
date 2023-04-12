@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import ShareDB from 'sharedb';
 import { ConnectSession } from '../connect-session';
 import { MigrationConstructor } from '../migration';
@@ -149,9 +150,16 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
         // property update
         const entityPath = op.p.slice(0, domain.pathTemplate.template.length);
         const oldEntity = this.deepGet(entityPath, oldDoc);
+
+        // Changing the deleted property should be treated as a delete operation
+        let operation: Operation = Operation.Edit;
+        if (op.p[op.p.length - 1] === 'deleted') {
+          operation = Operation.Delete;
+        }
+
         // if the entity doesn't exist in the old doc, then it must be inserted by a previous op that the user has a
         // right to perform, so we don't need to check this edit right
-        if (oldEntity != null && !this.hasRight(project, domain, Operation.Edit, session.userId, oldEntity)) {
+        if (oldEntity != null && !this.hasRight(project, domain, operation, session.userId, oldEntity)) {
           return false;
         }
       } else {
