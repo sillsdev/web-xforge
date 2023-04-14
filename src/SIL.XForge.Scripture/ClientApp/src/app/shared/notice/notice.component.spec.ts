@@ -10,6 +10,7 @@ describe('NoticeComponent', () => {
     const template = '<app-notice>This is a notice</app-notice>';
     const env = new TestEnvironment(template);
     expect(env.fixture.componentInstance).toBeTruthy();
+    expect(env.noticeText).toEqual('This is a notice');
     expect(env.icon).toBeFalsy();
     expect(env.container.classes['normal']).toBeTrue();
   });
