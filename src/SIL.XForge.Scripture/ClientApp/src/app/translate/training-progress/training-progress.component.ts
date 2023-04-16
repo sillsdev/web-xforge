@@ -1,9 +1,12 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { translate } from '@ngneat/transloco';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { BehaviorSubject, Subscription, timer } from 'rxjs';
 import { delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
+import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
@@ -30,7 +33,8 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
   constructor(
     noticeService: NoticeService,
     private readonly projectService: SFProjectService,
-    private readonly translationEngineService: TranslationEngineService
+    private readonly translationEngineService: TranslationEngineService,
+    private readonly userService: UserService
   ) {
     super(noticeService);
   }
@@ -87,6 +91,17 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
     this.trainingProgressClosed = true;
   }
 
+  /**
+   * Determines whether the user has the right to edit texts generally, without considering permissions on this chapter.
+   */
+  private get userHasGeneralEditRight(): boolean {
+    const project = this.projectDoc?.data;
+    return (
+      project != null &&
+      SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Texts, Operation.Edit)
+    );
+  }
+
   private get translationSuggestionsEnabled(): boolean {
     return (
       this.projectDoc != null &&
@@ -105,7 +120,7 @@ export class TrainingProgressComponent extends DataLoadingComponent implements O
       return;
     }
     const hasSourceBooks: boolean = this.translationEngineService.checkHasSourceBooks(this.projectDoc.data);
-    if (!this.translationSuggestionsEnabled || !hasSourceBooks) {
+    if (!this.translationSuggestionsEnabled || !this.userHasGeneralEditRight || !hasSourceBooks) {
       return;
     }
 

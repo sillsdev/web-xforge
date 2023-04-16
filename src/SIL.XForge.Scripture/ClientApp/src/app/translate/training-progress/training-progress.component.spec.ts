@@ -10,6 +10,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -20,6 +21,7 @@ import { TrainingProgressComponent } from './training-progress.component';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
+const mockedUserService = mock(UserService);
 
 describe('TrainingProgressComponent', () => {
   configureTestingModule(() => ({
@@ -27,7 +29,8 @@ describe('TrainingProgressComponent', () => {
     declarations: [TrainingProgressComponent],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: TranslationEngineService, useMock: mockedTranslationEngineService }
+      { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 
@@ -38,6 +41,23 @@ describe('TrainingProgressComponent', () => {
 
     verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
     expect(env.trainingProgress).toBeNull();
+  }));
+
+  it('should setup the translation engine if edit permission', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData(true);
+    env.wait();
+
+    verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+  }));
+
+  it('should not setup the translation engine if no edit permission', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setCurrentUser('user02');
+    env.setupProjectData(true);
+    env.wait();
+
+    verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).never();
   }));
 
   it('should display', fakeAsync(() => {
@@ -104,6 +124,7 @@ class TestEnvironment {
     );
     when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(true);
     when(this.mockedRemoteTranslationEngine.listenForTrainingStatus()).thenReturn(defer(() => this.trainingProgress$));
+    this.setCurrentUser();
 
     this.fixture = TestBed.createComponent(TrainingProgressComponent);
     this.component = this.fixture.componentInstance;
@@ -147,6 +168,10 @@ class TestEnvironment {
     trainingProgress$.complete();
     this.fixture.detectChanges();
     tick();
+  }
+
+  setCurrentUser(userId: string = 'user01'): void {
+    when(mockedUserService.currentUserId).thenReturn(userId);
   }
 
   setupProjectData(translationSuggestionsEnabled: boolean): void {
