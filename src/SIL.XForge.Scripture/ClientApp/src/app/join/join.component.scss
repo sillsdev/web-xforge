@@ -30,4 +30,8 @@ form {
 a {
   cursor: pointer;
   margin-bottom: 70px;
+  &:hover {
+    //opacity: 0.5;
+    color: var(--mdc-theme-secondary);
+  }
 }
