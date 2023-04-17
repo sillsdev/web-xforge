@@ -1,10 +1,10 @@
 import { userEvent, within } from '@storybook/testing-library';
 import { CommonModule } from '@angular/common';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { Meta, Story } from '@storybook/angular';
+import { Meta, StoryFn } from '@storybook/angular';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { expect } from '@storybook/jest';
 import { arrayOfIntsFromOne } from 'xforge-common/test-utils';
+import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { getOverlay } from '../../../../.storybook/story-utils';
 import { BookChapterChooserComponent } from './book-chapter-chooser.component';
 
@@ -21,10 +21,8 @@ export default {
   }
 } as Meta<BookChapterChooserComponent>;
 
-const Template: Story = args => ({
-  moduleMetadata: {
-    imports: [CommonModule, UICommonModule, BrowserAnimationsModule]
-  },
+const Template: StoryFn = args => ({
+  moduleMetadata: { imports: [CommonModule, UICommonModule, I18nStoryModule] },
   props: args
 });
 

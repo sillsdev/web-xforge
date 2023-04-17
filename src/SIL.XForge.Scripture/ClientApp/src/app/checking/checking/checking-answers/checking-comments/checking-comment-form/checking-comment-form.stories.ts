@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { Meta, Story } from '@storybook/angular';
+import { Meta, StoryFn } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { expect } from '@storybook/jest';
+import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { CheckingCommentFormComponent } from './checking-comment-form.component';
 
 export default {
@@ -14,10 +14,8 @@ export default {
   }
 } as Meta;
 
-const Template: Story = args => ({
-  moduleMetadata: {
-    imports: [CommonModule, UICommonModule, BrowserAnimationsModule]
-  },
+const Template: StoryFn = args => ({
+  moduleMetadata: { imports: [CommonModule, UICommonModule, I18nStoryModule] },
   props: args
 });
 
