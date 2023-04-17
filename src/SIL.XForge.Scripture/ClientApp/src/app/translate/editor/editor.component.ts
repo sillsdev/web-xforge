@@ -264,6 +264,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this._chapter = value;
       this.changeText();
       this.toggleNoteThreadVerses(true);
+      this.bottomSheet.dismiss();
     }
   }
 
