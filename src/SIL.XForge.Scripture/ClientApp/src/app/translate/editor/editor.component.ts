@@ -884,7 +884,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       Array.from(noteThreadVerseRefs.values()),
       'note-thread'
     );
-    this.subscribeClickEvents(segments);
+    // Defer the subscription so that the editor has time to clean up comments on blanks verses
+    Promise.resolve().then(() => this.subscribeClickEvents(segments));
   }
 
   private async showNoteThread(threadId?: string, verseRef?: VerseRef): Promise<void> {
