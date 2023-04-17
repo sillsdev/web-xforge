@@ -1,4 +1,4 @@
-import { DecoratorFunction } from '@storybook/csf';
+import { DecoratorFunction } from '@storybook/types';
 import { HttpClientModule } from '@angular/common/http';
 import { ApplicationRef, APP_INITIALIZER, NgModule } from '@angular/core';
 import {
