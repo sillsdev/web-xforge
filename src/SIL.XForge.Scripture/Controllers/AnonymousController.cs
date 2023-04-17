@@ -24,7 +24,7 @@ public class AnonymousController : ControllerBase
         _exceptionHandler = exceptionHandler;
     }
 
-    [HttpPost]
+    [HttpPost("checkShareKey")]
     public async Task<IActionResult> CheckShareKey([FromBody] CheckShareKeyRequest content)
     {
         try
@@ -48,7 +48,7 @@ public class AnonymousController : ControllerBase
         }
     }
 
-    [HttpPost]
+    [HttpPost("generateAccount")]
     public async Task<IActionResult> GenerateAccount([FromBody] GenerateAccountRequest request)
     {
         try
