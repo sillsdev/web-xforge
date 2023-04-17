@@ -21,8 +21,8 @@
     "build:stats": "ng build --configuration production --stats-json",
     "prepare": "cd ../../.. && husky install src/SIL.XForge.Scripture/ClientApp/.husky",
     "docs:json": "compodoc -p ./tsconfig.json -e json -d .",
-    "storybook": "npm run docs:json && storybook dev -p 6006",
-    "build-storybook": "npm run docs:json && storybook build"
+    "storybook": "ng run SIL.XForge.Scripture:storybook",
+    "build-storybook": "ng run SIL.XForge.Scripture:build-storybook"
   },
   "private": true,
   "dependencies": {
