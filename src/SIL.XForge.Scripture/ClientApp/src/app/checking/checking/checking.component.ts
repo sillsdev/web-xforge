@@ -891,13 +891,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
     const answerIndex = this.getAnswerIndex(answer);
     if (answerIndex >= 0) {
-      const commentsLength: number = activeQuestionDoc.data!.answers[answerIndex].comments.length;
       activeQuestionDoc
         .submitJson0Op(op => {
           op.set(q => q.answers[answerIndex].deleted, true);
-          for (let commentIndex = 0; commentIndex < commentsLength; commentIndex++) {
-            op.set(q => q.answers[answerIndex].comments[commentIndex].deleted, true);
-          }
         })
         .then(() => {
           if (this.projectDoc != null) {
