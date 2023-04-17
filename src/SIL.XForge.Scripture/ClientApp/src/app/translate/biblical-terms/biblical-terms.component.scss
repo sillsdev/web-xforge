@@ -1,6 +1,11 @@
 @import 'src/variables';
 @import 'bootstrap/scss/mixins/breakpoints';
 
+/* We have two mat-icon actions buttons */
+.actions {
+  width: 110px;
+}
+
 /* Space out the cells a little bit */
 .mat-cell {
   padding: 5px;

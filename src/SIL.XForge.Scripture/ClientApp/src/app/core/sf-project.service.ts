@@ -100,6 +100,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadId);
   }
 
+  getBiblicalTerm(biblicalTermId: string): Promise<BiblicalTermDoc> {
+    return this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, biblicalTermId);
+  }
+
   queryQuestions(
     id: string,
     options: { bookNum?: number; activeOnly?: boolean; sort?: boolean } = {}

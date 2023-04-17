@@ -1712,7 +1712,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // look for any note that has not been read and was authored by another user
     const noteRefsRead: string[] = this.projectUserConfigDoc.data.noteRefsRead;
     return thread.data.notes.some(
-      n => n.ownerRef !== this.userService.currentUserId && !noteRefsRead.includes(n.dataId)
+      n => n.ownerRef !== this.userService.currentUserId && !noteRefsRead.includes(n.dataId) && !n.deleted
     );
   }
 

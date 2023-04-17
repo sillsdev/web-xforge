@@ -3,6 +3,13 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { anything, mock, when } from 'ts-mockito';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
+import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import {
+  NoteConflictType,
+  NoteStatus,
+  NoteThread,
+  NoteType
+} from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -13,10 +20,11 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
+import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
-import { BiblicalTermsComponent } from './biblical-terms.component';
+import { BiblicalTermsComponent, BiblicalTermNoteIcon } from './biblical-terms.component';
 
 const mockedI18nService = mock(I18nService);
 const mockedProjectService = mock(SFProjectService);
@@ -113,13 +121,37 @@ describe('BiblicalTermsComponent', () => {
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
   }));
 
-  it('can use the user project configuration of a difference project', fakeAsync(() => {
+  it('can use the user project configuration of a different project', fakeAsync(() => {
     const env = new TestEnvironment('project02', 3, 3, '0', 'project01');
     env.setupProjectData('en');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
     expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId03');
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category03_en');
+  }));
+
+  it('should show add if no biblical terms notes', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 2, 2, '2');
+    env.setupProjectData('en');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect((env.biblicalTermsNotesIcon[0] as HTMLElement).innerText).toBe(BiblicalTermNoteIcon.NoNotesIcon);
+  }));
+
+  it('should show biblical terms notes', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1, '1');
+    env.setupProjectData('en');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect((env.biblicalTermsNotesIcon[0] as HTMLElement).innerText).toBe(BiblicalTermNoteIcon.ReadNotesIcon);
+  }));
+
+  it('should show unread biblical terms notes', fakeAsync(() => {
+    const env = new TestEnvironment('project02', 3, 3);
+    env.setupProjectData('en');
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect((env.biblicalTermsNotesIcon[0] as HTMLElement).innerText).toBe(BiblicalTermNoteIcon.UnreadNotesIcon);
   }));
 });
 
@@ -140,6 +172,12 @@ class TestEnvironment {
         [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
       };
       return this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, parameters);
+    });
+    when(mockedProjectService.queryNoteThreads(anything())).thenCall(sfProjectId => {
+      const parameters: QueryParameters = {
+        [obj<NoteThread>().pathStr(t => t.projectRef)]: sfProjectId
+      };
+      return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, parameters);
     });
     when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((sfProjectId, sfUserId) =>
       this.realtimeService.get(SFProjectUserConfigDoc.COLLECTION, `${sfProjectId}:${sfUserId}`)
@@ -162,14 +200,18 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelectorAll('td.mat-column-term');
   }
 
+  get biblicalTermsNotesIcon(): NodeList {
+    return this.fixture.nativeElement.querySelectorAll('td.mat-column-id mat-icon');
+  }
+
   setupProjectData(language: string): void {
-    when(mockedUserService.currentUserId).thenReturn('owner01');
+    when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedI18nService.localeCode).thenReturn(language);
     this.realtimeService.addSnapshot<BiblicalTerm>(BiblicalTermDoc.COLLECTION, {
       id: 'id01',
       data: {
         projectRef: 'project01',
-        ownerRef: 'owner01',
+        ownerRef: 'user01',
         dataId: 'dataId01',
         termId: 'termId01',
         transliteration: 'transliteration01',
@@ -204,7 +246,7 @@ class TestEnvironment {
       id: 'id02',
       data: {
         projectRef: 'project01',
-        ownerRef: 'owner02',
+        ownerRef: 'user02',
         dataId: 'dataId02',
         termId: 'termId02',
         transliteration: 'transliteration02',
@@ -220,7 +262,7 @@ class TestEnvironment {
       id: 'id03',
       data: {
         projectRef: 'project02',
-        ownerRef: 'owner03',
+        ownerRef: 'user03',
         dataId: 'dataId03',
         termId: 'termId03',
         transliteration: 'transliteration03',
@@ -240,10 +282,10 @@ class TestEnvironment {
       }
     });
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
-      id: 'project01:owner01',
+      id: 'project01:user01',
       data: {
         projectRef: 'project01',
-        ownerRef: 'owner01',
+        ownerRef: 'user01',
         isTargetTextRight: false,
         confidenceThreshold: 0.2,
         biblicalTermsEnabled: true,
@@ -258,10 +300,10 @@ class TestEnvironment {
       }
     });
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
-      id: 'project02:owner01',
+      id: 'project02:user01',
       data: {
         projectRef: 'project02',
-        ownerRef: 'owner01',
+        ownerRef: 'user01',
         isTargetTextRight: false,
         confidenceThreshold: 0.2,
         biblicalTermsEnabled: true,
@@ -275,11 +317,62 @@ class TestEnvironment {
         noteRefsRead: []
       }
     });
+    this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
+      id: `project01:BT_termId01`,
+      data: {
+        projectRef: 'project01',
+        dataId: 'BT_termId01',
+        verseRef: new VerseRef(1, 1, 1),
+        ownerRef: 'user01',
+        originalContextBefore: '',
+        originalContextAfter: '',
+        originalSelectedText: '',
+        notes: [this.getNewBiblicalTermNote('BT_termId01', 'note01', 'user01')],
+        position: { start: 0, length: 0 },
+        status: NoteStatus.Todo,
+        assignment: '',
+        publishedToSF: true,
+        biblicalTermId: 'termId01'
+      }
+    });
+    this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
+      id: `project02:BT_termId03`,
+      data: {
+        projectRef: 'project02',
+        dataId: 'BT_termId03',
+        verseRef: new VerseRef(1, 1, 1),
+        ownerRef: 'user02',
+        originalContextBefore: '',
+        originalContextAfter: '',
+        originalSelectedText: '',
+        notes: [this.getNewBiblicalTermNote('BT_termId03', 'note02', 'user02')],
+        position: { start: 0, length: 0 },
+        status: NoteStatus.Todo,
+        assignment: '',
+        publishedToSF: true,
+        biblicalTermId: 'termId03'
+      }
+    });
   }
 
   wait(): void {
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
+  }
+
+  private getNewBiblicalTermNote(threadId: string, dataId: string, ownerRef: string): Note {
+    return {
+      dataId,
+      threadId,
+      dateCreated: '',
+      dateModified: '',
+      ownerRef,
+      content: 'note content',
+      type: NoteType.Normal,
+      conflictType: NoteConflictType.DefaultValue,
+      status: NoteStatus.Todo,
+      deleted: false
+    };
   }
 }

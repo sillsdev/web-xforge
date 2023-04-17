@@ -10,9 +10,19 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectService } from '../../core/sf-project.service';
+import { TextDocId } from '../../core/models/text-doc';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
+import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { NoteDialogComponent, NoteDialogData } from '../editor/note-dialog/note-dialog.component';
 import { BiblicalTermDialogComponent, BiblicalTermDialogData } from './biblical-term-dialog.component';
+
+// Material icons matching the biblical term's notes status
+export enum BiblicalTermNoteIcon {
+  NoNotesIcon = 'chat',
+  ReadNotesIcon = 'chat',
+  UnreadNotesIcon = 'mark_unread_chat_alt'
+}
 
 class Row {
   private static readonly defaultLocaleCode = I18nService.defaultLocale.canonicalTag;
@@ -20,11 +30,12 @@ class Row {
   constructor(
     public readonly biblicalTermDoc: BiblicalTermDoc,
     public readonly i18n: I18nService,
-    private readonly projectUserConfigDoc?: SFProjectUserConfigDoc
+    private readonly projectUserConfigDoc?: SFProjectUserConfigDoc,
+    private readonly noteThreadDoc?: NoteThreadDoc
   ) {}
 
-  get id(): string {
-    return this.biblicalTermDoc.id;
+  get id(): string | undefined {
+    return this.biblicalTermDoc.data?.dataId;
   }
 
   get term(): string {
@@ -56,6 +67,35 @@ class Row {
   get renderings(): string {
     return this.biblicalTermDoc.data?.renderings.join(', ') ?? '';
   }
+
+  get noteThreadId(): string | undefined {
+    return this.noteThreadDoc?.data?.dataId;
+  }
+
+  get flipNotesIcon(): boolean {
+    return !this.hasNoteThread;
+  }
+
+  get notesIcon(): string {
+    return !this.hasNoteThread
+      ? BiblicalTermNoteIcon.NoNotesIcon
+      : this.hasUnreadNotes
+      ? BiblicalTermNoteIcon.UnreadNotesIcon
+      : BiblicalTermNoteIcon.ReadNotesIcon;
+  }
+
+  private get hasUnreadNotes(): boolean {
+    if (this.noteThreadDoc?.data == null || this.projectUserConfigDoc?.data == null) return false;
+    // look for any note that has not been read and was authored by another user
+    const noteRefsRead: string[] = this.projectUserConfigDoc.data.noteRefsRead;
+    return this.noteThreadDoc.data.notes.some(
+      n => n.ownerRef !== this.projectUserConfigDoc?.data?.ownerRef && !noteRefsRead.includes(n.dataId) && !n.deleted
+    );
+  }
+
+  private get hasNoteThread(): boolean {
+    return this.noteThreadDoc != null;
+  }
 }
 
 @Component({
@@ -74,6 +114,9 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   private _chapter?: number;
   private chapter$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
   private configProjectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
+  private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
+  private noteThreadSub?: Subscription;
+  private _projectId?: string;
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private _verse?: string;
@@ -119,6 +162,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     if (id == null) {
       return;
     }
+    this._projectId = id;
     this.projectId$.next(id);
   }
 
@@ -150,6 +194,9 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     if (this.biblicalTermSub != null) {
       this.biblicalTermSub.unsubscribe();
     }
+    if (this.noteThreadSub != null) {
+      this.noteThreadSub.unsubscribe();
+    }
   }
 
   ngOnInit(): void {
@@ -158,25 +205,44 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         configProjectId,
         this.userService.currentUserId
       );
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse, true);
     });
     this.subscribe(this.projectId$, async projectId => {
       this.loadBiblicalTerms(projectId);
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse, true);
     });
     this.subscribe(this.bookNum$, bookNum => {
-      this.filterBiblicalTerms(bookNum, this._chapter ?? 0, this._verse);
+      this.filterBiblicalTerms(bookNum, this._chapter ?? 0, this._verse, true);
     });
     this.subscribe(this.chapter$, chapter => {
-      this.filterBiblicalTerms(this._bookNum ?? 0, chapter, this._verse);
+      this.filterBiblicalTerms(this._bookNum ?? 0, chapter, this._verse, true);
     });
     this.subscribe(this.verse$, verse => {
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, verse);
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, verse, true);
     });
   }
 
+  editNoteThread(row: Row): void {
+    if (this._projectId == null || this._bookNum == null || this._chapter == null) {
+      return;
+    }
+    const noteDialogData: NoteDialogData = {
+      biblicalTermId: row.id,
+      projectId: this._projectId,
+      textDocId: new TextDocId(this._projectId, this._bookNum, this._chapter),
+      threadId: row.noteThreadId
+    };
+    this.dialogService.openMatDialog<NoteDialogComponent, NoteDialogData, boolean>(NoteDialogComponent, {
+      autoFocus: true,
+      width: '600px',
+      disableClose: true,
+      data: noteDialogData
+    });
+    this.updateReadNotes(row.noteThreadId);
+  }
+
   async editRendering(id: string): Promise<void> {
-    var biblicalTermDoc = await this.realtimeService.subscribe<BiblicalTermDoc>(BiblicalTermDoc.COLLECTION, id);
+    var biblicalTermDoc = await this.projectService.getBiblicalTerm(this._projectId + ':' + id);
     this.dialogService.openMatDialog<BiblicalTermDialogComponent, BiblicalTermDialogData>(BiblicalTermDialogComponent, {
       data: { biblicalTermDoc, projectUserConfigDoc: this.projectUserConfigDoc },
       width: '80vw'
@@ -192,14 +258,14 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     }
   }
 
-  private filterBiblicalTerms(bookNum: number, chapter: number, verse: string | undefined): void {
+  private filterBiblicalTerms(bookNum: number, chapter: number, verse: string | undefined, scrollToTop: boolean): void {
     if (bookNum === 0 || chapter === 0 || verse == null) {
       return;
     }
     this.loadingStarted();
 
     // Scroll biblical terms to the top
-    this.biblicalTerms?.nativeElement.scrollIntoView();
+    if (scrollToTop) this.biblicalTerms?.nativeElement.scrollIntoView();
 
     const rows: Row[] = [];
     let verses: number[] = new VerseRef(bookNum, chapter, verse).verses;
@@ -219,8 +285,22 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
           break;
         }
       }
+
+      let noteThreadDoc: NoteThreadDoc | undefined;
+
+      // The code points will often be different, so we need to normalize the strings
+      const biblicalTermId = biblicalTermDoc.data?.termId.normalize('NFD');
+      if (biblicalTermId != null) {
+        const noteThreadIndex =
+          this.noteThreadQuery?.docs.findIndex(nt => nt.data?.biblicalTermId?.normalize('NFD') === biblicalTermId) ??
+          -1;
+        if (noteThreadIndex > -1) {
+          noteThreadDoc = this.noteThreadQuery?.docs[noteThreadIndex];
+        }
+      }
+
       if (displayTerm) {
-        rows.push(new Row(biblicalTermDoc, this.i18n, this.projectUserConfigDoc));
+        rows.push(new Row(biblicalTermDoc, this.i18n, this.projectUserConfigDoc, noteThreadDoc));
       }
     }
     this.rows = rows;
@@ -230,6 +310,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
   }
 
   private async loadBiblicalTerms(sfProjectId: string): Promise<void> {
+    // Load the Biblical Terms
     this.biblicalTermQuery?.dispose();
 
     this.biblicalTermQuery = await this.projectService.queryBiblicalTerms(sfProjectId);
@@ -241,9 +322,44 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         this.biblicalTermQuery.remoteDocChanges$
       ),
       () => {
-        this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+        this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse, false);
       }
     );
+
+    // Load the Note Threads
+    this.noteThreadQuery?.dispose();
+
+    this.noteThreadQuery = await this.projectService.queryNoteThreads(sfProjectId);
+    this.noteThreadSub?.unsubscribe();
+    this.noteThreadSub = this.subscribe(
+      merge(this.noteThreadQuery.ready$, this.noteThreadQuery.remoteChanges$, this.noteThreadQuery.remoteDocChanges$),
+      () => {
+        this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse, false);
+      }
+    );
+  }
+
+  private updateReadNotes(threadId: string | undefined): void {
+    if (threadId == null) return;
+    const noteThread: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(d => d.data?.dataId === threadId);
+    if (noteThread?.data != null && this.projectUserConfigDoc?.data != null) {
+      const notesRead: string[] = [];
+      for (const note of noteThread.data.notes) {
+        if (!this.projectUserConfigDoc.data.noteRefsRead.includes(note.dataId)) {
+          notesRead.push(note.dataId);
+        }
+      }
+
+      if (notesRead.length === 0) {
+        return;
+      }
+
+      this.projectUserConfigDoc.submitJson0Op(op => {
+        for (const noteId of notesRead) {
+          op.add(puc => puc.noteRefsRead, noteId);
+        }
+      });
+    }
   }
 }
 

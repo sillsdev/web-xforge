@@ -41,8 +41,10 @@ import {
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { BIBLICAL_TERM_TAG_ID, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { BiblicalTermDoc } from '../../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -500,6 +502,71 @@ describe('NoteDialogComponent', () => {
     expect(noteThread.notes[3].content).toEqual('note04');
     expect(env.notes[0].nativeElement.querySelector('.note-content').textContent).toEqual('note04');
   }));
+
+  it('can insert a biblical terms note', fakeAsync(() => {
+    const biblicalTerm = TestEnvironment.defaultBiblicalTerm;
+    env = new TestEnvironment({ biblicalTerm });
+    expect(env.noteInputElement).toBeTruthy();
+    expect(env.verseRef).toEqual('Biblical Term');
+    env.enterNoteContent('Enter note content');
+    expect(env.component.currentNoteContent).toEqual('Enter note content');
+    expect(env.noteText.nativeElement.textContent).toEqual('termId01 (transliteration01) gloss01_en');
+    env.submit();
+
+    const verseData: VerseRefData = fromVerseRef(new VerseRef(biblicalTerm.references[0]));
+    verify(mockedProjectService.createNoteThread('project01', anything())).once();
+    const [, noteThread] = capture(mockedProjectService.createNoteThread).last();
+    expect(env.component.flagIcon).toEqual('/assets/icons/TagIcons/biblicalterm1.png');
+    expect(noteThread.verseRef).toEqual(verseData);
+    expect(noteThread.originalSelectedText).toEqual('');
+    expect(noteThread.publishedToSF).toBe(true);
+    expect(noteThread.notes[0].ownerRef).toEqual('user01');
+    expect(noteThread.notes[0].content).toEqual('Enter note content');
+    expect(noteThread.notes[0].tagId).toEqual(BIBLICAL_TERM_TAG_ID);
+    const projectUserConfigDoc: SFProjectUserConfigDoc = env.getProjectUserConfigDoc(
+      TestEnvironment.PROJECT01,
+      'user01'
+    );
+    expect(projectUserConfigDoc.data!.noteRefsRead).not.toContain(noteThread.notes[0].dataId);
+  }));
+
+  it('allows adding a note to an existing biblical term note thread', fakeAsync(() => {
+    const biblicalTerm = TestEnvironment.defaultBiblicalTerm;
+    let noteThread = TestEnvironment.getNoteThread();
+    noteThread.biblicalTermId = biblicalTerm.dataId;
+    noteThread.extraHeadingInfo = {
+      gloss: 'note_gloss',
+      language: 'note_language',
+      lemma: 'note_lemma',
+      transliteration: 'note_transliteration'
+    };
+
+    env = new TestEnvironment({ noteThread, biblicalTerm });
+    const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('thread01');
+    expect(noteThreadDoc.data!.notes.length).toEqual(5);
+    expect(noteThreadDoc.data!.extraHeadingInfo).not.toBeNull();
+    expect(env.verseRef).toEqual('Biblical Term');
+    env.enterNoteContent('Enter note content');
+    expect(env.component.currentNoteContent).toEqual('Enter note content');
+    expect(env.noteText.nativeElement.textContent).toEqual('note_lemma (note_transliteration) note_gloss');
+    expect(env.noteInputElement).toBeTruthy();
+    // note 03 is marked deleted and is not displayed
+    expect(env.component.notesToDisplay.length).toEqual(4);
+    const content = 'content in the thread';
+    env.enterNoteContent('content in the thread');
+    env.submit();
+
+    expect(noteThreadDoc.data!.notes.length).toEqual(6);
+    expect(noteThreadDoc.data!.notes[5].dataId).not.toContain('note0');
+    expect(noteThreadDoc.data!.notes[5].threadId).toEqual('thread01');
+    expect(noteThreadDoc.data!.notes[5].content).toEqual(content);
+    expect(env.dialogResult).toBe(true);
+    const projectUserConfigDoc: SFProjectUserConfigDoc = env.getProjectUserConfigDoc(
+      TestEnvironment.PROJECT01,
+      'user01'
+    );
+    expect(projectUserConfigDoc.data!.noteRefsRead).not.toContain(noteThreadDoc.data!.notes[5].dataId);
+  }));
 });
 
 @NgModule({
@@ -514,6 +581,7 @@ interface TestEnvironmentConstructorArgs {
   noteThread?: NoteThread;
   verseRef?: VerseRef;
   noteTagId?: number;
+  biblicalTerm?: BiblicalTerm;
 }
 
 class TestEnvironment {
@@ -584,6 +652,40 @@ class TestEnvironment {
   static reattached: string = ['MAT 1:4', 'reattached text', '17', 'before selection ', ' after selection'].join(
     REATTACH_SEPARATOR
   );
+  static get defaultBiblicalTerm(): BiblicalTerm {
+    return {
+      projectRef: 'project01',
+      ownerRef: 'user01',
+      dataId: 'dataId01',
+      termId: 'termId01',
+      transliteration: 'transliteration01',
+      renderings: ['rendering01'],
+      description: 'description01',
+      language: 'language01',
+      links: ['link01'],
+      references: [new VerseRef(1, 1, 1).BBBCCCVVV],
+      definitions: {
+        en: {
+          categories: ['category01_en'],
+          domains: ['domain01_en'],
+          gloss: 'gloss01_en',
+          notes: 'notes01_en'
+        },
+        es: {
+          categories: [],
+          domains: [],
+          gloss: 'gloss01_es',
+          notes: 'notes01_es'
+        },
+        fr: {
+          categories: ['category01_fr'],
+          domains: ['domain01_fr'],
+          gloss: 'gloss01_fr',
+          notes: 'notes01_fr'
+        }
+      }
+    };
+  }
   static get defaultNoteThread(): NoteThread {
     return {
       originalContextBefore: '',
@@ -743,7 +845,8 @@ class TestEnvironment {
     currentUserId = 'user01',
     noteThread,
     verseRef,
-    noteTagId
+    noteTagId,
+    biblicalTerm
   }: TestEnvironmentConstructorArgs = {}) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const textDocId = new TextDocId(TestEnvironment.PROJECT01, 40, 1);
@@ -751,7 +854,8 @@ class TestEnvironment {
       projectId: TestEnvironment.PROJECT01,
       textDocId,
       threadId: noteThread?.dataId,
-      verseRef
+      verseRef,
+      biblicalTermId: biblicalTerm?.dataId
     };
     TestEnvironment.testProjectProfile.isRightToLeft = isRightToLeftProject;
     TestEnvironment.testProject.isRightToLeft = isRightToLeftProject;
@@ -782,11 +886,21 @@ class TestEnvironment {
           data: noteThread
         });
       }
+      if (biblicalTerm != null) {
+        this.realtimeService.addSnapshot<BiblicalTerm>(BiblicalTermDoc.COLLECTION, {
+          id: [configData.projectId, biblicalTerm.dataId].join(':'),
+          data: biblicalTerm
+        });
+      }
       this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
         id: getSFProjectUserConfigDocId(configData.projectId, currentUserId),
         data: TestEnvironment.projectUserConfig
       });
     }
+
+    when(mockedProjectService.getBiblicalTerm(anything())).thenCall(id =>
+      this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, id)
+    );
 
     when(mockedProjectService.getNoteThread(anything())).thenCall(id =>
       this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, id)

@@ -2443,6 +2443,62 @@ public class ParatextSyncRunnerTests
         Assert.AreEqual("notes02_en", biblicalTerm.Definitions["en"].Notes);
     }
 
+    [Test]
+    public async Task SyncAsync_AddParatextBiblicalTermNotes()
+    {
+        var env = new TestEnvironment();
+        var book = new Book("MAT", 1, true);
+        env.SetupSFData(true, false, false, true, book);
+        env.SetupPTData(book);
+        Book[] books = { book };
+        env.AddParatextNoteThreadData(books, true, true, true);
+        SyncMetricInfo info = new SyncMetricInfo(1, 0, 0);
+        env.ParatextService
+            .UpdateParatextCommentsAsync(
+                Arg.Any<UserSecret>(),
+                "target",
+                null,
+                Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
+                Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                Arg.Any<int>()
+            )
+            .Returns(Task.FromResult(info));
+
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+        await env.ParatextService
+            .Received(1)
+            .UpdateParatextCommentsAsync(
+                Arg.Any<UserSecret>(),
+                "target",
+                null,
+                Arg.Is<IEnumerable<IDocument<NoteThread>>>(t => t.Single().Id == "project01:thread01"),
+                Arg.Any<Dictionary<string, ParatextUserProfile>>(),
+                Arg.Any<int>()
+            );
+
+        env.ParatextService
+            .Received(1)
+            .GetNoteThreadChanges(
+                Arg.Any<UserSecret>(),
+                "target",
+                null,
+                Arg.Is<IEnumerable<IDocument<NoteThread>>>(t => t.Single().Data.Notes.All(n => n.OwnerRef == "user03")),
+                Arg.Any<Dictionary<int, ChapterDelta>>(),
+                Arg.Any<Dictionary<string, ParatextUserProfile>>()
+            );
+        SFProject project = env.GetProject();
+        NoteThread noteThread = env.GetNoteThread("project01", "thread01");
+        Assert.That(noteThread.Notes[0].OwnerRef, Is.EqualTo("user03"));
+        Assert.That(noteThread.BiblicalTermId, Is.EqualTo("biblicalTerm01"));
+        Assert.That(noteThread.ExtraHeadingInfo?.Gloss, Is.EqualTo("gloss01"));
+        Assert.That(noteThread.ExtraHeadingInfo?.Language, Is.EqualTo("language01"));
+        Assert.That(noteThread.ExtraHeadingInfo?.Lemma, Is.EqualTo("lemma01"));
+        Assert.That(noteThread.ExtraHeadingInfo?.Transliteration, Is.EqualTo("transliteration01"));
+        Assert.That(project.ParatextUsers.Select(u => u.Username), Is.EquivalentTo(new[] { "User 1", "User 2" }));
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.ParatextNotes, Is.EqualTo(info));
+    }
+
     private class Book
     {
         public Book(string bookId, int highestChapter, bool hasSource = true)
@@ -3365,15 +3421,21 @@ public class ParatextSyncRunnerTests
             Assert.That(datumGetter(note), Is.EqualTo(newData));
         }
 
-        public void AddParatextNoteThreadData(Book[] books, bool publishedToSF = false, bool fromCommenter = false)
+        public void AddParatextNoteThreadData(
+            Book[] books,
+            bool publishedToSF = false,
+            bool fromCommenter = false,
+            bool biblicalTermNote = false
+        )
         {
             NoteThread[] noteThreads = new NoteThread[books.Length];
             for (int i = 0; i < books.Length; i++)
             {
-                string threadId = $"thread0{i + 1}";
+                string suffix = (i + 1).ToString("00");
+                string threadId = $"thread{suffix}";
                 Book book = books[i];
                 int chapter = book.HighestTargetChapter;
-                int tagId = CommentTag.toDoTagId;
+                const int tagId = CommentTag.toDoTagId;
 
                 noteThreads[i] = new NoteThread
                 {
@@ -3386,7 +3448,7 @@ public class ParatextSyncRunnerTests
                     OriginalContextAfter = " context after",
                     OriginalSelectedText = "Scripture text in project",
                     PublishedToSF = publishedToSF,
-                    Notes = new List<Note>()
+                    Notes = new List<Note>
                     {
                         new Note
                         {
@@ -3396,7 +3458,7 @@ public class ParatextSyncRunnerTests
                             SyncUserRef = "syncuser01",
                             Content = "Paratext note 1.",
                             TagId = tagId,
-                            DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
+                            DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
                         },
                         new Note
                         {
@@ -3406,10 +3468,21 @@ public class ParatextSyncRunnerTests
                             SyncUserRef = "syncuser02",
                             Content = "Paratext note 2.",
                             TagId = tagId,
-                            DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
+                            DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
                         },
-                    }
+                    },
                 };
+                if (biblicalTermNote)
+                {
+                    noteThreads[i].BiblicalTermId = $"biblicalTerm{suffix}";
+                    noteThreads[i].ExtraHeadingInfo = new BiblicalTermNoteHeadingInfo
+                    {
+                        Gloss = $"gloss{suffix}",
+                        Language = $"language{suffix}",
+                        Lemma = $"lemma{suffix}",
+                        Transliteration = $"transliteration{suffix}",
+                    };
+                }
             }
             RealtimeService.AddRepository("note_threads", OTType.Json0, new MemoryRepository<NoteThread>(noteThreads));
         }

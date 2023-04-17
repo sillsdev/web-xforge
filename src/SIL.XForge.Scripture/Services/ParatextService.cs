@@ -1211,7 +1211,7 @@ public class ParatextService : DisposableBase, IParatextService
                 threadDoc.Data.ExtraHeadingInfo
             );
             // Find the corresponding comment thread
-            var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
+            var existingThread = commentThreads?.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
             if (existingThread == null)
             {
                 // The thread has been removed
@@ -1495,10 +1495,7 @@ public class ParatextService : DisposableBase, IParatextService
                     Description = termRendering.Notes,
                     Language = term.Language,
                     Links = term.Links.ToList(),
-                    References = term.VerseRefs()
-                        .Where(v => books.Contains(v.BookNum))
-                        .Select(v => v.BBBCCCVVV)
-                        .ToList(),
+                    References = term.VerseRefs().Select(v => v.BBBCCCVVV).ToList(),
                     Definitions = definitions,
                 };
                 biblicalTerms.Add(biblicalTerm);
@@ -2177,12 +2174,17 @@ public class ParatextService : DisposableBase, IParatextService
         List<List<Paratext.Data.ProjectComments.Comment>> changeList
     )
     {
+        SyncMetricInfo syncMetricInfo = new SyncMetricInfo();
+        if (!changeList.Any())
+        {
+            return syncMetricInfo;
+        }
+
         string username = GetParatextUsername(userSecret);
         List<string> users = new List<string>();
-        SyncMetricInfo syncMetricInfo = new SyncMetricInfo();
-        ScrText scrText = ScrTextCollection.FindById(username, paratextId);
-        if (scrText == null)
-            throw new DataNotFoundException("Can't get access to cloned project.");
+        ScrText scrText =
+            ScrTextCollection.FindById(username, paratextId)
+            ?? throw new DataNotFoundException("Can't get access to cloned project.");
         CommentManager manager = CommentManager.Get(scrText);
 
         // Algorithm sourced from Paratext DataAccessServer
@@ -2391,7 +2393,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// </summary>
     private async Task<List<List<Paratext.Data.ProjectComments.Comment>>> SFNotesToCommentChangeListAsync(
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
-        IEnumerable<CommentThread> commentThreads,
+        IEnumerable<CommentThread>? commentThreads,
         string defaultUsername,
         int sfNoteTagId,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
@@ -2404,7 +2406,7 @@ public class ParatextService : DisposableBase, IParatextService
         foreach (IDocument<NoteThread> threadDoc in activeThreadDocs)
         {
             List<Paratext.Data.ProjectComments.Comment> thread = new List<Paratext.Data.ProjectComments.Comment>();
-            CommentThread existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
+            CommentThread? existingThread = commentThreads?.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
             if (existingThread != null)
                 matchedCommentThreads.Add(existingThread.Id);
             List<(int, string)> threadNoteParatextUserRefs = new List<(int, string)>();
@@ -2452,8 +2454,23 @@ public class ParatextService : DisposableBase, IParatextService
                         VerseRefStr = threadDoc.Data.VerseRef.ToString(),
                         SelectedText = threadDoc.Data.OriginalSelectedText,
                         ContextBefore = threadDoc.Data.OriginalContextBefore,
-                        ContextAfter = threadDoc.Data.OriginalContextAfter
+                        ContextAfter = threadDoc.Data.OriginalContextAfter,
+                        BiblicalTermId = threadDoc.Data.BiblicalTermId,
                     };
+                    if (threadDoc.Data.ExtraHeadingInfo is not null)
+                    {
+                        comment.ExtraHeadingInfo = new TermNoteHeadingInfo(
+                            threadDoc.Data.ExtraHeadingInfo.Lemma,
+                            threadDoc.Data.ExtraHeadingInfo.Language,
+                            threadDoc.Data.ExtraHeadingInfo.Transliteration,
+                            threadDoc.Data.ExtraHeadingInfo.Gloss
+                        );
+                    }
+                    else
+                    {
+                        comment.ExtraHeadingInfo = null;
+                    }
+
                     bool isFirstComment = i == 0;
                     PopulateCommentFromNote(note, comment, sfNoteTagId, isFirstComment);
                     thread.Add(comment);
@@ -2484,7 +2501,8 @@ public class ParatextService : DisposableBase, IParatextService
             }
         }
         // handle deleted note threads
-        IEnumerable<CommentThread> deletedThreads = commentThreads.Where(t => !matchedCommentThreads.Contains(t.Id));
+        IEnumerable<CommentThread> deletedThreads =
+            commentThreads?.Where(t => !matchedCommentThreads.Contains(t.Id)) ?? new List<CommentThread>();
         foreach (CommentThread thread in deletedThreads)
         {
             var deletedCommentsInThread = new List<Paratext.Data.ProjectComments.Comment>();
