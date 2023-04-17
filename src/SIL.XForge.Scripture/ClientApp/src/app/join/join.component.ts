@@ -118,7 +118,7 @@ export class JoinComponent extends DataLoadingComponent {
   }
 
   logIn(): void {
-    if (this.status != null) {
+    if (this.status !== 'input') {
       return;
     }
     this.authService.logIn({ returnUrl: this.locationService.pathname, signUp: false });
