@@ -495,6 +495,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.showSuggestions = false;
         this.sourceLoaded = false;
         this.targetLoaded = false;
+        this.bottomSheet.dismiss();
         this.loadingStarted();
         const projectId = params['projectId'] as string;
         const bookId = params['bookId'] as string;
@@ -958,7 +959,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.mobileNoteControl.reset();
       // On-screen keyboards appearing can interfere with the resize height logic which then changes the focus
       // Waiting for 100ms was found to be a good amount of time for that to be resolved
-      setTimeout(() => this.mobileNoteTextarea?.nativeElement.focus(), 100);
+      setTimeout(() => this.mobileNoteTextarea?.nativeElement.focus(), 650);
     } else if (this.hasEditRight) {
       this.bottomSheetRef?.dismiss();
       this.insertNoteFab!.nativeElement.style.visibility = 'visible';
