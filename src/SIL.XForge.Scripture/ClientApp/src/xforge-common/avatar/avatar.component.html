@@ -7,6 +7,4 @@
   [borderColor]="borderColor"
   [bgColor]="borderColor"
 ></ngx-avatar>
-<div *ngIf="showOnlineStatus" class="online-status">
-  <mdc-icon *ngIf="(pwaService.onlineStatus$ | async) !== true">cloud_off</mdc-icon>
-</div>
+<mat-icon *ngIf="showOnlineStatus && (pwaService.onlineStatus$ | async) === false">cloud_off</mat-icon>
