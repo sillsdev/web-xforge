@@ -2,12 +2,13 @@ import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/te
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { anyString, anything, capture, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { GenericError, RedirectLoginOptions, TimeoutError } from '@auth0/auth0-spa-js';
 import { Auth0Client } from '@auth0/auth0-spa-js';
 import { MockConsole } from 'xforge-common/mock-console';
+import { filter, take } from 'rxjs/operators';
 import {
   AuthDetails,
   AuthService,
@@ -344,7 +345,7 @@ describe('AuthService', () => {
   }));
 
   it('should update interface language if logged in', fakeAsync(() => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment({ isOnline: true, isLoggedIn: true });
     const interfaceLanguage = 'es';
     expect(interfaceLanguage).withContext('setup').not.toEqual(env.language);
     expect(env.isLoggedIn).withContext('setup').toBe(true);
@@ -355,6 +356,7 @@ describe('AuthService', () => {
     const [, method, params] = capture<string, string, any>(mockedCommandService.onlineInvoke).last();
     expect(method).toEqual('updateInterfaceLanguage');
     expect(params).toEqual({ language: interfaceLanguage });
+    env.discardTokenExpiryTimer();
   }));
 
   it('should not update interface language if logged out', fakeAsync(() => {
@@ -370,6 +372,22 @@ describe('AuthService', () => {
 
     tick();
     verify(mockedCommandService.onlineInvoke(anything(), anything(), anything())).never();
+  }));
+
+  it('should not update interface language while offline', fakeAsync(() => {
+    const env = new TestEnvironment({ isOnline: false, isLoggedIn: true });
+    const interfaceLanguage = 'es';
+    expect(interfaceLanguage).withContext('setup').not.toEqual(env.language);
+    expect(env.isLoggedIn).withContext('setup').toBe(true);
+
+    env.service.updateInterfaceLanguage(interfaceLanguage);
+
+    tick();
+    verify(mockedCommandService.onlineInvoke(anything(), 'updateInterfaceLanguage', anything())).never();
+
+    env.setOnline(true);
+    tick();
+    verify(mockedCommandService.onlineInvoke(anything(), 'updateInterfaceLanguage', anything())).once();
   }));
 
   it('should clear data if user id has changed', fakeAsync(() => {
@@ -591,6 +609,7 @@ class TestEnvironment {
   private _localeSettingsRemoveChanges = new Subject<StorageEvent>();
   private _loginLinkedAccountId: string | undefined;
   private readonly _authLoginState: string;
+  private onlineStatus$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   static encodeAccessToken(token: Auth0AccessToken): string {
     // The response from auth0 contains 3 parts separated by a dot
@@ -608,6 +627,17 @@ class TestEnvironment {
   }: TestEnvironmentConstructorArgs = {}) {
     resetCalls(mockedWebAuth);
     this._authLoginState = JSON.stringify(loginState);
+    when(mockedPwaService.online).thenReturn(
+      new Promise<void>(resolve => {
+        this.onlineStatus$
+          .pipe(
+            filter(isOnline => isOnline),
+            take(1)
+          )
+          .toPromise()
+          .then(() => resolve());
+      })
+    );
     this.setOnline(isOnline);
 
     if (isLoggedIn || isNewlyLoggedIn) {
@@ -762,6 +792,7 @@ class TestEnvironment {
   setOnline(isOnline: boolean = true): void {
     when(mockedPwaService.checkOnline()).thenResolve(isOnline);
     when(mockedPwaService.isBrowserOnline).thenReturn(isOnline);
+    this.onlineStatus$.next(isOnline);
   }
 
   setTimeoutResponse(): void {
