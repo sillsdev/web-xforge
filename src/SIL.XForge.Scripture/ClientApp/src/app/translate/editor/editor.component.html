@@ -73,7 +73,7 @@
         <div *ngIf="projectTextNotEditable && hasEditRight" class="project-text-not-editable">
           <mat-icon>info</mat-icon> {{ t("project_text_not_editable") }}
         </div>
-        <div *ngIf="userHasGeneralEditRight && !hasChapterEditPermission" class="no-edit-permission-message">
+        <div *ngIf="showNoEditPermissionMessage" class="no-edit-permission-message">
           <mat-icon>info</mat-icon> {{ t("no_permission_edit_chapter", { userRole: userRoleStr }) }}
         </div>
         <div
