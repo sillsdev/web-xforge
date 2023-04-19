@@ -359,9 +359,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get currentSegmentReference(): string {
-    const segmentRef: string | undefined = this.target?.currentSegmentOrDefault;
-    if (segmentRef == null || this.bookNum == null) return '';
-    const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
+    const verseRef: VerseRef | undefined = this.commenterSelectedVerseRef;
     if (verseRef == null) {
       return '';
     }
@@ -889,15 +887,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   async saveNote(params: SaveNoteParameters): Promise<void> {
-    if (this.projectId == null) {
-      return;
-    }
-    const segmentRef: string | undefined = this.target?.currentSegmentOrDefault;
-    if (segmentRef == null || this.bookNum == null) {
-      return;
-    }
-    const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
-    if (verseRef == null) {
+    if (this.projectId == null || this.bookNum == null) {
       return;
     }
     const currentDate: string = new Date().toJSON();
@@ -916,6 +906,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       deleted: false
     };
     if (params.threadId == null) {
+      const verseRef: VerseRef | undefined = this.commenterSelectedVerseRef;
+      if (verseRef == null) return;
       const threadId: string = objectId();
       note.threadId = threadId;
       // Create a new thread
