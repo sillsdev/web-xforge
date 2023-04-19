@@ -233,6 +233,7 @@ export class AuthService {
 
   async updateInterfaceLanguage(language: string): Promise<void> {
     if (await this.isLoggedIn) {
+      await this.pwaService.online;
       await this.commandService.onlineInvoke(USERS_URL, 'updateInterfaceLanguage', { language });
     }
   }
