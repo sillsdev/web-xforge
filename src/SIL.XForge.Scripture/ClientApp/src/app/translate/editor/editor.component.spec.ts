@@ -2615,16 +2615,30 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('can open insert note dialog on default verse', fakeAsync(() => {
+    it('shows current selected verse on bottom sheet', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
+      env.setReviewerUser();
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
 
-      env.setSelectionAndInsertNote(undefined);
-      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
-      const [, arg2] = capture(mockedMatDialog.open).last();
-      const noteVerseRef: VerseRef = (arg2 as MatDialogConfig).data!.verseRef;
-      expect(noteVerseRef.toString()).toEqual('MAT 1:1');
+      // Allow check for mobile viewports to return TRUE
+      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+      env.clickSegmentRef('verse_1_1');
+      env.wait();
+      expect(env.insertNoteFabMobile).toBeTruthy();
+      expect(env.bottomSheetVerseReference?.textContent).toEqual('Luke 1:1');
+      env.clickSegmentRef('s_1');
+      env.insertNoteFabMobile!.click();
+      env.wait();
+      expect(env.bottomSheetVerseReference?.textContent).toEqual('Luke 1:1');
+      const content = 'reviewer leaving mobile note';
+      env.component.mobileNoteControl.setValue(content);
+      env.saveMobileNoteButton!.click();
+      env.wait();
+      const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
+      expect(noteThread.verseRef).toEqual(fromVerseRef(VerseRef.parse('LUK 1:1')));
+      expect(noteThread.notes[0].content).toEqual(content);
       env.dispose();
     }));
 
@@ -3480,6 +3494,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.insert-note-fab > button'));
   }
 
+  get bottomSheetVerseReference(): HTMLElement | null {
+    return document.querySelector('.fab-bottom-sheet > b');
+  }
+
   get insertNoteFabMobile(): HTMLButtonElement | null {
     return document.querySelector('.fab-bottom-sheet button');
   }
@@ -3739,7 +3757,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  setSelectionAndInsertNote(segmentRef: string | undefined): void {
+  setSelectionAndInsertNote(segmentRef: string): void {
     if (segmentRef != null) {
       this.clickSegmentRef(segmentRef);
     }
