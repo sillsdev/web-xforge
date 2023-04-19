@@ -114,6 +114,20 @@ describe('NoteThreadService', () => {
     expect(doc).not.toBeNull();
   });
 
+  it('allows translators to edit note thread position', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+    const conn: Connection = clientConnect(env.server, env.translator);
+    const noteThreadId: string = getNoteThreadDocId('project01', 'noteThread01');
+    const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadId);
+    expect(doc.data.position).toEqual({ start: 0, length: 0 });
+    const position: TextAnchor = { start: 0, length: 7 };
+    await submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, noteThreadId, op =>
+      op.set(n => n.position, position)
+    );
+    expect(doc.data.position).toEqual(position);
+  });
+
   it('prohibits reviewer user to read note threads not published in Scripture Forge', async () => {
     const env = new TestEnvironment();
     await env.createData();
@@ -285,6 +299,7 @@ describe('NoteThreadService', () => {
 
 class TestEnvironment {
   readonly projectAdminId = 'projectAdmin';
+  readonly translator = 'translator';
   readonly checkerId = 'checker';
   readonly reviewerId = 'reviewer';
   readonly service: NoteThreadService;
@@ -422,6 +437,7 @@ class TestEnvironment {
       sync: { queuedCount: 0 },
       userRoles: {
         projectAdmin: SFProjectRole.ParatextAdministrator,
+        translator: SFProjectRole.ParatextTranslator,
         checker: SFProjectRole.CommunityChecker,
         reviewer: SFProjectRole.Reviewer
       },

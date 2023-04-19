@@ -74,8 +74,8 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     answer_comments: ['view', 'create', 'edit_own', 'delete_own'],
     answer_status: ['view'],
     likes: ['view', 'create', 'delete_own'],
-    pt_note_threads: ['view', 'create', 'delete_own'],
-    sf_note_threads: ['view', 'create', 'delete_own'],
+    pt_note_threads: ['view', 'create', 'edit', 'delete_own'],
+    sf_note_threads: ['view', 'create', 'edit', 'delete_own'],
     notes: ['view', 'create', 'edit_own', 'delete_own']
   },
   pt_administrator: {
