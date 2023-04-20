@@ -289,7 +289,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get hasEditRight(): boolean {
-    return this.userHasGeneralEditRight && this.hasChapterEditPermission;
+    return this.userHasGeneralEditRight && this.hasChapterEditPermission === true;
   }
 
   /**
@@ -305,12 +305,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   /**
    * Determines whether the user has permission to edit the currently active chapter.
+   * Returns undefined if the necessary data is not yet available.
    */
-  get hasChapterEditPermission(): boolean {
+  get hasChapterEditPermission(): boolean | undefined {
     const chapter = this.text?.chapters.find(c => c.number === this._chapter);
     // Even though permissions is guaranteed to be there in the model, its not in IndexedDB the first time the project
     // is accessed after migration
-    return chapter?.permissions?.[this.userService.currentUserId] === TextInfoPermission.Write;
+    const permission: string | undefined = chapter?.permissions?.[this.userService.currentUserId];
+    return permission == null ? undefined : permission === TextInfoPermission.Write;
+  }
+
+  get showNoEditPermissionMessage(): boolean {
+    return this.userHasGeneralEditRight && this.hasChapterEditPermission === false;
   }
 
   get userRoleStr(): string {
@@ -538,8 +544,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (this.projectDoc == null || this.projectDoc.data == null) {
           return;
         }
-        await this.loadNoteThreadDocs(this.projectDoc.id);
         this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
+        await this.loadNoteThreadDocs(this.projectDoc.id);
         if (this.sourceProjectDoc?.data != null) {
           this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
         }
