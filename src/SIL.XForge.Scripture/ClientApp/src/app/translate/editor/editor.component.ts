@@ -909,11 +909,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     const currentDate: string = new Date().toJSON();
+    const threadId: string = params.threadId ?? objectId();
     // Configure the note
     const note: Note = {
       dateCreated: currentDate,
       dateModified: currentDate,
-      threadId: params.threadId ?? '',
+      threadId,
       dataId: params.dataId ?? objectId(),
       tagId: this.projectDoc?.data?.translateConfig.defaultNoteTagId,
       ownerRef: this.userService.currentUserId,
@@ -924,8 +925,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       deleted: false
     };
     if (params.threadId == null) {
-      const threadId: string = objectId();
-      note.threadId = threadId;
       // Create a new thread
       const noteThread: NoteThread = {
         dataId: threadId,
@@ -1041,8 +1040,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.target?.toggleVerseSelection(verseRef!);
     this.commenterSelectedVerseRef = undefined;
     const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
-    if (result?.noteContent != null) {
-      await this.saveNote({ content: result.noteContent, threadId, dataId: result.noteDataId });
+    if (result != null) {
+      if (result.noteContent != null) {
+        await this.saveNote({ content: result.noteContent, threadId, dataId: result.noteDataId });
+      }
       this.toggleNoteThreadVerseRefs$.next();
     }
   }

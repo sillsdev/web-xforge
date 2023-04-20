@@ -2730,13 +2730,13 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
       expect(env.getNoteThreadIconElement('verse_1_3', 'thread02')).not.toBeNull();
-      env.mockNoteDialogRef.onClose = () => env.insertNoteThread('user01', 'MAT 1:3', 'threadnew01');
       env.setSelectionAndInsertNote('verse_1_3');
-      env.mockNoteDialogRef.close(true);
+      const noteDialogResult: NoteDialogResult = { noteContent: 'newly created comment', noteDataId: 'notenew01' };
+      env.mockNoteDialogRef.close(noteDialogResult);
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       env.wait();
 
-      const noteElement: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'threadnew01')!;
+      const noteElement: HTMLElement = env.getNoteThreadIconElementAtIndex('verse_1_3', 1)!;
       noteElement.click();
       tick();
       env.fixture.detectChanges();
@@ -3658,6 +3658,13 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector(
       `usx-segment[data-segment=${segmentRef}] display-note[data-thread-id=${threadId}]`
     );
+  }
+
+  getNoteThreadIconElementAtIndex(segmentRef: string, index: number): HTMLElement | null {
+    const iconElements: HTMLElement[] | null = this.fixture.nativeElement.querySelectorAll(
+      `usx-segment[data-segment=${segmentRef}] display-note`
+    );
+    return iconElements![index];
   }
 
   /** Editor position of note thread. */
