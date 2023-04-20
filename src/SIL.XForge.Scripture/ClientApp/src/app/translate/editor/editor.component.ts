@@ -204,7 +204,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   set targetFocused(focused: boolean) {
-    focused = this.dialogService.openDialogCount > 0 ? true : focused;
+    // both the note dialog and the bottom sheet causes the editor to lose focus,
+    // but the editor should still keep the highlighting in both situations
+    focused = this.dialogService.openDialogCount > 0 || this.bottomSheetRef != null ? true : focused;
     this._targetFocused = focused;
   }
 
@@ -907,11 +909,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     const currentDate: string = new Date().toJSON();
+    const threadId: string = params.threadId ?? objectId();
     // Configure the note
     const note: Note = {
       dateCreated: currentDate,
       dateModified: currentDate,
-      threadId: params.threadId ?? '',
+      threadId,
       dataId: params.dataId ?? objectId(),
       tagId: this.projectDoc?.data?.translateConfig.defaultNoteTagId,
       ownerRef: this.userService.currentUserId,
@@ -922,8 +925,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       deleted: false
     };
     if (params.threadId == null) {
-      const threadId: string = objectId();
-      note.threadId = threadId;
       // Create a new thread
       const noteThread: NoteThread = {
         dataId: threadId,
@@ -1005,7 +1006,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       Array.from(noteThreadVerseRefs.values()),
       'note-thread'
     );
-    this.subscribeClickEvents(segments);
+    // Defer the subscription so that the editor has time to clean up comments on blanks verses
+    Promise.resolve().then(() => this.subscribeClickEvents(segments));
   }
 
   private async showNoteThread(threadId?: string, verseRef?: VerseRef): Promise<void> {
@@ -1032,12 +1034,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       disableClose: true,
       data: noteDialogData
     });
+
+    // deselect the current verse selection so that the newly inserted note thread embed gets the correct formatting
+    // to prevent introducing erroneous usx-segment elements into the DOM
+    this.target?.toggleVerseSelection(verseRef!);
+    this.commenterSelectedVerseRef = undefined;
     const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
-    if (result?.noteContent != null) {
-      await this.saveNote({ content: result.noteContent, threadId, dataId: result.noteDataId });
-    } else if (result?.deleted) {
-      this.toggleNoteThreadVerses(false);
-      this.toggleNoteThreadVerses(true);
+    if (result != null) {
+      if (result.noteContent != null) {
+        await this.saveNote({ content: result.noteContent, threadId, dataId: result.noteDataId });
+      }
+      this.toggleNoteThreadVerseRefs$.next();
     }
   }
 

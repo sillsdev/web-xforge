@@ -2725,6 +2725,28 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('can open dialog of the second note on the verse', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+      expect(env.getNoteThreadIconElement('verse_1_3', 'thread02')).not.toBeNull();
+      env.setSelectionAndInsertNote('verse_1_3');
+      const noteDialogResult: NoteDialogResult = { noteContent: 'newly created comment', noteDataId: 'notenew01' };
+      env.mockNoteDialogRef.close(noteDialogResult);
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      env.wait();
+
+      const noteElement: HTMLElement = env.getNoteThreadIconElementAtIndex('verse_1_3', 1)!;
+      noteElement.click();
+      tick();
+      env.fixture.detectChanges();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).twice();
+
+      env.setSelectionAndInsertNote('verse_1_3');
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).thrice();
+      env.dispose();
+    }));
+
     it('reviewers can click to select verse', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
@@ -3636,6 +3658,13 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector(
       `usx-segment[data-segment=${segmentRef}] display-note[data-thread-id=${threadId}]`
     );
+  }
+
+  getNoteThreadIconElementAtIndex(segmentRef: string, index: number): HTMLElement | null {
+    const iconElements: HTMLElement[] | null = this.fixture.nativeElement.querySelectorAll(
+      `usx-segment[data-segment=${segmentRef}] display-note`
+    );
+    return iconElements![index];
   }
 
   /** Editor position of note thread. */
