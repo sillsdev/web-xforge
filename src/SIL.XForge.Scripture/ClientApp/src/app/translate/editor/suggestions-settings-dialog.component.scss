@@ -1,14 +1,43 @@
 .slider-labels {
   margin-top: 15px;
+  flex-direction: row;
+  box-sizing: border-box;
+  display: flex;
+  place-content: stretch space-between;
+  align-items: stretch;
 }
 
-.suggestions-switch {
+.switch {
   column-gap: 12px;
+  margin-bottom: 15px;
+}
+
+.row {
+  column-gap: 12px;
+  margin-left: 12px;
+  margin-right: 12px;
+  margin-bottom: 25px;
+  flex-direction: row;
+  box-sizing: border-box;
+  display: flex;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 1e-9px;
+}
+
+.col {
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0%;
+  box-sizing: border-box;
 }
 
 mat-dialog-content.content-padding {
   padding-top: 15px;
   overflow: visible; // prevent mdc-select menu from causing scroll bar
+  flex-direction: column;
+  box-sizing: border-box;
+  display: flex;
 }
 
 #num-suggestions-select ::ng-deep .mdc-select__anchor {
@@ -27,4 +56,12 @@ mat-dialog-content.content-padding {
 
 mdc-list-item {
   height: 2.5em;
+}
+
+mat-dialog-actions {
+  place-content: stretch flex-end;
+  align-items: stretch;
+  flex-direction: row;
+  box-sizing: border-box;
+  display: flex;
 }

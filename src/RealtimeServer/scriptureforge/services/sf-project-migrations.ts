@@ -207,6 +207,23 @@ class SFProjectMigration9 implements Migration {
   }
 }
 
+class SFProjectMigration10 implements Migration {
+  static readonly VERSION = 10;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    if (doc.data.biblicalTermsEnabled == null) {
+      ops.push({ p: ['biblicalTermsEnabled'], oi: false });
+      ops.push({ p: ['biblicalTermsMessage'], oi: 'A sync is required before Biblical Terms can be enabled.' });
+    }
+    await submitMigrationOp(SFProjectMigration10.VERSION, doc, ops);
+  }
+
+  migrateOp(_op: RawOp): void {
+    //do nothing
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
@@ -216,5 +233,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration6,
   SFProjectMigration7,
   SFProjectMigration8,
-  SFProjectMigration9
+  SFProjectMigration9,
+  SFProjectMigration10
 ];

@@ -194,6 +194,7 @@ class TestEnvironment {
     texts: [this.matthewText],
     noteTags: [],
     sync: { queuedCount: 0 },
+    biblicalTermsEnabled: false,
     editable: true,
     userRoles: {
       [this.adminUser.id]: this.adminUser.role

@@ -25,8 +25,10 @@ using Newtonsoft.Json.Linq;
 using Paratext.Data;
 using Paratext.Data.Languages;
 using Paratext.Data.ProjectComments;
+using Paratext.Data.ProjectSettingsAccess;
 using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
+using Paratext.Data.Terms;
 using Paratext.Data.Users;
 using PtxUtils;
 using SIL.ObjectModel;
@@ -1179,16 +1181,17 @@ public class ParatextService : DisposableBase, IParatextService
     /// Returns a list of changes to apply to SF note threads to match the corresponding
     /// PT comment threads for a given book.
     /// </summary>
+    /// <remarks>If <paramref name="bookNum"/> is null, Note Thread Changes for Biblical Terms are returned</remarks>
     public IEnumerable<NoteThreadChange> GetNoteThreadChanges(
         UserSecret userSecret,
         string paratextId,
-        int bookNum,
+        int? bookNum,
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
         Dictionary<int, ChapterDelta> chapterDeltas,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
-        IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, paratextId, bookNum);
+        IEnumerable<CommentThread>? commentThreads = GetCommentThreads(userSecret, paratextId, bookNum);
         CommentTags commentTags = GetCommentTags(userSecret, paratextId);
         List<string> matchedThreadIds = new List<string>();
         List<NoteThreadChange> changes = new List<NoteThreadChange>();
@@ -1203,10 +1206,12 @@ public class ParatextService : DisposableBase, IParatextService
                 threadDoc.Data.OriginalContextBefore,
                 threadDoc.Data.OriginalContextAfter,
                 threadDoc.Data.Status,
-                threadDoc.Data.Assignment
+                threadDoc.Data.Assignment,
+                threadDoc.Data.BiblicalTermId,
+                threadDoc.Data.ExtraHeadingInfo
             );
             // Find the corresponding comment thread
-            var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
+            var existingThread = commentThreads?.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
             if (existingThread == null)
             {
                 // The thread has been removed
@@ -1217,7 +1222,7 @@ public class ParatextService : DisposableBase, IParatextService
             matchedThreadIds.Add(existingThread.Id);
             foreach (Note note in threadDoc.Data.Notes)
             {
-                Paratext.Data.ProjectComments.Comment matchedComment = GetMatchingCommentFromNote(
+                Paratext.Data.ProjectComments.Comment? matchedComment = GetMatchingCommentFromNote(
                     note,
                     existingThread,
                     ptProjectUsers
@@ -1287,7 +1292,17 @@ public class ParatextService : DisposableBase, IParatextService
                 info.ContextBefore,
                 info.ContextAfter,
                 info.Status.InternalValue,
-                info.AssignedUser
+                info.AssignedUser,
+                info.BiblicalTermId,
+                info.ExtraHeadingInfo == null
+                    ? null
+                    : new BiblicalTermNoteHeadingInfo
+                    {
+                        Gloss = info.ExtraHeadingInfo.Gloss,
+                        Language = info.ExtraHeadingInfo.Language,
+                        Lemma = info.ExtraHeadingInfo.Lemma,
+                        Transliteration = info.ExtraHeadingInfo.Transliteration,
+                    }
             )
             {
                 Position = GetThreadTextAnchor(thread, chapterDeltas),
@@ -1310,14 +1325,14 @@ public class ParatextService : DisposableBase, IParatextService
     public async Task<SyncMetricInfo> UpdateParatextCommentsAsync(
         UserSecret userSecret,
         string paratextId,
-        int bookNum,
+        int? bookNum,
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
         int sfNoteTagId
     )
     {
-        string username = GetParatextUsername(userSecret);
-        IEnumerable<CommentThread> commentThreads = GetCommentThreads(userSecret, paratextId, bookNum);
+        string? username = GetParatextUsername(userSecret);
+        IEnumerable<CommentThread>? commentThreads = GetCommentThreads(userSecret, paratextId, bookNum);
         List<List<Paratext.Data.ProjectComments.Comment>> noteThreadChangeList = await SFNotesToCommentChangeListAsync(
             noteThreadDocs,
             commentThreads,
@@ -1347,6 +1362,181 @@ public class ParatextService : DisposableBase, IParatextService
             commentTags.AddOrUpdate(newCommentTag);
         }
         return commentTags.FindMatchingTag(newCommentTag);
+    }
+
+    public async Task<(IReadOnlyList<BiblicalTerm> biblicalTerms, string message)> GetBiblicalTermsAsync(
+        UserSecret userSecret,
+        string paratextId,
+        IEnumerable<int> books
+    )
+    {
+        // Remove the Biblical Terms Parallel Deserializer
+        Memento.AddParallelDeserializer<BiblicalTermsList>(null);
+
+        // Get the ScrText, returning empty biblical terms if it is missing
+        List<BiblicalTerm> biblicalTerms = new List<BiblicalTerm>();
+        using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret)!, paratextId);
+        if (scrText is null)
+        {
+            // Log the error and return the empty biblical terms collection. Biblical Terms will be disabled.
+            const string message = "The Paratext Project is not accessible from Scripture Forge.";
+            _logger.LogError(message);
+            return (biblicalTerms, message);
+        }
+
+        // The biblical terms ScrText, if defined, must be disposed properly
+        ScrText? biblicalTermsScrText = null;
+        try
+        {
+            // Get the biblical terms specified in settings
+            string biblicalTermsList = scrText.Settings.GetSetting(Setting.BiblicalTermsListSetting);
+            string[] biblicalTermsListParts = biblicalTermsList.Split(':');
+            BiblicalTermsInfo biblicalTermsInfo;
+            if (biblicalTermsListParts.Length > 2 && !string.IsNullOrEmpty(biblicalTermsListParts[1]))
+            {
+                // Find the project, then load the ScrText
+                string biblicalTermsProjectParatextId = await _realtimeService
+                    .QuerySnapshots<SFProject>()
+                    .Where(p => p.ShortName == biblicalTermsListParts[1])
+                    .Select(p => p.ParatextId)
+                    .FirstOrDefaultAsync();
+                if (string.IsNullOrWhiteSpace(biblicalTermsProjectParatextId))
+                {
+                    // Log the error and return the empty biblical terms collection. Biblical Terms will be disabled.
+                    string message =
+                        $"The Biblical Terms project ({biblicalTermsListParts[1]}) has not been synced to "
+                        + "Scripture Forge.";
+                    _logger.LogError(message);
+                    return (biblicalTerms, message);
+                }
+
+                // Load the biblical terms project
+                biblicalTermsScrText = ScrTextCollection.FindById(
+                    GetParatextUsername(userSecret)!,
+                    biblicalTermsProjectParatextId
+                );
+                if (biblicalTermsScrText is null)
+                {
+                    // Log the error and return the empty biblical terms collection. Biblical Terms will be disabled.
+                    string message =
+                        "Biblical Terms could not be retrieved during Sync because the user "
+                        + $"{GetParatextUsername(userSecret)}  does not have permission to read the Biblical Terms "
+                        + "project defined in Paratext.";
+                    _logger.LogError(message);
+                    return (biblicalTerms, message);
+                }
+
+                Enum<BiblicalTermsListType> listType = string.IsNullOrEmpty(biblicalTermsListParts[0])
+                    ? BiblicalTermsListType.Major
+                    : new Enum<BiblicalTermsListType>(biblicalTermsListParts[0]);
+                biblicalTermsInfo = new BiblicalTermsInfo(biblicalTermsListParts[2], biblicalTermsScrText, listType);
+            }
+            else
+            {
+                // Use major biblical terms if it is not set
+                biblicalTermsInfo = string.IsNullOrEmpty(biblicalTermsList)
+                    ? new BiblicalTermsInfo(BiblicalTermsListType.Major)
+                    : new BiblicalTermsInfo(scrText, biblicalTermsList);
+            }
+
+            // Clear the persistent profile cache, as term rendering file is cached
+            PersistedProjectFile.ClearCacheForProject(scrText);
+
+            // Get the term renderings
+            TermRenderings termRenderings = TermRenderings.GetTermRenderings(scrText);
+
+            // Do not specify biblical terms if no renderings are specified
+            if (!termRenderings.SomeRenderingsPresent)
+            {
+                // Log the error and return the empty biblical terms collection. Biblical Terms will be disabled.
+                const string message = "No Biblical Term Renderings are defined for the Project in Paratext.";
+                _logger.LogError(message);
+                return (biblicalTerms, message);
+            }
+
+            // Load the biblical terms from the project settings (i.e. the terms this project's are based on)
+            BiblicalTerms projectSettingsBiblicalTerms = BiblicalTerms.GetBiblicalTerms(biblicalTermsInfo);
+
+            // Get the term localizations
+            Dictionary<string, TermLocalizations> allTermLocalizations = TermLocalizations.LanguagesAvailable
+                .Select(language => (language, termLocalizations: TermLocalizations.GetTermLocalizations(language)))
+                .ToDictionary(l => l.language, l => l.termLocalizations);
+
+            // Create the collection of Biblical Terms with Renderings
+            foreach (
+                Term term in projectSettingsBiblicalTerms.Terms.Where(
+                    t => t.VerseRefs().Any(v => books.Contains(v.BookNum))
+                )
+            )
+            {
+                TermRendering termRendering = termRenderings.GetRendering(term.Id);
+                Dictionary<string, BiblicalTermDefinition> definitions =
+                    new Dictionary<string, BiblicalTermDefinition>();
+                foreach ((string language, TermLocalizations termLocalizations) in allTermLocalizations)
+                {
+                    TermLocalization termLocalization = termLocalizations.GetTermLocalization(term.Id);
+                    BiblicalTermDefinition biblicalTermDefinition = new BiblicalTermDefinition
+                    {
+                        Categories = term.CategoryIds
+                            .Select(c => termLocalizations.GetCategoryLocalization(c))
+                            .ToList(),
+                        Domains = term.SemanticDomains.Select(d => termLocalizations.GetDomainLocalization(d)).ToList(),
+                        Gloss = termLocalization.Gloss,
+                        Notes = termLocalization.Notes,
+                    };
+                    definitions.Add(FixLanguageCode(language), biblicalTermDefinition);
+                }
+
+                BiblicalTerm biblicalTerm = new BiblicalTerm
+                {
+                    TermId = term.Id,
+                    Transliteration = term.Transliteration,
+                    Renderings = termRendering.RenderingsEntries.ToList(),
+                    Description = termRendering.Notes,
+                    Language = term.Language,
+                    Links = term.Links.ToList(),
+                    References = term.VerseRefs().Select(v => v.BBBCCCVVV).ToList(),
+                    Definitions = definitions,
+                };
+                biblicalTerms.Add(biblicalTerm);
+            }
+
+            return (biblicalTerms, string.Empty);
+        }
+        finally
+        {
+            // Dispose the Biblical Terms ScrText from Settings, if it was set
+            biblicalTermsScrText?.Dispose();
+        }
+    }
+
+    public void UpdateBiblicalTerms(UserSecret userSecret, string paratextId, IReadOnlyList<BiblicalTerm> biblicalTerms)
+    {
+        if (!biblicalTerms.Any())
+        {
+            return;
+        }
+
+        using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret)!, paratextId);
+        if (scrText is null)
+        {
+            return;
+        }
+
+        // Get and update the term renderings
+        TermRenderings termRenderings = TermRenderings.GetTermRenderings(scrText);
+        using (termRenderings.UpdateLock())
+        {
+            foreach (BiblicalTerm biblicalTerm in biblicalTerms)
+            {
+                TermRendering termRendering = termRenderings.GetRendering(biblicalTerm.TermId);
+                termRendering.Notes = biblicalTerm.Description;
+                termRendering.RenderingsEntries = biblicalTerm.Renderings;
+                termRendering.Guess = false;
+            }
+        }
+
+        termRenderings.Save();
     }
 
     /// <summary>
@@ -1666,6 +1856,21 @@ public class ParatextService : DisposableBase, IParatextService
         };
 
     /// <summary>
+    /// Converts a Paratext language code into a language-country codes for the frontend.
+    /// </summary>
+    /// <param name="languageCode">The Paratext Language code</param>
+    /// <returns>The language-country code</returns>
+    private static string FixLanguageCode(string languageCode) =>
+        languageCode.ToLower() switch
+        {
+            "zh-hans" => "zh-CN",
+            "zh-hant" => "zh-TW",
+            "pt" => "pt-PT",
+            "" => string.Empty,
+            _ => char.ToLower(languageCode[0]) + (languageCode.Length == 1 ? string.Empty : languageCode[1..]),
+        };
+
+    /// <summary>
     /// Checks whether a backup exists
     /// </summary>
     /// <param name="scrText">The scripture text.</param>
@@ -1939,7 +2144,7 @@ public class ParatextService : DisposableBase, IParatextService
         _hgHelper.Update(clonePath);
     }
 
-    private IEnumerable<CommentThread> GetCommentThreads(UserSecret userSecret, string paratextId, int bookNum)
+    private IEnumerable<CommentThread>? GetCommentThreads(UserSecret userSecret, string paratextId, int? bookNum)
     {
         ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
         if (scrText == null)
@@ -1948,10 +2153,17 @@ public class ParatextService : DisposableBase, IParatextService
         CommentManager manager = CommentManager.Get(scrText);
 
         // CommentThread.VerseRef calculates the reallocated location, however in Paratext a note can only be
-        // reallocated within the chapter, so for our query, we only need the first location
+        // reallocated within the chapter, so for our query, we only need the first location.
+        // A Biblical Term has a VerseRef, but it is usually not useful, so we exclude BT notes when getting a book's notes
+        // The VerseRef will still be stored for a BT note, as this is a PT requirement.
         return manager.FindThreads(
             commentThread =>
-                commentThread.Comments[0].VerseRef.BookNum == bookNum && !commentThread.Id.StartsWith("ANSWER_"),
+                (
+                    bookNum != null
+                    && commentThread.Comments[0].VerseRef.BookNum == bookNum
+                    && !commentThread.IsBTNote
+                    && !commentThread.Id.StartsWith("ANSWER_")
+                ) || (bookNum == null && commentThread.IsBTNote),
             false
         );
     }
@@ -1962,12 +2174,17 @@ public class ParatextService : DisposableBase, IParatextService
         List<List<Paratext.Data.ProjectComments.Comment>> changeList
     )
     {
+        SyncMetricInfo syncMetricInfo = new SyncMetricInfo();
+        if (!changeList.Any())
+        {
+            return syncMetricInfo;
+        }
+
         string username = GetParatextUsername(userSecret);
         List<string> users = new List<string>();
-        SyncMetricInfo syncMetricInfo = new SyncMetricInfo();
-        ScrText scrText = ScrTextCollection.FindById(username, paratextId);
-        if (scrText == null)
-            throw new DataNotFoundException("Can't get access to cloned project.");
+        ScrText scrText =
+            ScrTextCollection.FindById(username, paratextId)
+            ?? throw new DataNotFoundException("Can't get access to cloned project.");
         CommentManager manager = CommentManager.Get(scrText);
 
         // Algorithm sourced from Paratext DataAccessServer
@@ -2144,7 +2361,7 @@ public class ParatextService : DisposableBase, IParatextService
     }
 
     /// <summary> Get the corresponding Comment from a note. </summary>
-    private static Paratext.Data.ProjectComments.Comment GetMatchingCommentFromNote(
+    private static Paratext.Data.ProjectComments.Comment? GetMatchingCommentFromNote(
         Note note,
         CommentThread thread,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
@@ -2176,7 +2393,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// </summary>
     private async Task<List<List<Paratext.Data.ProjectComments.Comment>>> SFNotesToCommentChangeListAsync(
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
-        IEnumerable<CommentThread> commentThreads,
+        IEnumerable<CommentThread>? commentThreads,
         string defaultUsername,
         int sfNoteTagId,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
@@ -2189,7 +2406,7 @@ public class ParatextService : DisposableBase, IParatextService
         foreach (IDocument<NoteThread> threadDoc in activeThreadDocs)
         {
             List<Paratext.Data.ProjectComments.Comment> thread = new List<Paratext.Data.ProjectComments.Comment>();
-            CommentThread existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
+            CommentThread? existingThread = commentThreads?.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
             if (existingThread != null)
                 matchedCommentThreads.Add(existingThread.Id);
             List<(int, string)> threadNoteParatextUserRefs = new List<(int, string)>();
@@ -2197,7 +2414,7 @@ public class ParatextService : DisposableBase, IParatextService
             for (int i = 0; i < threadDoc.Data.Notes.Count; i++)
             {
                 Note note = threadDoc.Data.Notes[i];
-                Paratext.Data.ProjectComments.Comment matchedComment =
+                Paratext.Data.ProjectComments.Comment? matchedComment =
                     existingThread == null ? null : GetMatchingCommentFromNote(note, existingThread, ptProjectUsers);
                 if (matchedComment != null)
                 {
@@ -2237,8 +2454,21 @@ public class ParatextService : DisposableBase, IParatextService
                         VerseRefStr = threadDoc.Data.VerseRef.ToString(),
                         SelectedText = threadDoc.Data.OriginalSelectedText,
                         ContextBefore = threadDoc.Data.OriginalContextBefore,
-                        ContextAfter = threadDoc.Data.OriginalContextAfter
+                        ContextAfter = threadDoc.Data.OriginalContextAfter,
+                        BiblicalTermId = threadDoc.Data.BiblicalTermId,
+                        ExtraHeadingInfo = threadDoc.Data.ExtraHeadingInfo switch
+                        {
+                            null => null,
+                            _
+                                => new TermNoteHeadingInfo(
+                                    threadDoc.Data.ExtraHeadingInfo.Lemma,
+                                    threadDoc.Data.ExtraHeadingInfo.Language,
+                                    threadDoc.Data.ExtraHeadingInfo.Transliteration,
+                                    threadDoc.Data.ExtraHeadingInfo.Gloss
+                                ),
+                        },
                     };
+
                     bool isFirstComment = i == 0;
                     PopulateCommentFromNote(note, comment, sfNoteTagId, isFirstComment);
                     thread.Add(comment);
@@ -2269,7 +2499,8 @@ public class ParatextService : DisposableBase, IParatextService
             }
         }
         // handle deleted note threads
-        IEnumerable<CommentThread> deletedThreads = commentThreads.Where(t => !matchedCommentThreads.Contains(t.Id));
+        IEnumerable<CommentThread> deletedThreads =
+            commentThreads?.Where(t => !matchedCommentThreads.Contains(t.Id)) ?? new List<CommentThread>();
         foreach (CommentThread thread in deletedThreads)
         {
             var deletedCommentsInThread = new List<Paratext.Data.ProjectComments.Comment>();
@@ -2286,7 +2517,7 @@ public class ParatextService : DisposableBase, IParatextService
     private ChangeType GetCommentChangeType(
         Paratext.Data.ProjectComments.Comment comment,
         Note note,
-        CommentTag commentTag,
+        CommentTag? commentTag,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
@@ -2373,9 +2604,9 @@ public class ParatextService : DisposableBase, IParatextService
         };
     }
 
-    private static CommentTag GetCommentTag(
+    private static CommentTag? GetCommentTag(
         CommentThread thread,
-        Paratext.Data.ProjectComments.Comment comment,
+        Paratext.Data.ProjectComments.Comment? comment,
         CommentTags commentTags
     )
     {
@@ -2384,7 +2615,7 @@ public class ParatextService : DisposableBase, IParatextService
         CommentTag lastTodoTagUsed = null;
         foreach (Paratext.Data.ProjectComments.Comment threadComment in thread.Comments)
         {
-            bool tagAddedInUse = threadComment.TagsAdded != null && threadComment.TagsAdded.Length > 0;
+            bool tagAddedInUse = threadComment.TagsAdded is { Length: > 0 };
             if (tagAddedInUse)
             {
                 tagInUse = commentTags.Get(int.Parse(threadComment.TagsAdded[0]));

@@ -10,6 +10,7 @@ export enum SFProjectDomain {
   AnswerComments = 'answer_comments',
   AnswerStatus = 'answer_status',
   Likes = 'likes',
+  BiblicalTerms = 'biblical_terms',
   PTNoteThreads = 'pt_note_threads',
   SFNoteThreads = 'sf_note_threads',
   Notes = 'notes'
@@ -33,6 +34,7 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     answer_status: ['view'],
     answer_comments: ['view'],
     likes: ['view'],
+    biblical_terms: ['view'],
     pt_note_threads: ['view'],
     sf_note_threads: ['view'],
     notes: ['view']
@@ -61,6 +63,7 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     answer_status: ['view'],
     answer_comments: ['view'],
     likes: ['view'],
+    biblical_terms: ['view'],
     pt_note_threads: ['view', 'create', 'delete_own'],
     sf_note_threads: ['view', 'create', 'delete_own'],
     notes: ['view', 'create', 'edit_own', 'delete_own']
@@ -74,6 +77,7 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     answer_comments: ['view', 'create', 'edit_own', 'delete_own'],
     answer_status: ['view'],
     likes: ['view', 'create', 'delete_own'],
+    biblical_terms: ['view', 'edit'],
     pt_note_threads: ['view', 'create', 'edit', 'delete_own'],
     sf_note_threads: ['view', 'create', 'edit', 'delete_own'],
     notes: ['view', 'create', 'edit_own', 'delete_own']
@@ -87,6 +91,7 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     answer_comments: ['view', 'create', 'edit_own', 'delete'],
     answer_status: ['view', 'edit'],
     likes: ['view', 'create', 'delete_own'],
+    biblical_terms: ['view', 'edit'],
     pt_note_threads: ['view', 'create', 'edit', 'delete'],
     sf_note_threads: ['view', 'create', 'edit', 'delete'],
     notes: ['view', 'create', 'edit_own', 'delete']

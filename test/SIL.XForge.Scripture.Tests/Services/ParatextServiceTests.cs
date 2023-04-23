@@ -1844,6 +1844,75 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task GetNoteThreadChanges_SupportsBiblicalTerms()
+    {
+        var env = new TestEnvironment();
+        string sfProjectId = env.Project01;
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(sfProjectId, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.AddTextDoc(40, 1);
+        const string threadId = "thread01";
+
+        env.MockGuidService.NewObjectId().Returns("thread01note01");
+
+        // There is a PT Comment.
+        var comment = new Paratext.Data.ProjectComments.Comment(associatedPtUser)
+        {
+            Thread = threadId,
+            VerseRefStr = "MAT 1:1",
+            SelectedText = "",
+            ContextBefore = "",
+            ContextAfter = "",
+            StartPosition = 0,
+            Contents = null,
+            Date = "2019-12-31T08:00:00.0000000+00:00",
+            Deleted = false,
+            Status = NoteStatus.Todo,
+            Type = NoteType.Normal,
+            ConflictType = NoteConflictType.None,
+            AssignedUser = CommentThread.unassignedUser,
+            AcceptedChangeXmlStr = "some xml",
+            BiblicalTermId = "biblicalTerm01",
+            ExtraHeadingInfo = new TermNoteHeadingInfo("lemma01", "language01", "transliteration01", "gloss01"),
+        };
+        env.AddParatextComment(comment);
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        // But we have no SF notes.
+        IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
+            conn,
+            Array.Empty<string>()
+        );
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
+        {
+            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
+        }.ToDictionary(u => u.Username);
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected");
+
+        // SUT
+        IList<NoteThreadChange> changes = env.Service
+            .GetNoteThreadChanges(userSecret, ptProjectId, 40, noteThreadDocs, chapterDeltas, ptProjectUsers)
+            .ToList();
+        // We fetched a single change, of one new note to create.
+
+        Assert.That(changes.Count, Is.EqualTo(1));
+        NoteThreadChange change = changes.First();
+        Assert.That(change.ThreadId, Is.EqualTo(threadId));
+        Assert.That(change.BiblicalTermId, Is.EqualTo("biblicalTerm01"));
+        Assert.That(change.ExtraHeadingInfo?.Gloss, Is.EqualTo("gloss01"));
+        Assert.That(change.ExtraHeadingInfo?.Language, Is.EqualTo("language01"));
+        Assert.That(change.ExtraHeadingInfo?.Lemma, Is.EqualTo("lemma01"));
+        Assert.That(change.ExtraHeadingInfo?.Transliteration, Is.EqualTo("transliteration01"));
+        Assert.That(change.NotesAdded.Count, Is.EqualTo(1));
+        Note newNote = change.NotesAdded[0];
+        Assert.That(newNote.ThreadId, Is.EqualTo(threadId));
+        Assert.That(newNote.Type, Is.EqualTo(NoteType.Normal.InternalValue));
+        Assert.That(newNote.ConflictType, Is.EqualTo(NoteConflictType.None.InternalValue));
+        Assert.That(newNote.AcceptedChangeXml, Is.EqualTo("some xml"));
+    }
+
+    [Test]
     public async Task UpdateParatextComments_AddsComment()
     {
         var env = new TestEnvironment();

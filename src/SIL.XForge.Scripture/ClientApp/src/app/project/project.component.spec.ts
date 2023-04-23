@@ -212,6 +212,8 @@ class TestEnvironment {
           selectedBookNum: args.selectedTask == null ? undefined : args.selectedBooknum,
           isTargetTextRight: true,
           confidenceThreshold: 0.2,
+          biblicalTermsEnabled: false,
+          transliterateBiblicalTerms: false,
           translationSuggestionsEnabled: true,
           numSuggestions: 1,
           selectedSegment: '',
@@ -242,6 +244,7 @@ class TestEnvironment {
             answerExportMethod: CheckingAnswerExport.MarkedForExport
           },
           sync: { queuedCount: 0 },
+          biblicalTermsEnabled: false,
           editable: true,
           texts:
             args.hasTexts == null || args.hasTexts

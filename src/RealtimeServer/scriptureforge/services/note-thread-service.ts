@@ -25,7 +25,9 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
       this.pathTemplate(t => t.originalSelectedText),
       this.pathTemplate(t => t.notes[ANY_INDEX].dataId),
       this.pathTemplate(t => t.notes[ANY_INDEX].ownerRef),
-      this.pathTemplate(t => t.notes[ANY_INDEX].dateCreated)
+      this.pathTemplate(t => t.notes[ANY_INDEX].dateCreated),
+      this.pathTemplate(t => t.biblicalTermId),
+      this.pathTemplate(t => t.extraHeadingInfo)
     ];
     this.immutableProps.push(...immutableProps);
   }
