@@ -40,7 +40,7 @@ import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils'
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { BIBLICAL_TERM_TAG_ICON, NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { NoteType } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
 import { UntypedFormControl, Validators } from '@angular/forms';
@@ -50,7 +50,7 @@ import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import { getNoteThreadDocId } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
-import { NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
+import { defaultNoteThreadIcon, NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -151,6 +151,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private targetLoaded: boolean = false;
   private _targetFocused: boolean = false;
   private _chapter?: number;
+  private _verse: string = '0';
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
   private onTargetDeleteSub?: Subscription;
@@ -170,7 +171,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly projectService: SFProjectService,
     noticeService: NoticeService,
     private readonly dialogService: DialogService,
-    private readonly mediaObserver: MediaObserver,
+    readonly mediaObserver: MediaObserver,
     private readonly pwaService: PwaService,
     private readonly translationEngineService: TranslationEngineService,
     private readonly i18n: I18nService,
@@ -238,10 +239,36 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get translationSuggestionsProjectEnabled(): boolean {
+    return this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled === true;
+  }
+
+  get suggestionsSettingsEnabled(): boolean {
+    const userRole: string | undefined =
+      this.projectUserConfigDoc?.data?.ownerRef != null
+        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc?.data?.ownerRef]
+        : undefined;
     return (
-      this.projectDoc != null &&
-      this.projectDoc.data != null &&
-      this.projectDoc.data.translateConfig.translationSuggestionsEnabled
+      (this.showSource && this.translationSuggestionsProjectEnabled) ||
+      (this.projectDoc?.data?.biblicalTermsEnabled === true &&
+        userRole != null &&
+        SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.View))
+    );
+  }
+
+  get biblicalTermsEnabledForSource(): boolean {
+    // Return true if the source project has biblical terms enabled, or if the target has it enabled and the source has
+    // Biblical Terms - determined by the absence of a Biblical Terms Error Message.
+    return (
+      (this.sourceProjectDoc?.data?.biblicalTermsEnabled === true &&
+        this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true) ||
+      (this.biblicalTermsEnabledForTarget && this.sourceProjectDoc?.data?.biblicalTermsMessage == null)
+    );
+  }
+
+  get biblicalTermsEnabledForTarget(): boolean {
+    return (
+      this.projectDoc?.data?.biblicalTermsEnabled === true &&
+      this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true
     );
   }
 
@@ -253,6 +280,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get noteTags(): NoteTag[] {
     return this.projectDoc?.data?.noteTags ?? [];
+  }
+
+  get verse(): string {
+    return this._verse;
   }
 
   get chapter(): number | undefined {
@@ -469,17 +500,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.projectDoc?.id;
   }
 
+  get sourceProjectId(): string | undefined {
+    return this.projectDoc?.data?.translateConfig.source?.projectRef;
+  }
+
   private get userRole(): string | undefined {
     return this.projectDoc?.data?.userRoles[this.userService.currentUserId];
   }
 
   private get hasSource(): boolean {
-    const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
-    if (this.text == null || this.currentUser === undefined || sourceId === undefined) {
+    if (this.text == null || this.currentUser === undefined || this.sourceProjectId === undefined) {
       return false;
     } else {
       const projects = this.currentUser.sites[environment.siteId].projects;
-      return this.text.hasSource && projects.includes(sourceId);
+      return this.text.hasSource && projects.includes(this.sourceProjectId);
     }
   }
 
@@ -529,11 +563,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.userService.currentUserId
           );
 
-          const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
-          if (sourceId != null) {
-            const userOnProject: boolean = !!this.currentUser?.sites[environment.siteId].projects.includes(sourceId);
+          if (this.sourceProjectId != null) {
+            const userOnProject: boolean = !!this.currentUser?.sites[environment.siteId].projects.includes(
+              this.sourceProjectId
+            );
             // Only get the project doc if the user is on the project to avoid an error.
-            this.sourceProjectDoc = userOnProject ? await this.projectService.getProfile(sourceId) : undefined;
+            this.sourceProjectDoc = userOnProject
+              ? await this.projectService.getProfile(this.sourceProjectId)
+              : undefined;
           }
 
           if (this.projectUserConfigChangesSub != null) {
@@ -650,11 +687,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.projectUserConfigDoc.data.selectedChapterNum !== this._chapter ||
             this.projectUserConfigDoc.data.selectedSegment !== this.target.segmentRef)
         ) {
-          const sourceProjectRef = this.projectDoc?.data?.translateConfig.source?.projectRef;
-          if ((prevSegment == null || this.translator == null) && sourceProjectRef !== undefined) {
-            await this.translationEngineService.trainSelectedSegment(this.projectUserConfigDoc.data, sourceProjectRef);
+          if ((prevSegment == null || this.translator == null) && this.sourceProjectId !== undefined) {
+            await this.translationEngineService.trainSelectedSegment(
+              this.projectUserConfigDoc.data,
+              this.sourceProjectId
+            );
           } else {
-            await this.trainSegment(prevSegment, sourceProjectRef);
+            await this.trainSegment(prevSegment, this.sourceProjectId);
           }
           await this.projectUserConfigDoc.submitJson0Op(op => {
             op.set<string>(puc => puc.selectedTask!, 'translate');
@@ -774,6 +813,24 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       this.multiCursorViewers = multiCursorViewers;
     }
+  }
+
+  onSegmentRefChange(segmentRef: string): void {
+    // If the segment is empty or not in a valid verse, set the verse to zero
+    // so that it can propagate correctly to the biblical terms component
+    if (segmentRef == null || this.bookNum == null) {
+      this._verse = '0';
+      return;
+    }
+
+    const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
+    if (verseRef == null) {
+      this._verse = '0';
+      return;
+    }
+
+    // We use a string to account for partial (e.g. 12a) and compound (e.g. 3-4) verses
+    this._verse = verseRef.verse;
   }
 
   insertSuggestion(suggestionIndex: number, wordIndex: number, event: Event): void {
@@ -1126,7 +1183,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const elem: HTMLElement = this.targetContainer.nativeElement;
     const bounds = elem.getBoundingClientRect();
     // add bottom padding
-    const top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
+    let top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
     if (this.target.editor != null && this.targetFocused) {
       // reset scroll position
       this.target.editor.scrollingContainer.scrollTop = 0;
@@ -1463,9 +1520,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     const hasNewContent: boolean = this.hasNewContent(threadDoc);
     const otherAssigned: boolean = threadDoc.isAssignedToOtherUser(this.userService.currentUserId, this.paratextUsers);
-    const icon: NoteThreadIcon = otherAssigned
-      ? threadDoc.getIconGrayed(this.noteTags)
-      : threadDoc.getIcon(this.noteTags);
+    const icon: NoteThreadIcon =
+      threadDoc.data.biblicalTermId != null
+        ? defaultNoteThreadIcon(BIBLICAL_TERM_TAG_ICON)
+        : otherAssigned
+        ? threadDoc.getIconGrayed(this.noteTags)
+        : threadDoc.getIcon(this.noteTags);
 
     return {
       verseRef,
@@ -1757,13 +1817,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     ) {
       return [];
     }
-    // only show notes that are from this chapter and is not a conflict note
+    // only show notes that are from this chapter, are notes for biblical terms, and is not a conflict note
     return this.noteThreadQuery.docs.filter(
       nt =>
         nt.data != null &&
         nt.data.verseRef.bookNum === this.bookNum &&
         nt.data.verseRef.chapterNum === this.chapter &&
         nt.data.notes.length > 0 &&
+        nt.data.biblicalTermId == null &&
         nt.data.notes[0].type !== NoteType.Conflict
     );
   }
@@ -1800,7 +1861,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // look for any note that has not been read and was authored by another user
     const noteRefsRead: string[] = this.projectUserConfigDoc.data.noteRefsRead;
     return thread.data.notes.some(
-      n => n.ownerRef !== this.userService.currentUserId && !noteRefsRead.includes(n.dataId)
+      n => n.ownerRef !== this.userService.currentUserId && !noteRefsRead.includes(n.dataId) && !n.deleted
     );
   }
 

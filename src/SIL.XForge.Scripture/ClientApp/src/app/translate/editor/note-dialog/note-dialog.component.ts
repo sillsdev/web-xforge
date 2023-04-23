@@ -28,6 +28,7 @@ export interface NoteDialogData {
   textDocId: TextDocId;
   projectId: string;
   verseRef?: VerseRef;
+  biblicalTermId?: string;
 }
 
 export interface NoteDialogResult {
