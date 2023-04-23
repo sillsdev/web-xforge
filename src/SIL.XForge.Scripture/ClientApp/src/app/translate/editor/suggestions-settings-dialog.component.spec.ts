@@ -7,13 +7,16 @@ import { MatSlider } from '@angular/material/slider';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import cloneDeep from 'lodash-es/cloneDeep';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig,
   SF_PROJECT_USER_CONFIGS_COLLECTION
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { BehaviorSubject } from 'rxjs';
-import { mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -24,8 +27,10 @@ import {
   TestTranslocoModule
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
+import { SFProjectService } from '../../core/sf-project.service';
 import {
   CONFIDENCE_THRESHOLD_TIMEOUT,
   SuggestionsSettingsDialogComponent,
@@ -33,11 +38,15 @@ import {
 } from './suggestions-settings-dialog.component';
 
 const mockedPwaService = mock(PwaService);
+const mockedProjectService = mock(SFProjectService);
 
 describe('SuggestionsSettingsDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    providers: [{ provide: PwaService, useMock: mockedPwaService }]
+    providers: [
+      { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: PwaService, useMock: mockedPwaService }
+    ]
   }));
 
   it('update confidence threshold', fakeAsync(() => {
@@ -76,10 +85,93 @@ describe('SuggestionsSettingsDialogComponent', () => {
     env.closeDialog();
   }));
 
+  it('update biblical terms enabled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.openDialog();
+    expect(env.component!.biblicalTermsEnabled).toBe(true);
+
+    env.clickSwitch(env.mdcBiblicalTermsEnabledSwitch);
+    expect(env.component!.biblicalTermsEnabled).toBe(false);
+    const userConfigDoc = env.getProjectUserConfigDoc();
+    expect(userConfigDoc.data!.biblicalTermsEnabled).toBe(false);
+    env.closeDialog();
+  }));
+
+  it('update transliterate biblical terms', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.openDialog();
+    expect(env.component!.transliterateBiblicalTerms).toBe(false);
+
+    env.clickSwitch(env.mdcTransliterateBiblicalTermsSwitch);
+    expect(env.component!.transliterateBiblicalTerms).toBe(true);
+    const userConfigDoc = env.getProjectUserConfigDoc();
+    expect(userConfigDoc.data!.transliterateBiblicalTerms).toBe(true);
+    env.closeDialog();
+  }));
+
+  it('biblical terms is disabled if it is disabled in the project', fakeAsync(() => {
+    const env = new TestEnvironment(true, false);
+    env.openDialog();
+    expect(env.component!.biblicalTermsEnabled).toBe(false);
+
+    expect(env.biblicalTermsEnabledSwitch.disabled).toBe(true);
+    env.closeDialog();
+  }));
+
+  it('biblical terms is disabled if the user is an SF user', fakeAsync(() => {
+    const env = new TestEnvironment(true, true);
+    const projectProfileDoc = env.getProjectProfileDoc();
+    projectProfileDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.Viewer));
+    env.openDialog();
+    expect(env.component!.biblicalTermsEnabled).toBe(true);
+
+    expect(env.biblicalTermsEnabledSwitch.disabled).toBe(true);
+    env.closeDialog();
+  }));
+
+  it('transliterate biblical terms is disabled if biblical terms is disabled', fakeAsync(() => {
+    const env = new TestEnvironment(true, true);
+    env.openDialog();
+    expect(env.component!.biblicalTermsEnabled).toBe(true);
+    expect(env.transliterateBiblicalTermsSwitch.disabled).toBe(false);
+
+    env.clickSwitch(env.mdcBiblicalTermsEnabledSwitch);
+    expect(env.component!.biblicalTermsEnabled).toBe(false);
+    expect(env.transliterateBiblicalTermsSwitch.disabled).toBe(true);
+    env.closeDialog();
+  }));
+
+  it('the transliterate biblical terms toggle stays on when biblical terms is off', fakeAsync(() => {
+    const env = new TestEnvironment(true, true);
+    env.openDialog();
+    expect(env.component!.biblicalTermsEnabled).toBe(true);
+    expect(env.component!.transliterateBiblicalTerms).toBe(false);
+
+    env.clickSwitch(env.mdcTransliterateBiblicalTermsSwitch);
+    env.clickSwitch(env.mdcBiblicalTermsEnabledSwitch);
+
+    expect(env.component!.transliterateBiblicalTerms).toBe(true);
+    expect(env.transliterateBiblicalTermsSwitch.disabled).toBe(true);
+    expect(env.transliterateBiblicalTermsSwitch.checked).toBe(true);
+    env.closeDialog();
+  }));
+
   it('shows correct confidence threshold even when suggestions disabled', fakeAsync(() => {
     const env = new TestEnvironment(false);
     env.openDialog();
     expect(env.confidenceThresholdSlider.value).toEqual(50);
+    env.closeDialog();
+  }));
+
+  it('translation suggestions are disabled if the user cannot edit tests', fakeAsync(() => {
+    const env = new TestEnvironment(true, true);
+    const projectProfileDoc = env.getProjectProfileDoc();
+    projectProfileDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.ParatextObserver));
+    env.openDialog();
+    expect(env.component!.biblicalTermsEnabled).toBe(true);
+
+    expect(env.biblicalTermsEnabledSwitch.disabled).toBe(false);
+    expect(env.suggestionsEnabledSwitch.disabled).toBe(true);
     env.closeDialog();
   }));
 
@@ -102,7 +194,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
   }));
 
   it('the suggestions toggle is switched on when the dialog opens while offline', fakeAsync(() => {
-    const env = new TestEnvironment();
+    const env = new TestEnvironment(true);
     env.isOnline = false;
     env.openDialog();
 
@@ -126,14 +218,20 @@ class TestEnvironment {
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  constructor(translationSuggestionsEnabled = true) {
+  constructor(translationSuggestionsEnabled = true, biblicalTermsEnabled = true) {
     this.setProjectUserConfig({
       confidenceThreshold: 0.5,
       translationSuggestionsEnabled,
-      numSuggestions: 1
+      numSuggestions: 1,
+      biblicalTermsEnabled,
+      transliterateBiblicalTerms: false
     });
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
+
+    when(mockedProjectService.getProfile(anything())).thenCall(sfProjectId =>
+      this.realtimeService.get(SFProjectProfileDoc.COLLECTION, sfProjectId)
+    );
 
     when(mockedPwaService.isOnline).thenCall(() => this.onlineStatus.getValue());
     when(mockedPwaService.onlineStatus$).thenReturn(this.onlineStatus.asObservable());
@@ -145,6 +243,22 @@ class TestEnvironment {
 
   get confidenceThresholdSlider(): MatSlider {
     return this.component!.confidenceThresholdSlider!;
+  }
+
+  get mdcBiblicalTermsEnabledSwitch(): HTMLElement {
+    return this.overlayContainerElement.querySelector('#biblical-terms-enabled-switch') as HTMLElement;
+  }
+
+  get biblicalTermsEnabledSwitch(): HTMLInputElement {
+    return this.mdcBiblicalTermsEnabledSwitch.querySelector('input[type="checkbox"]') as HTMLInputElement;
+  }
+
+  get mdcTransliterateBiblicalTermsSwitch(): HTMLElement {
+    return this.overlayContainerElement.querySelector('#transliterate-biblical-terms-switch') as HTMLElement;
+  }
+
+  get transliterateBiblicalTermsSwitch(): HTMLInputElement {
+    return this.mdcTransliterateBiblicalTermsSwitch.querySelector('input[type="checkbox"]') as HTMLInputElement;
   }
 
   get mdcSuggestionsEnabledSwitch(): HTMLElement {
@@ -205,9 +319,36 @@ class TestEnvironment {
   setProjectUserConfig(userConfig: Partial<SFProjectUserConfig> = {}): void {
     const user1Config = cloneDeep(userConfig) as SFProjectUserConfig;
     user1Config.ownerRef = 'user01';
+    user1Config.projectRef = 'project01';
     this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
-      id: getSFProjectUserConfigDocId('project01', user1Config.ownerRef),
+      id: getSFProjectUserConfigDocId(user1Config.projectRef, user1Config.ownerRef),
       data: user1Config
+    });
+    this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
+      id: user1Config.projectRef,
+      data: {
+        name: 'Project 01',
+        shortName: 'PT01',
+        paratextId: 'pt01',
+        writingSystem: { tag: 'qaa' },
+        translateConfig: {
+          translationSuggestionsEnabled: user1Config.translationSuggestionsEnabled,
+          shareEnabled: true
+        },
+        checkingConfig: {
+          checkingEnabled: false,
+          usersSeeEachOthersResponses: true,
+          shareEnabled: true,
+          answerExportMethod: CheckingAnswerExport.MarkedForExport
+        },
+        texts: [],
+        noteTags: [],
+        biblicalTermsEnabled: user1Config.biblicalTermsEnabled,
+        editable: true,
+        sync: { queuedCount: 0 },
+        userRoles: { user01: SFProjectRole.ParatextTranslator },
+        userPermissions: {}
+      }
     });
   }
 
@@ -216,6 +357,10 @@ class TestEnvironment {
       SFProjectUserConfigDoc.COLLECTION,
       getSFProjectUserConfigDocId('project01', 'user01')
     );
+  }
+
+  getProjectProfileDoc(): SFProjectProfileDoc {
+    return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
   }
 
   clickSwitch(element: HTMLElement): void {

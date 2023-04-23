@@ -543,6 +543,7 @@ class TestEnvironment {
       { tagId: 6, name: 'SF Note Tag', icon: 'defaultIcon', creatorResolve: false }
     ],
     sync: { queuedCount: 0 },
+    biblicalTermsEnabled: false,
     editable: true,
     userRoles: TestEnvironment.userRoles
   };
@@ -556,6 +557,8 @@ class TestEnvironment {
     answerRefsRead: [],
     commentRefsRead: [],
     noteRefsRead: [],
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
     translationSuggestionsEnabled: false,
     isTargetTextRight: true,
     confidenceThreshold: 0.2,

@@ -398,6 +398,16 @@ describe('SettingsComponent', () => {
         expect(env.statusDone(env.checkingExportStatus)).not.toBeNull();
       }));
     });
+
+    describe('Biblical Terms options', () => {
+      it('Biblical Terms should be disabled if a message is present', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject(undefined, undefined, false, 'A message');
+        env.wait();
+        expect(env.inputElement(env.biblicalTermsCheckbox).checked).toBe(false);
+        expect(env.inputElement(env.biblicalTermsCheckbox).disabled).toBe(true);
+      }));
+    });
   });
 
   describe('Danger Zone', () => {
@@ -608,6 +618,10 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector('.tool-setting-field + mat-error');
   }
 
+  get biblicalTermsCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-biblical-terms'));
+  }
+
   set onlineStatus(hasConnection: boolean) {
     this.isOnline.next(hasConnection);
     tick();
@@ -692,7 +706,9 @@ class TestEnvironment {
       usersSeeEachOthersResponses: false,
       shareEnabled: false,
       answerExportMethod: CheckingAnswerExport.MarkedForExport
-    }
+    },
+    biblicalTermsEnabled: boolean = false,
+    biblicalTermsMessage: string | undefined = undefined
   ): void {
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'project01',
@@ -706,6 +722,8 @@ class TestEnvironment {
         translateConfig,
         checkingConfig,
         sync: { queuedCount: 0 },
+        biblicalTermsEnabled: biblicalTermsEnabled,
+        biblicalTermsMessage: biblicalTermsMessage,
         editable: true,
         texts: [],
         userRoles: {},

@@ -1665,6 +1665,8 @@ class TestEnvironment {
     projectRef: 'project01',
     isTargetTextRight: true,
     confidenceThreshold: 0.2,
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
     translationSuggestionsEnabled: true,
     numSuggestions: 1,
     selectedSegment: '',
@@ -1679,6 +1681,8 @@ class TestEnvironment {
     projectRef: 'project01',
     isTargetTextRight: true,
     confidenceThreshold: 0.2,
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
     translationSuggestionsEnabled: true,
     numSuggestions: 1,
     selectedSegment: '',
@@ -1694,6 +1698,8 @@ class TestEnvironment {
     projectRef: 'project01',
     isTargetTextRight: true,
     confidenceThreshold: 0.2,
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
     translationSuggestionsEnabled: true,
     numSuggestions: 1,
     selectedSegment: '',
@@ -1708,6 +1714,8 @@ class TestEnvironment {
     projectRef: 'project01',
     isTargetTextRight: true,
     confidenceThreshold: 0.2,
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
     translationSuggestionsEnabled: true,
     numSuggestions: 1,
     selectedQuestionRef: 'project01:q5Id',
@@ -1747,6 +1755,7 @@ class TestEnvironment {
         writingSystem: { tag: 'qaa' }
       }
     },
+    biblicalTermsEnabled: false,
     editable: true,
     texts: [
       {
