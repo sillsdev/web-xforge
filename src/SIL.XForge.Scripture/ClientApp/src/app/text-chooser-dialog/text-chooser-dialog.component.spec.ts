@@ -382,6 +382,7 @@ class TestEnvironment {
     texts: [TestEnvironment.matthewText],
     noteTags: [],
     sync: { queuedCount: 0 },
+    biblicalTermsEnabled: false,
     editable: true,
     userRoles: {
       user01: SFProjectRole.ParatextAdministrator

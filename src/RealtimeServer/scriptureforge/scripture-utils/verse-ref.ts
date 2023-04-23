@@ -123,6 +123,12 @@ export class VerseRef {
   private _versification?: ScrVers;
 
   constructor(book?: number | string, chapter?: number | string, verse?: number | string, versification?: ScrVers) {
+    // Allow the first parameter to be in BBBCCCVVV format
+    if (book != null && typeof book === 'number' && chapter == null && verse == null) {
+      verse = book % VerseRef.chapterDigitShifter;
+      chapter = Math.floor((book % VerseRef.bookDigitShifter) / VerseRef.chapterDigitShifter);
+      book = Math.floor(book / VerseRef.bookDigitShifter);
+    }
     if (book != null && chapter != null && verse != null) {
       if (typeof book === 'string') {
         this.book = book;
@@ -269,13 +275,41 @@ export class VerseRef {
   }
 
   /**
+   * Gets an array of verses from the verses specified in this VerseRef.
+   */
+  get verses(): number[] {
+    // Get verses from the verse strings
+    const verseList: number[] = [];
+    if (this._verse == null) {
+      verseList.push(this.verseNum); // no bridge or segment info included in verse
+      return verseList;
+    }
+
+    let verseStr = '';
+    for (let i = 0; i < this._verse.length; i++) {
+      if (this._verse[i].match(/[0-9]/i)) {
+        verseStr += this._verse[i];
+      } else if (verseStr.length > 0) {
+        verseList.push(parseInt(verseStr));
+        verseStr = '';
+      }
+    }
+
+    if (verseStr.length > 0) {
+      verseList.push(parseInt(verseStr)); // add any accumulated digits
+    }
+
+    return verseList;
+  }
+
+  /**
    * Parses the reference in the specified string.
    * Optionally versification can follow reference as in GEN 3:11/4
    * Throw an exception if
    * - invalid book name
    * - chapter number is missing or not a number
    * - verse number is missing or does not start with a number
-   * - versifcation is invalid
+   * - versification is invalid
    * @param string verseStr string to parse e.g. "MAT 3:11"
    */
   parse(verseStr: string): void {

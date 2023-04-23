@@ -7,7 +7,7 @@ public enum ChangeType
     Added,
     Updated,
     Deleted,
-    None
+    None,
 }
 
 /// <summary>
@@ -20,9 +20,11 @@ public class NoteThreadChange
     public string SelectedText { get; set; }
     public string ContextBefore { get; set; }
     public string ContextAfter { get; set; }
-    public TextAnchor Position { get; set; }
+    public TextAnchor? Position { get; set; }
     public string Status { get; set; }
     public string Assignment { get; set; }
+    public string? BiblicalTermId { get; set; }
+    public BiblicalTermNoteHeadingInfo? ExtraHeadingInfo { get; set; }
 
     public bool ThreadUpdated { get; set; }
     public List<Note> NotesAdded { get; set; } = new List<Note>();
@@ -52,7 +54,9 @@ public class NoteThreadChange
         string contextBefore,
         string contextAfter,
         string status,
-        string assignment
+        string assignment,
+        string? biblicalTermId = null,
+        BiblicalTermNoteHeadingInfo? extraHeadingInfo = null
     )
     {
         ThreadId = threadId;
@@ -62,6 +66,8 @@ public class NoteThreadChange
         ContextAfter = contextAfter;
         Assignment = assignment;
         Status = status;
+        BiblicalTermId = biblicalTermId;
+        ExtraHeadingInfo = extraHeadingInfo;
     }
 
     public void AddChange(Note changedNote, ChangeType type)
@@ -77,6 +83,7 @@ public class NoteThreadChange
             case ChangeType.Deleted:
                 NotesDeleted.Add(changedNote);
                 break;
+            case ChangeType.None:
             default:
                 break;
         }

@@ -29,6 +29,7 @@ import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-pro
 export class SettingsComponent extends DataLoadingComponent implements OnInit {
   translationSuggestionsEnabled = new UntypedFormControl(false);
   sourceParatextId = new UntypedFormControl(undefined);
+  biblicalTermsEnabled = new UntypedFormControl(false);
   translateShareEnabled = new UntypedFormControl(false);
   checkingEnabled = new UntypedFormControl(false);
   usersSeeEachOthersResponses = new UntypedFormControl(false);
@@ -40,6 +41,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   form = new UntypedFormGroup({
     translationSuggestionsEnabled: this.translationSuggestionsEnabled,
     sourceParatextId: this.sourceParatextId,
+    biblicalTermsEnabled: this.biblicalTermsEnabled,
     translateShareEnabled: this.translateShareEnabled,
     checkingEnabled: this.checkingEnabled,
     usersSeeEachOthersResponses: this.usersSeeEachOthersResponses,
@@ -108,6 +110,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get projectParatextId(): string | undefined {
     return this.projectDoc?.data?.paratextId;
+  }
+
+  get biblicalTermsMessage(): string | undefined {
+    return this.projectDoc?.data?.biblicalTermsMessage;
   }
 
   set isAppOnline(isOnline: boolean) {
@@ -259,6 +265,13 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
+    if (
+      (newValue.biblicalTermsEnabled ?? null) !== (this.previousFormValues.biblicalTermsEnabled ?? null) &&
+      this.biblicalTermsMessage == null
+    ) {
+      this.updateSetting(newValue, 'biblicalTermsEnabled');
+    }
+
     this.updateCheckingConfig(newValue);
   }
 
@@ -311,6 +324,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.previousFormValues = {
       translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
       sourceParatextId: curSource != null ? curSource.paratextId : undefined,
+      biblicalTermsEnabled: this.projectDoc.data.biblicalTermsEnabled,
       translateShareEnabled: !!this.projectDoc.data.translateConfig.shareEnabled,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
@@ -326,11 +340,16 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (!this.isLoggedInToParatext && !this.isTranslationSuggestionsEnabled) {
       this.translationSuggestionsEnabled.disable();
     }
+
+    if (this.projectDoc?.data?.biblicalTermsMessage != null) {
+      this.biblicalTermsEnabled.disable();
+    }
   }
 
   private setAllControlsToInSync(): void {
     this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
     this.controlStates.set('sourceParatextId', ElementState.InSync);
+    this.controlStates.set('biblicalTermsEnabled', ElementState.InSync);
     this.controlStates.set('translateShareEnabled', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);
     this.controlStates.set('usersSeeEachOthersResponses', ElementState.InSync);

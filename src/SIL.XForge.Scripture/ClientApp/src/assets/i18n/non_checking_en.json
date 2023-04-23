@@ -6,6 +6,23 @@
     "translate": "Translate",
     "users": "Users"
   },
+  "biblical_term_dialog": {
+    "cancel": "Cancel",
+    "close": "Close",
+    "description": "Description",
+    "edit_renderings": "Edit Renderings",
+    "renderings": "Renderings",
+    "save": "Save",
+    "term": "Term/Definition",
+    "view_renderings": "View Renderings"
+  },
+  "biblical_terms": {
+    "actions": "Actions",
+    "category": "Category",
+    "gloss": "Gloss",
+    "renderings": "Renderings",
+    "term": "Term"
+  },
   "chapter_nav": {
     "previous_chapter": "Previous chapter",
     "next_chapter": "Next chapter"
@@ -174,6 +191,7 @@
     "other_viewers": "{{ count }} other viewers"
   },
   "note_dialog": {
+    "biblical_term": "Biblical Term",
     "close": "Close",
     "delete": "Delete",
     "hide_changes": "Hide changes",
@@ -239,6 +257,8 @@
   },
   "settings": {
     "anyone_with_a_link": "Anyone with a link",
+    "biblical_terms_will_be_enabled": "Biblical Terms will be displayed and can be updated in Scripture Forge",
+    "biblical_terms": "Enable Biblical Terms",
     "community_checking_settings": "Community Checking Settings",
     "connect_network_to_change_settings": "Project settings cannot be changed while offline. Please connect to the internet to make changes.",
     "danger_zone": "Danger Zone",
@@ -274,13 +294,15 @@
   },
   "suggestions_settings_dialog": {
     "better": "Better",
+    "biblical_terms": "Show/Hide Biblical Terms",
     "close": "Close",
     "more": "More",
     "number_of_suggestions": "Number of suggestions",
     "settings_not_available_offline": "These settings are not available while you are offline.",
     "suggestion_confidence": "Suggestion confidence",
     "translation_suggestions": "Translation suggestions",
-    "translation_suggestions_settings": "Translation suggestions settings"
+    "translator_settings": "Translator settings",
+    "transliterate_biblical_terms": "Transliterate Biblical Terms"
   },
   "sync": {
     "cancel": "Cancel",

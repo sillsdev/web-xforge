@@ -57,7 +57,7 @@ public interface IParatextService
     Task<SyncMetricInfo> UpdateParatextCommentsAsync(
         UserSecret userSecret,
         string paratextId,
-        int bookNum,
+        int? bookNum,
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
         IReadOnlyDictionary<string, string> userIdsToUsernames,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
@@ -66,12 +66,18 @@ public interface IParatextService
     IEnumerable<NoteThreadChange> GetNoteThreadChanges(
         UserSecret userSecret,
         string paratextId,
-        int bookNum,
+        int? bookNum,
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
         Dictionary<int, ChapterDelta> chapterDeltas,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     );
     int UpdateCommentTag(UserSecret userSecret, string paratextId, NoteTag noteTag);
+    Task<(IReadOnlyList<BiblicalTerm> biblicalTerms, string message)> GetBiblicalTermsAsync(
+        UserSecret userSecret,
+        string paratextId,
+        IEnumerable<int> books
+    );
+    void UpdateBiblicalTerms(UserSecret userSecret, string paratextId, IReadOnlyList<BiblicalTerm> biblicalTerms);
     string? GetLatestSharedVersion(UserSecret userSecret, string paratextId);
     string GetRepoRevision(UserSecret userSecret, string paratextId);
     void SetRepoToRevision(UserSecret userSecret, string paratextId, string desiredRevision);

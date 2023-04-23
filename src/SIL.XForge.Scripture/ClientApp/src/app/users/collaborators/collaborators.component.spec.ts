@@ -645,6 +645,7 @@ class TestEnvironment {
         answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
       noteTags: [],
+      biblicalTermsEnabled: false,
       editable: true,
       userRoles,
       paratextUsers: paratextUsersFromRoles(userRoles),

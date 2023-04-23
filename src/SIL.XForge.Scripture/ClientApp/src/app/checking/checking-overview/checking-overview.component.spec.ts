@@ -542,6 +542,8 @@ class TestEnvironment {
     projectRef: 'project01',
     isTargetTextRight: true,
     confidenceThreshold: 0.2,
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
     translationSuggestionsEnabled: true,
     numSuggestions: 1,
     selectedSegment: '',
@@ -555,6 +557,8 @@ class TestEnvironment {
     projectRef: 'project01',
     isTargetTextRight: true,
     confidenceThreshold: 0.2,
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
     translationSuggestionsEnabled: true,
     numSuggestions: 1,
     selectedSegment: '',
@@ -568,6 +572,8 @@ class TestEnvironment {
     projectRef: 'project01',
     isTargetTextRight: true,
     confidenceThreshold: 0.2,
+    biblicalTermsEnabled: false,
+    transliterateBiblicalTerms: false,
     translationSuggestionsEnabled: true,
     numSuggestions: 1,
     selectedSegment: '',
@@ -594,6 +600,7 @@ class TestEnvironment {
       shareEnabled: false
     },
     sync: { queuedCount: 0 },
+    biblicalTermsEnabled: false,
     editable: true,
     texts: [
       {
