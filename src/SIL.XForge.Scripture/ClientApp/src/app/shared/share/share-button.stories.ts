@@ -1,34 +1,48 @@
-import { Meta, StoryFn } from '@storybook/angular';
+import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { instance, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { userEvent, within } from '@storybook/testing-library';
 import { of } from 'rxjs';
+import { anything, instance, mock, reset, verify, when } from 'ts-mockito';
 import { ShareButtonComponent } from './share-button.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
 when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project1' }));
 const mockedDialogService = mock(DialogService);
 
-export default {
+const meta: Meta<ShareButtonComponent> = {
   title: 'Utility/ShareButton',
   component: ShareButtonComponent
-} as Meta;
+};
+export default meta;
 
-const Template: StoryFn = args => ({
-  moduleMetadata: {
-    imports: [UICommonModule, CommonModule, I18nStoryModule],
-    providers: [
-      { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },
-      { provide: DialogService, useValue: instance(mockedDialogService) }
-    ]
-  },
-  props: args
-});
+type Story = StoryObj<ShareButtonComponent>;
 
-export const IconOnly = Template.bind({});
+const Template: Story = {
+  decorators: [
+    moduleMetadata({
+      imports: [UICommonModule, CommonModule, I18nStoryModule],
+      providers: [
+        { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },
+        { provide: DialogService, useValue: instance(mockedDialogService) }
+      ]
+    })
+  ],
+  play: async ({ canvasElement }) => {
+    reset(mockedDialogService);
+    const canvas = within(canvasElement);
+    const button = canvas.getByRole('button');
+    userEvent.click(button);
+    verify(mockedDialogService.openMatDialog(anything(), anything())).once();
+  }
+};
 
-export const ButtonWithText = Template.bind({});
-ButtonWithText.args = { iconOnlyButton: false };
+export const ButtonWithIcon: Story = { ...Template };
+
+export const ButtonWithText: Story = {
+  ...Template,
+  args: { iconOnlyButton: false }
+};

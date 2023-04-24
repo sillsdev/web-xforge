@@ -10,7 +10,7 @@ import { BookChapterChooserComponent } from './book-chapter-chooser.component';
 
 const CANON_SIZE = 66; // all books we currently localize
 
-export default {
+const meta: Meta = {
   title: 'Shared/Book & Chapter Chooser',
   component: BookChapterChooserComponent,
   argTypes: {
@@ -19,7 +19,8 @@ export default {
       control: 'select'
     }
   }
-} as Meta<BookChapterChooserComponent>;
+};
+export default meta;
 
 const Template: StoryFn = args => ({
   moduleMetadata: { imports: [CommonModule, UICommonModule, I18nStoryModule] },
