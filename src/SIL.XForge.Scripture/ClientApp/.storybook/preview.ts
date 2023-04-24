@@ -1,9 +1,11 @@
-import { setCompodocJson } from '@storybook/addon-docs/angular';
-import { moduleMetadata } from '@storybook/angular';
-import { I18nStoryModule, I18nStoryDecorator } from '../src/xforge-common/i18n-story.module';
-import docJson from '../documentation.json';
+import { applicationConfig } from '@storybook/angular';
 import { getI18nLocales } from '../src/xforge-common/utils';
 import { I18nService } from '../src/xforge-common/i18n.service';
+import { I18nStoryModule, I18nStoryDecorator } from '../src/xforge-common/i18n-story.module';
+import { importProvidersFrom } from '@angular/core';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { setCompodocJson } from '@storybook/addon-docs/angular';
+import docJson from '../documentation.json';
 setCompodocJson(docJson);
 
 export const parameters = {
@@ -32,4 +34,9 @@ export const globalTypes = {
   }
 };
 
-export const decorators = [I18nStoryDecorator, moduleMetadata({ imports: [I18nStoryModule] })];
+export const decorators = [
+  I18nStoryDecorator,
+  applicationConfig({
+    providers: [importProvidersFrom(I18nStoryModule), provideAnimations()]
+  })
+];

@@ -1,23 +1,28 @@
-import { Meta, Story } from '@storybook/angular';
+import { Meta, StoryFn } from '@storybook/angular';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { mock } from 'ts-mockito';
+import { instance, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
+import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { of } from 'rxjs';
 import { ShareButtonComponent } from './share-button.component';
+
+const mockedActivatedRoute = mock(ActivatedRoute);
+when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project1' }));
+const mockedDialogService = mock(DialogService);
 
 export default {
   title: 'Utility/ShareButton',
   component: ShareButtonComponent
 } as Meta;
 
-const Template: Story = args => ({
+const Template: StoryFn = args => ({
   moduleMetadata: {
-    imports: [UICommonModule, BrowserAnimationsModule, CommonModule],
+    imports: [UICommonModule, CommonModule, I18nStoryModule],
     providers: [
-      { provide: ActivatedRoute, useValue: mock(ActivatedRoute) },
-      { provide: DialogService, useValue: mock(DialogService) }
+      { provide: ActivatedRoute, useValue: instance(mockedActivatedRoute) },
+      { provide: DialogService, useValue: instance(mockedDialogService) }
     ]
   },
   props: args
