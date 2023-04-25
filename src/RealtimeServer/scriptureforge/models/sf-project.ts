@@ -27,6 +27,7 @@ export interface SFProjectProfile extends Project {
   editable: boolean;
   defaultFontSize?: number;
   defaultFont?: string;
+  maxGeneratedUsersPerShareKey?: number;
 }
 
 export interface SFProject extends SFProjectProfile {
