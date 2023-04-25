@@ -501,7 +501,7 @@ class TestEnvironment {
   };
   static userRoles: { [userId: string]: string } = {
     user01: SFProjectRole.ParatextAdministrator,
-    user02: SFProjectRole.Observer
+    user02: SFProjectRole.Viewer
   };
   static testProjectProfile: SFProjectProfile = {
     paratextId: 'pt01',

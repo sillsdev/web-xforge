@@ -119,8 +119,8 @@ export class ShareControlComponent extends SubscriptionDisposable {
 
     const linkSharingSettings = {
       [SFProjectRole.CommunityChecker]: project.checkingConfig.shareEnabled,
-      [SFProjectRole.Observer]: project.translateConfig.shareEnabled,
-      [SFProjectRole.Reviewer]: project.translateConfig.shareEnabled
+      [SFProjectRole.Viewer]: project.translateConfig.shareEnabled,
+      [SFProjectRole.Commenter]: project.translateConfig.shareEnabled
     };
     return linkSharingSettings[this.shareRole] && this.userShareableRoles.includes(this.shareRole);
   }
@@ -140,7 +140,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
           SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Questions, Operation.View)
       },
       {
-        role: SFProjectRole.Observer,
+        role: SFProjectRole.Viewer,
         available: true,
         permission:
           project.translateConfig.shareEnabled &&
@@ -148,7 +148,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
           userRole !== SFProjectRole.CommunityChecker
       },
       {
-        role: SFProjectRole.Reviewer,
+        role: SFProjectRole.Commenter,
         available: this.featureFlags.allowAddingNotes.enabled,
         permission: this.isProjectAdmin
       }

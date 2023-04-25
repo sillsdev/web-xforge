@@ -100,11 +100,11 @@ public class SFProjectServiceTests
         const string observerEmail = "sf_observer@example.com";
         const string observerKey = "sfobserverkey";
         env.SecurityService.GenerateKey().Returns(observerKey);
-        await env.Service.InviteAsync(User02, Project04, observerEmail, "en", SFProjectRole.SFObserver);
+        await env.Service.InviteAsync(User02, Project04, observerEmail, "en", SFProjectRole.Viewer);
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project04);
         Assert.That(
             projectSecret.ShareKeys.Any(
-                s => s.Email == observerEmail && s.Key == observerKey && s.ProjectRole == SFProjectRole.SFObserver
+                s => s.Email == observerEmail && s.Key == observerKey && s.ProjectRole == SFProjectRole.Viewer
             ),
             Is.True
         );
@@ -121,11 +121,11 @@ public class SFProjectServiceTests
         const string reviewerEmail = "reviewer@example.com";
         const string reviewerKey = "reviewerKey";
         env.SecurityService.GenerateKey().Returns(reviewerKey);
-        await env.Service.InviteAsync(User02, Project04, reviewerEmail, "en", SFProjectRole.Reviewer);
+        await env.Service.InviteAsync(User02, Project04, reviewerEmail, "en", SFProjectRole.Commenter);
         projectSecret = env.ProjectSecrets.Get(Project04);
         Assert.That(
             projectSecret.ShareKeys.Any(
-                s => s.Email == reviewerEmail && s.Key == reviewerKey && s.ProjectRole == SFProjectRole.Reviewer
+                s => s.Email == reviewerEmail && s.Key == reviewerKey && s.ProjectRole == SFProjectRole.Commenter
             ),
             Is.True
         );
@@ -146,7 +146,7 @@ public class SFProjectServiceTests
         var env = new TestEnvironment();
         const string email = "bob@example.com";
         const string initialRole = SFProjectRole.CommunityChecker;
-        const string endingRole = SFProjectRole.SFObserver;
+        const string endingRole = SFProjectRole.Viewer;
 
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project03);
         Assert.That(
@@ -313,7 +313,7 @@ public class SFProjectServiceTests
                 sk =>
                     sk.Key == "reservedKey"
                     && sk.ShareLinkType == ShareLinkType.Recipient
-                    && sk.ProjectRole == SFProjectRole.SFObserver
+                    && sk.ProjectRole == SFProjectRole.Viewer
             ),
             Is.True,
             "setup"
@@ -323,7 +323,7 @@ public class SFProjectServiceTests
         string shareLink = await env.Service.GetLinkSharingKeyAsync(
             User07,
             Project06,
-            SFProjectRole.SFObserver,
+            SFProjectRole.Viewer,
             ShareLinkType.Recipient
         );
         Assert.That(shareLink, Is.EqualTo("newKey"));
@@ -333,7 +333,7 @@ public class SFProjectServiceTests
                 sk =>
                     sk.Key == "newKey"
                     && sk.ShareLinkType == ShareLinkType.Recipient
-                    && sk.ProjectRole == SFProjectRole.SFObserver
+                    && sk.ProjectRole == SFProjectRole.Viewer
                     && sk.Reserved == null
             ),
             Is.True
@@ -383,7 +383,7 @@ public class SFProjectServiceTests
     public async Task GetLinkSharingKeyAsync_LinkHasExpired_NewShareKeyCreated()
     {
         var env = new TestEnvironment();
-        const string role = SFProjectRole.SFObserver;
+        const string role = SFProjectRole.Viewer;
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
 
         Assert.That(
@@ -422,20 +422,15 @@ public class SFProjectServiceTests
         string key = await env.Service.GetLinkSharingKeyAsync(
             User01,
             Project01,
-            SFProjectRole.SFObserver,
+            SFProjectRole.Viewer,
             ShareLinkType.Anyone
         );
         Assert.That(key, Is.Not.Null);
         // An sf observer should have rights to invite another observer
-        key = await env.Service.GetLinkSharingKeyAsync(
-            User06,
-            Project01,
-            SFProjectRole.SFObserver,
-            ShareLinkType.Anyone
-        );
+        key = await env.Service.GetLinkSharingKeyAsync(User06, Project01, SFProjectRole.Viewer, ShareLinkType.Anyone);
         Assert.That(key, Is.Not.Null);
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetLinkSharingKeyAsync(User02, Project01, SFProjectRole.SFObserver, ShareLinkType.Anyone)
+            () => env.Service.GetLinkSharingKeyAsync(User02, Project01, SFProjectRole.Viewer, ShareLinkType.Anyone)
         );
     }
 
@@ -446,12 +441,12 @@ public class SFProjectServiceTests
         string key = await env.Service.GetLinkSharingKeyAsync(
             User01,
             Project01,
-            SFProjectRole.Reviewer,
+            SFProjectRole.Commenter,
             ShareLinkType.Anyone
         );
         Assert.That(key, Is.Not.Null);
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.GetLinkSharingKeyAsync(User02, Project01, SFProjectRole.Reviewer, ShareLinkType.Anyone)
+            () => env.Service.GetLinkSharingKeyAsync(User02, Project01, SFProjectRole.Commenter, ShareLinkType.Anyone)
         );
     }
 
@@ -1687,7 +1682,7 @@ public class SFProjectServiceTests
                 sk =>
                     sk.Key == "toBeReservedKey"
                     && sk.ShareLinkType == ShareLinkType.Recipient
-                    && sk.ProjectRole == SFProjectRole.Reviewer
+                    && sk.ProjectRole == SFProjectRole.Commenter
                     && sk.ExpirationTime == null
                     && sk.Reserved == null
             ),
@@ -1704,7 +1699,7 @@ public class SFProjectServiceTests
                 sk =>
                     sk.Key == "toBeReservedKey"
                     && sk.ShareLinkType == ShareLinkType.Recipient
-                    && sk.ProjectRole == SFProjectRole.Reviewer
+                    && sk.ProjectRole == SFProjectRole.Commenter
                     && sk.ExpirationTime > DateTime.Now
                     && sk.Reserved == true
             ),
@@ -2725,7 +2720,7 @@ public class SFProjectServiceTests
                                 { User01, SFProjectRole.Administrator },
                                 { User02, SFProjectRole.CommunityChecker },
                                 { User05, SFProjectRole.Translator },
-                                { User06, SFProjectRole.SFObserver }
+                                { User06, SFProjectRole.Viewer }
                             },
                             Texts =
                             {
@@ -3102,7 +3097,7 @@ public class SFProjectServiceTests
                             new ShareKey
                             {
                                 Key = "linksharing04",
-                                ProjectRole = SFProjectRole.SFObserver,
+                                ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Anyone
                             },
                         }
@@ -3131,13 +3126,13 @@ public class SFProjectServiceTests
                             {
                                 Key = "expiredKey",
                                 ExpirationTime = currentTime.AddDays(-1),
-                                ProjectRole = SFProjectRole.SFObserver,
+                                ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient
                             },
                             new ShareKey
                             {
                                 Key = "usedKey",
-                                ProjectRole = SFProjectRole.SFObserver,
+                                ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
                                 RecipientUserId = User02
                             },
@@ -3145,14 +3140,14 @@ public class SFProjectServiceTests
                             {
                                 Key = "reservedKey",
                                 ExpirationTime = currentTime.AddDays(1),
-                                ProjectRole = SFProjectRole.SFObserver,
+                                ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
                                 Reserved = true
                             },
                             new ShareKey
                             {
                                 Key = "toBeReservedKey",
-                                ProjectRole = SFProjectRole.Reviewer,
+                                ProjectRole = SFProjectRole.Commenter,
                                 ShareLinkType = ShareLinkType.Recipient,
                             },
                         }

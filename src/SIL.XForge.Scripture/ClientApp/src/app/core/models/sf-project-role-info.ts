@@ -8,9 +8,9 @@ export const SF_PROJECT_ROLES: ProjectRoleInfo[] = [
   { role: SFProjectRole.ParatextTranslator, canBeShared: false },
   { role: SFProjectRole.ParatextConsultant, canBeShared: false },
   { role: SFProjectRole.ParatextObserver, canBeShared: false },
-  { role: SFProjectRole.Reviewer, canBeShared: true },
+  { role: SFProjectRole.Commenter, canBeShared: true },
   { role: SFProjectRole.CommunityChecker, canBeShared: true },
-  { role: SFProjectRole.Observer, canBeShared: true }
+  { role: SFProjectRole.Viewer, canBeShared: true }
 ];
 
 export function canAccessTranslateApp(role?: SFProjectRole): boolean {
@@ -22,4 +22,4 @@ export function canAccessCommunityCheckingApp(role: SFProjectRole): boolean {
 }
 
 export const SF_DEFAULT_SHARE_ROLE: SFProjectRole = SFProjectRole.CommunityChecker;
-export const SF_DEFAULT_TRANSLATE_SHARE_ROLE: SFProjectRole = SFProjectRole.Observer;
+export const SF_DEFAULT_TRANSLATE_SHARE_ROLE: SFProjectRole = SFProjectRole.Viewer;

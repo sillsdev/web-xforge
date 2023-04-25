@@ -209,8 +209,8 @@
     "pt_observer": "Observer",
     "pt_translator": "Translator",
     "sf_community_checker": "Community Checker",
-    "sf_reviewer": "Reviewer",
-    "sf_observer": "Observer"
+    "sf_reviewer": "Commenter",
+    "sf_observer": "Viewer"
   },
   "role_descriptions": {
     "sf_community_checker": "Answer questions, Comment on answers",

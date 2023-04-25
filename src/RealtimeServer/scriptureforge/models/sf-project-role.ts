@@ -15,8 +15,8 @@ export function isTranslateRole(role: string | undefined): boolean {
     return true;
   }
   switch (role) {
-    case SFProjectRole.Reviewer:
-    case SFProjectRole.Observer:
+    case SFProjectRole.Commenter:
+    case SFProjectRole.Viewer:
       return true;
     default:
       return false;
@@ -28,8 +28,8 @@ export enum SFProjectRole {
   ParatextTranslator = 'pt_translator',
   ParatextConsultant = 'pt_consultant',
   ParatextObserver = 'pt_observer',
-  Reviewer = 'sf_reviewer',
+  Commenter = 'sf_reviewer',
   CommunityChecker = 'sf_community_checker',
-  Observer = 'sf_observer',
+  Viewer = 'sf_observer',
   None = 'none'
 }

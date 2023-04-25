@@ -251,7 +251,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
           SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Questions, Operation.View)
       },
       {
-        role: SFProjectRole.Observer,
+        role: SFProjectRole.Viewer,
         available: true,
         permission:
           project.translateConfig.shareEnabled &&
@@ -259,7 +259,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
           userRole !== SFProjectRole.CommunityChecker
       },
       {
-        role: SFProjectRole.Reviewer,
+        role: SFProjectRole.Commenter,
         available: this.featureFlags.allowAddingNotes.enabled,
         permission: this.isProjectAdmin
       }

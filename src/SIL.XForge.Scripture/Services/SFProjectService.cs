@@ -384,8 +384,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 SFProjectRole.CommunityChecker,
                 project.CheckingConfig.CheckingEnabled && (isAdmin || project.CheckingConfig.ShareEnabled)
             },
-            { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled || isAdmin },
-            { SFProjectRole.Reviewer, project.TranslateConfig.ShareEnabled || isAdmin }
+            { SFProjectRole.Viewer, project.TranslateConfig.ShareEnabled || isAdmin },
+            { SFProjectRole.Commenter, project.TranslateConfig.ShareEnabled || isAdmin }
         }
             .Where(entry => entry.Value)
             .Select(entry => entry.Key)
@@ -473,8 +473,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 SFProjectRole.CommunityChecker,
                 project.CheckingConfig.CheckingEnabled && (isProjectAdmin || project.CheckingConfig.ShareEnabled)
             },
-            { SFProjectRole.SFObserver, isProjectAdmin || project.TranslateConfig.ShareEnabled },
-            { SFProjectRole.Reviewer, isProjectAdmin || project.TranslateConfig.ShareEnabled }
+            { SFProjectRole.Viewer, isProjectAdmin || project.TranslateConfig.ShareEnabled },
+            { SFProjectRole.Commenter, isProjectAdmin || project.TranslateConfig.ShareEnabled }
         }
             .Where(entry => entry.Value)
             .Select(entry => entry.Key)
@@ -652,8 +652,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     SFProjectRole.CommunityChecker,
                     project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled
                 },
-                { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled },
-                { SFProjectRole.Reviewer, project.TranslateConfig.ShareEnabled },
+                { SFProjectRole.Viewer, project.TranslateConfig.ShareEnabled },
+                { SFProjectRole.Commenter, project.TranslateConfig.ShareEnabled },
             }
                 .Where(entry => entry.Value)
                 .Select(entry => entry.Key)
@@ -1150,19 +1150,19 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (role == SFProjectRole.CommunityChecker)
             return true;
 
-        if (role == SFProjectRole.Reviewer)
+        if (role == SFProjectRole.Commenter)
         {
             // This may change if we decide that other users should be able to invite reviewers
             if (IsProjectAdmin(project, userId))
                 return true;
         }
-        else if (role == SFProjectRole.SFObserver)
+        else if (role == SFProjectRole.Viewer)
         {
             if (HasParatextRole(project, userId))
                 return true;
             if (project.UserRoles.TryGetValue(userId, out string projectRole))
             {
-                if (projectRole == SFProjectRole.Reviewer || projectRole == SFProjectRole.SFObserver)
+                if (projectRole == SFProjectRole.Commenter || projectRole == SFProjectRole.Viewer)
                     return true;
             }
         }

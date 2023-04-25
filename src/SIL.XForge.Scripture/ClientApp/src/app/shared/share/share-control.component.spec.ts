@@ -200,12 +200,12 @@ describe('ShareControlComponent', () => {
     env.wait();
     const roles: string[] = env.component.availableRolesInfo.map(info => info.role);
     expect(roles).toContain(SFProjectRole.CommunityChecker);
-    expect(roles).toContain(SFProjectRole.Observer);
-    expect(roles).toContain(SFProjectRole.Reviewer);
-    env.component.roleControl.setValue(SFProjectRole.Observer);
+    expect(roles).toContain(SFProjectRole.Viewer);
+    expect(roles).toContain(SFProjectRole.Commenter);
+    env.component.roleControl.setValue(SFProjectRole.Viewer);
     env.wait();
     verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything(), anything())).twice();
-    env.component.roleControl.setValue(SFProjectRole.Reviewer);
+    env.component.roleControl.setValue(SFProjectRole.Commenter);
     env.wait();
     verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything(), anything())).thrice();
     expect(env.component.isLinkSharingEnabled).toBe(true);
@@ -328,7 +328,7 @@ class TestEnvironment {
         userRoles: {
           user01: SFProjectRole.CommunityChecker,
           user02: SFProjectRole.ParatextAdministrator,
-          user03: SFProjectRole.Observer
+          user03: SFProjectRole.Viewer
         },
         translateConfig: { shareEnabled: true },
         checkingConfig: { checkingEnabled: args.checkingEnabled, shareEnabled: true }
