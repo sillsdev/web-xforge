@@ -66,7 +66,7 @@ public class AnonymousController : ControllerBase
             );
             return Ok(true);
         }
-        catch (ForbiddenException e)
+        catch (DataNotFoundException e)
         {
             return NotFound(e.Message);
         }

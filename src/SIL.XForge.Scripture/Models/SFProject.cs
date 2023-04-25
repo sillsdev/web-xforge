@@ -24,4 +24,10 @@ public class SFProject : Project
     public int? DefaultFontSize { get; set; }
     public string DefaultFont { get; set; }
     public List<NoteTag> NoteTags { get; set; } = new List<NoteTag>();
+
+    /// <summary>
+    /// Used as a rate limiter for transparent authentication to limit the risk of abuse creating auth0 users.
+    /// There may be some projects that will want this increased which can be done manually in the database
+    /// </summary>
+    public int? MaxGeneratedUsersPerShareKey { get; set; } = 50;
 }
