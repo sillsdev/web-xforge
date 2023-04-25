@@ -22,6 +22,7 @@ public interface ISFProjectService : IProjectService
     Task<SFProject> GetProjectAsync(string projectId);
     SFProjectSecret GetProjectSecretByShareKey(string shareKey);
     Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey);
+    Task IncreaseShareKeyUsersGenerated(string shareKey);
     Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email);
     Task UninviteUserAsync(string curUserId, string projectId, string email);
     Task<string> JoinWithShareKeyAsync(string curUserId, string shareKey);
