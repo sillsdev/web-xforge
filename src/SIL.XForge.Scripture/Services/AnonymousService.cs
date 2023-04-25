@@ -46,7 +46,11 @@ public class AnonymousService : IAnonymousService
         string language
     )
     {
-        await _projectService.CheckShareKeyValidity(shareKey);
+        ValidShareKey validShareKey = await _projectService.CheckShareKeyValidity(shareKey);
+        if (validShareKey.Project.MaxGeneratedUsersPerShareKey <= validShareKey.ShareKey.UsersGenerated)
+        {
+            throw new DataNotFoundException("max_users_reached");
+        }
         // Generate random username and password for the account
         var credentials = new TransparentAuthenticationCredentials
         {
@@ -54,6 +58,7 @@ public class AnonymousService : IAnonymousService
             Password = _securityService.GenerateKey(16)
         };
         _ = await _authService.GenerateAnonymousUser(displayName, credentials, language);
+        await _projectService.IncreaseShareKeyUsersGenerated(shareKey);
         return credentials;
     }
 }
