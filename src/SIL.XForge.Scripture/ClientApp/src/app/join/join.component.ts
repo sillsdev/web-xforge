@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { PwaService } from 'xforge-common/pwa.service';
-import { combineLatest } from 'rxjs';
+import { combineLatest, of } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -14,6 +14,8 @@ import { LocationService } from 'xforge-common/location.service';
 import { FormControl, Validators } from '@angular/forms';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { TranslocoService } from '@ngneat/transloco';
 import { SFProjectService } from '../core/sf-project.service';
 
 export interface AnonymousShareKeyDetails {
@@ -45,6 +47,7 @@ export class JoinComponent extends DataLoadingComponent {
     private readonly reportingService: ErrorReportingService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
+    private readonly transloco: TranslocoService,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -112,7 +115,7 @@ export class JoinComponent extends DataLoadingComponent {
         this.name.enable();
       }
     } catch (e) {
-      await this.informInvalidShareLinkAndRedirect();
+      await this.informInvalidShareLinkAndRedirect(e instanceof HttpErrorResponse ? e.error : '');
     }
     this.status = 'input';
   }
@@ -178,8 +181,8 @@ export class JoinComponent extends DataLoadingComponent {
     }
   }
 
-  private async informInvalidShareLinkAndRedirect(): Promise<void> {
-    await this.dialogService.message('join.project_link_is_invalid');
+  private async informInvalidShareLinkAndRedirect(error: string = 'project_link_is_invalid'): Promise<void> {
+    await this.dialogService.message(of(this.transloco.translate(`join.${error}`)));
     this.locationService.go(this.locationService.origin);
   }
 }

@@ -155,6 +155,7 @@
     "join": "Join",
     "join_a_project": "Join a project",
     "login_existing_account": "or {{ underlineStart }}Log in{{ underlineEnd }} to an existing account",
+    "max_users_reached": "The maximum amount of users allowed to join using this share key has been reached. Please contact the person who sent you the link and ask for a new one.",
     "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
     "project_link_is_invalid": "The project link is invalid. Please contact the person who sent you the link and ask for a new one.",
     "your_name": "Enter your name"

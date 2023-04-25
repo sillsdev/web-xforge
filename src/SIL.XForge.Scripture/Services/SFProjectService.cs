@@ -494,6 +494,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     && sk.RecipientUserId == null
                     && sk.Reserved == null
                     && sk.ExpirationTime == null
+                    && sk.UsersGenerated < project.MaxGeneratedUsersPerShareKey
             )
             ?.Key;
         if (!string.IsNullOrEmpty(key))
@@ -558,6 +559,21 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             projectId,
             u => u.RemoveAll(secretSet => secretSet.ShareKeys, shareKey => shareKey.Email == (emailToUninvite))
         );
+    }
+
+    /// <summary>Increase the amount of times an auth0 user has been generated using the share key</summary>
+    public async Task IncreaseShareKeyUsersGenerated(string shareKey)
+    {
+        ValidShareKey validShareKey = await CheckShareKeyValidity(shareKey);
+        int index = validShareKey.ProjectSecret.ShareKeys.FindIndex(sk => sk.Key == shareKey);
+        if (index > -1)
+        {
+            var usersGenerated = (validShareKey.ShareKey.UsersGenerated ?? 0) + 1;
+            await ProjectSecrets.UpdateAsync(
+                p => p.Id == validShareKey.Project.Id,
+                update => update.Set(p => p.ShareKeys[index].UsersGenerated, usersGenerated)
+            );
+        }
     }
 
     /// <summary>Is there already a pending invitation to the project for the specified email address?</summary>
