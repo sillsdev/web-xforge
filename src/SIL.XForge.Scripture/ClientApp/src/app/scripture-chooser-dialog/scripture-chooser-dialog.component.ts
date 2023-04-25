@@ -48,7 +48,7 @@ export class ScriptureChooserDialogComponent implements OnInit {
     @Inject(MAT_DIALOG_DATA) public data: ScriptureChooserDialogData
   ) {}
 
-  get hasOTBooks() {
+  get hasOTBooks(): boolean {
     return this.otBooks.length > 0;
   }
 
@@ -56,10 +56,14 @@ export class ScriptureChooserDialogComponent implements OnInit {
     return this.otBooks.length + this.ntBooks.length > 1;
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     const books = Object.keys(this.data.booksAndChaptersToShow);
-    this.otBooks = books.filter(book => this.isOT(book));
-    this.ntBooks = books.filter(book => !this.isOT(book));
+    this.otBooks = books
+      .filter(book => this.isOT(book))
+      .sort((a, b) => this.data.booksAndChaptersToShow[a].bookNum - this.data.booksAndChaptersToShow[b].bookNum);
+    this.ntBooks = books
+      .filter(book => !this.isOT(book))
+      .sort((a, b) => this.data.booksAndChaptersToShow[a].bookNum - this.data.booksAndChaptersToShow[b].bookNum);
 
     if (this.data.rangeStart != null) {
       const rangeStart = this.data.rangeStart;
@@ -82,7 +86,7 @@ export class ScriptureChooserDialogComponent implements OnInit {
     }
   }
 
-  onCloseFocus(event: Event) {
+  onCloseFocus(event: Event): void {
     // Blur close button when dialog first loads, since it looks visually unappealing.
     // Don't subsequently blur the close button if the user tabs over to it.
     const focuses = ++this.closeFocuses;
@@ -93,12 +97,12 @@ export class ScriptureChooserDialogComponent implements OnInit {
     }, 1);
   }
 
-  onClickBook(book: string) {
+  onClickBook(book: string): void {
     this.selection.book = book;
     this.showChapterSelection();
   }
 
-  onClickChapter(chapter: number) {
+  onClickChapter(chapter: number): void {
     this.selection.chapter = chapter.toString();
     if (this.data.includeVerseSelection === false) {
       this.dialogRef.close(new VerseRef(this.selection.book, this.selection.chapter, 0));
@@ -107,12 +111,12 @@ export class ScriptureChooserDialogComponent implements OnInit {
     }
   }
 
-  onClickVerse(verse: number) {
+  onClickVerse(verse: number): void {
     this.selection.verse = verse.toString();
     this.dialogRef.close(new VerseRef(this.selection.book, this.selection.chapter, this.selection.verse));
   }
 
-  onClickBackoutButton() {
+  onClickBackoutButton(): void {
     if (this.showing === 'books' || this.showing === 'rangeEnd') {
       this.dialogRef.close('close');
     }
@@ -124,19 +128,19 @@ export class ScriptureChooserDialogComponent implements OnInit {
     }
   }
 
-  showBookSelection() {
+  showBookSelection(): void {
     this.showing = 'books';
   }
 
-  showChapterSelection() {
+  showChapterSelection(): void {
     this.showing = 'chapters';
   }
 
-  showVerseSelection() {
+  showVerseSelection(): void {
     this.showing = 'verses';
   }
 
-  showRangeEndSelection() {
+  showRangeEndSelection(): void {
     this.showing = 'rangeEnd';
   }
 
