@@ -2648,7 +2648,7 @@ public class ParatextSyncRunnerTests
                     {
                         { "user01", SFProjectRole.Administrator },
                         { "user02", SFProjectRole.Translator },
-                        { "user03", SFProjectRole.Reviewer }
+                        { "user03", SFProjectRole.Commenter }
                     },
                     ParatextId = "target",
                     IsRightToLeft = false,

@@ -664,7 +664,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     const textAnchorRange = this.viewModel.getEditorContentRange(embedInsertPos, textAnchor.length);
     const formatLength: number = textAnchorRange.editorLength;
 
-    if (role !== SFProjectRole.Reviewer) {
+    if (role !== SFProjectRole.Commenter) {
       insertFormat['text-anchor'] = 'true';
       this.editor.formatText(embedInsertPos, formatLength, insertFormat, 'api');
     }

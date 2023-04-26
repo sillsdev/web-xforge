@@ -35,7 +35,7 @@ const mockedFeatureFlagService = mock(FeatureFlagService);
 enum TestUsers {
   CommunityChecker = 'user01',
   Admin = 'user02',
-  Observer = 'user03'
+  Viewer = 'user03'
 }
 
 describe('ShareDialogComponent', () => {
@@ -82,7 +82,7 @@ describe('ShareDialogComponent', () => {
       })
     );
 
-    env.component.setRole(SFProjectRole.Reviewer);
+    env.component.setRole(SFProjectRole.Commenter);
     env.wait();
     expect(env.shareButton.disabled).toBe(true);
     expect(env.copyLinkButton.disabled).toBe(true);
@@ -143,12 +143,12 @@ describe('ShareDialogComponent', () => {
     });
     const roles: SFProjectRole[] = env.component.availableRoles;
     expect(roles).toContain(SFProjectRole.CommunityChecker);
-    expect(roles).toContain(SFProjectRole.Observer);
-    expect(roles).toContain(SFProjectRole.Reviewer);
-    env.component.setRole(SFProjectRole.Observer);
+    expect(roles).toContain(SFProjectRole.Viewer);
+    expect(roles).toContain(SFProjectRole.Commenter);
+    env.component.setRole(SFProjectRole.Viewer);
     env.wait();
     verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything(), anything())).twice();
-    env.component.setRole(SFProjectRole.Reviewer);
+    env.component.setRole(SFProjectRole.Commenter);
     env.wait();
     verify(mockedProjectService.onlineGetLinkSharingKey('project01', anything(), anything())).thrice();
   }));
@@ -167,19 +167,19 @@ describe('ShareDialogComponent', () => {
     env = new TestEnvironment({ userId: TestUsers.CommunityChecker });
     const roles: SFProjectRole[] = env.component.availableRoles;
     expect(roles).toContain(SFProjectRole.CommunityChecker);
-    expect(roles).not.toContain(SFProjectRole.Observer);
-    expect(roles).not.toContain(SFProjectRole.Reviewer);
+    expect(roles).not.toContain(SFProjectRole.Viewer);
+    expect(roles).not.toContain(SFProjectRole.Commenter);
     expect(env.component.shareRole).toEqual(SFProjectRole.CommunityChecker);
     expect(env.canChangeInvitationRole).toBeFalse();
   }));
 
-  it('observer users can only share the observer role', fakeAsync(() => {
-    env = new TestEnvironment({ userId: TestUsers.Observer, defaultRole: SFProjectRole.Observer });
+  it('viewer users can only share the viewer role', fakeAsync(() => {
+    env = new TestEnvironment({ userId: TestUsers.Viewer, defaultRole: SFProjectRole.Viewer });
     const roles: SFProjectRole[] = env.component.availableRoles;
     expect(roles).not.toContain(SFProjectRole.CommunityChecker);
-    expect(roles).toContain(SFProjectRole.Observer);
-    expect(roles).not.toContain(SFProjectRole.Reviewer);
-    expect(env.component.shareRole).toEqual(SFProjectRole.Observer);
+    expect(roles).toContain(SFProjectRole.Viewer);
+    expect(roles).not.toContain(SFProjectRole.Commenter);
+    expect(env.component.shareRole).toEqual(SFProjectRole.Viewer);
     expect(env.canChangeInvitationRole).toBeFalse();
   }));
 
@@ -187,16 +187,16 @@ describe('ShareDialogComponent', () => {
     env = new TestEnvironment({ userId: TestUsers.Admin, checkingShareEnabled: false, translateShareEnabled: false });
     const roles: SFProjectRole[] = env.component.availableRoles;
     expect(roles).toContain(SFProjectRole.CommunityChecker);
-    expect(roles).toContain(SFProjectRole.Observer);
-    expect(roles).toContain(SFProjectRole.Reviewer);
+    expect(roles).toContain(SFProjectRole.Viewer);
+    expect(roles).toContain(SFProjectRole.Commenter);
   }));
 
   it('admin users can share any role except community checking if it is disabled', fakeAsync(() => {
     env = new TestEnvironment({ userId: TestUsers.Admin, checkingEnabled: false, translateShareEnabled: false });
     const roles: SFProjectRole[] = env.component.availableRoles;
     expect(roles).not.toContain(SFProjectRole.CommunityChecker);
-    expect(roles).toContain(SFProjectRole.Observer);
-    expect(roles).toContain(SFProjectRole.Reviewer);
+    expect(roles).toContain(SFProjectRole.Viewer);
+    expect(roles).toContain(SFProjectRole.Commenter);
   }));
 
   it('admin users can not share with anyone if sharing is disabled', fakeAsync(() => {
@@ -215,14 +215,14 @@ describe('ShareDialogComponent', () => {
     expect(env.component.shareRole).toEqual(SFProjectRole.CommunityChecker);
     expect(env.canChangeLinkUsage).toBeTrue();
 
-    env.component.setRole(SFProjectRole.Observer);
+    env.component.setRole(SFProjectRole.Viewer);
     env.wait();
-    expect(env.component.shareRole).toEqual(SFProjectRole.Observer);
+    expect(env.component.shareRole).toEqual(SFProjectRole.Viewer);
     expect(env.canChangeLinkUsage).toBeTrue();
   }));
 
   it('default role can be set', fakeAsync(() => {
-    env = new TestEnvironment({ defaultRole: SF_DEFAULT_TRANSLATE_SHARE_ROLE, userId: TestUsers.Observer });
+    env = new TestEnvironment({ defaultRole: SF_DEFAULT_TRANSLATE_SHARE_ROLE, userId: TestUsers.Viewer });
     expect(env.component.shareRole).toEqual(SF_DEFAULT_TRANSLATE_SHARE_ROLE);
   }));
 
@@ -259,14 +259,14 @@ describe('ShareDialogComponent', () => {
     env = new TestEnvironment({ userId: TestUsers.Admin });
     let roles: SFProjectRole[] = env.component.availableRoles;
     expect(roles).toContain(SFProjectRole.CommunityChecker);
-    expect(roles).toContain(SFProjectRole.Observer);
+    expect(roles).toContain(SFProjectRole.Viewer);
     expect(env.canChangeLinkUsage).toBeTrue();
 
     env.disableCheckingSharing();
 
     roles = env.component.availableRoles;
     expect(roles).not.toContain(SFProjectRole.CommunityChecker);
-    expect(roles).toContain(SFProjectRole.Observer);
+    expect(roles).toContain(SFProjectRole.Viewer);
     expect(env.canChangeLinkUsage).toBeFalse();
   }));
 
@@ -332,7 +332,7 @@ class TestEnvironment {
         userRoles: {
           user01: SFProjectRole.CommunityChecker,
           user02: SFProjectRole.ParatextAdministrator,
-          user03: SFProjectRole.Observer
+          user03: SFProjectRole.Viewer
         },
         translateConfig: { shareEnabled: translateShareEnabled },
         checkingConfig: { checkingEnabled: checkingEnabled, shareEnabled: checkingShareEnabled }

@@ -151,13 +151,13 @@ describe('AppComponent', () => {
     expect(env.menuLength).toEqual(5);
   }));
 
-  it('hides community checking tool from reviewers', fakeAsync(() => {
+  it('hides community checking tool from commenters', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setCurrentUser('user04');
     env.navigate(['/projects', 'project01']);
     env.init();
 
-    expect(env.component.selectedProjectRole).toEqual(SFProjectRole.Reviewer);
+    expect(env.component.selectedProjectRole).toEqual(SFProjectRole.Commenter);
     expect(env.selectedProjectId).toEqual('project01');
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(true);
@@ -617,7 +617,7 @@ class TestEnvironment {
         user01: SFProjectRole.ParatextTranslator,
         user02: SFProjectRole.CommunityChecker,
         user03: SFProjectRole.CommunityChecker,
-        user04: SFProjectRole.Reviewer
+        user04: SFProjectRole.Commenter
       },
       [
         { bookNum: 40, hasSource: true, chapters: [], permissions: {} },

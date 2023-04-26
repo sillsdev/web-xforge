@@ -1013,14 +1013,14 @@ describe('EditorComponent', () => {
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
       // Change user role on the project and run a sync to force remote updates
-      env.changeUserRole(projectId, userId, SFProjectRole.Observer);
+      env.changeUserRole(projectId, userId, SFProjectRole.Viewer);
       env.setDataInSync(projectId, true, false);
       env.setDataInSync(projectId, false, false);
       env.wait();
       resetCalls(env.mockedRemoteTranslationEngine);
 
       projectDoc = env.getProjectDoc(projectId);
-      expect(projectDoc.data?.userRoles[userId]).toBe(SFProjectRole.Observer);
+      expect(projectDoc.data?.userRoles[userId]).toBe(SFProjectRole.Viewer);
       expect(env.bookName).toEqual('Matthew');
       expect(env.component.canEdit).toBe(false);
 
@@ -2485,7 +2485,7 @@ describe('EditorComponent', () => {
     it('shows only note threads published in Scripture Forge', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.setReviewerUser();
+      env.setCommenterUser();
       const threadId: string = 'thread06';
       env.addParatextNoteThread(
         threadId,
@@ -2747,10 +2747,10 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('reviewers can click to select verse', fakeAsync(() => {
+    it('commenters can click to select verse', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.setReviewerUser();
+      env.setCommenterUser();
       env.wait();
 
       const hasSelectionAnchors = env.getSegmentElement('verse_1_1')!.querySelector('display-text-anchor');
@@ -2791,7 +2791,7 @@ describe('EditorComponent', () => {
     it('does not select verse when opening a note thread', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.setReviewerUser();
+      env.setCommenterUser();
       env.addParatextNoteThread(
         6,
         'MAT 1:1',
@@ -2836,7 +2836,7 @@ describe('EditorComponent', () => {
     it('does not allow selecting section headings', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.setReviewerUser();
+      env.setCommenterUser();
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
 
@@ -2861,10 +2861,10 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('reviewers can create note on selected verse with FAB', fakeAsync(() => {
+    it('commenters can create note on selected verse with FAB', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.setReviewerUser();
+      env.setCommenterUser();
       env.wait();
 
       const verseSegment: HTMLElement = env.getSegmentElement('verse_1_5')!;
@@ -3147,9 +3147,9 @@ class TestEnvironment {
     user02: SFProjectRole.ParatextConsultant,
     user03: SFProjectRole.ParatextTranslator,
     user04: SFProjectRole.ParatextAdministrator,
-    user05: SFProjectRole.Reviewer,
+    user05: SFProjectRole.Commenter,
     user06: SFProjectRole.ParatextObserver,
-    user07: SFProjectRole.Observer
+    user07: SFProjectRole.Viewer
   };
   private paratextUsersOnProject = paratextUsersFromRoles(this.userRolesOnProject);
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
@@ -3529,9 +3529,9 @@ class TestEnvironment {
   }
 
   setParatextReviewerUser(): void {
-    this.setReviewerUser('user02');
+    this.setCommenterUser('user02');
   }
-  setReviewerUser(userId: 'user02' | 'user05' = 'user05'): void {
+  setCommenterUser(userId: 'user02' | 'user05' = 'user05'): void {
     this.setCurrentUser(userId);
     when(mockedSFProjectService.queryNoteThreads('project01')).thenCall((id, _) =>
       this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {

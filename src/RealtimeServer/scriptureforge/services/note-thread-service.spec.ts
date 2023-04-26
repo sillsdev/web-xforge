@@ -301,7 +301,7 @@ class TestEnvironment {
   readonly projectAdminId = 'projectAdmin';
   readonly translator = 'translator';
   readonly checkerId = 'checker';
-  readonly reviewerId = 'reviewer';
+  readonly reviewerId = 'commenter';
   readonly service: NoteThreadService;
   readonly server: RealtimeServer;
   readonly db: ShareDBMingo;
@@ -439,7 +439,7 @@ class TestEnvironment {
         projectAdmin: SFProjectRole.ParatextAdministrator,
         translator: SFProjectRole.ParatextTranslator,
         checker: SFProjectRole.CommunityChecker,
-        reviewer: SFProjectRole.Reviewer
+        commenter: SFProjectRole.Commenter
       },
       userPermissions: {},
       paratextUsers: []
