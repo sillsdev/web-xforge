@@ -38,7 +38,13 @@ $mat-sf-green: (
 );
 
 $mat-sf-blue: (
-  500: $blueMedium,
+  100: hsl(205deg, 60%, 80%),
+  200: hsl(205deg, 60%, 75%),
+  300: hsl(205deg, 60%, 70%),
+  400: hsl(205deg, 60%, 65%),
+  500: hsl(205deg, 60%, 60%),
+  600: hsl(205deg, 60%, 55%),
+  700: hsl(205deg, 60%, 50%),
   contrast: (
     500: white
   )
@@ -52,14 +58,14 @@ $mat-sf-orange: (
 );
 
 // Styles for angular material components. Refer to https://material.angular.io/guide/theming
-$matGrey: mat.define-palette($mat-sf-grey, 800);
-$matGreenLight: mat.define-palette($mat-sf-green, 500, 200);
+$matGrey: mat.define-palette($mat-sf-blue, 500);
+$matBlue: mat.define-palette($mat-sf-blue, 500, 200);
 
 $material-app-theme: mat.define-light-theme(
   (
     color: (
       primary: $matGrey,
-      accent: $matGreenLight
+      accent: $matBlue
     )
   )
 );

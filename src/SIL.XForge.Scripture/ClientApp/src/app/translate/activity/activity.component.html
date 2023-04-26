@@ -1,0 +1,14 @@
+<h2>Recent project activity</h2>
+
+<mat-selection-list [multiple]="false">
+  <mat-list-option *ngFor="let event of events" [class]="event.type">
+    <mat-icon mat-list-icon>{{ getIcon(event) }}</mat-icon>
+    <div class="description">
+      <app-owner mat-line [includeAvatar]="true" [ownerRef]="event.userId"></app-owner>
+      <div>
+        <span mat-line>{{ getMessage(event) }}</span>
+        <span mat-line>{{ getTimeMessage(event) }}</span>
+      </div>
+    </div>
+  </mat-list-option>
+</mat-selection-list>

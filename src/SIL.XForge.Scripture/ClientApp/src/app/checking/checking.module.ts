@@ -27,6 +27,7 @@ import { ImportQuestionsConfirmationDialogComponent } from './import-questions-d
 import { ImportQuestionsDialogComponent } from './import-questions-dialog/import-questions-dialog.component';
 import { QuestionAnsweredDialogComponent } from './question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogComponent } from './question-dialog/question-dialog.component';
+import { ProgressComponent } from './progress/progress.component';
 
 @NgModule({
   declarations: [
@@ -47,7 +48,8 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     AudioTimePipe,
     CheckingAudioCombinedComponent,
     QuestionAnsweredDialogComponent,
-    TextChooserDialogComponent
+    TextChooserDialogComponent,
+    ProgressComponent
   ],
   imports: [
     CheckingRoutingModule,

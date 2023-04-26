@@ -1,0 +1,21 @@
+@import 'src/variables';
+
+.answer mat-icon {
+  color: $answers;
+}
+
+.comment mat-icon {
+  color: $comments;
+}
+
+.note,
+.comment_on_note {
+  mat-icon {
+    color: $questions;
+  }
+}
+
+.description {
+  display: flex;
+  column-gap: 1em;
+}

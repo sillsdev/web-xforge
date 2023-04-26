@@ -66,6 +66,23 @@ export class FeatureFlagService {
     'Allow adding notes'
   );
 
+  showProjectActivity: FeatureFlag = new FeatureFlag(
+    new LocalStorageFlagStore('SHOW_PROJECT_ACTIVITY'),
+    'Show project activity'
+  );
+
+  showNmtDrafting: FeatureFlag = new FeatureFlag(new LocalStorageFlagStore('SHOW_NMT_DRAFTING'), 'Show NMT drafting');
+
+  showQualityChecks: FeatureFlag = new FeatureFlag(
+    new LocalStorageFlagStore('SHOW_QUALITY_CHECKS'),
+    'Show quality checks'
+  );
+
+  showNewCheckingProgressPage: FeatureFlag = new FeatureFlag(
+    new LocalStorageFlagStore('SHOW_CHECKING_PROGRESS'),
+    'Show checking progress'
+  );
+
   preventOpSubmission: FeatureFlag = new FeatureFlag(
     new LocalStorageFlagStore('PREVENT_OP_SUBMISSION'),
     'Prevent op submission (intentionally breaks things)'
