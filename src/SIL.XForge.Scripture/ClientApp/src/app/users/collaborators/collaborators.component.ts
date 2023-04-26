@@ -52,6 +52,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   pageSize: number = 50;
   filterForm: UntypedFormGroup = new UntypedFormGroup({ filter: new UntypedFormControl('') });
   isAppOnline = true;
+  showParatextOnly = false;
 
   private projectDoc?: SFProjectDoc;
   private term: string = '';
@@ -87,12 +88,16 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   get totalUsers(): number {
-    return this._userRows == null ? 0 : this._userRows.length;
+    if (this._userRows == null) return 0;
+    if (this.showParatextOnly) return this._userRows.filter(r => this.hasParatextRole(r)).length;
+    return this._userRows.length;
   }
 
   get filteredLength(): number {
     if (this.term && this.term.trim()) {
-      return this.filteredRows.length;
+      return this.showParatextOnly
+        ? this.filteredRows.filter(r => this.hasParatextRole(r)).length
+        : this.filteredRows.length;
     }
     return this.totalUsers;
   }
@@ -117,13 +122,16 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     }
 
     const term = this.term && this.term.trim().toLowerCase();
-    const rows: Row[] = term ? this.filteredRows : this._userRows;
+    let rows: Row[] = term ? this.filteredRows : this._userRows;
+    if (this.showParatextOnly) {
+      rows = rows.filter(r => this.hasParatextRole(r));
+    }
 
     return this.page(rows);
   }
 
   get tableColumns(): string[] {
-    const columns = ['avatar', 'name', 'role', 'questions_permission', 'remove'];
+    const columns = ['avatar', 'name', 'info', 'questions_permission', 'role', 'more']; //, 'questions_permission', 'remove'];
     return this.projectDoc?.data?.checkingConfig.checkingEnabled
       ? columns
       : columns.filter(s => s !== 'questions_permission');
@@ -178,6 +186,10 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     return userRow.id === this.userService.currentUserId;
   }
 
+  hasParatextRole(userRow: Row): boolean {
+    return isParatextRole(userRow.role);
+  }
+
   updateSearchTerm(target: EventTarget | null): void {
     const termTarget = target as HTMLInputElement;
     if (termTarget?.value != null) {
@@ -208,11 +220,11 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     this.loadUsers();
   }
 
-  onInvitationSent() {
+  onInvitationSent(): void {
     this.loadUsers();
   }
 
-  async toggleQuestionPermission(row: Row) {
+  async toggleQuestionPermission(row: Row): Promise<void> {
     if (!this.isAppOnline || !row.canHaveQuestionPermissionRevoked) {
       return;
     }
