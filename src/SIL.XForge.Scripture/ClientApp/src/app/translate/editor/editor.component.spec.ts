@@ -2721,6 +2721,7 @@ describe('EditorComponent', () => {
       expect(noteThread.data!.notes.length).toEqual(2);
       expect(noteThread.data!.notes[1].threadId).toEqual(threadId);
       expect(noteThread.data!.notes[1].content).toEqual(content);
+      expect(noteThread.data!.notes[1].tagId).toBe(undefined);
 
       env.dispose();
     }));

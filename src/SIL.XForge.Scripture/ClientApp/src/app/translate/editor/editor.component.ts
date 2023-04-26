@@ -910,13 +910,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     const currentDate: string = new Date().toJSON();
     const threadId: string = params.threadId ?? objectId();
+    // only set the tag id if it is the first note in the thread
+    const tagId: number | undefined =
+      params.threadId == null ? this.projectDoc?.data?.translateConfig.defaultNoteTagId : undefined;
     // Configure the note
     const note: Note = {
       dateCreated: currentDate,
       dateModified: currentDate,
       threadId,
       dataId: params.dataId ?? objectId(),
-      tagId: this.projectDoc?.data?.translateConfig.defaultNoteTagId,
+      tagId,
       ownerRef: this.userService.currentUserId,
       content: params.content,
       conflictType: NoteConflictType.DefaultValue,
