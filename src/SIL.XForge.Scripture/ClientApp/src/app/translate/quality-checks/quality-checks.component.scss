@@ -1,0 +1,23 @@
+$cell-width: 14px;
+$cell-height: $cell-width * 2;
+
+.book {
+  display: flex;
+}
+
+.row-wrapper {
+  display: flex;
+  flex-flow: wrap;
+  max-width: calc($cell-width * 50);
+}
+
+.book-name {
+  min-width: 36px;
+  display: inline-block;
+}
+
+.heatmap {
+  height: $cell-height;
+  width: $cell-width;
+  display: inline-block;
+}

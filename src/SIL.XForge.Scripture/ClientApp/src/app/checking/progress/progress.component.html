@@ -1,0 +1,21 @@
+<h2>My progress</h2>
+<mat-selection-list [multiple]="false">
+  <ng-container *ngFor="let book of books">
+    <mat-list-option (click)="toggleBook(book)">
+      <app-donut-chart
+        mat-list-icon
+        [colors]="['#B8D332', '#3a3a3a']"
+        [data]="[answered(book), unanswered(book)]"
+      ></app-donut-chart>
+      {{ getMessageFor(book) }}
+    </mat-list-option>
+    <mat-list-option *ngFor="let chapter of getChapters(book)" class="chapter-list-item">
+      <app-donut-chart
+        mat-list-icon
+        [colors]="['#B8D332', '#3a3a3a']"
+        [data]="[answeredInChapter(book, chapter), unansweredInChapter(book, chapter)]"
+      ></app-donut-chart>
+      {{ chapterMessage(book, chapter) }}
+    </mat-list-option>
+  </ng-container>
+</mat-selection-list>

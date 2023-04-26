@@ -12,6 +12,9 @@ import { SuggestionsComponent } from './editor/suggestions.component';
 import { TrainingProgressComponent } from './training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview/translate-overview.component';
 import { TranslateRoutingModule } from './translate-routing.module';
+import { ActivityComponent } from './activity/activity.component';
+import { GenerateDraftComponent } from './generate-draft/generate-draft.component';
+import { QualityChecksComponent } from './quality-checks/quality-checks.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +24,10 @@ import { TranslateRoutingModule } from './translate-routing.module';
     SuggestionsComponent,
     SuggestionsSettingsDialogComponent,
     TrainingProgressComponent,
-    TranslateOverviewComponent
+    TranslateOverviewComponent,
+    ActivityComponent,
+    GenerateDraftComponent,
+    QualityChecksComponent
   ],
   imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, XForgeCommonModule, TranslocoModule]
 })

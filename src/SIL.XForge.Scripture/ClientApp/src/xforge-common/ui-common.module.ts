@@ -1,3 +1,4 @@
+import { MatTabsModule } from '@angular/material/tabs';
 import { MDCDataTableModule } from '@angular-mdc/web';
 import { MdcButtonModule } from '@angular-mdc/web/button';
 import { MdcCheckboxModule } from '@angular-mdc/web/checkbox';
@@ -45,6 +46,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoService } from '@ngneat/transloco';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatBottomSheetModule } from '@angular/material/bottom-sheet';
+import { MatChipsModule } from '@angular/material/chips';
 import { AutofocusDirective } from './autofocus.directive';
 import { BlurOnClickDirective } from './blur-on-click.directive';
 import { DonutChartModule } from './donut-chart/donut-chart.module';
@@ -63,6 +65,7 @@ const modules = [
   MatButtonModule,
   MatCardModule,
   MatCheckboxModule,
+  MatChipsModule,
   MatDialogModule,
   MatDividerModule,
   MatFormFieldModule,
@@ -78,6 +81,7 @@ const modules = [
   MatSelectModule,
   MatSliderModule,
   MatTableModule,
+  MatTabsModule,
   MatToolbarModule,
   MatTooltipModule,
   MdcButtonModule,

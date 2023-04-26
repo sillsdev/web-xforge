@@ -1,0 +1,96 @@
+<ng-container *transloco="let t; read: 'app'">
+  <mat-nav-list id="tools-menu-list">
+    <mat-list-item disableRipple class="navigation-header" *ngIf="isTranslateEnabled">
+      <!-- <mdc-icon svgIcon="translate" class="translate-icon"></mdc-icon> -->
+      {{ t("translate") }}
+    </mat-list-item>
+    <div *ngIf="isTranslateEnabled && (translateVisible || hasSingleAppEnabled)">
+      <a mat-list-item [appRouterLink]="getRouterLink('translate')" (click)="itemSelected()">
+        <mat-icon mat-list-icon>apps</mat-icon>
+        {{ t("overview") }}
+      </a>
+      <a mat-list-item [appRouterLink]="getRouterLink('activity')" *ngIf="flags.showProjectActivity.enabled">
+        <mat-icon mat-list-icon>notifications</mat-icon>
+        Project activity
+      </a>
+      <a mat-list-item [appRouterLink]="getTranslateLink()">
+        <mat-icon mat-list-icon class="material-icons-outlined">article</mat-icon>
+        Draft & review
+      </a>
+      <a mat-list-item [appRouterLink]="getRouterLink('generate-draft')" *ngIf="flags.showNmtDrafting.enabled">
+        <mat-icon mat-list-icon>draw</mat-icon>
+        Generate draft <span class="nav-label">beta</span>
+      </a>
+      <a mat-list-item [appRouterLink]="getRouterLink('quality-checks')" *ngIf="flags.showQualityChecks.enabled">
+        <mat-icon mat-list-icon>rule</mat-icon>
+        Quality checks <span class="nav-label">beta</span>
+      </a>
+    </div>
+    <mat-divider *ngIf="isCheckingEnabled && isTranslateEnabled"></mat-divider>
+    <mat-list-item disableRipple class="navigation-header" *ngIf="isCheckingEnabled">
+      {{ t("community_checking") }}
+    </mat-list-item>
+    <div *ngIf="isCheckingEnabled && hasSingleAppEnabled">
+      <a mat-list-item [appRouterLink]="getRouterLink('checking', 'questions')" (click)="itemSelected()">
+        <mat-icon mat-list-icon>list</mat-icon>
+        Manage questions
+      </a>
+      <a mat-list-item [appRouterLink]="getRouterLink('checking')" *ngIf="flags.showNewCheckingProgressPage.enabled">
+        <mat-icon mat-list-icon>bar_chart</mat-icon>
+        My progress
+      </a>
+      <a
+        mat-list-item
+        *ngIf="showAllQuestions"
+        [appRouterLink]="getRouterLink('checking', 'ALL')"
+        (click)="itemSelected()"
+      >
+        <mat-icon mat-list-icon class="mirror-rtl">question_answer</mat-icon>
+        Questions & answers
+      </a>
+    </div>
+  </mat-nav-list>
+  <mat-nav-list id="admin-pages-menu-list" *ngIf="canSeeAdminPages$ | async">
+    <mat-divider></mat-divider>
+    <div *ngIf="canSync$ | async">
+      <a
+        mat-list-item
+        [appRouterLink]="getRouterLink('sync')"
+        [class.list-item-disabled]="!isAppOnline"
+        (click)="itemSelected()"
+      >
+        <mat-icon
+          mat-list-icon
+          matBadge="error"
+          [matBadgeHidden]="!lastSyncFailed"
+          [class.sync-in-progress]="syncInProgress"
+          id="sync-icon"
+          >sync</mat-icon
+        >
+        {{ t("synchronize") }}
+      </a>
+    </div>
+    <div *ngIf="canSeeUsers$ | async">
+      <a
+        mat-list-item
+        [appRouterLink]="getRouterLink('users')"
+        [class.list-item-disabled]="!isAppOnline"
+        (click)="itemSelected()"
+      >
+        <mat-icon mat-list-icon class="mirror-rtl">people</mat-icon>
+        {{ t("users") }}
+      </a>
+    </div>
+    <div *ngIf="canSeeSettings$ | async">
+      <a
+        mat-list-item
+        [appRouterLink]="getRouterLink('settings')"
+        [class.list-item-disabled]="!isAppOnline"
+        (click)="itemSelected()"
+      >
+        <mat-icon mat-list-icon>settings</mat-icon>
+        {{ t("settings") }}
+      </a>
+    </div>
+  </mat-nav-list>
+</ng-container>

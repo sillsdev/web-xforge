@@ -5,7 +5,7 @@
     [class.mat-progress-bar--closed]="isAppLoading !== true"
   ></mat-progress-bar>
   <header [class.overlay-drawer]="!isDrawerPermanent" [dir]="i18n.direction">
-    <mat-toolbar color="primary">
+    <mat-toolbar style="background-color: #343a31; color: white">
       <mat-toolbar-row>
         <button mat-icon-button *ngIf="!isDrawerPermanent && isProjectSelected" (click)="toggleDrawer()">
           <mat-icon>menu</mat-icon>
@@ -127,7 +127,8 @@
       </mdc-select>
     </mdc-drawer-header>
     <mdc-drawer-content>
-      <mat-nav-list id="tools-menu-list">
+      <app-navigation [selectedProjectDoc]="selectedProjectDoc" (menuItemClicked)="itemSelected()"></app-navigation>
+      <mat-nav-list *ngIf="false" id="tools-menu-list">
         <a
           mat-list-item
           class="translate-nav-item"
@@ -195,7 +196,7 @@
           </ng-container>
         </div>
       </mat-nav-list>
-      <mat-nav-list id="admin-pages-menu-list" *ngIf="canSeeAdminPages$ | async">
+      <mat-nav-list id="admin-pages-menu-list" *ngIf="false">
         <mat-divider></mat-divider>
         <div *ngIf="canSync$ | async">
           <a
