@@ -2618,7 +2618,7 @@ describe('EditorComponent', () => {
     it('shows current selected verse on bottom sheet', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.setReviewerUser();
+      env.setCommenterUser();
       env.updateParams({ projectId: 'project01', bookId: 'LUK' });
       env.wait();
 
