@@ -1159,7 +1159,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       selectedSegmentChecksum = this.projectUserConfigDoc.data.selectedSegmentChecksum;
     }
     // reset the verse selection before changing text
-    this.resetCommenterVerseSelection();
+    this.resetInsertNoteFab(true);
     if (this.source != null) {
       this.source.id = this.hasSource
         ? new TextDocId(this.projectDoc.data!.translateConfig.source!.projectRef, this.text.bookNum, this._chapter)
@@ -1428,8 +1428,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.toggleNoteThreadVerses(true);
   }
 
-  private resetInsertNoteFab(): void {
+  private resetInsertNoteFab(forceResetSelection: boolean = false): void {
     if (this.bottomSheetRef != null) {
+      if (forceResetSelection) {
+        this.resetCommenterVerseSelection();
+      }
       return;
     }
     this.resetCommenterVerseSelection();
@@ -1785,8 +1788,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.target != null && this.commenterSelectedVerseRef != null) {
       this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
       this.commenterSelectedVerseRef = undefined;
-      this.showInsertNoteFab = false;
     }
+    this.showInsertNoteFab = false;
   }
 
   private hasNewContent(thread: NoteThreadDoc): boolean {
