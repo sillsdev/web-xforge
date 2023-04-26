@@ -3,10 +3,11 @@ import { Meta, StoryFn } from '@storybook/angular';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { NoticeComponent } from '../../shared/notice/notice.component';
 
-export default {
+const meta: Meta<NoticeComponent> = {
   title: 'Utility/Notice',
   component: NoticeComponent
-} as Meta;
+};
+export default meta;
 
 const Template: StoryFn = args => ({
   moduleMetadata: { imports: [UICommonModule, CommonModule] },
