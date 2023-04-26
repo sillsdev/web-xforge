@@ -510,7 +510,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             LogMetric($"Getting Paratext book {text.BookNum}");
             SortedList<int, IDocument<TextData>> targetTextDocs = GetTextDocsForBook(text, textDocs);
             textDocsByBook[text.BookNum] = targetTextDocs;
-            if (settings.Editable && !_paratextService.IsResource(paratextId))
+            if (settings.Editable && !_paratextService.IsResource(paratextId) && Canon.IsCanonical(text.BookNum))
             {
                 LogMetric("Updating Paratext book");
                 await UpdateParatextBook(text, paratextId, targetTextDocs);
