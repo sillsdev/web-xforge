@@ -453,7 +453,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     this.questionDocs.clear();
     this.textsByBookId = {};
     this.texts = [];
-    for (const text of this.projectDoc.data.texts) {
+    for (const text of this.projectDoc.data.texts.slice().sort((a, b) => a.bookNum - b.bookNum)) {
       // ignore empty books
       if (text.chapters.length === 1 && text.chapters[0].lastVerse === 0) {
         continue;
