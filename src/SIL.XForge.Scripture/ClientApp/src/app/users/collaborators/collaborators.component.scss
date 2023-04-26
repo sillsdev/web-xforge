@@ -2,17 +2,8 @@ h3 {
   font-weight: 500;
 }
 
-.mdc-list-divider {
-  margin-top: 32px;
-  margin-bottom: 16px;
-}
-
 .invite-user {
   max-width: 800px;
-}
-
-mdc-text-field {
-  min-width: 272px;
 }
 
 .invite-user-btn {
@@ -20,13 +11,27 @@ mdc-text-field {
   bottom: 10px;
 }
 
+.paratext-logo {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+}
+
 .helper-text {
   color: var(--mdc-theme-text-hint-on-background);
-  mdc-icon {
+  mat-icon {
     font-size: inherit;
     position: relative;
-    top: 3px;
+    top: 10px;
   }
+}
+
+td.mat-cell:last-of-type {
+  padding: 0;
+}
+
+.mat-cell.mat-column-role {
+  padding: 0 30px;
 }
 
 .text-entry {
@@ -35,7 +40,6 @@ mdc-text-field {
 
 .users-controls {
   margin-top: 16px;
-  margin-bottom: 32px;
 }
 
 .mat-column-avatar {
@@ -44,13 +48,16 @@ mdc-text-field {
 
 .mat-column-name,
 .mat-column-role {
-  padding-right: 0.5em;
   word-break: break-word;
 }
 
 // Allow the questions permission label to wrap on whitespace to prevent layout issues
 .mat-column-questions_permission .mat-checkbox ::ng-deep label {
   white-space: initial;
+}
+
+.mat-tab-group {
+  flex-grow: 1;
 }
 
 .current-user-label {
