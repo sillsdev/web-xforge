@@ -2818,6 +2818,51 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('deselects a selected verse when opening a note dialog', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.wait();
+
+      const segmentRef = 'verse_1_1';
+      env.clickSegmentRef(segmentRef);
+      env.wait();
+      const verse1Elem: HTMLElement = env.getSegmentElement(segmentRef)!;
+      expect(verse1Elem.classList).toContain('commenter-selection');
+      const noteElem: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'thread02')!;
+      noteElem.click();
+      env.wait();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      instance(mockedMatDialog).closeAll();
+      env.wait();
+      const segmentRef3 = 'verse_1_3';
+      env.clickSegmentRef(segmentRef3);
+      env.wait();
+      const verse3Elem: HTMLElement = env.getSegmentElement(segmentRef3)!;
+      expect(verse3Elem.classList).toContain('commenter-selection');
+      expect(verse1Elem.classList).not.toContain('commenter-selection');
+      env.dispose();
+    }));
+
+    it('deselects a verse when bottom sheet is open and chapter changed', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+      env.wait();
+
+      const segmentRef = 'verse_1_1';
+      env.setSelectionAndInsertNote(segmentRef);
+      expect(env.mobileNoteTextArea).toBeTruthy();
+      env.component.chapter = 2;
+      env.wait();
+      env.clickSegmentRef('verse_2_2');
+      env.wait();
+      const verse1Elem: HTMLElement = env.getSegmentElement('verse_2_1')!;
+      expect(verse1Elem.classList).not.toContain('commenter-selection');
+      const verse2Elem: HTMLElement = env.getSegmentElement('verse_2_2')!;
+      expect(verse2Elem.classList).toContain('commenter-selection');
+      env.dispose();
+    }));
+
     it('shows the correct combined verse ref for a new note', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
@@ -3388,14 +3433,16 @@ class TestEnvironment {
     when(mockedPwaService.onlineStatus$).thenReturn(of(true));
 
     this.fixture = TestBed.createComponent(EditorComponent);
-    this.component = this.fixture.componentInstance;
     when(mockedMatDialog.openDialogs).thenCall(() => this.openNoteDialogs);
     this.mockNoteDialogRef = new MockNoteDialogRef(this.fixture.nativeElement);
     when(mockedMatDialog.open(NoteDialogComponent, anything())).thenCall(() => {
       this.openNoteDialogs.push(this.mockNoteDialogRef);
       return this.mockNoteDialogRef;
     });
-    when(mockedMatDialog.closeAll()).thenCall(() => this.openNoteDialogs.forEach(dialog => dialog.close()));
+    when(mockedMatDialog.closeAll()).thenCall(() => {
+      this.openNoteDialogs.forEach(dialog => dialog.close());
+      this.openNoteDialogs = [];
+    });
     when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());

@@ -1037,8 +1037,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     // deselect the current verse selection so that the newly inserted note thread embed gets the correct formatting
     // to prevent introducing erroneous usx-segment elements into the DOM
-    this.target?.toggleVerseSelection(verseRef!);
-    this.commenterSelectedVerseRef = undefined;
+    this.resetCommenterVerseSelection();
     const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
     if (result != null) {
       if (result.noteContent != null) {
@@ -1159,6 +1158,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       selectedSegment = this.projectUserConfigDoc.data.selectedSegment;
       selectedSegmentChecksum = this.projectUserConfigDoc.data.selectedSegmentChecksum;
     }
+    // reset the verse selection before changing text
+    this.resetInsertNoteFab(true);
     if (this.source != null) {
       this.source.id = this.hasSource
         ? new TextDocId(this.projectDoc.data!.translateConfig.source!.projectRef, this.text.bookNum, this._chapter)
@@ -1187,7 +1188,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       });
     });
     setTimeout(() => this.setTextHeight());
-    this.resetInsertNoteFab();
   }
 
   private onStartTranslating(): void {
@@ -1378,14 +1378,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           if (this.commenterSelectedVerseRef != null) {
             if (verseRef.equals(this.commenterSelectedVerseRef)) {
               this.commenterSelectedVerseRef = undefined;
-            } else {
-              // un-select previously selected verses since a note can apply to only one verse.
-              this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
-              this.commenterSelectedVerseRef = verseRef;
+              return;
             }
-          } else {
-            this.commenterSelectedVerseRef = verseRef;
+            // un-select previously selected verses since a note can apply to only one verse.
+            this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
           }
+          this.commenterSelectedVerseRef = verseRef;
         })
       );
     }
@@ -1430,15 +1428,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.toggleNoteThreadVerses(true);
   }
 
-  private resetInsertNoteFab(): void {
+  private resetInsertNoteFab(forceResetSelection: boolean = false): void {
     if (this.bottomSheetRef != null) {
+      if (forceResetSelection) {
+        this.resetCommenterVerseSelection();
+      }
       return;
     }
-    this.showInsertNoteFab = false;
-    if (this.target != null && this.commenterSelectedVerseRef != null) {
-      this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
-      this.commenterSelectedVerseRef = undefined;
-    }
+    this.resetCommenterVerseSelection();
     // set a 10ms time out so the layout is drawn before calculating the target contain coordinates
     setTimeout(() => {
       const targetRect: DOMRect | undefined = this.targetContainer?.nativeElement.getBoundingClientRect();
@@ -1785,6 +1782,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       'note-thread-embed',
       format
     );
+  }
+
+  private resetCommenterVerseSelection(): void {
+    if (this.target != null && this.commenterSelectedVerseRef != null) {
+      this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
+      this.commenterSelectedVerseRef = undefined;
+    }
+    this.showInsertNoteFab = false;
   }
 
   private hasNewContent(thread: NoteThreadDoc): boolean {
