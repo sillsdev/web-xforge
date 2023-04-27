@@ -75,7 +75,7 @@ public class ParatextService : DisposableBase, IParatextService
     private readonly IWebHostEnvironment _env;
 
     /// <summary> An expression to match the SF user label that looks like [User 05 - xForge] </summary>
-    private readonly string _sfUserLabel = @"\[.+\s-\s.+\]";
+    private readonly string SF_USER_LABEL_REGEX = @"\[.+\s-\s.+\]";
 
     public ParatextService(
         IWebHostEnvironment env,
@@ -2216,9 +2216,10 @@ public class ParatextService : DisposableBase, IParatextService
                         userIdsToUsernames,
                         ptProjectUsers
                     );
+                    string contents = comment.Contents?.InnerXml.Trim() ?? string.Empty;
                     // Replace whitespace characters between xml tags
-                    string commentWithoutWhiteSpace = Regex.Replace(comment.Contents.InnerXml.Trim(), @">\W+<", "><");
-                    if (equivalentCommentContent != commentWithoutWhiteSpace)
+                    string contentWithoutWhiteSpace = Regex.Replace(contents, @">\W+<", "><");
+                    if (equivalentCommentContent != contentWithoutWhiteSpace)
                     {
                         if (comment.Contents == null)
                             comment.AddTextToContent(string.Empty, false);
@@ -2391,12 +2392,9 @@ public class ParatextService : DisposableBase, IParatextService
         {
             XElement elem = elements[i];
             XNode node = elem.FirstNode;
-            if (node is XText text)
-            {
-                // check if this text matches the note label
-                if (Regex.IsMatch(text.Value, _sfUserLabel))
-                    isReviewer = true;
-            }
+            // check if the text matches the note label format
+            if (node is XText text && Regex.IsMatch(text.Value, SF_USER_LABEL_REGEX))
+                isReviewer = true;
             if (i == 0 && isReviewer)
                 continue;
             // If there is only one paragraph node other than the SF user label then omit the paragraph tags
