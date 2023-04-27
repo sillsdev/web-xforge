@@ -1,8 +1,18 @@
+:host {
+  display: flex;
+  gap: 2em;
+  flex-wrap: wrap;
+}
+
+:host > .mat-card {
+  flex-grow: 1;
+}
+
 .mat-card {
   max-width: 25em;
 }
 
-div {
+.working-animation {
   mat-icon:nth-child(1) {
     animation: counter-spin 2s linear infinite;
   }
@@ -17,4 +27,13 @@ div {
   mat-icon:nth-child(3) {
     animation: counter-spin 2s linear infinite;
   }
+}
+
+:host > .mat-card:nth-child(2) {
+  max-width: 35em;
+}
+
+.controls {
+  display: flex;
+  align-content: center;
 }
