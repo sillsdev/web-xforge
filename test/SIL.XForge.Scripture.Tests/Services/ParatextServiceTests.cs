@@ -3680,7 +3680,7 @@ public class ParatextServiceTests
         public readonly IGuidService MockGuidService;
         public readonly ParatextService Service;
         public readonly HttpClient MockRegistryHttpClient;
-        public Dictionary<string, string> usernames;
+        public readonly Dictionary<string, string> usernames;
         private bool disposed;
 
         public TestEnvironment()
@@ -4021,7 +4021,7 @@ public class ParatextServiceTests
                 {
                     { User01, SFProjectRole.Administrator },
                     { User02, SFProjectRole.CommunityChecker },
-                    { User05, SFProjectRole.Reviewer }
+                    { User05, SFProjectRole.Commenter }
                 },
                 Texts =
                 {
