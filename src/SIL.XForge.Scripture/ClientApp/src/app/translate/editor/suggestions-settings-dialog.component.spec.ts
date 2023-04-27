@@ -121,7 +121,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
   it('biblical terms is disabled if the user is an SF user', fakeAsync(() => {
     const env = new TestEnvironment(true, true);
     const projectProfileDoc = env.getProjectProfileDoc();
-    projectProfileDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.Observer));
+    projectProfileDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.Commenter));
     env.openDialog();
     expect(env.component!.biblicalTermsEnabled).toBe(true);
 

@@ -4184,7 +4184,7 @@ class TestEnvironment {
   }
 }
 
-class MockNoteDialogRef {
+export class MockNoteDialogRef {
   close$ = new Subject<NoteDialogResult | void>();
   onClose: () => void = () => {};
 

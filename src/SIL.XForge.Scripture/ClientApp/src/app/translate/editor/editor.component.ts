@@ -89,6 +89,7 @@ export interface SaveNoteParameters {
   content: string;
   dataId?: string;
   threadId?: string;
+  biblicalTermId?: string;
 }
 
 const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;

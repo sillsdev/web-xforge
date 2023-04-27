@@ -151,7 +151,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
           if (this.projectDoc != null) {
             this.updateSettingsInfo();
             this.updateNonSelectableProjects();
-            this.subscribe(this.projectDoc.remoteChanges$, () => this.updateNonSelectableProjects());
+            this.subscribe(this.projectDoc.remoteChanges$, () => {
+              this.updateNonSelectableProjects();
+              this.setIndividualControlDisabledStates();
+            });
             this.mainSettingsLoaded = true;
             this.updateFormEnabled();
           }
@@ -267,7 +270,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     }
 
     if (
-      (newValue.biblicalTermsEnabled ?? null) !== (this.previousFormValues.biblicalTermsEnabled ?? null) &&
+      (newValue.biblicalTermsEnabled ?? false) !== (this.previousFormValues.biblicalTermsEnabled ?? false) &&
       this.biblicalTermsMessage == null
     ) {
       this.updateSetting(newValue, 'biblicalTermsEnabled');
@@ -342,7 +345,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       this.translationSuggestionsEnabled.disable();
     }
 
-    if (this.projectDoc?.data?.biblicalTermsMessage != null) {
+    if (this.projectDoc?.data?.biblicalTermsMessage == null) {
+      this.biblicalTermsEnabled.enable({ onlySelf: true });
+    } else {
       this.biblicalTermsEnabled.disable();
     }
   }

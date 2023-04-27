@@ -129,7 +129,7 @@ class TestEnvironment {
       userRoles: {
         projectAdmin: SFProjectRole.ParatextAdministrator,
         checker: SFProjectRole.CommunityChecker,
-        reviewer: SFProjectRole.Reviewer
+        commenter: SFProjectRole.Commenter
       },
       userPermissions: {},
       paratextUsers: []

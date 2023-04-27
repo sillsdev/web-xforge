@@ -1,6 +1,7 @@
 import { mock } from 'ts-mockito';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
+  getNoteThreadDocId,
   NoteConflictType,
   NoteStatus,
   NoteThread,
@@ -194,7 +195,7 @@ class TestEnvironment {
   setupDoc(notes: Note[], tagId: number = 1): Promise<NoteThreadDoc> {
     notes = notes.length === 0 ? this.getDefaultNotes(tagId) : notes;
     const thread: NoteThread = this.getNoteThread(notes);
-    const threadId = [thread.projectRef, thread.dataId].join(':');
+    const threadId = getNoteThreadDocId(thread.projectRef, thread.dataId);
     this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
       id: threadId,
       data: thread
