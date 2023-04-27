@@ -1,11 +1,15 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { anything, mock, when } from 'ts-mockito';
+import { of } from 'rxjs';
+import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
+import { BiblicalTerm, getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { BIBLICAL_TERM_TAG_ID } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
+  getNoteThreadDocId,
   NoteConflictType,
   NoteStatus,
   NoteThread,
@@ -13,9 +17,14 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import {
+  getSFProjectUserConfigDocId,
+  SFProjectUserConfig
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { fromVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -29,10 +38,13 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
+import { NoteDialogComponent } from '../editor/note-dialog/note-dialog.component';
+import { MockNoteDialogRef } from '../editor/editor.component.spec';
 import { BiblicalTermsComponent, BiblicalTermNoteIcon, BiblicalTermDialogIcon } from './biblical-terms.component';
 
 const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedI18nService = mock(I18nService);
+const mockedMatDialog = mock(MatDialog);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 
@@ -43,6 +55,7 @@ describe('BiblicalTermsComponent', () => {
     providers: [
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: I18nService, useMock: mockedI18nService },
+      { provide: MatDialog, useMock: mockedMatDialog },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService }
     ]
@@ -185,12 +198,81 @@ describe('BiblicalTermsComponent', () => {
     expect(env.biblicalTermsTerm.length).toBe(1);
     expect(env.editBiblicalTermIcon.innerText).toBe(BiblicalTermDialogIcon.View);
   }));
+
+  it('can save a new note thread for a biblical term', fakeAsync(() => {
+    const projectId = 'project01';
+    const env = new TestEnvironment(projectId, 2, 2, '2');
+    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
+    env.setupProjectData('en');
+    env.wait();
+
+    env.biblicalTermsNotesButton.click();
+    env.wait();
+
+    const noteContent: string = 'content in the thread';
+    env.mockNoteDialogRef.close({ noteContent });
+    env.wait();
+
+    verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+    const [, config] = capture(mockedMatDialog.open).last();
+    const biblicalTermId: string = (config as MatDialogConfig).data!.biblicalTermId;
+    expect(biblicalTermId.toString()).toEqual('dataId02');
+
+    const biblicalTerm = env.getBiblicalTermDoc(projectId, biblicalTermId);
+    const verseData: VerseRefData = fromVerseRef(new VerseRef(biblicalTerm.data!.references[0]));
+    verify(mockedProjectService.createNoteThread(projectId, anything())).once();
+    const [, noteThread] = capture(mockedProjectService.createNoteThread).last();
+    expect(noteThread.verseRef).toEqual(verseData);
+    expect(noteThread.originalSelectedText).toEqual('');
+    expect(noteThread.publishedToSF).toBe(true);
+    expect(noteThread.notes[0].ownerRef).toEqual('user01');
+    expect(noteThread.notes[0].content).toEqual(noteContent);
+    expect(noteThread.notes[0].tagId).toEqual(BIBLICAL_TERM_TAG_ID);
+    const projectUserConfigDoc: SFProjectUserConfigDoc = env.getProjectUserConfigDoc('project01', 'user01');
+    expect(projectUserConfigDoc.data!.noteRefsRead).not.toContain(noteThread.notes[0].dataId);
+  }));
+
+  it('can save a note for an existing biblical term', fakeAsync(() => {
+    const projectId = 'project01';
+    const noteDataId = 'dataId01';
+    const env = new TestEnvironment(projectId, 1, 1);
+    env.setupProjectData('en');
+    env.wait();
+
+    env.biblicalTermsNotesButton.click();
+    env.wait();
+
+    const noteContent: string = 'content in the thread';
+    env.mockNoteDialogRef.close({ noteContent });
+    env.wait();
+
+    verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+    const [, config] = capture(mockedMatDialog.open).last();
+    const biblicalTermId: string = (config as MatDialogConfig).data!.biblicalTermId;
+    expect(biblicalTermId.toString()).toEqual(noteDataId);
+
+    const biblicalTerm = env.getBiblicalTermDoc(projectId, biblicalTermId);
+    const verseData: VerseRefData = fromVerseRef(new VerseRef(biblicalTerm.data!.references[0]));
+    const noteThread = env.getNoteThreadDoc(projectId, 'BT_termId01').data!;
+    expect(noteThread.verseRef).toEqual(verseData);
+    expect(noteThread.originalSelectedText).toEqual('');
+    expect(noteThread.publishedToSF).toBe(true);
+    expect(noteThread.notes[1].ownerRef).toEqual('user01');
+    expect(noteThread.notes[1].content).toEqual(noteContent);
+    expect(noteThread.notes[1].tagId).toEqual(BIBLICAL_TERM_TAG_ID);
+    const projectUserConfigDoc: SFProjectUserConfigDoc = env.getProjectUserConfigDoc('project01', 'user01');
+    expect(projectUserConfigDoc.data!.noteRefsRead).toContain(noteThread.notes[1].dataId);
+  }));
 });
 
 class TestEnvironment {
   readonly component: BiblicalTermsComponent;
   readonly fixture: ComponentFixture<BiblicalTermsComponent>;
+  readonly mockNoteDialogRef;
+  readonly mockedDialogRef = mock<MatDialogRef<GenericDialogComponent<any>, GenericDialogOptions<any>>>(MatDialogRef);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+
+  private openNoteDialogs: MockNoteDialogRef[] = [];
 
   constructor(
     projectId: string,
@@ -211,13 +293,22 @@ class TestEnvironment {
       };
       return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, parameters);
     });
-    when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((sfProjectId, sfUserId) =>
-      this.realtimeService.get(SFProjectUserConfigDoc.COLLECTION, `${sfProjectId}:${sfUserId}`)
+    when(mockedProjectService.getBiblicalTerm(anything())).thenCall(id =>
+      this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, id)
+    );
+    when(mockedProjectService.getNoteThread(anything())).thenCall(id =>
+      this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, id)
+    );
+    when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((projectId, userId) =>
+      this.realtimeService.get(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(projectId, userId))
     );
     when(mockedProjectService.getProfile(anything())).thenCall(sfProjectId =>
       this.realtimeService.get(SFProjectProfileDoc.COLLECTION, sfProjectId)
     );
     when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: false } as FeatureFlag);
+    when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
+    when(this.mockedDialogRef.afterClosed()).thenReturn(of());
+    when(mockedMatDialog.openDialogs).thenCall(() => this.openNoteDialogs);
 
     this.fixture = TestBed.createComponent(BiblicalTermsComponent);
     this.component = this.fixture.componentInstance;
@@ -226,6 +317,12 @@ class TestEnvironment {
     this.component.bookNum = bookNum;
     this.component.chapter = chapter;
     this.component.verse = verse;
+
+    this.mockNoteDialogRef = new MockNoteDialogRef(this.fixture.nativeElement);
+    when(mockedMatDialog.open(NoteDialogComponent, anything())).thenCall(() => {
+      this.openNoteDialogs.push(this.mockNoteDialogRef);
+      return this.mockNoteDialogRef;
+    });
   }
 
   get biblicalTermsCategory(): NodeList {
@@ -236,6 +333,10 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelectorAll('td.mat-column-term');
   }
 
+  get biblicalTermsNotesButton(): HTMLElement {
+    return this.fixture.nativeElement.querySelectorAll('td.mat-column-id button')[0] as HTMLElement;
+  }
+
   get biblicalTermsNotesIcon(): HTMLElement {
     return this.fixture.nativeElement.querySelectorAll('td.mat-column-id mat-icon')[0] as HTMLElement;
   }
@@ -244,11 +345,24 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelectorAll('td.mat-column-id mat-icon')[1] as HTMLElement;
   }
 
+  getBiblicalTermDoc(projectId: string, dataId: string): BiblicalTermDoc {
+    return this.realtimeService.get(BiblicalTermDoc.COLLECTION, getBiblicalTermDocId(projectId, dataId));
+  }
+
+  getNoteThreadDoc(projectId: string, threadId: string): NoteThreadDoc {
+    return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, getNoteThreadDocId(projectId, threadId));
+  }
+
+  getProjectUserConfigDoc(projectId: string, userId: string): SFProjectUserConfigDoc {
+    const id: string = getSFProjectUserConfigDocId(projectId, userId);
+    return this.realtimeService.get<SFProjectUserConfigDoc>(SFProjectUserConfigDoc.COLLECTION, id);
+  }
+
   setupProjectData(language: string): void {
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedI18nService.localeCode).thenReturn(language);
     this.realtimeService.addSnapshot<BiblicalTerm>(BiblicalTermDoc.COLLECTION, {
-      id: 'id01',
+      id: 'project01:dataId01',
       data: {
         projectRef: 'project01',
         ownerRef: 'user01',
@@ -283,7 +397,7 @@ class TestEnvironment {
       }
     });
     this.realtimeService.addSnapshot<BiblicalTerm>(BiblicalTermDoc.COLLECTION, {
-      id: 'id02',
+      id: 'project01:dataId02',
       data: {
         projectRef: 'project01',
         ownerRef: 'user02',
@@ -299,7 +413,7 @@ class TestEnvironment {
       }
     });
     this.realtimeService.addSnapshot<BiblicalTerm>(BiblicalTermDoc.COLLECTION, {
-      id: 'id03',
+      id: 'project02:dataId03',
       data: {
         projectRef: 'project02',
         ownerRef: 'user03',
@@ -362,7 +476,7 @@ class TestEnvironment {
       data: {
         projectRef: 'project01',
         dataId: 'BT_termId01',
-        verseRef: new VerseRef(1, 1, 1),
+        verseRef: fromVerseRef(new VerseRef(1, 1, 1)),
         ownerRef: 'user01',
         originalContextBefore: '',
         originalContextAfter: '',
@@ -380,7 +494,7 @@ class TestEnvironment {
       data: {
         projectRef: 'project02',
         dataId: 'BT_termId03',
-        verseRef: new VerseRef(1, 1, 1),
+        verseRef: fromVerseRef(new VerseRef(1, 1, 1)),
         ownerRef: 'user02',
         originalContextBefore: '',
         originalContextAfter: '',
