@@ -1,49 +1,76 @@
-<h2>Generate back translation drafts</h2>
-<p>
-  Scripture Forge can assist with drafting a back translation, based on your existing back translation progress. For
-  example, if the translation team has already drafted one or more books and then back translated one or more of them,
-  Scripture Forge can use that example data to draft a back translation of the next book you draft.
-</p>
-<p>
-  Keep in mind that the translation draft will contain mistakes, and you will need to edit the draft that is generated.
-</p>
-<p>
-  The back translation draft will be generated in the background. You can continue to work on other tasks while the
-  draft is being generated. You can also cancel the generation process at any time. The process will typically take at
-  least 8 hours under ideal conditions, but may take longer if the server is busy.
-</p>
-<mat-card *ngIf="status !== 'generated'">
-  <mat-card-title>Generate back translation draft</mat-card-title>
-  <mat-card-content *ngIf="status === 'init'">
-    Click "Generate draft" to start the process of generating a back translation draft. This will take at least a few
-    hours.
-  </mat-card-content>
-  <mat-card-content *ngIf="status === 'queued'">
-    The back translation draft has been queued. Please check back later.
-  </mat-card-content>
-  <mat-card-content *ngIf="status === 'generating'">
-    Generating draft; this can take a few hours.
-    <div>
-      <mat-icon>settings</mat-icon>
-      <mat-icon class="material-icons-outlined">settings</mat-icon>
-      <mat-icon>settings</mat-icon>
-    </div>
-  </mat-card-content>
-  <mat-card-actions>
-    <button *ngIf="canCancel" mat-flat-button color="primary" (click)="cancel()">Cancel</button>
-    <button *ngIf="status === 'init'" mat-flat-button color="primary" color="primary" (click)="generateDraft()">
-      Generate draft
-    </button>
-  </mat-card-actions>
-  <mat-card-footer *ngIf="status === 'queued' || status === 'generating'">
-    <mat-progress-bar
-      [mode]="status === 'queued' ? 'indeterminate' : 'determinate'"
-      [value]="progress"
-    ></mat-progress-bar>
-  </mat-card-footer>
+<mat-card>
+  <h2 mat-card-title>Generate back translation drafts</h2>
+  <mat-divider></mat-divider>
+  <p>
+    Scripture Forge can assist with drafting a back translation, based on your existing back translation progress. For
+    example, if the translation team has already drafted one or more books and then back translated one or more of them,
+    Scripture Forge can use that example data to draft a back translation of the next book you draft.
+  </p>
+  <p>
+    Keep in mind that the translation draft will contain mistakes, and you will need to edit the draft that is
+    generated.
+  </p>
+  <p>
+    The back translation draft will be generated in the background. You can continue to work on other tasks while the
+    draft is being generated. You can also cancel the generation process at any time. The process will typically take at
+    least 8 hours under ideal conditions, but may take longer if the server is busy.
+  </p>
+  <mat-divider></mat-divider>
+  <br />
+
+  <ng-container *ngIf="status !== 'generated'">
+    <p *ngIf="status === 'init'">
+      Click "Generate draft" to start the process of generating a back translation draft. This will take at least a few
+      hours.
+    </p>
+    <p *ngIf="status === 'queued'">The back translation draft has been queued. Please check back later.</p>
+
+    <ng-container *ngIf="status === 'generating'">
+      <p>Generating draft; this can take a few hours.</p>
+      <p class="working-animation">
+        <mat-icon>settings</mat-icon>
+        <mat-icon class="material-icons-outlined">settings</mat-icon>
+        <mat-icon>settings</mat-icon>
+      </p>
+    </ng-container>
+
+    <mat-card-actions>
+      <button *ngIf="canCancel" mat-flat-button color="primary" (click)="cancel()">Cancel</button>
+      <button *ngIf="status === 'init'" mat-flat-button color="primary" color="primary" (click)="generateDraft()">
+        Generate draft
+      </button>
+    </mat-card-actions>
+    <mat-card-footer *ngIf="status === 'queued' || status === 'generating'">
+      <mat-progress-bar
+        [mode]="status === 'queued' ? 'indeterminate' : 'determinate'"
+        [value]="progress"
+      ></mat-progress-bar>
+    </mat-card-footer>
+  </ng-container>
 </mat-card>
 
-<mat-card *ngIf="status === 'generated'">
-  <mat-card-title>Back translation draft generated</mat-card-title>
-  <mat-card-content> A back translation draft has been generated. You can now edit the draft. </mat-card-content>
+<mat-card>
+  <h2 mat-card-title>Draft preview</h2>
+  <mat-divider></mat-divider>
+  <p *ngIf="!hasDraft">No draft available yet</p>
+
+  <div class="controls">
+    <app-book-chapter-chooser
+      *ngIf="hasDraft"
+      [book]="41"
+      [books]="[41]"
+      [chapter]="1"
+      [chapters]="[1, 2, 3, 4, 5]"
+    ></app-book-chapter-chooser>
+    <a *ngIf="hasDraft" mat-flat-button color="primary">Apply to project</a>
+  </div>
+
+  <app-text
+    *ngIf="hasDraft"
+    [isReadOnly]="true"
+    [subscribeToUpdates]="false"
+    [id]="textDocId"
+    [placeholder]="'Loading..'"
+    [isRightToLeft]="false"
+  ></app-text>
 </mat-card>

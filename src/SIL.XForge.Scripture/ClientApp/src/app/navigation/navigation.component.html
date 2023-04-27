@@ -25,6 +25,14 @@
         <mat-icon mat-list-icon>rule</mat-icon>
         Quality checks <span class="nav-label">beta</span>
       </a>
+      <a mat-list-item [appRouterLink]="getRouterLink('key-terms')">
+        <mat-icon mat-list-icon>key</mat-icon>
+        Key terms <span class="nav-label">beta</span>
+      </a>
+      <a mat-list-item [appRouterLink]="getRouterLink('key-terms')">
+        <mat-icon mat-list-icon>launch</mat-icon>
+        Back translation <span class="nav-label">beta</span>
+      </a>
     </div>
     <mat-divider *ngIf="isCheckingEnabled && isTranslateEnabled"></mat-divider>
     <mat-list-item disableRipple class="navigation-header" *ngIf="isCheckingEnabled">

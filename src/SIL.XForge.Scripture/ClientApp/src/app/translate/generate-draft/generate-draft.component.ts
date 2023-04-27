@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { of } from 'rxjs';
+import { TextDocId } from 'src/app/core/models/text-doc';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 
 @Component({
@@ -8,7 +10,9 @@ import { DialogService } from 'xforge-common/dialog.service';
   styleUrls: ['./generate-draft.component.scss']
 })
 export class GenerateDraftComponent implements OnInit {
-  constructor(private readonly dialog: DialogService) {}
+  constructor(private readonly dialog: DialogService, private readonly activatedProject: ActivatedProjectService) {}
+
+  hasDraft = false;
 
   status: 'init' | 'queued' | 'generating' | 'generated' | 'error' = 'init';
 
@@ -21,7 +25,7 @@ export class GenerateDraftComponent implements OnInit {
   generateDraft(): void {
     this.status = 'queued';
 
-    setTimeout(() => this.startGenerating(), 3_000);
+    setTimeout(() => this.startGenerating(), 2_000);
   }
 
   async cancel(): Promise<void> {
@@ -47,7 +51,7 @@ export class GenerateDraftComponent implements OnInit {
     if (this.status === 'queued') {
       this.status = 'generating';
 
-      const generationTime = 10_000;
+      const generationTime = 3_000;
 
       setInterval(() => this.progress++, generationTime / 100);
 
@@ -58,6 +62,17 @@ export class GenerateDraftComponent implements OnInit {
   private finishGenerating(): void {
     if (this.status === 'generating') {
       this.status = 'generated';
+      this.hasDraft = true;
     }
+  }
+
+  get textDocId(): TextDocId | undefined {
+    const text = this.activatedProject.projectDoc?.data?.texts[0];
+    const bookNum = text?.bookNum;
+
+    if (bookNum !== undefined && this.activatedProject.projectId !== undefined) {
+      return new TextDocId(this.activatedProject.projectId, bookNum, 1);
+    }
+    return undefined;
   }
 }
