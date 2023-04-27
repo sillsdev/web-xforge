@@ -51,7 +51,6 @@ public class SFScriptureText : IText
     {
         string prevRef = null;
         bool isSentenceStart = true;
-        bool isInRange = false;
         var sb = new StringBuilder();
         var ops = (BsonArray)doc["ops"];
         foreach (BsonDocument op in ops.Cast<BsonDocument>())
@@ -70,24 +69,8 @@ public class SFScriptureText : IText
             string curRef = segmentValue.AsString;
             if (prevRef != null && prevRef != curRef)
             {
-                // The prev range is a range start if the current reference has a '/' (is in a range)
-                // i.e. verse_1_1/li_1
-                bool curRefIsInRange = curRef.Contains('/');
-                bool isRangeStart = curRef.StartsWith(prevRef) && curRefIsInRange;
-
-                // We are in range if the previous or current reference contains a '/' (is in a range)
-                bool prevRefIsInRange = prevRef.Contains('/');
-                isInRange = curRefIsInRange || prevRefIsInRange;
-
                 // Return the previous segment, using the current segment to calculate ss,ir,rs values
-                yield return CreateSegment(
-                    wordTokenizer,
-                    prevRef,
-                    sb.ToString(),
-                    isSentenceStart,
-                    isInRange,
-                    isRangeStart
-                );
+                yield return CreateSegment(wordTokenizer, prevRef, sb.ToString(), isSentenceStart);
                 isSentenceStart = sb.ToString().HasSentenceEnding();
                 sb.Clear();
             }
@@ -99,7 +82,7 @@ public class SFScriptureText : IText
 
         if (prevRef != null)
         {
-            yield return CreateSegment(wordTokenizer, prevRef, sb.ToString(), isSentenceStart, isInRange, false);
+            yield return CreateSegment(wordTokenizer, prevRef, sb.ToString(), isSentenceStart);
         }
     }
 
@@ -107,9 +90,7 @@ public class SFScriptureText : IText
         ITokenizer<string, int, string> wordTokenizer,
         string segRef,
         string segmentStr,
-        bool isSentenceStart,
-        bool isInRange,
-        bool isRangeStart
+        bool isSentenceStart
     )
     {
         var keys = new List<string>();
@@ -120,14 +101,6 @@ public class SFScriptureText : IText
             keys.AddRange(keys.Count > 0 ? partKeys.Skip(1) : partKeys);
         }
         string[] segment = wordTokenizer.Tokenize(segmentStr).ToArray();
-        return new TextSegment(
-            Id,
-            new TextSegmentRef(keys),
-            segment,
-            isSentenceStart,
-            isInRange,
-            isRangeStart,
-            !segment.Any()
-        );
+        return new TextSegment(Id, new TextSegmentRef(keys), segment, isSentenceStart, false, false, !segment.Any());
     }
 }
