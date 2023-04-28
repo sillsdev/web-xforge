@@ -22,7 +22,8 @@
     "prepare": "cd ../../.. && husky install src/SIL.XForge.Scripture/ClientApp/.husky",
     "docs:json": "compodoc -p ./tsconfig.json -e json -d .",
     "storybook": "ng run SIL.XForge.Scripture:storybook",
-    "build-storybook": "ng run SIL.XForge.Scripture:build-storybook"
+    "build-storybook": "ng run SIL.XForge.Scripture:build-storybook",
+    "chromatic": "chromatic --exit-zero-on-changes"
   },
   "private": true,
   "dependencies": {
@@ -114,6 +115,7 @@
     "@typescript-eslint/eslint-plugin": "^5.45.0",
     "@typescript-eslint/parser": "^5.45.0",
     "babel-loader": "^8.3.0",
+    "chromatic": "^6.17.3",
     "codecov": "^3.8.3",
     "eslint": "^8.28.0",
     "eslint-config-prettier": "^8.5.0",
