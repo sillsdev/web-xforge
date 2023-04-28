@@ -257,7 +257,7 @@ public class UserService : IUserService
         return userDoc.Data.DisplayName;
     }
 
-    public async Task<Dictionary<string, string>> UsernamesFromUserIds(string curUserId, string[] userIds)
+    public async Task<Dictionary<string, string>> DisplayNamesFromUserIds(string curUserId, string[] userIds)
     {
         await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
         IReadOnlyCollection<IDocument<User>> userDocs = await conn.GetAndFetchDocsAsync<User>(userIds);
