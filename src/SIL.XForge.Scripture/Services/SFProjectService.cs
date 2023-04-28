@@ -703,8 +703,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     SFProjectRole.CommunityChecker,
                     project.CheckingConfig.CheckingEnabled && project.CheckingConfig.ShareEnabled
                 },
-                { SFProjectRole.SFObserver, project.TranslateConfig.ShareEnabled },
-                { SFProjectRole.Reviewer, project.TranslateConfig.ShareEnabled },
+                { SFProjectRole.Viewer, project.TranslateConfig.ShareEnabled },
+                { SFProjectRole.Commenter, project.TranslateConfig.ShareEnabled },
             }
                 .Where(entry => entry.Value)
                 .Select(entry => entry.Key)
