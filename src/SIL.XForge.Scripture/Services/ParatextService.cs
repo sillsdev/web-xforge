@@ -1316,7 +1316,7 @@ public class ParatextService : DisposableBase, IParatextService
         string paratextId,
         int bookNum,
         IEnumerable<IDocument<NoteThread>> noteThreadDocs,
-        IReadOnlyDictionary<string, string> userIdsToUsernames,
+        IReadOnlyDictionary<string, string> displayNames,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
         int sfNoteTagId
     )
@@ -1328,7 +1328,7 @@ public class ParatextService : DisposableBase, IParatextService
             commentThreads,
             username,
             sfNoteTagId,
-            userIdsToUsernames,
+            displayNames,
             ptProjectUsers
         );
 
@@ -2185,7 +2185,7 @@ public class ParatextService : DisposableBase, IParatextService
         IEnumerable<CommentThread> commentThreads,
         string defaultUsername,
         int sfNoteTagId,
-        IReadOnlyDictionary<string, string> userIdsToUsernames,
+        IReadOnlyDictionary<string, string> displayNames,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
@@ -2211,19 +2211,11 @@ public class ParatextService : DisposableBase, IParatextService
                     matchedCommentIds.Add(matchedComment.Id);
                     var comment = (Paratext.Data.ProjectComments.Comment)matchedComment.Clone();
                     bool commentUpdated = false;
-                    string equivalentCommentContent = GetCommentContentsFromNote(
-                        note,
-                        userIdsToUsernames,
-                        ptProjectUsers
-                    );
-                    string contents = comment.Contents?.InnerXml.Trim() ?? string.Empty;
-                    // Replace whitespace characters between xml tags
-                    string contentWithoutWhiteSpace = Regex.Replace(contents, @">\W+<", "><");
-                    if (equivalentCommentContent != contentWithoutWhiteSpace)
+                    if (GetUpdatedCommentXmlIfChanged(comment, note, displayNames, ptProjectUsers, out string xml))
                     {
                         if (comment.Contents == null)
                             comment.AddTextToContent(string.Empty, false);
-                        comment.Contents.InnerXml = equivalentCommentContent;
+                        comment.Contents.InnerXml = xml;
                         commentUpdated = true;
                     }
                     if (commentUpdated)
@@ -2255,15 +2247,7 @@ public class ParatextService : DisposableBase, IParatextService
                         ContextAfter = threadDoc.Data.OriginalContextAfter
                     };
                     bool isFirstComment = i == 0;
-                    // TODO: Add the SF reviewer name to the content
-                    PopulateCommentFromNote(
-                        note,
-                        comment,
-                        userIdsToUsernames,
-                        ptProjectUsers,
-                        sfNoteTagId,
-                        isFirstComment
-                    );
+                    PopulateCommentFromNote(note, comment, displayNames, ptProjectUsers, sfNoteTagId, isFirstComment);
                     thread.Add(comment);
                     if (note.SyncUserRef == null)
                     {
@@ -2321,7 +2305,7 @@ public class ParatextService : DisposableBase, IParatextService
         bool conflictTypeChanged = comment.ConflictType.InternalValue != note.ConflictType;
         bool acceptedChangeXmlChanged = comment.AcceptedChangeXmlStr != note.AcceptedChangeXml;
         string equivalentNoteContent = GetNoteContentFromComment(comment);
-        bool contentChanged = note.Content != equivalentNoteContent;
+        bool contentChanged = string.IsNullOrEmpty(comment.ExternalUser) && note.Content != equivalentNoteContent;
         bool tagChanged = commentTag?.Id != note.TagId;
         bool assignedUserChanged = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers) != note.Assignment;
         if (
@@ -2337,36 +2321,65 @@ public class ParatextService : DisposableBase, IParatextService
         return ChangeType.None;
     }
 
+    private bool GetUpdatedCommentXmlIfChanged(
+        Paratext.Data.ProjectComments.Comment comment,
+        Note note,
+        IReadOnlyDictionary<string, string> displayNames,
+        Dictionary<string, ParatextUserProfile> ptProjectUsers,
+        out string xml
+    )
+    {
+        string equivalentCommentContent = GetCommentContentsFromNote(note, displayNames, ptProjectUsers);
+        string contents = comment.Contents?.InnerXml ?? string.Empty;
+        // Replace whitespace characters between xml tags
+        string contentWithoutWhiteSpace = GetXmlContentNoWhitespace(contents);
+        if (equivalentCommentContent != contentWithoutWhiteSpace)
+        {
+            xml = equivalentCommentContent;
+            return true;
+        }
+        xml = string.Empty;
+        return false;
+    }
+
     /// <summary>
     /// Convert the note content to its comment equivalent. The primary use case
     /// is to add the SF user label to the content.
     /// </summary>
     private string GetCommentContentsFromNote(
         Note note,
-        IReadOnlyDictionary<string, string> userIdsToUsernames,
+        IReadOnlyDictionary<string, string> displayNames,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
         string ownerId = note.OwnerRef;
-        StringBuilder sb = new StringBuilder();
-        userIdsToUsernames.TryGetValue(ownerId, out string username);
-        if (!string.IsNullOrEmpty(username) && !ptProjectUsers.TryGetValue(username, out _))
+        displayNames.TryGetValue(ownerId, out string displayName);
+        // if the user is a paratext user, keep the note content as is
+        if (string.IsNullOrEmpty(displayName) || ptProjectUsers.TryGetValue(displayName, out _))
+            return note.Content;
+
+        var contentElem = new XElement("Contents");
+        string label = $"[{displayName} - {_siteOptions.Value.Name}]";
+        var labelElement = new XElement("p", label);
+        contentElem.Add(labelElement);
+        string noteContentWithoutWhitespace = GetXmlContentNoWhitespace(note.Content);
+        if (!noteContentWithoutWhitespace.StartsWith("<p>"))
         {
-            sb.Append("<p>");
-            sb.Append($"[{username} - {_siteOptions.Value.Name}]");
-            sb.Append("</p>");
-            if (!note.Content.StartsWith("<p>"))
-            {
-                // Add the paragraph style to the content
-                sb.Append("<p>");
-                sb.Append(note.Content);
-                sb.Append("</p>");
-            }
-            else
-                sb.Append(note.Content);
+            // add the note content in a paragraph tag
+            XElement commentNode = new XElement("p", noteContentWithoutWhitespace);
+            contentElem.Add(commentNode);
         }
         else
-            sb.Append(note.Content);
+        {
+            XDocument commentDoc = XDocument.Parse($"<root>{noteContentWithoutWhitespace}</root>");
+            // add the note content paragraph by paragraph
+            foreach (XElement paragraphElems in commentDoc.Root.Descendants("p"))
+                contentElem.Add(paragraphElems);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        foreach (XElement paragraphElems in contentElem.Descendants("p"))
+            sb.Append(paragraphElems.ToString());
         return sb.ToString();
     }
 
@@ -2406,10 +2419,14 @@ public class ParatextService : DisposableBase, IParatextService
         return sb.ToString();
     }
 
+    /// <summary> Replace the meaningless white space between xml tags </summary>
+    private static string GetXmlContentNoWhitespace(string xmlContent) =>
+        Regex.Replace(xmlContent.Trim(), @">\W+<", "><");
+
     private void PopulateCommentFromNote(
         Note note,
         Paratext.Data.ProjectComments.Comment comment,
-        IReadOnlyDictionary<string, string> userIdsToUsernames,
+        IReadOnlyDictionary<string, string> displayNames,
         Dictionary<string, ParatextUserProfile> ptProjectUsers,
         int sfNoteTagId,
         bool isFirstComment
@@ -2420,11 +2437,7 @@ public class ParatextService : DisposableBase, IParatextService
         comment.Deleted = note.Deleted;
 
         if (!string.IsNullOrEmpty(note.Content))
-            comment.GetOrCreateCommentNode().InnerXml = GetCommentContentsFromNote(
-                note,
-                userIdsToUsernames,
-                ptProjectUsers
-            );
+            comment.GetOrCreateCommentNode().InnerXml = GetCommentContentsFromNote(note, displayNames, ptProjectUsers);
         if (!_userSecretRepository.Query().Any(u => u.Id == note.OwnerRef))
             comment.ExternalUser = note.OwnerRef;
         comment.TagsAdded =
