@@ -8,7 +8,7 @@ public interface IUserService
     Task UpdateUserFromProfileAsync(string curUserId, string userProfileJson);
     Task LinkParatextAccountAsync(string primaryAuthId, string secondaryAuthId);
     Task<string> GetUsernameFromUserId(string curUserId, string userId);
-    Task<Dictionary<string, string>> UsernamesFromUserIds(string curUserId, string[] userId);
+    Task<Dictionary<string, string>> DisplayNamesFromUserIds(string curUserId, string[] userId);
     Task UpdateAvatarFromDisplayNameAsync(string curUserId, string authId);
     Task UpdateInterfaceLanguageAsync(string curUserId, string authId, string language);
     Task DeleteAsync(string curUserId, string systemRole, string userId);
