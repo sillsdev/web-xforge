@@ -6,7 +6,7 @@ module.exports = {
     options: {}
   },
   docs: {
-    autodocs: true
+    autodocs: 'tag'
   },
   staticDirs: [{ from: '../src/assets', to: '/assets' }]
 };
