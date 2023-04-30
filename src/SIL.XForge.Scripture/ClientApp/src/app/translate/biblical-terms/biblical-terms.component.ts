@@ -159,9 +159,9 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
 
   constructor(
     noticeService: NoticeService,
+    readonly i18n: I18nService,
     private readonly dialogService: DialogService,
     private readonly featureFlags: FeatureFlagService,
-    private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService
   ) {
@@ -205,6 +205,19 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     }
     this._verse = verse;
     this.verse$.next(verse);
+  }
+
+  get selectedReferenceForCaption(): string {
+    if ((this._bookNum ?? 0) === 0) {
+      return '';
+    } else if ((this._chapter ?? 0) === 0) {
+      return ` (${this.i18n.localizeBook(this._bookNum ?? 0)})`;
+    } else if ((this._verse ?? '0') === '0') {
+      return ` (${this.i18n.localizeBook(this._bookNum ?? 0)} ${this._chapter})`;
+    } else {
+      let verseRef = new VerseRef(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+      return ` (${this.i18n.localizeReference(verseRef)})`;
+    }
   }
 
   ngOnDestroy(): void {
