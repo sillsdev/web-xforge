@@ -20,7 +20,8 @@
     "category": "Categoría",
     "gloss": "Glosa",
     "renderings": "Traducciones",
-    "term": "Término"
+    "term": "Término",
+    "biblical_terms_renderings": "Traducciones de vocablos bíblicos"
   },
   "chapter_nav": {
     "previous_chapter": "Capítulo anterior",

@@ -20,7 +20,8 @@
     "category": "Categoria",
     "gloss": "Glosa",
     "renderings": "Renderizações",
-    "term": "Termo"
+    "term": "Termo",
+    "biblical_terms_renderings": "Renderizações de termos bíblicos"
   },
   "chapter_nav": {
     "previous_chapter": "Capítulo Anterior",

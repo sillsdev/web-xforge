@@ -20,7 +20,8 @@
     "category": "Catégorie",
     "gloss": "Glose",
     "renderings": "Équivalents",
-    "term": "Terme"
+    "term": "Terme",
+    "biblical_terms_renderings": "Équivalents des termes bibliques"
   },
   "chapter_nav": {
     "previous_chapter": "Chapitre précédent",

@@ -19,7 +19,8 @@
     "category": "Category",
     "gloss": "Gloss",
     "renderings": "Renderings",
-    "term": "Term"
+    "term": "Term",
+    "biblical_terms_renderings": "Biblical Terms Renderings"
   },
   "chapter_nav": {
     "previous_chapter": "Previous chapter",

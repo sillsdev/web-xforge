@@ -20,7 +20,8 @@
     "category": "类别",
     "gloss": "译词",
     "renderings": "译法",
-    "term": "词条"
+    "term": "词条",
+    "biblical_terms_renderings": "圣经专门用词译法"
   },
   "chapter_nav": {
     "previous_chapter": "Previous chapter",

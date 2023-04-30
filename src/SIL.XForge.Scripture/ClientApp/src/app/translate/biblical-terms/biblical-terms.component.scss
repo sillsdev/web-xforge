@@ -64,3 +64,16 @@
 .mat-icon-button:disabled {
   pointer-events: none;
 }
+
+/* The table heading */
+.mat-table caption {
+  font-size: 0.9em;
+  font-weight: bold;
+  padding: 5px 0 5px 20px;
+  text-align: left;
+}
+
+/* RTL support for the table heading */
+.mat-table caption[dir='rtl'] {
+  text-align: right;
+}
