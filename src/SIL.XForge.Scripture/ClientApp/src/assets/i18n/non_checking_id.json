@@ -20,7 +20,8 @@
     "category": "Kategori",
     "gloss": "Petunjuk Arti",
     "renderings": "Padanan",
-    "term": "Istilah"
+    "term": "Istilah",
+    "biblical_terms_renderings": "Padanan Istilah Alkitab"
   },
   "chapter_nav": {
     "previous_chapter": "Pasal sebelumnya",

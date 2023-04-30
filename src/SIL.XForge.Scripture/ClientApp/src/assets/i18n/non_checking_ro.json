@@ -20,7 +20,8 @@
     "category": "Categoria",
     "gloss": "Traducere cuvânt cu cuvânt",
     "renderings": "Traducerile",
-    "term": "Cuvânt"
+    "term": "Cuvânt",
+    "biblical_terms_renderings": "Cuvintele cheie pe scurt"
   },
   "chapter_nav": {
     "previous_chapter": "Capitolul anterior",

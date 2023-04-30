@@ -20,7 +20,8 @@
     "category": "Категория",
     "gloss": "Глосса",
     "renderings": "Переводы",
-    "term": "Термин"
+    "term": "Термин",
+    "biblical_terms_renderings": "Переводы библейских терминов"
   },
   "chapter_nav": {
     "previous_chapter": "Предыдущая глава",
