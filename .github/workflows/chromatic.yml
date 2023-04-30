@@ -1,0 +1,58 @@
+name: "Chromatic"
+
+on:
+  push:
+    branches: [develop, master, sf-qa, sf-live]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  chromatic-deployment:
+    name: "Deploy Storybook to Chromatic"
+    strategy:
+      matrix:
+        os: ["ubuntu-20.04"]
+        node_version: ["16.15.0"]
+        npm_version: ["8.10.0"]
+    runs-on: ${{matrix.os}}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Chromatic requires git history
+      - name: "Deps: Node"
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{matrix.node_version}}
+      - name: "Deps: npm"
+        run: npm install --global npm@${{matrix.npm_version}}
+      - name: Pre-build report
+        run: |
+          set -xueo pipefail
+          lsb_release -a
+          which node
+          node --version
+          which npm
+          npm --version
+      - name: "Ensure desired tool versions"
+        # The build machine may come with newer tools than we are ready for.
+        run: |
+          set -xueo pipefail
+          [[ $(node --version) == v${{matrix.node_version}} ]]
+          [[ $(npm --version) == ${{matrix.npm_version}} ]]
+
+      - name: "Deps: RealtimeServer npm"
+        run: cd src/RealtimeServer && npm ci
+      - name: "Deps: Frontend npm"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm ci
+
+      - name: "Build: Backend, RealtimeServer"
+        run: cd src/RealtimeServer && npm run build
+      - name: "Build: Frontend"
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
+
+      - name: Publish to Chromatic
+        uses: chromaui/action@v1
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          workingDir: src/SIL.XForge.Scripture/ClientApp
