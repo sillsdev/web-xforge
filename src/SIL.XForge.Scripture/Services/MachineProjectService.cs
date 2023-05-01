@@ -105,7 +105,7 @@ public class MachineProjectService : IMachineProjectService
         )
         {
             // We do not need the returned project secret
-            _ = await CreateServalProjectAsync(project, cancellationToken);
+            await CreateServalProjectAsync(project, cancellationToken);
         }
     }
 
@@ -192,7 +192,7 @@ public class MachineProjectService : IMachineProjectService
         {
             // If the corpus was updated, start the build
             // We do not need the build ID for tracking as we use GetCurrentBuildAsync for that
-            _ = await _translationEnginesClient.StartBuildAsync(
+            await _translationEnginesClient.StartBuildAsync(
                 projectSecret.ServalData!.TranslationEngineId,
                 cancellationToken
             );
@@ -585,7 +585,7 @@ public class MachineProjectService : IMachineProjectService
                 // Remove the project id from the start of the text id (if present)
                 string textId = text.Id.StartsWith($"{projectId}_") ? text.Id[(projectId.Length + 1)..] : text.Id;
 
-                // See if the corpus exists, and delete it if it does
+                // See if the corpus exists and update it if it is missing, or if the checksum has changed
                 bool uploadText = false;
                 string checksum = StringUtils.ComputeMd5Hash(textFileData);
                 ServalCorpusFile? previousCorpusFile = oldCorpusFiles?.FirstOrDefault(c => c.TextId == textId);
