@@ -57,7 +57,7 @@ public class AnonymousControllerTests
         };
         env.AnonymousService
             .GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
-            .Throws(new ForbiddenException());
+            .Throws(new DataNotFoundException(""));
 
         // SUT
         var actual = env.Controller.GenerateAccount(request);
