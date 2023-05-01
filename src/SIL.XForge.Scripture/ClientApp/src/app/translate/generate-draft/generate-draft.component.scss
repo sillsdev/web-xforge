@@ -29,11 +29,16 @@
   }
 }
 
+:host {
+  align-items: flex-start;
+}
+
 :host > .mat-card:nth-child(2) {
   max-width: 35em;
 }
 
 .controls {
   display: flex;
-  align-content: center;
+  align-items: center;
+  justify-content: space-between;
 }

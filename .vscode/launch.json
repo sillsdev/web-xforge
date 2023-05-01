@@ -71,7 +71,7 @@
         "name": "",
         "type": "pwa-chrome",
         "request": "launch",
-        "runtimeExecutable": "/usr/bin/chromium-browser"
+        "runtimeExecutable": "/usr/bin/brave-browser"
       }
     },
     {

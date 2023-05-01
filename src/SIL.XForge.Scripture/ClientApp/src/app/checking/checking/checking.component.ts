@@ -245,7 +245,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       return;
     }
     const questionDocs = this.questionDocs;
-    if (this.projectDoc == null || this.projectDoc.data == null || questionDocs.length === 0) {
+    if (this.projectDoc?.data == null || questionDocs.length === 0) {
       return;
     }
     /** Get the book from the first question if showing all the questions
@@ -273,6 +273,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   get books(): number[] {
     return this.projectDoc?.data?.texts.map(t => t.bookNum) || [];
+  }
+
+  bookSelected(bookNum: number): void {
+    const book = Canon.bookNumberToId(bookNum);
+    this.router.navigate(['projects', this.projectDoc?.id, 'checking', book]);
   }
 
   /** Height in px needed to show all elements in the bottom
