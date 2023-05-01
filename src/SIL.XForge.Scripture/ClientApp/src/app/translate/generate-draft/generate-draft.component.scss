@@ -1,15 +1,15 @@
+@import 'src/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
+
 :host {
-  display: flex;
+  display: grid;
+  align-items: start;
   gap: 2em;
-  flex-wrap: wrap;
-}
+  grid-template-columns: 1fr 1fr;
 
-:host > .mat-card {
-  flex-grow: 1;
-}
-
-.mat-card {
-  max-width: 25em;
+  @include media-breakpoint-down(sm) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .working-animation {
@@ -29,11 +29,27 @@
   }
 }
 
-:host > .mat-card:nth-child(2) {
-  max-width: 35em;
-}
-
 .controls {
   display: flex;
-  align-content: center;
+  align-items: center;
+  justify-content: space-between;
+}
+
+app-text {
+  display: block;
+}
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    // transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    // transform: scale(1);
+  }
+}
+
+.draft-preview {
+  animation: cardEntrance 0.5s ease-in;
 }

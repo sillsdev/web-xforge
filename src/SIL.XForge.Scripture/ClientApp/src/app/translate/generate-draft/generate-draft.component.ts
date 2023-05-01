@@ -75,4 +75,8 @@ export class GenerateDraftComponent implements OnInit {
     }
     return undefined;
   }
+
+  get bookNumbers(): number[] {
+    return this.activatedProject.projectDoc?.data?.texts.map(t => t.bookNum) ?? [];
+  }
 }

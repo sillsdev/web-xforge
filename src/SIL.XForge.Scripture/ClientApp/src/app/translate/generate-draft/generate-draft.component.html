@@ -3,17 +3,18 @@
   <mat-divider></mat-divider>
   <p>
     Scripture Forge can assist with drafting a back translation, based on your existing back translation progress. For
-    example, if the translation team has already drafted one or more books and then back translated one or more of them,
-    Scripture Forge can use that example data to draft a back translation of the next book you draft.
+    example, if your translation team has already drafted one or more books and then back translated one or more of
+    them, Scripture Forge can use the books you have already back translated to generate a draft a back translation of
+    the next book you are working on.
   </p>
   <p>
-    Keep in mind that the translation draft will contain mistakes, and you will need to edit the draft that is
+    Keep in mind that the back translation draft will contain mistakes, and you will need to edit the draft that is
     generated.
   </p>
   <p>
-    The back translation draft will be generated in the background. You can continue to work on other tasks while the
-    draft is being generated. You can also cancel the generation process at any time. The process will typically take at
-    least 8 hours under ideal conditions, but may take longer if the server is busy.
+    The back translation draft will be generated in the background. You can continue to work on other tasks while is is
+    being generated. You can also cancel the generation process at any time. The process will typically take at least 8
+    hours under ideal conditions, but may take longer if the server is busy.
   </p>
   <mat-divider></mat-divider>
   <br />
@@ -49,16 +50,14 @@
   </ng-container>
 </mat-card>
 
-<mat-card>
+<mat-card class="draft-preview" *ngIf="hasDraft">
   <h2 mat-card-title>Draft preview</h2>
   <mat-divider></mat-divider>
-  <p *ngIf="!hasDraft">No draft available yet</p>
-
   <div class="controls">
     <app-book-chapter-chooser
       *ngIf="hasDraft"
       [book]="41"
-      [books]="[41]"
+      [books]="bookNumbers"
       [chapter]="1"
       [chapters]="[1, 2, 3, 4, 5]"
     ></app-book-chapter-chooser>

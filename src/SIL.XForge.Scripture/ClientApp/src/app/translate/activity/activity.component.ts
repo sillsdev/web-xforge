@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -16,7 +16,7 @@ interface Event {
   templateUrl: './activity.component.html',
   styleUrls: ['./activity.component.scss']
 })
-export class ActivityComponent extends SubscriptionDisposable implements OnInit {
+export class ActivityComponent extends SubscriptionDisposable {
   timeFrameInSeconds = 60 * 60 * 24 * 7; // 1 week
 
   events: Event[] = [];
@@ -95,10 +95,6 @@ export class ActivityComponent extends SubscriptionDisposable implements OnInit 
 
   get project(): SFProjectProfile | undefined {
     return this.activatedProject.projectDoc?.data;
-  }
-
-  ngOnInit(): void {
-    console.log('init');
   }
 
   getMessage(event: Event): string {
