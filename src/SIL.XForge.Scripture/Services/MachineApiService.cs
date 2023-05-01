@@ -253,7 +253,8 @@ public class MachineApiService : IMachineApiService
         // This will be null if Serval is down, or if all feature flags are false
         if (engineDto is null)
         {
-            throw new DataNotFoundException("No translation engine could be retrieved");
+            string additionalInfo = await GetAdditionalErrorInformationAsync();
+            throw new DataNotFoundException($"No translation engine could be retrieved - {additionalInfo}");
         }
 
         // Make sure the DTO conforms to the machine-api V2 URLs
@@ -322,7 +323,8 @@ public class MachineApiService : IMachineApiService
         // This will be null if Serval is down, or if all feature flags are false
         if (wordGraphDto is null)
         {
-            throw new DataNotFoundException("No translation engine could be retrieved");
+            string additionalInfo = await GetAdditionalErrorInformationAsync();
+            throw new DataNotFoundException($"No translation engine could be retrieved - {additionalInfo}");
         }
 
         return wordGraphDto;
@@ -348,7 +350,7 @@ public class MachineApiService : IMachineApiService
                 try
                 {
                     // We do not need the success boolean result, as we will still rebuild if no files have changed
-                    _ = await _machineProjectService.SyncProjectCorporaAsync(curUserId, sfProjectId, cancellationToken);
+                    await _machineProjectService.SyncProjectCorporaAsync(curUserId, sfProjectId, cancellationToken);
                     TranslationBuild translationBuild = await _translationEnginesClient.StartBuildAsync(
                         translationEngineId,
                         cancellationToken
@@ -390,7 +392,8 @@ public class MachineApiService : IMachineApiService
         // This will be null if Serval is down, or if all feature flags are false
         if (buildDto is null)
         {
-            throw new DataNotFoundException("No translation engine could be retrieved");
+            string additionalInfo = await GetAdditionalErrorInformationAsync();
+            throw new DataNotFoundException($"No translation engine could be retrieved - {additionalInfo}");
         }
 
         return UpdateDto(buildDto, sfProjectId);
@@ -511,7 +514,8 @@ public class MachineApiService : IMachineApiService
         // This will be null if Serval is down, or if all feature flags are false
         if (translationResultDto is null)
         {
-            throw new DataNotFoundException("No translation engine could be retrieved");
+            string additionalInfo = await GetAdditionalErrorInformationAsync();
+            throw new DataNotFoundException($"No translation engine could be retrieved - {additionalInfo}");
         }
 
         return translationResultDto;
@@ -820,6 +824,25 @@ public class MachineApiService : IMachineApiService
         {
             throw new ForbiddenException();
         }
+    }
+
+    /// <summary>
+    /// Generates additional information for an error message to help debugging.
+    /// </summary>
+    /// <returns>A string describing the Machine or Serval state.</returns>
+    private async Task<string> GetAdditionalErrorInformationAsync()
+    {
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
+        {
+            return "Is Serval Down?";
+        }
+
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
+        {
+            return "Is the project configured in Machine?";
+        }
+
+        return "The Serval and Machine Feature Flags are not configured";
     }
 
     private async Task<BuildDto?> GetInProcessBuildAsync(
