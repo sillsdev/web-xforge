@@ -303,6 +303,46 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task ReserveLinkSharingKeyAsync_GenerateNewKeyIfMaxUsersReached()
+    {
+        var env = new TestEnvironment();
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
+
+        Assert.That(
+            projectSecret.ShareKeys.Any(
+                sk =>
+                    sk.Key == "maxUsersReached"
+                    && sk.ShareLinkType == ShareLinkType.Recipient
+                    && sk.ProjectRole == SFProjectRole.Viewer
+                    && sk.UsersGenerated == 50
+            ),
+            Is.True,
+            "setup"
+        );
+        env.SecurityService.GenerateKey().Returns("newKey");
+
+        string shareLink = await env.Service.GetLinkSharingKeyAsync(
+            User07,
+            Project06,
+            SFProjectRole.Viewer,
+            ShareLinkType.Recipient
+        );
+        Assert.That(shareLink, Is.EqualTo("newKey"));
+        projectSecret = env.ProjectSecrets.Get(Project06);
+        Assert.That(
+            projectSecret.ShareKeys.Any(
+                sk =>
+                    sk.Key == "newKey"
+                    && sk.ShareLinkType == ShareLinkType.Recipient
+                    && sk.ProjectRole == SFProjectRole.Viewer
+                    && sk.Reserved == null
+                    && sk.UsersGenerated == 0
+            ),
+            Is.True
+        );
+    }
+
+    [Test]
     public async Task ReserveLinkSharingKeyAsync_GenerateNewKeyIfReserved()
     {
         var env = new TestEnvironment();
@@ -470,6 +510,21 @@ public class SFProjectServiceTests
         Assert.ThrowsAsync<ForbiddenException>(
             () => env.Service.GetLinkSharingKeyAsync(User02, Project01, SFProjectRole.Commenter, ShareLinkType.Anyone)
         );
+    }
+
+    [Test]
+    public async Task IncreaseShareKeyUsersGenerated()
+    {
+        var env = new TestEnvironment();
+        var shareKey = "linksharing02";
+        ValidShareKey validShareKey = await env.Service.CheckShareKeyValidity(shareKey);
+        Assert.AreEqual(validShareKey.ShareKey.UsersGenerated, 0);
+
+        // SUT
+        await env.Service.IncreaseShareKeyUsersGenerated(shareKey);
+
+        validShareKey = await env.Service.CheckShareKeyValidity(shareKey);
+        Assert.AreEqual(validShareKey.ShareKey.UsersGenerated, 1);
     }
 
     [Test]
@@ -3176,6 +3231,13 @@ public class SFProjectServiceTests
                                 Key = "toBeReservedKey",
                                 ProjectRole = SFProjectRole.Commenter,
                                 ShareLinkType = ShareLinkType.Recipient,
+                            },
+                            new ShareKey
+                            {
+                                Key = "maxUsersReached",
+                                ProjectRole = SFProjectRole.Viewer,
+                                ShareLinkType = ShareLinkType.Recipient,
+                                UsersGenerated = 50
                             },
                         }
                     },
