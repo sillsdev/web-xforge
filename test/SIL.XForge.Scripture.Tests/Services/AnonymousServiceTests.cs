@@ -14,6 +14,7 @@ namespace SIL.XForge.Scripture.Services;
 [TestFixture]
 public class AnonymousServiceTests
 {
+    private const int MaxUsers = 50;
     private const string Project01 = "project01";
 
     [Test]
@@ -97,8 +98,6 @@ public class AnonymousServiceTests
         string language = "en";
         string username = "generatedKey";
         string password = "longerGeneratedKey";
-        env.SFProjectService.GetProjectSecretByShareKey(shareKey).Returns(env.ProjectSecrets.Get(Project01));
-        env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(env.Projects.Get(Project01)));
         env.SFProjectService.CheckShareKeyValidity(shareKey).Returns(Task.FromResult(new ValidShareKey()));
         env.SecurityService.GenerateKey().Returns(username);
         env.SecurityService.GenerateKey(16).Returns(password);
@@ -113,6 +112,7 @@ public class AnonymousServiceTests
         Assert.IsNotNull(result);
         Assert.AreEqual(username, result.Username);
         Assert.AreEqual(password, result.Password);
+        await env.SFProjectService.Received(1).IncreaseShareKeyUsersGenerated(shareKey);
     }
 
     [Test]
@@ -128,6 +128,37 @@ public class AnonymousServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(() => env.Service.GenerateAccount(shareKey, displayName, language));
+    }
+
+    [Test]
+    public void CheckSharingKey_GenerateAnonymousUserThrowsWhenMaxUsersGeneratedReached()
+    {
+        var env = new TestEnvironment();
+        string shareKey = "key03";
+        string displayName = "Test User";
+        string language = "en";
+        SFProject project = env.Projects.Get(Project01);
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project01);
+        ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
+        env.SFProjectService.GetProjectSecretByShareKey(shareKey).Returns(env.ProjectSecrets.Get(Project01));
+        env.SFProjectService.GetProjectAsync(Project01).Returns(Task.FromResult(env.Projects.Get(Project01)));
+        env.SFProjectService
+            .CheckShareKeyValidity(shareKey)
+            .Returns(
+                Task.FromResult(
+                    new ValidShareKey()
+                    {
+                        Project = project,
+                        ProjectSecret = projectSecret,
+                        ShareKey = projectSecretShareKey
+                    }
+                )
+            );
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.GenerateAccount(shareKey, displayName, language));
+        Assert.AreEqual(project.MaxGeneratedUsersPerShareKey, MaxUsers);
+        Assert.AreEqual(projectSecretShareKey.UsersGenerated, MaxUsers);
     }
 
     private class TestEnvironment
@@ -171,6 +202,14 @@ public class AnonymousServiceTests
                                 RecipientUserId = "user01",
                                 ProjectRole = SFProjectRole.CommunityChecker,
                                 ShareLinkType = ShareLinkType.Recipient
+                            },
+                            new ShareKey
+                            {
+                                Key = "key03",
+                                RecipientUserId = "user01",
+                                ProjectRole = SFProjectRole.CommunityChecker,
+                                ShareLinkType = ShareLinkType.Recipient,
+                                UsersGenerated = MaxUsers
                             }
                         }
                     }
