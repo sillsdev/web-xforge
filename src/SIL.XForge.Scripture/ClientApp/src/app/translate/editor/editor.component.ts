@@ -89,6 +89,7 @@ export interface SaveNoteParameters {
   content: string;
   dataId?: string;
   threadId?: string;
+  verseRef?: VerseRef;
 }
 
 const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
@@ -367,9 +368,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get currentSegmentReference(): string {
-    const segmentRef: string | undefined = this.target?.currentSegmentOrDefault;
-    if (segmentRef == null || this.bookNum == null) return '';
-    const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
+    const verseRef: VerseRef | undefined = this.commenterSelectedVerseRef;
     if (verseRef == null) {
       return '';
     }
@@ -887,25 +886,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   async saveMobileNote(): Promise<void> {
-    if (!this.mobileNoteControl.valid || this.projectId == null) {
+    if (!this.mobileNoteControl.valid || this.projectId == null || this.commenterSelectedVerseRef == null) {
       return;
     }
 
-    await this.saveNote({ content: this.mobileNoteControl.value });
+    await this.saveNote({ content: this.mobileNoteControl.value, verseRef: this.commenterSelectedVerseRef });
     this.addingMobileNote = false;
     this.bottomSheetRef?.dismiss();
   }
 
   async saveNote(params: SaveNoteParameters): Promise<void> {
-    if (this.projectId == null) {
-      return;
-    }
-    const segmentRef: string | undefined = this.target?.currentSegmentOrDefault;
-    if (segmentRef == null || this.bookNum == null) {
-      return;
-    }
-    const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
-    if (verseRef == null) {
+    if (this.projectId == null || this.bookNum == null) {
       return;
     }
     const currentDate: string = new Date().toJSON();
@@ -928,10 +919,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       deleted: false
     };
     if (params.threadId == null) {
+      if (params.verseRef == null) return;
       // Create a new thread
       const noteThread: NoteThread = {
         dataId: threadId,
-        verseRef: fromVerseRef(verseRef),
+        verseRef: fromVerseRef(params.verseRef),
         projectRef: this.projectId,
         ownerRef: this.userService.currentUserId,
         notes: [note],
@@ -1038,13 +1030,19 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       data: noteDialogData
     });
 
+    const currentVerseRef: VerseRef | undefined = this.commenterSelectedVerseRef;
     // deselect the current verse selection so that the newly inserted note thread embed gets the correct formatting
     // to prevent introducing erroneous usx-segment elements into the DOM
     this.resetCommenterVerseSelection();
     const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
     if (result != null) {
       if (result.noteContent != null) {
-        await this.saveNote({ content: result.noteContent, threadId, dataId: result.noteDataId });
+        await this.saveNote({
+          content: result.noteContent,
+          threadId,
+          dataId: result.noteDataId,
+          verseRef: currentVerseRef
+        });
       }
       this.toggleNoteThreadVerseRefs$.next();
     }
