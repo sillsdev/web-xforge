@@ -37,7 +37,7 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     sf_note_threads: ['view'],
     notes: ['view']
   },
-  sf_reviewer: {
+  sf_commenter: {
     project_user_configs: ['view_own', 'edit_own'],
     texts: ['view'],
     sf_note_threads: ['view', 'create', 'delete_own'],

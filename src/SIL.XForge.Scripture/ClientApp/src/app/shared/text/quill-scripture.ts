@@ -647,10 +647,10 @@ export function registerScripture(): string[] {
   });
 
   formats.push(NoteThreadHighlightClass);
-  const ReviewerSelectedSegmentClass = new ClassAttributor('commenter-selection', 'commenter-selection', {
+  const CommenterSelectedSegmentClass = new ClassAttributor('commenter-selection', 'commenter-selection', {
     scope: Parchment.Scope.INLINE
   });
-  formats.push(ReviewerSelectedSegmentClass);
+  formats.push(CommenterSelectedSegmentClass);
 
   const InvalidBlockClass = new ClassAttributor('invalid-block', 'invalid-block', {
     scope: Parchment.Scope.BLOCK

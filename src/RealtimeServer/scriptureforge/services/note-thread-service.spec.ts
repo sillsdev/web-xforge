@@ -128,10 +128,10 @@ describe('NoteThreadService', () => {
     expect(doc.data.position).toEqual(position);
   });
 
-  it('prohibits reviewer user to read note threads not published in Scripture Forge', async () => {
+  it('prohibits commenter user to read note threads not published in Scripture Forge', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    const conn: Connection = clientConnect(env.server, env.reviewerId);
+    const conn: Connection = clientConnect(env.server, env.commenterId);
 
     const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread01');
     await expect(async () => fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId)).rejects.toEqual(
@@ -143,16 +143,16 @@ describe('NoteThreadService', () => {
     expect(doc).not.toBeNull();
   });
 
-  it('allows a reviewer to create a note thread', async () => {
+  it('allows a commenter to create a note thread', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    // the user id 'reviewer' is assigned to have the Reviewer role on the project
-    const conn: Connection = clientConnect(env.server, env.reviewerId);
+    // the user id 'commenter' is assigned to have the commenter role on the project
+    const conn: Connection = clientConnect(env.server, env.commenterId);
 
     const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread04');
     const noteThread: NoteThread = {
       dataId: 'noteThread04',
-      ownerRef: env.reviewerId,
+      ownerRef: env.commenterId,
       projectRef: 'project01',
       publishedToSF: true,
       originalContextAfter: '',
@@ -161,19 +161,19 @@ describe('NoteThreadService', () => {
       verseRef: { bookNum: 40, chapterNum: 1, verseNum: 10 },
       status: NoteStatus.Todo,
       position: { start: 0, length: 0 },
-      notes: [env.getNewNote('noteThread04', 'noteThread04note01', env.reviewerId)]
+      notes: [env.getNewNote('noteThread04', 'noteThread04note01', env.commenterId)]
     };
     await createDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId, noteThread);
     const noteThreadDoc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId);
     expect(noteThreadDoc).not.toBeNull();
   });
 
-  it('reviewers can add notes to note thread they can read', async () => {
+  it('commenters can add notes to note thread they can read', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    const conn: Connection = clientConnect(env.server, env.reviewerId);
+    const conn: Connection = clientConnect(env.server, env.commenterId);
     const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread01');
-    const note: Note = env.getNewNote('noteThread01', 'reviewerNote01', env.reviewerId);
+    const note: Note = env.getNewNote('noteThread01', 'commenterNote01', env.commenterId);
     // since the user cannot read the note thread, they should not be able to add a note
     await expect(() =>
       submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, noteThreadDocId, op => op.insert(n => n.notes, 4, note))
@@ -192,10 +192,10 @@ describe('NoteThreadService', () => {
     expect(sfNoteThread.notes.length).toEqual(2);
   });
 
-  it('allows reviewer to update and delete own note', async () => {
+  it('allows commenter to update and delete own note', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    const conn: Connection = clientConnect(env.server, env.reviewerId);
+    const conn: Connection = clientConnect(env.server, env.commenterId);
     const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread02');
     const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId);
     const noteThread: NoteThread = doc.data as NoteThread;
@@ -218,43 +218,43 @@ describe('NoteThreadService', () => {
       new Error(`403: Permission denied (update), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
     );
 
-    const reviewerNoteThreadId: string = getNoteThreadDocId('project01', 'noteThread03');
-    const reviewerDoc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, reviewerNoteThreadId);
-    let reviewerNoteThread: NoteThread = reviewerDoc.data as NoteThread;
-    expect(reviewerNoteThread).not.toBeNull();
+    const commenterNoteThreadId: string = getNoteThreadDocId('project01', 'noteThread03');
+    const commenterDoc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, commenterNoteThreadId);
+    let commenterNoteThread: NoteThread = commenterDoc.data as NoteThread;
+    expect(commenterNoteThread).not.toBeNull();
 
     // edit the note
-    await submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, reviewerNoteThreadId, op =>
+    await submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, commenterNoteThreadId, op =>
       op.set(n => n.notes[0].content, content)
     );
-    reviewerNoteThread = reviewerDoc.data;
-    expect(reviewerNoteThread.notes[0].content).toEqual('edited content');
+    commenterNoteThread = commenterDoc.data;
+    expect(commenterNoteThread.notes[0].content).toEqual('edited content');
 
     // delete the note
-    await submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, reviewerNoteThreadId, op =>
+    await submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, commenterNoteThreadId, op =>
       op.remove(n => n.notes, 0)
     );
-    reviewerNoteThread = reviewerDoc.data;
-    expect(reviewerNoteThread.notes.length).toEqual(0);
+    commenterNoteThread = commenterDoc.data;
+    expect(commenterNoteThread.notes.length).toEqual(0);
   });
 
-  it('allows reviewer to delete their own note thread', async () => {
+  it('allows commenter to delete their own note thread', async () => {
     const env = new TestEnvironment();
     await env.createData();
-    const conn: Connection = clientConnect(env.server, env.reviewerId);
+    const conn: Connection = clientConnect(env.server, env.commenterId);
     const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread02');
     await expect(() => deleteDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId)).rejects.toEqual(
       new Error(`403: Permission denied (delete), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
     );
 
-    const reviewerThreadDocId: string = getNoteThreadDocId('project01', 'noteThread03');
-    const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, reviewerThreadDocId);
-    let reviewerNoteThread: NoteThread = doc.data as NoteThread;
-    expect(reviewerNoteThread).toBeDefined();
+    const commenterThreadDocId: string = getNoteThreadDocId('project01', 'noteThread03');
+    const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, commenterThreadDocId);
+    let commenterNoteThread: NoteThread = doc.data as NoteThread;
+    expect(commenterNoteThread).toBeDefined();
     // the user who created the first note in the thread can delete the thread because they own the thread
-    await deleteDoc(conn, NOTE_THREAD_COLLECTION, reviewerThreadDocId);
-    reviewerNoteThread = doc.data as NoteThread;
-    expect(reviewerNoteThread).toBeUndefined();
+    await deleteDoc(conn, NOTE_THREAD_COLLECTION, commenterThreadDocId);
+    commenterNoteThread = doc.data as NoteThread;
+    expect(commenterNoteThread).toBeUndefined();
   });
 
   it('removes have-read note refs when thread deleted', async () => {
@@ -301,7 +301,7 @@ class TestEnvironment {
   readonly projectAdminId = 'projectAdmin';
   readonly translator = 'translator';
   readonly checkerId = 'checker';
-  readonly reviewerId = 'commenter';
+  readonly commenterId = 'commenter';
   readonly service: NoteThreadService;
   readonly server: RealtimeServer;
   readonly db: ShareDBMingo;
@@ -386,7 +386,7 @@ class TestEnvironment {
       }
     );
 
-    await createDoc<User>(conn, USERS_COLLECTION, this.reviewerId, {
+    await createDoc<User>(conn, USERS_COLLECTION, this.commenterId, {
       name: 'User 03',
       email: 'user03@example.com',
       role: SystemRole.User,
@@ -400,10 +400,10 @@ class TestEnvironment {
     await createDoc<SFProjectUserConfig>(
       conn,
       SF_PROJECT_USER_CONFIGS_COLLECTION,
-      getSFProjectUserConfigDocId('project01', this.reviewerId),
+      getSFProjectUserConfigDocId('project01', this.commenterId),
       {
         projectRef: 'project01',
-        ownerRef: this.reviewerId,
+        ownerRef: this.commenterId,
         isTargetTextRight: false,
         confidenceThreshold: 0.2,
         translationSuggestionsEnabled: false,
@@ -488,10 +488,10 @@ class TestEnvironment {
 
     await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread03'), {
       projectRef: 'project01',
-      ownerRef: this.reviewerId,
+      ownerRef: this.commenterId,
       dataId: 'noteThread03',
       verseRef,
-      notes: [this.getNewNote('noteThread03', 'noteThread03note01', this.reviewerId)],
+      notes: [this.getNewNote('noteThread03', 'noteThread03note01', this.commenterId)],
       originalSelectedText: '',
       originalContextBefore: '',
       originalContextAfter: '',

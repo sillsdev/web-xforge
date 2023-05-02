@@ -209,12 +209,12 @@
     "pt_observer": "Observer",
     "pt_translator": "Translator",
     "sf_community_checker": "Community Checker",
-    "sf_reviewer": "Commenter",
+    "sf_commenter": "Commenter",
     "sf_observer": "Viewer"
   },
   "role_descriptions": {
     "sf_community_checker": "Answer questions, Comment on answers",
-    "sf_reviewer": "View translation, Add notes",
+    "sf_commenter": "View translation, Add comments",
     "sf_observer": "View translation"
   },
   "settings": {
