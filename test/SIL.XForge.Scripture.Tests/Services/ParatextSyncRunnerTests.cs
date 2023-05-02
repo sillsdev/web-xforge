@@ -1348,7 +1348,8 @@ public class ParatextSyncRunnerTests
                         Arg.Any<UserSecret>(),
                         Arg.Any<string>(),
                         Arg.Any<IProgress<ProgressState>>(),
-                        Arg.Any<CancellationToken>()
+                        Arg.Any<CancellationToken>(),
+                        Arg.Any<SyncMetrics>()
                     )
             )
             .Do(_ => cancellationTokenSource.Cancel());
@@ -1382,7 +1383,8 @@ public class ParatextSyncRunnerTests
                         Arg.Any<UserSecret>(),
                         Arg.Any<string>(),
                         Arg.Any<IProgress<ProgressState>>(),
-                        Arg.Any<CancellationToken>()
+                        Arg.Any<CancellationToken>(),
+                        Arg.Any<SyncMetrics>()
                     )
             )
             .Do(_ => cancellationTokenSource.Cancel());
@@ -1450,7 +1452,8 @@ public class ParatextSyncRunnerTests
                         Arg.Any<UserSecret>(),
                         Arg.Any<string>(),
                         Arg.Any<IProgress<ProgressState>>(),
-                        Arg.Any<CancellationToken>()
+                        Arg.Any<CancellationToken>(),
+                        Arg.Any<SyncMetrics>()
                     )
             )
             .Do(_ => cancellationTokenSource.Cancel());
@@ -2060,7 +2063,8 @@ public class ParatextSyncRunnerTests
                 Arg.Any<UserSecret>(),
                 Arg.Any<string>(),
                 Arg.Any<IProgress<ProgressState>>(),
-                Arg.Any<CancellationToken>()
+                Arg.Any<CancellationToken>(),
+                Arg.Any<SyncMetrics>()
             )
             .Returns(new ParatextResource());
 
@@ -2101,7 +2105,8 @@ public class ParatextSyncRunnerTests
                 Arg.Any<UserSecret>(),
                 Arg.Any<string>(),
                 Arg.Any<IProgress<ProgressState>>(),
-                Arg.Any<CancellationToken>()
+                Arg.Any<CancellationToken>(),
+                Arg.Any<SyncMetrics>()
             )
             .Returns(new ParatextResource());
 
@@ -2255,7 +2260,8 @@ public class ParatextSyncRunnerTests
                 Arg.Any<UserSecret>(),
                 Arg.Any<string>(),
                 Arg.Any<IProgress<ProgressState>>(),
-                Arg.Any<CancellationToken>()
+                Arg.Any<CancellationToken>(),
+                Arg.Any<SyncMetrics>()
             )
             .Returns(new ParatextResource());
 
@@ -2372,7 +2378,8 @@ public class ParatextSyncRunnerTests
                             Arg.Any<UserSecret>(),
                             "target",
                             Arg.Any<IProgress<ProgressState>>(),
-                            Arg.Any<CancellationToken>()
+                            Arg.Any<CancellationToken>(),
+                            Arg.Any<SyncMetrics>()
                         )
                 )
                 .Do(x =>
@@ -3318,7 +3325,13 @@ public class ParatextSyncRunnerTests
             // Should not be performing a SR.
             await ParatextService
                 .DidNotReceiveWithAnyArgs()
-                .SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IProgress<ProgressState>>());
+                .SendReceiveAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<string>(),
+                    Arg.Any<IProgress<ProgressState>>(),
+                    Arg.Any<CancellationToken>(),
+                    Arg.Any<SyncMetrics>()
+                );
 
             // Record of sync is of not success.
             AssertDBSyncMetadata(
@@ -3363,7 +3376,13 @@ public class ParatextSyncRunnerTests
             // Should be performing a SR.
             await ParatextService
                 .Received(1)
-                .SendReceiveAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IProgress<ProgressState>>());
+                .SendReceiveAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<string>(),
+                    Arg.Any<IProgress<ProgressState>>(),
+                    Arg.Any<CancellationToken>(),
+                    Arg.Any<SyncMetrics>()
+                );
 
             // Record of sync is of success.
             AssertDBSyncMetadata(
