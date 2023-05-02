@@ -813,7 +813,8 @@ public class ParatextServiceTests
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
         env.AddTextDocs(40, 1, 10, "Context before ", "Text selected");
 
-        ThreadNoteComponents thread1Note = new ThreadNoteComponents { ownerRef = env.User01 };
+        ThreadNoteComponents user1Note = new ThreadNoteComponents { ownerRef = env.User01, tagsAdded = new[] { "1" } };
+        ThreadNoteComponents user1NoteNoTag = new ThreadNoteComponents { ownerRef = env.User01 };
         ThreadNoteComponents thread8Note = new ThreadNoteComponents
         {
             ownerRef = env.User01,
@@ -827,19 +828,44 @@ public class ParatextServiceTests
                 {
                     threadNum = 1,
                     noteCount = 1,
-                    notes = new[] { thread1Note }
+                    notes = new[] { user1Note }
                 },
-                new ThreadComponents { threadNum = 2, noteCount = 1 },
-                new ThreadComponents { threadNum = 4, noteCount = 2 },
-                new ThreadComponents { threadNum = 5, noteCount = 1 },
-                new ThreadComponents { threadNum = 7, noteCount = 1 },
+                new ThreadComponents
+                {
+                    threadNum = 2,
+                    noteCount = 1,
+                    notes = new[] { user1Note }
+                },
+                new ThreadComponents
+                {
+                    threadNum = 4,
+                    noteCount = 2,
+                    notes = new[] { user1Note, user1NoteNoTag }
+                },
+                new ThreadComponents
+                {
+                    threadNum = 5,
+                    noteCount = 1,
+                    notes = new[] { user1Note }
+                },
+                new ThreadComponents
+                {
+                    threadNum = 7,
+                    noteCount = 1,
+                    notes = new[] { user1Note }
+                },
                 new ThreadComponents
                 {
                     threadNum = 8,
                     noteCount = 1,
                     notes = new[] { thread8Note }
                 },
-                new ThreadComponents { threadNum = 9, noteCount = 3 }
+                new ThreadComponents
+                {
+                    threadNum = 9,
+                    noteCount = 3,
+                    notes = new[] { user1Note, user1Note, user1Note }
+                }
             }
         );
         env.AddParatextComments(
@@ -850,6 +876,7 @@ public class ParatextServiceTests
                     threadNum = 1,
                     noteCount = 1,
                     username = env.Username01,
+                    notes = new[] { user1Note },
                     isEdited = true
                 },
                 new ThreadComponents
@@ -857,31 +884,36 @@ public class ParatextServiceTests
                     threadNum = 2,
                     noteCount = 1,
                     username = env.Username01,
+                    notes = new[] { user1Note },
                     isDeleted = true
                 },
                 new ThreadComponents
                 {
                     threadNum = 3,
                     noteCount = 1,
-                    username = env.Username02
+                    username = env.Username02,
+                    notes = new[] { user1Note }
                 },
                 new ThreadComponents
                 {
                     threadNum = 4,
                     noteCount = 1,
-                    username = env.Username01
+                    username = env.Username01,
+                    notes = new[] { user1Note }
                 },
                 new ThreadComponents
                 {
                     threadNum = 6,
                     noteCount = 1,
-                    isConflict = true
+                    isConflict = true,
+                    notes = new[] { user1Note }
                 },
                 new ThreadComponents
                 {
                     threadNum = 7,
                     noteCount = 2,
-                    username = env.Username01
+                    username = env.Username01,
+                    notes = new[] { user1Note, user1NoteNoTag }
                 },
                 new ThreadComponents
                 {
@@ -894,7 +926,8 @@ public class ParatextServiceTests
                 {
                     threadNum = 9,
                     noteCount = 3,
-                    username = env.Username01
+                    username = env.Username01,
+                    notes = new[] { user1Note, user1NoteNoTag, user1NoteNoTag }
                 }
             }
         );
@@ -1407,15 +1440,30 @@ public class ParatextServiceTests
         );
         ThreadNoteComponents[] threadNotes = new[]
         {
-            new ThreadNoteComponents { status = NoteStatus.Todo, tagsAdded = new[] { "2" } },
-            new ThreadNoteComponents { status = NoteStatus.Unspecified },
-            new ThreadNoteComponents { status = NoteStatus.Unspecified },
-            new ThreadNoteComponents { status = NoteStatus.Resolved },
-            new ThreadNoteComponents { status = NoteStatus.Todo, tagsAdded = new[] { "3" } },
-            new ThreadNoteComponents { status = NoteStatus.Unspecified },
-            new ThreadNoteComponents { status = NoteStatus.Done },
-            new ThreadNoteComponents { status = NoteStatus.Todo },
-            new ThreadNoteComponents { status = NoteStatus.Todo, tagsAdded = new[] { "4" } }
+            new ThreadNoteComponents
+            {
+                ownerRef = env.User01,
+                status = NoteStatus.Todo,
+                tagsAdded = new[] { "2" }
+            },
+            new ThreadNoteComponents { ownerRef = env.User01, status = NoteStatus.Unspecified },
+            new ThreadNoteComponents { ownerRef = env.User01, status = NoteStatus.Unspecified },
+            new ThreadNoteComponents { ownerRef = env.User01, status = NoteStatus.Resolved },
+            new ThreadNoteComponents
+            {
+                ownerRef = env.User01,
+                status = NoteStatus.Todo,
+                tagsAdded = new[] { "3" }
+            },
+            new ThreadNoteComponents { ownerRef = env.User01, status = NoteStatus.Unspecified },
+            new ThreadNoteComponents { ownerRef = env.User01, status = NoteStatus.Done },
+            new ThreadNoteComponents { ownerRef = env.User01, status = NoteStatus.Todo },
+            new ThreadNoteComponents
+            {
+                ownerRef = env.User01,
+                status = NoteStatus.Todo,
+                tagsAdded = new[] { "4" }
+            }
         };
         env.AddParatextComments(
             new[]
@@ -1497,7 +1545,8 @@ public class ParatextServiceTests
                 {
                     status = NoteStatus.Todo,
                     tagsAdded = i == 0 ? commentTagsAdded : null,
-                    assignedPTUser = assignedUser
+                    assignedPTUser = assignedUser,
+                    ownerRef = env.User01
                 };
                 components.Add(noteComponents);
             }
@@ -1536,6 +1585,7 @@ public class ParatextServiceTests
         ThreadNoteComponents[] threadNotes4 = getThreadNoteComponents(1, new[] { teamUserString });
         ThreadNoteComponents[] threadNotes5 = getThreadNoteComponents(1, new[] { unassignedUserString }, true);
         ThreadNoteComponents[] threadNotes7 = getThreadNoteComponents(1, null);
+        ThreadNoteComponents[] threadNotes8 = getThreadNoteComponents(1, new[] { unassignedUserString });
         env.AddParatextComments(
             new[]
             {
@@ -1591,7 +1641,8 @@ public class ParatextServiceTests
                 {
                     threadNum = 8,
                     noteCount = 1,
-                    username = env.Username01
+                    username = env.Username01,
+                    notes = threadNotes8
                 },
                 new ThreadComponents { threadNum = 9, noteCount = 1 }
             }
@@ -1613,7 +1664,6 @@ public class ParatextServiceTests
             ptProjectUsers
         );
 
-        // TODO: Give thread 06 to user05
         Assert.That(changes.Count, Is.EqualTo(8));
         Assert.That(changes.Any(c => c.ThreadId == "thread6"), Is.False);
         // Note added and user assigned
@@ -4354,7 +4404,8 @@ public class ParatextServiceTests
                         note = comp.notes[i - 1];
                     note.ownerRef ??= User05;
                     string content = note.ownerRef == User05 ? "<p>[User 05 - xForge]</p>" : "";
-                    content += comp.isEdited ? $"<p>{threadId} note {i}: EDITED.</p>" : $"<p>{threadId} note {i}.</p>";
+                    string commentContent = comp.isEdited ? $"{threadId} note {i}: EDITED." : $"{threadId} note {i}.";
+                    content += note.ownerRef == User05 ? $"<p>{commentContent}</p>" : commentContent;
                     note.content ??= content;
 
                     XmlElement contentElem = doc.CreateElement("Contents");
