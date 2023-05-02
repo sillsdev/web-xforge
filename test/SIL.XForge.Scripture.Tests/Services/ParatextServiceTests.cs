@@ -2279,11 +2279,22 @@ public class ParatextServiceTests
     {
         var env = new TestEnvironment();
         UserSecret user01Secret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(null, null, null));
         Assert.ThrowsAsync<ArgumentNullException>(
-            () => env.Service.SendReceiveAsync(null, env.PTProjectIds[env.Project01].Id, null)
+            () => env.Service.SendReceiveAsync(null, null, null, default, Substitute.For<SyncMetrics>())
         );
-        Assert.ThrowsAsync<ArgumentNullException>(() => env.Service.SendReceiveAsync(user01Secret, null, null));
+        Assert.ThrowsAsync<ArgumentNullException>(
+            () =>
+                env.Service.SendReceiveAsync(
+                    null,
+                    env.PTProjectIds[env.Project01].Id,
+                    null,
+                    default,
+                    Substitute.For<SyncMetrics>()
+                )
+        );
+        Assert.ThrowsAsync<ArgumentNullException>(
+            () => env.Service.SendReceiveAsync(user01Secret, null, null, default, Substitute.For<SyncMetrics>())
+        );
     }
 
     [Test]
@@ -2307,14 +2318,14 @@ public class ParatextServiceTests
             .Returns(false);
 
         InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(
-            () => env.Service.SendReceiveAsync(user01Secret, projectId, null)
+            () => env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
 
         // Check exception is thrown if errors occurred, even if share changes succeeded
         env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>()).Returns(false);
         ex = Assert.ThrowsAsync<InvalidOperationException>(
-            () => env.Service.SendReceiveAsync(user01Secret, projectId, null)
+            () => env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
     }
@@ -2330,7 +2341,8 @@ public class ParatextServiceTests
         env.SetSharedRepositorySource(user01Secret, UserRoles.Administrator);
 
         ArgumentException ex = Assert.ThrowsAsync<ArgumentException>(
-            () => env.Service.SendReceiveAsync(user01Secret, "badProjectId", null)
+            () =>
+                env.Service.SendReceiveAsync(user01Secret, "badProjectId", null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("PT projects with the following PT ids were requested"));
     }
@@ -2364,14 +2376,14 @@ public class ParatextServiceTests
             });
 
         InvalidOperationException ex = Assert.ThrowsAsync<InvalidOperationException>(
-            () => env.Service.SendReceiveAsync(user01Secret, projectId, null)
+            () => env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
 
         // Check exception is thrown if errors occurred, even if share changes succeeded
         env.MockSharingLogicWrapper.HandleErrors(Arg.Any<Action>()).Returns(false);
         ex = Assert.ThrowsAsync<InvalidOperationException>(
-            () => env.Service.SendReceiveAsync(user01Secret, projectId, null)
+            () => env.Service.SendReceiveAsync(user01Secret, projectId, null, default, Substitute.For<SyncMetrics>())
         );
         Assert.That(ex.Message, Does.Contain("Failed: Errors occurred"));
     }
@@ -2390,7 +2402,7 @@ public class ParatextServiceTests
         env.SetupSuccessfulSendReceive();
 
         // SUT 1
-        await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null);
+        await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null, default, Substitute.For<SyncMetrics>());
         env.MockSharingLogicWrapper
             .Received(1)
             .ShareChanges(
@@ -2405,7 +2417,14 @@ public class ParatextServiceTests
         // Passing a PT project Id for a project the user does not have access to fails early without doing S/R
         // SUT 2
         ArgumentException resultingException = Assert.ThrowsAsync<ArgumentException>(
-            () => env.Service.SendReceiveAsync(user01Secret, "unknownPtProjectId8")
+            () =>
+                env.Service.SendReceiveAsync(
+                    user01Secret,
+                    "unknownPtProjectId8",
+                    null,
+                    default,
+                    Substitute.For<SyncMetrics>()
+                )
         );
         Assert.That(resultingException.Message, Does.Contain("unknownPtProjectId8"));
         env.MockSharingLogicWrapper
@@ -2433,7 +2452,7 @@ public class ParatextServiceTests
         env.MockFileSystemService.DirectoryExists(clonePath).Returns(false);
 
         // SUT
-        await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null);
+        await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null, default, Substitute.For<SyncMetrics>());
         // Should have tried to clone the needed repo.
         env.MockFileSystemService.Received(1).CreateDirectory(clonePath);
         mockSource.Received(1).Pull(clonePath, Arg.Any<SharedRepository>());
@@ -2463,9 +2482,21 @@ public class ParatextServiceTests
         ComparableProjectPermissionManager targetScrTextPermissions = (ComparableProjectPermissionManager)
             env.ProjectScrText.Permissions;
 
-        ParatextProject targetProject = await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
+        ParatextProject targetProject = await env.Service.SendReceiveAsync(
+            user01Secret,
+            targetProjectId,
+            null,
+            default,
+            Substitute.For<SyncMetrics>()
+        );
         Assert.IsNotNull(targetProject);
-        ParatextProject sourceProject = await env.Service.SendReceiveAsync(user01Secret, sourceProjectId);
+        ParatextProject sourceProject = await env.Service.SendReceiveAsync(
+            user01Secret,
+            sourceProjectId,
+            null,
+            default,
+            Substitute.For<SyncMetrics>()
+        );
         Assert.IsNotNull(sourceProject);
         // Below, we are checking also that the SharedProject has a
         // Permissions that is set from the SharedProject's ScrText.Permissions.
@@ -2503,9 +2534,21 @@ public class ParatextServiceTests
                 env.MockScrTextCollection.FindById(env.Username01, newSourceProjectId).Returns(newSourceScrText);
             });
 
-        targetProject = await env.Service.SendReceiveAsync(user01Secret, targetProjectId);
+        targetProject = await env.Service.SendReceiveAsync(
+            user01Secret,
+            targetProjectId,
+            null,
+            default,
+            Substitute.For<SyncMetrics>()
+        );
         Assert.IsNotNull(targetProject);
-        sourceProject = await env.Service.SendReceiveAsync(user01Secret, newSourceProjectId);
+        sourceProject = await env.Service.SendReceiveAsync(
+            user01Secret,
+            newSourceProjectId,
+            null,
+            default,
+            Substitute.For<SyncMetrics>()
+        );
         Assert.IsNotNull(sourceProject);
         env.MockFileSystemService.DidNotReceive().DeleteDirectory(Arg.Any<string>());
         env.MockFileSystemService.Received(1).CreateDirectory(sourcePath);
@@ -2527,8 +2570,10 @@ public class ParatextServiceTests
         env.SetRestClientFactory(user01Secret);
         ScrTextCollection.Initialize("/srv/scriptureforge/projects");
         string resourceId = "test_resource_id"; // A missing or invalid resource or project
-        await env.Service.SendReceiveAsync(user01Secret, ptProjectId);
-        Assert.ThrowsAsync<ArgumentException>(() => env.Service.SendReceiveAsync(user01Secret, resourceId));
+        await env.Service.SendReceiveAsync(user01Secret, ptProjectId, null, default, Substitute.For<SyncMetrics>());
+        Assert.ThrowsAsync<ArgumentException>(
+            () => env.Service.SendReceiveAsync(user01Secret, resourceId, null, default, Substitute.For<SyncMetrics>())
+        );
     }
 
     [Test]
@@ -2543,9 +2588,21 @@ public class ParatextServiceTests
         env.SetRestClientFactory(user01Secret);
         ScrTextCollection.Initialize("/srv/scriptureforge/projects");
         string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
-        ParatextProject targetProject = await env.Service.SendReceiveAsync(user01Secret, ptProjectId);
+        ParatextProject targetProject = await env.Service.SendReceiveAsync(
+            user01Secret,
+            ptProjectId,
+            null,
+            default,
+            Substitute.For<SyncMetrics>()
+        );
         Assert.IsNotNull(targetProject);
-        ParatextProject sourceProject = await env.Service.SendReceiveAsync(user01Secret, resourceId);
+        ParatextProject sourceProject = await env.Service.SendReceiveAsync(
+            user01Secret,
+            resourceId,
+            null,
+            default,
+            Substitute.For<SyncMetrics>()
+        );
         Assert.IsNotNull(sourceProject);
         Assert.IsInstanceOf(typeof(ParatextResource), sourceProject);
     }
