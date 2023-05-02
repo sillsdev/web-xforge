@@ -6,7 +6,7 @@ public static class SFProjectRole
     public const string Translator = "pt_translator";
     public const string Consultant = "pt_consultant";
     public const string PTObserver = "pt_observer";
-    public const string Commenter = "sf_reviewer";
+    public const string Commenter = "sf_commenter";
     public const string CommunityChecker = "sf_community_checker";
     public const string Viewer = "sf_observer";
 

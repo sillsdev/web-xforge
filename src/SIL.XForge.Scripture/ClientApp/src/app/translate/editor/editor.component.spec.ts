@@ -2632,7 +2632,7 @@ describe('EditorComponent', () => {
       env.insertNoteFabMobile!.click();
       env.wait();
       expect(env.bottomSheetVerseReference?.textContent).toEqual('Luke 1:1');
-      const content = 'reviewer leaving mobile note';
+      const content = 'commenter leaving mobile note';
       env.component.mobileNoteControl.setValue(content);
       env.saveMobileNoteButton!.click();
       env.wait();
