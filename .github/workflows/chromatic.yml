@@ -1,8 +1,6 @@
 name: "Chromatic"
 
 on:
-  push:
-    branches: [develop, master, sf-qa, sf-live]
   pull_request:
   workflow_dispatch:
 
