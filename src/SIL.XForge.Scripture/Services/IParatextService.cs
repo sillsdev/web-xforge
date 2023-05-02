@@ -86,6 +86,7 @@ public interface IParatextService
         UserSecret userSecret,
         string paratextId,
         IProgress<ProgressState> progress = null,
-        CancellationToken token = default
+        CancellationToken token = default,
+        SyncMetrics syncMetrics = null
     );
 }

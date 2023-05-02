@@ -72,6 +72,7 @@ public class ParatextService : DisposableBase, IParatextService
         new ConcurrentDictionary<string, SemaphoreSlim>();
     private readonly IHgWrapper _hgHelper;
     private readonly IWebHostEnvironment _env;
+    private readonly DotNetCoreAlert _alertSystem;
 
     public ParatextService(
         IWebHostEnvironment env,
@@ -104,6 +105,7 @@ public class ParatextService : DisposableBase, IParatextService
         _restClientFactory = restClientFactory;
         _hgHelper = hgWrapper;
         _env = env;
+        _alertSystem = new DotNetCoreAlert(_logger);
 
         _httpClientHandler = new HttpClientHandler();
         _registryClient = new HttpClient(_httpClientHandler);
@@ -147,12 +149,11 @@ public class ParatextService : DisposableBase, IParatextService
     /// <summary> Prepare access to Paratext.Data library, authenticate, and prepare Mercurial. </summary>
     public void Init()
     {
-        // Uncomment to output more info to the Terminal from ParatextData.dll for investigating. Note that without
-        // Clear()ing, the output would show in Debug Console while debugging.
+        System.Diagnostics.Trace.AutoFlush = true;
+        // Uncomment to output more info to the Terminal from ParatextData.dll for investigating.
         // The output is using System.Diagnostics.Trace and so is not managed by the ILogging LogLevel filtering
         // settings.
         // System.Diagnostics.Trace.Listeners.Add(new System.Diagnostics.TextWriterTraceListener(Console.Out));
-        // System.Diagnostics.Trace.AutoFlush = true;
 
         // Stop ParatextData.dll Trace output from appearing on the server.
         System.Diagnostics.Trace.Listeners.Clear();
@@ -163,7 +164,7 @@ public class ParatextService : DisposableBase, IParatextService
         // Disable caching VersionedText instances since multiple repos may exist on SF server with the same GUID
         Environment.SetEnvironmentVariable("PTD_CACHE_VERSIONED_TEXT", "DISABLED");
         RegistryU.Implementation = new DotNetCoreRegistry();
-        Alert.Implementation = new DotNetCoreAlert(_logger);
+        Alert.Implementation = _alertSystem;
         ParatextDataSettings.Initialize(new PersistedParatextDataSettings());
         PtxUtilsDataSettings.Initialize(new PersistedPtxUtilsSettings());
         SetupMercurial();
@@ -183,8 +184,9 @@ public class ParatextService : DisposableBase, IParatextService
     public async Task<ParatextProject> SendReceiveAsync(
         UserSecret userSecret,
         string paratextId,
-        IProgress<ProgressState> progress = null,
-        CancellationToken token = default
+        IProgress<ProgressState>? progress,
+        CancellationToken token,
+        SyncMetrics syncMetrics
     )
     {
         if (userSecret == null || paratextId == null)
@@ -192,111 +194,130 @@ public class ParatextService : DisposableBase, IParatextService
             throw new ArgumentNullException();
         }
 
-        IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret.Id, token);
-        IEnumerable<SharedRepository> repositories = GetRepositories(
-            source,
-            $"For SF user id {userSecret.Id}, while attempting to sync PT project id {paratextId}."
-        );
-        IEnumerable<ProjectMetadata> projectsMetadata = source.GetProjectsMetaData();
-        IEnumerable<string> projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid.Id);
-        SharedRepository sendReceiveRepository = repositories.FirstOrDefault(r => r.SendReceiveId.Id == paratextId);
-        if (TryGetProject(userSecret, sendReceiveRepository, projectsMetadata, out ParatextProject ptProject))
+        void traceListener(string message) => syncMetrics.Log.Add($"{DateTime.UtcNow:u} Trace: {message}");
+        void alertListener(string message) => syncMetrics.Log.Add($"{DateTime.UtcNow:u} {message}");
+        LambdaTraceListener listener = new LambdaTraceListener(traceListener);
+        try
         {
-            if (!projectGuids.Contains(paratextId))
-                _logger.LogWarning($"The project with PT ID {paratextId} did not have a full name available.");
-        }
-        else
-        {
-            // See if this is a resource
-            IReadOnlyList<ParatextResource> resources = await this.GetResourcesInternalAsync(
-                userSecret.Id,
-                true,
-                token
-            );
-            ptProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
-        }
+            // Messages from ParatextData Hg.cs and SharingLogic HandleErrors() go to Trace and Alert. Record them into
+            // each sync's SyncMetrics log. This will also unfortunately capture trace and alert messages from other
+            // irrelevant areas or project syncs that happen at the same time, along with the desired information. These
+            // internal messages, including messages from unrelated projects, are not necessarily for displaying to a
+            // user in error reports.
+            System.Diagnostics.Trace.Listeners.Add(listener);
+            _alertSystem.AddListener(alertListener);
 
-        if (ptProject == null)
-        {
-            throw new ArgumentException(
-                "PT projects with the following PT ids were requested but without access or they don't exist: "
-                    + $"{paratextId}"
+            IInternetSharedRepositorySource source = await GetInternetSharedRepositorySource(userSecret.Id, token);
+            IEnumerable<SharedRepository> repositories = GetRepositories(
+                source,
+                $"For SF user id {userSecret.Id}, while attempting to sync PT project id {paratextId}."
             );
-        }
-        EnsureProjectReposExists(userSecret, ptProject, source);
-        if (ptProject is not ParatextResource)
-        {
-            StartProgressReporting(progress);
-
-            string username = GetParatextUsername(userSecret);
-            using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
-            if (scrText == null)
-                throw new Exception(
-                    $"Failed to fetch ScrText for PT project id {paratextId} using PT username {username}"
+            IEnumerable<ProjectMetadata> projectsMetadata = source.GetProjectsMetaData();
+            IEnumerable<string> projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid.Id);
+            SharedRepository sendReceiveRepository = repositories.FirstOrDefault(r => r.SendReceiveId.Id == paratextId);
+            if (TryGetProject(userSecret, sendReceiveRepository, projectsMetadata, out ParatextProject ptProject))
+            {
+                if (!projectGuids.Contains(paratextId))
+                    _logger.LogWarning($"The project with PT ID {paratextId} did not have a full name available.");
+            }
+            else
+            {
+                // See if this is a resource
+                IReadOnlyList<ParatextResource> resources = await this.GetResourcesInternalAsync(
+                    userSecret.Id,
+                    true,
+                    token
                 );
-
-            SharedProject sharedProj = CreateSharedProject(
-                paratextId,
-                ptProject.ShortName,
-                scrText,
-                sendReceiveRepository
-            );
-            List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { sharedProj };
-
-            // If we are in development, unlock the repo before we begin,
-            // just in case the repo is locked.
-            if (_env.IsDevelopment())
-            {
-                try
-                {
-                    source.UnlockRemoteRepository(sharedProj.Repository);
-                }
-                catch (Paratext.Data.HttpException)
-                {
-                    // A 403 error will be thrown if the repo is not locked
-                }
+                ptProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
             }
 
-            // TODO report results
-            List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
-            bool success = false;
-            bool noErrors = SharingLogicWrapper.HandleErrors(
-                () =>
-                    success = SharingLogicWrapper.ShareChanges(
-                        sharedPtProjectsToSr,
-                        source.AsInternetSharedRepositorySource(),
-                        out results,
-                        sharedPtProjectsToSr
-                    )
-            );
-            if (results == null)
+            if (ptProject == null)
             {
-                _logger.LogWarning($"SendReceive results are unexpectedly null.");
-            }
-            if (results != null && results.Any(r => r == null))
-            {
-                _logger.LogWarning($"SendReceive results unexpectedly contained a null result.");
-            }
-            string srResultDescriptions = ExplainSRResults(results);
-            _logger.LogInformation($"SendReceive results: {srResultDescriptions}");
-            if (
-                !noErrors
-                || !success
-                || (results != null && results.Any(r => r != null && r.Result == SendReceiveResultEnum.Failed))
-            )
-            {
-                string resultsInfo = ExplainSRResults(results);
-                throw new InvalidOperationException(
-                    $"Failed: Errors occurred while performing the sync with the Paratext Server. More information: noErrors: {noErrors}. success: {success}. null results: {results == null}. results: {resultsInfo}"
+                throw new ArgumentException(
+                    "PT projects with the following PT ids were requested but without access or they don't exist: "
+                        + $"{paratextId}"
                 );
             }
+            EnsureProjectReposExists(userSecret, ptProject, source);
+            if (ptProject is not ParatextResource)
+            {
+                StartProgressReporting(progress);
 
-            // Update the cached comment manager
-            CommentManager manager = CommentManager.Get(scrText);
-            manager.Load();
+                string username = GetParatextUsername(userSecret);
+                using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
+                if (scrText == null)
+                    throw new Exception(
+                        $"Failed to fetch ScrText for PT project id {paratextId} using PT username {username}"
+                    );
+
+                SharedProject sharedProj = CreateSharedProject(
+                    paratextId,
+                    ptProject.ShortName,
+                    scrText,
+                    sendReceiveRepository
+                );
+                List<SharedProject> sharedPtProjectsToSr = new List<SharedProject> { sharedProj };
+
+                // If we are in development, unlock the repo before we begin,
+                // just in case the repo is locked.
+                if (_env.IsDevelopment())
+                {
+                    try
+                    {
+                        source.UnlockRemoteRepository(sharedProj.Repository);
+                    }
+                    catch (Paratext.Data.HttpException)
+                    {
+                        // A 403 error will be thrown if the repo is not locked
+                    }
+                }
+
+                // TODO report results
+                List<SendReceiveResult> results = Enumerable.Empty<SendReceiveResult>().ToList();
+                bool success = false;
+                bool noErrors = SharingLogicWrapper.HandleErrors(
+                    () =>
+                        success = SharingLogicWrapper.ShareChanges(
+                            sharedPtProjectsToSr,
+                            source.AsInternetSharedRepositorySource(),
+                            out results,
+                            sharedPtProjectsToSr
+                        )
+                );
+                if (results == null)
+                {
+                    _logger.LogWarning($"SendReceive results are unexpectedly null.");
+                }
+                if (results != null && results.Any(r => r == null))
+                {
+                    _logger.LogWarning($"SendReceive results unexpectedly contained a null result.");
+                }
+                string srResultDescriptions = ExplainSRResults(results);
+                _logger.LogInformation($"SendReceive results: {srResultDescriptions}");
+                if (
+                    !noErrors
+                    || !success
+                    || (results != null && results.Any(r => r != null && r.Result == SendReceiveResultEnum.Failed))
+                )
+                {
+                    string resultsInfo = ExplainSRResults(results);
+                    throw new InvalidOperationException(
+                        $"Failed: Errors occurred while performing the sync with the Paratext Server. More information: noErrors: {noErrors}. success: {success}. null results: {results == null}. results: {resultsInfo}"
+                    );
+                }
+
+                // Update the cached comment manager
+                CommentManager manager = CommentManager.Get(scrText);
+                manager.Load();
+            }
+
+            return ptProject;
         }
-
-        return ptProject;
+        finally
+        {
+            _alertSystem.RemoveListener(alertListener);
+            System.Diagnostics.Trace.Listeners.Remove(listener);
+        }
     }
 
     /// <returns>

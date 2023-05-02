@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using PtxUtils;
@@ -7,9 +9,15 @@ namespace SIL.XForge.Scripture.Services;
 /// <summary> Simple alert implementation for Paratext Data to use when running in dotnet core. </summary>
 class DotNetCoreAlert : PtxUtils.Alert
 {
+    private readonly List<Action<string>> _listeners = new List<Action<String>>();
     private readonly ILogger _logger;
 
     public DotNetCoreAlert(ILogger logger) => _logger = logger;
+
+    /// <summary>Register a listener to receive alert messages.</summary>
+    public void AddListener(Action<string> listener) => _listeners.Add(listener);
+
+    public void RemoveListener(Action<string> listener) => _listeners.Remove(listener);
 
     protected override AlertResult ShowInternal(
         IComponent owner,
@@ -21,10 +29,19 @@ class DotNetCoreAlert : PtxUtils.Alert
         bool showInTaskbar
     )
     {
-        _logger.LogInformation($"Alert: {text} : {caption}");
+        string message = $"Alert: {caption}: {text}";
+        _logger.LogError(message);
+        foreach (var listener in _listeners)
+            listener(message);
+
         return AlertResult.Positive;
     }
 
-    protected override void ShowLaterInternal(string text, string caption, AlertLevel alertLevel) =>
-        _logger.LogInformation($"Async Alert: {text} : {caption}");
+    protected override void ShowLaterInternal(string text, string caption, AlertLevel alertLevel)
+    {
+        string message = $"Deferred Alert: {caption}: {text}";
+        _logger.LogError(message);
+        foreach (var listener in _listeners)
+            listener(message);
+    }
 }

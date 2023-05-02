@@ -232,7 +232,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     _userSecret,
                     targetParatextId,
                     progress,
-                    token
+                    token,
+                    _syncMetrics
                 );
                 Log($"RunAsync: ParatextData SendReceive finished without throwing.");
             }
