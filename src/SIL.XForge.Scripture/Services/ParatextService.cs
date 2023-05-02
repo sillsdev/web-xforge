@@ -76,7 +76,7 @@ public class ParatextService : DisposableBase, IParatextService
     private readonly DotNetCoreAlert _alertSystem;
 
     /// <summary> An expression to match the SF user label that looks like [User 05 - xForge] </summary>
-    private readonly string SF_USER_LABEL_REGEX = @"\[.+\s-\s.+\]";
+    private const string SF_USER_LABEL_REGEX = @"^\[[^\]]+\s-\s[^\]]\]$";
 
     public ParatextService(
         IWebHostEnvironment env,
@@ -2311,6 +2311,11 @@ public class ParatextService : DisposableBase, IParatextService
         return changes;
     }
 
+    /// <summary>
+    /// Compares the content of a PT comment to the equivalent note and returns the
+    /// change type if the note needs to be updated.
+    /// </summary>
+    /// <remarks> If the external user property of a comment is set, the comment changes are disregarded. </remarks>
     private ChangeType GetCommentChangeType(
         Paratext.Data.ProjectComments.Comment comment,
         Note note,
@@ -2318,6 +2323,9 @@ public class ParatextService : DisposableBase, IParatextService
         Dictionary<string, ParatextUserProfile> ptProjectUsers
     )
     {
+        // If the external user property is set, discard changes made in PT
+        if (!string.IsNullOrEmpty(comment.ExternalUser))
+            return ChangeType.None;
         if (comment.Deleted != note.Deleted)
             return ChangeType.Deleted;
         // Check if fields have been updated in Paratext
@@ -2326,7 +2334,7 @@ public class ParatextService : DisposableBase, IParatextService
         bool conflictTypeChanged = comment.ConflictType.InternalValue != note.ConflictType;
         bool acceptedChangeXmlChanged = comment.AcceptedChangeXmlStr != note.AcceptedChangeXml;
         string equivalentNoteContent = GetNoteContentFromComment(comment);
-        bool contentChanged = string.IsNullOrEmpty(comment.ExternalUser) && note.Content != equivalentNoteContent;
+        bool contentChanged = note.Content != equivalentNoteContent;
         bool tagChanged = commentTag?.Id != note.TagId;
         bool assignedUserChanged = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers) != note.Assignment;
         if (
@@ -2400,7 +2408,7 @@ public class ParatextService : DisposableBase, IParatextService
 
         StringBuilder sb = new StringBuilder();
         foreach (XElement paragraphElems in contentElem.Descendants("p"))
-            sb.Append(paragraphElems.ToString());
+            sb.Append(paragraphElems);
         return sb.ToString();
     }
 
@@ -2408,7 +2416,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// Convert the content from a comment to its note equivalent. The primary use case
     /// is to remove the SF user label from the comment.
     /// </summary>
-    private string GetNoteContentFromComment(Paratext.Data.ProjectComments.Comment comment)
+    private static string GetNoteContentFromComment(Paratext.Data.ProjectComments.Comment comment)
     {
         string content = comment.Contents?.OuterXml;
         if (string.IsNullOrEmpty(content))
@@ -2427,7 +2435,7 @@ public class ParatextService : DisposableBase, IParatextService
             XElement elem = elements[i];
             XNode node = elem.FirstNode;
             // check if the text matches the note label format
-            if (node is XText text && Regex.IsMatch(text.Value, SF_USER_LABEL_REGEX))
+            if (node is XText text && Regex.IsMatch(text.Value, SF_USER_LABEL_REGEX, RegexOptions.Compiled))
                 isReviewer = true;
             if (i == 0 && isReviewer)
                 continue;
@@ -2435,7 +2443,7 @@ public class ParatextService : DisposableBase, IParatextService
             if (isReviewer && paragraphNodeCount <= 2)
                 sb.Append(elem.Value);
             else
-                sb.Append(elem.ToString());
+                sb.Append(elem);
         }
         return sb.ToString();
     }
