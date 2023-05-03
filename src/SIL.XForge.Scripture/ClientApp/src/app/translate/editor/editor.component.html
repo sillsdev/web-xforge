@@ -44,6 +44,23 @@
         </div>
       </ng-container>
     </div>
+
+    <!-- <div>sourceText: {{ currentSourceText }} targetText: {{ currentTargetText }}</div> -->
+
+    <mat-card class="line-by-line-editor">
+      <mat-card-title>{{ currentVerseRefForDisplay }}</mat-card-title>
+      <p>{{ currentSourceText }}</p>
+      <mat-divider></mat-divider>
+      <input #lineByLineInput type="text" [value]="currentTargetText" (keydown)="inputKeyDown($event)" />
+      <mat-divider></mat-divider>
+      <p *ngIf="suggestionWords.length > 0">
+        {{ currentTargetText }}
+        <span *ngFor="let word of suggestionWords; let i = index" [class.first-word]="i === 0"> {{ word }}</span>
+        <span class="spacer"></span>
+      </p>
+      <p *ngIf="suggestionWords.length === 0" class="no-suggestion">No suggestion available</p>
+    </mat-card>
+
     <div [fxLayout]="isTargetTextRight ? 'row' : 'row-reverse'" class="both-editors-wrapper">
       <div id="source-text-area" [fxShow.gt-xs]="showSource" fxHide.xs class="text-area">
         <div class="language-label" mdcSubtitle1>{{ sourceLabel }}</div>
