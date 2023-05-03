@@ -3214,6 +3214,46 @@ public class DeltaUsxMapperTests
         Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected));
     }
 
+    [Test]
+    public void ToDelta_SecondChapterInInvalidBook()
+    {
+        XDocument usxDoc = Usx(
+            "TDX",
+            Chapter("1"),
+            Para("q", Verse("1"), "This verse is valid, but in an invalid book"),
+            Chapter("2"),
+            Para("q", Verse("1"), "This verse is also valid, but in an invalid book")
+        );
+
+        var mapper = new DeltaUsxMapper(_mapperGuidService, _logger, _exceptionHandler);
+        List<ChapterDelta> chapterDeltas = mapper.ToChapterDeltas(usxDoc).ToList();
+
+        var expected = new[]
+        {
+            Delta
+                .New()
+                .InsertChapter("1")
+                .InsertBlank("q_1")
+                .InsertVerse("1")
+                .InsertText("This verse is valid, but in an invalid book", "verse_1_1")
+                .InsertPara("q"),
+            Delta
+                .New()
+                .InsertChapter("2")
+                .InsertBlank("q_1")
+                .InsertVerse("1")
+                .InsertText("This verse is also valid, but in an invalid book", "verse_2_1")
+                .InsertPara("q"),
+        };
+
+        Assert.That(chapterDeltas.Count, Is.EqualTo(2));
+        Assert.That(chapterDeltas[0].IsValid, Is.False);
+        Assert.That(chapterDeltas[1].IsValid, Is.False);
+        Assert.IsTrue(chapterDeltas[0].Delta.DeepEquals(expected[0]));
+        Assert.IsTrue(chapterDeltas[1].Delta.DeepEquals(expected[1]));
+    }
+
+    [Test]
     public void ToDelta_LineBreakWithinVerse()
     {
         XDocument usxDoc = Usx(

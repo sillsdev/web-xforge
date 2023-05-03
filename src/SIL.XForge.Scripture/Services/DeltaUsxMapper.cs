@@ -144,6 +144,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         var chapterDelta = new Delta();
         var nextIds = new Dictionary<string, int>();
         var state = new ParseState();
+        bool bookIsValid = true;
         foreach (XNode node in usxDoc.Element("usx").Nodes())
         {
             switch (node)
@@ -152,6 +153,8 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                     switch (elem.Name.LocalName)
                     {
                         case "book":
+                            // Check for book validity. The list of valid books are in the XSD
+                            bookIsValid = elem.GetSchemaInfo()?.Validity == XmlSchemaValidity.Valid;
                             break;
 
                         case "para":
@@ -200,7 +203,9 @@ public class DeltaUsxMapper : IDeltaUsxMapper
                                 ChapterEnded(chapterDeltas, chapterDelta, state);
                                 nextIds.Clear();
                                 chapterDelta = new Delta();
-                                state.CurChapterIsValid = true;
+
+                                // The book must be valid for the chapter to be valid
+                                state.CurChapterIsValid = bookIsValid;
                             }
                             state.CurRef = null;
                             state.LastVerse = 0;
