@@ -651,15 +651,17 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
             LogMetric("Updating thread docs - updating");
 
-            if (noteThreadDocsByBook.TryGetValue(text.BookNum, out IEnumerable<IDocument<NoteThread>> noteThreadDocs))
+            // update note thread docs
+            if (!noteThreadDocsByBook.TryGetValue(text.BookNum, out IEnumerable<IDocument<NoteThread>> noteThreadDocs))
             {
-                await UpdateNoteThreadDocsAsync(
-                    text,
-                    noteThreadDocs.ToDictionary(nt => nt.Data.DataId),
-                    chapterDeltas,
-                    ptUsernamesToSFUserIds
-                );
+                noteThreadDocs = Array.Empty<IDocument<NoteThread>>();
             }
+            await UpdateNoteThreadDocsAsync(
+                text,
+                noteThreadDocs.ToDictionary(nt => nt.Data.DataId),
+                chapterDeltas,
+                ptUsernamesToSFUserIds
+            );
 
             // update project metadata
             LogMetric("Updating project metadata");
