@@ -81,7 +81,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <summary>
     /// The existing Scripture Text
     /// </summary>
-    private ScrText existingScrText;
+    private ScrText? _existingScrText;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SFInstallableDblResource" /> class.
@@ -171,33 +171,42 @@ public class SFInstallableDblResource : InstallableResource
     /// <remarks>
     /// This is required for <see cref="InstallableResource.IsNewerThanCurrentlyInstalled" />.
     /// </remarks>
-    public override ScrText ExistingScrText
+    public override ScrText? ExistingScrText
     {
         get
         {
-            if (existingScrText == null)
+            if (_existingScrText == null)
             {
+                // First check the resources by ID directory
+                string fileName = Name + "." + DBLEntryUid + ProjectFileManager.resourceFileExtension;
+                string projectPath = Path.Combine(SFScrTextCollection.ResourcesByIdDirectory, fileName);
+                if (!RobustFile.Exists(projectPath))
+                {
+                    // If that does not exist, use the resources directory
+                    fileName = Name + ProjectFileManager.resourceFileExtension;
+                    projectPath = Path.Combine(ScrTextCollection.ResourcesDirectory, fileName);
+                }
+
                 // Generate an ExistingScrText from the p8z file on disk
-                string fileName = this.Name + ProjectFileManager.resourceFileExtension;
-                string projectPath = Path.Combine(ScrTextCollection.ResourcesDirectory, fileName);
                 if (RobustFile.Exists(projectPath))
                 {
                     var name = new ProjectName(projectPath);
-                    if (name != null)
+                    string userName = _jwtTokenHelper.GetParatextUsername(_userSecret);
+                    if (userName == null)
                     {
-                        string userName = this._jwtTokenHelper.GetParatextUsername(this._userSecret);
-                        if (userName == null)
-                        {
-                            throw new Exception($"Failed to get a PT username for SF user id {_userSecret.Id}.");
-                        }
-                        var ptUser = new SFParatextUser(userName);
-                        var passwordProvider = new ParatextZippedResourcePasswordProvider(this._paratextOptions);
-                        existingScrText = new ResourceScrText(name, ptUser, passwordProvider);
+                        throw new Exception($"Failed to get a PT username for SF user id {_userSecret.Id}.");
+                    }
+                    var ptUser = new SFParatextUser(userName);
+                    var passwordProvider = new ParatextZippedResourcePasswordProvider(_paratextOptions);
+                    var resourceScrText = new ResourceScrText(name, ptUser, passwordProvider);
+                    if (resourceScrText.Settings.DBLId == DBLEntryUid)
+                    {
+                        _existingScrText = resourceScrText;
                     }
                 }
             }
 
-            return existingScrText;
+            return _existingScrText;
         }
     }
 
@@ -489,27 +498,33 @@ public class SFInstallableDblResource : InstallableResource
         // Initialize variables
         Dictionary<string, int> resourceRevisions = new Dictionary<string, int>();
         string resourcesDirectory;
+        string resourcesByIdDirectory;
 
         // This can throw an error if the SettingsDirectory is not specified
         // If that is the case, we don't need to look at the FS anyway
         try
         {
             resourcesDirectory = ScrTextCollection.ResourcesDirectory;
+            resourcesByIdDirectory = SFScrTextCollection.ResourcesByIdDirectory;
         }
         catch (ArgumentNullException)
         {
             // Path.Combine() in ScrTextCollection will have thrown this error
             resourcesDirectory = string.Empty;
+            resourcesByIdDirectory = string.Empty;
         }
 
         if (!string.IsNullOrWhiteSpace(resourcesDirectory) && Directory.Exists(resourcesDirectory))
         {
-            foreach (
-                string resourceFile in Directory.EnumerateFiles(
-                    ScrTextCollection.ResourcesDirectory,
-                    "*" + ProjectFileManager.resourceFileExtension
-                )
-            )
+            const string resourceFilesPattern = $"*{ProjectFileManager.resourceFileExtension}";
+            List<string> resourceFiles = new List<string>();
+            resourceFiles.AddRange(Directory.EnumerateFiles(resourcesDirectory, resourceFilesPattern));
+            if (Directory.Exists(resourcesByIdDirectory))
+            {
+                resourceFiles.AddRange(Directory.EnumerateFiles(resourcesByIdDirectory, resourceFilesPattern));
+            }
+
+            foreach (string resourceFile in resourceFiles)
             {
                 // See if this a zip file, and if it contains the correct ID
                 try
@@ -566,10 +581,7 @@ public class SFInstallableDblResource : InstallableResource
                         }
 
                         // Add the file id and revision to the dictionary
-                        if (!resourceRevisions.ContainsKey(fileId))
-                        {
-                            resourceRevisions.Add(fileId, revision);
-                        }
+                        resourceRevisions.TryAdd(fileId, revision);
                     }
                 }
                 catch (Exception)

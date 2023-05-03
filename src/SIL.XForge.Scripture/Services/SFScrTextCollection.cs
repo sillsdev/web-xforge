@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Paratext.Data;
 using SIL.WritingSystems;
 
@@ -14,6 +15,11 @@ public class SFScrTextCollection : ScrTextCollection
 {
     // Keep track of languages that weren't found in SLDR so we don't call over and over for the same bad code.
     private static readonly List<string> _sldrLookupFailed = new List<string>();
+
+    /// <summary>
+    /// The location where resources reside if there is more than one resource with the same short name.
+    /// </summary>
+    public static string ResourcesByIdDirectory => Path.Combine(SettingsDirectory, "_resourcesById");
 
     protected override string DictionariesDirectoryInternal => null;
 
