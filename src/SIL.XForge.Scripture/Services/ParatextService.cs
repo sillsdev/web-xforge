@@ -75,9 +75,6 @@ public class ParatextService : DisposableBase, IParatextService
     private readonly IWebHostEnvironment _env;
     private readonly DotNetCoreAlert _alertSystem;
 
-    /// <summary> An expression to match the SF user label that looks like [User 05 - xForge] </summary>
-    private const string SF_USER_LABEL_REGEX = @"^\[[^\]]+\s-\s[^\]]\]$";
-
     public ParatextService(
         IWebHostEnvironment env,
         IOptions<ParatextOptions> paratextOptions,
@@ -2389,7 +2386,7 @@ public class ParatextService : DisposableBase, IParatextService
 
         var contentElem = new XElement("Contents");
         string label = $"[{displayName} - {_siteOptions.Value.Name}]";
-        var labelElement = new XElement("p", label);
+        var labelElement = new XElement("p", label, new XAttribute("class", "sf-user-label"));
         contentElem.Add(labelElement);
         string noteContentWithoutWhitespace = GetXmlContentNoWhitespace(note.Content);
         if (!noteContentWithoutWhitespace.StartsWith("<p>"))
@@ -2433,9 +2430,8 @@ public class ParatextService : DisposableBase, IParatextService
         for (int i = 0; i < elements.Length; i++)
         {
             XElement elem = elements[i];
-            XNode node = elem.FirstNode;
-            // check if the text matches the note label format
-            if (node is XText text && Regex.IsMatch(text.Value, SF_USER_LABEL_REGEX, RegexOptions.Compiled))
+            // check if the paragraph element contains the user label class
+            if (elem.Attribute("class")?.Value == "sf-user-label")
                 isReviewer = true;
             if (i == 0 && isReviewer)
                 continue;
