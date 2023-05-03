@@ -528,6 +528,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 if (noteThreadDocs.Any(d => d.Data.PublishedToSF == true))
                     await UpdateTranslateNoteTag(paratextId);
 
+                // Skip over updating Paratext notes for now (2023-05-04)
+                /*
                 int sfNoteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? NoteTag.notSetId;
                 _syncMetrics.ParatextNotes += await _paratextService.UpdateParatextCommentsAsync(
                     _userSecret,
@@ -537,6 +539,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     _currentPtSyncUsers,
                     sfNoteTagId
                 );
+                */
             }
         }
     }
