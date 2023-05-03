@@ -1825,6 +1825,38 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_NewBook_AddParatextNoteThreadDoc()
+    {
+        var env = new TestEnvironment();
+        var book = new Book("MAT", 1);
+        env.SetupSFData(false, true, false, false);
+        env.SetupPTData(book);
+
+        env.SetupNewNoteThreadChange("thread02", "syncuser01");
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+        SFProject project = env.GetProject();
+        Assert.That(project.Sync.LastSyncSuccessful, Is.True);
+        env.ParatextService
+            .Received(1)
+            .GetNoteThreadChanges(
+                Arg.Any<UserSecret>(),
+                "target",
+                40,
+                Arg.Any<IEnumerable<IDocument<NoteThread>>>(),
+                Arg.Any<Dictionary<int, ChapterDelta>>(),
+                Arg.Any<Dictionary<string, ParatextUserProfile>>()
+            );
+        NoteThread noteThread = env.GetNoteThread("project01", "thread02");
+        // The note was created on the newly created book
+        Assert.That(noteThread.VerseRef.BookNum, Is.EqualTo(40));
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+        Assert.That(syncMetrics.Books, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
+        Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 0)));
+    }
+
+    [Test]
     public async Task SyncAsync_AddParatextNoteThreadDoc()
     {
         var env = new TestEnvironment();
