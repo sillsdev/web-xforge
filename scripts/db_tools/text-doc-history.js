@@ -68,8 +68,8 @@ async function run() {
 function logEdit(snapshot, user, editCount, startTime, endTime) {
   const time =
     editCount === 1
-      ? `at ${new Date(startTime).toUTCString()}`
-      : `from ${new Date(startTime).toUTCString()} to ${new Date(endTime).toUTCString()}`;
+      ? `at ${new Date(startTime).toISOString()} (${startTime})`
+      : `from ${new Date(startTime).toISOString()} (${startTime}) to ${new Date(endTime).toISOString()} (${endTime})`;
 
   console.log(`Modified by ${user} in ${editCount} edits ${time}`);
   if (snapshot.data == null) {
