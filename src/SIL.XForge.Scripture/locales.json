@@ -4,14 +4,14 @@
     "englishName": "English (US)",
     "tags": ["en", "en-US"],
     "production": true,
-    "helps": "en"
+    "helps": ""
   },
   {
     "localName": "English (UK)",
     "englishName": "English (UK)",
     "tags": ["en-GB"],
     "production": true,
-    "helps": "en"
+    "helps": ""
   },
   {
     "localName": "简体中文",
