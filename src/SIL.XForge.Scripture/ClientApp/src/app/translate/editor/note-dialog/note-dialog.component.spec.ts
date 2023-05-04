@@ -405,7 +405,8 @@ describe('NoteDialogComponent', () => {
     verify(mockedDialogService.confirm(anything(), anything())).once();
     expect(env.notes.length).toEqual(3);
     expect(env.noteHasEditActions(3)).toBe(true);
-    expect(noteThread.data!.notes.length).toEqual(4);
+    expect(noteThread.data!.notes.length).toEqual(5);
+    expect(noteThread.data!.notes[4].deleted).toBe(true);
   }));
 
   it('does not delete the note if a user cancels', fakeAsync(() => {
@@ -426,8 +427,8 @@ describe('NoteDialogComponent', () => {
     expect(env.noteHasEditActions(1)).toBe(true);
     env.clickDeleteNote();
     verify(mockedDialogService.confirm(anything(), anything())).once();
-    expect(noteThread.data).toBeUndefined();
     expect(env.dialogResult).toEqual({ deleted: true });
+    expect(noteThread.data!.notes[0].deleted).toBe(true);
   }));
 
   it('deletes the thread if the deleted note is the only active note', fakeAsync(() => {
@@ -452,7 +453,7 @@ describe('NoteDialogComponent', () => {
     expect(env.noteHasEditActions(1)).toBe(true);
     env.clickDeleteNote();
     verify(mockedDialogService.confirm(anything(), anything())).once();
-    expect(threadDoc.data).toBeUndefined();
+    expect(threadDoc.data!.notes[0].deleted).toBe(true);
     expect(env.dialogResult).toEqual({ deleted: true });
   }));
 

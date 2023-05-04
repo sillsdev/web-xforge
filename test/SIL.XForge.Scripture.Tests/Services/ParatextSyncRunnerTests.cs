@@ -1856,13 +1856,13 @@ public class ParatextSyncRunnerTests
         Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
         Assert.That(
             syncMetrics.Notes,
-            Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            Is.EqualTo(new NoteSyncMetricInfo(added: 2, deleted: 0, updated: 0, removed: 0))
         );
         Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
     }
 
     [Test]
-    public async Task SyncAsync_RemovesParatextNoteThreadDoc()
+    public async Task SyncAsync_RemovesNoteFromThreadDoc()
     {
         var env = new TestEnvironment();
         string sfProjectId = "project01";
@@ -1907,13 +1907,13 @@ public class ParatextSyncRunnerTests
         );
         Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
 
-        // Remove the entire thread
-        env.SetupNoteRemovedChange(threadId, null);
+        // Remove note 3
+        env.SetupNoteRemovedChange(threadId, "n03");
 
         // SUT 2
         await env.Runner.RunAsync(sfProjectId, "user01", "project01_alt", false, CancellationToken.None);
 
-        Assert.That(env.ContainsNoteThread(sfProjectId, threadId), Is.False);
+        Assert.That(env.ContainsNoteThread(sfProjectId, threadId), Is.True);
         project = env.GetProject();
         Assert.That(project.Sync.LastSyncSuccessful, Is.True);
 
@@ -1922,9 +1922,9 @@ public class ParatextSyncRunnerTests
         Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
         Assert.That(
             syncMetrics.Notes,
-            Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 1))
         );
-        Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
+        Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
     }
 
     [Test]
@@ -1956,7 +1956,7 @@ public class ParatextSyncRunnerTests
         Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
         Assert.That(
             syncMetrics.Notes,
-            Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 0))
+            Is.EqualTo(new NoteSyncMetricInfo(added: 1, deleted: 0, updated: 0, removed: 0))
         );
         Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 1, deleted: 0, updated: 1)));
 
@@ -3076,10 +3076,7 @@ public class ParatextSyncRunnerTests
                 NoteStatus.Resolved.InternalValue,
                 ""
             );
-            if (noteId == null)
-                noteThreadChange.ThreadRemoved = true;
-            else
-                noteThreadChange.NoteIdsRemoved.Add(noteId);
+            noteThreadChange.NoteIdsRemoved.Add(noteId);
             SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
         }
 

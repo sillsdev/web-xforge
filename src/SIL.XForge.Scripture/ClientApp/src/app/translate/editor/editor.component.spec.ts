@@ -2975,7 +2975,7 @@ describe('EditorComponent', () => {
       const segmentRef = 'verse_1_3';
       let thread2Elem: HTMLElement | null = env.getNoteThreadIconElement(segmentRef, threadId);
       expect(thread2Elem).not.toBeNull();
-      env.deleteNoteThread('project01', segmentRef, threadId);
+      env.deleteMostRecentNote('project01', segmentRef, threadId);
       thread2Elem = env.getNoteThreadIconElement(segmentRef, threadId);
       expect(thread2Elem).toBeNull();
       env.dispose();
@@ -4062,12 +4062,12 @@ class TestEnvironment {
     this.wait();
   }
 
-  deleteNoteThread(projectId: string, segmentRef: string, threadId: string): void {
+  deleteMostRecentNote(projectId: string, segmentRef: string, threadId: string): void {
     const noteThreadIconElem: HTMLElement = this.getNoteThreadIconElement(segmentRef, threadId)!;
     noteThreadIconElem.click();
     this.wait();
     const noteDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
-    noteDoc.delete();
+    noteDoc.submitJson0Op(op => op.set(d => d.notes[0].deleted, true));
     this.mockNoteDialogRef.close({ deleted: true });
     this.realtimeService.updateAllSubscribeQueries();
     this.wait();
