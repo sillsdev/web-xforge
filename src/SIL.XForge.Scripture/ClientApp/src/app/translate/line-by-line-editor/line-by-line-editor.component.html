@@ -1,0 +1,19 @@
+<mat-card class="line-by-line-editor">
+  <mat-card-title>{{ currentVerseRefForDisplay }}</mat-card-title>
+  <p>{{ currentSourceText }}</p>
+  <mat-divider></mat-divider>
+  <input #lineByLineInput type="text" [value]="currentTargetText" (keydown)="inputKeyDown($event)" />
+  <mat-divider></mat-divider>
+
+  <div class="card-footer">
+    <div *ngIf="suggestionWords.length > 0">
+      {{ currentTargetText }}
+      <span *ngFor="let word of suggestionWords; let i = index" [class.first-word]="i === 0"> {{ word }}</span>
+      <span class="spacer"></span>
+    </div>
+    <span *ngIf="suggestionWords.length === 0" class="no-suggestion">No suggestion available</span>
+
+    <button mat-flat-button (click)="previousSegment()">Previous</button>
+    <button mat-flat-button (click)="nextSegment()">Next</button>
+  </div>
+</mat-card>

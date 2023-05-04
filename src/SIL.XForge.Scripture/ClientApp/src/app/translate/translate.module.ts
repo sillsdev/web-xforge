@@ -15,6 +15,7 @@ import { TranslateRoutingModule } from './translate-routing.module';
 import { ActivityComponent } from './activity/activity.component';
 import { GenerateDraftComponent } from './generate-draft/generate-draft.component';
 import { QualityChecksComponent } from './quality-checks/quality-checks.component';
+import { LineByLineEditorComponent } from './line-by-line-editor/line-by-line-editor.component';
 
 @NgModule({
   declarations: [
@@ -27,7 +28,8 @@ import { QualityChecksComponent } from './quality-checks/quality-checks.componen
     TranslateOverviewComponent,
     ActivityComponent,
     GenerateDraftComponent,
-    QualityChecksComponent
+    QualityChecksComponent,
+    LineByLineEditorComponent
   ],
   imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, XForgeCommonModule, TranslocoModule]
 })

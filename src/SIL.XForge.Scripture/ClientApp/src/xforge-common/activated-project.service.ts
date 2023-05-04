@@ -28,6 +28,10 @@ export class ActivatedProjectService extends SubscriptionDisposable {
   constructor(private readonly router: Router, private readonly projectService: SFProjectService) {
     super();
 
+    // hideous but I haven't figured out how to get params from old navigations
+    const alreadySelectedId = router.routerState.snapshot.url.match(/\/projects\/([a-f0-9]{24})\//)?.[1];
+    if (alreadySelectedId != null) this.selectProject(alreadySelectedId);
+
     this.subscribe(this.router.events.pipe(), event => {
       if (event instanceof ActivationEnd) {
         this.selectProject(event.snapshot.params.projectId);
