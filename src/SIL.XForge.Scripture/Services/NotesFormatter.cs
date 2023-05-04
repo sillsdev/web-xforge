@@ -215,31 +215,30 @@ public static class NotesFormatter
 
     private static void ParseParagraph(XElement paraElem, StringBuilder sb)
     {
-        sb.Append("<p>");
+        var p = new XElement("p");
         foreach (var node in paraElem.Nodes())
         {
             if (node is XText text)
-                sb.Append(text.Value);
+                p.Add(text);
             else
             {
                 XElement elem = (XElement)node;
                 if (elem.Name == "span")
                 {
-                    string style = elem.Attribute("style")?.Value ?? "bold";
-                    sb.Append($"<{style}>");
-                    sb.Append(elem.GetInnerText());
-                    sb.Append($"</{style}>");
+                    string[] styles = { "bold", "italic" };
+                    var style = styles.SingleOrDefault(s => s == elem.Attribute("style")?.Value) ?? "span";
+                    p.Add(new XElement(style, elem.GetInnerText()));
                 }
                 else if (elem.Name == "lang")
                 {
-                    string name = elem.Attribute("name")?.Value ?? "en";
-                    sb.Append($"<language name=\"{name}\">");
-                    sb.Append(elem.GetInnerText());
-                    sb.Append("</language>");
+                    var languageElement = new XElement("language", elem.GetInnerText());
+                    var languageName = elem.Attribute("name")?.Value ?? "en";
+                    languageElement.Add(new XAttribute("name", languageName));
+                    p.Add(languageElement);
                 }
             }
         }
-        sb.Append("</p>");
+        sb.Append(p.GetOuterXml());
     }
 
     private static void ParseSelection(XElement? selElem, Comment comment)
