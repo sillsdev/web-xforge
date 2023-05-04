@@ -16,31 +16,16 @@
     z-index: 8;
   }
 
-  > mdc-drawer {
-    > mdc-drawer-header {
-      padding: 0;
+  .project-select {
+    ::ng-deep .mdc-select__anchor {
+      width: 100%;
+    }
 
-      > .project-select {
-        ::ng-deep .mdc-select__anchor {
-          width: 100%;
-        }
-
-        .mdc-list-item {
-          // Fix overflow in Firefox when a project name uses the Khmer script. As of 2022-11-11, the DBL resource
-          // KHSV05 is one example that will cause overflow, which looks particularly bad in RTL mode because it
-          // overflows to the left in a menu that is layed out in LTR.
-          overflow-wrap: anywhere;
-
-          // Override styles spilling from mdc-drawer to mdc-select (both mdc-drawer and mdc-select can contain
-          // mdc-list-item and it appears the styles applied for the drawer's list items are now styling the select menu).
-          @include typography.typography(subtitle1);
-          margin: 0;
-          border-radius: 0;
-          padding: 0 16px;
-          height: unset;
-          min-height: 48px;
-        }
-      }
+    .mdc-list-item {
+      // Fix overflow in Firefox when a project name uses the Khmer script. As of 2022-11-11, the DBL resource
+      // KHSV05 is one example that will cause overflow, which looks particularly bad in RTL mode because it
+      // overflows to the left in a menu that is layed out in LTR.
+      overflow-wrap: anywhere;
     }
   }
 
@@ -243,12 +228,6 @@ mat-nav-list .mat-list-item {
   background-color: #e7e8e7;
 }
 
-mdc-drawer-content {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
 #tools-menu-list,
 #admin-pages-menu-list {
   padding-top: 0;
@@ -279,4 +258,23 @@ mdc-drawer-content {
 .fix-rtl-arrow-placement {
   margin-left: initial !important;
   margin-right: auto;
+}
+
+.mat-drawer-container {
+  width: 100%;
+  background: initial;
+}
+
+.app-content {
+  height: 100%;
+}
+
+.nav-spacer {
+  flex-grow: 1;
+}
+
+.mat-drawer ::ng-deep .mat-drawer-inner-container {
+  display: flex;
+  flex-direction: column;
+  width: 255px;
 }
