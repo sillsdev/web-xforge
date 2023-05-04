@@ -17,11 +17,15 @@ export class ExternalUrlService {
     return environment.helps + '/' + (this.i18n.locale.helps || I18nService.defaultLocale.helps!);
   }
 
+  get manual(): string {
+    return this.helps + '/manual';
+  }
+
   get transceleratorImportHelpPage(): string {
-    return this.helps + '/index.htm?#t=Tasks%2FAdministrator_tasks%2FImport_questions_from_Transcelerator.htm';
+    return this.helps + '/community-checking#1ed2e353d94847a3861ad3a69d531aac';
   }
 
   get csvImportHelpPage(): string {
-    return this.helps + '/#t=Tasks%2FAdministrator_tasks%2FImport_questions_from_spreadsheet.htm';
+    return this.helps + '/community-checking#42107c9def434bf396442d0004577710';
   }
 }
