@@ -101,7 +101,7 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
       return '';
     }
 
-    const iconDefinedNotes = this.notesInOrderClone(this.data.notes).filter(n => n.tagId != null);
+    const iconDefinedNotes: Note[] = this.notesInOrderClone(this.data.notes).filter(n => n.tagId != null);
     let tagId: number | undefined =
       iconDefinedNotes.length === 0 ? undefined : iconDefinedNotes[iconDefinedNotes.length - 1].tagId;
     if (tagId == null) {

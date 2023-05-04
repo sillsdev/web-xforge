@@ -21,8 +21,8 @@ public class Comment : IOwnedData
     /// <remarks>
     /// This is used for answers and comments so that they may be deleted correctly from Paratext.
     ///
-    /// For notes, this property is an artifact of the legacy DataAccessServer and should not be set to true
-    /// except for marking a note with the corresponding Paratext comment.
+    /// For notes, this property is an artifact of the legacy DataAccessServer. Marking this as true indicates
+    /// that the corresponding Paratext comment not already marked deleted should be delete if it exists.
     /// </remarks>
     public bool Deleted { get; set; }
 }

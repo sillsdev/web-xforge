@@ -24,8 +24,6 @@ public class NoteThreadChange
     public string Status { get; set; }
     public string Assignment { get; set; }
 
-    /// <summary> True if the thread has been permanently removed. </summary>
-    public bool ThreadRemoved { get; set; }
     public bool ThreadUpdated { get; set; }
     public List<Note> NotesAdded { get; set; } = new List<Note>();
     public List<Note> NotesUpdated { get; set; } = new List<Note>();
@@ -42,7 +40,6 @@ public class NoteThreadChange
                 || NotesUpdated.Count > 0
                 || NotesDeleted.Count > 0
                 || NoteIdsRemoved.Count > 0
-                || ThreadRemoved
                 || ThreadUpdated
                 || Position != null;
         }

@@ -1232,8 +1232,12 @@ public class ParatextService : DisposableBase, IParatextService
             if (existingThread == null)
             {
                 // The thread has been removed
-                threadChange.ThreadRemoved = true;
-                changes.Add(threadChange);
+                threadChange.NoteIdsRemoved = threadDoc.Data.Notes
+                    .Where(n => !n.Deleted)
+                    .Select(n => n.DataId)
+                    .ToList();
+                if (threadChange.NoteIdsRemoved.Count > 0)
+                    changes.Add(threadChange);
                 continue;
             }
             matchedThreadIds.Add(existingThread.Id);
@@ -1257,7 +1261,7 @@ public class ParatextService : DisposableBase, IParatextService
                         );
                     }
                 }
-                else
+                else if (!note.Deleted)
                     threadChange.NoteIdsRemoved.Add(note.DataId);
             }
             if (existingThread.Status.InternalValue != threadDoc.Data.Status)
@@ -2210,15 +2214,11 @@ public class ParatextService : DisposableBase, IParatextService
         List<List<Paratext.Data.ProjectComments.Comment>> changes =
             new List<List<Paratext.Data.ProjectComments.Comment>>();
         IEnumerable<IDocument<NoteThread>> activeThreadDocs = noteThreadDocs.Where(t => t.Data != null);
-        List<string> matchedCommentThreads = new List<string>();
         foreach (IDocument<NoteThread> threadDoc in activeThreadDocs)
         {
             List<Paratext.Data.ProjectComments.Comment> thread = new List<Paratext.Data.ProjectComments.Comment>();
             CommentThread existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
-            if (existingThread != null)
-                matchedCommentThreads.Add(existingThread.Id);
             List<(int, string)> threadNoteParatextUserRefs = new List<(int, string)>();
-            List<string> matchedCommentIds = new List<string>();
             for (int i = 0; i < threadDoc.Data.Notes.Count; i++)
             {
                 Note note = threadDoc.Data.Notes[i];
@@ -2226,10 +2226,14 @@ public class ParatextService : DisposableBase, IParatextService
                     existingThread == null ? null : GetMatchingCommentFromNote(note, existingThread, ptProjectUsers);
                 if (matchedComment != null)
                 {
-                    matchedCommentIds.Add(matchedComment.Id);
                     var comment = (Paratext.Data.ProjectComments.Comment)matchedComment.Clone();
                     bool commentUpdated = false;
-                    if (GetUpdatedCommentXmlIfChanged(comment, note, displayNames, ptProjectUsers, out string xml))
+                    if (note.Deleted && !comment.Deleted)
+                    {
+                        comment.Deleted = true;
+                        commentUpdated = true;
+                    }
+                    else if (GetUpdatedCommentXmlIfChanged(comment, note, displayNames, ptProjectUsers, out string xml))
                     {
                         if (comment.Contents == null)
                             comment.AddTextToContent(string.Empty, false);
@@ -2237,12 +2241,12 @@ public class ParatextService : DisposableBase, IParatextService
                         commentUpdated = true;
                     }
                     if (commentUpdated)
-                    {
                         thread.Add(comment);
-                    }
                 }
                 else
                 {
+                    if (note.Deleted)
+                        continue;
                     if (!string.IsNullOrEmpty(note.SyncUserRef))
                         throw new DataNotFoundException(
                             "Could not find the matching comment for a note containing a sync user."
@@ -2268,42 +2272,16 @@ public class ParatextService : DisposableBase, IParatextService
                     PopulateCommentFromNote(note, comment, displayNames, ptProjectUsers, sfNoteTagId, isFirstComment);
                     thread.Add(comment);
                     if (note.SyncUserRef == null)
-                    {
                         threadNoteParatextUserRefs.Add((i, ptProjectUser.OpaqueUserId));
-                    }
                 }
             }
 
-            if (existingThread != null)
-            {
-                IEnumerable<Paratext.Data.ProjectComments.Comment> deletedComments = existingThread.Comments.Where(
-                    c => !matchedCommentIds.Contains(c.Id)
-                );
-                foreach (Paratext.Data.ProjectComments.Comment deleted in deletedComments)
-                {
-                    var comment = (Paratext.Data.ProjectComments.Comment)deleted.Clone();
-                    comment.Deleted = true;
-                    thread.Add(comment);
-                }
-            }
             if (thread.Count > 0)
             {
                 changes.Add(thread);
                 // Set the sync user ref on the notes in the SF Mongo DB
                 await UpdateNoteSyncUserAsync(threadDoc, threadNoteParatextUserRefs);
             }
-        }
-        // handle deleted note threads
-        IEnumerable<CommentThread> deletedThreads = commentThreads.Where(t => !matchedCommentThreads.Contains(t.Id));
-        foreach (CommentThread thread in deletedThreads)
-        {
-            var deletedCommentsInThread = new List<Paratext.Data.ProjectComments.Comment>();
-            foreach (Paratext.Data.ProjectComments.Comment comment in thread.Comments)
-            {
-                comment.Deleted = true;
-                deletedCommentsInThread.Add(comment);
-            }
-            changes.Add(deletedCommentsInThread);
         }
         return changes;
     }
