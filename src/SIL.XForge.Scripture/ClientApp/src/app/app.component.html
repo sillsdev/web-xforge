@@ -94,18 +94,16 @@
       </mat-toolbar-row>
     </mat-toolbar>
   </header>
-  <mdc-drawer
-    id="menu-drawer"
-    *ngIf="isProjectSelected"
-    [drawer]="isDrawerPermanent ? 'permanent' : 'modal'"
-    [open]="isExpanded"
-    (closed)="drawerCollapsed()"
-  >
-    <mdc-drawer-header>
-      <div
-        [class.top-app-bar-adjust]="isDrawerPermanent"
-        [class.top-app-bar-adjust-double]="hasUpdate && isDrawerPermanent"
-      ></div>
+
+  <mat-drawer-container class="top-app-bar-adjust" [class.top-app-bar-adjust-double]="hasUpdate" autosize>
+    <mat-drawer
+      #drawer
+      id="menu-drawer"
+      [mode]="isDrawerPermanent ? 'side' : 'over'"
+      *ngIf="isProjectSelected"
+      [opened]="isExpanded || isDrawerPermanent"
+      (closed)="drawerCollapsed()"
+    >
       <mdc-select
         *ngIf="projectDocs != null"
         dir="auto"
@@ -125,8 +123,6 @@
           </mdc-list>
         </mdc-menu>
       </mdc-select>
-    </mdc-drawer-header>
-    <mdc-drawer-content>
       <mat-nav-list id="tools-menu-list">
         <a
           mat-list-item
@@ -195,6 +191,7 @@
           </ng-container>
         </div>
       </mat-nav-list>
+      <div class="nav-spacer"></div>
       <mat-nav-list id="admin-pages-menu-list" *ngIf="canSeeAdminPages$ | async">
         <mat-divider></mat-divider>
         <div *ngIf="canSync$ | async">
@@ -238,19 +235,13 @@
           </a>
         </div>
       </mat-nav-list>
-    </mdc-drawer-content>
-  </mdc-drawer>
-  <!-- The cdkScrollable attribute is needed so the CDK can listen to scroll events within this container -->
-  <div
-    #appContent
-    cdkScrollable
-    class="app-content top-app-bar-adjust"
-    [class.top-app-bar-adjust-double]="hasUpdate"
-    [dir]="i18n.direction"
-  >
-    <div>
-      <router-outlet></router-outlet>
-      <p *ngIf="showCheckingDisabled" class="checking-unavailable">{{ t("scripture_checking_not_available") }}</p>
+    </mat-drawer>
+    <!-- The cdkScrollable attribute is needed so the CDK can listen to scroll events within this container -->
+    <div #appContent cdkScrollable class="app-content" [dir]="i18n.direction">
+      <div>
+        <router-outlet></router-outlet>
+        <p *ngIf="showCheckingDisabled" class="checking-unavailable">{{ t("scripture_checking_not_available") }}</p>
+      </div>
     </div>
-  </div>
+  </mat-drawer-container>
 </ng-container>
