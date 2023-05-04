@@ -1638,7 +1638,6 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
-    [Ignore("Not ready to sync comments to PT.")]
     public async Task SyncAsync_UpdatesParatextComments()
     {
         var env = new TestEnvironment();
@@ -1677,7 +1676,6 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
-    [Ignore("Not ready to sync comments to PT.")]
     public async Task SyncAsync_AddParatextComments()
     {
         var env = new TestEnvironment();
