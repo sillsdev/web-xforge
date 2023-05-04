@@ -1,4 +1,4 @@
-import { MdcSelect } from '@angular-mdc/web/select';
+import { MatSelect } from '@angular/material/select';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
@@ -30,6 +30,8 @@ import { SFProjectService } from '../core/sf-project.service';
 import { ProjectSelectComponent } from '../project-select/project-select.component';
 import { SyncProgressComponent } from '../sync/sync-progress/sync-progress.component';
 import { ConnectProjectComponent } from './connect-project.component';
+import { MatSelectModule } from '@angular/material/select';
+import { MDCSelectHelperText } from '@angular-mdc/web';
 
 const mockedParatextService = mock(ParatextService);
 const mockedProjectNotificationService = mock(ProjectNotificationService);
@@ -451,10 +453,6 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#connect-non-admin-msg'));
   }
 
-  get projectsMenu(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#projects-menu'));
-  }
-
   get settingsCard(): DebugElement {
     return this.fixture.debugElement.query(By.css('#settings-card'));
   }
@@ -521,8 +519,8 @@ class TestEnvironment {
   }
 
   changeSelectValue(select: DebugElement, value: string): void {
-    const mdcSelect: MdcSelect = select.componentInstance;
-    mdcSelect.value = value;
+    const matSelect: MatSelect = select.componentInstance;
+    matSelect.value = value;
     this.fixture.detectChanges();
     tick();
   }
@@ -538,11 +536,11 @@ class TestEnvironment {
   }
 
   getMenuItems(menu: DebugElement): DebugElement[] {
-    return menu.queryAll(By.css('mdc-list-item'));
+    return menu.queryAll(By.css('mat-list-item'));
   }
 
   isMenuItemDisabled(menu: DebugElement, index: number): boolean {
-    return this.getMenuItems(menu)[index].nativeElement.classList.contains('mdc-list-item--disabled');
+    return this.getMenuItems(menu)[index].nativeElement.classList.contains('mat-list-item--disabled');
   }
 
   getMenuItemText(menu: DebugElement, index: number): string {

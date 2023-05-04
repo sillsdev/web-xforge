@@ -112,20 +112,20 @@
   max-width: calc(100% - 44px);
 }
 
-mdc-menu {
-  // Make the MDC Menu List extend to the width of the MDC Select that it drops down from, minus some space to still
-  // show the drop down arrow.
-  width: calc(100% - 40px);
-}
-
-mdc-select {
+mat-select {
   margin-bottom: 4px;
-  ::ng-deep .mdc-select__anchor {
+  ::ng-deep .mat-select__anchor {
     width: 100%;
   }
 }
 
-mdc-list-item {
+::ng-deep .mat-select-panel {
+  // Make the option extend to the width of the box that it drops down from, minus some space to still
+  // show the drop down arrow.
+  min-width: calc(100% - 20px) !important;
+}
+
+mat-option {
   height: unset;
   min-height: 48px;
 }
