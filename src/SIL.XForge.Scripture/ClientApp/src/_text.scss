@@ -9,6 +9,7 @@ quill-editor {
   > .ql-container {
     @include typography.typography(body1);
     > .ql-editor {
+      font-family: Roboto, 'Noto Sans Kayah Li', sans-serif;
       line-height: 1.6;
       width: 100%;
       word-break: break-word;
