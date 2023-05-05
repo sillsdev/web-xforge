@@ -116,6 +116,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   addingMobileNote: boolean = false;
   suggestions: Suggestion[] = [];
   showSuggestions: boolean = false;
+  books: number[] = [];
   chapters: number[] = [];
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
@@ -269,6 +270,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.toggleNoteThreadVerses(true);
       this.bottomSheet.dismiss();
     }
+  }
+
+  setBook(book: number): void {
+    this.router.navigate(['projects', this.projectId, 'translate', Canon.bookNumberToId(book)]);
   }
 
   get bookNum(): number | undefined {
@@ -545,6 +550,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (this.projectDoc == null || this.projectDoc.data == null) {
           return;
         }
+        this.books = this.projectDoc.data.texts.map(t => t.bookNum);
         this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
         await this.loadNoteThreadDocs(this.projectDoc.id);
         if (this.sourceProjectDoc?.data != null) {

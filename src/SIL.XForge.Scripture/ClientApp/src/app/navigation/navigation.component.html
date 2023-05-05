@@ -1,0 +1,68 @@
+<ng-container *transloco="let t; read: 'app'">
+  <mat-nav-list id="tools-menu-list" (click)="clickWithinNavList($event)">
+    <mat-list-item disableRipple class="navigation-header" *ngIf="isTranslateEnabled">
+      {{ t("translate") }}
+    </mat-list-item>
+    <div *ngIf="isTranslateEnabled">
+      <a mat-list-item [appRouterLink]="link('translate')">
+        <mat-icon mat-list-icon>apps</mat-icon>
+        {{ t("overview") }}
+      </a>
+      <a mat-list-item [appRouterLink]="draftReviewLink" [class.active]="draftReviewActive">
+        <mat-icon mat-list-icon class="material-icons-outlined">article</mat-icon>
+        {{ t("draft_review") }}
+      </a>
+    </div>
+    <mat-divider *ngIf="isCheckingEnabled && isTranslateEnabled"></mat-divider>
+    <mat-list-item disableRipple class="navigation-header" *ngIf="isCheckingEnabled">
+      {{ t("community_checking") }}
+    </mat-list-item>
+    <div *ngIf="isCheckingEnabled">
+      <a *ngIf="canManageQuestions" mat-list-item [appRouterLink]="link('checking')">
+        <mat-icon mat-list-icon>list</mat-icon>
+        {{ t("manage_questions") }}
+      </a>
+      <a *ngIf="!canManageQuestions" mat-list-item [appRouterLink]="link('checking')">
+        <mat-icon mat-list-icon>bar_chart</mat-icon>
+        {{ t("my_progress") }}
+      </a>
+      <a mat-list-item [appRouterLink]="answerQuestionsLink" [class.active]="answerQuestionsActive">
+        <mat-icon mat-list-icon class="mirror-rtl">question_answer</mat-icon>
+        {{ t("questions_answers") }}
+      </a>
+    </div>
+  </mat-nav-list>
+  <mat-nav-list
+    [class.disabled-offline]="!isAppOnline"
+    id="admin-pages-menu-list"
+    *ngIf="canSeeAdminPages$ | async"
+    (click)="clickWithinNavList($event)"
+  >
+    <mat-divider></mat-divider>
+    <div *ngIf="canSync$ | async">
+      <a mat-list-item [appRouterLink]="link('sync')">
+        <mat-icon
+          mat-list-icon
+          matBadge="error"
+          [matBadgeHidden]="!lastSyncFailed"
+          [class.sync-in-progress]="syncInProgress"
+          id="sync-icon"
+          >sync</mat-icon
+        >
+        {{ t("synchronize") }}
+      </a>
+    </div>
+    <div *ngIf="canSeeUsers$ | async">
+      <a mat-list-item [appRouterLink]="link('users')">
+        <mat-icon mat-list-icon class="mirror-rtl">people</mat-icon>
+        {{ t("users") }}
+      </a>
+    </div>
+    <div *ngIf="canSeeSettings$ | async">
+      <a mat-list-item [appRouterLink]="link('settings')">
+        <mat-icon mat-list-icon>settings</mat-icon>
+        {{ t("settings") }}
+      </a>
+    </div>
+  </mat-nav-list>
+</ng-container>

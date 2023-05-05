@@ -268,10 +268,12 @@ describe('CheckingComponent', () => {
       expect(env.questions.length).toEqual(16);
       let question = env.selectQuestion(1);
       expect(env.getQuestionText(question)).toBe('Book 1, Q1 text');
-      expect(env.currentBookAndChapter).toBe('John 1');
+      expect(env.component.book).toBe(43);
+      expect(env.component.chapter).toBe(1);
       question = env.selectQuestion(16);
       expect(env.getQuestionText(question)).toBe('Matthew question relating to chapter 1');
-      expect(env.currentBookAndChapter).toBe('Matthew 1');
+      expect(env.component.book).toBe(40);
+      expect(env.component.chapter).toBe(1);
     }));
 
     it('can select a question', fakeAsync(() => {
@@ -1836,13 +1838,6 @@ class TestEnvironment {
 
   get cancelAnswerButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('#cancel-answer'));
-  }
-
-  get currentBookAndChapter(): string {
-    return this.fixture.debugElement
-      .query(By.css('h2.chapter-select'))
-      .nativeElement.textContent.replace('keyboard_arrow_down', '')
-      .trim();
   }
 
   get commentFormTextFields(): DebugElement[] {

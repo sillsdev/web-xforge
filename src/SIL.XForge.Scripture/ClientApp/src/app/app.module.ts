@@ -34,10 +34,12 @@ import { TranslateModule } from './translate/translate.module';
 import { UsersModule } from './users/users.module';
 import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
 import { JoinComponent } from './join/join.component';
+import { NavigationComponent } from './navigation/navigation.component';
 
 @NgModule({
   declarations: [
     AppComponent,
+    NavigationComponent,
     ConnectProjectComponent,
     DeleteProjectDialogComponent,
     ProjectComponent,

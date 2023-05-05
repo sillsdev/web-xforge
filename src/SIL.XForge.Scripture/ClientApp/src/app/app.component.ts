@@ -79,7 +79,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private _projectSelect?: MdcSelect;
   private projectDeletedDialogRef: MdcDialogRef<ProjectDeletedDialogComponent> | null = null;
   private _topAppBar?: MdcTopAppBar;
-  private selectedProjectDoc?: SFProjectProfileDoc;
+  selectedProjectDoc?: SFProjectProfileDoc;
   private selectedProjectDeleteSub?: Subscription;
   private removedFromProjectSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
@@ -522,17 +522,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   getBookId(text: TextInfo): string {
     return Canon.bookNumberToId(text.bookNum);
-  }
-
-  getRouterLink(tool: string, extension?: string): string[] {
-    if (this.selectedProjectId == null) {
-      return [];
-    }
-    const link = ['/projects', this.selectedProjectId, tool];
-    if (extension != null && extension !== '') {
-      link.push(extension);
-    }
-    return link;
   }
 
   hasQuestions(text: TextInfo): boolean {
