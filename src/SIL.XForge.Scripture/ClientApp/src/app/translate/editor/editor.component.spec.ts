@@ -2598,18 +2598,16 @@ describe('EditorComponent', () => {
 
       // Allow check for mobile viewports to return TRUE
       when(mockedMediaObserver.isActive(anything())).thenReturn(true);
-      let verseSegment: HTMLElement = env.getSegmentElement('verse_1_2')!;
-      verseSegment.click();
-      env.wait();
+      env.clickSegmentRef('verse_1_2');
       expect(env.insertNoteFabMobile).toBeFalsy();
       expect(env.insertNoteFab).toBeTruthy();
       env.insertNoteFab.nativeElement.click();
       env.wait();
       expect(env.mobileNoteTextArea).toBeTruthy();
+      expect(env.component.currentSegmentReference).toEqual('Matthew 1:2');
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).never();
       // Close the bottom sheet
-      verseSegment = env.getSegmentElement('verse_1_2')!;
-      verseSegment.click();
+      env.saveMobileCloseButton!.click();
       env.wait();
 
       env.dispose();
@@ -3506,6 +3504,10 @@ class TestEnvironment {
     return document.querySelector('.fab-bottom-sheet form textarea');
   }
 
+  get saveMobileCloseButton(): HTMLButtonElement | null {
+    return document.querySelector('.fab-bottom-sheet .close-button');
+  }
+
   get saveMobileNoteButton(): HTMLButtonElement | null {
     return document.querySelector('.fab-bottom-sheet .save-button');
   }
@@ -3579,6 +3581,7 @@ class TestEnvironment {
     const range = this.component.target!.getSegmentRange(segmentRef);
     this.targetEditor.setSelection(range!.index, 0, 'user');
     this.getSegmentElement(segmentRef)!.click();
+    this.wait();
   }
 
   deleteText(textId: string): void {

@@ -662,6 +662,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             op.set(puc => puc.selectedSegment, this.target!.segmentRef);
             op.set(puc => puc.selectedSegmentChecksum!, this.target!.segmentChecksum);
           });
+          if (this.bookNum != null && this.hasEditRight) {
+            const verseRef = getVerseRefFromSegmentRef(this.bookNum, this.target.segmentRef);
+            this.toggleVerseRefElement(verseRef);
+          }
         }
         await this.translateSegment();
       } finally {
@@ -1130,7 +1134,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.target.editor.scrollingContainer.scrollTop = 0;
     }
     this.textHeight = `calc(100vh - ${top}px)`;
-    if (this.targetFocused && this.dialogService.openDialogCount < 1) {
+    if (this.targetFocused && this.dialogService.openDialogCount < 1 && this.bottomSheet == null) {
       setTimeout(() => {
         // reset focus, which causes Quill to scroll to the selection
         this.target!.focus();
@@ -1357,7 +1361,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private subscribeCommentingSelectionEvents(): void {
-    if (this.target == null || this.userRole == null || !this.showAddCommentUI) return;
+    if (this.target == null || this.userRole == null || !this.showAddCommentUI || this.hasEditRight) return;
     this.selectionClickSubs.forEach(s => s.unsubscribe());
 
     for (const [segment] of this.target.segments) {
@@ -1369,22 +1373,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.subscribe(fromEvent<MouseEvent>(segmentElement, 'click'), event => {
           if (this.bookNum == null || this.target == null) return;
           const verseRef: VerseRef | undefined = verseRefFromMouseEvent(event, this.bookNum);
-          if (verseRef == null) return;
-          if (this.canShowInsertNoteFab) {
-            this.showInsertNoteFab = this.target.toggleVerseSelection(verseRef);
-            this.positionInsertNoteFab(segmentElement);
-          } else {
-            this.showInsertNoteFab = false;
-          }
-          if (this.commenterSelectedVerseRef != null) {
-            if (verseRef.equals(this.commenterSelectedVerseRef)) {
-              this.commenterSelectedVerseRef = undefined;
-              return;
-            }
-            // un-select previously selected verses since a note can apply to only one verse.
-            this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
-          }
-          this.commenterSelectedVerseRef = verseRef;
+          this.toggleVerseRefElement(verseRef);
         })
       );
     }
@@ -1573,6 +1562,48 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     } else {
       // hide the insert note FAB when the user clicks outside of the editor
       this.showInsertNoteFab = false;
+    }
+  }
+
+  private toggleVerseRefElement(verseRef?: VerseRef, forceToggle: boolean = false): void {
+    if (
+      verseRef == null ||
+      this.target == null ||
+      !this.targetLoaded ||
+      this.userRole == null ||
+      !this.showAddCommentUI ||
+      !this.isAddNotesEnabled
+    )
+      return;
+    const verseSegments: string[] = this.target.getVerseSegments(verseRef);
+    const segmentElement: Element | null = this.target.getSegmentElement(verseSegments[0]);
+    if (segmentElement == null) {
+      return;
+    }
+    if (this.canShowInsertNoteFab) {
+      let allowToggleVerseSelection: boolean = true;
+      if (this.commenterSelectedVerseRef != null && verseRef.equals(this.commenterSelectedVerseRef)) {
+        allowToggleVerseSelection = !this.hasEditRight;
+      }
+      if (allowToggleVerseSelection || forceToggle) {
+        this.showInsertNoteFab = this.target.toggleVerseSelection(verseRef);
+        this.positionInsertNoteFab(segmentElement);
+      }
+    } else {
+      this.showInsertNoteFab = false;
+    }
+    if (this.commenterSelectedVerseRef != null) {
+      if (verseRef.equals(this.commenterSelectedVerseRef)) {
+        if (!this.hasEditRight) {
+          this.commenterSelectedVerseRef = undefined;
+        }
+        return;
+      }
+      // un-select previously selected verses since a note can apply to only one verse.
+      this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
+    }
+    if (this.dialogService.openDialogCount < 1 && !this.addingMobileNote) {
+      this.commenterSelectedVerseRef = verseRef;
     }
   }
 
