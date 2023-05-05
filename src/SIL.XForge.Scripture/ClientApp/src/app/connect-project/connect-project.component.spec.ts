@@ -167,11 +167,11 @@ describe('ConnectProjectComponent', () => {
     env.setupDefaultProjectData();
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
-    expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
-    expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(false);
-    expect(env.isMenuItemDisabled(env.projectSelect, 1)).toBe(true);
-    expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(true);
-    expect(env.isMenuItemDisabled(env.projectSelect, 3)).toBe(false);
+    expect(env.getProjects(env.projectSelect).length).toEqual(4);
+    expect(env.isProjectDisabled(env.projectSelect, 0)).toBe(false);
+    expect(env.isProjectDisabled(env.projectSelect, 1)).toBe(true);
+    expect(env.isProjectDisabled(env.projectSelect, 2)).toBe(true);
+    expect(env.isProjectDisabled(env.projectSelect, 3)).toBe(false);
     expect(env.nonAdminMessage).not.toBeNull();
   }));
 
@@ -210,10 +210,10 @@ describe('ConnectProjectComponent', () => {
     );
     env.waitForProjectsResponse();
     expect(env.component.state).toEqual('input');
-    expect(env.getMenuItems(env.projectSelect).length).toEqual(3);
-    expect(env.isMenuItemDisabled(env.projectSelect, 0)).toBe(false);
-    expect(env.isMenuItemDisabled(env.projectSelect, 1)).toBe(true);
-    expect(env.isMenuItemDisabled(env.projectSelect, 2)).toBe(false);
+    expect(env.getProjects(env.projectSelect).length).toEqual(3);
+    expect(env.isProjectDisabled(env.projectSelect, 0)).toBe(false);
+    expect(env.isProjectDisabled(env.projectSelect, 1)).toBe(true);
+    expect(env.isProjectDisabled(env.projectSelect, 2)).toBe(false);
     expect(env.nonAdminMessage).toBeNull();
   }));
 
@@ -230,7 +230,7 @@ describe('ConnectProjectComponent', () => {
     env.onlineStatus = true;
     expect(env.offlineMessage).toBeNull();
     expect(env.component.state).toEqual('input');
-    expect(env.getMenuItems(env.projectSelect).length).toEqual(4);
+    expect(env.getProjects(env.projectSelect).length).toEqual(4);
     expect(env.component.connectProjectForm.enabled).toBe(true);
     expect(env.submitButton.nativeElement.disabled).toBe(false);
     expect(env.nonAdminMessage).not.toBeNull();
@@ -535,16 +535,16 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  getMenuItems(menu: DebugElement): DebugElement[] {
-    return menu.queryAll(By.css('mat-list-item'));
+  getProjects(menu: DebugElement): DebugElement[] {
+    return menu.queryAll(By.css('mat-option'));
   }
 
-  isMenuItemDisabled(menu: DebugElement, index: number): boolean {
-    return this.getMenuItems(menu)[index].nativeElement.classList.contains('mat-list-item--disabled');
+  isProjectDisabled(menu: DebugElement, index: number): boolean {
+    return this.getProjects(menu)[index].nativeElement.classList.contains('mat-option--disabled');
   }
 
-  getMenuItemText(menu: DebugElement, index: number): string {
-    return this.getMenuItems(menu)[index].nativeElement.textContent.trim();
+  getProjectText(menu: DebugElement, index: number): string {
+    return this.getProjects(menu)[index].nativeElement.textContent.trim();
   }
 
   inputElement(element: DebugElement): HTMLInputElement {
