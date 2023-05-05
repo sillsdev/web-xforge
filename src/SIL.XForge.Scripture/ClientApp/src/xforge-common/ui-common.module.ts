@@ -39,6 +39,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -76,6 +77,7 @@ const modules = [
   MatProgressSpinnerModule,
   MatRadioModule,
   MatSelectModule,
+  MatExpansionModule,
   MatSliderModule,
   MatTableModule,
   MatToolbarModule,

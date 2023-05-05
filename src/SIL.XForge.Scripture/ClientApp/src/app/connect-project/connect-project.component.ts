@@ -109,6 +109,18 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this._projects != null ? this._projects : [];
   }
 
+  get projectsAvailable(): ParatextProject[] {
+    return this.projects.filter(p => !p.isConnected && p.isConnectable);
+  }
+
+  get projectsProhibited(): ParatextProject[] {
+    return this.projects.filter(p => !p.isConnectable);
+  }
+
+  get projectsConnected(): ParatextProject[] {
+    return this.projects.filter(p => p.isConnected);
+  }
+
   get translationSuggestionsEnabled(): boolean {
     return this.settings.controls.translationSuggestions.value;
   }

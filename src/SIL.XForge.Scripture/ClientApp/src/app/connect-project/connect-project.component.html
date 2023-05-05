@@ -16,30 +16,43 @@
     </mat-card>
     <form *ngSwitchDefault [formGroup]="connectProjectForm" (ngSubmit)="submit()">
       <ng-container *ngIf="projects.length > 0 || state === 'offline'; else noProjectMsg">
+        <mat-accordion multi>
+          <mat-expansion-panel *ngIf="projectsAvailable.length > 0" [expanded]="true">
+            <mat-expansion-panel-header>
+              <mat-panel-title> Available </mat-panel-title>
+            </mat-expansion-panel-header>
+            <mat-selection-list [multiple]="false" #projectSelect id="project-select" formControlName="paratextId">
+              <mat-list-option *ngFor="let project of projectsAvailable" [value]="project.paratextId">
+                {{ projectLabel(project) }}
+              </mat-list-option>
+            </mat-selection-list>
+          </mat-expansion-panel>
+
+          <mat-expansion-panel *ngIf="projectsConnected.length > 0">
+            <mat-expansion-panel-header>
+              <mat-panel-title> Connected </mat-panel-title>
+            </mat-expansion-panel-header>
+            <mat-list>
+              <mat-list-item *ngFor="let project of projectsConnected" [disabled]="true">
+                {{ projectLabel(project) }}
+              </mat-list-item>
+            </mat-list>
+          </mat-expansion-panel>
+
+          <mat-expansion-panel *ngIf="projectsProhibited.length > 0">
+            <mat-expansion-panel-header>
+              <mat-panel-title> Needs Permissions** </mat-panel-title>
+            </mat-expansion-panel-header>
+            <mat-list>
+              <mat-list-item *ngFor="let project of projectsProhibited" [disabled]="true">
+                {{ projectLabel(project) }}
+              </mat-list-item>
+            </mat-list>
+          </mat-expansion-panel>
+        </mat-accordion>
         <p *ngIf="hasNonAdministratorProject && !showSettings && isAppOnline" id="connect-non-admin-msg">
           {{ t("only_paratext_admins_can_start") }}
         </p>
-        <mat-form-field>
-          <mat-select
-            #projectSelect
-            id="project-select"
-            placeholder="{{ t('paratext_project') }}"
-            formControlName="paratextId"
-            [disableOptionCentering]="true"
-          >
-            <mat-option
-              *ngFor="let project of projects"
-              [value]="project.paratextId"
-              [disabled]="!project.isConnectable"
-            >
-              {{ projectLabel(project) }}
-              <ng-container *ngIf="!project.isConnectable && project.isConnected">
-                &nbsp;{{ t("already_connected") }}
-              </ng-container>
-              <ng-container *ngIf="!project.isConnectable && !project.isConnected">&nbsp;**</ng-container>
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
       </ng-container>
       <ng-template #noProjectMsg>
         <p
