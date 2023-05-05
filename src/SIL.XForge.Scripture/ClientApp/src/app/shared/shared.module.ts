@@ -3,7 +3,6 @@ import { NgModule } from '@angular/core';
 import { TranslocoModule } from '@ngneat/transloco';
 import { QuillModule } from 'ngx-quill';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { ChapterNavComponent } from './chapter-nav/chapter-nav.component';
 import { ShareControlComponent } from './share/share-control.component';
 import { ShareDialogComponent } from './share/share-dialog.component';
 import { ShareButtonComponent } from './share/share-button.component';
@@ -13,7 +12,6 @@ import { BookChapterChooserComponent } from './book-chapter-chooser/book-chapter
 
 const componentExports = [
   BookChapterChooserComponent,
-  ChapterNavComponent,
   NoticeComponent,
   ShareButtonComponent,
   ShareControlComponent,
