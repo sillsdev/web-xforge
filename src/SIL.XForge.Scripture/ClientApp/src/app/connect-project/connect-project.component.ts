@@ -1,5 +1,5 @@
 import { Component, ErrorHandler, OnInit } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -77,7 +77,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this._isAppOnline;
   }
 
-  get paratextIdControl() {
+  get paratextIdControl(): AbstractControl<any, any> {
     return this.connectProjectForm.controls.paratextId;
   }
 
@@ -217,7 +217,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     }
   }
 
-  private async populateProjectList() {
+  private async populateProjectList(): Promise<void> {
     this.state = 'loading';
     this.loadingStarted();
     const resourceFetchPromise = this.fetchResources();
@@ -234,7 +234,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     this.loadingFinished();
   }
 
-  private async fetchResources() {
+  private async fetchResources(): Promise<void> {
     try {
       this.resources = await this.paratextService.getResources();
       this.showResourcesLoadingFailedMessage = false;
