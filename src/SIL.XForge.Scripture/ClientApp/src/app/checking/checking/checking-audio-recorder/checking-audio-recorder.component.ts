@@ -3,13 +3,12 @@ import { Component, EventEmitter, Inject, OnDestroy, OnInit, Output } from '@ang
 import { translate } from '@ngneat/transloco';
 import RecordRTC from 'recordrtc';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
-import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
-import { UserService } from 'xforge-common/user.service';
+import { objectId } from 'xforge-common/utils';
 
 export interface AudioAttachment {
   status?: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded';
@@ -29,10 +28,8 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   mediaDevicesUnsupported: boolean = false;
   private stream?: MediaStream;
   private recordRTC?: RecordRTC;
-  private user?: UserDoc;
 
   constructor(
-    private readonly userService: UserService,
     private readonly noticeService: NoticeService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
     private readonly dialog: MdcDialog
@@ -46,10 +43,6 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
     return this.recordRTC != null && this.recordRTC.state === 'recording';
   }
 
-  get recodingFileName(): string {
-    return this.user == null || this.user.data == null ? '' : this.user.data.displayName + '.webm';
-  }
-
   ngOnDestroy(): void {
     if (this.isRecording) {
       this.stopRecording();
@@ -57,7 +50,6 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
-    this.user = await this.userService.getCurrentUser();
     this.mediaDevicesUnsupported = this.navigator.mediaDevices?.getUserMedia == null;
   }
 
@@ -72,7 +64,7 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
       url: audioVideoWebMURL,
       status: 'processed',
       blob: this.recordRTC.getBlob(),
-      fileName: this.recodingFileName
+      fileName: objectId() + '.webm'
     });
   }
 
