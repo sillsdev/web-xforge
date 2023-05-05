@@ -49,10 +49,10 @@ mdc-list {
   > mdc-list-item {
     height: 30px;
     padding: 0 8px;
+    column-gap: 5px;
 
     > div {
       font-size: smaller;
-      padding-left: 5px;
     }
   }
 }
