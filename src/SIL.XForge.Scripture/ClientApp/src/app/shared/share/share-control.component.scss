@@ -4,7 +4,6 @@
 
 form {
   display: flex;
-  align-items: center;
   width: 100%;
   column-gap: 20px;
   @include media-breakpoint-down(sm) {
@@ -25,8 +24,10 @@ form {
 }
 
 #send-btn {
-  // add margin that is same height as the text field helper text, so the button is centered properly
-  margin-bottom: 19px;
+  align-self: center;
+  @include media-breakpoint-down(sm) {
+    align-self: flex-end;
+  }
 }
 
 .invite-by-link .offline-text {
