@@ -2386,7 +2386,7 @@ public class ParatextService : DisposableBase, IParatextService
 
         var contentElem = new XElement("Contents");
         string label = $"[{displayName} - {_siteOptions.Value.Name}]";
-        var labelElement = new XElement("p", label, new XAttribute("class", "sf-user-label"));
+        var labelElement = new XElement("p", label, new XAttribute("sf-user-label", "true"));
         contentElem.Add(labelElement);
         string noteContentWithoutWhitespace = GetXmlContentNoWhitespace(note.Content);
         if (!noteContentWithoutWhitespace.StartsWith("<p>"))
@@ -2431,7 +2431,7 @@ public class ParatextService : DisposableBase, IParatextService
         {
             XElement elem = elements[i];
             // check if the paragraph element contains the user label class
-            if (elem.Attribute("class")?.Value == "sf-user-label")
+            if (elem.Attribute("sf-user-label")?.Value == "true")
                 isReviewer = true;
             if (i == 0 && isReviewer)
                 continue;

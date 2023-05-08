@@ -2072,7 +2072,7 @@ public class ParatextServiceTests
         expected =
             "thread2/User 01/2019-01-01T08:00:00.0000000+00:00-"
             + "MAT 1:2-"
-            + "<p class=\"sf-user-label\">[User 05 - xForge]</p><p>thread2 note 1.</p>-"
+            + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread2 note 1.</p>-"
             + "Start:0-"
             + "user05-"
             + "Tag:1";
@@ -2202,7 +2202,7 @@ public class ParatextServiceTests
         string expected2 =
             "thread1/User 01/2019-01-02T08:00:00.0000000+00:00-"
             + "MAT 1:1-"
-            + "<p class=\"sf-user-label\">[User 05 - xForge]</p><p>thread1 note 2: EDITED.</p>-"
+            + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread1 note 2: EDITED.</p>-"
             + "Start:15-"
             + "user05";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected2));
@@ -2223,7 +2223,7 @@ public class ParatextServiceTests
 
         string threadId = "thread1";
         string content1a = "Reviewer comment";
-        string content1b = "<p class=\"sf-user-label\">[User 05 - xForge]</p>\n<p>Reviewer comment</p>";
+        string content1b = "<p sf-user-label=\"true\">[User 05 - xForge]</p>\n<p>Reviewer comment</p>";
         string content2 = "Project admin comment";
         ThreadNoteComponents[] notesSF = new[]
         {
@@ -2340,7 +2340,7 @@ public class ParatextServiceTests
         string expected =
             "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-"
             + "MAT 1:1-"
-            + "<p class=\"sf-user-label\">[User 05 - xForge]</p><p>thread1 note 1.</p>-"
+            + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread1 note 1.</p>-"
             + "Start:15-"
             + "user05-"
             + "Tag:1";
@@ -4403,7 +4403,7 @@ public class ParatextServiceTests
                     if (comp.notes != null)
                         note = comp.notes[i - 1];
                     note.ownerRef ??= User05;
-                    string content = note.ownerRef == User05 ? "<p class=\"sf-user-label\">[User 05 - xForge]</p>" : "";
+                    string content = note.ownerRef == User05 ? "<p sf-user-label=\"true\">[User 05 - xForge]</p>" : "";
                     string commentContent = comp.isEdited ? $"{threadId} note {i}: EDITED." : $"{threadId} note {i}.";
                     content += note.ownerRef == User05 ? $"<p>{commentContent}</p>" : commentContent;
                     note.content ??= content;
