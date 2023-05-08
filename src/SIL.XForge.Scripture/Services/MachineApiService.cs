@@ -8,8 +8,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Polly.CircuitBreaker;
 using Serval.Client;
-using SIL.Machine.Annotations;
 using SIL.Machine.Threading;
+using SIL.Machine.Tokenization;
 using SIL.Machine.Translation;
 using SIL.Machine.WebApi;
 using SIL.Machine.WebApi.Configuration;
@@ -48,6 +48,7 @@ public class MachineApiService : IMachineApiService
     private readonly DataAccess.IRepository<SFProjectSecret> _projectSecrets;
     private readonly IRealtimeService _realtimeService;
     private readonly ITranslationEnginesClient _translationEnginesClient;
+    private readonly StringTokenizer _wordTokenizer = new LatinWordTokenizer();
 
     public MachineApiService(
         IBuildRepository builds,
@@ -261,14 +262,14 @@ public class MachineApiService : IMachineApiService
         return UpdateDto(engineDto, sfProjectId);
     }
 
-    public async Task<WordGraphDto> GetWordGraphAsync(
+    public async Task<WordGraph> GetWordGraphAsync(
         string curUserId,
         string sfProjectId,
-        IReadOnlyList<string> segment,
+        string segment,
         CancellationToken cancellationToken
     )
     {
-        WordGraphDto? wordGraphDto = null;
+        WordGraph? wordGraph = null;
 
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
@@ -281,12 +282,11 @@ public class MachineApiService : IMachineApiService
             {
                 try
                 {
-                    WordGraph wordGraph = await _translationEnginesClient.GetWordGraphAsync(
+                    wordGraph = await _translationEnginesClient.GetWordGraphAsync(
                         translationEngineId,
-                        string.Join(' ', segment),
+                        segment,
                         cancellationToken
                     );
-                    wordGraphDto = CreateDto(wordGraph);
                 }
                 catch (ServalApiException e)
                 {
@@ -316,18 +316,19 @@ public class MachineApiService : IMachineApiService
         if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
         {
             Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
-            MachineWordGraph wordGraph = await _engineService.GetWordGraphAsync(engine.Id, segment);
-            wordGraphDto = CreateDto(wordGraph);
+            string[] segments = _wordTokenizer.Tokenize(segment).ToArray();
+            MachineWordGraph machineWordGraph = await _engineService.GetWordGraphAsync(engine.Id, segments);
+            wordGraph = CreateDto(machineWordGraph, segments);
         }
 
         // This will be null if Serval is down, or if all feature flags are false
-        if (wordGraphDto is null)
+        if (wordGraph is null)
         {
             string additionalInfo = await GetAdditionalErrorInformationAsync();
             throw new DataNotFoundException($"No translation engine could be retrieved - {additionalInfo}");
         }
 
-        return wordGraphDto;
+        return wordGraph;
     }
 
     public async Task<BuildDto> StartBuildAsync(
@@ -353,6 +354,7 @@ public class MachineApiService : IMachineApiService
                     await _machineProjectService.SyncProjectCorporaAsync(curUserId, sfProjectId, cancellationToken);
                     TranslationBuild translationBuild = await _translationEnginesClient.StartBuildAsync(
                         translationEngineId,
+                        new TranslationBuildConfig(),
                         cancellationToken
                     );
                     buildDto = CreateDto(translationBuild);
@@ -402,7 +404,7 @@ public class MachineApiService : IMachineApiService
     public async Task TrainSegmentAsync(
         string curUserId,
         string sfProjectId,
-        SegmentPairDto segmentPair,
+        SegmentPair segmentPair,
         CancellationToken cancellationToken
     )
     {
@@ -419,7 +421,7 @@ public class MachineApiService : IMachineApiService
                 {
                     await _translationEnginesClient.TrainSegmentAsync(
                         translationEngineId,
-                        GetSegmentPair(segmentPair),
+                        segmentPair,
                         cancellationToken
                     );
                 }
@@ -447,23 +449,20 @@ public class MachineApiService : IMachineApiService
         if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
         {
             Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
-            await _engineService.TrainSegmentAsync(
-                engine.Id,
-                segmentPair.SourceSegment,
-                segmentPair.TargetSegment,
-                segmentPair.SentenceStart
-            );
+            string[] sourceSegment = _wordTokenizer.Tokenize(segmentPair.SourceSegment).ToArray();
+            string[] targetSegment = _wordTokenizer.Tokenize(segmentPair.TargetSegment).ToArray();
+            await _engineService.TrainSegmentAsync(engine.Id, sourceSegment, targetSegment, segmentPair.SentenceStart);
         }
     }
 
-    public async Task<TranslationResultDto> TranslateAsync(
+    public async Task<TranslationResult> TranslateAsync(
         string curUserId,
         string sfProjectId,
-        IReadOnlyList<string> segment,
+        string segment,
         CancellationToken cancellationToken
     )
     {
-        TranslationResultDto? translationResultDto = null;
+        TranslationResult? translationResult = null;
 
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
@@ -476,12 +475,11 @@ public class MachineApiService : IMachineApiService
             {
                 try
                 {
-                    TranslationResult translationResult = await _translationEnginesClient.TranslateAsync(
+                    translationResult = await _translationEnginesClient.TranslateAsync(
                         translationEngineId,
-                        string.Join(' ', segment),
+                        segment,
                         cancellationToken
                     );
-                    translationResultDto = CreateDto(translationResult);
                 }
                 catch (BrokenCircuitException e)
                 {
@@ -507,29 +505,33 @@ public class MachineApiService : IMachineApiService
         if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
         {
             Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
-            MachineTranslationResult translationResult = await _engineService.TranslateAsync(engine.Id, segment);
-            translationResultDto = CreateDto(translationResult);
+            string[] segments = _wordTokenizer.Tokenize(segment).ToArray();
+            MachineTranslationResult machineTranslationResult = await _engineService.TranslateAsync(
+                engine.Id,
+                segments
+            );
+            translationResult = CreateDto(machineTranslationResult);
         }
 
         // This will be null if Serval is down, or if all feature flags are false
-        if (translationResultDto is null)
+        if (translationResult is null)
         {
             string additionalInfo = await GetAdditionalErrorInformationAsync();
             throw new DataNotFoundException($"No translation engine could be retrieved - {additionalInfo}");
         }
 
-        return translationResultDto;
+        return translationResult;
     }
 
-    public async Task<TranslationResultDto[]> TranslateNAsync(
+    public async Task<TranslationResult[]> TranslateNAsync(
         string curUserId,
         string sfProjectId,
         int n,
-        IReadOnlyList<string> segment,
+        string segment,
         CancellationToken cancellationToken
     )
     {
-        IEnumerable<TranslationResultDto> translationResultsDto = Array.Empty<TranslationResultDto>();
+        IEnumerable<TranslationResult> translationResults = Array.Empty<TranslationResult>();
 
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
@@ -542,13 +544,12 @@ public class MachineApiService : IMachineApiService
             {
                 try
                 {
-                    IList<TranslationResult> translationResults = await _translationEnginesClient.TranslateNAsync(
+                    translationResults = await _translationEnginesClient.TranslateNAsync(
                         translationEngineId,
                         n,
-                        string.Join(' ', segment),
+                        segment,
                         cancellationToken
                     );
-                    translationResultsDto = translationResults.Select(CreateDto);
                 }
                 catch (BrokenCircuitException e)
                 {
@@ -574,15 +575,16 @@ public class MachineApiService : IMachineApiService
         if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
         {
             Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
-            IEnumerable<MachineTranslationResult> translationResults = await _engineService.TranslateAsync(
+            string[] segments = _wordTokenizer.Tokenize(segment).ToArray();
+            IEnumerable<MachineTranslationResult> machineTranslationResults = await _engineService.TranslateAsync(
                 engine.Id,
                 n,
-                segment
+                segments
             );
-            translationResultsDto = translationResults.Select(CreateDto);
+            translationResults = machineTranslationResults.Select(CreateDto);
         }
 
-        return translationResultsDto.ToArray();
+        return translationResults.ToArray();
     }
 
     private static BuildDto CreateDto(Build build) =>
@@ -625,140 +627,77 @@ public class MachineApiService : IMachineApiService
             TargetLanguageTag = translationEngine.TargetLanguage,
         };
 
-    private static PhraseDto CreateDto(MachinePhrase phrase) =>
-        new PhraseDto
+    private static Phrase CreateDto(MachinePhrase phrase) =>
+        new Phrase
         {
-            SourceSegmentRange = CreateDto(phrase.SourceSegmentRange),
+            SourceSegmentStart = phrase.SourceSegmentRange.Start,
+            SourceSegmentEnd = phrase.SourceSegmentRange.End,
             TargetSegmentCut = phrase.TargetSegmentCut,
-            Confidence = phrase.Confidence,
         };
 
-    private static PhraseDto CreateDto(Phrase phrase) =>
-        new PhraseDto
+    private static TranslationResult CreateDto(MachineTranslationResult translationResult) =>
+        new TranslationResult
         {
-            SourceSegmentRange = CreateRangeDto(phrase),
-            TargetSegmentCut = phrase.TargetSegmentCut,
-            Confidence = phrase.Confidence,
-        };
-
-    private static RangeDto CreateDto(Range<int> range) => new RangeDto { Start = range.Start, End = range.End };
-
-    private static TranslationResultDto CreateDto(MachineTranslationResult translationResult) =>
-        new TranslationResultDto
-        {
-            Target = translationResult.TargetSegment.ToArray(),
-            Confidences = translationResult.WordConfidences.Select(c => (float)c).ToArray(),
-            Sources = translationResult.WordSources.ToArray(),
+            SourceTokens = translationResult.SourceSegment.ToArray(),
+            TargetTokens = translationResult.TargetSegment.ToArray(),
+            Confidences = translationResult.WordConfidences.ToArray(),
+            Sources = translationResult.WordSources.Select(CreateDto).ToArray(),
             Alignment = CreateDto(translationResult.Alignment),
             Phrases = translationResult.Phrases.Select(CreateDto).ToArray(),
+            Translation = string.Join(' ', translationResult.TargetSegment),
         };
 
-    private static TranslationResultDto CreateDto(TranslationResult translationResult) =>
-        new TranslationResultDto
-        {
-            Target = translationResult.Tokens.ToArray(),
-            Confidences = translationResult.Confidences.ToArray(),
-            Sources = translationResult.Sources.Select(CreateDto).ToArray(),
-            Alignment = translationResult.Alignment.Select(CreateDto).ToArray(),
-            Phrases = translationResult.Phrases.Select(CreateDto).ToArray(),
-        };
-
-    private static TranslationSources CreateDto(IList<TranslationSource> translationSourceList)
+    private static IList<TranslationSource> CreateDto(TranslationSources translationSources)
     {
-        TranslationSources translationSources = TranslationSources.None;
-        if (translationSourceList.Contains(TranslationSource.Primary))
-        {
-            translationSources |= TranslationSources.Smt;
-        }
-
-        if (translationSourceList.Contains(TranslationSource.Secondary))
-        {
-            translationSources |= TranslationSources.Transfer;
-        }
-
-        if (translationSourceList.Contains(TranslationSource.Human))
-        {
-            translationSources |= TranslationSources.Prefix;
-        }
-
-        return translationSources;
+        List<TranslationSource> translationSourceList = new List<TranslationSource>();
+        if (translationSources.HasFlag(TranslationSources.Smt))
+            translationSourceList.Add(TranslationSource.Primary);
+        if (translationSources.HasFlag(TranslationSources.Transfer))
+            translationSourceList.Add(TranslationSource.Secondary);
+        if (translationSources.HasFlag(TranslationSources.Prefix))
+            translationSourceList.Add(TranslationSource.Human);
+        return translationSourceList;
     }
 
-    private static WordGraphDto CreateDto(MachineWordGraph wordGraph) =>
-        new WordGraphDto
+    private static WordGraph CreateDto(MachineWordGraph wordGraph, IList<string> sourceTokens) =>
+        new WordGraph
         {
             InitialStateScore = (float)wordGraph.InitialStateScore,
             FinalStates = wordGraph.FinalStates.ToArray(),
             Arcs = wordGraph.Arcs.Select(CreateDto).ToArray(),
+            SourceTokens = sourceTokens,
         };
 
-    private static WordGraphDto CreateDto(WordGraph wordGraph) =>
-        new WordGraphDto
-        {
-            InitialStateScore = wordGraph.InitialStateScore,
-            FinalStates = wordGraph.FinalStates.ToArray(),
-            Arcs = wordGraph.Arcs.Select(CreateDto).ToArray(),
-        };
-
-    private static WordGraphArcDto CreateDto(MachineWordGraphArc arc) =>
-        new WordGraphArcDto
+    private static WordGraphArc CreateDto(MachineWordGraphArc arc) =>
+        new WordGraphArc
         {
             PrevState = arc.PrevState,
             NextState = arc.NextState,
             Score = (float)arc.Score,
-            Words = arc.Words.ToArray(),
-            Confidences = arc.WordConfidences.Select(c => (float)c).ToArray(),
-            SourceSegmentRange = CreateDto(arc.SourceSegmentRange),
-            Sources = arc.WordSources.ToArray(),
+            TargetTokens = arc.Words.ToArray(),
+            Confidences = arc.WordConfidences.ToArray(),
+            SourceSegmentStart = arc.SourceSegmentRange.Start,
+            SourceSegmentEnd = arc.SourceSegmentRange.End,
+            Sources = arc.WordSources.Select(CreateDto).ToArray(),
             Alignment = CreateDto(arc.Alignment),
         };
 
-    private static WordGraphArcDto CreateDto(WordGraphArc arc) =>
-        new WordGraphArcDto
-        {
-            PrevState = arc.PrevState,
-            NextState = arc.NextState,
-            Score = arc.Score,
-            Words = arc.Tokens.ToArray(),
-            Confidences = arc.Confidences.ToArray(),
-            SourceSegmentRange = CreateRangeDto(arc),
-            Sources = arc.Sources.Select(CreateDto).ToArray(),
-            Alignment = arc.Alignment.Select(CreateDto).ToArray(),
-        };
-
-    private static AlignedWordPairDto[] CreateDto(WordAlignmentMatrix matrix)
+    private static AlignedWordPair[] CreateDto(WordAlignmentMatrix matrix)
     {
-        var wordPairs = new List<AlignedWordPairDto>();
+        var wordPairs = new List<AlignedWordPair>();
         for (int i = 0; i < matrix.RowCount; i++)
         {
             for (int j = 0; j < matrix.ColumnCount; j++)
             {
                 if (matrix[i, j])
                 {
-                    wordPairs.Add(new AlignedWordPairDto { SourceIndex = i, TargetIndex = j });
+                    wordPairs.Add(new AlignedWordPair { SourceIndex = i, TargetIndex = j });
                 }
             }
         }
 
         return wordPairs.ToArray();
     }
-
-    private static AlignedWordPairDto CreateDto(AlignedWordPair alignedWordPair) =>
-        new AlignedWordPairDto { SourceIndex = alignedWordPair.SourceIndex, TargetIndex = alignedWordPair.TargetIndex };
-
-    private static RangeDto CreateRangeDto(Phrase phrase) =>
-        new RangeDto { Start = phrase.SourceSegmentStart, End = phrase.SourceSegmentEnd };
-
-    private static RangeDto CreateRangeDto(WordGraphArc arc) =>
-        new RangeDto { Start = arc.SourceSegmentStart, End = arc.SourceSegmentEnd };
-
-    private static SegmentPair GetSegmentPair(SegmentPairDto segmentPairDto) =>
-        new SegmentPair
-        {
-            SentenceStart = segmentPairDto.SentenceStart,
-            SourceSegment = string.Join(' ', segmentPairDto.SourceSegment ?? Array.Empty<string>()),
-            TargetSegment = string.Join(' ', segmentPairDto.TargetSegment ?? Array.Empty<string>()),
-        };
 
     /// <summary>
     /// This method maps Serval API exceptions to the exceptions that Machine.js understands.
