@@ -1,5 +1,6 @@
-import { Component, ErrorHandler, OnInit } from '@angular/core';
+import { Component, ErrorHandler, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { MatSelectionList } from '@angular/material/list';
 import { Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -43,7 +44,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   state: 'connecting' | 'loading' | 'input' | 'login' | 'offline' = 'loading';
   connectProjectName?: string;
   projectDoc?: SFProjectDoc;
-
+  @ViewChild('projectSelect') projectSelect?: MatSelectionList;
   projectLabel = projectLabel;
 
   private _isAppOnline: boolean = false;
@@ -82,10 +83,10 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   get showSettings(): boolean {
-    if (this.state !== 'input' || this._projects == null) {
+    if (this.state !== 'input' || this._projects == null || this.projectSelect == null) {
       return false;
     }
-    const paratextId: string = this.paratextIdControl.value;
+    const paratextId: string = this.projectSelect.selectedOptions.selected[0]?.value;
     const project = this._projects.find(p => p.paratextId === paratextId);
     return project != null && project.projectId == null;
   }
@@ -114,7 +115,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   }
 
   get projectsProhibited(): ParatextProject[] {
-    return this.projects.filter(p => !p.isConnectable);
+    return this.projects.filter(p => !p.isConnected && !p.isConnectable);
   }
 
   get projectsConnected(): ParatextProject[] {
