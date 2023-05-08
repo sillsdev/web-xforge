@@ -15,7 +15,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, map, startWith, take, tap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, startWith, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -289,12 +289,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   async ngOnInit(): Promise<void> {
-    await this.authService.loggedInState$
-      .pipe(
-        filter(state => state.loggedIn),
-        take(1)
-      )
-      .toPromise();
+    await this.authService.loggedIn;
     this.loadingStarted();
     this.currentUserDoc = await this.userService.getCurrentUser();
     const userData = cloneDeep(this.currentUserDoc.data);

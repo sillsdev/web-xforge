@@ -200,6 +200,15 @@ export class AuthService {
     return Promise.resolve(state.newlyLoggedIn);
   }
 
+  get loggedIn(): Promise<LoginResult> {
+    return this.loggedInState$
+      .pipe(
+        filter(state => state.loggedIn),
+        take(1)
+      )
+      .toPromise();
+  }
+
   get loggedInState$(): Observable<LoginResult> {
     return this._loggedInState$.asObservable().pipe(filter(state => state != null)) as Observable<LoginResult>;
   }

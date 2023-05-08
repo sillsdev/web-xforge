@@ -14,7 +14,7 @@ namespace SIL.XForge.Scripture.Services;
 [TestFixture]
 public class AnonymousServiceTests
 {
-    private const int MaxUsers = 50;
+    private const int MaxUsers = 250;
     private const string Project01 = "project01";
 
     [Test]
