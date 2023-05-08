@@ -103,7 +103,9 @@ public class MachineProjectServiceTests
         // SUT
         await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
 
-        await env.TranslationEnginesClient.Received().StartBuildAsync(TranslationEngine02, CancellationToken.None);
+        await env.TranslationEnginesClient
+            .Received()
+            .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
     [Test]
@@ -121,7 +123,7 @@ public class MachineProjectServiceTests
             .GetCorpusAsync(TranslationEngine02, Corpus01, CancellationToken.None);
         await env.TranslationEnginesClient
             .DidNotReceiveWithAnyArgs()
-            .StartBuildAsync(TranslationEngine02, CancellationToken.None);
+            .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
     [Test]
@@ -148,7 +150,7 @@ public class MachineProjectServiceTests
 
         await env.TranslationEnginesClient
             .DidNotReceiveWithAnyArgs()
-            .StartBuildAsync(TranslationEngine02, CancellationToken.None);
+            .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
     [Test]
@@ -165,7 +167,7 @@ public class MachineProjectServiceTests
 
         await env.TranslationEnginesClient
             .DidNotReceiveWithAnyArgs()
-            .StartBuildAsync(TranslationEngine02, CancellationToken.None);
+            .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
     [Test]
