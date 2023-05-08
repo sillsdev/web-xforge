@@ -1,6 +1,8 @@
 import { Component, ErrorHandler, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatSelectionList } from '@angular/material/list';
+import { MatExpansionPanel } from '@angular/material/expansion';
+import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -45,6 +47,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   connectProjectName?: string;
   projectDoc?: SFProjectDoc;
   @ViewChild('projectSelect') projectSelect?: MatSelectionList;
+  @ViewChild('projectsConnectedPanel') projectsConnectedPanel?: MatExpansionPanel;
   projectLabel = projectLabel;
 
   private _isAppOnline: boolean = false;
@@ -54,6 +57,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
   constructor(
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
+    private readonly userProjectsService: SFUserProjectsService,
     private readonly router: Router,
     readonly i18n: I18nService,
     noticeService: NoticeService,
@@ -82,14 +86,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this.connectProjectForm.controls.paratextId;
   }
 
-  get showSettings(): boolean {
-    if (this.state !== 'input' || this._projects == null || this.projectSelect == null) {
-      return false;
-    }
-    const paratextId: string = this.projectSelect.selectedOptions.selected[0]?.value;
-    const project = this._projects.find(p => p.paratextId === paratextId);
-    return project != null && project.projectId == null;
-  }
+  showSettings = false;
 
   get submitDisabled(): boolean {
     return !this.hasConnectableProjects || !this.isAppOnline;
@@ -110,16 +107,12 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this._projects != null ? this._projects : [];
   }
 
-  get projectsAvailable(): ParatextProject[] {
-    return this.projects.filter(p => !p.isConnected && p.isConnectable);
-  }
-
-  get projectsProhibited(): ParatextProject[] {
-    return this.projects.filter(p => !p.isConnected && !p.isConnectable);
-  }
-
   get projectsConnected(): ParatextProject[] {
     return this.projects.filter(p => p.isConnected);
+  }
+
+  get projectsUnconnected(): ParatextProject[] {
+    return this.projects.filter(p => !p.isConnected);
   }
 
   get translationSuggestionsEnabled(): boolean {
@@ -130,23 +123,15 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this.connectProjectForm.controls.settings as UntypedFormGroup;
   }
 
-  ngOnInit(): void {
-    this.subscribe(this.paratextIdControl.valueChanges, () => {
-      if (this.state !== 'input') {
-        return;
-      }
-      if (this.showSettings) {
-        this.settings.enable();
-      } else {
-        this.settings.disable();
-      }
-      if (!this.isBasedOnProjectSet) {
-        const translationSuggestions = this.settings.controls.translationSuggestions;
-        translationSuggestions.reset();
-        translationSuggestions.disable();
-      }
-    });
+  displaySettings(): void {
+    this.settings.enable();
+    this.showSettings = true;
+    if (this.projectsConnectedPanel != null) {
+      this.projectsConnectedPanel.expanded = false;
+    }
+  }
 
+  ngOnInit(): void {
     this.state = 'loading';
     this.subscribe(this.settings.controls.sourceParatextId.valueChanges, (value: boolean) => {
       const translationSuggestions = this.settings.controls.translationSuggestions;
@@ -167,9 +152,23 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
           this.state = 'input';
         }
       } else {
+        if (this._projects == null) {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const projectDocs$ = this.userProjectsService.projectDocs$;
+        }
         this.state = 'offline';
       }
     });
+  }
+
+  goToProject(projectsConnectedList: MatSelectionList): void {
+    if (this._projects != null) {
+      const selection = projectsConnectedList.selectedOptions.selected[0]?.value;
+      const project = this._projects.find(p => p.paratextId === selection.paratextId);
+      if (project != null) {
+        this.router.navigate(['/projects', project.projectId]);
+      }
+    }
   }
 
   logInWithParatext(): void {
