@@ -43,6 +43,8 @@ public class MachineApiServiceTests
     private const string Build01 = "build01";
     private const string TranslationEngine01 = "translationEngine01";
     private const string User01 = "user01";
+    private const string Segment = "segment";
+    private const string TargetSegment = "targetSegment";
 
     [Test]
     public async Task GetBuildAsync_InProcessNoRevisionNoBuildRunning()
@@ -777,7 +779,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            () => env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -789,13 +791,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () =>
-                env.Service.GetWordGraphAsync(
-                    "invalid_user_id",
-                    Project01,
-                    Array.Empty<string>(),
-                    CancellationToken.None
-                )
+            () => env.Service.GetWordGraphAsync("invalid_user_id", Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -807,13 +803,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.GetWordGraphAsync(
-                    User01,
-                    "invalid_project_id",
-                    Array.Empty<string>(),
-                    CancellationToken.None
-                )
+            () => env.Service.GetWordGraphAsync(User01, "invalid_project_id", Segment, CancellationToken.None)
         );
     }
 
@@ -829,7 +819,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            () => env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -842,7 +832,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetWordGraphAsync(User01, Project03, Array.Empty<string>(), CancellationToken.None)
+            () => env.Service.GetWordGraphAsync(User01, Project03, Segment, CancellationToken.None)
         );
     }
 
@@ -852,13 +842,13 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient
-            .GetWordGraphAsync(TranslationEngine01, String.Empty, CancellationToken.None)
+            .GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            () => env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -868,14 +858,14 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient
-            .GetWordGraphAsync(TranslationEngine01, string.Empty, CancellationToken.None)
+            .GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
         env.EngineService
-            .GetWordGraphAsync(TranslationEngine01, Array.Empty<string>())
+            .GetWordGraphAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
             .Returns(Task.FromResult(new MachineWordGraph(Array.Empty<MachineWordGraphArc>(), Array.Empty<int>())));
 
         // SUT
-        _ = await env.Service.GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None);
+        _ = await env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None);
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
     }
@@ -887,7 +877,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         const float initialStateScore = -91.43696f;
         env.EngineService
-            .GetWordGraphAsync(TranslationEngine01, Array.Empty<string>())
+            .GetWordGraphAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
             .Returns(
                 Task.FromResult(
                     new MachineWordGraph(
@@ -901,7 +891,7 @@ public class MachineApiServiceTests
                                 new WordAlignmentMatrix(0, 0),
                                 Range<int>.Null,
                                 Array.Empty<TranslationSources>()
-                            )
+                            ),
                         },
                         new[] { 1 },
                         initialStateScore
@@ -911,17 +901,12 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
-        WordGraphDto actual = await env.Service.GetWordGraphAsync(
-            User01,
-            Project01,
-            Array.Empty<string>(),
-            CancellationToken.None
-        );
+        WordGraph actual = await env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None);
 
         Assert.IsNotNull(actual);
         Assert.AreEqual(initialStateScore, actual.InitialStateScore);
-        Assert.AreEqual(1, actual.Arcs.Length);
-        Assert.AreEqual(1, actual.FinalStates.Length);
+        Assert.AreEqual(1, actual.Arcs.Count);
+        Assert.AreEqual(1, actual.FinalStates.Count);
     }
 
     [Test]
@@ -931,7 +916,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
         const float initialStateScore = -91.43696f;
         env.TranslationEnginesClient
-            .GetWordGraphAsync(TranslationEngine01, string.Empty, CancellationToken.None)
+            .GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new WordGraph
@@ -939,23 +924,19 @@ public class MachineApiServiceTests
                         Arcs = new[] { new WordGraphArc() },
                         FinalStates = new[] { 1 },
                         InitialStateScore = initialStateScore,
+                        SourceTokens = new[] { Segment },
                     }
                 )
             );
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        WordGraphDto actual = await env.Service.GetWordGraphAsync(
-            User01,
-            Project01,
-            Array.Empty<string>(),
-            CancellationToken.None
-        );
+        WordGraph actual = await env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None);
 
         Assert.IsNotNull(actual);
         Assert.AreEqual(initialStateScore, actual.InitialStateScore);
-        Assert.AreEqual(1, actual.Arcs.Length);
-        Assert.AreEqual(1, actual.FinalStates.Length);
+        Assert.AreEqual(1, actual.Arcs.Count);
+        Assert.AreEqual(1, actual.FinalStates.Count);
     }
 
     [Test]
@@ -964,19 +945,21 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient
-            .GetWordGraphAsync(TranslationEngine01, string.Empty)
+            .GetWordGraphAsync(TranslationEngine01, Segment)
             .Returns(Task.FromResult(new WordGraph()));
         env.EngineService
-            .GetWordGraphAsync(TranslationEngine01, Array.Empty<string>())
+            .GetWordGraphAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
             .Returns(Task.FromResult(new MachineWordGraph()));
 
         // SUT
-        _ = await env.Service.GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None);
+        _ = await env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None);
 
-        await env.EngineService.Received(1).GetWordGraphAsync(TranslationEngine01, Array.Empty<string>());
+        await env.EngineService
+            .Received(1)
+            .GetWordGraphAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment));
         await env.TranslationEnginesClient
             .Received(1)
-            .GetWordGraphAsync(TranslationEngine01, string.Empty, CancellationToken.None);
+            .GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None);
     }
 
     [Test]
@@ -1052,7 +1035,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient
-            .StartBuildAsync(TranslationEngine01, CancellationToken.None)
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
             .Throws(new BrokenCircuitException());
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
@@ -1068,7 +1051,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient
-            .StartBuildAsync(TranslationEngine01, CancellationToken.None)
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
             .Throws(new BrokenCircuitException());
         env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
 
@@ -1128,7 +1111,7 @@ public class MachineApiServiceTests
         const int revision = 2;
         const JobState state = JobState.Active;
         env.TranslationEnginesClient
-            .StartBuildAsync(TranslationEngine01, CancellationToken.None)
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new TranslationBuild
@@ -1165,7 +1148,7 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient
-            .StartBuildAsync(TranslationEngine01, CancellationToken.None)
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
             .Returns(Task.FromResult(new TranslationBuild()));
         env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
 
@@ -1174,7 +1157,9 @@ public class MachineApiServiceTests
 
         await env.EngineService.Received(1).StartBuildAsync(TranslationEngine01);
         await env.MachineProjectService.Received(1).SyncProjectCorporaAsync(User01, Project01, CancellationToken.None);
-        await env.TranslationEnginesClient.Received(1).StartBuildAsync(TranslationEngine01, CancellationToken.None);
+        await env.TranslationEnginesClient
+            .Received(1)
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
     }
 
     [Test]
@@ -1185,13 +1170,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () =>
-                env.Service.TrainSegmentAsync(
-                    "invalid_user_id",
-                    Project01,
-                    new SegmentPairDto(),
-                    CancellationToken.None
-                )
+            () => env.Service.TrainSegmentAsync("invalid_user_id", Project01, new SegmentPair(), CancellationToken.None)
         );
     }
 
@@ -1203,13 +1182,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.TrainSegmentAsync(
-                    User01,
-                    "invalid_project_id",
-                    new SegmentPairDto(),
-                    CancellationToken.None
-                )
+            () => env.Service.TrainSegmentAsync(User01, "invalid_project_id", new SegmentPair(), CancellationToken.None)
         );
     }
 
@@ -1225,7 +1198,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TrainSegmentAsync(User01, Project01, new SegmentPairDto(), CancellationToken.None)
+            () => env.Service.TrainSegmentAsync(User01, Project01, new SegmentPair(), CancellationToken.None)
         );
     }
 
@@ -1238,7 +1211,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TrainSegmentAsync(User01, Project03, new SegmentPairDto(), CancellationToken.None)
+            () => env.Service.TrainSegmentAsync(User01, Project03, new SegmentPair(), CancellationToken.None)
         );
     }
 
@@ -1254,7 +1227,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.TrainSegmentAsync(User01, Project01, new SegmentPairDto(), CancellationToken.None)
+            () => env.Service.TrainSegmentAsync(User01, Project01, new SegmentPair(), CancellationToken.None)
         );
     }
 
@@ -1263,21 +1236,26 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var segmentPairDto = new SegmentPairDto();
+        var segmentPair = new SegmentPair
+        {
+            SentenceStart = false,
+            SourceSegment = Segment,
+            TargetSegment = TargetSegment,
+        };
         env.TranslationEnginesClient
             .TrainSegmentAsync(TranslationEngine01, Arg.Any<SegmentPair>(), CancellationToken.None)
             .Throws(new BrokenCircuitException());
         env.EngineService
             .TrainSegmentAsync(
                 TranslationEngine01,
-                segmentPairDto.SourceSegment,
-                segmentPairDto.TargetSegment,
-                segmentPairDto.SentenceStart
+                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.SourceSegment),
+                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.TargetSegment),
+                segmentPair.SentenceStart
             )
             .Returns(Task.FromResult(true));
 
         // SUT
-        await env.Service.TrainSegmentAsync(User01, Project01, segmentPairDto, CancellationToken.None);
+        await env.Service.TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
     }
@@ -1288,18 +1266,23 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
-        var segmentPairDto = new SegmentPairDto();
+        var segmentPair = new SegmentPair
+        {
+            SentenceStart = false,
+            SourceSegment = Segment,
+            TargetSegment = TargetSegment,
+        };
 
         // SUT
-        await env.Service.TrainSegmentAsync(User01, Project01, segmentPairDto, CancellationToken.None);
+        await env.Service.TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
 
         await env.EngineService
             .Received(1)
             .TrainSegmentAsync(
                 TranslationEngine01,
-                segmentPairDto.SourceSegment,
-                segmentPairDto.TargetSegment,
-                segmentPairDto.SentenceStart
+                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.SourceSegment),
+                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.TargetSegment),
+                segmentPair.SentenceStart
             );
     }
 
@@ -1311,7 +1294,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        await env.Service.TrainSegmentAsync(User01, Project01, new SegmentPairDto(), CancellationToken.None);
+        await env.Service.TrainSegmentAsync(User01, Project01, new SegmentPair(), CancellationToken.None);
 
         await env.TranslationEnginesClient
             .Received(1)
@@ -1323,18 +1306,23 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var segmentPairDto = new SegmentPairDto();
+        var segmentPair = new SegmentPair
+        {
+            SentenceStart = false,
+            SourceSegment = Segment,
+            TargetSegment = TargetSegment,
+        };
 
         // SUT
-        await env.Service.TrainSegmentAsync(User01, Project01, segmentPairDto, CancellationToken.None);
+        await env.Service.TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
 
         await env.EngineService
             .Received(1)
             .TrainSegmentAsync(
                 TranslationEngine01,
-                segmentPairDto.SourceSegment,
-                segmentPairDto.TargetSegment,
-                segmentPairDto.SentenceStart
+                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.SourceSegment),
+                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.TargetSegment),
+                segmentPair.SentenceStart
             );
         await env.TranslationEnginesClient
             .Received(1)
@@ -1351,7 +1339,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            () => env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -1363,8 +1351,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () =>
-                env.Service.TranslateAsync("invalid_user_id", Project01, Array.Empty<string>(), CancellationToken.None)
+            () => env.Service.TranslateAsync("invalid_user_id", Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -1376,8 +1363,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.TranslateAsync(User01, "invalid_project_id", Array.Empty<string>(), CancellationToken.None)
+            () => env.Service.TranslateAsync(User01, "invalid_project_id", Segment, CancellationToken.None)
         );
     }
 
@@ -1393,7 +1379,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            () => env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -1406,7 +1392,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateAsync(User01, Project03, Array.Empty<string>(), CancellationToken.None)
+            () => env.Service.TranslateAsync(User01, Project03, Segment, CancellationToken.None)
         );
     }
 
@@ -1416,13 +1402,13 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient
-            .TranslateAsync(TranslationEngine01, string.Empty, CancellationToken.None)
+            .TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            () => env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None)
         );
     }
 
@@ -1432,10 +1418,10 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient
-            .TranslateAsync(TranslationEngine01, string.Empty, CancellationToken.None)
+            .TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
         env.EngineService
-            .TranslateAsync(TranslationEngine01, Array.Empty<string>())
+            .TranslateAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
             .Returns(
                 Task.FromResult(
                     new MachineTranslationResult(
@@ -1450,7 +1436,7 @@ public class MachineApiServiceTests
             );
 
         // SUT
-        _ = await env.Service.TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None);
+        _ = await env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None);
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
     }
@@ -1461,12 +1447,12 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.EngineService
-            .TranslateAsync(TranslationEngine01, Array.Empty<string>())
+            .TranslateAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
             .Returns(
                 Task.FromResult(
                     new MachineTranslationResult(
-                        new[] { string.Empty },
-                        new[] { string.Empty },
+                        new[] { Segment },
+                        new[] { TargetSegment },
                         new[] { 0.0 },
                         new[] { TranslationSources.Smt },
                         new WordAlignmentMatrix(1, 1, new[] { (0, 0) }),
@@ -1477,19 +1463,17 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
-        TranslationResultDto actual = await env.Service.TranslateAsync(
-            User01,
-            Project01,
-            Array.Empty<string>(),
-            CancellationToken.None
-        );
+        TranslationResult actual = await env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None);
 
         Assert.IsNotNull(actual);
-        Assert.AreEqual(1, actual.Target.Length);
-        Assert.AreEqual(1, actual.Confidences.Length);
-        Assert.AreEqual(1, actual.Sources.Length);
-        Assert.AreEqual(1, actual.Alignment.Length);
-        Assert.AreEqual(1, actual.Phrases.Length);
+        Assert.AreEqual(1, actual.SourceTokens.Count);
+        Assert.AreEqual(1, actual.TargetTokens.Count);
+        Assert.AreEqual(1, actual.Confidences.Count);
+        Assert.AreEqual(1, actual.Sources.Count);
+        Assert.AreEqual(1, actual.Sources.First().Count);
+        Assert.AreEqual(1, actual.Alignment.Count);
+        Assert.AreEqual(1, actual.Phrases.Count);
+        Assert.AreEqual(TargetSegment, actual.Translation);
     }
 
     [Test]
@@ -1498,35 +1482,34 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient
-            .TranslateAsync(TranslationEngine01, string.Empty, CancellationToken.None)
+            .TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new TranslationResult
                     {
                         Alignment = new[] { new AlignedWordPair() },
-                        Confidences = new[] { 0.0f },
+                        Confidences = new[] { 0.0 },
                         Phrases = new[] { new Phrase() },
                         Sources = new IList<TranslationSource>[] { new[] { TranslationSource.Primary } },
-                        Tokens = new[] { string.Empty },
+                        TargetTokens = new[] { TargetSegment },
+                        SourceTokens = new[] { Segment },
+                        Translation = TargetSegment,
                     }
                 )
             );
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        TranslationResultDto actual = await env.Service.TranslateAsync(
-            User01,
-            Project01,
-            Array.Empty<string>(),
-            CancellationToken.None
-        );
+        TranslationResult actual = await env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None);
 
         Assert.IsNotNull(actual);
-        Assert.AreEqual(1, actual.Target.Length);
-        Assert.AreEqual(1, actual.Confidences.Length);
-        Assert.AreEqual(1, actual.Sources.Length);
-        Assert.AreEqual(1, actual.Alignment.Length);
-        Assert.AreEqual(1, actual.Phrases.Length);
+        Assert.AreEqual(1, actual.SourceTokens.Count);
+        Assert.AreEqual(1, actual.TargetTokens.Count);
+        Assert.AreEqual(1, actual.Confidences.Count);
+        Assert.AreEqual(1, actual.Sources.Count);
+        Assert.AreEqual(1, actual.Alignment.Count);
+        Assert.AreEqual(1, actual.Phrases.Count);
+        Assert.AreEqual(TargetSegment, actual.Translation);
     }
 
     [Test]
@@ -1535,21 +1518,23 @@ public class MachineApiServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TranslationEnginesClient
-            .TranslateAsync(TranslationEngine01, string.Empty, CancellationToken.None)
+            .TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
             .Returns(
                 Task.FromResult(
                     new TranslationResult
                     {
                         Alignment = new[] { new AlignedWordPair() },
-                        Confidences = new[] { 0.0f },
+                        Confidences = new[] { 0.0 },
                         Phrases = new[] { new Phrase() },
                         Sources = new IList<TranslationSource>[] { new[] { TranslationSource.Primary } },
-                        Tokens = new[] { string.Empty },
+                        TargetTokens = new[] { TargetSegment },
+                        SourceTokens = new[] { Segment },
+                        Translation = TargetSegment,
                     }
                 )
             );
         env.EngineService
-            .TranslateAsync(TranslationEngine01, Array.Empty<string>())
+            .TranslateAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
             .Returns(
                 Task.FromResult(
                     new MachineTranslationResult(
@@ -1564,12 +1549,14 @@ public class MachineApiServiceTests
             );
 
         // SUT
-        _ = await env.Service.TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None);
+        _ = await env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None);
 
-        await env.EngineService.Received(1).TranslateAsync(TranslationEngine01, Array.Empty<string>());
+        await env.EngineService
+            .Received(1)
+            .TranslateAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment));
         await env.TranslationEnginesClient
             .Received(1)
-            .TranslateAsync(TranslationEngine01, string.Empty, CancellationToken.None);
+            .TranslateAsync(TranslationEngine01, Segment, CancellationToken.None);
     }
 
     [Test]
@@ -1581,14 +1568,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () =>
-                env.Service.TranslateNAsync(
-                    "invalid_user_id",
-                    Project01,
-                    n,
-                    Array.Empty<string>(),
-                    CancellationToken.None
-                )
+            () => env.Service.TranslateNAsync("invalid_user_id", Project01, n, Segment, CancellationToken.None)
         );
     }
 
@@ -1601,14 +1581,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () =>
-                env.Service.TranslateNAsync(
-                    User01,
-                    "invalid_project_id",
-                    n,
-                    Array.Empty<string>(),
-                    CancellationToken.None
-                )
+            () => env.Service.TranslateNAsync(User01, "invalid_project_id", n, Segment, CancellationToken.None)
         );
     }
 
@@ -1625,7 +1598,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
+            () => env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None)
         );
     }
 
@@ -1639,7 +1612,7 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.TranslateNAsync(User01, Project03, n, Array.Empty<string>(), CancellationToken.None)
+            () => env.Service.TranslateNAsync(User01, Project03, n, Segment, CancellationToken.None)
         );
     }
 
@@ -1650,13 +1623,13 @@ public class MachineApiServiceTests
         const int n = 1;
         var env = new TestEnvironment();
         env.TranslationEnginesClient
-            .TranslateNAsync(TranslationEngine01, n, string.Empty, CancellationToken.None)
+            .TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
+            () => env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None)
         );
     }
 
@@ -1667,14 +1640,14 @@ public class MachineApiServiceTests
         const int n = 1;
         var env = new TestEnvironment();
         env.TranslationEnginesClient
-            .TranslateNAsync(TranslationEngine01, n, string.Empty, CancellationToken.None)
+            .TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
             .Throws(new BrokenCircuitException());
         env.EngineService
-            .TranslateAsync(TranslationEngine01, n, Array.Empty<string>())
+            .TranslateAsync(TranslationEngine01, n, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
             .Returns(Task.FromResult(Array.Empty<MachineTranslationResult>().AsEnumerable()));
 
         // SUT
-        _ = await env.Service.TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None);
+        _ = await env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None);
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
     }
@@ -1686,14 +1659,14 @@ public class MachineApiServiceTests
         const int n = 1;
         var env = new TestEnvironment();
         env.EngineService
-            .TranslateAsync(TranslationEngine01, n, Array.Empty<string>())
+            .TranslateAsync(TranslationEngine01, n, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
             .Returns(
                 Task.FromResult(
                     new[]
                     {
                         new MachineTranslationResult(
-                            new[] { string.Empty },
-                            new[] { string.Empty },
+                            new[] { Segment },
+                            new[] { TargetSegment },
                             new[] { 0.0 },
                             new[] { TranslationSources.Smt },
                             new WordAlignmentMatrix(1, 1, new[] { (0, 0) }),
@@ -1705,21 +1678,23 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
-        TranslationResultDto[] actual = await env.Service.TranslateNAsync(
+        TranslationResult[] actual = await env.Service.TranslateNAsync(
             User01,
             Project01,
             n,
-            Array.Empty<string>(),
+            Segment,
             CancellationToken.None
         );
 
         Assert.IsNotNull(actual);
         Assert.AreEqual(1, actual.Length);
-        Assert.AreEqual(1, actual.First().Target.Length);
-        Assert.AreEqual(1, actual.First().Confidences.Length);
-        Assert.AreEqual(1, actual.First().Sources.Length);
-        Assert.AreEqual(1, actual.First().Alignment.Length);
-        Assert.AreEqual(1, actual.First().Phrases.Length);
+        Assert.AreEqual(1, actual.First().SourceTokens.Count);
+        Assert.AreEqual(1, actual.First().TargetTokens.Count);
+        Assert.AreEqual(1, actual.First().Confidences.Count);
+        Assert.AreEqual(1, actual.First().Sources.Count);
+        Assert.AreEqual(1, actual.First().Alignment.Count);
+        Assert.AreEqual(1, actual.First().Phrases.Count);
+        Assert.AreEqual(TargetSegment, actual.First().Translation);
     }
 
     [Test]
@@ -1729,7 +1704,7 @@ public class MachineApiServiceTests
         const int n = 1;
         var env = new TestEnvironment();
         env.TranslationEnginesClient
-            .TranslateNAsync(TranslationEngine01, n, string.Empty, CancellationToken.None)
+            .TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
             .Returns(
                 Task.FromResult<IList<TranslationResult>>(
                     new[]
@@ -1737,10 +1712,12 @@ public class MachineApiServiceTests
                         new TranslationResult
                         {
                             Alignment = new[] { new AlignedWordPair() },
-                            Confidences = new[] { 0.0f },
+                            Confidences = new[] { 0.0 },
                             Phrases = new[] { new Phrase() },
                             Sources = new IList<TranslationSource>[] { new[] { TranslationSource.Primary } },
-                            Tokens = new[] { string.Empty },
+                            TargetTokens = new[] { TargetSegment },
+                            SourceTokens = new[] { Segment },
+                            Translation = TargetSegment,
                         },
                     }
                 )
@@ -1748,21 +1725,23 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        TranslationResultDto[] actual = await env.Service.TranslateNAsync(
+        TranslationResult[] actual = await env.Service.TranslateNAsync(
             User01,
             Project01,
             n,
-            Array.Empty<string>(),
+            Segment,
             CancellationToken.None
         );
 
         Assert.IsNotNull(actual);
         Assert.AreEqual(1, actual.Length);
-        Assert.AreEqual(1, actual.First().Target.Length);
-        Assert.AreEqual(1, actual.First().Confidences.Length);
-        Assert.AreEqual(1, actual.First().Sources.Length);
-        Assert.AreEqual(1, actual.First().Alignment.Length);
-        Assert.AreEqual(1, actual.First().Phrases.Length);
+        Assert.AreEqual(1, actual.First().SourceTokens.Count);
+        Assert.AreEqual(1, actual.First().TargetTokens.Count);
+        Assert.AreEqual(1, actual.First().Confidences.Count);
+        Assert.AreEqual(1, actual.First().Sources.Count);
+        Assert.AreEqual(1, actual.First().Alignment.Count);
+        Assert.AreEqual(1, actual.First().Phrases.Count);
+        Assert.AreEqual(TargetSegment, actual.First().Translation);
     }
 
     [Test]
@@ -1772,16 +1751,18 @@ public class MachineApiServiceTests
         const int n = 1;
         var env = new TestEnvironment();
         env.EngineService
-            .TranslateAsync(TranslationEngine01, n, Array.Empty<string>())
+            .TranslateAsync(TranslationEngine01, n, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
             .Returns(Task.FromResult(Array.Empty<MachineTranslationResult>().AsEnumerable()));
 
         // SUT
-        _ = await env.Service.TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None);
+        _ = await env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None);
 
-        await env.EngineService.Received(1).TranslateAsync(TranslationEngine01, n, Array.Empty<string>());
+        await env.EngineService
+            .Received(1)
+            .TranslateAsync(TranslationEngine01, n, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment));
         await env.TranslationEnginesClient
             .Received(1)
-            .TranslateNAsync(TranslationEngine01, n, string.Empty, CancellationToken.None);
+            .TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None);
     }
 
     private class TestEnvironment

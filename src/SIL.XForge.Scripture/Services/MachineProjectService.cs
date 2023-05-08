@@ -194,6 +194,7 @@ public class MachineProjectService : IMachineProjectService
             // We do not need the build ID for tracking as we use GetCurrentBuildAsync for that
             await _translationEnginesClient.StartBuildAsync(
                 projectSecret.ServalData!.TranslationEngineId,
+                new TranslationBuildConfig(),
                 cancellationToken
             );
         }
@@ -427,7 +428,6 @@ public class MachineProjectService : IMachineProjectService
             TranslationCorpusConfig corpusConfig = new TranslationCorpusConfig
             {
                 Name = sfProjectId,
-                Pretranslate = false,
                 SourceFiles = newSourceCorpusFiles
                     .Select(f => new TranslationCorpusFileConfig { FileId = f.FileId, TextId = f.TextId })
                     .ToList(),

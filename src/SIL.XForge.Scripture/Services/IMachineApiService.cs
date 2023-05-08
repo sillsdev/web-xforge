@@ -1,6 +1,6 @@
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Serval.Client;
 using SIL.Machine.WebApi;
 
 namespace SIL.XForge.Scripture.Services;
@@ -21,30 +21,30 @@ public interface IMachineApiService
         CancellationToken cancellationToken
     );
     Task<EngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
-    Task<WordGraphDto> GetWordGraphAsync(
+    Task<WordGraph> GetWordGraphAsync(
         string curUserId,
         string sfProjectId,
-        IReadOnlyList<string> segment,
+        string segment,
         CancellationToken cancellationToken
     );
     Task<BuildDto> StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
     Task TrainSegmentAsync(
         string curUserId,
         string sfProjectId,
-        SegmentPairDto segmentPair,
+        SegmentPair segmentPair,
         CancellationToken cancellationToken
     );
-    Task<TranslationResultDto> TranslateAsync(
+    Task<TranslationResult> TranslateAsync(
         string curUserId,
         string sfProjectId,
-        IReadOnlyList<string> segment,
+        string segment,
         CancellationToken cancellationToken
     );
-    Task<TranslationResultDto[]> TranslateNAsync(
+    Task<TranslationResult[]> TranslateNAsync(
         string curUserId,
         string sfProjectId,
         int n,
-        IReadOnlyList<string> segment,
+        string segment,
         CancellationToken cancellationToken
     );
 }
