@@ -314,7 +314,7 @@ public class SFProjectServiceTests
                     sk.Key == "maxUsersReached"
                     && sk.ShareLinkType == ShareLinkType.Recipient
                     && sk.ProjectRole == SFProjectRole.Viewer
-                    && sk.UsersGenerated == 50
+                    && sk.UsersGenerated == 250
             ),
             Is.True,
             "setup"
@@ -3237,7 +3237,7 @@ public class SFProjectServiceTests
                                 Key = "maxUsersReached",
                                 ProjectRole = SFProjectRole.Viewer,
                                 ShareLinkType = ShareLinkType.Recipient,
-                                UsersGenerated = 50
+                                UsersGenerated = 250
                             },
                         }
                     },

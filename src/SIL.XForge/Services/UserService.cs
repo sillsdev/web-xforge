@@ -52,7 +52,7 @@ public class UserService : IUserService
         var userProfile = JObject.Parse(userProfileJson);
         var identities = (JArray)userProfile["identities"];
         JObject ptIdentity = identities.OfType<JObject>().FirstOrDefault(i => (string)i["connection"] == "paratext");
-        bool isAnonymousUser = identities
+        bool displayNameSetAtSignup = identities
             .OfType<JObject>()
             .Any(i => (string)i["connection"] == "Transparent-Authentication");
         Regex emailRegex = new Regex(EMAIL_PATTERN);
@@ -69,7 +69,7 @@ public class UserService : IUserService
                             string.IsNullOrWhiteSpace(name) || emailRegex.IsMatch(name)
                                 ? (string)userProfile["nickname"]
                                 : name,
-                        IsDisplayNameConfirmed = isAnonymousUser,
+                        IsDisplayNameConfirmed = displayNameSetAtSignup,
                     }
             );
             await userDoc.SubmitJson0OpAsync(op =>
