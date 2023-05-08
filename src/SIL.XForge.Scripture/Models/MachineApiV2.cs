@@ -1,14 +1,16 @@
+using System;
+
 namespace SIL.XForge.Scripture.Models;
 
 /// <summary>
 /// Machine API URL strings and helper methods.
 /// </summary>
-public static class MachineApi
+[Obsolete("This class will be removed when JavaScript clients have updated to the latest Machine.js")]
+public static class MachineApiV2
 {
-    public const string HttpClientName = "machine_api";
-    public const string Namespace = "machine-api/v3";
+    public const string Namespace = "machine-api/v2";
     public const string StartBuild = "translation/builds";
-    public const string GetBuild = "translation/builds/id:{sfProjectId}.{buildId?}";
+    public const string GetBuild = "translation/builds/{locatorType}:{sfProjectId}.{buildId?}";
     public const string GetEngine = "translation/engines/project:{sfProjectId}";
     public const string GetWordGraph = "translation/engines/project:{sfProjectId}/actions/getWordGraph";
     public const string TrainSegment = "translation/engines/project:{sfProjectId}/actions/trainSegment";
@@ -18,7 +20,10 @@ public static class MachineApi
     public static string GetBuildHref(string sfProjectId, string buildId)
     {
         // The {locatorType} parameter is required to maintain compatibility with the v1 machine-api and machine.js
-        string buildHref = GetBuild.Replace("{sfProjectId}", sfProjectId).Replace("{buildId?}", buildId);
+        string buildHref = GetBuild
+            .Replace("{sfProjectId}", sfProjectId)
+            .Replace("{buildId?}", buildId)
+            .Replace("{locatorType}", "id");
         return $"{Namespace}/{buildHref}";
     }
 
