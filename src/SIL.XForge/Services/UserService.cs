@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -254,6 +255,13 @@ public class UserService : IUserService
         await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
         IDocument<User> userDoc = await conn.FetchAsync<User>(userId);
         return userDoc.Data.DisplayName;
+    }
+
+    public async Task<Dictionary<string, string>> DisplayNamesFromUserIds(string curUserId, string[] userIds)
+    {
+        await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
+        IReadOnlyCollection<IDocument<User>> userDocs = await conn.GetAndFetchDocsAsync<User>(userIds);
+        return userDocs.ToDictionary(u => u.Id, u => u.Data.DisplayName);
     }
 
     /// <summary>
