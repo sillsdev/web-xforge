@@ -194,6 +194,7 @@ public class MachineProjectService : IMachineProjectService
             // We do not need the build ID for tracking as we use GetCurrentBuildAsync for that
             await _translationEnginesClient.StartBuildAsync(
                 projectSecret.ServalData!.TranslationEngineId,
+                new TranslationBuildConfig(),
                 cancellationToken
             );
         }
@@ -427,7 +428,6 @@ public class MachineProjectService : IMachineProjectService
             TranslationCorpusConfig corpusConfig = new TranslationCorpusConfig
             {
                 Name = sfProjectId,
-                Pretranslate = false,
                 SourceFiles = newSourceCorpusFiles
                     .Select(f => new TranslationCorpusFileConfig { FileId = f.FileId, TextId = f.TextId })
                     .ToList(),
@@ -473,19 +473,10 @@ public class MachineProjectService : IMachineProjectService
         var sb = new StringBuilder();
         foreach (TextSegment segment in text.GetSegments().Where(s => !s.IsEmpty))
         {
-            string key;
-            if (segment.SegmentRef is TextSegmentRef textSegmentRef)
-            {
-                // We pad the verse number so the string based key comparisons in Machine will be accurate
-                key = string.Join(
-                    '_',
-                    textSegmentRef.Keys.Select(k => int.TryParse(k, out int _) ? k.PadLeft(3, '0') : k)
-                );
-            }
-            else
-            {
-                key = (string)segment.SegmentRef;
-            }
+            // We pad the verse number so the string based key comparisons in Machine will be accurate
+            string key = segment.SegmentRef is TextSegmentRef textSegmentRef
+                ? string.Join('_', textSegmentRef.Keys.Select(k => int.TryParse(k, out int _) ? k.PadLeft(3, '0') : k))
+                : (string)segment.SegmentRef;
 
             // Strip characters from the key that will corrupt the line
             sb.Append(key.Replace('\n', '_').Replace('\t', '_'));
