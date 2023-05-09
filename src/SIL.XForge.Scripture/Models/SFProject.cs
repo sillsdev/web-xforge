@@ -24,8 +24,7 @@ public class SFProject : Project
     public int? DefaultFontSize { get; set; }
     public string? DefaultFont { get; set; }
     public List<NoteTag> NoteTags { get; set; } = new List<NoteTag>();
-    public bool BiblicalTermsEnabled { get; set; }
-    public string? BiblicalTermsMessage { get; set; }
+    public BiblicalTermsConfig BiblicalTermsConfig { get; set; } = new BiblicalTermsConfig();
 
     /// <summary>
     /// Used as a rate limiter for transparent authentication to limit the risk of abuse creating auth0 users.

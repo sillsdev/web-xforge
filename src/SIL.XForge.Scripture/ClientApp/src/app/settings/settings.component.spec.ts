@@ -722,8 +722,11 @@ class TestEnvironment {
         translateConfig,
         checkingConfig,
         sync: { queuedCount: 0 },
-        biblicalTermsEnabled: biblicalTermsEnabled,
-        biblicalTermsMessage: biblicalTermsMessage,
+        biblicalTermsConfig: {
+          biblicalTermsEnabled: biblicalTermsEnabled,
+          errorMessage: biblicalTermsMessage,
+          hasRenderings: false
+        },
         editable: true,
         texts: [],
         userRoles: {},

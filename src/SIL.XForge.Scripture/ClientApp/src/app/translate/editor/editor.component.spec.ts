@@ -3208,7 +3208,7 @@ describe('EditorComponent', () => {
     it('shows translator settings when suggestions are enabled for the project', fakeAsync(() => {
       const projectConfig = {
         translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: true },
-        biblicalTermsEnabled: false
+        biblicalTermsConfig: { ...defaultBiblicalTermsConfig }
       };
       const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
 
@@ -3224,7 +3224,7 @@ describe('EditorComponent', () => {
     it('shows translator settings when biblical terms are enabled for the project', fakeAsync(() => {
       const projectConfig = {
         translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        biblicalTermsEnabled: true
+        biblicalTermsConfig: { ...defaultBiblicalTermsConfig, biblicalTermsEnabled: true }
       };
       const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
 
@@ -3240,7 +3240,7 @@ describe('EditorComponent', () => {
     it('hides translator settings when suggestions and biblical terms are disabled for the project', fakeAsync(() => {
       const projectConfig = {
         translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        biblicalTermsEnabled: false
+        biblicalTermsConfig: { ...defaultBiblicalTermsConfig }
       };
       const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
 
@@ -3256,7 +3256,7 @@ describe('EditorComponent', () => {
     it('shows target biblical terms when enabled for the target project and target user project', fakeAsync(() => {
       const projectConfig = {
         translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        biblicalTermsEnabled: true
+        biblicalTermsConfig: { ...defaultBiblicalTermsConfig, biblicalTermsEnabled: true }
       };
       const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
 
@@ -3270,19 +3270,24 @@ describe('EditorComponent', () => {
     }));
 
     it('shows source biblical terms when enabled for the target project and target user project', fakeAsync(() => {
-      const projectConfig = {
+      const targetProjectConfig = {
         translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        biblicalTermsEnabled: true
+        biblicalTermsConfig: { ...defaultBiblicalTermsConfig, biblicalTermsEnabled: true }
+      };
+      const sourceProjectConfig = {
+        biblicalTermsConfig: { ...defaultBiblicalTermsConfig, hasRenderings: true }
       };
       const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
 
       const env = new TestEnvironment();
-      env.setupProject(projectConfig, 'project01');
+      env.setupProject(targetProjectConfig, 'project01');
+      env.setupProject(sourceProjectConfig, 'project02');
       env.setProjectUserConfig({ biblicalTermsEnabled: true });
       env.updateParams(navigationParams);
       env.wait();
-      expect(env.getProjectDoc('project01').data?.biblicalTermsEnabled).toBeTrue();
-      expect(env.getProjectDoc('project02').data?.biblicalTermsEnabled).toBeFalse();
+      expect(env.getProjectDoc('project01').data?.biblicalTermsConfig.biblicalTermsEnabled).toBeTrue();
+      expect(env.getProjectDoc('project02').data?.biblicalTermsConfig.biblicalTermsEnabled).toBeFalse();
+      expect(env.getProjectDoc('project02').data?.biblicalTermsConfig.hasRenderings).toBeTrue();
       expect(env.sourceBiblicalTerms).toBeTruthy();
       env.dispose();
     }));
@@ -3290,7 +3295,7 @@ describe('EditorComponent', () => {
     it('shows source biblical terms when enabled for the source project and target user project', fakeAsync(() => {
       const projectConfig = {
         translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        biblicalTermsEnabled: true
+        biblicalTermsConfig: { ...defaultBiblicalTermsConfig, biblicalTermsEnabled: true }
       };
       const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
 
@@ -3299,8 +3304,8 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ biblicalTermsEnabled: true });
       env.updateParams(navigationParams);
       env.wait();
-      expect(env.getProjectDoc('project01').data?.biblicalTermsEnabled).toBeFalse();
-      expect(env.getProjectDoc('project02').data?.biblicalTermsEnabled).toBeTrue();
+      expect(env.getProjectDoc('project01').data?.biblicalTermsConfig.biblicalTermsEnabled).toBeFalse();
+      expect(env.getProjectDoc('project02').data?.biblicalTermsConfig.biblicalTermsEnabled).toBeTrue();
       expect(env.sourceBiblicalTerms).toBeTruthy();
       env.dispose();
     }));
@@ -3308,7 +3313,7 @@ describe('EditorComponent', () => {
     it('hides source biblical terms when there is an error syncing them', fakeAsync(() => {
       const targetProjectConfig = {
         translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
-        biblicalTermsEnabled: true
+        biblicalTermsConfig: { ...defaultBiblicalTermsConfig, biblicalTermsEnabled: true }
       };
       const sourceProjectConfig = {
         translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false },
@@ -3329,6 +3334,10 @@ describe('EditorComponent', () => {
   });
 });
 
+const defaultBiblicalTermsConfig = {
+  biblicalTermsEnabled: false,
+  hasRenderings: false
+};
 const defaultTranslateConfig = {
   translationSuggestionsEnabled: false,
   shareEnabled: false
@@ -3404,7 +3413,10 @@ class TestEnvironment {
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     sync: { queuedCount: 0, dataInSync: true },
-    biblicalTermsEnabled: false,
+    biblicalTermsConfig: {
+      biblicalTermsEnabled: false,
+      hasRenderings: false
+    },
     editable: true,
     texts: [
       {
@@ -3813,11 +3825,14 @@ class TestEnvironment {
     if (data.isRightToLeft != null) {
       projectProfileData.isRightToLeft = data.isRightToLeft;
     }
-    if (data.biblicalTermsEnabled != null) {
-      projectProfileData.biblicalTermsEnabled = data.biblicalTermsEnabled;
+    if (data.biblicalTermsConfig?.biblicalTermsEnabled != null) {
+      projectProfileData.biblicalTermsConfig.biblicalTermsEnabled = data.biblicalTermsConfig.biblicalTermsEnabled;
     }
-    if (data.biblicalTermsMessage != null) {
-      projectProfileData.biblicalTermsMessage = data.biblicalTermsMessage;
+    if (data.biblicalTermsConfig?.hasRenderings != null) {
+      projectProfileData.biblicalTermsConfig.hasRenderings = data.biblicalTermsConfig.hasRenderings;
+    }
+    if (data.biblicalTermsConfig?.errorMessage != null) {
+      projectProfileData.biblicalTermsConfig.errorMessage = data.biblicalTermsConfig.errorMessage;
     }
     if (data.editable != null) {
       projectProfileData.editable = data.editable;

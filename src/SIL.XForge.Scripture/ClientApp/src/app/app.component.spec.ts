@@ -985,7 +985,10 @@ class TestEnvironment {
           answerExportMethod: CheckingAnswerExport.MarkedForExport
         },
         sync: { queuedCount: 0, lastSyncSuccessful: true },
-        biblicalTermsEnabled: false,
+        biblicalTermsConfig: {
+          biblicalTermsEnabled: false,
+          hasRenderings: false
+        },
         editable: true,
         userRoles,
         userPermissions: {},

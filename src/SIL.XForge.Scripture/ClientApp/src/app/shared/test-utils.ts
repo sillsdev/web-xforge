@@ -125,7 +125,10 @@ export function getSFProject(id: string): SFProjectProfile {
       answerExportMethod: CheckingAnswerExport.MarkedForExport
     },
     sync: { queuedCount: 0 },
-    biblicalTermsEnabled: false,
+    biblicalTermsConfig: {
+      biblicalTermsEnabled: false,
+      hasRenderings: false
+    },
     editable: true,
     texts: [
       {

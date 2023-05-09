@@ -167,7 +167,10 @@ class TestEnvironment {
           lastSyncSuccessful: true,
           dateLastSuccessfulSync: date.toJSON()
         },
-        biblicalTermsEnabled: false,
+        biblicalTermsConfig: {
+          biblicalTermsEnabled: false,
+          hasRenderings: false
+        },
         editable: true,
         texts: [],
         noteTags: [],
@@ -202,7 +205,10 @@ class TestEnvironment {
             lastSyncSuccessful: true,
             dateLastSuccessfulSync: date.toJSON()
           },
-          biblicalTermsEnabled: false,
+          biblicalTermsConfig: {
+            biblicalTermsEnabled: false,
+            hasRenderings: false
+          },
           editable: true,
           texts: [],
           noteTags: [],

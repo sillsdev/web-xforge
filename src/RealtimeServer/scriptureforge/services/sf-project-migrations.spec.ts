@@ -211,14 +211,13 @@ describe('version 10', () => {
     const conn = env.server.connect();
     await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {});
     let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-    expect(projectDoc.data.biblicalTermsEnabled).not.toBeDefined();
-    expect(projectDoc.data.biblicalTermsMessage).not.toBeDefined();
+    expect(projectDoc.data.biblicalTermsConfig).not.toBeDefined();
 
     await env.server.migrateIfNecessary();
 
     projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
-    expect(projectDoc.data.biblicalTermsEnabled).toBe(false);
-    expect(projectDoc.data.biblicalTermsMessage).toBeDefined();
+    expect(projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled).toBe(false);
+    expect(projectDoc.data.biblicalTermsConfig.hasRenderings).toBe(false);
   });
 });
 

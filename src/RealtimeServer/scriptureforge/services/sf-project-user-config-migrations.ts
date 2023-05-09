@@ -38,7 +38,7 @@ class SFProjectUserConfigMigration3 implements Migration {
   async migrateDoc(doc: Doc): Promise<void> {
     const ops: ObjectInsertOp[] = [];
     if (doc.data.biblicalTermsEnabled == null) {
-      const op: ObjectInsertOp = { p: ['biblicalTermsEnabled'], oi: false };
+      const op: ObjectInsertOp = { p: ['biblicalTermsEnabled'], oi: true };
       ops.push(op);
     }
     if (doc.data.transliterateBiblicalTerms == null) {

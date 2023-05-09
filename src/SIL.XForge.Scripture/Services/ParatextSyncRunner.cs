@@ -577,7 +577,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         biblicalTermNoteThreadDocs.AddRange(noteDocs.Where(n => n.Data?.BiblicalTermId != null));
 
         // If biblical terms is not enabled, we do not want to sync an empty list, as it will remove any biblical term notes
-        if (!_projectDoc.Data.BiblicalTermsEnabled && !biblicalTermNoteThreadDocs.Any())
+        if (!_projectDoc.Data.BiblicalTermsConfig.BiblicalTermsEnabled && !biblicalTermNoteThreadDocs.Any())
         {
             return;
         }
@@ -605,7 +605,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     {
         LogMetric("Getting Paratext biblical terms");
         await NotifySyncProgress(syncPhase, 0);
-        (IReadOnlyList<BiblicalTerm> biblicalTerms, string message) = await _paratextService.GetBiblicalTermsAsync(
+        BiblicalTermsChanges biblicalTermsChanges = await _paratextService.GetBiblicalTermsAsync(
             _userSecret,
             paratextId,
             _projectDoc.Data.Texts.Select(t => t.BookNum)
@@ -619,16 +619,17 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         // If the user had an error, but there are already Biblical Terms, just leave them as is.
         // We should record the error but not disable biblical terms
-        if (!string.IsNullOrWhiteSpace(message))
+        if (!string.IsNullOrWhiteSpace(biblicalTermsChanges.ErrorMessage))
         {
             await _projectDoc.SubmitJson0OpAsync(op =>
             {
-                op.Set(p => p.BiblicalTermsMessage, message);
+                op.Set(p => p.BiblicalTermsConfig.ErrorMessage, biblicalTermsChanges.ErrorMessage);
+                op.Set(p => p.BiblicalTermsConfig.HasRenderings, biblicalTermsChanges.HasRenderings);
 
-                // If there are no Biblical Terms, disable Biblical Terms
+                // If there are no Biblical Terms or Renderings, disable Biblical Terms
                 if (!biblicalTermDocs.Any())
                 {
-                    op.Set(p => p.BiblicalTermsEnabled, false);
+                    op.Set(p => p.BiblicalTermsConfig.BiblicalTermsEnabled, false);
                 }
             });
             return;
@@ -643,7 +644,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
         {
             i++;
             await NotifySyncProgress(syncPhase, 50 + (i / biblicalTermDocs.Count / 3));
-            BiblicalTerm? biblicalTerm = biblicalTerms.FirstOrDefault(b => b.TermId == biblicalTermDoc.Data.TermId);
+            BiblicalTerm? biblicalTerm = biblicalTermsChanges.BiblicalTerms.FirstOrDefault(
+                b => b.TermId == biblicalTermDoc.Data.TermId
+            );
             if (
                 biblicalTerm is not null
                 && (
@@ -679,7 +682,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         LogMetric("Getting Paratext biblical terms");
         await NotifySyncProgress(syncPhase, 0);
-        (IReadOnlyList<BiblicalTerm> biblicalTerms, string message) = await _paratextService.GetBiblicalTermsAsync(
+        BiblicalTermsChanges biblicalTermsChanges = await _paratextService.GetBiblicalTermsAsync(
             _userSecret,
             paratextId,
             _projectDoc.Data.Texts.Select(t => t.BookNum)
@@ -687,14 +690,22 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
         // If the user had an error, but there are already Biblical Terms, just leave them as is.
         // We should record the error but not disable biblical terms
-        if (!string.IsNullOrWhiteSpace(message))
+        if (!string.IsNullOrWhiteSpace(biblicalTermsChanges.ErrorMessage))
         {
-            await _projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.BiblicalTermsMessage, message));
+            await _projectDoc.SubmitJson0OpAsync(op =>
+            {
+                op.Set(p => p.BiblicalTermsConfig.ErrorMessage, biblicalTermsChanges.ErrorMessage);
+                op.Set(p => p.BiblicalTermsConfig.HasRenderings, biblicalTermsChanges.HasRenderings);
+            });
             return;
         }
         else
         {
-            await _projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.BiblicalTermsMessage));
+            await _projectDoc.SubmitJson0OpAsync(op =>
+            {
+                op.Unset(p => p.BiblicalTermsConfig.ErrorMessage);
+                op.Set(p => p.BiblicalTermsConfig.HasRenderings, biblicalTermsChanges.HasRenderings);
+            });
         }
 
         var tasks = new List<Task>();
@@ -702,10 +713,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
         // Add and Update existing terms
         LogMetric("Updating biblical terms");
         double i = 0.0;
-        foreach (BiblicalTerm biblicalTerm in biblicalTerms)
+        foreach (BiblicalTerm biblicalTerm in biblicalTermsChanges.BiblicalTerms)
         {
             i++;
-            await NotifySyncProgress(syncPhase, i / biblicalTerms.Count);
+            await NotifySyncProgress(syncPhase, i / biblicalTermsChanges.BiblicalTerms.Count);
             IDocument<BiblicalTerm>? biblicalTermDoc = biblicalTermDocs.FirstOrDefault(
                 b => b.Data.TermId == biblicalTerm.TermId
             );
@@ -788,7 +799,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         // Remove missing biblical terms
         foreach (
             IDocument<BiblicalTerm> biblicalTermDoc in biblicalTermDocs.Where(
-                doc => !biblicalTerms.Select(b => b.TermId).Contains(doc.Data.TermId)
+                doc => !biblicalTermsChanges.BiblicalTerms.Select(b => b.TermId).Contains(doc.Data.TermId)
             )
         )
         {

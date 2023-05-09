@@ -128,7 +128,7 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable i
   }
 
   get biblicalTermsSettingsDisabled(): boolean {
-    return !this.projectDoc?.data?.biblicalTermsEnabled || !this.pwaService.isOnline;
+    return !this.projectDoc?.data?.biblicalTermsConfig.biblicalTermsEnabled || !this.pwaService.isOnline;
   }
 
   get biblicalTermsEnabled(): boolean {
@@ -177,7 +177,7 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable i
         : undefined;
     if (
       this.pwaService.isOnline &&
-      this.projectDoc?.data?.biblicalTermsEnabled === true &&
+      this.projectDoc?.data?.biblicalTermsConfig.biblicalTermsEnabled === true &&
       userRole != null &&
       SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.View)
     ) {

@@ -113,7 +113,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   get biblicalTermsMessage(): string | undefined {
-    return this.projectDoc?.data?.biblicalTermsMessage;
+    return this.projectDoc?.data?.biblicalTermsConfig.errorMessage;
   }
 
   set isAppOnline(isOnline: boolean) {
@@ -273,6 +273,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       this.biblicalTermsMessage == null
     ) {
       this.updateSetting(newValue, 'biblicalTermsEnabled');
+      return;
     }
 
     this.updateCheckingConfig(newValue);
@@ -327,7 +328,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.previousFormValues = {
       translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
       sourceParatextId: curSource != null ? curSource.paratextId : undefined,
-      biblicalTermsEnabled: this.projectDoc.data.biblicalTermsEnabled,
+      biblicalTermsEnabled: this.projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled,
       translateShareEnabled: !!this.projectDoc.data.translateConfig.shareEnabled,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
@@ -344,7 +345,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       this.translationSuggestionsEnabled.disable();
     }
 
-    if (this.projectDoc?.data?.biblicalTermsMessage == null) {
+    if (this.projectDoc?.data?.biblicalTermsConfig.errorMessage == null) {
       this.biblicalTermsEnabled.enable({ onlySelf: true });
     } else {
       this.biblicalTermsEnabled.disable();

@@ -343,7 +343,10 @@ class TestEnvironment {
         },
         texts: [],
         noteTags: [],
-        biblicalTermsEnabled: user1Config.biblicalTermsEnabled,
+        biblicalTermsConfig: {
+          biblicalTermsEnabled: user1Config.biblicalTermsEnabled,
+          hasRenderings: false
+        },
         editable: true,
         sync: { queuedCount: 0 },
         userRoles: { user01: SFProjectRole.ParatextTranslator },
