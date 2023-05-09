@@ -403,7 +403,10 @@ class TestEnvironment {
           answerExportMethod: CheckingAnswerExport.MarkedForExport
         },
         sync: { queuedCount: 1 },
-        biblicalTermsEnabled: false,
+        biblicalTermsConfig: {
+          biblicalTermsEnabled: false,
+          hasRenderings: false
+        },
         editable: true,
         texts: [],
         noteTags: [],

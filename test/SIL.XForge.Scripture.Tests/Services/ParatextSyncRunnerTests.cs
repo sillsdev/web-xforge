@@ -2380,8 +2380,9 @@ public class ParatextSyncRunnerTests
             .GetBiblicalTermsAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IEnumerable<int>>())
             .Returns(
                 Task.FromResult(
-                    (
-                        new[]
+                    new BiblicalTermsChanges
+                    {
+                        BiblicalTerms =
                         {
                             // This Biblical Term will be updated
                             new BiblicalTerm
@@ -2413,9 +2414,10 @@ public class ParatextSyncRunnerTests
                             },
                             // This Biblical Term will be added
                             new BiblicalTerm { TermId = "termId03" },
-                        } as IReadOnlyList<BiblicalTerm>,
-                        string.Empty
-                    )
+                        },
+                        ErrorMessage = string.Empty,
+                        HasRenderings = true,
+                    }
                 )
             );
         env.GuidService.NewObjectId().Returns("dataId03");
@@ -2619,9 +2621,7 @@ public class ParatextSyncRunnerTests
             };
             ParatextService
                 .GetBiblicalTermsAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<IEnumerable<int>>())
-                .Returns(
-                    Task.FromResult<(IReadOnlyList<BiblicalTerm>, string)>((Array.Empty<BiblicalTerm>(), string.Empty))
-                );
+                .Returns(Task.FromResult(new BiblicalTermsChanges()));
             ParatextService
                 .GetProjectRolesAsync(
                     Arg.Any<UserSecret>(),

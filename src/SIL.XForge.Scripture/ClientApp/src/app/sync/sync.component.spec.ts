@@ -279,7 +279,10 @@ class TestEnvironment {
           dateLastSuccessfulSync: date.toJSON()
         },
         syncDisabled: isSyncDisabled,
-        biblicalTermsEnabled: false,
+        biblicalTermsConfig: {
+          biblicalTermsEnabled: false,
+          hasRenderings: false
+        },
         editable: true,
         texts: [],
         noteTags: [],

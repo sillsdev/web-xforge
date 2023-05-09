@@ -260,7 +260,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         : undefined;
     return (
       (this.showSource && this.translationSuggestionsProjectEnabled) ||
-      (this.projectDoc?.data?.biblicalTermsEnabled === true &&
+      (this.projectDoc?.data?.biblicalTermsConfig.biblicalTermsEnabled === true &&
         userRole != null &&
         SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.View))
     );
@@ -268,17 +268,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get biblicalTermsEnabledForSource(): boolean {
     // Return true if the source project has biblical terms enabled, or if the target has it enabled and the source has
-    // Biblical Terms - determined by the absence of a Biblical Terms Error Message.
+    // renderings for Biblical Terms.
     return (
-      (this.sourceProjectDoc?.data?.biblicalTermsEnabled === true &&
+      (this.sourceProjectDoc?.data?.biblicalTermsConfig.biblicalTermsEnabled === true &&
         this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true) ||
-      (this.biblicalTermsEnabledForTarget && this.sourceProjectDoc?.data?.biblicalTermsMessage == null)
+      (this.biblicalTermsEnabledForTarget && this.sourceProjectDoc?.data?.biblicalTermsConfig.hasRenderings === true)
     );
   }
 
   get biblicalTermsEnabledForTarget(): boolean {
     return (
-      this.projectDoc?.data?.biblicalTermsEnabled === true &&
+      this.projectDoc?.data?.biblicalTermsConfig.biblicalTermsEnabled === true &&
       this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true
     );
   }

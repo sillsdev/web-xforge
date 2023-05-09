@@ -123,7 +123,10 @@ class TestEnvironment {
       },
       texts: [],
       noteTags: [],
-      biblicalTermsEnabled: false,
+      biblicalTermsConfig: {
+        biblicalTermsEnabled: false,
+        hasRenderings: false
+      },
       editable: true,
       sync: { queuedCount: 0 },
       userRoles: {

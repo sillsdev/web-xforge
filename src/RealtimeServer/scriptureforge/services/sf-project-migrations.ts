@@ -212,9 +212,14 @@ class SFProjectMigration10 implements Migration {
 
   async migrateDoc(doc: Doc): Promise<void> {
     const ops: Op[] = [];
-    if (doc.data.biblicalTermsEnabled == null) {
-      ops.push({ p: ['biblicalTermsEnabled'], oi: false });
-      ops.push({ p: ['biblicalTermsMessage'], oi: 'A sync is required before Biblical Terms can be enabled.' });
+    if (doc.data.biblicalTermsConfig == null) {
+      ops.push({ p: ['biblicalTermsConfig'], oi: {} });
+    }
+    if (doc.data.biblicalTermsConfig == null || doc.data.biblicalTermsConfig.biblicalTermsEnabled == null) {
+      ops.push({ p: ['biblicalTermsConfig', 'biblicalTermsEnabled'], oi: false });
+    }
+    if (doc.data.biblicalTermsConfig == null || doc.data.biblicalTermsConfig.hasRenderings == null) {
+      ops.push({ p: ['biblicalTermsConfig', 'hasRenderings'], oi: false });
     }
     await submitMigrationOp(SFProjectMigration10.VERSION, doc, ops);
   }

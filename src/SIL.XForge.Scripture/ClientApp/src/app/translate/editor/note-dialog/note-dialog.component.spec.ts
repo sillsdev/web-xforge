@@ -592,7 +592,10 @@ class TestEnvironment {
       { tagId: 6, name: 'SF Note Tag', icon: 'defaultIcon', creatorResolve: false }
     ],
     sync: { queuedCount: 0 },
-    biblicalTermsEnabled: false,
+    biblicalTermsConfig: {
+      biblicalTermsEnabled: false,
+      hasRenderings: false
+    },
     editable: true,
     userRoles: TestEnvironment.userRoles
   };

@@ -1755,7 +1755,10 @@ class TestEnvironment {
         writingSystem: { tag: 'qaa' }
       }
     },
-    biblicalTermsEnabled: false,
+    biblicalTermsConfig: {
+      biblicalTermsEnabled: false,
+      hasRenderings: false
+    },
     editable: true,
     texts: [
       {

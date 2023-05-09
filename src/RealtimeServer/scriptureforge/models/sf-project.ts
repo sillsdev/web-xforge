@@ -1,5 +1,6 @@
 import { Project } from '../../common/models/project';
 import { WritingSystem } from '../../common/models/writing-system';
+import { BiblicalTermsConfig } from './biblical-terms-config';
 import { CheckingConfig } from './checking-config';
 import { NoteTag } from './note-tag';
 import { ParatextUserProfile } from './paratext-user-profile';
@@ -28,8 +29,7 @@ export interface SFProjectProfile extends Project {
   defaultFontSize?: number;
   defaultFont?: string;
   maxGeneratedUsersPerShareKey?: number;
-  biblicalTermsEnabled: boolean;
-  biblicalTermsMessage?: string;
+  biblicalTermsConfig: BiblicalTermsConfig;
 }
 
 export interface SFProject extends SFProjectProfile {

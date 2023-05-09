@@ -170,7 +170,10 @@ class TestEnvironment {
       texts: [],
       noteTags: [],
       sync: { queuedCount: 0 },
-      biblicalTermsEnabled: false,
+      biblicalTermsConfig: {
+        biblicalTermsEnabled: false,
+        hasRenderings: false
+      },
       editable: true,
       userRoles: {
         projectAdmin: SFProjectRole.ParatextAdministrator,

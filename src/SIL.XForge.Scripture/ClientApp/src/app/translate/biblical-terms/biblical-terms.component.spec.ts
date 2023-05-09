@@ -527,7 +527,10 @@ class TestEnvironment {
           answerExportMethod: CheckingAnswerExport.MarkedForExport
         },
         sync: { queuedCount: 0, lastSyncSuccessful: true },
-        biblicalTermsEnabled: true,
+        biblicalTermsConfig: {
+          biblicalTermsEnabled: true,
+          hasRenderings: false
+        },
         editable: true,
         userRoles: {
           ['user01']: SFProjectRole.ParatextTranslator
@@ -558,7 +561,10 @@ class TestEnvironment {
           answerExportMethod: CheckingAnswerExport.MarkedForExport
         },
         sync: { queuedCount: 0, lastSyncSuccessful: true },
-        biblicalTermsEnabled: true,
+        biblicalTermsConfig: {
+          biblicalTermsEnabled: true,
+          hasRenderings: false
+        },
         editable: true,
         userRoles: {
           ['user01']: SFProjectRole.ParatextObserver

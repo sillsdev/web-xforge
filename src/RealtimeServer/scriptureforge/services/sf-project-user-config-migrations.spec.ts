@@ -51,7 +51,7 @@ describe('SFProjectUserConfigMigrations', () => {
       await env.server.migrateIfNecessary();
 
       userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
-      expect(userConfigDoc.data.biblicalTermsEnabled).toEqual(false);
+      expect(userConfigDoc.data.biblicalTermsEnabled).toEqual(true);
       expect(userConfigDoc.data.transliterateBiblicalTerms).toEqual(false);
     });
   });
