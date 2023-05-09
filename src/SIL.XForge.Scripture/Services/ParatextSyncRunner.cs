@@ -80,6 +80,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private readonly IDeltaUsxMapper _deltaUsxMapper;
     private readonly IParatextNotesMapper _notesMapper;
     private readonly ILogger<ParatextSyncRunner> _logger;
+    private readonly IGuidService _guidService;
     private readonly IHubContext<NotificationHub, INotifier> _hubContext;
 
     private IConnection _conn;
@@ -102,7 +103,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
         IDeltaUsxMapper deltaUsxMapper,
         IParatextNotesMapper notesMapper,
         IHubContext<NotificationHub, INotifier> hubContext,
-        ILogger<ParatextSyncRunner> logger
+        ILogger<ParatextSyncRunner> logger,
+        IGuidService guidService
     )
     {
         _userSecrets = userSecrets;
@@ -116,6 +118,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         _logger = logger;
         _deltaUsxMapper = deltaUsxMapper;
         _notesMapper = notesMapper;
+        _guidService = guidService;
         _hubContext = hubContext;
     }
 
@@ -730,7 +733,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
             userId,
             _projectDoc.Data.UserRoles.Keys.ToArray()
         );
-        _currentPtSyncUsers = _projectDoc.Data.ParatextUsers.ToDictionary(u => u.Username);
 
         if (!(await _userSecrets.TryGetAsync(userId)).TryResult(out _userSecret))
         {
@@ -738,6 +740,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             return false;
         }
 
+        _currentPtSyncUsers = await GetCurrentProjectPTUsers(token);
         List<User> paratextUsers = await _realtimeService
             .QuerySnapshots<User>()
             .Where(u => _projectDoc.Data.UserRoles.Keys.Contains(u.Id) && u.ParatextId != null)
@@ -1514,11 +1517,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                         u => u.Username == activePtSyncUser.Username
                     );
                     if (existingUser == null)
-                    {
-                        if (ptUsernamesToSFUserIds.TryGetValue(activePtSyncUser.Username, out string userId))
-                            activePtSyncUser.SFUserId = userId;
                         op.Add(pd => pd.ParatextUsers, activePtSyncUser);
-                    }
                     else if (
                         existingUser.SFUserId == null
                         && ptUsernamesToSFUserIds.TryGetValue(existingUser.Username, out string userId)
@@ -1660,6 +1659,31 @@ public class ParatextSyncRunner : IParatextSyncRunner
         foreach (KeyValuePair<string, string> kvp in idsToUsernames)
             usernamesToUserIds.Add(kvp.Value, kvp.Key);
         return usernamesToUserIds;
+    }
+
+    private async Task<Dictionary<string, ParatextUserProfile>> GetCurrentProjectPTUsers(CancellationToken token)
+    {
+        IReadOnlyDictionary<string, string> sfUserIdsToUsernames =
+            await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);
+        Dictionary<string, ParatextUserProfile> paratextUsers = _projectDoc.Data.ParatextUsers.ToDictionary(
+            p => p.Username
+        );
+        foreach (var (sfUserId, username) in sfUserIdsToUsernames)
+        {
+            if (!paratextUsers.TryGetValue(username, out ParatextUserProfile profile))
+            {
+                ParatextUserProfile userProfile = new ParatextUserProfile
+                {
+                    Username = username,
+                    SFUserId = sfUserId,
+                    OpaqueUserId = _guidService.NewObjectId()
+                };
+                paratextUsers.TryAdd(username, userProfile);
+            }
+            else
+                profile.SFUserId ??= sfUserId;
+        }
+        return paratextUsers;
     }
 
     /// <summary>
