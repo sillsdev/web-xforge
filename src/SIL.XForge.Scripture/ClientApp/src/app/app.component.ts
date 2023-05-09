@@ -1,9 +1,9 @@
 import { MdcIconRegistry } from '@angular-mdc/web';
 import { MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MdcSelect } from '@angular-mdc/web/select';
 import { MdcTopAppBar } from '@angular-mdc/web/top-app-bar';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
-import { MatSelectionList } from '@angular/material/list';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { DefaultFocusState } from '@material/menu/constants';
@@ -76,7 +76,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   projectLabel = projectLabel;
 
   private currentUserDoc?: UserDoc;
-  private _projectSelect?: MatSelectionList;
+  private _projectSelect?: MdcSelect;
   private projectDeletedDialogRef: MdcDialogRef<ProjectDeletedDialogComponent> | null = null;
   private _topAppBar?: MdcTopAppBar;
   private selectedProjectDoc?: SFProjectProfileDoc;
@@ -180,17 +180,17 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.setTopAppBarVariant();
   }
 
-  get projectSelect(): MatSelectionList | undefined {
+  get projectSelect(): MdcSelect | undefined {
     return this._projectSelect;
   }
 
-  @ViewChild(MatSelectionList)
-  set projectSelect(value: MatSelectionList | undefined) {
+  @ViewChild(MdcSelect)
+  set projectSelect(value: MdcSelect | undefined) {
     this._projectSelect = value;
     if (this._projectSelect != null) {
       setTimeout(() => {
         if (this._projectSelect != null && this.selectedProjectDoc != null) {
-          this._projectSelect._value = [this.selectedProjectDoc.id];
+          this._projectSelect.value = this.selectedProjectDoc.id;
         }
       });
     }
@@ -422,7 +422,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.checkingVisible = false;
       }
       if (this._projectSelect != null) {
-        this._projectSelect._value = [this.selectedProjectDoc.id];
+        this._projectSelect.value = this.selectedProjectDoc.id;
       }
 
       this.checkDeviceStorage();
