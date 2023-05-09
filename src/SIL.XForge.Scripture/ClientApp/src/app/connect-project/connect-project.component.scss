@@ -24,9 +24,8 @@
 
   span {
     display: table;
-    margin: 0 auto;
+    margin: 16px auto;
     padding: 0px;
-    margin-bottom: 16px;
   }
 
   .paratext-login-container {
@@ -196,6 +195,12 @@ mat-select {
   // Make the option extend to the width of the box that it drops down from, minus some space to still
   // show the drop down arrow.
   min-width: calc(100% - 20px) !important;
+}
+
+mat-list-option {
+  background-color: #f8f8f8;
+  margin: 8px 0px;
+  border-radius: 8px;
 }
 
 // mat-option {

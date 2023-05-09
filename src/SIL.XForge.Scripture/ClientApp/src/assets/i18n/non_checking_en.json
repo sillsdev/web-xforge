@@ -52,8 +52,8 @@
   },
   "connect_project": {
     "already_connected": "(already connected)",
-    "connect_network_to_connect_project": "Please connect to the internet to enable connecting to a project",
-    "connect_paratext_project": "Connect Paratext Project",
+    "connect_network_to_connect_project": "Please connect to the internet to enable connecting to a new project",
+    "my_projects": "My Projects",
     "connect": "Connect",
     "connecting_to_project": "Connecting to {{ projectName }}...",
     "enable_community_checking": "Enable Community Checking",

@@ -1,6 +1,5 @@
 <ng-container *transloco="let t; read: 'connect_project'">
-  <!--todo Projects Home and allow offline project navigation-->
-  <div class="title mat-display-1">{{ t("connect_paratext_project") }}</div>
+  <div class="title mat-display-1">{{ t("my_projects") }}</div>
   <div class="content" [ngSwitch]="state">
     <div *ngSwitchCase="'login'" class="paratext-login-container">
       <div>{{ t("you_must_be_logged_in_to_paratext") }}</div>
@@ -15,30 +14,24 @@
       <app-sync-progress [projectDoc]="projectDoc" (inProgress)="updateStatus($event)"></app-sync-progress>
     </mat-card>
 
-    <!--todo split resources to their own section-->
-
     <ng-container *ngSwitchDefault>
       <ng-container *ngIf="projects.length > 0 || state === 'offline'; else noProjectMsg">
-        <mat-expansion-panel #projectsConnectedPanel *ngIf="projectsConnected.length > 0" [expanded]="true">
-          <mat-expansion-panel-header>
-            <mat-panel-title> Your Projects </mat-panel-title>
-          </mat-expansion-panel-header>
-          <mat-selection-list [multiple]="false" #projectsConnectedList>
-            <mat-list-option
-              *ngFor="let project of projectsConnected"
-              [value]="project"
-              (selectedChange)="goToProject(projectsConnectedList)"
-            >
-              {{ projectLabel(project) }}
-            </mat-list-option>
-          </mat-selection-list>
-        </mat-expansion-panel>
+        <mat-selection-list [multiple]="false" #projectsConnectedList>
+          <mat-list-option
+            *ngFor="let project of projectDocs$ | async"
+            [value]="project.data"
+            (selectedChange)="goToProject(projectsConnectedList)"
+          >
+            {{ projectLabel(project.data) }}
+          </mat-list-option>
+        </mat-selection-list>
 
         <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_connect_project") }} </span>
 
         <form [formGroup]="connectProjectForm" (ngSubmit)="submit()">
           <mat-form-field appearance="outline">
             <mat-label>Connect New Project</mat-label>
+            <!--todo convert to button-->
             <mat-select (selectionChange)="displaySettings()" formControlName="paratextId">
               <mat-option
                 [value]="project.paratextId"

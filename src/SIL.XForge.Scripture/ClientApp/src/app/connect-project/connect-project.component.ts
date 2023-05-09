@@ -2,6 +2,8 @@ import { Component, ErrorHandler, OnInit, ViewChild } from '@angular/core';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { MatSelectionList } from '@angular/material/list';
 import { MatExpansionPanel } from '@angular/material/expansion';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
 import { Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
@@ -16,6 +18,7 @@ import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { compareProjectsForSorting, projectLabel } from '../shared/utils';
+import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 
 interface ConnectProjectFormValues {
   paratextId: string;
@@ -115,6 +118,12 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this.projects.filter(p => !p.isConnected);
   }
 
+  get projectDocs$(): Observable<SFProjectProfileDoc[]> {
+    return this.userProjectsService.projectDocs$.pipe(
+      map((list: SFProjectProfileDoc[]) => list.filter((s: SFProjectProfileDoc) => s.data?.paratextId.length === 40))
+    );
+  }
+
   get translationSuggestionsEnabled(): boolean {
     return this.settings.controls.translationSuggestions.value;
   }
@@ -152,10 +161,6 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
           this.state = 'input';
         }
       } else {
-        if (this._projects == null) {
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const projectDocs$ = this.userProjectsService.projectDocs$;
-        }
         this.state = 'offline';
       }
     });
