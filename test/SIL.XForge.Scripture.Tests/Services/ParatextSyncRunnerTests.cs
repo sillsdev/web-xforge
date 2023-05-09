@@ -1440,9 +1440,9 @@ public class ParatextSyncRunnerTests
         env.Connection.Get<SFProject>("project01").Returns(project);
 
         // The HTTP call throws this when a cancelled token is passed
-        env.ParatextService
-            .GetParatextUsernameMappingAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), Arg.Any<CancellationToken>())
-            .ThrowsForAnyArgs(new OperationCanceledException());
+        // env.ParatextService
+        //     .GetParatextUsernameMappingAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), Arg.Any<CancellationToken>())
+        //     .ThrowsForAnyArgs(new OperationCanceledException());
 
         // Setup a trap to cancel the task
         env.ParatextService
@@ -2351,6 +2351,7 @@ public class ParatextSyncRunnerTests
         private readonly MemoryRepository<SFProjectSecret> _projectSecrets;
         private readonly MemoryRepository<SyncMetrics> _syncMetrics;
         private bool _sendReceivedCalled = false;
+        private int _guidStartNum = 3;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TestEnvironment" /> class.
@@ -2448,6 +2449,8 @@ public class ParatextSyncRunnerTests
             NotesMapper = Substitute.For<IParatextNotesMapper>();
             var hubContext = Substitute.For<IHubContext<NotificationHub, INotifier>>();
             MockLogger = new MockLogger<ParatextSyncRunner>();
+            GuidService = Substitute.For<IGuidService>();
+            GuidService.NewObjectId().Returns($"syncuser0{_guidStartNum++}");
 
             Runner = new ParatextSyncRunner(
                 userSecrets,
@@ -2461,7 +2464,8 @@ public class ParatextSyncRunnerTests
                 DeltaUsxMapper,
                 NotesMapper,
                 hubContext,
-                MockLogger
+                MockLogger,
+                GuidService
             );
         }
 
@@ -2475,6 +2479,7 @@ public class ParatextSyncRunnerTests
         public IRealtimeService SubstituteRealtimeService { get; }
         public IDeltaUsxMapper DeltaUsxMapper { get; }
         public MockLogger<ParatextSyncRunner> MockLogger { get; }
+        public IGuidService GuidService { get; }
 
         /// <summary>
         /// Gets the connection to be used with <see cref="SubstituteRealtimeService"/>.
@@ -3018,14 +3023,7 @@ public class ParatextSyncRunnerTests
                         Arg.Any<Dictionary<int, ChapterDelta>>(),
                         Arg.Any<Dictionary<string, ParatextUserProfile>>()
                     )
-                    .Returns(x =>
-                    {
-                        ((Dictionary<string, ParatextUserProfile>)x[5]).Add(
-                            "User 3",
-                            new ParatextUserProfile { OpaqueUserId = "syncuser03", Username = "User 3" }
-                        );
-                        return new[] { noteThreadChange };
-                    });
+                    .Returns(new[] { noteThreadChange });
                 Dictionary<string, string> userIdsToUsernames = new Dictionary<string, string>
                 {
                     { "user01", "User 1" },
