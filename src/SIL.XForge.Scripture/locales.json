@@ -74,7 +74,8 @@
   {
     "localName": "ພາສາລາວ",
     "englishName": "Lao",
-    "tags": ["lo", "lo-LA"]
+    "tags": ["lo", "lo-LA"],
+    "production": true
   },
   {
     "localName": "ꤊꤢ꤬ꤛꤢ꤭ꤜꤟꤤ꤬ (W. Kayah Li)",
