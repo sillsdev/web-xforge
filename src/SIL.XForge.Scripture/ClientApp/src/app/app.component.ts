@@ -16,6 +16,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, tap } from 'rxjs/operators';
+import { AnalyticsService } from 'xforge-common/analytics.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -46,8 +47,6 @@ import { SFProjectService } from './core/sf-project.service';
 import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 import { projectLabel } from './shared/utils';
-
-declare function gtag(...args: any): void;
 
 export const CONNECT_PROJECT_OPTION = '*connect-project*';
 
@@ -106,6 +105,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
+    private readonly analytics: AnalyticsService,
     iconRegistry: MdcIconRegistry,
     sanitizer: DomSanitizer
   ) {
@@ -148,8 +148,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       );
       this.subscribe(navEndEvent$, e => {
         if (this.isAppOnline) {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          gtag('config', 'UA-22170471-15', { page_path: e.urlAfterRedirects });
+          this.analytics.logNavigation(e.urlAfterRedirects);
         }
       });
     }
