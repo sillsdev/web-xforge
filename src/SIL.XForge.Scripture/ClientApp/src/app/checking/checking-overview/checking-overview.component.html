@@ -3,17 +3,10 @@
     <mat-icon class="mirror-rtl">library_books</mat-icon>
     <h2>{{ t(canCreateQuestion ? "manage_questions" : "my_progress") }}</h2>
     <ng-container *ngIf="canCreateQuestion; else overallProgressChart" class="primary-actions">
-      <button mdc-button type="button" *ngIf="showImportButton" (click)="importDialog()" id="import-btn">
+      <button mat-button type="button" *ngIf="showImportButton" (click)="importDialog()" id="import-btn">
         {{ t("import_questions") }}
       </button>
-      <button
-        *ngIf="!isLoading"
-        mdc-button
-        [unelevated]="true"
-        type="button"
-        (click)="questionDialog()"
-        id="add-question-button"
-      >
+      <button *ngIf="!isLoading" mat-flat-button type="button" (click)="questionDialog()" id="add-question-button">
         <mat-icon class="mirror-rtl">post_add</mat-icon> <span fxHide.xs>{{ t("add_question") }}</span>
       </button>
     </ng-container>
