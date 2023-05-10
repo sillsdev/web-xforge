@@ -38,7 +38,7 @@ import { ThemeService } from 'xforge-common/theme.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
-import { AnalyticsService } from '../xforge-common/analytics.service';
+import { AnalyticsService } from "xforge-common/analytics.service";
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
