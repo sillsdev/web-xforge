@@ -13,6 +13,12 @@
 }
 
 #add-question-button {
+  color: white;
+  background-color: $sf_grey;
+  &:not(:disabled):hover {
+    background-color: $greenLight;
+    color: $sf_grey;
+  }
   @include media-breakpoint-only(xs) {
     min-width: 48px;
   }
