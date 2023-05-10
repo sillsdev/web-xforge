@@ -16,5 +16,6 @@ export const environment = {
   realtimeUrl: '/realtime-api/',
   authDomain: 'login.languagetechnology.org',
   authClientId: 'tY2wXn40fsL5VsPM4uIHNtU6ZUEXGeFn',
-  offlineDBVersion: 8
+  offlineDBVersion: 8,
+  googleTagId: 'G-SVKBDV7K3Q'
 };

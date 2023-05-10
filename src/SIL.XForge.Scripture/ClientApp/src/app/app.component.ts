@@ -38,6 +38,7 @@ import { ThemeService } from 'xforge-common/theme.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
+import { AnalyticsService } from '../xforge-common/analytics.service';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from './core/models/sf-project-user-config-doc';
@@ -91,7 +92,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly pwaService: PwaService,
     private readonly themeService: ThemeService,
     onlineStatusService: OnlineStatusService,
-    private destroyRef: DestroyRef
+    private destroyRef: DestroyRef,
+    private readonly analytics: AnalyticsService
   ) {
     super(noticeService);
     this.breakpointObserver
@@ -132,8 +134,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       );
       navEndEvent$.pipe(quietTakeUntilDestroyed(this.destroyRef)).subscribe(e => {
         if (this.isAppOnline) {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          gtag('config', 'UA-22170471-15', { page_path: e.urlAfterRedirects });
+          this.analytics.logNavigation(e.urlAfterRedirects);
         }
       });
     }
