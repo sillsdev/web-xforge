@@ -34,11 +34,10 @@ import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
+import { AnalyticsService } from '../xforge-common/analytics.service';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
-
-declare function gtag(...args: any): void;
 
 export const CONNECT_PROJECT_OPTION = '*connect-project*';
 
@@ -81,7 +80,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
-    onlineStatusService: OnlineStatusService
+    onlineStatusService: OnlineStatusService,
+    private readonly analytics: AnalyticsService
   ) {
     super(noticeService);
     this.subscribe(
@@ -122,8 +122,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       );
       this.subscribe(navEndEvent$, e => {
         if (this.isAppOnline) {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          gtag('config', 'UA-22170471-15', { page_path: e.urlAfterRedirects });
+          this.analytics.logNavigation(e.urlAfterRedirects);
         }
       });
     }
