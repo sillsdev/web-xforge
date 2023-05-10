@@ -1,0 +1,60 @@
+use("xforge");
+
+function getMatchingProjects(days, edits) {
+  const startTimestamp = new Date().getTime() - days * 24 * 60 * 60 * 1000;
+
+  return db.o_texts
+    .aggregate([
+      {
+        $match: {
+          "m.uId": { $exists: true },
+          "m.ts": { $gt: startTimestamp }
+        }
+      },
+      {
+        $group: {
+          _id: { $arrayElemAt: [{ $split: ["$d", ":"] }, 0] },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $match: {
+          count: { $gte: edits }
+        }
+      },
+      {
+        $sort: {
+          count: -1
+        }
+      },
+      {
+        $lookup: {
+          from: "sf_projects",
+          localField: "_id",
+          foreignField: "_id",
+          as: "project"
+        }
+      },
+      { $unwind: "$project" },
+      {
+        $project: {
+          name: "$project.name",
+          shortName: "$project.shortName",
+          paratextId: "$project.paratextId",
+          count: 1
+        }
+      }
+    ])
+    .toArray();
+}
+
+const days = [30, 60, 90];
+const edits = [100, 1000];
+
+for (const dayCount of days) {
+  for (const editCount of edits) {
+    const projects = getMatchingProjects(dayCount, editCount);
+    const count = projects.length;
+    print(`${count} projects with at least ${editCount} edits in the last ${dayCount} days`);
+  }
+}
