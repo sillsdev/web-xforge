@@ -15,93 +15,58 @@
     </mat-card>
 
     <ng-container *ngSwitchDefault>
-      <ng-container *ngIf="projects.length > 0 || state === 'offline'; else noProjectMsg">
-        <mat-selection-list [multiple]="false" #projectsConnectedList>
-          <mat-list-option
-            *ngFor="let project of projectDocs$ | async"
-            [value]="project.data"
-            (selectedChange)="goToProject(projectsConnectedList)"
-          >
-            {{ projectLabel(project.data) }}
-          </mat-list-option>
-        </mat-selection-list>
+      <ng-container *ngIf="state !== 'configuring'">
+        <ng-container *ngIf="projects.length > 0 || state === 'offline'; else noProjectMsg">
+          <mat-selection-list [multiple]="false" #projectsConnectedList>
+            <mat-list-option
+              *ngFor="let project of projectDocs$ | async"
+              [value]="project.data"
+              (selectedChange)="goToProject(projectsConnectedList)"
+            >
+              {{ projectLabel(project.data) }}
+            </mat-list-option>
+          </mat-selection-list>
+        </ng-container>
 
-        <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_connect_project") }} </span>
+        <span *ngIf="!isAppOnline"> {{ t("connect_network_to_connect_project") }} </span>
 
-        <form [formGroup]="connectProjectForm" (ngSubmit)="submit()">
-          <mat-form-field appearance="outline">
-            <mat-label>Connect New Project</mat-label>
-            <!--todo convert to button-->
-            <mat-select (selectionChange)="displaySettings()" formControlName="paratextId">
-              <mat-option
-                [value]="project.paratextId"
-                *ngFor="let project of projectsUnconnected"
-                [disabled]="!project.isConnectable"
-              >
-                {{ projectLabel(project) }}
-                <ng-container *ngIf="!project.isConnectable">&nbsp;**</ng-container>
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
+        <ng-container *ngIf="projectsUnconnected.length > 0; else noProjectsConnectableMsg">
+          <span class="new-project-header"> {{ t("connect_to_new_project") }} </span>
+          <mat-selection-list [multiple]="false" #projectsUnconnectedList>
+            <mat-list-option
+              [value]="project.paratextId"
+              *ngFor="let project of projectsUnconnected"
+              [disabled]="!project.isConnectable"
+              (selectedChange)="switchToNewProjectState()"
+            >
+              {{ projectLabel(project) }}
+              <ng-container *ngIf="!project.isConnectable">&nbsp;**</ng-container>
+            </mat-list-option>
+          </mat-selection-list>
 
-          <p *ngIf="hasNonAdministratorProject && !showSettings && isAppOnline" id="connect-non-admin-msg">
+          <p *ngIf="hasNonAdministratorProject" id="connect-non-admin-msg">
             {{ t("only_paratext_admins_can_start") }}
           </p>
-
-          <mat-card id="settings-card" *ngIf="showSettings" class="card-outline" formGroupName="settings">
-            <mat-card-title>{{ t("project_settings") }}</mat-card-title>
-            <mat-card-subtitle>{{ t("you_can_change_later") }}</mat-card-subtitle>
-            <mat-card-content class="card-content">
-              <p>{{ t("select_project_or_resource") }}</p>
-              <p>{{ t("translation_suggestions_require_source_text") }}</p>
-              <app-project-select
-                formControlName="sourceParatextId"
-                placeholder="{{ t('source_text_placeholder') }}"
-                [projects]="projects"
-                [resources]="resources"
-                [hideProjectId]="paratextIdControl.value"
-              ></app-project-select>
-              <mat-error *ngIf="showResourcesLoadingFailedMessage">{{ t("error_fetching_resources") }}</mat-error>
-              <ng-container *ngIf="isBasedOnProjectSet">
-                <div fxLayout="row" fxLayoutAlign="start center">
-                  <div fxLayout="column" fxFlex="grow">
-                    <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
-                      {{ t("enable_translation_suggestions") }}
-                    </mat-checkbox>
-                    <div>
-                      <div fxFlex="24px" class="indent"></div>
-                      <mat-hint
-                        fxFlex
-                        class="helper-text"
-                        [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
-                      ></mat-hint>
-                    </div>
-                  </div>
-                </div>
-              </ng-container>
-            </mat-card-content>
-            <mat-card-content class="card-content">
-              <div>
-                <mat-checkbox formControlName="checking" id="checking-checkbox">
-                  {{ t("enable_community_checking") }}
-                </mat-checkbox>
-              </div>
-              <div>
-                <div fxFlex="24px" class="indent"></div>
-                <mat-hint fxFlex class="helper-text">{{ t("engage_the_wider_community_to_check_scripture") }}</mat-hint>
-              </div>
-            </mat-card-content>
-
-            <button mat-flat-button type="submit" id="connect-submit-button" [disabled]="submitDisabled">
-              {{ t("connect") }}
-            </button>
-          </mat-card>
-        </form>
+        </ng-container>
       </ng-container>
+
+      <app-new-project
+        *ngIf="state === 'configuring'"
+        [targetProject]="getTargetProject()"
+        [projects]="projects"
+      ></app-new-project>
+
       <ng-template #noProjectMsg>
         <p
           *ngIf="state !== 'loading'"
           id="no-projects-msg"
+          [innerHtml]="i18n.translateAndInsertTags('connect_project.no_connected_projects')"
+        ></p>
+      </ng-template>
+      <ng-template #noProjectsConnectableMsg>
+        <p
+          *ngIf="state !== 'loading'"
+          id="no-projects-connectable-msg"
           [innerHtml]="i18n.translateAndInsertTags('connect_project.no_connectable_projects')"
         ></p>
       </ng-template>

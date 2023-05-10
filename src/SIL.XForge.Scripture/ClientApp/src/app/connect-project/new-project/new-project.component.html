@@ -1,0 +1,55 @@
+<ng-container *transloco="let t; read: 'connect_project'">
+  <!--todo back button-->
+  <form [formGroup]="connectProjectForm" (ngSubmit)="submit()">
+    <mat-label formControlName="paratextId">HEY</mat-label>
+
+    <mat-card id="settings-card" class="card-outline" formGroupName="settings">
+      <mat-card-title>{{ t("project_settings") }}</mat-card-title>
+      <mat-card-subtitle>{{ t("you_can_change_later") }}</mat-card-subtitle>
+      <mat-card-content class="card-content">
+        <p>{{ t("select_project_or_resource") }}</p>
+        <p>{{ t("translation_suggestions_require_source_text") }}</p>
+        <app-project-select
+          formControlName="sourceParatextId"
+          placeholder="{{ t('source_text_placeholder') }}"
+          [projects]="projects"
+          [resources]="resources"
+          [hideProjectId]="paratextIdControl.value"
+        ></app-project-select>
+        <mat-error *ngIf="showResourcesLoadingFailedMessage">{{ t("error_fetching_resources") }}</mat-error>
+        <ng-container *ngIf="isBasedOnProjectSet">
+          <div fxLayout="row" fxLayoutAlign="start center">
+            <div fxLayout="column" fxFlex="grow">
+              <mat-checkbox formControlName="translationSuggestions" id="translation-suggestions-checkbox">
+                {{ t("enable_translation_suggestions") }}
+              </mat-checkbox>
+              <div>
+                <div fxFlex="24px" class="indent"></div>
+                <mat-hint
+                  fxFlex
+                  class="helper-text"
+                  [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
+                ></mat-hint>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </mat-card-content>
+      <mat-card-content class="card-content">
+        <div>
+          <mat-checkbox formControlName="checking" id="checking-checkbox">
+            {{ t("enable_community_checking") }}
+          </mat-checkbox>
+        </div>
+        <div>
+          <div fxFlex="24px" class="indent"></div>
+          <mat-hint fxFlex class="helper-text">{{ t("engage_the_wider_community_to_check_scripture") }}</mat-hint>
+        </div>
+      </mat-card-content>
+
+      <button mat-flat-button type="submit" id="connect-submit-button">
+        {{ t("connect") }}
+      </button>
+    </mat-card>
+  </form>
+</ng-container>

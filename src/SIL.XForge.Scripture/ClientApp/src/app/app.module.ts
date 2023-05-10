@@ -29,6 +29,7 @@ import { DeleteProjectDialogComponent } from './settings/delete-project-dialog/d
 import { SettingsComponent } from './settings/settings.component';
 import { StartComponent } from './start/start.component';
 import { SyncProgressComponent } from './sync/sync-progress/sync-progress.component';
+import { NewProjectComponent } from './connect-project/new-project/new-project.component';
 import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';
 import { UsersModule } from './users/users.module';
@@ -52,6 +53,7 @@ import { JoinComponent } from './join/join.component';
     FeatureFlagsDialogComponent,
     ProjectSelectComponent,
     SyncProgressComponent,
+    NewProjectComponent,
     TextNoteDialogComponent,
     JoinComponent
   ],

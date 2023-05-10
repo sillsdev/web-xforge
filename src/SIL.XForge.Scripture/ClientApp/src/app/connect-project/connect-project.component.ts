@@ -1,7 +1,6 @@
 import { Component, ErrorHandler, OnInit, ViewChild } from '@angular/core';
-import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatSelectionList } from '@angular/material/list';
-import { MatExpansionPanel } from '@angular/material/expansion';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { SFUserProjectsService } from 'xforge-common/user-projects.service';
@@ -11,23 +10,12 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
-import { hasStringProp } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
-import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
-import { ParatextService, SelectableProject } from '../core/paratext.service';
+import { ParatextService } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { compareProjectsForSorting, projectLabel } from '../shared/utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
-
-interface ConnectProjectFormValues {
-  paratextId: string;
-  settings: {
-    checking: boolean;
-    translationSuggestions: boolean;
-    sourceParatextId: string;
-  };
-}
 
 @Component({
   selector: 'app-connect-project',
@@ -35,22 +23,13 @@ interface ConnectProjectFormValues {
   styleUrls: ['./connect-project.component.scss']
 })
 export class ConnectProjectComponent extends DataLoadingComponent implements OnInit {
-  static readonly errorAlreadyConnectedKey: string = 'error-already-connected';
   readonly connectProjectForm = new UntypedFormGroup({
-    paratextId: new UntypedFormControl(undefined),
-    settings: new UntypedFormGroup({
-      translationSuggestions: new UntypedFormControl(false),
-      sourceParatextId: new UntypedFormControl(undefined),
-      checking: new UntypedFormControl(true)
-    })
+    paratextId: new UntypedFormControl(undefined)
   });
-  resources?: SelectableProject[];
-  showResourcesLoadingFailedMessage = false;
-  state: 'connecting' | 'loading' | 'input' | 'login' | 'offline' = 'loading';
+  state: 'connecting' | 'loading' | 'input' | 'login' | 'offline' | 'configuring' = 'loading';
   connectProjectName?: string;
   projectDoc?: SFProjectDoc;
-  @ViewChild('projectSelect') projectSelect?: MatSelectionList;
-  @ViewChild('projectsConnectedPanel') projectsConnectedPanel?: MatExpansionPanel;
+  @ViewChild('projectsUnconnectedList') projectsUnconnectedList?: MatSelectionList;
   projectLabel = projectLabel;
 
   private _isAppOnline: boolean = false;
@@ -89,21 +68,11 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     return this.connectProjectForm.controls.paratextId;
   }
 
-  showSettings = false;
-
-  get submitDisabled(): boolean {
-    return !this.hasConnectableProjects || !this.isAppOnline;
-  }
-
   get hasNonAdministratorProject(): boolean {
     if (!this._projects) {
       return false;
     }
     return this._projects.filter(p => !p.isConnected && !p.isConnectable).length > 0;
-  }
-
-  get isBasedOnProjectSet(): boolean {
-    return this.settings.controls.sourceParatextId.value != null;
   }
 
   get projects(): ParatextProject[] {
@@ -124,34 +93,12 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     );
   }
 
-  get translationSuggestionsEnabled(): boolean {
-    return this.settings.controls.translationSuggestions.value;
-  }
-
-  get settings(): UntypedFormGroup {
-    return this.connectProjectForm.controls.settings as UntypedFormGroup;
-  }
-
-  displaySettings(): void {
-    this.settings.enable();
-    this.showSettings = true;
-    if (this.projectsConnectedPanel != null) {
-      this.projectsConnectedPanel.expanded = false;
-    }
+  switchToNewProjectState(): void {
+    this.state = 'configuring';
   }
 
   ngOnInit(): void {
     this.state = 'loading';
-    this.subscribe(this.settings.controls.sourceParatextId.valueChanges, (value: boolean) => {
-      const translationSuggestions = this.settings.controls.translationSuggestions;
-      if (value) {
-        translationSuggestions.enable();
-      } else {
-        translationSuggestions.reset();
-        translationSuggestions.disable();
-      }
-    });
-
     this.subscribe(this.pwaService.onlineStatus$, async isOnline => {
       this.isAppOnline = isOnline;
       if (isOnline) {
@@ -166,62 +113,27 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     });
   }
 
-  goToProject(projectsConnectedList: MatSelectionList): void {
+  goToProject(projectsList: MatSelectionList): void {
+    const project = this.getSelectedProject(projectsList);
+    if (project != null) {
+      this.router.navigate(['/projects', project.projectId]);
+    }
+  }
+
+  getSelectedProject(projectsList: MatSelectionList): ParatextProject | null {
     if (this._projects != null) {
-      const selection = projectsConnectedList.selectedOptions.selected[0]?.value;
+      const selection = projectsList.selectedOptions.selected[0]?.value;
       const project = this._projects.find(p => p.paratextId === selection.paratextId);
       if (project != null) {
-        this.router.navigate(['/projects', project.projectId]);
+        return project;
       }
     }
+
+    return null;
   }
 
   logInWithParatext(): void {
     this.paratextService.linkParatext('/connect-project');
-  }
-
-  async submit(): Promise<void> {
-    // Set the validator when the user tries to submit the form to prevent the select immediately being invalid
-    // when the user clicks it. Marking it untouched does not appear to work.
-    this.paratextIdControl.setValidators(Validators.required);
-    this.paratextIdControl.updateValueAndValidity();
-    if (!this.connectProjectForm.valid || this._projects == null) {
-      return;
-    }
-    const values = this.connectProjectForm.value as ConnectProjectFormValues;
-    const project = this._projects.find(p => p.paratextId === values.paratextId);
-    if (project == null) {
-      return;
-    }
-    this.state = 'connecting';
-    if (project.projectId == null) {
-      this.connectProjectName = project.name;
-      const settings: SFProjectCreateSettings = {
-        paratextId: project.paratextId,
-        checkingEnabled: values.settings.checking,
-        translationSuggestionsEnabled: values.settings.translationSuggestions ?? false,
-        sourceParatextId: values.settings.sourceParatextId
-      };
-
-      let projectId: string = '';
-      try {
-        projectId = await this.projectService.onlineCreate(settings);
-      } catch (err) {
-        if (!hasStringProp(err, 'message') || !err.message.includes(ConnectProjectComponent.errorAlreadyConnectedKey)) {
-          throw err;
-        }
-
-        err.message = this.translocoService.translate('connect_project.problem_already_connected');
-        this.errorHandler.handleError(err);
-        this.state = 'input';
-        this.populateProjectList();
-        return;
-      }
-      this.projectDoc = await this.projectService.get(projectId);
-    } else {
-      await this.projectService.onlineAddCurrentUser(project.projectId);
-      this.router.navigate(['/projects', project.projectId]);
-    }
   }
 
   translateFromSettings(key: string): string {
@@ -234,10 +146,20 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     }
   }
 
+  getTargetProject(): ParatextProject | undefined {
+    if (this.projectsUnconnectedList != null) {
+      const project = this.getSelectedProject(this.projectsUnconnectedList);
+      if (project != null) {
+        return project;
+      }
+    }
+
+    return undefined;
+  }
+
   private async populateProjectList(): Promise<void> {
     this.state = 'loading';
     this.loadingStarted();
-    const resourceFetchPromise = this.fetchResources();
     const projects = await this.paratextService.getProjects();
 
     if (projects == null) {
@@ -246,17 +168,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       this._projects = projects.sort(compareProjectsForSorting);
       this.targetProjects = this._projects.filter(p => p.isConnectable);
       this.state = 'input';
-      await resourceFetchPromise;
     }
     this.loadingFinished();
-  }
-
-  private async fetchResources(): Promise<void> {
-    try {
-      this.resources = await this.paratextService.getResources();
-      this.showResourcesLoadingFailedMessage = false;
-    } catch {
-      this.showResourcesLoadingFailedMessage = true;
-    }
   }
 }

@@ -10,10 +10,6 @@
   margin-bottom: 32px;
 }
 
-.offline-text {
-  padding-bottom: 16px;
-}
-
 .content {
   max-width: 512px;
   width: 100%;
@@ -25,7 +21,10 @@
   span {
     display: table;
     margin: 16px auto;
-    padding: 0px;
+  }
+
+  .new-project-header {
+    margin-top: 48px;
   }
 
   .paratext-login-container {
