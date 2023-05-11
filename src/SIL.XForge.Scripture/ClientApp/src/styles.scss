@@ -150,6 +150,11 @@ button.mdc-icon-button {
   animation: none;
 }
 
+.remove-padding .mat-expansion-panel-content .mat-expansion-panel-body {
+  padding-inline-end: 0 !important;
+  padding-block-start: 0 !important;
+}
+
 body[dir='rtl'] .mirror-rtl {
   transform: scaleX(-1);
 }
