@@ -40,6 +40,11 @@ td.mat-cell:last-of-type {
 
 .users-controls {
   margin-top: 16px;
+  flex-wrap: wrap-reverse;
+}
+
+.tab-selector {
+  flex-grow: 1;
 }
 
 .mat-column-avatar {
@@ -54,10 +59,6 @@ td.mat-cell:last-of-type {
 // Allow the questions permission label to wrap on whitespace to prevent layout issues
 .mat-column-questions_permission .mat-checkbox ::ng-deep label {
   white-space: initial;
-}
-
-.mat-tab-group {
-  flex-grow: 1;
 }
 
 .current-user-label {

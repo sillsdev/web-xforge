@@ -27,4 +27,11 @@ div {
     flex-shrink: 0;
     align-self: flex-start;
   }
+  .notice-content {
+    flex: 1;
+  }
+  .mat-flat-button {
+    background-color: var(--notice-color);
+    color: #fff;
+  }
 }

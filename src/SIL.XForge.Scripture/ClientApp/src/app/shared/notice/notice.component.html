@@ -1,4 +1,7 @@
-<div [ngClass]="{ outline }" [class]="type">
-  <mat-icon *ngIf="icon">{{ icon }}</mat-icon>
-  <span><ng-content></ng-content></span>
-</div>
+<ng-container *transloco="let t; read: 'notice'">
+  <div [ngClass]="{ outline }" [class]="type">
+    <mat-icon *ngIf="icon">{{ icon }}</mat-icon>
+    <span class="notice-content"><ng-content></ng-content></span>
+    <a mat-flat-button *ngIf="helpLink" [href]="helpLink" target="_blank">{{ t("learn_more") }}</a>
+  </div>
+</ng-container>
