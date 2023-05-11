@@ -141,9 +141,9 @@
 
   <ng-template #reviewerQuestionPanel>
     <div fxLayout="column" fxLayoutAlign="space-around" class="reviewer-panels" id="reviewer-question-panel">
-      <mat-selection-list dense id="reviewer-questions-list">
+      <mat-list dense id="reviewer-questions-list">
         <ng-container *ngFor="let text of texts">
-          <mat-list-option *ngIf="bookQuestionCount(text) > 0" [appRouterLink]="getRouterLink(getBookId(text))">
+          <mat-list-item *ngIf="bookQuestionCount(text) > 0" [appRouterLink]="getRouterLink(getBookId(text))">
             <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
               <span fxFlex>{{ getBookName(text) }}</span>
               <span>
@@ -153,9 +153,9 @@
                 ></app-donut-chart>
               </span>
             </div>
-          </mat-list-option>
+          </mat-list-item>
         </ng-container>
-      </mat-selection-list>
+      </mat-list>
     </div>
   </ng-template>
 
