@@ -210,8 +210,8 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
         this.metrics.productiveCharacterCount = prodCharCount;
       }
       const sourceText = this.source.getSegmentText(segment.ref);
-      this.metrics.sourceWordCount = this.sourceWordTokenizer.tokenize(sourceText).length;
-      this.metrics.targetWordCount = this.targetWordTokenizer.tokenize(segment.text).length;
+      this.metrics.sourceWordCount = Array.from(this.sourceWordTokenizer.tokenize(sourceText)).length;
+      this.metrics.targetWordCount = Array.from(this.targetWordTokenizer.tokenize(segment.text)).length;
     }
     if (!this.isMetricsEmpty && !isEqual(this.prevMetrics, this.metrics)) {
       this.prevMetrics = cloneDeep(this.metrics);

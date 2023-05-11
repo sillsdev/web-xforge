@@ -3,9 +3,9 @@ import { MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import {
-  createInteractiveTranslator,
-  ErrorCorrectionModel,
   InteractiveTranslator,
+  InteractiveTranslatorFactory,
+  LatinWordDetokenizer,
   LatinWordTokenizer,
   MAX_SEGMENT_LENGTH,
   PhraseTranslationSuggester,
@@ -131,13 +131,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   @ViewChild('fabBottomSheet') TemplateBottomSheet?: TemplateRef<any>;
   @ViewChild('mobileNoteTextarea') mobileNoteTextarea?: ElementRef<HTMLTextAreaElement>;
 
+  private interactiveTranslatorFactory?: InteractiveTranslatorFactory;
   private translationEngine?: RemoteTranslationEngine;
   private isTranslating: boolean = false;
+  private readonly detokenizer = new LatinWordDetokenizer();
   private readonly sourceWordTokenizer: RangeTokenizer;
   private readonly targetWordTokenizer: RangeTokenizer;
   private translator?: InteractiveTranslator;
-  private readonly translationSuggester: TranslationSuggester = new PhraseTranslationSuggester();
-  private readonly ecm = new ErrorCorrectionModel();
+  private readonly translationSuggester: TranslationSuggester = new PhraseTranslationSuggester(0.2);
   private insertSuggestionEnd: number = -1;
   private bottomSheetRef?: MatBottomSheetRef;
   private currentUserDoc?: UserDoc;
@@ -184,8 +185,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const wordTokenizer = new LatinWordTokenizer();
     this.sourceWordTokenizer = wordTokenizer;
     this.targetWordTokenizer = wordTokenizer;
-
-    this.translationSuggester.confidenceThreshold = 0.2;
 
     this.segmentUpdated$ = new Subject<void>();
     this.subscribe(this.segmentUpdated$.pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT)), () => this.updateSuggestions());
@@ -799,10 +798,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     const words = wordIndex === -1 ? suggestion.words : suggestion.words.slice(0, wordIndex + 1);
-    // TODO: use detokenizer to build suggestion text
-    let insertText = words.join(' ');
+    let insertText = this.detokenizer.detokenize(words);
     if (this.translator != null && !this.translator.isLastWordComplete) {
-      const lastWord = this.translator.prefix[this.translator.prefix.length - 1];
+      const lastWord = this.translator.prefixWordRanges[this.translator.prefixWordRanges.length - 1];
       insertText = insertText.substring(lastWord.length);
     }
     if (this.insertSuggestionEnd !== -1) {
@@ -1113,6 +1111,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
       )
       .subscribe();
+    this.interactiveTranslatorFactory = this.translationEngineService.createInteractiveTranslatorFactory(
+      this.projectDoc.id
+    );
   }
 
   private setTextHeight(): void {
@@ -1203,21 +1204,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     const sourceSegment = this.source.segmentText;
-    const words = this.sourceWordTokenizer.tokenize(sourceSegment);
-    if (words.length === 0) {
+    if (sourceSegment.length === 0) {
       return;
-    } else if (words.length > MAX_SEGMENT_LENGTH) {
+    } else if (sourceSegment.length > MAX_SEGMENT_LENGTH) {
       this.translator = undefined;
       this.noticeService.show(translate('editor.verse_too_long_for_suggestions'));
       return;
     }
 
     const start = performance.now();
-    const translator = await createInteractiveTranslator(this.ecm, this.translationEngine, words);
+    const translator = await this.interactiveTranslatorFactory?.create(sourceSegment);
     if (sourceSegment === this.source.segmentText) {
       this.translator = translator;
       const finish = performance.now();
-      this.console.log(`Translated segment, length: ${words.length}, time: ${finish - start}ms`);
+      this.console.log(`Translated segment, length: ${sourceSegment.length}, time: ${finish - start}ms`);
     }
   }
 
@@ -1241,18 +1241,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.target.segment.range.index,
           range.index - this.target.segment.range.index
         );
-
-        const tokenRanges = this.targetWordTokenizer.tokenizeAsRanges(text);
-        const prefix = tokenRanges.map(r => text.substring(r.start, r.end));
-        const isLastWordComplete =
-          this.insertSuggestionEnd !== -1 ||
-          tokenRanges.length === 0 ||
-          tokenRanges[tokenRanges.length - 1].end !== text.length;
-        this.translator.setPrefix(prefix, isLastWordComplete);
+        // We add a space to the prefix to force IsLastWordComplete to be true if we are not at the end
+        const prefix = this.insertSuggestionEnd !== -1 ? text + ' ' : text;
+        this.translator.setPrefix(prefix);
         const machineSuggestions = this.translationSuggester.getSuggestions(
           this.numSuggestions,
-          prefix.length,
-          isLastWordComplete,
+          this.translator.prefixWordRanges.length,
+          this.translator.isLastWordComplete,
           this.translator.getCurrentResults()
         );
         if (machineSuggestions.length === 0) {
