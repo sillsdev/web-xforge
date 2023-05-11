@@ -9,6 +9,9 @@ import { ActivatedRoute, Params, Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import {
   createRange,
+  InteractiveTranslatorFactory,
+  LatinWordDetokenizer,
+  LatinWordTokenizer,
   ProgressStatus,
   TranslationSources,
   WordAlignmentMatrix,
@@ -553,13 +556,7 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(range!.index, 0, 'user');
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(
-        env.mockedRemoteTranslationEngine.trainSegment(
-          anything(),
-          deepEqual(['target', ':', 'chapter', '1', ',', 'verse', '5']),
-          true
-        )
-      ).once();
+      verify(env.mockedRemoteTranslationEngine.trainSegment(anything(), 'target: chapter 1, verse 5', true)).once();
 
       env.dispose();
     }));
@@ -615,13 +612,7 @@ describe('EditorComponent', () => {
       env.targetEditor.setSelection(range!.index, 0, 'user');
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(
-        env.mockedRemoteTranslationEngine.trainSegment(
-          anything(),
-          deepEqual(['target', ':', 'chapter', '1', ',', 'verse', '5']),
-          true
-        )
-      ).once();
+      verify(env.mockedRemoteTranslationEngine.trainSegment(anything(), 'target: chapter 1, verse 5', true)).once();
 
       env.dispose();
     }));
@@ -3212,6 +3203,8 @@ class TestEnvironment {
     user07: SFProjectRole.Viewer
   };
   private paratextUsersOnProject = paratextUsersFromRoles(this.userRolesOnProject);
+  private tokenizer = new LatinWordTokenizer();
+  private detokenizer = new LatinWordDetokenizer();
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private readonly params$: BehaviorSubject<Params>;
   private trainingProgress$ = new Subject<ProgressStatus>();
@@ -3387,6 +3380,9 @@ class TestEnvironment {
     );
     when(mockedTranslationEngineService.createTranslationEngine('project02')).thenReturn(
       instance(this.mockedRemoteTranslationEngine)
+    );
+    when(mockedTranslationEngineService.createInteractiveTranslatorFactory(anything())).thenReturn(
+      new InteractiveTranslatorFactory(instance(this.mockedRemoteTranslationEngine), this.tokenizer, this.detokenizer)
     );
     this.setupProject();
     this.addParatextNoteThread(1, 'MAT 1:1', 'chapter 1', { start: 8, length: 9 }, ['user01', 'user02', 'user03']);
@@ -4105,10 +4101,11 @@ class TestEnvironment {
     });
   }
 
-  private createWordGraph(segment: string[]): WordGraph {
+  private createWordGraph(segment: string): WordGraph {
+    const segments = Array.from(this.tokenizer.tokenize(segment));
     const arcs: WordGraphArc[] = [];
-    for (let i = 0; i < segment.length; i++) {
-      let targetWord = segment[i];
+    for (let i = 0; i < segments.length; i++) {
+      let targetWord = segments[i];
       if (targetWord === 'source') {
         targetWord = 'target';
       }
@@ -4123,7 +4120,7 @@ class TestEnvironment {
         );
       }
     }
-    return new WordGraph(arcs, [segment.length]);
+    return new WordGraph(segments, arcs, [segments.length - 1]);
   }
 }
 

@@ -1,14 +1,14 @@
-import { TranslationSources } from '@sillsdev/machine';
 import { AlignedWordPairDto } from './aligned-word-pair-dto';
-import { RangeDto } from './range-dto';
+import { TranslationSource } from './translation-source';
 
 export interface WordGraphArcDto {
   prevState: number;
   nextState: number;
   score: number;
-  words: string[];
+  targetTokens: string[];
   confidences: number[];
-  sourceSegmentRange: RangeDto;
+  sourceSegmentStart: number;
+  sourceSegmentEnd: number;
   alignment: AlignedWordPairDto[];
-  sources: TranslationSources[];
+  sources: TranslationSource[][];
 }
