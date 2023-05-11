@@ -22,13 +22,20 @@
   }
 }
 
+.mat-expansion-panel-header {
+  padding-inline-end: 0;
+}
+
+.mat-list-base {
+  padding-block-start: 0;
+}
+
 app-donut-chart {
   width: 36px;
   height: 36px;
 }
 
 .mat-list-item {
-  cursor: pointer;
   .audio-icon {
     margin-right: 5px;
   }
