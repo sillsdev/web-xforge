@@ -18,14 +18,14 @@
   </div>
 
   <div fxLayout="column" fxLayoutAlign="space-around" *ngIf="canEditQuestion; else reviewerQuestionPanel">
-    <mdc-list [dense]="true" id="text-with-questions-list">
+    <mat-selection-list dense id="text-with-questions-list">
       <ng-container *ngFor="let text of texts">
-        <mdc-list-item
+        <mat-list-option
           *ngIf="bookQuestionCount(text) > 0"
           (selectionChange)="itemVisible[getBookId(text)] = !itemVisible[getBookId(text)]"
         >
           <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-            <mat-icon fxFlex="24px" mdcListItemMeta>
+            <mat-icon fxFlex="24px" matListItemMeta>
               keyboard_arrow_{{ itemVisible[getBookId(text)] ? "down" : i18n.forwardDirectionWord }}
             </mat-icon>
             <span fxFlex>{{ getBookName(text) }}</span>
@@ -47,10 +47,10 @@
               </button>
             </span>
           </div>
-        </mdc-list-item>
+        </mat-list-option>
         <ng-container *ngIf="itemVisible[getBookId(text)]">
           <ng-container *ngFor="let chapter of text.chapters">
-            <mdc-list-item
+            <mat-list-option
               *ngIf="questionCount(text.bookNum, chapter.number) > 0"
               (selectionChange)="
                 itemVisible[getTextDocId(text.bookNum, chapter.number)] =
@@ -59,7 +59,7 @@
             >
               <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                 <span fxFlex="16px" class="indent"></span>
-                <mat-icon fxFlex="24px" mdcListItemMeta>
+                <mat-icon fxFlex="24px" matListItemMeta>
                   keyboard_arrow_{{
                     itemVisible[getTextDocId(text.bookNum, chapter.number)] ? "down" : i18n.forwardDirectionWord
                   }}
@@ -83,14 +83,14 @@
                   </button>
                 </span>
               </div>
-            </mdc-list-item>
+            </mat-list-option>
             <ng-container *ngIf="itemVisible[getTextDocId(text.bookNum, chapter.number)]">
-              <mdc-list-item
+              <mat-list-option
                 *ngFor="let questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number))"
               >
                 <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                   <span fxFlex="16px" class="indent"></span>
-                  <button fxFlex="64px" mdc-button type="button" (click)="questionDialog(questionDoc)" class="edit-btn">
+                  <button fxFlex="64px" mat-button type="button" (click)="questionDialog(questionDoc)" class="edit-btn">
                     <mat-icon>edit</mat-icon>
                   </button>
                   v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
@@ -112,12 +112,12 @@
                     </button>
                   </span>
                 </div>
-              </mdc-list-item>
+              </mat-list-option>
             </ng-container>
           </ng-container>
         </ng-container>
       </ng-container>
-    </mdc-list>
+    </mat-selection-list>
   </div>
 
   <div
@@ -140,9 +140,9 @@
 
   <ng-template #reviewerQuestionPanel>
     <div fxLayout="column" fxLayoutAlign="space-around" class="reviewer-panels" id="reviewer-question-panel">
-      <mdc-list [dense]="true" id="reviewer-questions-list">
+      <mat-selection-list dense id="reviewer-questions-list">
         <ng-container *ngFor="let text of texts">
-          <mdc-list-item *ngIf="bookQuestionCount(text) > 0" [appRouterLink]="getRouterLink(getBookId(text))">
+          <mat-list-option *ngIf="bookQuestionCount(text) > 0" [appRouterLink]="getRouterLink(getBookId(text))">
             <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
               <span fxFlex>{{ getBookName(text) }}</span>
               <span>
@@ -152,9 +152,9 @@
                 ></app-donut-chart>
               </span>
             </div>
-          </mdc-list-item>
+          </mat-list-option>
         </ng-container>
-      </mdc-list>
+      </mat-selection-list>
     </div>
   </ng-template>
 
@@ -200,14 +200,14 @@
   </div>
 
   <div fxLayout="column" *ngIf="canEditQuestion">
-    <mdc-list [dense]="true" id="text-with-archived-questions">
+    <mat-selection-list dense id="text-with-archived-questions">
       <ng-container *ngFor="let text of texts">
-        <mdc-list-item
+        <mat-list-option
           *ngIf="bookQuestionCount(text, true) > 0"
           (selectionChange)="itemVisibleArchived[getBookId(text)] = !itemVisibleArchived[getBookId(text)]"
         >
           <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-            <mat-icon fxFlex="24px" mdcListItemMeta
+            <mat-icon fxFlex="24px" matListItemMeta
               >keyboard_arrow_{{ itemVisibleArchived[getBookId(text)] ? "down" : i18n.forwardDirectionWord }}</mat-icon
             ><span fxFlex>{{ getBookName(text) }}</span>
             <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center" class="archived-questions-count">
@@ -225,10 +225,10 @@
               </button>
             </span>
           </div>
-        </mdc-list-item>
+        </mat-list-option>
         <ng-container *ngIf="itemVisibleArchived[getBookId(text)]">
           <ng-container *ngFor="let chapter of text.chapters">
-            <mdc-list-item
+            <mat-list-option
               *ngIf="questionCount(text.bookNum, chapter.number, true) > 0"
               (selectionChange)="
                 itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)] =
@@ -236,7 +236,7 @@
               "
               ><div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                 <span fxFlex="16px" class="indent"></span>
-                <mat-icon fxFlex="24px" mdcListItemMeta
+                <mat-icon fxFlex="24px" matListItemMeta
                   >keyboard_arrow_{{
                     itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)] ? "down" : i18n.forwardDirectionWord
                   }}</mat-icon
@@ -257,9 +257,9 @@
                   </button>
                 </span>
               </div>
-            </mdc-list-item>
+            </mat-list-option>
             <ng-container *ngIf="itemVisibleArchived[getTextDocId(text.bookNum, chapter.number)]">
-              <mdc-list-item
+              <mat-list-option
                 *ngFor="let questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number), true)"
               >
                 <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
@@ -282,12 +282,12 @@
                     </button>
                   </span>
                 </div>
-              </mdc-list-item>
+              </mat-list-option>
             </ng-container>
           </ng-container>
         </ng-container>
       </ng-container>
-    </mdc-list>
+    </mat-selection-list>
     <div
       fxLayout="row"
       fxLayoutAlign="space-around"
