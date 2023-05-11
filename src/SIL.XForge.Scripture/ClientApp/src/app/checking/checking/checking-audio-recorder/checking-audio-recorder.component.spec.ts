@@ -14,12 +14,10 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { AudioTimePipe, CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingAudioRecorderComponent } from './checking-audio-recorder.component';
 
-const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedNavigator = mock(Navigator);
 const mockedPwaService = mock(PwaService);
@@ -31,7 +29,6 @@ describe('CheckingAudioRecorderComponent', () => {
     declarations: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent, AudioTimePipe],
     imports: [UICommonModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
-      { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: NAVIGATOR, useMock: mockedNavigator },
       { provide: PwaService, useMock: mockedPwaService },
@@ -111,9 +108,6 @@ class TestEnvironment {
       id: 'user01',
       data: { name: 'user' }
     });
-    when(mockedUserService.getCurrentUser()).thenCall(() =>
-      this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
-    );
     when(mockedNavigator.mediaDevices).thenReturn({
       getUserMedia: (mediaConstraints: MediaStreamConstraints) =>
         this.rejectUserMedia ? Promise.reject() : navigator.mediaDevices.getUserMedia(mediaConstraints)
