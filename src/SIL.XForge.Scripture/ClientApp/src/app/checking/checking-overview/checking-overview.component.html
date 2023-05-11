@@ -6,7 +6,14 @@
       <button mat-button type="button" *ngIf="showImportButton" (click)="importDialog()" id="import-btn">
         {{ t("import_questions") }}
       </button>
-      <button *ngIf="!isLoading" mat-flat-button type="button" (click)="questionDialog()" id="add-question-button">
+      <button
+        *ngIf="!isLoading"
+        mat-flat-button
+        type="button"
+        color="primary"
+        (click)="questionDialog()"
+        id="add-question-button"
+      >
         <mat-icon class="mirror-rtl">post_add</mat-icon> <span fxHide.xs>{{ t("add_question") }}</span>
       </button>
     </ng-container>
