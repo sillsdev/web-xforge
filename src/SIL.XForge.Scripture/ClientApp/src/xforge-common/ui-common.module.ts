@@ -42,6 +42,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { TranslocoService } from '@ngneat/transloco';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatBottomSheetModule } from '@angular/material/bottom-sheet';
@@ -80,6 +81,7 @@ const modules = [
   MatTableModule,
   MatToolbarModule,
   MatTooltipModule,
+  MatExpansionModule,
   MdcButtonModule,
   MdcCheckboxModule,
   MdcDialogModule,
