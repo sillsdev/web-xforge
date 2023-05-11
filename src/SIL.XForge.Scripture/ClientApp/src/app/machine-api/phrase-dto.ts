@@ -1,7 +1,5 @@
-import { RangeDto } from './range-dto';
-
 export interface PhraseDto {
-  sourceSegmentRange: RangeDto;
+  sourceSegmentStart: number;
+  sourceSegmentEnd: number;
   targetSegmentCut: number;
-  confidence: number;
 }

@@ -136,7 +136,7 @@ describe('ExceptionHandlingService', () => {
       new HttpErrorResponse({
         status: 504,
         statusText: 'Gateway Timeout',
-        url: 'http://localhost:5000/machine-api/v2/translation/engines/some-end-point'
+        url: 'http://localhost:5000/machine-api/v3/translation/engines/some-end-point'
       })
     );
     env.handleError(
