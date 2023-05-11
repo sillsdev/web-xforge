@@ -9,6 +9,7 @@ import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
+import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -53,6 +54,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   filterForm: UntypedFormGroup = new UntypedFormGroup({ filter: new UntypedFormControl('') });
   isAppOnline = true;
   showParatextOnly = false;
+  currentTabIndex: number = 0;
 
   private projectDoc?: SFProjectDoc;
   private term: string = '';
@@ -66,7 +68,8 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     readonly i18n: I18nService,
     private readonly pwaService: PwaService,
     private readonly changeDetector: ChangeDetectorRef,
-    private readonly dialogService: DialogService
+    private readonly dialogService: DialogService,
+    readonly urls: ExternalUrlService
   ) {
     super(noticeService);
   }
@@ -88,26 +91,19 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   get totalUsers(): number {
-    if (this._userRows == null) return 0;
-    if (this.showParatextOnly) return this._userRows.filter(r => this.hasParatextRole(r)).length;
-    return this._userRows.length;
+    return this._userRows == null ? 0 : this._userRows.length;
   }
 
   get filteredLength(): number {
     if (this.term && this.term.trim()) {
-      return this.showParatextOnly
-        ? this.filteredRows.filter(r => this.hasParatextRole(r)).length
-        : this.filteredRows.length;
+      return this.filteredRows.length;
     }
-    return this.totalUsers;
+    return this.userRowsOnTab.length;
   }
 
   get filteredRows(): Row[] {
-    if (this._userRows == null) {
-      return [];
-    }
     const term = this.term.trim().toLowerCase();
-    return this._userRows.filter(
+    return this.userRowsOnTab.filter(
       userRow =>
         userRow.user &&
         (userRow.user.displayName?.toLowerCase().includes(term) ||
@@ -117,17 +113,23 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   get userRows(): Row[] {
+    const term = this.term && this.term.trim().toLowerCase();
+    let rows: Row[] = term ? this.filteredRows : this.userRowsOnTab;
+    return this.page(rows);
+  }
+
+  private get userRowsOnTab(): Row[] {
     if (this._userRows == null) {
       return [];
     }
-
-    const term = this.term && this.term.trim().toLowerCase();
-    let rows: Row[] = term ? this.filteredRows : this._userRows;
-    if (this.showParatextOnly) {
-      rows = rows.filter(r => this.hasParatextRole(r));
+    switch (this.currentTabIndex) {
+      case 1:
+        return this._userRows.filter(r => this.hasParatextRole(r));
+      case 2:
+        return this._userRows.filter(r => !this.hasParatextRole(r));
+      default:
+        return this._userRows;
     }
-
-    return this.page(rows);
   }
 
   get tableColumns(): string[] {

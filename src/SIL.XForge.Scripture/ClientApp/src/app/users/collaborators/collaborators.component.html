@@ -9,13 +9,18 @@
     <span *ngIf="!isAppOnline" id="collaborators-offline-message" class="offline-text">{{
       t("connect_network_to_manage_users")
     }}</span>
-    <app-notice icon="live_help">{{ t("uses_roles_to_access_project") }}</app-notice>
+    <app-notice icon="live_help" [outline]="true" helpLink="{{ urls.helps }}">{{
+      t("uses_roles_to_access_project")
+    }}</app-notice>
 
     <div fxLayout="row" fxLayoutAlign="start center" class="users-controls">
-      <mat-tab-group (selectedIndexChange)="showParatextOnly = $event === 1">
-        <mat-tab label="{{ t('all') }}"></mat-tab>
-        <mat-tab label="{{ t('paratext') }}"></mat-tab>
-      </mat-tab-group>
+      <div class="tab-selector">
+        <mat-tab-group (selectedIndexChange)="currentTabIndex = $event">
+          <mat-tab label="{{ t('all') }}"></mat-tab>
+          <mat-tab label="{{ t('paratext_members') }}"></mat-tab>
+          <mat-tab label="{{ t('project_guests') }}"></mat-tab>
+        </mat-tab-group>
+      </div>
       <mat-form-field [formGroup]="filterForm" appearance="outline" id="project-user-filter">
         <mat-label>{{ t("filter_users") }}</mat-label>
         <input matInput formControlName="filter" (keyup)="updateSearchTerm($event.target)" />
@@ -36,6 +41,9 @@
               <div *ngIf="!userRow.inviteeStatus" class="display-name-label">
                 {{ userRow.user?.displayName }}
                 <b *ngIf="isCurrentUser(userRow)" class="current-user-label">&nbsp;{{ t("me") }}</b>
+              </div>
+              <div *ngIf="!userRow.inviteeStatus" fxHide.gt-xs>
+                <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : "" }}</em>
               </div>
               <div
                 *ngIf="userRow.inviteeStatus"
@@ -58,8 +66,8 @@
           </ng-container>
           <ng-container matColumnDef="questions_permission">
             <td mat-cell *matCellDef="let userRow">
-              <div title="{{ t('allow_add_edit_questions') }}" *ngIf="userRow.allowCreatingQuestions">
-                <mat-icon>library_add</mat-icon>
+              <div [matTooltip]="t('allow_add_edit_questions')" *ngIf="userRow.allowCreatingQuestions">
+                <mat-icon>post_add</mat-icon>
               </div>
             </td>
           </ng-container>
