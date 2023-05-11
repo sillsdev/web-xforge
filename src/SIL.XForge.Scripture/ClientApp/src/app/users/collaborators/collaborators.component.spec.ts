@@ -267,12 +267,35 @@ describe('CollaboratorsComponent', () => {
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
-
     env.clickElement(env.userRowMoreMenuElement(1));
     env.clickElement(env.removeUserItemOnRow(1));
     verify(mockedProjectService.onlineRemoveUser(anything(), anything())).once();
-
     expect().nothing();
+  }));
+
+  it('can tab between groups', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
+      { email: 'bob@example.com', role: 'sf_community_checker', expired: false }
+    ]);
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    expect(env.component.currentTabIndex).toBe(0);
+    expect(env.userRows.length).toBe(4);
+    env.clickElement(env.tabElementFromIndex(1));
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.currentTabIndex).toBe(1);
+    expect(env.userRows.length).toBe(2);
+
+    env.clickElement(env.tabElementFromIndex(2));
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.currentTabIndex).toBe(2);
+    expect(env.component.userRows.length).toBe(2);
   }));
 
   it('should filter users', fakeAsync(() => {
@@ -439,8 +462,7 @@ describe('CollaboratorsComponent', () => {
     // project admins always have permission, so the checkbox should be checked, disabled, and do nothing when clicked
     expect(env.userPermissionIcon(0)).toBeTruthy();
     env.clickElement(env.userRowMoreMenuElement(0));
-    expect(env.questionPermissionItemOnRow(0)).toBeNull();
-    env.clickElement(env.userRowMoreMenuElement(0));
+    expect(env.questionPermissionItemOnRow(0).attributes['disabled']).toBeTruthy();
 
     // translators can be given permission, or not have permission
     expect(env.userPermissionIcon(1)).toBeUndefined();
@@ -552,6 +574,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#project-users-table'));
   }
 
+  get tabControl(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.users-controls'));
+  }
+
   get userRows(): DebugElement[] {
     // querying the debug table element doesn't seem to work, so we query the native element instead and convert back
     // to debug elements
@@ -612,8 +638,12 @@ class TestEnvironment {
     return this.userRows[row].query(By.css('.user-options button.question-permission'));
   }
 
-  userPermissionIcon(index: number): HTMLElement {
-    return this.table.nativeElement.querySelectorAll('td.mat-column-questions_permission .mat-icon')[index];
+  userPermissionIcon(row: number): HTMLElement {
+    return this.table.nativeElement.querySelectorAll('td.mat-column-questions_permission .mat-icon')[row];
+  }
+
+  tabElementFromIndex(index: number): DebugElement {
+    return this.tabControl.queryAll(By.css('.mat-tab-label'))[index];
   }
 
   clickElement(element: HTMLElement | DebugElement): void {
