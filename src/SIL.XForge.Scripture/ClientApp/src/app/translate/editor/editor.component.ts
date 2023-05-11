@@ -492,7 +492,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   ngAfterViewInit(): void {
     this.subscribe(fromEvent(window, 'resize'), () => {
-      this.setTextHeight();
       // Note: this does not appear to get triggered when the window changes by opening dev tools
       this.resetInsertNoteFab();
     });
@@ -576,7 +575,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled || !this.hasEditRight) {
               this.setupTranslationEngine();
             }
-            setTimeout(() => this.setTextHeight());
           });
 
           if (this.metricsSession != null) {
@@ -596,8 +594,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       }
     );
-
-    setTimeout(() => this.setTextHeight());
   }
 
   ngOnDestroy(): void {
@@ -1115,29 +1111,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       .subscribe();
   }
 
-  private setTextHeight(): void {
-    if (this.target == null || this.targetContainer == null) {
-      return;
-    }
-    // this is a horrible hack to set the height of the text components
-    // we don't want to use flexbox because it makes editing very slow
-    const elem: HTMLElement = this.targetContainer.nativeElement;
-    const bounds = elem.getBoundingClientRect();
-    // add bottom padding
-    const top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
-    if (this.target.editor != null && this.targetFocused) {
-      // reset scroll position
-      this.target.editor.scrollingContainer.scrollTop = 0;
-    }
-    this.textHeight = `calc(100vh - ${top}px)`;
-    if (this.targetFocused && this.dialogService.openDialogCount < 1) {
-      setTimeout(() => {
-        // reset focus, which causes Quill to scroll to the selection
-        this.target!.focus();
-      });
-    }
-  }
-
   private async changeText(): Promise<void> {
     if (this.projectDoc == null || this.text == null || this._chapter == null) {
       this.source!.id = undefined;
@@ -1188,7 +1161,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.router.navigateByUrl('/projects/' + this.projectDoc!.id + '/translate', { replaceUrl: true });
       });
     });
-    setTimeout(() => this.setTextHeight());
   }
 
   private onStartTranslating(): void {

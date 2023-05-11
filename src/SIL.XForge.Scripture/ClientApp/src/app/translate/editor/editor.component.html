@@ -1,5 +1,5 @@
 <ng-container *transloco="let t; read: 'editor'">
-  <div class="content" fxLayout="column">
+  <div class="content">
     <div class="toolbar" fxLayout="row" fxLayoutAlign="start center">
       <div fxFlex fxLayout="row wrap">
         <app-chapter-nav [bookNum]="bookNum" [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
@@ -33,116 +33,114 @@
         </ng-container>
       </div>
       <ng-container *ngIf="showMultiViewers">
-        <div fxFlexAlign="end" class="avatar-padding">
+        <div class="avatar-padding">
           <app-multi-viewer [viewers]="multiCursorViewers" (viewerClick)="onViewerClicked($event)"></app-multi-viewer>
         </div>
       </ng-container>
     </div>
-    <div [fxLayout]="isTargetTextRight ? 'row' : 'row-reverse'" class="both-editors-wrapper">
-      <div id="source-text-area" [fxShow.gt-xs]="showSource" fxHide.xs class="text-area">
-        <div class="language-label" mdcSubtitle1>{{ sourceLabel }}</div>
-        <div #sourceContainer class="text-container" [style.height]="textHeight">
-          <app-text
-            #source
-            [isReadOnly]="true"
-            [highlightSegment]="targetFocused"
-            (loaded)="onTextLoaded('source')"
-            (updated)="onSourceUpdated($event.delta != null)"
-            [isRightToLeft]="isSourceRightToLeft"
-            [fontSize]="sourceFontSize"
-          ></app-text>
-        </div>
+    <div id="source-text-area" [fxShow.gt-xs]="showSource" fxHide.xs class="text-area">
+      <div class="language-label" mdcSubtitle1>{{ sourceLabel }}</div>
+      <div #sourceContainer class="text-container" [style.height]="textHeight">
+        <app-text
+          #source
+          [isReadOnly]="true"
+          [highlightSegment]="targetFocused"
+          (loaded)="onTextLoaded('source')"
+          (updated)="onSourceUpdated($event.delta != null)"
+          [isRightToLeft]="isSourceRightToLeft"
+          [fontSize]="sourceFontSize"
+        ></app-text>
+      </div>
+    </div>
+    <div
+      id="target-text-area"
+      class="text-area"
+      [ngClass.gt-xs]="{ 'text-area-full-width': !showSource }"
+      ngClass.xs="text-area-full-width"
+    >
+      <div class="language-label" [fxShow.gt-xs]="showSource" fxHide.xs mdcSubtitle1>{{ targetLabel }}</div>
+      <div *ngIf="!isUsfmValid && hasEditRight" class="formatting-invalid-warning">
+        <mat-icon>warning</mat-icon> {{ t("cannot_edit_chapter_formatting_invalid") }}
+      </div>
+      <div *ngIf="!dataInSync && hasEditRight" class="out-of-sync-warning">
+        <mat-icon>warning</mat-icon> {{ t("project_data_out_of_sync") }}
+      </div>
+      <div *ngIf="target.areOpsCorrupted && hasEditRight" class="doc-corrupted-warning">
+        <mat-icon>error</mat-icon> {{ t("text_doc_corrupted") }}
+        <span [innerHTML]="t('to_report_issue_email', { issueEmailLink: issueEmailLink })"></span>
+      </div>
+      <div *ngIf="projectTextNotEditable && hasEditRight" class="project-text-not-editable">
+        <mat-icon>info</mat-icon> {{ t("project_text_not_editable") }}
+      </div>
+      <div *ngIf="showNoEditPermissionMessage" class="no-edit-permission-message">
+        <mat-icon>info</mat-icon> {{ t("no_permission_edit_chapter", { userRole: userRoleStr }) }}
       </div>
       <div
-        id="target-text-area"
-        class="text-area"
-        [ngClass.gt-xs]="{ 'text-area-full-width': !showSource }"
-        ngClass.xs="text-area-full-width"
+        #targetContainer
+        class="text-container"
+        [style.height]="textHeight"
+        [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'"
       >
-        <div class="language-label" [fxShow.gt-xs]="showSource" fxHide.xs mdcSubtitle1>{{ targetLabel }}</div>
-        <div *ngIf="!isUsfmValid && hasEditRight" class="formatting-invalid-warning">
-          <mat-icon>warning</mat-icon> {{ t("cannot_edit_chapter_formatting_invalid") }}
-        </div>
-        <div *ngIf="!dataInSync && hasEditRight" class="out-of-sync-warning">
-          <mat-icon>warning</mat-icon> {{ t("project_data_out_of_sync") }}
-        </div>
-        <div *ngIf="target.areOpsCorrupted && hasEditRight" class="doc-corrupted-warning">
-          <mat-icon>error</mat-icon> {{ t("text_doc_corrupted") }}
-          <span [innerHTML]="t('to_report_issue_email', { issueEmailLink: issueEmailLink })"></span>
-        </div>
-        <div *ngIf="projectTextNotEditable && hasEditRight" class="project-text-not-editable">
-          <mat-icon>info</mat-icon> {{ t("project_text_not_editable") }}
-        </div>
-        <div *ngIf="showNoEditPermissionMessage" class="no-edit-permission-message">
-          <mat-icon>info</mat-icon> {{ t("no_permission_edit_chapter", { userRole: userRoleStr }) }}
-        </div>
-        <div
-          #targetContainer
-          class="text-container"
-          [style.height]="textHeight"
-          [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'"
-        >
-          <app-text
-            #target
-            [isReadOnly]="!canEdit"
-            (updated)="
-              onTargetUpdated(
-                $event.segment,
-                $event.delta,
-                $event.prevSegment,
-                $event.affectedEmbeds,
-                $event.isLocalUpdate
-              )
-            "
-            (loaded)="onTextLoaded('target')"
-            (focused)="targetFocused = $event"
-            (presenceChange)="onPresenceChange($event)"
-            [highlightSegment]="targetFocused && canEdit"
-            [enablePresence]="true"
-            [markInvalid]="true"
-            [isRightToLeft]="isTargetRightToLeft"
-            [fontSize]="fontSize"
-            [selectableVerses]="showAddCommentUI"
-          ></app-text>
-          <app-suggestions
-            [mdcElevation]="2"
-            [show]="showSuggestions && translationSuggestionsEnabled"
-            [suggestions]="suggestions"
-            [text]="target"
-            (selected)="insertSuggestion($event.suggestionIndex, $event.wordIndex, $event.event)"
-            (showChange)="showSuggestions = $event"
-          ></app-suggestions>
-          <ng-template #fabBottomSheet>
-            <div class="fab-bottom-sheet" [dir]="direction">
-              <b>{{ currentSegmentReference }}</b>
-              <button
-                *ngIf="!addingMobileNote && !hasEditRight"
-                mat-flat-button
-                (click)="toggleAddingMobileNote()"
-                color="accent"
-              >
-                <mat-icon>add_comment</mat-icon>
-                {{ t("add_comment") }}
-              </button>
-              <form *ngIf="addingMobileNote">
-                <mat-form-field class="full-width" appearance="outline">
-                  <mat-label>{{ t("your_comment") }}</mat-label>
-                  <textarea #mobileNoteTextarea matInput [formControl]="mobileNoteControl"></textarea>
-                </mat-form-field>
-                <div class="fab-action-buttons">
-                  <button mat-button class="close-button" (click)="toggleAddingMobileNote()">{{ t("cancel") }}</button>
-                  <button mat-flat-button class="save-button" color="primary" (click)="saveMobileNote()">
-                    {{ t("save") }}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </ng-template>
-          <div *ngIf="canInsertNote" #fabButton class="insert-note-fab" [style.left]="insertNoteFabLeft">
-            <button mat-mini-fab title="{{ t('add_comment') }}" (click)="insertNote()">
+        <app-text
+          #target
+          [isReadOnly]="!canEdit"
+          (updated)="
+            onTargetUpdated(
+              $event.segment,
+              $event.delta,
+              $event.prevSegment,
+              $event.affectedEmbeds,
+              $event.isLocalUpdate
+            )
+          "
+          (loaded)="onTextLoaded('target')"
+          (focused)="targetFocused = $event"
+          (presenceChange)="onPresenceChange($event)"
+          [highlightSegment]="targetFocused && canEdit"
+          [enablePresence]="true"
+          [markInvalid]="true"
+          [isRightToLeft]="isTargetRightToLeft"
+          [fontSize]="fontSize"
+          [selectableVerses]="showAddCommentUI"
+        ></app-text>
+        <app-suggestions
+          [mdcElevation]="2"
+          [show]="showSuggestions && translationSuggestionsEnabled"
+          [suggestions]="suggestions"
+          [text]="target"
+          (selected)="insertSuggestion($event.suggestionIndex, $event.wordIndex, $event.event)"
+          (showChange)="showSuggestions = $event"
+        ></app-suggestions>
+        <ng-template #fabBottomSheet>
+          <div class="fab-bottom-sheet" [dir]="direction">
+            <b>{{ currentSegmentReference }}</b>
+            <button
+              *ngIf="!addingMobileNote && !hasEditRight"
+              mat-flat-button
+              (click)="toggleAddingMobileNote()"
+              color="accent"
+            >
               <mat-icon>add_comment</mat-icon>
+              {{ t("add_comment") }}
             </button>
+            <form *ngIf="addingMobileNote">
+              <mat-form-field class="full-width" appearance="outline">
+                <mat-label>{{ t("your_comment") }}</mat-label>
+                <textarea #mobileNoteTextarea matInput [formControl]="mobileNoteControl"></textarea>
+              </mat-form-field>
+              <div class="fab-action-buttons">
+                <button mat-button class="close-button" (click)="toggleAddingMobileNote()">{{ t("cancel") }}</button>
+                <button mat-flat-button class="save-button" color="primary" (click)="saveMobileNote()">
+                  {{ t("save") }}
+                </button>
+              </div>
+            </form>
           </div>
+        </ng-template>
+        <div *ngIf="canInsertNote" #fabButton class="insert-note-fab" [style.left]="insertNoteFabLeft">
+          <button mat-mini-fab title="{{ t('add_comment') }}" (click)="insertNote()">
+            <mat-icon>add_comment</mat-icon>
+          </button>
         </div>
       </div>
     </div>
