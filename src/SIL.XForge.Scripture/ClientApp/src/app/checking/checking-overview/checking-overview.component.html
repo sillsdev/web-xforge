@@ -64,7 +64,7 @@
                     {{ questionCountLabel(questionCount(text.bookNum, chapter.number)) }}
                   </span>
                   <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
-                    {{ answerCountLabel(bookAnswerCount(text)) }}
+                    {{ answerCountLabel(chapterAnswerCount(text.bookNum, chapter.number)) }}
                   </span>
                   <span fxFlex="64px" fxLayoutAlign="end center">
                     <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
