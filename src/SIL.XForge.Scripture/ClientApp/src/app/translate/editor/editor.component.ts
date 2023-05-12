@@ -224,7 +224,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   set isTargetTextRight(value: boolean) {
     if (this.projectUserConfigDoc != null && this.isTargetTextRight !== value) {
       this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.isTargetTextRight, value));
-      this.resetInsertNoteFab();
+      this.resetInsertNoteFab(false);
     }
   }
 
@@ -492,10 +492,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   ngAfterViewInit(): void {
     this.subscribe(fromEvent(window, 'resize'), () => {
+      const mobileDeviceViewport: boolean = this.mediaObserver.isActive('lt-lg');
       // only scroll to selection when window is resized on larger devices
-      this.setTextHeight(this.mediaObserver.isActive('gt-md'));
+      this.setTextHeight(!mobileDeviceViewport);
       // Note: this does not appear to get triggered when the window changes by opening dev tools
-      this.resetInsertNoteFab();
+      this.resetInsertNoteFab(false);
     });
     this.subscribe(
       this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
@@ -1432,14 +1433,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.toggleNoteThreadVerses(true);
   }
 
-  private resetInsertNoteFab(forceResetSelection: boolean = false): void {
-    if (this.bottomSheetRef != null) {
-      if (forceResetSelection) {
-        this.resetCommenterVerseSelection();
-      }
-      return;
+  private resetInsertNoteFab(resetVerseSelection: boolean): void {
+    if (resetVerseSelection) {
+      this.resetCommenterVerseSelection();
     }
-    this.resetCommenterVerseSelection();
+    if (this.bottomSheetRef?.containerInstance != null) return;
+
     // set a 10ms time out so the layout is drawn before calculating the target contain coordinates
     setTimeout(() => {
       const targetRect: DOMRect | undefined = this.targetContainer?.nativeElement.getBoundingClientRect();
