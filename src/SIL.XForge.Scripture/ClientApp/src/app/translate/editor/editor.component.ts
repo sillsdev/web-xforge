@@ -763,6 +763,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     if ((!this.hasSource || this.sourceLoaded) && this.targetLoaded) {
       this.loadingFinished();
+      // Toggle the segment the cursor is focused in - the timeout allows for Quill to get its focus set
+      setTimeout(() => {
+        if (this.target != null && this.targetFocused && this.bookNum != null && this.hasEditRight) {
+          const verseRef = getVerseRefFromSegmentRef(this.bookNum, this.target.segmentRef);
+          this.toggleVerseRefElement(verseRef);
+        }
+      }, 1);
     }
   }
 
@@ -1588,8 +1595,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.target == null ||
       !this.targetLoaded ||
       this.userRole == null ||
-      !this.showAddCommentUI ||
-      !this.isAddNotesEnabled
+      !this.showAddCommentUI
     )
       return;
     const verseSegments: string[] = this.target.getVerseSegments(verseRef);
