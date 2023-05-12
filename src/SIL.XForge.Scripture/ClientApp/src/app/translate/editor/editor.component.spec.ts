@@ -1220,11 +1220,13 @@ describe('EditorComponent', () => {
       env.typeCharacters('test');
       let contents = env.targetEditor.getContents();
       expect(contents.ops![verse2SegmentIndex].insert).toEqual('test');
-      expect(contents.ops![verse2SegmentIndex].attributes).toEqual({
-        'para-contents': true,
-        segment: 'verse_1_2',
-        'highlight-segment': true
-      });
+      expect(contents.ops![verse2SegmentIndex].attributes)
+        .withContext('typeCharacters verse2SegmentIndex attributes')
+        .toEqual({
+          'para-contents': true,
+          segment: 'verse_1_2',
+          'highlight-segment': true
+        });
 
       expect(contents.ops![verse3EmbedIndex].insert).toEqual({ verse: { number: '3', style: 'v' } });
       expect(contents.ops![verse3EmbedIndex].attributes).toEqual({ 'para-contents': true });
@@ -1233,11 +1235,14 @@ describe('EditorComponent', () => {
       contents = env.targetEditor.getContents();
       // check that edit has been undone
       expect(contents.ops![verse2SegmentIndex].insert).toEqual({ blank: true });
-      expect(contents.ops![verse2SegmentIndex].attributes).toEqual({
-        'para-contents': true,
-        segment: 'verse_1_2',
-        'highlight-segment': true
-      });
+      expect(contents.ops![verse2SegmentIndex].attributes)
+        .withContext('triggerUndo verse2SegmentIndex attributes')
+        .toEqual({
+          'para-contents': true,
+          segment: 'verse_1_2',
+          'highlight-segment': true,
+          'commenter-selection': true
+        });
       // check to make sure that data after the affected segment hasn't gotten corrupted
       expect(contents.ops![verse3EmbedIndex].insert).toEqual({ verse: { number: '3', style: 'v' } });
       expect(contents.ops![verse3EmbedIndex].attributes).toEqual({ 'para-contents': true });
@@ -1248,11 +1253,13 @@ describe('EditorComponent', () => {
       env.triggerRedo();
       contents = env.targetEditor.getContents();
       expect(contents.ops![verse2SegmentIndex].insert).toEqual('test');
-      expect(contents.ops![verse2SegmentIndex].attributes).toEqual({
-        'para-contents': true,
-        segment: 'verse_1_2',
-        'highlight-segment': true
-      });
+      expect(contents.ops![verse2SegmentIndex].attributes)
+        .withContext('triggerRedo verse2SegmentIndex attributes')
+        .toEqual({
+          'para-contents': true,
+          segment: 'verse_1_2',
+          'highlight-segment': true
+        });
       expect(contents.ops![verse3EmbedIndex].insert).toEqual({ verse: { number: '3', style: 'v' } });
       expect(contents.ops![verse3EmbedIndex].attributes).toEqual({ 'para-contents': true });
 
@@ -2607,7 +2614,7 @@ describe('EditorComponent', () => {
       expect(env.component.currentSegmentReference).toEqual('Matthew 1:2');
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).never();
       // Close the bottom sheet
-      env.saveMobileCloseButton!.click();
+      env.bottomSheetCloseButton!.click();
       env.wait();
 
       env.dispose();
@@ -3492,6 +3499,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.insert-note-fab > button'));
   }
 
+  get bottomSheetCloseButton(): HTMLButtonElement | null {
+    return document.querySelector('.fab-bottom-sheet .close-button');
+  }
+
   get bottomSheetVerseReference(): HTMLElement | null {
     return document.querySelector('.fab-bottom-sheet > b');
   }
@@ -3502,10 +3513,6 @@ class TestEnvironment {
 
   get mobileNoteTextArea(): HTMLTextAreaElement | null {
     return document.querySelector('.fab-bottom-sheet form textarea');
-  }
-
-  get saveMobileCloseButton(): HTMLButtonElement | null {
-    return document.querySelector('.fab-bottom-sheet .close-button');
   }
 
   get saveMobileNoteButton(): HTMLButtonElement | null {
