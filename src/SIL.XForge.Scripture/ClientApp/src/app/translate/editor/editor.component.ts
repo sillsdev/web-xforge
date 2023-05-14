@@ -769,7 +769,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           const verseRef = getVerseRefFromSegmentRef(this.bookNum, this.target.segmentRef);
           this.toggleVerseRefElement(verseRef);
         }
-      }, 1);
+      }, 50);
     }
   }
 
