@@ -178,7 +178,7 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
       dto.sourceTokens,
       dto.targetTokens,
       dto.confidences,
-      dto.sources,
+      Array.from(this.createTranslationSources(dto.sources)),
       this.createWordAlignmentMatrix(dto.alignment, dto.sourceTokens.length, dto.targetTokens.length),
       dto.phrases.map(p => this.createPhrase(p))
     );
