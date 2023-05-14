@@ -1231,9 +1231,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.target.segment.range.index,
           range.index - this.target.segment.range.index
         );
-        // We add a space to the prefix to force IsLastWordComplete to be true if we are not at the end
-        const prefix = this.insertSuggestionEnd !== -1 ? text + ' ' : text;
-        this.translator.setPrefix(prefix);
+        // Only specify IsLastWordComplete if insertSuggestionEnd is not -1
+        let isLastWordComplete: boolean | undefined;
+        if (this.insertSuggestionEnd !== -1) {
+          isLastWordComplete = true;
+        }
+        this.translator.setPrefix(text, isLastWordComplete);
         const machineSuggestions = this.translationSuggester.getSuggestions(
           this.numSuggestions,
           this.translator.prefixWordRanges.length,
