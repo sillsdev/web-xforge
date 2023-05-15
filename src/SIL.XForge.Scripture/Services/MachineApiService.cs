@@ -118,9 +118,9 @@ public class MachineApiService : IMachineApiService
                 );
                 buildDto = CreateDto(translationBuild);
             }
-            catch (ServalApiException e)
+            catch (Exception e)
             {
-                ProcessServalApiException(e);
+                await ProcessServalApiExceptionAsync(e);
             }
         }
         else
@@ -175,9 +175,9 @@ public class MachineApiService : IMachineApiService
                 );
                 buildDto = CreateDto(translationBuild);
             }
-            catch (ServalApiException e)
+            catch (Exception e)
             {
-                ProcessServalApiException(e);
+                await ProcessServalApiExceptionAsync(e);
             }
         }
         else
@@ -220,21 +220,10 @@ public class MachineApiService : IMachineApiService
                     );
                     engineDto = CreateDto(translationEngine);
                 }
-                catch (ServalApiException e)
-                {
-                    ProcessServalApiException(e);
-                }
-                catch (BrokenCircuitException e)
+                catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
-                    {
-                        _exceptionHandler.ReportException(e);
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -288,21 +277,10 @@ public class MachineApiService : IMachineApiService
                         cancellationToken
                     );
                 }
-                catch (ServalApiException e)
-                {
-                    ProcessServalApiException(e);
-                }
-                catch (BrokenCircuitException e)
+                catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
-                    {
-                        _exceptionHandler.ReportException(e);
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -359,21 +337,10 @@ public class MachineApiService : IMachineApiService
                     );
                     buildDto = CreateDto(translationBuild);
                 }
-                catch (ServalApiException e)
-                {
-                    ProcessServalApiException(e);
-                }
-                catch (BrokenCircuitException e)
+                catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
-                    {
-                        _exceptionHandler.ReportException(e);
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -425,17 +392,10 @@ public class MachineApiService : IMachineApiService
                         cancellationToken
                     );
                 }
-                catch (BrokenCircuitException e)
+                catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
-                    {
-                        _exceptionHandler.ReportException(e);
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -481,17 +441,10 @@ public class MachineApiService : IMachineApiService
                         cancellationToken
                     );
                 }
-                catch (BrokenCircuitException e)
+                catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
-                    {
-                        _exceptionHandler.ReportException(e);
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -551,17 +504,10 @@ public class MachineApiService : IMachineApiService
                         cancellationToken
                     );
                 }
-                catch (BrokenCircuitException e)
+                catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
-                    {
-                        _exceptionHandler.ReportException(e);
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -703,20 +649,29 @@ public class MachineApiService : IMachineApiService
     /// This method maps Serval API exceptions to the exceptions that Machine.js understands.
     /// </summary>
     /// <param name="e">The Serval API Exception</param>
+    /// <param name="doNotThrowIfInProcessEnabled">Report but do not throw the exception if in-process machine is enabled</param>
     /// <exception cref="DataNotFoundException">Entity Deleted.</exception>
     /// <exception cref="ForbiddenException">Access Denied.</exception>
     /// <remarks>If this method returns, it is expected that the DTO will be null.</remarks>
-    private static void ProcessServalApiException(ServalApiException e)
+    private async Task ProcessServalApiExceptionAsync(Exception e, bool doNotThrowIfInProcessEnabled = false)
     {
-        switch (e.StatusCode)
+        switch (e)
         {
-            case StatusCodes.Status204NoContent:
+            case ServalApiException { StatusCode: StatusCodes.Status204NoContent }:
                 throw new DataNotFoundException("Entity Deleted");
-            case StatusCodes.Status403Forbidden:
+            case ServalApiException { StatusCode: StatusCodes.Status403Forbidden }:
                 throw new ForbiddenException();
-            case StatusCodes.Status404NotFound:
+            case ServalApiException { StatusCode: StatusCodes.Status404NotFound }:
                 throw new DataNotFoundException("Entity Deleted");
-            case StatusCodes.Status408RequestTimeout:
+            case ServalApiException { StatusCode: StatusCodes.Status408RequestTimeout }:
+                return;
+            case BrokenCircuitException
+                when doNotThrowIfInProcessEnabled
+                    && await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess):
+            case ServalApiException
+                when doNotThrowIfInProcessEnabled
+                    && await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess):
+                _exceptionHandler.ReportException(e);
                 return;
             default:
                 throw e;
