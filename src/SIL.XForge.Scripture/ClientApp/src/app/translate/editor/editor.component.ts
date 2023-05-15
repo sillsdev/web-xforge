@@ -1,4 +1,13 @@
-import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Inject,
+  OnDestroy,
+  TemplateRef,
+  ViewChild
+} from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
@@ -172,6 +181,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly projectService: SFProjectService,
     noticeService: NoticeService,
     private readonly dialogService: DialogService,
+    private readonly changeDetector: ChangeDetectorRef,
     private readonly mediaObserver: MediaObserver,
     private readonly pwaService: PwaService,
     private readonly translationEngineService: TranslationEngineService,
@@ -1232,8 +1242,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     // only bother updating the suggestion if the cursor is at the end of the segment
+    let suggestionsUpdated = false;
     if (!this.isTranslating && this.target.isSelectionAtSegmentEnd) {
       if (this.translator == null) {
+        if (this.suggestions.length > 0) {
+          suggestionsUpdated = true;
+        }
         this.suggestions = [];
       } else {
         const range = this.skipInitialWhitespace(this.target.editor, this.target.editor.getSelection()!);
@@ -1254,6 +1268,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.translator.getCurrentResults()
         );
         if (machineSuggestions.length === 0) {
+          if (this.suggestions.length > 0) {
+            suggestionsUpdated = true;
+          }
           this.suggestions = [];
         } else {
           const suggestions: Suggestion[] = [];
@@ -1265,6 +1282,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             suggestions.push({ words, confidence });
           }
           this.suggestions = suggestions;
+          suggestionsUpdated = true;
           if (this.suggestions.length > 0 && !isEqual(this.lastShownSuggestions, this.suggestions)) {
             if (this.metricsSession != null) {
               this.metricsSession.onSuggestionShown();
@@ -1274,7 +1292,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       }
     }
-    this.showSuggestions = (this.isTranslating || this.suggestions.length > 0) && this.target.isSelectionAtSegmentEnd;
+    const newShowSuggestionsValue =
+      (this.isTranslating || this.suggestions.length > 0) && this.target.isSelectionAtSegmentEnd;
+    if (this.showSuggestions !== newShowSuggestionsValue) {
+      suggestionsUpdated = true;
+    }
+    this.showSuggestions = newShowSuggestionsValue;
+    if (suggestionsUpdated) {
+      // Trigger detect changes so the suggestion list will update
+      this.changeDetector.detectChanges();
+    }
   }
 
   private skipInitialWhitespace(editor: Quill, range: RangeStatic): RangeStatic {
