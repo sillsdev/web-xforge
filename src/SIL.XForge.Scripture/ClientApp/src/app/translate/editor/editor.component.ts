@@ -578,7 +578,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled || !this.hasEditRight) {
               this.setupTranslationEngine();
             }
-            setTimeout(() => this.setTextHeight(true));
+            setTimeout(() => this.setTextHeight());
           });
 
           if (this.metricsSession != null) {
@@ -599,7 +599,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
     );
 
-    setTimeout(() => this.setTextHeight(true));
+    setTimeout(() => this.setTextHeight());
   }
 
   ngOnDestroy(): void {
@@ -1117,7 +1117,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       .subscribe();
   }
 
-  private setTextHeight(scrollToSelection: boolean): void {
+  private setTextHeight(scrollToSelection: boolean = true): void {
     if (this.target == null || this.targetContainer == null) {
       return;
     }
@@ -1192,7 +1192,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.router.navigateByUrl('/projects/' + this.projectDoc!.id + '/translate', { replaceUrl: true });
       });
     });
-    setTimeout(() => this.setTextHeight(true));
+    setTimeout(() => this.setTextHeight());
   }
 
   private onStartTranslating(): void {
