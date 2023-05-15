@@ -6,7 +6,7 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
-import { merge, Subscription } from 'rxjs';
+import { asyncScheduler, merge, Subscription } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -197,7 +197,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       }
       this.dataChangesSub = merge(this.projectDoc.remoteChanges$, this.questionsQuery.remoteChanges$)
         // TODO Find a better solution than merely throttling remote changes
-        .pipe(throttleTime(1000))
+        .pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true }))
         .subscribe(() => {
           if (this.projectDoc != null && this.projectDoc.data != null) {
             if (this.projectDoc.data.checkingConfig.checkingEnabled) {
