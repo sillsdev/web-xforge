@@ -291,6 +291,9 @@ public class MachineProjectService : IMachineProjectService
 
         // Remove the project from Serval
         await _translationEnginesClient.DeleteAsync(projectSecret.ServalData.TranslationEngineId, cancellationToken);
+
+        // Remove the Serval Data
+        await _projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData));
     }
 
     /// <summary>

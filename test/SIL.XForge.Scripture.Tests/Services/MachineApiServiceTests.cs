@@ -87,7 +87,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetBuildAsync_MachineApiBuildEnded()
+    public void GetBuildAsync_ServalBuildEnded()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -104,7 +104,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetBuildAsync_MachineApiNoBuildRunning()
+    public async Task GetBuildAsync_ServalNoBuildRunning()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -178,7 +178,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetBuildAsync_MachineApiNoTranslationEngine()
+    public void GetBuildAsync_ServalNoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -237,7 +237,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetBuildAsync_MachineApiSuccess()
+    public async Task GetBuildAsync_ServalSuccess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -339,7 +339,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetCurrentBuildAsync_MachineApiBuildEnded()
+    public void GetCurrentBuildAsync_ServalBuildEnded()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -356,7 +356,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetCurrentBuildAsync_MachineApiNoBuildRunning()
+    public async Task GetCurrentBuildAsync_ServalNoBuildRunning()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -443,7 +443,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetCurrentBuildAsync_MachineApiNoTranslationEngine()
+    public void GetCurrentBuildAsync_ServalNoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -501,7 +501,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetCurrentBuildAsync_MachineApiSuccess()
+    public async Task GetCurrentBuildAsync_ServalSuccess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -619,7 +619,23 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetEngineAsync_MachineApiNoTranslationEngine()
+    public void GetEngineAsync_ServalDoesNotOwnTranslationEngine()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+        env.TranslationEnginesClient
+            .GetAsync(TranslationEngine01, CancellationToken.None)
+            .Throws(ServalApiExceptions.Forbidden);
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.GetEngineAsync(User01, Project01, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void GetEngineAsync_ServalNoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -632,7 +648,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetEngineAsync_MachineApiOutageNoInProcess()
+    public void GetEngineAsync_ServalOutageNoInProcess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -648,7 +664,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetEngineAsync_MachineApiOutageFailsToInProcess()
+    public async Task GetEngineAsync_ServalOutageFailsToInProcess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -707,7 +723,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetEngineAsync_MachineApiSuccess()
+    public async Task GetEngineAsync_ServalSuccess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -824,7 +840,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetWordGraphAsync_MachineApiNoTranslationEngine()
+    public void GetWordGraphAsync_ServalNoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -837,7 +853,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void GetWordGraphAsync_MachineApiOutageNoInProcess()
+    public void GetWordGraphAsync_ServalOutageNoInProcess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -853,7 +869,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetWordGraphAsync_MachineApiOutageFailsToInProcess()
+    public async Task GetWordGraphAsync_ServalOutageFailsToInProcess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -910,7 +926,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task GetWordGraphAsync_MachineApiSuccess()
+    public async Task GetWordGraphAsync_ServalSuccess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1017,7 +1033,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void StartBuildAsync_MachineApiNoTranslationEngine()
+    public void StartBuildAsync_ServalNoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1030,7 +1046,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void StartBuildAsync_MachineApiOutageNoInProcess()
+    public void StartBuildAsync_ServalOutageNoInProcess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1046,7 +1062,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task StartBuildAsync_MachineApiOutageFailsToInProcess()
+    public async Task StartBuildAsync_ServalOutageFailsToInProcess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1101,7 +1117,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task StartBuildAsync_MachineApiSuccess()
+    public async Task StartBuildAsync_ServalSuccess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1203,7 +1219,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void TrainSegmentAsync_MachineApiNoTranslationEngine()
+    public void TrainSegmentAsync_ServalNoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1216,7 +1232,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void TrainSegmentAsync_MachineApiOutageNoInProcess()
+    public void TrainSegmentAsync_ServalOutageNoInProcess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1232,7 +1248,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task TrainSegmentAsync_MachineApiOutageFailsToInProcess()
+    public async Task TrainSegmentAsync_ServalOutageFailsToInProcess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1287,7 +1303,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task TrainSegmentAsync_MachineApiSuccess()
+    public async Task TrainSegmentAsync_ServalSuccess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1384,7 +1400,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void TranslateAsync_MachineApiNoTranslationEngine()
+    public void TranslateAsync_ServalNoTranslationEngine()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1397,7 +1413,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void TranslateAsync_MachineApiOutageNoInProcess()
+    public void TranslateAsync_ServalOutageNoInProcess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1413,7 +1429,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task TranslateAsync_MachineApiOutageFailsToInProcess()
+    public async Task TranslateAsync_ServalOutageFailsToInProcess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1454,7 +1470,7 @@ public class MachineApiServiceTests
                         new[] { Segment },
                         new[] { TargetSegment },
                         new[] { 0.0 },
-                        new[] { TranslationSources.Smt },
+                        new[] { TranslationSources.Smt | TranslationSources.Transfer | TranslationSources.Prefix },
                         new WordAlignmentMatrix(1, 1, new[] { (0, 0) }),
                         new[] { new MachinePhrase(new Range<int>(), 0, 0.0) }
                     )
@@ -1470,14 +1486,14 @@ public class MachineApiServiceTests
         Assert.AreEqual(1, actual.TargetTokens.Count);
         Assert.AreEqual(1, actual.Confidences.Count);
         Assert.AreEqual(1, actual.Sources.Count);
-        Assert.AreEqual(1, actual.Sources.First().Count);
+        Assert.AreEqual(3, actual.Sources.First().Count);
         Assert.AreEqual(1, actual.Alignment.Count);
         Assert.AreEqual(1, actual.Phrases.Count);
         Assert.AreEqual(TargetSegment, actual.Translation);
     }
 
     [Test]
-    public async Task TranslateAsync_MachineApiSuccess()
+    public async Task TranslateAsync_ServalSuccess()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1603,7 +1619,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void TranslateNAsync_MachineApiNoTranslationEngine()
+    public void TranslateNAsync_ServalNoTranslationEngine()
     {
         // Set up test environment
         const int n = 1;
@@ -1617,7 +1633,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void TranslateNAsync_MachineApiOutageNoInProcess()
+    public void TranslateNAsync_ServalOutageNoInProcess()
     {
         // Set up test environment
         const int n = 1;
@@ -1634,7 +1650,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task TranslateNAsync_MachineApiOutageFailsToInProcess()
+    public async Task TranslateNAsync_ServalOutageFailsToInProcess()
     {
         // Set up test environment
         const int n = 1;
@@ -1698,7 +1714,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task TranslateNAsync_MachineApiSuccess()
+    public async Task TranslateNAsync_ServalSuccess()
     {
         // Set up test environment
         const int n = 1;
