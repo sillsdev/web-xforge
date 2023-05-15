@@ -35,8 +35,6 @@ import { QuestionDialogService } from '../question-dialog/question-dialog.servic
   styleUrls: ['./checking-overview.component.scss']
 })
 export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
-  itemVisible: { [bookIdOrDocId: string]: boolean } = {};
-  itemVisibleArchived: { [bookIdOrDocId: string]: boolean } = {};
   texts: TextInfo[] = [];
   projectId?: string;
 
