@@ -2,6 +2,7 @@ import { MdcDialogModule, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatExpansionPanel } from '@angular/material/expansion';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Route } from '@angular/router';
@@ -23,7 +24,6 @@ import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
@@ -154,9 +154,8 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toEqual(2);
 
       // Click on Luke and then Luke 1
-      env.simulateRowClick(1);
-      const id = new TextDocId('project01', 42, 1);
-      env.simulateRowClick(2, id);
+      env.clickExpanderAtRow(1);
+      env.clickExpanderAtRow(2);
       expect(env.questionEditButtons.length).toEqual(1);
 
       env.clickElement(env.addQuestionButton);
@@ -171,9 +170,8 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
       // Click on Matthew and then Matthew 1
-      env.simulateRowClick(0);
-      const id = new TextDocId('project01', 40, 1);
-      env.simulateRowClick(1, id);
+      env.clickExpanderAtRow(0);
+      env.clickExpanderAtRow(1);
       expect(env.textRows[2].nativeElement.textContent).toContain('v3');
       expect(env.textRows[3].nativeElement.textContent).toContain('v4');
     }));
@@ -200,9 +198,8 @@ describe('CheckingOverviewComponent', () => {
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(1);
-      env.simulateRowClick(1);
-      const id = new TextDocId('project01', 42, 1);
-      env.simulateRowClick(2, id);
+      env.clickExpanderAtRow(0);
+      env.clickExpanderAtRow(1);
       expect(env.textRows.length).toEqual(3);
     }));
   });
@@ -214,28 +211,27 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
       expect(env.questionEditButtons.length).toEqual(0);
-      expect(env.component.itemVisible[id.toString()]).toBeFalsy();
+      // expect(env.component.itemVisible[id.toString()]).toBeFalsy();
       expect(env.component.questionCount(id.bookNum, id.chapterNum)).toBeGreaterThan(0);
 
-      env.simulateRowClick(0);
+      env.clickExpanderAtRow(0);
       expect(env.textRows.length).toEqual(3);
-      env.simulateRowClick(1, id);
+      env.clickExpanderAtRow(1);
       expect(env.textRows.length).toEqual(9);
       expect(env.questionEditButtons.length).toEqual(6);
 
-      env.simulateRowClick(1, id);
+      env.clickExpanderAtRow(1);
       expect(env.textRows.length).toEqual(3);
       expect(env.questionEditButtons.length).toEqual(0);
-      env.simulateRowClick(0);
+      env.clickExpanderAtRow(0);
       expect(env.textRows.length).toEqual(2);
     }));
 
     it('should open a dialog to edit a question', fakeAsync(() => {
       const env = new TestEnvironment();
-      const id = new TextDocId('project01', 40, 1);
       env.waitForQuestions();
-      env.simulateRowClick(0);
-      env.simulateRowClick(1, id);
+      env.clickExpanderAtRow(0);
+      env.clickExpanderAtRow(1);
       expect(env.textRows.length).toEqual(9);
       expect(env.questionEditButtons.length).toEqual(6);
 
@@ -246,10 +242,9 @@ describe('CheckingOverviewComponent', () => {
 
     it('should bring up question dialog only if user confirms question answered dialog', fakeAsync(() => {
       const env = new TestEnvironment();
-      const id = new TextDocId('project01', 40, 1);
       env.waitForQuestions();
-      env.simulateRowClick(0);
-      env.simulateRowClick(1, id);
+      env.clickExpanderAtRow(0);
+      env.clickExpanderAtRow(1);
       // Edit a question with no answers
       env.clickElement(env.questionEditButtons[3]);
       verify(mockedDialogService.openMdcDialog(anything())).never();
@@ -385,29 +380,27 @@ describe('CheckingOverviewComponent', () => {
   describe('Archive Question', () => {
     it('should display "No archived question" message', fakeAsync(() => {
       const env = new TestEnvironment();
-      const id = new TextDocId('project01', 40, 1);
       env.fixture.detectChanges();
       expect(env.loadingArchivedQuestionsLabel).not.toBeNull();
       env.waitForQuestions();
       expect(env.loadingArchivedQuestionsLabel).toBeNull();
       expect(env.noArchivedQuestionsLabel).toBeNull();
 
-      env.simulateRowClick(0, undefined, true);
-      env.simulateRowClick(1, id, true);
-      env.clickElement(env.questionPublishButtons[2]);
+      env.clickExpanderAtRow(0, true);
+      env.clickExpanderAtRow(1, true);
+      env.clickElement(env.questionPublishButtons[0]);
       expect(env.loadingArchivedQuestionsLabel).toBeNull();
       expect(env.noArchivedQuestionsLabel).not.toBeNull();
     }));
 
     it('archives and republishes a question', fakeAsync(() => {
       const env = new TestEnvironment();
-      const id = new TextDocId('project01', 40, 1);
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
       expect(env.textArchivedRows.length).toEqual(1);
       expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('1 questions');
-      env.simulateRowClick(0);
-      env.simulateRowClick(1, id);
+      env.clickExpanderAtRow(0);
+      env.clickExpanderAtRow(1);
       expect(env.textRows.length).toEqual(9);
       expect(env.questionArchiveButtons.length).toEqual(9);
       env.clickElement(env.questionArchiveButtons[2]);
@@ -416,8 +409,8 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toEqual(8);
 
       // Re-publish a question that has been archived
-      env.simulateRowClick(0, undefined, true);
-      env.simulateRowClick(1, id, true);
+      env.clickExpanderAtRow(0, true);
+      env.clickExpanderAtRow(1, true);
       const archivedQuestion: HTMLElement = env.archivedQuestionDates[0].nativeElement;
       expect(archivedQuestion.textContent).toContain('Archived on');
       env.clickElement(env.questionPublishButtons[2]);
@@ -437,7 +430,7 @@ describe('CheckingOverviewComponent', () => {
       // expect one book with archived questions
       expect(env.textArchivedRows.length).toEqual(1);
       // expand the first book
-      env.simulateRowClick(0);
+      env.clickExpanderAtRow(0);
       // expect there is only one chapter of questions in that book (number of rows increased from 2 to 3)
       expect(env.textRows.length).toEqual(3);
       // that chapter should have 6 questions
@@ -457,21 +450,14 @@ describe('CheckingOverviewComponent', () => {
       // REPUBLISH QUESTIONS IN A CHAPTER
 
       // expand the book with archived questions
-      env.simulateRowClick(0, undefined, true);
+      env.clickExpanderAtRow(0, true);
       // expect 7 questions all in the one chapter
       expect(env.getArchivedQuestionsCountTextByRow(1)).toContain('7 questions');
       // republish all 7 questions in that chapter
       env.clickElement(env.questionPublishButtons[1]);
       // expect no archived questions
       expect(env.textArchivedRows.length).toEqual(0);
-      // Expect 2 books with published questions. In this case the first book will still be expanded, so the row length
-      // will be 3. It seems to remember that the book was expanded, even after all questions in that book are archived,
-      // so when they get republished and the book shows up in the list again, the books is expanded. Technically this
-      // is probably a bug, but it's hard to imagine why anyone would care.
-      expect(env.textRows.length).toEqual(3);
-      // for the sake of expectations later in the test, close that first book
-      env.simulateRowClick(0);
-      // now just the two books should be shown, not any expanded chapters
+      // Expect 2 books with published questions.
       expect(env.textRows.length).toEqual(2);
       // with 7 questions in the first book
       expect(env.getPublishedQuestionsCountTextByRow(0)).toContain('7 questions');
@@ -486,12 +472,7 @@ describe('CheckingOverviewComponent', () => {
       env.clickElement(env.questionArchiveButtons[0]);
       // there should be no books with published questions now
       expect(env.textRows.length).toEqual(0);
-      // Expect two books with archived questions. The first book will still be expanded from before, so there will be
-      // 3 rows. See the note above about the same thing happening for the published questions list.
-      expect(env.textArchivedRows.length).toEqual(3);
-      // for the sake of expectations later in the test, close that first book
-      env.simulateRowClick(0, undefined, true);
-      // now just the two books should be shown, not any expanded chapters
+      // Expect two books with archived questions
       expect(env.textArchivedRows.length).toEqual(2);
       expect(env.getArchivedQuestionsCountTextByRow(0)).toContain('7 questions');
       expect(env.getArchivedQuestionsCountTextByRow(1)).toContain('1 questions');
@@ -923,27 +904,58 @@ class TestEnvironment {
   }
 
   get textRows(): DebugElement[] {
-    return this.questions.queryAll(By.css('mdc-list-item'));
+    // const booksChapters = this.fixture.debugElement.query(
+    //   By.css('#text-with-questions-list')).queryAll(By.css('mat-expansion-panel, mat-list-item'));
+
+    return this.rowsByList('#text-with-questions-list');
   }
 
   get textArchivedRows(): DebugElement[] {
-    return this.archivedQuestions.queryAll(By.css('mdc-list-item'));
+    // const booksChapters = this.fixture.debugElement.query(
+    //   By.css('#text-with-archived-questions')).queryAll(By.css('mat-expansion-panel, mat-list-item'));
+
+    return this.rowsByList('#text-with-archived-questions');
   }
 
-  get questions(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#text-with-questions-list'));
+  rowsByList(listId: string): DebugElement[] {
+    const rowsShown: DebugElement[] = [];
+    const list = this.fixture.debugElement.query(By.css(listId));
+    for (const book of list.queryAll(By.css('mat-expansion-panel.remove-padding'))) {
+      rowsShown.push(book);
+      const bookExpander = book.componentInstance as MatExpansionPanel;
+      if (bookExpander.expanded) {
+        const chapters = book.queryAll(By.css('mat-expansion-panel'));
+        for (const chapter of chapters) {
+          rowsShown.push(chapter);
+          const chapterExpander = chapter.componentInstance as MatExpansionPanel;
+          if (chapterExpander.expanded) {
+            const questions = chapter.queryAll(By.css('mat-list-item'));
+            for (const question of questions) {
+              rowsShown.push(question);
+            }
+          }
+        }
+      }
+    }
+    return rowsShown;
   }
 
   get questionEditButtons(): DebugElement[] {
-    return this.fixture.debugElement.queryAll(By.css('mdc-list-item .edit-btn'));
+    const ret: DebugElement[] = [];
+    this.textRows.filter(By.css('mat-list-item')).forEach(e => ret.push(e.query(By.css('.edit-btn'))));
+    return ret;
   }
 
   get questionArchiveButtons(): DebugElement[] {
-    return this.fixture.debugElement.queryAll(By.css('mdc-list-item .archive-btn'));
+    const ret: DebugElement[] = [];
+    this.textRows.forEach(e => ret.push(e.query(By.css('.archive-btn'))));
+    return ret;
   }
 
   get questionPublishButtons(): DebugElement[] {
-    return this.archivedQuestions.queryAll(By.css('mdc-list-item .publish-btn'));
+    const ret: DebugElement[] = [];
+    this.textArchivedRows.forEach(e => ret.push(e.query(By.css('.publish-btn'))));
+    return ret;
   }
 
   get loadingArchivedQuestionsLabel(): DebugElement {
@@ -955,7 +967,7 @@ class TestEnvironment {
   }
 
   get archivedQuestionDates(): DebugElement[] {
-    return this.archivedQuestions.queryAll(By.css('mdc-list-item .date-archived'));
+    return this.archivedQuestions.queryAll(By.css('mat-list-item .date-archived'));
   }
 
   get overallProgressChart(): DebugElement {
@@ -977,12 +989,11 @@ class TestEnvironment {
   }
 
   getPublishedQuestionsCountTextByRow(row: number): string {
-    return this.questions.queryAll(By.css('mdc-list-item .questions-count'))[row].nativeElement.textContent;
+    return this.textRows[row].query(By.css('.questions-count')).nativeElement.textContent;
   }
 
   getArchivedQuestionsCountTextByRow(row: number): string {
-    return this.archivedQuestions.queryAll(By.css('mdc-list-item .archived-questions-count'))[row].nativeElement
-      .textContent;
+    return this.textArchivedRows[row].query(By.css('.archived-questions-count')).nativeElement.textContent;
   }
 
   waitForQuestions(): void {
@@ -1014,20 +1025,13 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  /**
-   * simulate row click since actually clicking on the row doesn't fire the selectionChange event
-   */
-  simulateRowClick(index: number, id?: TextDocId, fromArchives?: boolean): void {
-    let idStr: string;
-    if (id) {
-      idStr = id.toString();
-    } else {
-      idStr = Canon.bookNumberToId(this.component.texts[index].bookNum);
-    }
+  clickExpanderAtRow(rowIndex: number, fromArchives?: boolean): void {
     if (fromArchives) {
-      this.component.itemVisibleArchived[idStr] = !this.component.itemVisibleArchived[idStr];
+      const panel = this.textArchivedRows[rowIndex].componentInstance as MatExpansionPanel;
+      panel.toggle();
     } else {
-      this.component.itemVisible[idStr] = !this.component.itemVisible[idStr];
+      const panel = this.textRows[rowIndex].componentInstance as MatExpansionPanel;
+      panel.toggle();
     }
     this.fixture.detectChanges();
     flush();
