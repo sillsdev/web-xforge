@@ -13,8 +13,14 @@ import { ProjectDeletedDialogComponent } from './app/project-deleted-dialog/proj
 import { DeleteProjectDialogComponent } from './app/settings/delete-project-dialog/delete-project-dialog.component';
 import { MdcDialogLaunchComponent, mdcDialogStory } from '.storybook/story-utils';
 
+// This set of stories is for dialogs that are being converted from MDC to Angular Material.
+// Typically each dialog, being a separate component, should have its own set of stories.
+// However, in order to quickly get as many MDC dialogs into Storybook as possible, nearly all the MDC dialogs were put
+// in this file. When converting a dialog to Material it would be preferable to update this file to show the new dialog
+// component, so that Chromatic can compare the old and new versions of the dialog.
+
 const meta: Meta = {
-  title: 'MDC/Dialogs',
+  title: 'Dialogs',
   component: MdcDialogLaunchComponent
 };
 export default meta;
