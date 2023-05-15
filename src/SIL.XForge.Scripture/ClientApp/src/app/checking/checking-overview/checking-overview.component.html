@@ -49,74 +49,78 @@
             </span>
           </mat-panel-title>
         </mat-expansion-panel-header>
-        <mat-selection-list>
-          <ng-container *ngFor="let chapter of text.chapters">
-            <mat-expansion-panel
-              dense
-              *ngIf="questionCount(text.bookNum, chapter.number) > 0"
-              [togglePosition]="'before'"
-              class="mat-elevation-z0"
-            >
-              <mat-expansion-panel-header>
-                <mat-panel-title fxLayoutAlign="start center">
-                  <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
-                  <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center" class="questions-count">
-                    {{ questionCountLabel(questionCount(text.bookNum, chapter.number)) }}
-                  </span>
-                  <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
-                    {{ answerCountLabel(chapterAnswerCount(text.bookNum, chapter.number)) }}
-                  </span>
-                  <span fxFlex="64px" fxLayoutAlign="end center">
-                    <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
-                    <button
-                      mat-icon-button
-                      (click)="$event.stopPropagation(); setArchiveStatusForQuestionsInChapter(text, chapter, true)"
-                      [title]="t('archive_multiple', { location: getBookName(text) })"
-                      class="archive-btn"
-                    >
-                      <mat-icon>archive</mat-icon>
-                    </button>
-                  </span>
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-              <mat-selection-list [multiple]="false">
-                <mat-list-item
-                  *ngFor="let questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number))"
-                >
-                  <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-                    <button
-                      fxFlex="64px"
-                      mat-button
-                      type="button"
-                      (click)="questionDialog(questionDoc)"
-                      class="edit-btn"
-                    >
-                      <mat-icon>edit</mat-icon>
-                    </button>
-                    v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
-                    <mat-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mat-icon>
-                    <span fxFlex class="no-overflow-ellipsis">
-                      <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
+        <ng-template matExpansionPanelContent>
+          <mat-selection-list>
+            <ng-container *ngFor="let chapter of text.chapters">
+              <mat-expansion-panel
+                dense
+                *ngIf="questionCount(text.bookNum, chapter.number) > 0"
+                [togglePosition]="'before'"
+                class="mat-elevation-z0"
+              >
+                <mat-expansion-panel-header>
+                  <mat-panel-title fxLayoutAlign="start center">
+                    <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
+                    <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center" class="questions-count">
+                      {{ questionCountLabel(questionCount(text.bookNum, chapter.number)) }}
                     </span>
                     <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
-                      {{ answerCountLabel(questionDoc.getAnswers().length) }}
+                      {{ answerCountLabel(chapterAnswerCount(text.bookNum, chapter.number)) }}
                     </span>
                     <span fxFlex="64px" fxLayoutAlign="end center">
+                      <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
                       <button
                         mat-icon-button
-                        (click)="setQuestionArchiveStatus(questionDoc, true)"
-                        title="{{ t('archive') }}"
+                        (click)="$event.stopPropagation(); setArchiveStatusForQuestionsInChapter(text, chapter, true)"
+                        [title]="t('archive_multiple', { location: getBookName(text) })"
                         class="archive-btn"
                       >
                         <mat-icon>archive</mat-icon>
                       </button>
                     </span>
-                  </div>
-                </mat-list-item>
-              </mat-selection-list>
-            </mat-expansion-panel>
-          </ng-container>
-        </mat-selection-list>
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+                <ng-template matExpansionPanelContent>
+                  <mat-selection-list [multiple]="false">
+                    <mat-list-item
+                      *ngFor="let questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number))"
+                    >
+                      <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+                        <button
+                          fxFlex="64px"
+                          mat-button
+                          type="button"
+                          (click)="questionDialog(questionDoc)"
+                          class="edit-btn"
+                        >
+                          <mat-icon>edit</mat-icon>
+                        </button>
+                        v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
+                        <mat-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mat-icon>
+                        <span fxFlex class="no-overflow-ellipsis">
+                          <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
+                        </span>
+                        <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center">
+                          {{ answerCountLabel(questionDoc.getAnswers().length) }}
+                        </span>
+                        <span fxFlex="64px" fxLayoutAlign="end center">
+                          <button
+                            mat-icon-button
+                            (click)="setQuestionArchiveStatus(questionDoc, true)"
+                            title="{{ t('archive') }}"
+                            class="archive-btn"
+                          >
+                            <mat-icon>archive</mat-icon>
+                          </button>
+                        </span>
+                      </div>
+                    </mat-list-item>
+                  </mat-selection-list>
+                </ng-template>
+              </mat-expansion-panel>
+            </ng-container>
+          </mat-selection-list>
+        </ng-template>
       </mat-expansion-panel>
     </ng-container>
   </div>
@@ -229,61 +233,65 @@
             </div>
           </mat-panel-title>
         </mat-expansion-panel-header>
-        <ng-container *ngFor="let chapter of text.chapters">
-          <mat-expansion-panel
-            [togglePosition]="'before'"
-            class="mat-elevation-z0"
-            *ngIf="questionCount(text.bookNum, chapter.number, true) > 0"
-          >
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-                  <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
-                  <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center" class="archived-questions-count">
-                    {{ questionCountLabel(questionCount(text.bookNum, chapter.number, true)) }}
-                  </span>
-                  <span fxFlex="64px" fxLayoutAlign="end center">
-                    <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
-                    <button
-                      mat-icon-button
-                      (click)="$event.stopPropagation(); setArchiveStatusForQuestionsInChapter(text, chapter, false)"
-                      [title]="t('republish_multiple', { location: getBookName(text) + ' ' + chapter.number })"
-                      class="publish-btn"
-                    >
-                      <mat-icon>public</mat-icon>
-                    </button>
-                  </span>
-                </div>
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <mat-selection-list [multiple]="false">
-              <mat-list-item
-                *ngFor="let questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number), true)"
-              >
-                <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-                  v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
-                  <mat-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mat-icon>
-                  <span fxFlex class="no-overflow-ellipsis">
-                    <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
-                  </span>
-                  <span fxFlex="260px" fxHide.lt-sm fxLayoutAlign="end center" class="date-archived">{{
-                    timeArchivedStamp(questionDoc.data?.dateArchived)
-                  }}</span>
-                  <span fxFlex="64px" fxLayoutAlign="end center">
-                    <button
-                      mat-icon-button
-                      (click)="setQuestionArchiveStatus(questionDoc, false)"
-                      title="{{ t('republish') }}"
-                      class="publish-btn"
-                    >
-                      <mat-icon>public</mat-icon>
-                    </button>
-                  </span>
-                </div>
-              </mat-list-item>
-            </mat-selection-list>
-          </mat-expansion-panel>
-        </ng-container>
+        <ng-template matExpansionPanelContent>
+          <ng-container *ngFor="let chapter of text.chapters">
+            <mat-expansion-panel
+              [togglePosition]="'before'"
+              class="mat-elevation-z0"
+              *ngIf="questionCount(text.bookNum, chapter.number, true) > 0"
+            >
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+                    <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
+                    <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center" class="archived-questions-count">
+                      {{ questionCountLabel(questionCount(text.bookNum, chapter.number, true)) }}
+                    </span>
+                    <span fxFlex="64px" fxLayoutAlign="end center">
+                      <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
+                      <button
+                        mat-icon-button
+                        (click)="$event.stopPropagation(); setArchiveStatusForQuestionsInChapter(text, chapter, false)"
+                        [title]="t('republish_multiple', { location: getBookName(text) + ' ' + chapter.number })"
+                        class="publish-btn"
+                      >
+                        <mat-icon>public</mat-icon>
+                      </button>
+                    </span>
+                  </div>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <ng-template matExpansionPanelContent>
+                <mat-selection-list [multiple]="false">
+                  <mat-list-item
+                    *ngFor="let questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number), true)"
+                  >
+                    <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
+                      v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
+                      <mat-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mat-icon>
+                      <span fxFlex class="no-overflow-ellipsis">
+                        <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
+                      </span>
+                      <span fxFlex="260px" fxHide.lt-sm fxLayoutAlign="end center" class="date-archived">{{
+                        timeArchivedStamp(questionDoc.data?.dateArchived)
+                      }}</span>
+                      <span fxFlex="64px" fxLayoutAlign="end center">
+                        <button
+                          mat-icon-button
+                          (click)="setQuestionArchiveStatus(questionDoc, false)"
+                          title="{{ t('republish') }}"
+                          class="publish-btn"
+                        >
+                          <mat-icon>public</mat-icon>
+                        </button>
+                      </span>
+                    </div>
+                  </mat-list-item>
+                </mat-selection-list>
+              </ng-template>
+            </mat-expansion-panel>
+          </ng-container>
+        </ng-template>
       </mat-expansion-panel>
     </ng-container>
     <div
