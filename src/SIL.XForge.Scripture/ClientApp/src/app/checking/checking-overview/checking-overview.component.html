@@ -70,7 +70,7 @@
                     <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
                     <button
                       mat-icon-button
-                      (click)="$event.stopPropagation(); setArchiveStatusForQuestionsInBook(text, true)"
+                      (click)="$event.stopPropagation(); setArchiveStatusForQuestionsInChapter(text, chapter, true)"
                       [title]="t('archive_multiple', { location: getBookName(text) })"
                       class="archive-btn"
                     >
