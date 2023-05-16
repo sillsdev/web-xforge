@@ -532,8 +532,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 if (noteThreadDocs.Any(d => d.Data.PublishedToSF == true))
                     await UpdateTranslateNoteTag(paratextId);
 
-                // Skip over updating Paratext notes for now (2023-05-04)
-                /*
                 int sfNoteTagId = _projectDoc.Data.TranslateConfig.DefaultNoteTagId ?? NoteTag.notSetId;
                 _syncMetrics.ParatextNotes += await _paratextService.UpdateParatextCommentsAsync(
                     _userSecret,
@@ -544,7 +542,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     _currentPtSyncUsers,
                     sfNoteTagId
                 );
-                */
             }
         }
     }
@@ -656,15 +653,17 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
             LogMetric("Updating thread docs - updating");
 
-            if (noteThreadDocsByBook.TryGetValue(text.BookNum, out IEnumerable<IDocument<NoteThread>> noteThreadDocs))
+            // update note thread docs
+            if (!noteThreadDocsByBook.TryGetValue(text.BookNum, out IEnumerable<IDocument<NoteThread>> noteThreadDocs))
             {
-                await UpdateNoteThreadDocsAsync(
-                    text,
-                    noteThreadDocs.ToDictionary(nt => nt.Data.DataId),
-                    chapterDeltas,
-                    ptUsernamesToSFUserIds
-                );
+                noteThreadDocs = Array.Empty<IDocument<NoteThread>>();
             }
+            await UpdateNoteThreadDocsAsync(
+                text,
+                noteThreadDocs.ToDictionary(nt => nt.Data.DataId),
+                chapterDeltas,
+                ptUsernamesToSFUserIds
+            );
 
             // update project metadata
             LogMetric("Updating project metadata");
