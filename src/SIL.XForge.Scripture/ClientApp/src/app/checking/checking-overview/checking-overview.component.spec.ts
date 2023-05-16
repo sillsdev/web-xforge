@@ -211,7 +211,6 @@ describe('CheckingOverviewComponent', () => {
       env.waitForQuestions();
       expect(env.textRows.length).toEqual(2);
       expect(env.questionEditButtons.length).toEqual(0);
-      // expect(env.component.itemVisible[id.toString()]).toBeFalsy();
       expect(env.component.questionCount(id.bookNum, id.chapterNum)).toBeGreaterThan(0);
 
       env.clickExpanderAtRow(0);
