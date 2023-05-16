@@ -95,13 +95,7 @@
                       *ngFor="let questionDoc of getQuestionDocs(getTextDocIdType(text.bookNum, chapter.number))"
                     >
                       <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
-                        <button
-                          fxFlex="64px"
-                          mat-button
-                          type="button"
-                          (click)="questionDialog(questionDoc)"
-                          class="edit-btn"
-                        >
+                        <button mat-icon-button (click)="questionDialog(questionDoc)" class="edit-btn">
                           <mat-icon>edit</mat-icon>
                         </button>
                         v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
