@@ -1,4 +1,4 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement } from '@angular/core';
@@ -41,7 +41,7 @@ const mockedUserService = mock(UserService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
-const mockedDialog = mock(MdcDialog);
+const mockedDialog = mock(MatDialog);
 
 @Component({
   template: `<div>Mock</div>`
@@ -71,7 +71,7 @@ describe('SettingsComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: PwaService, useMock: mockedPwaService },
-      { provide: MdcDialog, useMock: mockedDialog }
+      { provide: MatDialog, useMock: mockedDialog }
     ]
   }));
 
@@ -477,7 +477,7 @@ class TestEnvironment {
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isOnline: BehaviorSubject<boolean>;
-  private mockedDialogRef = mock<MdcDialogRef<DeleteProjectDialogComponent>>(MdcDialogRef);
+  private mockedDialogRef = mock<MatDialogRef<DeleteProjectDialogComponent>>(MatDialogRef);
 
   constructor(hasConnection: boolean = true, isSource: boolean = false) {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));

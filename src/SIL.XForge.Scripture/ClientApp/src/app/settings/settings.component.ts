@@ -1,4 +1,4 @@
-import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -64,7 +64,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly dialog: MdcDialog,
+    private readonly dialog: MatDialog,
     noticeService: NoticeService,
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
@@ -192,8 +192,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
-    const config: MdcDialogConfig = {
-      data: { name: this.projectDoc.data.name }
+    const config: MatDialogConfig<any> = {
+      data: { name: this.projectDoc.data.name },
+      maxWidth: '550px'
     };
     const dialogRef = this.dialog.open(DeleteProjectDialogComponent, config);
     dialogRef.afterClosed().subscribe(async result => {
