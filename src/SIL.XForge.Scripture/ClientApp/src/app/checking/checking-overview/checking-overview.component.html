@@ -31,7 +31,11 @@
     id="text-with-questions-list"
   >
     <ng-container *ngFor="let text of texts">
-      <mat-expansion-panel *ngIf="bookQuestionCount(text) > 0" [togglePosition]="'before'" class="remove-padding">
+      <mat-expansion-panel
+        *ngIf="bookQuestionCount(text) > 0"
+        [togglePosition]="'before'"
+        class="book-expander mat-elevation-z0"
+      >
         <mat-expansion-panel-header>
           <mat-panel-title>
             <span fxFlex>{{ getBookName(text) }}</span>
@@ -211,7 +215,11 @@
 
   <div fxLayout="column" *ngIf="canEditQuestion" id="text-with-archived-questions">
     <ng-container *ngFor="let text of texts">
-      <mat-expansion-panel *ngIf="bookQuestionCount(text, true) > 0" [togglePosition]="'before'" class="remove-padding">
+      <mat-expansion-panel
+        *ngIf="bookQuestionCount(text, true) > 0"
+        [togglePosition]="'before'"
+        class="book-expander mat-elevation-z0"
+      >
         <mat-expansion-panel-header>
           <mat-panel-title>
             <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">

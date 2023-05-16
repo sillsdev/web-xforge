@@ -920,7 +920,7 @@ class TestEnvironment {
   rowsByList(listId: string): DebugElement[] {
     const rowsShown: DebugElement[] = [];
     const list = this.fixture.debugElement.query(By.css(listId));
-    for (const book of list.queryAll(By.css('mat-expansion-panel.remove-padding'))) {
+    for (const book of list.queryAll(By.css('mat-expansion-panel.book-expander'))) {
       rowsShown.push(book);
       const bookExpander = book.componentInstance as MatExpansionPanel;
       if (bookExpander.expanded) {

@@ -1,4 +1,5 @@
 @import 'src/variables';
+@import 'src/styles';
 @import 'bootstrap/scss/mixins/breakpoints';
 
 .header {
@@ -49,6 +50,10 @@ app-donut-chart {
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+}
+
+.book-expander {
+  @extend .remove-padding;
 }
 
 #no-questions-label,
