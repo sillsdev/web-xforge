@@ -1,5 +1,4 @@
 @import 'src/variables';
-@import 'src/styles';
 @import 'bootstrap/scss/mixins/breakpoints';
 
 .header {
@@ -52,8 +51,9 @@ app-donut-chart {
   overflow: hidden;
 }
 
-.book-expander {
-  @extend .remove-padding;
+.book-expander ::ng-deep .mat-expansion-panel-content .mat-expansion-panel-body {
+  padding-inline-end: 0 !important;
+  padding-block-start: 0 !important;
 }
 
 #no-questions-label,
