@@ -904,16 +904,10 @@ class TestEnvironment {
   }
 
   get textRows(): DebugElement[] {
-    // const booksChapters = this.fixture.debugElement.query(
-    //   By.css('#text-with-questions-list')).queryAll(By.css('mat-expansion-panel, mat-list-item'));
-
     return this.rowsByList('#text-with-questions-list');
   }
 
   get textArchivedRows(): DebugElement[] {
-    // const booksChapters = this.fixture.debugElement.query(
-    //   By.css('#text-with-archived-questions')).queryAll(By.css('mat-expansion-panel, mat-list-item'));
-
     return this.rowsByList('#text-with-archived-questions');
   }
 
