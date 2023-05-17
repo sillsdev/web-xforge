@@ -1,4 +1,4 @@
-import { MdcDialog } from '@angular-mdc/web';
+import { MatDialog } from '@angular/material/dialog';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -21,7 +21,7 @@ import { CheckingAudioRecorderComponent } from './checking-audio-recorder.compon
 const mockedNoticeService = mock(NoticeService);
 const mockedNavigator = mock(Navigator);
 const mockedPwaService = mock(PwaService);
-const mockedDialog = mock(MdcDialog);
+const mockedDialog = mock(MatDialog);
 const mockedI18nService = mock(I18nService);
 
 describe('CheckingAudioRecorderComponent', () => {
@@ -32,7 +32,7 @@ describe('CheckingAudioRecorderComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: NAVIGATOR, useMock: mockedNavigator },
       { provide: PwaService, useMock: mockedPwaService },
-      { provide: MdcDialog, useMock: mockedDialog },
+      { provide: MatDialog, useMock: mockedDialog },
       { provide: I18nService, useMock: mockedI18nService }
     ]
   }));
@@ -134,7 +134,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  async waitForRecorder(ms: number) {
+  async waitForRecorder(ms: number): Promise<any> {
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }
