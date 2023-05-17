@@ -1,4 +1,4 @@
-import { MDC_DIALOG_DATA } from '@angular-mdc/web';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Component, Inject } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -14,9 +14,9 @@ export enum BrowserIssue {
   templateUrl: './supported-browsers-dialog.component.html'
 })
 export class SupportedBrowsersDialogComponent {
-  constructor(@Inject(MDC_DIALOG_DATA) public data: BrowserIssue, private readonly i18n: I18nService) {}
+  constructor(@Inject(MAT_DIALOG_DATA) public data: BrowserIssue, private readonly i18n: I18nService) {}
 
-  get browserLinks() {
+  get browserLinks(): { chromeLink: string; firefoxLink: string; safariLink: string } {
     return browserLinks();
   }
 
