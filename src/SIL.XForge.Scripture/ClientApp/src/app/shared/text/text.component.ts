@@ -300,6 +300,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   get id(): TextDocId | undefined {
     return this._id;
   }
+
   @Input() set id(value: TextDocId | undefined) {
     if (!isEqual(this._id, value)) {
       this._id = value;
@@ -340,6 +341,14 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         this.clearHighlight();
       }
     }
+  }
+
+  get selectionBoundsTop(): number {
+    return this.highlightMarkerTop;
+  }
+
+  get scrollPosition(): number {
+    return this.editor == null ? 0 : this.editor.root.scrollTop;
   }
 
   get segmentRef(): string {
