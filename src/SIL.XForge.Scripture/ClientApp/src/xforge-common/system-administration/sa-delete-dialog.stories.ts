@@ -3,7 +3,7 @@ import { MatDialog, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/d
 import { Meta, StoryFn } from '@storybook/angular';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { MatButtonModule } from '@angular/material/button';
-import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
+// import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
 import { AvatarModule } from 'ngx-avatar';
 import { BehaviorSubject } from 'rxjs';
 import { ServiceWorkerModule } from '@angular/service-worker';
