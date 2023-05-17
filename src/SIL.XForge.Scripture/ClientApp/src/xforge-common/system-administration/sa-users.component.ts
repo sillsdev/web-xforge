@@ -1,5 +1,5 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Component, HostBinding, OnInit } from '@angular/core';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
@@ -39,23 +39,20 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
 
   userRows: Row[] = [];
 
-  private readonly searchTerm$: BehaviorSubject<string>;
-  private readonly queryParameters$: BehaviorSubject<QueryParameters>;
-  private readonly reload$: BehaviorSubject<void>;
+  private readonly searchTerm$ = new BehaviorSubject<string>('');
+  private readonly queryParameters$ = new BehaviorSubject<QueryParameters>(this.getQueryParameters());
+  private readonly reload$ = new BehaviorSubject<void>(undefined);
 
   constructor(
-    private readonly dialog: MdcDialog,
+    private readonly dialog: MatDialog,
     noticeService: NoticeService,
     private readonly userService: UserService,
     private readonly projectService: ProjectService
   ) {
     super(noticeService);
-    this.searchTerm$ = new BehaviorSubject<string>('');
-    this.queryParameters$ = new BehaviorSubject<QueryParameters>(this.getQueryParameters());
-    this.reload$ = new BehaviorSubject<void>(undefined);
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadingStarted();
     this.subscribe(
       this.userService.onlineQuery(this.searchTerm$, this.queryParameters$, this.reload$),
@@ -103,17 +100,14 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
   }
 
   removeUser(userId: string, user: User): void {
-    const dialogConfig: MdcDialogConfig<SaDeleteUserDialogData> = {
+    const dialogConfig: MatDialogConfig<SaDeleteUserDialogData> = {
       data: {
         user
       }
     };
-    const dialogRef = this.dialog.open(SaDeleteDialogComponent, dialogConfig) as MdcDialogRef<
-      SaDeleteDialogComponent,
-      'close' | 'confirmed'
-    >;
+    const dialogRef = this.dialog.open(SaDeleteDialogComponent, dialogConfig);
     dialogRef.afterClosed().subscribe(confirmation => {
-      if (confirmation != null && confirmation === 'confirmed') {
+      if (confirmation) {
         this.deleteUser(userId);
       }
     });
@@ -138,7 +132,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     return projectIdMap;
   }
 
-  private async deleteUser(userId: string) {
+  private async deleteUser(userId: string): Promise<void> {
     await this.userService.onlineDelete(userId);
     this.reload$.next(undefined);
   }
