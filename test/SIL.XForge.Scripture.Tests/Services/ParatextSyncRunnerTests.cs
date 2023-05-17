@@ -1439,11 +1439,6 @@ public class ParatextSyncRunnerTests
         project.Data.Returns(env.GetProject());
         env.Connection.Get<SFProject>("project01").Returns(project);
 
-        // The HTTP call throws this when a cancelled token is passed
-        // env.ParatextService
-        //     .GetParatextUsernameMappingAsync(Arg.Any<UserSecret>(), Arg.Any<SFProject>(), Arg.Any<CancellationToken>())
-        //     .ThrowsForAnyArgs(new OperationCanceledException());
-
         // Setup a trap to cancel the task
         env.ParatextService
             .When(
@@ -2351,7 +2346,7 @@ public class ParatextSyncRunnerTests
         private readonly MemoryRepository<SFProjectSecret> _projectSecrets;
         private readonly MemoryRepository<SyncMetrics> _syncMetrics;
         private bool _sendReceivedCalled = false;
-        private int _guidStartNum = 3;
+        private readonly int _guidStartNum = 3;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TestEnvironment" /> class.

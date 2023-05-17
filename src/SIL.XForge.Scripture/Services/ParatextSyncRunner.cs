@@ -392,8 +392,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     questionDocsByBook,
                     noteThreadDocsByBook,
                     targetBooks,
-                    sourceBooks,
-                    token
+                    sourceBooks
                 );
             }
             LogMetric("Back from UpdateDocsAsync");
@@ -606,12 +605,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
         Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook,
         Dictionary<int, IEnumerable<IDocument<NoteThread>>> noteThreadDocsByBook,
         HashSet<int> targetBooks,
-        HashSet<int> sourceBooks,
-        CancellationToken token
+        HashSet<int> sourceBooks
     )
     {
-        Dictionary<string, string> ptUsernamesToSFUserIds = await GetPTUsernameToSFUserIdsAsync(token);
-
         // update source and target real-time docs
         double i = 0.0;
         foreach (int bookNum in targetBooks)
@@ -661,12 +657,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             {
                 noteThreadDocs = Array.Empty<IDocument<NoteThread>>();
             }
-            await UpdateNoteThreadDocsAsync(
-                text,
-                noteThreadDocs.ToDictionary(nt => nt.Data.DataId),
-                chapterDeltas,
-                ptUsernamesToSFUserIds
-            );
+            await UpdateNoteThreadDocsAsync(text, noteThreadDocs.ToDictionary(nt => nt.Data.DataId), chapterDeltas);
 
             // update project metadata
             LogMetric("Updating project metadata");
@@ -1023,8 +1014,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private async Task UpdateNoteThreadDocsAsync(
         TextInfo text,
         Dictionary<string, IDocument<NoteThread>> noteThreadDocs,
-        Dictionary<int, ChapterDelta> chapterDeltas,
-        Dictionary<string, string> usernamesToUserIds
+        Dictionary<int, ChapterDelta> chapterDeltas
     )
     {
         IEnumerable<NoteThreadChange> noteThreadChanges = _paratextService.GetNoteThreadChanges(
@@ -1063,14 +1053,14 @@ public class ParatextSyncRunner : IParatextSyncRunner
                             Assignment = change.Assignment
                         }
                     );
-                    await SubmitChangesOnNoteThreadDocAsync(doc, change, usernamesToUserIds);
+                    await SubmitChangesOnNoteThreadDocAsync(doc, change);
                 }
                 tasks.Add(createThreadDoc(change));
                 _syncMetrics.NoteThreads.Added++;
             }
             else
             {
-                tasks.Add(SubmitChangesOnNoteThreadDocAsync(threadDoc, change, usernamesToUserIds));
+                tasks.Add(SubmitChangesOnNoteThreadDocAsync(threadDoc, change));
 
                 // Record thread metrics and note metrics
                 if (change.ThreadRemoved)
@@ -1133,11 +1123,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// Apply the changes to a ParatextNoteThread doc.
     /// TODO: Handle if verseRef changes
     /// </summary>
-    private async Task SubmitChangesOnNoteThreadDocAsync(
-        IDocument<NoteThread> threadDoc,
-        NoteThreadChange change,
-        IReadOnlyDictionary<string, string> usernamesToUserIds
-    )
+    private async Task SubmitChangesOnNoteThreadDocAsync(IDocument<NoteThread> threadDoc, NoteThreadChange change)
     {
         if (change.ThreadRemoved)
         {
@@ -1203,13 +1189,14 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Add new notes, giving each note an associated SF userId if the user is also a Paratext user.
             foreach (Note added in change.NotesAdded)
             {
-                string ownerRef = null;
+                ParatextUserProfile paratextUser = null;
                 string username = string.IsNullOrEmpty(added.SyncUserRef)
                     ? null
                     : _currentPtSyncUsers.Values.Single(u => u.OpaqueUserId == added.SyncUserRef).Username;
                 if (username != null)
-                    usernamesToUserIds.TryGetValue(username, out ownerRef);
-                added.OwnerRef = string.IsNullOrEmpty(ownerRef) ? _userSecret.Id : ownerRef;
+                    _currentPtSyncUsers.TryGetValue(username, out paratextUser);
+
+                added.OwnerRef = string.IsNullOrEmpty(paratextUser?.SFUserId) ? _userSecret.Id : paratextUser?.SFUserId;
                 op.Add(td => td.Notes, added);
             }
 
@@ -1507,7 +1494,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
         // GetPTUsernameToSFUserIdsAsync will fail if the token is cancelled
         if (!token.IsCancellationRequested && _currentPtSyncUsers != null)
         {
-            Dictionary<string, string> ptUsernamesToSFUserIds = await GetPTUsernameToSFUserIdsAsync(token);
             await _projectDoc.SubmitJson0OpAsync(op =>
             {
                 foreach (ParatextUserProfile activePtSyncUser in _currentPtSyncUsers.Values)
@@ -1517,15 +1503,14 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     );
                     if (existingUser == null)
                         op.Add(pd => pd.ParatextUsers, activePtSyncUser);
-                    else if (
-                        existingUser.SFUserId == null
-                        && ptUsernamesToSFUserIds.TryGetValue(existingUser.Username, out string userId)
-                    )
+                    else if (existingUser.SFUserId == null)
                     {
                         int index = _projectDoc.Data.ParatextUsers.FindIndex(
                             u => u.Username == activePtSyncUser.Username
                         );
-                        op.Set(pd => pd.ParatextUsers[index].SFUserId, userId);
+                        string userId = _currentPtSyncUsers[existingUser.Username].SFUserId;
+                        if (!string.IsNullOrEmpty(userId))
+                            op.Set(pd => pd.ParatextUsers[index].SFUserId, userId);
                     }
                 }
             });
@@ -1644,20 +1629,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 $"{prefix}In-sync info: Local hg repo current rev: {repoRev}, Latest shared rev: {sharedRev}, {dbInfo}"
             );
         }
-    }
-
-    private async Task<Dictionary<string, string>> GetPTUsernameToSFUserIdsAsync(CancellationToken token)
-    {
-        IReadOnlyDictionary<string, string> idsToUsernames = await _paratextService.GetParatextUsernameMappingAsync(
-            _userSecret,
-            _projectDoc.Data,
-            token
-        );
-        Dictionary<string, string> usernamesToUserIds = new Dictionary<string, string>();
-        // Swap the keys and values
-        foreach (KeyValuePair<string, string> kvp in idsToUsernames)
-            usernamesToUserIds.Add(kvp.Value, kvp.Key);
-        return usernamesToUserIds;
     }
 
     private async Task<Dictionary<string, ParatextUserProfile>> GetCurrentProjectPTUsers(CancellationToken token)
