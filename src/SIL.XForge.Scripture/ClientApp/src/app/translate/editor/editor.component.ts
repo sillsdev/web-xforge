@@ -174,6 +174,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private toggleNoteThreadSub?: Subscription;
   private shouldNoteThreadsRespondToEdits: boolean = false;
   private commenterSelectedVerseRef?: VerseRef;
+  private scrollSubscription?: Subscription;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -759,6 +760,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.targetLoaded = true;
         this.toggleNoteThreadVerseRefs$.next();
         this.shouldNoteThreadsRespondToEdits = true;
+        if (this.target?.editor != null) {
+          this.subscribeScroll(this.target.editor);
+        }
         break;
     }
     if ((!this.hasSource || this.sourceLoaded) && this.targetLoaded) {
@@ -1455,7 +1459,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       const targetRect: DOMRect | undefined = this.targetContainer?.nativeElement.getBoundingClientRect();
       if (targetRect != null) {
         const adjustment: number = this.isTargetRightToLeft ? 20 : -60;
-        const leftCoordinate: number = (this.isTargetRightToLeft ? targetRect.left : targetRect.right) + adjustment;
+        const leftCoordinate: number =
+          (this.isTargetRightToLeft ? targetRect.left : targetRect.right - targetRect.left) + adjustment;
         this.insertNoteFabLeft = `${leftCoordinate}px`;
       }
     }, 10);
@@ -1578,11 +1583,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private positionInsertNoteFab(segmentElement: Element): void {
-    if (this.insertNoteFab == null || this.target == null || !this.isInsertNoteFabEnabled) return;
-    const selection: RangeStatic | null | undefined = this.target.editor?.getSelection();
+  private positionInsertNoteFab(): void {
+    if (this.insertNoteFab == null || this.target?.editor == null || !this.isInsertNoteFabEnabled) return;
+    const selection: RangeStatic | null | undefined = this.target.editor.getSelection();
     if (selection != null) {
-      this.insertNoteFab.nativeElement.style.top = `${segmentElement.getBoundingClientRect().top}px`;
+      this.insertNoteFab.nativeElement.style.top = `${this.target.selectionBoundsTop}px`;
+      this.insertNoteFab.nativeElement.style.marginTop = `-${this.target.scrollPosition}px`;
     } else {
       // hide the insert note FAB when the user clicks outside of the editor
       this.showInsertNoteFab = false;
@@ -1610,7 +1616,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       if (allowToggleVerseSelection || forceToggle) {
         this.showInsertNoteFab = this.target.toggleVerseSelection(verseRef);
-        this.positionInsertNoteFab(segmentElement);
+        this.positionInsertNoteFab();
       }
     } else {
       this.showInsertNoteFab = false;
@@ -1893,6 +1899,26 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       newScrollTop += sourceBottomPosition;
     }
     this.source.editor.scrollingContainer.scrollTop = newScrollTop;
+  }
+
+  private subscribeScroll(editor: Quill): void {
+    this.scrollSubscription?.unsubscribe();
+    this.scrollSubscription = this.subscribe(fromEvent(editor.root, 'scroll'), () => {
+      if (this.insertNoteFab == null || this.target == null || this.targetContainer == null) return;
+      const bounds: DOMRect = this.targetContainer.nativeElement.getBoundingClientRect();
+      const fabHeight = 40;
+      const targetContainerBottom: number = bounds.bottom - bounds.top - fabHeight;
+
+      // bound the FAB to the top of the editor
+      let scrollTop: number = Math.min(this.target.selectionBoundsTop, editor.root.scrollTop);
+      // bound the FAB to the bottom of the editor
+      const minScroll: number = Math.max(this.target.selectionBoundsTop - targetContainerBottom, 0);
+      if (scrollTop < minScroll) {
+        scrollTop = minScroll;
+      }
+
+      this.insertNoteFab.nativeElement.style.marginTop = `-${scrollTop}px`;
+    });
   }
 
   onViewerClicked(viewer: MultiCursorViewer): void {
