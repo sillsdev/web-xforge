@@ -1,4 +1,4 @@
-import { MdcDialog } from '@angular-mdc/web';
+import { MatDialog } from '@angular/material/dialog';
 import { Component, EventEmitter, Inject, OnDestroy, OnInit, Output } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import RecordRTC from 'recordrtc';
@@ -32,7 +32,7 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   constructor(
     private readonly noticeService: NoticeService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
-    private readonly dialog: MdcDialog
+    private readonly dialog: MatDialog
   ) {}
 
   get hasAudioAttachment(): boolean {
