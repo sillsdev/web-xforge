@@ -1,6 +1,6 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { DebugElement, getDebugNode, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -30,7 +30,7 @@ import { UserService } from '../user.service';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
 import { SaUsersComponent } from './sa-users.component';
 
-const mockedMdcDialog = mock(MdcDialog);
+const mockedMatDialog = mock(MatDialog);
 const mockedNoticeService = mock(NoticeService);
 const mockedUserService = mock(UserService);
 const mockedProjectService: ProjectService = mock(ProjectService);
@@ -48,7 +48,7 @@ describe('SaUsersComponent', () => {
     ],
     declarations: [SaUsersComponent],
     providers: [
-      { provide: MdcDialog, useMock: mockedMdcDialog },
+      { provide: MatDialog, useMock: mockedMatDialog },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: UserService, useMock: mockedUserService },
       { provide: ProjectService, useMock: mockedProjectService },
@@ -104,14 +104,14 @@ describe('SaUsersComponent', () => {
   it('should delete user', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupUserData();
-    when(env.mockedDeleteUserDialogRef.afterClosed()).thenReturn(of('confirmed'));
+    when(env.mockedDeleteUserDialogRef.afterClosed()).thenReturn(of(true));
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
     verify(mockedUserService.onlineDelete(anything())).never();
 
     env.clickElement(env.removeUserButtonOnRow(1));
-    verify(mockedMdcDialog.open(anything(), anything())).once();
+    verify(mockedMatDialog.open(anything(), anything())).once();
     verify(mockedUserService.onlineDelete(anything())).once();
 
     expect().nothing();
@@ -168,12 +168,12 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<SaUsersComponent>;
 
   readonly numUsersOnProject = 3;
-  readonly mockedDeleteUserDialogRef = mock<MdcDialogRef<SaDeleteDialogComponent>>(MdcDialogRef);
+  readonly mockedDeleteUserDialogRef = mock<MatDialogRef<SaDeleteDialogComponent>>(MatDialogRef);
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
-    when(mockedMdcDialog.open(anything(), anything())).thenReturn(instance(this.mockedDeleteUserDialogRef));
+    when(mockedMatDialog.open(anything(), anything())).thenReturn(instance(this.mockedDeleteUserDialogRef));
     when(mockedUserService.onlineQuery(anything(), anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<QueryParameters>, reload$: Observable<void>) =>
         combineLatest([term$, parameters$, reload$]).pipe(
@@ -317,7 +317,7 @@ class TestEnvironment {
     }
 
     input.value = value;
-    input.dispatchEvent(new Event('keyup'));
+    input.dispatchEvent(new Event('input'));
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
