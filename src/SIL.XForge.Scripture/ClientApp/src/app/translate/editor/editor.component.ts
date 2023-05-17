@@ -808,7 +808,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     const words = wordIndex === -1 ? suggestion.words : suggestion.words.slice(0, wordIndex + 1);
-    let insertText = this.detokenizer.detokenize(words);
+    let insertText: string = this.detokenizer.detokenize(words);
     if (this.translator != null && !this.translator.isLastWordComplete) {
       const lastWord = this.translator.prefixWordRanges[this.translator.prefixWordRanges.length - 1];
       insertText = insertText.substring(lastWord.length);
@@ -1222,8 +1222,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const start = performance.now();
-    const translator = await this.interactiveTranslatorFactory?.create(sourceSegment);
+    const start: number = performance.now();
+    const translator: InteractiveTranslator | undefined = await this.interactiveTranslatorFactory?.create(
+      sourceSegment
+    );
     if (sourceSegment === this.source.segmentText) {
       this.translator = translator;
       const finish = performance.now();
