@@ -10,7 +10,6 @@ import {
 } from './app/checking/import-questions-dialog/import-questions-confirmation-dialog/import-question-confirmation-dialog.component';
 import { QuestionAnsweredDialogComponent } from './app/checking/question-answered-dialog/question-answered-dialog.component';
 import { ProjectDeletedDialogComponent } from './app/project-deleted-dialog/project-deleted-dialog.component';
-import { DeleteProjectDialogComponent } from './app/settings/delete-project-dialog/delete-project-dialog.component';
 import { MdcDialogLaunchComponent, mdcDialogStory } from '.storybook/story-utils';
 
 const meta: Meta = {
@@ -22,9 +21,6 @@ export default meta;
 export const QuestionAnswered = mdcDialogStory(QuestionAnsweredDialogComponent);
 
 export const ProjectDeletedDialog = mdcDialogStory(ProjectDeletedDialogComponent);
-
-export const DeleteProjectDialog = mdcDialogStory(DeleteProjectDialogComponent);
-DeleteProjectDialog.args = { data: { name: 'My Project' } };
 
 export const UnsupportedBrowser = mdcDialogStory(SupportedBrowsersDialogComponent);
 UnsupportedBrowser.args = { data: BrowserIssue.Upgrade };
