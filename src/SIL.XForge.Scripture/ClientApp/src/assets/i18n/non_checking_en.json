@@ -46,6 +46,7 @@
     "enable_add_edit_questions": "Enable add and edit questions",
     "filter_users": "Filter users...",
     "invitation_expired": "Invitation has expired for{{ newLine }}{{ email }}",
+    "learn_more": "Learn More",
     "me": "me",
     "no_users_found": "No users found",
     "paratext_members": "Paratext Members",
@@ -187,9 +188,6 @@
     "team": "(Team)",
     "unassigned": "(Unassigned)",
     "your_comment": "Your comment"
-  },
-  "notice": {
-    "learn_more": "Learn More"
   },
   "paginator": {
     "items_per_page": "Items per page",

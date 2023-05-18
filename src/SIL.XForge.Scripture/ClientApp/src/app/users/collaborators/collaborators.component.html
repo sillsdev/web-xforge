@@ -9,9 +9,12 @@
     <span *ngIf="!isAppOnline" id="collaborators-offline-message" class="offline-text">{{
       t("connect_network_to_manage_users")
     }}</span>
-    <app-notice icon="live_help" [outline]="true" helpLink="{{ urls.helps }}">{{
-      t("uses_roles_to_access_project")
-    }}</app-notice>
+    <app-notice icon="live_help" [outline]="true"
+      >{{ t("uses_roles_to_access_project")
+      }}<a mat-flat-button class="learn-more-btn" [href]="urls.rolesHelpPage" target="_blank">{{
+        t("learn_more")
+      }}</a></app-notice
+    >
 
     <div fxLayout="row" fxLayoutAlign="start center" class="users-controls">
       <div class="tab-selector">
