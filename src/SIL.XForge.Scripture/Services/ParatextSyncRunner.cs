@@ -59,6 +59,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private static readonly double _numberOfPhases = Enum.GetValues(typeof(SyncPhase)).Length;
     private static readonly IEqualityComparer<List<Chapter>> _chapterListEqualityComparer =
         SequenceEqualityComparer.Create(new ChapterEqualityComparer());
+    private static readonly IEqualityComparer<IEnumerable<NoteTag>> _noteTagListEqualityComparer =
+        SequenceEqualityComparer.Create(new NoteTagEqualityComparer());
 
     /// <summary>
     /// The regular expression for finding whitespace before XML tags.
@@ -1478,7 +1480,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 op.Set(pd => pd.DefaultFont, settings.DefaultFont);
                 op.Set(pd => pd.DefaultFontSize, settings.DefaultFontSize);
                 if (settings.NoteTags != null)
-                    op.Set(pd => pd.NoteTags, settings.NoteTags);
+                    op.Set(pd => pd.NoteTags, settings.NoteTags, _noteTagListEqualityComparer);
             }
             // The source can be null if there was an error getting a resource from the DBL
             if (TranslationSuggestionsEnabled && _projectDoc.Data.TranslateConfig.Source != null)
@@ -1737,24 +1739,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
         Phase5 = 4, // Getting the resource texts
         Phase6 = 5, // Updating texts from Paratext books
         Phase7 = 6, // Final methods
-    }
-
-    private class ChapterEqualityComparer : IEqualityComparer<Chapter>
-    {
-        public bool Equals(Chapter x, Chapter y) =>
-            // We do not compare permissions, as these are modified in SFProjectService
-            x.Number == y.Number
-            && x.LastVerse == y.LastVerse
-            && x.IsValid == y.IsValid;
-
-        public int GetHashCode(Chapter obj)
-        {
-            int code = 23;
-            code = code * 31 + obj.Number.GetHashCode();
-            code = code * 31 + obj.LastVerse.GetHashCode();
-            code = code * 31 + obj.IsValid.GetHashCode();
-            return code;
-        }
     }
 
     private void Log(string message, string? projectSFId = null, string? userId = null)
