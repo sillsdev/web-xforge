@@ -1,5 +1,5 @@
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
 import { CookieService } from 'ngx-cookie-service';
@@ -14,7 +14,7 @@ const mockedBugsnagService = mock(BugsnagService);
 
 describe('DeleteProjectDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, UICommonModule, BrowserAnimationsModule],
+    imports: [DialogTestModule, UICommonModule, NoopAnimationsModule],
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
       { provide: BugsnagService, useMock: mockedBugsnagService },
