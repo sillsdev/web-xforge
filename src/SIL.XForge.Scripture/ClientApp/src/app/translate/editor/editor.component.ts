@@ -492,10 +492,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   ngAfterViewInit(): void {
     this.subscribe(fromEvent(window, 'resize'), () => {
-      const mobileDeviceViewport: boolean = this.mediaObserver.isActive('lt-lg');
-      // only scroll to selection when window is resized on larger devices
-      this.setTextHeight(!mobileDeviceViewport);
-      // Note: this does not appear to get triggered when the window changes by opening dev tools
+      this.setTextHeight();
       this.resetInsertNoteFab(false);
     });
     this.subscribe(
@@ -1118,7 +1115,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       .subscribe();
   }
 
-  private setTextHeight(scrollToSelection: boolean = true): void {
+  private setTextHeight(): void {
     if (this.target == null || this.targetContainer == null) {
       return;
     }
@@ -1126,21 +1123,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // we don't want to use flexbox because it makes editing very slow
     const elem: HTMLElement = this.targetContainer.nativeElement;
     const bounds = elem.getBoundingClientRect();
-    // add bottom padding
+    // // add bottom padding
     const top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
-    // give the option to disable scrolling to the selection which causes issues
-    // when the keyboard opens on smaller devices and the scrolling is not helpful
-    if (this.target.editor != null && this.targetFocused && scrollToSelection) {
-      // reset scroll position
-      this.target.editor.scrollingContainer.scrollTop = 0;
-    }
     this.textHeight = `calc(100vh - ${top}px)`;
-    if (this.targetFocused && scrollToSelection && this.dialogService.openDialogCount < 1) {
-      setTimeout(() => {
-        // reset focus, which causes Quill to scroll to the selection
-        this.target!.focus();
-      });
-    }
   }
 
   private async changeText(): Promise<void> {
