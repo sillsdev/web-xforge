@@ -2978,6 +2978,15 @@ describe('EditorComponent', () => {
       env.deleteNoteThread('project01', segmentRef, threadId);
       thread2Elem = env.getNoteThreadIconElement(segmentRef, threadId);
       expect(thread2Elem).toBeNull();
+
+      // notes respond to edits after note icon removed
+      const note1position: number = env.getNoteThreadEditorPosition('thread01');
+      env.targetEditor.setSelection(note1position + 2, 'user');
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const originalPos: TextAnchor = { start: 8, length: 9 };
+      expect(noteThreadDoc.data!.position).toEqual(originalPos);
+      env.typeCharacters('t');
+      expect(noteThreadDoc.data!.position).toEqual({ start: originalPos.start, length: originalPos.length + 1 });
       env.dispose();
     }));
   });
