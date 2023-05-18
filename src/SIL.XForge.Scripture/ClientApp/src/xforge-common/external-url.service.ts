@@ -17,11 +17,22 @@ export class ExternalUrlService {
     return environment.helps + '/' + (this.i18n.locale.helps || I18nService.defaultLocale.helps!);
   }
 
+  get rolesHelpPage(): string {
+    return this.getUrlToManual('/#t=Concepts%2FRoles.htm');
+  }
+
   get transceleratorImportHelpPage(): string {
-    return this.helps + '/index.htm?#t=Tasks%2FAdministrator_tasks%2FImport_questions_from_Transcelerator.htm';
+    return this.getUrlToManual('/#t=Tasks%2FAdministrator_tasks%2FImport_questions_from_Transcelerator.htm');
   }
 
   get csvImportHelpPage(): string {
-    return this.helps + '/#t=Tasks%2FAdministrator_tasks%2FImport_questions_from_spreadsheet.htm';
+    return this.getUrlToManual('/#t=Tasks%2FAdministrator_tasks%2FImport_questions_from_spreadsheet.htm');
+  }
+
+  private getUrlToManual(location: string): string {
+    if (this.i18n.locale.helps === 'en') {
+      return environment.helps + '/manual' + location;
+    }
+    return this.helps + '/manual' + location;
   }
 }
