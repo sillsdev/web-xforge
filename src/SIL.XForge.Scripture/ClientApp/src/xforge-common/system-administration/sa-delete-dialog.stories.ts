@@ -3,11 +3,6 @@ import { MatDialog, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/d
 import { Meta, StoryFn } from '@storybook/angular';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { MatButtonModule } from '@angular/material/button';
-// import { AvatarComponent } from 'xforge-common/avatar/avatar.component';
-import { AvatarModule } from 'ngx-avatar';
-import { BehaviorSubject } from 'rxjs';
-import { ServiceWorkerModule } from '@angular/service-worker';
-import { PwaService } from '../pwa.service';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
 
 @Component({ template: '' })
@@ -26,26 +21,14 @@ export default {
 
 export const DeleteUserDialog: StoryFn = args => ({
   moduleMetadata: {
-    imports: [MatButtonModule, MatDialogModule, ServiceWorkerModule.register('', { enabled: false }), AvatarModule],
-    declarations: [
-      // AvatarComponent,
-      SaDeleteDialogComponent
-    ],
-    providers: [
-      { provide: MAT_DIALOG_DATA, useValue: { data: args.data } },
-      {
-        provide: PwaService,
-        useFactory: () => ({
-          onlineStatus$: new BehaviorSubject(args.isOnline)
-        })
-      }
-    ]
+    imports: [MatButtonModule, MatDialogModule],
+    declarations: [SaDeleteDialogComponent],
+    providers: [{ provide: MAT_DIALOG_DATA, useValue: { data: args.data } }]
   },
   props: args
 });
 
 DeleteUserDialog.args = {
-  isOnline: true,
   data: {
     user: {
       name: 'Billy T James',

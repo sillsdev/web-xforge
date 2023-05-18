@@ -6,6 +6,16 @@ mat-form-field {
   margin-top: 10px;
 }
 
+table {
+  width: 100%;
+}
+
+.mat-column-tasks {
+  @media screen and (max-width: 767px) {
+    display: none;
+  }
+}
+
 .no-projects-label {
   padding-top: 14px;
 }
