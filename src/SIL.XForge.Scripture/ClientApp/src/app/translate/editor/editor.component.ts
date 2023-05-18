@@ -1001,6 +1001,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       Array.from(noteThreadVerseRefs.values()),
       'note-thread'
     );
+    this.shouldNoteThreadsRespondToEdits = true;
     // Defer the subscription so that the editor has time to clean up comments on blanks verses
     Promise.resolve().then(() => this.subscribeClickEvents(segments));
   }
