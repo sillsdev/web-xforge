@@ -2,6 +2,10 @@
   margin: 32px 0;
 }
 
+table {
+  width: 100%;
+}
+
 .mat-column-avatar {
   width: 65px !important;
 }
@@ -13,6 +17,11 @@
 
 .mat-column-projects {
   word-break: break-word;
+
+  // 767px was the break used for the old fxLayout
+  @media screen and (max-width: 767px) {
+    display: none;
+  }
 }
 
 #no-users-label {

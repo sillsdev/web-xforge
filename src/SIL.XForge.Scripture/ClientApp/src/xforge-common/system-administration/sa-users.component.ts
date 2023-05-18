@@ -1,5 +1,5 @@
 import { Component, HostBinding, OnInit } from '@angular/core';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { MatDialogConfig } from '@angular/material/dialog';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
@@ -12,6 +12,7 @@ import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { QueryParameters } from '../query-parameters';
 import { UserService } from '../user.service';
+import { DialogService } from '../dialog.service';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
 
 interface ProjectInfo {
@@ -44,7 +45,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
   private readonly reload$ = new BehaviorSubject<void>(undefined);
 
   constructor(
-    private readonly dialog: MatDialog,
+    private dialogService: DialogService,
     noticeService: NoticeService,
     private readonly userService: UserService,
     private readonly projectService: ProjectService
@@ -105,12 +106,15 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
         user
       }
     };
-    const dialogRef = this.dialog.open(SaDeleteDialogComponent, dialogConfig);
-    dialogRef.afterClosed().subscribe(confirmation => {
-      if (confirmation) {
-        this.deleteUser(userId);
-      }
-    });
+
+    this.dialogService
+      .openMatDialog(SaDeleteDialogComponent, dialogConfig)
+      .afterClosed()
+      .subscribe(confirmation => {
+        if (confirmation) {
+          this.deleteUser(userId);
+        }
+      });
   }
 
   /** Get project docs for each project associated with each user, keyed by project id. */
