@@ -26,7 +26,7 @@ describe('DeleteDialogComponent', () => {
     const env = new TestEnvironment();
     env.clickElement(env.cancelButton);
     flush();
-    expect(env.afterCloseCallback).toHaveBeenCalledWith('');
+    expect(env.afterCloseCallback).toHaveBeenCalledWith(false);
   }));
 });
 
