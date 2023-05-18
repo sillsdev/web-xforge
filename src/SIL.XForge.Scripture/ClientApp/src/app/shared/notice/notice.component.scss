@@ -28,10 +28,9 @@ div {
     align-self: flex-start;
   }
   .notice-content {
+    display: flex;
     flex: 1;
-  }
-  .mat-flat-button {
-    background-color: var(--notice-color);
-    color: #fff;
+    justify-content: space-between;
+    align-items: center;
   }
 }

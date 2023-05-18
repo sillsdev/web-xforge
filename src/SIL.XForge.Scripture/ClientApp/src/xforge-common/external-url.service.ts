@@ -22,6 +22,10 @@ export class ExternalUrlService {
     return this.helps + '/manual';
   }
 
+  get rolesHelpPage(): string {
+    return this.manual + '/#t=concepts%2Froles.htm';
+  }
+
   get transceleratorImportHelpPage(): string {
     return this.helps + '/community-checking#1ed2e353d94847a3861ad3a69d531aac';
   }
