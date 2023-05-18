@@ -1846,7 +1846,7 @@ class TestEnvironment {
   }
 
   get commentFormTextFields(): DebugElement[] {
-    return this.fixture.debugElement.queryAll(By.css('mdc-text-field[formControlName="commentText"]'));
+    return this.fixture.debugElement.queryAll(By.css('[formControlName="commentText"]'));
   }
 
   get currentQuestion(): number {
@@ -2152,7 +2152,7 @@ class TestEnvironment {
   }
 
   getYourCommentField(answerIndex: number): DebugElement {
-    return this.getAnswer(answerIndex).query(By.css('mdc-text-field[formControlName="commentText"]'));
+    return this.getAnswer(answerIndex).query(By.css('[formControlName="commentText"]'));
   }
 
   selectQuestion(/** indexed starting at 1 */ questionNumber: number, includeReadTimer: boolean = true): DebugElement {
@@ -2179,7 +2179,11 @@ class TestEnvironment {
   }
 
   setTextFieldValue(textField: DebugElement, value: string): void {
-    const input = textField.query(By.css('input, textarea'));
+    // The text field may be either an input/textarea, or a component with an input/textarea within it.
+    // This differs between MDC and Material
+    const input = ['input', 'textarea'].includes(textField.name)
+      ? textField
+      : textField.query(By.css('input, textarea'));
     const inputElem = input.nativeElement as HTMLInputElement;
     inputElem.value = value;
     inputElem.dispatchEvent(new Event('input'));

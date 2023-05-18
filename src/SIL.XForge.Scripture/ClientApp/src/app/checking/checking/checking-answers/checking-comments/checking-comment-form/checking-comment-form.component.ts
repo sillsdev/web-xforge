@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { XFValidators } from 'xforge-common/xfvalidators';
 
 @Component({
@@ -10,32 +10,34 @@ import { XFValidators } from 'xforge-common/xfvalidators';
 export class CheckingCommentFormComponent {
   @Input() set text(value: string | undefined) {
     if (value != null) {
-      this.commentText.setValue(value);
+      this.commentForm.controls.commentText.setValue(value);
     }
   }
 
   @Output() save: EventEmitter<string> = new EventEmitter<string>();
-  @Output() cancel: EventEmitter<boolean> = new EventEmitter<boolean>();
+  @Output() cancel: EventEmitter<void> = new EventEmitter<void>();
 
-  commentForm: UntypedFormGroup = new UntypedFormGroup({
-    commentText: new UntypedFormControl('', [Validators.required, XFValidators.someNonWhitespace])
+  commentForm = new FormGroup({
+    commentText: new FormControl('', [Validators.required, XFValidators.someNonWhitespace])
   });
+
   constructor() {}
 
   submit(): void {
-    if (this.commentForm.invalid) {
-      return;
+    const commentText = this.commentForm.controls.commentText.value;
+    if (this.commentForm.valid && typeof commentText === 'string') {
+      this.save.emit(commentText);
+      this.commentForm.reset();
     }
-    this.save.emit(this.commentText.value);
-    this.commentForm.reset();
   }
 
   submitCancel(): void {
     this.commentForm.reset();
-    this.cancel.emit(false);
+    this.cancel.emit();
   }
 
-  private get commentText(): UntypedFormControl {
-    return this.commentForm.controls.commentText as UntypedFormControl;
+  get showValidationError(): boolean {
+    const control = this.commentForm.controls.commentText;
+    return control.invalid && control.touched;
   }
 }
