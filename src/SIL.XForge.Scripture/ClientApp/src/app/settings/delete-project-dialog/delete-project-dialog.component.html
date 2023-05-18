@@ -12,14 +12,13 @@
       ></p>
       <br />
       <p>{{ t("please_type_project_name") }}</p>
-      <mat-form-field id="project-entry">
+      <mat-form-field id="project-entry" appearance="outline">
         <mat-label>{{ t("project_name") }}</mat-label>
         <input matInput [formControl]="projectNameEntry" autocomplete="off" />
       </mat-form-field>
     </mat-dialog-content>
     <mat-dialog-actions [align]="'end'">
       <button mat-button id="cancel-btn" [mat-dialog-close]="'cancel'">{{ t("cancel") }}</button>
-      <span fxFlex="20px"></span>
       <button
         id="project-delete-btn"
         mat-flat-button
