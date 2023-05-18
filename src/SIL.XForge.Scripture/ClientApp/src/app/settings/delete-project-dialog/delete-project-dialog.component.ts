@@ -4,7 +4,8 @@ import { UntypedFormControl } from '@angular/forms';
 import { I18nService } from 'xforge-common/i18n.service';
 
 @Component({
-  templateUrl: 'delete-project-dialog.component.html'
+  templateUrl: 'delete-project-dialog.component.html',
+  styleUrls: ['delete-project-dialog.component.scss']
 })
 export class DeleteProjectDialogComponent {
   projectNameEntry = new UntypedFormControl('');

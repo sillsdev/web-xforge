@@ -17,10 +17,9 @@
       </mat-form-field>
     </mat-dialog-content>
     <mat-dialog-actions [align]="'end'">
-      <button mat-icon-button type="button" id="cancel-btn" [mat-dialog-close]="'cancel'">{{ t("cancel") }}</button>
+      <button mat-button id="cancel-btn" [mat-dialog-close]="'cancel'">{{ t("cancel") }}</button>
       <span fxFlex="20px"></span>
       <button
-        type="button"
         id="project-delete-btn"
         mat-flat-button
         color="primary"
