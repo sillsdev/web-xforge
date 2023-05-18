@@ -39,19 +39,7 @@ export function mdcDialogStory(
   declarations: any[] = [],
   providers: Provider[] = []
 ): StoryFn {
-  const story: StoryFn = args => ({
-    moduleMetadata: {
-      imports: [UICommonModule, CommonModule, TranslocoModule, ...imports],
-      declarations: [component, ...declarations],
-      providers: [
-        { provide: MDC_DIALOG_DATA, useValue: { data: args.data } },
-        { provide: COMPONENT_UNDER_TEST, useValue: component },
-        ...providers
-      ]
-    },
-    props: args
-  });
-  return story;
+  return getDialogStory(imports, component, declarations, providers, MDC_DIALOG_DATA);
 }
 
 @Component({ template: '' })
@@ -73,12 +61,22 @@ export function matDialogStory(
   declarations: any[] = [],
   providers: Provider[] = []
 ): StoryFn {
+  return getDialogStory(imports, component, declarations, providers, MAT_DIALOG_DATA);
+}
+
+function getDialogStory(
+  imports: any[],
+  component: any,
+  declarations: any[],
+  providers: Provider[],
+  dialogData: InjectionToken<any>
+) {
   const story: StoryFn = args => ({
     moduleMetadata: {
       imports: [UICommonModule, CommonModule, TranslocoModule, ...imports],
       declarations: [component, ...declarations],
       providers: [
-        { provide: MAT_DIALOG_DATA, useValue: { data: args.data } },
+        { provide: dialogData, useValue: { data: args.data } },
         { provide: COMPONENT_UNDER_TEST, useValue: component },
         ...providers
       ]
