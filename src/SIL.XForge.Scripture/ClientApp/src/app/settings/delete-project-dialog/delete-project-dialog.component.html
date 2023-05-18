@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; read: 'delete_project_dialog'">
   <mat-dialog [dir]="i18n.direction">
-    <h1 mat-dialog-title id="title" fxLayout fxLayoutGap="8px">
-      <mat-icon fxFlexAlign="center">warning</mat-icon>
+    <h1 mat-dialog-title id="title">
+      <mat-icon>warning</mat-icon>
       <span>{{ t("are_you_sure_you_want_to_delete") }}</span>
     </h1>
     <mat-dialog-content>
@@ -10,7 +10,6 @@
           i18n.translateAndInsertTags('delete_project_dialog.delete_cannot_be_undone', { projectName: data.name })
         "
       ></p>
-      <br />
       <p>{{ t("please_type_project_name") }}</p>
       <mat-form-field id="project-entry" appearance="outline">
         <mat-label>{{ t("project_name") }}</mat-label>
