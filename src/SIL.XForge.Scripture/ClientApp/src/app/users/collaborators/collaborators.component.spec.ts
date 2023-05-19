@@ -86,13 +86,21 @@ describe('CollaboratorsComponent', () => {
     expect(env.noUsersLabel).toBeNull();
   }));
 
-  it('should display message when there are no users', fakeAsync(() => {
+  it('should display message when there are no users on a tab', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupProjectDataWithNoUsers();
+    env.setupProjectData({ user01: SFProjectRole.ParatextAdministrator, user02: SFProjectRole.ParatextTranslator });
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
+    expect(env.userRows.length).toEqual(2);
+    expect(env.noUsersLabel).toBeNull();
 
+    // click tab to project guests where there are no users
+    env.clickElement(env.tabElementFromIndex(2));
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.currentTabIndex).toBe(2);
+    expect(env.table).toBeNull();
     expect(env.noUsersLabel).not.toBeNull();
   }));
 
@@ -684,10 +692,6 @@ class TestEnvironment {
       };
     }
     this.setupThisProjectData(this.project01Id, this.createProject(userRoles));
-  }
-
-  setupProjectDataWithNoUsers(): void {
-    this.setupThisProjectData(this.project01Id, this.createProject({}));
   }
 
   updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
