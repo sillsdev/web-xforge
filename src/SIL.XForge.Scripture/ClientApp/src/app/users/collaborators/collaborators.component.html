@@ -9,12 +9,10 @@
     <span *ngIf="!isAppOnline" id="collaborators-offline-message" class="offline-text">{{
       t("connect_network_to_manage_users")
     }}</span>
-    <app-notice icon="live_help" [outline]="true"
-      >{{ t("uses_roles_to_access_project")
-      }}<a mat-flat-button class="learn-more-btn" [href]="urls.rolesHelpPage" target="_blank">{{
-        t("learn_more")
-      }}</a></app-notice
-    >
+    <app-notice icon="live_help" [outline]="true">
+      {{ t("uses_roles_to_access_project") }}
+      <a mat-flat-button class="learn-more-btn" [href]="urls.rolesHelpPage" target="_blank">{{ t("learn_more") }}</a>
+    </app-notice>
 
     <div fxLayout="row" fxLayoutAlign="start center" class="users-controls">
       <div class="tab-selector">
@@ -30,7 +28,7 @@
       </mat-form-field>
     </div>
     <div *ngIf="!isLoading">
-      <div *ngIf="totalUsers > 0">
+      <div *ngIf="filteredLength > 0">
         <table mat-table fxFill id="project-users-table" [dataSource]="userRows">
           <ng-container matColumnDef="avatar">
             <td mat-cell *matCellDef="let userRow; let i = index">
@@ -127,7 +125,7 @@
         >
         </mat-paginator>
       </div>
-      <div *ngIf="totalUsers === 0" class="no-users-label">{{ t("no_users_found") }}</div>
+      <div *ngIf="filteredLength === 0" class="no-users-label">{{ t("no_users_found") }}</div>
     </div>
     <mat-divider></mat-divider>
     <app-share-control [projectId]="projectId" (invited)="onInvitationSent()"></app-share-control>
