@@ -77,3 +77,9 @@ td.mat-cell:last-of-type {
 .remove-cell {
   text-align: right;
 }
+
+.help-message {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
