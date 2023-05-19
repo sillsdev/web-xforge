@@ -27,10 +27,8 @@ div {
     flex-shrink: 0;
     align-self: flex-start;
   }
-  .notice-content {
-    display: flex;
-    flex: 1;
-    justify-content: space-between;
-    align-items: center;
-  }
+}
+
+.notice-content {
+  width: 100%;
 }
