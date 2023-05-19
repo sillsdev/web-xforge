@@ -10,8 +10,10 @@
       t("connect_network_to_manage_users")
     }}</span>
     <app-notice icon="live_help" [outline]="true">
-      {{ t("uses_roles_to_access_project") }}
-      <a mat-flat-button class="learn-more-btn" [href]="urls.rolesHelpPage" target="_blank">{{ t("learn_more") }}</a>
+      <div class="help-message">
+        {{ t("uses_roles_to_access_project") }}
+        <a mat-flat-button class="learn-more-btn" [href]="urls.rolesHelpPage" target="_blank">{{ t("learn_more") }}</a>
+      </div>
     </app-notice>
 
     <div fxLayout="row" fxLayoutAlign="start center" class="users-controls">
@@ -127,7 +129,6 @@
       </div>
       <div *ngIf="filteredLength === 0" class="no-users-label">{{ t("no_users_found") }}</div>
     </div>
-    <mat-divider></mat-divider>
     <app-share-control [projectId]="projectId" (invited)="onInvitationSent()"></app-share-control>
   </div>
 </ng-container>
