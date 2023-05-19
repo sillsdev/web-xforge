@@ -79,7 +79,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
     return Array.from(this.projectService.roles.values());
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadingStarted();
     this.subscribe(
       this.projectService.onlineQuery(this.searchTerm$, this.queryParameters$, [

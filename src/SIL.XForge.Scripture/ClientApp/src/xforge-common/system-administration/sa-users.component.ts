@@ -5,6 +5,7 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { environment } from '../../environments/environment';
 import { DataLoadingComponent } from '../data-loading-component';
 import { ProjectDoc } from '../models/project-doc';
@@ -118,7 +119,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
   }
 
   /** Get project docs for each project associated with each user, keyed by project id. */
-  private async getUserProjectDocs(userDocs: RealtimeQuery<UserDoc>) {
+  private async getUserProjectDocs(userDocs: RealtimeQuery<UserDoc>): Promise<Map<string, ProjectDoc<Project>>> {
     const projectDocsLookup = [] as string[];
     for (const userDoc of userDocs.docs) {
       if (userDoc.data != null) {
