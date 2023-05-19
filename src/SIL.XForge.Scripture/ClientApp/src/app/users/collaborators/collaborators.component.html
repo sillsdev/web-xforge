@@ -127,7 +127,7 @@
         >
         </mat-paginator>
       </div>
-      <div *ngIf="filteredLength === 0" class="no-users-label">{{ t("no_users_found") }}</div>
+      <div class="mat-hint" *ngIf="filteredLength === 0" class="no-users-label">{{ t("no_users_found") }}</div>
     </div>
     <app-share-control [projectId]="projectId" (invited)="onInvitationSent()"></app-share-control>
   </div>
