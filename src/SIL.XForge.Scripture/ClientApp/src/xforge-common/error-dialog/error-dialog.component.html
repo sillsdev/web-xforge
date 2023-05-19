@@ -1,0 +1,17 @@
+<ng-container *transloco="let t; read: 'error'">
+  <h2 mat-dialog-title>{{ t("error_occurred") }}</h2>
+  <mat-dialog-content>
+    <p>{{ data.message }}</p>
+    <p [innerHTML]="t('to_report_issue_email', { issueEmailLink: issueEmailLink })"></p>
+    <p *ngIf="browserUnsupported" class="unsupported-browser" [innerHTML]="t('unsupported_browser', browserLinks)"></p>
+    <p class="error-id">{{ t("error_id", { errorId: data.eventId }) }}</p>
+
+    <ng-container *ngIf="data.stack">
+      <a (click)="this.showDetails = !this.showDetails">{{ showDetails ? t("hide_details") : t("show_details") }}</a>
+      <pre *ngIf="showDetails">{{ data.stack }}</pre>
+    </ng-container>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-flat-button mat-dialog-close color="primary" cdkFocusRegionStart>{{ t("close") }}</button>
+  </mat-dialog-actions>
+</ng-container>

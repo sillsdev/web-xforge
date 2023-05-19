@@ -1,16 +1,16 @@
-import { MdcDialog } from '@angular-mdc/web/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, Injector, NgZone } from '@angular/core';
 import Bugsnag, { Breadcrumb, BrowserConfig } from '@bugsnag/js';
 import { BugsnagErrorHandler } from '@bugsnag/plugin-angular';
 import { translate } from '@ngneat/transloco';
+import { MatDialog } from '@angular/material/dialog';
 import { hasObjectProp, hasStringProp } from '../type-utils';
 import { MACHINE_API_BASE_URL } from '../app/machine-api/http-client';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
 import { CONSOLE } from './browser-globals';
 import { ErrorReportingService } from './error-reporting.service';
-import { ErrorAlert, ErrorComponent } from './error/error.component';
+import { ErrorAlertData, ErrorDialogComponent } from './error-dialog/error-dialog.component';
 import { NoticeService } from './notice.service';
 import { objectId } from './utils';
 import { COMMAND_API_NAMESPACE } from './url-constants';
@@ -132,7 +132,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
 
   // Use injected console when it's available, for the sake of tests, but fall back to window.console if injection fails
   private console = window.console;
-  private alertQueue: ErrorAlert[] = [];
+  private alertQueue: ErrorAlertData[] = [];
   private dialogOpen = false;
 
   constructor(private readonly injector: Injector) {
@@ -145,12 +145,12 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     // instantiated.
     let ngZone: NgZone;
     let noticeService: NoticeService;
-    let dialog: MdcDialog;
+    let dialog: MatDialog;
     let errorReportingService: ErrorReportingService;
     try {
       ngZone = this.injector.get(NgZone);
       noticeService = this.injector.get(NoticeService);
-      dialog = this.injector.get(MdcDialog);
+      dialog = this.injector.get(MatDialog);
       errorReportingService = this.injector.get(ErrorReportingService);
       this.console = this.injector.get(CONSOLE);
     } catch {
@@ -254,18 +254,18 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     });
   }
 
-  private handleAlert(ngZone: NgZone, dialog: MdcDialog, error: ErrorAlert) {
+  private handleAlert(ngZone: NgZone, dialog: MatDialog, error: ErrorAlertData) {
     if (!this.alertQueue.some(alert => alert.message === error.message)) {
       this.alertQueue.unshift(error);
       this.showAlert(ngZone, dialog);
     }
   }
 
-  private showAlert(ngZone: NgZone, dialog: MdcDialog) {
+  private showAlert(ngZone: NgZone, dialog: MatDialog) {
     if (!this.dialogOpen && this.alertQueue.length) {
       ngZone.run(() => {
         this.dialogOpen = true;
-        const dialogRef = dialog.open(ErrorComponent, {
+        const dialogRef = dialog.open(ErrorDialogComponent, {
           autoFocus: false,
           data: this.alertQueue[this.alertQueue.length - 1]
         });
