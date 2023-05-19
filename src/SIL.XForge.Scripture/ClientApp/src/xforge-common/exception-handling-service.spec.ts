@@ -27,12 +27,12 @@ const mockedCookieService = mock(CookieService);
 
 // suppress any expected logging so it won't be shown in the test results
 class MockConsole {
-  log(val: any) {
+  log(val: any): void {
     if (val !== 'Error occurred. Reported to Bugsnag with release stage set to dev:') {
       console.log(val);
     }
   }
-  error(val: any) {
+  error(val: any): void {
     if (
       ![
         '',
@@ -259,7 +259,7 @@ class TestEnvironment {
     );
   }
 
-  get oneAndOnlyReport() {
+  get oneAndOnlyReport(): { error: any } {
     expect(this.errorReports.length).toEqual(1);
     return this.errorReports[this.errorReports.length - 1];
   }
@@ -278,7 +278,7 @@ class TestEnvironment {
     return breadcrumb;
   }
 
-  async handleError(error: any) {
+  async handleError(error: any): Promise<void> {
     await this.service.handleError(error);
     flush();
   }
