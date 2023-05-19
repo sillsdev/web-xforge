@@ -9,7 +9,6 @@ export class NoticeComponent {
   @Input() icon?: string;
   @Input() type: 'normal' | 'warning' | 'error' = 'normal';
   @Input() outline: boolean = false;
-  @Input() helpLink?: string;
 
   constructor() {}
 }

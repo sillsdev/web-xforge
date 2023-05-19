@@ -53,7 +53,6 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   pageSize: number = 50;
   filterForm: UntypedFormGroup = new UntypedFormGroup({ filter: new UntypedFormControl('') });
   isAppOnline = true;
-  showParatextOnly = false;
   currentTabIndex: number = 0;
 
   private projectDoc?: SFProjectDoc;
