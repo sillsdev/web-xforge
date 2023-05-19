@@ -1,7 +1,7 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { NotifiableError } from '@bugsnag/js';
 import { Breadcrumb } from '@bugsnag/js';
 import { CookieService } from 'ngx-cookie-service';
@@ -10,8 +10,8 @@ import { Observable } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from './auth.service';
 import { CONSOLE } from './browser-globals';
+import { ErrorDialogComponent } from './error-dialog/error-dialog.component';
 import { ErrorReportingService } from './error-reporting.service';
-import { ErrorComponent } from './error/error.component';
 import { ExceptionHandlingService } from './exception-handling-service';
 import { UserDoc } from './models/user-doc';
 import { NoticeService } from './notice.service';
@@ -19,7 +19,7 @@ import { configureTestingModule, TestTranslocoModule } from './test-utils';
 import { UserService } from './user.service';
 
 const mockedAuthService = mock(AuthService);
-const mockedMdcDialog = mock(MdcDialog);
+const mockedMatDialog = mock(MatDialog);
 const mockedUserService = mock(UserService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedNoticeService = mock(NoticeService);
@@ -55,7 +55,7 @@ describe('ExceptionHandlingService', () => {
     providers: [
       ExceptionHandlingService,
       { provide: AuthService, useMock: mockedAuthService },
-      { provide: MdcDialog, useMock: mockedMdcDialog },
+      { provide: MatDialog, useMock: mockedMatDialog },
       { provide: UserService, useMock: mockedUserService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -245,14 +245,14 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(HostComponent);
     this.fixture.detectChanges();
 
-    when(mockedMdcDialog.open(anything(), anything())).thenReturn({
+    when(mockedMatDialog.open(anything(), anything())).thenReturn({
       afterClosed: () =>
         ({
           subscribe: (callback: () => void) => {
             setTimeout(callback, 0);
           }
         } as Observable<{}>)
-    } as MdcDialogRef<ErrorComponent, {}>);
+    } as MatDialogRef<ErrorDialogComponent, {}>);
 
     when(mockedErrorReportingService.notify(anything(), anything())).thenCall((error: NotifiableError) =>
       this.errorReports.push({ error })
