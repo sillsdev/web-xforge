@@ -31,7 +31,7 @@ export class AppError extends Error {
 
 @Injectable()
 export class ExceptionHandlingService extends BugsnagErrorHandler {
-  static initBugsnag() {
+  static initBugsnag(): void {
     const config: BrowserConfig = {
       apiKey: environment.bugsnagApiKey,
       appVersion: versionData.version,
@@ -51,7 +51,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
    * Bugsnag doesn't always do well trying to get the actual text from some MDC elements e.g. buttons
    * This method does further investigation to try and determine the actual text before creating the breadcrumb
    */
-  static handleBreadcrumb(breadcrumb: Breadcrumb) {
+  static handleBreadcrumb(breadcrumb: Breadcrumb): void {
     if (
       !['targetSelector', 'targetText'].every(property => breadcrumb.metadata.hasOwnProperty(property)) ||
       breadcrumb.message !== 'UI click'
@@ -139,7 +139,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     super();
   }
 
-  async handleError(originalError: unknown, silently: boolean = false) {
+  async handleError(originalError: unknown, silently: boolean = false): Promise<void> {
     // Angular error handlers are instantiated before all other providers, so we cannot inject dependencies. Instead we
     // use the "Injector" to get the dependencies in this method. At this point, providers should have been
     // instantiated.
@@ -245,7 +245,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     }
   }
 
-  private sendReport(errorReportingService: ErrorReportingService, error: any) {
+  private sendReport(errorReportingService: ErrorReportingService, error: any): void {
     errorReportingService.notify(error, err => {
       if (err) {
         this.console.error('Sending error report failed:');
@@ -254,14 +254,14 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     });
   }
 
-  private handleAlert(ngZone: NgZone, dialog: MatDialog, error: ErrorAlertData) {
+  private handleAlert(ngZone: NgZone, dialog: MatDialog, error: ErrorAlertData): void {
     if (!this.alertQueue.some(alert => alert.message === error.message)) {
       this.alertQueue.unshift(error);
       this.showAlert(ngZone, dialog);
     }
   }
 
-  private showAlert(ngZone: NgZone, dialog: MatDialog) {
+  private showAlert(ngZone: NgZone, dialog: MatDialog): void {
     if (!this.dialogOpen && this.alertQueue.length) {
       ngZone.run(() => {
         this.dialogOpen = true;
