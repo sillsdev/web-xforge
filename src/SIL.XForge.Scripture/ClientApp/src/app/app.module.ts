@@ -7,7 +7,7 @@ import { ServiceWorkerModule } from '@angular/service-worker';
 import { TranslocoModule } from '@ngneat/transloco';
 import { CookieService } from 'ngx-cookie-service';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
-import { ErrorComponent } from 'xforge-common/error/error.component';
+import { ErrorDialogComponent } from 'xforge-common/error-dialog/error-dialog.component';
 import { ExceptionHandlingService } from 'xforge-common/exception-handling-service';
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -48,7 +48,7 @@ import { SharedModule } from './shared/shared.module';
     SyncComponent,
     ScriptureChooserDialogComponent,
     SupportedBrowsersDialogComponent,
-    ErrorComponent,
+    ErrorDialogComponent,
     EditNameDialogComponent,
     FeatureFlagsDialogComponent,
     ProjectSelectComponent,
