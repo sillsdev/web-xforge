@@ -30,6 +30,8 @@ export const InvalidForm: Story = {
   args: { text: '' },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    // Only necessary because the autofocus directive has to use setTimeout
+    await new Promise(resolve => setTimeout(resolve, 0));
     const saveButton = canvas.getByRole('button', { name: /Save/i });
     userEvent.click(saveButton);
     const error = canvas.getByText(/You need to enter your comment before saving/i);

@@ -1,4 +1,9 @@
 .form-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
+}
+
+.mat-form-field {
+  width: 100%;
 }
