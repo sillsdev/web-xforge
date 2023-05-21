@@ -2736,7 +2736,7 @@ public class ParatextServiceTests
         ComparableProjectPermissionManager targetScrTextPermissions = (ComparableProjectPermissionManager)
             env.ProjectScrText.Permissions;
 
-        ParatextProject targetProject = await env.Service.SendReceiveAsync(
+        (ParatextProject targetProject, _) = await env.Service.SendReceiveAsync(
             user01Secret,
             targetProjectId,
             null,
@@ -2744,7 +2744,7 @@ public class ParatextServiceTests
             Substitute.For<SyncMetrics>()
         );
         Assert.IsNotNull(targetProject);
-        ParatextProject sourceProject = await env.Service.SendReceiveAsync(
+        (ParatextProject sourceProject, _) = await env.Service.SendReceiveAsync(
             user01Secret,
             sourceProjectId,
             null,
@@ -2788,7 +2788,7 @@ public class ParatextServiceTests
                 env.MockScrTextCollection.FindById(env.Username01, newSourceProjectId).Returns(newSourceScrText);
             });
 
-        targetProject = await env.Service.SendReceiveAsync(
+        (targetProject, _) = await env.Service.SendReceiveAsync(
             user01Secret,
             targetProjectId,
             null,
@@ -2796,7 +2796,7 @@ public class ParatextServiceTests
             Substitute.For<SyncMetrics>()
         );
         Assert.IsNotNull(targetProject);
-        sourceProject = await env.Service.SendReceiveAsync(
+        (sourceProject, _) = await env.Service.SendReceiveAsync(
             user01Secret,
             newSourceProjectId,
             null,
@@ -2842,7 +2842,7 @@ public class ParatextServiceTests
         env.SetRestClientFactory(user01Secret);
         ScrTextCollection.Initialize("/srv/scriptureforge/projects");
         string resourceId = env.Resource3Id; // See the XML in SetRestClientFactory for this
-        ParatextProject targetProject = await env.Service.SendReceiveAsync(
+        (ParatextProject targetProject, _) = await env.Service.SendReceiveAsync(
             user01Secret,
             ptProjectId,
             null,
@@ -2850,7 +2850,7 @@ public class ParatextServiceTests
             Substitute.For<SyncMetrics>()
         );
         Assert.IsNotNull(targetProject);
-        ParatextProject sourceProject = await env.Service.SendReceiveAsync(
+        (ParatextProject sourceProject, _) = await env.Service.SendReceiveAsync(
             user01Secret,
             resourceId,
             null,
@@ -3678,6 +3678,264 @@ public class ParatextServiceTests
         // SUT
         string languageId = env.Service.GetLanguageId(userSecret, ptProjectId);
         Assert.AreEqual(LanguageId.English.Id, languageId);
+    }
+
+    [Test]
+    public void GetSyncResults_NoResults()
+    {
+        var env = new TestEnvironment();
+
+        SendReceiveResult[] srResults = Array.Empty<SendReceiveResult>();
+        var syncResults = new ParatextSyncResults();
+        var scrText = env.ProjectScrText;
+
+        // SUT
+        env.Service.GetSyncResults(srResults, syncResults, scrText);
+
+        Assert.IsEmpty(syncResults.Books);
+        Assert.IsFalse(syncResults.IsResource);
+        Assert.IsFalse(syncResults.NotesChanged);
+        Assert.IsFalse(syncResults.PermissionsChanged);
+        Assert.IsFalse(syncResults.ProjectChanged);
+    }
+
+    [Test]
+    public void GetSyncResults_EmptyResult()
+    {
+        var env = new TestEnvironment();
+
+        SendReceiveResult[] srResults = { new SendReceiveResult(new SharedProject()) };
+        var syncResults = new ParatextSyncResults();
+        var scrText = env.ProjectScrText;
+
+        // SUT
+        env.Service.GetSyncResults(srResults, syncResults, scrText);
+
+        Assert.IsEmpty(syncResults.Books);
+        Assert.IsFalse(syncResults.IsResource);
+        Assert.IsFalse(syncResults.NotesChanged);
+        Assert.IsFalse(syncResults.PermissionsChanged);
+        Assert.IsFalse(syncResults.ProjectChanged);
+    }
+
+    [Test]
+    public void GetSyncResults_BookChanged()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+
+        string[] revisionIds = { "1" };
+        SendReceiveResult[] srResults =
+        {
+            new SendReceiveResult(new SharedProject()) { RevisionsReceived = revisionIds }
+        };
+        var syncResults = new ParatextSyncResults();
+        var scrText = env.ProjectScrText;
+        env.MockParatextDataHelper
+            .GetRevisionChanges(scrText, revisionIds)
+            .Returns(new[] { (ProjectFileType.Books, new[] { 1 }) });
+
+        // SUT
+        env.Service.GetSyncResults(srResults, syncResults, scrText);
+
+        Assert.AreEqual(1, syncResults.Books.Count);
+        Assert.AreEqual(1, syncResults.Books.First());
+        Assert.IsFalse(syncResults.IsResource);
+        Assert.IsFalse(syncResults.NotesChanged);
+        Assert.IsFalse(syncResults.PermissionsChanged);
+        Assert.IsFalse(syncResults.ProjectChanged);
+    }
+
+    [Test]
+    public void GetSyncResults_IgnoreChanges()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+
+        string[] revisionIds = { "1" };
+        SendReceiveResult[] srResults =
+        {
+            new SendReceiveResult(new SharedProject()) { RevisionsReceived = revisionIds }
+        };
+        var syncResults = new ParatextSyncResults();
+        var scrText = env.ProjectScrText;
+
+        // NOTE: For coverage, we return all of the revisions that would update notes
+        env.MockParatextDataHelper
+            .GetRevisionChanges(scrText, revisionIds)
+            .Returns(
+                new[]
+                {
+                    (ProjectFileType.Renderings, Array.Empty<int>()),
+                    (ProjectFileType.Terms, Array.Empty<int>()),
+                    (ProjectFileType.Autocorrect, Array.Empty<int>()),
+                    (ProjectFileType.Denials, Array.Empty<int>()),
+                    (ProjectFileType.Figures, Array.Empty<int>()),
+                    (ProjectFileType.Hyphenation, Array.Empty<int>()),
+                    (ProjectFileType.Interlinear, Array.Empty<int>()),
+                    (ProjectFileType.Lexicon, Array.Empty<int>()),
+                    (ProjectFileType.ModuleSpecifications, Array.Empty<int>()),
+                    (ProjectFileType.NotAProjectFile, Array.Empty<int>()),
+                    (ProjectFileType.Passages, Array.Empty<int>()),
+                    (ProjectFileType.PluginData, Array.Empty<int>()),
+                    (ProjectFileType.Progress, Array.Empty<int>()),
+                    (ProjectFileType.RubyGlosses, Array.Empty<int>()),
+                    (ProjectFileType.SavedFilters, Array.Empty<int>()),
+                    (ProjectFileType.SharedFiles, Array.Empty<int>()),
+                    (ProjectFileType.SimplifiedMenus, Array.Empty<int>()),
+                    (ProjectFileType.Spelling, Array.Empty<int>()),
+                    (ProjectFileType.StatusCheckBoxes, Array.Empty<int>()),
+                    (ProjectFileType.StudyBibleAdditions, Array.Empty<int>()),
+                    (ProjectFileType.StudyBibleAdditionBooks, Array.Empty<int>()),
+                    (ProjectFileType.Unspecified, Array.Empty<int>()),
+                }
+            );
+
+        // SUT
+        env.Service.GetSyncResults(srResults, syncResults, scrText);
+
+        Assert.IsEmpty(syncResults.Books);
+        Assert.IsFalse(syncResults.IsResource);
+        Assert.IsFalse(syncResults.NotesChanged);
+        Assert.IsFalse(syncResults.PermissionsChanged);
+        Assert.IsFalse(syncResults.ProjectChanged);
+    }
+
+    [Test]
+    public void GetSyncResults_NotesChanged()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+
+        string[] revisionIds = { "1" };
+        SendReceiveResult[] srResults =
+        {
+            new SendReceiveResult(new SharedProject()) { RevisionsReceived = revisionIds }
+        };
+        var syncResults = new ParatextSyncResults();
+        var scrText = env.ProjectScrText;
+
+        // NOTE: For coverage, we return all of the revisions that would update notes
+        env.MockParatextDataHelper
+            .GetRevisionChanges(scrText, revisionIds)
+            .Returns(
+                new[]
+                {
+                    (ProjectFileType.Notes, Array.Empty<int>()),
+                    (ProjectFileType.NoteLanguages, Array.Empty<int>()),
+                    (ProjectFileType.NoteTags, Array.Empty<int>()),
+                }
+            );
+
+        // SUT
+        env.Service.GetSyncResults(srResults, syncResults, scrText);
+
+        Assert.IsEmpty(syncResults.Books);
+        Assert.IsFalse(syncResults.IsResource);
+        Assert.IsTrue(syncResults.NotesChanged);
+        Assert.IsFalse(syncResults.PermissionsChanged);
+        Assert.IsFalse(syncResults.ProjectChanged);
+    }
+
+    [Test]
+    public void GetSyncResults_PermissionsChanged()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+
+        string[] revisionIds = { "1" };
+        SendReceiveResult[] srResults =
+        {
+            new SendReceiveResult(new SharedProject()) { RevisionsReceived = revisionIds }
+        };
+        var syncResults = new ParatextSyncResults();
+        var scrText = env.ProjectScrText;
+        env.MockParatextDataHelper
+            .GetRevisionChanges(scrText, revisionIds)
+            .Returns(new[] { (ProjectFileType.RolesPermissions, Array.Empty<int>()) });
+
+        // SUT
+        env.Service.GetSyncResults(srResults, syncResults, scrText);
+
+        Assert.IsEmpty(syncResults.Books);
+        Assert.IsFalse(syncResults.IsResource);
+        Assert.IsFalse(syncResults.NotesChanged);
+        Assert.IsTrue(syncResults.PermissionsChanged);
+        Assert.IsFalse(syncResults.ProjectChanged);
+    }
+
+    [Test]
+    public void GetSyncResults_ProjectChanged()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+
+        string[] revisionIds = { "1" };
+        SendReceiveResult[] srResults =
+        {
+            new SendReceiveResult(new SharedProject()) { RevisionsReceived = revisionIds }
+        };
+        var syncResults = new ParatextSyncResults();
+        var scrText = env.ProjectScrText;
+
+        // NOTE: For coverage, we return all of the revisions that would update notes
+        env.MockParatextDataHelper
+            .GetRevisionChanges(scrText, revisionIds)
+            .Returns(
+                new[]
+                {
+                    (ProjectFileType.BookNames, Array.Empty<int>()),
+                    (ProjectFileType.Canons, Array.Empty<int>()),
+                    (ProjectFileType.LanguageSettings, Array.Empty<int>()),
+                    (ProjectFileType.ProjectUpdate, Array.Empty<int>()),
+                    (ProjectFileType.PropertiesAndSettings, Array.Empty<int>()),
+                    (ProjectFileType.Stylesheet, Array.Empty<int>()),
+                    (ProjectFileType.Versification, Array.Empty<int>()),
+                    (ProjectFileType.XmlResourceProject, Array.Empty<int>()),
+                }
+            );
+
+        // SUT
+        env.Service.GetSyncResults(srResults, syncResults, scrText);
+
+        Assert.IsEmpty(syncResults.Books);
+        Assert.IsFalse(syncResults.IsResource);
+        Assert.IsFalse(syncResults.NotesChanged);
+        Assert.IsFalse(syncResults.PermissionsChanged);
+        Assert.IsTrue(syncResults.ProjectChanged);
+    }
+
+    [Test]
+    public void GetSyncResults_UnknownBooksChanged()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        env.SetupProject(env.Project01, associatedPtUser);
+
+        string[] revisionIds = { "1" };
+        SendReceiveResult[] srResults =
+        {
+            new SendReceiveResult(new SharedProject()) { RevisionsReceived = revisionIds }
+        };
+        var syncResults = new ParatextSyncResults();
+        var scrText = env.ProjectScrText;
+        env.MockParatextDataHelper
+            .GetRevisionChanges(scrText, revisionIds)
+            .Returns(new[] { (ProjectFileType.Books, Array.Empty<int>()) });
+
+        // SUT
+        env.Service.GetSyncResults(srResults, syncResults, scrText);
+
+        Assert.IsEmpty(syncResults.Books);
+        Assert.IsFalse(syncResults.IsResource);
+        Assert.IsFalse(syncResults.NotesChanged);
+        Assert.IsFalse(syncResults.PermissionsChanged);
+        Assert.IsTrue(syncResults.ProjectChanged);
     }
 
     private class TestEnvironment : IDisposable
