@@ -476,7 +476,10 @@ public class MachineProjectService : IMachineProjectService
         var sb = new StringBuilder();
         foreach (TextSegment segment in text.GetSegments().Where(s => !s.IsEmpty))
         {
-            // We pad the verse number so the string based key comparisons in Machine will be accurate
+            // We pad the verse number so the string based key comparisons in Machine will be accurate.
+            // If the int does not parse successfully, it will be because it is a Biblical Term - which has a Greek or
+            // Hebrew word as the key, or because the verse number is unusual (i.e. 12a or 12-13). Usually the key is
+            // a standard verse number, so will be at most in the hundreds.
             string key = segment.SegmentRef is TextSegmentRef textSegmentRef
                 ? string.Join('_', textSegmentRef.Keys.Select(k => int.TryParse(k, out int _) ? k.PadLeft(3, '0') : k))
                 : (string)segment.SegmentRef;
