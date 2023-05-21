@@ -13,6 +13,7 @@ using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Paratext.Data.ProjectComments;
 using Paratext.Data.ProjectSettingsAccess;
+using SIL.Extensions;
 using SIL.Scripture;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -302,6 +303,65 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_HasSourceUpdatedWhenDataNotChanged()
+    {
+        var env = new TestEnvironment();
+        Book[] books = { new Book("MAT", 2), new Book("MRK", 2) };
+        env.SetupSFData(true, true, false, false, books);
+        env.SetupPTData(books);
+
+        // Make sure no books are listed as modified
+        env.ParatextSyncResults.Books.Clear();
+
+        // Set hasSource to false
+        SFProject project = env.GetProject();
+        project.Texts[0].HasSource = false;
+        env.RealtimeService.GetRepository<SFProject>().Replace(project);
+
+        // SUT
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+        env.MockLogger.AssertEventCount(
+            (LogEvent logEvent) =>
+                logEvent.LogLevel == LogLevel.Information && Regex.IsMatch(logEvent.Message, "Starting"),
+            1
+        );
+
+        await env.ParatextService
+            .DidNotReceive()
+            .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<XDocument>());
+        await env.ParatextService
+            .DidNotReceive()
+            .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<XDocument>());
+
+        await env.ParatextService
+            .DidNotReceive()
+            .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<XDocument>());
+        await env.ParatextService
+            .DidNotReceive()
+            .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<XDocument>());
+
+        var delta = Delta.New().InsertText("text");
+        Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);
+        Assert.That(env.GetText("project01", "MAT", 2).DeepEquals(delta), Is.True);
+        Assert.That(env.GetText("project01", "MRK", 1).DeepEquals(delta), Is.True);
+        Assert.That(env.GetText("project01", "MRK", 2).DeepEquals(delta), Is.True);
+
+        Assert.That(env.GetText("project02", "MAT", 1).DeepEquals(delta), Is.True);
+        Assert.That(env.GetText("project02", "MAT", 2).DeepEquals(delta), Is.True);
+        Assert.That(env.GetText("project02", "MRK", 1).DeepEquals(delta), Is.True);
+        Assert.That(env.GetText("project02", "MRK", 2).DeepEquals(delta), Is.True);
+
+        env.ParatextService.DidNotReceive().PutNotes(Arg.Any<UserSecret>(), "target", Arg.Any<XElement>());
+
+        project = env.VerifyProjectSync(true);
+        Assert.That(project.ParatextUsers.Count, Is.EqualTo(2));
+        Assert.IsTrue(project.Texts[0].HasSource);
+        Assert.That(project.UserRoles["user01"], Is.EqualTo(SFProjectRole.Administrator));
+        Assert.That(project.UserRoles["user02"], Is.EqualTo(SFProjectRole.Translator));
+    }
+
+    [Test]
     public async Task SyncAsync_DataChangedTranslateAndCheckingEnabled()
     {
         var env = new TestEnvironment();
@@ -403,6 +463,7 @@ public class ParatextSyncRunnerTests
         env.SetupPTData(new Book("MAT", 3), new Book("MRK", 1));
         Book[] books = new[] { new Book("MRK", 2) };
         env.AddParatextNoteThreadData(books);
+        env.ParatextSyncResults.NotesChanged = true;
         Assert.That(env.ContainsNote(1), Is.True);
 
         await env.Runner.RunAsync("project02", "user01", "project02", false, CancellationToken.None);
@@ -543,6 +604,7 @@ public class ParatextSyncRunnerTests
                 Arg.Any<CancellationToken>()
             )
             .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
+        env.ParatextSyncResults.PermissionsChanged = true;
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
@@ -1441,16 +1503,7 @@ public class ParatextSyncRunnerTests
 
         // Setup a trap to cancel the task
         env.ParatextService
-            .When(
-                x =>
-                    x.SendReceiveAsync(
-                        Arg.Any<UserSecret>(),
-                        Arg.Any<string>(),
-                        Arg.Any<IProgress<ProgressState>>(),
-                        Arg.Any<CancellationToken>(),
-                        Arg.Any<SyncMetrics>()
-                    )
-            )
+            .When(x => x.GetBookList(Arg.Any<UserSecret>(), Arg.Any<string>()))
             .Do(_ => cancellationTokenSource.Cancel());
 
         // Run the task
@@ -1652,6 +1705,7 @@ public class ParatextSyncRunnerTests
                 Arg.Any<int>()
             )
             .Returns(Task.FromResult(info));
+        env.ParatextSyncResults.NotesChanged = true;
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
         await env.ParatextService
@@ -1693,6 +1747,7 @@ public class ParatextSyncRunnerTests
                 Arg.Any<int>()
             )
             .Returns(Task.FromResult(info));
+        env.ParatextSyncResults.NotesChanged = true;
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
         await env.ParatextService
@@ -2097,7 +2152,7 @@ public class ParatextSyncRunnerTests
                 Arg.Any<CancellationToken>(),
                 Arg.Any<SyncMetrics>()
             )
-            .Returns(new ParatextResource());
+            .Returns((new ParatextResource(), new ParatextSyncResults { IsResource = true }));
 
         // SUT
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -2139,7 +2194,7 @@ public class ParatextSyncRunnerTests
                 Arg.Any<CancellationToken>(),
                 Arg.Any<SyncMetrics>()
             )
-            .Returns(new ParatextResource());
+            .Returns((new ParatextResource(), new ParatextSyncResults { IsResource = true }));
 
         // SUT
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -2294,7 +2349,7 @@ public class ParatextSyncRunnerTests
                 Arg.Any<CancellationToken>(),
                 Arg.Any<SyncMetrics>()
             )
-            .Returns(new ParatextResource());
+            .Returns((new ParatextResource(), new ParatextSyncResults { IsResource = true }));
 
         // Ensure that the source is project02, and has no users with access
         Assert.AreEqual("project02", env.GetProject().TranslateConfig.Source.ProjectRef);
@@ -2420,7 +2475,16 @@ public class ParatextSyncRunnerTests
                     _sendReceivedCalled = true;
                     ParatextService.GetLatestSharedVersion(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns("afterSR");
                 });
-
+            ParatextSyncResults = new ParatextSyncResults();
+            ParatextService
+                .SendReceiveAsync(
+                    Arg.Any<UserSecret>(),
+                    Arg.Any<string>(),
+                    Arg.Any<IProgress<ProgressState>>(),
+                    Arg.Any<CancellationToken>(),
+                    Arg.Any<SyncMetrics>()
+                )
+                .Returns((null, ParatextSyncResults));
             ParatextService.GetNotes(Arg.Any<UserSecret>(), "target", Arg.Any<int>()).Returns("<notes/>");
             ParatextService.GetParatextUsername(Arg.Is<UserSecret>(u => u.Id == "user01")).Returns("User 1");
             ParatextService
@@ -2470,6 +2534,7 @@ public class ParatextSyncRunnerTests
         public IMachineProjectService MachineProjectService { get; }
         public IParatextNotesMapper NotesMapper { get; }
         public IParatextService ParatextService { get; }
+        public ParatextSyncResults ParatextSyncResults { get; }
         public SFMemoryRealtimeService RealtimeService { get; }
         public IRealtimeService SubstituteRealtimeService { get; }
         public IDeltaUsxMapper DeltaUsxMapper { get; }
@@ -2969,6 +3034,7 @@ public class ParatextSyncRunnerTests
                 if (book.HighestSourceChapter > 0 || book.HighestSourceChapter == book.HighestTargetChapter)
                     AddPTBook(sourceProjectPTId, book.Id, book.HighestSourceChapter, book.MissingSourceChapters);
             }
+            ParatextSyncResults.Books.AddRange(books.Select(b => Canon.BookIdToNumber(b.Id)));
         }
 
         public Task SetUserRole(string userId, string role)
@@ -3019,6 +3085,7 @@ public class ParatextSyncRunnerTests
                         Arg.Any<Dictionary<string, ParatextUserProfile>>()
                     )
                     .Returns(new[] { noteThreadChange });
+                ParatextSyncResults.NotesChanged = true;
                 Dictionary<string, string> userIdsToUsernames = new Dictionary<string, string>
                 {
                     { "user01", "User 1" },
@@ -3141,6 +3208,7 @@ public class ParatextSyncRunnerTests
                     Arg.Any<Dictionary<string, ParatextUserProfile>>()
                 )
                 .Returns(new[] { noteThreadChange });
+            ParatextSyncResults.NotesChanged = true;
         }
 
         /// <summary>Prepare a change report to be provided when thread changes are asked for.</summary>
@@ -3536,6 +3604,7 @@ public class ParatextSyncRunnerTests
                     Arg.Any<Dictionary<string, ParatextUserProfile>>()
                 )
                 .Returns(noteThreadChanges);
+            ParatextSyncResults.NotesChanged = true;
         }
 
         private static Note CreateNote(
