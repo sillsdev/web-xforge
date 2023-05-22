@@ -79,6 +79,20 @@ public class AuthService : DisposableBase, IAuthService
         return CallApiAsync(new HttpMethod("PATCH"), $"users/{authId}", content);
     }
 
+    /// <summary>
+    /// Used for SMS authentication as the user has their name and nickname set to their phone number which may get
+    /// exposed in future user requests. This method sets both values to "Anonymous" and is intended to be run once.
+    /// </summary>
+    public async Task<string> UpdateUserToAnonymous(string authId)
+    {
+        var content = new JObject(
+            new JProperty("name", "Anonymous"),
+            new JProperty("nickname", "Anonymous"),
+            new JProperty("picture", "https://cdn.auth0.com/avatars/a.png")
+        );
+        return await CallApiAsync(new HttpMethod("PATCH"), $"users/{authId}", content);
+    }
+
     private async Task<string> CallApiAsync(HttpMethod method, string url, JToken content = null)
     {
         bool refreshed = false;
