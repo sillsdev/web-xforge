@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using SIL.ObjectModel;
 using SIL.XForge.Configuration;
+using SIL.XForge.Models;
 
 namespace SIL.XForge.Services;
 
@@ -39,6 +40,23 @@ public class AuthService : DisposableBase, IAuthService
     }
 
     public Task<string> GetUserAsync(string authId) => CallApiAsync(HttpMethod.Get, $"users/{authId}");
+
+    public Task<string> GenerateAnonymousUser(
+        string name,
+        TransparentAuthenticationCredentials credentials,
+        string language
+    )
+    {
+        var content = new JObject(
+            new JProperty("name", name),
+            new JProperty("username", credentials.Username),
+            new JProperty("email", $"{credentials.Username}@users.noreply.scriptureforge.org"),
+            new JProperty("password", credentials.Password),
+            new JProperty("connection", "Transparent-Authentication"),
+            new JProperty("user_metadata", new JObject(new JProperty("interface_language", language)))
+        );
+        return CallApiAsync(HttpMethod.Post, "users", content);
+    }
 
     public Task LinkAccounts(string primaryAuthId, string secondaryAuthId)
     {

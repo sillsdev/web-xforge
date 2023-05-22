@@ -303,6 +303,46 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task ReserveLinkSharingKeyAsync_GenerateNewKeyIfMaxUsersReached()
+    {
+        var env = new TestEnvironment();
+        SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
+
+        Assert.That(
+            projectSecret.ShareKeys.Any(
+                sk =>
+                    sk.Key == "maxUsersReached"
+                    && sk.ShareLinkType == ShareLinkType.Recipient
+                    && sk.ProjectRole == SFProjectRole.Viewer
+                    && sk.UsersGenerated == 250
+            ),
+            Is.True,
+            "setup"
+        );
+        env.SecurityService.GenerateKey().Returns("newKey");
+
+        string shareLink = await env.Service.GetLinkSharingKeyAsync(
+            User07,
+            Project06,
+            SFProjectRole.Viewer,
+            ShareLinkType.Recipient
+        );
+        Assert.That(shareLink, Is.EqualTo("newKey"));
+        projectSecret = env.ProjectSecrets.Get(Project06);
+        Assert.That(
+            projectSecret.ShareKeys.Any(
+                sk =>
+                    sk.Key == "newKey"
+                    && sk.ShareLinkType == ShareLinkType.Recipient
+                    && sk.ProjectRole == SFProjectRole.Viewer
+                    && sk.Reserved == null
+                    && sk.UsersGenerated == 0
+            ),
+            Is.True
+        );
+    }
+
+    [Test]
     public async Task ReserveLinkSharingKeyAsync_GenerateNewKeyIfReserved()
     {
         var env = new TestEnvironment();
@@ -338,6 +378,28 @@ public class SFProjectServiceTests
             ),
             Is.True
         );
+    }
+
+    [Test]
+    public void GetProjectSecret_ReturnsSecret()
+    {
+        var env = new TestEnvironment();
+        var shareKey = "abcd";
+
+        // SUT
+        SFProjectSecret projectSecret = env.Service.GetProjectSecretByShareKey(shareKey);
+
+        Assert.AreEqual(projectSecret.Id, Project01);
+    }
+
+    [Test]
+    public void GetProjectSecret_ThrowsOnNotFound()
+    {
+        var env = new TestEnvironment();
+        var shareKey = "invalid";
+
+        // SUT
+        Assert.Throws<DataNotFoundException>(() => env.Service.GetProjectSecretByShareKey(shareKey));
     }
 
     [Test]
@@ -451,16 +513,31 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void CheckLinkSharingAsync_LinkSharingDisabledAndUserOnProject_Success()
+    public async Task IncreaseShareKeyUsersGenerated()
+    {
+        var env = new TestEnvironment();
+        var shareKey = "linksharing02";
+        ValidShareKey validShareKey = await env.Service.CheckShareKeyValidity(shareKey);
+        Assert.AreEqual(validShareKey.ShareKey.UsersGenerated, 0);
+
+        // SUT
+        await env.Service.IncreaseShareKeyUsersGenerated(shareKey);
+
+        validShareKey = await env.Service.CheckShareKeyValidity(shareKey);
+        Assert.AreEqual(validShareKey.ShareKey.UsersGenerated, 1);
+    }
+
+    [Test]
+    public void JoinWithShareKeyAsync_LinkSharingDisabledAndUserOnProject_Success()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project01);
         Assert.That(project.UserRoles.ContainsKey(User02), Is.True, "setup");
-        Assert.DoesNotThrowAsync(() => env.Service.CheckLinkSharingAsync(User02, "abcd"));
+        Assert.DoesNotThrowAsync(() => env.Service.JoinWithShareKeyAsync(User02, "abcd"));
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
+    public async Task JoinWithShareKeyAsync_LinkSharingDisabledAndUserNotOnProject_Forbidden()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
@@ -470,17 +547,17 @@ public class SFProjectServiceTests
             Project02,
             new SFProjectSettings { CheckingShareEnabled = false }
         );
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.CheckLinkSharingAsync(User03, "linksharing02"));
+        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.JoinWithShareKeyAsync(User03, "linksharing02"));
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_LinkSharingEnabled_UserJoined()
+    public async Task JoinWithShareKeyAsync_LinkSharingEnabled_UserJoined()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
 
-        await env.Service.CheckLinkSharingAsync(User03, "linksharing02");
+        await env.Service.JoinWithShareKeyAsync(User03, "linksharing02");
         project = env.GetProject(Project02);
         Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True);
         Assert.That(userRole, Is.EqualTo(SFProjectRole.CommunityChecker));
@@ -489,7 +566,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_LinkSharingEnabledAndUserHasPTRole_UserJoined()
+    public async Task JoinWithShareKeyAsync_LinkSharingEnabledAndUserHasPTRole_UserJoined()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project04);
@@ -498,7 +575,7 @@ public class SFProjectServiceTests
             .TryGetProjectRoleAsync(Arg.Any<UserSecret>(), Arg.Any<string>(), CancellationToken.None)
             .Returns(Task.FromResult(new Attempt<string>(SFProjectRole.Translator)));
 
-        await env.Service.CheckLinkSharingAsync(User03, "linksharing04");
+        await env.Service.JoinWithShareKeyAsync(User03, "linksharing04");
         project = env.GetProject(Project04);
         Assert.That(project.UserRoles.TryGetValue(User03, out string userRole), Is.True);
         Assert.That(userRole, Is.EqualTo(SFProjectRole.Translator));
@@ -507,7 +584,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_LinkSharingEnabledAndShareKeyExists_UserJoined()
+    public async Task JoinWithShareKeyAsync_LinkSharingEnabledAndShareKeyExists_UserJoined()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project02);
@@ -516,13 +593,14 @@ public class SFProjectServiceTests
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "existingkeyuser03"), Is.True, "setup");
 
-        await env.Service.CheckLinkSharingAsync(User03, "existingkeyuser03");
+        await env.Service.JoinWithShareKeyAsync(User03, "existingkeyuser03");
         project = env.GetProject(Project02);
+
         Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_SpecificSharingAlternateUser_UserJoined()
+    public async Task JoinWithShareKeyAsync_SpecificSharingAlternateUser_UserJoined()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project03);
@@ -538,8 +616,9 @@ public class SFProjectServiceTests
         );
 
         // Use the sharekey linked to user03
-        await env.Service.CheckLinkSharingAsync(User04, "key1234");
+        await env.Service.JoinWithShareKeyAsync(User04, "key1234");
         project = env.GetProject(Project03);
+
         Assert.That(project.UserRoles.ContainsKey(User04), Is.True, "User should have been added to project");
 
         invitees = await env.Service.InvitedUsersAsync(User01, Project03);
@@ -550,7 +629,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_SpecificSharingLinkExpired_ForbiddenError()
+    public async Task JoinWithShareKeyAsync_SpecificSharingLinkExpired_ForbiddenError()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project03);
@@ -560,7 +639,7 @@ public class SFProjectServiceTests
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "expired@example.com"), Is.True, "setup");
 
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.CheckLinkSharingAsync(LinkExpiredUser, "keyexp"),
+            () => env.Service.JoinWithShareKeyAsync(LinkExpiredUser, "keyexp"),
             "The user should be forbidden to join the project: Email was in ShareKeys, but code was expired."
         );
 
@@ -574,7 +653,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void CheckLinkSharingAsync_SpecificSharingAndWrongCode_ForbiddenError()
+    public void JoinWithShareKeyAsync_SpecificSharingAndWrongCode_ForbiddenError()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project03);
@@ -584,13 +663,13 @@ public class SFProjectServiceTests
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "user03@example.com"), Is.True, "setup");
 
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.CheckLinkSharingAsync(User03, "badcode"),
+            () => env.Service.JoinWithShareKeyAsync(User03, "badcode"),
             "The user should be forbidden to join the project: Email address was in ShareKeys list, but wrong code was given."
         );
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_SpecificSharingAndRightKey_UserJoined()
+    public async Task JoinWithShareKeyAsync_SpecificSharingAndRightKey_UserJoined()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project03);
@@ -600,14 +679,15 @@ public class SFProjectServiceTests
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Key == "key1234"), Is.True, "setup");
         Assert.That(projectSecret.ShareKeys.Count, Is.EqualTo(4), "setup");
 
-        await env.Service.CheckLinkSharingAsync(User03, "key1234");
+        await env.Service.JoinWithShareKeyAsync(User03, "key1234");
 
         project = env.GetProject(Project03);
+
         Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_SpecificSharingAndRecipientPreviouslyJoined()
+    public async Task JoinWithShareKeyAsync_SpecificSharingAndRecipientPreviouslyJoined()
     {
         var env = new TestEnvironment();
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
@@ -618,11 +698,11 @@ public class SFProjectServiceTests
             "setup"
         );
 
-        Assert.That(await env.Service.CheckLinkSharingAsync(User02, "usedKey"), Is.EqualTo(Project06));
+        Assert.That(await env.Service.JoinWithShareKeyAsync(User02, "usedKey"), Is.EqualTo(Project06));
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_ShareDisabledAndKeyValid_UserJoined()
+    public async Task JoinWithShareKeyAsync_ShareDisabledAndKeyValid_UserJoined()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project03);
@@ -639,14 +719,15 @@ public class SFProjectServiceTests
         );
         project = env.GetProject(Project03);
         Assert.That(project.CheckingConfig.ShareEnabled, Is.False, "setup");
-        await env.Service.CheckLinkSharingAsync(User03, "key1234");
+        await env.Service.JoinWithShareKeyAsync(User03, "key1234");
 
         project = env.GetProject(Project03);
+
         Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_PTUserHasPTPermissions()
+    public async Task JoinWithShareKeyAsync_PTUserHasPTPermissions()
     {
         // If a user is invited to a project, and goes to the invitation link, the user being added to the project
         // should have their PT permissions for text books and chapters.
@@ -740,7 +821,7 @@ public class SFProjectServiceTests
             .Returns(Task.FromResult(ptSourcePermissions));
 
         // SUT
-        await env.Service.CheckLinkSharingAsync(User03, shareKeyCode);
+        await env.Service.JoinWithShareKeyAsync(User03, shareKeyCode);
 
         project = env.GetProject(Project05);
         Assert.That(
@@ -774,7 +855,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_NonPTUser()
+    public async Task JoinWithShareKeyAsync_NonPTUser()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project05);
@@ -792,7 +873,7 @@ public class SFProjectServiceTests
         Assert.That(project.Texts.First().Chapters.First().Permissions.ContainsKey(User04), Is.False, "setup");
 
         // SUT
-        await env.Service.CheckLinkSharingAsync(User04, "key12345");
+        await env.Service.JoinWithShareKeyAsync(User04, "key12345");
 
         project = env.GetProject(Project05);
         Assert.That(project.UserRoles.TryGetValue(User04, out string userRole), Is.True, "user was added to project");
@@ -827,7 +908,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_PTUserButNotOfThisProjectAndCannotReadResource()
+    public async Task JoinWithShareKeyAsync_PTUserButNotOfThisProjectAndCannotReadResource()
     {
         // The user joining the project _is_ a PT user, but they do not have a PT role on this particular project.
         // Further, they do not have permission to read the DBL resource.
@@ -943,7 +1024,7 @@ public class SFProjectServiceTests
             .Returns(Task.FromResult(ptSourcePermissions));
 
         // SUT
-        await env.Service.CheckLinkSharingAsync(User03, "key12345");
+        await env.Service.JoinWithShareKeyAsync(User03, "key12345");
 
         project = env.GetProject(Project05);
         Assert.That(
@@ -1017,7 +1098,7 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public async Task CheckLinkSharingAsync_PTUserButNotOfThisProjectYetReadsResource()
+    public async Task JoinWithShareKeyAsync_PTUserButNotOfThisProjectYetReadsResource()
     {
         // The user joining the project _is_ a PT user, but they do not have a PT role on this particular project.
         // Though they do have permission to read the DBL resource.
@@ -1128,7 +1209,7 @@ public class SFProjectServiceTests
             .Returns(Task.FromResult(ptSourcePermissions));
 
         // SUT
-        await env.Service.CheckLinkSharingAsync(User03, "key12345");
+        await env.Service.JoinWithShareKeyAsync(User03, "key12345");
 
         project = env.GetProject(Project05);
         Assert.That(
@@ -1206,13 +1287,13 @@ public class SFProjectServiceTests
     }
 
     [Test]
-    public void CheckLinkSharingAsync_ObserverInvitedToProject_AddedToProject()
+    public void JoinWithShareKeyAsync_ObserverInvitedToProject_AddedToProject()
     {
         var env = new TestEnvironment();
         SFProject project = env.GetProject(Project04);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
 
-        Assert.DoesNotThrowAsync(() => env.Service.CheckLinkSharingAsync(User03, "linksharing04"));
+        Assert.DoesNotThrowAsync(() => env.Service.JoinWithShareKeyAsync(User03, "linksharing04"));
         project = env.GetProject(Project04);
         Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "user should be added to project");
     }
@@ -1504,6 +1585,7 @@ public class SFProjectServiceTests
 
         await env.Service.AddUserAsync(User03, Project03, null);
         project = env.GetProject(Project03);
+
         Assert.That(project.UserRoles.ContainsKey(User03), Is.True, "User should have been added to project");
     }
 
@@ -3149,6 +3231,13 @@ public class SFProjectServiceTests
                                 Key = "toBeReservedKey",
                                 ProjectRole = SFProjectRole.Commenter,
                                 ShareLinkType = ShareLinkType.Recipient,
+                            },
+                            new ShareKey
+                            {
+                                Key = "maxUsersReached",
+                                ProjectRole = SFProjectRole.Viewer,
+                                ShareLinkType = ShareLinkType.Recipient,
+                                UsersGenerated = 250
                             },
                         }
                     },

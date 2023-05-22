@@ -494,6 +494,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     && sk.RecipientUserId == null
                     && sk.Reserved == null
                     && sk.ExpirationTime == null
+                    && sk.UsersGenerated < project.MaxGeneratedUsersPerShareKey
             )
             ?.Key;
         if (!string.IsNullOrEmpty(key))
@@ -501,6 +502,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         // Generate a new link sharing key for the given role
         key = _securityService.GenerateKey();
+
         await ProjectSecrets.UpdateAsync(
             p => p.Id == projectId,
             update =>
@@ -559,6 +561,21 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         );
     }
 
+    /// <summary>Increase the amount of times an auth0 user has been generated using the share key</summary>
+    public async Task IncreaseShareKeyUsersGenerated(string shareKey)
+    {
+        ValidShareKey validShareKey = await CheckShareKeyValidity(shareKey);
+        int index = validShareKey.ProjectSecret.ShareKeys.FindIndex(sk => sk.Key == shareKey);
+        if (index > -1)
+        {
+            var usersGenerated = (validShareKey.ShareKey.UsersGenerated ?? 0) + 1;
+            await ProjectSecrets.UpdateAsync(
+                p => p.Id == validShareKey.Project.Id,
+                update => update.Set(p => p.ShareKeys[index].UsersGenerated, usersGenerated)
+            );
+        }
+    }
+
     /// <summary>Is there already a pending invitation to the project for the specified email address?</summary>
     public async Task<bool> IsAlreadyInvitedAsync(string curUserId, string projectId, string email)
     {
@@ -603,7 +620,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
     /// <summary> Check that a share link is valid for a project and add the user to the project. </summary>
     /// <returns>Returns the projectId, which is used by the Angular join component to navigate to the project</returns>
-    public async Task<string> CheckLinkSharingAsync(string curUserId, string shareKey)
+    public async Task<string> JoinWithShareKeyAsync(string curUserId, string shareKey)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         ProjectSecret projectSecret = ProjectSecrets
@@ -614,8 +631,6 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         string projectId = projectSecret.Id;
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
-        if (projectSecretShareKey == null)
-            throw new ForbiddenException();
 
         if (projectSecretShareKey.RecipientUserId != null)
         {
@@ -640,10 +655,46 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             return projectId;
         }
 
-        // Get the project role that is specified in the shareKey
-        if (projectSecretShareKey.ProjectRole == null)
-            throw new ForbiddenException();
+        // Ensure the share key is valid for everyone else
+        await CheckShareKeyValidity(shareKey);
 
+        if (projectSecretShareKey.ShareLinkType == ShareLinkType.Anyone)
+        {
+            await AddUserToProjectAsync(
+                conn,
+                projectDoc,
+                userDoc,
+                projectSecretShareKey.ProjectRole,
+                projectSecretShareKey.Key
+            );
+            return projectId;
+        }
+        // Look for a valid specific user share key.
+        if (projectSecretShareKey.ShareLinkType == ShareLinkType.Recipient)
+        {
+            await AddUserToProjectAsync(
+                conn,
+                projectDoc,
+                userDoc,
+                projectSecretShareKey.ProjectRole,
+                projectSecretShareKey.Key
+            );
+            return projectId;
+        }
+        throw new ForbiddenException();
+    }
+
+    public async Task<ValidShareKey> CheckShareKeyValidity(string shareKey)
+    {
+        SFProjectSecret projectSecret = GetProjectSecretByShareKey(shareKey);
+        ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
+
+        if (string.IsNullOrWhiteSpace(projectSecretShareKey?.ProjectRole))
+        {
+            throw new ForbiddenException();
+        }
+
+        SFProject project = await GetProjectAsync(projectSecret.Id);
         if (projectSecretShareKey.ShareLinkType == ShareLinkType.Anyone)
         {
             string[] availableRoles = new Dictionary<string, bool>
@@ -659,34 +710,34 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 .Select(entry => entry.Key)
                 .ToArray();
 
-            if (availableRoles.Contains(projectSecretShareKey.ProjectRole))
+            if (!availableRoles.Contains(projectSecretShareKey.ProjectRole))
             {
-                await AddUserToProjectAsync(
-                    conn,
-                    projectDoc,
-                    userDoc,
-                    projectSecretShareKey.ProjectRole,
-                    projectSecretShareKey.Key
-                );
-                return projectId;
+                throw new ForbiddenException();
             }
         }
-        // Look for a valid specific user share key.
-        if (
-            projectSecretShareKey.ExpirationTime > DateTime.UtcNow
+        else if (
+            projectSecretShareKey.ExpirationTime < DateTime.UtcNow
             && projectSecretShareKey.ShareLinkType == ShareLinkType.Recipient
         )
         {
-            await AddUserToProjectAsync(
-                conn,
-                projectDoc,
-                userDoc,
-                projectSecretShareKey.ProjectRole,
-                projectSecretShareKey.Key
-            );
-            return projectId;
+            throw new ForbiddenException();
         }
-        throw new ForbiddenException();
+        return new ValidShareKey()
+        {
+            Project = project,
+            ProjectSecret = projectSecret,
+            ShareKey = projectSecretShareKey
+        };
+    }
+
+    public SFProjectSecret GetProjectSecretByShareKey(string shareKey)
+    {
+        SFProjectSecret projectSecret = ProjectSecrets
+            .Query()
+            .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
+        if (projectSecret == null)
+            throw new DataNotFoundException("Invalid share key");
+        return projectSecret;
     }
 
     /// <summary> Determine if the specified project is an active source project. </summary>

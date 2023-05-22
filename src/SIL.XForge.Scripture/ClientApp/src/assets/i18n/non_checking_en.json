@@ -149,6 +149,17 @@
     "transcelerator_some_questions_already_imported": "Note: Some selected questions have already been imported. Questions that have been edited in Transcelerator will be updated in Scripture Forge, and exact duplicates will be skipped.",
     "update_transcelerator": "The version of Transcelerator used in this project is not supported. Please update to at least Transcelerator version 1.5.3."
   },
+  "join": {
+    "error_occurred_login": "An error occurred trying to join the project",
+    "invited_to_join": "You've been invited to join {{ boldStart }}{{ projectName }}{{ boldEnd }} project",
+    "join": "Join",
+    "join_a_project": "Join a project",
+    "login_existing_account": "or {{ underlineStart }}Log in{{ underlineEnd }} to an existing account",
+    "max_users_reached": "The maximum amount of users allowed to join using this share key has been reached. Please contact the person who sent you the link and ask for a new one.",
+    "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
+    "project_link_is_invalid": "The project link is invalid. Please contact the person who sent you the link and ask for a new one.",
+    "your_name": "Enter your name"
+  },
   "multi_viewer": {
     "other_viewers": "{{ count }} other viewers"
   },
@@ -306,5 +317,10 @@
   "users": {
     "collaborators": "Collaborators",
     "users": "Users"
+  },
+  "warnings": {
+    "cancel": "Cancel",
+    "login_cookie_deletion": "Logging out will remove your ability to log back into this account. Are you sure you want to logout?",
+    "logout": "Yes, logout"
   }
 }

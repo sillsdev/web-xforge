@@ -4,7 +4,7 @@ import { SFProjectService } from '../app/core/sf-project.service';
 import { compareProjectsForSorting } from '../app/shared/utils';
 import { SFProjectProfileDoc } from '../app/core/models/sf-project-profile-doc';
 import { environment } from '../environments/environment';
-import { AuthService } from './auth.service';
+import { AuthService, LoginResult } from './auth.service';
 import { UserDoc } from './models/user-doc';
 import { SubscriptionDisposable } from './subscription-disposable';
 import { UserService } from './user.service';
@@ -30,11 +30,14 @@ export class SFUserProjectsService extends SubscriptionDisposable {
   }
 
   private async setup(): Promise<void> {
-    if (await this.authService.isLoggedIn) {
+    this.subscribe(this.authService.loggedInState$, async (state: LoginResult) => {
+      if (!state.loggedIn) {
+        return;
+      }
       const userDoc = await this.userService.getCurrentUser();
       this.updateProjectList(userDoc);
       this.subscribe(userDoc.remoteChanges$, () => this.updateProjectList(userDoc));
-    }
+    });
   }
 
   private async updateProjectList(userDoc: UserDoc): Promise<void> {
