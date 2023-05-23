@@ -8,8 +8,8 @@ import { clientConnect, createDoc, fetchDoc } from '../../common/utils/test-util
 import { CheckingAnswerExport } from '../models/checking-config';
 import { SystemRole } from '../../common/models/system-role';
 import { ParatextUserProfile } from '../models/paratext-user-profile';
-import { SFProjectService } from './sf-project-service';
 import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
+import { SFProjectService } from './sf-project-service';
 
 describe('SFProjectService', () => {
   it('allows user on project to see profile', async () => {

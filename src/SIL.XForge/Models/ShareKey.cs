@@ -32,7 +32,7 @@ public class ShareKey
     /// A cryptographically random key that grants access to a project. Depending on the other settings this key may be
     /// valid for multiple users, or only the first user to use it.
     /// <summary>
-    public string Key { get; set; }
+    public string Key { get; set; } = string.Empty;
 
     /// <summary>
     /// Optional.
@@ -48,12 +48,12 @@ public class ShareKey
     /// Must be one of "recipient" or "anyone", indicating whether the link can be used only one time, or can be used
     /// repeatedly (so it could be shared with multiple people). Invitation sent by email are always "recipient".
     /// </summary>
-    public string ShareLinkType { get; set; }
+    public string ShareLinkType { get; set; } = string.Empty;
 
     /// <summary>
     /// The role the user will have when they use the share key to join the project.
     /// </summary>
-    public string ProjectRole { get; set; }
+    public string ProjectRole { get; set; } = string.Empty;
 
     /// <summary>
     /// The ID of the user that used the key to join a project. This is only set if the ShareLinkType is "recipient".
@@ -68,4 +68,11 @@ public class ShareKey
     /// only for that link. Any new one time, recipient only, share links required will generate a new share key
     /// </summary>
     public bool? Reserved { get; set; }
+
+    /// <summary>
+    /// Used to keep track of how many Auth0 user accounts have been generated using this share key. This allows for a
+    /// basic rate limiting check to ensure any abuse is restricted. An optional setting on the project is available to
+    /// increase the rate limiting if required.
+    /// </summary>
+    public int? UsersGenerated { get; set; } = 0;
 }

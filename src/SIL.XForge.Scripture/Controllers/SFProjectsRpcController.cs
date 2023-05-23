@@ -340,11 +340,14 @@ public class SFProjectsRpcController : RpcControllerBase
         }
     }
 
-    public async Task<IRpcMethodResult> CheckLinkSharing(string shareKey)
+    [Obsolete("Only here for old clients that still call it. Removed 2023-04.")]
+    public async Task<IRpcMethodResult> CheckLinkSharing(string shareKey) => Ok(await JoinWithShareKey(shareKey));
+
+    public async Task<IRpcMethodResult> JoinWithShareKey(string shareKey)
     {
         try
         {
-            return Ok(await _projectService.CheckLinkSharingAsync(UserId, shareKey));
+            return Ok(await _projectService.JoinWithShareKeyAsync(UserId, shareKey));
         }
         catch (ForbiddenException)
         {

@@ -192,8 +192,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   }
 
   /** Get added into project with specified shareKey code. */
-  async onlineCheckLinkSharing(shareKey: string): Promise<string> {
-    return (await this.onlineInvoke<string>('checkLinkSharing', { shareKey }))!;
+  async onlineJoinWithShareKey(shareKey: string): Promise<string> {
+    return (await this.onlineInvoke<string>('joinWithShareKey', { shareKey }))!;
   }
 
   onlineInvite(id: string, email: string, locale: string, role: string): Promise<string | undefined> {

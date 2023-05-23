@@ -1,0 +1,39 @@
+@import 'src/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
+
+:host {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+p {
+  text-align: center;
+}
+form {
+  padding-top: 20px;
+  display: flex;
+  align-items: center;
+  column-gap: 20px;
+  @include media-breakpoint-only(xs) {
+    flex-direction: column;
+    align-items: normal;
+  }
+
+  mat-form-field {
+    width: 300px;
+  }
+
+  button {
+    margin-bottom: 1.34375em;
+  }
+}
+a {
+  margin-bottom: 70px;
+
+  ::ng-deep u {
+    cursor: pointer;
+    &:hover {
+      color: var(--mdc-theme-secondary);
+    }
+  }
+}
