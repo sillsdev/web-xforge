@@ -353,9 +353,7 @@ export class AuthService {
     this.localSettings.set(cacheKey.toKey(), cacheEntry);
     await this.localLogIn(authResponse.access_token, authResponse.id_token, authResponse.expires_in);
     await this.remoteStore.init(() => this.getAccessToken());
-    if (!environment.production) {
-      await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
-    }
+    await this.commandService.onlineInvoke(USERS_URL, 'pullAuthUserProfile');
     this._loggedInState$.next({ loggedIn: true, newlyLoggedIn: true, anonymousUser: true });
     return true;
   }
