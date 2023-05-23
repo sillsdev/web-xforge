@@ -224,7 +224,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   set isTargetTextRight(value: boolean) {
     if (this.projectUserConfigDoc != null && this.isTargetTextRight !== value) {
       this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.isTargetTextRight, value));
-      this.resetInsertNoteFab();
+      this.resetInsertNoteFab(false);
     }
   }
 
@@ -493,8 +493,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   ngAfterViewInit(): void {
     this.subscribe(fromEvent(window, 'resize'), () => {
       this.setTextHeight();
-      // Note: this does not appear to get triggered when the window changes by opening dev tools
-      this.resetInsertNoteFab();
+      this.resetInsertNoteFab(false);
     });
     this.subscribe(
       this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
@@ -1124,19 +1123,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // we don't want to use flexbox because it makes editing very slow
     const elem: HTMLElement = this.targetContainer.nativeElement;
     const bounds = elem.getBoundingClientRect();
-    // add bottom padding
+    // // add bottom padding
     const top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
-    if (this.target.editor != null && this.targetFocused) {
-      // reset scroll position
-      this.target.editor.scrollingContainer.scrollTop = 0;
-    }
     this.textHeight = `calc(100vh - ${top}px)`;
-    if (this.targetFocused && this.dialogService.openDialogCount < 1) {
-      setTimeout(() => {
-        // reset focus, which causes Quill to scroll to the selection
-        this.target!.focus();
-      });
-    }
   }
 
   private async changeText(): Promise<void> {
@@ -1430,14 +1419,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.toggleNoteThreadVerses(true);
   }
 
-  private resetInsertNoteFab(forceResetSelection: boolean = false): void {
-    if (this.bottomSheetRef != null) {
-      if (forceResetSelection) {
-        this.resetCommenterVerseSelection();
-      }
-      return;
+  private resetInsertNoteFab(resetVerseSelection: boolean): void {
+    if (resetVerseSelection) {
+      this.resetCommenterVerseSelection();
     }
-    this.resetCommenterVerseSelection();
+    if (this.bottomSheetRef?.containerInstance != null) return;
+
     // set a 10ms time out so the layout is drawn before calculating the target contain coordinates
     setTimeout(() => {
       const targetRect: DOMRect | undefined = this.targetContainer?.nativeElement.getBoundingClientRect();
