@@ -1841,11 +1841,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       if (this.insertNoteFab == null || this.target == null || this.targetContainer == null) return;
       const bounds: DOMRect = this.targetContainer.nativeElement.getBoundingClientRect();
       const fabHeight = 40;
-      const targetContainerBottom: number = bounds.bottom - bounds.top - fabHeight;
+      const editorMargin = 5;
 
       // bound the FAB to the top of the editor
-      let scrollTop: number = Math.min(this.target.selectionBoundsTop, editor.root.scrollTop);
+      let scrollTop: number = Math.min(this.target.selectionBoundsTop - editorMargin, editor.root.scrollTop);
       // bound the FAB to the bottom of the editor
+      const targetContainerBottom: number = bounds.bottom - bounds.top - fabHeight - editorMargin;
       const minScroll: number = Math.max(this.target.selectionBoundsTop - targetContainerBottom, 0);
       if (scrollTop < minScroll) {
         scrollTop = minScroll;

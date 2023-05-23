@@ -241,7 +241,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private initialSegmentFocus?: boolean;
   private _highlightSegment: boolean = false;
   private highlightMarker?: HTMLElement;
-  private highlightMarkerTop: number = 0;
+  private _selectionBoundsTop: number = 0;
   private highlightMarkerHeight: number = 0;
   private _placeholder?: string;
   private currentUserDoc?: UserDoc;
@@ -344,7 +344,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   get selectionBoundsTop(): number {
-    return this.highlightMarkerTop;
+    return this._selectionBoundsTop;
   }
 
   get scrollPosition(): number {
@@ -1520,9 +1520,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
     const range = this._segment.range;
     const bounds = this._editor.getBounds(range.index, range.length);
-    this.highlightMarkerTop = bounds.top + this._editor.root.scrollTop;
+    this._selectionBoundsTop = bounds.top + this._editor.root.scrollTop;
     this.highlightMarkerHeight = bounds.height;
-    this.highlightMarker.style.top = this.highlightMarkerTop + 'px';
+    this.highlightMarker.style.top = this._selectionBoundsTop + 'px';
     this.updateHighlightMarkerVisibility();
   }
 
@@ -1532,10 +1532,10 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     const marginTop = -this._editor.root.scrollTop;
-    const offsetTop = marginTop + this.highlightMarkerTop;
+    const offsetTop = marginTop + this._selectionBoundsTop;
     const offsetBottom = offsetTop + this.highlightMarkerHeight;
     if (offsetTop < 0) {
-      this.highlightMarker.style.marginTop = -this.highlightMarkerTop + 'px';
+      this.highlightMarker.style.marginTop = -this._selectionBoundsTop + 'px';
       const height = this.highlightMarkerHeight + offsetTop;
       this.highlightMarker.style.height = Math.max(height, 0) + 'px';
     } else if (offsetBottom > this._editor.scrollingContainer.clientHeight) {
