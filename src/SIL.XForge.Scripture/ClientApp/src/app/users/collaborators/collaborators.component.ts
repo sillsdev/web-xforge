@@ -132,7 +132,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   get tableColumns(): string[] {
-    const columns = ['avatar', 'name', 'info', 'questions_permission', 'role', 'more']; //, 'questions_permission', 'remove'];
+    const columns: string[] = ['avatar', 'name', 'info', 'questions_permission', 'role', 'more'];
     return this.projectDoc?.data?.checkingConfig.checkingEnabled
       ? columns
       : columns.filter(s => s !== 'questions_permission');
