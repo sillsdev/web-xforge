@@ -4,6 +4,7 @@ import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scripture
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Delta, TextDocId } from '../core/models/text-doc';
+import { rightLeftMarker } from './utils';
 
 export function getTextDoc(id: TextDocId): TextData {
   const delta = new Delta();
@@ -36,7 +37,8 @@ export function getTextDoc(id: TextDocId): TextData {
   return delta;
 }
 
-export function getCombinedVerseTextDoc(id: TextDocId): TextData {
+export function getCombinedVerseTextDoc(id: TextDocId, rtl: boolean = false): TextData {
+  const verseStr: string = rtl ? `2${rightLeftMarker}-3` : '2-3';
   const delta = new Delta();
   delta.insert(`Title for chapter ${id.chapterNum}`, { segment: 's_1' });
   delta.insert('\n', { para: { style: 's' } });
@@ -44,8 +46,10 @@ export function getCombinedVerseTextDoc(id: TextDocId): TextData {
   delta.insert({ blank: true }, { segment: 'p_1' });
   delta.insert({ verse: { number: '1', style: 'v' } });
   delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
-  delta.insert({ verse: { number: '2-3', style: 'v' } });
-  delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 2-3.`, { segment: `verse_${id.chapterNum}_2-3` });
+  delta.insert({ verse: { number: verseStr, style: 'v' } });
+  delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 2-3.`, {
+    segment: `verse_${id.chapterNum}_${verseStr}`
+  });
   delta.insert('\n', { para: { style: 'p' } });
   delta.insert('Text in section heading', { segment: 's_2' });
   delta.insert('\n', { para: { style: 's' } });
