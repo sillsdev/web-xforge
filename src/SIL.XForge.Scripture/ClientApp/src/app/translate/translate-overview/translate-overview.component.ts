@@ -6,7 +6,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
-import { Subscription, timer } from 'rxjs';
+import { asyncScheduler, Subscription, timer } from 'rxjs';
 import { delayWhen, filter, map, repeat, retryWhen, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -126,7 +126,7 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
           }),
           filter(ops => ops.some(op => TEXT_PATH_TEMPLATE.matches(op.p))),
           // TODO Find a better solution than merely throttling remote changes
-          throttleTime(1000)
+          throttleTime(1000, asyncScheduler, { leading: true, trailing: true })
         )
         .subscribe(async () => {
           this.loadingStarted();
