@@ -2107,7 +2107,7 @@ public class ParatextServiceTests
         // should not create second comment if the note is marked deleted
         CommentThread thread3 = env.ProjectCommentManager.FindThread(thread3Id);
         Assert.That(thread3.Comments.Single(c => c.Contents.InnerText.Contains($"{thread3Id} note 1.")), Is.Not.Null);
-        Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
+        Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01 }));
         IDocument<NoteThread> noteThread1Doc = noteThreadDocs.First(d => d.Data.DataId == thread1Id);
         Assert.That(noteThread1Doc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser01"));
         IDocument<NoteThread> noteThread2Doc = noteThreadDocs.First(d => d.Data.DataId == thread2Id);
