@@ -27,7 +27,7 @@ public static class DataAccessServiceCollectionExtensions
                     new MongoStorageOptions
                     {
                         CheckQueuedJobsStrategy = CheckQueuedJobsStrategy.TailNotificationsCollection,
-                        InvisibilityTimeout = TimeSpan.FromMinutes(120),
+                        InvisibilityTimeout = TimeSpan.FromMinutes(180),
                         MigrationOptions = new MongoMigrationOptions
                         {
                             MigrationStrategy = new MigrateMongoMigrationStrategy(),
