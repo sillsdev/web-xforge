@@ -34,10 +34,10 @@ export const InvalidInputForm: Story = {
   play: async ({ canvasElement }) => {
     const root = within(canvasElement);
 
-    const submitButton = root.getByRole('button', { name: /Delete this project/i });
+    const submitButton: HTMLElement = root.getByRole('button', { name: /Delete this project/i });
     expect(submitButton).toBeDisabled();
 
-    const projectInput = root.getByRole('textbox');
+    const projectInput: HTMLElement = root.getByRole('textbox');
     userEvent.type(projectInput, 'Other Project');
 
     expect(submitButton).toBeDisabled();
@@ -49,10 +49,10 @@ export const ValidInputForm: Story = {
   play: async ({ canvasElement }) => {
     const root = within(canvasElement);
 
-    const submitButton = root.getByRole('button', { name: /Delete this project/i });
+    const submitButton: HTMLElement = root.getByRole('button', { name: /Delete this project/i });
     expect(submitButton).toBeDisabled();
 
-    const projectInput = root.getByRole('textbox');
+    const projectInput: HTMLElement = root.getByRole('textbox');
     userEvent.type(projectInput, 'My Project');
 
     expect(submitButton).toBeEnabled();

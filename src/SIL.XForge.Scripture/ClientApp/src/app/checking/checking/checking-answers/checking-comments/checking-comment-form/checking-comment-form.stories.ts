@@ -30,9 +30,9 @@ export const InvalidForm: Story = {
   args: { text: '' },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const saveButton = canvas.getByRole('button', { name: /Save/i });
+    const saveButton: HTMLElement = canvas.getByRole('button', { name: /Save/i });
     userEvent.click(saveButton);
-    const error = canvas.getByText(/You need to enter your comment before saving/i);
+    const error: HTMLElement = canvas.getByText(/You need to enter your comment before saving/i);
     expect(error).toBeInTheDocument();
   }
 };
