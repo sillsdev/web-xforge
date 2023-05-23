@@ -12,3 +12,11 @@ flag_management:
         type: patch
         target: 90%
         informational: true
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
