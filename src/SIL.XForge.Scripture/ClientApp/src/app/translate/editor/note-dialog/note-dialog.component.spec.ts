@@ -49,7 +49,7 @@ import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-con
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { getTextDoc, paratextUsersFromRoles } from '../../../shared/test-utils';
+import { getCombinedVerseTextDoc, getTextDoc, paratextUsersFromRoles } from '../../../shared/test-utils';
 import { TranslateModule } from '../../translate.module';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog.component';
 
@@ -103,6 +103,12 @@ describe('NoteDialogComponent', () => {
     env = new TestEnvironment({ noteThread });
     expect(env.textMenuButton).toBeFalsy();
     expect(env.component.isSegmentDifferentFromContext).toBeFalse();
+  }));
+
+  it('shows segment text for rtl combined verses', fakeAsync(() => {
+    const verseRef: VerseRef = VerseRef.parse('MAT 1:2-3');
+    env = new TestEnvironment({ verseRef, isRightToLeftProject: true, combinedVerseTextDoc: true });
+    expect(env.noteText.nativeElement.textContent).toBe('target: chapter 1, verse 2-3.');
   }));
 
   it('should not show deleted notes', fakeAsync(() => {
@@ -487,6 +493,7 @@ interface TestEnvironmentConstructorArgs {
   noteThread?: NoteThread;
   verseRef?: VerseRef;
   noteTagId?: number;
+  combinedVerseTextDoc?: boolean;
 }
 
 class TestEnvironment {
@@ -713,7 +720,8 @@ class TestEnvironment {
     currentUserId = 'user01',
     noteThread,
     verseRef,
-    noteTagId
+    noteTagId,
+    combinedVerseTextDoc
   }: TestEnvironmentConstructorArgs = {}) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const textDocId = new TextDocId(TestEnvironment.PROJECT01, 40, 1);
@@ -740,7 +748,9 @@ class TestEnvironment {
         id: configData.projectId,
         data: TestEnvironment.testProjectProfile
       });
-      const textData = getTextDoc(textDocId);
+      const textData: TextData = combinedVerseTextDoc
+        ? getCombinedVerseTextDoc(textDocId, isRightToLeftProject)
+        : getTextDoc(textDocId);
       this.realtimeService.addSnapshot<TextData>(TextDoc.COLLECTION, {
         id: textDocId.toString(),
         data: textData,

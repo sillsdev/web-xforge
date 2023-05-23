@@ -9,6 +9,7 @@ import { SelectableProject } from '../core/paratext.service';
 export const VERSE_FROM_SEGMENT_REF_REGEX = /verse_\d+_(\d+-?\d*)/;
 // Regular expression for the verse segment ref of scripture content
 export const VERSE_REGEX = /verse_[0-9]+_[0-9]+/;
+export const rightLeftMarker = '\u200f';
 
 export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRef | undefined {
   if (!startStr) {
@@ -65,8 +66,10 @@ export function getVerseRefFromSegmentRef(bookNum: number, segmentRef: string): 
   return new VerseRef(bookNum, parts[1], parts[2]);
 }
 
-export function verseSlug(verse: VerseRef): string {
-  return 'verse_' + verse.chapterNum + '_' + (verse.verse == null ? verse.verseNum : verse.verse);
+export function verseSlug(verse: VerseRef, isRtl: boolean): string {
+  let versePart: string = verse.verse == null ? `${verse.verseNum}` : verse.verse;
+  versePart = isRtl ? versePart.replace('-', `${rightLeftMarker}-`) : versePart;
+  return 'verse_' + verse.chapterNum + '_' + versePart;
 }
 
 export function verseRefFromMouseEvent(event: MouseEvent, bookNum: number): VerseRef | undefined {
