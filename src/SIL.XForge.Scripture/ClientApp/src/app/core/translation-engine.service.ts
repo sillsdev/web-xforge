@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import {
-  createInteractiveTranslator,
-  ErrorCorrectionModel,
+  InteractiveTranslator,
+  InteractiveTranslatorFactory,
   LatinWordTokenizer,
   MAX_SEGMENT_LENGTH
 } from '@sillsdev/machine';
@@ -28,7 +28,12 @@ import { SFProjectService } from './sf-project.service';
 })
 export class TranslationEngineService extends SubscriptionDisposable {
   private onlineStatus$: Observable<boolean>;
+  private tokenizer = new LatinWordTokenizer();
   private translationEngines: Map<string, RemoteTranslationEngine> = new Map<string, RemoteTranslationEngine>();
+  private interactiveTranslatorFactories: Map<string, InteractiveTranslatorFactory> = new Map<
+    string,
+    InteractiveTranslatorFactory
+  >();
 
   constructor(
     private readonly offlineStore: OfflineStore,
@@ -55,6 +60,16 @@ export class TranslationEngineService extends SubscriptionDisposable {
       this.translationEngines.set(projectId, new RemoteTranslationEngine(projectId, this.machineHttp));
     }
     return this.translationEngines.get(projectId)!;
+  }
+
+  createInteractiveTranslatorFactory(projectId: string): InteractiveTranslatorFactory {
+    if (!this.interactiveTranslatorFactories.has(projectId)) {
+      this.interactiveTranslatorFactories.set(
+        projectId,
+        new InteractiveTranslatorFactory(this.createTranslationEngine(projectId), this.tokenizer)
+      );
+    }
+    return this.interactiveTranslatorFactories.get(projectId)!;
   }
 
   checkHasSourceBooks(project: SFProjectProfile): boolean {
@@ -120,7 +135,7 @@ export class TranslationEngineService extends SubscriptionDisposable {
     chapterNum: number,
     segment: string,
     checksum?: number
-  ) {
+  ): Promise<void> {
     const targetDoc = await this.projectService.getText(getTextDocId(projectRef, bookNum, chapterNum, 'target'));
     const targetText = targetDoc.getSegmentText(segment);
     if (targetText === '') {
@@ -139,19 +154,13 @@ export class TranslationEngineService extends SubscriptionDisposable {
       return;
     }
 
-    const wordTokenizer = new LatinWordTokenizer();
-    const sourceWords = wordTokenizer.tokenize(sourceText);
-    if (sourceWords.length > MAX_SEGMENT_LENGTH) {
+    if (sourceText.length > MAX_SEGMENT_LENGTH) {
       return;
     }
 
-    const translationEngine = this.createTranslationEngine(projectRef);
-    const translator = await createInteractiveTranslator(new ErrorCorrectionModel(), translationEngine, sourceWords);
-    const tokenRanges = wordTokenizer.tokenizeAsRanges(targetText);
-    const prefix = tokenRanges.map(r => targetText.substring(r.start, r.end));
-    const isLastWordComplete =
-      tokenRanges.length === 0 || tokenRanges[tokenRanges.length - 1].end !== targetText.length;
-    translator.setPrefix(prefix, isLastWordComplete);
+    const factory: InteractiveTranslatorFactory = this.createInteractiveTranslatorFactory(projectRef);
+    const translator: InteractiveTranslator = await factory.create(sourceText);
+    translator.setPrefix(targetText);
     await translator.approve(true);
     console.log('Segment ' + segment + ' of document ' + Canon.bookNumberToId(bookNum) + ' was trained successfully.');
   }

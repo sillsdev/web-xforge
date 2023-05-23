@@ -4,12 +4,12 @@ import {
   InteractiveTranslationEngine,
   Phrase,
   ProgressStatus,
-  Range,
   TranslationResult,
   TranslationResultBuilder,
   WordAlignmentMatrix,
   WordGraph,
-  WordGraphArc
+  WordGraphArc,
+  TranslationSources
 } from '@sillsdev/machine';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, expand, filter, map, mergeMap, share, startWith, takeWhile } from 'rxjs/operators';
@@ -19,50 +19,56 @@ import { BuildStates } from './build-states';
 import { HttpClient } from './http-client';
 import { EngineDto } from './engine-dto';
 import { PhraseDto } from './phrase-dto';
-import { RangeDto } from './range-dto';
 import { TranslationEngineStats } from './translation-engine-stats';
 import { SegmentPairDto } from './segment-pair-dto';
 import { TranslationResultDto } from './translation-result-dto';
 import { WordGraphDto } from './word-graph-dto';
+import { TranslationSource } from './translation-source';
 
 export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   private trainingStatus$?: Observable<ProgressStatus>;
 
   constructor(public readonly projectId: string, private readonly httpClient: HttpClient) {}
 
-  async translate(segment: string[]): Promise<TranslationResult> {
+  async translate(segment: string): Promise<TranslationResult> {
     if (segment.length > MAX_SEGMENT_LENGTH) {
-      const builder = new TranslationResultBuilder();
-      return builder.toResult(segment.length);
+      const builder = new TranslationResultBuilder([]);
+      return builder.toResult(segment);
     }
     const response = await this.httpClient
-      .post<TranslationResultDto>(`translation/engines/project:${this.projectId}/actions/translate`, segment)
+      .post<TranslationResultDto>(
+        `translation/engines/project:${this.projectId}/actions/translate`,
+        JSON.stringify(segment)
+      )
       .toPromise();
-    return this.createTranslationResult(response.data as TranslationResultDto, segment);
+    return this.createTranslationResult(response.data as TranslationResultDto);
   }
 
-  async translateN(n: number, segment: string[]): Promise<TranslationResult[]> {
+  async translateN(n: number, segment: string): Promise<TranslationResult[]> {
     if (segment.length > MAX_SEGMENT_LENGTH) {
       return [];
     }
     const response = await this.httpClient
-      .post<TranslationResultDto[]>(`translation/engines/project:${this.projectId}/actions/translate/${n}`, segment)
+      .post<TranslationResultDto[]>(
+        `translation/engines/project:${this.projectId}/actions/translate/${n}`,
+        JSON.stringify(segment)
+      )
       .toPromise();
     const dto = response.data as TranslationResultDto[];
-    return dto.map(dto => this.createTranslationResult(dto, segment));
+    return dto.map(dto => this.createTranslationResult(dto));
   }
 
-  async getWordGraph(segment: string[]): Promise<WordGraph> {
+  async getWordGraph(segment: string): Promise<WordGraph> {
     if (segment.length > MAX_SEGMENT_LENGTH) {
-      return new WordGraph();
+      return new WordGraph([]);
     }
     const response = await this.httpClient
-      .post<WordGraphDto>(`translation/engines/project:${this.projectId}/actions/getWordGraph`, segment)
+      .post<WordGraphDto>(`translation/engines/project:${this.projectId}/actions/getWordGraph`, JSON.stringify(segment))
       .toPromise();
     return this.createWordGraph(response.data as WordGraphDto);
   }
 
-  async trainSegment(sourceSegment: string[], targetSegment: string[], sentenceStart: boolean = true): Promise<void> {
+  async trainSegment(sourceSegment: string, targetSegment: string, sentenceStart: boolean = true): Promise<void> {
     const pairDto: SegmentPairDto = { sourceSegment, targetSegment, sentenceStart };
     await this.httpClient
       .post(`translation/engines/project:${this.projectId}/actions/trainSegment`, pairDto)
@@ -72,7 +78,7 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   train(): Observable<ProgressStatus> {
     return this.getEngine(this.projectId).pipe(
       mergeMap(e => this.createBuild(e.id)),
-      mergeMap(b => this.pollBuildProgress('id', b.id, b.revision + 1).pipe(startWith(b)))
+      mergeMap(b => this.pollBuildProgress(b.id, b.revision + 1).pipe(startWith(b)))
     );
   }
 
@@ -85,7 +91,7 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   listenForTrainingStatus(): Observable<ProgressStatus> {
     if (this.trainingStatus$ == null) {
       this.trainingStatus$ = this.getEngine(this.projectId).pipe(
-        mergeMap(e => this.pollBuildProgress('engine', e.id, 0)),
+        mergeMap(e => this.pollBuildProgress(e.id, 0)),
         share()
       );
     }
@@ -109,15 +115,14 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
       .pipe(map(res => res.data as BuildDto));
   }
 
-  private pollBuildProgress(locatorType: string, locator: string, minRevision: number): Observable<ProgressStatus> {
-    return this.getBuildProgress(locatorType, locator, minRevision).pipe(
+  private pollBuildProgress(locator: string, minRevision: number): Observable<ProgressStatus> {
+    return this.getBuildProgress(locator, minRevision).pipe(
       expand(buildDto => {
         if (buildDto != null) {
-          locatorType = 'id';
           locator = buildDto.id;
           minRevision = buildDto.revision + 1;
         }
-        return this.getBuildProgress(locatorType, locator, minRevision);
+        return this.getBuildProgress(locator, minRevision);
       }),
       filter(buildDto => buildDto != null),
       map(buildDto => buildDto as BuildDto),
@@ -125,28 +130,22 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
     );
   }
 
-  private getBuildProgress(
-    locatorType: string,
-    locator: string,
-    minRevision: number
-  ): Observable<BuildDto | undefined> {
-    return this.httpClient
-      .get<BuildDto>(`translation/builds/${locatorType}:${locator}?minRevision=${minRevision}`)
-      .pipe(
-        map(res => {
-          if (res.data != null && res.data.state === BuildStates.Faulted) {
-            throw new Error('Error occurred during build: ' + res.data.message);
-          }
-          return res.data;
-        }),
-        catchError(err => {
-          if (err.status === 404) {
-            return of(undefined);
-          } else {
-            return throwError(err);
-          }
-        })
-      );
+  private getBuildProgress(locator: string, minRevision: number): Observable<BuildDto | undefined> {
+    return this.httpClient.get<BuildDto>(`translation/builds/id:${locator}?minRevision=${minRevision}`).pipe(
+      map(res => {
+        if (res.data != null && res.data.state === BuildStates.Faulted) {
+          throw new Error('Error occurred during build: ' + res.data.message);
+        }
+        return res.data;
+      }),
+      catchError(err => {
+        if (err.status === 404) {
+          return of(undefined);
+        } else {
+          return throwError(err);
+        }
+      })
+    );
   }
 
   private createWordGraph(dto: WordGraphDto): WordGraph {
@@ -154,34 +153,55 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
     for (const arcDto of dto.arcs) {
       const alignment = this.createWordAlignmentMatrix(
         arcDto.alignment,
-        arcDto.sourceSegmentRange.end - arcDto.sourceSegmentRange.start,
-        arcDto.words.length
+        arcDto.sourceSegmentEnd - arcDto.sourceSegmentStart,
+        arcDto.targetTokens.length
       );
       arcs.push(
         new WordGraphArc(
           arcDto.prevState,
           arcDto.nextState,
           arcDto.score,
-          arcDto.words,
+          arcDto.targetTokens,
           alignment,
-          this.createRange(arcDto.sourceSegmentRange),
-          arcDto.sources,
+          createRange(arcDto.sourceSegmentStart, arcDto.sourceSegmentEnd),
+          Array.from(this.createTranslationSources(arcDto.sources)),
           arcDto.confidences
         )
       );
     }
-    return new WordGraph(arcs, dto.finalStates, dto.initialStateScore);
+    return new WordGraph(dto.sourceTokens, arcs, dto.finalStates, dto.initialStateScore);
   }
 
-  private createTranslationResult(dto: TranslationResultDto, sourceSegment: string[]): TranslationResult {
+  private createTranslationResult(dto: TranslationResultDto): TranslationResult {
     return new TranslationResult(
-      sourceSegment.length,
-      dto.target,
+      dto.translation,
+      dto.sourceTokens,
+      dto.targetTokens,
       dto.confidences,
-      dto.sources,
-      this.createWordAlignmentMatrix(dto.alignment, sourceSegment.length, dto.target.length),
+      Array.from(this.createTranslationSources(dto.sources)),
+      this.createWordAlignmentMatrix(dto.alignment, dto.sourceTokens.length, dto.targetTokens.length),
       dto.phrases.map(p => this.createPhrase(p))
     );
+  }
+
+  private *createTranslationSources(sources: TranslationSource[][]): Iterable<TranslationSources> {
+    for (const source of sources) {
+      let translationSources = TranslationSources.None;
+      for (const translationSource of source) {
+        switch (translationSource) {
+          case TranslationSource.Primary:
+            translationSources |= TranslationSources.Smt;
+            break;
+          case TranslationSource.Secondary:
+            translationSources |= TranslationSources.Transfer;
+            break;
+          case TranslationSource.Human:
+            translationSources |= TranslationSources.Prefix;
+            break;
+        }
+      }
+      yield translationSources;
+    }
   }
 
   private createWordAlignmentMatrix(dto: AlignedWordPairDto[], i: number, j: number): WordAlignmentMatrix {
@@ -193,10 +213,6 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   }
 
   private createPhrase(dto: PhraseDto): Phrase {
-    return new Phrase(this.createRange(dto.sourceSegmentRange), dto.targetSegmentCut, dto.confidence);
-  }
-
-  private createRange(dto: RangeDto): Range {
-    return createRange(dto.start, dto.end);
+    return new Phrase(createRange(dto.sourceSegmentStart, dto.sourceSegmentEnd), dto.targetSegmentCut);
   }
 }

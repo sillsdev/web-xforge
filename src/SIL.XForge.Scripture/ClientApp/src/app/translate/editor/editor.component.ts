@@ -1,11 +1,20 @@
-import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, TemplateRef, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Inject,
+  OnDestroy,
+  TemplateRef,
+  ViewChild
+} from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
 import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import {
-  createInteractiveTranslator,
-  ErrorCorrectionModel,
   InteractiveTranslator,
+  InteractiveTranslatorFactory,
+  LatinWordDetokenizer,
   LatinWordTokenizer,
   MAX_SEGMENT_LENGTH,
   PhraseTranslationSuggester,
@@ -131,13 +140,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   @ViewChild('fabBottomSheet') TemplateBottomSheet?: TemplateRef<any>;
   @ViewChild('mobileNoteTextarea') mobileNoteTextarea?: ElementRef<HTMLTextAreaElement>;
 
+  private interactiveTranslatorFactory?: InteractiveTranslatorFactory;
   private translationEngine?: RemoteTranslationEngine;
   private isTranslating: boolean = false;
+  private readonly detokenizer = new LatinWordDetokenizer();
   private readonly sourceWordTokenizer: RangeTokenizer;
   private readonly targetWordTokenizer: RangeTokenizer;
   private translator?: InteractiveTranslator;
-  private readonly translationSuggester: TranslationSuggester = new PhraseTranslationSuggester();
-  private readonly ecm = new ErrorCorrectionModel();
+  private readonly translationSuggester: TranslationSuggester = new PhraseTranslationSuggester(0.2);
   private insertSuggestionEnd: number = -1;
   private bottomSheetRef?: MatBottomSheetRef;
   private currentUserDoc?: UserDoc;
@@ -171,6 +181,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly projectService: SFProjectService,
     noticeService: NoticeService,
     private readonly dialogService: DialogService,
+    private readonly changeDetector: ChangeDetectorRef,
     private readonly mediaObserver: MediaObserver,
     private readonly pwaService: PwaService,
     private readonly translationEngineService: TranslationEngineService,
@@ -184,8 +195,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const wordTokenizer = new LatinWordTokenizer();
     this.sourceWordTokenizer = wordTokenizer;
     this.targetWordTokenizer = wordTokenizer;
-
-    this.translationSuggester.confidenceThreshold = 0.2;
 
     this.segmentUpdated$ = new Subject<void>();
     this.subscribe(this.segmentUpdated$.pipe(debounceTime(UPDATE_SUGGESTIONS_TIMEOUT)), () => this.updateSuggestions());
@@ -798,10 +807,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     const words = wordIndex === -1 ? suggestion.words : suggestion.words.slice(0, wordIndex + 1);
-    // TODO: use detokenizer to build suggestion text
-    let insertText = words.join(' ');
+    let insertText: string = this.detokenizer.detokenize(words);
     if (this.translator != null && !this.translator.isLastWordComplete) {
-      const lastWord = this.translator.prefix[this.translator.prefix.length - 1];
+      const lastWord = this.translator.prefixWordRanges[this.translator.prefixWordRanges.length - 1];
       insertText = insertText.substring(lastWord.length);
     }
     if (this.insertSuggestionEnd !== -1) {
@@ -1113,6 +1121,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         retryWhen(errors => errors.pipe(delayWhen(() => timer(30000))))
       )
       .subscribe();
+    this.interactiveTranslatorFactory = this.translationEngineService.createInteractiveTranslatorFactory(
+      this.projectDoc.id
+    );
   }
 
   private setTextHeight(): void {
@@ -1193,21 +1204,22 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     const sourceSegment = this.source.segmentText;
-    const words = this.sourceWordTokenizer.tokenize(sourceSegment);
-    if (words.length === 0) {
+    if (sourceSegment.length === 0) {
       return;
-    } else if (words.length > MAX_SEGMENT_LENGTH) {
+    } else if (sourceSegment.length > MAX_SEGMENT_LENGTH) {
       this.translator = undefined;
       this.noticeService.show(translate('editor.verse_too_long_for_suggestions'));
       return;
     }
 
-    const start = performance.now();
-    const translator = await createInteractiveTranslator(this.ecm, this.translationEngine, words);
+    const start: number = performance.now();
+    const translator: InteractiveTranslator | undefined = await this.interactiveTranslatorFactory?.create(
+      sourceSegment
+    );
     if (sourceSegment === this.source.segmentText) {
       this.translator = translator;
       const finish = performance.now();
-      this.console.log(`Translated segment, length: ${words.length}, time: ${finish - start}ms`);
+      this.console.log(`Translated segment, length: ${sourceSegment.length}, time: ${finish - start}ms`);
     }
   }
 
@@ -1222,8 +1234,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
 
     // only bother updating the suggestion if the cursor is at the end of the segment
+    let suggestionsUpdated = false;
     if (!this.isTranslating && this.target.isSelectionAtSegmentEnd) {
       if (this.translator == null) {
+        if (this.suggestions.length > 0) {
+          suggestionsUpdated = true;
+        }
         this.suggestions = [];
       } else {
         const range = this.skipInitialWhitespace(this.target.editor, this.target.editor.getSelection()!);
@@ -1231,21 +1247,22 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.target.segment.range.index,
           range.index - this.target.segment.range.index
         );
-
-        const tokenRanges = this.targetWordTokenizer.tokenizeAsRanges(text);
-        const prefix = tokenRanges.map(r => text.substring(r.start, r.end));
-        const isLastWordComplete =
-          this.insertSuggestionEnd !== -1 ||
-          tokenRanges.length === 0 ||
-          tokenRanges[tokenRanges.length - 1].end !== text.length;
-        this.translator.setPrefix(prefix, isLastWordComplete);
+        // Only specify IsLastWordComplete if insertSuggestionEnd is not -1
+        let isLastWordComplete: boolean | undefined;
+        if (this.insertSuggestionEnd !== -1) {
+          isLastWordComplete = true;
+        }
+        this.translator.setPrefix(text, isLastWordComplete);
         const machineSuggestions = this.translationSuggester.getSuggestions(
           this.numSuggestions,
-          prefix.length,
-          isLastWordComplete,
+          this.translator.prefixWordRanges.length,
+          this.translator.isLastWordComplete,
           this.translator.getCurrentResults()
         );
         if (machineSuggestions.length === 0) {
+          if (this.suggestions.length > 0) {
+            suggestionsUpdated = true;
+          }
           this.suggestions = [];
         } else {
           const suggestions: Suggestion[] = [];
@@ -1257,6 +1274,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             suggestions.push({ words, confidence });
           }
           this.suggestions = suggestions;
+          suggestionsUpdated = true;
           if (this.suggestions.length > 0 && !isEqual(this.lastShownSuggestions, this.suggestions)) {
             if (this.metricsSession != null) {
               this.metricsSession.onSuggestionShown();
@@ -1266,7 +1284,16 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       }
     }
-    this.showSuggestions = (this.isTranslating || this.suggestions.length > 0) && this.target.isSelectionAtSegmentEnd;
+    const newShowSuggestionsValue =
+      (this.isTranslating || this.suggestions.length > 0) && this.target.isSelectionAtSegmentEnd;
+    if (this.showSuggestions !== newShowSuggestionsValue) {
+      suggestionsUpdated = true;
+    }
+    this.showSuggestions = newShowSuggestionsValue;
+    if (suggestionsUpdated) {
+      // Trigger detect changes so the suggestion list will update
+      this.changeDetector.detectChanges();
+    }
   }
 
   private skipInitialWhitespace(editor: Quill, range: RangeStatic): RangeStatic {

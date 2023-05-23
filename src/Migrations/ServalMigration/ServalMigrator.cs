@@ -5,12 +5,12 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 
-namespace MachineApiMigration;
+namespace ServalMigration;
 
 /// <summary>
-/// Migrates all projects to the new Machine API, if translation is enabled.
+/// Migrates all projects to Serval, if translation is enabled.
 /// </summary>
-public class MachineApiMigrator : DisposableBase
+public class ServalMigrator : DisposableBase
 {
     /// <summary>
     /// The feature manager.
@@ -18,7 +18,7 @@ public class MachineApiMigrator : DisposableBase
     private readonly IFeatureManager _featureManager;
 
     /// <summary>
-    /// The HTTP client to test if the Machine API is accessible.
+    /// The HTTP client to test if Serval is accessible.
     /// </summary>
     private readonly HttpClient _httpClient;
 
@@ -38,14 +38,14 @@ public class MachineApiMigrator : DisposableBase
     private readonly IRealtimeService _realtimeService;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="MachineApiMigrator" /> class.
+    /// Initializes a new instance of the <see cref="ServalMigrator" /> class.
     /// </summary>
     /// <param name="featureManager">The feature manager.</param>
     /// <param name="httpClientFactory">The HTTP client factory.</param>
     /// <param name="machineProjectService">The Machine project service.</param>
     /// <param name="projectSecrets">The SF project secrets repository.</param>
     /// <param name="realtimeService">The realtime service.</param>
-    public MachineApiMigrator(
+    public ServalMigrator(
         IFeatureManager featureManager,
         IHttpClientFactory httpClientFactory,
         IMachineProjectService machineProjectService,
@@ -54,7 +54,7 @@ public class MachineApiMigrator : DisposableBase
     )
     {
         _featureManager = featureManager;
-        _httpClient = httpClientFactory.CreateClient(MachineServiceBase.ClientName);
+        _httpClient = httpClientFactory.CreateClient(MachineApi.HttpClientName);
         _machineProjectService = machineProjectService;
         _projectSecrets = projectSecrets;
         _realtimeService = realtimeService;
@@ -68,9 +68,9 @@ public class MachineApiMigrator : DisposableBase
     )
     {
         // Ensure that the feature flags are set correctly
-        if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineApi))
+        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            Program.Log("ERROR: Cannot proceed. The Machine API feature flag is disabled.");
+            Program.Log("ERROR: Cannot proceed. The Serval feature flag is disabled.");
             return false;
         }
 
@@ -80,14 +80,14 @@ public class MachineApiMigrator : DisposableBase
             return false;
         }
 
-        // Validate that the Machine API is accessible
-        if (!await IsMachineApiAccessible(cancellationToken))
+        // Validate that Serval is accessible
+        if (!await IsServalAccessible(cancellationToken))
         {
-            Program.Log("ERROR: Cannot proceed. The Machine API is not accessible.");
+            Program.Log("ERROR: Cannot proceed. Serval is not accessible.");
             return false;
         }
 
-        // Get all projects that have translation suggestions enabled, and are not configured for the Machine API
+        // Get all projects that have translation suggestions enabled, and are not configured for Serval
         List<SFProject> projects = await _realtimeService
             .QuerySnapshots<SFProject>()
             .Where(p => p.TranslateConfig.TranslationSuggestionsEnabled)
@@ -102,13 +102,13 @@ public class MachineApiMigrator : DisposableBase
             Program.Log($"Only working on the subset of projects (count {count}) with these SF project ids: {ids}");
         }
 
-        // Get all of the project secrets that are not configured for the Machine API
+        // Get all of the project secrets that are not configured for Serval
         List<SFProjectSecret> projectSecrets = await _projectSecrets
             .Query()
-            .Where(p => p.MachineData == null || string.IsNullOrEmpty(p.MachineData!.TranslationEngineId))
+            .Where(p => p.ServalData == null || string.IsNullOrEmpty(p.ServalData!.TranslationEngineId))
             .ToListAsync();
 
-        // Iterate over each project that is not configured for the Machine API
+        // Iterate over each project that is not configured for Serval
         foreach (var project in projects.Where(p => projectSecrets.Select(ps => ps.Id).Contains(p.Id)))
         {
             Program.Log($"Migrating Project {project.Id}: {project.Name}");
@@ -148,18 +148,18 @@ public class MachineApiMigrator : DisposableBase
                     }
                 }
 
-                // Add the project to the Machine API, and build it
+                // Add the project to Serval, and build it
                 // If the writing system tag is not set for the target or source, BuildProjectAsync will fix that
                 if (doWrite)
                 {
-                    Program.Log("Adding project to Machine API...");
+                    Program.Log("Adding project to Serval...");
                     await _machineProjectService.AddProjectAsync(sfUserId, project.Id, cancellationToken);
                     Program.Log("Initiating first build...");
                     await _machineProjectService.BuildProjectAsync(sfUserId, project.Id, cancellationToken);
                 }
                 else
                 {
-                    Program.Log("Project not migrated to Machine API, as test mode enabled.");
+                    Program.Log("Project not migrated to Serval, as test mode enabled.");
                 }
 
                 // We do not need to iterate any longer (the continue statements above ensure the correct user is used)
@@ -173,23 +173,20 @@ public class MachineApiMigrator : DisposableBase
     /// <summary>
     /// Disposes managed resources.
     /// </summary>
-    protected override void DisposeManagedResources()
-    {
-        _httpClient.Dispose();
-    }
+    protected override void DisposeManagedResources() => _httpClient.Dispose();
 
     /// <summary>
-    /// Checks if the Machine API returns a valid response
+    /// Checks if Serval returns a valid response
     /// </summary>
     /// <param name="cancellationToken">The cancellation token</param>
-    /// <returns><c>true</c> if the Machine API was successfully accessed; otherwise <c>false</c>.</returns>
-    private async Task<bool> IsMachineApiAccessible(CancellationToken cancellationToken)
+    /// <returns><c>true</c> if Serval was successfully accessed; otherwise <c>false</c>.</returns>
+    private async Task<bool> IsServalAccessible(CancellationToken cancellationToken)
     {
-        Program.Log("Checking if the Machine API is accessible...");
+        Program.Log("Checking if Serval is accessible...");
         try
         {
             using var response = await _httpClient.GetAsync(
-                "translation-engines/",
+                "api/v1/translation/engines/",
                 HttpCompletionOption.ResponseHeadersRead,
                 cancellationToken
             );
