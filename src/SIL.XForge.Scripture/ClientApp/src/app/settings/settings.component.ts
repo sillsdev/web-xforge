@@ -1,4 +1,4 @@
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { MatDialogConfig } from '@angular/material/dialog';
 import { DialogService } from 'xforge-common/dialog.service';
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
@@ -65,7 +65,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly dialog: MatDialog,
     noticeService: NoticeService,
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
