@@ -3,6 +3,7 @@ import { MatDialog, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/d
 import { Meta, StoryFn } from '@storybook/angular';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { MatButtonModule } from '@angular/material/button';
+import { AvatarTestingModule } from '../avatar/avatar-testing.module';
 import { SaDeleteDialogComponent } from './sa-delete-dialog.component';
 
 @Component({ template: '' })
@@ -21,7 +22,7 @@ export default {
 
 export const DeleteUserDialog: StoryFn = args => ({
   moduleMetadata: {
-    imports: [MatButtonModule, MatDialogModule],
+    imports: [MatButtonModule, MatDialogModule, AvatarTestingModule],
     declarations: [SaDeleteDialogComponent],
     providers: [{ provide: MAT_DIALOG_DATA, useValue: { data: args.data } }]
   },
