@@ -1,11 +1,9 @@
 <ng-container *transloco="let t; read: 'supported_browsers_dialog'">
-  <mat-dialog [dir]="'auto'">
-    <h2 mat-dialog-title>{{ t("browser_unsupported") }}</h2>
-    <mat-dialog-content>
-      <p [innerHTML]="dialogMessage"></p>
-    </mat-dialog-content>
-    <mat-dialog-actions>
-      <button mat-icon-button [mat-dialog-close]="'close'">{{ t("dismiss") }}</button>
-    </mat-dialog-actions>
-  </mat-dialog>
+  <h2 mat-dialog-title>{{ t("browser_unsupported") }}</h2>
+  <mat-dialog-content>
+    <p [innerHTML]="dialogMessage"></p>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <button mat-icon-button [mat-dialog-close]="'close'">{{ t("dismiss") }}</button>
+  </mat-dialog-actions>
 </ng-container>
