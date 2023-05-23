@@ -17,6 +17,9 @@
     </app-notice>
 
     <div fxLayout="row" fxLayoutAlign="start center" class="users-controls">
+      <!-- The tab group component sets the currentTabIndex which filters the list of users.
+      This is a non-standard way to use the component and causes a slight UI glitch where the
+      tab text jumps a few pixels when navigating between tabs. -->
       <div class="tab-selector">
         <mat-tab-group (selectedIndexChange)="currentTabIndex = $event">
           <mat-tab label="{{ t('all') }}"></mat-tab>
@@ -127,7 +130,7 @@
         >
         </mat-paginator>
       </div>
-      <div class="mat-hint" *ngIf="filteredLength === 0" class="no-users-label">{{ t("no_users_found") }}</div>
+      <mat-hint *ngIf="filteredLength === 0" class="no-users-label">{{ t("no_users_found") }}</mat-hint>
     </div>
     <app-share-control [projectId]="projectId" (invited)="onInvitationSent()"></app-share-control>
   </div>
