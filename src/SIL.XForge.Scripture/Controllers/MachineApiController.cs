@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Polly.CircuitBreaker;
+using Serval.Client;
 using SIL.Machine.WebApi;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
@@ -43,26 +44,20 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            BuildDto? build;
-            if (string.IsNullOrWhiteSpace(buildId))
-            {
-                build = await _machineApiService.GetCurrentBuildAsync(
+            BuildDto? build = string.IsNullOrWhiteSpace(buildId)
+                ? await _machineApiService.GetCurrentBuildAsync(
                     _userAccessor.UserId,
                     sfProjectId,
                     minRevision,
                     cancellationToken
-                );
-            }
-            else
-            {
-                build = await _machineApiService.GetBuildAsync(
+                )
+                : await _machineApiService.GetBuildAsync(
                     _userAccessor.UserId,
                     sfProjectId,
                     buildId,
                     minRevision,
                     cancellationToken
                 );
-            }
 
             // A null means no build is running
             if (build is null)
@@ -115,15 +110,15 @@ public class MachineApiController : ControllerBase
     }
 
     [HttpPost(MachineApi.GetWordGraph)]
-    public async Task<ActionResult<WordGraphDto>> GetWordGraphAsync(
+    public async Task<ActionResult<WordGraph>> GetWordGraphAsync(
         string sfProjectId,
-        [FromBody] string[] segment,
+        [FromBody] string segment,
         CancellationToken cancellationToken
     )
     {
         try
         {
-            WordGraphDto wordGraph = await _machineApiService.GetWordGraphAsync(
+            WordGraph wordGraph = await _machineApiService.GetWordGraphAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 segment,
@@ -179,7 +174,7 @@ public class MachineApiController : ControllerBase
     [HttpPost(MachineApi.TrainSegment)]
     public async Task<ActionResult> TrainSegmentAsync(
         string sfProjectId,
-        [FromBody] SegmentPairDto segmentPair,
+        [FromBody] SegmentPair segmentPair,
         CancellationToken cancellationToken
     )
     {
@@ -209,15 +204,15 @@ public class MachineApiController : ControllerBase
     }
 
     [HttpPost(MachineApi.Translate)]
-    public async Task<ActionResult<TranslationResultDto>> TranslateAsync(
+    public async Task<ActionResult<TranslationResult>> TranslateAsync(
         string sfProjectId,
-        [FromBody] string[] segment,
+        [FromBody] string segment,
         CancellationToken cancellationToken
     )
     {
         try
         {
-            TranslationResultDto translationResult = await _machineApiService.TranslateAsync(
+            TranslationResult translationResult = await _machineApiService.TranslateAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 segment,
@@ -241,16 +236,16 @@ public class MachineApiController : ControllerBase
     }
 
     [HttpPost(MachineApi.TranslateN)]
-    public async Task<ActionResult<TranslationResultDto[]>> TranslateNAsync(
+    public async Task<ActionResult<TranslationResult[]>> TranslateNAsync(
         string sfProjectId,
         int n,
-        [FromBody] string[] segment,
+        [FromBody] string segment,
         CancellationToken cancellationToken
     )
     {
         try
         {
-            TranslationResultDto[] translationResults = await _machineApiService.TranslateNAsync(
+            TranslationResult[] translationResults = await _machineApiService.TranslateNAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 n,

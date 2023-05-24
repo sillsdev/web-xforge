@@ -1,10 +1,10 @@
 using Microsoft.FeatureManagement;
 using SIL.XForge.Scripture.Models;
 
-namespace MachineApiMigration;
+namespace ServalMigration;
 
 /// <summary>
-/// This feature filter enables the Machine API and disabled the In-Process Machine.
+/// This feature filter enables Serval and disabled the In-Process Machine.
 /// </summary>
 public class MigratorFeatureSessionManager : ISessionManager
 {
@@ -17,7 +17,7 @@ public class MigratorFeatureSessionManager : ISessionManager
         return Task.FromResult<bool?>(
             featureName switch
             {
-                FeatureFlags.MachineApi => true,
+                FeatureFlags.Serval => true,
                 FeatureFlags.MachineInProcess => false,
                 _ => null,
             }

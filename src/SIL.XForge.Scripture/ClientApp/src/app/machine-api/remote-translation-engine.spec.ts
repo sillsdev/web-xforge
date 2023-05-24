@@ -1,26 +1,32 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { MAX_SEGMENT_LENGTH, TranslationSources } from '@sillsdev/machine';
 import { of, throwError } from 'rxjs';
-import { deepEqual, instance, mock, when } from 'ts-mockito';
-import { TranslationSources } from '@sillsdev/machine';
+import { anything, instance, mock, when } from 'ts-mockito';
 import { BuildDto } from './build-dto';
 import { BuildStates } from './build-states';
 import { EngineDto } from './engine-dto';
 import { HttpClient } from './http-client';
-import { WordGraphDto } from './word-graph-dto';
 import { RemoteTranslationEngine } from './remote-translation-engine';
+import { SegmentPairDto } from './segment-pair-dto';
+import { TranslationResultDto } from './translation-result-dto';
+import { TranslationSource } from './translation-source';
+import { WordGraphDto } from './word-graph-dto';
 
 describe('RemoteTranslationEngine', () => {
   it('get word graph', async () => {
     const env = new TestEnvironment();
-    const sourceSegment = ['Esto', 'es', 'una', 'prueba', '.'];
+    const sourceTokens = ['Esto', 'es', 'una', 'prueba', '.'];
+    const sourceSegment = 'Esto es una prueba.';
     when(
       env.mockedHttpClient.post<WordGraphDto>(
         'translation/engines/project:project01/actions/getWordGraph',
-        deepEqual(sourceSegment)
+        JSON.stringify(sourceSegment)
       )
     ).thenReturn(
       of({
         status: 200,
         data: {
+          sourceTokens: sourceTokens,
           initialStateScore: -111.111,
           finalStates: [4],
           arcs: [
@@ -28,10 +34,11 @@ describe('RemoteTranslationEngine', () => {
               prevState: 0,
               nextState: 1,
               score: -11.11,
-              words: ['This', 'is'],
+              targetTokens: ['This', 'is'],
               confidences: [0.4, 0.5],
-              sourceSegmentRange: { start: 0, end: 2 },
-              sources: [TranslationSources.Smt, TranslationSources.Smt],
+              sourceSegmentStart: 0,
+              sourceSegmentEnd: 2,
+              sources: [[TranslationSource.Primary], [TranslationSource.Secondary], [TranslationSource.Human]],
               alignment: [
                 { sourceIndex: 0, targetIndex: 0 },
                 { sourceIndex: 1, targetIndex: 1 }
@@ -41,30 +48,33 @@ describe('RemoteTranslationEngine', () => {
               prevState: 1,
               nextState: 2,
               score: -22.22,
-              words: ['a'],
+              targetTokens: ['a'],
               confidences: [0.6],
-              sourceSegmentRange: { start: 2, end: 3 },
-              sources: [TranslationSources.Smt],
+              sourceSegmentStart: 2,
+              sourceSegmentEnd: 3,
+              sources: [[TranslationSource.Primary]],
               alignment: [{ sourceIndex: 0, targetIndex: 0 }]
             },
             {
               prevState: 2,
               nextState: 3,
               score: 33.33,
-              words: ['prueba'],
+              targetTokens: ['prueba'],
               confidences: [0],
-              sourceSegmentRange: { start: 3, end: 4 },
-              sources: [TranslationSources.None],
+              sourceSegmentStart: 3,
+              sourceSegmentEnd: 4,
+              sources: [[]],
               alignment: [{ sourceIndex: 0, targetIndex: 0 }]
             },
             {
               prevState: 3,
               nextState: 4,
               score: -44.44,
-              words: ['.'],
+              targetTokens: ['.'],
               confidences: [0.7],
-              sourceSegmentRange: { start: 4, end: 5 },
-              sources: [TranslationSources.Smt],
+              sourceSegmentStart: 4,
+              sourceSegmentEnd: 5,
+              sources: [[TranslationSource.Primary]],
               alignment: [{ sourceIndex: 0, targetIndex: 0 }]
             }
           ]
@@ -74,21 +84,33 @@ describe('RemoteTranslationEngine', () => {
 
     const wordGraph = await env.client.getWordGraph(sourceSegment);
     expect(wordGraph.initialStateScore).toEqual(-111.111);
+    expect(wordGraph.sourceTokens).toEqual(sourceTokens);
     expect(Array.from(wordGraph.finalStates)).toEqual([4]);
     expect(wordGraph.arcs.length).toEqual(4);
     let arc = wordGraph.arcs[0];
     expect(arc.prevState).toEqual(0);
     expect(arc.nextState).toEqual(1);
     expect(arc.score).toEqual(-11.11);
-    expect(arc.words).toEqual(['This', 'is']);
-    expect(arc.wordConfidences).toEqual([0.4, 0.5]);
+    expect(arc.targetTokens).toEqual(['This', 'is']);
+    expect(arc.confidences).toEqual([0.4, 0.5]);
     expect(arc.sourceSegmentRange.start).toEqual(0);
     expect(arc.sourceSegmentRange.end).toEqual(2);
-    expect(arc.wordSources).toEqual([TranslationSources.Smt, TranslationSources.Smt]);
-    expect(arc.alignment.get(0, 0)).toBeTruthy();
-    expect(arc.alignment.get(1, 1)).toBeTruthy();
+    expect(arc.sources).toEqual([TranslationSources.Smt, TranslationSources.Transfer, TranslationSources.Prefix]);
+    expect(arc.alignment.get(0, 0)).toBe(true);
+    expect(arc.alignment.get(1, 1)).toBe(true);
     arc = wordGraph.arcs[2];
-    expect(arc.wordSources).toEqual([TranslationSources.None]);
+    expect(arc.sources).toEqual([TranslationSources.None]);
+  });
+
+  it('get word graph with a too long segment', async () => {
+    const env = new TestEnvironment();
+    const segment = 'x'.repeat(MAX_SEGMENT_LENGTH + 1);
+
+    const wordGraph = await env.client.getWordGraph(segment);
+    expect(wordGraph.initialStateScore).toEqual(0);
+    expect(wordGraph.sourceTokens).toEqual([]);
+    expect(Array.from(wordGraph.finalStates)).toEqual([]);
+    expect(wordGraph.arcs.length).toEqual(0);
   });
 
   it('train with no errors', () => {
@@ -121,10 +143,23 @@ describe('RemoteTranslationEngine', () => {
     );
   });
 
+  it('train with 404 error during build', () => {
+    const env = new TestEnvironment();
+    env.addCreateBuild();
+    when(env.mockedHttpClient.get<BuildDto>('translation/builds/id:build01?minRevision=1')).thenReturn(
+      throwError(new HttpErrorResponse({ status: 404 }))
+    );
+
+    env.client.train().subscribe(
+      progress => expect(progress.percentCompleted).toEqual(0),
+      err => expect(err.message).toEqual('')
+    );
+  });
+
   it('train with error during build', () => {
     const env = new TestEnvironment();
     env.addCreateBuild();
-    when(env.mockedHttpClient.get<BuildDto>(`translation/builds/id:build01?minRevision=1`)).thenReturn(
+    when(env.mockedHttpClient.get<BuildDto>('translation/builds/id:build01?minRevision=1')).thenReturn(
       of({
         status: 200,
         data: {
@@ -145,9 +180,210 @@ describe('RemoteTranslationEngine', () => {
     );
   });
 
+  it('train segment executes successfully', async () => {
+    const env = new TestEnvironment();
+    let sourceSegment = 'source';
+    let targetSegment = 'target';
+    let remoteMethodCalled = false;
+    when(
+      env.mockedHttpClient.post<SegmentPairDto>(
+        'translation/engines/project:project01/actions/trainSegment',
+        anything()
+      )
+    ).thenCall((_, dto: SegmentPairDto) => {
+      remoteMethodCalled = true;
+      expect(dto.sourceSegment).toBe(sourceSegment);
+      expect(dto.targetSegment).toBe(targetSegment);
+      expect(dto.sentenceStart).toBe(true);
+      return of({ status: 200 });
+    });
+
+    await env.client.trainSegment(sourceSegment, targetSegment);
+    expect(remoteMethodCalled).toBe(true);
+  });
+
+  it('translate executes successfully', async () => {
+    const env = new TestEnvironment();
+    const confidences = [0.1, 0.2, 0.3, 0.4, 0.5];
+    const sourceTokens = ['Esto', 'es', 'una', 'prueba', '.'];
+    const sourceSegment = 'Esto es una prueba.';
+    const translation = 'This is a test.';
+    const targetTokens = ['This', 'is', 'a', 'test', '.'];
+    when(
+      env.mockedHttpClient.post<TranslationResultDto>(
+        'translation/engines/project:project01/actions/translate',
+        JSON.stringify(sourceSegment)
+      )
+    ).thenReturn(
+      of({
+        status: 200,
+        data: {
+          alignment: [
+            { sourceIndex: 0, targetIndex: 0 },
+            { sourceIndex: 1, targetIndex: 1 },
+            { sourceIndex: 2, targetIndex: 2 },
+            { sourceIndex: 3, targetIndex: 3 },
+            { sourceIndex: 4, targetIndex: 4 }
+          ],
+          confidences: confidences,
+          phrases: [
+            { sourceSegmentStart: 0, sourceSegmentEnd: 1, targetSegmentCut: 2 },
+            { sourceSegmentStart: 1, sourceSegmentEnd: 2, targetSegmentCut: 3 },
+            { sourceSegmentStart: 2, sourceSegmentEnd: 3, targetSegmentCut: 4 },
+            { sourceSegmentStart: 3, sourceSegmentEnd: 4, targetSegmentCut: 5 },
+            { sourceSegmentStart: 4, sourceSegmentEnd: 5, targetSegmentCut: 6 }
+          ],
+          sources: [
+            [TranslationSource.Primary],
+            [TranslationSource.Secondary],
+            [TranslationSource.Human],
+            [TranslationSource.Primary, TranslationSource.Secondary],
+            [TranslationSource.Primary, TranslationSource.Secondary, TranslationSource.Human]
+          ],
+          sourceTokens: sourceTokens,
+          targetTokens: targetTokens,
+          translation: translation
+        }
+      })
+    );
+
+    const translationResult = await env.client.translate(sourceSegment);
+    expect(translationResult.alignment.columnCount).toEqual(5);
+    expect(translationResult.alignment.rowCount).toEqual(5);
+    expect(translationResult.confidences).toEqual(confidences);
+    expect(translationResult.phrases.length).toEqual(5);
+    for (let i = 0; i < translationResult.phrases.length; i++) {
+      expect(translationResult.phrases[i].sourceSegmentRange.start).toEqual(i);
+      expect(translationResult.phrases[i].sourceSegmentRange.end).toEqual(i + 1);
+      expect(translationResult.phrases[i].targetSegmentCut).toEqual(i + 2);
+    }
+    expect(translationResult.sourceTokens).toEqual(sourceTokens);
+    expect(translationResult.sources.length).toEqual(5);
+    expect(translationResult.sources[0]).toEqual(TranslationSources.Smt);
+    expect(translationResult.sources[1]).toEqual(TranslationSources.Transfer);
+    expect(translationResult.sources[2]).toEqual(TranslationSources.Prefix);
+    expect(translationResult.sources[3]).toEqual(TranslationSources.Smt + TranslationSources.Transfer);
+    expect(translationResult.sources[4]).toEqual(
+      TranslationSources.Smt + TranslationSources.Transfer + TranslationSources.Prefix
+    );
+    expect(translationResult.targetTokens).toEqual(targetTokens);
+    expect(translationResult.translation).toEqual(translation);
+  });
+
+  it('translate with a too long segment', async () => {
+    const env = new TestEnvironment();
+    const segment = 'x'.repeat(MAX_SEGMENT_LENGTH + 1);
+
+    const translationResult = await env.client.translate(segment);
+    expect(translationResult.alignment.columnCount).toEqual(0);
+    expect(translationResult.alignment.rowCount).toEqual(0);
+    expect(translationResult.confidences).toEqual([]);
+    expect(translationResult.phrases).toEqual([]);
+    expect(translationResult.sourceTokens).toEqual([]);
+    expect(translationResult.sources).toEqual([]);
+    expect(translationResult.targetTokens).toEqual([]);
+    expect(translationResult.translation).toEqual(segment);
+  });
+
+  it('translate n executes successfully', async () => {
+    const env = new TestEnvironment();
+    const n = 1;
+    const confidences = [0.1, 0.2, 0.3, 0.4, 0.5];
+    const sourceTokens = ['Esto', 'es', 'una', 'prueba', '.'];
+    const sourceSegment = 'Esto es una prueba.';
+    const translation = 'This is a test.';
+    const targetTokens = ['This', 'is', 'a', 'test', '.'];
+    when(
+      env.mockedHttpClient.post<TranslationResultDto[]>(
+        'translation/engines/project:project01/actions/translate/1',
+        JSON.stringify(sourceSegment)
+      )
+    ).thenReturn(
+      of({
+        status: 200,
+        data: [
+          {
+            alignment: [
+              { sourceIndex: 0, targetIndex: 0 },
+              { sourceIndex: 1, targetIndex: 1 },
+              { sourceIndex: 2, targetIndex: 2 },
+              { sourceIndex: 3, targetIndex: 3 },
+              { sourceIndex: 4, targetIndex: 4 }
+            ],
+            confidences: confidences,
+            phrases: [
+              { sourceSegmentStart: 0, sourceSegmentEnd: 1, targetSegmentCut: 2 },
+              { sourceSegmentStart: 1, sourceSegmentEnd: 2, targetSegmentCut: 3 },
+              { sourceSegmentStart: 2, sourceSegmentEnd: 3, targetSegmentCut: 4 },
+              { sourceSegmentStart: 3, sourceSegmentEnd: 4, targetSegmentCut: 5 },
+              { sourceSegmentStart: 4, sourceSegmentEnd: 5, targetSegmentCut: 6 }
+            ],
+            sources: [
+              [TranslationSource.Primary],
+              [TranslationSource.Secondary],
+              [TranslationSource.Human],
+              [TranslationSource.Primary, TranslationSource.Secondary],
+              [TranslationSource.Primary, TranslationSource.Secondary, TranslationSource.Human]
+            ],
+            sourceTokens: sourceTokens,
+            targetTokens: targetTokens,
+            translation: translation
+          }
+        ]
+      })
+    );
+
+    const translationResults = await env.client.translateN(n, sourceSegment);
+    expect(translationResults.length).toEqual(n);
+    expect(translationResults[0].alignment.columnCount).toEqual(5);
+    expect(translationResults[0].alignment.rowCount).toEqual(5);
+    expect(translationResults[0].confidences).toEqual(confidences);
+    expect(translationResults[0].phrases.length).toEqual(5);
+    for (let i = 0; i < translationResults[0].phrases.length; i++) {
+      expect(translationResults[0].phrases[i].sourceSegmentRange.start).toEqual(i);
+      expect(translationResults[0].phrases[i].sourceSegmentRange.end).toEqual(i + 1);
+      expect(translationResults[0].phrases[i].targetSegmentCut).toEqual(i + 2);
+    }
+    expect(translationResults[0].sourceTokens).toEqual(sourceTokens);
+    expect(translationResults[0].sources.length).toEqual(5);
+    expect(translationResults[0].sources[0]).toEqual(TranslationSources.Smt);
+    expect(translationResults[0].sources[1]).toEqual(TranslationSources.Transfer);
+    expect(translationResults[0].sources[2]).toEqual(TranslationSources.Prefix);
+    expect(translationResults[0].sources[3]).toEqual(TranslationSources.Smt + TranslationSources.Transfer);
+    expect(translationResults[0].sources[4]).toEqual(
+      TranslationSources.Smt + TranslationSources.Transfer + TranslationSources.Prefix
+    );
+    expect(translationResults[0].targetTokens).toEqual(targetTokens);
+    expect(translationResults[0].translation).toEqual(translation);
+  });
+
+  it('translate n with a too long segment', async () => {
+    const env = new TestEnvironment();
+    const segment = 'x'.repeat(MAX_SEGMENT_LENGTH + 1);
+
+    const translationResults = await env.client.translateN(1, segment);
+    expect(translationResults).toEqual([]);
+  });
+
+  it('listen for training status with 404 error', () => {
+    const env = new TestEnvironment();
+    env.addCreateBuild();
+    let errorThrown = false;
+    when(env.mockedHttpClient.get<BuildDto>('translation/builds/id:engine01?minRevision=0')).thenCall(() => {
+      errorThrown = true;
+      throwError(new HttpErrorResponse({ status: 404 }));
+    });
+
+    env.client.listenForTrainingStatus().subscribe(
+      progress => throwError(new Error(`This should not be called. Progress: ${progress}`)),
+      err => throwError(err)
+    );
+    expect(errorThrown).toBe(true);
+  });
+
   it('listen for training status with no errors', () => {
     const env = new TestEnvironment();
-    when(env.mockedHttpClient.get<BuildDto>('translation/builds/engine:engine01?minRevision=0')).thenReturn(
+    when(env.mockedHttpClient.get<BuildDto>('translation/builds/id:engine01?minRevision=0')).thenReturn(
       of({
         status: 200,
         data: {

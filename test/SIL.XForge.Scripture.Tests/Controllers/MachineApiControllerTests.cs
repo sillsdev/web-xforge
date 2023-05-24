@@ -7,6 +7,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
 using Polly.CircuitBreaker;
+using Serval.Client;
 using SIL.Machine.WebApi;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
@@ -332,13 +333,13 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService
-            .GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            .GetWordGraphAsync(User01, Project01, string.Empty, CancellationToken.None)
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<WordGraphDto> actual = await env.Controller.GetWordGraphAsync(
+        ActionResult<WordGraph> actual = await env.Controller.GetWordGraphAsync(
             Project01,
-            Array.Empty<string>(),
+            string.Empty,
             CancellationToken.None
         );
 
@@ -353,13 +354,13 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService
-            .GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            .GetWordGraphAsync(User01, Project01, string.Empty, CancellationToken.None)
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<WordGraphDto> actual = await env.Controller.GetWordGraphAsync(
+        ActionResult<WordGraph> actual = await env.Controller.GetWordGraphAsync(
             Project01,
-            Array.Empty<string>(),
+            string.Empty,
             CancellationToken.None
         );
 
@@ -372,13 +373,13 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService
-            .GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            .GetWordGraphAsync(User01, Project01, string.Empty, CancellationToken.None)
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<WordGraphDto> actual = await env.Controller.GetWordGraphAsync(
+        ActionResult<WordGraph> actual = await env.Controller.GetWordGraphAsync(
             Project01,
-            Array.Empty<string>(),
+            string.Empty,
             CancellationToken.None
         );
 
@@ -391,13 +392,13 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService
-            .GetWordGraphAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
-            .Returns(Task.FromResult(new WordGraphDto()));
+            .GetWordGraphAsync(User01, Project01, string.Empty, CancellationToken.None)
+            .Returns(Task.FromResult(new WordGraph()));
 
         // SUT
-        ActionResult<WordGraphDto> actual = await env.Controller.GetWordGraphAsync(
+        ActionResult<WordGraph> actual = await env.Controller.GetWordGraphAsync(
             Project01,
-            Array.Empty<string>(),
+            string.Empty,
             CancellationToken.None
         );
 
@@ -471,7 +472,7 @@ public class MachineApiControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var segmentPair = new SegmentPairDto();
+        var segmentPair = new SegmentPair();
         env.MachineApiService
             .TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None)
             .Throws(new BrokenCircuitException());
@@ -489,7 +490,7 @@ public class MachineApiControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var segmentPair = new SegmentPairDto();
+        var segmentPair = new SegmentPair();
         env.MachineApiService
             .TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None)
             .Throws(new ForbiddenException());
@@ -505,7 +506,7 @@ public class MachineApiControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var segmentPair = new SegmentPairDto();
+        var segmentPair = new SegmentPair();
         env.MachineApiService
             .TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None)
             .Throws(new DataNotFoundException(string.Empty));
@@ -521,7 +522,7 @@ public class MachineApiControllerTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        var segmentPair = new SegmentPairDto();
+        var segmentPair = new SegmentPair();
 
         // SUT
         ActionResult actual = await env.Controller.TrainSegmentAsync(Project01, segmentPair, CancellationToken.None);
@@ -538,13 +539,13 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService
-            .TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            .TranslateAsync(User01, Project01, string.Empty, CancellationToken.None)
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<TranslationResultDto> actual = await env.Controller.TranslateAsync(
+        ActionResult<TranslationResult> actual = await env.Controller.TranslateAsync(
             Project01,
-            Array.Empty<string>(),
+            string.Empty,
             CancellationToken.None
         );
 
@@ -559,13 +560,13 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService
-            .TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            .TranslateAsync(User01, Project01, string.Empty, CancellationToken.None)
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<TranslationResultDto> actual = await env.Controller.TranslateAsync(
+        ActionResult<TranslationResult> actual = await env.Controller.TranslateAsync(
             Project01,
-            Array.Empty<string>(),
+            string.Empty,
             CancellationToken.None
         );
 
@@ -578,13 +579,13 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService
-            .TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
+            .TranslateAsync(User01, Project01, string.Empty, CancellationToken.None)
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<TranslationResultDto> actual = await env.Controller.TranslateAsync(
+        ActionResult<TranslationResult> actual = await env.Controller.TranslateAsync(
             Project01,
-            Array.Empty<string>(),
+            string.Empty,
             CancellationToken.None
         );
 
@@ -597,13 +598,13 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService
-            .TranslateAsync(User01, Project01, Array.Empty<string>(), CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationResultDto()));
+            .TranslateAsync(User01, Project01, string.Empty, CancellationToken.None)
+            .Returns(Task.FromResult(new TranslationResult()));
 
         // SUT
-        ActionResult<TranslationResultDto> actual = await env.Controller.TranslateAsync(
+        ActionResult<TranslationResult> actual = await env.Controller.TranslateAsync(
             Project01,
-            Array.Empty<string>(),
+            string.Empty,
             CancellationToken.None
         );
 
@@ -614,17 +615,17 @@ public class MachineApiControllerTests
     public async Task TranslateNAsync_MachineApiDown()
     {
         // Set up test environment
-        int n = 1;
+        const int n = 1;
         var env = new TestEnvironment();
         env.MachineApiService
-            .TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
+            .TranslateNAsync(User01, Project01, n, string.Empty, CancellationToken.None)
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<TranslationResultDto[]> actual = await env.Controller.TranslateNAsync(
+        ActionResult<TranslationResult[]> actual = await env.Controller.TranslateNAsync(
             Project01,
             n,
-            Array.Empty<string>(),
+            string.Empty,
             CancellationToken.None
         );
 
@@ -637,17 +638,17 @@ public class MachineApiControllerTests
     public async Task TranslateNAsync_NoPermission()
     {
         // Set up test environment
-        int n = 1;
+        const int n = 1;
         var env = new TestEnvironment();
         env.MachineApiService
-            .TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
+            .TranslateNAsync(User01, Project01, n, string.Empty, CancellationToken.None)
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<TranslationResultDto[]> actual = await env.Controller.TranslateNAsync(
+        ActionResult<TranslationResult[]> actual = await env.Controller.TranslateNAsync(
             Project01,
             n,
-            Array.Empty<string>(),
+            string.Empty,
             CancellationToken.None
         );
 
@@ -658,17 +659,17 @@ public class MachineApiControllerTests
     public async Task TranslateNAsync_NoProject()
     {
         // Set up test environment
-        int n = 1;
+        const int n = 1;
         var env = new TestEnvironment();
         env.MachineApiService
-            .TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
+            .TranslateNAsync(User01, Project01, n, string.Empty, CancellationToken.None)
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<TranslationResultDto[]> actual = await env.Controller.TranslateNAsync(
+        ActionResult<TranslationResult[]> actual = await env.Controller.TranslateNAsync(
             Project01,
             n,
-            Array.Empty<string>(),
+            string.Empty,
             CancellationToken.None
         );
 
@@ -679,17 +680,17 @@ public class MachineApiControllerTests
     public async Task TranslateNAsync_Success()
     {
         // Set up test environment
-        int n = 1;
+        const int n = 1;
         var env = new TestEnvironment();
         env.MachineApiService
-            .TranslateNAsync(User01, Project01, n, Array.Empty<string>(), CancellationToken.None)
-            .Returns(Task.FromResult(Array.Empty<TranslationResultDto>()));
+            .TranslateNAsync(User01, Project01, n, string.Empty, CancellationToken.None)
+            .Returns(Task.FromResult(Array.Empty<TranslationResult>()));
 
         // SUT
-        ActionResult<TranslationResultDto[]> actual = await env.Controller.TranslateNAsync(
+        ActionResult<TranslationResult[]> actual = await env.Controller.TranslateNAsync(
             Project01,
             n,
-            Array.Empty<string>(),
+            string.Empty,
             CancellationToken.None
         );
 

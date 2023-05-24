@@ -9,8 +9,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Polly;
+using Serval.Client;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
+using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 
 namespace Microsoft.Extensions.DependencyInjection;
@@ -42,24 +44,24 @@ public static class MachineServiceCollectionExtensions
         services.AddSingleton<IBuildHandler, SFBuildHandler>();
 
         // Setup the Machine API
-        var machineOptions = configuration.GetOptions<MachineOptions>();
+        var servalOptions = configuration.GetOptions<ServalOptions>();
         services.AddAccessTokenManagement(options =>
         {
             options.Client.Clients.Add(
-                MachineServiceBase.ClientName,
+                MachineApi.HttpClientName,
                 new ClientCredentialsTokenRequest
                 {
-                    Address = machineOptions.TokenUrl,
-                    ClientId = machineOptions.ClientId,
-                    ClientSecret = machineOptions.ClientSecret,
-                    Parameters = new Parameters { { "audience", machineOptions.Audience } },
+                    Address = servalOptions.TokenUrl,
+                    ClientId = servalOptions.ClientId,
+                    ClientSecret = servalOptions.ClientSecret,
+                    Parameters = new Parameters { { "audience", servalOptions.Audience } },
                 }
             );
         });
         services
             .AddClientAccessTokenHttpClient(
-                MachineServiceBase.ClientName,
-                configureClient: client => client.BaseAddress = new Uri(machineOptions.ApiServer)
+                MachineApi.HttpClientName,
+                configureClient: client => client.BaseAddress = new Uri(servalOptions.ApiServer)
             )
             .ConfigurePrimaryHttpMessageHandler(() =>
             {
@@ -73,15 +75,26 @@ public static class MachineServiceCollectionExtensions
                 return handler;
             });
         services
-            .AddHttpClient(MachineServiceBase.ClientName)
+            .AddHttpClient(MachineApi.HttpClientName)
             .SetHandlerLifetime(TimeSpan.FromMinutes(5))
             .AddPolicyHandler(GetRetryPolicy())
             .AddPolicyHandler(GetCircuitBreakerPolicy());
+        services.AddSingleton<ITranslationEnginesClient, TranslationEnginesClient>(sp =>
+        {
+            // Instantiate the translation engines client with our named HTTP client
+            var factory = sp.GetService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient(MachineApi.HttpClientName);
+            return new TranslationEnginesClient(httpClient);
+        });
+        services.AddSingleton<IDataFilesClient, DataFilesClient>(sp =>
+        {
+            // Instantiate the data files client with our named HTTP client
+            var factory = sp.GetService<IHttpClientFactory>();
+            var httpClient = factory.CreateClient(MachineApi.HttpClientName);
+            return new DataFilesClient(httpClient);
+        });
         services.AddSingleton<IMachineApiService, MachineApiService>();
-        services.AddSingleton<IMachineBuildService, MachineBuildService>();
-        services.AddSingleton<IMachineCorporaService, MachineCorporaService>();
         services.AddSingleton<IMachineProjectService, MachineProjectService>();
-        services.AddSingleton<IMachineTranslationService, MachineTranslationService>();
         return services;
     }
 

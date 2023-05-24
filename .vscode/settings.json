@@ -62,6 +62,7 @@
     "usfm",
     "webm",
     "xforge",
+    "xfvalidators",
     "xlink"
   ],
   "dotnet-test-explorer.testProjectPath": "test/**/*.Tests.csproj",

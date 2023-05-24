@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
 using SIL.ObjectModel;
 using SIL.XForge.Configuration;
+using SIL.XForge.Models;
 
 namespace SIL.XForge.Services;
 
@@ -40,6 +41,23 @@ public class AuthService : DisposableBase, IAuthService
 
     public Task<string> GetUserAsync(string authId) => CallApiAsync(HttpMethod.Get, $"users/{authId}");
 
+    public Task<string> GenerateAnonymousUser(
+        string name,
+        TransparentAuthenticationCredentials credentials,
+        string language
+    )
+    {
+        var content = new JObject(
+            new JProperty("name", name),
+            new JProperty("username", credentials.Username),
+            new JProperty("email", $"{credentials.Username}@users.noreply.scriptureforge.org"),
+            new JProperty("password", credentials.Password),
+            new JProperty("connection", "Transparent-Authentication"),
+            new JProperty("user_metadata", new JObject(new JProperty("interface_language", language)))
+        );
+        return CallApiAsync(HttpMethod.Post, "users", content);
+    }
+
     public Task LinkAccounts(string primaryAuthId, string secondaryAuthId)
     {
         var content = new JObject(new JProperty("provider", "oauth2"), new JProperty("user_id", secondaryAuthId));
@@ -59,6 +77,20 @@ public class AuthService : DisposableBase, IAuthService
         );
         // Since .NET Std 2.0 see https://stackoverflow.com/a/23600004/5501739
         return CallApiAsync(new HttpMethod("PATCH"), $"users/{authId}", content);
+    }
+
+    /// <summary>
+    /// Used for SMS authentication as the user has their name and nickname set to their phone number which may get
+    /// exposed in future user requests. This method sets both values to "Anonymous" and is intended to be run once.
+    /// </summary>
+    public async Task<string> UpdateUserToAnonymous(string authId)
+    {
+        var content = new JObject(
+            new JProperty("name", "Anonymous"),
+            new JProperty("nickname", "Anonymous"),
+            new JProperty("picture", "https://cdn.auth0.com/avatars/a.png")
+        );
+        return await CallApiAsync(new HttpMethod("PATCH"), $"users/{authId}", content);
     }
 
     private async Task<string> CallApiAsync(HttpMethod method, string url, JToken content = null)

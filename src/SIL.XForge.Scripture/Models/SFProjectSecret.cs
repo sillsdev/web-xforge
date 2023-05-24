@@ -29,8 +29,8 @@ public class SFProjectSecret : ProjectSecret
     public List<string> SyncMetricsIds { get; set; } = new List<string>();
 
     /// <summary>
-    /// Gets or sets the Machine API data.
+    /// Gets or sets the Serval data.
     /// </summary>
-    /// <value>The Machine API data.</value>
-    public MachineData? MachineData { get; set; }
+    /// <value>The Serval data.</value>
+    public ServalData? ServalData { get; set; }
 }

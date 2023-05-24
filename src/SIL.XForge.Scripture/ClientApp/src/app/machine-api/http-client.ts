@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-export const MACHINE_API_BASE_URL = 'machine-api/v2/';
+export const MACHINE_API_BASE_URL = 'machine-api/v3/';
 
 export interface HttpResponse<T> {
   status: number;

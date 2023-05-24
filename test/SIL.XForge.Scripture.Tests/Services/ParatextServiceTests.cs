@@ -1101,15 +1101,16 @@ public class ParatextServiceTests
         var env = new TestEnvironment();
         string sfProjectId = env.Project01;
         var associatedPtUser = new SFParatextUser(env.Username01);
+        var newPtUser = new SFParatextUser("New User");
         string ptProjectId = env.SetupProject(sfProjectId, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
         env.AddTextDoc(40, 1);
         string threadId = "thread01";
-
-        env.MockGuidService.NewObjectId().Returns("thread01note01");
+        string newSyncUserRef = "newsyncuser";
+        env.MockGuidService.NewObjectId().Returns(newSyncUserRef);
 
         // There is a PT Comment.
-        var comment = new Paratext.Data.ProjectComments.Comment(associatedPtUser)
+        var comment = new Paratext.Data.ProjectComments.Comment(newPtUser)
         {
             Thread = threadId,
             VerseRefStr = "MAT 1:1",
@@ -1157,9 +1158,13 @@ public class ParatextServiceTests
         Assert.That(change.NotesAdded.Count, Is.EqualTo(1));
         Note newNote = change.NotesAdded[0];
         Assert.That(newNote.ThreadId, Is.EqualTo(threadId));
+        Assert.That(newNote.SyncUserRef, Is.EqualTo(newSyncUserRef));
         Assert.That(newNote.Type, Is.EqualTo(NoteType.Normal.InternalValue));
         Assert.That(newNote.ConflictType, Is.EqualTo(NoteConflictType.None.InternalValue));
         Assert.That(newNote.AcceptedChangeXml, Is.EqualTo("some xml"));
+        Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01, "New User" }));
+        Assert.That(ptProjectUsers.TryGetValue("New User", out ParatextUserProfile profile), Is.True);
+        Assert.That(profile.OpaqueUserId, Is.EqualTo(newSyncUserRef));
     }
 
     [Test]
@@ -2000,7 +2005,7 @@ public class ParatextServiceTests
         string thread2Id = "thread2";
         var thread1Notes = new[]
         {
-            new ThreadNoteComponents { ownerRef = env.User02, tagsAdded = new[] { "1" } }
+            new ThreadNoteComponents { ownerRef = env.User01, tagsAdded = new[] { "1" } }
         };
         var thread2Notes = new[]
         {
@@ -2058,7 +2063,7 @@ public class ParatextServiceTests
         Assert.That(thread.Comments.Count, Is.EqualTo(1));
         Paratext.Data.ProjectComments.Comment comment = thread.Comments.First();
         string expected =
-            "thread1/User 02/2019-01-01T08:00:00.0000000+00:00-"
+            "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-"
             + "MAT 1:1-"
             + "thread1 note 1.-"
             + "Start:0-"
@@ -2077,9 +2082,9 @@ public class ParatextServiceTests
             + "user05-"
             + "Tag:1";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected));
-        Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
+        Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01 }));
         IDocument<NoteThread> noteThread1Doc = noteThreadDocs.First(d => d.Data.DataId == thread1Id);
-        Assert.That(noteThread1Doc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser02"));
+        Assert.That(noteThread1Doc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser01"));
         IDocument<NoteThread> noteThread2Doc = noteThreadDocs.First(d => d.Data.DataId == thread2Id);
         Assert.That(noteThread2Doc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser01"));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
@@ -2175,7 +2180,12 @@ public class ParatextServiceTests
         // Edit a comment
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
-            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+            new ParatextUserProfile
+            {
+                OpaqueUserId = "syncuser01",
+                Username = env.Username01,
+                SFUserId = env.User01
+            }
         }.ToDictionary(u => u.Username);
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
@@ -2256,7 +2266,12 @@ public class ParatextServiceTests
         IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, threadId);
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
-            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+            new ParatextUserProfile
+            {
+                OpaqueUserId = "syncuser01",
+                Username = env.Username01,
+                SFUserId = env.User01
+            }
         }.ToDictionary(u => u.Username);
         SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
             userSecret,
@@ -3800,7 +3815,7 @@ public class ParatextServiceTests
             MockGuidService.NewObjectId().Returns(_ => guidServiceGuidPrefix + guidServiceObjectId++);
             usernames = new Dictionary<string, string>
             {
-                { User01, Username01 },
+                { User01, "User 01 Display" },
                 { User02, Username02 },
                 { User05, "User 05" }
             };

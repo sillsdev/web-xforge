@@ -7,10 +7,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SIL.XForge.Scripture.Services;
 
-namespace MachineApiMigration;
+namespace ServalMigration;
 
 /// <summary>
-/// The Machine API migration program.
+/// The Serval migration program.
 /// </summary>
 public class Program
 {
@@ -38,15 +38,15 @@ public class Program
         string? sfAdminRequestValues = Environment.GetEnvironmentVariable("SF_PROJECT_ADMINS");
         if (string.IsNullOrWhiteSpace(sfAppDir))
         {
-            // This calculated from "web-xforge\src\Migrations\MachineApiMigration\bin\Debug\net6.0"
+            // This calculated from "web-xforge\src\Migrations\ServalMigration\bin\Debug\net6.0"
             sfAppDir = Environment.GetEnvironmentVariable("SF_APP_DIR") ?? "../../../../../SIL.XForge.Scripture";
         }
 
-        Log("Migrate Projects to Machine API.");
+        Log("Migrate Projects to Serval.");
 
         if (!doWrite)
         {
-            Log("Test Mode ONLY - no files are changed. Run `MachineApiMigration run` to change files.");
+            Log("Test Mode ONLY - no files are changed. Run `ServalMigration run` to change files.");
             Log(string.Empty);
         }
 
@@ -77,9 +77,9 @@ public class Program
             sfAdminsToUse.Add(request[0], request[1]);
         }
 
-        // Migrate all projects to the new Machine API
-        var machineApiMigrator = webHost.Services.GetService<MachineApiMigrator>();
-        bool success = await machineApiMigrator!.MigrateAllProjectsAsync(
+        // Migrate all projects to Serval
+        var servalMigrator = webHost.Services.GetService<ServalMigrator>();
+        bool success = await servalMigrator!.MigrateAllProjectsAsync(
             doWrite,
             sfProjectIdsToMigrate,
             sfAdminsToUse,
@@ -97,9 +97,9 @@ public class Program
     internal static void Log(string message)
     {
         string when = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
-        Console.WriteLine(@$"{when} MachineApiMigration: {message}");
+        Console.WriteLine(@$"{when} ServalMigration: {message}");
 #if DEBUG
-        Debug.WriteLine($"{when} MachineApiMigration: {message}");
+        Debug.WriteLine($"{when} ServalMigration: {message}");
 #endif
     }
 

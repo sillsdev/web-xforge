@@ -102,6 +102,27 @@ public class UserServiceTests
     }
 
     [Test]
+    public async Task PushAuthUserProfile_NewUser_SMS()
+    {
+        var env = new TestEnvironment();
+
+        JObject userProfile = TestEnvironment.CreateSMSUserProfile("user03", "auth03");
+        JObject expectedProfile = (JObject)userProfile.DeepClone();
+        expectedProfile["name"] = "Anonymous";
+        expectedProfile["nickname"] = "Anonymous";
+        expectedProfile["picture"] = "https://cdn.auth0.com/avatars/a.png";
+        env.AuthService.UpdateUserToAnonymous("auth03").Returns(Task.FromResult<string>(expectedProfile.ToString()));
+
+        // SUT
+        await env.Service.UpdateUserFromProfileAsync("user03", userProfile.ToString());
+
+        User user3 = env.GetUser("user03");
+        Assert.That(user3.Name, Is.EqualTo("Anonymous"));
+        Assert.That(user3.DisplayName, Is.EqualTo("Anonymous"));
+        Assert.That(user3.AvatarUrl, Is.EqualTo("https://cdn.auth0.com/avatars/a.png"));
+    }
+
+    [Test]
     public async Task PushAuthUserProfile_Metadata_AvatarSet()
     {
         var env = new TestEnvironment();
@@ -423,6 +444,33 @@ public class UserServiceTests
         public User GetUser(string id) => RealtimeService.GetRepository<User>().Get(id);
 
         public bool ContainsUser(string id) => RealtimeService.GetRepository<User>().Contains(id);
+
+        public static JObject CreateSMSUserProfile(string userId, string authId)
+        {
+            return new JObject(
+                new JProperty("user_id", authId),
+                new JProperty("name", "+123456789"),
+                new JProperty("nickname", "+123456789"),
+                new JProperty("phone_number", "+123456789"),
+                new JProperty("picture", "http://example.com/new-avatar.png"),
+                new JProperty(
+                    "app_metadata",
+                    new JObject(new JProperty("xf_user_id", userId), new JProperty("xf_role", "user"))
+                ),
+                new JProperty(
+                    "identities",
+                    new JArray(
+                        new JObject(
+                            new JProperty("connection", "sms"),
+                            new JProperty("user_id", authId),
+                            new JProperty("provider", "sms"),
+                            new JProperty("isSocial", false)
+                        )
+                    )
+                ),
+                new JProperty("logins_count", 1)
+            );
+        }
 
         public static JObject CreateUserProfile(string userId, string authId, DateTime issuedAt)
         {

@@ -49,7 +49,6 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
     verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'translate', 'MRK']), anything())).once();
     expect().nothing();
   }));
@@ -60,7 +59,6 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
     verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'translate', 'MAT']), anything())).once();
     expect().nothing();
   }));
@@ -71,7 +69,6 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
     verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'checking', 'ALL']), anything())).once();
     expect().nothing();
   }));
@@ -102,7 +99,6 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
     verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'translate']), anything())).once();
     expect().nothing();
   }));
@@ -129,7 +125,6 @@ describe('ProjectComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedSFProjectService.onlineCheckLinkSharing('project01')).never();
     verify(mockedRouter.navigate(anything(), anything())).never();
     expect().nothing();
   }));
@@ -174,9 +169,6 @@ class TestEnvironment {
     when(mockedUserService.currentProjectId(anything())).thenReturn('project01');
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
-    );
-    when(mockedSFProjectService.onlineCheckLinkSharing(anything())).thenCall(() =>
-      this.setProjectData({ memberProjects: ['project01'] })
     );
     when(mockedTranslocoService.translate<string>(anything())).thenReturn('The project link is invalid.');
     const snapshot = new ActivatedRouteSnapshot();
@@ -293,7 +285,7 @@ class TestEnvironment {
     tick();
   }
 
-  subscribeRealtimeDocs(projectId: string) {
+  subscribeRealtimeDocs(projectId: string): void {
     when(mockedSFProjectService.getUserConfig(projectId, 'user01')).thenCall(() =>
       this.realtimeService.subscribe(
         SFProjectUserConfigDoc.COLLECTION,

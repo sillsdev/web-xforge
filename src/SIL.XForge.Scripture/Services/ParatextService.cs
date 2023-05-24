@@ -2379,9 +2379,11 @@ public class ParatextService : DisposableBase, IParatextService
     )
     {
         string ownerId = note.OwnerRef;
-        displayNames.TryGetValue(ownerId, out string displayName);
         // if the user is a paratext user, keep the note content as is
-        if (string.IsNullOrEmpty(displayName) || ptProjectUsers.TryGetValue(displayName, out _))
+        if (
+            ptProjectUsers.Values.SingleOrDefault(u => u.SFUserId == ownerId) != null
+            || !displayNames.TryGetValue(ownerId, out string displayName)
+        )
             return note.Content;
 
         var contentElem = new XElement("Contents");
@@ -2611,6 +2613,11 @@ public class ParatextService : DisposableBase, IParatextService
         return new TextAnchor { Start = startPos, Length = posJustPastLastCharacter - startPos };
     }
 
+    /// <summary>
+    /// Finds the Paratext user profile on the project based on the username, if it exists.
+    /// If the Paratext user profile does not exist because the user has not logged into SF, create
+    /// a profile for that user.
+    /// </summary>
     private ParatextUserProfile FindOrCreateParatextUser(
         string paratextUsername,
         Dictionary<string, ParatextUserProfile> ptProjectUsers
