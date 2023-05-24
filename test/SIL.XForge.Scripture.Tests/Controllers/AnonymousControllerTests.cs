@@ -1,5 +1,6 @@
 using System;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -58,6 +59,25 @@ public class AnonymousControllerTests
         env.AnonymousService
             .GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
             .Throws(new DataNotFoundException(""));
+
+        // SUT
+        var actual = env.Controller.GenerateAccount(request);
+        Assert.IsInstanceOf<NotFoundObjectResult>(actual.Result);
+    }
+
+    [Test]
+    public void GenerateAccount_NotFound_HttpRequestException()
+    {
+        var env = new TestEnvironment();
+        var request = new GenerateAccountRequest()
+        {
+            ShareKey = "key01",
+            DisplayName = "Test User",
+            Language = "en"
+        };
+        env.AnonymousService
+            .GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
+            .Throws(new HttpRequestException(""));
 
         // SUT
         var actual = env.Controller.GenerateAccount(request);
