@@ -39,15 +39,8 @@ export class FontSizeComponent implements OnInit {
     }
   }
 
-  adjustFontSize($event: Event, direction: '-' | '+'): void {
-    switch (direction) {
-      case '-':
-        this.fontSize -= this.step;
-        break;
-      case '+':
-        this.fontSize += this.step;
-        break;
-    }
+  adjustFontSize($event: Event, direction: 1 | -1): void {
+    this.fontSize += direction * this.step;
     this.enforceBounds();
     this.applySize();
 
