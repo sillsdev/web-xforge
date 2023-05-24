@@ -1057,7 +1057,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private updateReadNotes(threadId: string): void {
-    const noteThread: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(d => d.data?.dataId === threadId);
+    const noteThread: NoteThreadDoc | undefined = this.noteThreadQuery?.docs.find(
+      d => d.data?.dataId === threadId && d.data?.notes.filter(n => !n.deleted).length > 0
+    );
     if (noteThread?.data != null && this.projectUserConfigDoc?.data != null) {
       const notesRead: string[] = [];
       for (const note of noteThread.data.notes) {
@@ -1776,7 +1778,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         nt.data != null &&
         nt.data.verseRef.bookNum === this.bookNum &&
         nt.data.verseRef.chapterNum === this.chapter &&
-        nt.data.notes.length > 0 &&
+        nt.data.notes.filter(n => !n.deleted).length > 0 &&
         nt.data.notes[0].type !== NoteType.Conflict
     );
   }

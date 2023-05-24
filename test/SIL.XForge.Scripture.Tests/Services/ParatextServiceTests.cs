@@ -839,14 +839,16 @@ public class ParatextServiceTests
                 new ThreadComponents
                 {
                     threadNum = 4,
-                    noteCount = 2,
-                    notes = new[] { user1Note, user1NoteNoTag }
+                    noteCount = 3,
+                    notes = new[] { user1Note, user1NoteNoTag, user1NoteNoTag },
+                    deletedNotes = new[] { false, true, false }
                 },
                 new ThreadComponents
                 {
                     threadNum = 5,
-                    noteCount = 1,
-                    notes = new[] { user1Note }
+                    noteCount = 2,
+                    notes = new[] { user1Note, user1NoteNoTag },
+                    deletedNotes = new[] { true, false }
                 },
                 new ThreadComponents
                 {
@@ -885,7 +887,7 @@ public class ParatextServiceTests
                     noteCount = 1,
                     username = env.Username01,
                     notes = new[] { user1Note },
-                    isDeleted = true
+                    deletedNotes = new[] { true }
                 },
                 new ThreadComponents
                 {
@@ -990,7 +992,8 @@ public class ParatextServiceTests
             change04.ThreadChangeToString(),
             Is.EqualTo("Context before Text selected thread4 context after.-MAT 1:4")
         );
-        Assert.That(change04.NoteIdsRemoved, Is.EquivalentTo(new[] { "n2onthread4" }));
+        // only remove the note that is not already marked deleted
+        Assert.That(change04.NoteIdsRemoved, Is.EquivalentTo(new[] { "n3onthread4" }));
 
         // Permanently removed thread
         NoteThreadChange change05 = changes.Where(c => c.ThreadId == "thread5").Single();
@@ -998,7 +1001,7 @@ public class ParatextServiceTests
             change05.ThreadChangeToString(),
             Is.EqualTo("Context before Text selected thread5 context after.-MAT 1:5")
         );
-        Assert.That(change05.ThreadRemoved, Is.True);
+        Assert.That(change05.NoteIdsRemoved, Is.EquivalentTo(new[] { "n2onthread5" }));
 
         // Added conflict comment
         NoteThreadChange change06 = changes.Where(c => c.ThreadId == "thread6").Single();
@@ -1968,7 +1971,7 @@ public class ParatextServiceTests
                     threadNum = 1,
                     noteCount = 1,
                     username = env.Username01,
-                    isDeleted = true
+                    deletedNotes = new[] { true }
                 }
             }
         );
@@ -2003,6 +2006,7 @@ public class ParatextServiceTests
 
         string thread1Id = "thread1";
         string thread2Id = "thread2";
+        string thread3Id = "thread3";
         var thread1Notes = new[]
         {
             new ThreadNoteComponents { ownerRef = env.User01, tagsAdded = new[] { "1" } }
@@ -2027,13 +2031,31 @@ public class ParatextServiceTests
                     noteCount = 1,
                     isNew = true,
                     notes = thread2Notes
+                },
+                new ThreadComponents
+                {
+                    threadNum = 3,
+                    noteCount = 2,
+                    deletedNotes = new[] { false, true }
+                }
+            }
+        );
+        env.AddParatextComments(
+            new[]
+            {
+                new ThreadComponents
+                {
+                    threadNum = 3,
+                    noteCount = 1,
+                    username = env.Username01,
+                    deletedNotes = new[] { false }
                 }
             }
         );
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         CommentThread thread = env.ProjectCommentManager.FindThread(thread1Id);
         Assert.That(thread, Is.Null);
-        string[] noteThreads = new[] { thread1Id, thread2Id };
+        string[] noteThreads = new[] { thread1Id, thread2Id, thread3Id };
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
             conn,
             noteThreads
@@ -2082,6 +2104,9 @@ public class ParatextServiceTests
             + "user05-"
             + "Tag:1";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected));
+        // should not create second comment if the note is marked deleted
+        CommentThread thread3 = env.ProjectCommentManager.FindThread(thread3Id);
+        Assert.That(thread3.Comments.Single(c => c.Contents.InnerText.Contains($"{thread3Id} note 1.")), Is.Not.Null);
         Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01 }));
         IDocument<NoteThread> noteThread1Doc = noteThreadDocs.First(d => d.Data.DataId == thread1Id);
         Assert.That(noteThread1Doc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser01"));
@@ -2300,7 +2325,50 @@ public class ParatextServiceTests
     }
 
     [Test]
-    public async Task UpdateParatextComments_DeletesComment()
+    public async Task UpdateParatextComments_DeleteComment()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        string threadId = "thread1";
+        var components = new ThreadComponents
+        {
+            threadNum = 1,
+            noteCount = 1,
+            username = env.Username01
+        };
+        env.AddParatextComments(new[] { components });
+        components.deletedNotes = new[] { true };
+        env.AddNoteThreadData(new[] { components });
+        CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
+        Assert.That(thread, Is.Not.Null);
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, threadId);
+
+        // One comment is marked deleted, the other is permanently deleted
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
+        {
+            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 }
+        }.ToDictionary(u => u.Username);
+        var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
+            userSecret,
+            paratextId,
+            40,
+            new[] { noteThreadDoc },
+            env.usernames,
+            ptProjectUsers,
+            env.TagCount
+        );
+        Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, updated: 0, deleted: 1)));
+        thread = env.ProjectCommentManager.FindThread(threadId);
+        Assert.That(thread, Is.Null);
+    }
+
+    [Test]
+    public async Task UpdateParatextComments_DoesNotDeleteComment()
     {
         var env = new TestEnvironment();
         var associatedPtUser = new SFParatextUser(env.Username01);
@@ -2315,7 +2383,8 @@ public class ParatextServiceTests
                 {
                     threadNum = 1,
                     noteCount = 1,
-                    username = env.Username01
+                    username = env.Username01,
+                    deletedNotes = new[] { true }
                 }
             }
         );
@@ -2326,7 +2395,8 @@ public class ParatextServiceTests
                 {
                     threadNum = 1,
                     noteCount = 2,
-                    username = env.Username01
+                    username = env.Username01,
+                    deletedNotes = new[] { true, false }
                 }
             }
         );
@@ -2350,7 +2420,7 @@ public class ParatextServiceTests
         );
 
         CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
-        Assert.That(thread.Comments.Count, Is.EqualTo(1));
+        Assert.That(thread.Comments.Count, Is.EqualTo(2));
         var comment = thread.Comments.First();
         string expected =
             "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-"
@@ -2358,16 +2428,28 @@ public class ParatextServiceTests
             + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread1 note 1.</p>-"
             + "Start:15-"
             + "user05-"
+            + "deleted-"
             + "Tag:1";
+        // comment already marked deleted is unchanged
         Assert.That(comment.CommentToString(), Is.EqualTo(expected));
-        Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
+        var comment2 = thread.Comments[1];
+        string expected2 =
+            "thread1/User 01/2019-01-02T08:00:00.0000000+00:00-"
+            + "MAT 1:1-"
+            + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread1 note 2.</p>-"
+            + "Start:15-"
+            + "user05-"
+            + "Tag:1";
+        // comment without a corresponding note is unchanged
+        Assert.That(comment2.CommentToString(), Is.EqualTo(expected2));
+        Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
 
         // PT username is not written to server logs
         env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
     }
 
     [Test]
-    public async Task UpdateParatextComments_DeletesThread()
+    public async Task UpdateParatextComments_DoesNotDeleteThread()
     {
         var env = new TestEnvironment();
         var associatedPtUser = new SFParatextUser(env.Username01);
@@ -2408,7 +2490,7 @@ public class ParatextServiceTests
             env.TagCount
         );
         thread = env.ProjectCommentManager.FindThread(threadId);
-        Assert.That(thread, Is.Null);
+        Assert.That(thread, Is.Not.Null);
     }
 
     [Test]
@@ -3083,7 +3165,7 @@ public class ParatextServiceTests
         public SelectionType alternateText;
         public bool isNew;
         public bool isEdited;
-        public bool isDeleted;
+        public bool[] deletedNotes;
         public bool isConflict;
         public bool appliesToVerse;
         public string reattachedVerseStr;
@@ -4220,7 +4302,7 @@ public class ParatextServiceTests
                         SyncUserRef = comp.isNew ? null : "syncuser01",
                         DateCreated = new DateTime(2019, 1, i, 8, 0, 0, DateTimeKind.Utc),
                         TagId = noteComponent.tagsAdded == null ? null : int.Parse(noteComponent.tagsAdded[0]),
-                        Deleted = comp.isDeleted,
+                        Deleted = comp.deletedNotes != null && comp.deletedNotes[i - 1],
                         Status = noteComponent.status.InternalValue,
                         Assignment = noteComponent.assignedPTUser
                     };
@@ -4427,7 +4509,7 @@ public class ParatextServiceTests
                     contentElem.InnerXml = note.content;
                     comment.Contents = contentElem;
                     comment.Date = date;
-                    comment.Deleted = comp.isDeleted;
+                    comment.Deleted = comp.deletedNotes != null && comp.deletedNotes[i - 1];
                     comment.Status = note.status;
                     if (note.ownerRef != User01 && !comp.isConflict)
                         comment.ExternalUser = note.ownerRef;

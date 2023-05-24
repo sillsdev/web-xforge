@@ -1063,24 +1063,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
             else
             {
                 tasks.Add(SubmitChangesOnNoteThreadDocAsync(threadDoc, change));
-
-                // Record thread metrics and note metrics
-                if (change.ThreadRemoved)
-                {
-                    _syncMetrics.NoteThreads.Deleted++;
-                }
-
                 if (change.ThreadUpdated)
                 {
                     _syncMetrics.NoteThreads.Updated++;
                 }
-
-                _syncMetrics.Notes += new NoteSyncMetricInfo(
-                    added: change.NotesAdded.Count,
-                    deleted: change.NotesDeleted.Count,
-                    updated: change.NotesUpdated.Count,
-                    removed: change.NoteIdsRemoved.Count
-                );
             }
         }
         await Task.WhenAll(tasks);
@@ -1127,12 +1113,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// </summary>
     private async Task SubmitChangesOnNoteThreadDocAsync(IDocument<NoteThread> threadDoc, NoteThreadChange change)
     {
-        if (change.ThreadRemoved)
-        {
-            await threadDoc.DeleteAsync();
-            return;
-        }
-
         await threadDoc.SubmitJson0OpAsync(op =>
         {
             // Update thread details
@@ -1163,6 +1143,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                         op.Set(td => td.Notes[index].Assignment, updated.Assignment);
                     if (threadDoc.Data.Notes[index].AcceptedChangeXml != updated.AcceptedChangeXml)
                         op.Set(td => td.Notes[index].AcceptedChangeXml, updated.AcceptedChangeXml);
+                    _syncMetrics.Notes.Updated++;
                 }
                 else
                 {
@@ -1179,6 +1160,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 {
                     // The note can be easily removed by using op.Remove if that is preferred
                     op.Set(td => td.Notes[index].Deleted, true);
+                    _syncMetrics.Notes.Deleted++;
                 }
                 else
                 {
@@ -1200,6 +1182,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
                 added.OwnerRef = string.IsNullOrEmpty(paratextUser?.SFUserId) ? _userSecret.Id : paratextUser?.SFUserId;
                 op.Add(td => td.Notes, added);
+                _syncMetrics.Notes.Added++;
             }
 
             // Permanently removes a note
@@ -1207,7 +1190,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
             {
                 int index = threadDoc.Data.Notes.FindIndex(n => n.DataId == removedId);
                 if (index >= 0)
+                {
                     op.Remove(td => td.Notes, index);
+                    _syncMetrics.Notes.Removed++;
+                }
             }
 
             if (change.Position != null)
