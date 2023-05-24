@@ -329,17 +329,7 @@ public class ParatextSyncRunnerTests
 
         await env.ParatextService
             .DidNotReceive()
-            .PutBookText(Arg.Any<UserSecret>(), "target", 40, Arg.Any<XDocument>());
-        await env.ParatextService
-            .DidNotReceive()
-            .PutBookText(Arg.Any<UserSecret>(), "target", 41, Arg.Any<XDocument>());
-
-        await env.ParatextService
-            .DidNotReceive()
-            .PutBookText(Arg.Any<UserSecret>(), "source", 40, Arg.Any<XDocument>());
-        await env.ParatextService
-            .DidNotReceive()
-            .PutBookText(Arg.Any<UserSecret>(), "source", 41, Arg.Any<XDocument>());
+            .PutBookText(Arg.Any<UserSecret>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<XDocument>());
 
         var delta = Delta.New().InsertText("text");
         Assert.That(env.GetText("project01", "MAT", 1).DeepEquals(delta), Is.True);

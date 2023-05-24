@@ -1,14 +1,14 @@
 /*
  * Paratext Repository Information Tool
  *
- * Usage: REPOINFO [CSV] projectpath
+ * Usage: dotnet run [CSV] projectpath
  *
  * Examples:
  *  - Display the repository information in the console:
- *      REPOINFO /var/lib/scriptureforge/sync/59e59e2dce4bb5c863c683c0c4647008dd9767d4
+ *      dotnet run /var/lib/scriptureforge/sync/59e59e2dce4bb5c863c683c0c4647008dd9767d4/target
  *
  *  - Output the repository information as a CSV file:
- *      REPOINFO CSV C:\My Paratext 9 Projects\ABC > output.csv
+ *      dotnet run CSV C:\My Paratext 9 Projects\ABC > output.csv
  *
  * Notes:
  *  - The Class column corresponds to how I classify the commit for sync in Scripture Forge
@@ -33,6 +33,8 @@ using Paratext.Data.ProjectSettingsAccess;
 using Paratext.Data;
 using SIL.Scripture;
 using SIL.XForge.Scripture.Services;
+
+#nullable enable
 
 // Get the project path, and CSV from the command line arguments
 // Allow the arguments to be in any order

@@ -628,7 +628,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
             int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
             if (!syncResults.UpdateBook(bookNum) && textIndex > -1)
             {
-                // Update hasSource, as our source may have changed
+                // Update hasSource, as the earlier sync of the source project may have added or removed a book that is
+                // already in the target project and not updated in this sync of the target project.
                 LogMetric("Updating project metadata");
                 await _projectDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Texts[textIndex].HasSource, hasSource));
             }

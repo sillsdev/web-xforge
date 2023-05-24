@@ -44,6 +44,10 @@ public class ParatextSyncResults
     /// </summary>
     /// <param name="bookNum">The book number.</param>
     /// <returns><c>true</c> if the book should be updated; otherwise, <c>false</c>.</returns>
+    /// <remarks>
+    /// This will return <c>true</c> for resources, as resource updates are calculated via
+    /// <see cref="Services.ParatextService.ResourceDocsNeedUpdating"/>, and not the Mercurial log.
+    /// </remarks>
     public bool UpdateBook(int bookNum) => ProjectChanged || IsResource || Books.Contains(bookNum);
 
     /// <summary>
