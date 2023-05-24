@@ -1,154 +1,241 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { Component, DebugElement, ElementRef, ViewChild } from '@angular/core';
-import { By } from '@angular/platform-browser';
+import { HarnessLoader } from '@angular/cdk/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { MatButtonHarness } from '@angular/material/button/testing';
+import { MatMenuHarness } from '@angular/material/menu/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { FontSizeComponent } from './font-size.component';
 
 describe('FontSizeComponent', () => {
+  let component: FontSizeComponent;
+  let fixture: ComponentFixture<FontSizeComponent>;
+  let loader: HarnessLoader;
+
+  const getMenuTrigger = function (): Promise<MatButtonHarness> {
+    return loader.getHarness(MatButtonHarness.with({ selector: '.font-size-menu-trigger' }));
+  };
+
+  const getMenu = function (): Promise<MatMenuHarness> {
+    return loader.getHarness(MatMenuHarness.with({ selector: '.font-size-menu-trigger' }));
+  };
+
+  const getDecreaseButton = function (menu: MatMenuHarness): Promise<MatButtonHarness> {
+    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group > button:nth-of-type(1)' }));
+  };
+
+  const getIncreaseButton = function (menu: MatMenuHarness): Promise<MatButtonHarness> {
+    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group > button:nth-of-type(2)' }));
+  };
+
+  beforeEach(waitForAsync(() => {
+    TestBed.configureTestingModule({
+      imports: [UICommonModule, NoopAnimationsModule],
+      declarations: [FontSizeComponent]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(FontSizeComponent);
+    component = fixture.componentInstance;
+    loader = TestbedHarnessEnvironment.loader(fixture);
+  }));
+
   it('should create', () => {
-    const template =
-      '<app-font-size (apply)="applyFontChange($event)"></app-font-size><div #container>Lorem ipsum dolor sit .</div>';
-    const env = new TestEnvironment(template);
-    expect(env.fixture.componentInstance).toBeTruthy();
+    expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('can increase font', () => {
-    const template = `
-      <app-font-size (apply)="applyFontChange($event)"></app-font-size>
-      <div id="container" #container>Lorem ipsum dolor sit amet.</div>
-    `;
-    const env = new TestEnvironment(template);
-    env.clickButton(env.toggleSelectorButton);
-    const fontSize = env.fontSize;
-    env.clickButton(env.increaseButton);
-    const newFontSize = env.fontSize;
-    expect(newFontSize).toBeGreaterThan(fontSize);
+  it('should open the mat-menu when the button is clicked', async () => {
+    const button = await getMenuTrigger();
+    expect(button).toBeTruthy();
+    await button.click();
+
+    const menu = await loader.getHarness(MatMenuHarness);
+    expect(menu).toBeTruthy();
+
+    const isOpen = await menu.isOpen();
+    expect(isOpen).toBe(true);
+
+    const items = await menu.getItems();
+    expect(items.length).toBeGreaterThan(0);
   });
 
-  it('can decrease font', () => {
-    const template = `
-      <app-font-size (apply)="applyFontChange($event)"></app-font-size>
-      <div id="container" #container>Lorem ipsum dolor sit amet.</div>
-    `;
-    const env = new TestEnvironment(template);
-    env.clickButton(env.toggleSelectorButton);
-    const fontSize = env.fontSize;
-    env.clickButton(env.increaseButton);
-    let newFontSize = env.fontSize;
-    expect(newFontSize).toBeGreaterThan(fontSize);
-    env.clickButton(env.decreaseButton);
-    newFontSize = env.fontSize;
-    expect(newFontSize).toEqual(fontSize);
+  it('can decrease font', async () => {
+    component.initial = component.max;
+    component.ngOnInit();
+    const initialFontSize = component.fontSize;
+
+    const menu = await getMenu();
+    await menu.open();
+
+    const decreaseFontButton = await getDecreaseButton(menu);
+    expect(decreaseFontButton).toBeTruthy();
+
+    await decreaseFontButton.click();
+
+    const newFontSize = component.fontSize;
+    expect(newFontSize).toBeLessThan(initialFontSize);
   });
 
-  it('check disabled states', () => {
-    const template = `
-      <app-font-size (apply)="applyFontChange($event)"></app-font-size>
-      <div id="container" #container>Lorem ipsum dolor sit amet.</div>
-    `;
-    const env = new TestEnvironment(template);
-    env.clickButton(env.toggleSelectorButton);
-    expect(env.decreaseButton.nativeElement.disabled).toBe(true);
-    for (let i: number = 0; i < 30; i++) {
-      env.clickButton(env.increaseButton);
+  it('can increase font', async () => {
+    component.initial = component.min;
+    component.ngOnInit();
+    const initialFontSize = component.fontSize;
+
+    const menu = await getMenu();
+    await menu.open();
+
+    const increaseFontButton = await getIncreaseButton(menu);
+
+    expect(increaseFontButton).toBeTruthy();
+
+    await increaseFontButton.click();
+    const newFontSize = component.fontSize;
+    expect(newFontSize).toBeGreaterThan(initialFontSize);
+  });
+
+  it('can set disabled states', async () => {
+    const menu = await getMenu();
+    await menu.open();
+
+    const decreaseFontButton = await getDecreaseButton(menu);
+    const increaseFontButton = await getIncreaseButton(menu);
+
+    component.initial = component.min;
+    component.ngOnInit();
+    expect(await decreaseFontButton.isDisabled()).toBeTrue();
+
+    await increaseFontButton.click();
+    expect(await decreaseFontButton.isDisabled()).toBeFalse();
+
+    await decreaseFontButton.click();
+    expect(component.fontSize).toEqual(component.min);
+    expect(await decreaseFontButton.isDisabled()).toBeTrue();
+
+    component.initial = component.max;
+    component.ngOnInit();
+    expect(await increaseFontButton.isDisabled()).toBeTrue();
+
+    await decreaseFontButton.click();
+    expect(await increaseFontButton.isDisabled()).toBeFalse();
+
+    await increaseFontButton.click();
+    expect(component.fontSize).toEqual(component.max);
+    expect(await increaseFontButton.isDisabled()).toBeTrue();
+  });
+
+  it('can set [min] attribute > default min', async () => {
+    const menu = await getMenu();
+    await menu.open();
+
+    const decreaseFontButton = await getDecreaseButton(menu);
+
+    const min = 2;
+    component.min = min;
+    component.ngOnInit();
+    expect(component.fontSize).toEqual(min);
+    expect(await decreaseFontButton.isDisabled()).toBeTrue();
+  });
+
+  it('can set [min] attribute < default min', async () => {
+    const menu = await getMenu();
+    await menu.open();
+
+    const decreaseFontButton = await getDecreaseButton(menu);
+
+    const min = 0.5;
+    component.min = min;
+    component.ngOnInit();
+    expect(component.fontSize).toEqual(component.initial);
+    expect(component.fontSize).toBeGreaterThan(min);
+    expect(await decreaseFontButton.isDisabled()).toBeFalse();
+  });
+
+  it('can set [max] attribute > initial < default max', async () => {
+    const menu = await getMenu();
+    await menu.open();
+
+    const increaseFontButton = await getIncreaseButton(menu);
+
+    const max = 2;
+    component.max = max;
+    component.initial = 1;
+    component.ngOnInit();
+    expect(await increaseFontButton.isDisabled()).toBeFalse();
+    for (let i = component.initial; i < max; i += component.step) {
+      await increaseFontButton.click();
     }
-    expect(env.decreaseButton.nativeElement.disabled).toBe(false);
-    expect(env.increaseButton.nativeElement.disabled).toBe(true);
+    expect(component.fontSize).toEqual(component.max);
+    expect(await increaseFontButton.isDisabled()).toBeTrue();
   });
 
-  it('check min attribute - greater than default size', () => {
-    const template = `
-      <app-font-size (apply)="applyFontChange($event)" [min]="2"></app-font-size>
-      <div id="container" #container>Lorem ipsum dolor sit amet.</div>
-    `;
-    const env = new TestEnvironment(template);
-    env.clickButton(env.toggleSelectorButton);
-    const fontSize = env.fontSize;
-    expect(fontSize).toBe(2);
-    expect(env.decreaseButton.nativeElement.disabled).toBe(true);
-  });
+  it('can set [max] attribute > initial > default max', async () => {
+    const menu = await getMenu();
+    await menu.open();
 
-  it('check min attribute - less than default size', () => {
-    const template = `
-      <app-font-size (apply)="applyFontChange($event)" [min]="0.5"></app-font-size>
-      <div id="container" #container>Lorem ipsum dolor sit amet.</div>
-    `;
-    const env = new TestEnvironment(template);
-    env.clickButton(env.toggleSelectorButton);
-    const fontSize = env.fontSize;
-    expect(fontSize).toBe(1);
-    expect(env.decreaseButton.nativeElement.disabled).toBe(false);
-  });
+    const increaseFontButton = await getIncreaseButton(menu);
 
-  it('check max attribute - greater than default size', () => {
-    const template = `
-      <app-font-size (apply)="applyFontChange($event)" [max]="1.5"></app-font-size>
-      <div id="container" #container>Lorem ipsum dolor sit amet.</div>
-    `;
-    const env = new TestEnvironment(template);
-    env.clickButton(env.toggleSelectorButton);
-    for (let i: number = 0; i < 5; i++) {
-      env.clickButton(env.increaseButton);
+    const max = 5;
+    component.max = max;
+    component.initial = 1;
+    component.ngOnInit();
+    expect(await increaseFontButton.isDisabled()).toBeFalse();
+    for (let i = component.initial; i < max; i += component.step) {
+      await increaseFontButton.click();
     }
-    const fontSize = env.fontSize;
-    expect(fontSize).toBe(1.5);
-    expect(env.increaseButton.nativeElement.disabled).toBe(true);
+    expect(component.fontSize).toEqual(component.max);
+    expect(await increaseFontButton.isDisabled()).toBeTrue();
   });
 
-  it('check max attribute - less than default size', () => {
-    const template = `
-      <app-font-size (apply)="applyFontChange($event)" [max]="0.5"></app-font-size>
-      <div id="container" #container>Lorem ipsum dolor sit amet.</div>
-    `;
+  it('can handle [max] attribute < initial', async () => {
+    const menu = await getMenu();
+    await menu.open();
+
+    const increaseFontButton = await getIncreaseButton(menu);
+
+    component.min = 1;
+    component.max = 1.5;
+    component.initial = 2;
+    component.ngOnInit();
+    expect(await increaseFontButton.isDisabled()).toBeTrue();
+    expect(component.fontSize).toEqual(component.max);
+  });
+
+  it('can handle [min] attribute > initial', async () => {
+    const menu = await getMenu();
+    await menu.open();
+
+    const decreaseFontButton = await getDecreaseButton(menu);
+
+    component.min = 2;
+    component.max = 3;
+    component.initial = 1;
+    component.ngOnInit();
+    expect(await decreaseFontButton.isDisabled()).toBeTrue();
+    expect(component.fontSize).toEqual(component.min);
+  });
+
+  it('handles invalid min max range', async () => {
+    component.min = component.max + 1;
     expect(() => {
-      const env = new TestEnvironment(template);
-      env.clickButton(env.toggleSelectorButton);
-    }).toThrow(new RangeError('min (1) can not be larger than max (0.5)'));
+      component.ngOnInit();
+    }).toThrow(new RangeError(`min (${component.min}) can not be larger than max (${component.max})`));
+  });
+
+  it('should emit "apply" when font size is changed', async () => {
+    component.min = 1;
+    component.max = 3;
+    component.initial = 1;
+    component.ngOnInit();
+
+    const spy = jasmine.createSpy('apply');
+    component.apply.subscribe(spy);
+
+    const menu = await getMenu();
+    await menu.open();
+
+    const increaseFontButton = await getIncreaseButton(menu);
+    await increaseFontButton.click();
+
+    expect(component.fontSize).toBeGreaterThan(component.initial);
+    expect(spy).toHaveBeenCalledWith(`${component.fontSize}rem`);
   });
 });
-
-@Component({ selector: 'app-host', template: '' })
-class HostComponent {
-  @ViewChild('container', { static: true }) container!: ElementRef;
-
-  applyFontChange($event: string) {
-    this.container.nativeElement.style.fontSize = $event;
-  }
-}
-
-class TestEnvironment {
-  readonly fixture: ComponentFixture<HostComponent>;
-
-  constructor(template: string) {
-    TestBed.configureTestingModule({
-      declarations: [HostComponent, FontSizeComponent],
-      imports: [UICommonModule]
-    });
-
-    TestBed.overrideComponent(HostComponent, { set: { template } });
-    this.fixture = TestBed.createComponent(HostComponent);
-    this.fixture.detectChanges();
-  }
-
-  clickButton(button: DebugElement): void {
-    button.nativeElement.click();
-    this.fixture.detectChanges();
-  }
-
-  get toggleSelectorButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#font-size-toggle'));
-  }
-
-  get increaseButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('mdc-menu-surface button:last-child'));
-  }
-
-  get decreaseButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('mdc-menu-surface button:first-child'));
-  }
-
-  get fontSize(): number {
-    return parseFloat(this.fixture.debugElement.query(By.css('#container')).nativeElement.style.fontSize);
-  }
-}
