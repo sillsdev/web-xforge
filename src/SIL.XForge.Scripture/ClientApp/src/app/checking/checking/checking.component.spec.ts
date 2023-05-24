@@ -51,6 +51,10 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
+import { HarnessLoader } from '@angular/cdk/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { MatMenuHarness } from '@angular/material/menu/testing';
+import { MatButtonHarness } from '@angular/material/button/testing';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -1582,14 +1586,15 @@ describe('CheckingComponent', () => {
   });
 
   describe('Text', () => {
-    it('can increase and decrease font size', fakeAsync(() => {
+    it('can increase and decrease font size', fakeAsync(async () => {
       const env = new TestEnvironment(ADMIN_USER);
       const editor = env.quillEditor;
       expect(editor.style.fontSize).toBe('1rem');
-      env.clickButton(env.increaseFontSizeButton);
+      await (await env.getIncreaseFontSizeButton()).click();
       expect(editor.style.fontSize).toBe('1.1rem');
-      env.clickButton(env.decreaseFontSizeButton);
+      await (await env.getDecreaseFontSizeButton()).click();
       expect(editor.style.fontSize).toBe('1rem');
+      await (await env.getFontSizeMenu()).close();
     }));
 
     it('can select a question from the text', fakeAsync(() => {
@@ -1647,6 +1652,7 @@ interface UserInfo {
 class TestEnvironment {
   readonly component: CheckingComponent;
   readonly fixture: ComponentFixture<CheckingComponent>;
+  readonly loader: HarnessLoader;
   readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   readonly mockedAnsweredDialogRef = mock<MdcDialogRef<QuestionAnsweredDialogComponent>>(MdcDialogRef);
@@ -1800,6 +1806,7 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
     this.location = TestBed.inject(Location);
     this.router = TestBed.inject(Router);
+    this.loader = TestbedHarnessEnvironment.loader(this.fixture);
     // Need to wait for questions, text promises, and slider position calculations to finish
     this.fixture.detectChanges();
     tick(1);
@@ -1863,16 +1870,24 @@ class TestEnvironment {
     return -1;
   }
 
-  get decreaseFontSizeButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('app-font-size mdc-menu-surface button:first-child'));
+  async getFontSizeMenu(): Promise<MatMenuHarness> {
+    return this.loader.getHarness(MatMenuHarness.with({ selector: '.font-size-menu-trigger' }));
+  }
+
+  async getDecreaseFontSizeButton(): Promise<MatButtonHarness> {
+    const menu = await this.getFontSizeMenu();
+    await menu.open();
+    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group > button:nth-of-type(1)' }));
+  }
+
+  async getIncreaseFontSizeButton(): Promise<MatButtonHarness> {
+    const menu = await this.getFontSizeMenu();
+    await menu.open();
+    return menu.getHarness(MatButtonHarness.with({ selector: '.button-group > button:nth-of-type(2)' }));
   }
 
   get editQuestionButton(): DebugElement {
     return this.answerPanel.query(By.css('.edit-question-button'));
-  }
-
-  get increaseFontSizeButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('app-font-size mdc-menu-surface button:last-child'));
   }
 
   get likeButtons(): DebugElement[] {
