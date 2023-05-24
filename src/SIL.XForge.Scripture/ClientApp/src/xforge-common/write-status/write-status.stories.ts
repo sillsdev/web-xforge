@@ -2,7 +2,7 @@ import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { CommonModule } from '@angular/common';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { Component, Input } from '@angular/core';
-import { UntypedFormGroup } from '@angular/forms';
+import { FormGroup } from '@angular/forms';
 import { ElementState } from '../models/element-state';
 import { WriteStatusComponent } from './write-status.component';
 
@@ -14,7 +14,7 @@ import { WriteStatusComponent } from './write-status.component';
 })
 class WriteStatusTestComponent {
   @Input() state?: ElementState;
-  formGroup?: UntypedFormGroup = new UntypedFormGroup({});
+  formGroup?: FormGroup = new FormGroup({});
 }
 
 const meta: Meta<WriteStatusComponent> = {

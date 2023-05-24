@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ElementState } from '../models/element-state';
 import { configureTestingModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
@@ -67,8 +67,8 @@ class TestEnvironment {
   template: `<app-write-status id="test-status" [state]="controlState" [formGroup]="testForm"></app-write-status>`
 })
 class TestHostComponent {
-  testForm: UntypedFormGroup = new UntypedFormGroup({
-    controlOne: new UntypedFormControl('controlOneValue', Validators.required)
+  testForm: FormGroup = new FormGroup({
+    controlOne: new FormControl('controlOneValue', Validators.required)
   });
   controlState: ElementState = ElementState.InSync;
 }
