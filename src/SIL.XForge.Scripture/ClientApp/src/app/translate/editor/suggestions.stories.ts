@@ -1,4 +1,6 @@
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
+import { within } from '@storybook/testing-library';
+import { expect } from '@storybook/jest';
 import { CommonModule } from '@angular/common';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SuggestionsComponent } from './suggestions.component';
@@ -31,5 +33,17 @@ export const Loading: Story = {
   args: {
     ...Default.args,
     suggestions: []
+  }
+};
+
+export const DefaultHasFirstSelected: Story = {
+  args: {
+    ...Default.args
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const options = canvas.getAllByRole('option');
+    expect(options[0].getAttribute('aria-selected')).toBe('true');
+    expect(options[1].getAttribute('aria-selected')).toBe('false');
   }
 };
