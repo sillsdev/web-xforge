@@ -5,4 +5,4 @@
   aria-label="Update in progress"
 ></mat-spinner>
 <mat-icon *ngIf="state === ElementState.Submitted && !formGroup?.errors" class="check-icon">done</mat-icon>
-<mat-icon *ngIf="state === ElementState.Error && !formGroup?.errors" class="error-icon" color="warn">error</mat-icon>
+<mat-icon *ngIf="state === ElementState.Error && !formGroup?.errors" class="error-icon" color="error">error</mat-icon>
