@@ -1,6 +1,7 @@
 import { Connection, Doc } from 'sharedb/lib/client';
 import { createFetchQuery, docSubmitJson0Op } from '../../common/utils/sharedb-utils';
 import { OwnedData } from '../../common/models/owned-data';
+import { ValidationSchema } from '../../common/models/validation-schema';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { ANY_INDEX } from '../../common/utils/obj-path';
 import { NoteThread, NOTE_THREAD_COLLECTION, NOTE_THREAD_INDEX_PATHS } from '../models/note-thread';
@@ -15,6 +16,162 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
 
   protected readonly indexPaths = NOTE_THREAD_INDEX_PATHS;
   protected readonly listenForUpdates = true;
+  readonly validationSchema: ValidationSchema = {
+    bsonType: 'object',
+    required: ['_id', '_v', '_m', '_o', '_type'],
+    properties: {
+      _id: {
+        bsonType: 'string',
+        pattern: '[a-z0-9]+:[a-z0-9]+'
+      },
+      dataId: {
+        bsonType: 'string',
+        pattern: '[a-z0-9]+'
+      },
+      verseRef: {
+        bsonType: 'object',
+        required: ['bookNum', 'chapterNum', 'verseNum'],
+        properties: {
+          bookNum: {
+            bsonType: 'int'
+          },
+          chapterNum: {
+            bsonType: 'int'
+          },
+          verseNum: {
+            bsonType: 'int'
+          },
+          verse: {
+            bsonType: 'string'
+          }
+        },
+        additionalProperties: false
+      },
+      notes: {
+        bsonType: 'array',
+        items: {
+          bsonType: 'object',
+          required: ['threadId', 'type', 'deleted', 'status', 'dataId', 'dateModified', 'dateCreated'],
+          properties: {
+            threadId: {
+              bsonType: 'string',
+              pattern: '[a-z0-9]+'
+            },
+            type: {
+              bsonType: 'string'
+            },
+            conflictType: {
+              bsonType: 'string'
+            },
+            deleted: {
+              bsonType: 'bool'
+            },
+            status: {
+              enum: ['', 'todo', 'done', 'deleted']
+            },
+            tagId: {
+              bsonType: 'number'
+            },
+            reattached: {
+              bsonType: 'string'
+            },
+            assignment: {
+              bsonType: 'string'
+            },
+            content: {
+              bsonType: 'string'
+            },
+            acceptedChangeXml: {
+              bsonType: 'string'
+            },
+            dataId: {
+              bsonType: 'string',
+              pattern: '[a-z0-9]+'
+            },
+            syncUserRef: {
+              bsonType: 'string'
+            },
+            text: {
+              bsonType: 'string'
+            },
+            dateModified: {
+              bsonType: 'string'
+            },
+            dateCreated: {
+              bsonType: 'string'
+            },
+            ownerRef: {
+              bsonType: 'string',
+              pattern: '[a-z0-9]?'
+            }
+          },
+          additionalProperties: false
+        }
+      },
+      originalSelectedText: {
+        bsonType: 'string'
+      },
+      originalContextBefore: {
+        bsonType: 'string'
+      },
+      originalContextAfter: {
+        bsonType: 'string'
+      },
+      position: {
+        bsonType: 'object',
+        required: ['start', 'length'],
+        properties: {
+          start: {
+            bsonType: 'int'
+          },
+          length: {
+            bsonType: 'int'
+          }
+        },
+        additionalProperties: false
+      },
+      status: {
+        enum: ['', 'todo', 'done', 'deleted']
+      },
+      publishedToSF: {
+        bsonType: 'bool'
+      },
+      assignment: {
+        bsonType: 'string'
+      },
+      projectRef: {
+        bsonType: 'string',
+        pattern: '[a-z0-9]+'
+      },
+      ownerRef: {
+        bsonType: 'string',
+        pattern: '[a-z0-9]?'
+      },
+      _type: {
+        bsonType: ['null', 'string']
+      },
+      _v: {
+        bsonType: 'int'
+      },
+      _m: {
+        bsonType: 'object',
+        required: ['ctime', 'mtime'],
+        properties: {
+          ctime: {
+            bsonType: 'double'
+          },
+          mtime: {
+            bsonType: 'double'
+          }
+        },
+        additionalProperties: false
+      },
+      _o: {
+        bsonType: 'objectId'
+      }
+    },
+    additionalProperties: false
+  };
 
   constructor() {
     super(NOTE_THREAD_MIGRATIONS);

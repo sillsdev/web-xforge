@@ -10,7 +10,8 @@ public class RealtimeOptions
 {
     public string AppModuleName { get; set; }
     public int Port { get; set; }
-    public bool MigrationsDisabled = false;
+    public bool MigrationsDisabled { get; set; } = false;
+    public bool DataValidationDisabled { get; set; } = false;
     public DocConfig UserDoc { get; set; } = new DocConfig("users", typeof(User));
     public DocConfig ProjectDoc { get; set; }
 

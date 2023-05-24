@@ -36,6 +36,7 @@ class TestEnvironment {
     this.server = new RealtimeServer(
       'TEST',
       false,
+      false,
       [new SFProjectUserConfigService()],
       SF_PROJECT_USER_CONFIGS_COLLECTION,
       this.db,

@@ -1,3 +1,4 @@
+import { Db } from 'mongodb';
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { Doc, Op } from 'sharedb/lib/client';
@@ -141,6 +142,49 @@ describe('RealtimeServer', () => {
     const project = await env.server.getProject('project02');
     expect(project?.name).toEqual('Project 02');
   });
+
+  it('data validation stops invalid ops', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const userConn = clientConnect(env.server, 'user01');
+    await expect(
+      submitOp(userConn, USERS_COLLECTION, 'user01', [
+        {
+          p: ['this_property_does_not_exist'],
+          oi: 'invalid data'
+        }
+      ])
+    ).rejects.toThrow('Invalid path for operation.');
+  });
+
+  it('disabling data validation stops invalid ops', async () => {
+    const env = new TestEnvironment(false, true);
+    await env.createData();
+
+    const userConn = clientConnect(env.server, 'user01');
+    await submitOp(userConn, USERS_COLLECTION, 'user01', [
+      {
+        p: ['this_property_does_not_exist'],
+        oi: 'invalid data'
+      }
+    ]);
+  });
+
+  it('validation schemas are loaded for every doc service', async () => {
+    const env = new TestEnvironment();
+    await env.server.addValidationSchema(env.mongo);
+    verify(env.mockedProjectService.addValidationSchema(env.mongo)).once();
+    verify(env.mockedUserService.addValidationSchema(env.mongo)).once();
+  });
+
+  it('indexes are created for every doc service', async () => {
+    const env = new TestEnvironment();
+    await env.server.createIndexes(env.mongo);
+    verify(env.mockedSchemaVersionRepository.createIndex()).once();
+    verify(env.mockedProjectService.createIndexes(env.mongo)).once();
+    verify(env.mockedUserService.createIndexes(env.mongo)).once();
+  });
 });
 
 class TestEnvironment {
@@ -148,19 +192,23 @@ class TestEnvironment {
   readonly mockedProjectService = mock(ProjectService);
   readonly db: ShareDBMingo;
   readonly mockedSchemaVersionRepository = mock(SchemaVersionRepository);
+  readonly mongo = mock(Db);
   readonly server: RealtimeServer;
 
-  constructor(migrationsDisabled = false) {
+  constructor(migrationsDisabled = false, dataValidationDisabled = false) {
     const ShareDBMingoType = MetadataDB(ShareDBMingo.extendMemoryDB(ShareDB.MemoryDB));
     this.db = new ShareDBMingoType();
     when(this.mockedSchemaVersionRepository.getAll()).thenResolve([
       { _id: PROJECTS_COLLECTION, collection: PROJECTS_COLLECTION, version: 1 }
     ]);
     when(this.mockedUserService.collection).thenReturn(USERS_COLLECTION);
+    const userService = new UserService();
+    when(this.mockedUserService.validationSchema).thenReturn(userService.validationSchema);
     when(this.mockedProjectService.collection).thenReturn(PROJECTS_COLLECTION);
     this.server = new RealtimeServer(
       'TEST',
       migrationsDisabled,
+      dataValidationDisabled,
       [instance(this.mockedUserService), instance(this.mockedProjectService)],
       PROJECTS_COLLECTION,
       this.db,

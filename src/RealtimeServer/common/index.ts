@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MongoClient } from 'mongodb';
 import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
@@ -34,6 +33,7 @@ interface RealtimeServerOptions {
   bugsnagApiKey: string;
   releaseStage: string;
   migrationsDisabled: boolean;
+  dataValidationDisabled: boolean;
   siteId: string;
   version: string;
 }
@@ -68,10 +68,12 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
     server = new RealtimeServerType(
       options.siteId,
       options.migrationsDisabled,
+      options.dataValidationDisabled,
       new DBType(callback => callback(null, client)),
       new SchemaVersionRepository(db)
     );
     await server.createIndexes(db);
+    await server.addValidationSchema(db);
 
     streamListener = new WebSocketStreamListener(
       options.audience,

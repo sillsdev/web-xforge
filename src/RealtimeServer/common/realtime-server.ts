@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Db } from 'mongodb';
 import ShareDB from 'sharedb';
 import shareDBAccess from 'sharedb-access';
 import { Connection, Doc, Op, RawOp } from 'sharedb/lib/client';
 import { ConnectSession } from './connect-session';
 import { Project } from './models/project';
+import { ValidationSchema } from './models/validation-schema';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { DocService } from './services/doc-service';
 import { createFetchQuery, docFetch } from './utils/sharedb-utils';
@@ -15,6 +15,7 @@ export const XF_ROLE_CLAIM = 'http://xforge.org/role';
 export type RealtimeServerConstructor = new (
   siteId: string,
   migrationsDisabled: boolean,
+  dataValidationDisabled: boolean,
   db: ShareDB.DB,
   schemaVersions: SchemaVersionRepository
 ) => RealtimeServer;
@@ -121,6 +122,7 @@ export class RealtimeServer extends ShareDB {
   constructor(
     private readonly siteId: string,
     readonly migrationsDisabled: boolean,
+    readonly dataValidationDisabled: boolean,
     docServices: DocService[],
     private readonly projectsCollection: string,
     db: ShareDB.DB,
@@ -152,6 +154,44 @@ export class RealtimeServer extends ShareDB {
         context.op.m.migration = context.op.mv;
         delete context.op.mv;
       }
+
+      // Perform data validation, if enabled and we are not migrating an operation
+      const validationSchema: ValidationSchema | undefined = this.docServices.get(context.collection)?.validationSchema;
+      if (
+        !this.dataValidationDisabled &&
+        validationSchema != null &&
+        context.op.op != null &&
+        context.op.m.migration == null
+      ) {
+        // Iterate over every operation
+        for (const op of context.op.op) {
+          // Skip blank operations
+          if (op.p == null) {
+            continue;
+          }
+          let properties = validationSchema.properties;
+          // For each property name in the path array
+          for (let i = 0; i < op.p.length; i++) {
+            const propertyName = op.p[i];
+            // If we have a valid property in our schema matching the current path
+            if (typeof propertyName === 'string' && properties != undefined && properties[propertyName] !== undefined) {
+              // If this property has more properties, set the properties to use with the next property name in the path
+              if (properties[propertyName].properties !== undefined) {
+                properties = properties[propertyName].properties;
+              } else if (properties[propertyName].items !== undefined) {
+                // This is an array - skip the indexer
+                properties = properties[propertyName].items?.properties;
+                i++;
+              }
+              // TODO: Check type via bsonType
+              // TODO: Check for enum values
+              // TODO: Check for correct list ops for collections
+            } else {
+              done(new Error('Invalid path for operation.'));
+            }
+          }
+        }
+      }
       done();
     });
 
@@ -176,6 +216,12 @@ export class RealtimeServer extends ShareDB {
     });
 
     this.defaultConnection = this.connect();
+  }
+
+  async addValidationSchema(db: Db): Promise<void> {
+    for (const docService of this.docServices.values()) {
+      await docService.addValidationSchema(db);
+    }
   }
 
   async createIndexes(db: Db): Promise<void> {

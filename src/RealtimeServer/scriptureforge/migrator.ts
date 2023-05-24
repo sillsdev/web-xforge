@@ -58,6 +58,7 @@ async function runMigrations() {
       new SchemaVersionRepository(db)
     );
     await server.createIndexes(db);
+    await server.addValidationSchema(db);
     await server.migrateIfNecessary();
   } finally {
     server?.close();

@@ -56,6 +56,7 @@ class TestEnvironment {
     this.server = new RealtimeServer(
       'TEST',
       false,
+      false,
       [new NoteThreadService()],
       NOTE_THREAD_COLLECTION,
       this.db,

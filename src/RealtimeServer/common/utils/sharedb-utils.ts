@@ -27,6 +27,9 @@ export function docCreate(doc: Doc, data: any, type?: OTType): Promise<void> {
 
 export function docSubmitOp(doc: Doc, components: any): Promise<void> {
   return new Promise<void>((resolve, reject) => {
+    if (!Array.isArray(components)) {
+      components = [components];
+    }
     doc.submitOp(components, undefined, err => {
       if (err != null) {
         reject(err);

@@ -224,6 +224,7 @@ class TestEnvironment {
     this.server = new RealtimeServer(
       'TEST',
       false,
+      false,
       [new SFProjectService(SF_PROJECT_MIGRATIONS.filter(m => m.VERSION <= endVersion))],
       SF_PROJECTS_COLLECTION,
       this.db,

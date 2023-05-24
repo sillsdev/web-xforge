@@ -1,6 +1,7 @@
+import { Db } from 'mongodb';
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
-import { instance, mock } from 'ts-mockito';
+import { anything, instance, mock, objectContaining, verify } from 'ts-mockito';
 import { SystemRole } from '../models/system-role';
 import { User, USERS_COLLECTION, USER_PROFILES_COLLECTION } from '../models/user';
 import { RealtimeServer } from '../realtime-server';
@@ -84,12 +85,28 @@ describe('UserService', () => {
       submitJson0Op<User>(conn, USERS_COLLECTION, 'user02', ops => ops.set<string>(u => u.role, SystemRole.SystemAdmin))
     ).rejects.toThrow();
   });
+
+  it('adds the validation schema', async () => {
+    const env = new TestEnvironment();
+    await env.service.addValidationSchema(instance(env.mongo));
+
+    verify(
+      env.mongo.command(
+        objectContaining({
+          validator: {
+            $jsonSchema: env.service.validationSchema
+          }
+        })
+      )
+    ).once();
+  });
 });
 
 class TestEnvironment {
   readonly service: UserService;
   readonly server: RealtimeServer;
   readonly db: ShareDBMingo;
+  readonly mongo = mock(Db);
   readonly mockedSchemaVersionRepository = mock(SchemaVersionRepository);
 
   constructor() {
@@ -98,6 +115,7 @@ class TestEnvironment {
     this.db = new ShareDBMingoType();
     this.server = new RealtimeServer(
       'TEST',
+      false,
       false,
       [this.service],
       'projects',

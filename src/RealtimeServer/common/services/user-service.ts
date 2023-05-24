@@ -2,6 +2,7 @@ import ShareDB from 'sharedb';
 import { ConnectSession } from '../connect-session';
 import { SystemRole } from '../models/system-role';
 import { User, USER_INDEX_PATHS, USER_PROFILES_COLLECTION, USERS_COLLECTION } from '../models/user';
+import { ValidationSchema } from '../models/validation-schema';
 import { RealtimeServer } from '../realtime-server';
 import { ANY_KEY, ObjPathTemplate } from '../utils/obj-path';
 import { JsonDocService } from './json-doc-service';
@@ -31,6 +32,87 @@ export class UserService extends JsonDocService<User> {
     this.pathTemplate(u => u.sites[ANY_KEY], false),
     this.pathTemplate(u => u.sites[ANY_KEY].projects)
   ];
+
+  readonly validationSchema: ValidationSchema = {
+    bsonType: 'object',
+    required: ['_id', '_v', '_m', '_o', '_type'],
+    properties: {
+      _id: {
+        bsonType: 'string',
+        pattern: '[a-z0-9]+'
+      },
+      name: {
+        bsonType: 'string'
+      },
+      email: {
+        bsonType: 'string'
+      },
+      paratextId: {
+        bsonType: 'string'
+      },
+      role: {
+        bsonType: 'string'
+      },
+      isDisplayNameConfirmed: {
+        bsonType: 'bool'
+      },
+      interfaceLanguage: {
+        bsonType: 'string'
+      },
+      authId: {
+        bsonType: 'string'
+      },
+      sites: {
+        bsonType: 'object',
+        properties: {
+          sf: {
+            bsonType: 'object',
+            required: ['projects'],
+            properties: {
+              currentProjectId: {
+                bsonType: 'string'
+              },
+              projects: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'string'
+                }
+              }
+            }
+          }
+        }
+      },
+      displayName: {
+        bsonType: 'string'
+      },
+      avatarUrl: {
+        bsonType: 'string'
+      },
+      _type: {
+        bsonType: ['null', 'string']
+      },
+      _v: {
+        bsonType: 'int'
+      },
+      _m: {
+        bsonType: 'object',
+        required: ['ctime', 'mtime'],
+        properties: {
+          ctime: {
+            bsonType: 'double'
+          },
+          mtime: {
+            bsonType: 'double'
+          }
+        },
+        additionalProperties: false
+      },
+      _o: {
+        bsonType: 'objectId'
+      }
+    },
+    additionalProperties: false
+  };
 
   constructor() {
     super(USER_MIGRATIONS);

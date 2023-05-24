@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import ShareDB from 'sharedb';
 import { ConnectSession } from '../connect-session';
 import { MigrationConstructor } from '../migration';
