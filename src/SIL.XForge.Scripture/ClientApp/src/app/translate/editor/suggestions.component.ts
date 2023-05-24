@@ -65,7 +65,6 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
       this._suggestions = value;
       setTimeout(() => {
         this.setPosition();
-        this.setSelectedIndex(0);
       });
     }
   }
