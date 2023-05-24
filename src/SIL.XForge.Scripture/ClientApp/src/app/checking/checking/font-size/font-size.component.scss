@@ -23,7 +23,7 @@
   .mat-menu-panel.font-size-menu {
     min-height: 0;
     min-width: 0;
-    margin-left: -25%; // Centers menu under trigger
+    margin-inline-start: -25%; // Centers menu under trigger (works for both ltr and rtl)
 
     > .mat-menu-content {
       padding: 0;
