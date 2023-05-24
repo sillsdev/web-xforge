@@ -1,4 +1,5 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
+import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, inject, TestBed, tick } from '@angular/core/testing';
 import { CookieService } from 'ngx-cookie-service';
@@ -13,7 +14,7 @@ const mockedBugsnagService = mock(BugsnagService);
 
 describe('DeleteProjectDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, UICommonModule],
+    imports: [DialogTestModule, UICommonModule, NoopAnimationsModule],
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
       { provide: BugsnagService, useMock: mockedBugsnagService },
@@ -21,7 +22,7 @@ describe('DeleteProjectDialogComponent', () => {
     ]
   }));
 
-  let dialog: MdcDialog;
+  let dialog: MatDialog;
   let viewContainerFixture: ComponentFixture<ChildViewContainerComponent>;
 
   it('should allow user to delete the project', fakeAsync(() => {
@@ -56,13 +57,13 @@ describe('DeleteProjectDialogComponent', () => {
   class TestEnvironment {
     fixture: ComponentFixture<ChildViewContainerComponent>;
     component: DeleteProjectDialogComponent;
-    dialogRef: MdcDialogRef<DeleteProjectDialogComponent>;
+    dialogRef: MatDialogRef<DeleteProjectDialogComponent>;
 
     afterCloseCallback: jasmine.Spy;
 
     constructor() {
       this.afterCloseCallback = jasmine.createSpy('afterClose callback');
-      const config: MdcDialogConfig = { data: { name: 'project01' } };
+      const config: MatDialogConfig = { data: { name: 'project01' } };
       this.dialogRef = dialog.open(DeleteProjectDialogComponent, config);
       this.dialogRef.afterClosed().subscribe(this.afterCloseCallback);
       this.component = this.dialogRef.componentInstance;
@@ -101,7 +102,7 @@ describe('DeleteProjectDialogComponent', () => {
     }
   }
 
-  beforeEach(inject([MdcDialog], (d: MdcDialog) => {
+  beforeEach(inject([MatDialog], (d: MatDialog) => {
     dialog = d;
   }));
 

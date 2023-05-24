@@ -1,42 +1,33 @@
 <ng-container *transloco="let t; read: 'delete_project_dialog'">
-  <mdc-dialog [dir]="i18n.direction">
-    <mdc-dialog-container>
-      <mdc-dialog-surface>
-        <mdc-dialog-title id="title"
-          ><mdc-icon>warning</mdc-icon>&nbsp;{{ t("are_you_sure_you_want_to_delete") }}</mdc-dialog-title
-        >
-        <mdc-dialog-content>
-          <p
-            [innerHTML]="
-              i18n.translateAndInsertTags('delete_project_dialog.delete_cannot_be_undone', { projectName: data.name })
-            "
-          ></p>
-          <br />
-          <p>{{ t("please_type_project_name") }}</p>
-          <mdc-form-field>
-            <mdc-text-field
-              id="project-entry"
-              label="{{ t('project_name') }}"
-              [formControl]="projectNameEntry"
-              autocomplete="off"
-            ></mdc-text-field>
-          </mdc-form-field>
-        </mdc-dialog-content>
-        <mdc-dialog-actions>
-          <button mdcDialogButton type="button" id="cancel-btn" mdcDialogAction="cancel">{{ t("cancel") }}</button>
-          <button
-            mdcDialogButton
-            type="button"
-            id="project-delete-btn"
-            [outlined]="true"
-            mdcDialogAction="accept"
-            [disabled]="deleteDisabled"
-          >
-            <span fxHide.lt-sm>{{ t("i_understand_the_consequences") }}</span>
-            <span fxHide fxShow.xs>{{ t("delete_this_project") }}</span>
-          </button>
-        </mdc-dialog-actions>
-      </mdc-dialog-surface>
-    </mdc-dialog-container>
-  </mdc-dialog>
+  <mat-dialog [dir]="i18n.direction">
+    <h1 mat-dialog-title id="title">
+      <mat-icon>warning</mat-icon>
+      <span>{{ t("are_you_sure_you_want_to_delete") }}</span>
+    </h1>
+    <mat-dialog-content>
+      <p
+        [innerHTML]="
+          i18n.translateAndInsertTags('delete_project_dialog.delete_cannot_be_undone', { projectName: data.name })
+        "
+      ></p>
+      <p>{{ t("please_type_project_name") }}</p>
+      <mat-form-field id="project-entry" appearance="outline">
+        <mat-label>{{ t("project_name") }}</mat-label>
+        <input matInput [formControl]="projectNameEntry" autocomplete="off" />
+      </mat-form-field>
+    </mat-dialog-content>
+    <mat-dialog-actions [align]="'end'">
+      <button mat-button id="cancel-btn" [mat-dialog-close]="'cancel'">{{ t("cancel") }}</button>
+      <button
+        id="project-delete-btn"
+        mat-flat-button
+        color="primary"
+        [mat-dialog-close]="'accept'"
+        [disabled]="deleteDisabled"
+      >
+        <span fxHide.lt-sm>{{ t("i_understand_the_consequences") }}</span>
+        <span fxHide fxShow.xs>{{ t("delete_this_project") }}</span>
+      </button>
+    </mat-dialog-actions>
+  </mat-dialog>
 </ng-container>

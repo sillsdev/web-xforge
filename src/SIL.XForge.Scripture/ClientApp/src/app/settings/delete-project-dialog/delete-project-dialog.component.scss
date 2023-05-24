@@ -1,0 +1,14 @@
+.mat-dialog-content {
+  max-width: 560px;
+}
+
+.mat-icon {
+  overflow: unset;
+}
+
+#title {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+}

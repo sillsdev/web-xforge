@@ -1,4 +1,5 @@
 import { MdcDialog, MDC_DIALOG_DATA } from '@angular-mdc/web';
+import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { Component, Inject, InjectionToken, OnInit, Provider } from '@angular/core';
 import { TranslocoModule } from '@ngneat/transloco';
@@ -38,12 +39,44 @@ export function mdcDialogStory(
   declarations: any[] = [],
   providers: Provider[] = []
 ): StoryFn {
+  return getDialogStory(imports, component, declarations, providers, MDC_DIALOG_DATA);
+}
+
+@Component({ template: '' })
+export class MatDialogLaunchComponent implements OnInit {
+  constructor(
+    private dialog: MatDialog,
+    @Inject(MAT_DIALOG_DATA) public data: any,
+    @Inject(COMPONENT_UNDER_TEST) private component: any
+  ) {}
+
+  public ngOnInit(): void {
+    this.dialog.open(this.component, this.data);
+  }
+}
+
+export function matDialogStory(
+  component: any,
+  imports: any[] = [],
+  declarations: any[] = [],
+  providers: Provider[] = []
+): StoryFn {
+  return getDialogStory(imports, component, declarations, providers, MAT_DIALOG_DATA);
+}
+
+function getDialogStory(
+  imports: any[],
+  component: any,
+  declarations: any[],
+  providers: Provider[],
+  dialogData: InjectionToken<any>
+) {
   const story: StoryFn = args => ({
     moduleMetadata: {
       imports: [UICommonModule, CommonModule, TranslocoModule, ...imports],
       declarations: [component, ...declarations],
       providers: [
-        { provide: MDC_DIALOG_DATA, useValue: { data: args.data } },
+        { provide: dialogData, useValue: { data: args.data } },
         { provide: COMPONENT_UNDER_TEST, useValue: component },
         ...providers
       ]

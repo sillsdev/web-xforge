@@ -1,4 +1,5 @@
-import { MdcDialog, MdcDialogConfig } from '@angular-mdc/web/dialog';
+import { MatDialogConfig } from '@angular/material/dialog';
+import { DialogService } from 'xforge-common/dialog.service';
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -64,11 +65,11 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly dialog: MdcDialog,
     noticeService: NoticeService,
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
+    private readonly dialogService: DialogService,
     private readonly router: Router,
     private readonly pwaService: PwaService,
     readonly i18n: I18nService
@@ -192,10 +193,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
-    const config: MdcDialogConfig = {
-      data: { name: this.projectDoc.data.name }
-    };
-    const dialogRef = this.dialog.open(DeleteProjectDialogComponent, config);
+    const config: MatDialogConfig<any> = { data: { name: this.projectDoc.data.name } };
+    const dialogRef = this.dialogService.openMatDialog(DeleteProjectDialogComponent, config);
     dialogRef.afterClosed().subscribe(async result => {
       if (result === 'accept') {
         const user: UserDoc = await this.userService.getCurrentUser();
