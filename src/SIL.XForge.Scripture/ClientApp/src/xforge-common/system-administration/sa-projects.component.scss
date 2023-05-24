@@ -1,3 +1,6 @@
+@import 'src/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
+
 .projects-controls {
   margin: 32px 0;
 }
@@ -11,7 +14,7 @@ table {
 }
 
 .mat-column-tasks {
-  @media screen and (max-width: 767px) {
+  @include media-breakpoint-down(md) {
     display: none;
   }
 }

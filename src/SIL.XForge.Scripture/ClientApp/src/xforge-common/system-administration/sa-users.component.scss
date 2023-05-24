@@ -1,3 +1,6 @@
+@import 'src/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
+
 .users-controls {
   margin: 32px 0;
 }
@@ -18,8 +21,7 @@ table {
 .mat-column-projects {
   word-break: break-word;
 
-  // 767px was the break used for the old fxLayout
-  @media screen and (max-width: 767px) {
+  @include media-breakpoint-down(md) {
     display: none;
   }
 }
