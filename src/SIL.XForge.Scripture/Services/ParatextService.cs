@@ -579,8 +579,13 @@ public class ParatextService : DisposableBase, IParatextService
         ScrText scrText
     )
     {
+        if (srResults is null)
+        {
+            return;
+        }
+
         // Parse the sync results
-        foreach (SendReceiveResult result in srResults ?? Array.Empty<SendReceiveResult>())
+        foreach (SendReceiveResult result in srResults)
         {
             // If we have received any revisions (including merge revisions)
             string[] revisionIds = result.RevisionsReceived ?? Array.Empty<string>();
