@@ -11,7 +11,7 @@
   <div mat-menu-item disableRipple class="button-group">
     <button
       mat-icon-button
-      (click)="adjustFontSize($event, '-')"
+      (click)="adjustFontSize($event, -1)"
       [disabled]="fontSize === min"
       title="Decrease font size"
     >
@@ -19,7 +19,7 @@
     </button>
     <button
       mat-icon-button
-      (click)="adjustFontSize($event, '+')"
+      (click)="adjustFontSize($event, 1)"
       [disabled]="fontSize === max"
       title="Increase font size"
     >
