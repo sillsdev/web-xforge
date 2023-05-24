@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Security;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -71,9 +72,20 @@ public class AnonymousController : ControllerBase
         {
             return NotFound(e.Message);
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException e)
         {
-            return NotFound("error_occurred_login");
+            _exceptionHandler.ReportException(e);
+            return NoContent();
+        }
+        catch (TaskCanceledException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return NoContent();
+        }
+        catch (SecurityException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return NoContent();
         }
         catch (Exception)
         {
