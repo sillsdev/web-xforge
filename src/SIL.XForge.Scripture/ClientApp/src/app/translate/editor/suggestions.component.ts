@@ -79,10 +79,8 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
   }
 
   private setSelectedIndex(index: number): void {
-    if (this.list != null) {
-      const option: MatListOption | undefined = this.list.options.get(index);
-      if (option != null) option.selected = true;
-    }
+    const option: MatListOption | undefined = this.list?.options.get(index);
+    if (option != null) option.selected = true;
   }
 
   get show(): boolean {
