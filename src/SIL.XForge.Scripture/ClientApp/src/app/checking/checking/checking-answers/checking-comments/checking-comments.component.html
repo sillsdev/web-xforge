@@ -13,7 +13,7 @@
       <div class="actions">
         <button
           *ngIf="canEditComment(comment)"
-          mdc-button
+          mat-button
           type="button"
           (click)="editComment(comment)"
           class="comment-edit"
@@ -22,7 +22,7 @@
         </button>
         <button
           *ngIf="canDeleteComment(comment)"
-          mdc-button
+          mat-button
           type="button"
           (click)="deleteCommentClicked(comment)"
           class="comment-delete"
@@ -45,7 +45,7 @@
   ></app-checking-comment-form>
   <button
     *ngIf="!commentFormVisible && commentCount > maxCommentsToShow && !showAllComments"
-    mdc-button
+    mat-button
     type="button"
     (click)="showComments()"
     class="show-all-comments"
@@ -54,7 +54,7 @@
   </button>
   <button
     *ngIf="!commentFormVisible && (commentCount <= maxCommentsToShow || showAllComments) && canAddComment"
-    mdc-button
+    mat-button
     type="button"
     (click)="showCommentForm()"
     class="add-comment"
