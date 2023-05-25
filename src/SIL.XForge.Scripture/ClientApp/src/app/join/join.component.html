@@ -4,9 +4,9 @@
     <p [innerHTML]="inviteText"></p>
     <app-notice *ngIf="!isOnline" type="error" icon="cloud_off">{{ t("please_connect_to_use_link") }}</app-notice>
     <form>
-      <mat-form-field appearance="fill">
+      <mat-form-field appearance="outline">
         <mat-label>{{ t("your_name") }}</mat-label>
-        <input matInput [formControl]="name" />
+        <input matInput [formControl]="name" appAutofocus />
       </mat-form-field>
       <button mat-flat-button color="primary" type="submit" (click)="joinProject()" [disabled]="!isFormEnabled">
         {{ t("join") }}
