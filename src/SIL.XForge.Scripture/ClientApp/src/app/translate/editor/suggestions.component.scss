@@ -1,3 +1,5 @@
+@import 'src/variables';
+
 :host {
   background-color: #faf9f7;
   color: #373a3c;
@@ -59,7 +61,7 @@ mat-selection-list[dense] {
 
   > div {
     font-size: smaller !important;
-    color: rgba(0, 0, 0, 0.3);
+    color: $lighterTextColor;
   }
 }
 
