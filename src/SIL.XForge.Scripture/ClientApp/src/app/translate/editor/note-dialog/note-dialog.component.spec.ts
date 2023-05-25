@@ -111,6 +111,12 @@ describe('NoteDialogComponent', () => {
     expect(env.noteText.nativeElement.textContent).toBe('target: chapter 1, verse 2-3.');
   }));
 
+  it('shows segment text for rtl multiple verses', fakeAsync(() => {
+    const verseRef: VerseRef = VerseRef.parse('MAT 1:5,7');
+    env = new TestEnvironment({ verseRef, isRightToLeftProject: true, combinedVerseTextDoc: true });
+    expect(env.noteText.nativeElement.textContent).toBe('target: chapter 1, verse 5,7.');
+  }));
+
   it('should not show deleted notes', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     expect(env.notes.length).toBe(4);
