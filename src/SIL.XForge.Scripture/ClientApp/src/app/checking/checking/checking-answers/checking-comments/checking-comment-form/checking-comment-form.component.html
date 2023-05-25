@@ -6,8 +6,8 @@
       <mat-error *ngIf="showValidationError">{{ t("comment_cannot_be_blank") }}</mat-error>
     </mat-form-field>
     <div class="form-actions">
-      <button mdc-button type="button" (click)="submitCancel()" class="cancel-comment">{{ t("cancel") }}</button>
-      <button mdc-button [unelevated]="true" type="submit" class="save-comment">
+      <button mat-button type="button" (click)="submitCancel()" class="cancel-comment">{{ t("cancel") }}</button>
+      <button mat-button [unelevated]="true" type="submit" class="save-comment">
         {{ t("save_comment") }}
       </button>
     </div>
