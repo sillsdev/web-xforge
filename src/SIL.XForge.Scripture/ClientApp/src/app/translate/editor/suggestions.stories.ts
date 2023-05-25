@@ -26,6 +26,12 @@ export const Default: Story = {
       { words: ['there', 'was', 'dearth', 'in', 'the', 'earth'], confidence: 0.29 },
       { words: ['there', 'was', 'a', 'famine', 'in', 'the', 'land'], confidence: 0.21 }
     ]
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const options: HTMLElement[] = canvas.getAllByRole('option');
+    expect(options[0].getAttribute('aria-selected')).toBe('true');
+    expect(options[1].getAttribute('aria-selected')).toBe('false');
   }
 };
 
@@ -33,17 +39,5 @@ export const Loading: Story = {
   args: {
     ...Default.args,
     suggestions: []
-  }
-};
-
-export const DefaultHasFirstSelected: Story = {
-  args: {
-    ...Default.args
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const options: HTMLElement[] = canvas.getAllByRole('option');
-    expect(options[0].getAttribute('aria-selected')).toBe('true');
-    expect(options[1].getAttribute('aria-selected')).toBe('false');
   }
 };
