@@ -1,5 +1,5 @@
 import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
-import { MatSelectionList } from '@angular/material/list';
+import { MatListOption, MatSelectionList } from '@angular/material/list';
 import isEqual from 'lodash-es/isEqual';
 import Quill from 'quill';
 import { fromEvent } from 'rxjs';
@@ -80,7 +80,7 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
 
   private setSelectedIndex(index: number): void {
     if (this.list != null) {
-      const option = this.list.options.get(index);
+      const option: MatListOption | undefined = this.list.options.get(index);
       if (option != null) option.selected = true;
     }
   }

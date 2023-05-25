@@ -42,7 +42,7 @@ export const DefaultHasFirstSelected: Story = {
   },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const options = canvas.getAllByRole('option');
+    const options: HTMLElement[] = canvas.getAllByRole('option');
     expect(options[0].getAttribute('aria-selected')).toBe('true');
     expect(options[1].getAttribute('aria-selected')).toBe('false');
   }
