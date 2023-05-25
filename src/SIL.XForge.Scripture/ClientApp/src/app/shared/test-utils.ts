@@ -38,7 +38,8 @@ export function getTextDoc(id: TextDocId): TextData {
 }
 
 export function getCombinedVerseTextDoc(id: TextDocId, rtl: boolean = false): TextData {
-  const verseStr: string = rtl ? `2${RIGHT_TO_LEFT_MARK}-3` : '2-3';
+  const verse2Str: string = rtl ? `2${RIGHT_TO_LEFT_MARK}-3` : '2-3';
+  const verse5Str: string = rtl ? `5${RIGHT_TO_LEFT_MARK},7` : '5,7';
   const delta = new Delta();
   delta.insert(`Title for chapter ${id.chapterNum}`, { segment: 's_1' });
   delta.insert('\n', { para: { style: 's' } });
@@ -46,9 +47,9 @@ export function getCombinedVerseTextDoc(id: TextDocId, rtl: boolean = false): Te
   delta.insert({ blank: true }, { segment: 'p_1' });
   delta.insert({ verse: { number: '1', style: 'v' } });
   delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
-  delta.insert({ verse: { number: verseStr, style: 'v' } });
+  delta.insert({ verse: { number: verse2Str, style: 'v' } });
   delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 2-3.`, {
-    segment: `verse_${id.chapterNum}_${verseStr}`
+    segment: `verse_${id.chapterNum}_${verse2Str}`
   });
   delta.insert('\n', { para: { style: 'p' } });
   delta.insert('Text in section heading', { segment: 's_2' });
@@ -56,6 +57,10 @@ export function getCombinedVerseTextDoc(id: TextDocId, rtl: boolean = false): Te
   delta.insert({ blank: true }, { segment: 'p_2' });
   delta.insert({ verse: { number: '4', style: 'v' } });
   delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 4.`, { segment: `verse_${id.chapterNum}_4` });
+  delta.insert({ verse: { number: verse5Str, style: 'v' } });
+  delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 5,7.`, {
+    segment: `verse_${id.chapterNum}_${verse5Str}`
+  });
   delta.insert('\n', { para: { style: 'p' } });
   return delta;
 }
