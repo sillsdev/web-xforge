@@ -4,7 +4,7 @@ import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scripture
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Delta, TextDocId } from '../core/models/text-doc';
-import { rightLeftMarker } from './utils';
+import { RIGHT_TO_LEFT_MARK } from './utils';
 
 export function getTextDoc(id: TextDocId): TextData {
   const delta = new Delta();
@@ -38,7 +38,7 @@ export function getTextDoc(id: TextDocId): TextData {
 }
 
 export function getCombinedVerseTextDoc(id: TextDocId, rtl: boolean = false): TextData {
-  const verseStr: string = rtl ? `2${rightLeftMarker}-3` : '2-3';
+  const verseStr: string = rtl ? `2${RIGHT_TO_LEFT_MARK}-3` : '2-3';
   const delta = new Delta();
   delta.insert(`Title for chapter ${id.chapterNum}`, { segment: 's_1' });
   delta.insert('\n', { para: { style: 's' } });

@@ -20,7 +20,7 @@ import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
-import { canInsertNote, formatFontSizeToRems, verseSlug } from '../../../shared/utils';
+import { canInsertNote, formatFontSizeToRems } from '../../../shared/utils';
 
 export interface NoteDialogData {
   threadId?: string;
@@ -151,8 +151,7 @@ export class NoteDialogComponent implements OnInit {
     if (verseRef == null) {
       return '';
     }
-    const verseSegment: string = verseSlug(verseRef, this.isRtl);
-    return this.textDoc.getSegmentTextIncludingRelated(verseSegment);
+    return this.textDoc.getSegmentTextIncludingRelated(verseRef.verse ?? verseRef.verseNum);
   }
 
   get canInsertNote(): boolean {
