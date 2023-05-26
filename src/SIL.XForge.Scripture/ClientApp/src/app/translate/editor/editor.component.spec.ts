@@ -2689,8 +2689,9 @@ describe('EditorComponent', () => {
       const projectId: string = 'project01';
       const userId: string = 'user01';
       const env = new TestEnvironment();
-      env.setProjectUserConfig();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
+      expect(env.component.target!.segment!.ref).toBe('verse_1_1');
       env.setSelectionAndInsertNote('verse_1_4');
 
       const content: string = 'content in the thread';
@@ -2709,6 +2710,7 @@ describe('EditorComponent', () => {
       expect(noteThread.notes[0].content).toEqual(content);
       expect(noteThread.notes[0].tagId).toEqual(2);
       expect(env.isNoteIconHighlighted(noteThread.dataId)).toBeFalse();
+      expect(env.component.target!.segment!.ref).toBe('verse_1_4');
 
       env.dispose();
     }));
@@ -3776,6 +3778,7 @@ class TestEnvironment {
     if (segmentRef != null) {
       this.clickSegmentRef(segmentRef);
     }
+    this.wait();
     this.insertNoteFab.nativeElement.click();
     tick();
     this.fixture.detectChanges();
