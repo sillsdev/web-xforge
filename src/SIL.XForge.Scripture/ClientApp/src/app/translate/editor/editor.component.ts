@@ -1021,6 +1021,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       // at least one must be defined
       return;
     }
+
+    const selectedSegment: string | undefined = this.projectUserConfigDoc?.data?.selectedSegment;
+    const selectedSegmentChecksum: number | undefined = this.projectUserConfigDoc?.data?.selectedSegmentChecksum;
     const noteDialogData: NoteDialogData = {
       projectId: this.projectDoc!.id,
       threadId,
@@ -1043,6 +1046,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // to prevent introducing erroneous usx-segment elements into the DOM
     this.resetCommenterVerseSelection();
     const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
+
     if (result != null) {
       if (result.noteContent != null) {
         await this.saveNote({
@@ -1054,6 +1058,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       this.toggleNoteThreadVerseRefs$.next();
     }
+    // delay setting the selection back to the original segment for the editor to get focus
+    setTimeout(() => this.setSegment(selectedSegment, selectedSegmentChecksum), 10);
   }
 
   private updateReadNotes(threadId: string): void {
@@ -1150,18 +1156,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.target == null) {
       return;
     }
-    let selectedSegment: string | undefined;
-    let selectedSegmentChecksum: number | undefined;
-    if (
-      this.projectUserConfigDoc != null &&
-      this.projectUserConfigDoc.data != null &&
-      this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum &&
-      this.projectUserConfigDoc.data.selectedChapterNum === this._chapter &&
-      this.projectUserConfigDoc.data.selectedSegment !== ''
-    ) {
-      selectedSegment = this.projectUserConfigDoc.data.selectedSegment;
-      selectedSegmentChecksum = this.projectUserConfigDoc.data.selectedSegmentChecksum;
-    }
+
     // reset the verse selection before changing text
     this.resetInsertNoteFab(true);
     if (this.source != null) {
@@ -1175,13 +1170,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.target.blur();
     }
     this.target.id = targetId;
-    if (selectedSegment != null) {
-      const segmentChanged = this.target.setSegment(selectedSegment, selectedSegmentChecksum, true);
-      if (!segmentChanged && selectedSegmentChecksum == null && this.target.segment != null) {
-        // the segment checksum was unset on the server, so accept the current segment changes
-        this.target.segment.acceptChanges();
-      }
-    }
+    this.setSegment();
     const textDoc = await this.projectService.getText(targetId);
     if (this.onTargetDeleteSub != null) {
       this.onTargetDeleteSub.unsubscribe();
@@ -1198,6 +1187,28 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.isTranslating = true;
     this.suggestions = [];
     this.showSuggestions = this.target != null && this.target.isSelectionAtSegmentEnd;
+  }
+
+  private setSegment(selectedSegment?: string, selectedSegmentChecksum?: number): void {
+    if (this.target == null || this.text == null) return;
+    if (
+      selectedSegment == null &&
+      this.projectUserConfigDoc?.data != null &&
+      this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum &&
+      this.projectUserConfigDoc.data.selectedChapterNum === this._chapter &&
+      this.projectUserConfigDoc.data.selectedSegment !== ''
+    ) {
+      selectedSegment = this.projectUserConfigDoc.data.selectedSegment;
+      selectedSegmentChecksum = this.projectUserConfigDoc.data.selectedSegmentChecksum;
+    }
+
+    if (selectedSegment != null) {
+      const segmentChanged: boolean = this.target.setSegment(selectedSegment, selectedSegmentChecksum, true);
+      if (!segmentChanged && selectedSegmentChecksum == null && this.target.segment != null) {
+        // the segment checksum was unset on the server, so accept the current segment changes
+        this.target.segment.acceptChanges();
+      }
+    }
   }
 
   private async translateSegment(): Promise<void> {
