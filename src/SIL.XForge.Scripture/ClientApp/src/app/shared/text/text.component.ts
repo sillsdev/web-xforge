@@ -1290,10 +1290,21 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     if (!this.viewModel.hasSegmentRange(segmentRef)) {
-      const verseParts: string[] = segmentRef.split('_');
-      const verseRef: VerseRef = new VerseRef(this.id?.bookNum, verseParts[1], verseParts[2]);
-      const correspondingSegments: string[] = this.getVerseSegments(verseRef);
-      if (correspondingSegments.length === 0) {
+      let resetSegment = true;
+
+      // If verse segment ref has no exact match, check for segments that fall within a verse reference
+      if (segmentRef.startsWith('verse')) {
+        const [_, chapterNum, verseNum] = segmentRef.split('_');
+        const verseRef: VerseRef = new VerseRef(this.id?.bookNum, chapterNum, verseNum);
+        const correspondingSegments: string[] = this.getVerseSegments(verseRef);
+
+        if (correspondingSegments.length > 0) {
+          segmentRef = correspondingSegments[0];
+          resetSegment = false;
+        }
+      }
+
+      if (resetSegment) {
         if (this._segment != null && this.highlightSegment) {
           this.clearHighlight();
         }
@@ -1301,7 +1312,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         this.segmentRefChange.emit();
         return true;
       }
-      segmentRef = correspondingSegments[0];
     }
 
     if (focus) {
