@@ -22,13 +22,20 @@
   }
 }
 
+.mat-expansion-panel-header {
+  padding-inline-end: 0;
+}
+
+.mat-list-base {
+  padding-block-start: 0;
+}
+
 app-donut-chart {
   width: 36px;
   height: 36px;
 }
 
-.mdc-list-item {
-  cursor: pointer;
+.mat-list-item {
   .audio-icon {
     margin-right: 5px;
   }
@@ -42,6 +49,11 @@ app-donut-chart {
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+}
+
+.book-expander ::ng-deep .mat-expansion-panel-content .mat-expansion-panel-body {
+  padding-inline-end: 0 !important;
+  padding-block-start: 0 !important;
 }
 
 #no-questions-label,

@@ -3,7 +3,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { asyncScheduler, merge, Subscription } from 'rxjs';
@@ -35,8 +34,6 @@ import { QuestionDialogService } from '../question-dialog/question-dialog.servic
   styleUrls: ['./checking-overview.component.scss']
 })
 export class CheckingOverviewComponent extends DataLoadingComponent implements OnInit, OnDestroy {
-  itemVisible: { [bookIdOrDocId: string]: boolean } = {};
-  itemVisibleArchived: { [bookIdOrDocId: string]: boolean } = {};
   texts: TextInfo[] = [];
   projectId?: string;
 
@@ -233,13 +230,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       return [];
     }
     return ['/projects', this.projectId, 'checking', bookId];
-  }
-
-  getTextDocId(bookNum: number, chapter: number): string {
-    if (this.projectDoc == null) {
-      return '';
-    }
-    return getTextDocId(this.projectDoc.id, bookNum, chapter);
   }
 
   getTextDocIdType(bookNum: number, chapter: number): TextDocId | undefined {
