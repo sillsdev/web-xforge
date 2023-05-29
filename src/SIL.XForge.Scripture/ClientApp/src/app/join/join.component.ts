@@ -2,12 +2,12 @@ import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { PwaService } from 'xforge-common/pwa.service';
-import { combineLatest, of } from 'rxjs';
+import { combineLatest } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { I18nService } from 'xforge-common/i18n.service';
+import { en, I18nService } from 'xforge-common/i18n.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { AnonymousService } from 'xforge-common/anonymous.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -17,6 +17,7 @@ import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslocoService } from '@ngneat/transloco';
 import { SFProjectService } from '../core/sf-project.service';
+import { ObjectPaths } from '../../type-utils';
 
 export interface AnonymousShareKeyDetails {
   projectName: string;
@@ -115,7 +116,7 @@ export class JoinComponent extends DataLoadingComponent {
         this.name.enable();
       }
     } catch (e) {
-      await this.informInvalidShareLinkAndRedirect(e instanceof HttpErrorResponse ? e.error : '');
+      await this.informInvalidShareLinkAndRedirect(e instanceof HttpErrorResponse ? e.error : undefined);
     }
     this.status = 'input';
   }
@@ -140,7 +141,7 @@ export class JoinComponent extends DataLoadingComponent {
         err instanceof CommandError &&
         (err.code === CommandErrorCode.Forbidden || err.code === CommandErrorCode.NotFound)
       ) {
-        await this.informInvalidShareLinkAndRedirect();
+        await this.informInvalidShareLinkAndRedirect(err.message);
       } else {
         throw err;
       }
@@ -182,7 +183,16 @@ export class JoinComponent extends DataLoadingComponent {
   }
 
   private async informInvalidShareLinkAndRedirect(error: string = 'project_link_is_invalid'): Promise<void> {
-    await this.dialogService.message(of(this.transloco.translate(`join.${error}`)));
+    const key: ObjectPaths<typeof en.join> = [
+      'error_occurred_login',
+      'key_already_used',
+      'key_expired',
+      'max_users_reached',
+      'role_not_found'
+    ].includes(error)
+      ? (error as ObjectPaths<typeof en.join>)
+      : 'project_link_is_invalid';
+    await this.dialogService.message(`join.${key}`);
     this.locationService.go(this.locationService.origin);
   }
 }
