@@ -2601,11 +2601,13 @@ describe('EditorComponent', () => {
       expect(env.insertNoteFab).toBeTruthy();
       env.insertNoteFab.nativeElement.click();
       env.wait();
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('hidden');
       expect(env.mobileNoteTextArea).toBeTruthy();
       expect(env.component.currentSegmentReference).toEqual('Matthew 1:2');
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).never();
       // Close the bottom sheet
       env.bottomSheetCloseButton!.click();
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('visible');
       env.wait();
 
       env.dispose();
@@ -2831,7 +2833,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('deselects a selected verse when opening a note dialog', fakeAsync(() => {
+    it('verse keeps selection when opening a note dialog', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -2841,12 +2843,15 @@ describe('EditorComponent', () => {
       env.wait();
       const verse1Elem: HTMLElement = env.getSegmentElement(segmentRef)!;
       expect(verse1Elem.classList).toContain('commenter-selection');
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('visible');
       const noteElem: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'thread02')!;
       noteElem.click();
       env.wait();
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('hidden');
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       instance(mockedMatDialog).closeAll();
       env.wait();
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('visible');
       const segmentRef3 = 'verse_1_3';
       env.clickSegmentRef(segmentRef3);
       env.wait();
