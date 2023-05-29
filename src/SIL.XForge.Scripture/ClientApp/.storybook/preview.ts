@@ -1,11 +1,13 @@
-import { applicationConfig } from '@storybook/angular';
-import { getI18nLocales } from '../src/xforge-common/utils';
-import { I18nService } from '../src/xforge-common/i18n.service';
-import { I18nStoryModule, I18nStoryDecorator } from '../src/xforge-common/i18n-story.module';
-import { importProvidersFrom } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { APP_INITIALIZER, importProvidersFrom } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { setCompodocJson } from '@storybook/addon-docs/angular';
+import { applicationConfig } from '@storybook/angular';
 import docJson from '../documentation.json';
+import { I18nStoryDecorator, I18nStoryModule } from '../src/xforge-common/i18n-story.module';
+import { I18nService } from '../src/xforge-common/i18n.service';
+import { getI18nLocales } from '../src/xforge-common/utils';
+
 setCompodocJson(docJson);
 
 export const parameters = {
@@ -36,6 +38,18 @@ export const globalTypes = {
 export const decorators = [
   I18nStoryDecorator,
   applicationConfig({
-    providers: [importProvidersFrom(I18nStoryModule), provideAnimations()]
+    providers: [
+      importProvidersFrom(I18nStoryModule),
+      provideAnimations(),
+      {
+        provide: APP_INITIALIZER,
+        useFactory: (document: Document) => {
+          // Allows global font effects from mdc typography
+          return () => document.body.classList.add('mdc-typography');
+        },
+        deps: [DOCUMENT],
+        multi: true
+      }
+    ]
   })
 ];

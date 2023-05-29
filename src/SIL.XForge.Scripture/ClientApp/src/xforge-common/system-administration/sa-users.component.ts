@@ -1,10 +1,11 @@
-import { MdcDialog, MdcDialogConfig, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Component, HostBinding, OnInit } from '@angular/core';
+import { MatDialogConfig } from '@angular/material/dialog';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { BehaviorSubject } from 'rxjs';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { environment } from '../../environments/environment';
 import { DataLoadingComponent } from '../data-loading-component';
 import { ProjectDoc } from '../models/project-doc';
@@ -12,6 +13,7 @@ import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
 import { QueryParameters } from '../query-parameters';
 import { UserService } from '../user.service';
+import { DialogService } from '../dialog.service';
 import { SaDeleteDialogComponent, SaDeleteUserDialogData } from './sa-delete-dialog.component';
 
 interface ProjectInfo {
@@ -39,23 +41,20 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
 
   userRows: Row[] = [];
 
-  private readonly searchTerm$: BehaviorSubject<string>;
-  private readonly queryParameters$: BehaviorSubject<QueryParameters>;
-  private readonly reload$: BehaviorSubject<void>;
+  private readonly searchTerm$ = new BehaviorSubject<string>('');
+  private readonly queryParameters$ = new BehaviorSubject<QueryParameters>(this.getQueryParameters());
+  private readonly reload$ = new BehaviorSubject<void>(undefined);
 
   constructor(
-    private readonly dialog: MdcDialog,
+    private dialogService: DialogService,
     noticeService: NoticeService,
     private readonly userService: UserService,
     private readonly projectService: ProjectService
   ) {
     super(noticeService);
-    this.searchTerm$ = new BehaviorSubject<string>('');
-    this.queryParameters$ = new BehaviorSubject<QueryParameters>(this.getQueryParameters());
-    this.reload$ = new BehaviorSubject<void>(undefined);
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadingStarted();
     this.subscribe(
       this.userService.onlineQuery(this.searchTerm$, this.queryParameters$, this.reload$),
@@ -103,24 +102,24 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
   }
 
   removeUser(userId: string, user: User): void {
-    const dialogConfig: MdcDialogConfig<SaDeleteUserDialogData> = {
+    const dialogConfig: MatDialogConfig<SaDeleteUserDialogData> = {
       data: {
         user
       }
     };
-    const dialogRef = this.dialog.open(SaDeleteDialogComponent, dialogConfig) as MdcDialogRef<
-      SaDeleteDialogComponent,
-      'close' | 'confirmed'
-    >;
-    dialogRef.afterClosed().subscribe(confirmation => {
-      if (confirmation != null && confirmation === 'confirmed') {
-        this.deleteUser(userId);
-      }
-    });
+
+    this.dialogService
+      .openMatDialog(SaDeleteDialogComponent, dialogConfig)
+      .afterClosed()
+      .subscribe(confirmation => {
+        if (confirmation) {
+          this.deleteUser(userId);
+        }
+      });
   }
 
   /** Get project docs for each project associated with each user, keyed by project id. */
-  private async getUserProjectDocs(userDocs: RealtimeQuery<UserDoc>) {
+  private async getUserProjectDocs(userDocs: RealtimeQuery<UserDoc>): Promise<Map<string, ProjectDoc<Project>>> {
     const projectDocsLookup = [] as string[];
     for (const userDoc of userDocs.docs) {
       if (userDoc.data != null) {
@@ -138,7 +137,7 @@ export class SaUsersComponent extends DataLoadingComponent implements OnInit {
     return projectIdMap;
   }
 
-  private async deleteUser(userId: string) {
+  private async deleteUser(userId: string): Promise<void> {
     await this.userService.onlineDelete(userId);
     this.reload$.next(undefined);
   }
