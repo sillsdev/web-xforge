@@ -547,7 +547,7 @@ public class SFProjectServiceTests
             Project02,
             new SFProjectSettings { CheckingShareEnabled = false }
         );
-        Assert.ThrowsAsync<ForbiddenException>(() => env.Service.JoinWithShareKeyAsync(User03, "linksharing02"));
+        Assert.ThrowsAsync<DataNotFoundException>(() => env.Service.JoinWithShareKeyAsync(User03, "linksharing02"));
     }
 
     [Test]
@@ -638,7 +638,7 @@ public class SFProjectServiceTests
         Assert.That(project.UserRoles.ContainsKey(LinkExpiredUser), Is.False, "setup");
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "expired@example.com"), Is.True, "setup");
 
-        Assert.ThrowsAsync<ForbiddenException>(
+        Assert.ThrowsAsync<DataNotFoundException>(
             () => env.Service.JoinWithShareKeyAsync(LinkExpiredUser, "keyexp"),
             "The user should be forbidden to join the project: Email was in ShareKeys, but code was expired."
         );
@@ -662,7 +662,7 @@ public class SFProjectServiceTests
         Assert.That(project.UserRoles.ContainsKey(User03), Is.False, "setup");
         Assert.That(projectSecret.ShareKeys.Any(sk => sk.Email == "user03@example.com"), Is.True, "setup");
 
-        Assert.ThrowsAsync<ForbiddenException>(
+        Assert.ThrowsAsync<DataNotFoundException>(
             () => env.Service.JoinWithShareKeyAsync(User03, "badcode"),
             "The user should be forbidden to join the project: Email address was in ShareKeys list, but wrong code was given."
         );
