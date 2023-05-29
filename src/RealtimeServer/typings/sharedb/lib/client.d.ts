@@ -20,7 +20,7 @@ export {
   Path
 } from './common';
 
-export class Connection {
+export class Connection extends EventEmitter {
   state: 'connecting' | 'connected' | 'disconnected' | 'closed' | 'stopped';
   constructor(ws: WebSocket | WS);
   get(collectionName: string, documentID: string): Doc;

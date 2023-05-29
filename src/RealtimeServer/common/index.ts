@@ -144,6 +144,7 @@ export = {
       return;
     }
     const connection = server.connect(userId);
+    connection.on('error', err => console.log(err));
     const index = connectionIndex++;
     connections.set(index, connection);
     callback(undefined, index);
