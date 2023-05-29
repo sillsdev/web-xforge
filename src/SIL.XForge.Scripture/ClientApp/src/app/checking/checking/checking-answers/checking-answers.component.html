@@ -17,10 +17,10 @@
           </div>
           <div class="question-footer" *ngIf="canEditQuestion">
             <div class="actions">
-              <button mdc-button type="button" (click)="questionDialog()" class="edit-question-button">
+              <button mat-button type="button" (click)="questionDialog()" class="edit-question-button">
                 {{ t("edit") }}
               </button>
-              <button mdc-button type="button" (click)="archiveQuestion()" class="archive-question-button">
+              <button mat-button type="button" (click)="archiveQuestion()" class="archive-question-button">
                 {{ t("archive") }}
               </button>
             </div>
@@ -29,8 +29,8 @@
         <div *ngIf="!answerFormVisible" class="actions">
           <button
             *ngIf="currentUserTotalAnswers === 0 && canAddAnswer"
-            mdc-button
-            [unelevated]="true"
+            mat-flat-button
+            color="primary"
             (click)="showAnswerForm()"
             id="add-answer"
           >
@@ -83,14 +83,15 @@
             <p [fxHide]="!!selectedText" class="scripture-text-blank">{{ t("no_scripture_selected") }}</p>
             <div class="buttons-wrapper">
               <button
-                mdc-icon-button
+                mat-icon-button
                 *ngIf="selectedText"
                 type="button"
                 (click)="clearSelection()"
-                icon="clear"
                 class="clear-selection"
-              ></button>
-              <button type="button" (click)="selectScripture()" mdc-button [unelevated]="true" id="select-scripture">
+              >
+                <mat-icon>clear</mat-icon>
+              </button>
+              <button type="button" (click)="selectScripture()" mat-flat-button color="primary" id="select-scripture">
                 {{ t("select_verses") }}
               </button>
             </div>
@@ -99,10 +100,10 @@
             {{ t("answer_required_before_saving") }}
           </div>
           <div class="form-actions">
-            <button mdc-button type="button" (click)="hideAnswerForm()" id="cancel-answer">{{ t("cancel") }}</button>
+            <button mat-button type="button" (click)="hideAnswerForm()" id="cancel-answer">{{ t("cancel") }}</button>
             <button
-              mdc-button
-              [unelevated]="true"
+              mat-flat-button
+              color="primary"
               form="answer-form"
               id="save-answer"
               type="submit"
@@ -131,12 +132,13 @@
           >
             <div *ngIf="canSeeOtherUserResponses" class="like">
               <button
-                mdc-icon-button
+                mat-icon-button
                 class="like-answer"
-                icon="thumb_up"
                 (click)="likeAnswer(answer)"
                 [ngClass]="{ liked: hasUserLikedAnswer(answer) }"
-              ></button>
+              >
+                <mat-icon>thumb_up</mat-icon>
+              </button>
               <span class="like-count">{{ answer.likes.length }}</span>
             </div>
             <div class="answer-detail">
@@ -161,7 +163,7 @@
                 <div class="actions">
                   <button
                     *ngIf="canChangeAnswerStatus(answer)"
-                    mdc-button
+                    mat-button
                     type="button"
                     (click)="markAnswerForExport(answer)"
                     class="answer-status answer-export"
@@ -173,7 +175,7 @@
                   </button>
                   <button
                     *ngIf="canChangeAnswerStatus(answer)"
-                    mdc-button
+                    mat-button
                     type="button"
                     (click)="markAnswerAsResolved(answer)"
                     class="answer-status answer-resolve"
@@ -186,7 +188,7 @@
 
                   <button
                     *ngIf="canEditAnswer(answer)"
-                    mdc-button
+                    mat-button
                     type="button"
                     (click)="editAnswer(answer)"
                     class="answer-edit"
@@ -196,7 +198,7 @@
                   <div *ngIf="canDeleteAnswer(answer)" class="delete-divider">|</div>
                   <button
                     *ngIf="canDeleteAnswer(answer)"
-                    mdc-button
+                    mat-button
                     type="button"
                     (click)="deleteAnswerClicked(answer)"
                     class="answer-delete"
@@ -218,7 +220,7 @@
       </div>
     </div>
     <div class="answers-component-footer" *ngIf="remoteAnswersCount > 0 && !answerFormVisible && shouldSeeAnswersList">
-      <button mdc-button id="show-unread-answers-button" (click)="showRemoteAnswers(true)">
+      <button mat-button id="show-unread-answers-button" (click)="showRemoteAnswers(true)">
         {{ t("show_more_unread", { count: remoteAnswersCount }) }}
       </button>
     </div>
