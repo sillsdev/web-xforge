@@ -627,7 +627,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             .Query()
             .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
         if (projectSecret == null)
-            throw new ForbiddenException();
+            throw new DataNotFoundException("project_link_is_invalid");
 
         string projectId = projectSecret.Id;
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
@@ -638,7 +638,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             {
                 return projectId;
             }
-            throw new ForbiddenException();
+            throw new DataNotFoundException("key_already_used");
         }
 
         IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
@@ -681,7 +681,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             );
             return projectId;
         }
-        throw new ForbiddenException();
+        throw new DataNotFoundException("project_link_is_invalid");
     }
 
     public async Task<ValidShareKey> CheckShareKeyValidity(string shareKey)
@@ -691,7 +691,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         if (string.IsNullOrWhiteSpace(projectSecretShareKey?.ProjectRole))
         {
-            throw new ForbiddenException();
+            throw new DataNotFoundException("role_not_found");
         }
 
         SFProject project = await GetProjectAsync(projectSecret.Id);
@@ -712,7 +712,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
             if (!availableRoles.Contains(projectSecretShareKey.ProjectRole))
             {
-                throw new ForbiddenException();
+                throw new DataNotFoundException("role_not_found");
             }
         }
         else if (
@@ -720,7 +720,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             && projectSecretShareKey.ShareLinkType == ShareLinkType.Recipient
         )
         {
-            throw new ForbiddenException();
+            throw new DataNotFoundException("key_expired");
         }
         return new ValidShareKey()
         {
@@ -736,7 +736,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             .Query()
             .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
         if (projectSecret == null)
-            throw new DataNotFoundException("Invalid share key");
+            throw new DataNotFoundException("project_link_is_invalid");
         return projectSecret;
     }
 
