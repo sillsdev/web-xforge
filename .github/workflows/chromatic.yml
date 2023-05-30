@@ -3,6 +3,8 @@ name: "Chromatic"
 on:
   pull_request:
   workflow_dispatch:
+  push:
+    branches: [master]
 
 jobs:
   chromatic-deployment:
@@ -55,3 +57,8 @@ jobs:
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           workingDir: src/SIL.XForge.Scripture/ClientApp
+          # Auto accept changes on master branch so we have a clean baseline
+          autoAcceptChanges: "master"
+          # Ignore any past builds on the branch that triggered the workflow. This prevents rebased branches from
+          # having the wrong baseline. On master this shouldn't have any effect because autoAcceptChanges is true.
+          ignoreLastBuildOnBranch: ${{ github.ref }}
