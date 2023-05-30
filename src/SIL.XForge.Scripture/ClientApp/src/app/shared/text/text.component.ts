@@ -1300,7 +1300,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       let resetSegment = true;
 
       // If verse segment ref has no exact match, check for segments that fall within a verse reference
-      if (segmentRef.startsWith('verse')) {
+      if (VERSE_REGEX.test(segmentRef)) {
         const [_, chapterNum, verseNum] = segmentRef.split('_');
         const verseRef: VerseRef = new VerseRef(this.id?.bookNum, chapterNum, verseNum);
         const correspondingSegments: string[] = this.getVerseSegments(verseRef);
