@@ -76,9 +76,9 @@
       }
     }
   }
-  mdc-form-field {
+  mat-form-field {
     width: 100%;
-    mdc-text-field {
+    mat-text-field {
       width: 100%;
     }
   }
@@ -264,11 +264,6 @@
 .mat-button {
   line-height: unset;
   padding: 0 8px;
-}
-
-::ng-deep .mat-form-field {
-  width: 100%;
-  height: 100%;
 }
 
 :host ::ng-deep .mat-form-field-appearance-outline.mat-form-field-invalid .mat-form-field-outline-thick,
