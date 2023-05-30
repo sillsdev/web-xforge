@@ -1,9 +1,22 @@
+@import 'src/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
+
 .projects-controls {
   margin: 32px 0;
 }
 
 mat-form-field {
   margin-top: 10px;
+}
+
+table {
+  width: 100%;
+}
+
+.mat-column-tasks {
+  @include media-breakpoint-down(md) {
+    display: none;
+  }
 }
 
 .no-projects-label {

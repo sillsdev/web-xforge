@@ -1,5 +1,12 @@
+@import 'src/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
+
 .users-controls {
   margin: 32px 0;
+}
+
+table {
+  width: 100%;
 }
 
 .mat-column-avatar {
@@ -13,6 +20,10 @@
 
 .mat-column-projects {
   word-break: break-word;
+
+  @include media-breakpoint-down(md) {
+    display: none;
+  }
 }
 
 #no-users-label {

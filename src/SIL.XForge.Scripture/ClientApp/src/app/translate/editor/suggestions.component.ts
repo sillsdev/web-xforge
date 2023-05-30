@@ -1,5 +1,5 @@
-import { MdcList } from '@angular-mdc/web/list';
 import { Component, ElementRef, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import { MatListOption, MatSelectionList } from '@angular/material/list';
 import isEqual from 'lodash-es/isEqual';
 import Quill from 'quill';
 import { fromEvent } from 'rxjs';
@@ -27,7 +27,7 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
   @Output() selected = new EventEmitter<SuggestionSelectedEvent>();
   @Output() showChange = new EventEmitter<boolean>();
 
-  @ViewChild('list') list?: MdcList;
+  @ViewChild('list') list?: MatSelectionList;
 
   showHelp: boolean = false;
 
@@ -65,11 +65,22 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
       this._suggestions = value;
       setTimeout(() => {
         this.setPosition();
-        if (this.list != null) {
-          this.list.setSelectedIndex(0);
-        }
       });
     }
+  }
+
+  private getSelectedIndex(): number {
+    if (this.list != null) {
+      const selected = this.list.selectedOptions.selected[0];
+      return this.list.options.toArray().indexOf(selected);
+    }
+
+    return -1;
+  }
+
+  private setSelectedIndex(index: number): void {
+    const option: MatListOption | undefined = this.list?.options.get(index);
+    if (option != null) option.selected = true;
   }
 
   get show(): boolean {
@@ -108,7 +119,7 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
     if (this.list == null) {
       return;
     }
-    this.selected.emit({ suggestionIndex: this.list.getSelectedIndex(), wordIndex: -1, event });
+    this.selected.emit({ suggestionIndex: this.getSelectedIndex(), wordIndex: -1, event });
   }
 
   getPercentage(num: number): number {
@@ -143,27 +154,27 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
         let selectedIndex;
         switch (event.key) {
           case 'ArrowDown':
-            selectedIndex = this.list.getSelectedIndex();
-            if (selectedIndex === this.list.items.length - 1) {
+            selectedIndex = this.getSelectedIndex();
+            if (selectedIndex === this.list.options.length - 1) {
               selectedIndex = 0;
             } else {
               selectedIndex++;
             }
-            this.list.setSelectedIndex(selectedIndex);
+            this.setSelectedIndex(selectedIndex);
             break;
 
           case 'ArrowUp':
-            selectedIndex = this.list.getSelectedIndex();
+            selectedIndex = this.getSelectedIndex();
             if (selectedIndex === 0) {
-              selectedIndex = this.list.items.length - 1;
+              selectedIndex = this.list.options.length - 1;
             } else {
               selectedIndex--;
             }
-            this.list.setSelectedIndex(selectedIndex);
+            this.setSelectedIndex(selectedIndex);
             break;
 
           case 'Enter':
-            this.selected.emit({ suggestionIndex: this.list.getSelectedIndex(), wordIndex: -1, event });
+            this.selected.emit({ suggestionIndex: this.getSelectedIndex(), wordIndex: -1, event });
             break;
 
           case 'Escape':
@@ -172,7 +183,7 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
 
           default:
             this.selected.emit({
-              suggestionIndex: this.list.getSelectedIndex(),
+              suggestionIndex: this.getSelectedIndex(),
               wordIndex: parseInt(event.key, 10) - 1,
               event
             });
