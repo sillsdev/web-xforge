@@ -53,6 +53,7 @@
     }
   }
 }
+
 #answer-form {
   .answer-tab {
     padding: 10px 0;
@@ -95,14 +96,13 @@
   .form-actions {
     display: flex;
     justify-content: flex-end;
-    .mdc-button:not(:first-child) {
+    .mat-button:not(:first-child) {
       margin-left: $button-spacing;
     }
   }
-  @include media-breakpoint-down(lg) {
-    mdc-tab {
-      padding: 0 10px;
-    }
+  ::ng-deep .mat-tab-label-content {
+    flex: 1;
+    column-gap: 8px;
   }
 }
 
@@ -155,8 +155,7 @@
       @include media-breakpoint-down(sm) {
         flex: 0 0 35px;
       }
-      mdc-icon {
-        cursor: pointer;
+      mat-icon {
         @include media-breakpoint-down(sm) {
           font-size: 18px;
         }
