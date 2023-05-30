@@ -1,8 +1,7 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { Location } from '@angular/common';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Route, Router } from '@angular/router';
@@ -83,7 +82,6 @@ const mockedProjectService = mock(SFProjectService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
-const mockedMdcDialog = mock(MdcDialog);
 const mockedDialogService = mock(DialogService);
 const mockedTextChooserDialogComponent = mock(TextChooserDialogComponent);
 const mockedQuestionDialogService = mock(QuestionDialogService);
@@ -156,7 +154,6 @@ describe('CheckingComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: MdcDialog, useMock: mockedMdcDialog },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: TextChooserDialogComponent, useMock: mockedTextChooserDialogComponent },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
@@ -331,7 +328,7 @@ describe('CheckingComponent', () => {
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
       ).times(3);
       env.clickButton(env.editQuestionButton);
-      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent, anything())).never();
+      verify(mockedDialogService.openMatDialog(QuestionAnsweredDialogComponent, anything())).never();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       tick(env.questionReadTimer);
       verify(
@@ -388,10 +385,10 @@ describe('CheckingComponent', () => {
       // Edit a question with answers
       env.selectQuestion(6);
       env.clickButton(env.editQuestionButton);
-      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).once();
+      verify(mockedDialogService.openMatDialog(QuestionAnsweredDialogComponent)).once();
       when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
       env.clickButton(env.editQuestionButton);
-      verify(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).twice();
+      verify(mockedDialogService.openMatDialog(QuestionAnsweredDialogComponent)).twice();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));
@@ -747,6 +744,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.addAnswerButton);
       env.waitForSliderUpdate();
       env.clickButton(env.audioTab);
+      env.waitForSliderUpdate();
       expect(env.recordButton).not.toBeNull();
     }));
 
@@ -756,7 +754,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.addAnswerButton);
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      expect(env.yourAnswerField.classes['mdc-text-field--invalid']).toBe(true);
+      expect(env.yourAnswerContainer.classes['mat-form-field-invalid']).toBe(true);
     }));
 
     it('can edit a new answer', fakeAsync(() => {
@@ -873,6 +871,7 @@ describe('CheckingComponent', () => {
       env.clickButton(env.getAnswerEditButton(0));
       env.waitForSliderUpdate();
       env.clickButton(env.audioTab);
+      env.waitForSliderUpdate();
       env.clickButton(env.removeAudioButton);
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
@@ -1080,6 +1079,7 @@ describe('CheckingComponent', () => {
       expect(env.answerFormErrors.length).withContext('setup').toEqual(1);
       expect(env.answerFormErrors[0].nativeElement.textContent).withContext('setup').toContain('record');
       env.clickButton(env.audioTab);
+      env.waitForSliderUpdate();
 
       // SUT
       env.clickButton(env.recordButton);
@@ -1649,7 +1649,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<CheckingComponent>;
   readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
-  readonly mockedAnsweredDialogRef = mock<MdcDialogRef<QuestionAnsweredDialogComponent>>(MdcDialogRef);
+  readonly mockedAnsweredDialogRef = mock<MatDialogRef<QuestionAnsweredDialogComponent>>(MatDialogRef);
   readonly mockedTextChooserDialogComponent = mock<MatDialogRef<TextChooserDialogComponent>>(MatDialogRef);
   readonly location: Location;
   readonly router: Router;
@@ -1929,7 +1929,7 @@ class TestEnvironment {
   }
 
   get audioTab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(2)'));
+    return this.fixture.debugElement.query(By.css('.mat-tab-label:nth-child(2)'));
   }
 
   get removeAudioButton(): DebugElement {
@@ -1940,8 +1940,12 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#save-answer'));
   }
 
+  get yourAnswerContainer(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#answer-form .mat-form-field'));
+  }
+
   get yourAnswerField(): DebugElement {
-    return this.fixture.debugElement.query(By.css('mdc-textarea[formControlName="answerText"]'));
+    return this.fixture.debugElement.query(By.css('textarea[formControlName="answerText"]'));
   }
 
   get answerFormErrors(): DebugElement[] {
@@ -1958,7 +1962,7 @@ class TestEnvironment {
   }
 
   get selectTextTab(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#answer-form mdc-tab:nth-child(3)'));
+    return this.fixture.debugElement.query(By.css('.mat-tab-label:nth-child(3)'));
   }
 
   get selectVersesButton(): DebugElement {
@@ -2463,7 +2467,9 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
     );
 
-    when(mockedMdcDialog.open(QuestionAnsweredDialogComponent)).thenReturn(instance(this.mockedAnsweredDialogRef));
+    when(mockedDialogService.openMatDialog(QuestionAnsweredDialogComponent)).thenReturn(
+      instance(this.mockedAnsweredDialogRef)
+    );
     when(mockedDialogService.openMatDialog(TextChooserDialogComponent, anything())).thenReturn(
       instance(this.mockedTextChooserDialogComponent)
     );
