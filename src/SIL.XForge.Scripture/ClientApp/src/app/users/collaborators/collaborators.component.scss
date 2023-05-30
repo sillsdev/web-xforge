@@ -83,3 +83,8 @@ td.mat-cell:last-of-type {
   justify-content: space-between;
   align-items: center;
 }
+
+// prevent undesirable flicker effect when changing tabs
+:host ::ng-deep .mat-tab-body-wrapper {
+  display: none;
+}
