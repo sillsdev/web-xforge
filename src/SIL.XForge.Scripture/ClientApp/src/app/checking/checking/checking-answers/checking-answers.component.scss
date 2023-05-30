@@ -270,3 +270,8 @@
   width: 100%;
   height: 100%;
 }
+
+:host ::ng-deep .mat-form-field-appearance-outline.mat-form-field-invalid .mat-form-field-outline-thick,
+:host ::ng-deep .mat-form-field.mat-form-field-invalid .mat-form-field-label {
+  color: var(--mdc-theme-error) !important;
+}
