@@ -1,4 +1,4 @@
-import { AsyncPipe, CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -44,47 +44,18 @@ const meta: Meta = {
   argTypes: {
     online: {
       name: 'Is app online',
-      control: 'boolean',
-      table: {
-        category: 'App state'
-      }
+      table: { category: 'App state' }
     },
     loggedIn: {
       name: 'Is user logged in',
-      control: 'boolean',
-      table: {
-        category: 'App state'
-      }
+      table: { category: 'App state' }
     },
     shareKey: {
-      options: [
-        ShareKeys.Expired,
-        ShareKeys.InvalidRole,
-        ShareKeys.InvalidShareKey,
-        ShareKeys.MaxUsersReached,
-        ShareKeys.KeyAlreadyUsed,
-        ShareKeys.Valid
-      ],
+      options: Object.values(ShareKeys),
       control: 'select',
-      table: {
-        category: 'App state'
-      }
+      table: { category: 'App state' }
     }
-  }
-};
-
-export default meta;
-
-// Additional states off the app to support mocks
-interface StoryAppState {
-  online: boolean;
-  loggedIn: boolean;
-  shareKey: string;
-}
-
-type Story = StoryObj<StoryAppState & JoinComponent>;
-
-const Template: Story = {
+  },
   decorators: [
     moduleMetadata({
       imports: [UICommonModule, CommonModule, I18nStoryModule],
@@ -99,8 +70,7 @@ const Template: Story = {
         { provide: PwaService, useValue: instance(mockedPwaService) },
         { provide: Router, useValue: instance(mockedRouter) },
         { provide: MatDialogRef, useValue: {} },
-        { provide: SFProjectService, useValue: instance(mockedSFProjectService) },
-        AsyncPipe
+        { provide: SFProjectService, useValue: instance(mockedSFProjectService) }
       ]
     }),
     (story, context) => {
@@ -138,41 +108,37 @@ const Template: Story = {
     }
   ],
   parameters: {
+    // FIXME there should be a better way
     controls: {
-      exclude: [
-        '_isLoading',
-        'checkShareKey',
-        'dispose',
-        'informInvalidShareLinkAndRedirect',
-        'joiningResponse',
-        'joinProject',
-        'joinWithShareKey',
-        'loadingFinished',
-        'loadingStarted',
-        'logIn',
-        'name',
-        'ngOnDestroy',
-        'ngUnsubscribe',
-        'status',
-        'subscribe',
-        'updateOfflineJoiningStatus'
-      ]
+      include: ['online', 'loggedIn', 'shareKey']
     }
-  }
-};
-
-const Default: Story = {
-  ...Template,
+  },
   args: {
-    loggedIn: false,
     online: true,
+    loggedIn: false,
     shareKey: ShareKeys.Valid
   }
 };
 
+export default meta;
+
+// Additional states off the app to support mocks
+interface StoryAppState {
+  online: boolean;
+  loggedIn: boolean;
+  shareKey: string;
+}
+
+type Story = StoryObj<StoryAppState>;
+
+export const EnterYourName: Story = {};
+
+export const OfflineNoticeWhenJoining: Story = {
+  args: { online: false }
+};
+
 export const DialogExpiredKey: Story = {
-  ...Default,
-  args: { ...Default.args, ...{ shareKey: ShareKeys.Expired } },
+  args: { shareKey: ShareKeys.Expired },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const joinButton = canvas.getByRole('button');
@@ -183,8 +149,7 @@ export const DialogExpiredKey: Story = {
 };
 
 export const DialogInvalidRole: Story = {
-  ...Default,
-  args: { ...Default.args, ...{ shareKey: ShareKeys.InvalidRole } },
+  args: { shareKey: ShareKeys.InvalidRole },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const joinButton = canvas.getByRole('button');
@@ -195,18 +160,21 @@ export const DialogInvalidRole: Story = {
 };
 
 export const DialogInvalidShareKey: Story = {
-  ...Default,
-  args: { ...Default.args, ...{ shareKey: ShareKeys.InvalidShareKey, loggedIn: true } }
+  args: {
+    shareKey: ShareKeys.InvalidShareKey,
+    loggedIn: true
+  }
 };
 
 export const DialogKeyAlreadyUsed: Story = {
-  ...Default,
-  args: { ...Default.args, ...{ shareKey: ShareKeys.KeyAlreadyUsed, loggedIn: true } }
+  args: {
+    shareKey: ShareKeys.KeyAlreadyUsed,
+    loggedIn: true
+  }
 };
 
 export const DialogMaxUsersReached: Story = {
-  ...Default,
-  args: { ...Default.args, ...{ shareKey: ShareKeys.MaxUsersReached } },
+  args: { shareKey: ShareKeys.MaxUsersReached },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const joinButton = canvas.getByRole('button');
@@ -214,14 +182,9 @@ export const DialogMaxUsersReached: Story = {
     await userEvent.type(nameInput, 'Anonymous');
     await userEvent.click(joinButton);
   }
-};
-
-export const EnterYourName: Story = {
-  ...Default
 };
 
 export const JoiningWithValidKey: Story = {
-  ...Default,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const joinButton = canvas.getByRole('button');
@@ -229,9 +192,4 @@ export const JoiningWithValidKey: Story = {
     await userEvent.type(nameInput, 'Anonymous');
     await userEvent.click(joinButton);
   }
-};
-
-export const OfflineNoticeWhenJoining: Story = {
-  ...Default,
-  args: { ...Default.args, ...{ online: false } }
 };
