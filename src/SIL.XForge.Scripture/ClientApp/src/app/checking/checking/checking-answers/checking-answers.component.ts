@@ -1,4 +1,3 @@
-import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
@@ -118,7 +117,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   constructor(
     private readonly userService: UserService,
-    private readonly dialog: MdcDialog,
     private readonly dialogService: DialogService,
     private readonly noticeService: NoticeService,
     private readonly questionDialogService: QuestionDialogService,
@@ -351,9 +349,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
     const projectId = this._questionDoc.data.projectRef;
     if (this._questionDoc.getAnswers().length > 0) {
-      const answeredDialogRef = this.dialog.open(QuestionAnsweredDialogComponent);
+      const answeredDialogRef = this.dialogService.openMatDialog(QuestionAnsweredDialogComponent);
       const dialogResponse = (await answeredDialogRef.afterClosed().toPromise()) as string;
-      if (dialogResponse === 'close') {
+      if (dialogResponse !== 'accept') {
         return;
       }
     }

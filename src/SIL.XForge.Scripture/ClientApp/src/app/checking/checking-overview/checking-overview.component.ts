@@ -378,9 +378,9 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     }
     if (questionDoc != null && questionDoc.data != null) {
       if (questionDoc.getAnswers().length > 0) {
-        const answeredDialogRef = this.dialogService.openMdcDialog(QuestionAnsweredDialogComponent);
+        const answeredDialogRef = this.dialogService.openMatDialog(QuestionAnsweredDialogComponent);
         const response = (await answeredDialogRef.afterClosed().toPromise()) as string;
-        if (response === 'close') {
+        if (response !== 'accept') {
           return;
         }
       }

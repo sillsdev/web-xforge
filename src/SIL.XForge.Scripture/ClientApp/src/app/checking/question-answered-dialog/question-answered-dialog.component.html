@@ -1,14 +1,8 @@
 <ng-container *transloco="let t; read: 'question_answered_dialog'">
-  <mdc-dialog>
-    <mdc-dialog-container>
-      <mdc-dialog-surface>
-        <mdc-dialog-title>{{ t("question_has_answer") }}</mdc-dialog-title>
-        <mdc-dialog-content>{{ t("consider_creating_new_question") }}</mdc-dialog-content>
-        <mdc-dialog-actions>
-          <button mdcDialogButton type="button" mdcDialogAction="accept">{{ t("edit_anyway") }}</button>
-          <button mdcDialogButton type="button" mdcDialogAction="close">{{ t("cancel") }}</button>
-        </mdc-dialog-actions>
-      </mdc-dialog-surface>
-    </mdc-dialog-container>
-  </mdc-dialog>
+  <h2 mat-dialog-title>{{ t("question_has_answer") }}</h2>
+  <p mat-dialog-content>{{ t("consider_creating_new_question") }}</p>
+  <div mat-dialog-actions>
+    <button mat-button type="button" [mat-dialog-close]="'accept'">{{ t("edit_anyway") }}</button>
+    <button mat-button type="button" [mat-dialog-close]="'close'" cdkFocusInitial>{{ t("cancel") }}</button>
+  </div>
 </ng-container>
