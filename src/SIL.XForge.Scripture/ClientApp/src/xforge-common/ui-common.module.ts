@@ -66,7 +66,6 @@ const modules = [
   MatCardModule,
   MatCheckboxModule,
   MatDialogModule,
-  MatTabsModule,
   MatDividerModule,
   MatFormFieldModule,
   MatIconModule,
