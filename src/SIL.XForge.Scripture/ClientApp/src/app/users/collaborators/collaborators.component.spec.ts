@@ -303,7 +303,7 @@ describe('CollaboratorsComponent', () => {
     tick();
     env.fixture.detectChanges();
     expect(env.component.currentTabIndex).toBe(2);
-    expect(env.component.userRows.length).toBe(2);
+    expect(env.component.rowsToDisplay.length).toBe(2);
   }));
 
   it('should filter users', fakeAsync(() => {

@@ -34,7 +34,7 @@
     </div>
     <div *ngIf="!isLoading">
       <div *ngIf="filteredLength > 0">
-        <table mat-table fxFill id="project-users-table" [dataSource]="userRows">
+        <table mat-table fxFill id="project-users-table" [dataSource]="rowsToDisplay">
           <ng-container matColumnDef="avatar">
             <td mat-cell *matCellDef="let userRow; let i = index">
               <div *ngIf="!userRow.isInvitee">
@@ -48,9 +48,6 @@
                 {{ userRow.user?.displayName }}
                 <b *ngIf="isCurrentUser(userRow)" class="current-user-label">&nbsp;{{ t("me") }}</b>
               </div>
-              <div *ngIf="!userRow.inviteeStatus" fxHide.gt-xs>
-                <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : "" }}</em>
-              </div>
               <div
                 *ngIf="userRow.inviteeStatus"
                 [innerHtml]="
@@ -61,6 +58,9 @@
                       })
                 "
               ></div>
+              <div fxHide.gt-xs>
+                <em>{{ userRow.role ? i18n.localizeRole(userRow.role) : "" }}</em>
+              </div>
             </td>
           </ng-container>
           <ng-container matColumnDef="info">
