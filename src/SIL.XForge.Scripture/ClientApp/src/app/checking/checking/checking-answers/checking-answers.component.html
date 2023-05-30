@@ -45,16 +45,10 @@
               <ng-template matTabLabel><mat-icon>title</mat-icon>{{ t("answer") }}</ng-template>
               <ng-template matTabContent>
                 <div class="answer-tab answer-text">
-                  <mdc-form-field>
-                    <mdc-textarea
-                      appAutofocus
-                      label="{{ t('your_answer') }}"
-                      type="text"
-                      formControlName="answerText"
-                      [outlined]="true"
-                      [fullwidth]="true"
-                    ></mdc-textarea>
-                  </mdc-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ t("your_answer") }}</mat-label>
+                    <textarea appAutofocus matInput type="text" formControlName="answerText"></textarea>
+                  </mat-form-field>
                 </div>
               </ng-template>
             </mat-tab>
