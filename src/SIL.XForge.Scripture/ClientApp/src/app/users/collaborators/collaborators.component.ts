@@ -95,14 +95,20 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
   get filteredLength(): number {
     if (this.term && this.term.trim()) {
-      return this.filteredRows.length;
+      return this.filteredRowsBySearchTermAndTab.length;
     }
-    return this.userRowsOnTab.length;
+    return this.userRowsForSelectedTab.length;
   }
 
-  get filteredRows(): Row[] {
+  get rowsToDisplay(): Row[] {
+    const userRows: Row[] =
+      this.term.trim().length === 0 ? this.userRowsForSelectedTab : this.filteredRowsBySearchTermAndTab;
+    return this.page(userRows);
+  }
+
+  private get filteredRowsBySearchTermAndTab(): Row[] {
     const term = this.term.trim().toLowerCase();
-    return this.userRowsOnTab.filter(
+    return this.userRowsForSelectedTab.filter(
       userRow =>
         userRow.user &&
         (userRow.user.displayName?.toLowerCase().includes(term) ||
@@ -111,13 +117,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     );
   }
 
-  get userRows(): Row[] {
-    const term = this.term && this.term.trim().toLowerCase();
-    let rows: Row[] = term ? this.filteredRows : this.userRowsOnTab;
-    return this.page(rows);
-  }
-
-  private get userRowsOnTab(): Row[] {
+  private get userRowsForSelectedTab(): Row[] {
     if (this._userRows == null) {
       return [];
     }
