@@ -38,10 +38,9 @@
     }
   }
 }
-div[mat-dialog-actions] {
+.share-action-buttons {
   display: flex;
-  flex-direction: row-reverse; /* This was done so the share button would receive the focus */
-  justify-items: flex-end;
+  justify-content: flex-end;
   column-gap: 10px;
 
   button {
