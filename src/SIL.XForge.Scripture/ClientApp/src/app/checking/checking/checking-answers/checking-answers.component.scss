@@ -265,3 +265,8 @@
   line-height: unset;
   padding: 0 8px;
 }
+
+::ng-deep .mat-form-field {
+  width: 100%;
+  height: 100%;
+}
