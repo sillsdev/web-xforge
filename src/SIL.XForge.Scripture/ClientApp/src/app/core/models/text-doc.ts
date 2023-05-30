@@ -7,6 +7,7 @@ import {
   TEXT_INDEX_PATHS
 } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
+import { RIGHT_TO_LEFT_MARK, VERSE_FROM_SEGMENT_REF_REGEX } from '../../shared/utils';
 
 export const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
 
@@ -82,7 +83,7 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, RangeStatic> {
     return text;
   }
 
-  getSegmentTextIncludingRelated(ref: string): string {
+  getSegmentTextIncludingRelated(verseStr: string): string {
     if (this.data == null || this.data.ops == null) {
       return '';
     }
@@ -101,10 +102,9 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, RangeStatic> {
         continue;
       }
       // Locate range of ops that match the verse segments
-      if (
-        op.attributes?.segment != null &&
-        (op.attributes.segment === ref || op.attributes.segment.indexOf(ref + '/') === 0)
-      ) {
+      const opSegmentRef: string = op.attributes?.segment ?? '';
+      const match: RegExpMatchArray | null = VERSE_FROM_SEGMENT_REF_REGEX.exec(opSegmentRef);
+      if (match != null && match[1].replace(RIGHT_TO_LEFT_MARK, '') === verseStr) {
         text += textBetweenRelatedSegments + op.insert;
         // Reset text so no double-ups
         textBetweenRelatedSegments = '';
