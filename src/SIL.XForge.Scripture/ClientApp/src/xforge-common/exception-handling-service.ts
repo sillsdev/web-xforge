@@ -3,17 +3,17 @@ import { Injectable, Injector, NgZone } from '@angular/core';
 import Bugsnag, { Breadcrumb, BrowserConfig } from '@bugsnag/js';
 import { BugsnagErrorHandler } from '@bugsnag/plugin-angular';
 import { translate } from '@ngneat/transloco';
-import { MatDialog } from '@angular/material/dialog';
-import { hasObjectProp, hasStringProp } from '../type-utils';
-import { MACHINE_API_BASE_URL } from '../app/machine-api/http-client';
 import versionData from '../../../version.json';
+import { MACHINE_API_BASE_URL } from '../app/machine-api/http-client';
 import { environment } from '../environments/environment';
+import { hasObjectProp, hasStringProp } from '../type-utils';
 import { CONSOLE } from './browser-globals';
-import { ErrorReportingService } from './error-reporting.service';
+import { DialogService } from './dialog.service';
 import { ErrorAlertData, ErrorDialogComponent } from './error-dialog/error-dialog.component';
+import { ErrorReportingService } from './error-reporting.service';
 import { NoticeService } from './notice.service';
-import { objectId } from './utils';
 import { COMMAND_API_NAMESPACE } from './url-constants';
+import { objectId } from './utils';
 
 export interface BreadcrumbSelector {
   element: string;
@@ -145,12 +145,12 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     // instantiated.
     let ngZone: NgZone;
     let noticeService: NoticeService;
-    let dialog: MatDialog;
+    let dialogService: DialogService;
     let errorReportingService: ErrorReportingService;
     try {
       ngZone = this.injector.get(NgZone);
       noticeService = this.injector.get(NoticeService);
-      dialog = this.injector.get(MatDialog);
+      dialogService = this.injector.get(DialogService);
       errorReportingService = this.injector.get(ErrorReportingService);
       this.console = this.injector.get(CONSOLE);
     } catch {
@@ -232,7 +232,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
         // Don't show a dialog if this is a silent error that we just want sent to Bugsnag
         if (!silently) {
           const stack = hasStringProp(error, 'stack') ? error.stack : undefined;
-          this.handleAlert(ngZone, dialog, { message, stack, eventId });
+          this.handleAlert(ngZone, dialogService, { message, stack, eventId });
         }
       } finally {
         errorReportingService.addMeta({ eventId });
@@ -254,25 +254,25 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     });
   }
 
-  private handleAlert(ngZone: NgZone, dialog: MatDialog, error: ErrorAlertData): void {
+  private handleAlert(ngZone: NgZone, dialogService: DialogService, error: ErrorAlertData): void {
     if (!this.alertQueue.some(alert => alert.message === error.message)) {
       this.alertQueue.unshift(error);
-      this.showAlert(ngZone, dialog);
+      this.showAlert(ngZone, dialogService);
     }
   }
 
-  private showAlert(ngZone: NgZone, dialog: MatDialog): void {
+  private showAlert(ngZone: NgZone, dialogService: DialogService): void {
     if (!this.dialogOpen && this.alertQueue.length) {
       ngZone.run(() => {
         this.dialogOpen = true;
-        const dialogRef = dialog.open(ErrorDialogComponent, {
+        const dialogRef = dialogService.openMatDialog(ErrorDialogComponent, {
           autoFocus: false,
           data: this.alertQueue[this.alertQueue.length - 1]
         });
         dialogRef.afterClosed().subscribe(() => {
           this.alertQueue.pop();
           this.dialogOpen = false;
-          this.showAlert(ngZone, dialog);
+          this.showAlert(ngZone, dialogService);
         });
       });
     }
