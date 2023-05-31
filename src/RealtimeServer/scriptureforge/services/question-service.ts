@@ -1,5 +1,6 @@
 import { Doc } from 'sharedb/lib/client';
 import { OwnedData } from '../../common/models/owned-data';
+import { ValidationSchema } from '../../common/models/validation-schema';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { ANY_INDEX } from '../../common/utils/obj-path';
 import { createFetchQuery, docSubmitJson0Op } from '../../common/utils/sharedb-utils';
@@ -19,6 +20,193 @@ export class QuestionService extends SFProjectDataService<Question> {
 
   protected readonly indexPaths = QUESTION_INDEX_PATHS;
   protected readonly listenForUpdates = true;
+  readonly validationSchema: ValidationSchema = {
+    bsonType: 'object',
+    required: ['_id', '_type', '_v', '_m', '_o'],
+    properties: {
+      _id: {
+        bsonType: 'string',
+        pattern: '^[0-9a-f]+:[0-9a-f]+$'
+      },
+      dataId: {
+        bsonType: 'string',
+        pattern: '^[0-9a-f]+$'
+      },
+      verseRef: {
+        bsonType: 'object',
+        required: ['bookNum', 'chapterNum', 'verseNum'],
+        properties: {
+          bookNum: {
+            bsonType: 'int'
+          },
+          chapterNum: {
+            bsonType: 'int'
+          },
+          verseNum: {
+            bsonType: 'int'
+          },
+          verse: {
+            bsonType: 'string'
+          }
+        },
+        additionalProperties: false
+      },
+      text: {
+        bsonType: 'string'
+      },
+      audioUrl: {
+        bsonType: 'string'
+      },
+      answers: {
+        bsonType: 'array',
+        items: {
+          bsonType: 'object',
+          required: ['dataId', 'deleted', 'dateModified', 'dateCreated'],
+          properties: {
+            verseRef: {
+              bsonType: 'object',
+              required: ['bookNum', 'chapterNum', 'verseNum'],
+              properties: {
+                bookNum: {
+                  bsonType: 'int'
+                },
+                chapterNum: {
+                  bsonType: 'int'
+                },
+                verseNum: {
+                  bsonType: 'int'
+                },
+                verse: {
+                  bsonType: 'string'
+                }
+              },
+              additionalProperties: false
+            },
+            comments: {
+              bsonType: 'array',
+              items: {
+                bsonType: 'object',
+                required: ['dataId', 'deleted', 'dateModified', 'dateCreated'],
+                properties: {
+                  dataId: {
+                    bsonType: 'string',
+                    pattern: '^[0-9a-f]+$'
+                  },
+                  deleted: {
+                    bsonType: 'bool'
+                  },
+                  syncUserRef: {
+                    bsonType: 'string'
+                  },
+                  text: {
+                    bsonType: 'string'
+                  },
+                  dateModified: {
+                    bsonType: 'string'
+                  },
+                  dateCreated: {
+                    bsonType: 'string'
+                  },
+                  ownerRef: {
+                    bsonType: 'string',
+                    pattern: '^[0-9a-f]*$'
+                  }
+                },
+                additionalProperties: false
+              }
+            },
+            likes: {
+              bsonType: 'array',
+              items: {
+                bsonType: 'object',
+                required: ['ownerRef'],
+                properties: {
+                  ownerRef: {
+                    bsonType: 'string',
+                    pattern: '^[0-9a-f]$'
+                  }
+                },
+                additionalProperties: false
+              }
+            },
+            status: {
+              enum: ['', 'resolved', 'export']
+            },
+            dataId: {
+              bsonType: 'string',
+              pattern: '^[0-9a-f]+$'
+            },
+            deleted: {
+              bsonType: 'bool'
+            },
+            syncUserRef: {
+              bsonType: 'string'
+            },
+            text: {
+              bsonType: 'string'
+            },
+            dateModified: {
+              bsonType: 'string'
+            },
+            dateCreated: {
+              bsonType: 'string'
+            },
+            ownerRef: {
+              bsonType: 'string',
+              pattern: '^[0-9a-f]*$'
+            }
+          },
+          additionalProperties: false
+        }
+      },
+      isArchived: {
+        bsonType: 'bool'
+      },
+      dateArchived: {
+        bsonType: 'string'
+      },
+      dateModified: {
+        bsonType: 'string'
+      },
+      dateCreated: {
+        bsonType: 'string'
+      },
+      transceleratorQuestionId: {
+        bsonType: 'string'
+      },
+      projectRef: {
+        bsonType: 'string',
+        pattern: '^[0-9a-f]+$'
+      },
+      ownerRef: {
+        bsonType: 'string',
+        pattern: '^[0-9a-f]*$'
+      },
+      _type: {
+        bsonType: ['null', 'string']
+      },
+      _v: {
+        bsonType: 'int'
+      },
+      _m: {
+        bsonType: 'object',
+        required: ['ctime', 'mtime'],
+        properties: {
+          ctime: {
+            bsonType: 'number'
+          },
+          mtime: {
+            bsonType: 'number'
+          }
+        },
+        additionalProperties: false
+      },
+      _o: {
+        bsonType: 'objectId'
+      }
+    },
+    additionalProperties: false
+  };
 
   constructor() {
     super(QUESTION_MIGRATIONS);

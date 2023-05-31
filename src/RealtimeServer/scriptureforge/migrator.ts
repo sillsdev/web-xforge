@@ -57,10 +57,12 @@ async function runMigrations() {
     server = new SFRealtimeServer(
       siteId,
       false,
+      true,
       new DBType(callback => callback(null, client)),
       new SchemaVersionRepository(db)
     );
     await server.createIndexes(db);
+    await server.addValidationSchema(db);
     await server.migrateIfNecessary();
   } finally {
     server?.close();
