@@ -835,9 +835,9 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return !(newSel == null || sel.index !== newSel.index || sel.length !== newSel.length);
   }
 
-  /**
-   * Both onBlur and focusout are used as sometimes touch devices can trigger one but not the other with Quill
-   */
+  // Triggered for Quill editor component (onFocus) and (onBlur) events.
+  // Don't toggle focus on Quill (focusout) event, as this causes editor to fail to highlight active segment
+  // until an (onBlur) event is triggered.
   toggleFocus(focus: boolean): void {
     this.focused.emit(focus);
   }
