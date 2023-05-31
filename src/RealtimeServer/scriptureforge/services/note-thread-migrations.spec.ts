@@ -40,6 +40,31 @@ describe('NoteThreadMigrations', () => {
       expect(doc.data.notes[0].tagIcon).toBeUndefined();
     });
   });
+
+  describe('version 3', () => {
+    it('sets the biblical term id if the note is for a biblical term', async () => {
+      const env = new TestEnvironment(2);
+      const conn = env.server.connect();
+      await createDoc(conn, NOTE_THREAD_COLLECTION, 'project01:thread01', {
+        dataId: 'BT_מַשָּׂא-1'
+      });
+
+      await env.server.migrateIfNecessary();
+      const doc: Doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, 'project01:thread01');
+      expect(doc.data.biblicalTermId).toBe('מַשָּׂא-1');
+    });
+    it('does not set the biblical term id for notes that are not for biblical terms', async () => {
+      const env = new TestEnvironment(2);
+      const conn = env.server.connect();
+      await createDoc(conn, NOTE_THREAD_COLLECTION, 'project01:thread01', {
+        dataId: 'dataId01'
+      });
+
+      await env.server.migrateIfNecessary();
+      const doc: Doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, 'project01:thread01');
+      expect(doc.data.biblicalTermId).toBeUndefined();
+    });
+  });
 });
 
 class TestEnvironment {

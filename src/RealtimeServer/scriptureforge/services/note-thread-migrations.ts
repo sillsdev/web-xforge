@@ -49,4 +49,28 @@ class NoteThreadMigration2 implements Migration {
   }
 }
 
-export const NOTE_THREAD_MIGRATIONS: MigrationConstructor[] = [NoteThreadMigration1, NoteThreadMigration2];
+class NoteThreadMigration3 implements Migration {
+  static readonly VERSION = 3;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    const dataId: string | undefined = doc.data.dataId;
+    if (dataId != null && dataId.substring(0, 3) === 'BT_' && doc.data.biblicalTermId == null) {
+      ops.push({ p: ['biblicalTermId'], oi: dataId.substring(3) });
+    }
+
+    if (ops.length > 0) {
+      await submitMigrationOp(NoteThreadMigration3.VERSION, doc, ops);
+    }
+  }
+
+  migrateOp(_op: RawOp): void {
+    // do nothing
+  }
+}
+
+export const NOTE_THREAD_MIGRATIONS: MigrationConstructor[] = [
+  NoteThreadMigration1,
+  NoteThreadMigration2,
+  NoteThreadMigration3
+];
