@@ -1480,6 +1480,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     dialogConfig: MatDialogConfig<D>
   ): MatDialogRef<T, R> {
     const selection: RangeStatic | null | undefined = this.target?.editor?.getSelection();
+    const scrollTop: number | undefined = this.target?.editor?.root.scrollTop;
     const dialogRef: MatDialogRef<T, R> = this.dialogService.openMatDialog(component, dialogConfig);
     if (selection == null || !this.canEdit) return dialogRef;
 
@@ -1488,6 +1489,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         const currentSelection: RangeStatic | null | undefined = this.target.editor.getSelection();
         if (currentSelection?.index !== selection.index) {
           this.target.editor.setSelection(selection.index, 0, 'user');
+          if (scrollTop != null) this.target.editor.root.scrollTop = scrollTop;
         }
       }
       subscription.unsubscribe();
