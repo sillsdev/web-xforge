@@ -1,10 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import Ajv from 'ajv';
+import ajvBsonType from 'ajv-bsontype';
 import { Db } from 'mongodb';
 import ShareDB from 'sharedb';
 import shareDBAccess from 'sharedb-access';
 import { Connection, Doc, Op, RawOp } from 'sharedb/lib/client';
 import { ConnectSession } from './connect-session';
 import { Project } from './models/project';
+import { ValidationSchema } from './models/validation-schema';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { DocService } from './services/doc-service';
 import { createFetchQuery, docFetch } from './utils/sharedb-utils';
@@ -15,6 +17,7 @@ export const XF_ROLE_CLAIM = 'http://xforge.org/role';
 export type RealtimeServerConstructor = new (
   siteId: string,
   migrationsDisabled: boolean,
+  dataValidationDisabled: boolean,
   db: ShareDB.DB,
   schemaVersions: SchemaVersionRepository,
   milestoneDb?: ShareDB.MilestoneDB
@@ -122,6 +125,7 @@ export class RealtimeServer extends ShareDB {
   constructor(
     private readonly siteId: string,
     readonly migrationsDisabled: boolean,
+    readonly dataValidationDisabled: boolean,
     docServices: DocService[],
     private readonly projectsCollection: string,
     db: ShareDB.DB,
@@ -168,11 +172,175 @@ export class RealtimeServer extends ShareDB {
       this.docServices.set(docService.collection, docService);
     }
 
+    // Setup Ajv
+    const ajv = new Ajv({ strict: false, allErrors: true, logger: false });
+    ajvBsonType(ajv);
+
     this.use('submit', (context, done) => {
       context.op.c = context.collection;
       if (context.op.mv != null) {
         context.op.m.migration = context.op.mv;
         delete context.op.mv;
+      }
+
+      // Perform data validation, if enabled. It will be disabled during migration.
+      const validationSchema: ValidationSchema | undefined = this.docServices.get(context.collection)?.validationSchema;
+      if (!this.dataValidationDisabled && validationSchema != null && context.op.op != null) {
+        let ops;
+        if (Array.isArray(context.op.op)) {
+          ops = context.op.op;
+        } else {
+          ops = [context.op.op];
+        }
+        // Iterate over every operation
+        for (const op of ops) {
+          // Skip blank operations
+          if (op.p == null) {
+            continue;
+          }
+          let properties = validationSchema.properties;
+          let patternProperties = false;
+          // For each property name in the path array
+          for (let i = 0; i < op.p.length; i++) {
+            const propertyName = op.p[i];
+            let propertySchema: ValidationSchema | undefined;
+            // If we have a valid property in our schema matching the current path
+            if (typeof propertyName === 'string' && properties != undefined) {
+              if (properties[propertyName] !== undefined) {
+                // If this property has more properties, set the properties to use with the next property in the path
+                if (properties[propertyName].properties !== undefined) {
+                  patternProperties = false;
+
+                  // If we are not at the end of the path, iterate over the next path property name
+                  if (i < op.p.length - 1) {
+                    properties = properties[propertyName].properties;
+                    continue;
+                  } else {
+                    // Use the schema for the items, as we are at the end of the path
+                    propertySchema = properties[propertyName];
+                  }
+                } else if (properties[propertyName].items !== undefined) {
+                  // This is an array - skip the indexer
+                  i++;
+                  patternProperties = false;
+
+                  // If we are not at the end of the path, iterate over the next path property name
+                  if (i < op.p.length - 1) {
+                    properties = properties[propertyName].items?.properties;
+                    continue;
+                  } else if (i == op.p.length) {
+                    // i is past the end of the array (i.e. there is no indexer), so we are replacing the array
+                    propertySchema = properties[propertyName];
+                  } else if (properties[propertyName].items !== undefined) {
+                    // Use the schema for the items, as we are at the end of the path
+                    propertySchema = properties[propertyName].items;
+                  }
+                } else if (properties[propertyName].patternProperties !== undefined && i < op.p.length - 1) {
+                  // This is a map - check that the next property name matches the pattern
+                  properties = properties[propertyName].patternProperties!;
+                  patternProperties = true;
+                  continue;
+                }
+              }
+
+              // Get the schema, by checking for the property name by pattern
+              if (patternProperties) {
+                for (const [key, value] of Object.entries(properties)) {
+                  if (new RegExp(key).test(propertyName)) {
+                    propertySchema = value;
+                  }
+                }
+              }
+
+              // No pattern matched, retrieve the schema by property name
+              if (propertySchema === undefined) {
+                propertySchema = properties[propertyName];
+              }
+
+              // If we still have no property schema, this is an invalid path
+              if (propertySchema === undefined) {
+                done(`Invalid path for operation: ${JSON.stringify(op)}`);
+                return;
+              }
+
+              let newValue: any;
+              if ('li' in op) {
+                newValue = op.li;
+              } else if ('oi' in op) {
+                newValue = op.oi;
+              } else if ('na' in op) {
+                newValue = op.na;
+              } else {
+                // Op does not require checking, continue with the next op
+                continue;
+              }
+
+              // Check type via bsonType
+              let validData = false;
+              let bsonTypes: string[];
+              if (Array.isArray(propertySchema.bsonType)) {
+                bsonTypes = propertySchema.bsonType;
+              } else if (typeof propertySchema.bsonType === 'string') {
+                bsonTypes = [propertySchema.bsonType];
+              } else {
+                // No bson type, is valid
+                bsonTypes = [];
+                validData = true;
+              }
+
+              for (const bsonType of bsonTypes) {
+                switch (bsonType) {
+                  case 'number':
+                  case 'int':
+                  case 'double':
+                  case 'long':
+                  case 'decimal':
+                    validData = typeof newValue === 'number';
+                    break;
+                  case 'bool':
+                    validData = typeof newValue === 'boolean';
+                    break;
+                  case 'null':
+                    validData = newValue == null;
+                    break;
+                  case 'string':
+                    validData = typeof newValue === 'string';
+                    // Check value for pattern
+                    if (propertySchema.pattern != null) {
+                      validData = new RegExp(propertySchema.pattern).test(newValue);
+                    }
+                    // Check for enum values
+                    if (propertySchema.enum != null) {
+                      validData = propertySchema.enum.includes(newValue);
+                    }
+                    break;
+                  case 'object': {
+                    const validate = ajv.compile(propertySchema);
+                    validData = validate(newValue);
+                    break;
+                  }
+                  default:
+                    // This is a type we cannot check, so we assume the data is valid
+                    validData = true;
+                    break;
+                }
+
+                // We iterate over the bsonTypes until a valid value is found
+                if (validData) {
+                  break;
+                }
+              }
+
+              if (!validData) {
+                done(`Invalid operation data: ${JSON.stringify(op)}`);
+                return;
+              }
+            } else {
+              done(`Invalid path for operation: ${JSON.stringify(op)}`);
+              return;
+            }
+          }
+        }
       }
       done();
     });
@@ -198,6 +366,12 @@ export class RealtimeServer extends ShareDB {
     });
 
     this.defaultConnection = this.connect();
+  }
+
+  async addValidationSchema(db: Db): Promise<void> {
+    for (const docService of this.docServices.values()) {
+      await docService.addValidationSchema(db);
+    }
   }
 
   async createIndexes(db: Db): Promise<void> {

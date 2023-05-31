@@ -1,6 +1,7 @@
 import { Db } from 'mongodb';
 import { ConnectSession } from '../connect-session';
 import { Migration, MigrationConstructor } from '../migration';
+import { ValidationSchema } from '../models/validation-schema';
 import { RealtimeServer } from '../realtime-server';
 
 /**
@@ -23,6 +24,7 @@ export abstract class DocService<T = any> {
 
   abstract get collection(): string;
   protected abstract get indexPaths(): string[];
+  validationSchema: ValidationSchema | undefined = undefined;
 
   init(server: RealtimeServer): void {
     this.server = server;
@@ -46,6 +48,21 @@ export abstract class DocService<T = any> {
     for (const path of this.indexPaths) {
       const collection = db.collection(this.collection);
       await collection.createIndex({ [path]: 1 });
+    }
+  }
+
+  async addValidationSchema(db: Db): Promise<void> {
+    if (this.validationSchema != null) {
+      const collectionExists = await db.listCollections({ name: this.collection }).hasNext();
+      if (!collectionExists) await db.createCollection(this.collection);
+      await db.command({
+        collMod: this.collection,
+        validator: {
+          $jsonSchema: this.validationSchema
+        },
+        validationAction: 'warn',
+        validationLevel: 'strict'
+      });
     }
   }
 

@@ -239,6 +239,7 @@ public class RealtimeService : DisposableBase, IRealtimeService
             BugsnagApiKey = this._configuration.GetValue<string>("Bugsnag:ApiKey"),
             ReleaseStage = this._configuration.GetValue<string>("Bugsnag:ReleaseStage"),
             this._realtimeOptions.Value.MigrationsDisabled,
+            this._realtimeOptions.Value.DataValidationDisabled,
             SiteId = this._siteOptions.Value.Id,
             Product.Version,
         };
