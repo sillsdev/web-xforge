@@ -35,13 +35,8 @@
     }
 
     .mat-button {
-      margin-top: unset;
+      line-height: unset;
+      padding: 0 8px;
     }
   }
-}
-
-.mat-button {
-  line-height: unset;
-  padding: 0 8px;
-  margin-top: 8px;
 }
