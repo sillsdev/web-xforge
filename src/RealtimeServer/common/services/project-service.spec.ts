@@ -106,6 +106,7 @@ class TestEnvironment {
     this.server = new RealtimeServer(
       'TEST',
       false,
+      false,
       [this.service],
       PROJECTS_COLLECTION,
       this.db,

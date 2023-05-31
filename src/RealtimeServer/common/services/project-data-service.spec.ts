@@ -414,6 +414,7 @@ class TestEnvironment {
     this.server = new RealtimeServer(
       'TEST',
       false,
+      false,
       [this.service, instance(this.mockedProjectService), instance(this.mockedUserService)],
       PROJECTS_COLLECTION,
       this.db,
