@@ -18,11 +18,25 @@ const Template: Story = {
   decorators: [moduleMetadata({ imports: [CommonModule, UICommonModule, I18nStoryModule] })]
 };
 
-export const NewForm: Story = { ...Template };
+// The outlined form field has inconsistencies in how it renders the outline when focused.
+// Using Chromatic's diff tool at
+// https://6262c53f521620003ac2ff49-ukmsdlppcb.chromatic.com/?path=/story/stories-diff-threshold-check--test-yours-out
+// it appears a diff threshold of about 0.66 is needed to ignore the differences. For good measure it's rounded up to
+// 0.7. It may be possible to remove this after updating @angular/material.
+
+export const NewForm: Story = {
+  ...Template,
+  parameters: {
+    chromatic: { diffThreshold: 0.7 }
+  }
+};
 
 export const EditForm: Story = {
   ...Template,
-  args: { text: 'This is a comment' }
+  args: { text: 'This is a comment' },
+  parameters: {
+    chromatic: { diffThreshold: 0.7 }
+  }
 };
 
 export const InvalidForm: Story = {
