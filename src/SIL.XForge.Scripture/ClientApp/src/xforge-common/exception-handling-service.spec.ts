@@ -17,9 +17,10 @@ import { UserDoc } from './models/user-doc';
 import { NoticeService } from './notice.service';
 import { configureTestingModule, TestTranslocoModule } from './test-utils';
 import { UserService } from './user.service';
+import { DialogService } from './dialog.service';
 
 const mockedAuthService = mock(AuthService);
-const mockedMatDialog = mock(MatDialog);
+const mockedDialogService = mock(DialogService);
 const mockedUserService = mock(UserService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedNoticeService = mock(NoticeService);
@@ -55,7 +56,7 @@ describe('ExceptionHandlingService', () => {
     providers: [
       ExceptionHandlingService,
       { provide: AuthService, useMock: mockedAuthService },
-      { provide: MatDialog, useMock: mockedMatDialog },
+      { provide: DialogService, useMock: mockedDialogService },
       { provide: UserService, useMock: mockedUserService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -245,7 +246,7 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(HostComponent);
     this.fixture.detectChanges();
 
-    when(mockedMatDialog.open(anything(), anything())).thenReturn({
+    when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn({
       afterClosed: () =>
         ({
           subscribe: (callback: () => void) => {
