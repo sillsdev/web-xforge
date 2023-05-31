@@ -38,16 +38,29 @@ enum ShareKeys {
   Valid = 'valid'
 }
 
+// Additional states of the app to support mocks
+interface StoryAppState {
+  online: boolean;
+  loggedIn: boolean;
+  shareKey: string;
+}
+
+const defaultArgs: StoryAppState = {
+  online: true,
+  loggedIn: false,
+  shareKey: ShareKeys.Valid
+};
+
 const meta: Meta = {
   title: 'App/Join with share key',
   component: JoinComponent,
   argTypes: {
     online: {
-      name: 'Is app online',
+      description: 'Is application online',
       table: { category: 'App state' }
     },
     loggedIn: {
-      name: 'Is user logged in',
+      description: 'Is user logged in',
       table: { category: 'App state' }
     },
     shareKey: {
@@ -108,26 +121,15 @@ const meta: Meta = {
     }
   ],
   parameters: {
-    // FIXME there should be a better way
     controls: {
-      include: ['online', 'loggedIn', 'shareKey']
+      expanded: true,
+      include: Object.keys(defaultArgs)
     }
   },
-  args: {
-    online: true,
-    loggedIn: false,
-    shareKey: ShareKeys.Valid
-  }
+  args: defaultArgs
 };
 
 export default meta;
-
-// Additional states off the app to support mocks
-interface StoryAppState {
-  online: boolean;
-  loggedIn: boolean;
-  shareKey: string;
-}
 
 type Story = StoryObj<StoryAppState>;
 
@@ -137,12 +139,22 @@ export const OfflineNoticeWhenJoining: Story = {
   args: { online: false }
 };
 
+export const JoiningWithValidKey: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const joinButton: HTMLElement = canvas.getByRole('button');
+    const nameInput: HTMLElement = canvas.getByRole('textbox');
+    await userEvent.type(nameInput, 'Anonymous');
+    await userEvent.click(joinButton);
+  }
+};
+
 export const DialogExpiredKey: Story = {
   args: { shareKey: ShareKeys.Expired },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const joinButton = canvas.getByRole('button');
-    const nameInput = canvas.getByRole('textbox');
+    const joinButton: HTMLElement = canvas.getByRole('button');
+    const nameInput: HTMLElement = canvas.getByRole('textbox');
     await userEvent.type(nameInput, 'Anonymous');
     await userEvent.click(joinButton);
   }
@@ -152,8 +164,19 @@ export const DialogInvalidRole: Story = {
   args: { shareKey: ShareKeys.InvalidRole },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const joinButton = canvas.getByRole('button');
-    const nameInput = canvas.getByRole('textbox');
+    const joinButton: HTMLElement = canvas.getByRole('button');
+    const nameInput: HTMLElement = canvas.getByRole('textbox');
+    await userEvent.type(nameInput, 'Anonymous');
+    await userEvent.click(joinButton);
+  }
+};
+
+export const DialogMaxUsersReached: Story = {
+  args: { shareKey: ShareKeys.MaxUsersReached },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const joinButton: HTMLElement = canvas.getByRole('button');
+    const nameInput: HTMLElement = canvas.getByRole('textbox');
     await userEvent.type(nameInput, 'Anonymous');
     await userEvent.click(joinButton);
   }
@@ -170,26 +193,5 @@ export const DialogKeyAlreadyUsed: Story = {
   args: {
     shareKey: ShareKeys.KeyAlreadyUsed,
     loggedIn: true
-  }
-};
-
-export const DialogMaxUsersReached: Story = {
-  args: { shareKey: ShareKeys.MaxUsersReached },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const joinButton = canvas.getByRole('button');
-    const nameInput = canvas.getByRole('textbox');
-    await userEvent.type(nameInput, 'Anonymous');
-    await userEvent.click(joinButton);
-  }
-};
-
-export const JoiningWithValidKey: Story = {
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const joinButton = canvas.getByRole('button');
-    const nameInput = canvas.getByRole('textbox');
-    await userEvent.type(nameInput, 'Anonymous');
-    await userEvent.click(joinButton);
   }
 };
