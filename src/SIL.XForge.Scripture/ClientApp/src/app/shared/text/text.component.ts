@@ -23,9 +23,8 @@ import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
-import { getBrowserEngine } from 'xforge-common/utils';
+import { getBrowserEngine, objectId } from 'xforge-common/utils';
 import { DialogService } from 'xforge-common/dialog.service';
-import { objectId } from 'xforge-common/utils';
 import tinyColor from 'tinycolor2';
 import { takeUntil } from 'rxjs/operators';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -37,7 +36,7 @@ import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-vie
 import { getAttributesAtPosition, registerScripture } from './quill-scripture';
 import { Segment } from './segment';
 import { EditorRange, TextViewModel } from './text-view-model';
-import { TextNoteDialogComponent, NoteDialogData } from './text-note-dialog/text-note-dialog.component';
+import { NoteDialogData, TextNoteDialogComponent } from './text-note-dialog/text-note-dialog.component';
 
 const EDITORS = new Set<Quill>();
 // When a user is active in the editor a timer starts to mark them as inactive for remote presences
@@ -254,8 +253,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   private presenceDoc?: Presence<RangeStatic>;
   private presenceChannel?: Presence<PresenceData>;
   private presenceActiveEditor$: Subject<boolean> = new Subject<boolean>();
-  private onPresenceDocReceive = (_presenceId: string, _range: RangeStatic | null) => {};
-  private onPresenceChannelReceive = (_presenceId: string, _presenceData: PresenceData | null) => {};
+  private onPresenceDocReceive = (_presenceId: string, _range: RangeStatic | null): void => {};
+  private onPresenceChannelReceive = (_presenceId: string, _presenceData: PresenceData | null): void => {};
 
   constructor(
     private readonly changeDetector: ChangeDetectorRef,
@@ -658,14 +657,22 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     );
     const embedInsertPos: number =
       editorRange.startEditorPosition + editorRange.editorLength + editorRange.trailingEmbedCount;
-    const insertFormat = this.editor.getFormat(embedInsertPos);
+    let insertFormat = this.editor.getFormat(embedInsertPos);
 
+    // Include formatting from the current insert position as well as any unique formatting
+    format = { ...insertFormat, ...format };
     this.editor.insertEmbed(embedInsertPos, formatName, format, 'api');
     const textAnchorRange = this.viewModel.getEditorContentRange(embedInsertPos, textAnchor.length);
     const formatLength: number = textAnchorRange.editorLength;
 
+    // Add text anchors as a separate formatText call rather than part of insertEmbed as it needs to expand over a
+    // a length of text
     if (role !== SFProjectRole.Commenter) {
-      insertFormat['text-anchor'] = 'true';
+      // Formatting for text anchors only need the text-anchor property when inserted at position zero
+      if (textAnchor.start === 0) {
+        insertFormat = {};
+      }
+      insertFormat = { ...insertFormat, ...{ 'text-anchor': true } };
       this.editor.formatText(embedInsertPos, formatLength, insertFormat, 'api');
     }
     this.updateSegment();
@@ -1381,8 +1388,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         currentVerseRange = range;
         verseIsEdited = false;
       } else {
-        const lengthFromVerseStart: number = range.index + range.length - currentVerseRange.index;
-        currentVerseRange.length = lengthFromVerseStart;
+        // Set length from start of verse
+        currentVerseRange.length = range.index + range.length - currentVerseRange.index;
       }
 
       const editedPositionsWithinRange: number[] = editPositions.filter(
