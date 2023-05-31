@@ -1,4 +1,4 @@
-import { Component, Inject, ViewEncapsulation } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -34,8 +34,7 @@ export enum ShareLinkType {
 
 @Component({
   templateUrl: './share-dialog.component.html',
-  styleUrls: ['./share-dialog.component.scss'],
-  encapsulation: ViewEncapsulation.None
+  styleUrls: ['./share-dialog.component.scss']
 })
 export class ShareDialogComponent extends SubscriptionDisposable {
   isProjectAdmin: boolean = false;
