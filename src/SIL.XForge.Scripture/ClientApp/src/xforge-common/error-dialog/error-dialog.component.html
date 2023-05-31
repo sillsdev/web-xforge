@@ -8,7 +8,7 @@
 
     <ng-container *ngIf="data.stack">
       <a (click)="this.showDetails = !this.showDetails">{{ showDetails ? t("hide_details") : t("show_details") }}</a>
-      <pre *ngIf="showDetails">{{ data.stack }}</pre>
+      <pre *ngIf="showDetails" dir="ltr">{{ data.stack }}</pre>
     </ng-container>
   </mat-dialog-content>
   <mat-dialog-actions align="end">
