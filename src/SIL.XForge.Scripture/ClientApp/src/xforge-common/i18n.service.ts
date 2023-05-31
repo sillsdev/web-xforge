@@ -37,6 +37,8 @@ export type I18nKey = ObjectPaths<typeof en>;
 // not corresponding localization strings for all of the roles we have defined. Determining the proper way to reconcile
 // this mismatch is left to be solved at another time.
 
+export type I18nKeyOf<T extends keyof typeof en> = keyof (typeof en)[T];
+
 export const IGNORE_COOKIE_LOCALE = new InjectionToken<boolean>('IGNORE_COOKIE_LOCALE');
 
 @Injectable()
