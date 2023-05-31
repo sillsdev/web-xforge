@@ -65,6 +65,7 @@ class TestEnvironment {
     this.server = new RealtimeServer(
       'TEST',
       false,
+      false,
       [this.service],
       SF_PROJECTS_COLLECTION,
       this.db,

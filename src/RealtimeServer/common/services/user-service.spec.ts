@@ -1,6 +1,7 @@
+import { CollectionInfo, Db, ListCollectionsCursor } from 'mongodb';
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
-import { instance, mock } from 'ts-mockito';
+import { anything, instance, mock, objectContaining, verify, when } from 'ts-mockito';
 import { createTestUser } from '../models/user-test-data';
 import { SystemRole } from '../models/system-role';
 import { User, USERS_COLLECTION, USER_PROFILES_COLLECTION } from '../models/user';
@@ -85,26 +86,64 @@ describe('UserService', () => {
       submitJson0Op<User>(conn, USERS_COLLECTION, 'user02', ops => ops.set<string>(u => u.role, SystemRole.SystemAdmin))
     ).rejects.toThrow();
   });
+
+  it('adds the validation schema to an existing collection', async () => {
+    const env = new TestEnvironment(true);
+    await env.service.addValidationSchema(instance(env.mongo));
+
+    verify(
+      env.mongo.command(
+        objectContaining({
+          validator: {
+            $jsonSchema: env.service.validationSchema
+          }
+        })
+      )
+    ).once();
+    verify(env.mongo.createCollection(env.service.collection)).never();
+  });
+
+  it('adds the validation schema and creates the collection if it is missing', async () => {
+    const env = new TestEnvironment();
+    await env.service.addValidationSchema(instance(env.mongo));
+
+    verify(
+      env.mongo.command(
+        objectContaining({
+          validator: {
+            $jsonSchema: env.service.validationSchema
+          }
+        })
+      )
+    ).once();
+    verify(env.mongo.createCollection(env.service.collection)).once();
+  });
 });
 
 class TestEnvironment {
   readonly service: UserService;
   readonly server: RealtimeServer;
   readonly db: ShareDBMingo;
+  readonly mongo = mock(Db);
   readonly mockedSchemaVersionRepository = mock(SchemaVersionRepository);
 
-  constructor() {
+  constructor(collectionExists = false) {
     this.service = new UserService();
     const ShareDBMingoType = ShareDBMingo.extendMemoryDB(ShareDB.MemoryDB);
     this.db = new ShareDBMingoType();
     this.server = new RealtimeServer(
       'TEST',
       false,
+      false,
       [this.service],
       'projects',
       this.db,
       instance(this.mockedSchemaVersionRepository)
     );
+    // This is used by addValidationSchema()
+    const cursor: ListCollectionsCursor<CollectionInfo> = mock(ListCollectionsCursor);
+    when(cursor.hasNext()).thenResolve(collectionExists);
+    when(this.mongo.listCollections(anything())).thenReturn(instance(cursor));
   }
 
   async createData(): Promise<void> {

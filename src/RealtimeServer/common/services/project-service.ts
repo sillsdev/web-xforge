@@ -1,3 +1,4 @@
+import { ValidationSchema } from '../models/validation-schema';
 import { ConnectSession } from '../connect-session';
 import { Project } from '../models/project';
 import { SystemRole } from '../models/system-role';
@@ -9,6 +10,68 @@ import { JsonDocService } from './json-doc-service';
 export abstract class ProjectService<T extends Project = Project> extends JsonDocService<T> {
   protected abstract get projectAdminRole(): string;
   protected readonly immutableProps = [this.pathTemplate(p => p.name), this.pathTemplate(p => p.userRoles)];
+
+  // This is static to aide with testing, and allow SFProjectService to utilize it
+  static readonly validationSchema: ValidationSchema = {
+    bsonType: 'object',
+    required: ['_id', '_type', '_v', '_m', '_o'],
+    properties: {
+      _id: {
+        bsonType: 'string',
+        pattern: '^[0-9a-f]+$'
+      },
+      name: {
+        bsonType: 'string'
+      },
+      userRoles: {
+        bsonType: 'object',
+        patternProperties: {
+          '^[0-9a-f]+$': {
+            bsonType: 'string'
+          }
+        },
+        additionalProperties: false
+      },
+      userPermissions: {
+        bsonType: 'object',
+        patternProperties: {
+          '^[0-9a-f]+$': {
+            bsonType: 'array',
+            items: {
+              bsonType: 'string'
+            }
+          }
+        },
+        additionalProperties: false
+      },
+      syncDisabled: {
+        bsonType: 'bool'
+      },
+      _type: {
+        bsonType: ['null', 'string']
+      },
+      _v: {
+        bsonType: 'int'
+      },
+      _m: {
+        bsonType: 'object',
+        required: ['ctime', 'mtime'],
+        properties: {
+          ctime: {
+            bsonType: 'number'
+          },
+          mtime: {
+            bsonType: 'number'
+          }
+        },
+        additionalProperties: false
+      },
+      _o: {
+        bsonType: 'objectId'
+      }
+    },
+    additionalProperties: false
+  };
 
   protected allowRead(_docId: string, doc: T, session: ConnectSession): boolean {
     if (session.isServer || session.role === SystemRole.SystemAdmin || Object.keys(doc).length === 0) {
