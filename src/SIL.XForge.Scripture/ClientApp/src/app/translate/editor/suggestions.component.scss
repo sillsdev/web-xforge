@@ -53,18 +53,17 @@ mat-selection-list[dense] {
   }
 }
 
-::ng-deep .mat-list-text {
-  flex-direction: row !important;
-  padding: 0 !important;
-  column-gap: 5px !important;
-  align-items: baseline !important;
-
-  > div {
-    font-size: smaller !important;
-    color: $lighterTextColor;
+:host ::ng-deep .mat-list-option .mat-list-item-content {
+  padding: 0 8px !important;
+  .mat-list-text {
+    flex-direction: row !important;
+    padding: 0 !important;
+    column-gap: 5px;
+    align-items: baseline;
   }
 }
 
-::ng-deep .mat-list-item-content {
-  padding: 0 8px !important;
+.suggestion-confidence {
+  font-size: smaller !important;
+  color: $lighterTextColor;
 }
