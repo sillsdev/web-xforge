@@ -6,7 +6,7 @@ import {
 import { MatDialogLaunchComponent, matDialogStory } from '.storybook/story-utils';
 
 const meta: Meta = {
-  title: 'Material/Dialogs',
+  title: 'Misc/Dialogs',
   component: MatDialogLaunchComponent
 };
 export default meta;
