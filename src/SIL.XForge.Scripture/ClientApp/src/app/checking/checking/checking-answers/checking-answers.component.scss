@@ -265,9 +265,3 @@
   line-height: unset;
   padding: 0 8px;
 }
-
-:host ::ng-deep .mat-form-field-appearance-outline.mat-form-field-invalid .mat-form-field-outline-thick,
-:host ::ng-deep .mat-form-field.mat-form-field-invalid .mat-form-field-label,
-:host ::ng-deep .mat-form-field-required-marker {
-  color: var(--mdc-theme-error) !important;
-}
