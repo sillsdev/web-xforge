@@ -1,7 +1,7 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
+import { MatDialogRef } from '@angular/material/dialog';
 import { NotifiableError } from '@bugsnag/js';
 import { Breadcrumb } from '@bugsnag/js';
 import { CookieService } from 'ngx-cookie-service';
@@ -10,16 +10,17 @@ import { Observable } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from './auth.service';
 import { CONSOLE } from './browser-globals';
+import { ErrorDialogComponent } from './error-dialog/error-dialog.component';
 import { ErrorReportingService } from './error-reporting.service';
-import { ErrorComponent } from './error/error.component';
 import { ExceptionHandlingService } from './exception-handling-service';
 import { UserDoc } from './models/user-doc';
 import { NoticeService } from './notice.service';
 import { configureTestingModule, TestTranslocoModule } from './test-utils';
 import { UserService } from './user.service';
+import { DialogService } from './dialog.service';
 
 const mockedAuthService = mock(AuthService);
-const mockedMdcDialog = mock(MdcDialog);
+const mockedDialogService = mock(DialogService);
 const mockedUserService = mock(UserService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedNoticeService = mock(NoticeService);
@@ -27,12 +28,12 @@ const mockedCookieService = mock(CookieService);
 
 // suppress any expected logging so it won't be shown in the test results
 class MockConsole {
-  log(val: any) {
+  log(val: any): void {
     if (val !== 'Error occurred. Reported to Bugsnag with release stage set to dev:') {
       console.log(val);
     }
   }
-  error(val: any) {
+  error(val: any): void {
     if (
       ![
         '',
@@ -55,7 +56,7 @@ describe('ExceptionHandlingService', () => {
     providers: [
       ExceptionHandlingService,
       { provide: AuthService, useMock: mockedAuthService },
-      { provide: MdcDialog, useMock: mockedMdcDialog },
+      { provide: DialogService, useMock: mockedDialogService },
       { provide: UserService, useMock: mockedUserService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -245,21 +246,21 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(HostComponent);
     this.fixture.detectChanges();
 
-    when(mockedMdcDialog.open(anything(), anything())).thenReturn({
+    when(mockedDialogService.openMatDialog(anything(), anything())).thenReturn({
       afterClosed: () =>
         ({
           subscribe: (callback: () => void) => {
             setTimeout(callback, 0);
           }
         } as Observable<{}>)
-    } as MdcDialogRef<ErrorComponent, {}>);
+    } as MatDialogRef<ErrorDialogComponent, {}>);
 
     when(mockedErrorReportingService.notify(anything(), anything())).thenCall((error: NotifiableError) =>
       this.errorReports.push({ error })
     );
   }
 
-  get oneAndOnlyReport() {
+  get oneAndOnlyReport(): { error: any } {
     expect(this.errorReports.length).toEqual(1);
     return this.errorReports[this.errorReports.length - 1];
   }
@@ -278,7 +279,7 @@ class TestEnvironment {
     return breadcrumb;
   }
 
-  async handleError(error: any) {
+  async handleError(error: any): Promise<void> {
     await this.service.handleError(error);
     flush();
   }
