@@ -1,13 +1,15 @@
 import { CommonModule } from '@angular/common';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MdcDialog, MdcDialogModule } from '@angular-mdc/web';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { UICommonModule } from 'xforge-common/ui-common.module';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
-import { DialogService } from 'xforge-common/dialog.service';
-import { instance, mock } from 'ts-mockito';
+import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UserService } from 'xforge-common/user.service';
+import { instance, mock, when, anything } from 'ts-mockito';
+import { DialogService } from 'xforge-common/dialog.service';
+import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { UICommonModule } from 'xforge-common/ui-common.module';
+import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { MdcDialog, MdcDialogModule } from '@angular-mdc/web';
+import { MatDialogModule } from '@angular/material/dialog';
+import { UserProfileDoc } from '../../../../../xforge-common/models/user-profile-doc';
 import { CheckingCommentsComponent } from './checking-comments.component';
 
 const meta: Meta<CheckingCommentsComponent> = {
@@ -18,6 +20,14 @@ export default meta;
 
 const mockedDialogService = mock(DialogService);
 const mockedUserService = mock(UserService);
+when(mockedUserService.getProfile(anything())).thenResolve({
+  id: 'user01',
+  data: {
+    displayName: 'Test User',
+    avatarUrl: ''
+  }
+} as UserProfileDoc);
+when(mockedUserService.currentUserId).thenReturn('user01');
 
 const defaultArgs = {
   project: {
@@ -42,7 +52,9 @@ const defaultArgs = {
     },
     editable: true,
     name: '',
-    userRoles: {},
+    userRoles: {
+      user01: 'sf_community_checker'
+    },
     userPermissions: {}
   },
   answer: {
@@ -54,7 +66,7 @@ const defaultArgs = {
         deleted: false,
         dateModified: '',
         dateCreated: '',
-        ownerRef: ''
+        ownerRef: 'user01'
       }
     ],
     likes: [],
@@ -62,7 +74,7 @@ const defaultArgs = {
     deleted: false,
     dateModified: '',
     dateCreated: '',
-    ownerRef: ''
+    ownerRef: 'user01'
   }
 };
 
@@ -76,7 +88,8 @@ const Template: Story = {
         { provide: MdcDialog, useValue: {} },
         { provide: DialogService, useValue: instance(mockedDialogService) },
         { provide: UserService, useValue: instance(mockedUserService) }
-      ]
+      ],
+      declarations: [OwnerComponent]
     })
   ]
 };
