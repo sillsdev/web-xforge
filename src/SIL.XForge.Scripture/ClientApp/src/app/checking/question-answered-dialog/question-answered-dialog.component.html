@@ -1,8 +1,0 @@
-<ng-container *transloco="let t; read: 'question_answered_dialog'">
-  <h2 mat-dialog-title>{{ t("question_has_answer") }}</h2>
-  <p mat-dialog-content>{{ t("consider_creating_new_question") }}</p>
-  <div mat-dialog-actions>
-    <button mat-button type="button" [mat-dialog-close]="'accept'">{{ t("edit_anyway") }}</button>
-    <button mat-button type="button" [mat-dialog-close]="'close'" cdkFocusInitial>{{ t("cancel") }}</button>
-  </div>
-</ng-container>

@@ -24,7 +24,6 @@ import {
   ImportQuestionsDialogComponent,
   ImportQuestionsDialogData
 } from '../import-questions-dialog/import-questions-dialog.component';
-import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 
@@ -378,9 +377,12 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     }
     if (questionDoc != null && questionDoc.data != null) {
       if (questionDoc.getAnswers().length > 0) {
-        const answeredDialogRef = this.dialogService.openMatDialog(QuestionAnsweredDialogComponent);
-        const response = (await answeredDialogRef.afterClosed().toPromise()) as string;
-        if (response !== 'accept') {
+        const answeredDialogRef = this.dialogService.confirm(
+          'question_answered_dialog.cancel',
+          'question_answered_dialog.edit_anyway'
+        );
+        const confirm = (await answeredDialogRef).valueOf();
+        if (!confirm) {
           return;
         }
       }
