@@ -349,8 +349,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     const projectId = this._questionDoc.data.projectRef;
     if (this._questionDoc.getAnswers().length > 0) {
       const answeredDialogRef = this.dialogService.confirm(
-        'question_answered_dialog.cancel',
-        'question_answered_dialog.edit_anyway'
+        'question_answered_dialog.question_has_answer',
+        'question_answered_dialog.edit_anyway',
+        'question_answered_dialog.cancel'
       );
       const confirm = (await answeredDialogRef).valueOf();
       if (!confirm) {
