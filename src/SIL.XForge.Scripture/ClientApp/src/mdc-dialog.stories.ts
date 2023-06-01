@@ -1,9 +1,5 @@
 import { Meta } from '@storybook/angular';
 import {
-  BrowserIssue,
-  SupportedBrowsersDialogComponent
-} from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
-import {
   ImportQuestionsConfirmationDialogComponent,
   ImportQuestionsConfirmationDialogData
 } from './app/checking/import-questions-dialog/import-questions-confirmation-dialog/import-question-confirmation-dialog.component';
