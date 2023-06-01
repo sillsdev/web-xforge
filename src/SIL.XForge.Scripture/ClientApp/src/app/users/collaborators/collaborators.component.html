@@ -84,7 +84,7 @@
           </ng-container>
           <ng-container matColumnDef="more">
             <td mat-cell *matCellDef="let userRow">
-              <button mat-icon-button class="user-more-menu" [matMenuTriggerFor]="userOptions">
+              <button mat-icon-button class="user-more-menu" (click)="openUserDialog(userRow)">
                 <mat-icon>more_vert</mat-icon>
               </button>
               <mat-menu #userOptions="matMenu" class="user-options">

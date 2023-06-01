@@ -1,0 +1,16 @@
+<ng-container *transloco="let t; read: 'user-dialog'">
+  <app-avatar [user]="data.userInfo" [size]="32" [round]="false"></app-avatar>
+  <h1 mat-dialog-title>{{ data.userInfo.displayName }}</h1>
+  <div mat-dialog-content>
+    <form class="role-form" [formGroup]="formGroup">
+      Role
+      <mat-radio-group class="role-options" [disabled]="data.isParatextUser" formControlName="roleControl">
+        <mat-radio-button *ngFor="let r of applicableRoles" [value]="r">{{ r }}</mat-radio-button>
+      </mat-radio-group>
+    </form>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end">
+    <button mat-flat-button mat-dialog-close>Cancel</button>
+    <button mat-flat-button color="primary" (click)="saveRole()">Save</button>
+  </div>
+</ng-container>

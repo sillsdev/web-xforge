@@ -1,9 +1,11 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { MatDialogRef } from '@angular/material/dialog';
 import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
@@ -17,8 +19,9 @@ import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { UserDialogComponent, UserDialogData } from '../user-dialog/user-dialog.component';
 
-interface UserInfo {
+export interface UserInfo {
   displayName?: string;
   avatarUrl?: string;
   email?: string;
@@ -237,6 +240,17 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
     await this.projectService.onlineSetUserProjectPermissions(this.projectId, row.id, Array.from(permissions));
     this.loadUsers();
+  }
+
+  async openUserDialog(row: Row): Promise<void> {
+    const userProfile: UserProfile = { displayName: row.user.displayName!, avatarUrl: row.user.avatarUrl! };
+    const data: UserDialogData = { userInfo: userProfile, isParatextUser: this.hasParatextRole(row), role: row.role };
+    const userDialogRef: MatDialogRef<UserDialogComponent, string> = this.dialogService.openMatDialog(
+      UserDialogComponent,
+      { data }
+    );
+    const role: string | undefined = await userDialogRef.afterClosed().toPromise();
+    console.log(role);
   }
 
   private page(rows: Row[]): Row[] {

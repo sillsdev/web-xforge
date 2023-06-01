@@ -1,0 +1,15 @@
+.mat-dialog-content {
+  min-height: 200px;
+  min-width: 300px;
+}
+
+.role-form {
+  display: flex;
+  flex-direction: column;
+
+  .role-options {
+    display: flex;
+    flex-direction: column;
+    column-gap: 10px;
+  }
+}
