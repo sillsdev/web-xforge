@@ -1,8 +1,8 @@
 import { Meta } from '@storybook/angular';
-import { userEvent } from '@storybook/testing-library';
+import { userEvent, within } from '@storybook/testing-library';
 import { expect } from '@storybook/jest';
 import { DeleteProjectDialogComponent } from './delete-project-dialog.component';
-import { MatDialogLaunchComponent, matDialogStory } from '.storybook/story-utils';
+import { getOverlay, MatDialogLaunchComponent, matDialogStory } from '.storybook/story-utils';
 
 const meta: Meta = {
   title: 'Settings/Delete Project',
@@ -12,13 +12,13 @@ export default meta;
 
 export const DeleteProjectInvalidDialog = matDialogStory(DeleteProjectDialogComponent);
 DeleteProjectInvalidDialog.args = { data: { name: 'My Project' } };
-DeleteProjectInvalidDialog.play = async ({}) => {
-  const dialog: HTMLElement = document.querySelector('.mat-dialog-container')!;
+DeleteProjectInvalidDialog.play = async ({ canvasElement }) => {
+  const overlay = within(getOverlay(canvasElement));
 
-  const submitButton = document.getElementById('project-delete-btn');
+  const submitButton = overlay.getByRole('button', { name: /I understand the consequences, delete this project/i });
   expect(submitButton).toBeDisabled();
 
-  const projectInput = dialog.querySelector('.mat-input-element')!;
+  const projectInput = overlay.getByRole('textbox');
   userEvent.type(projectInput, 'Other Project');
 
   expect(submitButton).toBeDisabled();
@@ -26,13 +26,13 @@ DeleteProjectInvalidDialog.play = async ({}) => {
 
 export const DeleteProjectValidDialog = matDialogStory(DeleteProjectDialogComponent);
 DeleteProjectValidDialog.args = { data: { name: 'My Project' } };
-DeleteProjectValidDialog.play = async ({}) => {
-  const dialog: HTMLElement = document.querySelector('.mat-dialog-container')!;
+DeleteProjectValidDialog.play = async ({ canvasElement }) => {
+  const overlay = within(getOverlay(canvasElement));
 
-  const submitButton = document.getElementById('project-delete-btn');
+  const submitButton = overlay.getByRole('button', { name: /I understand the consequences, delete this project/i });
   expect(submitButton).toBeDisabled();
 
-  const projectInput = dialog.querySelector('.mat-input-element')!;
+  const projectInput = overlay.getByRole('textbox');
   userEvent.type(projectInput, 'My Project');
 
   expect(submitButton).toBeEnabled();
