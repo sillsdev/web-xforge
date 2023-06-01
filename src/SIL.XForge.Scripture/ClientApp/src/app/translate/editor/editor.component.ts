@@ -648,6 +648,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.source.setSegment(this.target.segmentRef);
         this.syncScroll();
       }
+      if (segment == null || !VERSE_REGEX.test(segment.ref)) {
+        this.resetInsertNoteFab(true);
+      }
 
       this.insertSuggestionEnd = -1;
       this.onStartTranslating();

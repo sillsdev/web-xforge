@@ -2625,10 +2625,7 @@ describe('EditorComponent', () => {
       env.clickSegmentRef('verse_1_1');
       env.wait();
       expect(env.insertNoteFabMobile).toBeTruthy();
-      expect(env.bottomSheetVerseReference?.textContent).toEqual('Luke 1:1');
-      env.clickSegmentRef('s_1');
       env.insertNoteFabMobile!.click();
-      env.wait();
       expect(env.bottomSheetVerseReference?.textContent).toEqual('Luke 1:1');
       const content = 'commenter leaving mobile note';
       env.component.mobileNoteControl.setValue(content);
@@ -2905,21 +2902,21 @@ describe('EditorComponent', () => {
 
       let elem: HTMLElement = env.getSegmentElement('s_1')!;
       expect(elem.classList).not.toContain('commenter-selection');
-      elem.click();
-      env.wait();
+      env.clickSegmentRef('s_1');
       expect(elem.classList).not.toContain('commenter-selection');
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('hidden');
 
       elem = env.getSegmentElement('s_2')!;
       expect(elem.classList).not.toContain('commenter-selection');
-      elem.click();
-      env.wait();
+      env.clickSegmentRef('s_2');
       expect(elem.classList).not.toContain('commenter-selection');
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('hidden');
 
       const verseElem: HTMLElement = env.getSegmentElement('verse_1_2-3')!;
       expect(verseElem.classList).not.toContain('commenter-selection');
-      verseElem.click();
-      env.wait();
+      env.clickSegmentRef('verse_1_2-3');
       expect(verseElem.classList).toContain('commenter-selection');
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('visible');
       expect(elem.classList).not.toContain('commenter-selection');
       env.dispose();
     }));
