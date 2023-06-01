@@ -150,36 +150,18 @@ export const JoiningWithValidKey: Story = {
 };
 
 export const DialogExpiredKey: Story = {
-  args: { shareKey: ShareKeys.Expired },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const joinButton: HTMLElement = canvas.getByRole('button');
-    const nameInput: HTMLElement = canvas.getByRole('textbox');
-    await userEvent.type(nameInput, 'Anonymous');
-    await userEvent.click(joinButton);
-  }
+  ...JoiningWithValidKey,
+  args: { shareKey: ShareKeys.Expired }
 };
 
 export const DialogInvalidRole: Story = {
-  args: { shareKey: ShareKeys.InvalidRole },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const joinButton: HTMLElement = canvas.getByRole('button');
-    const nameInput: HTMLElement = canvas.getByRole('textbox');
-    await userEvent.type(nameInput, 'Anonymous');
-    await userEvent.click(joinButton);
-  }
+  ...JoiningWithValidKey,
+  args: { shareKey: ShareKeys.InvalidRole }
 };
 
 export const DialogMaxUsersReached: Story = {
-  args: { shareKey: ShareKeys.MaxUsersReached },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    const joinButton: HTMLElement = canvas.getByRole('button');
-    const nameInput: HTMLElement = canvas.getByRole('textbox');
-    await userEvent.type(nameInput, 'Anonymous');
-    await userEvent.click(joinButton);
-  }
+  ...JoiningWithValidKey,
+  args: { shareKey: ShareKeys.MaxUsersReached }
 };
 
 export const DialogInvalidShareKey: Story = {
