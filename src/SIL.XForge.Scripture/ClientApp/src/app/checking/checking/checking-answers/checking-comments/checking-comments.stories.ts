@@ -7,8 +7,6 @@ import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { MdcDialog, MdcDialogModule } from '@angular-mdc/web';
-import { MatDialogModule } from '@angular/material/dialog';
 import { UserProfileDoc } from '../../../../../xforge-common/models/user-profile-doc';
 import { CheckingCommentsComponent } from './checking-comments.component';
 
@@ -83,9 +81,8 @@ type Story = StoryObj<CheckingCommentsComponent>;
 const Template: Story = {
   decorators: [
     moduleMetadata({
-      imports: [CommonModule, UICommonModule, I18nStoryModule, MdcDialogModule, MatDialogModule],
+      imports: [CommonModule, UICommonModule, I18nStoryModule],
       providers: [
-        { provide: MdcDialog, useValue: {} },
         { provide: DialogService, useValue: instance(mockedDialogService) },
         { provide: UserService, useValue: instance(mockedUserService) }
       ],
