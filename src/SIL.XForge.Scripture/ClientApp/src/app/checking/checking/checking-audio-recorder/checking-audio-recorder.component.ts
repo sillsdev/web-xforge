@@ -1,4 +1,3 @@
-import { MatDialog } from '@angular/material/dialog';
 import { Component, EventEmitter, Inject, OnDestroy, OnInit, Output } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import RecordRTC from 'recordrtc';
@@ -9,6 +8,7 @@ import {
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { objectId } from 'xforge-common/utils';
+import { DialogService } from 'xforge-common/dialog.service';
 
 export interface AudioAttachment {
   status?: 'denied' | 'processed' | 'recording' | 'reset' | 'stopped' | 'uploaded';
@@ -32,7 +32,7 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
   constructor(
     private readonly noticeService: NoticeService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
-    private readonly dialog: MatDialog
+    private readonly dialogService: DialogService
   ) {}
 
   get hasAudioAttachment(): boolean {
@@ -77,7 +77,7 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
     const mediaConstraints: MediaStreamConstraints = { audio: true };
     if (this.mediaDevicesUnsupported) {
       this.status.emit({ status: 'denied' });
-      this.dialog.open(SupportedBrowsersDialogComponent, { data: BrowserIssue.AudioRecording });
+      this.dialogService.openMatDialog(SupportedBrowsersDialogComponent, { data: BrowserIssue.AudioRecording });
       return;
     }
     this.navigator.mediaDevices
