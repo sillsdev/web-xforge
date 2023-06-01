@@ -372,6 +372,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
             bool resourceNeedsUpdating =
                 paratextProject is ParatextResource paratextResource
                 && _paratextService.ResourceDocsNeedUpdating(_projectDoc.Data, paratextResource);
+            if (paratextProject is ParatextResource)
+                LogMetric($"Resource needs updating: {resourceNeedsUpdating}");
 
             // If a resource needs updating, retrieve the books, as they were not retrieved previously
             if (resourceNeedsUpdating)

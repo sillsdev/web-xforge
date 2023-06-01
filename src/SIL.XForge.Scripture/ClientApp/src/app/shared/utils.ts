@@ -6,9 +6,11 @@ import { DeltaOperation } from 'rich-text';
 import { SelectableProject } from '../core/paratext.service';
 
 // Regular expression for getting the verse from a segment ref
-export const VERSE_FROM_SEGMENT_REF_REGEX = /verse_\d+_(\d+-?\d*)/;
+// Some projects will have the right to left marker in the segment attribute which we need to account for
+export const VERSE_FROM_SEGMENT_REF_REGEX = /verse_\d+_(\d+[\u200f]?[,-]?\d*[^\/]?)/;
 // Regular expression for the verse segment ref of scripture content
 export const VERSE_REGEX = /verse_[0-9]+_[0-9]+/;
+export const RIGHT_TO_LEFT_MARK = '\u200f';
 
 export function combineVerseRefStrs(startStr?: string, endStr?: string): VerseRef | undefined {
   if (!startStr) {

@@ -19,7 +19,6 @@ import { defaultNoteThreadIcon, NoteThreadDoc } from '../../../core/models/note-
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
-import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { canInsertNote, formatFontSizeToRems } from '../../../shared/utils';
 
@@ -52,7 +51,6 @@ export class NoteDialogComponent implements OnInit {
   private textDoc?: TextDoc;
   private paratextProjectUsers?: ParatextUserProfile[];
   private noteIdBeingEdited?: string;
-  private projectUserConfigDoc?: SFProjectUserConfigDoc;
   private userRole?: string;
 
   constructor(
@@ -89,9 +87,6 @@ export class NoteDialogComponent implements OnInit {
         );
       }
     }
-
-    this.projectUserConfigDoc = await this.projectService.getUserConfig(this.projectId, this.userService.currentUserId);
-    this.projectUserConfigDoc = await this.projectService.getUserConfig(this.projectId, this.userService.currentUserId);
   }
 
   get canViewAssignedUser(): boolean {
@@ -156,7 +151,7 @@ export class NoteDialogComponent implements OnInit {
     if (verseRef == null) {
       return '';
     }
-    return this.textDoc.getSegmentTextIncludingRelated(`verse_${verseRef.chapter}_${verseRef.verse}`);
+    return this.textDoc.getSegmentTextIncludingRelated(verseRef.verse ?? verseRef.verseNum);
   }
 
   get canInsertNote(): boolean {
