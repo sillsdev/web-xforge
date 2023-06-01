@@ -3,7 +3,6 @@ import {
   BrowserIssue,
   SupportedBrowsersDialogComponent
 } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
-import { ErrorAlert, ErrorComponent } from 'xforge-common/error/error.component';
 import {
   ImportQuestionsConfirmationDialogComponent,
   ImportQuestionsConfirmationDialogData
@@ -36,11 +35,3 @@ const confirmationData: ImportQuestionsConfirmationDialogData = {
   ]
 };
 ImportQuestionsConfirmation.args = { data: confirmationData };
-
-export const ErrorDialog = mdcDialogStory(ErrorComponent);
-const errorData: ErrorAlert = {
-  message: 'This is an error message',
-  stack: 'This is an error stack',
-  eventId: '12345'
-};
-ErrorDialog.args = { data: errorData };
