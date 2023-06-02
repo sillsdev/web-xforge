@@ -2,7 +2,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatButtonHarness } from '@angular/material/button/testing';
-import { MatMenuHarness } from '@angular/material/menu/testing';
+import { MatMenuHarness, MatMenuItemHarness } from '@angular/material/menu/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { FontSizeComponent } from './font-size.component';
@@ -44,17 +44,17 @@ describe('FontSizeComponent', () => {
   });
 
   it('should open the mat-menu when the button is clicked', async () => {
-    const button = await getMenuTrigger();
+    const button: MatButtonHarness = await getMenuTrigger();
     expect(button).toBeTruthy();
     await button.click();
 
-    const menu = await loader.getHarness(MatMenuHarness);
+    const menu: MatMenuHarness = await loader.getHarness(MatMenuHarness);
     expect(menu).toBeTruthy();
 
-    const isOpen = await menu.isOpen();
+    const isOpen: boolean = await menu.isOpen();
     expect(isOpen).toBe(true);
 
-    const items = await menu.getItems();
+    const items: MatMenuItemHarness[] = await menu.getItems();
     expect(items.length).toBeGreaterThan(0);
   });
 
@@ -63,15 +63,15 @@ describe('FontSizeComponent', () => {
     component.ngOnInit();
     const initialFontSize = component.fontSize;
 
-    const menu = await getMenu();
+    const menu: MatMenuHarness = await getMenu();
     await menu.open();
 
-    const decreaseFontButton = await getDecreaseButton(menu);
+    const decreaseFontButton: MatButtonHarness = await getDecreaseButton(menu);
     expect(decreaseFontButton).toBeTruthy();
 
     await decreaseFontButton.click();
 
-    const newFontSize = component.fontSize;
+    const newFontSize: number = component.fontSize;
     expect(newFontSize).toBeLessThan(initialFontSize);
   });
 
@@ -80,24 +80,24 @@ describe('FontSizeComponent', () => {
     component.ngOnInit();
     const initialFontSize = component.fontSize;
 
-    const menu = await getMenu();
+    const menu: MatMenuHarness = await getMenu();
     await menu.open();
 
-    const increaseFontButton = await getIncreaseButton(menu);
+    const increaseFontButton: MatButtonHarness = await getIncreaseButton(menu);
 
     expect(increaseFontButton).toBeTruthy();
 
     await increaseFontButton.click();
-    const newFontSize = component.fontSize;
+    const newFontSize: number = component.fontSize;
     expect(newFontSize).toBeGreaterThan(initialFontSize);
   });
 
   it('can set disabled states', async () => {
-    const menu = await getMenu();
+    const menu: MatMenuHarness = await getMenu();
     await menu.open();
 
-    const decreaseFontButton = await getDecreaseButton(menu);
-    const increaseFontButton = await getIncreaseButton(menu);
+    const decreaseFontButton: MatButtonHarness = await getDecreaseButton(menu);
+    const increaseFontButton: MatButtonHarness = await getIncreaseButton(menu);
 
     component.initial = component.min;
     component.ngOnInit();
@@ -123,12 +123,12 @@ describe('FontSizeComponent', () => {
   });
 
   it('can set [min] attribute > default min', async () => {
-    const menu = await getMenu();
+    const menu: MatMenuHarness = await getMenu();
     await menu.open();
 
-    const decreaseFontButton = await getDecreaseButton(menu);
+    const decreaseFontButton: MatButtonHarness = await getDecreaseButton(menu);
 
-    const min = 2;
+    const min: number = 2;
     component.min = min;
     component.ngOnInit();
     expect(component.fontSize).toEqual(min);
@@ -136,12 +136,12 @@ describe('FontSizeComponent', () => {
   });
 
   it('can set [min] attribute < default min', async () => {
-    const menu = await getMenu();
+    const menu: MatMenuHarness = await getMenu();
     await menu.open();
 
-    const decreaseFontButton = await getDecreaseButton(menu);
+    const decreaseFontButton: MatButtonHarness = await getDecreaseButton(menu);
 
-    const min = 0.5;
+    const min: number = 0.5;
     component.min = min;
     component.ngOnInit();
     expect(component.fontSize).toEqual(component.initial);
@@ -150,12 +150,12 @@ describe('FontSizeComponent', () => {
   });
 
   it('can set [max] attribute > initial < default max', async () => {
-    const menu = await getMenu();
+    const menu: MatMenuHarness = await getMenu();
     await menu.open();
 
-    const increaseFontButton = await getIncreaseButton(menu);
+    const increaseFontButton: MatButtonHarness = await getIncreaseButton(menu);
 
-    const max = 2;
+    const max: number = 2;
     component.max = max;
     component.initial = 1;
     component.ngOnInit();
@@ -168,12 +168,12 @@ describe('FontSizeComponent', () => {
   });
 
   it('can set [max] attribute > initial > default max', async () => {
-    const menu = await getMenu();
+    const menu: MatMenuHarness = await getMenu();
     await menu.open();
 
-    const increaseFontButton = await getIncreaseButton(menu);
+    const increaseFontButton: MatButtonHarness = await getIncreaseButton(menu);
 
-    const max = 5;
+    const max: number = 5;
     component.max = max;
     component.initial = 1;
     component.ngOnInit();
@@ -186,10 +186,10 @@ describe('FontSizeComponent', () => {
   });
 
   it('can handle [max] attribute < initial', async () => {
-    const menu = await getMenu();
+    const menu: MatMenuHarness = await getMenu();
     await menu.open();
 
-    const increaseFontButton = await getIncreaseButton(menu);
+    const increaseFontButton: MatButtonHarness = await getIncreaseButton(menu);
 
     component.min = 1;
     component.max = 1.5;
@@ -200,10 +200,10 @@ describe('FontSizeComponent', () => {
   });
 
   it('can handle [min] attribute > initial', async () => {
-    const menu = await getMenu();
+    const menu: MatMenuHarness = await getMenu();
     await menu.open();
 
-    const decreaseFontButton = await getDecreaseButton(menu);
+    const decreaseFontButton: MatButtonHarness = await getDecreaseButton(menu);
 
     component.min = 2;
     component.max = 3;
@@ -229,10 +229,10 @@ describe('FontSizeComponent', () => {
     const spy = jasmine.createSpy('apply');
     component.apply.subscribe(spy);
 
-    const menu = await getMenu();
+    const menu: MatMenuHarness = await getMenu();
     await menu.open();
 
-    const increaseFontButton = await getIncreaseButton(menu);
+    const increaseFontButton: MatButtonHarness = await getIncreaseButton(menu);
     await increaseFontButton.click();
 
     expect(component.fontSize).toBeGreaterThan(component.initial);
