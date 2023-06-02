@@ -13,7 +13,13 @@ export class FontSizeComponent implements OnInit {
   step: number = 0.1;
   initial: number = 1;
 
-  fontSize!: number;
+  private _fontSize: number = this.cropToBounds(this.initial);
+  get fontSize(): number {
+    return this._fontSize;
+  }
+  set fontSize(value: number) {
+    this._fontSize = this.cropToBounds(value);
+  }
 
   constructor() {}
 
@@ -23,7 +29,6 @@ export class FontSizeComponent implements OnInit {
     }
 
     this.fontSize = this.initial;
-    this.enforceBounds();
     this.applySize();
   }
 
@@ -31,18 +36,8 @@ export class FontSizeComponent implements OnInit {
     this.apply.emit(this.fontSize + 'rem');
   }
 
-  enforceBounds(): void {
-    if (this.fontSize < this.min) {
-      this.fontSize = this.min;
-    }
-    if (this.fontSize > this.max) {
-      this.fontSize = this.max;
-    }
-  }
-
   adjustFontSize($event: Event, direction: 1 | -1): void {
     this.fontSize += direction * this.step;
-    this.enforceBounds();
     this.applySize();
 
     // Ensure focus removed from element if disabled (firefox doesn't)
@@ -52,5 +47,9 @@ export class FontSizeComponent implements OnInit {
 
     // Allows menu to stay open
     $event.stopPropagation();
+  }
+
+  private cropToBounds(fontSize: number): number {
+    return Math.min(Math.max(fontSize, this.min), this.max);
   }
 }
