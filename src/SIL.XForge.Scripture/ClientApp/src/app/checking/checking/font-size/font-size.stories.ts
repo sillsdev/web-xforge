@@ -13,12 +13,11 @@ export default {
     moduleMetadata({
       imports: [CommonModule, UICommonModule]
     }),
-    componentWrapperDecorator(story => `<div style="margin:10px 20px">${story}</div>`)
+    componentWrapperDecorator(story => `<div style="padding:0 30px 60px">${story}</div>`)
   ],
   args: {
     min: 1,
-    max: 3,
-    initial: 1
+    max: 3
   }
 } as Meta<FontSizeComponent>;
 
@@ -36,23 +35,23 @@ export const OpenMenu: Story = {
 };
 
 export const IncreaseFontAllowed: Story = {
-  args: { initial: 1 },
+  args: { fontSize: 2 },
   play: playForAdjustFontButton('Increase')
 };
 
 export const IncreaseFontNotAllowed: Story = {
   ...IncreaseFontAllowed,
-  args: { initial: 3 }
+  args: { fontSize: 3 }
 };
 
 export const DecreaseFontAllowed: Story = {
-  args: { initial: 3 },
+  args: { fontSize: 2 },
   play: playForAdjustFontButton('Decrease')
 };
 
 export const DecreaseFontNotAllowed: Story = {
   ...DecreaseFontAllowed,
-  args: { initial: 1 }
+  args: { fontSize: 1 }
 };
 
 /**
