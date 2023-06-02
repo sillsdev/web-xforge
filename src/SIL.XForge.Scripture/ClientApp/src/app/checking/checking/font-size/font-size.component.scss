@@ -1,9 +1,4 @@
 :host {
-  display: flex;
-  align-items: center;
-}
-
-:host {
   > button {
     &.menu-open {
       background: #e0e0e0;
@@ -46,8 +41,6 @@
   }
 
   button {
-    position: relative;
-
     mat-icon {
       margin: 0;
       color: inherit;
