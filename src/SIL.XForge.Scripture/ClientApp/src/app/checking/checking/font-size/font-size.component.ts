@@ -41,7 +41,7 @@ export class FontSizeComponent implements OnInit {
     this.applySize();
 
     // Ensure focus removed from element if disabled (firefox doesn't)
-    if (this.fontSize === this.min) {
+    if (this.fontSize === this.min || this.fontSize === this.max) {
       ($event.target as HTMLElement).closest('button')?.blur();
     }
 
