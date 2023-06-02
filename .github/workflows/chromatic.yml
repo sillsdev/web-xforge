@@ -52,11 +52,15 @@ jobs:
       - name: "Build: Frontend"
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run build
 
+      - name: Build Storybook
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run build-storybook -- --webpack-stats-json
       - name: Publish to Chromatic
         uses: chromaui/action@v1
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          onlyChanged: true
           workingDir: src/SIL.XForge.Scripture/ClientApp
+          storybookBuildDir: storybook-static
           # Auto accept changes on master branch so we have a clean baseline
           autoAcceptChanges: "master"
           # Ignore any past builds on the branch that triggered the workflow. This prevents rebased branches from
