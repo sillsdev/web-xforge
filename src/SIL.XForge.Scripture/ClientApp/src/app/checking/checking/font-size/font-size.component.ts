@@ -8,9 +8,10 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 export class FontSizeComponent implements OnInit {
   @Input() min: number = 1;
   @Input() max: number = 3;
-  @Input() step: number = 0.1;
-  @Input() initial: number = 1;
   @Output() apply = new EventEmitter<string>();
+
+  step: number = 0.1;
+  initial: number = 1;
 
   fontSize!: number;
 
