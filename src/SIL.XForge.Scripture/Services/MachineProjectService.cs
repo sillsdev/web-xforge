@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 using Serval.Client;
@@ -245,7 +245,7 @@ public class MachineProjectService : IMachineProjectService
                 {
                     // A 404 means that the file does not exist
                     string message;
-                    if (e.StatusCode == (int)HttpStatusCode.NotFound)
+                    if (e.StatusCode == StatusCodes.Status404NotFound)
                     {
                         message =
                             $"Corpora file {fileId} in corpus {corpusId} for project {sfProjectId}"
@@ -272,7 +272,7 @@ public class MachineProjectService : IMachineProjectService
             {
                 // A 404 means that the translation engine does not exist
                 string message;
-                if (e.StatusCode == (int)HttpStatusCode.NotFound)
+                if (e.StatusCode == StatusCodes.Status404NotFound)
                 {
                     message =
                         $"Translation Engine {translationEngineId} for project {sfProjectId}"
@@ -434,16 +434,10 @@ public class MachineProjectService : IMachineProjectService
             await _projectSecrets.UpdateAsync(
                 sfProjectId,
                 u =>
-                {
-                    if (!string.IsNullOrWhiteSpace(corpusId))
-                    {
-                        u.Unset(p => p.ServalData.Corpora[corpusId]);
-                    }
                     u.Set(
                         p => p.ServalData.Corpora[corpus.Id],
                         new ServalCorpus { SourceFiles = newSourceCorpusFiles, TargetFiles = newTargetCorpusFiles }
-                    );
-                }
+                    )
             );
         }
 
@@ -615,7 +609,19 @@ public class MachineProjectService : IMachineProjectService
         {
             foreach (var corpusFile in oldCorpusFiles.Where(c => newCorpusFiles.All(n => n.FileId != c.FileId)))
             {
-                await _dataFilesClient.DeleteAsync(corpusFile.FileId, cancellationToken);
+                try
+                {
+                    await _dataFilesClient.DeleteAsync(corpusFile.FileId, cancellationToken);
+                }
+                catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
+                {
+                    // If the file was already deleted, just log a message
+                    string message =
+                        $"Corpora file {corpusFile.FileId} for text {corpusFile.TextId} in project {projectId}"
+                        + " was missing or already deleted.";
+                    _logger.LogInformation(e, message);
+                }
+
                 corpusUpdated = true;
             }
         }

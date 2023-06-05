@@ -1,6 +1,9 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -545,12 +548,69 @@ public class MachineProjectServiceTests
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, "textId", CancellationToken.None);
     }
 
+    [Test]
+    public async Task SyncProjectCorporaAsync_DoesNotCrashWhenDeletingDeletedFiles()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .UpdateCorpusAsync(
+                TranslationEngine02,
+                Arg.Any<string>(),
+                Arg.Any<TranslationCorpusUpdateConfig>(),
+                CancellationToken.None
+            )
+            .Returns(args => Task.FromResult(new TranslationCorpus { Id = args.ArgAt<string>(1) }));
+        env.DataFilesClient
+            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, "textId", CancellationToken.None)
+            .Returns(Task.FromResult(new DataFile { Id = "File05" }));
+        env.DataFilesClient
+            .DeleteAsync("File03", CancellationToken.None)
+            .Throws(
+                new ServalApiException(
+                    "The HTTP status code of the response was not expected (404).",
+                    StatusCodes.Status404NotFound,
+                    string.Empty,
+                    new Dictionary<string, IEnumerable<string>>(),
+                    null
+                )
+            );
+
+        // Specify a file to delete
+        await env.ProjectSecrets.UpdateAsync(
+            Project02,
+            u =>
+                u.Add(
+                    p => p.ServalData.Corpora[Corpus01].SourceFiles,
+                    new ServalCorpusFile
+                    {
+                        FileChecksum = "a_previous_checksum",
+                        FileId = "File03",
+                        TextId = "textId1",
+                    }
+                )
+        );
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        Assert.IsTrue(actual);
+        await env.DataFilesClient.Received(1).DeleteAsync("File03", CancellationToken.None);
+
+        // The 404 exception was logged
+        Assert.That(
+            env.MockLogger.LogEvents.Count(
+                logEvent => logEvent.LogLevel == LogLevel.Information && logEvent.Exception is ServalApiException
+            ),
+            Is.EqualTo(1)
+        );
+    }
+
     private class TestEnvironment
     {
         public TestEnvironment()
         {
             EngineService = Substitute.For<IEngineService>();
-            var logger = new MockLogger<MachineProjectService>();
+            MockLogger = new MockLogger<MachineProjectService>();
             DataFilesClient = Substitute.For<IDataFilesClient>();
             DataFilesClient
                 .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None)
@@ -663,7 +723,7 @@ public class MachineProjectServiceTests
                 DataFilesClient,
                 EngineService,
                 FeatureManager,
-                logger,
+                MockLogger,
                 paratextService,
                 ProjectSecrets,
                 realtimeService,
@@ -709,5 +769,6 @@ public class MachineProjectServiceTests
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MemoryRepository<SFProject> Projects { get; }
         public ITextCorpusFactory TextCorpusFactory { get; }
+        public MockLogger<MachineProjectService> MockLogger { get; }
     }
 }
