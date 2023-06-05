@@ -1,20 +1,10 @@
-// Note: ViewEncapsulation is disabled for this file, so all styles can apply to any element globally
 @import 'src/variables';
-
-.share-dialog-component-panel {
-  width: 30em;
-  // Angular Material sets max-width on the element itself, so this is the only way to override in CSS
-  max-width: 90vw !important;
-}
 
 .mat-dialog-title {
   margin-bottom: 0.25em;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  button {
-    margin-top: -4px;
-  }
 }
 
 .configurations {
