@@ -889,7 +889,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // Mobile users can use the bottom sheet to add new notes
     if (this.mediaObserver.isActive('lt-lg')) {
       this.toggleAddingMobileNote();
-      this.insertNoteFab!.nativeElement.style.visibility = 'hidden';
+      this.setNoteFabVisibility('hidden');
       this.bottomSheetRef = this.bottomSheet.open(this.TemplateBottomSheet, { hasBackdrop: false });
     } else {
       this.showNoteThread(undefined, verseRef);
@@ -986,7 +986,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       setTimeout(() => this.mobileNoteTextarea?.nativeElement.focus(), 650);
     } else if (this.hasEditRight) {
       this.bottomSheetRef?.dismiss();
-      this.insertNoteFab!.nativeElement.style.visibility = 'visible';
+      this.setNoteFabVisibility('visible');
     }
   }
 
@@ -1055,7 +1055,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     });
 
     const currentVerseRef: VerseRef | undefined = this.commenterSelectedVerseRef;
-    this.insertNoteFab!.nativeElement.style.visibility = 'hidden';
+    this.setNoteFabVisibility('hidden');
     const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
 
     if (result != null) {
@@ -1069,7 +1069,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       this.toggleNoteThreadVerseRefs$.next();
     }
-    this.insertNoteFab!.nativeElement.style.visibility = 'visible';
+    this.setNoteFabVisibility('visible');
+  }
+
+  /** Sets the visibility of the insert note FAB. If the FAB does not exist, this is a no-op. */
+  private setNoteFabVisibility(visible: 'visible' | 'hidden'): void {
+    if (this.insertNoteFab?.nativeElement != null) {
+      this.insertNoteFab.nativeElement.style.visibility = visible;
+    }
   }
 
   private updateReadNotes(threadId: string): void {
