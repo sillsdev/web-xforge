@@ -4,7 +4,7 @@
     <ng-container *ngFor="let suggestion of suggestions; let i = index">
       <mat-list-option [selected]="suggestion && i === 0">
         {{ suggestion.words.join(" ") }}
-        <div matListItemMeta>{{ getPercentage(suggestion.confidence) }}%</div>
+        <div matListItemMeta class="suggestion-confidence">{{ getPercentage(suggestion.confidence) }}%</div>
       </mat-list-option>
     </ng-container>
   </mat-selection-list>

@@ -1,19 +1,19 @@
-import { MdcDialog } from '@angular-mdc/web/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, Injector, NgZone } from '@angular/core';
 import Bugsnag, { Breadcrumb, BrowserConfig } from '@bugsnag/js';
 import { BugsnagErrorHandler } from '@bugsnag/plugin-angular';
 import { translate } from '@ngneat/transloco';
-import { hasObjectProp, hasStringProp } from '../type-utils';
-import { MACHINE_API_BASE_URL } from '../app/machine-api/http-client';
 import versionData from '../../../version.json';
+import { MACHINE_API_BASE_URL } from '../app/machine-api/http-client';
 import { environment } from '../environments/environment';
+import { hasObjectProp, hasStringProp } from '../type-utils';
 import { CONSOLE } from './browser-globals';
+import { DialogService } from './dialog.service';
+import { ErrorAlertData, ErrorDialogComponent } from './error-dialog/error-dialog.component';
 import { ErrorReportingService } from './error-reporting.service';
-import { ErrorAlert, ErrorComponent } from './error/error.component';
 import { NoticeService } from './notice.service';
-import { objectId } from './utils';
 import { COMMAND_API_NAMESPACE } from './url-constants';
+import { objectId } from './utils';
 
 export interface BreadcrumbSelector {
   element: string;
@@ -31,7 +31,7 @@ export class AppError extends Error {
 
 @Injectable()
 export class ExceptionHandlingService extends BugsnagErrorHandler {
-  static initBugsnag() {
+  static initBugsnag(): void {
     const config: BrowserConfig = {
       apiKey: environment.bugsnagApiKey,
       appVersion: versionData.version,
@@ -51,7 +51,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
    * Bugsnag doesn't always do well trying to get the actual text from some MDC elements e.g. buttons
    * This method does further investigation to try and determine the actual text before creating the breadcrumb
    */
-  static handleBreadcrumb(breadcrumb: Breadcrumb) {
+  static handleBreadcrumb(breadcrumb: Breadcrumb): void {
     if (
       !['targetSelector', 'targetText'].every(property => breadcrumb.metadata.hasOwnProperty(property)) ||
       breadcrumb.message !== 'UI click'
@@ -132,25 +132,25 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
 
   // Use injected console when it's available, for the sake of tests, but fall back to window.console if injection fails
   private console = window.console;
-  private alertQueue: ErrorAlert[] = [];
+  private alertQueue: ErrorAlertData[] = [];
   private dialogOpen = false;
 
   constructor(private readonly injector: Injector) {
     super();
   }
 
-  async handleError(originalError: unknown, silently: boolean = false) {
+  async handleError(originalError: unknown, silently: boolean = false): Promise<void> {
     // Angular error handlers are instantiated before all other providers, so we cannot inject dependencies. Instead we
     // use the "Injector" to get the dependencies in this method. At this point, providers should have been
     // instantiated.
     let ngZone: NgZone;
     let noticeService: NoticeService;
-    let dialog: MdcDialog;
+    let dialogService: DialogService;
     let errorReportingService: ErrorReportingService;
     try {
       ngZone = this.injector.get(NgZone);
       noticeService = this.injector.get(NoticeService);
-      dialog = this.injector.get(MdcDialog);
+      dialogService = this.injector.get(DialogService);
       errorReportingService = this.injector.get(ErrorReportingService);
       this.console = this.injector.get(CONSOLE);
     } catch {
@@ -232,7 +232,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
         // Don't show a dialog if this is a silent error that we just want sent to Bugsnag
         if (!silently) {
           const stack = hasStringProp(error, 'stack') ? error.stack : undefined;
-          this.handleAlert(ngZone, dialog, { message, stack, eventId });
+          this.handleAlert(ngZone, dialogService, { message, stack, eventId });
         }
       } finally {
         errorReportingService.addMeta({ eventId });
@@ -245,7 +245,7 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     }
   }
 
-  private sendReport(errorReportingService: ErrorReportingService, error: any) {
+  private sendReport(errorReportingService: ErrorReportingService, error: any): void {
     errorReportingService.notify(error, err => {
       if (err) {
         this.console.error('Sending error report failed:');
@@ -254,25 +254,25 @@ export class ExceptionHandlingService extends BugsnagErrorHandler {
     });
   }
 
-  private handleAlert(ngZone: NgZone, dialog: MdcDialog, error: ErrorAlert) {
+  private handleAlert(ngZone: NgZone, dialogService: DialogService, error: ErrorAlertData): void {
     if (!this.alertQueue.some(alert => alert.message === error.message)) {
       this.alertQueue.unshift(error);
-      this.showAlert(ngZone, dialog);
+      this.showAlert(ngZone, dialogService);
     }
   }
 
-  private showAlert(ngZone: NgZone, dialog: MdcDialog) {
+  private showAlert(ngZone: NgZone, dialogService: DialogService): void {
     if (!this.dialogOpen && this.alertQueue.length) {
       ngZone.run(() => {
         this.dialogOpen = true;
-        const dialogRef = dialog.open(ErrorComponent, {
+        const dialogRef = dialogService.openMatDialog(ErrorDialogComponent, {
           autoFocus: false,
           data: this.alertQueue[this.alertQueue.length - 1]
         });
         dialogRef.afterClosed().subscribe(() => {
           this.alertQueue.pop();
           this.dialogOpen = false;
-          this.showAlert(ngZone, dialog);
+          this.showAlert(ngZone, dialogService);
         });
       });
     }

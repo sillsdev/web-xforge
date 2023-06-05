@@ -37,7 +37,7 @@ import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/ca
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { DeltaOperation } from 'rich-text';
 import { BehaviorSubject, fromEvent, merge, Subject, Subscription, timer } from 'rxjs';
-import { debounceTime, delayWhen, filter, repeat, retryWhen, tap } from 'rxjs/operators';
+import { debounceTime, delayWhen, filter, first, repeat, retryWhen, tap } from 'rxjs/operators';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -57,6 +57,8 @@ import { XFValidators } from 'xforge-common/xfvalidators';
 import { NoteConflictType, NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { getNoteThreadDocId } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { ComponentType } from '@angular/cdk/portal';
+import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
@@ -851,20 +853,23 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
 
-    const dialogRef = this.dialogService.openMatDialog<
+    const dialogRef = this.openMatDialog<SuggestionsSettingsDialogComponent, SuggestionsSettingsDialogData>(
       SuggestionsSettingsDialogComponent,
-      SuggestionsSettingsDialogData
-    >(SuggestionsSettingsDialogComponent, {
-      autoFocus: false,
-      data: { projectUserConfigDoc: this.projectUserConfigDoc }
-    });
-    dialogRef.afterClosed().subscribe(() => {
-      if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
-        const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
-        this.translationSuggester.confidenceThreshold = pcnt / 100;
+      {
+        autoFocus: false,
+        data: { projectUserConfigDoc: this.projectUserConfigDoc }
       }
-      this.updateSuggestions();
-    });
+    );
+    dialogRef
+      .afterClosed()
+      .pipe(first())
+      .subscribe(() => {
+        if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
+          const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
+          this.translationSuggester.confidenceThreshold = pcnt / 100;
+        }
+        this.updateSuggestions();
+      });
   }
 
   insertNote(): void {
@@ -888,7 +893,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.bottomSheetRef = this.bottomSheet.open(this.TemplateBottomSheet, { hasBackdrop: false });
     } else {
       this.showNoteThread(undefined, verseRef);
-      this.showInsertNoteFab = false;
     }
   }
 
@@ -1032,13 +1036,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       // at least one must be defined
       return;
     }
+
     const noteDialogData: NoteDialogData = {
       projectId: this.projectDoc!.id,
       threadId,
       textDocId: new TextDocId(this.projectDoc!.id, this.bookNum, this.chapter),
       verseRef
     };
-    const dialogRef = this.dialogService.openMatDialog<
+    const dialogRef: MatDialogRef<NoteDialogComponent, NoteDialogResult | undefined> = this.openMatDialog<
       NoteDialogComponent,
       NoteDialogData,
       NoteDialogResult | undefined
@@ -1050,10 +1055,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     });
 
     const currentVerseRef: VerseRef | undefined = this.commenterSelectedVerseRef;
-    // deselect the current verse selection so that the newly inserted note thread embed gets the correct formatting
-    // to prevent introducing erroneous usx-segment elements into the DOM
-    this.resetCommenterVerseSelection();
+    this.insertNoteFab!.nativeElement.style.visibility = 'hidden';
     const result: NoteDialogResult | undefined = await dialogRef.afterClosed().toPromise();
+
     if (result != null) {
       if (result.noteContent != null) {
         await this.saveNote({
@@ -1065,6 +1069,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       this.toggleNoteThreadVerseRefs$.next();
     }
+    this.insertNoteFab!.nativeElement.style.visibility = 'visible';
   }
 
   private updateReadNotes(threadId: string): void {
@@ -1161,18 +1166,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (this.target == null) {
       return;
     }
-    let selectedSegment: string | undefined;
-    let selectedSegmentChecksum: number | undefined;
-    if (
-      this.projectUserConfigDoc != null &&
-      this.projectUserConfigDoc.data != null &&
-      this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum &&
-      this.projectUserConfigDoc.data.selectedChapterNum === this._chapter &&
-      this.projectUserConfigDoc.data.selectedSegment !== ''
-    ) {
-      selectedSegment = this.projectUserConfigDoc.data.selectedSegment;
-      selectedSegmentChecksum = this.projectUserConfigDoc.data.selectedSegmentChecksum;
-    }
+
     // reset the verse selection before changing text
     this.resetInsertNoteFab(true);
     if (this.source != null) {
@@ -1186,13 +1180,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.target.blur();
     }
     this.target.id = targetId;
-    if (selectedSegment != null) {
-      const segmentChanged = this.target.setSegment(selectedSegment, selectedSegmentChecksum, true);
-      if (!segmentChanged && selectedSegmentChecksum == null && this.target.segment != null) {
-        // the segment checksum was unset on the server, so accept the current segment changes
-        this.target.segment.acceptChanges();
-      }
-    }
+    this.setSegment();
     const textDoc = await this.projectService.getText(targetId);
     if (this.onTargetDeleteSub != null) {
       this.onTargetDeleteSub.unsubscribe();
@@ -1209,6 +1197,28 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.isTranslating = true;
     this.suggestions = [];
     this.showSuggestions = this.target != null && this.target.isSelectionAtSegmentEnd;
+  }
+
+  private setSegment(selectedSegment?: string, selectedSegmentChecksum?: number): void {
+    if (this.target == null || this.text == null) return;
+    if (
+      selectedSegment == null &&
+      this.projectUserConfigDoc?.data != null &&
+      this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum &&
+      this.projectUserConfigDoc.data.selectedChapterNum === this._chapter &&
+      this.projectUserConfigDoc.data.selectedSegment !== ''
+    ) {
+      selectedSegment = this.projectUserConfigDoc.data.selectedSegment;
+      selectedSegmentChecksum = this.projectUserConfigDoc.data.selectedSegmentChecksum;
+    }
+
+    if (selectedSegment != null) {
+      const segmentChanged: boolean = this.target.setSegment(selectedSegment, selectedSegmentChecksum, true);
+      if (!segmentChanged && selectedSegmentChecksum == null && this.target.segment != null) {
+        // the segment checksum was unset on the server, so accept the current segment changes
+        this.target.segment.acceptChanges();
+      }
+    }
   }
 
   private async translateSegment(): Promise<void> {
@@ -1461,6 +1471,32 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }, 10);
   }
 
+  /**
+   * Opens a MAT dialog and records the current editor selection if one exists
+   * and return the cursor to that position on dialog close.
+   */
+  private openMatDialog<T, D = any, R = any>(
+    component: ComponentType<T>,
+    dialogConfig: MatDialogConfig<D>
+  ): MatDialogRef<T, R> {
+    const selection: RangeStatic | null | undefined = this.target?.editor?.getSelection();
+    const scrollTop: number | undefined = this.target?.editor?.root.scrollTop;
+    const dialogRef: MatDialogRef<T, R> = this.dialogService.openMatDialog(component, dialogConfig);
+    if (selection == null || !this.canEdit) return dialogRef;
+
+    const subscription: Subscription = dialogRef.afterClosed().subscribe(() => {
+      if (this.target?.editor != null && this.dialogService.openDialogCount === 0) {
+        const currentSelection: RangeStatic | null | undefined = this.target.editor.getSelection();
+        if (currentSelection?.index !== selection.index) {
+          this.target.editor.setSelection(selection.index, 0, 'user');
+          if (scrollTop != null) this.target.editor.root.scrollTop = scrollTop;
+        }
+      }
+      subscription.unsubscribe();
+    });
+    return dialogRef;
+  }
+
   /** Gets the information needed to format a particular featured verse. */
   private getFeaturedVerseRefInfo(threadDoc: NoteThreadDoc): FeaturedVerseRefInfo | undefined {
     const notes: Note[] = threadDoc.notesInOrderClone(threadDoc.data!.notes);
@@ -1589,7 +1625,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private toggleVerseRefElement(verseRef?: VerseRef, forceToggle: boolean = false): void {
+  private toggleVerseRefElement(verseRef?: VerseRef): void {
     if (
       verseRef == null ||
       this.target == null ||
@@ -1608,7 +1644,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       if (this.commenterSelectedVerseRef != null && verseRef.equals(this.commenterSelectedVerseRef)) {
         allowToggleVerseSelection = !this.hasEditRight;
       }
-      if (allowToggleVerseSelection || forceToggle) {
+      if (allowToggleVerseSelection) {
         this.showInsertNoteFab = this.target.toggleVerseSelection(verseRef);
         this.positionInsertNoteFab(segmentElement);
       }

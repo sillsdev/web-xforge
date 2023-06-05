@@ -38,32 +38,10 @@ import { Segment } from './segment';
 import { EditorRange, TextViewModel } from './text-view-model';
 import { NoteDialogData, TextNoteDialogComponent } from './text-note-dialog/text-note-dialog.component';
 
-const EDITORS = new Set<Quill>();
 // When a user is active in the editor a timer starts to mark them as inactive for remote presences
 export const PRESENCE_EDITOR_ACTIVE_TIMEOUT = 3500;
 
-function onNativeSelectionChanged(): void {
-  // workaround for bug where Quill allows a selection inside of an embed
-  const sel = window.document.getSelection();
-  if (sel == null || sel.rangeCount === 0 || !sel.isCollapsed) {
-    return;
-  }
-  const text = sel.getRangeAt(0).commonAncestorContainer.textContent;
-  if (text === '\ufeff') {
-    for (const editor of EDITORS) {
-      if (editor.hasFocus()) {
-        const editorSel = editor.getSelection();
-        if (editorSel != null) {
-          editor.setSelection(editorSel, 'silent');
-        }
-        break;
-      }
-    }
-  }
-}
-
 const USX_FORMATS = registerScripture();
-window.document.addEventListener('selectionchange', onNativeSelectionChanged);
 
 export interface TextUpdatedEvent {
   delta?: DeltaStatic;
@@ -468,9 +446,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this.viewModel != null) {
       this.viewModel.unbind();
     }
-    if (this._editor != null) {
-      EDITORS.delete(this._editor);
-    }
     this.dismissPresences();
     if (this.onDeleteSub != null) {
       this.onDeleteSub.unsubscribe();
@@ -489,7 +464,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this.id != null) {
       this.bindQuill();
     }
-    EDITORS.add(this._editor);
 
     editor.container.addEventListener('beforeinput', (ev: Event) => this.onBeforeinput(ev));
   }
@@ -1297,10 +1271,21 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     }
 
     if (!this.viewModel.hasSegmentRange(segmentRef)) {
-      const verseParts: string[] = segmentRef.split('_');
-      const verseRef: VerseRef = new VerseRef(this.id?.bookNum, verseParts[1], verseParts[2]);
-      const correspondingSegments: string[] = this.getVerseSegments(verseRef);
-      if (correspondingSegments.length === 0) {
+      let resetSegment = true;
+
+      // If verse segment ref has no exact match, check for segments that fall within a verse reference
+      if (VERSE_REGEX.test(segmentRef)) {
+        const [_, chapterNum, verseNum] = segmentRef.split('_');
+        const verseRef: VerseRef = new VerseRef(this.id?.bookNum, chapterNum, verseNum);
+        const correspondingSegments: string[] = this.getVerseSegments(verseRef);
+
+        if (correspondingSegments.length > 0) {
+          segmentRef = correspondingSegments[0];
+          resetSegment = false;
+        }
+      }
+
+      if (resetSegment) {
         if (this._segment != null && this.highlightSegment) {
           this.clearHighlight();
         }
@@ -1308,7 +1293,6 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
         this.segmentRefChange.emit();
         return true;
       }
-      segmentRef = correspondingSegments[0];
     }
 
     if (focus) {
