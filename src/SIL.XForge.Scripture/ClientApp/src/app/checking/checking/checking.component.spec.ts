@@ -59,7 +59,6 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { SharedModule } from '../../shared/shared.module';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
-import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
@@ -328,7 +327,7 @@ describe('CheckingComponent', () => {
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
       ).times(3);
       env.clickButton(env.editQuestionButton);
-      verify(mockedDialogService.openMatDialog(QuestionAnsweredDialogComponent, anything())).never();
+      verify(mockedDialogService.confirm(anything(), anything(), anything())).never();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       tick(env.questionReadTimer);
       verify(
@@ -381,14 +380,14 @@ describe('CheckingComponent', () => {
 
     it('user must confirm question answered dialog before question dialog appears', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
-      when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('close'));
+      when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(false);
       // Edit a question with answers
       env.selectQuestion(6);
       env.clickButton(env.editQuestionButton);
-      verify(mockedDialogService.openMatDialog(QuestionAnsweredDialogComponent)).once();
-      when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
+      verify(mockedDialogService.confirm(anything(), anything(), anything())).once();
+      when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
       env.clickButton(env.editQuestionButton);
-      verify(mockedDialogService.openMatDialog(QuestionAnsweredDialogComponent)).twice();
+      verify(mockedDialogService.confirm(anything(), anything(), anything())).twice();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));
@@ -1649,7 +1648,6 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<CheckingComponent>;
   readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
-  readonly mockedAnsweredDialogRef = mock<MatDialogRef<QuestionAnsweredDialogComponent>>(MatDialogRef);
   readonly mockedTextChooserDialogComponent = mock<MatDialogRef<TextChooserDialogComponent>>(MatDialogRef);
   readonly location: Location;
   readonly router: Router;
@@ -2467,9 +2465,6 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
     );
 
-    when(mockedDialogService.openMatDialog(QuestionAnsweredDialogComponent)).thenReturn(
-      instance(this.mockedAnsweredDialogRef)
-    );
     when(mockedDialogService.openMatDialog(TextChooserDialogComponent, anything())).thenReturn(
       instance(this.mockedTextChooserDialogComponent)
     );

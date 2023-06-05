@@ -1,4 +1,4 @@
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule } from '@angular/material/dialog';
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -26,7 +26,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -45,8 +45,6 @@ import { TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { CheckingModule } from '../checking.module';
 import { ImportQuestionsDialogComponent } from '../import-questions-dialog/import-questions-dialog.component';
-import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
-import { QuestionDialogComponent } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { CheckingOverviewComponent } from './checking-overview.component';
 
@@ -246,17 +244,19 @@ describe('CheckingOverviewComponent', () => {
       env.clickExpanderAtRow(1);
       // Edit a question with no answers
       env.clickElement(env.questionEditButtons[3]);
-      verify(mockedDialogService.openMatDialog(anything())).never();
+      verify(mockedDialogService.confirm(anything(), anything(), anything())).never();
       resetCalls(mockedDialogService);
-      when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('close'));
+      when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(false);
       // Edit a question with answers
       env.clickElement(env.questionEditButtons[0]);
-      verify(mockedDialogService.openMatDialog(anything())).once();
-      verify(mockedDialogService.openMatDialog(QuestionDialogComponent)).never();
+      verify(mockedDialogService.confirm(anything(), anything(), anything())).once();
+
       resetCalls(mockedQuestionDialogService);
-      when(env.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
+      resetCalls(mockedDialogService);
+
+      when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
       env.clickElement(env.questionEditButtons[0]);
-      verify(mockedDialogService.openMatDialog(anything())).twice();
+      verify(mockedDialogService.confirm(anything(), anything(), anything())).once();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));
@@ -531,7 +531,6 @@ class TestEnvironment {
   location: Location;
 
   readonly ngZone: NgZone = TestBed.inject(NgZone);
-  readonly mockedAnsweredDialogRef = mock<MatDialogRef<QuestionAnsweredDialogComponent>>(MatDialogRef);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
@@ -859,10 +858,7 @@ class TestEnvironment {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedQuestionDialogService.questionDialog(anything())).thenResolve();
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
-    when(mockedDialogService.openMatDialog(QuestionAnsweredDialogComponent)).thenReturn(
-      instance(this.mockedAnsweredDialogRef)
-    );
-    when(this.mockedAnsweredDialogRef.afterClosed()).thenReturn(of('accept'));
+    when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
