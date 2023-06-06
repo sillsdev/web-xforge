@@ -1,7 +1,12 @@
+import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { NgModule } from '@angular/core';
 import { MAX_SEGMENT_LENGTH, TranslationSources } from '@sillsdev/machine';
 import { of, throwError } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
+import { NoticeService } from 'xforge-common/notice.service';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { BuildDto } from './build-dto';
 import { BuildStates } from './build-states';
 import { EngineDto } from './engine-dto';
@@ -13,6 +18,10 @@ import { TranslationSource } from './translation-source';
 import { WordGraphDto } from './word-graph-dto';
 
 describe('RemoteTranslationEngine', () => {
+  configureTestingModule(() => ({
+    imports: [DialogTestModule, TestTranslocoModule]
+  }));
+
   it('get word graph', async () => {
     const env = new TestEnvironment();
     const sourceTokens = ['Esto', 'es', 'una', 'prueba', '.'];
@@ -411,11 +420,31 @@ describe('RemoteTranslationEngine', () => {
       }
     );
   });
+
+  it('sends notice when getWordGraph has error', async function () {
+    const env = new TestEnvironment();
+    const sourceSegment = 'Esto es una prueba.';
+    when(
+      env.mockedHttpClient.post<WordGraphDto>(
+        'translation/engines/project:project01/actions/getWordGraph',
+        JSON.stringify(sourceSegment)
+      )
+    ).thenThrow(new Error());
+
+    const result = await env.client.getWordGraph(sourceSegment);
+    expect(result.isEmpty).toBeTruthy();
+  });
 });
+
+@NgModule({
+  imports: [CommonModule, UICommonModule, TestTranslocoModule]
+})
+class DialogTestModule {}
 
 class TestEnvironment {
   readonly mockedHttpClient: HttpClient;
   readonly client: RemoteTranslationEngine;
+  readonly mockedNoticeService: NoticeService;
 
   constructor() {
     this.mockedHttpClient = mock(HttpClient);
@@ -434,7 +463,12 @@ class TestEnvironment {
         }
       })
     );
-    this.client = new RemoteTranslationEngine('project01', instance(this.mockedHttpClient));
+    this.mockedNoticeService = mock(NoticeService);
+    this.client = new RemoteTranslationEngine(
+      'project01',
+      instance(this.mockedHttpClient),
+      instance(this.mockedNoticeService)
+    );
   }
 
   addCreateBuild(): void {

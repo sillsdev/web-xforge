@@ -13,6 +13,8 @@ import {
 } from '@sillsdev/machine';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, expand, filter, map, mergeMap, share, startWith, takeWhile } from 'rxjs/operators';
+import { translate } from '@ngneat/transloco';
+import { NoticeService } from 'xforge-common/notice.service';
 import { AlignedWordPairDto } from './aligned-word-pair-dto';
 import { BuildDto } from './build-dto';
 import { BuildStates } from './build-states';
@@ -28,7 +30,11 @@ import { TranslationSource } from './translation-source';
 export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   private trainingStatus$?: Observable<ProgressStatus>;
 
-  constructor(public readonly projectId: string, private readonly httpClient: HttpClient) {}
+  constructor(
+    public readonly projectId: string,
+    private readonly httpClient: HttpClient,
+    private readonly noticeService: NoticeService
+  ) {}
 
   async translate(segment: string): Promise<TranslationResult> {
     if (segment.length > MAX_SEGMENT_LENGTH) {
@@ -62,10 +68,20 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
     if (segment.length > MAX_SEGMENT_LENGTH) {
       return new WordGraph([]);
     }
-    const response = await this.httpClient
-      .post<WordGraphDto>(`translation/engines/project:${this.projectId}/actions/getWordGraph`, JSON.stringify(segment))
-      .toPromise();
-    return this.createWordGraph(response.data as WordGraphDto);
+
+    try {
+      const response = await this.httpClient
+        .post<WordGraphDto>(
+          `translation/engines/project:${this.projectId}/actions/getWordGraph`,
+          JSON.stringify(segment)
+        )
+        .toPromise();
+      return this.createWordGraph(response.data as WordGraphDto);
+    } catch (err) {
+      this.noticeService.showError(translate('error_messages.failed_to_retrieve_suggestions'));
+    }
+
+    return new WordGraph([]);
   }
 
   async trainSegment(sourceSegment: string, targetSegment: string, sentenceStart: boolean = true): Promise<void> {
