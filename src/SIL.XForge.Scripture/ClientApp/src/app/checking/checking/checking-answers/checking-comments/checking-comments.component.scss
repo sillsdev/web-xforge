@@ -33,5 +33,10 @@
     button {
       height: auto;
     }
+
+    .mat-button {
+      line-height: unset;
+      padding: 0 8px;
+    }
   }
 }
