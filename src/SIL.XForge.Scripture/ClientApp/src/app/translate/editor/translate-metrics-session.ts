@@ -4,6 +4,7 @@ import isEqual from 'lodash-es/isEqual';
 import { fromEvent, interval, merge, Subject } from 'rxjs';
 import { buffer, debounceTime, filter, map, tap } from 'rxjs/operators';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { objectId } from 'xforge-common/utils';
@@ -91,7 +92,8 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
     private readonly target: TextComponent,
     private readonly sourceWordTokenizer: RangeTokenizer,
     private readonly targetWordTokenizer: RangeTokenizer,
-    private readonly pwaService: PwaService
+    private readonly pwaService: PwaService,
+    private readonly reportingService: ErrorReportingService
   ) {
     super();
     this.id = objectId();
@@ -224,13 +226,21 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
           return;
         }
         if (!(err instanceof CommandError)) {
-          throw err;
+          this.reportingService.silentError(
+            'Error when adding translation metrics',
+            ErrorReportingService.normalizeError(err)
+          );
+          return;
         }
         const commandError: CommandError = err;
         if (commandError.code === CommandErrorCode.NotFound || commandError.code === CommandErrorCode.Forbidden) {
           return;
         }
-        throw err;
+        this.reportingService.silentError(
+          'Error when adding translation metrics',
+          ErrorReportingService.normalizeError(err)
+        );
+        return;
       }
     }
   }
