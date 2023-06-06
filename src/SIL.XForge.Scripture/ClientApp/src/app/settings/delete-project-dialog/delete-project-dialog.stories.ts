@@ -1,60 +1,39 @@
-import { CommonModule } from '@angular/common';
-import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { Meta } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { expect } from '@storybook/jest';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { DeleteProjectDialogComponent } from './delete-project-dialog.component';
+import { getOverlay, MatDialogLaunchComponent, matDialogStory } from '.storybook/story-utils';
 
-const meta: Meta<DeleteProjectDialogComponent> = {
+const meta: Meta = {
   title: 'Settings/Delete Project',
-  component: DeleteProjectDialogComponent
+  component: MatDialogLaunchComponent
 };
 export default meta;
 
-type Story = StoryObj<DeleteProjectDialogComponent>;
+export const DeleteProjectInvalidDialog = matDialogStory(DeleteProjectDialogComponent);
+DeleteProjectInvalidDialog.args = { data: { name: 'My Project' } };
+DeleteProjectInvalidDialog.play = async ({ canvasElement }) => {
+  const overlay = within(getOverlay(canvasElement));
 
-const Template: Story = {
-  decorators: [
-    moduleMetadata({
-      imports: [CommonModule, UICommonModule, I18nStoryModule, MatDialogModule],
-      providers: [
-        { provide: MAT_DIALOG_DATA, useValue: { name: 'My Project' } },
-        { provide: MatDialogRef, useValue: {} }
-      ]
-    })
-  ]
+  const submitButton = overlay.getByRole('button', { name: /I understand the consequences, delete this project/i });
+  expect(submitButton).toBeDisabled();
+
+  const projectInput = overlay.getByRole('textbox');
+  userEvent.type(projectInput, 'Other Project');
+
+  expect(submitButton).toBeDisabled();
 };
 
-export const NewForm: Story = { ...Template };
+export const DeleteProjectValidDialog = matDialogStory(DeleteProjectDialogComponent);
+DeleteProjectValidDialog.args = { data: { name: 'My Project' } };
+DeleteProjectValidDialog.play = async ({ canvasElement }) => {
+  const overlay = within(getOverlay(canvasElement));
 
-export const InvalidInputForm: Story = {
-  ...Template,
-  play: async ({ canvasElement }) => {
-    const root = within(canvasElement);
+  const submitButton = overlay.getByRole('button', { name: /I understand the consequences, delete this project/i });
+  expect(submitButton).toBeDisabled();
 
-    const submitButton: HTMLElement = root.getByRole('button', { name: /Delete this project/i });
-    expect(submitButton).toBeDisabled();
+  const projectInput = overlay.getByRole('textbox');
+  userEvent.type(projectInput, 'My Project');
 
-    const projectInput: HTMLElement = root.getByRole('textbox');
-    userEvent.type(projectInput, 'Other Project');
-
-    expect(submitButton).toBeDisabled();
-  }
-};
-
-export const ValidInputForm: Story = {
-  ...Template,
-  play: async ({ canvasElement }) => {
-    const root = within(canvasElement);
-
-    const submitButton: HTMLElement = root.getByRole('button', { name: /Delete this project/i });
-    expect(submitButton).toBeDisabled();
-
-    const projectInput: HTMLElement = root.getByRole('textbox');
-    userEvent.type(projectInput, 'My Project');
-
-    expect(submitButton).toBeEnabled();
-  }
+  expect(submitButton).toBeEnabled();
 };

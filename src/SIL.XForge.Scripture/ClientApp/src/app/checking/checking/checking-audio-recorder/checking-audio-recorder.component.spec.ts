@@ -1,4 +1,3 @@
-import { MdcDialog } from '@angular-mdc/web';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -14,6 +13,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { DialogService } from 'xforge-common/dialog.service';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { AudioTimePipe, CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingAudioRecorderComponent } from './checking-audio-recorder.component';
@@ -21,7 +21,7 @@ import { CheckingAudioRecorderComponent } from './checking-audio-recorder.compon
 const mockedNoticeService = mock(NoticeService);
 const mockedNavigator = mock(Navigator);
 const mockedPwaService = mock(PwaService);
-const mockedDialog = mock(MdcDialog);
+const mockedDialog = mock(DialogService);
 const mockedI18nService = mock(I18nService);
 
 describe('CheckingAudioRecorderComponent', () => {
@@ -32,7 +32,7 @@ describe('CheckingAudioRecorderComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: NAVIGATOR, useMock: mockedNavigator },
       { provide: PwaService, useMock: mockedPwaService },
-      { provide: MdcDialog, useMock: mockedDialog },
+      { provide: DialogService, useMock: mockedDialog },
       { provide: I18nService, useMock: mockedI18nService }
     ]
   }));
@@ -83,11 +83,11 @@ describe('CheckingAudioRecorderComponent', () => {
     env.component.mediaDevicesUnsupported = true;
     env.clickButton(env.recordButton);
     await env.waitForRecorder(100);
-    verify(mockedDialog.open(SupportedBrowsersDialogComponent, anything())).once();
+    verify(mockedDialog.openMatDialog(SupportedBrowsersDialogComponent, anything())).once();
     env.component.mediaDevicesUnsupported = false;
     env.clickButton(env.recordButton);
     await env.waitForRecorder(100);
-    verify(mockedDialog.open(SupportedBrowsersDialogComponent, anything())).once();
+    verify(mockedDialog.openMatDialog(SupportedBrowsersDialogComponent, anything())).once();
     expect().nothing();
   });
 });
@@ -134,7 +134,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  async waitForRecorder(ms: number) {
+  async waitForRecorder(ms: number): Promise<any> {
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }
