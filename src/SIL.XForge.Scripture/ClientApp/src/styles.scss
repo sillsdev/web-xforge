@@ -95,7 +95,7 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
 }
 
 .snackbar-error {
-  background-color: var(--mdc-theme-error);
+  background-color: var(--mdc-theme-error) !important;
 }
 
 .mdc-select__selected-text {
