@@ -27,6 +27,7 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
@@ -190,6 +191,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly translationEngineService: TranslationEngineService,
     private readonly i18n: I18nService,
     private readonly featureFlags: FeatureFlagService,
+    private readonly reportingService: ErrorReportingService,
     @Inject(CONSOLE) private readonly console: ConsoleInterface,
     private readonly router: Router,
     private bottomSheet: MatBottomSheet
@@ -609,7 +611,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
               this.target,
               this.sourceWordTokenizer,
               this.targetWordTokenizer,
-              this.pwaService
+              this.pwaService,
+              this.reportingService
             );
           }
         }
