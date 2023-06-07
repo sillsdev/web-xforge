@@ -6,7 +6,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
@@ -19,8 +19,10 @@ import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextsByBookId } from '../../../core/models/texts-by-book-id';
+import { SFProjectService } from '../../../core/sf-project.service';
 import {
   TextChooserDialogComponent,
   TextChooserDialogData,
@@ -31,8 +33,6 @@ import { QuestionDialogService } from '../../question-dialog/question-dialog.ser
 import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
-import { SFProjectService } from '../../../core/sf-project.service';
-import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { CommentAction } from './checking-comments/checking-comments.component';
 
 export interface AnswerAction {
@@ -347,13 +347,11 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return;
     }
     const projectId = this._questionDoc.data.projectRef;
-    if (this._questionDoc.getAnswers().length > 0) {
-      const answeredDialogRef = this.dialogService.confirm(
+    if (this._questionDoc?.data != null && this._questionDoc.getAnswers().length > 0) {
+      const confirm = await this.dialogService.confirm(
         'question_answered_dialog.question_has_answer',
-        'question_answered_dialog.edit_anyway',
-        'question_answered_dialog.cancel'
+        'question_answered_dialog.edit_anyway'
       );
-      const confirm = (await answeredDialogRef).valueOf();
       if (!confirm) {
         return;
       }
