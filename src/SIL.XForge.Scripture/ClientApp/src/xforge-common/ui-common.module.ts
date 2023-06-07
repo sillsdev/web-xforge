@@ -41,7 +41,6 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { TranslocoService } from '@ngneat/transloco';
@@ -80,7 +79,6 @@ const modules = [
   MatSelectModule,
   MatSliderModule,
   MatTableModule,
-  MatTabsModule,
   MatToolbarModule,
   MatTooltipModule,
   MatExpansionModule,
