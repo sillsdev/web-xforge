@@ -1,23 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { OwnerComponent } from 'xforge-common/owner/owner.component';
-import { UserService } from 'xforge-common/user.service';
+import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
+import { expect } from '@storybook/jest';
+import { within } from '@storybook/testing-library';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { instance, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { OwnerComponent } from 'xforge-common/owner/owner.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { within } from '@storybook/testing-library';
-import { expect } from '@storybook/jest';
-import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
+import { UserService } from 'xforge-common/user.service';
 import { UserProfileDoc } from '../../../../../xforge-common/models/user-profile-doc';
 import { CheckingCommentsComponent } from './checking-comments.component';
-
-const meta: Meta<CheckingCommentsComponent> = {
-  title: 'Checking/Comments/Comments',
-  component: CheckingCommentsComponent
-};
-export default meta;
 
 const mockedDialogService = mock(DialogService);
 const mockedUserService = mock(UserService);
@@ -77,9 +71,9 @@ const defaultArgs = {
   }
 };
 
-type Story = StoryObj<CheckingCommentsComponent>;
-
-const Template: Story = {
+const meta: Meta<CheckingCommentsComponent> = {
+  title: 'Checking/Comments/Comments',
+  component: CheckingCommentsComponent,
   decorators: [
     moduleMetadata({
       imports: [CommonModule, UICommonModule, I18nStoryModule],
@@ -89,8 +83,12 @@ const Template: Story = {
       ],
       declarations: [OwnerComponent]
     })
-  ]
+  ],
+  args: defaultArgs
 };
+export default meta;
+
+type Story = StoryObj<CheckingCommentsComponent>;
 
 function createComment(content: string, owner: string): Comment {
   return {
@@ -103,10 +101,9 @@ function createComment(content: string, owner: string): Comment {
   };
 }
 
-export const NoComments: Story = { ...Template };
-NoComments.args = defaultArgs;
+export const NoComments: Story = {};
 
-export const OwnComments: Story = { ...Template };
+export const OwnComments: Story = {};
 OwnComments.args = {
   ...defaultArgs,
   answer: {
@@ -128,7 +125,7 @@ OwnComments.play = async ({ canvasElement }) => {
   expect(deleteButtons.length).toBe(3);
 };
 
-export const OthersComments: Story = { ...Template };
+export const OthersComments: Story = {};
 OthersComments.args = {
   ...defaultArgs,
   answer: {
@@ -146,7 +143,7 @@ OthersComments.play = async ({ canvasElement }) => {
   expect(deleteButtons.length).toBe(0);
 };
 
-export const Admin: Story = { ...Template };
+export const Admin: Story = {};
 Admin.args = {
   ...defaultArgs,
   project: {
