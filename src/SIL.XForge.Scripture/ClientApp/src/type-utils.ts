@@ -46,8 +46,8 @@ export interface CaretPosition {
 // Look up type manipulation in the TypeScript handbook for an explanation of the operators that are being used.
 
 // Define an array type that contains types that correspond to values ones less than the index they are at. This allows
-// subtracting one when evaluating the Leaves type below, thereby preventing excessive recursion (which would produce a
-// compiler error).
+// subtracting one when evaluating the ObjectPaths type below, thereby preventing excessive recursion (which would
+// produce a compiler error).
 // This is not a list of values. This is a list of types. For example, `5` is a type that contains only the number 5.
 type OneLessThan = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ...10[]];
 
