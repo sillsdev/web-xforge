@@ -14,6 +14,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
@@ -49,7 +50,6 @@ import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforg
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -327,7 +327,7 @@ describe('CheckingComponent', () => {
         mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, questionId, 'audioFile.mp3')
       ).times(3);
       env.clickButton(env.editQuestionButton);
-      verify(mockedDialogService.confirm(anything(), anything(), anything())).never();
+      verify(mockedDialogService.confirm(anything(), anything())).never();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       tick(env.questionReadTimer);
       verify(
@@ -380,14 +380,14 @@ describe('CheckingComponent', () => {
 
     it('user must confirm question answered dialog before question dialog appears', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER);
-      when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(false);
+      when(mockedDialogService.confirm(anything(), anything())).thenResolve(false);
       // Edit a question with answers
       env.selectQuestion(6);
       env.clickButton(env.editQuestionButton);
-      verify(mockedDialogService.confirm(anything(), anything(), anything())).once();
-      when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
+      verify(mockedDialogService.confirm(anything(), anything())).once();
+      when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
       env.clickButton(env.editQuestionButton);
-      verify(mockedDialogService.confirm(anything(), anything(), anything())).twice();
+      verify(mockedDialogService.confirm(anything(), anything())).twice();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));

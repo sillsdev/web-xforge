@@ -1,7 +1,7 @@
-import { MatDialogModule } from '@angular/material/dialog';
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -12,6 +12,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import {
   getQuestionDocId,
   Question,
@@ -24,7 +25,6 @@ import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -244,19 +244,19 @@ describe('CheckingOverviewComponent', () => {
       env.clickExpanderAtRow(1);
       // Edit a question with no answers
       env.clickElement(env.questionEditButtons[3]);
-      verify(mockedDialogService.confirm(anything(), anything(), anything())).never();
+      verify(mockedDialogService.confirm(anything(), anything())).never();
       resetCalls(mockedDialogService);
-      when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(false);
+      when(mockedDialogService.confirm(anything(), anything())).thenResolve(false);
       // Edit a question with answers
       env.clickElement(env.questionEditButtons[0]);
-      verify(mockedDialogService.confirm(anything(), anything(), anything())).once();
+      verify(mockedDialogService.confirm(anything(), anything())).once();
 
       resetCalls(mockedQuestionDialogService);
       resetCalls(mockedDialogService);
 
-      when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
+      when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
       env.clickElement(env.questionEditButtons[0]);
-      verify(mockedDialogService.confirm(anything(), anything(), anything())).once();
+      verify(mockedDialogService.confirm(anything(), anything())).once();
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));
@@ -858,7 +858,6 @@ class TestEnvironment {
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedQuestionDialogService.questionDialog(anything())).thenResolve();
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
-    when(mockedDialogService.confirm(anything(), anything(), anything())).thenResolve(true);
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
