@@ -381,12 +381,13 @@ describe('TranslateMetricsSession', () => {
 
     // CommandError NotFound is ignored
     resetCalls(mockedSFProjectService);
+    resetCalls(mockedReportingService);
     const notFoundError: CommandError = new CommandError(CommandErrorCode.NotFound, 'error');
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(notFoundError);
     env.keyPress('a');
     tick(SEND_METRICS_INTERVAL);
     verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
-    verify(mockedReportingService.silentError(anything(), anything())).once();
+    verify(mockedReportingService.silentError(anything(), anything())).never();
 
     // CommandError Forbidden is ignored
     resetCalls(mockedSFProjectService);
@@ -395,7 +396,7 @@ describe('TranslateMetricsSession', () => {
     env.keyPress('a');
     tick(SEND_METRICS_INTERVAL);
     verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
-    verify(mockedReportingService.silentError(anything(), anything())).once();
+    verify(mockedReportingService.silentError(anything(), anything())).never();
 
     // CommandError is ignored when offline
     resetCalls(mockedSFProjectService);
@@ -406,7 +407,7 @@ describe('TranslateMetricsSession', () => {
     tick(SEND_METRICS_INTERVAL);
     // Not calling since offline
     verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
-    verify(mockedReportingService.silentError(anything(), anything())).once();
+    verify(mockedReportingService.silentError(anything(), anything())).never();
 
     // Non-CommandError error is ignored when offline
     resetCalls(mockedSFProjectService);
@@ -414,7 +415,7 @@ describe('TranslateMetricsSession', () => {
     tick(SEND_METRICS_INTERVAL);
     // Not calling since offline
     verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
-    verify(mockedReportingService.silentError(anything(), anything())).once();
+    verify(mockedReportingService.silentError(anything(), anything())).never();
 
     env.sessionDispose();
   }));

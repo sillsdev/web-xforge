@@ -19,7 +19,7 @@ import { WordGraphDto } from './word-graph-dto';
 
 describe('RemoteTranslationEngine', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestTranslocoModule]
+    imports: [TestModule, TestTranslocoModule]
   }));
 
   it('get word graph', async () => {
@@ -439,7 +439,7 @@ describe('RemoteTranslationEngine', () => {
 @NgModule({
   imports: [CommonModule, UICommonModule, TestTranslocoModule]
 })
-class DialogTestModule {}
+class TestModule {}
 
 class TestEnvironment {
   readonly mockedHttpClient: HttpClient;
