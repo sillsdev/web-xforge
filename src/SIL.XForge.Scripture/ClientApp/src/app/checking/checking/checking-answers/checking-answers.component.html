@@ -17,10 +17,10 @@
           </div>
           <div class="question-footer" *ngIf="canEditQuestion">
             <div class="actions">
-              <button mat-button type="button" (click)="questionDialog()" class="edit-question-button">
+              <button mat-button type="button" (click)="questionDialog()" class="edit-question-button short-button">
                 {{ t("edit") }}
               </button>
-              <button mat-button type="button" (click)="archiveQuestion()" class="archive-question-button">
+              <button mat-button type="button" (click)="archiveQuestion()" class="archive-question-button short-button">
                 {{ t("archive") }}
               </button>
             </div>
@@ -181,7 +181,7 @@
                     mat-button
                     type="button"
                     (click)="markAnswerForExport(answer)"
-                    class="answer-status answer-export"
+                    class="answer-status answer-export short-button"
                     [class.status-exportable]="isMarkedForExport(answer)"
                     [matTooltip]="t('tooltip_status_export')"
                     matTooltipPosition="above"
@@ -193,7 +193,7 @@
                     mat-button
                     type="button"
                     (click)="markAnswerAsResolved(answer)"
-                    class="answer-status answer-resolve"
+                    class="answer-status answer-resolve short-button"
                     [class.status-resolved]="isAnswerResolved(answer)"
                     [matTooltip]="t('tooltip_status_resolve')"
                     matTooltipPosition="above"
@@ -206,7 +206,7 @@
                     mat-button
                     type="button"
                     (click)="editAnswer(answer)"
-                    class="answer-edit"
+                    class="answer-edit short-button"
                   >
                     {{ t("edit") }}
                   </button>
@@ -216,7 +216,7 @@
                     mat-button
                     type="button"
                     (click)="deleteAnswerClicked(answer)"
-                    class="answer-delete"
+                    class="answer-delete short-button"
                   >
                     {{ t("delete") }}
                   </button>
@@ -235,7 +235,7 @@
       </div>
     </div>
     <div class="answers-component-footer" *ngIf="remoteAnswersCount > 0 && !answerFormVisible && shouldSeeAnswersList">
-      <button mat-button id="show-unread-answers-button" (click)="showRemoteAnswers(true)">
+      <button mat-button id="show-unread-answers-button" (click)="showRemoteAnswers(true)" class="short-button">
         {{ t("show_more_unread", { count: remoteAnswersCount }) }}
       </button>
     </div>
