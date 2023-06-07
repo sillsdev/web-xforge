@@ -1147,7 +1147,9 @@ public class MachineApiServiceTests
         // SUT
         BuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
 
-        await env.MachineProjectService.Received(1).SyncProjectCorporaAsync(User01, Project01, CancellationToken.None);
+        await env.MachineProjectService
+            .Received(1)
+            .SyncProjectCorporaAsync(User01, Project01, preTranslate: false, CancellationToken.None);
         Assert.AreEqual(message, actual.Message);
         Assert.AreEqual(percentCompleted, actual.PercentCompleted);
         Assert.AreEqual(revision, actual.Revision);
@@ -1172,7 +1174,9 @@ public class MachineApiServiceTests
         _ = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
 
         await env.EngineService.Received(1).StartBuildAsync(TranslationEngine01);
-        await env.MachineProjectService.Received(1).SyncProjectCorporaAsync(User01, Project01, CancellationToken.None);
+        await env.MachineProjectService
+            .Received(1)
+            .SyncProjectCorporaAsync(User01, Project01, preTranslate: false, CancellationToken.None);
         await env.TranslationEnginesClient
             .Received(1)
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);

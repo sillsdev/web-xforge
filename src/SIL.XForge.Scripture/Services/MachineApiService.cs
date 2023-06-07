@@ -102,7 +102,7 @@ public class MachineApiService : IMachineApiService
         else if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             // Execute on Serval, if it is enabled
-            string translationEngineId = await GetTranslationIdAsync(sfProjectId);
+            string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
             if (string.IsNullOrWhiteSpace(translationEngineId))
             {
                 throw new DataNotFoundException("The translation engine is not configured");
@@ -160,7 +160,7 @@ public class MachineApiService : IMachineApiService
         else if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             // Otherwise execute on Serval, if it is enabled
-            string translationEngineId = await GetTranslationIdAsync(sfProjectId);
+            string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
             if (string.IsNullOrWhiteSpace(translationEngineId))
             {
                 throw new DataNotFoundException("The translation engine is not configured");
@@ -209,7 +209,7 @@ public class MachineApiService : IMachineApiService
         // Execute on Serval, if it is enabled
         if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            string translationEngineId = await GetTranslationIdAsync(sfProjectId);
+            string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
             if (!string.IsNullOrWhiteSpace(translationEngineId))
             {
                 try
@@ -266,7 +266,7 @@ public class MachineApiService : IMachineApiService
         // Execute on Serval, if it is enabled
         if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            string translationEngineId = await GetTranslationIdAsync(sfProjectId);
+            string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
             if (!string.IsNullOrWhiteSpace(translationEngineId))
             {
                 try
@@ -323,13 +323,18 @@ public class MachineApiService : IMachineApiService
         // Execute on Serval, if it is enabled
         if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            string translationEngineId = await GetTranslationIdAsync(sfProjectId);
+            string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
             if (!string.IsNullOrWhiteSpace(translationEngineId))
             {
                 try
                 {
                     // We do not need the success boolean result, as we will still rebuild if no files have changed
-                    await _machineProjectService.SyncProjectCorporaAsync(curUserId, sfProjectId, cancellationToken);
+                    await _machineProjectService.SyncProjectCorporaAsync(
+                        curUserId,
+                        sfProjectId,
+                        preTranslate: false,
+                        cancellationToken
+                    );
                     TranslationBuild translationBuild = await _translationEnginesClient.StartBuildAsync(
                         translationEngineId,
                         new TranslationBuildConfig(),
@@ -368,6 +373,46 @@ public class MachineApiService : IMachineApiService
         return UpdateDto(buildDto, sfProjectId);
     }
 
+    public async Task<BuildDto?> StartPreTranslationBuildAsync(
+        string curUserId,
+        string sfProjectId,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        await EnsurePermissionAsync(curUserId, sfProjectId);
+
+        // Execute on Serval, if it is enabled
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
+        {
+            try
+            {
+                TranslationBuild translationBuild = await _machineProjectService.BuildProjectAsync(
+                    curUserId,
+                    sfProjectId,
+                    preTranslate: true,
+                    cancellationToken
+                );
+
+                // A null value will be an empty result (204) to the user
+                if (translationBuild is null)
+                {
+                    return null;
+                }
+
+                BuildDto buildDto = CreateDto(translationBuild);
+                return UpdateDto(buildDto, sfProjectId);
+            }
+            catch (Exception e)
+            {
+                await ProcessServalApiExceptionAsync(e);
+            }
+        }
+
+        // We only support Serval for pre-translations
+        throw new DataNotFoundException("The translation engine does not support pre-translations");
+    }
+
     public async Task TrainSegmentAsync(
         string curUserId,
         string sfProjectId,
@@ -381,7 +426,7 @@ public class MachineApiService : IMachineApiService
         // Execute on Serval, if it is enabled
         if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            string translationEngineId = await GetTranslationIdAsync(sfProjectId);
+            string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
             if (!string.IsNullOrWhiteSpace(translationEngineId))
             {
                 try
@@ -430,7 +475,7 @@ public class MachineApiService : IMachineApiService
         // Execute on Serval, if it is enabled
         if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            string translationEngineId = await GetTranslationIdAsync(sfProjectId);
+            string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
             if (!string.IsNullOrWhiteSpace(translationEngineId))
             {
                 try
@@ -492,7 +537,7 @@ public class MachineApiService : IMachineApiService
         // Execute on Serval, if it is enabled
         if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            string translationEngineId = await GetTranslationIdAsync(sfProjectId);
+            string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
             if (!string.IsNullOrWhiteSpace(translationEngineId))
             {
                 try
@@ -778,7 +823,7 @@ public class MachineApiService : IMachineApiService
         return engine ?? throw new DataNotFoundException("The engine does not exist.");
     }
 
-    private async Task<string> GetTranslationIdAsync(string sfProjectId)
+    private async Task<string> GetTranslationIdAsync(string sfProjectId, bool preTranslate)
     {
         // Load the project secret, so we can get the translation engine ID
         if (!(await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
@@ -787,7 +832,9 @@ public class MachineApiService : IMachineApiService
         }
 
         // Ensure we have a translation engine ID
-        string? translationEngineId = projectSecret.ServalData?.TranslationEngineId;
+        string? translationEngineId = preTranslate
+            ? projectSecret.ServalData?.PreTranslationEngineId
+            : projectSecret.ServalData?.TranslationEngineId;
         return string.IsNullOrWhiteSpace(translationEngineId) ? string.Empty : translationEngineId;
     }
 }

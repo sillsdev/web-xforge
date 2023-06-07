@@ -139,7 +139,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled)
             {
                 await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
-                await _machineProjectService.AddProjectAsync(curUserId, projectDoc.Id, CancellationToken.None);
+                await _machineProjectService.AddProjectAsync(curUserId, projectDoc.Id, false, CancellationToken.None);
             }
         }
 
@@ -226,7 +226,18 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         // The machine service requires the project secrets, so call it before removing them
-        await _machineProjectService.RemoveProjectAsync(curUserId, projectId, CancellationToken.None);
+        await _machineProjectService.RemoveProjectAsync(
+            curUserId,
+            projectId,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        await _machineProjectService.RemoveProjectAsync(
+            curUserId,
+            projectId,
+            preTranslate: true,
+            CancellationToken.None
+        );
         await ProjectSecrets.DeleteAsync(projectId);
         await RealtimeService.DeleteProjectAsync(projectId);
         string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", ptProjectId);
@@ -307,17 +318,32 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     // recreate Machine project only if one existed
                     if (hasExistingMachineProject)
                     {
-                        await _machineProjectService.RemoveProjectAsync(curUserId, projectId, CancellationToken.None);
+                        await _machineProjectService.RemoveProjectAsync(
+                            curUserId,
+                            projectId,
+                            preTranslate: false,
+                            CancellationToken.None
+                        );
                     }
 
                     await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
-                    await _machineProjectService.AddProjectAsync(curUserId, projectId, CancellationToken.None);
+                    await _machineProjectService.AddProjectAsync(
+                        curUserId,
+                        projectId,
+                        preTranslate: false,
+                        CancellationToken.None
+                    );
                     trainEngine = true;
                 }
                 else if (hasExistingMachineProject)
                 {
                     // translation suggestions was disabled or source project set to null
-                    await _machineProjectService.RemoveProjectAsync(curUserId, projectId, CancellationToken.None);
+                    await _machineProjectService.RemoveProjectAsync(
+                        curUserId,
+                        projectId,
+                        preTranslate: false,
+                        CancellationToken.None
+                    );
                 }
             }
 

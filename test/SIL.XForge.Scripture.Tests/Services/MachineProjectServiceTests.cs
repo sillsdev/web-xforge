@@ -46,7 +46,7 @@ public class MachineProjectServiceTests
             .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
 
         // SUT
-        await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
+        await env.Service.AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
 
         await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
         Assert.AreEqual(TranslationEngine01, env.ProjectSecrets.Get(Project01).ServalData?.TranslationEngineId);
@@ -60,7 +60,7 @@ public class MachineProjectServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
-        await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
+        await env.Service.AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
 
         await env.EngineService.Received().AddProjectAsync(Arg.Any<MachineProject>());
         await env.TranslationEnginesClient
@@ -79,7 +79,7 @@ public class MachineProjectServiceTests
             .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
 
         // SUT
-        await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
+        await env.Service.AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
 
         await env.EngineService.DidNotReceiveWithAnyArgs().AddProjectAsync(Arg.Any<MachineProject>());
     }
@@ -90,7 +90,7 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source, false)
             .Returns(TestEnvironment.MockTextCorpus);
         env.TranslationEnginesClient
             .UpdateCorpusAsync(
@@ -102,7 +102,7 @@ public class MachineProjectServiceTests
             .Returns(Task.FromResult(new TranslationCorpus { Id = Corpus01 }));
 
         // SUT
-        await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
+        await env.Service.BuildProjectAsync(User01, Project02, preTranslate: false, CancellationToken.None);
 
         await env.TranslationEnginesClient
             .Received()
@@ -117,7 +117,7 @@ public class MachineProjectServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
-        await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
+        await env.Service.BuildProjectAsync(User01, Project02, preTranslate: false, CancellationToken.None);
 
         await env.TranslationEnginesClient
             .DidNotReceiveWithAnyArgs()
@@ -132,7 +132,7 @@ public class MachineProjectServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
+        await env.Service.BuildProjectAsync(User01, Project02, preTranslate: false, CancellationToken.None);
 
         await env.EngineService.DidNotReceive().StartBuildByProjectIdAsync(Project02);
     }
@@ -143,7 +143,7 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>())
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>(), Arg.Any<bool>())
             .Returns(TestEnvironment.MockTextCorpus);
         await env.ProjectSecrets.UpdateAsync(
             Project02,
@@ -166,7 +166,7 @@ public class MachineProjectServiceTests
         );
 
         // SUT
-        await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
+        await env.Service.BuildProjectAsync(User01, Project02, preTranslate: false, CancellationToken.None);
 
         await env.TranslationEnginesClient
             .DidNotReceiveWithAnyArgs()
@@ -183,7 +183,7 @@ public class MachineProjectServiceTests
             .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
 
         // SUT
-        await env.Service.BuildProjectAsync(User01, Project01, CancellationToken.None);
+        await env.Service.BuildProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
 
         await env.TranslationEnginesClient
             .DidNotReceiveWithAnyArgs()
@@ -197,7 +197,7 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
+        await env.Service.BuildProjectAsync(User01, Project02, preTranslate: false, CancellationToken.None);
 
         await env.EngineService.Received().StartBuildByProjectIdAsync(Project02);
     }
@@ -209,7 +209,7 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
+        await env.Service.RemoveProjectAsync(User01, Project02, preTranslate: false, CancellationToken.None);
 
         // Ensure that the translation engine, corpus and any files are deleted
         await env.TranslationEnginesClient.Received(1).DeleteAsync(TranslationEngine02, CancellationToken.None);
@@ -228,7 +228,7 @@ public class MachineProjectServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
-        await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
+        await env.Service.RemoveProjectAsync(User01, Project02, preTranslate: false, CancellationToken.None);
 
         // Ensure that the translation engine, corpus and any files were not deleted
         await env.TranslationEnginesClient
@@ -247,7 +247,7 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.RemoveProjectAsync(User01, Project01, CancellationToken.None);
+        await env.Service.RemoveProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
 
         // Ensure that the translation engine, corpus and any files were not deleted
         await env.TranslationEnginesClient
@@ -267,7 +267,7 @@ public class MachineProjectServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
+        await env.Service.RemoveProjectAsync(User01, Project02, preTranslate: false, CancellationToken.None);
 
         // Ensure that the in process instance was not called
         await env.EngineService.DidNotReceiveWithAnyArgs().RemoveProjectAsync(Project02);
@@ -280,7 +280,7 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.RemoveProjectAsync(User01, Project01, CancellationToken.None);
+        await env.Service.RemoveProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
 
         await env.EngineService.Received().RemoveProjectAsync(Project01);
     }
@@ -291,7 +291,7 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source, false)
             .Returns(TestEnvironment.MockTextCorpus);
         env.TranslationEnginesClient
             .AddCorpusAsync(TranslationEngine01, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
@@ -302,7 +302,12 @@ public class MachineProjectServiceTests
         );
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project01, CancellationToken.None);
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            Project01,
+            preTranslate: false,
+            CancellationToken.None
+        );
         Assert.IsTrue(actual);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
         await env.DataFilesClient
@@ -317,7 +322,7 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source, false)
             .Returns(TestEnvironment.MockTextCorpus);
         env.TranslationEnginesClient
             .UpdateCorpusAsync(
@@ -331,7 +336,12 @@ public class MachineProjectServiceTests
         // SUT
         Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData?.Corpora[Corpus01].TargetFiles.Count);
         Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData?.Corpora[Corpus01].SourceFiles.Count);
-        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            Project02,
+            preTranslate: false,
+            CancellationToken.None
+        );
         Assert.IsTrue(actual);
         await env.DataFilesClient.ReceivedWithAnyArgs(1).DeleteAsync(string.Empty, CancellationToken.None);
         await env.DataFilesClient
@@ -347,7 +357,7 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>())
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>(), Arg.Any<bool>())
             .Returns(TestEnvironment.MockTextCorpus);
         await env.ProjectSecrets.UpdateAsync(
             Project02,
@@ -370,7 +380,12 @@ public class MachineProjectServiceTests
         );
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            Project02,
+            preTranslate: false,
+            CancellationToken.None
+        );
         Assert.IsFalse(actual);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
         await env.DataFilesClient
@@ -386,7 +401,12 @@ public class MachineProjectServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            Project02,
+            preTranslate: false,
+            CancellationToken.None
+        );
         Assert.IsFalse(actual);
         await env.TranslationEnginesClient
             .DidNotReceiveWithAnyArgs()
@@ -417,7 +437,12 @@ public class MachineProjectServiceTests
         );
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            Project02,
+            preTranslate: false,
+            CancellationToken.None
+        );
         Assert.IsFalse(actual);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
         await env.DataFilesClient
@@ -434,7 +459,7 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source, false)
             .Returns(TestEnvironment.MockTextCorpus);
         env.TranslationEnginesClient
             .AddCorpusAsync(TranslationEngine01, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
@@ -446,7 +471,7 @@ public class MachineProjectServiceTests
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.SyncProjectCorporaAsync(User01, Project01, CancellationToken.None)
+            () => env.Service.SyncProjectCorporaAsync(User01, Project01, preTranslate: false, CancellationToken.None)
         );
     }
 
@@ -456,7 +481,7 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source, false)
             .Returns(TestEnvironment.MockTextCorpus);
         env.TranslationEnginesClient
             .UpdateCorpusAsync(
@@ -488,7 +513,12 @@ public class MachineProjectServiceTests
         );
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            Project02,
+            preTranslate: false,
+            CancellationToken.None
+        );
         Assert.IsTrue(actual);
         await env.DataFilesClient.ReceivedWithAnyArgs(1).DeleteAsync(string.Empty, CancellationToken.None);
         await env.DataFilesClient
@@ -502,7 +532,7 @@ public class MachineProjectServiceTests
         // Set up test environment
         var env = new TestEnvironment();
         env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>())
+            .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>(), Arg.Any<bool>())
             .Returns(TestEnvironment.MockTextCorpus);
         env.TranslationEnginesClient
             .UpdateCorpusAsync(
@@ -539,7 +569,12 @@ public class MachineProjectServiceTests
         );
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            Project02,
+            preTranslate: false,
+            CancellationToken.None
+        );
         Assert.IsTrue(actual);
         await env.DataFilesClient.Received(1).DeleteAsync("File03", CancellationToken.None);
         await env.DataFilesClient.Received(1).DeleteAsync("File04", CancellationToken.None);
@@ -592,7 +627,12 @@ public class MachineProjectServiceTests
         );
 
         // SUT
-        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            Project02,
+            preTranslate: false,
+            CancellationToken.None
+        );
         Assert.IsTrue(actual);
         await env.DataFilesClient.Received(1).DeleteAsync("File03", CancellationToken.None);
 
@@ -625,7 +665,7 @@ public class MachineProjectServiceTests
                 )
                 .Returns(Task.FromResult(new TranslationCorpus { Id = Corpus01 }));
             var paratextService = Substitute.For<IParatextService>();
-            TextCorpusFactory = Substitute.For<ITextCorpusFactory>();
+            TextCorpusFactory = Substitute.For<ISFTextCorpusFactory>();
 
             FeatureManager = Substitute.For<IFeatureManager>();
             FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(true));
@@ -768,7 +808,7 @@ public class MachineProjectServiceTests
         public ITranslationEnginesClient TranslationEnginesClient { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MemoryRepository<SFProject> Projects { get; }
-        public ITextCorpusFactory TextCorpusFactory { get; }
+        public ISFTextCorpusFactory TextCorpusFactory { get; }
         public MockLogger<MachineProjectService> MockLogger { get; }
     }
 }

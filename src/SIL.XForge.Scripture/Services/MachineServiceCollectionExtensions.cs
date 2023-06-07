@@ -40,6 +40,7 @@ public static class MachineServiceCollectionExtensions
                 o.MachineDatabaseName = "xforge_machine";
             })
             .AddTextCorpus<SFTextCorpusFactory>();
+        services.AddSingleton<ISFTextCorpusFactory, SFTextCorpusFactory>();
         services.AddSingleton<IAuthorizationHandler, MachineAuthorizationHandler>();
         services.AddSingleton<IBuildHandler, SFBuildHandler>();
 

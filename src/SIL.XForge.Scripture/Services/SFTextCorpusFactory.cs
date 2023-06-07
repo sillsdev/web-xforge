@@ -22,7 +22,7 @@ namespace SIL.XForge.Scripture.Services;
 /// This class represents a Machine text corpus for a SF project. It is used during batch training of the Machine
 /// translation engine.
 /// </summary>
-public class SFTextCorpusFactory : ITextCorpusFactory
+public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
 {
     private readonly IMongoClient _mongoClient;
     private readonly IOptions<DataAccessOptions> _dataAccessOptions;
@@ -45,9 +45,16 @@ public class SFTextCorpusFactory : ITextCorpusFactory
     }
 
     public async Task<ITextCorpus> CreateAsync(IEnumerable<string> projects, TextCorpusType type) =>
-        new DictionaryTextCorpus(await CreateTextsAsync(projects, type));
+        new DictionaryTextCorpus(await CreateTextsAsync(projects, type, false));
 
-    private async Task<IReadOnlyList<IText>> CreateTextsAsync(IEnumerable<string> projects, TextCorpusType type)
+    public async Task<ITextCorpus> CreateAsync(IEnumerable<string> projects, TextCorpusType type, bool preTranslate) =>
+        new DictionaryTextCorpus(await CreateTextsAsync(projects, type, preTranslate));
+
+    private async Task<IReadOnlyList<IText>> CreateTextsAsync(
+        IEnumerable<string> projects,
+        TextCorpusType type,
+        bool preTranslate
+    )
     {
         StringTokenizer wordTokenizer = new LatinWordTokenizer();
         IMongoDatabase database = _mongoClient.GetDatabase(_dataAccessOptions.Value.MongoDatabaseName);
@@ -65,11 +72,18 @@ public class SFTextCorpusFactory : ITextCorpusFactory
 
             string textCorpusProjectId;
             string paratextId;
+            List<TextInfo> projectTexts = project.Texts.Where(t => t.HasSource).ToList();
             switch (type)
             {
                 case TextCorpusType.Source:
                     textCorpusProjectId = project.TranslateConfig.Source.ProjectRef;
                     paratextId = project.TranslateConfig.Source.ParatextId;
+                    if (preTranslate)
+                    {
+                        project = await _realtimeService.GetSnapshotAsync<SFProject>(textCorpusProjectId);
+                        projectTexts = project.Texts;
+                    }
+
                     break;
 
                 case TextCorpusType.Target:
@@ -81,7 +95,7 @@ public class SFTextCorpusFactory : ITextCorpusFactory
                     throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextCorpusType));
             }
 
-            foreach (TextInfo text in project.Texts.Where(t => t.HasSource))
+            foreach (TextInfo text in projectTexts)
             {
                 foreach (Chapter chapter in text.Chapters)
                 {
