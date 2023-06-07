@@ -376,13 +376,11 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       return;
     }
     if (questionDoc != null && questionDoc.data != null) {
-      if (questionDoc.getAnswers().length > 0) {
-        const answeredDialogRef = this.dialogService.confirm(
+      if (questionDoc?.data != null && questionDoc.getAnswers().length > 0) {
+        const confirm = await this.dialogService.confirm(
           'question_answered_dialog.question_has_answer',
-          'question_answered_dialog.edit_anyway',
-          'question_answered_dialog.cancel'
+          'question_answered_dialog.edit_anyway'
         );
-        const confirm = (await answeredDialogRef).valueOf();
         if (!confirm) {
           return;
         }
