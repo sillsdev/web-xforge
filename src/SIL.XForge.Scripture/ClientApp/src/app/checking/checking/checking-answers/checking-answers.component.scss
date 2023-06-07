@@ -46,9 +46,6 @@
       .actions {
         display: flex;
         justify-content: flex-end;
-        button {
-          height: auto;
-        }
       }
     }
   }
@@ -173,7 +170,6 @@
         }
 
         button {
-          height: auto;
           &.answer-status {
             &.status-exportable {
               background: $answerExportable;
