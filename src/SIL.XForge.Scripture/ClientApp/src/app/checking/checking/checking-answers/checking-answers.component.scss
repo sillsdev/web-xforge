@@ -110,12 +110,10 @@
     justify-content: flex-end;
     column-gap: $button-spacing;
   }
-  ::ng-deep .mat-tab-label-content {
-    flex: 1;
+  .tab-label {
+    display: flex;
     column-gap: 8px;
-  }
-  ::ng-deep .mat-ink-bar {
-    background-color: var(--mdc-theme-primary);
+    align-items: center;
   }
 }
 

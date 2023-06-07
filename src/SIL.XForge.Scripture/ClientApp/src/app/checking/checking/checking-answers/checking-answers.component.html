@@ -42,7 +42,12 @@
         <form [formGroup]="answerForm" autocomplete="off" id="answer-form" appScrollIntoView>
           <mat-tab-group #answerTabs animationDuration="0ms">
             <mat-tab>
-              <ng-template matTabLabel><mat-icon>title</mat-icon>{{ t("answer") }}</ng-template>
+              <ng-template matTabLabel>
+                <span class="tab-label">
+                  <mat-icon>title</mat-icon>
+                  {{ t("answer") }}
+                </span>
+              </ng-template>
               <ng-template matTabContent>
                 <div class="answer-tab answer-text">
                   <mat-form-field appearance="outline">
@@ -54,8 +59,10 @@
             </mat-tab>
             <mat-tab>
               <ng-template matTabLabel>
-                <mat-icon>library_music</mat-icon>
-                {{ media.isActive("xs") ? t("record") : t("record_upload") }}
+                <span class="tab-label">
+                  <mat-icon>library_music</mat-icon>
+                  {{ media.isActive("xs") ? t("record") : t("record_upload") }}
+                </span>
               </ng-template>
               <ng-template matTabContent>
                 <div class="answer-tab answer-record-upload">
@@ -68,8 +75,10 @@
             </mat-tab>
             <mat-tab>
               <ng-template matTabLabel>
-                <mat-icon>text_rotation_none</mat-icon>
-                {{ media.isActive("xs") ? t("select") : t("select_text") }}
+                <span class="tab-label">
+                  <mat-icon>text_rotation_none</mat-icon>
+                  {{ media.isActive("xs") ? t("select") : t("select_text") }}
+                </span>
               </ng-template>
               <ng-template matTabContent>
                 <div class="answer-tab answer-select-text" [class.text-selected]="selectedText">
