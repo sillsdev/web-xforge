@@ -802,10 +802,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
     this.updateVisibleQuestions();
     if (this.totalQuestions() === 0) {
-      this.router.navigate(['/projects', this.projectDoc.id, 'checking'], {
-        replaceUrl: true
-      });
-      return;
+      // this.router.navigate(['/projects', this.projectDoc.id, 'checking'], {
+      //   replaceUrl: true
+      // });
+      // return;
     } else if (this.showAllBooks) {
       const availableBooks = new Set<string>();
       for (const questionDoc of this.visibleQuestions ?? []) {

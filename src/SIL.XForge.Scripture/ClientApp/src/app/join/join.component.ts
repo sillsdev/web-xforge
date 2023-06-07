@@ -102,14 +102,20 @@ export class JoinComponent extends DataLoadingComponent {
     this.status = 'joining';
     try {
       this.name.disable();
+      console.time('joinProject');
+      console.log(performance.now());
       await this.anonymousService.generateAccount(
         this.joiningResponse.shareKey,
         this.name.value,
         this.i18nService.localeCode
       );
+      console.log(performance.now());
       await this.authService.tryTransparentAuthentication();
+      console.log(performance.now());
       if (await this.authService.isLoggedIn) {
+        console.log(performance.now());
         await this.joinWithShareKey(this.joiningResponse.shareKey);
+        console.timeEnd('joinProject');
       } else {
         this.reportingService.silentError('Unable to login after generating transparent user account');
         await this.dialogService.message('join.error_occurred_login', 'error_messages.try_again');
