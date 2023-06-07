@@ -67,7 +67,7 @@
     &.answer-select-text {
       color: var(--mdc-theme-primary);
       justify-content: center;
-      column-gap: 10px;
+      column-gap: 12px;
       min-height: 75px;
       &.text-selected {
         flex-direction: column;
@@ -108,9 +108,7 @@
   .form-actions {
     display: flex;
     justify-content: flex-end;
-    .mat-button:not(:first-child) {
-      margin-left: $button-spacing;
-    }
+    column-gap: $button-spacing;
   }
   ::ng-deep .mat-tab-label-content {
     flex: 1;
