@@ -39,15 +39,17 @@
     &:not(:last-child) {
       padding-bottom: 16px;
     }
-    @include media-breakpoint-up(sm) {
-      display: flex;
-    }
+    display: flex;
+    column-gap: 10px;
 
     > app-write-status {
-      @include media-breakpoint-only(xs) {
-        margin-left: 10px;
+      @include media-breakpoint-up(sm) {
+        margin-left: 22px;
       }
-      margin-left: 32px;
+    }
+
+    .mat-icon {
+      transform: scale(0.9);
     }
   }
 

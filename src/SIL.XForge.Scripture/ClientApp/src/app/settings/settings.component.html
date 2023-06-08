@@ -150,6 +150,7 @@
                 <mat-checkbox formControlName="translateShareEnabled" id="checkbox-translate-share">
                   {{ t("shareTranslate") }}
                 </mat-checkbox>
+                <mat-icon [matTooltip]="t('users_can_share_the_project')">help</mat-icon>
                 <app-write-status
                   [state]="getControlState('translateShareEnabled')"
                   [formGroup]="form"
@@ -162,6 +163,7 @@
                 <mat-checkbox formControlName="checkingShareEnabled" id="checkbox-checking-share">
                   {{ t("shareChecking") }}
                 </mat-checkbox>
+                <mat-icon [matTooltip]="t('users_can_share_the_project')">help</mat-icon>
                 <app-write-status
                   [state]="getControlState('checkingShareEnabled')"
                   [formGroup]="form"
