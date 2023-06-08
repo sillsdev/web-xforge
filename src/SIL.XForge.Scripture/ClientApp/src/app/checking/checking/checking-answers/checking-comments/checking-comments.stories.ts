@@ -129,7 +129,7 @@ export const OthersComments: Story = {
   args: {
     answer: {
       ...defaultArgs.answer,
-      comments: createComments(['user01', 'user02'])
+      comments: createComments(['user02', 'user02'])
     }
   },
   play: async ({ canvasElement }) => {
