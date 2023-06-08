@@ -101,72 +101,68 @@ function createComment(content: string, owner: string): Comment {
   };
 }
 
+function createComments(userIds: string[]): Comment[] {
+  return userIds.map((id, index) => createComment(`comment ${index + 1}`, id));
+}
+
 export const NoComments: Story = {};
 
-export const OwnComments: Story = {};
-OwnComments.args = {
-  ...defaultArgs,
-  answer: {
-    ...defaultArgs.answer,
-    comments: [
-      createComment('comment 1', 'user01'),
-      createComment('comment 2', 'user01'),
-      createComment('comment 3', 'user01')
-    ]
-  }
-};
-OwnComments.play = async ({ canvasElement }) => {
-  const root = within(canvasElement);
-
-  const editButtons = root.getAllByRole('button', { name: /Edit/i });
-  expect(editButtons.length).toBe(3);
-
-  const deleteButtons = root.getAllByRole('button', { name: /Delete/i });
-  expect(deleteButtons.length).toBe(3);
-};
-
-export const OthersComments: Story = {};
-OthersComments.args = {
-  ...defaultArgs,
-  answer: {
-    ...defaultArgs.answer,
-    comments: [createComment('comment 1', 'user02'), createComment('comment 2', 'user02')]
-  }
-};
-OthersComments.play = async ({ canvasElement }) => {
-  const root = within(canvasElement);
-
-  const editButtons = root.queryAllByRole('button', { name: /Edit/i });
-  expect(editButtons.length).toBe(0);
-
-  const deleteButtons = root.queryAllByRole('button', { name: /Delete/i });
-  expect(deleteButtons.length).toBe(0);
-};
-
-export const Admin: Story = {};
-Admin.args = {
-  ...defaultArgs,
-  project: {
-    ...defaultArgs.project,
-    userRoles: {
-      user01: 'pt_administrator'
+export const OwnComments: Story = {
+  args: {
+    answer: {
+      ...defaultArgs.answer,
+      comments: createComments(['user01', 'user01', 'user01'])
     }
   },
-  answer: {
-    ...defaultArgs.answer,
-    comments: [
-      createComment('comment 1', 'user3'),
-      createComment('comment 2', 'user02'),
-      createComment('comment 3', 'user01')
-    ]
+  play: async ({ canvasElement }) => {
+    const root = within(canvasElement);
+
+    const editButtons = root.getAllByRole('button', { name: /Edit/i });
+    expect(editButtons.length).toBe(3);
+
+    const deleteButtons = root.getAllByRole('button', { name: /Delete/i });
+    expect(deleteButtons.length).toBe(3);
   }
 };
-Admin.play = async ({ canvasElement }) => {
-  const root = within(canvasElement);
 
-  const editButtons = root.getAllByRole('button', { name: /Edit/i });
-  expect(editButtons.length).toBe(1);
+export const OthersComments: Story = {
+  args: {
+    answer: {
+      ...defaultArgs.answer,
+      comments: createComments(['user01', 'user02'])
+    }
+  },
+  play: async ({ canvasElement }) => {
+    const root = within(canvasElement);
 
-  const deleteButtons = root.getAllByRole('button', { name: /Delete/i });
-  expect(deleteButtons.length).toBe(3);
+    const editButtons = root.queryAllByRole('button', { name: /Edit/i });
+    expect(editButtons.length).toBe(0);
+
+    const deleteButtons = root.queryAllByRole('button', { name: /Delete/i });
+    expect(deleteButtons.length).toBe(0);
+  }
+};
+
+export const Admin: Story = {
+  args: {
+    project: {
+      ...defaultArgs.project,
+      userRoles: {
+        user01: 'pt_administrator'
+      }
+    },
+    answer: {
+      ...defaultArgs.answer,
+      comments: createComments(['user03', 'user02', 'user01'])
+    }
+  },
+  play: async ({ canvasElement }) => {
+    const root = within(canvasElement);
+
+    const editButtons = root.getAllByRole('button', { name: /Edit/i });
+    expect(editButtons.length).toBe(1);
+
+    const deleteButtons = root.getAllByRole('button', { name: /Delete/i });
+    expect(deleteButtons.length).toBe(3);
+  }
 };
