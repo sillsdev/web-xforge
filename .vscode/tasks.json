@@ -129,6 +129,32 @@
         "cwd": "${workspaceRoot}/src/Migrations/SyncUserToPTUser"
       },
       "problemMatcher": "$msCompile"
+    },
+    {
+      "type": "docker-build",
+      "label": "docker-build: debug",
+      "dependsOn": ["build"],
+      "dockerBuild": {
+        "tag": "sf-local",
+        "target": "Development",
+        "dockerfile": "${workspaceFolder}/Dockerfile",
+        "context": "${workspaceFolder}",
+        "pull": true
+      },
+      "netCore": {
+        "appProject": "${workspaceFolder}/src/SIL.XForge.Scripture/SIL.XForge.Scripture.csproj",
+        "enableDebugging": true
+      }
+    },
+    {
+      "type": "docker-run",
+      "label": "docker-run: debug",
+      "dependsOn": ["docker-build: debug"],
+      "dockerRun": {},
+      "netCore": {
+        "appProject": "${workspaceFolder}/src/SIL.XForge.Scripture/SIL.XForge.Scripture.csproj",
+        "enableDebugging": true
+      }
     }
     // {
     //   "label": "build-migrator-foo",

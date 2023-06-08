@@ -151,6 +151,20 @@
         // "SYNC_USER_PROJECT_IDS": "6201831c0e13de5c38e0ed7d",
         "SYNC_USER_MODE_RUN": "true"
       }
+    },
+    {
+      "name": "Docker .NET Attach (Preview)",
+      "type": "docker",
+      "request": "attach",
+      "platform": "netCore",
+      "containerName": "sf-local-1",
+      "processId": "${command:pickRemoteDockerProcess}",
+      "netCore": {
+        "debuggerPath": "/remote_debugger/vsdbg"
+      },
+      "sourceFileMap": {
+        "/usr/src/app/": "${workspaceFolder}/src"
+      }
     }
     // {
     //   "name": "Migration Foo",
@@ -166,5 +180,8 @@
     //     "ASPNETCORE_ENVIRONMENT": "Development"
     //   }
     // },
-  ]
+  ],
+  "dockerServerReadyAction": {
+    "uriFormat": "%s://localhost:%s"
+  }
 }

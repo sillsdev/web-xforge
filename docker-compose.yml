@@ -1,0 +1,33 @@
+version: "3.9"
+services:
+  mongo:
+    image: mongo:4.0
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data_container:/data/db
+    expose:
+      - 27017
+  sf:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    image: sf-local
+    container_name: sf-local-1
+    depends_on:
+      - "mongo"
+    ports:
+      - 5000:5000
+      - 5003:5003
+    environment:
+      - ASPNETCORE_DataAccess__ConnectionString=mongodb://mongo:27017
+      - ASPNETCORE_ENVIRONMENT=Development
+    command: dotnet run
+    expose:
+      - 5000
+      - 5003
+    volumes:
+      - ~/.vsdbg:/remote_debugger:rw
+
+volumes:
+  mongodb_data_container:
