@@ -15,7 +15,7 @@ import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { merge, Subscription } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { filter, map, take } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -434,7 +434,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           this.questionsSub.unsubscribe();
         }
         const prevBook = this.book;
-        this.book = bookNum;
+        this.questionsQuery.ready$.pipe(take(1)).subscribe(() => (this.book = bookNum));
         this.questionsSub = this.subscribe(
           merge(
             this.questionsQuery.ready$,
