@@ -35,6 +35,17 @@ export const Default: Story = {
   }
 };
 
+export const RTLSuggestions: Story = {
+  args: {
+    show: true,
+    suggestions: [
+      { words: ' وَعَمَّتْ تِلْكَ الْبِلادَ مَجَاعَةٌ'.split(' '), confidence: 0.29 },
+      { words: 'ثُمَّ حَدَثْتْ مَجَاعَةٌ فِي الأرْضِ'.split(' '), confidence: 0.21 }
+    ]
+  },
+  parameters: { locale: 'ar' }
+};
+
 export const Loading: Story = {
   args: {
     ...Default.args,
