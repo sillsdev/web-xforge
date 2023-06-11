@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -475,6 +474,8 @@ public class MachineProjectServiceTests
             {
                 // We normally would have target files, but to keep the test simple, we clear it
                 u.Unset(p => p.ServalData.Corpora[Corpus01].TargetFiles);
+                // Remove file01 so that the SUT only calls UpdateAsync
+                u.RemoveAll(p => p.ServalData.Corpora[Corpus01].SourceFiles, p => p.FileId == File01);
                 u.Add(
                     p => p.ServalData.Corpora[Corpus01].SourceFiles,
                     new ServalCorpusFile
@@ -490,7 +491,10 @@ public class MachineProjectServiceTests
         // SUT
         bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
         Assert.IsTrue(actual);
-        await env.DataFilesClient.ReceivedWithAnyArgs(1).DeleteAsync(string.Empty, CancellationToken.None);
+        await env.DataFilesClient
+            .DidNotReceiveWithAnyArgs()
+            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
+        await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
         await env.DataFilesClient
             .ReceivedWithAnyArgs(1)
             .UpdateAsync("File03", Arg.Any<FileParameter>(), CancellationToken.None);
@@ -597,11 +601,8 @@ public class MachineProjectServiceTests
         await env.DataFilesClient.Received(1).DeleteAsync("File03", CancellationToken.None);
 
         // The 404 exception was logged
-        Assert.That(
-            env.MockLogger.LogEvents.Count(
-                logEvent => logEvent.LogLevel == LogLevel.Information && logEvent.Exception is ServalApiException
-            ),
-            Is.EqualTo(1)
+        env.MockLogger.AssertHasEvent(
+            logEvent => logEvent.LogLevel == LogLevel.Information && logEvent.Exception is ServalApiException
         );
     }
 
