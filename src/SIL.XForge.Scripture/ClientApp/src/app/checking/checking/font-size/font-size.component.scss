@@ -3,14 +3,6 @@
     &.menu-open {
       background: #e0e0e0;
     }
-
-    ::ng-deep {
-      .mat-button-wrapper {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-    }
   }
 }
 
