@@ -1,6 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -49,8 +48,6 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   userInviteForm = new UntypedFormGroup({
     email: new UntypedFormControl('', [XFValidators.email])
   });
-  pageIndex: number = 0;
-  pageSize: number = 50;
   filterForm: UntypedFormGroup = new UntypedFormGroup({ filter: new UntypedFormControl('') });
   isAppOnline = true;
   currentTabIndex: number = 0;
@@ -101,9 +98,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   get rowsToDisplay(): Row[] {
-    const userRows: Row[] =
-      this.term.trim().length === 0 ? this.userRowsForSelectedTab : this.filteredRowsBySearchTermAndTab;
-    return this.page(userRows);
+    return this.term.trim().length === 0 ? this.userRowsForSelectedTab : this.filteredRowsBySearchTermAndTab;
   }
 
   private get filteredRowsBySearchTermAndTab(): Row[] {
@@ -195,15 +190,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     const termTarget = target as HTMLInputElement;
     if (termTarget?.value != null) {
       this.term = termTarget.value;
-      if (termTarget.value.trim().length > 0) {
-        this.pageIndex = 0;
-      }
     }
-  }
-
-  updatePaginatorData(event: PageEvent): void {
-    this.pageIndex = event.pageIndex;
-    this.pageSize = event.pageSize;
   }
 
   async removeProjectUserClicked(row: Row): Promise<void> {
@@ -237,11 +224,6 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
     await this.projectService.onlineSetUserProjectPermissions(this.projectId, row.id, Array.from(permissions));
     this.loadUsers();
-  }
-
-  private page(rows: Row[]): Row[] {
-    const start = this.pageSize * this.pageIndex;
-    return rows.slice(start, start + this.pageSize);
   }
 
   private async loadUsers(): Promise<void> {
