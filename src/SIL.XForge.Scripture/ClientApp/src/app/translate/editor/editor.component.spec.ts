@@ -2878,6 +2878,34 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('keeps insert note fab hidden for commenters on mobile devices', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+      env.addParatextNoteThread(
+        6,
+        'MAT 1:1',
+        '',
+        { start: 0, length: 0 },
+        ['user01'],
+        NoteStatus.Todo,
+        undefined,
+        true
+      );
+      env.setCommenterUser();
+      env.wait();
+
+      env.clickSegmentRef('verse_1_3');
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('hidden');
+      const noteElem: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'thread06')!;
+      noteElem.click();
+      env.wait();
+      env.mockNoteDialogRef.close();
+      env.wait();
+      expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('hidden');
+      env.dispose();
+    }));
+
     it('shows the correct combined verse ref for a new note', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
