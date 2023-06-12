@@ -1,32 +1,38 @@
 :host {
   > button {
     &.menu-open {
+      // Keep trigger button highlight while menu is open
       background: #e0e0e0;
     }
   }
 }
 
+// Menu exists in overlay, so ::ng-deep cannot be nested under :host
 ::ng-deep {
   .mat-menu-panel.font-size-menu {
     min-height: 0;
     min-width: 0;
     margin-inline-start: -25%; // Centers menu under trigger (works for both ltr and rtl)
 
+    // Trims the top and bottom off the default mat menu
     > .mat-menu-content {
       padding: 0;
     }
 
+    // Make ripple more visible (otherwise it is light green of button hover text)
     .mat-ripple-element {
       background-color: #000;
     }
   }
 }
 
+// Both 'increase' and 'decrease' buttons are within the single menu item, so some modifications are needed
 .button-group {
   display: flex;
   padding: 0;
   height: auto;
 
+  // Prevents entire menu from showing focus highlight
   &.cdk-program-focused,
   &:hover {
     background: transparent;
