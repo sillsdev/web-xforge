@@ -438,16 +438,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.pwaService.isOnline && this.multiCursorViewers.length > 0;
   }
 
-  get isInsertNoteFabEnabled(): boolean {
-    return this.isAddNotesEnabled && this.canShowInsertNoteFab;
-  }
-
   set showInsertNoteFab(value: boolean) {
     if (this.insertNoteFab == null || this.TemplateBottomSheet == null) return;
     this.addingMobileNote = false;
     // Mobile users without editing rights will see a bottom sheet instead of a FAB
-    if (this.mediaObserver.isActive('lt-lg') && !this.hasEditRight) {
-      this.insertNoteFab.nativeElement.style.visibility = 'hidden';
+    if (this.isCommenterOnMobileDevice) {
+      this.setNoteFabVisibility('hidden');
       if (value) {
         if (this.bottomSheetRef?.containerInstance == null) {
           this.bottomSheetRef = this.bottomSheet.open(this.TemplateBottomSheet, { hasBackdrop: false });
@@ -456,7 +452,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.bottomSheet.dismiss();
       }
     } else {
-      this.insertNoteFab.nativeElement.style.visibility = value ? 'visible' : 'hidden';
+      this.setNoteFabVisibility(value ? 'visible' : 'hidden');
       this.bottomSheet.dismiss();
     }
   }
@@ -496,6 +492,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private get isAddNotesEnabled(): boolean {
     return this.featureFlags.allowAddingNotes.enabled;
+  }
+
+  private get isInsertNoteFabEnabled(): boolean {
+    return this.isAddNotesEnabled && this.canShowInsertNoteFab && !this.isCommenterOnMobileDevice;
+  }
+
+  private get isCommenterOnMobileDevice(): boolean {
+    return !this.hasEditRight && this.mediaObserver.isActive('lt-lg');
   }
 
   private get canShowInsertNoteFab(): boolean {
@@ -1082,7 +1086,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   /** Sets the visibility of the insert note FAB. If the FAB does not exist, this is a no-op. */
   private setNoteFabVisibility(visible: 'visible' | 'hidden'): void {
     if (this.insertNoteFab?.nativeElement != null) {
-      this.insertNoteFab.nativeElement.style.visibility = visible;
+      if (this.isInsertNoteFabEnabled) {
+        this.insertNoteFab.nativeElement.style.visibility = visible;
+        return;
+      }
+      this.insertNoteFab.nativeElement.style.visibility = 'hidden';
     }
   }
 
