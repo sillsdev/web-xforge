@@ -44,12 +44,8 @@
 
     > app-write-status {
       @include media-breakpoint-up(sm) {
-        margin-left: 22px;
+        margin-inline-start: 22px;
       }
-    }
-
-    .mat-icon {
-      transform: scale(0.9);
     }
   }
 
