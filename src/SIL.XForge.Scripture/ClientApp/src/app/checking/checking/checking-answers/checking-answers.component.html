@@ -64,14 +64,13 @@
                   {{ media.isActive("xs") ? t("record") : t("record_upload") }}
                 </span>
               </ng-template>
-              <ng-template matTabContent>
-                <div class="answer-tab answer-record-upload">
-                  <app-checking-audio-combined
-                    [source]="activeAnswer?.audioUrl"
-                    (update)="processAudio($event)"
-                  ></app-checking-audio-combined>
-                </div>
-              </ng-template>
+              <!-- Lazy loading causes heavy components like this to reload when switching tabs -->
+              <div class="answer-tab answer-record-upload">
+                <app-checking-audio-combined
+                  [source]="activeAnswer?.audioUrl"
+                  (update)="processAudio($event)"
+                ></app-checking-audio-combined>
+              </div>
             </mat-tab>
             <mat-tab>
               <ng-template matTabLabel>
