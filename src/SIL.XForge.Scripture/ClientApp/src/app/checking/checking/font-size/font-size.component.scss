@@ -46,10 +46,6 @@
       color: inherit;
     }
 
-    &:not([disabled]) {
-      color: #000;
-    }
-
     &[disabled] {
       color: #9e9e9e !important;
     }
