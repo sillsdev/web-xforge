@@ -8,7 +8,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
-import { RIGHT_TO_LEFT_MARK, VERSE_FROM_SEGMENT_REF_REGEX } from '../../shared/utils';
+import { getVerseStrFromSegmentRef } from '../../shared/utils';
 
 export const Delta: new (ops?: DeltaOperation[] | { ops: DeltaOperation[] }) => DeltaStatic = Quill.import('delta');
 
@@ -28,8 +28,8 @@ export class TextDocId {
     return getTextDocId(this.projectId, this.bookNum, this.chapterNum, this.textType);
   }
 
-  isSameBookAndChapter(verseRef?: VerseRef): boolean {
-    return verseRef?.bookNum === this.bookNum && verseRef.chapterNum === this.chapterNum;
+  isSameBookAndChapter(verseRef: VerseRef): boolean {
+    return verseRef.bookNum === this.bookNum && verseRef.chapterNum === this.chapterNum;
   }
 }
 
@@ -108,8 +108,8 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, RangeStatic> {
       }
       // Locate range of ops that match the verse segments
       const opSegmentRef: string = op.attributes?.segment ?? '';
-      const match: RegExpMatchArray | null = VERSE_FROM_SEGMENT_REF_REGEX.exec(opSegmentRef);
-      if (match != null && match[1].replace(RIGHT_TO_LEFT_MARK, '') === verseStr) {
+      const segmentVerse: string | undefined = getVerseStrFromSegmentRef(opSegmentRef);
+      if (segmentVerse === verseStr) {
         text += textBetweenRelatedSegments + op.insert;
         // Reset text so no double-ups
         textBetweenRelatedSegments = '';
