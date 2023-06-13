@@ -6,6 +6,7 @@ import {
   TextType,
   TEXT_INDEX_PATHS
 } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
 import { RIGHT_TO_LEFT_MARK, VERSE_FROM_SEGMENT_REF_REGEX } from '../../shared/utils';
 
@@ -25,6 +26,10 @@ export class TextDocId {
 
   toString(): string {
     return getTextDocId(this.projectId, this.bookNum, this.chapterNum, this.textType);
+  }
+
+  isSameBookAndChapter(verseRef?: VerseRef): boolean {
+    return verseRef?.bookNum === this.bookNum && verseRef.chapterNum === this.chapterNum;
   }
 }
 
