@@ -256,7 +256,7 @@
     "export_marked_for_export": "Answers marked for export",
     "export_none": "No answers",
     "exporting_answers": "Exporting Answers",
-    "invite_others": "Administrators can invite people outside Paratext to contribute from the {{ templateTagBoundary }}Users{{ templateTagBoundary }} page.",
+    "invite_others": "Administrators can invite people from the {{ templateTagBoundary }}Users{{ templateTagBoundary }} page.",
     "log_in_with_paratext": "Log in to Paratext",
     "see_others_answers_and_comments": "Allow checkers to see each other's answers",
     "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
