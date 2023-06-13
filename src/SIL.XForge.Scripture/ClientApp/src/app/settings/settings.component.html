@@ -164,13 +164,14 @@
                 ></app-write-status>
               </div>
             </div>
-            <mat-hint class="helper-text checkbox-helper-text" fxLayout="row">
+            <div class="indent">
+              <mat-icon>admin_panel_settings</mat-icon>
               <span>
                 <span [innerHTML]="shareDescription?.before"></span>
                 <a [appRouterLink]="['/projects', projectId, 'users']">{{ shareDescription?.templateTagText }}</a>
                 <span>{{ shareDescription?.after }}</span>
               </span>
-            </mat-hint>
+            </div>
           </mat-card-content>
         </form>
       </mat-card>
