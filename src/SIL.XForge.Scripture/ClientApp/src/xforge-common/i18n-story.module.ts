@@ -41,7 +41,7 @@ function localizationInit(transloco: TranslocoService, applicationRef: Applicati
 
 export const I18nStoryDecorator: DecoratorFunction = (Story, context) => {
   // In some cases the locale has been known to be the empty string, so make sure not to set it to that.
-  const locale = context.globals.locale || I18nService.defaultLocale.canonicalTag;
+  const locale = context.parameters.locale || context.globals.locale || I18nService.defaultLocale.canonicalTag;
   selectedLocale = locale;
   if (translocoService != null) translocoService.setActiveLang(locale);
   return Story();
