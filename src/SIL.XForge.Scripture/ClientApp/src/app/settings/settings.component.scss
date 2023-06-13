@@ -62,8 +62,12 @@
   }
 }
 
-.mat-icon {
+mat-icon {
   overflow: unset;
+  color: $greyLight;
+  &:not(.no-hover):hover {
+    color: darken($greyLight, 10%);
+  }
 }
 
 .indent {
