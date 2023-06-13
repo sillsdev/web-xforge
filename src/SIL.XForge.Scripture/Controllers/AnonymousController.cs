@@ -53,6 +53,15 @@ public class AnonymousController : ControllerBase
     [HttpPost("generateAccount")]
     public async Task<IActionResult> GenerateAccount([FromBody] GenerateAccountRequest request)
     {
+        _exceptionHandler.RecordEndpointInfoForException(
+            new Dictionary<string, string>
+            {
+                { "method", "GenerateAccount" },
+                { "shareKey", request.ShareKey },
+                { "displayName", request.DisplayName },
+                { "language", request.Language }
+            }
+        );
         try
         {
             var credentials = await _anonymousService.GenerateAccount(
@@ -89,15 +98,6 @@ public class AnonymousController : ControllerBase
         }
         catch (Exception)
         {
-            _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string>
-                {
-                    { "method", "GenerateAccount" },
-                    { "shareKey", request.ShareKey },
-                    { "displayName", request.DisplayName },
-                    { "language", request.Language }
-                }
-            );
             throw;
         }
     }
