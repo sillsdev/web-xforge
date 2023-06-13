@@ -1,41 +1,19 @@
 import { DecoratorFunction } from '@storybook/types';
 import { HttpClientModule } from '@angular/common/http';
 import { ApplicationRef, APP_INITIALIZER, NgModule } from '@angular/core';
-import {
-  TranslocoConfig,
-  TranslocoModule,
-  TranslocoService,
-  TRANSLOCO_CONFIG,
-  TRANSLOCO_LOADER
-} from '@ngneat/transloco';
-import { delay, distinctUntilChanged, tap } from 'rxjs/operators';
+import { TranslocoConfig, TranslocoModule, TRANSLOCO_CONFIG, TRANSLOCO_LOADER } from '@ngneat/transloco';
 import { I18nService, IGNORE_COOKIE_LOCALE, TranslationLoader } from './i18n.service';
 
-let translocoService: TranslocoService | undefined;
+let i18nService: I18nService | undefined;
 let selectedLocale: string | undefined;
 
 const translocoConfig: TranslocoConfig = { ...I18nService.translocoConfig, prodMode: false };
 
-function getLocaleDir(locale: string): 'ltr' | 'rtl' {
-  return I18nService.locales.find(l => l.tags.some(tag => tag === locale))?.direction ?? 'ltr';
-}
-
-function localizationInit(transloco: TranslocoService, applicationRef: ApplicationRef): () => void {
+function localizationInit(transloco: I18nService): () => void {
   return () => {
-    translocoService = transloco;
+    i18nService = transloco;
 
-    transloco.langChanges$
-      .pipe(
-        distinctUntilChanged(),
-        delay(100), // hideous but necessary
-        tap(() => {
-          document.body.setAttribute('dir', getLocaleDir(transloco.getActiveLang()));
-          applicationRef.tick();
-        })
-      )
-      .subscribe();
-
-    if (selectedLocale != null) translocoService.setActiveLang(selectedLocale);
+    if (selectedLocale != null) i18nService.trySetLocale(selectedLocale);
   };
 }
 
@@ -43,7 +21,7 @@ export const I18nStoryDecorator: DecoratorFunction = (Story, context) => {
   // In some cases the locale has been known to be the empty string, so make sure not to set it to that.
   const locale = context.parameters.locale || context.globals.locale || I18nService.defaultLocale.canonicalTag;
   selectedLocale = locale;
-  if (translocoService != null) translocoService.setActiveLang(locale);
+  if (i18nService != null) i18nService.trySetLocale(locale);
   return Story();
 };
 
@@ -51,7 +29,7 @@ export const I18nStoryDecorator: DecoratorFunction = (Story, context) => {
   imports: [HttpClientModule],
   exports: [TranslocoModule],
   providers: [
-    { provide: APP_INITIALIZER, useFactory: localizationInit, deps: [TranslocoService, ApplicationRef], multi: true },
+    { provide: APP_INITIALIZER, useFactory: localizationInit, deps: [I18nService, ApplicationRef], multi: true },
     { provide: TRANSLOCO_CONFIG, useValue: translocoConfig },
     { provide: TRANSLOCO_LOADER, useClass: TranslationLoader },
     { provide: IGNORE_COOKIE_LOCALE, useValue: true }
