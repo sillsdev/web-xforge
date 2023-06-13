@@ -518,7 +518,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   getVerseSegments(verseRef?: VerseRef): string[] {
-    if (this.id?.chapterNum !== verseRef?.chapterNum) return [];
+    if (!this.id?.isSameBookAndChapter(verseRef!)) return [];
     return this.viewModel.getVerseSegments(verseRef);
   }
 
