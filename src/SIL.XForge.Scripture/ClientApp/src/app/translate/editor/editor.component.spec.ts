@@ -2903,6 +2903,8 @@ describe('EditorComponent', () => {
       env.mockNoteDialogRef.close();
       env.wait();
       expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('hidden');
+      // clean up
+      env.clickSegmentRef('verse_1_3');
       env.dispose();
     }));
 
