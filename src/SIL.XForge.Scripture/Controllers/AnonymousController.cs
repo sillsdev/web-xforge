@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Security;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -51,6 +53,15 @@ public class AnonymousController : ControllerBase
     [HttpPost("generateAccount")]
     public async Task<IActionResult> GenerateAccount([FromBody] GenerateAccountRequest request)
     {
+        _exceptionHandler.RecordEndpointInfoForException(
+            new Dictionary<string, string>
+            {
+                { "method", "GenerateAccount" },
+                { "shareKey", request.ShareKey },
+                { "displayName", request.DisplayName },
+                { "language", request.Language }
+            }
+        );
         try
         {
             var credentials = await _anonymousService.GenerateAccount(
@@ -70,17 +81,23 @@ public class AnonymousController : ControllerBase
         {
             return NotFound(e.Message);
         }
+        catch (HttpRequestException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return NoContent();
+        }
+        catch (TaskCanceledException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return NoContent();
+        }
+        catch (SecurityException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return NoContent();
+        }
         catch (Exception)
         {
-            _exceptionHandler.RecordEndpointInfoForException(
-                new Dictionary<string, string>
-                {
-                    { "method", "GenerateAccount" },
-                    { "shareKey", request.ShareKey },
-                    { "displayName", request.DisplayName },
-                    { "language", request.Language }
-                }
-            );
             throw;
         }
     }

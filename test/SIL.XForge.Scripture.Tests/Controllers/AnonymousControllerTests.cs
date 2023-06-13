@@ -1,5 +1,7 @@
 using System;
 using System.Net;
+using System.Net.Http;
+using System.Security;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -62,6 +64,63 @@ public class AnonymousControllerTests
         // SUT
         var actual = env.Controller.GenerateAccount(request);
         Assert.IsInstanceOf<NotFoundObjectResult>(actual.Result);
+    }
+
+    [Test]
+    public void GenerateAccount_NotFound_HttpRequestException()
+    {
+        var env = new TestEnvironment();
+        var request = new GenerateAccountRequest()
+        {
+            ShareKey = "key01",
+            DisplayName = "Test User",
+            Language = "en"
+        };
+        env.AnonymousService
+            .GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
+            .Throws(new HttpRequestException(""));
+
+        // SUT
+        var actual = env.Controller.GenerateAccount(request);
+        Assert.IsInstanceOf<NoContentResult>(actual.Result);
+    }
+
+    [Test]
+    public void GenerateAccount_NotFound_SecurityException()
+    {
+        var env = new TestEnvironment();
+        var request = new GenerateAccountRequest()
+        {
+            ShareKey = "key01",
+            DisplayName = "Test User",
+            Language = "en"
+        };
+        env.AnonymousService
+            .GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
+            .Throws(new SecurityException());
+
+        // SUT
+        var actual = env.Controller.GenerateAccount(request);
+        Assert.IsInstanceOf<NoContentResult>(actual.Result);
+    }
+
+    [Test]
+    public void GenerateAccount_NotFound_TaskCanceledException()
+    {
+        var env = new TestEnvironment();
+        var request = new GenerateAccountRequest()
+        {
+            ShareKey = "key01",
+            DisplayName = "Test User",
+            Language = "en"
+        };
+        env.AnonymousService
+            .GenerateAccount(request.ShareKey, request.DisplayName, request.Language)
+            .Throws(new TaskCanceledException());
+
+        // SUT
+        var actual = env.Controller.GenerateAccount(request);
+        Assert.IsInstanceOf<NoContentResult>(actual.Result);
     }
 
     private class TestEnvironment
