@@ -51,20 +51,20 @@ div[mat-dialog-actions] {
     }
   }
 }
-.share-selection-role.mat-list-base {
+
+::ng-deep .share-selection-role.mat-list-base {
   padding-top: 0;
   mat-list-option {
-    height: auto !important;
-    .mat-list-text > {
-      .role-name {
-        margin-top: 8px;
-      }
-
-      .role-description {
-        color: gray;
-        font-size: 0.9em;
-        margin-bottom: 8px;
-      }
-    }
+    height: auto;
   }
+}
+
+.role-name {
+  margin-top: 8px !important;
+}
+
+.role-description {
+  color: gray;
+  font-size: 0.9em !important;
+  margin-bottom: 8px !important;
 }
