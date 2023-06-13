@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -28,7 +30,6 @@ public class MachineProjectServiceTests
     private const string Project03 = "project03";
     private const string User01 = "user01";
     private const string Corpus01 = "corpus01";
-    private const string Corpus02 = "corpus02";
     private const string File01 = "file01";
     private const string File02 = "file02";
     private const string TranslationEngine01 = "translationEngine01";
@@ -39,9 +40,6 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
 
         // SUT
         await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
@@ -54,8 +52,7 @@ public class MachineProjectServiceTests
     public async Task AddProjectAsync_DoesNotCallServalIfFeatureDisabled()
     {
         // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
+        var env = new TestEnvironment(new TestEnvironmentOptions { ServalSupport = false });
 
         // SUT
         await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
@@ -70,11 +67,7 @@ public class MachineProjectServiceTests
     public async Task AddProjectAsync_DoesNotExecuteInProcessMachineIfFeatureDisabled()
     {
         // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
-        env.TranslationEnginesClient
-            .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
+        var env = new TestEnvironment(new TestEnvironmentOptions { MachineSupport = false });
 
         // SUT
         await env.Service.AddProjectAsync(User01, Project01, CancellationToken.None);
@@ -87,18 +80,6 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-            .Returns(TestEnvironment.MockTextCorpus);
-        env.TranslationEnginesClient
-            .GetCorpusAsync(TranslationEngine02, Corpus01, CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationCorpus { Id = Corpus01 }));
-        env.TranslationEnginesClient
-            .AddCorpusAsync(TranslationEngine02, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationCorpus { Id = Corpus02 }));
-        env.DataFilesClient
-            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None)
-            .Returns(Task.FromResult(new DataFile { Id = File01 }));
 
         // SUT
         await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
@@ -112,15 +93,11 @@ public class MachineProjectServiceTests
     public async Task BuildProjectAsync_DoesNotCallServalIfFeatureDisabled()
     {
         // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
+        var env = new TestEnvironment(new TestEnvironmentOptions { ServalSupport = false });
 
         // SUT
         await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
 
-        await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
-            .GetCorpusAsync(TranslationEngine02, Corpus01, CancellationToken.None);
         await env.TranslationEnginesClient
             .DidNotReceiveWithAnyArgs()
             .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
@@ -130,8 +107,7 @@ public class MachineProjectServiceTests
     public async Task BuildProjectAsync_DoesNotExecuteInProcessMachineIfFeatureDisabled()
     {
         // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+        var env = new TestEnvironment(new TestEnvironmentOptions { MachineSupport = false });
 
         // SUT
         await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
@@ -140,10 +116,13 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task BuildProjectAsync_DoesNotBuildServalIfNoTextChanges()
+    public async Task BuildProjectAsync_DoesNotBuildServalIfNoLocalChanges()
     {
         // Set up test environment
-        var env = new TestEnvironment();
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+        );
+        await env.SetDataInSync(Project02);
 
         // SUT
         await env.Service.BuildProjectAsync(User01, Project02, CancellationToken.None);
@@ -158,9 +137,6 @@ public class MachineProjectServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.TranslationEnginesClient
-            .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
 
         // SUT
         await env.Service.BuildProjectAsync(User01, Project01, CancellationToken.None);
@@ -204,8 +180,7 @@ public class MachineProjectServiceTests
     public async Task RemoveProjectAsync_DoesNotCallServalIfFeatureDisabled()
     {
         // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
+        var env = new TestEnvironment(new TestEnvironmentOptions { ServalSupport = false });
 
         // SUT
         await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
@@ -243,8 +218,7 @@ public class MachineProjectServiceTests
     public async Task RemoveProjectAsync_DoesNotExecuteInProcessMachineIfFeatureDisabled()
     {
         // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+        var env = new TestEnvironment(new TestEnvironmentOptions { MachineSupport = false });
 
         // SUT
         await env.Service.RemoveProjectAsync(User01, Project02, CancellationToken.None);
@@ -266,23 +240,11 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_CreatesCorpusIfMissing()
+    public async Task SyncProjectCorporaAsync_CreatesRemoteCorpusIfMissing()
     {
         // Set up test environment
-        var env = new TestEnvironment();
-        env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-            .Returns(TestEnvironment.MockTextCorpus);
-        env.TranslationEnginesClient
-            .AddCorpusAsync(TranslationEngine01, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationCorpus { Id = Corpus01 }));
-        env.DataFilesClient
-            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None)
-            .Returns(Task.FromResult(new DataFile { Id = File01 }));
-        await env.ProjectSecrets.UpdateAsync(
-            Project01,
-            u => u.Set(p => p.ServalData, new ServalData { TranslationEngineId = TranslationEngine01 })
-        );
+        var env = new TestEnvironment(new TestEnvironmentOptions { LocalSourceTextHasData = true });
+        await env.BeforeFirstSync(Project01);
 
         // SUT
         bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project01, CancellationToken.None);
@@ -295,121 +257,33 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_CreatesCorpusTextIfTextDoesNotExistInProjectSecretOrServal()
+    public async Task SyncProjectCorporaAsync_CreatesRemoteDataFileForNewLocalText()
     {
         // Set up test environment
-        var env = new TestEnvironment();
-        env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-            .Returns(TestEnvironment.MockTextCorpus);
-        env.TranslationEnginesClient
-            .GetCorpusAsync(TranslationEngine02, Corpus01, CancellationToken.None)
-            .Returns(
-                Task.FromResult(
-                    new TranslationCorpus
-                    {
-                        Id = Corpus01,
-                        SourceFiles = new[]
-                        {
-                            new TranslationCorpusFile
-                            {
-                                File = new ResourceLink { Id = "File03", Url = "/corpora/corpus01/files/File03" },
-                                TextId = "textId",
-                            },
-                        },
-                        TargetFiles = new[]
-                        {
-                            new TranslationCorpusFile
-                            {
-                                File = new ResourceLink { Id = "File04", Url = "/corpora/corpus01/files/File04" },
-                                TextId = "textId",
-                            },
-                        },
-                    }
-                )
-            );
-        env.TranslationEnginesClient
-            .AddCorpusAsync(TranslationEngine02, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationCorpus { Id = Corpus02 }));
-        env.DataFilesClient
-            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None)
-            .Returns(Task.FromResult(new DataFile { Id = File01 }));
+        var env = new TestEnvironment(new TestEnvironmentOptions { LocalSourceTextHasData = true });
+        await env.NoFilesSynced(Project02);
 
         // SUT
-        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData?.Corpora[Corpus01].TargetFiles.Count);
-        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData?.Corpora[Corpus01].SourceFiles.Count);
-        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
-        Assert.IsTrue(actual);
-        await env.DataFilesClient.ReceivedWithAnyArgs(2).DeleteAsync(string.Empty, CancellationToken.None);
-        await env.DataFilesClient
-            .ReceivedWithAnyArgs(1)
-            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, string.Empty, CancellationToken.None);
-        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData?.Corpora[Corpus02].SourceFiles.Count);
-        Assert.AreEqual(0, env.ProjectSecrets.Get(Project02).ServalData?.Corpora[Corpus02].TargetFiles.Count);
-    }
-
-    [Test]
-    public async Task SyncProjectCorporaAsync_CreatesCorpusTextIfTextExistsInProjectServerButNotServal()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-            .Returns(TestEnvironment.MockTextCorpus);
-        env.TranslationEnginesClient
-            .GetCorpusAsync(TranslationEngine02, Corpus01, CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationCorpus()));
-        env.TranslationEnginesClient
-            .AddCorpusAsync(TranslationEngine02, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationCorpus { Id = Corpus02 }));
-        env.DataFilesClient
-            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None)
-            .Returns(Task.FromResult(new DataFile { Id = "File03" }));
-        await env.ProjectSecrets.UpdateAsync(
-            Project02,
-            u =>
-                u.Add(
-                    p => p.ServalData.Corpora[Corpus01].SourceFiles,
-                    new ServalCorpusFile
-                    {
-                        FileChecksum = "a_previous_checksum",
-                        FileId = "File03",
-                        TextId = "textId",
-                    }
-                )
-        );
-
-        // SUT
+        Assert.AreEqual(0, env.ProjectSecrets.Get(Project02).ServalData?.Corpora[Corpus01].TargetFiles.Count);
+        Assert.AreEqual(0, env.ProjectSecrets.Get(Project02).ServalData?.Corpora[Corpus01].SourceFiles.Count);
         bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
         Assert.IsTrue(actual);
         await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
         await env.DataFilesClient
             .ReceivedWithAnyArgs(1)
-            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
+            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, string.Empty, CancellationToken.None);
+        Assert.AreEqual(1, env.ProjectSecrets.Get(Project02).ServalData?.Corpora[Corpus01].SourceFiles.Count);
+        Assert.AreEqual(0, env.ProjectSecrets.Get(Project02).ServalData?.Corpora[Corpus01].TargetFiles.Count);
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_DoesNotUpdateIfNoChanges()
+    public async Task SyncProjectCorporaAsync_DoesNotUpdateRemoteIfNoLocalChanges()
     {
         // Set up test environment
-        var env = new TestEnvironment();
-        env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-            .Returns(TestEnvironment.MockTextCorpus);
-        string checksum = StringUtils.ComputeMd5Hash("segRef\tsegment01\n");
-        await env.ProjectSecrets.UpdateAsync(
-            Project02,
-            u =>
-                u.Add(
-                    p => p.ServalData.Corpora[Corpus01].SourceFiles,
-                    new ServalCorpusFile
-                    {
-                        FileChecksum = checksum,
-                        FileId = "File03",
-                        TextId = "textId",
-                    }
-                )
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
         );
+        await env.SetDataInSync(Project02);
 
         // SUT
         bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
@@ -424,22 +298,30 @@ public class MachineProjectServiceTests
     public async Task SyncProjectCorporaAsync_DoesNotCallServalIfFeatureDisabled()
     {
         // Set up test environment
-        var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
+        var env = new TestEnvironment(new TestEnvironmentOptions { ServalSupport = false });
 
         // SUT
         bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
         Assert.IsFalse(actual);
         await env.TranslationEnginesClient
             .DidNotReceiveWithAnyArgs()
-            .GetCorpusAsync(TranslationEngine02, Corpus01, CancellationToken.None);
+            .AddCorpusAsync(TranslationEngine02, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
+        await env.TranslationEnginesClient
+            .DidNotReceiveWithAnyArgs()
+            .UpdateCorpusAsync(
+                TranslationEngine02,
+                Corpus01,
+                Arg.Any<TranslationCorpusUpdateConfig>(),
+                CancellationToken.None
+            );
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_DoesNotUpdateIfNoText()
+    public async Task SyncProjectCorporaAsync_DoesNotUpdateRemoteIfNoLocalText()
     {
         // Set up test environment
         var env = new TestEnvironment();
+        await env.NoFilesSynced(Project02);
 
         // SUT
         bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
@@ -448,26 +330,22 @@ public class MachineProjectServiceTests
         await env.DataFilesClient
             .DidNotReceiveWithAnyArgs()
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
+        await env.DataFilesClient
+            .DidNotReceiveWithAnyArgs()
+            .UpdateAsync(Arg.Any<string>(), Arg.Any<FileParameter>(), CancellationToken.None);
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_FailsIfCorpusNotAddedToTranslationEngine()
+    public async Task SyncProjectCorporaAsync_FailsLocallyOnRemoteFailure()
     {
         // Set up test environment
-        var env = new TestEnvironment();
-        env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-            .Returns(TestEnvironment.MockTextCorpus);
+        var env = new TestEnvironment(new TestEnvironmentOptions { LocalSourceTextHasData = true });
+        await env.BeforeFirstSync(Project01);
+
+        // Make adding the corpus to fail due to an API issue
         env.TranslationEnginesClient
             .AddCorpusAsync(TranslationEngine01, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
             .Throws(new BrokenCircuitException());
-        env.DataFilesClient
-            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None)
-            .Returns(Task.FromResult(new DataFile { Id = File01 }));
-        await env.ProjectSecrets.UpdateAsync(
-            Project01,
-            u => u.Set(p => p.ServalData, new ServalData { TranslationEngineId = TranslationEngine01 })
-        );
 
         // SUT
         Assert.ThrowsAsync<BrokenCircuitException>(
@@ -476,46 +354,39 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_UpdatesCorpusIfTextExists()
+    public async Task SyncProjectCorporaAsync_UpdatesRemoteCorpusIfLocalTextChanges()
     {
         // Set up test environment
-        var env = new TestEnvironment();
-        env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
-            .Returns(TestEnvironment.MockTextCorpus);
-        env.TranslationEnginesClient
-            .GetCorpusAsync(TranslationEngine02, Corpus01, CancellationToken.None)
-            .Returns(
-                Task.FromResult(
-                    new TranslationCorpus
-                    {
-                        SourceFiles = new[]
-                        {
-                            new TranslationCorpusFile
-                            {
-                                File = new ResourceLink { Id = "File03", Url = "/corpora/corpus01/files/File03" },
-                                TextId = "textId",
-                            },
-                        },
-                    }
-                )
-            );
-        env.TranslationEnginesClient
-            .AddCorpusAsync(TranslationEngine02, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationCorpus { Id = Corpus02 }));
-        env.DataFilesClient
-            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None)
-            .Returns(Task.FromResult(new DataFile { Id = "File04" }));
+        var env = new TestEnvironment(new TestEnvironmentOptions { LocalSourceTextHasData = true });
+
+        // Set sync state so that there is one file and the local copy has changed since last sync
         await env.ProjectSecrets.UpdateAsync(
             Project02,
             u =>
-                u.Add(
-                    p => p.ServalData.Corpora[Corpus01].SourceFiles,
-                    new ServalCorpusFile
+                u.Set(
+                    p => p.ServalData,
+                    new ServalData
                     {
-                        FileChecksum = "a_previous_checksum",
-                        FileId = "File03",
-                        TextId = "textId",
+                        TranslationEngineId = TranslationEngine02,
+                        Corpora = new Dictionary<string, ServalCorpus>
+                        {
+                            {
+                                Corpus01,
+                                new ServalCorpus
+                                {
+                                    SourceFiles = new List<ServalCorpusFile>
+                                    {
+                                        new ServalCorpusFile
+                                        {
+                                            FileChecksum = "a_previous_checksum",
+                                            FileId = "File03",
+                                            TextId = "textId",
+                                        },
+                                    },
+                                    TargetFiles = new List<ServalCorpusFile>(),
+                                }
+                            },
+                        },
                     }
                 )
         );
@@ -523,51 +394,24 @@ public class MachineProjectServiceTests
         // SUT
         bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
         Assert.IsTrue(actual);
-        await env.DataFilesClient.ReceivedWithAnyArgs(1).DeleteAsync(string.Empty, CancellationToken.None);
+        await env.DataFilesClient
+            .DidNotReceiveWithAnyArgs()
+            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
+        await env.DataFilesClient.DidNotReceiveWithAnyArgs().DeleteAsync(string.Empty, CancellationToken.None);
         await env.DataFilesClient
             .ReceivedWithAnyArgs(1)
-            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
+            .UpdateAsync("File03", Arg.Any<FileParameter>(), CancellationToken.None);
     }
 
     [Test]
-    public async Task SyncProjectCorporaAsync_UpdatesSourceAndTargetTexts()
+    public async Task SyncProjectCorporaAsync_AddsAndDeletesLocalSourceAndTargetFilesToRemote()
     {
         // Set up test environment
-        var env = new TestEnvironment();
-        env.TextCorpusFactory
-            .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>())
-            .Returns(TestEnvironment.MockTextCorpus);
-        env.TranslationEnginesClient
-            .GetCorpusAsync(TranslationEngine02, Corpus01, CancellationToken.None)
-            .Returns(
-                Task.FromResult(
-                    new TranslationCorpus
-                    {
-                        SourceFiles = new[]
-                        {
-                            new TranslationCorpusFile
-                            {
-                                File = new ResourceLink { Id = "File03", Url = "/corpora/corpus01/files/File03" },
-                                TextId = "textId",
-                            },
-                        },
-                        TargetFiles = new[]
-                        {
-                            new TranslationCorpusFile
-                            {
-                                File = new ResourceLink { Id = "File04", Url = "/corpora/corpus01/files/File04" },
-                                TextId = "textId",
-                            },
-                        },
-                    }
-                )
-            );
-        env.TranslationEnginesClient
-            .AddCorpusAsync(TranslationEngine02, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
-            .Returns(Task.FromResult(new TranslationCorpus { Id = Corpus02 }));
-        env.DataFilesClient
-            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, "textId", CancellationToken.None)
-            .Returns(Task.FromResult(new DataFile { Id = "File05" }));
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+        );
+
+        // Set the sync state so that there are two files on remote that no longer exist locally
         await env.ProjectSecrets.UpdateAsync(
             Project02,
             u =>
@@ -601,20 +445,114 @@ public class MachineProjectServiceTests
             .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, "textId", CancellationToken.None);
     }
 
+    [Test]
+    public async Task SyncProjectCorporaAsync_DoesNotCrashWhenDeletingAlreadyDeletedRemoteFiles()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // Make the Serval API return the error code for an already deleted file
+        env.DataFilesClient
+            .DeleteAsync("File03", CancellationToken.None)
+            .Throws(
+                new ServalApiException(
+                    "The HTTP status code of the response was not expected (404).",
+                    StatusCodes.Status404NotFound,
+                    string.Empty,
+                    new Dictionary<string, IEnumerable<string>>(),
+                    null
+                )
+            );
+
+        // Add one file to the sync state that we think exists remotely, but doesn't, and no longer exists locally
+        await env.ProjectSecrets.UpdateAsync(
+            Project02,
+            u =>
+                u.Add(
+                    p => p.ServalData.Corpora[Corpus01].SourceFiles,
+                    new ServalCorpusFile
+                    {
+                        FileChecksum = "a_previous_checksum",
+                        FileId = "File03",
+                        TextId = "textId1",
+                    }
+                )
+        );
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(User01, Project02, CancellationToken.None);
+        Assert.IsTrue(actual);
+        await env.DataFilesClient.Received(1).DeleteAsync("File03", CancellationToken.None);
+
+        // The 404 exception was logged
+        env.MockLogger.AssertHasEvent(
+            logEvent => logEvent.LogLevel == LogLevel.Information && logEvent.Exception is ServalApiException
+        );
+    }
+
+    private class TestEnvironmentOptions
+    {
+        public bool MachineSupport { get; init; } = true;
+        public bool ServalSupport { get; init; } = true;
+        public bool LocalSourceTextHasData { get; init; }
+        public bool LocalTargetTextHasData { get; init; }
+    }
+
     private class TestEnvironment
     {
-        public TestEnvironment()
+        public TestEnvironment(TestEnvironmentOptions? options = null)
         {
+            options ??= new TestEnvironmentOptions();
             EngineService = Substitute.For<IEngineService>();
-            var logger = new MockLogger<MachineProjectService>();
+            MockLogger = new MockLogger<MachineProjectService>();
             DataFilesClient = Substitute.For<IDataFilesClient>();
+            DataFilesClient
+                .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None)
+                .Returns(Task.FromResult(new DataFile { Id = File01 }));
+            DataFilesClient
+                .UpdateAsync(Arg.Any<string>(), Arg.Any<FileParameter>())
+                .Returns(args => Task.FromResult(new DataFile { Id = args.ArgAt<string>(0) }));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
+            TranslationEnginesClient
+                .AddCorpusAsync(TranslationEngine01, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
+                .Returns(Task.FromResult(new TranslationCorpus { Id = Corpus01 }));
+            TranslationEnginesClient
+                .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None)
+                .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
+            TranslationEnginesClient
+                .UpdateCorpusAsync(
+                    Arg.Any<string>(),
+                    Arg.Any<string>(),
+                    Arg.Any<TranslationCorpusUpdateConfig>(),
+                    CancellationToken.None
+                )
+                .Returns(args => Task.FromResult(new TranslationCorpus { Id = args.ArgAt<string>(1) }));
             var paratextService = Substitute.For<IParatextService>();
-            TextCorpusFactory = Substitute.For<ITextCorpusFactory>();
+            var textCorpusFactory = Substitute.For<ITextCorpusFactory>();
+            if (options.LocalSourceTextHasData && options.LocalTargetTextHasData)
+            {
+                textCorpusFactory
+                    .CreateAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<TextCorpusType>())
+                    .Returns(MockTextCorpus);
+            }
+            else if (options.LocalSourceTextHasData)
+            {
+                textCorpusFactory
+                    .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Source)
+                    .Returns(MockTextCorpus);
+            }
+            else if (options.LocalTargetTextHasData)
+            {
+                textCorpusFactory
+                    .CreateAsync(Arg.Any<IEnumerable<string>>(), TextCorpusType.Target)
+                    .Returns(MockTextCorpus);
+            }
 
-            FeatureManager = Substitute.For<IFeatureManager>();
-            FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(true));
-            FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(true));
+            var featureManager = Substitute.For<IFeatureManager>();
+            featureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(options.ServalSupport));
+            featureManager
+                .IsEnabledAsync(FeatureFlags.MachineInProcess)
+                .Returns(Task.FromResult(options.MachineSupport));
 
             ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                 new[]
@@ -651,7 +589,7 @@ public class MachineProjectServiceTests
 
             var userSecrets = new MemoryRepository<UserSecret>(new[] { new UserSecret { Id = User01 } });
 
-            Projects = new MemoryRepository<SFProject>(
+            var projects = new MemoryRepository<SFProject>(
                 new[]
                 {
                     new SFProject
@@ -702,23 +640,25 @@ public class MachineProjectServiceTests
             );
 
             var realtimeService = new SFMemoryRealtimeService();
-            realtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
+            realtimeService.AddRepository("sf_projects", OTType.Json0, projects);
 
             Service = new MachineProjectService(
                 DataFilesClient,
                 EngineService,
-                FeatureManager,
-                logger,
+                featureManager,
+                MockLogger,
                 paratextService,
                 ProjectSecrets,
                 realtimeService,
-                TextCorpusFactory,
+                textCorpusFactory,
                 TranslationEnginesClient,
                 userSecrets
             );
         }
 
-        public static Task<ITextCorpus> MockTextCorpus =>
+        private static string MockTextCorpusChecksum => StringUtils.ComputeMd5Hash("segRef\tsegment01\n");
+
+        private static Task<ITextCorpus> MockTextCorpus =>
             Task.FromResult<ITextCorpus>(
                 new MockTextCorpus
                 {
@@ -746,11 +686,47 @@ public class MachineProjectServiceTests
 
         public MachineProjectService Service { get; }
         public IEngineService EngineService { get; }
-        public IFeatureManager FeatureManager { get; }
         public IDataFilesClient DataFilesClient { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
-        public MemoryRepository<SFProject> Projects { get; }
-        public ITextCorpusFactory TextCorpusFactory { get; }
+        public MockLogger<MachineProjectService> MockLogger { get; }
+
+        public async Task SetDataInSync(string projectId) =>
+            await ProjectSecrets.UpdateAsync(
+                projectId,
+                u =>
+                {
+                    List<ServalCorpusFile> existingFiles = new List<ServalCorpusFile>
+                    {
+                        new ServalCorpusFile
+                        {
+                            FileChecksum = MockTextCorpusChecksum,
+                            FileId = "File03",
+                            TextId = "textId",
+                        },
+                    };
+                    u.Set(
+                        p => p.ServalData.Corpora[Corpus01],
+                        new ServalCorpus { SourceFiles = existingFiles, TargetFiles = existingFiles }
+                    );
+                }
+            );
+
+        public async Task NoFilesSynced(string projectId) =>
+            await ProjectSecrets.UpdateAsync(
+                projectId,
+                u =>
+                {
+                    List<ServalCorpusFile> noFiles = new List<ServalCorpusFile>();
+                    u.Set(p => p.ServalData.Corpora[Corpus01].SourceFiles, noFiles);
+                    u.Set(p => p.ServalData.Corpora[Corpus01].TargetFiles, noFiles);
+                }
+            );
+
+        public async Task BeforeFirstSync(string projectId) =>
+            await ProjectSecrets.UpdateAsync(
+                projectId,
+                u => u.Set(p => p.ServalData, new ServalData { TranslationEngineId = TranslationEngine01 })
+            );
     }
 }
