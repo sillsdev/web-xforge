@@ -138,13 +138,6 @@
           <mat-divider></mat-divider>
           <mat-card-content>
             <mat-card-title>{{ t("sharing") }}</mat-card-title>
-            <mat-hint class="helper-text checkbox-helper-text" fxLayout="row">
-              <span>
-                <span [innerHTML]="shareDescription?.before"></span>
-                <a [appRouterLink]="['/projects', projectId, 'users']">{{ shareDescription?.templateTagText }}</a>
-                <span>{{ shareDescription?.after }}</span>
-              </span>
-            </mat-hint>
             <div class="tool-setting">
               <div class="tool-setting-field checkbox-field">
                 <mat-checkbox formControlName="translateShareEnabled" id="checkbox-translate-share">
@@ -171,6 +164,13 @@
                 ></app-write-status>
               </div>
             </div>
+            <mat-hint class="helper-text checkbox-helper-text" fxLayout="row">
+              <span>
+                <span [innerHTML]="shareDescription?.before"></span>
+                <a [appRouterLink]="['/projects', projectId, 'users']">{{ shareDescription?.templateTagText }}</a>
+                <span>{{ shareDescription?.after }}</span>
+              </span>
+            </mat-hint>
           </mat-card-content>
         </form>
       </mat-card>
