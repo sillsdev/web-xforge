@@ -12,7 +12,15 @@
   .mat-menu-panel.font-size-menu {
     min-height: 0;
     min-width: 0;
-    margin-inline-start: -25%; // Centers menu under trigger (works for both ltr and rtl)
+
+    // If both 'left' and 'right' are specified, 'left' wins when direction is 'ltr'
+    // and 'right' wins when direction is 'rtl'.
+    // (See https://developer.mozilla.org/en-US/docs/Web/CSS/position#description)
+    // This trick, combined with setting the menu [xPosition] to 'before', allows centering of the menu
+    // when it is on the end side of the screen, as it is when the 'Share' button is not present.
+    // However, this assumes that the component will never be at the start side of the screen (right side in rtl).
+    left: 25%;
+    right: 25%;
 
     // Trims the top and bottom off the default mat menu
     > .mat-menu-content {

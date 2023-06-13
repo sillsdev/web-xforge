@@ -13,7 +13,13 @@ export default {
     moduleMetadata({
       imports: [CommonModule, UICommonModule]
     }),
-    componentWrapperDecorator(story => `<div style="padding:0 30px 60px">${story}</div>`)
+    componentWrapperDecorator(
+      story => `
+      <div style="display:flex; justify-content:flex-end; padding:0 0 60px; margin:10px 20px">
+      ${story}
+      </div>
+    `
+    )
   ],
   args: {
     min: 1,
@@ -32,6 +38,18 @@ export const OpenMenu: Story = {
     expect(menuTrigger).not.toBeNull();
     userEvent.click(menuTrigger!);
   }
+};
+
+export const OpenMenuWithEndSpace: Story = {
+  ...OpenMenu,
+  decorators: [
+    componentWrapperDecorator(
+      story => `
+      ${story}
+      <div style="width:40px; height:40px; border:2px dotted #ccc;"></div>
+    `
+    )
+  ]
 };
 
 export const IncreaseFontAllowed: Story = {
