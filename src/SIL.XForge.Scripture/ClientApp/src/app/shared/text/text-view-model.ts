@@ -3,8 +3,8 @@ import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } f
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
 
-import { Delta, TextDoc } from '../../core/models/text-doc';
-import { isBadDelta, VERSE_FROM_SEGMENT_REF_REGEX } from '../utils';
+import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
+import { getVerseStrFromSegmentRef, isBadDelta } from '../utils';
 import { getAttributesAtPosition } from './quill-scripture';
 import { USFM_STYLE_DESCRIPTIONS } from './usfm-style-descriptions';
 
@@ -122,6 +122,7 @@ export class TextViewModel {
   private remoteChangesSub?: Subscription;
   private onCreateSub?: Subscription;
   private textDoc?: TextDoc;
+  private textDocId?: TextDocId;
   /**
    * A mapping of IDs of elements embedded into the quill editor to their positions.
    * These elements are in addition to the text data i.e. Note threads
@@ -169,12 +170,13 @@ export class TextViewModel {
   }
 
   /** Associate the existing editor to a (single) specific textdoc. */
-  bind(textDoc: TextDoc, subscribeToUpdates: boolean): void {
+  bind(textDocId: TextDocId, textDoc: TextDoc, subscribeToUpdates: boolean): void {
     const editor = this.checkEditor();
     if (this.textDoc != null) {
       this.unbind();
     }
 
+    this.textDocId = textDocId;
     this.textDoc = textDoc;
     editor.setContents(this.textDoc.data as DeltaStatic);
     editor.history.clear();
@@ -346,7 +348,7 @@ export class TextViewModel {
    */
   getVerseSegments(verseRef?: VerseRef): string[] {
     const segmentsInVerseRef: string[] = [];
-    if (verseRef == null) {
+    if (verseRef == null || !this.textDocId?.isSameBookAndChapter(verseRef)) {
       return segmentsInVerseRef;
     }
     const verses: VerseRef[] = verseRef.allVerses();
@@ -355,15 +357,15 @@ export class TextViewModel {
     let matchStartNum = 0;
     let matchLastNum = 0;
     for (const segment of this._segments.keys()) {
-      const match: RegExpExecArray | null = VERSE_FROM_SEGMENT_REF_REGEX.exec(segment);
-      if (match != null) {
+      const verseStr: string | undefined = getVerseStrFromSegmentRef(segment);
+      if (verseStr != null) {
         // update numbers for the new verse
-        const verseParts: string[] = match[1].split('-');
+        const verseParts: string[] = verseStr.split('-');
         matchStartNum = +verseParts[0];
         matchLastNum = +verseParts[verseParts.length - 1];
       }
-      const matchStartsWithin = matchStartNum >= startVerseNum && matchStartNum <= lastVerseNum;
-      const matchEndsWithin = matchLastNum >= startVerseNum && matchLastNum <= lastVerseNum;
+      const matchStartsWithin: boolean = matchStartNum >= startVerseNum && matchStartNum <= lastVerseNum;
+      const matchEndsWithin: boolean = matchLastNum >= startVerseNum && matchLastNum <= lastVerseNum;
       if (matchStartsWithin || matchEndsWithin) {
         segmentsInVerseRef.push(segment);
       }
