@@ -66,6 +66,8 @@ export class FeatureFlagService {
     'Allow adding notes'
   );
 
+  scriptureAudio: FeatureFlag = new FeatureFlag(new LocalStorageFlagStore('SCRIPTURE_AUDIO'), 'Scripture audio');
+
   preventOpSubmission: FeatureFlag = new FeatureFlag(
     new LocalStorageFlagStore('PREVENT_OP_SUBMISSION'),
     'Prevent op submission (intentionally breaks things)'
