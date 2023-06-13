@@ -1084,17 +1084,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       this.toggleNoteThreadVerseRefs$.next();
     }
-    this.setNoteFabVisibility('visible');
+    if (this.isInsertNoteFabEnabled) {
+      this.setNoteFabVisibility('visible');
+    }
   }
 
   /** Sets the visibility of the insert note FAB. If the FAB does not exist, this is a no-op. */
   private setNoteFabVisibility(visible: 'visible' | 'hidden'): void {
     if (this.insertNoteFab?.nativeElement != null) {
-      if (this.isInsertNoteFabEnabled) {
-        this.insertNoteFab.nativeElement.style.visibility = visible;
-        return;
-      }
-      this.insertNoteFab.nativeElement.style.visibility = 'hidden';
+      this.insertNoteFab.nativeElement.style.visibility = visible;
     }
   }
 
