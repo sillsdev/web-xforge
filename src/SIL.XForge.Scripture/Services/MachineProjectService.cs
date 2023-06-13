@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 using Serval.Client;
@@ -245,7 +245,7 @@ public class MachineProjectService : IMachineProjectService
                 {
                     // A 404 means that the file does not exist
                     string message;
-                    if (e.StatusCode == (int)HttpStatusCode.NotFound)
+                    if (e.StatusCode == StatusCodes.Status404NotFound)
                     {
                         message =
                             $"Corpora file {fileId} in corpus {corpusId} for project {sfProjectId}"
@@ -272,7 +272,7 @@ public class MachineProjectService : IMachineProjectService
             {
                 // A 404 means that the translation engine does not exist
                 string message;
-                if (e.StatusCode == (int)HttpStatusCode.NotFound)
+                if (e.StatusCode == StatusCodes.Status404NotFound)
                 {
                     message =
                         $"Translation Engine {translationEngineId} for project {sfProjectId}"
@@ -393,41 +393,8 @@ public class MachineProjectService : IMachineProjectService
         // If the corpus should be updated
         if (corpusUpdated)
         {
-            // Delete the old corpus and its files, if it exists
+            // Create or update the corpus
             TranslationCorpus corpus;
-            if (!string.IsNullOrWhiteSpace(corpusId))
-            {
-                // Delete the corpus files that are not a part of the new corpus
-                corpus = await _translationEnginesClient.GetCorpusAsync(
-                    projectSecret.ServalData.TranslationEngineId,
-                    corpusId,
-                    cancellationToken
-                );
-                foreach (
-                    var fileId in corpus.SourceFiles
-                        .Concat(corpus.TargetFiles)
-                        .Where(
-                            f =>
-                                !newSourceCorpusFiles
-                                    .Concat(newTargetCorpusFiles)
-                                    .Select(c => c.FileId)
-                                    .Contains(f.File.Id)
-                        )
-                        .Select(f => f.File.Id)
-                )
-                {
-                    await _dataFilesClient.DeleteAsync(fileId, cancellationToken);
-                }
-
-                // Delete the old corpus
-                await _translationEnginesClient.DeleteCorpusAsync(
-                    projectSecret.ServalData.TranslationEngineId,
-                    corpusId,
-                    cancellationToken
-                );
-            }
-
-            // Create the new corpus
             TranslationCorpusConfig corpusConfig = new TranslationCorpusConfig
             {
                 Name = sfProjectId,
@@ -440,26 +407,37 @@ public class MachineProjectService : IMachineProjectService
                     .ToList(),
                 TargetLanguage = project.WritingSystem.Tag,
             };
-            corpus = await _translationEnginesClient.AddCorpusAsync(
-                projectSecret.ServalData.TranslationEngineId,
-                corpusConfig,
-                cancellationToken
-            );
+            if (string.IsNullOrEmpty(corpusId))
+            {
+                corpus = await _translationEnginesClient.AddCorpusAsync(
+                    projectSecret.ServalData.TranslationEngineId,
+                    corpusConfig,
+                    cancellationToken
+                );
+            }
+            else
+            {
+                TranslationCorpusUpdateConfig corpusUpdateConfig = new TranslationCorpusUpdateConfig
+                {
+                    SourceFiles = corpusConfig.SourceFiles,
+                    TargetFiles = corpusConfig.TargetFiles,
+                };
+                corpus = await _translationEnginesClient.UpdateCorpusAsync(
+                    projectSecret.ServalData.TranslationEngineId,
+                    corpusId,
+                    corpusUpdateConfig,
+                    cancellationToken
+                );
+            }
 
             // Update the project secret with the new corpus information
             await _projectSecrets.UpdateAsync(
                 sfProjectId,
                 u =>
-                {
-                    if (!string.IsNullOrWhiteSpace(corpusId))
-                    {
-                        u.Unset(p => p.ServalData.Corpora[corpusId]);
-                    }
                     u.Set(
                         p => p.ServalData.Corpora[corpus.Id],
                         new ServalCorpus { SourceFiles = newSourceCorpusFiles, TargetFiles = newTargetCorpusFiles }
-                    );
-                }
+                    )
             );
         }
 
@@ -595,12 +573,18 @@ public class MachineProjectService : IMachineProjectService
                 if (uploadText)
                 {
                     await using MemoryStream data = new MemoryStream(Encoding.UTF8.GetBytes(textFileData));
-                    DataFile dataFile = await _dataFilesClient.CreateAsync(
-                        new FileParameter(data),
-                        FileFormat.Text,
-                        textId,
-                        cancellationToken
-                    );
+                    DataFile dataFile = previousCorpusFile is null
+                        ? await _dataFilesClient.CreateAsync(
+                            new FileParameter(data),
+                            FileFormat.Text,
+                            textId,
+                            cancellationToken
+                        )
+                        : await _dataFilesClient.UpdateAsync(
+                            previousCorpusFile.FileId,
+                            new FileParameter(data),
+                            cancellationToken
+                        );
 
                     newCorpusFiles.Add(
                         new ServalCorpusFile
@@ -617,6 +601,28 @@ public class MachineProjectService : IMachineProjectService
                 {
                     newCorpusFiles.Add(previousCorpusFile);
                 }
+            }
+        }
+
+        // Delete corpus files for removed texts
+        if (oldCorpusFiles is not null)
+        {
+            foreach (var corpusFile in oldCorpusFiles.Where(c => newCorpusFiles.All(n => n.FileId != c.FileId)))
+            {
+                try
+                {
+                    await _dataFilesClient.DeleteAsync(corpusFile.FileId, cancellationToken);
+                }
+                catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
+                {
+                    // If the file was already deleted, just log a message
+                    string message =
+                        $"Corpora file {corpusFile.FileId} for text {corpusFile.TextId} in project {projectId}"
+                        + " was missing or already deleted.";
+                    _logger.LogInformation(e, message);
+                }
+
+                corpusUpdated = true;
             }
         }
 
