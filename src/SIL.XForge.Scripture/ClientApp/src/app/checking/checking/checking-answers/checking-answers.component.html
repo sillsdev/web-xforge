@@ -17,10 +17,10 @@
           </div>
           <div class="question-footer" *ngIf="canEditQuestion">
             <div class="actions">
-              <button mdc-button type="button" (click)="questionDialog()" class="edit-question-button">
+              <button mat-button type="button" (click)="questionDialog()" class="edit-question-button short-button">
                 {{ t("edit") }}
               </button>
-              <button mdc-button type="button" (click)="archiveQuestion()" class="archive-question-button">
+              <button mat-button type="button" (click)="archiveQuestion()" class="archive-question-button short-button">
                 {{ t("archive") }}
               </button>
             </div>
@@ -29,8 +29,8 @@
         <div *ngIf="!answerFormVisible" class="actions">
           <button
             *ngIf="currentUserTotalAnswers === 0 && canAddAnswer"
-            mdc-button
-            [unelevated]="true"
+            mat-flat-button
+            color="primary"
             (click)="showAnswerForm()"
             id="add-answer"
           >
@@ -40,69 +40,84 @@
       </div>
       <div *ngIf="answerFormVisible">
         <form [formGroup]="answerForm" autocomplete="off" id="answer-form" appScrollIntoView>
-          <mdc-tab-bar #answerTabs [fixed]="true">
-            <mdc-tab-scroller>
-              <mdc-tab icon="title" label="{{ t('answer') }}"></mdc-tab>
-              <mdc-tab
-                icon="library_music"
-                label="{{ media.isActive('xs') ? t('record') : t('record_upload') }}"
-              ></mdc-tab>
-              <mdc-tab
-                icon="text_rotation_none"
-                label="{{ media.isActive('xs') ? t('select') : t('select_text') }}"
-              ></mdc-tab>
-            </mdc-tab-scroller>
-          </mdc-tab-bar>
-          <div [fxShow]="answerTabs.activeTabIndex === 0" class="answer-tab answer-text">
-            <mdc-form-field>
-              <mdc-textarea
-                appAutofocus
-                label="{{ t('your_answer') }}"
-                type="text"
-                formControlName="answerText"
-                [outlined]="true"
-                [fullwidth]="true"
-              ></mdc-textarea>
-            </mdc-form-field>
-          </div>
-          <div [fxShow]="answerTabs.activeTabIndex === 1" class="answer-tab answer-record-upload">
-            <app-checking-audio-combined
-              [source]="activeAnswer?.audioUrl"
-              (update)="processAudio($event)"
-            ></app-checking-audio-combined>
-          </div>
-          <div
-            [fxHide]="answerTabs.activeTabIndex !== 2"
-            class="answer-tab answer-select-text"
-            [class.text-selected]="selectedText"
-          >
-            <p [fxHide]="!selectedText" [fxHide.lt-xl]="!canShowScriptureInput" class="scripture-text" dir="auto">
-              {{ (selectionStartClipped ? "…" : "") + (selectedText || "") + (selectionEndClipped ? "…" : "") }}
-              <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
-            </p>
-            <p [fxHide]="!!selectedText" class="scripture-text-blank">{{ t("no_scripture_selected") }}</p>
-            <div class="buttons-wrapper">
-              <button
-                mdc-icon-button
-                *ngIf="selectedText"
-                type="button"
-                (click)="clearSelection()"
-                icon="clear"
-                class="clear-selection"
-              ></button>
-              <button type="button" (click)="selectScripture()" mdc-button [unelevated]="true" id="select-scripture">
-                {{ t("select_verses") }}
-              </button>
-            </div>
-          </div>
+          <mat-tab-group #answerTabs animationDuration="0ms">
+            <mat-tab>
+              <ng-template matTabLabel>
+                <span class="tab-label">
+                  <mat-icon>title</mat-icon>
+                  {{ t("answer") }}
+                </span>
+              </ng-template>
+              <ng-template matTabContent>
+                <div class="answer-tab answer-text">
+                  <mat-form-field appearance="outline">
+                    <mat-label>{{ t("your_answer") }}</mat-label>
+                    <textarea appAutofocus matInput formControlName="answerText"></textarea>
+                  </mat-form-field>
+                </div>
+              </ng-template>
+            </mat-tab>
+            <mat-tab>
+              <ng-template matTabLabel>
+                <span class="tab-label">
+                  <mat-icon>library_music</mat-icon>
+                  {{ media.isActive("xs") ? t("record") : t("record_upload") }}
+                </span>
+              </ng-template>
+              <!-- Lazy loading causes heavy components like this to reload when switching tabs -->
+              <div class="answer-tab answer-record-upload">
+                <app-checking-audio-combined
+                  [source]="activeAnswer?.audioUrl"
+                  (update)="processAudio($event)"
+                ></app-checking-audio-combined>
+              </div>
+            </mat-tab>
+            <mat-tab>
+              <ng-template matTabLabel>
+                <span class="tab-label">
+                  <mat-icon>text_rotation_none</mat-icon>
+                  {{ media.isActive("xs") ? t("select") : t("select_text") }}
+                </span>
+              </ng-template>
+              <ng-template matTabContent>
+                <div class="answer-tab answer-select-text" [class.text-selected]="selectedText">
+                  <p [fxHide]="!selectedText" [fxHide.lt-xl]="!canShowScriptureInput" class="scripture-text" dir="auto">
+                    {{ (selectionStartClipped ? "…" : "") + (selectedText || "") + (selectionEndClipped ? "…" : "") }}
+                    <span class="answer-scripture-verse">{{ scriptureTextVerseRef(verseRef) }}</span>
+                  </p>
+                  <p [fxHide]="!!selectedText" class="scripture-text-blank">{{ t("no_scripture_selected") }}</p>
+                  <div class="buttons-wrapper">
+                    <button
+                      mat-icon-button
+                      *ngIf="selectedText"
+                      type="button"
+                      (click)="clearSelection()"
+                      class="clear-selection"
+                    >
+                      <mat-icon>clear</mat-icon>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="selectScripture()"
+                      mat-flat-button
+                      color="primary"
+                      id="select-scripture"
+                    >
+                      {{ t("select_verses") }}
+                    </button>
+                  </div>
+                </div>
+              </ng-template>
+            </mat-tab>
+          </mat-tab-group>
           <div class="form-helper-text" [ngClass]="{ visible: answerFormSubmitAttempted && answerText.invalid }">
             {{ t("answer_required_before_saving") }}
           </div>
           <div class="form-actions">
-            <button mdc-button type="button" (click)="hideAnswerForm()" id="cancel-answer">{{ t("cancel") }}</button>
+            <button mat-button type="button" (click)="hideAnswerForm()" id="cancel-answer">{{ t("cancel") }}</button>
             <button
-              mdc-button
-              [unelevated]="true"
+              mat-flat-button
+              color="primary"
               form="answer-form"
               id="save-answer"
               type="submit"
@@ -131,12 +146,13 @@
           >
             <div *ngIf="canSeeOtherUserResponses" class="like">
               <button
-                mdc-icon-button
+                mat-icon-button
                 class="like-answer"
-                icon="thumb_up"
                 (click)="likeAnswer(answer)"
                 [ngClass]="{ liked: hasUserLikedAnswer(answer) }"
-              ></button>
+              >
+                <mat-icon>thumb_up</mat-icon>
+              </button>
               <span class="like-count">{{ answer.likes.length }}</span>
             </div>
             <div class="answer-detail">
@@ -161,10 +177,10 @@
                 <div class="actions">
                   <button
                     *ngIf="canChangeAnswerStatus(answer)"
-                    mdc-button
+                    mat-button
                     type="button"
                     (click)="markAnswerForExport(answer)"
-                    class="answer-status answer-export"
+                    class="answer-status answer-export short-button"
                     [class.status-exportable]="isMarkedForExport(answer)"
                     [matTooltip]="t('tooltip_status_export')"
                     matTooltipPosition="above"
@@ -173,10 +189,10 @@
                   </button>
                   <button
                     *ngIf="canChangeAnswerStatus(answer)"
-                    mdc-button
+                    mat-button
                     type="button"
                     (click)="markAnswerAsResolved(answer)"
-                    class="answer-status answer-resolve"
+                    class="answer-status answer-resolve short-button"
                     [class.status-resolved]="isAnswerResolved(answer)"
                     [matTooltip]="t('tooltip_status_resolve')"
                     matTooltipPosition="above"
@@ -186,20 +202,20 @@
 
                   <button
                     *ngIf="canEditAnswer(answer)"
-                    mdc-button
+                    mat-button
                     type="button"
                     (click)="editAnswer(answer)"
-                    class="answer-edit"
+                    class="answer-edit short-button"
                   >
                     {{ t("edit") }}
                   </button>
                   <div *ngIf="canDeleteAnswer(answer)" class="delete-divider">|</div>
                   <button
                     *ngIf="canDeleteAnswer(answer)"
-                    mdc-button
+                    mat-button
                     type="button"
                     (click)="deleteAnswerClicked(answer)"
-                    class="answer-delete"
+                    class="answer-delete short-button"
                   >
                     {{ t("delete") }}
                   </button>
@@ -218,7 +234,7 @@
       </div>
     </div>
     <div class="answers-component-footer" *ngIf="remoteAnswersCount > 0 && !answerFormVisible && shouldSeeAnswersList">
-      <button mdc-button id="show-unread-answers-button" (click)="showRemoteAnswers(true)">
+      <button mat-button id="show-unread-answers-button" (click)="showRemoteAnswers(true)">
         {{ t("show_more_unread", { count: remoteAnswersCount }) }}
       </button>
     </div>

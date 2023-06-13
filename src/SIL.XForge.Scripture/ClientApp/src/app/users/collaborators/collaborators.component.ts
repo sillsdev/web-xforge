@@ -1,6 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import { PageEvent } from '@angular/material/paginator';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -9,6 +8,7 @@ import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
+import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -48,10 +48,9 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   userInviteForm = new UntypedFormGroup({
     email: new UntypedFormControl('', [XFValidators.email])
   });
-  pageIndex: number = 0;
-  pageSize: number = 50;
   filterForm: UntypedFormGroup = new UntypedFormGroup({ filter: new UntypedFormControl('') });
   isAppOnline = true;
+  currentTabIndex: number = 0;
 
   private projectDoc?: SFProjectDoc;
   private term: string = '';
@@ -65,7 +64,8 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     readonly i18n: I18nService,
     private readonly pwaService: PwaService,
     private readonly changeDetector: ChangeDetectorRef,
-    private readonly dialogService: DialogService
+    private readonly dialogService: DialogService,
+    readonly urls: ExternalUrlService
   ) {
     super(noticeService);
   }
@@ -92,17 +92,18 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
   get filteredLength(): number {
     if (this.term && this.term.trim()) {
-      return this.filteredRows.length;
+      return this.filteredRowsBySearchTermAndTab.length;
     }
-    return this.totalUsers;
+    return this.userRowsForSelectedTab.length;
   }
 
-  get filteredRows(): Row[] {
-    if (this._userRows == null) {
-      return [];
-    }
+  get rowsToDisplay(): Row[] {
+    return this.term.trim().length === 0 ? this.userRowsForSelectedTab : this.filteredRowsBySearchTermAndTab;
+  }
+
+  private get filteredRowsBySearchTermAndTab(): Row[] {
     const term = this.term.trim().toLowerCase();
-    return this._userRows.filter(
+    return this.userRowsForSelectedTab.filter(
       userRow =>
         userRow.user &&
         (userRow.user.displayName?.toLowerCase().includes(term) ||
@@ -111,19 +112,22 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     );
   }
 
-  get userRows(): Row[] {
+  private get userRowsForSelectedTab(): Row[] {
     if (this._userRows == null) {
       return [];
     }
-
-    const term = this.term && this.term.trim().toLowerCase();
-    const rows: Row[] = term ? this.filteredRows : this._userRows;
-
-    return this.page(rows);
+    switch (this.currentTabIndex) {
+      case 1:
+        return this._userRows.filter(r => this.hasParatextRole(r));
+      case 2:
+        return this._userRows.filter(r => !this.hasParatextRole(r));
+      default:
+        return this._userRows;
+    }
   }
 
   get tableColumns(): string[] {
-    const columns = ['avatar', 'name', 'role', 'questions_permission', 'remove'];
+    const columns: string[] = ['avatar', 'name', 'info', 'questions_permission', 'role', 'more'];
     return this.projectDoc?.data?.checkingConfig.checkingEnabled
       ? columns
       : columns.filter(s => s !== 'questions_permission');
@@ -178,19 +182,15 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     return userRow.id === this.userService.currentUserId;
   }
 
+  hasParatextRole(userRow: Row): boolean {
+    return isParatextRole(userRow.role);
+  }
+
   updateSearchTerm(target: EventTarget | null): void {
     const termTarget = target as HTMLInputElement;
     if (termTarget?.value != null) {
       this.term = termTarget.value;
-      if (termTarget.value.trim().length > 0) {
-        this.pageIndex = 0;
-      }
     }
-  }
-
-  updatePaginatorData(event: PageEvent): void {
-    this.pageIndex = event.pageIndex;
-    this.pageSize = event.pageSize;
   }
 
   async removeProjectUserClicked(row: Row): Promise<void> {
@@ -208,11 +208,11 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     this.loadUsers();
   }
 
-  onInvitationSent() {
+  onInvitationSent(): void {
     this.loadUsers();
   }
 
-  async toggleQuestionPermission(row: Row) {
+  async toggleQuestionPermission(row: Row): Promise<void> {
     if (!this.isAppOnline || !row.canHaveQuestionPermissionRevoked) {
       return;
     }
@@ -224,11 +224,6 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
 
     await this.projectService.onlineSetUserProjectPermissions(this.projectId, row.id, Array.from(permissions));
     this.loadUsers();
-  }
-
-  private page(rows: Row[]): Row[] {
-    const start = this.pageSize * this.pageIndex;
-    return rows.slice(start, start + this.pageSize);
   }
 
   private async loadUsers(): Promise<void> {

@@ -24,7 +24,6 @@ import {
   ImportQuestionsDialogComponent,
   ImportQuestionsDialogData
 } from '../import-questions-dialog/import-questions-dialog.component';
-import { QuestionAnsweredDialogComponent } from '../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 
@@ -377,10 +376,12 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       return;
     }
     if (questionDoc != null && questionDoc.data != null) {
-      if (questionDoc.getAnswers().length > 0) {
-        const answeredDialogRef = this.dialogService.openMdcDialog(QuestionAnsweredDialogComponent);
-        const response = (await answeredDialogRef.afterClosed().toPromise()) as string;
-        if (response === 'close') {
+      if (questionDoc?.data != null && questionDoc.getAnswers().length > 0) {
+        const confirm = await this.dialogService.confirm(
+          'question_answered_dialog.question_has_answer',
+          'question_answered_dialog.edit_anyway'
+        );
+        if (!confirm) {
           return;
         }
       }

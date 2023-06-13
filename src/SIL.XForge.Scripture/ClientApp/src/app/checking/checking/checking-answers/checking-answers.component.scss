@@ -46,16 +46,14 @@
       .actions {
         display: flex;
         justify-content: flex-end;
-        button {
-          height: auto;
-        }
       }
     }
   }
 }
+
 #answer-form {
   .answer-tab {
-    padding: 10px 0;
+    margin: 10px 0;
     display: flex;
     align-items: center;
     &.answer-record-upload {
@@ -65,19 +63,27 @@
     }
     &.answer-select-text {
       color: var(--mdc-theme-primary);
-      align-items: flex-start;
-      .buttons-wrapper {
-        display: flex;
-        align-items: center;
+      justify-content: center;
+      column-gap: 12px;
+      min-height: 75px;
+      &.text-selected {
+        flex-direction: column;
+      }
+      .scripture-text-blank,
+      .scripture-text {
+        margin: 0;
+      }
+      .scripture-text {
+        align-self: flex-start;
       }
       .scripture-text-blank {
         font-style: italic;
       }
     }
   }
-  mdc-form-field {
+  mat-form-field {
     width: 100%;
-    mdc-text-field {
+    mat-text-field {
       width: 100%;
     }
   }
@@ -85,41 +91,26 @@
     color: var(--mdc-theme-error);
     font-size: 0.75em;
     padding-left: 15px;
-    margin-bottom: 0.5em;
+    margin-bottom: 1em;
     font-weight: 400;
     letter-spacing: 0.03333333em;
+    text-align: center;
     &:not(.visible) {
-      visibility: hidden;
+      display: none;
     }
+  }
+  ::ng-deep .mat-form-field-wrapper {
+    padding-bottom: 0px;
   }
   .form-actions {
     display: flex;
     justify-content: flex-end;
-    .mdc-button:not(:first-child) {
-      margin-left: $button-spacing;
-    }
+    column-gap: $button-spacing;
   }
-  @include media-breakpoint-down(lg) {
-    mdc-tab {
-      padding: 0 10px;
-    }
-  }
-}
-
-.answer-select-text {
-  display: flex;
-  justify-content: space-between;
-  flex-direction: row;
-  &.text-selected {
-    flex-direction: column;
-  }
-  .buttons-wrapper {
-    align-self: flex-end;
-    flex-shrink: 0;
-  }
-  .scripture-text-blank,
-  .scripture-text {
-    margin: 0;
+  .tab-label {
+    display: flex;
+    column-gap: 8px;
+    align-items: center;
   }
 }
 
@@ -155,8 +146,7 @@
       @include media-breakpoint-down(sm) {
         flex: 0 0 35px;
       }
-      mdc-icon {
-        cursor: pointer;
+      mat-icon {
         @include media-breakpoint-down(sm) {
           font-size: 18px;
         }
@@ -180,7 +170,6 @@
         }
 
         button {
-          height: auto;
           &.answer-status {
             &.status-exportable {
               background: $answerExportable;
@@ -257,4 +246,9 @@
   button {
     display: block;
   }
+}
+
+.short-button {
+  line-height: unset;
+  padding: 0 8px;
 }

@@ -1,5 +1,8 @@
+import { HarnessLoader } from '@angular/cdk/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatMenuHarness } from '@angular/material/menu/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
@@ -83,13 +86,21 @@ describe('CollaboratorsComponent', () => {
     expect(env.noUsersLabel).toBeNull();
   }));
 
-  it('should display message when there are no users', fakeAsync(() => {
+  it('should display message when there are no users on a tab', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setupProjectDataWithNoUsers();
+    env.setupProjectData({ user01: SFProjectRole.ParatextAdministrator, user02: SFProjectRole.ParatextTranslator });
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
+    expect(env.userRows.length).toEqual(2);
+    expect(env.noUsersLabel).toBeNull();
 
+    // click tab to project guests where there are no users
+    env.clickElement(env.tabElementFromIndex(2));
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.currentTabIndex).toBe(2);
+    expect(env.table).toBeNull();
     expect(env.noUsersLabel).not.toBeNull();
   }));
 
@@ -104,19 +115,23 @@ describe('CollaboratorsComponent', () => {
     expect(env.userRows.length).toEqual(3);
 
     expect(env.cellDisplayName(0, 1)).toEqual('User 01');
-    expect(env.cellRole(0, 2).innerText).toEqual('Administrator');
-    expect(env.removeUserButtonOnRow(0)).toBeNull();
-    expect(env.cancelInviteButtonOnRow(0)).toBeNull();
+    expect(env.cellRole(0, 3).innerText).toEqual('Administrator');
+    env.clickElement(env.userRowMoreMenuElement(0));
+    expect(env.removeUserItemOnRow(0)).toBeNull();
+    expect(env.cancelInviteItemOnRow(0)).toBeNull();
 
     expect(env.cellDisplayName(1, 1)).toEqual('User 02');
-    expect(env.cellRole(1, 2).innerText).toEqual('Translator');
-    expect(env.removeUserButtonOnRow(1)).toBeTruthy();
-    expect(env.cancelInviteButtonOnRow(1)).toBeFalsy();
+    expect(env.cellRole(1, 3).innerText).toEqual('Translator');
+    env.clickElement(env.userRowMoreMenuElement(1));
+    expect(env.removeUserItemOnRow(1)).toBeTruthy();
+    expect(env.cancelInviteItemOnRow(1)).toBeFalsy();
 
     expect(env.cellDisplayName(2, 1)).toEqual('User 03');
-    expect(env.cellRole(2, 2).innerText).toEqual('Community Checker');
-    expect(env.removeUserButtonOnRow(2)).toBeTruthy();
-    expect(env.cancelInviteButtonOnRow(2)).toBeFalsy();
+    expect(env.cellRole(2, 3).innerText).toEqual('Community Checker');
+    env.clickElement(env.userRowMoreMenuElement(2));
+    expect(env.removeUserItemOnRow(2)).toBeTruthy();
+    expect(env.cancelInviteItemOnRow(2)).toBeFalsy();
+    env.cleanup();
   }));
 
   it('displays invited users', fakeAsync(() => {
@@ -144,9 +159,12 @@ describe('CollaboratorsComponent', () => {
     const expiredInvitee = env.elementTextContent(env.cell(expiredRow, 1));
     expect(expiredInvitee).toContain('Invitation has expired');
     expect(expiredInvitee).toContain('charles@c.cc');
+
     // Invitee row has cancel button but not remove button.
-    expect(env.removeUserButtonOnRow(inviteeRow)).toBeFalsy();
-    expect(env.cancelInviteButtonOnRow(inviteeRow)).toBeTruthy();
+    env.clickElement(env.userRowMoreMenuElement(inviteeRow));
+    expect(env.removeUserItemOnRow(inviteeRow)).toBeFalsy();
+    expect(env.cancelInviteItemOnRow(inviteeRow)).toBeTruthy();
+    env.cleanup();
   }));
 
   it('handle error from invited users query, when user is not on project', fakeAsync(() => {
@@ -237,19 +255,18 @@ describe('CollaboratorsComponent', () => {
     expect(inviteeDisplay).toContain('Awaiting');
     expect(inviteeDisplay).toContain('alice@a.aa');
     // Invitee row has cancel button but not remove button.
-    expect(env.removeUserButtonOnRow(inviteeRow)).toBeFalsy();
-    expect(env.cancelInviteButtonOnRow(inviteeRow)).toBeTruthy();
+    env.clickElement(env.userRowMoreMenuElement(inviteeRow));
+    expect(env.removeUserItemOnRow(inviteeRow)).toBeFalsy();
+    expect(env.cancelInviteItemOnRow(inviteeRow)).toBeTruthy();
 
     // Uninvite Alice
     when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([]);
-    env.clickElement(env.cancelInviteButtonOnRow(inviteeRow));
+    env.clickElement(env.cancelInviteItemOnRow(inviteeRow)!);
     verify(mockedProjectService.onlineUninviteUser(env.project01Id, 'alice@a.aa')).once();
 
     // Alice is not shown as in invitee
     numInvitees = 0;
     expect(env.userRows.length).toEqual(numUsersOnProject + numInvitees);
-
-    expect().nothing();
   }));
 
   it('should remove user from project', fakeAsync(() => {
@@ -258,11 +275,35 @@ describe('CollaboratorsComponent', () => {
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
-
-    env.clickElement(env.removeUserButtonOnRow(1));
+    env.clickElement(env.userRowMoreMenuElement(1));
+    env.clickElement(env.removeUserItemOnRow(1));
     verify(mockedProjectService.onlineRemoveUser(anything(), anything())).once();
-
     expect().nothing();
+  }));
+
+  it('can tab between groups', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
+      { email: 'bob@example.com', role: 'sf_community_checker', expired: false }
+    ]);
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    expect(env.component.currentTabIndex).toBe(0);
+    expect(env.userRows.length).toBe(4);
+    env.clickElement(env.tabElementFromIndex(1));
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.currentTabIndex).toBe(1);
+    expect(env.userRows.length).toBe(2);
+
+    env.clickElement(env.tabElementFromIndex(2));
+    tick();
+    env.fixture.detectChanges();
+    expect(env.component.currentTabIndex).toBe(2);
+    expect(env.component.rowsToDisplay.length).toBe(2);
   }));
 
   it('should filter users', fakeAsync(() => {
@@ -291,91 +332,6 @@ describe('CollaboratorsComponent', () => {
     expect(env.userRows.length).toEqual(2);
   }));
 
-  it('should page', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupProjectData();
-    env.component.pageSize = 2;
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
-
-    env.clickElement(env.nextPageButton);
-
-    expect(env.userRows.length).toEqual(1);
-  }));
-
-  it('should not page if matches are less than pageSize', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupProjectData();
-    env.component.pageSize = 2;
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
-    // Prove initial setup with paging
-    expect(env.userRows.length).toEqual(2);
-    // Filter out 2 out of the 3 entries
-    env.setInputValue(env.filterInput, '02');
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
-    // Verify that the table is filtered
-    expect(env.userRows.length).toEqual(1);
-
-    // SUT
-    expect(env.nextPageButton.nativeElement.disabled).toBe(true);
-    expect(env.elementTextContent(env.paginatorLabel).trim()).toEqual('1 - 1 of 1');
-  }));
-
-  it('should not reduce page size when using next and prev', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupProjectData();
-    env.component.pageSize = 2;
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
-    // verify that we have 2 items on page one
-    expect(env.userRows.length).toEqual(2);
-    // get to page 2
-    env.clickElement(env.nextPageButton);
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
-    // verify that we have 1 item on page 2
-    expect(env.userRows.length).toEqual(1);
-    env.clickElement(env.prevPageButton);
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
-
-    // SUT
-    expect(env.userRows.length).toEqual(2);
-    expect(env.elementTextContent(env.paginatorLabel).trim()).toEqual('1 - 2 of 3');
-  }));
-
-  it('should reset the page index when the filter is changed', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.setupProjectData();
-    env.component.pageSize = 2;
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
-    // get to page 2
-    env.clickElement(env.nextPageButton);
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
-    // Filter for an item on page 1
-    env.setInputValue(env.filterInput, '01');
-    env.fixture.detectChanges();
-    tick();
-    env.fixture.detectChanges();
-
-    // SUT
-    expect(env.userRows.length).toEqual(1);
-    expect(env.nextPageButton.nativeElement.disabled).toBe(true);
-    expect(env.elementTextContent(env.paginatorLabel).trim()).toEqual('1 - 1 of 1');
-  }));
-
   it('should disable collaborators if not connected', fakeAsync(() => {
     const env = new TestEnvironment(false);
     env.setupProjectData();
@@ -395,11 +351,14 @@ describe('CollaboratorsComponent', () => {
     expect(env.isFilterDisabled).toBe(false);
 
     env.onlineStatus = false;
+    const inviteeRow = 3;
     expect(env.userRows.length).toEqual(numUsersOnProject + 1);
     expect(env.offlineMessage).not.toBeNull();
     expect(env.isFilterDisabled).toBe(true);
-    expect(env.removeUserButtonOnRow(0)).toBeNull();
-    expect(env.cancelInviteButtonOnRow(3).nativeElement.disabled).toBe(true);
+    env.clickElement(env.userRowMoreMenuElement(inviteeRow));
+    expect(env.removeUserItemOnRow(inviteeRow)).toBeNull();
+    expect(env.cancelInviteItemOnRow(inviteeRow).attributes['disabled']).toBe('true');
+    env.cleanup();
   }));
 
   it('should allow granting question permission to non admins', fakeAsync(() => {
@@ -410,7 +369,7 @@ describe('CollaboratorsComponent', () => {
     env.fixture.detectChanges();
 
     // With checking disabled, the checkboxes should not exist
-    expect(env.userPermissionCheckbox(0)).toBeUndefined();
+    expect(env.userPermissionIcon(0)).toBeUndefined();
 
     // Enable checking
     const checkingConfig: CheckingConfig = {
@@ -424,16 +383,18 @@ describe('CollaboratorsComponent', () => {
     env.fixture.detectChanges();
 
     // project admins always have permission, so the checkbox should be checked, disabled, and do nothing when clicked
-    expect(env.userPermissionCheckbox(0).classList).toContain('mat-checkbox-disabled');
-    expect(env.userPermissionCheckbox(0).classList).toContain('mat-checkbox-checked');
-    env.clickElement(env.userPermissionCheckbox(0));
-    verify(mockedProjectService.onlineSetUserProjectPermissions(anything(), anything(), anything())).never();
+    expect(env.userPermissionIcon(0)).toBeTruthy();
+    env.clickElement(env.userRowMoreMenuElement(0));
+    expect(env.questionPermissionItemOnRow(0).attributes['disabled']).toBeTruthy();
 
     // translators can be given permission, or not have permission
-    expect(env.userPermissionCheckbox(1).classList).not.toContain('mat-checkbox-disabled');
-    expect(env.userPermissionCheckbox(1).classList).not.toContain('mat-checkbox-checked');
-    env.clickElement(env.userPermissionCheckbox(1));
-    expect(env.userPermissionCheckbox(1).classList).toContain('mat-checkbox-checked');
+    expect(env.userPermissionIcon(1)).toBeUndefined();
+    env.clickElement(env.userRowMoreMenuElement(1));
+    let translatorPermissionMenuItem: DebugElement = env.questionPermissionItemOnRow(1);
+    expect(translatorPermissionMenuItem).toBeTruthy();
+    expect(translatorPermissionMenuItem.nativeElement.textContent).toContain('Enable add and edit questions');
+    env.clickElement(translatorPermissionMenuItem);
+    expect(env.userPermissionIcon(1)).toBeTruthy();
     const permissions = [
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit)
@@ -443,23 +404,27 @@ describe('CollaboratorsComponent', () => {
     ).once();
 
     // community checkers cannot be given permission to manage questions
-    expect(env.userPermissionCheckbox(2)).toBeUndefined();
-
+    expect(env.userPermissionIcon(2)).toBeUndefined();
     resetCalls(mockedProjectService);
 
     // clicking a translator's checkbox should do nothing when offline
     env.onlineStatus = false;
-    expect(env.userPermissionCheckbox(1).classList).toContain('mat-checkbox-disabled');
-    expect(env.userPermissionCheckbox(1).classList).toContain('mat-checkbox-checked');
-    env.clickElement(env.userPermissionCheckbox(1));
-    expect(env.userPermissionCheckbox(1).classList).toContain('mat-checkbox-checked');
+    expect(env.userPermissionIcon(1)).toBeTruthy();
+    env.clickElement(env.userRowMoreMenuElement(1));
+    translatorPermissionMenuItem = env.questionPermissionItemOnRow(1);
+    expect(translatorPermissionMenuItem.attributes['disabled']).toBeTruthy();
+    expect(translatorPermissionMenuItem.nativeElement.textContent).toContain('Disable add and edit questions');
+    env.clickElement(translatorPermissionMenuItem);
+    expect(env.userPermissionIcon(1)).toBeTruthy();
     verify(mockedProjectService.onlineSetUserProjectPermissions(anything(), anything(), anything())).never();
+    env.cleanup();
   }));
 });
 
 class TestEnvironment {
   readonly fixture: ComponentFixture<CollaboratorsComponent>;
   readonly component: CollaboratorsComponent;
+  readonly loader: HarnessLoader;
   readonly project01Id: string = 'project01';
   private isOnline: BehaviorSubject<boolean>;
 
@@ -517,6 +482,7 @@ class TestEnvironment {
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
     this.fixture = TestBed.createComponent(CollaboratorsComponent);
     this.component = this.fixture.componentInstance;
+    this.loader = TestbedHarnessEnvironment.loader(this.fixture);
   }
 
   get offlineMessage(): DebugElement {
@@ -531,6 +497,10 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#project-users-table'));
   }
 
+  get tabControl(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.users-controls'));
+  }
+
   get userRows(): DebugElement[] {
     // querying the debug table element doesn't seem to work, so we query the native element instead and convert back
     // to debug elements
@@ -538,11 +508,11 @@ class TestEnvironment {
   }
 
   get filterInput(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#project-user-filter'));
+    return this.fixture.debugElement.query(By.css('#project-user-filter input'));
   }
 
   get isFilterDisabled(): boolean {
-    return this.filterInput.query(By.css('input')).nativeElement.disabled;
+    return this.filterInput.nativeElement.disabled;
   }
 
   get paginator(): DebugElement {
@@ -579,16 +549,24 @@ class TestEnvironment {
     return this.cell(row, column).query(By.css('em')).nativeElement;
   }
 
-  removeUserButtonOnRow(row: number): DebugElement {
-    return this.userRows[row].query(By.css('button.remove-user'));
+  removeUserItemOnRow(row: number): DebugElement {
+    return this.userRows[row].query(By.css('.user-options button.remove-user'));
   }
 
-  cancelInviteButtonOnRow(row: number): DebugElement {
-    return this.userRows[row].query(By.css('button.cancel-invite'));
+  cancelInviteItemOnRow(row: number): DebugElement {
+    return this.userRows[row].query(By.css('.user-options button.cancel-invite'));
   }
 
-  userPermissionCheckbox(index: number): HTMLElement {
-    return this.table.nativeElement.querySelectorAll('td.mat-column-questions_permission .mat-checkbox')[index];
+  questionPermissionItemOnRow(row: number): DebugElement {
+    return this.userRows[row].query(By.css('.user-options button.question-permission'));
+  }
+
+  userPermissionIcon(row: number): HTMLElement {
+    return this.table.nativeElement.querySelectorAll('td.mat-column-questions_permission .mat-icon')[row];
+  }
+
+  tabElementFromIndex(index: number): DebugElement {
+    return this.tabControl.queryAll(By.css('.mat-tab-label'))[index];
   }
 
   clickElement(element: HTMLElement | DebugElement): void {
@@ -599,6 +577,10 @@ class TestEnvironment {
     element.click();
     flush();
     this.fixture.detectChanges();
+  }
+
+  userRowMoreMenuElement(row: number): DebugElement {
+    return this.userRows[row].query(By.css('.user-more-menu'));
   }
 
   elementTextContent(element: DebugElement): string {
@@ -627,15 +609,21 @@ class TestEnvironment {
     this.setupThisProjectData(this.project01Id, this.createProject(userRoles));
   }
 
-  setupProjectDataWithNoUsers(): void {
-    this.setupThisProjectData(this.project01Id, this.createProject({}));
-  }
-
   updateCheckingProperties(config: CheckingConfig): Promise<boolean> {
     const projectDoc: SFProjectDoc = this.realtimeService.get(SFProjectDoc.COLLECTION, this.project01Id);
     return projectDoc.submitJson0Op(op => {
       op.set(p => p.checkingConfig, config);
     });
+  }
+
+  cleanup(): void {
+    this.loader.getAllHarnesses(MatMenuHarness).then(harnesses => {
+      for (const harness of harnesses) {
+        harness.close();
+      }
+    });
+    flush();
+    this.fixture.detectChanges();
   }
 
   private createProject(userRoles: { [userRef: string]: string }): SFProject {
