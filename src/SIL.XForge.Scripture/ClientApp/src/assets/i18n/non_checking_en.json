@@ -202,9 +202,8 @@
   },
   "question_answered_dialog": {
     "cancel": "Cancel",
-    "consider_creating_new_question": "Consider creating a new question instead of editing this question.",
     "edit_anyway": "Edit anyway",
-    "question_has_answer": "Question already has an answer"
+    "question_has_answer": "This question has an answer. Consider creating a new question instead."
   },
   "question_dialog": {
     "add_question_denied": "You don't have permission to add or edit questions.",

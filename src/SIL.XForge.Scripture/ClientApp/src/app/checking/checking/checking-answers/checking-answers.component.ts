@@ -1,4 +1,3 @@
-import { MdcDialog } from '@angular-mdc/web/dialog';
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
@@ -7,7 +6,7 @@ import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
@@ -20,21 +19,20 @@ import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { TextsByBookId } from '../../../core/models/texts-by-book-id';
+import { SFProjectService } from '../../../core/sf-project.service';
 import {
   TextChooserDialogComponent,
   TextChooserDialogData,
   TextSelection
 } from '../../../text-chooser-dialog/text-chooser-dialog.component';
-import { QuestionAnsweredDialogComponent } from '../../question-answered-dialog/question-answered-dialog.component';
 import { QuestionDialogData } from '../../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../../question-dialog/question-dialog.service';
 import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingTextComponent } from '../checking-text/checking-text.component';
-import { SFProjectService } from '../../../core/sf-project.service';
-import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { CommentAction } from './checking-comments/checking-comments.component';
 
 export interface AnswerAction {
@@ -118,7 +116,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
 
   constructor(
     private readonly userService: UserService,
-    private readonly dialog: MdcDialog,
     private readonly dialogService: DialogService,
     private readonly noticeService: NoticeService,
     private readonly questionDialogService: QuestionDialogService,
@@ -350,10 +347,12 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       return;
     }
     const projectId = this._questionDoc.data.projectRef;
-    if (this._questionDoc.getAnswers().length > 0) {
-      const answeredDialogRef = this.dialog.open(QuestionAnsweredDialogComponent);
-      const dialogResponse = (await answeredDialogRef.afterClosed().toPromise()) as string;
-      if (dialogResponse === 'close') {
+    if (this._questionDoc?.data != null && this._questionDoc.getAnswers().length > 0) {
+      const confirm = await this.dialogService.confirm(
+        'question_answered_dialog.question_has_answer',
+        'question_answered_dialog.edit_anyway'
+      );
+      if (!confirm) {
         return;
       }
     }
