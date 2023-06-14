@@ -27,6 +27,7 @@ import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SF_DEFAULT_SHARE_ROLE } from '../../core/models/sf-project-role-info';
@@ -102,6 +103,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   totalVisibleQuestionsString: string = '0';
   userDoc?: UserDoc;
   visibleQuestions?: QuestionDoc[];
+  showScriptureAudioPlayer: boolean = false;
 
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
@@ -137,6 +139,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly router: Router,
     private readonly questionDialogService: QuestionDialogService,
     readonly i18n: I18nService,
+    readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService
   ) {
     super(noticeService);
