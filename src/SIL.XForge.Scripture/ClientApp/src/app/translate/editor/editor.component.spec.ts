@@ -2830,7 +2830,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('verse keeps selection when opening a note dialog', fakeAsync(() => {
+    it('updates verse selection when opening a note dialog', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
@@ -2841,6 +2841,11 @@ describe('EditorComponent', () => {
       const verse1Elem: HTMLElement = env.getSegmentElement(segmentRef)!;
       expect(verse1Elem.classList).toContain('commenter-selection');
       expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('visible');
+
+      // simulate clicking the note icon on verse 3
+      const segmentRef3 = 'verse_1_3';
+      const thread2Position: number = env.getNoteThreadEditorPosition('thread02');
+      env.targetEditor.setSelection(thread2Position, 'user');
       const noteElem: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'thread02')!;
       noteElem.click();
       env.wait();
@@ -2849,9 +2854,6 @@ describe('EditorComponent', () => {
       instance(mockedMatDialog).closeAll();
       env.wait();
       expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('visible');
-      const segmentRef3 = 'verse_1_3';
-      env.clickSegmentRef(segmentRef3);
-      env.wait();
       const verse3Elem: HTMLElement = env.getSegmentElement(segmentRef3)!;
       expect(verse3Elem.classList).toContain('commenter-selection');
       expect(verse1Elem.classList).not.toContain('commenter-selection');
