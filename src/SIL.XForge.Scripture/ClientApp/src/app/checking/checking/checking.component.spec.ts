@@ -1743,6 +1743,7 @@ class TestEnvironment {
     translateConfig: {
       translationSuggestionsEnabled: true,
       shareEnabled: false,
+      preTranslate: false,
       source: {
         paratextId: 'project02',
         projectRef: 'project02',

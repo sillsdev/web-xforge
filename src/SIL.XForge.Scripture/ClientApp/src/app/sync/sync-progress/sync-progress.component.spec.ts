@@ -144,6 +144,7 @@ class TestEnvironment {
         translateConfig: {
           translationSuggestionsEnabled: !!args.translationSuggestionsEnabled,
           shareEnabled: false,
+          preTranslate: false,
           source:
             args.sourceProject != null
               ? {
@@ -188,7 +189,8 @@ class TestEnvironment {
           },
           translateConfig: {
             translationSuggestionsEnabled: false,
-            shareEnabled: false
+            shareEnabled: false,
+            preTranslate: false
           },
           checkingConfig: {
             checkingEnabled: false,

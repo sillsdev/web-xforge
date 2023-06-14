@@ -225,7 +225,8 @@ class TestEnvironment {
           },
           translateConfig: {
             translationSuggestionsEnabled: false,
-            shareEnabled: false
+            shareEnabled: false,
+            preTranslate: false
           },
           checkingConfig: {
             checkingEnabled: args.checkingEnabled == null ? true : args.checkingEnabled,

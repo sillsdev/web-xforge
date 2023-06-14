@@ -591,7 +591,8 @@ class TestEnvironment {
     },
     translateConfig: {
       translationSuggestionsEnabled: false,
-      shareEnabled: false
+      shareEnabled: false,
+      preTranslate: false
     },
     sync: { queuedCount: 0 },
     editable: true,
