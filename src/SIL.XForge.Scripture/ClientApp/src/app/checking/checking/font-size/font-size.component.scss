@@ -33,7 +33,7 @@
       padding: 0;
     }
 
-    // Make ripple more visible (otherwise it is light green of button hover text)
+    // Make ripple more visible (otherwise it uses the light green from button hover text color)
     .mat-ripple-element {
       background-color: #000;
     }
