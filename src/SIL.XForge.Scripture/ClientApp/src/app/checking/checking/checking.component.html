@@ -104,6 +104,14 @@
                       <mdc-icon class="mirror-rtl">post_add</mdc-icon> <span>{{ t("add_question") }}</span>
                     </button>
                   </ng-container>
+                  <button
+                    *ngIf="featureFlags.scriptureAudio.enabled"
+                    type="button"
+                    mat-icon-button
+                    (click)="showScriptureAudioPlayer = !showScriptureAudioPlayer"
+                  >
+                    <mat-icon>play_arrow</mat-icon>
+                  </button>
                   <app-font-size (apply)="applyFontChange($event)"></app-font-size>
                   <app-share-button *ngIf="canShare" [defaultRole]="defaultShareRole"></app-share-button>
                 </div>
@@ -118,6 +126,10 @@
               >
                 <as-split-area [size]="100">
                   <div class="panel-content" #scripturePanelContainer>
+                    <div class="scripture-audio-player-wrapper" *ngIf="showScriptureAudioPlayer">
+                      <!-- TODO (scripture audio) replace this with an actually useful component -->
+                      <app-checking-audio-player></app-checking-audio-player>
+                    </div>
                     <app-checking-text
                       #textPanel
                       [id]="textDocId"
