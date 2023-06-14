@@ -8,15 +8,23 @@ namespace SIL.XForge.Scripture.Models;
 public class ServalData
 {
     /// <summary>
-    /// Gets or sets the Serval Translation Engine Id for the project.
+    /// Gets or sets the SMT Translation Engine Id for the project.
     /// </summary>
     /// <value>
-    /// The Translation Engine Id.
+    /// The SMT Translation Engine Id.
     /// </value>
     /// <remarks>
     /// The user should not interact with the translation engine directly by ID.
     /// </remarks>
     public string TranslationEngineId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the NMT Translation Engine Id for the project.
+    /// </summary>
+    /// <value>
+    /// The NMT Translation Engine Id.
+    /// </value>
+    public string PreTranslationEngineId { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the corpora uploaded to Serval.

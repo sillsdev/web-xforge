@@ -297,7 +297,8 @@ class TestEnvironment {
         },
         translateConfig: {
           translationSuggestionsEnabled,
-          shareEnabled: false
+          shareEnabled: false,
+          preTranslate: false
         },
         checkingConfig: {
           checkingEnabled: false,

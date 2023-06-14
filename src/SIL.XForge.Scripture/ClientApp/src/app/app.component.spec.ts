@@ -964,7 +964,8 @@ class TestEnvironment {
         },
         translateConfig: {
           translationSuggestionsEnabled: false,
-          shareEnabled: false
+          shareEnabled: false,
+          preTranslate: false
         },
         checkingConfig: {
           checkingEnabled: true,

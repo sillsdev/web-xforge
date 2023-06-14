@@ -28,6 +28,7 @@ public class SFScriptureText : IText
         string projectId,
         int book,
         int chapter,
+        bool includeBlankSegments,
         BsonDocument doc
     )
     {
@@ -38,7 +39,7 @@ public class SFScriptureText : IText
             throw new ArgumentException(@"Doc is missing ops, perhaps the doc was deleted.", nameof(doc));
 
         Id = $"{projectId}_{book}_{chapter}";
-        _segments = GetSegments(wordTokenizer, doc).OrderBy(s => s.SegmentRef).ToArray();
+        _segments = GetSegments(wordTokenizer, doc, includeBlankSegments).OrderBy(s => s.SegmentRef).ToArray();
     }
 
     public string Id { get; }
@@ -47,7 +48,11 @@ public class SFScriptureText : IText
 
     public IEnumerable<TextSegment> GetSegments(bool includeText = true, IText? basedOn = null) => _segments;
 
-    private IEnumerable<TextSegment> GetSegments(ITokenizer<string, int, string> wordTokenizer, BsonDocument doc)
+    private IEnumerable<TextSegment> GetSegments(
+        ITokenizer<string, int, string> wordTokenizer,
+        BsonDocument doc,
+        bool includeBlankSegments
+    )
     {
         string prevRef = null;
         bool isSentenceStart = true;
@@ -55,9 +60,29 @@ public class SFScriptureText : IText
         var ops = (BsonArray)doc["ops"];
         foreach (BsonDocument op in ops.Cast<BsonDocument>())
         {
-            // skip embeds
-            if (!op.TryGetValue("insert", out BsonValue value) || value.BsonType != BsonType.String)
+            if (!op.TryGetValue("insert", out BsonValue value))
+            {
+                // Ensure there is an insert op
                 continue;
+            }
+            else if (includeBlankSegments && value.BsonType != BsonType.String)
+            {
+                // If we are to include blank segments, ensure this one is blank
+                BsonDocument insert = value.AsBsonDocument;
+                if (
+                    !insert.TryGetValue("blank", out BsonValue blankValue)
+                    || !blankValue.IsBoolean
+                    || !blankValue.AsBoolean
+                )
+                {
+                    continue;
+                }
+            }
+            else if (value.BsonType != BsonType.String)
+            {
+                // skip embeds
+                continue;
+            }
 
             if (!op.TryGetValue("attributes", out BsonValue attrsValue))
                 continue;
@@ -75,7 +100,7 @@ public class SFScriptureText : IText
                 sb.Clear();
             }
 
-            string text = value.AsString;
+            string text = value.IsString ? value.AsString : string.Empty;
             sb.Append(text);
             prevRef = curRef;
         }
