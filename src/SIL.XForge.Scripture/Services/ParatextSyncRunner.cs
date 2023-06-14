@@ -1583,7 +1583,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             if (TranslationSuggestionsEnabled && trainEngine && hasSourceTextDocs)
             {
                 // Start training Machine engine
-                await _machineProjectService.BuildProjectAsync(_userSecret.Id, _projectDoc.Id, token);
+                await _machineProjectService.BuildProjectAsync(_userSecret.Id, _projectDoc.Id, false, token);
             }
 
             // Backup the repository

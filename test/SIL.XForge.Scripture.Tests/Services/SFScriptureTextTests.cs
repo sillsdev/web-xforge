@@ -67,7 +67,14 @@ public class SFScriptureTextTests
         var tokenizer = new LatinWordTokenizer();
 
         // SUT
-        var text = new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc);
+        var text = new SFScriptureText(
+            tokenizer,
+            projectId,
+            bookNumber,
+            chapterNumber,
+            includeBlankSegments: false,
+            doc
+        );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
         Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
@@ -122,7 +129,14 @@ public class SFScriptureTextTests
         var tokenizer = new LatinWordTokenizer();
 
         // SUT
-        var text = new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc);
+        var text = new SFScriptureText(
+            tokenizer,
+            projectId,
+            bookNumber,
+            chapterNumber,
+            includeBlankSegments: false,
+            doc
+        );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
         Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
@@ -151,7 +165,14 @@ public class SFScriptureTextTests
         var tokenizer = new LatinWordTokenizer();
 
         // SUT
-        var text = new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc);
+        var text = new SFScriptureText(
+            tokenizer,
+            projectId,
+            bookNumber,
+            chapterNumber,
+            includeBlankSegments: false,
+            doc
+        );
 
         Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
         Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
@@ -168,7 +189,7 @@ public class SFScriptureTextTests
 
         // SUT
         Assert.Throws<ArgumentNullException>(
-            () => new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc)
+            () => new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, includeBlankSegments: false, doc)
         );
     }
 
@@ -188,7 +209,151 @@ public class SFScriptureTextTests
 
         // SUT
         Assert.Throws<ArgumentException>(
-            () => new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, doc)
+            () => new SFScriptureText(tokenizer, projectId, bookNumber, chapterNumber, includeBlankSegments: false, doc)
         );
+    }
+
+    [Test]
+    public void Create_ExcludeBlankSegmentsIfIncludeBlankSegmentsFalse()
+    {
+        var doc = new BsonDocument
+        {
+            { "_id", "abc123:MAT:1:target" },
+            {
+                "ops",
+                new BsonArray
+                {
+                    new BsonDocument
+                    {
+                        {
+                            "insert",
+                            new BsonDocument
+                            {
+                                {
+                                    "chapter",
+                                    new BsonDocument { { "number", "1" }, { "style", "c" } }
+                                },
+                            }
+                        },
+                    },
+                    new BsonDocument
+                    {
+                        {
+                            "insert",
+                            new BsonDocument
+                            {
+                                {
+                                    "verse",
+                                    new BsonDocument { { "number", "1" }, { "style", "v" } }
+                                },
+                            }
+                        },
+                    },
+                    new BsonDocument
+                    {
+                        {
+                            "insert",
+                            new BsonDocument { { "blank", true } }
+                        },
+                        {
+                            "attributes",
+                            new BsonDocument { { "segment", "verse_1_1" } }
+                        },
+                    },
+                }
+            },
+        };
+        const int numberOps = 3;
+        const int numberSegments = 0;
+        const int bookNumber = 40;
+        const int chapterNumber = 1;
+        const string projectId = "myProject";
+        Assert.That(((BsonArray)doc["ops"]).Count, Is.EqualTo(numberOps), "Setup");
+        var tokenizer = new LatinWordTokenizer();
+
+        // SUT
+        var text = new SFScriptureText(
+            tokenizer,
+            projectId,
+            bookNumber,
+            chapterNumber,
+            includeBlankSegments: false,
+            doc
+        );
+
+        Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
+        Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
+    }
+
+    [Test]
+    public void Create_IncludeBlankSegmentsIfIncludeBlankSegmentsTrue()
+    {
+        var doc = new BsonDocument
+        {
+            { "_id", "abc123:MAT:1:target" },
+            {
+                "ops",
+                new BsonArray
+                {
+                    new BsonDocument
+                    {
+                        {
+                            "insert",
+                            new BsonDocument
+                            {
+                                {
+                                    "chapter",
+                                    new BsonDocument { { "number", "1" }, { "style", "c" } }
+                                },
+                            }
+                        },
+                    },
+                    new BsonDocument
+                    {
+                        {
+                            "insert",
+                            new BsonDocument
+                            {
+                                {
+                                    "verse",
+                                    new BsonDocument { { "number", "1" }, { "style", "v" } }
+                                },
+                            }
+                        },
+                    },
+                    new BsonDocument
+                    {
+                        {
+                            "insert",
+                            new BsonDocument { { "blank", true } }
+                        },
+                        {
+                            "attributes",
+                            new BsonDocument { { "segment", "verse_1_1" } }
+                        },
+                    },
+                }
+            },
+        };
+        const int numberOps = 3;
+        const int numberSegments = 1;
+        const int bookNumber = 40;
+        const int chapterNumber = 1;
+        const string projectId = "myProject";
+        Assert.That(((BsonArray)doc["ops"]).Count, Is.EqualTo(numberOps), "Setup");
+        var tokenizer = new LatinWordTokenizer();
+
+        // SUT
+        var text = new SFScriptureText(
+            tokenizer,
+            projectId,
+            bookNumber,
+            chapterNumber,
+            includeBlankSegments: true,
+            doc
+        );
+
+        Assert.That(text.Id, Is.EqualTo($"{projectId}_{bookNumber}_{chapterNumber}"));
+        Assert.That(text.GetSegments().Count(), Is.EqualTo(numberSegments));
     }
 }

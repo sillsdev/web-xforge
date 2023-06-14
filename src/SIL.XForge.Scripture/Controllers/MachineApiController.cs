@@ -215,6 +215,36 @@ public class MachineApiController : ControllerBase
         }
     }
 
+    [HttpPost(MachineApi.StartPreTranslationBuild)]
+    public async Task<ActionResult<BuildDto>> StartPreTranslationBuildAsync(
+        [FromBody] string sfProjectId,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            BuildDto? build = await _machineApiService.StartPreTranslationBuildAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                cancellationToken
+            );
+            return build is null ? NoContent() : Ok(build);
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
     /// <summary>
     /// Incrementally trains a translation engine with a segment pair.
     /// </summary>
