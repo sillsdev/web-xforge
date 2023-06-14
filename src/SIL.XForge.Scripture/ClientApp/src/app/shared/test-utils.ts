@@ -116,7 +116,8 @@ export function getSFProject(id: string): SFProjectProfile {
     writingSystem: { tag: 'qaa' },
     translateConfig: {
       translationSuggestionsEnabled: false,
-      shareEnabled: false
+      shareEnabled: false,
+      preTranslate: false
     },
     checkingConfig: {
       checkingEnabled: false,

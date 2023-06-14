@@ -1048,6 +1048,7 @@ describe('EditorComponent', () => {
         translateConfig: {
           translationSuggestionsEnabled: true,
           shareEnabled: false,
+          preTranslate: false,
           source: {
             paratextId: 'resource01',
             name: 'Resource 1',
@@ -3123,6 +3124,7 @@ describe('EditorComponent', () => {
         translateConfig: {
           translationSuggestionsEnabled: false,
           shareEnabled: false,
+          preTranslate: false,
           source: {
             paratextId: 'resource01',
             name: 'Resource 1',
@@ -3212,7 +3214,9 @@ describe('EditorComponent', () => {
     }));
 
     it('hides translation suggestions settings when suggestions are disabled for the project', fakeAsync(() => {
-      const projectConfig = { translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false } };
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false, preTranslate: false }
+      };
       const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
 
       const env = new TestEnvironment();
@@ -3228,7 +3232,8 @@ describe('EditorComponent', () => {
 
 const defaultTranslateConfig = {
   translationSuggestionsEnabled: false,
-  shareEnabled: false
+  shareEnabled: false,
+  preTranslate: false
 };
 
 class TestEnvironment {
@@ -3284,6 +3289,7 @@ class TestEnvironment {
       translationSuggestionsEnabled: true,
       defaultNoteTagId: 2,
       shareEnabled: false,
+      preTranslate: false,
       source: {
         paratextId: 'source01',
         projectRef: 'project02',
