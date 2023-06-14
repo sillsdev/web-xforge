@@ -115,7 +115,7 @@ const CHECKER_USER: UserInfo = createUser('02', SFProjectRole.CommunityChecker);
 const CLEAN_CHECKER_USER: UserInfo = createUser('03', SFProjectRole.CommunityChecker, false);
 const OBSERVER_USER: UserInfo = createUser('04', SFProjectRole.ParatextObserver);
 
-class MockComponent { }
+class MockComponent {}
 
 const ROUTES: Route[] = [
   { path: 'projects/:projectId/checking/:bookId', component: MockComponent },
