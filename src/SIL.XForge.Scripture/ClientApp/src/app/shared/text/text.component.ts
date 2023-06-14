@@ -898,7 +898,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       this.displayMessage = this.transloco.translate('text.not_available_offline');
     }
     const textDoc = await this.projectService.getText(this._id);
-    this.viewModel.bind(textDoc, this.subscribeToUpdates);
+    this.viewModel.bind(this._id, textDoc, this.subscribeToUpdates);
     this.updatePlaceholderText();
     this.attachPresences(textDoc);
     if (this.onDeleteSub != null) {

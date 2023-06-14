@@ -1065,6 +1065,28 @@ describe('TextComponent', () => {
     });
     verify(mockedDialogService.openMatDialog(TextNoteDialogComponent, anything())).thrice();
   }));
+
+  it('does not match segments when verse ref is from a different chapter', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.id = new TextDocId('project01', 40, 1);
+    tick();
+    env.fixture.detectChanges();
+    // the current text is on chapter 1, so this should result in no matching segments
+    const verseRef: VerseRef = VerseRef.parse('MAT 2:1');
+    const segments: string[] = env.component.getVerseSegments(verseRef);
+    expect(segments.length).withContext('should be no matching segments when chapter does not match').toBe(0);
+  }));
+
+  it('does not match segments when verse ref is from a different book', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.id = new TextDocId('project01', 40, 1);
+    tick();
+    env.fixture.detectChanges();
+    // the current text is in Matthew, so this should result in no matching segments
+    const verseRef: VerseRef = VerseRef.parse('MRK 1:1');
+    const segments: string[] = env.component.getVerseSegments(verseRef);
+    expect(segments.length).withContext('should be no matching segments when book does not match').toBe(0);
+  }));
 });
 
 /** Represents both what the TextComponent understand to be the text in a segment, and what the editor
