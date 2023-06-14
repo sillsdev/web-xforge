@@ -1,7 +1,7 @@
 using System;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -60,7 +60,7 @@ public class MachineApiControllerTests
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
-        Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
     }
 
     [Test]
@@ -182,7 +182,7 @@ public class MachineApiControllerTests
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
-        Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
     }
 
     [Test]
@@ -279,7 +279,7 @@ public class MachineApiControllerTests
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
-        Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
     }
 
     [Test]
@@ -345,7 +345,7 @@ public class MachineApiControllerTests
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
-        Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
     }
 
     [Test]
@@ -419,7 +419,7 @@ public class MachineApiControllerTests
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
-        Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
     }
 
     [Test]
@@ -482,7 +482,7 @@ public class MachineApiControllerTests
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual);
-        Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual as ObjectResult)?.StatusCode);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual as ObjectResult)?.StatusCode);
     }
 
     [Test]
@@ -551,7 +551,7 @@ public class MachineApiControllerTests
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
-        Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
     }
 
     [Test]
@@ -631,7 +631,7 @@ public class MachineApiControllerTests
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
-        Assert.AreEqual((int)HttpStatusCode.ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
     }
 
     [Test]
