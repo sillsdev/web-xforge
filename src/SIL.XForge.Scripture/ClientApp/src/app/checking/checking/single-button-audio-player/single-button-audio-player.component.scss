@@ -1,0 +1,30 @@
+@import 'src/variables';
+
+$buttonColor: $purpleLight;
+$progressColor: rgb(26, 179, 18);
+$progressBackgroundColor: rgba(205, 219, 204, 0.33);
+
+button {
+  padding: 0;
+  display: flex;
+  align-items: center;
+  place-content: center;
+
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+
+  // Create a radial gradient and then remove the center of it with a conic gradient to create a circular progress bar
+  // The transition between white and transparent happens over several percentage points to avoid aliasing
+  background: radial-gradient(white 57%, transparent 61% 100%),
+    conic-gradient($progressColor var(--audio-progress), $progressBackgroundColor 0);
+}
+
+button:hover {
+  cursor: pointer;
+}
+
+mat-icon {
+  color: $buttonColor;
+}
