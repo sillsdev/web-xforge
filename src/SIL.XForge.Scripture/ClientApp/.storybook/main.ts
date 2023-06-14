@@ -8,5 +8,8 @@ module.exports = {
   docs: {
     autodocs: 'tag'
   },
-  staticDirs: [{ from: '../src/assets', to: '/assets' }]
+  staticDirs: [
+    { from: '../src/assets', to: '/assets' },
+    { from: '../src/app/checking/checking/checking-audio-player', to: '/test-audio-files' }
+  ]
 };
