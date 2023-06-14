@@ -15,23 +15,28 @@
     repo_path: "{{playbook_dir}}/.."
   pre_tasks:
     - name: "Add .NET Core | add key"
-      apt_key:
-        id: BE1229CF
+      get_url:
+        # key id BC528686B50D79E339D3721CEB3E94ADBE1229CF
         url: https://packages.microsoft.com/keys/microsoft.asc
-        keyring: /etc/apt/trusted.gpg.d/microsoft.gpg
+        dest: /etc/apt/trusted.gpg.d/microsoft.asc
       when: base_distribution == 'ubuntu'
     - name: "Add .NET Core | add source"
       apt_repository:
         repo: "deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-{{base_distribution_release}}-prod {{base_distribution_release}} main"
         state: present
       when: base_distribution == 'ubuntu'
-    - name: add Mongo apt key
-      apt_key:
-        keyserver: keyserver.ubuntu.com
-        id: 9DA31620334BD75D9DCB49F368818C72E52529D4
+    - name: add mongodb-server-4.0 apt key
+      # key id 9DA31620334BD75D9DCB49F368818C72E52529D4
+      # Note that mongodb-server-4.0 key 9DA31620334BD75D9DCB49F368818C72E52529D4
+      # is now expired, giving apt update error EXPKEYSIG. There does not seem to
+      # be an updated key for mongo 4.0. So trusted=yes will be used to continue
+      # using the mongo 4.0 repos.
+      get_url:
+        url: https://www.mongodb.org/static/pgp/server-4.0.asc
+        dest: /etc/apt/trusted.gpg.d/mongodb-server-4.0.asc
     - name: add Mongo {{mongodb_version}} repository
       apt_repository:
-        repo: "deb [arch=amd64] http://repo.mongodb.org/apt/ubuntu {{base_distribution_release}}/mongodb-org/{{mongodb_version}} multiverse"
+        repo: "deb [arch=amd64 trusted=yes signed-by=/etc/apt/trusted.gpg.d/mongodb-server-4.0.asc] https://repo.mongodb.org/apt/ubuntu {{base_distribution_release}}/mongodb-org/{{mongodb_version}} multiverse"
         filename: mongodb-org
         update_cache: yes
       when: base_distribution == 'ubuntu' and (base_distribution_release == 'xenial' or base_distribution_release == 'bionic')
@@ -39,7 +44,7 @@
       # MongoDB only provides mongodb-org package version 4.4, not 4.0, for focal. They do provide a 4.0 tarball. But
       # the 4.0 bionic package works too and comes with configs and a systemd service.
       apt_repository:
-        repo: "deb [arch=amd64] http://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/{{mongodb_version}} multiverse"
+        repo: "deb [arch=amd64 trusted=yes signed-by=/etc/apt/trusted.gpg.d/mongodb-server-4.0.asc] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/{{mongodb_version}} multiverse"
         filename: mongodb-org
         update_cache: yes
       when: base_distribution == 'ubuntu' and base_distribution_release == 'focal'
