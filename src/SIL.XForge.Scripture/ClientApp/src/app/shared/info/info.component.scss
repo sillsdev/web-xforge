@@ -1,0 +1,19 @@
+@import 'src/variables';
+
+:host {
+  display: flex;
+  align-items: center;
+}
+
+a {
+  color: $blueMedium;
+  cursor: pointer;
+  display: flex;
+
+  mat-icon {
+    font-size: 1.3em;
+    width: unset;
+    height: unset;
+    overflow: unset;
+  }
+}
