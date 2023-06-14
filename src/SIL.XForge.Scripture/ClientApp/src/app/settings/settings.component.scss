@@ -23,6 +23,7 @@
 
   > .checkbox-field {
     display: flex;
+    margin: 4px 0px;
   }
 
   > .tool-setting-field {
@@ -91,6 +92,10 @@ mat-icon {
   }
 }
 
+::ng-deep .mat-checkbox-label {
+  line-height: normal !important;
+}
+
 ::ng-deep .checkbox-placeholder {
   .mat-checkbox-inner-container {
     visibility: hidden;
@@ -135,11 +140,11 @@ mat-radio-group.tool-setting {
 }
 
 .mat-card-content:not(:first-child) {
-  padding-top: 24px;
+  padding-top: 32px;
 }
 
 .mat-card-content:not(:last-child) {
-  padding-bottom: 24px;
+  padding-bottom: 32px;
 }
 
 .sharing-heading {
