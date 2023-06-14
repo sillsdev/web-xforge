@@ -60,9 +60,7 @@
                 <mat-checkbox formControlName="translationSuggestionsEnabled" id="checkbox-translation-suggestions">
                   {{ t("translation_suggestions") }}
                 </mat-checkbox>
-                <mat-icon [matTooltip]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
-                  >help</mat-icon
-                >
+                <app-info [text]="t('translations_will_be_suggested')"></app-info>
                 <app-write-status
                   [state]="getControlState('translationSuggestionsEnabled')"
                   [formGroup]="form"
@@ -79,7 +77,7 @@
                 <mat-checkbox formControlName="checkingEnabled" id="checkbox-community-checking">
                   {{ t("enable_community_checking") }}
                 </mat-checkbox>
-                <mat-icon [matTooltip]="t('engage_the_wider_community')">help</mat-icon>
+                <app-info [text]="t('engage_the_wider_community')"></app-info>
                 <app-write-status
                   [state]="getControlState('checkingEnabled')"
                   [formGroup]="form"
@@ -139,7 +137,7 @@
                 <mat-checkbox formControlName="translateShareEnabled" id="checkbox-translate-share">
                   {{ t("shareTranslate") }}
                 </mat-checkbox>
-                <mat-icon [matTooltip]="t('users_can_share_the_project')">help</mat-icon>
+                <app-info [text]="t('users_can_share_the_project')"></app-info>
                 <app-write-status
                   [state]="getControlState('translateShareEnabled')"
                   [formGroup]="form"
@@ -152,7 +150,7 @@
                 <mat-checkbox formControlName="checkingShareEnabled" id="checkbox-checking-share">
                   {{ t("shareChecking") }}
                 </mat-checkbox>
-                <mat-icon [matTooltip]="t('users_can_share_the_project')">help</mat-icon>
+                <app-info [text]="t('users_can_share_the_project')"></app-info>
                 <app-write-status
                   [state]="getControlState('checkingShareEnabled')"
                   [formGroup]="form"

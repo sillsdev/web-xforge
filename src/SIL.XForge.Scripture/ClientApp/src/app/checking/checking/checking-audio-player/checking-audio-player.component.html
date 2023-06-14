@@ -16,14 +16,7 @@
       <mat-icon>volume_off</mat-icon>
       <span>{{ t("audio_unavailable") }}</span>
       <div *ngIf="hasErrorState">
-        <a
-          id="error-load"
-          #audioUnavailableTooltip="matTooltip"
-          (click)="audioUnavailableTooltip.show()"
-          matTooltip="{{ t(audioStatus) }}"
-        >
-          <mat-icon>help</mat-icon>
-        </a>
+        <app-info id="error-load" [text]="t(audioStatus)"></app-info>
       </div>
     </div>
   </div>
