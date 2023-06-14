@@ -6,4 +6,5 @@ public class TranslateConfig
     public TranslateSource Source { get; set; }
     public bool ShareEnabled { get; set; } = false;
     public int? DefaultNoteTagId { get; set; }
+    public bool PreTranslate { get; set; }
 }

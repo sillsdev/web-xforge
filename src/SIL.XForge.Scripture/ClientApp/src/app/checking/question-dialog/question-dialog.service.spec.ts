@@ -183,7 +183,8 @@ class TestEnvironment {
     writingSystem: { tag: 'en' },
     translateConfig: {
       translationSuggestionsEnabled: false,
-      shareEnabled: false
+      shareEnabled: false,
+      preTranslate: false
     },
     checkingConfig: {
       usersSeeEachOthersResponses: true,
