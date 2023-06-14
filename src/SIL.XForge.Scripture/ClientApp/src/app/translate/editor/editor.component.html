@@ -40,7 +40,7 @@
     </div>
     <div [fxLayout]="isTargetTextRight ? 'row' : 'row-reverse'" class="both-editors-wrapper">
       <div id="source-text-area" [fxShow.gt-xs]="showSource" fxHide.xs class="text-area">
-        <div class="language-label" mdcSubtitle1>{{ sourceLabel }}</div>
+        <div class="language-label">{{ sourceLabel }}</div>
         <div #sourceContainer class="text-container" [style.height]="textHeight">
           <app-text
             #source
@@ -59,7 +59,7 @@
         [ngClass.gt-xs]="{ 'text-area-full-width': !showSource }"
         ngClass.xs="text-area-full-width"
       >
-        <div class="language-label" [fxShow.gt-xs]="showSource" fxHide.xs mdcSubtitle1>{{ targetLabel }}</div>
+        <div class="language-label" [fxShow.gt-xs]="showSource" fxHide.xs>{{ targetLabel }}</div>
         <div *ngIf="!isUsfmValid && hasEditRight" class="formatting-invalid-warning">
           <mat-icon>warning</mat-icon> {{ t("cannot_edit_chapter_formatting_invalid") }}
         </div>
