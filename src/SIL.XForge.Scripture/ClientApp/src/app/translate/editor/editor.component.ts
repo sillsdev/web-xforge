@@ -438,29 +438,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.pwaService.isOnline && this.multiCursorViewers.length > 0;
   }
 
-  get isInsertNoteFabEnabled(): boolean {
-    return this.isAddNotesEnabled && this.canShowInsertNoteFab;
-  }
-
-  set showInsertNoteFab(value: boolean) {
-    if (this.insertNoteFab == null || this.TemplateBottomSheet == null) return;
-    this.addingMobileNote = false;
-    // Mobile users without editing rights will see a bottom sheet instead of a FAB
-    if (this.mediaObserver.isActive('lt-lg') && !this.hasEditRight) {
-      this.insertNoteFab.nativeElement.style.visibility = 'hidden';
-      if (value) {
-        if (this.bottomSheetRef?.containerInstance == null) {
-          this.bottomSheetRef = this.bottomSheet.open(this.TemplateBottomSheet, { hasBackdrop: false });
-        }
-      } else {
-        this.bottomSheet.dismiss();
-      }
-    } else {
-      this.insertNoteFab.nativeElement.style.visibility = value ? 'visible' : 'hidden';
-      this.bottomSheet.dismiss();
-    }
-  }
-
   /**
    * Determines whether the comment adding UI should be shown
    * This will be true any time the user has the right to add notes
@@ -498,8 +475,39 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.featureFlags.allowAddingNotes.enabled;
   }
 
+  private get isInsertNoteFabEnabled(): boolean {
+    return this.isAddNotesEnabled && this.canShowInsertNoteFab && !this.isCommenterOnMobileDevice;
+  }
+
+  private get isCommenterOnMobileDevice(): boolean {
+    return !this.hasEditRight && this.mediaObserver.isActive('lt-lg');
+  }
+
   private get canShowInsertNoteFab(): boolean {
     return this.targetLoaded && this.dialogService.openDialogCount < 1;
+  }
+
+  /**
+   * Set the visibility of the add comment button. The button will be the FAB or the bottom sheet button
+   * depending on the user's edit permissions and screen size.
+   */
+  private set showAddCommentButton(value: boolean) {
+    if (this.insertNoteFab == null || this.TemplateBottomSheet == null) return;
+    this.addingMobileNote = false;
+    // Mobile users without editing rights will see a bottom sheet instead of a FAB
+    if (this.isCommenterOnMobileDevice) {
+      this.setNoteFabVisibility('hidden');
+      if (value) {
+        if (this.bottomSheetRef?.containerInstance == null) {
+          this.bottomSheetRef = this.bottomSheet.open(this.TemplateBottomSheet, { hasBackdrop: false });
+        }
+      } else {
+        this.bottomSheet.dismiss();
+      }
+    } else {
+      this.setNoteFabVisibility(value ? 'visible' : 'hidden');
+      this.bottomSheet.dismiss();
+    }
   }
 
   ngAfterViewInit(): void {
@@ -1076,7 +1084,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       this.toggleNoteThreadVerseRefs$.next();
     }
-    this.setNoteFabVisibility('visible');
+    if (this.isInsertNoteFabEnabled) {
+      this.setNoteFabVisibility('visible');
+    }
   }
 
   /** Sets the visibility of the insert note FAB. If the FAB does not exist, this is a no-op. */
@@ -1637,7 +1647,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.insertNoteFab.nativeElement.style.marginTop = `-${this.target.scrollPosition}px`;
     } else {
       // hide the insert note FAB when the user clicks outside of the editor
-      this.showInsertNoteFab = false;
+      this.showAddCommentButton = false;
     }
   }
 
@@ -1661,11 +1671,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         allowToggleVerseSelection = !this.hasEditRight;
       }
       if (allowToggleVerseSelection) {
-        this.showInsertNoteFab = this.target.toggleVerseSelection(verseRef);
+        this.showAddCommentButton = this.target.toggleVerseSelection(verseRef);
         this.positionInsertNoteFab();
       }
     } else {
-      this.showInsertNoteFab = false;
+      this.showAddCommentButton = false;
     }
     if (this.commenterSelectedVerseRef != null) {
       if (verseRef.equals(this.commenterSelectedVerseRef)) {
@@ -1896,7 +1906,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
       this.commenterSelectedVerseRef = undefined;
     }
-    this.showInsertNoteFab = false;
+    this.showAddCommentButton = false;
   }
 
   private hasNewContent(thread: NoteThreadDoc): boolean {
