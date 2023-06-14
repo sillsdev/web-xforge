@@ -28,6 +28,11 @@ public interface IMachineApiService
         CancellationToken cancellationToken
     );
     Task<BuildDto> StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
+    Task<BuildDto?> StartPreTranslationBuildAsync(
+        string curUserId,
+        string sfProjectId,
+        CancellationToken cancellationToken
+    );
     Task TrainSegmentAsync(
         string curUserId,
         string sfProjectId,

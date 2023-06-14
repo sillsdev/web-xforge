@@ -385,6 +385,7 @@ class TestEnvironment {
         translateConfig: {
           translationSuggestionsEnabled: settings.translationSuggestionsEnabled,
           shareEnabled: false,
+          preTranslate: false,
           source:
             settings.sourceParatextId == null
               ? undefined

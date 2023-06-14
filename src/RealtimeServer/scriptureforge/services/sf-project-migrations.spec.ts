@@ -203,6 +203,23 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.checkingConfig.shareLevel).not.toBeDefined();
     });
   });
+
+  describe('version 10', () => {
+    it('adds preTranslate to translate config', async () => {
+      const env = new TestEnvironment(9);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { translationSuggestionsEnabled: false }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.preTranslate).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.preTranslate).toBe(false);
+    });
+  });
 });
 
 class TestEnvironment {

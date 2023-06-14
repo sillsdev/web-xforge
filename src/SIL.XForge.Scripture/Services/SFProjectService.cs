@@ -81,10 +81,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         IReadOnlyList<ParatextProject> ptProjects = await _paratextService.GetProjectsAsync(userSecret);
 
-        ParatextProject ptProject = ptProjects.SingleOrDefault(p => p.ParatextId == settings.ParatextId);
-        if (ptProject == null)
-            throw new DataNotFoundException("The paratext project does not exist.");
-
+        ParatextProject ptProject =
+            ptProjects.SingleOrDefault(p => p.ParatextId == settings.ParatextId)
+            ?? throw new DataNotFoundException("The paratext project does not exist.");
         var project = new SFProject
         {
             ParatextId = settings.ParatextId,
@@ -139,7 +138,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled)
             {
                 await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
-                await _machineProjectService.AddProjectAsync(curUserId, projectDoc.Id, CancellationToken.None);
+                await _machineProjectService.AddProjectAsync(curUserId, projectDoc.Id, false, CancellationToken.None);
             }
         }
 
@@ -226,7 +225,18 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         // The machine service requires the project secrets, so call it before removing them
-        await _machineProjectService.RemoveProjectAsync(curUserId, projectId, CancellationToken.None);
+        await _machineProjectService.RemoveProjectAsync(
+            curUserId,
+            projectId,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        await _machineProjectService.RemoveProjectAsync(
+            curUserId,
+            projectId,
+            preTranslate: true,
+            CancellationToken.None
+        );
         await ProjectSecrets.DeleteAsync(projectId);
         await RealtimeService.DeleteProjectAsync(projectId);
         string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", ptProjectId);
@@ -307,17 +317,32 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     // recreate Machine project only if one existed
                     if (hasExistingMachineProject)
                     {
-                        await _machineProjectService.RemoveProjectAsync(curUserId, projectId, CancellationToken.None);
+                        await _machineProjectService.RemoveProjectAsync(
+                            curUserId,
+                            projectId,
+                            preTranslate: false,
+                            CancellationToken.None
+                        );
                     }
 
                     await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
-                    await _machineProjectService.AddProjectAsync(curUserId, projectId, CancellationToken.None);
+                    await _machineProjectService.AddProjectAsync(
+                        curUserId,
+                        projectId,
+                        preTranslate: false,
+                        CancellationToken.None
+                    );
                     trainEngine = true;
                 }
                 else if (hasExistingMachineProject)
                 {
                     // translation suggestions was disabled or source project set to null
-                    await _machineProjectService.RemoveProjectAsync(curUserId, projectId, CancellationToken.None);
+                    await _machineProjectService.RemoveProjectAsync(
+                        curUserId,
+                        projectId,
+                        preTranslate: false,
+                        CancellationToken.None
+                    );
                 }
             }
 
@@ -521,12 +546,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
     public async Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey)
     {
-        ProjectSecret projectSecret = ProjectSecrets
-            .Query()
-            .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
-        if (projectSecret == null)
-            throw new DataNotFoundException("Unable to locate shareKey");
-
+        ProjectSecret projectSecret =
+            ProjectSecrets.Query().FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey))
+            ?? throw new DataNotFoundException("Unable to locate shareKey");
         string projectId = projectSecret.Id;
         SFProject project = await GetProjectAsync(projectId);
         if (!IsProjectAdmin(project, curUserId))
@@ -623,12 +645,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     public async Task<string> JoinWithShareKeyAsync(string curUserId, string shareKey)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
-        ProjectSecret projectSecret = ProjectSecrets
-            .Query()
-            .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
-        if (projectSecret == null)
-            throw new DataNotFoundException("project_link_is_invalid");
-
+        ProjectSecret projectSecret =
+            ProjectSecrets.Query().FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey))
+            ?? throw new DataNotFoundException("project_link_is_invalid");
         string projectId = projectSecret.Id;
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
 
@@ -732,11 +751,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
     public SFProjectSecret GetProjectSecretByShareKey(string shareKey)
     {
-        SFProjectSecret projectSecret = ProjectSecrets
-            .Query()
-            .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
-        if (projectSecret == null)
-            throw new DataNotFoundException("project_link_is_invalid");
+        SFProjectSecret projectSecret =
+            ProjectSecrets.Query().FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey))
+            ?? throw new DataNotFoundException("project_link_is_invalid");
         return projectSecret;
     }
 

@@ -155,7 +155,8 @@ class TestEnvironment {
       writingSystem: { tag: 'qaa' },
       translateConfig: {
         translationSuggestionsEnabled: false,
-        shareEnabled: true
+        shareEnabled: true,
+        preTranslate: false
       },
       checkingConfig: {
         checkingEnabled: false,
