@@ -31,6 +31,10 @@
     }
   }
 
+  p {
+    margin-block-start: 0;
+  }
+
   > .checkbox-field {
     display: flex;
   }
@@ -62,12 +66,12 @@
   }
 }
 
+a {
+  color: $blueMedium;
+}
+
 mat-icon {
-  overflow: unset;
   color: $greyLight;
-  &:not(.no-hover):hover {
-    color: darken($greyLight, 10%);
-  }
 }
 
 .indent {
