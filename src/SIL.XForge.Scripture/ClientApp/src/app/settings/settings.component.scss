@@ -23,7 +23,6 @@
 
   > .checkbox-field {
     display: flex;
-    margin: 4px 0px;
   }
 
   > .tool-setting-field {
@@ -90,6 +89,10 @@ mat-icon {
   > .more-options {
     margin-left: 16px;
   }
+}
+
+.mat-checkbox {
+  padding: 3px 0px;
 }
 
 ::ng-deep .mat-checkbox-label {
