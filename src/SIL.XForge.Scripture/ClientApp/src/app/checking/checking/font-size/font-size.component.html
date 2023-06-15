@@ -1,29 +1,29 @@
-<div mdcMenuSurfaceAnchor #fontSizeAnchor>
-  <button
-    mdc-icon-button
-    type="button"
-    (click)="fontSizeSurface.open = !fontSizeSurface.open"
-    icon="format_size"
-    id="font-size-toggle"
-  ></button>
-  <mdc-menu-surface #fontSizeSurface [anchorElement]="fontSizeAnchor" anchorCorner="bottomEnd" id="font-menu-surface">
-    <div class="buttons-group">
-      <button
-        type="button"
-        (click)="decreaseFontSize()"
-        [disabled]="fontSize === min"
-        mdc-icon-button
-        icon="remove"
-        title="Decrease font size"
-      ></button>
-      <button
-        mdc-icon-button
-        type="button"
-        (click)="increaseFontSize()"
-        [disabled]="fontSize === max"
-        icon="add"
-        title="Increase font size"
-      ></button>
-    </div>
-  </mdc-menu-surface>
-</div>
+<button
+  #trigger="matMenuTrigger"
+  mat-icon-button
+  [mat-menu-trigger-for]="menu"
+  class="font-size-menu-trigger"
+  [ngClass]="{ 'menu-open': trigger.menuOpen }"
+>
+  <mat-icon>format_size</mat-icon>
+</button>
+<mat-menu #menu="matMenu" class="font-size-menu" [xPosition]="'before'">
+  <div mat-menu-item disableRipple class="button-group">
+    <button
+      mat-icon-button
+      (click)="adjustFontSize($event, -1)"
+      [disabled]="fontSize === min"
+      title="Decrease font size"
+    >
+      <mat-icon>remove</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      (click)="adjustFontSize($event, 1)"
+      [disabled]="fontSize === max"
+      title="Increase font size"
+    >
+      <mat-icon>add</mat-icon>
+    </button>
+  </div>
+</mat-menu>

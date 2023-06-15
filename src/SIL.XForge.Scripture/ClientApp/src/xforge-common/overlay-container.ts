@@ -1,15 +1,24 @@
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, InjectionToken } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { Platform } from '@angular/cdk/platform';
 
+export const APP_ROOT_ELEMENT_SELECTOR = new InjectionToken<string>('APP_ROOT_ELEMENT_SELECTOR', {
+  providedIn: 'root',
+  factory: () => 'app-root'
+});
+
 @Injectable({ providedIn: 'root' })
 export class InAppRootOverlayContainer extends OverlayContainer {
-  constructor(@Inject(DOCUMENT) document: any, platform: Platform) {
+  constructor(
+    @Inject(DOCUMENT) document: any,
+    @Inject(APP_ROOT_ELEMENT_SELECTOR) private appRootSelector: string,
+    platform: Platform
+  ) {
     super(document, platform);
   }
 
-  protected _createContainer(): void {
+  protected override _createContainer(): void {
     super._createContainer();
     this.appendToRootComponent();
   }
@@ -19,7 +28,7 @@ export class InAppRootOverlayContainer extends OverlayContainer {
    * This allows for elements like the menu drawer to open on top of any overlays i.e. bottom sheet
    */
   private appendToRootComponent(): void {
-    const rootElement: Element | null = this._document.querySelector('app-root');
+    const rootElement: Element | null = this._document.querySelector(this.appRootSelector);
 
     if (this._containerElement == null || rootElement == null) {
       return;

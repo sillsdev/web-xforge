@@ -86,7 +86,8 @@ $material-app-theme: mat.define-light-theme(
 
 button.mat-icon-button {
   transition: color 0.15s;
-  &:hover {
+
+  &:not([disabled]):hover {
     color: $greenLight !important;
   }
 }

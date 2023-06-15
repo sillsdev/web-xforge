@@ -1,20 +1,61 @@
-@use '@material/icon-button/mixins' as icon-button;
+@import 'src/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
 
 :host {
+  > button {
+    &.menu-open {
+      // Keep trigger button highlight while menu is open
+      background: #e0e0e0;
+    }
+  }
+}
+
+// Menu exists in overlay, so ::ng-deep cannot be nested under :host
+::ng-deep {
+  .mat-menu-panel.font-size-menu {
+    min-height: 0;
+    min-width: 0;
+
+    // Only center menu if screen is wide enough
+    @include media-breakpoint-up(sm) {
+      // If both 'left' and 'right' are specified, 'left' wins when direction is 'ltr'
+      // and 'right' wins when direction is 'rtl'.
+      // (See https://developer.mozilla.org/en-US/docs/Web/CSS/position#description)
+      // This trick, combined with setting the menu [xPosition] to 'before', allows centering of the menu
+      // when it is on the end side of the screen, as it is when the 'Share' button is not present.
+      // However, this assumes that the component will never be at the start side of the screen (right side in rtl).
+      left: 25%;
+      right: 25%;
+    }
+
+    // Trims the top and bottom off the default mat menu
+    > .mat-menu-content {
+      padding: 0;
+    }
+
+    // Make ripple more visible (otherwise it uses the light green from button hover text color)
+    .mat-ripple-element {
+      background-color: #000;
+    }
+  }
+}
+
+// Both 'increase' and 'decrease' buttons are within the single menu item, so some modifications are needed
+.button-group {
   display: flex;
-  align-items: center;
-  span {
-    padding: 0 5px;
+  padding: 0;
+  height: auto;
+
+  // Prevents entire menu from showing focus highlight
+  &.cdk-program-focused,
+  &:hover {
+    background: transparent;
   }
-  .mdc-icon-button {
-    @include icon-button.icon-size(24px, 24px, 8px);
-  }
-  #font-menu-surface {
-    right: unset !important;
-    left: -50% !important;
-    overflow: hidden;
-    .buttons-group {
-      display: flex;
+
+  button {
+    mat-icon {
+      margin: 0;
+      color: inherit;
     }
   }
 }
