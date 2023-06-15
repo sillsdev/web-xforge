@@ -49,6 +49,10 @@ const defaultArgs = {
       shareEnabled: true,
       answerExportMethod: CheckingAnswerExport.All
     },
+    biblicalTermsConfig: {
+      biblicalTermsEnabled: false,
+      hasRenderings: false
+    },
     texts: [],
     sync: {
       queuedCount: 0
