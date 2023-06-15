@@ -307,7 +307,7 @@ describe('EditorComponent', () => {
         'note-thread-embed': {
           iconsrc: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
           preview: 'Note from user01',
-          threadid: 'thread05'
+          threadid: 'dataid05'
         }
       });
       op = segmentContents.ops![1];
@@ -327,7 +327,7 @@ describe('EditorComponent', () => {
         'note-thread-embed': {
           iconsrc: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
           preview: 'Note from user01',
-          threadid: 'thread05'
+          threadid: 'dataid05'
         }
       });
       op = segmentContents.ops![1];
@@ -345,7 +345,7 @@ describe('EditorComponent', () => {
         'note-thread-embed': {
           iconsrc: '--icon-file: url(/assets/icons/TagIcons/01flag1.png);',
           preview: 'Note from user01',
-          threadid: 'thread05'
+          threadid: 'dataid05'
         }
       });
       op = segmentContents.ops![1];
@@ -1382,7 +1382,7 @@ describe('EditorComponent', () => {
       );
       const combinedVerseUsxSegment: HTMLElement = env.getSegmentElement('verse_1_2-3')!;
       const combinedVerseNote: HTMLElement | null = combinedVerseUsxSegment.querySelector('display-note');
-      expect(combinedVerseNote!.getAttribute('data-thread-id')).toEqual('thread08');
+      expect(combinedVerseNote!.getAttribute('data-thread-id')).toEqual('dataid08');
       // Note assigned to current user
       expect(combinedVerseNote!.getAttribute('style')).toEqual(
         `--icon-file: url(/assets/icons/TagIcons/${redFlagIcon});`
@@ -1453,17 +1453,17 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      let doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      let doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
       const noteStart1 = env.component.target!.getSegmentRange('verse_1_1')!.index + doc.data!.position.start;
-      doc = env.getNoteThreadDoc('project01', 'thread02');
+      doc = env.getNoteThreadDoc('project01', 'dataid02');
       const noteStart2 = env.component.target!.getSegmentRange('verse_1_3')!.index + doc.data!.position.start;
-      doc = env.getNoteThreadDoc('project01', 'thread03');
+      doc = env.getNoteThreadDoc('project01', 'dataid03');
       // Add 1 for the one previous embed in the segment
       const noteStart3 = env.component.target!.getSegmentRange('verse_1_3')!.index + doc.data!.position.start + 1;
-      doc = env.getNoteThreadDoc('project01', 'thread04');
+      doc = env.getNoteThreadDoc('project01', 'dataid04');
       // Add 2 for the two previous embeds
       const noteStart4 = env.component.target!.getSegmentRange('verse_1_3')!.index + doc.data!.position.start + 2;
-      doc = env.getNoteThreadDoc('project01', 'thread05');
+      doc = env.getNoteThreadDoc('project01', 'dataid05');
       const noteStart5 = env.component.target!.getSegmentRange('verse_1_4')!.index + doc.data!.position.start;
       // positions are 11, 34, 55, 56, 94
       const expected = [noteStart1, noteStart2, noteStart3, noteStart4, noteStart5];
@@ -1480,12 +1480,12 @@ describe('EditorComponent', () => {
       const contents = env.targetEditor.getContents(range.index, range.length);
       // The footnote starts after a note thread in the segment
       expect(contents.ops![1].insert).toEqual({ note: { caller: '*' } });
-      const note2Position = env.getNoteThreadEditorPosition('thread02');
+      const note2Position = env.getNoteThreadEditorPosition('dataid02');
       expect(range.index).toEqual(note2Position);
-      const noteThreadDoc3 = env.getNoteThreadDoc('project01', 'thread03');
+      const noteThreadDoc3 = env.getNoteThreadDoc('project01', 'dataid03');
       const noteThread3StartPosition = 20;
       expect(noteThreadDoc3.data!.position).toEqual({ start: noteThread3StartPosition, length: 7 });
-      const note3Position = env.getNoteThreadEditorPosition('thread03');
+      const note3Position = env.getNoteThreadEditorPosition('dataid03');
       // plus 1 for the note icon embed at the beginning of the verse
       expect(range.index + noteThread3StartPosition + 1).toEqual(note3Position);
       env.dispose();
@@ -1499,7 +1499,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const note7Position = env.getNoteThreadEditorPosition('thread07');
+      const note7Position = env.getNoteThreadEditorPosition('dataid07');
       const note4EmbedLength = 1;
       expect(note7Position).toEqual(env.component.target!.getSegmentRange('verse_1_4/p_1')!.index + note4EmbedLength);
       env.dispose();
@@ -1511,13 +1511,13 @@ describe('EditorComponent', () => {
       // active position of thread04 when reattached to verse 4
       const position: TextAnchor = { start: 19, length: 5 };
       // reattach thread04 from MAT 1:3 to MAT 1:4
-      env.reattachNote('project01', 'thread04', 'MAT 1:4', position);
+      env.reattachNote('project01', 'dataid04', 'MAT 1:4', position);
 
       // SUT
       env.wait();
       const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_4')!;
-      const note4Position: number = env.getNoteThreadEditorPosition('thread04');
-      const note4Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread04')!;
+      const note4Position: number = env.getNoteThreadEditorPosition('dataid04');
+      const note4Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid04')!;
       const note4Anchor: TextAnchor = note4Doc.data!.position;
       expect(note4Anchor).toEqual(position);
       expect(note4Position).toEqual(range.index + position.start);
@@ -1529,10 +1529,10 @@ describe('EditorComponent', () => {
     it('does not display conflict notes', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
-      env.convertToConflictNote('project01', 'thread02');
+      env.convertToConflictNote('project01', 'dataid02');
       env.wait();
 
-      expect(env.getNoteThreadIconElement('verse_1_3', 'thread02')).toBeNull();
+      expect(env.getNoteThreadIconElement('verse_1_3', 'dataid02')).toBeNull();
       env.dispose();
     }));
 
@@ -1542,32 +1542,32 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ noteRefsRead: ['thread01_note0', 'thread02_note0'] });
       env.wait();
 
-      expect(env.isNoteIconHighlighted('thread01')).toBe(true);
-      expect(env.isNoteIconHighlighted('thread02')).toBe(false);
-      expect(env.isNoteIconHighlighted('thread03')).toBe(true);
-      expect(env.isNoteIconHighlighted('thread04')).toBe(true);
-      expect(env.isNoteIconHighlighted('thread05')).toBe(true);
+      expect(env.isNoteIconHighlighted('dataid01')).toBe(true);
+      expect(env.isNoteIconHighlighted('dataid02')).toBe(false);
+      expect(env.isNoteIconHighlighted('dataid03')).toBe(true);
+      expect(env.isNoteIconHighlighted('dataid04')).toBe(true);
+      expect(env.isNoteIconHighlighted('dataid05')).toBe(true);
 
       let puc: SFProjectUserConfigDoc = env.getProjectUserConfigDoc('user01');
       expect(puc.data!.noteRefsRead).not.toContain('thread01_note1');
       expect(puc.data!.noteRefsRead).not.toContain('thread01_note2');
 
-      let iconElement: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'thread01')!;
+      let iconElement: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'dataid01')!;
       iconElement.click();
       env.wait();
       puc = env.getProjectUserConfigDoc('user02');
       expect(puc.data!.noteRefsRead).toContain('thread01_note1');
       expect(puc.data!.noteRefsRead).toContain('thread01_note2');
-      expect(env.isNoteIconHighlighted('thread01')).toBe(false);
+      expect(env.isNoteIconHighlighted('dataid01')).toBe(false);
 
       expect(puc.data!.noteRefsRead).toContain('thread02_note0');
-      iconElement = env.getNoteThreadIconElement('verse_1_3', 'thread02')!;
+      iconElement = env.getNoteThreadIconElement('verse_1_3', 'dataid02')!;
       iconElement.click();
       env.wait();
       puc = env.getProjectUserConfigDoc('user02');
       expect(puc.data!.noteRefsRead).toContain('thread02_note0');
       expect(puc.data!.noteRefsRead.filter(ref => ref === 'thread02_note0').length).toEqual(1);
-      expect(env.isNoteIconHighlighted('thread02')).toBe(false);
+      expect(env.isNoteIconHighlighted('dataid02')).toBe(false);
       env.dispose();
     }));
 
@@ -1576,7 +1576,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
 
-      let noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      let noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
 
       // edit before start position
@@ -1587,20 +1587,20 @@ describe('EditorComponent', () => {
       expect(noteThreadDoc.data!.position).toEqual({ start: 8 + length, length: 9 });
 
       // edit at note position
-      let notePosition = env.getNoteThreadEditorPosition('thread01');
+      let notePosition = env.getNoteThreadEditorPosition('dataid01');
       env.targetEditor.setSelection(notePosition, 0, 'user');
       env.typeCharacters(text);
       expect(noteThreadDoc.data!.position).toEqual({ start: length * 2 + 8, length: 9 });
 
       // edit immediately after note
-      notePosition = env.getNoteThreadEditorPosition('thread01');
+      notePosition = env.getNoteThreadEditorPosition('dataid01');
       env.targetEditor.setSelection(notePosition + 1, 0, 'user');
       env.typeCharacters(text);
       expect(noteThreadDoc.data!.position).toEqual({ start: length * 2 + 8, length: 9 + length });
 
       // edit immediately after verse note
-      noteThreadDoc = env.getNoteThreadDoc('project01', 'thread02');
-      notePosition = env.getNoteThreadEditorPosition('thread02');
+      noteThreadDoc = env.getNoteThreadDoc('project01', 'dataid02');
+      notePosition = env.getNoteThreadEditorPosition('dataid02');
       expect(noteThreadDoc.data!.position).toEqual({ start: 0, length: 0 });
       env.targetEditor.setSelection(notePosition, 0, 'user');
       env.wait();
@@ -1615,25 +1615,25 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
 
       // delete text before note
       const length = 3;
       const noteEmbedLength = 1;
-      let notePosition = env.getNoteThreadEditorPosition('thread01');
+      let notePosition = env.getNoteThreadEditorPosition('dataid01');
       env.targetEditor.setSelection(notePosition - length, length, 'user');
       env.deleteCharacters();
       expect(noteThreadDoc.data!.position).toEqual({ start: 8 - length, length: 9 });
 
       // delete text at the beginning of note text
-      notePosition = env.getNoteThreadEditorPosition('thread01');
+      notePosition = env.getNoteThreadEditorPosition('dataid01');
       env.targetEditor.setSelection(notePosition + noteEmbedLength, length, 'user');
       env.deleteCharacters();
       expect(noteThreadDoc.data!.position).toEqual({ start: 8 - length, length: 9 - length });
 
       // delete text right after note text
-      notePosition = env.getNoteThreadEditorPosition('thread01');
+      notePosition = env.getNoteThreadEditorPosition('dataid01');
       const noteLength = noteThreadDoc.data!.position.length;
       env.targetEditor.setSelection(notePosition + noteEmbedLength + noteLength, length, 'user');
       env.deleteCharacters();
@@ -1646,9 +1646,9 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
 
-      const priorThreadId = 'thread02';
+      const priorThreadId = 'dataid02';
       const priorThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', priorThreadId);
-      const laterThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread04');
+      const laterThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid04');
       const origPriorThreadDocAnchorStart: number = priorThreadDoc.data!.position.start;
       const origPriorThreadDocAnchorLength: number = priorThreadDoc.data!.position.length;
       const origLaterThreadDocAnchorStart: number = laterThreadDoc.data!.position.start;
@@ -1699,7 +1699,7 @@ describe('EditorComponent', () => {
 
       // replace icon and characters with new text
       env.targetEditor.setSelection(9, 5, 'user');
-      const noteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const noteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
       env.typeCharacters('t');
       // 4 characters deleted and 1 character inserted
@@ -1723,19 +1723,19 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const position: number = env.getNoteThreadEditorPosition('thread03');
+      const position: number = env.getNoteThreadEditorPosition('dataid03');
       const length = 9;
       // $target: chapter 1, |->$$verse 3<-|.
       env.targetEditor.setSelection(position, length, 'api');
       env.deleteCharacters();
       const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_3')!;
-      expect(env.getNoteThreadEditorPosition('thread02')).toEqual(range.index);
-      expect(env.getNoteThreadEditorPosition('thread03')).toEqual(range.index + 1);
-      expect(env.getNoteThreadEditorPosition('thread04')).toEqual(range.index + 2);
+      expect(env.getNoteThreadEditorPosition('dataid02')).toEqual(range.index);
+      expect(env.getNoteThreadEditorPosition('dataid03')).toEqual(range.index + 1);
+      expect(env.getNoteThreadEditorPosition('dataid04')).toEqual(range.index + 2);
 
       for (let i = 0; i <= 2; i++) {
         const noteThreadId: number = i + 2;
-        const note: HTMLElement = env.getNoteThreadIconElement('verse_1_3', `thread0${noteThreadId}`)!;
+        const note: HTMLElement = env.getNoteThreadIconElement('verse_1_3', `dataid0${noteThreadId}`)!;
         note.click();
         env.wait();
         verify(mockedMatDialog.open(NoteDialogComponent, anything())).times(i + 1);
@@ -1752,9 +1752,9 @@ describe('EditorComponent', () => {
       // 1 target: $chapter|-> 1, $ve<-|rse 1.
       env.targetEditor.setSelection(19, 7, 'user');
       env.deleteCharacters();
-      const note1 = env.getNoteThreadDoc('project01', 'thread01');
+      const note1 = env.getNoteThreadDoc('project01', 'dataid01');
       expect(note1.data!.position).toEqual({ start: 8, length: 7 });
-      const note2 = env.getNoteThreadDoc('project01', 'thread06');
+      const note2 = env.getNoteThreadDoc('project01', 'dataid06');
       expect(note2.data!.position).toEqual({ start: 15, length: 3 });
       const textDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
       expect(textDoc.data!.ops![3].insert).toEqual('target: chapterrse 1.');
@@ -1767,7 +1767,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const noteThreadDoc = env.getNoteThreadDoc('project01', 'thread05');
+      const noteThreadDoc = env.getNoteThreadDoc('project01', 'dataid05');
       expect(noteThreadDoc.data!.position).toEqual({ start: 28, length: 9 });
       env.targetEditor.setSelection(86, 0, 'user');
       const text = ' new text ';
@@ -1782,10 +1782,10 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
       // delete text that spans across the end boundary
-      const notePosition = env.getNoteThreadEditorPosition('thread01');
+      const notePosition = env.getNoteThreadEditorPosition('dataid01');
       const deletionLength = 10;
       const noteEmbedLength: number = 1;
       // Arbitrary text position within thread anchoring, at which to start deleting.
@@ -1806,8 +1806,8 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const thread1Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
-      const thread1Position = env.getNoteThreadEditorPosition('thread01');
+      const thread1Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
+      const thread1Position = env.getNoteThreadEditorPosition('dataid01');
       expect(thread1Doc.data!.position).toEqual({ start: 8, length: 9 });
 
       const embedLength = 1;
@@ -1826,13 +1826,13 @@ describe('EditorComponent', () => {
       expect(thread1Doc.data!.position).toEqual({ start: 8, length: 10 });
 
       // insert in an adjacent text anchor should not be included in the previous note
-      const noteThread3Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread03');
+      const noteThread3Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid03');
       expect(noteThread3Doc.data!.position).toEqual({ start: 20, length: 7 });
-      const index = env.getNoteThreadEditorPosition('thread07');
+      const index = env.getNoteThreadEditorPosition('dataid07');
       env.targetEditor.setSelection(index + 1, 0, 'user');
       env.typeCharacters('c');
       expect(noteThread3Doc.data!.position).toEqual({ start: 20, length: 7 });
-      const noteThread7Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', `thread07`);
+      const noteThread7Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', `dataid07`);
       expect(noteThread7Doc.data!.position).toEqual({ start: 27, length: 1 + 'c'.length });
 
       env.dispose();
@@ -1843,20 +1843,20 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      let noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      let noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
 
       // delete the entire text anchor
-      let notePosition = env.getNoteThreadEditorPosition('thread01');
+      let notePosition = env.getNoteThreadEditorPosition('dataid01');
       let length = 9;
       env.targetEditor.setSelection(notePosition + 1, length, 'user');
       env.deleteCharacters();
       expect(noteThreadDoc.data!.position).toEqual({ start: 0, length: 0 });
 
       // delete text that includes the entire text anchor
-      noteThreadDoc = env.getNoteThreadDoc('project01', 'thread03');
+      noteThreadDoc = env.getNoteThreadDoc('project01', 'dataid03');
       expect(noteThreadDoc.data!.position).toEqual({ start: 20, length: 7 });
-      notePosition = env.getNoteThreadEditorPosition('thread03');
+      notePosition = env.getNoteThreadEditorPosition('dataid03');
       length = 8;
       env.targetEditor.setSelection(notePosition + 1, length, 'user');
       env.deleteCharacters();
@@ -1869,16 +1869,16 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
       env.wait();
 
-      const thread3Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread03');
+      const thread3Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid03');
       const thread3AnchorLength = 7;
       const thread4AnchorLength = 5;
       expect(thread3Doc.data!.position).toEqual({ start: 20, length: thread3AnchorLength });
-      const otherNoteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread04');
+      const otherNoteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid04');
       expect(otherNoteThreadDoc.data!.position).toEqual({ start: 20, length: thread4AnchorLength });
-      const verseNoteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread02');
+      const verseNoteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid02');
       expect(verseNoteThreadDoc.data!.position).toEqual({ start: 0, length: 0 });
       // edit before paratext note
-      let thread3Position = env.getNoteThreadEditorPosition('thread03');
+      let thread3Position = env.getNoteThreadEditorPosition('dataid03');
       env.targetEditor.setSelection(thread3Position, 0, 'user');
       env.wait();
       const textBeforeNote = 'add text before ';
@@ -1888,7 +1888,7 @@ describe('EditorComponent', () => {
       expect(otherNoteThreadDoc.data!.position).toEqual({ start: 20 + length1, length: thread4AnchorLength });
 
       // edit within note selection start
-      thread3Position = env.getNoteThreadEditorPosition('thread03');
+      thread3Position = env.getNoteThreadEditorPosition('dataid03');
       env.targetEditor.setSelection(thread3Position + 1, 0, 'user');
       env.wait();
       const textWithinNote = 'edit within note ';
@@ -1917,7 +1917,7 @@ describe('EditorComponent', () => {
       });
 
       // delete text within note selection
-      thread3Position = env.getNoteThreadEditorPosition('thread03');
+      thread3Position = env.getNoteThreadEditorPosition('dataid03');
       const deleteLength = 5;
       const lengthAfterNote = 2;
       env.targetEditor.setSelection(thread3Position + lengthAfterNote, deleteLength, 'user');
@@ -1947,11 +1947,11 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
       const origNoteAnchor: TextAnchor = { start: 8, length: 9 };
       expect(noteThreadDoc.data!.position).toEqual(origNoteAnchor);
 
-      const notePosition: number = env.getNoteThreadEditorPosition('thread01');
+      const notePosition: number = env.getNoteThreadEditorPosition('dataid01');
       const deleteStart: number = notePosition + 1;
       const text = 'chap';
 
@@ -1992,9 +1992,9 @@ describe('EditorComponent', () => {
       env.wait();
       const textBeforeNote = 'Text in ';
       let range: RangeStatic = env.component.target!.getSegmentRange('s_2')!;
-      let notePosition: number = env.getNoteThreadEditorPosition('thread06');
+      let notePosition: number = env.getNoteThreadEditorPosition('dataid06');
       expect(range.index + textBeforeNote.length).toEqual(notePosition);
-      const thread06Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread06');
+      const thread06Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid06');
       let textAnchor: TextAnchor = thread06Doc.data!.position;
       expect(textAnchor).toEqual(origThread06Pos);
 
@@ -2024,10 +2024,10 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread05');
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid05');
       expect(noteThreadDoc.data!.position).toEqual({ start: 28, length: 9 });
       let verse4p1Index = env.component.target!.getSegmentRange('verse_1_4/p_1')!.index;
-      expect(env.getNoteThreadEditorPosition('thread05')).toEqual(verse4p1Index);
+      expect(env.getNoteThreadEditorPosition('dataid05')).toEqual(verse4p1Index);
       // user deletes all of the text in segment before
       const range = env.component.target!.getSegmentRange('verse_1_4')!;
       env.targetEditor.setSelection(range.index, range.length, 'user');
@@ -2039,7 +2039,7 @@ describe('EditorComponent', () => {
       env.wait();
       env.updateParams({ projectId: 'project01', bookId: 'MAT' });
       env.wait();
-      let note5Index: number = env.getNoteThreadEditorPosition('thread05');
+      let note5Index: number = env.getNoteThreadEditorPosition('dataid05');
       verse4p1Index = env.component.target!.getSegmentRange('verse_1_4/p_1')!.index;
       expect(note5Index).toEqual(verse4p1Index);
 
@@ -2059,7 +2059,7 @@ describe('EditorComponent', () => {
       env.wait();
       expect(noteThreadDoc.data!.position).toEqual({ start: nextSegmentLength + text.length, length: 9 });
       verse4p1Index = env.component.target!.getSegmentRange('verse_1_4/p_1')!.index;
-      note5Index = env.getNoteThreadEditorPosition('thread05');
+      note5Index = env.getNoteThreadEditorPosition('dataid05');
       expect(note5Index).toEqual(verse4p1Index);
       env.dispose();
     }));
@@ -2068,11 +2068,11 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
       expect(noteThreadDoc.data!.position).toEqual({ start: 8, length: 9 });
 
       // The remote user inserts text after the thread01 note
-      let notePosition: number = env.getNoteThreadEditorPosition('thread01');
+      let notePosition: number = env.getNoteThreadEditorPosition('dataid01');
       let remoteEditPositionAfterNote: number = 4;
       let noteCountBeforePosition: number = 1;
       // Text position in the text doc at which the remote user edits
@@ -2101,12 +2101,12 @@ describe('EditorComponent', () => {
       expect(verse1Contents.ops![2].attributes!['text-anchor']).withContext('inserted text has formatting').toBe(true);
 
       // The remote user selects some text and pastes in a replacement
-      notePosition = env.getNoteThreadEditorPosition('thread02');
+      notePosition = env.getNoteThreadEditorPosition('dataid02');
       // 1 note from verse 1, and 1 in verse 3 before the selection point
       noteCountBeforePosition = 2;
       remoteEditPositionAfterNote = 5;
       remoteEditTextPos = env.getRemoteEditPosition(notePosition, remoteEditPositionAfterNote, noteCountBeforePosition);
-      const originalNotePosInVerse: number = env.getNoteThreadDoc('project01', 'thread03').data!.position.start;
+      const originalNotePosInVerse: number = env.getNoteThreadDoc('project01', 'dataid03').data!.position.start;
       // $*targ|->et: cha<-|pter 1, $$verse 3.
       //          ------- 7 characters get replaced locally by the text 'defgh'
       const selectionLength: number = 'et: cha'.length;
@@ -2134,15 +2134,15 @@ describe('EditorComponent', () => {
       // SUT 3
       env.wait();
       expect(env.component.target!.getSegmentText('verse_1_3')).toEqual('targdefghpter ' + 'erse 3.');
-      expect(env.getNoteThreadDoc('project01', 'thread03').data!.position.start).toEqual(originalNotePosInVerse);
-      expect(env.getNoteThreadDoc('project01', 'thread04').data!.position.start).toEqual(originalNotePosInVerse);
+      expect(env.getNoteThreadDoc('project01', 'dataid03').data!.position.start).toEqual(originalNotePosInVerse);
+      expect(env.getNoteThreadDoc('project01', 'dataid04').data!.position.start).toEqual(originalNotePosInVerse);
       const verse3Index: number = env.component.target!.getSegmentRange('verse_1_3')!.index;
       // The note is re-embedded at the position in the note thread doc.
       // Applying remote changes must not affect text anchors
       let notesBefore: number = 1;
-      expect(env.getNoteThreadEditorPosition('thread03')).toEqual(verse3Index + originalNotePosInVerse + notesBefore);
+      expect(env.getNoteThreadEditorPosition('dataid03')).toEqual(verse3Index + originalNotePosInVerse + notesBefore);
       notesBefore = 2;
-      expect(env.getNoteThreadEditorPosition('thread04')).toEqual(verse3Index + originalNotePosInVerse + notesBefore);
+      expect(env.getNoteThreadEditorPosition('dataid04')).toEqual(verse3Index + originalNotePosInVerse + notesBefore);
       env.dispose();
     }));
 
@@ -2151,15 +2151,15 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const noteThread1Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
-      const noteThread4Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread04');
+      const noteThread1Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
+      const noteThread4Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid04');
       const originalNoteThread1TextPos: TextAnchor = noteThread1Doc.data!.position;
       const originalNoteThread4TextPos: TextAnchor = noteThread4Doc.data!.position;
       expect(originalNoteThread1TextPos).toEqual({ start: 8, length: 9 });
       expect(originalNoteThread4TextPos).toEqual({ start: 20, length: 5 });
 
       // simulate text changes at current segment
-      let notePosition: number = env.getNoteThreadEditorPosition('thread04');
+      let notePosition: number = env.getNoteThreadEditorPosition('dataid04');
       let remoteEditPositionAfterNote: number = 1;
       // 1 note in verse 1, and 3 in verse 3
       let noteCountBeforePosition: number = 4;
@@ -2182,7 +2182,7 @@ describe('EditorComponent', () => {
       expect(noteThread4Doc.data!.position).toEqual(originalNoteThread4TextPos);
 
       // simulate text changes at a different segment
-      notePosition = env.getNoteThreadEditorPosition('thread01');
+      notePosition = env.getNoteThreadEditorPosition('dataid01');
       noteCountBeforePosition = 1;
       // target: $c|hapter 1, verse 1.
       remoteEditTextPos = env.getRemoteEditPosition(notePosition, remoteEditPositionAfterNote, noteCountBeforePosition);
@@ -2206,7 +2206,7 @@ describe('EditorComponent', () => {
       deltaOps = [{ retain: remoteEditTextPos }, { insert: insert }];
       const insertDelta = new Delta(deltaOps);
       textDoc.submit(insertDelta);
-      const note1Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const note1Doc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
       const anchor: TextAnchor = { start: 8 + insert.length, length: 12 };
       note1Doc.submitJson0Op(op => op.set(nt => nt.position, anchor));
 
@@ -2214,13 +2214,13 @@ describe('EditorComponent', () => {
       env.wait();
       expect(env.component.target!.getSegmentText('verse_1_1')).toEqual('target: ' + insert + 'cdefhapter 1, verse 1.');
       const range: RangeStatic = env.component.target!.getSegmentRange('verse_1_1')!;
-      expect(env.getNoteThreadEditorPosition('thread01')).toEqual(range.index + anchor.start);
+      expect(env.getNoteThreadEditorPosition('dataid01')).toEqual(range.index + anchor.start);
       const contents = env.targetEditor.getContents(range.index, range.length);
       expect(contents.ops![0].insert).toEqual('target: ' + insert);
       expect(contents.ops![0].attributes!['text-anchor']).toBeUndefined();
 
       // simulate text changes just after a note embed
-      notePosition = env.getNoteThreadEditorPosition('thread01');
+      notePosition = env.getNoteThreadEditorPosition('dataid01');
       remoteEditPositionAfterNote = 0;
       noteCountBeforePosition = 1;
       // target: before$|cdefhapter 1, verse 1.
@@ -2232,7 +2232,7 @@ describe('EditorComponent', () => {
 
       // SUT 4
       env.wait();
-      expect(env.getNoteThreadEditorPosition('thread01')).toEqual(notePosition);
+      expect(env.getNoteThreadEditorPosition('dataid01')).toEqual(notePosition);
       expect(env.component.target!.getSegmentText('verse_1_1')).toEqual(
         'target: before' + insert + 'cdefhapter 1, verse 1.'
       );
@@ -2272,7 +2272,7 @@ describe('EditorComponent', () => {
       let noteThreadIcon = verse3Element.querySelector('.note-thread-segment display-note');
       expect(noteThreadIcon).not.toBeNull();
       // Insert text next to thread02 icon
-      const notePosition: number = env.getNoteThreadEditorPosition('thread02');
+      const notePosition: number = env.getNoteThreadEditorPosition('dataid02');
       const remoteEditPositionAfterNote: number = 0;
       const noteCountBeforePosition = 2;
       // $|*target: chapter 1, $$verse 3.
@@ -2287,7 +2287,7 @@ describe('EditorComponent', () => {
       textDoc.submit(new Delta(deltaOps));
 
       env.wait();
-      expect(env.getNoteThreadEditorPosition('thread02')).toEqual(notePosition);
+      expect(env.getNoteThreadEditorPosition('dataid02')).toEqual(notePosition);
       verse3Element = env.getSegmentElement('verse_1_3')!;
       noteThreadIcon = verse3Element.querySelector('.note-thread-segment display-note');
       expect(noteThreadIcon).not.toBeNull();
@@ -2306,19 +2306,19 @@ describe('EditorComponent', () => {
       env.wait();
 
       // undo deleting just the note
-      const noteThread1: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const noteThread1: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
       const noteThread1Anchor: TextAnchor = { start: 8, length: 9 };
       expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
       const textDoc: TextDoc = env.getTextDoc(new TextDocId('project01', 40, 1));
       expect(textDoc.data!.ops![3].insert).toEqual('target: chapter 1, verse 1.');
-      const note1Position: number = env.getNoteThreadEditorPosition('thread01');
+      const note1Position: number = env.getNoteThreadEditorPosition('dataid01');
       // target: |->$<-|chapter 1, $verse 1.
       env.targetEditor.setSelection(note1Position, 1, 'user');
       env.deleteCharacters();
-      const positionAfterDelete: number = env.getNoteThreadEditorPosition('thread01');
+      const positionAfterDelete: number = env.getNoteThreadEditorPosition('dataid01');
       expect(positionAfterDelete).toEqual(note1Position);
       env.triggerUndo();
-      expect(env.getNoteThreadEditorPosition('thread01')).toEqual(note1Position);
+      expect(env.getNoteThreadEditorPosition('dataid01')).toEqual(note1Position);
       expect(env.component.target!.getSegmentText('verse_1_1')).toBe('target: chapter 1, verse 1.');
       expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
 
@@ -2328,10 +2328,10 @@ describe('EditorComponent', () => {
       // target|->: $ch<-|apter 1, $verse 1.
       env.targetEditor.setSelection(note1Position - beforeNoteLength, deleteLength, 'user');
       env.deleteCharacters();
-      let newNotePosition: number = env.getNoteThreadEditorPosition('thread01');
+      let newNotePosition: number = env.getNoteThreadEditorPosition('dataid01');
       expect(newNotePosition).toEqual(note1Position - beforeNoteLength);
       env.triggerUndo();
-      expect(env.getNoteThreadEditorPosition('thread01')).toEqual(note1Position);
+      expect(env.getNoteThreadEditorPosition('dataid01')).toEqual(note1Position);
       expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
 
       // undo deleting just the note when note thread doc has history
@@ -2347,7 +2347,7 @@ describe('EditorComponent', () => {
       // target|->: $chapter<-| 1: $verse 1.
       env.targetEditor.setSelection(note1Position - beforeNoteLength, deleteLength, 'user');
       env.deleteCharacters();
-      newNotePosition = env.getNoteThreadEditorPosition('thread01');
+      newNotePosition = env.getNoteThreadEditorPosition('dataid01');
       const range = env.component.target!.getSegmentRange('verse_1_1')!;
       // note moves to the beginning of the verse
       expect(newNotePosition).toEqual(range.index);
@@ -2355,43 +2355,43 @@ describe('EditorComponent', () => {
       expect(noteThread1.data!.position).toEqual({ start: 8, length: 9 });
 
       // undo deleting a second note in verse does not affect first note
-      const note6Position: number = env.getNoteThreadEditorPosition('thread06');
-      const noteThread6: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread06');
+      const note6Position: number = env.getNoteThreadEditorPosition('dataid06');
+      const noteThread6: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid06');
       deleteLength = 3;
       const text = 'abc';
       // target: $chapter 1, |->$ve<-|rse 1.
       env.targetEditor.setSelection(note6Position, deleteLength, 'api');
       env.typeCharacters(text);
-      newNotePosition = env.getNoteThreadEditorPosition('thread06');
+      newNotePosition = env.getNoteThreadEditorPosition('dataid06');
       expect(newNotePosition).toEqual(note6Position + text.length);
       env.triggerUndo();
-      expect(env.getNoteThreadEditorPosition('thread06')).toEqual(note6Position);
+      expect(env.getNoteThreadEditorPosition('dataid06')).toEqual(note6Position);
       expect(noteThread6.data!.position).toEqual(noteThread6Anchor);
       expect(noteThread1.data!.position).toEqual(noteThread1Anchor);
       expect(textDoc.data!.ops![3].insert).toEqual('target: chapter 1, verse 1.');
 
       // undo deleting multiple notes
-      const noteThread3: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread03');
-      const noteThread4: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread04');
+      const noteThread3: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid03');
+      const noteThread4: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid04');
       const noteThread3Anchor: TextAnchor = { start: 20, length: 7 };
       const noteThread4Anchor: TextAnchor = { start: 20, length: 5 };
       expect(noteThread3.data!.position).toEqual(noteThread3Anchor);
       expect(noteThread4.data!.position).toEqual(noteThread4Anchor);
       expect(textDoc.data!.ops![8].insert).toEqual('target: chapter 1, verse 3.');
-      const note3Position: number = env.getNoteThreadEditorPosition('thread03');
-      const note4Position: number = env.getNoteThreadEditorPosition('thread04');
+      const note3Position: number = env.getNoteThreadEditorPosition('dataid03');
+      const note4Position: number = env.getNoteThreadEditorPosition('dataid04');
       deleteLength = 6;
       // $target: chapter 1|->, $$ve<-|rse 3.
       env.targetEditor.setSelection(note3Position - beforeNoteLength, deleteLength, 'api');
       env.deleteCharacters();
-      newNotePosition = env.getNoteThreadEditorPosition('thread03');
+      newNotePosition = env.getNoteThreadEditorPosition('dataid03');
       expect(newNotePosition).toEqual(note3Position - beforeNoteLength);
-      newNotePosition = env.getNoteThreadEditorPosition('thread04');
+      newNotePosition = env.getNoteThreadEditorPosition('dataid04');
       expect(newNotePosition).toEqual(note4Position - beforeNoteLength);
       env.triggerUndo();
       env.wait();
-      expect(env.getNoteThreadEditorPosition('thread03')).toEqual(note3Position);
-      expect(env.getNoteThreadEditorPosition('thread04')).toEqual(note4Position);
+      expect(env.getNoteThreadEditorPosition('dataid03')).toEqual(note3Position);
+      expect(env.getNoteThreadEditorPosition('dataid04')).toEqual(note4Position);
       expect(noteThread3.data!.position).toEqual(noteThread3Anchor);
       expect(noteThread4.data!.position).toEqual(noteThread4Anchor);
       expect(textDoc.data!.ops![8].insert).toEqual('target: chapter 1, verse 3.');
@@ -2403,7 +2403,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const threadId: string = 'thread01';
+      const threadDataId: string = 'dataid01';
       const projectId: string = 'project01';
       const currentIconTag: string = '01flag1';
       const newIconTag: string = '02tag1';
@@ -2416,7 +2416,7 @@ describe('EditorComponent', () => {
       );
 
       // Update the last note on the thread as that is the icon displayed
-      const noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadId);
+      const noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadDataId);
       const index: number = noteThread.data!.notes.length - 1;
       const note: Note = noteThread.data!.notes[index];
       note.tagId = 2;
@@ -2430,14 +2430,14 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-      let iconElement02: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'thread02')!;
+      let iconElement02: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'dataid02')!;
       iconElement02.click();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
-      let iconElement03: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'thread03')!;
+      let iconElement03: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'dataid03')!;
       iconElement03.click();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).twice();
 
-      const notePosition: number = env.getNoteThreadEditorPosition('thread02');
+      const notePosition: number = env.getNoteThreadEditorPosition('dataid02');
       const selectionIndex: number = notePosition + 1;
       env.targetEditor.setSelection(selectionIndex, 'user');
       env.wait();
@@ -2445,12 +2445,12 @@ describe('EditorComponent', () => {
 
       // SUT
       env.triggerUndo();
-      iconElement02 = env.getNoteThreadIconElement('verse_1_3', 'thread02')!;
+      iconElement02 = env.getNoteThreadIconElement('verse_1_3', 'dataid02')!;
       iconElement02.click();
       env.wait();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).thrice();
       expect(iconElement02.parentElement!.tagName.toLowerCase()).toBe('display-text-anchor');
-      iconElement03 = env.getNoteThreadIconElement('verse_1_3', 'thread03')!;
+      iconElement03 = env.getNoteThreadIconElement('verse_1_3', 'dataid03')!;
       iconElement03.click();
       env.wait();
       // ensure that clicking subsequent notes in a verse still works
@@ -2466,7 +2466,7 @@ describe('EditorComponent', () => {
       const segmentRange = env.component.target!.getSegmentRange(segmentRef)!;
       env.targetEditor.setSelection(segmentRange.index);
       expect(env.activeElementClasses).toContain('ql-editor');
-      const iconElement: HTMLElement = env.getNoteThreadIconElement(segmentRef, 'thread02')!;
+      const iconElement: HTMLElement = env.getNoteThreadIconElement(segmentRef, 'dataid02')!;
       iconElement.click();
       const element: HTMLElement = env.targetTextEditor.querySelector(
         'usx-segment[data-segment="' + segmentRef + '"]'
@@ -2497,9 +2497,9 @@ describe('EditorComponent', () => {
       );
       env.wait();
 
-      const noteThreadElem: HTMLElement | null = env.getNoteThreadIconElement('verse_1_1', 'thread01');
+      const noteThreadElem: HTMLElement | null = env.getNoteThreadIconElement('verse_1_1', 'dataid01');
       expect(noteThreadElem).toBeNull();
-      const sfNoteElem: HTMLElement | null = env.getNoteThreadIconElement('verse_1_4', threadId);
+      const sfNoteElem: HTMLElement | null = env.getNoteThreadIconElement('verse_1_4', 'dataidthread06');
       expect(sfNoteElem).toBeTruthy();
       env.dispose();
     }));
@@ -2653,7 +2653,7 @@ describe('EditorComponent', () => {
       );
       env.wait();
 
-      const sfNote = env.getNoteThreadIconElement('verse_1_4', 'thread06')!;
+      const sfNote = env.getNoteThreadIconElement('verse_1_4', 'dataid06')!;
       expect(sfNote.getAttribute('style')).toEqual('--icon-file: url(/assets/icons/TagIcons/' + SF_TAG_ICON + '.png);');
       env.dispose();
     }));
@@ -2716,21 +2716,21 @@ describe('EditorComponent', () => {
 
     it('allows adding a note to an existing thread', fakeAsync(() => {
       const projectId: string = 'project01';
-      const threadId: string = 'thread04';
+      const threadDataId: string = 'dataid04';
       const segmentRef: string = 'verse_1_3';
       const env = new TestEnvironment();
       const content: string = 'content in the thread';
-      let noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadId);
+      let noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadDataId);
       expect(noteThread.data!.notes.length).toEqual(1);
       env.setProjectUserConfig();
       env.wait();
-      const noteThreadIconElem: HTMLElement = env.getNoteThreadIconElement(segmentRef, threadId)!;
+      const noteThreadIconElem: HTMLElement = env.getNoteThreadIconElement(segmentRef, threadDataId)!;
       noteThreadIconElem.click();
       env.mockNoteDialogRef.close({ noteContent: content });
       env.wait();
-      noteThread = env.getNoteThreadDoc(projectId, threadId);
+      noteThread = env.getNoteThreadDoc(projectId, threadDataId);
       expect(noteThread.data!.notes.length).toEqual(2);
-      expect(noteThread.data!.notes[1].threadId).toEqual(threadId);
+      expect(noteThread.data!.notes[1].threadId).toEqual(threadDataId);
       expect(noteThread.data!.notes[1].content).toEqual(content);
       expect(noteThread.data!.notes[1].tagId).toBe(undefined);
 
@@ -2741,7 +2741,7 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
       env.wait();
-      expect(env.getNoteThreadIconElement('verse_1_3', 'thread02')).not.toBeNull();
+      expect(env.getNoteThreadIconElement('verse_1_3', 'dataid02')).not.toBeNull();
       env.setSelectionAndInsertNote('verse_1_3');
       const noteDialogResult: NoteDialogResult = { noteContent: 'newly created comment', noteDataId: 'notenew01' };
       env.mockNoteDialogRef.close(noteDialogResult);
@@ -2816,7 +2816,7 @@ describe('EditorComponent', () => {
       );
       env.wait();
 
-      const elem: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'thread06')!;
+      const elem: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'dataid06')!;
       elem.click();
       env.mockNoteDialogRef.close();
       env.wait();
@@ -2846,7 +2846,7 @@ describe('EditorComponent', () => {
       const segmentRef3 = 'verse_1_3';
       const thread2Position: number = env.getNoteThreadEditorPosition('thread02');
       env.targetEditor.setSelection(thread2Position, 'user');
-      const noteElem: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'thread02')!;
+      const noteElem: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'dataid02')!;
       noteElem.click();
       env.wait();
       expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('hidden');
@@ -2899,7 +2899,7 @@ describe('EditorComponent', () => {
 
       env.clickSegmentRef('verse_1_3');
       expect(window.getComputedStyle(env.insertNoteFab.nativeElement)['visibility']).toBe('hidden');
-      const noteElem: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'thread06')!;
+      const noteElem: HTMLElement = env.getNoteThreadIconElement('verse_1_1', 'dataid06')!;
       noteElem.click();
       env.wait();
       env.mockNoteDialogRef.close();
@@ -2991,7 +2991,7 @@ describe('EditorComponent', () => {
       let noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
       expect(noteThreadEmbedCount).toEqual(5);
 
-      env.resolveNote('project01', 'thread01');
+      env.resolveNote('project01', 'dataid01');
       contents = env.targetEditor.getContents();
       noteThreadEmbedCount = env.countNoteThreadEmbeds(contents.ops!);
       expect(noteThreadEmbedCount).toEqual(4);
@@ -3003,7 +3003,7 @@ describe('EditorComponent', () => {
       env.setProjectUserConfig();
       env.wait();
 
-      const threadId = 'thread02';
+      const threadId = 'dataid02';
       const segmentRef = 'verse_1_3';
       let thread2Elem: HTMLElement | null = env.getNoteThreadIconElement(segmentRef, threadId);
       expect(thread2Elem).not.toBeNull();
@@ -3012,9 +3012,9 @@ describe('EditorComponent', () => {
       expect(thread2Elem).toBeNull();
 
       // notes respond to edits after note icon removed
-      const note1position: number = env.getNoteThreadEditorPosition('thread01');
+      const note1position: number = env.getNoteThreadEditorPosition('dataid01');
       env.targetEditor.setSelection(note1position + 2, 'user');
-      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'thread01');
+      const noteThreadDoc: NoteThreadDoc = env.getNoteThreadDoc('project01', 'dataid01');
       const originalPos: TextAnchor = { start: 8, length: 9 };
       expect(noteThreadDoc.data!.position).toEqual(originalPos);
       env.typeCharacters('t');
@@ -3766,14 +3766,14 @@ class TestEnvironment {
     return this.realtimeService.get<TextDoc>(TextDoc.COLLECTION, textId.toString());
   }
 
-  getNoteThreadDoc(projectId: string, threadId: string): NoteThreadDoc {
-    const docId: string = projectId + ':' + threadId;
+  getNoteThreadDoc(projectId: string, threadDataId: string): NoteThreadDoc {
+    const docId: string = projectId + ':' + threadDataId;
     return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, docId);
   }
 
-  getNoteThreadIconElement(segmentRef: string, threadId: string): HTMLElement | null {
+  getNoteThreadIconElement(segmentRef: string, threadDataId: string): HTMLElement | null {
     return this.fixture.nativeElement.querySelector(
-      `usx-segment[data-segment=${segmentRef}] display-note[data-thread-id=${threadId}]`
+      `usx-segment[data-segment=${segmentRef}] display-note[data-thread-id=${threadDataId}]`
     );
   }
 
@@ -3785,17 +3785,17 @@ class TestEnvironment {
   }
 
   /** Editor position of note thread. */
-  getNoteThreadEditorPosition(threadId: string): number {
-    return this.component.target!.embeddedElements.get(threadId)!;
+  getNoteThreadEditorPosition(threadDataId: string): number {
+    return this.component.target!.embeddedElements.get(threadDataId)!;
   }
 
   getRemoteEditPosition(notePosition: number, positionAfter: number, noteCount: number): number {
     return notePosition + 1 + positionAfter - noteCount;
   }
 
-  isNoteIconHighlighted(threadId: string): boolean {
+  isNoteIconHighlighted(threadDataId: string): boolean {
     const thread: HTMLElement | null = this.targetTextEditor.querySelector(
-      `usx-segment display-note[data-thread-id='${threadId}']`
+      `usx-segment display-note[data-thread-id='${threadDataId}']`
     );
     expect(thread).withContext('note thread highlight').not.toBeNull();
     return thread!.classList.contains('note-thread-highlight');
@@ -4012,6 +4012,7 @@ class TestEnvironment {
     setTagIdUndefined?: boolean
   ): void {
     const threadId: string = typeof threadNum === 'string' ? threadNum : `thread0${threadNum}`;
+    const dataId: string = typeof threadNum === 'string' ? `dataid${threadNum}` : `dataid0${threadNum}`;
     const assignedUser: ParatextUserProfile | undefined = this.paratextUsersOnProject.find(
       u => u.sfUserId === assignedSFUserRef
     );
@@ -4042,10 +4043,11 @@ class TestEnvironment {
 
     const verseRef: VerseRef = VerseRef.parse(verseStr);
     this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
-      id: `project01:${threadId}`,
+      id: `project01:${dataId}`,
       data: {
         projectRef: 'project01',
-        dataId: threadId,
+        dataId,
+        threadId,
         verseRef: fromVerseRef(verseRef),
         ownerRef: 'user01',
         originalSelectedText: selectedText,
@@ -4060,8 +4062,8 @@ class TestEnvironment {
     });
   }
 
-  reattachNote(projectId: string, threadId: string, verseStr: string, position: TextAnchor): void {
-    const noteThreadDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
+  reattachNote(projectId: string, threadDataId: string, verseStr: string, position: TextAnchor): void {
+    const noteThreadDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadDataId);
     const template: Note = noteThreadDoc.data!.notes[0];
     const verseRef: VerseRef = VerseRef.parse(verseStr);
     const contextAfter: string = ` ${verseRef.verseNum}.`;
@@ -4089,8 +4091,8 @@ class TestEnvironment {
     });
   }
 
-  convertToConflictNote(projectId: string, threadId: string): void {
-    const noteThreadDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadId);
+  convertToConflictNote(projectId: string, threadDataId: string): void {
+    const noteThreadDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadDataId);
     noteThreadDoc.submitJson0Op(op => {
       op.set<string>(nt => nt.notes[0].conflictType, NoteConflictType.VerseTextConflict);
       op.set<string>(nt => nt.notes[0].type, NoteType.Conflict);

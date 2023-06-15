@@ -1998,6 +1998,72 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task GetNoteThreadChanges_DeletedThreadRestored()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        string threadId = "thread1";
+        env.AddNoteThreadData(
+            new[]
+            {
+                new ThreadComponents
+                {
+                    threadNum = 1,
+                    noteCount = 1,
+                    deletedNotes = new[] { true }
+                }
+            }
+        );
+
+        env.AddParatextComments(
+            new[]
+            {
+                new ThreadComponents
+                {
+                    threadNum = 1,
+                    noteCount = 1,
+                    username = env.Username01
+                }
+            }
+        );
+        string dataId = "newdataid1";
+        env.MockGuidService.NewObjectId().Returns(dataId);
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
+            conn,
+            new[] { threadId }
+        );
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
+        var ptProjectUsers = new Dictionary<string, ParatextUserProfile>
+        {
+            {
+                env.Username01,
+                new ParatextUserProfile
+                {
+                    Username = env.Username01,
+                    OpaqueUserId = "syncuser01",
+                    SFUserId = env.User01
+                }
+            }
+        };
+        var changes = env.Service.GetNoteThreadChanges(
+            userSecret,
+            paratextId,
+            40,
+            noteThreadDocs,
+            chapterDeltas,
+            ptProjectUsers
+        );
+
+        NoteThreadChange change = changes.Single();
+        Assert.That(change.ThreadId, Is.EqualTo(threadId));
+        Assert.That(change.NotesAdded.Single().DataId, Is.EqualTo(dataId));
+    }
+
+    [Test]
     public async Task UpdateParatextComments_AddsComment()
     {
         var env = new TestEnvironment();

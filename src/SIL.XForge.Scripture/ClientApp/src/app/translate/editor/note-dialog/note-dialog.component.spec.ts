@@ -10,6 +10,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import {
   AssignedUsers,
+  getNoteThreadDocId,
   NoteConflictType,
   NoteStatus,
   NoteThread,
@@ -369,7 +370,7 @@ describe('NoteDialogComponent', () => {
   it('does not save if empty note added to an existing thread', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     expect(env.noteInputElement).toBeTruthy();
-    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('thread01');
+    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('dataid01');
     expect(noteThread.data!.notes.length).toEqual(5);
     env.submit();
     expect(noteThread.data!.notes.length).toEqual(5);
@@ -389,7 +390,7 @@ describe('NoteDialogComponent', () => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     // note03 is marked as deleted
     expect(env.notes.length).toEqual(4);
-    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('thread01');
+    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('dataid01');
     expect(noteThread.data!.notes[4].content).toEqual('note05');
     const noteNumbers = [1, 2, 3];
     noteNumbers.forEach(n => expect(env.noteHasEditActions(n)).toBe(false));
@@ -409,7 +410,7 @@ describe('NoteDialogComponent', () => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     // note03 is marked as deleted
     expect(env.notes.length).toEqual(4);
-    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('thread01');
+    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('dataid01');
     expect(noteThread.data!.notes.length).toEqual(5);
     expect(env.noteHasEditActions(3)).toBe(false);
     expect(env.noteHasEditActions(4)).toBe(true);
@@ -434,7 +435,7 @@ describe('NoteDialogComponent', () => {
   it('deletes the thread if the last note is deleted', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.defaultNoteThread });
     expect(env.notes.length).toEqual(1);
-    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('thread01');
+    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('dataid01');
     expect(noteThread.data).toBeTruthy();
     expect(env.noteHasEditActions(1)).toBe(true);
     env.clickDeleteNote();
@@ -460,7 +461,7 @@ describe('NoteDialogComponent', () => {
     noteThread.notes.push(note);
     env = new TestEnvironment({ noteThread });
     expect(env.notes.length).toEqual(1);
-    const threadDoc: NoteThreadDoc = env.getNoteThreadDoc('thread01');
+    const threadDoc: NoteThreadDoc = env.getNoteThreadDoc('dataid01');
     expect(threadDoc).toBeTruthy();
     expect(env.noteHasEditActions(1)).toBe(true);
     env.clickDeleteNote();
@@ -572,7 +573,8 @@ class TestEnvironment {
       originalContextBefore: '',
       originalContextAfter: '',
       originalSelectedText: '',
-      dataId: 'thread01',
+      dataId: 'dataid01',
+      threadId: 'thread01',
       ownerRef: 'user01',
       position: { start: 0, length: 0 },
       projectRef: TestEnvironment.PROJECT01,
@@ -604,7 +606,8 @@ class TestEnvironment {
       originalContextBefore: 'before selection ',
       originalContextAfter: ' after selection',
       originalSelectedText: 'selected text',
-      dataId: 'thread01',
+      dataId: 'dataid01',
+      threadId: 'thread01',
       ownerRef: 'user01',
       position: { start: 1, length: 1 },
       projectRef: TestEnvironment.PROJECT01,
@@ -875,8 +878,8 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  getNoteThreadDoc(threadId: string): NoteThreadDoc {
-    const id: string = [TestEnvironment.PROJECT01, threadId].join(':');
+  getNoteThreadDoc(threadDataId: string): NoteThreadDoc {
+    const id: string = getNoteThreadDocId(TestEnvironment.PROJECT01, threadDataId);
     return this.realtimeService.get<NoteThreadDoc>(NoteThreadDoc.COLLECTION, id);
   }
 
