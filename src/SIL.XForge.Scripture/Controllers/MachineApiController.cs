@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -32,6 +33,36 @@ public class MachineApiController : ControllerBase
         _userAccessor = userAccessor;
         _exceptionHandler = exceptionHandler;
         _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
+    }
+
+    [HttpPost(MachineApi.CancelPreTranslationBuild)]
+    public async Task<ActionResult> CancelPreTranslationBuildAsync(
+        [FromBody] string sfProjectId,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await _machineApiService.CancelPreTranslationBuildAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                cancellationToken
+            );
+            return Ok();
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (NotSupportedException)
+        {
+            return new StatusCodeResult(405);
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
     }
 
     [HttpGet(MachineApi.GetBuild)]

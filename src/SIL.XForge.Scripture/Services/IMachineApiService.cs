@@ -7,6 +7,7 @@ namespace SIL.XForge.Scripture.Services;
 
 public interface IMachineApiService
 {
+    Task CancelPreTranslationBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
     Task<BuildDto?> GetBuildAsync(
         string curUserId,
         string sfProjectId,

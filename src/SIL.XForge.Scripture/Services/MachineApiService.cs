@@ -80,6 +80,38 @@ public class MachineApiService : IMachineApiService
         _translationEnginesClient = translationEnginesClient;
     }
 
+    public async Task CancelPreTranslationBuildAsync(
+        string curUserId,
+        string sfProjectId,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        await EnsurePermissionAsync(curUserId, sfProjectId);
+
+        // We only support Serval for canceling the current build
+        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
+        {
+            throw new DataNotFoundException("The translation engine does not support pre-translations");
+        }
+
+        // Get the translation engine id
+        string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);
+        if (string.IsNullOrWhiteSpace(translationEngineId))
+        {
+            throw new DataNotFoundException("The translation engine is not configured");
+        }
+
+        try
+        {
+            await _translationEnginesClient.CancelBuildAsync(translationEngineId, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            await ProcessServalApiExceptionAsync(e);
+        }
+    }
+
     public async Task<BuildDto?> GetBuildAsync(
         string curUserId,
         string sfProjectId,
@@ -708,6 +740,8 @@ public class MachineApiService : IMachineApiService
                 throw new ForbiddenException();
             case ServalApiException { StatusCode: StatusCodes.Status404NotFound }:
                 throw new DataNotFoundException("Entity Deleted");
+            case ServalApiException { StatusCode: StatusCodes.Status405MethodNotAllowed }:
+                throw new NotSupportedException();
             case ServalApiException { StatusCode: StatusCodes.Status408RequestTimeout }:
                 return;
             case BrokenCircuitException
