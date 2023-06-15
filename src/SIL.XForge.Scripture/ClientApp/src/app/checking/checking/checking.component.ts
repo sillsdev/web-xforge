@@ -14,7 +14,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { merge, Subscription } from 'rxjs';
+import { merge, of, Subscription } from 'rxjs';
 import { filter, map, take } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -248,30 +248,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     if (book === this.book) {
       return;
     }
-    const questionDocs = this.questionDocs;
-    if (this.projectDoc == null || this.projectDoc.data == null || questionDocs.length === 0) {
+    if (this.projectDoc == null || this.projectDoc.data == null) {
       return;
     }
-    /** Get the book from the first question if showing all the questions
-     *  - Note that this only happens on first load as the book will be changed
-     *    later on via other methods
-     */
-    if (book === 0) {
-      book = undefined;
-      if (this.questionsPanel != null) {
-        const question = this.questionsPanel.activateStoredQuestion(questionDocs);
-        if (question.data != null) {
-          book = question.data.verseRef.bookNum;
-        }
-      }
-    }
+
     this._book = book;
     this.text = this.projectDoc.data.texts.find(t => t.bookNum === book);
     this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
     this._chapter = undefined;
-    if (this.questionsPanel != null) {
-      this.chapter = this.questionsPanel.activeQuestionChapter;
-    }
     this.triggerUpdate();
   }
 
@@ -430,13 +414,24 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           }
         });
         const prevBook = this.book;
-        this.setBookSub = this.questionsQuery.ready$.pipe(take(1)).subscribe(() => (this.book = bookNum));
-        // There may be some race conditions which means the questions query is
-        // ready before we subscribed
-        if (this.questionsQuery.ready) {
-          this.setBookSub.unsubscribe();
-          this.book = bookNum;
-        }
+        // There may be some race conditions which means the questions query is ready before we subscribe to ready$
+        // The merge does an additional subscribe on the state of the ready boolean for when it is true
+        this.setBookSub = merge([this.questionsQuery.ready$, of(this.questionsQuery.ready).pipe(filter(r => r))])
+          .pipe(take(1))
+          .subscribe(() => {
+            // Get the book from the first question if showing all the questions
+            if (this.showAllBooks) {
+              if (this.questionsPanel != null && this.questionDocs.length > 0) {
+                const question = this.questionsPanel.activateStoredQuestion(this.questionDocs);
+                if (question.data != null) {
+                  this.book = question.data.verseRef.bookNum;
+                }
+              }
+            } else {
+              this.book = bookNum;
+            }
+          });
+
         this.questionsSub = this.subscribe(
           merge(
             this.questionsQuery.ready$,
@@ -497,9 +492,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
-    if (this.questionsQuery != null) {
-      this.questionsQuery.dispose();
-    }
+    this.questionsQuery?.dispose();
+    this.setBookSub?.unsubscribe();
   }
 
   applyFontChange(fontSize: string): void {

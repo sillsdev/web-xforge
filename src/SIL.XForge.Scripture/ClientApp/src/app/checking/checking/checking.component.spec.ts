@@ -2007,11 +2007,11 @@ class TestEnvironment {
     const questionDoc = this.getQuestionDoc(dataId);
     this.ngZone.run(() => this.component.questionsPanel!.activateQuestion(questionDoc));
     tick();
-    this.fixture.detectChanges();
-    tick(this.questionReadTimer);
+    this.waitForQuestionTimersToComplete();
     const bookId: string = Canon.bookNumberToId(questionDoc.data!.verseRef.bookNum);
     this.setRouteSnapshot(bookId);
     this.params$.next({ projectId: 'project01', bookId });
+    this.waitForQuestionTimersToComplete();
   }
 
   getExportAnswerButton(index: number): DebugElement {
