@@ -19,6 +19,7 @@
     "page_not_found": "Page not found",
     "password_reset_email_sent": "We've just sent you an email to reset your password.",
     "product_version": "Product version: v{{ version }}",
+    "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "project_home": "Project home",
     "redirecting_in_moments": "Redirecting in a few moments...",
     "refresh": "Refresh",
@@ -294,10 +295,6 @@
   "dialog": {
     "cancel": "Cancel",
     "close": "Close"
-  },
-  "project_deleted_dialog": {
-    "ok": "OK",
-    "project_has_been_deleted": "The project has been deleted or is no longer accessible."
   },
   "scripture_chooser_dialog": {
     "choose_book": "Choose book",

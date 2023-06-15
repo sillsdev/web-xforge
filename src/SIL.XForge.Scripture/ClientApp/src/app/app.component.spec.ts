@@ -1,25 +1,27 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web';
+import { MdcDialog } from '@angular-mdc/web';
 import { CommonModule, Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService, LoginResult } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FileService } from 'xforge-common/file.service';
 import { LocationService } from 'xforge-common/location.service';
@@ -33,14 +35,12 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { environment } from '../environments/environment';
 import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
 import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
 import { SFProjectService } from './core/sf-project.service';
-import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 import { paratextUsersFromRoles } from './shared/test-utils';
 
@@ -58,6 +58,7 @@ const mockedPwaService = mock(PwaService);
 const mockedFileService = mock(FileService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedMdcDialog = mock(MdcDialog);
+const mockedDialogService = mock(DialogService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -103,7 +104,8 @@ describe('AppComponent', () => {
       { provide: PwaService, useMock: mockedPwaService },
       { provide: FileService, useMock: mockedFileService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
-      { provide: MdcDialog, useMock: mockedMdcDialog }
+      { provide: MdcDialog, useMock: mockedMdcDialog },
+      { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
 
@@ -237,7 +239,7 @@ describe('AppComponent', () => {
     expect(env.selectedProjectId).toEqual('project01');
     // SUT
     env.deleteProject('project01', false);
-    verify(mockedMdcDialog.open(ProjectDeletedDialogComponent, anything())).once();
+    verify(mockedDialogService.message(anything())).once();
     verify(mockedUserService.setCurrentProjectId(anything(), undefined)).once();
     env.confirmProjectDeletedDialog();
     // Get past setTimeout to navigation
@@ -266,7 +268,7 @@ describe('AppComponent', () => {
 
     expect(env.selectedProjectId).toEqual('project01');
     env.removeUserFromProject('project01');
-    verify(mockedMdcDialog.open(ProjectDeletedDialogComponent, anything())).once();
+    verify(mockedDialogService.message(anything())).once();
     env.confirmProjectDeletedDialog();
     // Get past setTimeout to navigation
     tick();
@@ -588,9 +590,7 @@ describe('AppComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, TestTranslocoModule],
-  declarations: [ProjectDeletedDialogComponent],
-  exports: [ProjectDeletedDialogComponent]
+  imports: [CommonModule, UICommonModule, TestTranslocoModule]
 })
 class DialogTestModule {}
 
@@ -610,7 +610,6 @@ class TestEnvironment {
     newlyLoggedIn: false,
     anonymousUser: false
   });
-  readonly mockedProjectDeletedDialogRef = mock<MdcDialogRef<ProjectDeletedDialogComponent>>(MdcDialogRef);
   readonly projectDeletedDialogRefAfterClosed$: Subject<string> = new Subject<string>();
   readonly comesOnline$: Subject<void> = new Subject<void>();
   private browserOnline$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
@@ -694,10 +693,6 @@ class TestEnvironment {
     }
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
     when(mockedPwaService.hasUpdate$).thenReturn(this.hasUpdate$);
-    when(mockedMdcDialog.open(ProjectDeletedDialogComponent, anything())).thenReturn(
-      instance(this.mockedProjectDeletedDialogRef)
-    );
-    when(this.mockedProjectDeletedDialogRef.afterClosed()).thenReturn(this.projectDeletedDialogRefAfterClosed$);
 
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);

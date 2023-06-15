@@ -21,7 +21,6 @@ import { AppComponent } from './app.component';
 import { CheckingModule } from './checking/checking.module';
 import { ConnectProjectComponent } from './connect-project/connect-project.component';
 import { CoreModule } from './core/core.module';
-import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { ProjectSelectComponent } from './project-select/project-select.component';
 import { ProjectComponent } from './project/project.component';
 import { ScriptureChooserDialogComponent } from './scripture-chooser-dialog/scripture-chooser-dialog.component';
@@ -42,7 +41,6 @@ import { SharedModule } from './shared/shared.module';
     ConnectProjectComponent,
     DeleteProjectDialogComponent,
     ProjectComponent,
-    ProjectDeletedDialogComponent,
     SettingsComponent,
     StartComponent,
     SyncComponent,
