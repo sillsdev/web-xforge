@@ -1214,8 +1214,11 @@ public class ParatextService : DisposableBase, IParatextService
         CommentTags commentTags = GetCommentTags(userSecret, paratextId);
         List<string> matchedThreadIds = new List<string>();
         List<NoteThreadChange> changes = new List<NoteThreadChange>();
+        IEnumerable<IDocument<NoteThread>> activeNoteThreadDocs = noteThreadDocs.Where(
+            nt => nt.Data.Notes.Any(n => !n.Deleted)
+        );
 
-        foreach (var threadDoc in noteThreadDocs)
+        foreach (var threadDoc in activeNoteThreadDocs)
         {
             List<string> matchedCommentIds = new List<string>();
             NoteThreadChange threadChange = new NoteThreadChange(
