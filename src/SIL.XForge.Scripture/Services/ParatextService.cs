@@ -981,7 +981,8 @@ public class ParatextService : DisposableBase, IParatextService
             Editable = scrText.Settings.Editable,
             DefaultFontSize = scrText.Settings.DefaultFontSize,
             DefaultFont = scrText.Settings.DefaultFont,
-            NoteTags = noteTags
+            NoteTags = noteTags,
+            LanguageTag = scrText.Settings.LanguageID?.Id,
         };
     }
 
