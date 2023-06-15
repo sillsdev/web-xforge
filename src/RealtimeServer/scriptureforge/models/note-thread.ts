@@ -55,6 +55,7 @@ export enum AssignedUsers {
 
 export interface NoteThread extends ProjectData {
   dataId: string;
+  threadId: string;
   verseRef: VerseRefData;
   notes: Note[];
   originalSelectedText: string;
