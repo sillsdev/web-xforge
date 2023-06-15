@@ -92,3 +92,7 @@ SelectChapter.play = async ({ canvasElement }) => {
   const chapter2 = await within(menu).findByText('2');
   userEvent.click(chapter2);
 };
+
+export const Arabic = Template.bind({});
+Arabic.args = { ...defaultArgs };
+Arabic.parameters = { locale: 'ar' };
