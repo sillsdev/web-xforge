@@ -241,7 +241,6 @@ describe('AppComponent', () => {
     env.deleteProject('project01', false);
     verify(mockedDialogService.message(anything())).once();
     verify(mockedUserService.setCurrentProjectId(anything(), undefined)).once();
-    env.confirmProjectDeletedDialog();
     // Get past setTimeout to navigation
     tick();
     env.fixture.detectChanges();
@@ -269,7 +268,6 @@ describe('AppComponent', () => {
     expect(env.selectedProjectId).toEqual('project01');
     env.removeUserFromProject('project01');
     verify(mockedDialogService.message(anything())).once();
-    env.confirmProjectDeletedDialog();
     // Get past setTimeout to navigation
     tick();
     expect(env.location.path()).toEqual('/projects');
@@ -610,7 +608,6 @@ class TestEnvironment {
     newlyLoggedIn: false,
     anonymousUser: false
   });
-  readonly projectDeletedDialogRefAfterClosed$: Subject<string> = new Subject<string>();
   readonly comesOnline$: Subject<void> = new Subject<void>();
   private browserOnline$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   private webSocketOnline$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
@@ -933,10 +930,6 @@ class TestEnvironment {
     projectDoc.submitJson0Op(op => op.set<string>(p => p.userRoles['user01'], SFProjectRole.CommunityChecker), false);
     this.currentUserDoc.submitJson0Op(op => op.add<string>(u => u.sites['sf'].projects, 'project04'), false);
     this.wait();
-  }
-
-  confirmProjectDeletedDialog(): void {
-    this.ngZone.run(() => this.projectDeletedDialogRefAfterClosed$.next('close'));
   }
 
   private addUser(userId: string, name: string, authId: string): void {
