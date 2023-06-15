@@ -245,12 +245,11 @@ public class ParatextService : DisposableBase, IParatextService
                 StartProgressReporting(progress);
 
                 string username = GetParatextUsername(userSecret);
-                using ScrText scrText = ScrTextCollection.FindById(username, paratextId);
-                if (scrText == null)
-                    throw new Exception(
+                using ScrText scrText =
+                    ScrTextCollection.FindById(username, paratextId)
+                    ?? throw new Exception(
                         $"Failed to fetch ScrText for PT project id {paratextId} using PT username {username}"
                     );
-
                 SharedProject sharedProj = CreateSharedProject(
                     paratextId,
                     ptProject.ShortName,
@@ -842,13 +841,11 @@ public class ParatextService : DisposableBase, IParatextService
                 null,
                 token
             );
-            JArray? members = JArray.Parse(response);
-            if (members == null)
-            {
-                throw new DataNotFoundException(
+            JArray? members =
+                JArray.Parse(response)
+                ?? throw new DataNotFoundException(
                     $"Got a null list of members when parsing registry members list, for project SF id {project.Id}, using user secret id {userSecret.Id}."
                 );
-            }
             return members
                 .OfType<JObject>()
                 .Where(m => !string.IsNullOrEmpty((string?)m["userId"]) && !string.IsNullOrEmpty((string?)m["role"]))
@@ -981,7 +978,8 @@ public class ParatextService : DisposableBase, IParatextService
             Editable = scrText.Settings.Editable,
             DefaultFontSize = scrText.Settings.DefaultFontSize,
             DefaultFont = scrText.Settings.DefaultFont,
-            NoteTags = noteTags
+            NoteTags = noteTags,
+            LanguageTag = scrText.Settings.LanguageID?.Id,
         };
     }
 
@@ -997,9 +995,9 @@ public class ParatextService : DisposableBase, IParatextService
     /// <summary> Get PT book text in USX, or throw if can't. </summary>
     public string GetBookText(UserSecret userSecret, string paratextId, int bookNum)
     {
-        using ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
-        if (scrText == null)
-            throw new DataNotFoundException("Can't get access to cloned project.");
+        using ScrText scrText =
+            ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId)
+            ?? throw new DataNotFoundException("Can't get access to cloned project.");
         string usfm = scrText.GetText(bookNum);
         return UsfmToUsx.ConvertToXmlString(scrText, bookNum, usfm, false);
     }
@@ -1658,18 +1656,14 @@ public class ParatextService : DisposableBase, IParatextService
 
     private ScrText GetScrText(UserSecret userSecret, string paratextId)
     {
-        string? ptUsername = GetParatextUsername(userSecret);
-        if (ptUsername == null)
-        {
-            throw new DataNotFoundException($"Failed to get username for UserSecret id {userSecret.Id}.");
-        }
-        ScrText? scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
-        if (scrText == null)
-        {
-            throw new DataNotFoundException(
+        string? ptUsername =
+            GetParatextUsername(userSecret)
+            ?? throw new DataNotFoundException($"Failed to get username for UserSecret id {userSecret.Id}.");
+        ScrText? scrText =
+            ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId)
+            ?? throw new DataNotFoundException(
                 $"Could not find project for UserSecret id {userSecret.Id}, PT project id {paratextId}"
             );
-        }
         return scrText;
     }
 
@@ -1993,9 +1987,9 @@ public class ParatextService : DisposableBase, IParatextService
         string username = GetParatextUsername(userSecret);
         List<string> users = new List<string>();
         SyncMetricInfo syncMetricInfo = new SyncMetricInfo();
-        ScrText scrText = ScrTextCollection.FindById(username, paratextId);
-        if (scrText == null)
-            throw new DataNotFoundException("Can't get access to cloned project.");
+        ScrText scrText =
+            ScrTextCollection.FindById(username, paratextId)
+            ?? throw new DataNotFoundException("Can't get access to cloned project.");
         CommentManager manager = CommentManager.Get(scrText);
 
         // Algorithm sourced from Paratext DataAccessServer

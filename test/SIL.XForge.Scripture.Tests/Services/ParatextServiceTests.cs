@@ -26,6 +26,7 @@ using Paratext.Data.Repository;
 using Paratext.Data.Users;
 using PtxUtils;
 using SIL.Scripture;
+using SIL.WritingSystems;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -4436,6 +4437,9 @@ public class ParatextServiceTests
             ProjectCommentManager = CommentManager.Get(ProjectScrText);
             MockScrTextCollection.FindById(Arg.Any<string>(), ptProjectId).Returns(ProjectScrText);
             SetupCommentTags(ProjectScrText, null);
+            // Ensure that the SLDR is initialized for LanguageID.Code to be retrieved correctly
+            if (!Sldr.IsInitialized)
+                Sldr.Initialize(true);
             return ptProjectId;
         }
 
