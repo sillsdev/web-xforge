@@ -684,10 +684,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             op.set(puc => puc.selectedSegment, this.target!.segmentRef);
             op.set(puc => puc.selectedSegmentChecksum!, this.target!.segmentChecksum);
           });
-          if (this.bookNum != null && this.hasEditRight) {
-            const verseRef = getVerseRefFromSegmentRef(this.bookNum, this.target.segmentRef);
-            this.toggleVerseRefElement(verseRef);
-          }
+        }
+        if (this.bookNum != null && this.hasEditRight) {
+          const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, this.target.segmentRef);
+          this.toggleVerseRefElement(verseRef);
         }
         await this.translateSegment();
       } finally {
