@@ -110,6 +110,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private _chapter?: number;
   private questionsQuery?: RealtimeQuery<QuestionDoc>;
   private _activeQuestionVerseRef?: VerseRef;
+  private setBookSub?: Subscription;
   private questionsSub?: Subscription;
   private projectDeleteSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
@@ -403,9 +404,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       const bookNum = bookId == null ? 0 : Canon.bookIdToNumber(bookId);
       this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
       if (prevProjectId !== this.projectDoc.id || this.book !== bookNum || (bookId !== 'ALL' && this.showAllBooks)) {
-        if (this.questionsQuery != null) {
-          this.questionsQuery.dispose();
-        }
+        this.setBookSub?.unsubscribe();
+        this.questionsSub?.unsubscribe();
+        this.questionsRemoteChangesSub?.unsubscribe();
+        this.questionsQuery?.dispose();
         this.resetFilter();
         const prevShowAllBooks = this.showAllBooks;
         this.showAllBooks = bookId === 'ALL';
@@ -415,9 +417,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           activeOnly: true
         });
         // TODO: check for remote changes to file data more generically
-        if (this.questionsRemoteChangesSub != null) {
-          this.questionsRemoteChangesSub.unsubscribe();
-        }
         this.questionsRemoteChangesSub = this.subscribe(this.questionsQuery.remoteDocChanges$, (qd: QuestionDoc) => {
           const isActiveQuestionDoc = qd.id === this.questionsPanel!.activeQuestionDoc?.id;
           if (isActiveQuestionDoc) {
@@ -430,11 +429,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
             }
           }
         });
-        if (this.questionsSub != null) {
-          this.questionsSub.unsubscribe();
-        }
         const prevBook = this.book;
-        this.questionsQuery.ready$.pipe(take(1)).subscribe(() => (this.book = bookNum));
+        this.setBookSub = this.questionsQuery.ready$.pipe(take(1)).subscribe(() => (this.book = bookNum));
+        // There may be some race conditions which means the questions query is
+        // ready before we subscribed
+        if (this.questionsQuery.ready) {
+          this.setBookSub.unsubscribe();
+          this.book = bookNum;
+        }
         this.questionsSub = this.subscribe(
           merge(
             this.questionsQuery.ready$,
@@ -452,9 +454,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.loadingFinished();
       }
       // Subscribe to the projectDoc now that it is defined
-      if (this.projectRemoteChangesSub != null) {
-        this.projectRemoteChangesSub.unsubscribe();
-      }
+      this.projectRemoteChangesSub?.unsubscribe();
       this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, () => {
         if (this.projectDoc != null && this.projectDoc.data != null) {
           if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
@@ -478,9 +478,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           }
         }
       });
-      if (this.projectDeleteSub != null) {
-        this.projectDeleteSub.unsubscribe();
-      }
+      this.projectDeleteSub?.unsubscribe();
       this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
       this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
       this.initQuestionFilters();
