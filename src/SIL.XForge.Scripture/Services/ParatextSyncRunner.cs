@@ -1065,10 +1065,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
         foreach (NoteThreadChange change in noteThreadChanges)
         {
             // Find the thread doc if it exists
-            if (!noteThreadDocs.TryGetValue(change.ThreadId, out IDocument<NoteThread> threadDoc))
+            if (!noteThreadDocs.TryGetValue(change.ThreadDataId, out IDocument<NoteThread> threadDoc))
             {
                 // Create a new ParatextNoteThread doc
-                IDocument<NoteThread> doc = GetNoteThreadDoc(change.ThreadId);
+                string newThreadDataId = _guidService.NewObjectId();
+                IDocument<NoteThread> doc = GetNoteThreadDoc(newThreadDataId);
                 async Task createThreadDoc(NoteThreadChange change)
                 {
                     VerseRef verseRef = new VerseRef();
@@ -1077,7 +1078,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     await doc.CreateAsync(
                         new NoteThread()
                         {
-                            DataId = change.ThreadId,
+                            DataId = newThreadDataId,
+                            ThreadId = change.ThreadId,
                             ProjectRef = _projectDoc.Id,
                             VerseRef = vrd,
                             OriginalSelectedText = change.SelectedText,
@@ -1709,8 +1711,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
             await textDoc.DeleteAsync();
     }
 
-    private IDocument<NoteThread> GetNoteThreadDoc(string threadId) =>
-        _conn.Get<NoteThread>($"{_projectDoc.Id}:{threadId}");
+    private IDocument<NoteThread> GetNoteThreadDoc(string dataId) =>
+        _conn.Get<NoteThread>($"{_projectDoc.Id}:{dataId}");
 
     private Dictionary<int, ChapterDelta> GetDeltasByChapter(int bookNum, string paratextId)
     {

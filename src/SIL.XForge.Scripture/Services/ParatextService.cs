@@ -1343,6 +1343,7 @@ public class ParatextService : DisposableBase, IParatextService
             List<string> matchedCommentIds = new List<string>();
             NoteThreadChange threadChange = new NoteThreadChange(
                 threadDoc.Data.DataId,
+                threadDoc.Data.ThreadId,
                 threadDoc.Data.VerseRef.ToString(),
                 threadDoc.Data.OriginalSelectedText,
                 threadDoc.Data.OriginalContextBefore,
@@ -1351,7 +1352,7 @@ public class ParatextService : DisposableBase, IParatextService
                 threadDoc.Data.Assignment
             );
             // Find the corresponding comment thread
-            var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
+            var existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.ThreadId);
             if (existingThread == null)
             {
                 // The thread has been removed
@@ -1430,6 +1431,7 @@ public class ParatextService : DisposableBase, IParatextService
                 continue;
             Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
             NoteThreadChange newThread = new NoteThreadChange(
+                NoteThreadChange.noneId,
                 threadId,
                 info.VerseRefStr,
                 info.SelectedText,
@@ -2343,7 +2345,7 @@ public class ParatextService : DisposableBase, IParatextService
         foreach (IDocument<NoteThread> threadDoc in activeThreadDocs)
         {
             List<Paratext.Data.ProjectComments.Comment> thread = new List<Paratext.Data.ProjectComments.Comment>();
-            CommentThread existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.DataId);
+            CommentThread existingThread = commentThreads.SingleOrDefault(ct => ct.Id == threadDoc.Data.ThreadId);
             List<(int, string)> threadNoteParatextUserRefs = new List<(int, string)>();
             for (int i = 0; i < threadDoc.Data.Notes.Count; i++)
             {
