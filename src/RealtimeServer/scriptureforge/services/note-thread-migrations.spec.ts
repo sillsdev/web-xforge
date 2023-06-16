@@ -40,6 +40,20 @@ describe('NoteThreadMigrations', () => {
       expect(doc.data.notes[0].tagIcon).toBeUndefined();
     });
   });
+
+  describe('version 3', () => {
+    it('copies data id value to new thread id property', async () => {
+      const env = new TestEnvironment(2);
+      const conn = env.server.connect();
+      await createDoc(conn, NOTE_THREAD_COLLECTION, 'project01:thread01', {
+        dataId: 'thread01'
+      });
+
+      await env.server.migrateIfNecessary();
+      const doc: Doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, 'project01:thread01');
+      expect(doc.data.threadId).toEqual('thread01');
+    });
+  });
 });
 
 class TestEnvironment {
