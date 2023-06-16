@@ -3061,8 +3061,9 @@ public class SFProjectServiceTests
                     {
                         new NoteThread
                         {
-                            Id = "project01:thread01",
-                            DataId = "thread01",
+                            Id = "project01:dataId01",
+                            DataId = "dataId01",
+                            ThreadId = "thread01",
                             Notes = new List<Note>()
                             {
                                 new Note { DataId = "thread01:PT01", SyncUserRef = "PT01" },
@@ -3071,8 +3072,9 @@ public class SFProjectServiceTests
                         },
                         new NoteThread
                         {
-                            Id = "project01:thread02",
-                            DataId = "thread02",
+                            Id = "project01:dataId02",
+                            DataId = "dataId02",
+                            ThreadId = "thread02",
                             Notes = new List<Note>()
                             {
                                 new Note { DataId = "thread02:PT01", SyncUserRef = "PT01" },

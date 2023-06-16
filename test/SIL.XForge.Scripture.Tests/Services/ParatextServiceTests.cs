@@ -702,7 +702,7 @@ public class ParatextServiceTests
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
             conn,
-            new[] { "thread1" }
+            new[] { "dataId1" }
         );
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
         {
@@ -773,7 +773,7 @@ public class ParatextServiceTests
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
             conn,
-            new[] { "thread1" }
+            new[] { "dataId1" }
         );
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
         {
@@ -937,7 +937,7 @@ public class ParatextServiceTests
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
             conn,
-            new[] { "thread1", "thread2", "thread4", "thread5", "thread7", "thread8", "thread9" }
+            new[] { "dataId1", "dataId2", "dataId4", "dataId5", "dataId7", "dataId8", "dataId9" }
         );
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
@@ -1080,7 +1080,7 @@ public class ParatextServiceTests
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
             conn,
-            new[] { "thread1" }
+            new[] { "dataId1" }
         );
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
@@ -1341,7 +1341,7 @@ public class ParatextServiceTests
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
             conn,
-            new[] { "thread1" }
+            new[] { "dataId1" }
         );
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
@@ -1490,7 +1490,7 @@ public class ParatextServiceTests
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
             conn,
-            new[] { "thread1" }
+            new[] { "dataId1" }
         );
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
@@ -1661,7 +1661,7 @@ public class ParatextServiceTests
         // SUT
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
             conn,
-            new[] { "thread1", "thread3", "thread4", "thread5", "thread6", "thread7", "thread8" }
+            new[] { "dataId1", "dataId3", "dataId4", "dataId5", "dataId6", "dataId7", "dataId8" }
         );
         var deltas = env.GetChapterDeltasByBook(1, "Context before ", "Text selected", true);
         IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
@@ -1896,7 +1896,7 @@ public class ParatextServiceTests
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
             conn,
-            new[] { "thread1", "thread3", "thread4", "thread5" }
+            new[] { "dataId1", "dataId3", "dataId4", "dataId5" }
         );
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
         Dictionary<string, ParatextUserProfile> syncUsers = new Dictionary<string, ParatextUserProfile>
@@ -2006,6 +2006,7 @@ public class ParatextServiceTests
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
         string threadId = "thread1";
+        string originalDataId = "dataId1";
         env.AddNoteThreadData(
             new[]
             {
@@ -2029,12 +2030,12 @@ public class ParatextServiceTests
                 }
             }
         );
-        string dataId = "newdataid1";
-        env.MockGuidService.NewObjectId().Returns(dataId);
+        string newDataId = "newdataid1";
+        env.MockGuidService.NewObjectId().Returns(newDataId);
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
             conn,
-            new[] { threadId }
+            new[] { originalDataId }
         );
         Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
         var ptProjectUsers = new Dictionary<string, ParatextUserProfile>
@@ -2060,7 +2061,7 @@ public class ParatextServiceTests
 
         NoteThreadChange change = changes.Single();
         Assert.That(change.ThreadId, Is.EqualTo(threadId));
-        Assert.That(change.NotesAdded.Single().DataId, Is.EqualTo(dataId));
+        Assert.That(change.NotesAdded.Single().DataId, Is.EqualTo(newDataId));
     }
 
     [Test]
@@ -2071,9 +2072,12 @@ public class ParatextServiceTests
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-        string thread1Id = "thread1";
-        string thread2Id = "thread2";
-        string thread3Id = "thread3";
+        string dataId1 = "dataId1";
+        string dataId2 = "dataId2";
+        string dataId3 = "dataId3";
+        string thread1 = "thread1";
+        string thread2 = "thread2";
+        string thread3 = "thread3";
         var thread1Notes = new[]
         {
             new ThreadNoteComponents { ownerRef = env.User01, tagsAdded = new[] { "1" } }
@@ -2120,12 +2124,12 @@ public class ParatextServiceTests
             }
         );
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
-        CommentThread thread = env.ProjectCommentManager.FindThread(thread1Id);
+        CommentThread thread = env.ProjectCommentManager.FindThread(thread1);
         Assert.That(thread, Is.Null);
-        string[] noteThreads = new[] { thread1Id, thread2Id, thread3Id };
+        string[] noteThreadDataIds = new[] { dataId1, dataId2, dataId3 };
         IEnumerable<IDocument<NoteThread>> noteThreadDocs = await TestEnvironment.GetNoteThreadDocsAsync(
             conn,
-            noteThreads
+            noteThreadDataIds
         );
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
         {
@@ -2148,7 +2152,7 @@ public class ParatextServiceTests
             ptProjectUsers,
             env.TagCount
         );
-        thread = env.ProjectCommentManager.FindThread(thread1Id);
+        thread = env.ProjectCommentManager.FindThread(thread1);
         Assert.That(thread.Comments.Count, Is.EqualTo(1));
         Paratext.Data.ProjectComments.Comment comment = thread.Comments.First();
         string expected =
@@ -2159,7 +2163,7 @@ public class ParatextServiceTests
             + "Tag:1";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected));
 
-        thread = env.ProjectCommentManager.FindThread(thread2Id);
+        thread = env.ProjectCommentManager.FindThread(thread2);
         Assert.That(thread.Comments.Count, Is.EqualTo(1));
         comment = thread.Comments.First();
         // expect the non-paratext ext user to be user05
@@ -2172,12 +2176,12 @@ public class ParatextServiceTests
             + "Tag:1";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected));
         // should not create second comment if the note is marked deleted
-        CommentThread thread3 = env.ProjectCommentManager.FindThread(thread3Id);
-        Assert.That(thread3.Comments.Single(c => c.Contents.InnerText.Contains($"{thread3Id} note 1.")), Is.Not.Null);
+        CommentThread noteThread3 = env.ProjectCommentManager.FindThread(thread3);
+        Assert.That(noteThread3.Comments.Single(c => c.Contents.InnerText.Contains($"{thread3} note 1.")), Is.Not.Null);
         Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01 }));
-        IDocument<NoteThread> noteThread1Doc = noteThreadDocs.First(d => d.Data.DataId == thread1Id);
+        IDocument<NoteThread> noteThread1Doc = noteThreadDocs.First(d => d.Data.DataId == dataId1);
         Assert.That(noteThread1Doc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser01"));
-        IDocument<NoteThread> noteThread2Doc = noteThreadDocs.First(d => d.Data.DataId == thread2Id);
+        IDocument<NoteThread> noteThread2Doc = noteThreadDocs.First(d => d.Data.DataId == dataId2);
         Assert.That(noteThread2Doc.Data.Notes[0].SyncUserRef, Is.EqualTo("syncuser01"));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 2, deleted: 0, updated: 0)));
 
@@ -2194,6 +2198,7 @@ public class ParatextServiceTests
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
         string threadId = "thread1";
+        string dataId = "dataId1";
         env.AddNoteThreadData(
             new[]
             {
@@ -2209,7 +2214,7 @@ public class ParatextServiceTests
         await using IConnection conn = await env.RealtimeService.ConnectAsync(env.User01);
         CommentThread commentThread = env.ProjectCommentManager.FindThread(threadId);
         Assert.That(commentThread, Is.Null);
-        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, threadId);
+        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
         var paratextUsers = new Dictionary<string, ParatextUserProfile>();
         int newSfNoteTagId = env.TagCount + 1;
         var syncMetricsInfo = await env.Service.UpdateParatextCommentsAsync(
@@ -2236,6 +2241,7 @@ public class ParatextServiceTests
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
         string threadId = "thread1";
+        string dataId = "dataId1";
         var threadNoteComponents = new[]
         {
             new ThreadNoteComponents { ownerRef = env.User01, tagsAdded = new[] { "2" } },
@@ -2268,7 +2274,7 @@ public class ParatextServiceTests
         );
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
-        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, threadId);
+        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
         // Edit a comment
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
@@ -2324,6 +2330,7 @@ public class ParatextServiceTests
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
         string threadId = "thread1";
+        string dataId = "dataId1";
         string content1a = "Reviewer comment";
         string content1b = "<p sf-user-label=\"true\">[User 05 - xForge]</p>\n<p>Reviewer comment</p>";
         string content2 = "Project admin comment";
@@ -2355,7 +2362,7 @@ public class ParatextServiceTests
         env.AddParatextComments(new[] { threadCompPT });
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
-        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, threadId);
+        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
             new ParatextUserProfile
@@ -2400,6 +2407,7 @@ public class ParatextServiceTests
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
         string threadId = "thread1";
+        string dataId = "dataId1";
         var components = new ThreadComponents
         {
             threadNum = 1,
@@ -2413,7 +2421,7 @@ public class ParatextServiceTests
         Assert.That(thread, Is.Not.Null);
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
-        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, threadId);
+        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
 
         // One comment is marked deleted, the other is permanently deleted
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
@@ -2443,6 +2451,7 @@ public class ParatextServiceTests
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
         string threadId = "thread1";
+        string dataId = "dataId1";
         env.AddNoteThreadData(
             new[]
             {
@@ -2469,7 +2478,7 @@ public class ParatextServiceTests
         );
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
-        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, threadId);
+        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
 
         // One comment is marked deleted, the other is permanently deleted
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
@@ -2568,7 +2577,7 @@ public class ParatextServiceTests
         string paratextId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
 
-        string threadId = "thread1";
+        string dataId = "dataId1";
         var thread = new ThreadComponents
         {
             threadNum = 1,
@@ -2579,7 +2588,7 @@ public class ParatextServiceTests
         env.AddNoteThreadData(new[] { thread });
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
-        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, threadId);
+        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
 
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
         {
@@ -4326,13 +4335,15 @@ public class ParatextServiceTests
             foreach (var comp in threadComponents)
             {
                 string threadId = "thread" + comp.threadNum;
+                string dataId = "dataId" + comp.threadNum;
                 string text = "Text selected " + threadId;
                 string selectedText = comp.appliesToVerse ? ContextBefore + text + ContextAfter : text;
 
                 var noteThread = new NoteThread
                 {
-                    Id = "project01:" + threadId,
-                    DataId = threadId,
+                    Id = "project01:" + dataId,
+                    DataId = dataId,
+                    ThreadId = threadId,
                     ProjectRef = "project01",
                     OwnerRef = "user01",
                     VerseRef = new VerseRefData(40, 1, comp.threadNum),
@@ -4476,19 +4487,17 @@ public class ParatextServiceTests
 
         public static async Task<IEnumerable<IDocument<NoteThread>>> GetNoteThreadDocsAsync(
             IConnection connection,
-            string[] threadIds
+            string[] dataIds
         )
         {
             List<IDocument<NoteThread>> noteThreadDocs = new List<IDocument<NoteThread>>();
-            foreach (string threadId in threadIds)
-                noteThreadDocs.Add(await GetNoteThreadDocAsync(connection, threadId));
+            foreach (string dataId in dataIds)
+                noteThreadDocs.Add(await GetNoteThreadDocAsync(connection, dataId));
             return noteThreadDocs;
         }
 
-        public static async Task<IDocument<NoteThread>> GetNoteThreadDocAsync(
-            IConnection connection,
-            string threadId
-        ) => await connection.FetchAsync<NoteThread>("project01:" + threadId);
+        public static async Task<IDocument<NoteThread>> GetNoteThreadDocAsync(IConnection connection, string dataId) =>
+            await connection.FetchAsync<NoteThread>("project01:" + dataId);
 
         public string SetupProject(string baseId, ParatextUser associatedPtUser, bool hasEditPermission = true)
         {
@@ -4709,14 +4718,16 @@ public class ParatextServiceTests
             env.MockGuidService.NewObjectId().Returns("thread01note01");
 
             string threadId = "thread01";
+            string dataId = "dataId01";
             string threadOwner = env.User01;
 
             // Put into the SF DB a NoteThread and a Note, that will need to be updated with new PT Comment data.
 
             var thread01 = new NoteThread
             {
-                Id = "project01:" + threadId,
-                DataId = threadId,
+                Id = "project01:" + dataId,
+                DataId = dataId,
+                ThreadId = threadId,
                 ProjectRef = sfProjectId,
                 OwnerRef = threadOwner,
                 VerseRef = new VerseRefData(40, 1, 1),
@@ -4778,7 +4789,7 @@ public class ParatextServiceTests
             await using IConnection conn = await env.RealtimeService.ConnectAsync();
             IEnumerable<IDocument<NoteThread>> noteThreadDocs = await GetNoteThreadDocsAsync(
                 conn,
-                new[] { "thread01" }
+                new[] { "dataId01" }
             );
             Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
             {
