@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Hangfire;
+using Hangfire.Common;
+using Hangfire.States;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using NSubstitute;
@@ -45,6 +48,70 @@ public class MachineApiServiceTests
     private const string User01 = "user01";
     private const string Segment = "segment";
     private const string TargetSegment = "targetSegment";
+
+    [Test]
+    public void CancelPreTranslationBuildAsync_NoFeatureFlagEnabled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void CancelPreTranslationBuildAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.CancelPreTranslationBuildAsync("invalid_user_id", Project01, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void CancelPreTranslationBuildAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.CancelPreTranslationBuildAsync(User01, "invalid_project_id", CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void CancelPreTranslationBuildAsync_NotSupported()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .CancelBuildAsync(TranslationEngine01, CancellationToken.None)
+            .Throws(ServalApiExceptions.NotSupported);
+
+        // SUT
+        Assert.ThrowsAsync<NotSupportedException>(
+            () => env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task CancelPreTranslationBuildAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
+
+        await env.TranslationEnginesClient.Received(1).CancelBuildAsync(TranslationEngine01, CancellationToken.None);
+    }
 
     [Test]
     public async Task GetBuildAsync_InProcessNoRevisionNoBuildRunning()
@@ -1220,88 +1287,15 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public void StartPreTranslationBuildAsync_NoTranslationEngine()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.MachineProjectService
-            .BuildProjectAsync(User01, Project01, true, CancellationToken.None)
-            .Throws(new DataNotFoundException("Not Found"));
-
-        // SUT
-        Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public void StartPreTranslationBuildAsync_Outage()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.MachineProjectService
-            .BuildProjectAsync(User01, Project01, true, CancellationToken.None)
-            .Throws(new BrokenCircuitException());
-
-        // SUT
-        Assert.ThrowsAsync<BrokenCircuitException>(
-            () => env.Service.StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
-        );
-    }
-
-    [Test]
-    public async Task StartPreTranslationBuildAsync_NoBuild()
-    {
-        // Set up test environment
-        var env = new TestEnvironment();
-        env.MachineProjectService
-            .BuildProjectAsync(User01, Project01, true, CancellationToken.None)
-            .Returns(Task.FromResult<TranslationBuild>(null));
-
-        // SUT
-        BuildDto? actual = await env.Service.StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
-        Assert.IsNull(actual);
-    }
-
-    [Test]
     public async Task StartPreTranslationBuildAsync_Success()
     {
         // Set up test environment
         var env = new TestEnvironment();
-        const string buildDtoId = $"{Project01}.{Build01}";
-        const string message = "Training language model";
-        const double percentCompleted = 0.01;
-        const int revision = 2;
-        const JobState state = JobState.Active;
-        env.MachineProjectService
-            .BuildProjectAsync(User01, Project01, true, CancellationToken.None)
-            .Returns(
-                Task.FromResult(
-                    new TranslationBuild
-                    {
-                        Url = "https://example.com",
-                        Id = Build01,
-                        Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
-                        Message = message,
-                        PercentCompleted = percentCompleted,
-                        Revision = revision,
-                        State = state,
-                    }
-                )
-            );
 
         // SUT
-        BuildDto actual = await env.Service.StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
+        await env.Service.StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
 
-        Assert.IsNotNull(actual);
-        Assert.AreEqual(message, actual.Message);
-        Assert.AreEqual(percentCompleted, actual.PercentCompleted);
-        Assert.AreEqual(revision, actual.Revision);
-        Assert.AreEqual(state.ToString().ToUpperInvariant(), actual.State);
-        Assert.AreEqual(buildDtoId, actual.Id);
-        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
-        Assert.AreEqual(Project01, actual.Engine.Id);
-        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
     }
 
     [Test]
@@ -1911,6 +1905,7 @@ public class MachineApiServiceTests
     {
         public TestEnvironment()
         {
+            BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
             Builds = Substitute.For<IBuildRepository>();
             Engines = Substitute.For<IEngineRepository>();
             Engines
@@ -1941,7 +1936,11 @@ public class MachineApiServiceTests
                     new SFProjectSecret
                     {
                         Id = Project01,
-                        ServalData = new ServalData { TranslationEngineId = TranslationEngine01 },
+                        ServalData = new ServalData
+                        {
+                            TranslationEngineId = TranslationEngine01,
+                            PreTranslationEngineId = TranslationEngine01
+                        },
                     },
                     new SFProjectSecret { Id = Project02 },
                 }
@@ -1972,6 +1971,7 @@ public class MachineApiServiceTests
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
 
             Service = new MachineApiService(
+                BackgroundJobClient,
                 Builds,
                 Engines,
                 engineOptions,
@@ -1985,6 +1985,7 @@ public class MachineApiServiceTests
             );
         }
 
+        public IBackgroundJobClient BackgroundJobClient { get; }
         public IBuildRepository Builds { get; }
         public IEngineRepository Engines { get; }
         public IEngineService EngineService { get; }

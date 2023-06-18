@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Infrastructure;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -20,6 +21,69 @@ public class MachineApiControllerTests
     private const string Build01 = "build01";
     private const string Project01 = "project01";
     private const string User01 = "user01";
+
+    [Test]
+    public async Task CancelPreTranslationBuildAsync_MachineApiDown()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            .Throws(new BrokenCircuitException());
+
+        // SUT
+        ActionResult actual = await env.Controller.CancelPreTranslationBuildAsync(Project01, CancellationToken.None);
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        Assert.IsInstanceOf<ObjectResult>(actual);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual as ObjectResult)?.StatusCode);
+    }
+
+    [Test]
+    public async Task CancelPreTranslationBuildAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            .Throws(new ForbiddenException());
+
+        // SUT
+        ActionResult actual = await env.Controller.CancelPreTranslationBuildAsync(Project01, CancellationToken.None);
+
+        Assert.IsInstanceOf<ForbidResult>(actual);
+    }
+
+    [Test]
+    public async Task CancelPreTranslationBuildAsync_NotSupported()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            .Throws(new NotSupportedException());
+
+        // SUT
+        ActionResult actual = await env.Controller.CancelPreTranslationBuildAsync(Project01, CancellationToken.None);
+
+        Assert.IsInstanceOf<IStatusCodeActionResult>(actual);
+        Assert.AreEqual(StatusCodes.Status405MethodNotAllowed, (actual as IStatusCodeActionResult)?.StatusCode);
+    }
+
+    [Test]
+    public async Task CancelPreTranslationBuildAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            .Returns(Task.CompletedTask);
+
+        // SUT
+        ActionResult actual = await env.Controller.CancelPreTranslationBuildAsync(Project01, CancellationToken.None);
+
+        Assert.IsInstanceOf<OkResult>(actual);
+    }
 
     [Test]
     public async Task GetBuildAsync_BuildEnded()
@@ -530,15 +594,12 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
-            .Returns(Task.FromResult(new BuildDto()));
+            .Returns(Task.CompletedTask);
 
         // SUT
-        ActionResult<BuildDto> actual = await env.Controller.StartPreTranslationBuildAsync(
-            Project01,
-            CancellationToken.None
-        );
+        ActionResult actual = await env.Controller.StartPreTranslationBuildAsync(Project01, CancellationToken.None);
 
-        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+        Assert.IsInstanceOf<OkResult>(actual);
     }
 
     [Test]
