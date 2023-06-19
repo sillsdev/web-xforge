@@ -1911,7 +1911,7 @@ public class ParatextSyncRunnerTests
         );
         await env.SetThreadNotesAsync(sfProjectId, threadId, beginningNoteSet);
         env.SetupPTData(book);
-        env.SetupNoteRemovedChange(threadId, "n02");
+        env.SetupNoteRemovedChange(threadId, new[] { "n02" });
         NoteThread thread01 = env.GetNoteThread(sfProjectId, threadId);
         Assert.That(
             thread01.Notes.Select(n => n.DataId),
@@ -1937,7 +1937,7 @@ public class ParatextSyncRunnerTests
         Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
 
         // Remove note 3
-        env.SetupNoteRemovedChange(threadId, "n03");
+        env.SetupNoteRemovedChange(threadId, new[] { "n03" });
 
         // SUT 2
         await env.Runner.RunAsync(sfProjectId, "user01", "project01_alt", false, CancellationToken.None);
@@ -1954,6 +1954,20 @@ public class ParatextSyncRunnerTests
             Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 1))
         );
         Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
+    }
+
+    [Test]
+    public async Task SyncAsync_NoteThreadDeleted()
+    {
+        var env = new TestEnvironment();
+        var book = new Book("MAT", 1);
+        env.SetupSFData(true, false, false, true, book);
+        env.SetupPTData(book);
+        env.SetupNoteRemovedChange("thread01", new[] { "n01", "n02" });
+
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+
+        Assert.Throws<KeyNotFoundException>(() => env.GetNoteThread("project01", "thread01"));
     }
 
     [Test]
@@ -3095,7 +3109,7 @@ public class ParatextSyncRunnerTests
             SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
         }
 
-        public void SetupNoteRemovedChange(string threadId, string noteId, string verseRef = "MAT 1:1")
+        public void SetupNoteRemovedChange(string threadId, string[] noteIds, string verseRef = "MAT 1:1")
         {
             var noteThreadChange = new NoteThreadChange(
                 threadId,
@@ -3105,8 +3119,10 @@ public class ParatextSyncRunnerTests
                 " context after",
                 NoteStatus.Resolved.InternalValue,
                 ""
-            );
-            noteThreadChange.NoteIdsRemoved.Add(noteId);
+            )
+            {
+                NoteIdsRemoved = new List<string>(noteIds)
+            };
             SetupNoteThreadChanges(new[] { noteThreadChange }, "target", 40);
         }
 
