@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Hangfire;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
@@ -38,6 +39,7 @@ namespace SIL.XForge.Scripture.Services;
 /// </summary>
 public class MachineApiService : IMachineApiService
 {
+    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IBuildRepository _builds;
     private readonly IEngineRepository _engines;
     private readonly IOptions<EngineOptions> _engineOptions;
@@ -51,6 +53,7 @@ public class MachineApiService : IMachineApiService
     private readonly StringTokenizer _wordTokenizer = new LatinWordTokenizer();
 
     public MachineApiService(
+        IBackgroundJobClient backgroundJobClient,
         IBuildRepository builds,
         IEngineRepository engines,
         IOptions<EngineOptions> engineOptions,
@@ -74,10 +77,43 @@ public class MachineApiService : IMachineApiService
         _featureManager = featureManager;
 
         // Serval Dependencies
+        _backgroundJobClient = backgroundJobClient;
         _machineProjectService = machineProjectService;
         _projectSecrets = projectSecrets;
         _realtimeService = realtimeService;
         _translationEnginesClient = translationEnginesClient;
+    }
+
+    public async Task CancelPreTranslationBuildAsync(
+        string curUserId,
+        string sfProjectId,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        await EnsurePermissionAsync(curUserId, sfProjectId);
+
+        // We only support Serval for canceling the current build
+        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
+        {
+            throw new DataNotFoundException("The translation engine does not support pre-translations");
+        }
+
+        // Get the translation engine id
+        string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);
+        if (string.IsNullOrWhiteSpace(translationEngineId))
+        {
+            throw new DataNotFoundException("The translation engine is not configured");
+        }
+
+        try
+        {
+            await _translationEnginesClient.CancelBuildAsync(translationEngineId, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            await ProcessServalApiExceptionAsync(e);
+        }
     }
 
     public async Task<BuildDto?> GetBuildAsync(
@@ -373,7 +409,7 @@ public class MachineApiService : IMachineApiService
         return UpdateDto(buildDto, sfProjectId);
     }
 
-    public async Task<BuildDto?> StartPreTranslationBuildAsync(
+    public async Task StartPreTranslationBuildAsync(
         string curUserId,
         string sfProjectId,
         CancellationToken cancellationToken
@@ -383,34 +419,15 @@ public class MachineApiService : IMachineApiService
         await EnsurePermissionAsync(curUserId, sfProjectId);
 
         // Execute on Serval, if it is enabled
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
+        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
-            try
-            {
-                TranslationBuild? translationBuild = await _machineProjectService.BuildProjectAsync(
-                    curUserId,
-                    sfProjectId,
-                    preTranslate: true,
-                    cancellationToken
-                );
-
-                // A null value will be an empty result (204) to the user
-                if (translationBuild is null)
-                {
-                    return null;
-                }
-
-                BuildDto buildDto = CreateDto(translationBuild);
-                return UpdateDto(buildDto, sfProjectId);
-            }
-            catch (Exception e)
-            {
-                await ProcessServalApiExceptionAsync(e);
-            }
+            throw new DataNotFoundException("The translation engine does not support pre-translations");
         }
 
-        // We only support Serval for pre-translations
-        throw new DataNotFoundException("The translation engine does not support pre-translations");
+        // This will take a while, so we run it in the background
+        _backgroundJobClient.Enqueue<MachineProjectService>(
+            r => r.BuildProjectAsync(curUserId, sfProjectId, true, CancellationToken.None)
+        );
     }
 
     public async Task TrainSegmentAsync(
@@ -708,6 +725,8 @@ public class MachineApiService : IMachineApiService
                 throw new ForbiddenException();
             case ServalApiException { StatusCode: StatusCodes.Status404NotFound }:
                 throw new DataNotFoundException("Entity Deleted");
+            case ServalApiException { StatusCode: StatusCodes.Status405MethodNotAllowed }:
+                throw new NotSupportedException();
             case ServalApiException { StatusCode: StatusCodes.Status408RequestTimeout }:
                 return;
             case BrokenCircuitException
