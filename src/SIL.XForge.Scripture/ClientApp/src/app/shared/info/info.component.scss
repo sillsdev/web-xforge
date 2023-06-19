@@ -12,6 +12,8 @@ a {
 
   mat-icon {
     font-size: 18px;
+    // https://github.com/google/material-design-icons/issues/648
+    transform: rotate(0.03deg);
     width: unset;
     height: unset;
     overflow: unset;
