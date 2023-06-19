@@ -19,31 +19,22 @@
         <p *ngIf="hasNonAdministratorProject && !showSettings && isAppOnline" id="connect-non-admin-msg">
           {{ t("only_paratext_admins_can_start") }}
         </p>
-        <mdc-form-field>
-          <mdc-select
-            #projectSelect
-            id="project-select"
-            placeholder="{{ t('paratext_project') }}"
-            formControlName="paratextId"
-            [outlined]="true"
-          >
-            <mdc-menu id="projects-menu">
-              <mdc-list>
-                <mdc-list-item
-                  *ngFor="let project of projects"
-                  [value]="project.paratextId"
-                  [disabled]="!project.isConnectable"
-                >
-                  {{ projectLabel(project) }}
-                  <ng-container *ngIf="!project.isConnectable && project.isConnected">
-                    &nbsp;{{ t("already_connected") }}
-                  </ng-container>
-                  <ng-container *ngIf="!project.isConnectable && !project.isConnected">&nbsp;**</ng-container>
-                </mdc-list-item>
-              </mdc-list>
-            </mdc-menu>
-          </mdc-select>
-        </mdc-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t("paratext_project") }}</mat-label>
+          <mat-select #projectSelect id="project-select" formControlName="paratextId">
+            <mat-option
+              *ngFor="let project of projects"
+              [value]="project.paratextId"
+              [disabled]="!project.isConnectable"
+            >
+              {{ projectLabel(project) }}
+              <ng-container *ngIf="!project.isConnectable && project.isConnected">
+                &nbsp;{{ t("already_connected") }}
+              </ng-container>
+              <ng-container *ngIf="!project.isConnectable && !project.isConnected">&nbsp;**</ng-container>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
       </ng-container>
       <ng-template #noProjectMsg>
         <p
