@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -32,6 +33,40 @@ public class MachineApiController : ControllerBase
         _userAccessor = userAccessor;
         _exceptionHandler = exceptionHandler;
         _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
+    }
+
+    [HttpPost(MachineApi.CancelPreTranslationBuild)]
+    public async Task<ActionResult> CancelPreTranslationBuildAsync(
+        [FromBody] string sfProjectId,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await _machineApiService.CancelPreTranslationBuildAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                cancellationToken
+            );
+            return Ok();
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (NotSupportedException)
+        {
+            return new StatusCodeResult(405);
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
     }
 
     [HttpGet(MachineApi.GetBuild)]
@@ -142,10 +177,7 @@ public class MachineApiController : ControllerBase
     }
 
     [HttpPost(MachineApi.StartBuild)]
-    public async Task<ActionResult<BuildDto>> StartBuildAsync(
-        [FromBody] string sfProjectId,
-        CancellationToken cancellationToken
-    )
+    public async Task<ActionResult> StartBuildAsync([FromBody] string sfProjectId, CancellationToken cancellationToken)
     {
         try
         {
@@ -172,19 +204,19 @@ public class MachineApiController : ControllerBase
     }
 
     [HttpPost(MachineApi.StartPreTranslationBuild)]
-    public async Task<ActionResult<BuildDto>> StartPreTranslationBuildAsync(
+    public async Task<ActionResult> StartPreTranslationBuildAsync(
         [FromBody] string sfProjectId,
         CancellationToken cancellationToken
     )
     {
         try
         {
-            BuildDto? build = await _machineApiService.StartPreTranslationBuildAsync(
+            await _machineApiService.StartPreTranslationBuildAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 cancellationToken
             );
-            return build is null ? NoContent() : Ok(build);
+            return Ok();
         }
         catch (BrokenCircuitException e)
         {

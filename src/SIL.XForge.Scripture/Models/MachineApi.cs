@@ -15,6 +15,7 @@ public static class MachineApi
     public const string Translate = "translation/engines/project:{sfProjectId}/actions/translate";
     public const string TranslateN = "translation/engines/project:{sfProjectId}/actions/translate/{n}";
     public const string StartPreTranslationBuild = "translation/pretranslations";
+    public const string CancelPreTranslationBuild = "translation/pretranslations/cancel";
 
     public static string GetBuildHref(string sfProjectId, string buildId)
     {
