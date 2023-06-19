@@ -211,12 +211,17 @@ public class MachineProjectService : IMachineProjectService
         {
             // If the corpus was updated (or this is a pre-translation engine), start the build
             // We do not need the build ID for tracking as we use GetCurrentBuildAsync for that
+
+            // Get the appropriate translation engine
             string translationEngineId;
             TranslationBuildConfig translationBuildConfig;
             if (preTranslate)
             {
-                // Execute a complete pre-translation
+                // Get the updated project secrets
+                projectSecret = await _projectSecrets.GetAsync(sfProjectId);
                 translationEngineId = projectSecret.ServalData!.PreTranslationEngineId;
+
+                // Execute a complete pre-translation
                 translationBuildConfig = GetTranslationBuildConfig(projectSecret.ServalData);
             }
             else
@@ -586,7 +591,7 @@ public class MachineProjectService : IMachineProjectService
         {
             Pretranslate = servalData.Corpora
                 .Where(s => s.Value.PreTranslate)
-                .Select(c => new PretranslateCorpusConfig { CorpusId = c.Key, TextIds = new List<string>() })
+                .Select(c => new PretranslateCorpusConfig { CorpusId = c.Key })
                 .ToList(),
         };
 
