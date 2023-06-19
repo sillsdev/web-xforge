@@ -2024,7 +2024,7 @@ public class ParatextSyncRunnerTests
         var book = new Book("MAT", 1);
         env.SetupSFData(true, false, false, true, book);
         env.SetupPTData(book);
-        env.SetupNoteRemovedChange("thread01", new[] { "n01", "n02" });
+        env.SetupNoteRemovedChange("dataId01", "thread01", new[] { "n01", "n02" });
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
@@ -3152,7 +3152,7 @@ public class ParatextSyncRunnerTests
         public void SetupNewNoteThreadChange(string threadId, string syncUserId, string verseRef = "MAT 1:1")
         {
             var noteThreadChange = new NoteThreadChange(
-                NoteThreadChange.noneId,
+                null,
                 threadId,
                 verseRef,
                 $"Scripture text in project",
@@ -3175,7 +3175,7 @@ public class ParatextSyncRunnerTests
         public void SetupNewConflictNoteThreadChange(string threadId, string verseRef = "MAT 1:1")
         {
             var noteThreadChange = new NoteThreadChange(
-                NoteThreadChange.noneId,
+                null,
                 threadId,
                 verseRef,
                 null,

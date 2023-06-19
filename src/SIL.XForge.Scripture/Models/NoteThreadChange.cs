@@ -15,8 +15,7 @@ public enum ChangeType
 /// </summary>
 public class NoteThreadChange
 {
-    public const string noneId = "none";
-    public string ThreadDataId { get; set; } = noneId;
+    public string? ThreadDataId { get; set; }
     public string ThreadId { get; set; }
     public string VerseRefStr { get; set; }
     public string SelectedText { get; set; }
