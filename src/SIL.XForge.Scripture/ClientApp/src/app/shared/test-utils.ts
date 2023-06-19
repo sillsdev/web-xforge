@@ -130,8 +130,8 @@ export function getSFProject(id: string): SFProjectProfile {
       {
         bookNum: 40,
         chapters: [
-          { number: 1, lastVerse: 3, isValid: true, permissions: {} },
-          { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+          { number: 1, lastVerse: 3, isValid: true, permissions: {}, hasAudio: false },
+          { number: 2, lastVerse: 3, isValid: true, permissions: {}, hasAudio: false }
         ],
         hasSource: true,
         permissions: {}

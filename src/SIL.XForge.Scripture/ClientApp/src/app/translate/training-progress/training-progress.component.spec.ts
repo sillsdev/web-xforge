@@ -204,7 +204,7 @@ class TestEnvironment {
         texts: [
           {
             bookNum: 41,
-            chapters: [{ number: 1, lastVerse: 3, isValid: true, permissions: {} }],
+            chapters: [{ number: 1, lastVerse: 3, isValid: true, permissions: {}, hasAudio: false }],
             hasSource: true,
             permissions: {}
           }

@@ -207,6 +207,31 @@ class SFProjectMigration9 implements Migration {
   }
 }
 
+/**
+ * This migration adds support for adding the hasAudio flag to chapters.
+ */
+class SFProjectMigration10 implements Migration {
+  static readonly VERSION = 10;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    for (let i = 0; i < doc.data.texts.length; i++) {
+      for (let j = 0; j < doc.data.texts[i].chapters.length; j++) {
+        if (doc.data.texts[i].chapters[j].hasSource === undefined) {
+          ops.push({ p: ['texts', i, 'chapters', j, 'hasAudio'], oi: false });
+        }
+      }
+    }
+    if (ops.length > 0) {
+      await submitMigrationOp(SFProjectMigration10.VERSION, doc, ops);
+    }
+  }
+
+  migrateOp(_op: RawOp): void {
+    //do nothing
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
@@ -216,5 +241,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration6,
   SFProjectMigration7,
   SFProjectMigration8,
-  SFProjectMigration9
+  SFProjectMigration9,
+  SFProjectMigration10
 ];

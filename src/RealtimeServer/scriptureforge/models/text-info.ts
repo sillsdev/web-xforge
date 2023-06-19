@@ -3,6 +3,7 @@ export interface Chapter {
   lastVerse: number;
   isValid: boolean;
   permissions: { [userRef: string]: string };
+  hasAudio: boolean;
 }
 
 /** Documents in the texts collection in the database represent the metadata

@@ -123,7 +123,8 @@ class TestEnvironment {
               permissions: {
                 projectAdmin: 'write',
                 translator: 'write'
-              }
+              },
+              hasAudio: false
             }
           ],
           permissions: {

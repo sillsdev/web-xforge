@@ -203,6 +203,25 @@ describe('SFProjectMigrations', () => {
       expect(projectDoc.data.checkingConfig.shareLevel).not.toBeDefined();
     });
   });
+
+  describe('version 10', () => {
+    it('adds hasAudio to the text chapters', async () => {
+      const env = new TestEnvironment(9);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        texts: [{ chapters: [] }, { chapters: [{}, {}] }]
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.texts[1].chapters[0].hasAudio).not.toBeDefined();
+      expect(projectDoc.data.texts[1].chapters[1].hasAudio).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.texts[1].chapters[0].hasAudio).toBe(false);
+      expect(projectDoc.data.texts[1].chapters[1].hasAudio).toBe(false);
+    });
+  });
 });
 
 class TestEnvironment {

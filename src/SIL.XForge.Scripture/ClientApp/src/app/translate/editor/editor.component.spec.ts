@@ -862,7 +862,8 @@ describe('EditorComponent', () => {
                   isValid: true,
                   permissions: {
                     user01: TextInfoPermission.Read
-                  }
+                  },
+                  hasAudio: false
                 }
               ],
               hasSource: false,
@@ -3312,13 +3313,15 @@ class TestEnvironment {
             number: 1,
             lastVerse: 3,
             isValid: true,
-            permissions: this.textInfoPermissions
+            permissions: this.textInfoPermissions,
+            hasAudio: false
           },
           {
             number: 2,
             lastVerse: 3,
             isValid: true,
-            permissions: this.textInfoPermissions
+            permissions: this.textInfoPermissions,
+            hasAudio: false
           }
         ],
         hasSource: true,
@@ -3331,7 +3334,8 @@ class TestEnvironment {
             number: 1,
             lastVerse: 3,
             isValid: false,
-            permissions: this.textInfoPermissions
+            permissions: this.textInfoPermissions,
+            hasAudio: false
           }
         ],
         hasSource: true,
@@ -3344,7 +3348,8 @@ class TestEnvironment {
             number: 1,
             lastVerse: 3,
             isValid: true,
-            permissions: this.textInfoPermissions
+            permissions: this.textInfoPermissions,
+            hasAudio: false
           },
           {
             number: 2,
@@ -3354,13 +3359,15 @@ class TestEnvironment {
               user01: TextInfoPermission.Write,
               user02: TextInfoPermission.None,
               user03: TextInfoPermission.Write
-            }
+            },
+            hasAudio: false
           },
           {
             number: 3,
             lastVerse: 3,
             isValid: true,
-            permissions: this.textInfoPermissions
+            permissions: this.textInfoPermissions,
+            hasAudio: false
           }
         ],
         hasSource: false,
@@ -3373,7 +3380,8 @@ class TestEnvironment {
             number: 1,
             lastVerse: 0,
             isValid: true,
-            permissions: this.textInfoPermissions
+            permissions: this.textInfoPermissions,
+            hasAudio: false
           }
         ],
         hasSource: false,
@@ -3386,7 +3394,8 @@ class TestEnvironment {
             number: 1,
             lastVerse: 3,
             isValid: true,
-            permissions: this.textInfoPermissions
+            permissions: this.textInfoPermissions,
+            hasAudio: false
           }
         ],
         hasSource: true,
@@ -3399,7 +3408,8 @@ class TestEnvironment {
             number: 2,
             lastVerse: 3,
             isValid: true,
-            permissions: this.textInfoPermissions
+            permissions: this.textInfoPermissions,
+            hasAudio: false
           }
         ],
         hasSource: false,

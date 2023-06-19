@@ -233,16 +233,16 @@ describe('ScriptureChooserDialog', () => {
     const onlyNTTexts: TextInfo[] = [
       {
         bookNum: 49,
-        chapters: [{ number: 3, lastVerse: 21, isValid: true, permissions: {} }],
+        chapters: [{ number: 3, lastVerse: 21, isValid: true, permissions: {}, hasAudio: false }],
         hasSource: false,
         permissions: {}
       },
       {
         bookNum: 45,
         chapters: [
-          { number: 3, lastVerse: 31, isValid: true, permissions: {} },
-          { number: 11, lastVerse: 36, isValid: true, permissions: {} },
-          { number: 12, lastVerse: 21, isValid: true, permissions: {} }
+          { number: 3, lastVerse: 31, isValid: true, permissions: {}, hasAudio: false },
+          { number: 11, lastVerse: 36, isValid: true, permissions: {}, hasAudio: false },
+          { number: 12, lastVerse: 21, isValid: true, permissions: {}, hasAudio: false }
         ],
         hasSource: false,
         permissions: {}
@@ -285,16 +285,16 @@ describe('ScriptureChooserDialog', () => {
     const texts: TextInfo[] = [
       {
         bookNum: 49,
-        chapters: [{ number: 3, lastVerse: 21, isValid: true, permissions: {} }],
+        chapters: [{ number: 3, lastVerse: 21, isValid: true, permissions: {}, hasAudio: false }],
         hasSource: false,
         permissions: {}
       },
       {
         bookNum: 45,
         chapters: [
-          { number: 3, lastVerse: 31, isValid: true, permissions: {} },
-          { number: 11, lastVerse: 36, isValid: true, permissions: {} },
-          { number: 12, lastVerse: 21, isValid: true, permissions: {} }
+          { number: 3, lastVerse: 31, isValid: true, permissions: {}, hasAudio: false },
+          { number: 11, lastVerse: 36, isValid: true, permissions: {}, hasAudio: false },
+          { number: 12, lastVerse: 21, isValid: true, permissions: {}, hasAudio: false }
         ],
         hasSource: false,
         permissions: {}
@@ -331,16 +331,16 @@ describe('ScriptureChooserDialog', () => {
     const texts: TextInfo[] = [
       {
         bookNum: 49,
-        chapters: [{ number: 3, lastVerse: 21, isValid: true, permissions: {} }],
+        chapters: [{ number: 3, lastVerse: 21, isValid: true, permissions: {}, hasAudio: false }],
         hasSource: false,
         permissions: {}
       },
       {
         bookNum: 45,
         chapters: [
-          { number: 3, lastVerse: 31, isValid: true, permissions: {} },
-          { number: 11, lastVerse: 36, isValid: true, permissions: {} },
-          { number: 12, lastVerse: 21, isValid: true, permissions: {} }
+          { number: 3, lastVerse: 31, isValid: true, permissions: {}, hasAudio: false },
+          { number: 11, lastVerse: 36, isValid: true, permissions: {}, hasAudio: false },
+          { number: 12, lastVerse: 21, isValid: true, permissions: {}, hasAudio: false }
         ],
         hasSource: false,
         permissions: {}
@@ -376,16 +376,16 @@ describe('ScriptureChooserDialog', () => {
     const texts: TextInfo[] = [
       {
         bookNum: 49,
-        chapters: [{ number: 3, lastVerse: 21, isValid: true, permissions: {} }],
+        chapters: [{ number: 3, lastVerse: 21, isValid: true, permissions: {}, hasAudio: false }],
         hasSource: false,
         permissions: {}
       },
       {
         bookNum: 45,
         chapters: [
-          { number: 3, lastVerse: 31, isValid: true, permissions: {} },
-          { number: 11, lastVerse: 36, isValid: true, permissions: {} },
-          { number: 12, lastVerse: 21, isValid: true, permissions: {} }
+          { number: 3, lastVerse: 31, isValid: true, permissions: {}, hasAudio: false },
+          { number: 11, lastVerse: 36, isValid: true, permissions: {}, hasAudio: false },
+          { number: 12, lastVerse: 21, isValid: true, permissions: {}, hasAudio: false }
         ],
         hasSource: false,
         permissions: {}
@@ -455,8 +455,8 @@ describe('ScriptureChooserDialog', () => {
         {
           bookNum: 2,
           chapters: [
-            { number: 39, lastVerse: 43, isValid: true, permissions: {} },
-            { number: 40, lastVerse: 38, isValid: true, permissions: {} }
+            { number: 39, lastVerse: 43, isValid: true, permissions: {}, hasAudio: false },
+            { number: 40, lastVerse: 38, isValid: true, permissions: {}, hasAudio: false }
           ],
           hasSource: false,
           permissions: {}
@@ -464,24 +464,24 @@ describe('ScriptureChooserDialog', () => {
         {
           bookNum: 40,
           chapters: [
-            { number: 1, lastVerse: 25, isValid: true, permissions: {} },
-            { number: 2, lastVerse: 23, isValid: true, permissions: {} }
+            { number: 1, lastVerse: 25, isValid: true, permissions: {}, hasAudio: false },
+            { number: 2, lastVerse: 23, isValid: true, permissions: {}, hasAudio: false }
           ],
           hasSource: false,
           permissions: {}
         },
         {
           bookNum: 49,
-          chapters: [{ number: 3, lastVerse: 21, isValid: true, permissions: {} }],
+          chapters: [{ number: 3, lastVerse: 21, isValid: true, permissions: {}, hasAudio: false }],
           hasSource: false,
           permissions: {}
         },
         {
           bookNum: 45,
           chapters: [
-            { number: 3, lastVerse: 31, isValid: true, permissions: {} },
-            { number: 11, lastVerse: 36, isValid: true, permissions: {} },
-            { number: 12, lastVerse: 21, isValid: true, permissions: {} }
+            { number: 3, lastVerse: 31, isValid: true, permissions: {}, hasAudio: false },
+            { number: 11, lastVerse: 36, isValid: true, permissions: {}, hasAudio: false },
+            { number: 12, lastVerse: 21, isValid: true, permissions: {}, hasAudio: false }
           ],
           hasSource: false,
           permissions: {}

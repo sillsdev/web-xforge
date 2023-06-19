@@ -316,8 +316,8 @@ class TestEnvironment {
           {
             bookNum: 41,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
-              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+              { number: 1, lastVerse: 3, isValid: true, permissions: {}, hasAudio: false },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {}, hasAudio: false }
             ],
             hasSource: true,
             permissions: {}
@@ -325,8 +325,8 @@ class TestEnvironment {
           {
             bookNum: 42,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
-              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+              { number: 1, lastVerse: 3, isValid: true, permissions: {}, hasAudio: false },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {}, hasAudio: false }
             ],
             hasSource: true,
             permissions: {}
@@ -334,8 +334,8 @@ class TestEnvironment {
           {
             bookNum: 43,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
-              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+              { number: 1, lastVerse: 3, isValid: true, permissions: {}, hasAudio: false },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {}, hasAudio: false }
             ],
             hasSource: false,
             permissions: {}
@@ -343,8 +343,8 @@ class TestEnvironment {
           {
             bookNum: 40,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
-              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+              { number: 1, lastVerse: 3, isValid: true, permissions: {}, hasAudio: false },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {}, hasAudio: false }
             ],
             hasSource: true,
             permissions: {}
