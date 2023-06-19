@@ -1040,7 +1040,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
         foreach (NoteThreadChange change in noteThreadChanges)
         {
             // Find the thread doc if it exists
-            if (!noteThreadDocs.TryGetValue(change.ThreadDataId, out IDocument<NoteThread> threadDoc))
+            if (
+                change.ThreadDataId == null
+                || !noteThreadDocs.TryGetValue(change.ThreadDataId, out IDocument<NoteThread> threadDoc)
+            )
             {
                 // Create a new ParatextNoteThread doc
                 string newThreadDataId = _guidService.NewObjectId();

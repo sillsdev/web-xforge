@@ -2863,7 +2863,7 @@ describe('EditorComponent', () => {
 
       // simulate clicking the note icon on verse 3
       const segmentRef3 = 'verse_1_3';
-      const thread2Position: number = env.getNoteThreadEditorPosition('thread02');
+      const thread2Position: number = env.getNoteThreadEditorPosition('dataid02');
       env.targetEditor.setSelection(thread2Position, 'user');
       const noteElem: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'dataid02')!;
       noteElem.click();

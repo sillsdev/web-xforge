@@ -1314,7 +1314,7 @@ public class ParatextService : DisposableBase, IParatextService
                 continue;
             Paratext.Data.ProjectComments.Comment info = thread.Comments[0];
             NoteThreadChange newThread = new NoteThreadChange(
-                NoteThreadChange.noneId,
+                null,
                 threadId,
                 info.VerseRefStr,
                 info.SelectedText,
