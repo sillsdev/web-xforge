@@ -1146,6 +1146,14 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// </summary>
     private async Task SubmitChangesOnNoteThreadDocAsync(IDocument<NoteThread> threadDoc, NoteThreadChange change)
     {
+        bool hasNotesInThread =
+            change.NotesAdded.Count > 0 || threadDoc.Data.Notes.Any(n => !change.NoteIdsRemoved.Contains(n.DataId));
+        if (!hasNotesInThread)
+        {
+            await threadDoc.DeleteAsync();
+            return;
+        }
+
         await threadDoc.SubmitJson0OpAsync(op =>
         {
             // Update thread details
