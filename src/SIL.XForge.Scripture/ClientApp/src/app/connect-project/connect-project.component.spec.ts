@@ -1,11 +1,12 @@
-import { MdcSelect } from '@angular-mdc/web/select';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, ErrorHandler } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AbstractControl } from '@angular/forms';
+import { MatSelect } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject } from 'rxjs';
@@ -19,7 +20,6 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -451,10 +451,6 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#connect-non-admin-msg'));
   }
 
-  get projectsMenu(): DebugElement {
-    return this.fixture.debugElement.query(By.css('#projects-menu'));
-  }
-
   get settingsCard(): DebugElement {
     return this.fixture.debugElement.query(By.css('#settings-card'));
   }
@@ -503,26 +499,26 @@ class TestEnvironment {
     return { projects, resources };
   }
 
-  get resourceLoadingErrorMessage() {
+  get resourceLoadingErrorMessage(): DebugElement {
     return this.fixture.debugElement.query(By.css('app-project-select + mat-error'));
   }
 
-  selectSourceProject(projectId: string) {
+  selectSourceProject(projectId: string): void {
     this.sourceProjectSelectComponent.value = projectId;
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();
   }
 
-  openSourceProjectAutocomplete() {
+  openSourceProjectAutocomplete(): void {
     this.sourceProjectSelectComponent.autocompleteTrigger.openPanel();
     this.fixture.detectChanges();
     tick();
   }
 
   changeSelectValue(select: DebugElement, value: string): void {
-    const mdcSelect: MdcSelect = select.componentInstance;
-    mdcSelect.value = value;
+    const matSelect: MatSelect = select.componentInstance;
+    matSelect.value = value;
     this.fixture.detectChanges();
     tick();
   }
@@ -538,11 +534,17 @@ class TestEnvironment {
   }
 
   getMenuItems(menu: DebugElement): DebugElement[] {
-    return menu.queryAll(By.css('mdc-list-item'));
+    const matSelect: MatSelect = menu.componentInstance;
+    matSelect.open();
+    this.waitForProjectsResponse();
+    const options = menu.queryAll(By.css('mat-option'));
+    matSelect.close();
+    this.waitForProjectsResponse();
+    return options;
   }
 
   isMenuItemDisabled(menu: DebugElement, index: number): boolean {
-    return this.getMenuItems(menu)[index].nativeElement.classList.contains('mdc-list-item--disabled');
+    return this.getMenuItems(menu)[index].nativeElement.classList.contains('mat-option-disabled');
   }
 
   getMenuItemText(menu: DebugElement, index: number): string {
@@ -570,7 +572,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  setupProjectsResources(projects?: ParatextProject[], resources?: SelectableProject[]) {
+  setupProjectsResources(projects?: ParatextProject[], resources?: SelectableProject[]): void {
     when(mockedParatextService.getProjects()).thenResolve(projects);
     when(mockedParatextService.getResources()).thenResolve(resources);
   }
