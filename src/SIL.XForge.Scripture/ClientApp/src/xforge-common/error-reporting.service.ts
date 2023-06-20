@@ -9,7 +9,7 @@ export interface EventMetadata {
   providedIn: 'root'
 })
 export class ErrorReportingService {
-  static beforeSend(metaData: EventMetadata, event: Event) {
+  static beforeSend(metaData: EventMetadata, event: Event): any {
     if (typeof event.request.url === 'string') {
       event.request.url = ErrorReportingService.redactAccessToken(event.request.url as string);
     }
@@ -46,7 +46,7 @@ export class ErrorReportingService {
 
   private metadata: EventMetadata = {};
 
-  addMeta(data: object, tabName: string = 'custom') {
+  addMeta(data: object, tabName: string = 'custom'): void {
     this.metadata[tabName] = { ...this.metadata[tabName], ...data };
   }
 
@@ -54,7 +54,7 @@ export class ErrorReportingService {
     Bugsnag.notify(error, event => ErrorReportingService.beforeSend(this.metadata, event), callback);
   }
 
-  silentError(message: string, metadata?: object) {
+  silentError(message: string, metadata?: object): void {
     if (metadata != null) {
       this.addMeta(metadata);
     }

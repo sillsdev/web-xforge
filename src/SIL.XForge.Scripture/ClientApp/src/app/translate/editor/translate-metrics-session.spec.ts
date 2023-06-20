@@ -1,19 +1,20 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { LatinWordTokenizer } from '@sillsdev/machine';
 import { QuillModule } from 'ngx-quill';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { User } from 'realtime-server/lib/esm/common/models/user';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
+import { DialogService } from 'xforge-common/dialog.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserService } from 'xforge-common/user.service';
-import { DialogService } from 'xforge-common/dialog.service';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { User } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -32,6 +33,7 @@ const mockedPwaService = mock(PwaService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedDialogService = mock(DialogService);
+const mockedReportingService = mock(ErrorReportingService);
 
 describe('TranslateMetricsSession', () => {
   configureTestingModule(() => ({
@@ -41,7 +43,8 @@ describe('TranslateMetricsSession', () => {
       { provide: PwaService, useMock: mockedPwaService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: DialogService, useMock: mockedDialogService }
+      { provide: DialogService, useMock: mockedDialogService },
+      { provide: ErrorReportingService, useMock: mockedReportingService }
     ]
   }));
 
@@ -359,62 +362,60 @@ describe('TranslateMetricsSession', () => {
     resetCalls(mockedSFProjectService);
     const commandError: CommandError = new CommandError(CommandErrorCode.InternalError, 'error');
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(commandError);
-    expect(() => {
-      env.keyPress('a');
-      tick(SEND_METRICS_INTERVAL);
-    }).toThrow();
+    verify(mockedReportingService.silentError(anything(), anything())).never();
+    env.keyPress('a');
+    tick(SEND_METRICS_INTERVAL);
     verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
+    verify(mockedReportingService.silentError(anything(), commandError)).once();
 
     // Non-CommandError error is re-thrown when online
     resetCalls(mockedSFProjectService);
+    resetCalls(mockedReportingService);
     const otherError: Error = new Error('problem');
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(otherError);
-    expect(() => {
-      env.keyPress('a');
-      tick(SEND_METRICS_INTERVAL);
-    }).toThrow();
+    verify(mockedReportingService.silentError(anything(), anything())).never();
+    env.keyPress('a');
+    tick(SEND_METRICS_INTERVAL);
     verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
+    verify(mockedReportingService.silentError(anything(), otherError)).once();
 
     // CommandError NotFound is ignored
     resetCalls(mockedSFProjectService);
+    resetCalls(mockedReportingService);
     const notFoundError: CommandError = new CommandError(CommandErrorCode.NotFound, 'error');
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(notFoundError);
-    expect(() => {
-      env.keyPress('a');
-      tick(SEND_METRICS_INTERVAL);
-    }).not.toThrow();
+    env.keyPress('a');
+    tick(SEND_METRICS_INTERVAL);
     verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
+    verify(mockedReportingService.silentError(anything(), anything())).never();
 
     // CommandError Forbidden is ignored
     resetCalls(mockedSFProjectService);
     const forbiddenError: CommandError = new CommandError(CommandErrorCode.Forbidden, 'error');
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(forbiddenError);
-    expect(() => {
-      env.keyPress('a');
-      tick(SEND_METRICS_INTERVAL);
-    }).not.toThrow();
+    env.keyPress('a');
+    tick(SEND_METRICS_INTERVAL);
     verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
+    verify(mockedReportingService.silentError(anything(), anything())).never();
 
     // CommandError is ignored when offline
     resetCalls(mockedSFProjectService);
     when(mockedPwaService.isOnline).thenReturn(false);
     when(mockedPwaService.onlineStatus$).thenReturn(of(false));
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(commandError);
-    expect(() => {
-      env.keyPress('a');
-      tick(SEND_METRICS_INTERVAL);
-    }).not.toThrow();
+    env.keyPress('a');
+    tick(SEND_METRICS_INTERVAL);
     // Not calling since offline
     verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
+    verify(mockedReportingService.silentError(anything(), anything())).never();
 
     // Non-CommandError error is ignored when offline
     resetCalls(mockedSFProjectService);
-    expect(() => {
-      env.keyPress('a');
-      tick(SEND_METRICS_INTERVAL);
-    }).not.toThrow();
+    env.keyPress('a');
+    tick(SEND_METRICS_INTERVAL);
     // Not calling since offline
     verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).never();
+    verify(mockedReportingService.silentError(anything(), anything())).never();
 
     env.sessionDispose();
   }));
@@ -473,7 +474,8 @@ class TestEnvironment {
       this.target,
       this.tokenizer,
       this.tokenizer,
-      instance(mockedPwaService)
+      instance(mockedPwaService),
+      instance(mockedReportingService)
     );
 
     this.sourceFixture.detectChanges();
