@@ -142,6 +142,7 @@ public class MachineApiServiceTests
             Project01,
             Build01,
             minRevision: null,
+            preTranslate: false,
             CancellationToken.None
         );
 
@@ -162,7 +163,15 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetBuildAsync(User01, Project01, Build01, minRevision: 1, CancellationToken.None)
+            () =>
+                env.Service.GetBuildAsync(
+                    User01,
+                    Project01,
+                    Build01,
+                    minRevision: 1,
+                    preTranslate: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -179,7 +188,15 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetBuildAsync(User01, Project01, Build01, minRevision, CancellationToken.None)
+            () =>
+                env.Service.GetBuildAsync(
+                    User01,
+                    Project01,
+                    Build01,
+                    minRevision,
+                    preTranslate: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -199,6 +216,7 @@ public class MachineApiServiceTests
             Project01,
             Build01,
             minRevision: null,
+            preTranslate: false,
             CancellationToken.None
         );
 
@@ -215,7 +233,15 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetBuildAsync(User01, Project01, Build01, minRevision: null, CancellationToken.None)
+            () =>
+                env.Service.GetBuildAsync(
+                    User01,
+                    Project01,
+                    Build01,
+                    minRevision: null,
+                    preTranslate: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -233,6 +259,7 @@ public class MachineApiServiceTests
                     Project01,
                     Build01,
                     minRevision: null,
+                    preTranslate: false,
                     CancellationToken.None
                 )
         );
@@ -252,6 +279,7 @@ public class MachineApiServiceTests
                     "invalid_project_id",
                     Build01,
                     minRevision: null,
+                    preTranslate: false,
                     CancellationToken.None
                 )
         );
@@ -266,7 +294,15 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetBuildAsync(User01, Project03, Build01, minRevision: null, CancellationToken.None)
+            () =>
+                env.Service.GetBuildAsync(
+                    User01,
+                    Project03,
+                    Build01,
+                    minRevision: null,
+                    preTranslate: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -302,6 +338,7 @@ public class MachineApiServiceTests
             Project01,
             Build01,
             minRevision: null,
+            preTranslate: false,
             CancellationToken.None
         );
 
@@ -350,6 +387,7 @@ public class MachineApiServiceTests
             Project01,
             Build01,
             minRevision: null,
+            preTranslate: false,
             CancellationToken.None
         );
 
@@ -371,7 +409,14 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        _ = await env.Service.GetBuildAsync(User01, Project01, Build01, minRevision: null, CancellationToken.None);
+        _ = await env.Service.GetBuildAsync(
+            User01,
+            Project01,
+            Build01,
+            minRevision: null,
+            preTranslate: false,
+            CancellationToken.None
+        );
 
         await env.Builds.Received(1).GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None);
         await env.TranslationEnginesClient
@@ -394,6 +439,7 @@ public class MachineApiServiceTests
             User01,
             Project01,
             minRevision: null,
+            preTranslate: false,
             CancellationToken.None
         );
 
@@ -414,7 +460,14 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetCurrentBuildAsync(User01, Project01, minRevision: 1, CancellationToken.None)
+            () =>
+                env.Service.GetCurrentBuildAsync(
+                    User01,
+                    Project01,
+                    minRevision: 1,
+                    preTranslate: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -431,7 +484,14 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetCurrentBuildAsync(User01, Project01, minRevision, CancellationToken.None)
+            () =>
+                env.Service.GetCurrentBuildAsync(
+                    User01,
+                    Project01,
+                    minRevision,
+                    preTranslate: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -450,6 +510,7 @@ public class MachineApiServiceTests
             User01,
             Project01,
             minRevision: null,
+            preTranslate: false,
             CancellationToken.None
         );
 
@@ -466,7 +527,14 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetCurrentBuildAsync(User01, Project01, minRevision: null, CancellationToken.None)
+            () =>
+                env.Service.GetCurrentBuildAsync(
+                    User01,
+                    Project01,
+                    minRevision: null,
+                    preTranslate: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -483,6 +551,7 @@ public class MachineApiServiceTests
                     "invalid_user_id",
                     Project01,
                     minRevision: null,
+                    preTranslate: false,
                     CancellationToken.None
                 )
         );
@@ -501,6 +570,7 @@ public class MachineApiServiceTests
                     User01,
                     "invalid_project_id",
                     minRevision: null,
+                    preTranslate: false,
                     CancellationToken.None
                 )
         );
@@ -518,7 +588,14 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetCurrentBuildAsync(User01, Project01, minRevision: null, CancellationToken.None)
+            () =>
+                env.Service.GetCurrentBuildAsync(
+                    User01,
+                    Project01,
+                    minRevision: null,
+                    preTranslate: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -531,7 +608,14 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.GetCurrentBuildAsync(User01, Project03, minRevision: null, CancellationToken.None)
+            () =>
+                env.Service.GetCurrentBuildAsync(
+                    User01,
+                    Project03,
+                    minRevision: null,
+                    preTranslate: false,
+                    CancellationToken.None
+                )
         );
     }
 
@@ -566,6 +650,7 @@ public class MachineApiServiceTests
             User01,
             Project01,
             minRevision: null,
+            preTranslate: false,
             CancellationToken.None
         );
 
@@ -613,6 +698,7 @@ public class MachineApiServiceTests
             User01,
             Project01,
             minRevision: null,
+            preTranslate: false,
             CancellationToken.None
         );
 
@@ -634,7 +720,13 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        _ = await env.Service.GetCurrentBuildAsync(User01, Project01, minRevision: null, CancellationToken.None);
+        _ = await env.Service.GetCurrentBuildAsync(
+            User01,
+            Project01,
+            minRevision: null,
+            preTranslate: false,
+            CancellationToken.None
+        );
 
         await env.Builds
             .Received(1)

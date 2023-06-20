@@ -124,6 +124,7 @@ public class MachineApiService : IMachineApiService
         string sfProjectId,
         string buildId,
         long? minRevision,
+        bool preTranslate,
         CancellationToken cancellationToken
     )
     {
@@ -141,7 +142,7 @@ public class MachineApiService : IMachineApiService
         else if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             // Execute on Serval, if it is enabled
-            string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
+            string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
             if (string.IsNullOrWhiteSpace(translationEngineId))
             {
                 throw new DataNotFoundException("The translation engine is not configured");
@@ -181,6 +182,7 @@ public class MachineApiService : IMachineApiService
         string curUserId,
         string sfProjectId,
         long? minRevision,
+        bool preTranslate,
         CancellationToken cancellationToken
     )
     {
@@ -199,7 +201,7 @@ public class MachineApiService : IMachineApiService
         else if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             // Otherwise execute on Serval, if it is enabled
-            string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: false);
+            string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate);
             if (string.IsNullOrWhiteSpace(translationEngineId))
             {
                 throw new DataNotFoundException("The translation engine is not configured");
