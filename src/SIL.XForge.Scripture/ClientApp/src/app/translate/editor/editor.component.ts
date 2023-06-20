@@ -684,10 +684,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             op.set(puc => puc.selectedSegment, this.target!.segmentRef);
             op.set(puc => puc.selectedSegmentChecksum!, this.target!.segmentChecksum);
           });
-          if (this.bookNum != null && this.hasEditRight) {
-            const verseRef = getVerseRefFromSegmentRef(this.bookNum, this.target.segmentRef);
-            this.toggleVerseRefElement(verseRef);
-          }
+        }
+        if (this.bookNum != null && this.hasEditRight) {
+          const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, this.target.segmentRef);
+          this.toggleVerseRefElement(verseRef);
         }
         await this.translateSegment();
       } finally {
@@ -774,6 +774,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.toggleNoteThreadVerseRefs$.next();
         this.shouldNoteThreadsRespondToEdits = true;
         if (this.target?.editor != null) {
+          this.positionInsertNoteFab();
           this.subscribeScroll(this.target.editor);
         }
         break;
@@ -1086,6 +1087,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     if (this.isInsertNoteFabEnabled) {
       this.setNoteFabVisibility('visible');
+      this.positionInsertNoteFab();
     }
   }
 
@@ -1640,7 +1642,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private positionInsertNoteFab(): void {
-    if (this.insertNoteFab == null || this.target?.editor == null || !this.isInsertNoteFabEnabled) return;
+    if (this.insertNoteFab == null || this.target?.editor == null) return;
     const selection: RangeStatic | null | undefined = this.target.editor.getSelection();
     if (selection != null) {
       this.insertNoteFab.nativeElement.style.top = `${this.target.selectionBoundsTop}px`;
@@ -1665,18 +1667,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (segmentElement == null) {
       return;
     }
-    if (this.canShowInsertNoteFab) {
-      let allowToggleVerseSelection: boolean = true;
-      if (this.commenterSelectedVerseRef != null && verseRef.equals(this.commenterSelectedVerseRef)) {
-        allowToggleVerseSelection = !this.hasEditRight;
-      }
-      if (allowToggleVerseSelection) {
-        this.showAddCommentButton = this.target.toggleVerseSelection(verseRef);
-        this.positionInsertNoteFab();
-      }
-    } else {
-      this.showAddCommentButton = false;
+
+    // always keep the selection current even if the note dialog was opened
+    let allowToggleVerseSelection: boolean = true;
+    if (this.commenterSelectedVerseRef != null && verseRef.equals(this.commenterSelectedVerseRef)) {
+      allowToggleVerseSelection = !this.hasEditRight;
     }
+    if (allowToggleVerseSelection) {
+      this.showAddCommentButton = this.target.toggleVerseSelection(verseRef);
+      this.positionInsertNoteFab();
+    }
+    if (!this.isInsertNoteFabEnabled) {
+      this.setNoteFabVisibility('hidden');
+    }
+
     if (this.commenterSelectedVerseRef != null) {
       if (verseRef.equals(this.commenterSelectedVerseRef)) {
         if (!this.hasEditRight) {
@@ -1687,9 +1691,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       // un-select previously selected verses since a note can apply to only one verse.
       this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
     }
-    if (this.dialogService.openDialogCount < 1 && !this.addingMobileNote) {
-      this.commenterSelectedVerseRef = verseRef;
-    }
+    this.commenterSelectedVerseRef = verseRef;
   }
 
   /** Determine the number of embeds that are within an anchoring.

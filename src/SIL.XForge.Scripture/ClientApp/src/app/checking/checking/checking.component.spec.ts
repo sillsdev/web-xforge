@@ -31,7 +31,7 @@ import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { anyString, anything, deepEqual, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
+import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
@@ -54,6 +54,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatMenuHarness } from '@angular/material/menu/testing';
 import { MatButtonHarness } from '@angular/material/button/testing';
+import { QueryParameters } from 'xforge-common/query-parameters';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -2006,9 +2007,11 @@ class TestEnvironment {
     const questionDoc = this.getQuestionDoc(dataId);
     this.ngZone.run(() => this.component.questionsPanel!.activateQuestion(questionDoc));
     tick();
-    this.fixture.detectChanges();
-    tick(this.questionReadTimer);
-    this.setRouteSnapshot(Canon.bookNumberToId(questionDoc.data!.verseRef.bookNum));
+    this.waitForQuestionTimersToComplete();
+    const bookId: string = Canon.bookNumberToId(questionDoc.data!.verseRef.bookNum);
+    this.setRouteSnapshot(bookId);
+    this.params$.next({ projectId: 'project01', bookId });
+    this.waitForQuestionTimersToComplete();
   }
 
   getExportAnswerButton(index: number): DebugElement {
@@ -2053,22 +2056,13 @@ class TestEnvironment {
 
   setBookId(bookId: string): void {
     this.setRouteSnapshot(bookId);
-    when(
-      mockedProjectService.queryQuestions(
-        'project01',
-        deepEqual({
-          bookNum: this.projectBookRoute === 'ALL' ? undefined : Canon.bookIdToNumber(this.projectBookRoute),
-          sort: true,
-          activeOnly: true
-        })
-      )
-    ).thenCall(() =>
-      this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {
-        [obj<Question>().pathStr(q => q.isArchived)]: false,
-        // Sort questions in order from oldest to newest
-        $sort: { [obj<Question>().pathStr(q => q.dateCreated)]: 1 }
-      })
-    );
+    when(mockedProjectService.queryQuestions('project01', anything())).thenCall((_projectId, options) => {
+      const parameters: QueryParameters = {};
+      if (options.bookNum != null) parameters[obj<Question>().pathStr(q => q.verseRef.bookNum)] = options.bookNum;
+      if (options.activeOnly) parameters[obj<Question>().pathStr(q => q.isArchived)] = false;
+      if (options.sort) parameters.$sort = { [obj<Question>().pathStr(q => q.dateCreated)]: 1 };
+      return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, parameters);
+    });
     this.setupQuestionData();
     this.params$.next({ projectId: 'project01', bookId });
   }
