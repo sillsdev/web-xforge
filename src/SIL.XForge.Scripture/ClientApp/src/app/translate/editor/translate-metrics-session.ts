@@ -240,7 +240,6 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
           'Error when adding translation metrics',
           ErrorReportingService.normalizeError(err)
         );
-        return;
       }
     }
   }

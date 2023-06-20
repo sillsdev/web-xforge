@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgModule } from '@angular/core';
-import { MAX_SEGMENT_LENGTH, TranslationSources } from '@sillsdev/machine';
+import { MAX_SEGMENT_LENGTH, TranslationSources, WordGraph } from '@sillsdev/machine';
 import { of, throwError } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -431,7 +431,7 @@ describe('RemoteTranslationEngine', () => {
       )
     ).thenThrow(new Error());
 
-    const result = await env.client.getWordGraph(sourceSegment);
+    const result: WordGraph = await env.client.getWordGraph(sourceSegment);
     expect(result.isEmpty).toBeTruthy();
   });
 });
