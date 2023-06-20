@@ -47,6 +47,7 @@ public class MachineApiService : IMachineApiService
     private readonly IExceptionHandler _exceptionHandler;
     private readonly IFeatureManager _featureManager;
     private readonly IMachineProjectService _machineProjectService;
+    private readonly IPreTranslationService _preTranslationService;
     private readonly DataAccess.IRepository<SFProjectSecret> _projectSecrets;
     private readonly IRealtimeService _realtimeService;
     private readonly ITranslationEnginesClient _translationEnginesClient;
@@ -61,6 +62,7 @@ public class MachineApiService : IMachineApiService
         IExceptionHandler exceptionHandler,
         IFeatureManager featureManager,
         IMachineProjectService machineProjectService,
+        IPreTranslationService preTranslationService,
         DataAccess.IRepository<SFProjectSecret> projectSecrets,
         IRealtimeService realtimeService,
         ITranslationEnginesClient translationEnginesClient
@@ -79,6 +81,7 @@ public class MachineApiService : IMachineApiService
         // Serval Dependencies
         _backgroundJobClient = backgroundJobClient;
         _machineProjectService = machineProjectService;
+        _preTranslationService = preTranslationService;
         _projectSecrets = projectSecrets;
         _realtimeService = realtimeService;
         _translationEnginesClient = translationEnginesClient;
@@ -285,6 +288,44 @@ public class MachineApiService : IMachineApiService
 
         // Make sure the DTO conforms to the machine-api V2 URLs
         return UpdateDto(engineDto, sfProjectId);
+    }
+
+    public async Task<PreTranslationDto> GetPreTranslationAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    )
+    {
+        // Create the DTO to return
+        PreTranslationDto preTranslation = new PreTranslationDto();
+
+        // Ensure that the user has permission
+        await EnsurePermissionAsync(curUserId, sfProjectId);
+
+        // We only support Serval for canceling the current build
+        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
+        {
+            throw new DataNotFoundException("The translation engine does not support pre-translations");
+        }
+
+        try
+        {
+            preTranslation.PreTranslations = await _preTranslationService.GetPreTranslationsAsync(
+                curUserId,
+                sfProjectId,
+                bookNum,
+                chapterNum,
+                cancellationToken
+            );
+        }
+        catch (Exception e)
+        {
+            await ProcessServalApiExceptionAsync(e);
+        }
+
+        return preTranslation;
     }
 
     public async Task<WordGraph> GetWordGraphAsync(
