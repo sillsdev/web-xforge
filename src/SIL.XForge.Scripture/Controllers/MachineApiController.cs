@@ -169,6 +169,40 @@ public class MachineApiController : ControllerBase
         }
     }
 
+    [HttpGet(MachineApi.GetPreTranslation)]
+    public async Task<ActionResult<PreTranslationDto>> GetPreTranslationAsync(
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            PreTranslationDto preTranslation = await _machineApiService.GetPreTranslationAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                bookNum,
+                chapterNum,
+                cancellationToken
+            );
+            return Ok(preTranslation);
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
     /// <summary>
     /// Gets the word graph that represents all possible translations of a segment of text.
     /// </summary>

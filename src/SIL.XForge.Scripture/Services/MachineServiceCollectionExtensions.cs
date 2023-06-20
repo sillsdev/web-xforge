@@ -96,6 +96,7 @@ public static class MachineServiceCollectionExtensions
         });
         services.AddSingleton<IMachineApiService, MachineApiService>();
         services.AddSingleton<IMachineProjectService, MachineProjectService>();
+        services.AddSingleton<IPreTranslationService, PreTranslationService>();
         return services;
     }
 
