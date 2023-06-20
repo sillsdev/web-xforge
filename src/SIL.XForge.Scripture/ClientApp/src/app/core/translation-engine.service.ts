@@ -12,6 +12,7 @@ import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { Observable } from 'rxjs';
 import { filter, share } from 'rxjs/operators';
+import { NoticeService } from 'xforge-common/notice.service';
 import { OfflineData, OfflineStore } from 'xforge-common/offline-store';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -39,7 +40,8 @@ export class TranslationEngineService extends SubscriptionDisposable {
     private readonly offlineStore: OfflineStore,
     private readonly pwaService: PwaService,
     private readonly projectService: SFProjectService,
-    private readonly machineHttp: HttpClient
+    private readonly machineHttp: HttpClient,
+    private readonly noticeService: NoticeService
   ) {
     super();
     this.onlineStatus$ = this.pwaService.onlineStatus$.pipe(
@@ -57,7 +59,10 @@ export class TranslationEngineService extends SubscriptionDisposable {
 
   createTranslationEngine(projectId: string): RemoteTranslationEngine {
     if (!this.translationEngines.has(projectId)) {
-      this.translationEngines.set(projectId, new RemoteTranslationEngine(projectId, this.machineHttp));
+      this.translationEngines.set(
+        projectId,
+        new RemoteTranslationEngine(projectId, this.machineHttp, this.noticeService)
+      );
     }
     return this.translationEngines.get(projectId)!;
   }
