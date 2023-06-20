@@ -59,6 +59,7 @@ public class MachineApiV2Controller : ControllerBase
                     _userAccessor.UserId,
                     sfProjectId,
                     minRevision,
+                    preTranslate: false,
                     cancellationToken
                 )
                 : await _machineApiService.GetBuildAsync(
@@ -66,6 +67,7 @@ public class MachineApiV2Controller : ControllerBase
                     sfProjectId,
                     buildId,
                     minRevision,
+                    preTranslate: false,
                     cancellationToken
                 );
 

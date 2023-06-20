@@ -14,12 +14,14 @@ public interface IMachineApiService
         string sfProjectId,
         string buildId,
         long? minRevision,
+        bool preTranslate,
         CancellationToken cancellationToken
     );
     Task<BuildDto?> GetCurrentBuildAsync(
         string curUserId,
         string sfProjectId,
         long? minRevision,
+        bool preTranslate,
         CancellationToken cancellationToken
     );
     Task<EngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
