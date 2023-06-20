@@ -90,6 +90,7 @@ public class MachineApiController : ControllerBase
         string sfProjectId,
         string? buildId,
         [FromQuery] int? minRevision,
+        [FromQuery] bool preTranslate,
         CancellationToken cancellationToken
     )
     {
@@ -100,6 +101,7 @@ public class MachineApiController : ControllerBase
                     _userAccessor.UserId,
                     sfProjectId,
                     minRevision,
+                    preTranslate,
                     cancellationToken
                 )
                 : await _machineApiService.GetBuildAsync(
@@ -107,6 +109,7 @@ public class MachineApiController : ControllerBase
                     sfProjectId,
                     buildId,
                     minRevision,
+                    preTranslate,
                     cancellationToken
                 );
 
