@@ -866,6 +866,74 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public void GetPreTranslationAsync_NoFeatureFlagEnabled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void GetPreTranslationAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.GetPreTranslationAsync("invalid_user_id", Project01, 40, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void GetPreTranslationAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetPreTranslationAsync(User01, "invalid_project_id", 40, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task GetPreTranslationAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string reference = "MAT 1:1";
+        const string translation = "The book of the generations of Jesus Christ, the son of David, the son of Abraham.";
+        env.PreTranslationService
+            .GetPreTranslationsAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new PreTranslation[]
+                    {
+                        new PreTranslation { Reference = reference, Translation = translation, },
+                    }
+                )
+            );
+
+        // SUT
+        PreTranslationDto actual = await env.Service.GetPreTranslationAsync(
+            User01,
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+        Assert.IsNotNull(actual);
+        Assert.AreEqual(reference, actual.PreTranslations.First().Reference);
+        Assert.AreEqual(translation, actual.PreTranslations.First().Translation);
+    }
+
+    [Test]
     public void GetWordGraphAsync_NoFeatureFlagsEnabled()
     {
         // Set up test environment
@@ -1943,6 +2011,7 @@ public class MachineApiServiceTests
             FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(true));
 
             MachineProjectService = Substitute.For<IMachineProjectService>();
+            PreTranslationService = Substitute.For<IPreTranslationService>();
             var projectSecrets = new MemoryRepository<SFProjectSecret>(
                 new[]
                 {
@@ -1992,6 +2061,7 @@ public class MachineApiServiceTests
                 ExceptionHandler,
                 FeatureManager,
                 MachineProjectService,
+                PreTranslationService,
                 projectSecrets,
                 realtimeService,
                 TranslationEnginesClient
@@ -2005,6 +2075,7 @@ public class MachineApiServiceTests
         public IExceptionHandler ExceptionHandler { get; }
         public IFeatureManager FeatureManager { get; }
         public IMachineProjectService MachineProjectService { get; }
+        public IPreTranslationService PreTranslationService { get; }
         public MachineApiService Service { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
     }

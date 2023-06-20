@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Serval.Client;
 using SIL.Machine.WebApi;
+using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -22,6 +23,13 @@ public interface IMachineApiService
         CancellationToken cancellationToken
     );
     Task<EngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
+    Task<PreTranslationDto> GetPreTranslationAsync(
+        string curUserId,
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    );
     Task<WordGraph> GetWordGraphAsync(
         string curUserId,
         string sfProjectId,

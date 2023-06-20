@@ -10,6 +10,7 @@ using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.Machine.WebApi;
+using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 
@@ -402,6 +403,88 @@ public class MachineApiControllerTests
 
         // SUT
         ActionResult<EngineDto> actual = await env.Controller.GetEngineAsync(Project01, CancellationToken.None);
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetPreTranslationAsync_MachineApiDown()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new BrokenCircuitException());
+
+        // SUT
+        ActionResult<PreTranslationDto> actual = await env.Controller.GetPreTranslationAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        Assert.IsInstanceOf<ObjectResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+    }
+
+    [Test]
+    public async Task GetPreTranslationAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new ForbiddenException());
+
+        // SUT
+        ActionResult<PreTranslationDto> actual = await env.Controller.GetPreTranslationAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetPreTranslationAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new DataNotFoundException(string.Empty));
+
+        // SUT
+        ActionResult<PreTranslationDto> actual = await env.Controller.GetPreTranslationAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetPreTranslationAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Returns(Task.FromResult(new PreTranslationDto()));
+
+        // SUT
+        ActionResult<PreTranslationDto> actual = await env.Controller.GetPreTranslationAsync(
+            Project01,
+            40,
+            1,
+            CancellationToken.None
+        );
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
     }
