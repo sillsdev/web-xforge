@@ -1,5 +1,4 @@
 import { MdcIconRegistry } from '@angular-mdc/web';
-import { MdcDialogRef } from '@angular-mdc/web/dialog';
 import { MdcSelect } from '@angular-mdc/web/select';
 import { MdcTopAppBar } from '@angular-mdc/web/top-app-bar';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
@@ -43,7 +42,6 @@ import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { canAccessCommunityCheckingApp, canAccessTranslateApp } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
-import { ProjectDeletedDialogComponent } from './project-deleted-dialog/project-deleted-dialog.component';
 import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 import { projectLabel } from './shared/utils';
 
@@ -78,7 +76,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private currentUserDoc?: UserDoc;
   private isLoggedInUserAnonymous: boolean = false;
   private _projectSelect?: MdcSelect;
-  private projectDeletedDialogRef: MdcDialogRef<ProjectDeletedDialogComponent> | null = null;
   private _topAppBar?: MdcTopAppBar;
   private selectedProjectDoc?: SFProjectProfileDoc;
   private selectedProjectDeleteSub?: Subscription;
@@ -350,20 +347,12 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.canSeeAdminPages$ = combineLatest([this.canSeeSettings$, this.canSeeUsers$, this.canSync$]).pipe(
           map(([settings, users, sync]) => settings || users || sync)
         );
-        // the project deleted dialog should be closed by now, so we can reset its ref to null
-        if (projectId == null) {
-          this.projectDeletedDialogRef = null;
-        }
       })
     );
 
     // select the current project
     this.subscribe(combineLatest([projectDocs$, projectId$]), async ([projectDocs, projectId]) => {
       this.projectDocs = projectDocs;
-      // if the project deleted dialog is displayed, don't do anything
-      if (this.projectDeletedDialogRef != null) {
-        return;
-      }
       const selectedProjectDoc = projectId == null ? undefined : this.projectDocs.find(p => p.id === projectId);
 
       if (this.selectedProjectDeleteSub != null) {
@@ -580,8 +569,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   private async showProjectDeletedDialog(): Promise<void> {
     await this.userService.setCurrentProjectId(this.currentUserDoc!, undefined);
-    this.projectDeletedDialogRef = this.dialogService.openMdcDialog(ProjectDeletedDialogComponent);
-    this.projectDeletedDialogRef.afterClosed().subscribe(() => this.navigateToStart());
+    await this.dialogService.message('app.project_has_been_deleted');
+    this.navigateToStart();
   }
 
   private navigateToStart(): void {
