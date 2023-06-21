@@ -12,6 +12,8 @@ import { SuggestionsComponent } from './editor/suggestions.component';
 import { TrainingProgressComponent } from './training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview/translate-overview.component';
 import { TranslateRoutingModule } from './translate-routing.module';
+import { GenerateDraftComponent } from './generate-draft/generate-draft.component';
+import { DraftViewerComponent } from './generate-draft/draft-viewer/draft-viewer.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +23,9 @@ import { TranslateRoutingModule } from './translate-routing.module';
     SuggestionsComponent,
     SuggestionsSettingsDialogComponent,
     TrainingProgressComponent,
-    TranslateOverviewComponent
+    TranslateOverviewComponent,
+    GenerateDraftComponent,
+    DraftViewerComponent
   ],
   imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, XForgeCommonModule, TranslocoModule]
 })
