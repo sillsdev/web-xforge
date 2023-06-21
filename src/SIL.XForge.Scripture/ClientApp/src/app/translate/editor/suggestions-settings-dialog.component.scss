@@ -21,6 +21,18 @@ mat-dialog-content.content-padding {
   }
 }
 
-mdc-list-item {
-  height: 2.5em;
+mat-option {
+  height: 2.5em !important;
+}
+
+.minor-header {
+  font-size: 0.875rem;
+  line-height: 1.375rem;
+  font-weight: 500;
+}
+
+span {
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  font-weight: 400;
 }

@@ -5,25 +5,25 @@
     <mat-slide-toggle #suggestionsToggle id="suggestions-enabled-switch">{{
       t("translation_suggestions")
     }}</mat-slide-toggle>
-    <mdc-select
-      id="num-suggestions-select"
-      [disabled]="settingsDisabled"
-      [(ngModel)]="numSuggestions"
-      placeholder="{{ t('number_of_suggestions') }}"
-    >
-      <mdc-menu>
-        <mdc-list>
-          <mdc-list-item *ngFor="let value of ['1', '2', '3', '4', '5']" [value]="value">
-            {{ value }}
-          </mdc-list-item>
-        </mdc-list>
-      </mdc-menu>
-    </mdc-select>
-    <mdc-form-field class="suggestions-confidence-field">
-      <label mdcSubtitle2>{{ t("suggestion_confidence") }}</label>
+    <mat-form-field appearance="outline">
+      <mat-label>{{ t("number_of_suggestions") }}</mat-label>
+      <mat-select
+        id="num-suggestions-select"
+        [disabled]="settingsDisabled"
+        [(ngModel)]="numSuggestions"
+        disableOptionCentering
+      >
+        <mat-option *ngFor="let value of ['1', '2', '3', '4', '5']" [value]="value">
+          {{ value }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <div class="suggestions-confidence-field">
+      <span class="minor-header">{{ t("suggestion_confidence") }}</span>
       <div class="slider-labels" fxLayout="row" fxLayoutAlign="space-between">
-        <span mdcCaption>{{ t("more") }}</span> <span mdcCaption>{{ confidenceThreshold }}%</span>
-        <span mdcCaption>{{ t("better") }}</span>
+        <span>{{ t("more") }}</span>
+        <span>{{ confidenceThreshold }}%</span>
+        <span>{{ t("better") }}</span>
       </div>
       <mat-slider
         #confidenceThresholdSlider
@@ -33,7 +33,7 @@
         [(ngModel)]="confidenceThreshold"
         (input)="confidenceThreshold = $event.value ?? 0"
       ></mat-slider>
-    </mdc-form-field>
+    </div>
   </mat-dialog-content>
   <mat-dialog-actions fxLayoutAlign="end">
     <button mat-button mat-dialog-close>{{ t("close") }}</button>
