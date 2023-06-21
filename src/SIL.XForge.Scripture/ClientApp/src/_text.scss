@@ -237,3 +237,8 @@ quill-editor.ltr .highlight-para usx-segment:first-child:before {
 quill-editor.rtl .highlight-para usx-segment:first-child:before {
   right: -1em;
 }
+
+usx-segment.draft {
+  color: #6495ed;
+  font-style: italic;
+}

@@ -1,0 +1,44 @@
+.working-animation {
+  margin: 10px 0;
+
+  mat-icon:nth-child(1) {
+    animation: counter-spin 2s linear infinite;
+  }
+
+  mat-icon:nth-child(2) {
+    animation: spin 4s linear infinite;
+    height: 48px;
+    width: 48px;
+    font-size: 48px;
+  }
+
+  mat-icon:nth-child(3) {
+    animation: counter-spin 2s linear infinite;
+  }
+}
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+h3 {
+  font-size: 20px;
+  font-weight: 500;
+}
+
+app-draft-viewer {
+  animation: cardEntrance 0.5s ease-in;
+}
+
+section {
+  padding: 10px 0;
+}
+
+mat-card-actions {
+  margin-inline-start: 0;
+}
