@@ -96,7 +96,18 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            BuildDto? build = string.IsNullOrWhiteSpace(buildId)
+            BuildDto? build = null;
+            if (preTranslate && buildId is null)
+            {
+                build = await _machineApiService.GetPreTranslationQueuedStateAsync(
+                    _userAccessor.UserId,
+                    sfProjectId,
+                    cancellationToken
+                );
+            }
+
+            // If a build identifier is not specified, get the current build
+            build ??= string.IsNullOrWhiteSpace(buildId)
                 ? await _machineApiService.GetCurrentBuildAsync(
                     _userAccessor.UserId,
                     sfProjectId,
