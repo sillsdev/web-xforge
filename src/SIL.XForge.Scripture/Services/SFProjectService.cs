@@ -1046,7 +1046,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     ///   <c>true</c> if a project translator; otherwise, <c>false</c>.
     /// </returns>
     /// <remarks>
-    /// This only checks the local project, and is based on <see cref="ProjectService.IsProjectAdmin" />.
+    /// This only checks the local project, and is based on <c>ProjectService.IsProjectAdmin</c>.
     /// </remarks>
     private static bool IsProjectTranslator(SFProject project, string userId) =>
         project.UserRoles.TryGetValue(userId, out string role) && role == SFProjectRole.Translator;
@@ -1115,7 +1115,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// <param name="userSecret">The user secret.</param>
     /// <param name="paratextId">The paratext identifier.</param>
     /// <param name="ptProjects">The paratext projects.</param>
-    /// <param name="userIds">The ids and roles of the users who will need to access the source.</param>
+    /// <param name="userRoles">The ids and roles of the users who will need to access the source.</param>
     /// <returns>The <see cref="TranslateSource"/> object for the specified resource.</returns>
     /// <exception cref="DataNotFoundException">The source paratext project does not exist.</exception>
     private async Task<TranslateSource> GetTranslateSourceAsync(

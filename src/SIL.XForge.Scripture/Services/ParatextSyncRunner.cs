@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -46,11 +46,11 @@ namespace SIL.XForge.Scripture.Services;
 /// <code>
 /// Diagram showing a high-level look at the order of data being transmitted:
 /// ┌─────┐  ┌─────┐  ┌───────────┐
-/// │SF DB├─>│Local│  │PT Archives│
-/// │     │  │PT hg├─>│           │
+/// │SF DB├─→│Local│  │PT Archives│
+/// │     │  │PT hg├─→│           │
 /// │     │  │repo │  │           │
-/// │     │  │     │<─┤           │
-/// │     │<─┤     │  │           │
+/// │     │  │     │←─┤           │
+/// │     │←─┤     │  │           │
 /// └─────┘  └─────┘  └───────────┘
 /// </code>
 /// </summary>
@@ -131,9 +131,14 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// Synchronize content and user permissions in SF DB with Paratext SendReceive servers and PT Registry, for
     /// a project.
     /// </summary>
+    /// <param name="projectSFId">The project's Scripture Forge identifier.</param>
+    /// <param name="userId">The user identifier.</param>
+    /// <param name="syncMetricsId">The sync metrics identifier.</param>
+    /// <param name="trainEngine"><c>true</c> if we are to train the SMT translation engine; otherwise <c>false</c>.</param>
+    /// <param name="token">The cancellation token.</param>
     /// <remarks>
     /// Do not allow multiple sync jobs to run in parallel on the same project by creating a hangfire mutex on the
-    /// <param name="projectSFId"/> parameter, i.e. "{0}".
+    /// <paramref name="projectSFId"/> parameter, i.e. "{0}".
     /// </remarks>
     [Mutex("{0}")]
     public async Task RunAsync(
@@ -465,6 +470,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// <param name="paratextId">The Paratext ID.</param>
     /// <param name="textDocsByBook">The text documents with the book number as key.</param>
     /// <param name="questionDocsByBook">The question documents with the book number as key.</param>
+    /// <param name="noteThreadDocsByBook">The note thread documents with the book number as key.</param>
     /// <returns>The task.</returns>
     /// <exception cref="ArgumentException">The Paratext project repository does not exist.</exception>
     private async Task GetAndUpdateParatextBooksAndNotes(
@@ -555,7 +561,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// <summary>
     /// Updates the resource configuration
     /// </summary>
-    /// <param name="project">The SF project.</param>
     /// <param name="paratextProject">The Paratext project. This should be a resource.</param>
     /// <returns>The asynchronous task.</returns>
     /// <remarks>Only call this if the config requires an update.</remarks>
@@ -1075,7 +1080,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     }
 
     /// <summary>
-    /// Gets the text docs from <see cref="docs"/> for the book specified in <see cref="text"/>.
+    /// Gets the text docs from <paramref name="docs"/> for the book specified in <paramref name="text"/>.
     /// </summary>
     private SortedList<int, IDocument<TextData>> GetTextDocsForBook(
         TextInfo text,
