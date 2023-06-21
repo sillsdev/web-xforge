@@ -119,11 +119,13 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
+        await env.QueuePreTranslationBuildAsync();
 
         // SUT
         await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
 
         await env.TranslationEnginesClient.Received(1).CancelBuildAsync(TranslationEngine01, CancellationToken.None);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueued);
     }
 
     [Test]
@@ -1219,6 +1221,53 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetPreTranslationQueuedStateAsync_BuildRunTooLong()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.QueuePreTranslationBuildAsync(DateTime.UtcNow.AddHours(-6));
+
+        // SUT
+        BuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+            User01,
+            Project01,
+            CancellationToken.None
+        );
+        Assert.AreEqual(MachineApiService.BuildStateFaulted, build?.State);
+    }
+
+    [Test]
+    public async Task GetPreTranslationQueuedStateAsync_BuildQueued()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.QueuePreTranslationBuildAsync();
+
+        // SUT
+        BuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+            User01,
+            Project01,
+            CancellationToken.None
+        );
+        Assert.AreEqual(MachineApiService.BuildStateQueued, build?.State);
+    }
+
+    [Test]
+    public async Task GetPreTranslationQueuedStateAsync_NoBuildQueued()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        BuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+            User01,
+            Project01,
+            CancellationToken.None
+        );
+        Assert.IsNull(build);
+    }
+
+    [Test]
     public void StartBuildAsync_NoFeatureFlagsEnabled()
     {
         // Set up test environment
@@ -2104,7 +2153,7 @@ public class MachineApiServiceTests
 
             MachineProjectService = Substitute.For<IMachineProjectService>();
             PreTranslationService = Substitute.For<IPreTranslationService>();
-            var projectSecrets = new MemoryRepository<SFProjectSecret>(
+            ProjectSecrets = new MemoryRepository<SFProjectSecret>(
                 new[]
                 {
                     new SFProjectSecret
@@ -2113,7 +2162,7 @@ public class MachineApiServiceTests
                         ServalData = new ServalData
                         {
                             TranslationEngineId = TranslationEngine01,
-                            PreTranslationEngineId = TranslationEngine01
+                            PreTranslationEngineId = TranslationEngine01,
                         },
                     },
                     new SFProjectSecret { Id = Project02 },
@@ -2154,7 +2203,7 @@ public class MachineApiServiceTests
                 FeatureManager,
                 MachineProjectService,
                 PreTranslationService,
-                projectSecrets,
+                ProjectSecrets,
                 realtimeService,
                 TranslationEnginesClient
             );
@@ -2168,7 +2217,14 @@ public class MachineApiServiceTests
         public IFeatureManager FeatureManager { get; }
         public IMachineProjectService MachineProjectService { get; }
         public IPreTranslationService PreTranslationService { get; }
+        public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MachineApiService Service { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
+
+        public async Task QueuePreTranslationBuildAsync(DateTime? dateTime = null) =>
+            await ProjectSecrets.UpdateAsync(
+                Project01,
+                u => u.Set(p => p.ServalData.PreTranslationQueued, dateTime ?? DateTime.UtcNow)
+            );
     }
 }
