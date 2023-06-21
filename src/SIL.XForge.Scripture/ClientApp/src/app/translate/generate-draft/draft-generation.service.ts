@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { reduce } from 'lodash-es';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { BehaviorSubject, Observable, of, Subscription, timer } from 'rxjs';
 import { map, takeWhile } from 'rxjs/operators';
-import { HttpClient } from '../../machine-api/http-client';
+import { HttpClient } from 'src/app/machine-api/http-client';
 import { PreTranslation, PreTranslationData, samplePreTranslations } from './pretranslation';
 
 export interface DraftJob {
@@ -29,7 +30,7 @@ export class DraftGenerationService {
   private job$ = new BehaviorSubject<DraftJob>(this.initialJobState);
   private timerSub?: Subscription;
   private interval = 100;
-  private duration = 2000;
+  private duration = 1000;
   private queueWaitTime = this.duration / 2;
   private generationTimer$ = timer(0, this.interval).pipe(
     takeWhile(x => this.interval * x <= this.duration) // Inclusive of last emission
@@ -90,12 +91,13 @@ export class DraftGenerationService {
     }).pipe(map((data: PreTranslationData) => this.toDraftSegmentMap(data.preTranslations)));
   }
 
+  // Transform collection into dictionary of segmentRef -> verse
   private toDraftSegmentMap(preTranslations: PreTranslation[]): DraftSegmentMap {
     return reduce(
       preTranslations,
       (result: DraftSegmentMap, curr: PreTranslation) => {
-        const chapterVerse = curr.reference.split(' ')[1].replace(':', '_');
-        const segmentRef = `verse_${chapterVerse}`;
+        let verseRef = VerseRef.parse(curr.reference);
+        const segmentRef = `verse_${verseRef.chapter}_${verseRef.verse}`;
         result[segmentRef] = curr.translation;
         return result;
       },

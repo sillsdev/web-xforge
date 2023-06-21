@@ -13,30 +13,46 @@
     ></app-book-chapter-chooser>
   </mat-card>
 
-  <ng-container *ngIf="targetTextDocId">
-    <mat-card class="target">
-      <h2 mat-card-title>{{ targetProjectName }}</h2>
+  <ng-container *ngIf="sourceTextDocId && targetTextDocId">
+    <mat-card class="source">
+      <h2 mat-card-title>{{ sourceProject?.name }}</h2>
       <app-text
-        #targetText
+        #sourceText
         [isReadOnly]="true"
         [subscribeToUpdates]="false"
         [placeholder]="'Loading..'"
-        [isRightToLeft]="isRtl"
-        [id]="targetTextDocId"
+        [isRightToLeft]="!!sourceProject?.isRightToLeft"
+        [id]="sourceTextDocId"
       ></app-text>
     </mat-card>
 
     <mat-card class="draft">
-      <h2 mat-card-title>
-        Draft preview
-        <a mat-flat-button color="primary" (click)="applyDraft()">Apply to project</a>
+      <h2 mat-card-title *ngIf="!isDraftApplied">
+        <div>{{ targetProject?.name }} <span class="draft-indicator">Draft</span></div>
+        <div class="button-group divider">
+          <button mat-button color="primary" (click)="goNextDraftChapter()">Skip</button>
+          <button mat-flat-button color="primary" (click)="applyDraft()">Apply to project</button>
+        </div>
+      </h2>
+      <h2 mat-card-title *ngIf="isDraftApplied">
+        {{ targetProject?.name }}
+        <mat-icon class="check-icon">check</mat-icon>
+        <div class="button-group">
+          <button mat-flat-button color="primary" (click)="goNextDraftChapter()">
+            Next chapter
+            <mat-icon *ngIf="i18n.direction === 'rtl'">navigate_before</mat-icon>
+            <mat-icon *ngIf="i18n.direction === 'ltr'">navigate_next</mat-icon>
+          </button>
+        </div>
       </h2>
       <app-text
-        #draftText
+        [ngClass]="{ applied: isDraftApplied }"
+        #targetText
         [isReadOnly]="true"
         [subscribeToUpdates]="false"
         [placeholder]="'Loading..'"
-        [isRightToLeft]="isRtl"
+        [isRightToLeft]="!!targetProject?.isRightToLeft"
+        [id]="targetTextDocId"
       ></app-text>
     </mat-card>
   </ng-container>
