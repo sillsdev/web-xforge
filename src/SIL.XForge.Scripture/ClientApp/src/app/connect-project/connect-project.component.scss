@@ -52,10 +52,6 @@
     display: flex;
     flex-direction: column;
 
-    #project-select {
-      width: 100%;
-    }
-
     #no-projects-msg {
       align-self: center;
     }
@@ -110,24 +106,6 @@
 
 #based-on-field {
   max-width: calc(100% - 44px);
-}
-
-mdc-menu {
-  // Make the MDC Menu List extend to the width of the MDC Select that it drops down from, minus some space to still
-  // show the drop down arrow.
-  width: calc(100% - 40px);
-}
-
-mdc-select {
-  margin-bottom: 4px;
-  ::ng-deep .mdc-select__anchor {
-    width: 100%;
-  }
-}
-
-mdc-list-item {
-  height: unset;
-  min-height: 48px;
 }
 
 app-project-select {
