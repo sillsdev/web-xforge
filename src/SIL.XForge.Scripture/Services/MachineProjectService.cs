@@ -219,14 +219,14 @@ public class MachineProjectService : IMachineProjectService
             {
                 // Get the updated project secrets
                 projectSecret = await _projectSecrets.GetAsync(sfProjectId);
-                translationEngineId = projectSecret.ServalData!.PreTranslationEngineId;
+                translationEngineId = projectSecret.ServalData!.PreTranslationEngineId!;
 
                 // Execute a complete pre-translation
                 translationBuildConfig = GetTranslationBuildConfig(projectSecret.ServalData);
             }
             else
             {
-                translationEngineId = projectSecret.ServalData!.TranslationEngineId;
+                translationEngineId = projectSecret.ServalData!.TranslationEngineId!;
                 translationBuildConfig = new TranslationBuildConfig();
             }
 
@@ -235,11 +235,22 @@ public class MachineProjectService : IMachineProjectService
             // - This is an NMT build and no pre-translation build is queued
             if (!preTranslate || !await PreTranslationBuildQueuedAsync(translationEngineId))
             {
-                return await _translationEnginesClient.StartBuildAsync(
+                TranslationBuild translationBuild = await _translationEnginesClient.StartBuildAsync(
                     translationEngineId,
                     translationBuildConfig,
                     cancellationToken
                 );
+
+                // Clear the pre-translation queued status
+                if (preTranslate)
+                {
+                    await _projectSecrets.UpdateAsync(
+                        sfProjectId,
+                        u => u.Unset(p => p.ServalData.PreTranslationQueued)
+                    );
+                }
+
+                return translationBuild;
             }
         }
 

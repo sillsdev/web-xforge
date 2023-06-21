@@ -32,6 +32,11 @@ public interface IMachineApiService
         int chapterNum,
         CancellationToken cancellationToken
     );
+    Task<BuildDto?> GetPreTranslationQueuedStateAsync(
+        string curUserId,
+        string sfProjectId,
+        CancellationToken cancellationToken
+    );
     Task<WordGraph> GetWordGraphAsync(
         string curUserId,
         string sfProjectId,
