@@ -39,6 +39,8 @@ namespace SIL.XForge.Scripture.Services;
 /// </summary>
 public class MachineApiService : IMachineApiService
 {
+    internal const string BuildStateFaulted = "Faulted";
+    internal const string BuildStateQueued = "Queued";
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IBuildRepository _builds;
     private readonly IEngineRepository _engines;
@@ -111,7 +113,17 @@ public class MachineApiService : IMachineApiService
 
         try
         {
+            // Cancel the build on Serval
             await _translationEnginesClient.CancelBuildAsync(translationEngineId, cancellationToken);
+
+            // Clear the pre-translation queued status
+            if (
+                (await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret)
+                && projectSecret.ServalData?.PreTranslationQueued is not null
+            )
+            {
+                await _projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.PreTranslationQueued));
+            }
         }
         catch (Exception e)
         {
@@ -330,6 +342,38 @@ public class MachineApiService : IMachineApiService
         return preTranslation;
     }
 
+    public async Task<BuildDto?> GetPreTranslationQueuedStateAsync(
+        string curUserId,
+        string sfProjectId,
+        CancellationToken cancellationToken
+    )
+    {
+        // Ensure that the user has permission
+        await EnsurePermissionAsync(curUserId, sfProjectId);
+
+        // If there is a pre-translation queued, return a build dto with a status showing it is queued
+        if (
+            (await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret)
+            && projectSecret.ServalData?.PreTranslationQueued is not null
+        )
+        {
+            // If the build was queued 6 hours or more ago, it will have failed to upload
+            if (projectSecret.ServalData?.PreTranslationQueued <= DateTime.UtcNow.AddHours(-6))
+            {
+                return new BuildDto
+                {
+                    State = BuildStateFaulted,
+                    Message = "The build failed to upload to the server.",
+                };
+            }
+
+            // The build is queued and uploading is occurring in the background
+            return new BuildDto { State = BuildStateQueued, Message = "The build is being uploaded to the server.", };
+        }
+
+        return null;
+    }
+
     public async Task<WordGraph> GetWordGraphAsync(
         string curUserId,
         string sfProjectId,
@@ -470,6 +514,12 @@ public class MachineApiService : IMachineApiService
         // This will take a while, so we run it in the background
         _backgroundJobClient.Enqueue<MachineProjectService>(
             r => r.BuildProjectAsync(curUserId, sfProjectId, true, CancellationToken.None)
+        );
+
+        // Set the pre-translation queued date and time
+        await _projectSecrets.UpdateAsync(
+            sfProjectId,
+            u => u.Set(p => p.ServalData.PreTranslationQueued, DateTime.UtcNow)
         );
     }
 

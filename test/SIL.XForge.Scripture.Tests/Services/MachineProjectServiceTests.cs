@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -118,7 +119,7 @@ public class MachineProjectServiceTests
     public async Task BuildProjectAsync_BuildsPreTranslationProjects()
     {
         // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsQueued = false });
+        var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsPending = false });
 
         // SUT
         await env.Service.BuildProjectAsync(User01, Project02, preTranslate: true, CancellationToken.None);
@@ -129,10 +130,10 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task BuildProjectAsync_DoesNotBuildIfQueuedPreTranslationBuild()
+    public async Task BuildProjectAsync_DoesNotBuildIfPendingPreTranslationBuild()
     {
         // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsQueued = true });
+        var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsPending = true });
 
         // SUT
         await env.Service.BuildProjectAsync(User01, Project02, preTranslate: true, CancellationToken.None);
@@ -143,13 +144,14 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task BuildProjectAsync_RunsPreTranslationBuildIfNoTextChangesAndNoQueuedBuild()
+    public async Task BuildProjectAsync_RunsPreTranslationBuildIfNoTextChangesAndNoPendingBuild()
     {
         // Set up test environment
         var env = new TestEnvironment(
             new TestEnvironmentOptions
             {
-                BuildIsQueued = false,
+                BuildIsPending = false,
+                PreTranslationBuildIsQueued = true,
                 LocalSourceTextHasData = true,
                 LocalTargetTextHasData = true,
             }
@@ -182,6 +184,7 @@ public class MachineProjectServiceTests
         await env.DataFilesClient
             .DidNotReceiveWithAnyArgs()
             .UpdateAsync(Arg.Any<string>(), Arg.Any<FileParameter>(), CancellationToken.None);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationQueued);
     }
 
     [Test]
@@ -643,7 +646,8 @@ public class MachineProjectServiceTests
 
     private class TestEnvironmentOptions
     {
-        public bool BuildIsQueued { get; init; }
+        public bool BuildIsPending { get; init; }
+        public bool PreTranslationBuildIsQueued { get; init; }
         public bool MachineSupport { get; init; } = true;
         public bool ServalSupport { get; init; } = true;
         public bool LocalSourceTextHasData { get; init; }
@@ -679,7 +683,7 @@ public class MachineProjectServiceTests
                     CancellationToken.None
                 )
                 .Returns(args => Task.FromResult(new TranslationCorpus { Id = args.ArgAt<string>(1) }));
-            if (options.BuildIsQueued)
+            if (options.BuildIsPending)
             {
                 TranslationEnginesClient
                     .GetCurrentBuildAsync(Arg.Any<string>(), null, CancellationToken.None)
@@ -735,6 +739,7 @@ public class MachineProjectServiceTests
                         Id = Project02,
                         ServalData = new ServalData
                         {
+                            PreTranslationQueued = options.PreTranslationBuildIsQueued ? DateTime.UtcNow : null,
                             TranslationEngineId = TranslationEngine02,
                             Corpora = new Dictionary<string, ServalCorpus>
                             {
