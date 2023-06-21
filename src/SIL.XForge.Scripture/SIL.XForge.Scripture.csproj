@@ -30,6 +30,7 @@
     <PackageReference Include="ParatextData" Version="9.3.0.9" />
     <PackageReference Include="Serval.Client" Version="0.5.0" />
     <PackageReference Include="SIL.Machine.WebApi" Version="$(MachineVersion)" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="6.0.0" />
   </ItemGroup>
 
