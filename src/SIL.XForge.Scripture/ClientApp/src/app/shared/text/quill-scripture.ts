@@ -662,6 +662,11 @@ export function registerScripture(): string[] {
   });
   formats.push(InvalidInlineClass);
 
+  const DraftClass = new ClassAttributor('draft', 'draft', {
+    scope: Parchment.Scope.INLINE
+  });
+  formats.push(DraftClass);
+
   class DisableHtmlClipboard extends QuillClipboard {
     private _textComponent: TextComponent;
 
