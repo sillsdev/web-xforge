@@ -1,8 +1,8 @@
-import { MdcSelect } from '@angular-mdc/web';
 import { CommonModule } from '@angular/common';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { MatSelect } from '@angular/material/select';
 import { MatSlider } from '@angular/material/slider';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -57,7 +57,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
     env.openDialog();
     expect(env.component!.translationSuggestionsUserEnabled).toBe(true);
 
-    env.clickSwitch(env.mdcSuggestionsEnabledSwitch);
+    env.clickSwitch(env.matSuggestionsEnabledSwitch);
     expect(env.component!.translationSuggestionsUserEnabled).toBe(false);
     const userConfigDoc = env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.translationSuggestionsEnabled).toBe(false);
@@ -69,7 +69,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
     env.openDialog();
     expect(env.component!.numSuggestions).toEqual('1');
 
-    env.changeSelectValue(env.mdcNumSuggestionsSelect, 2);
+    env.changeSelectValue(env.numSuggestionsSelect, 2);
     expect(env.component!.numSuggestions).toEqual('2');
     const userConfigDoc = env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.numSuggestions).toEqual(2);
@@ -90,14 +90,14 @@ describe('SuggestionsSettingsDialogComponent', () => {
     expect(env.offlineText).toBeNull();
     expect(env.suggestionsEnabledSwitch.disabled).toBe(false);
     expect(env.confidenceThresholdSlider.disabled).toBe(false);
-    expect(env.mdcNumSuggestionsSelect.disabled).toBe(false);
+    expect(env.numSuggestionsSelect.disabled).toBe(false);
 
     env.isOnline = false;
 
     expect(env.offlineText).not.toBeNull();
     expect(env.suggestionsEnabledSwitch.disabled).toBe(true);
     expect(env.confidenceThresholdSlider.disabled).toBe(true);
-    expect(env.mdcNumSuggestionsSelect.disabled).toBe(true);
+    expect(env.numSuggestionsSelect.disabled).toBe(true);
     env.closeDialog();
   }));
 
@@ -147,15 +147,15 @@ class TestEnvironment {
     return this.component!.confidenceThresholdSlider!;
   }
 
-  get mdcSuggestionsEnabledSwitch(): HTMLElement {
+  get matSuggestionsEnabledSwitch(): HTMLElement {
     return this.overlayContainerElement.querySelector('#suggestions-enabled-switch') as HTMLElement;
   }
 
   get suggestionsEnabledSwitch(): HTMLInputElement {
-    return this.mdcSuggestionsEnabledSwitch.querySelector('input[type="checkbox"]') as HTMLInputElement;
+    return this.matSuggestionsEnabledSwitch.querySelector('input[type="checkbox"]') as HTMLInputElement;
   }
 
-  get mdcNumSuggestionsSelect(): MdcSelect {
+  get numSuggestionsSelect(): MatSelect {
     return this.fixture.debugElement.query(By.css('#num-suggestions-select')).componentInstance;
   }
 
@@ -230,8 +230,8 @@ class TestEnvironment {
     tick();
   }
 
-  changeSelectValue(mdcSelect: MdcSelect, option: number): void {
-    mdcSelect.setSelectionByValue(option.toString());
+  changeSelectValue(matSelect: MatSelect, option: number): void {
+    matSelect.value = option;
     this.fixture.detectChanges();
     tick();
   }
