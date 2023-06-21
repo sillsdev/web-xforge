@@ -1,0 +1,43 @@
+<h1>Draft generation complete</h1>
+<p>Select "Apply to project" for each chapter that you want to overwrite with the draft text.</p>
+
+<div class="draft-viewer-body">
+  <mat-card class="controls">
+    <app-book-chapter-chooser
+      [books]="books"
+      [book]="currentBook"
+      (bookChange)="setBook($event)"
+      [chapters]="chapters"
+      [chapter]="currentChapter"
+      (chapterChange)="setChapter($event)"
+    ></app-book-chapter-chooser>
+  </mat-card>
+
+  <ng-container *ngIf="targetTextDocId">
+    <mat-card class="target">
+      <h2 mat-card-title>{{ targetProjectName }}</h2>
+      <app-text
+        #targetText
+        [isReadOnly]="true"
+        [subscribeToUpdates]="false"
+        [placeholder]="'Loading..'"
+        [isRightToLeft]="isRtl"
+        [id]="targetTextDocId"
+      ></app-text>
+    </mat-card>
+
+    <mat-card class="draft">
+      <h2 mat-card-title>
+        Draft preview
+        <a mat-flat-button color="primary" (click)="applyDraft()">Apply to project</a>
+      </h2>
+      <app-text
+        #draftText
+        [isReadOnly]="true"
+        [subscribeToUpdates]="false"
+        [placeholder]="'Loading..'"
+        [isRightToLeft]="isRtl"
+      ></app-text>
+    </mat-card>
+  </ng-container>
+</div>
