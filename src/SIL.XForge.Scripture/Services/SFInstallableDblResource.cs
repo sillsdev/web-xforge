@@ -219,6 +219,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <param name="restClientFactory">The rest client factory.</param>
     /// <param name="fileSystemService">The file system service.</param>
     /// <param name="jwtTokenHelper">The JWT token helper.</param>
+    /// <param name="exceptionHandler">The exception handler.</param>
     /// <param name="baseUrl">The base URL.</param>
     /// <returns>
     ///   <c>true</c> if the user has permission to access the resource; otherwise, <c>false</c>.
@@ -317,6 +318,7 @@ public class SFInstallableDblResource : InstallableResource
     /// <param name="restClientFactory">The rest client factory.</param>
     /// <param name="fileSystemService">The file system service.</param>
     /// <param name="jwtTokenHelper">The JWT token helper.</param>
+    /// <param name="exceptionHandler">The exception handler.</param>
     /// <param name="baseUrl">The base URL.</param>
     /// <param name="id">ID of resource to filter for (optional).</param>
     /// <returns>The Installable Resources.</returns>

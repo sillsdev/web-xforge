@@ -538,6 +538,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// </summary>
     /// <param name="paratextId">The paratext resource identifier.</param>
     /// <param name="sfUserId">The user SF identifier.</param>
+    /// <param name="token">The cancellation token.</param>
     /// <returns>
     /// Read or None.
     /// </returns>
@@ -811,6 +812,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// <param name="ptUsernameMapping">A mapping of user ID to Paratext username.</param>
     /// <param name="book">The book number. Set to zero to check for all books.</param>
     /// <param name="chapter">The chapter number. Set to zero to check for all books.</param>
+    /// <param name="token">The cancellation token.</param>
     /// <returns>
     /// A dictionary of permissions where the key is the user ID and the value is the permission.
     /// </returns>
@@ -2239,8 +2241,9 @@ public class ParatextService : DisposableBase, IParatextService
     /// <summary>
     /// Get Paratext resources that a user has access to.
     /// </summary>
-    /// <param name="userSecret">The user secret.</param>
+    /// <param name="sfUserId">The Scripture Forge user identifier.</param>
     /// <param name="includeInstallableResource">If set to <c>true</c> include the installable resource.</param>
+    /// <param name="token">The cancellation token.</param>
     /// <returns>
     /// The available resources.
     /// </returns>
@@ -2809,7 +2812,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// Writes the chapter to the <see cref="ScrText" />.
     /// </summary>
     /// <param name="scrText">The Scripture Text from Paratext.</param>
-    /// <param name="authorId">The user identifier for the author.</param>
+    /// <param name="userId">The user identifier for the author.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number. Set to 0 to write the entire book.</param>
     /// <param name="usfm">The USFM to write.</param>
