@@ -1,0 +1,43 @@
+h1 {
+  font-size: 24px;
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+
+h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+}
+
+.draft-viewer-body {
+  display: grid;
+  align-items: start;
+  gap: 1em;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-areas:
+    'controls . . .'
+    'target target draft draft';
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  grid-area: controls;
+  place-self: self-start;
+  padding: 5px 10px;
+}
+
+.target {
+  grid-area: target;
+}
+
+.draft {
+  grid-area: draft;
+}
+
+app-text {
+  display: block;
+}
