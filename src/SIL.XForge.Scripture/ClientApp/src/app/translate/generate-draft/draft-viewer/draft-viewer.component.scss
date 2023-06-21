@@ -1,3 +1,5 @@
+@import 'src/variables';
+
 h1 {
   font-size: 24px;
   font-weight: 500;
@@ -7,8 +9,21 @@ h1 {
 h2 {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  height: 36px;
+  min-height: 36px;
+}
+
+.button-group {
+  display: flex;
+  gap: 8px;
+  margin-inline-start: auto;
+
+  &.divider::before {
+    content: '';
+    width: 1px;
+    margin-inline-end: 0;
+    margin-inline-start: 8px;
+    background-color: $border-color;
+  }
 }
 
 .draft-viewer-body {
@@ -18,7 +33,7 @@ h2 {
   grid-template-columns: repeat(4, 1fr);
   grid-template-areas:
     'controls . . .'
-    'target target draft draft';
+    'source source draft draft';
 }
 
 .controls {
@@ -30,14 +45,66 @@ h2 {
   padding: 5px 10px;
 }
 
-.target {
-  grid-area: target;
+.source {
+  grid-area: source;
 }
 
 .draft {
   grid-area: draft;
 }
 
+.draft-indicator {
+  color: #bbb;
+  font-style: italic;
+  margin-inline-start: 16px;
+  font-family: monospace;
+  text-transform: uppercase;
+  font-size: 18px;
+}
+
+.check-icon {
+  animation: fadeIn 1s;
+  color: green;
+  font-size: 32px;
+  width: auto;
+  height: auto;
+  font-weight: 700;
+  margin-inline-start: 16px;
+}
+
 app-text {
   display: block;
+  position: relative;
+
+  &.applied {
+    &::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: #deeaff;
+      opacity: 0;
+      animation: fadeOut 1.5s ease-out;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 0;
+  }
 }
