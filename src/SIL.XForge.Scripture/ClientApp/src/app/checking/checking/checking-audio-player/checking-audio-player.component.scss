@@ -27,14 +27,5 @@
     padding: 5px;
     // Same spacing as .player .current-time
     column-gap: 10px;
-
-    a {
-      color: $blueMedium;
-      cursor: pointer;
-
-      mat-icon {
-        font-size: 1.3em;
-      }
-    }
   }
 }

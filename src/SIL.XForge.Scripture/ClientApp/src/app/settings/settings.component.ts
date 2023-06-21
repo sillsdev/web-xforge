@@ -1,12 +1,12 @@
-import { MatDialogConfig } from '@angular/material/dialog';
-import { DialogService } from 'xforge-common/dialog.service';
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { MatDialogConfig } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -83,7 +83,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   get shareDescription(): TextAroundTemplate | undefined {
-    return this.i18n.translateTextAroundTemplateTags('settings.users_can_share_the_project');
+    return this.i18n.translateTextAroundTemplateTags('settings.invite_others');
   }
 
   get isBasedOnProjectSet(): boolean {

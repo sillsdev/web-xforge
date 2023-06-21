@@ -141,6 +141,12 @@ button.mdc-icon-button {
   font-family: $languageFonts;
 }
 
+// Allows checkbox label word-wrap
+// https://github.com/angular/components/issues/8416
+.mat-checkbox-layout {
+  white-space: normal !important;
+}
+
 .mat-tooltip {
   font-size: 1em;
 }
