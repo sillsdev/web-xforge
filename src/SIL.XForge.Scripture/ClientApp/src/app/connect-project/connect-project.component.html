@@ -21,7 +21,7 @@
         </p>
         <mat-form-field appearance="outline">
           <mat-label>{{ t("paratext_project") }}</mat-label>
-          <mat-select #projectSelect id="project-select" formControlName="paratextId">
+          <mat-select #projectSelect id="project-select" disableOptionCentering formControlName="paratextId">
             <mat-option
               *ngFor="let project of projects"
               [value]="project.paratextId"
