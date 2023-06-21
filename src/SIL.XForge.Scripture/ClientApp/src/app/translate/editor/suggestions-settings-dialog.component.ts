@@ -1,6 +1,6 @@
 import { Component, Inject, ViewChild } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { MatSlider } from '@angular/material/slider';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
@@ -20,12 +20,7 @@ export interface SuggestionsSettingsDialogData {
 })
 export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
   @ViewChild('confidenceThresholdSlider') confidenceThresholdSlider?: MatSlider;
-  open: boolean = false;
-
-  suggestionsEnabledSwitch = new UntypedFormControl();
-  suggestionsSwitchFormGroup = new UntypedFormGroup({
-    suggestionsEnabledSwitch: this.suggestionsEnabledSwitch
-  });
+  @ViewChild('suggestionsToggle') suggestionsToggle?: MatSlideToggle;
 
   private readonly projectUserConfigDoc: SFProjectUserConfigDoc;
   private confidenceThreshold$ = new BehaviorSubject<number>(20);
@@ -44,7 +39,18 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
         this.confidenceThresholdSlider.value = this.projectUserConfigDoc.data!.confidenceThreshold * 100;
         this.confidenceThresholdSlider.disabled = this.settingsDisabled;
       }
-      this.open = true;
+
+      if (this.suggestionsToggle != null) {
+        this.suggestionsToggle.writeValue(this.translationSuggestionsUserEnabled);
+        this.subscribe(this.suggestionsToggle.change, value => {
+          this.projectUserConfigDoc.submitJson0Op(op =>
+            op.set<boolean>(puc => puc.translationSuggestionsEnabled, value.checked)
+          );
+        });
+        this.subscribe(this.pwaService.onlineStatus$, isOnline => {
+          this.suggestionsToggle?.setDisabledState(!isOnline);
+        });
+      }
     });
 
     if (this.projectUserConfigDoc.data != null) {
@@ -60,16 +66,6 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
       ),
       threshold => this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold))
     );
-
-    this.suggestionsEnabledSwitch.setValue(this.translationSuggestionsUserEnabled);
-    this.subscribe(this.suggestionsEnabledSwitch.valueChanges, () => {
-      this.projectUserConfigDoc.submitJson0Op(op =>
-        op.set<boolean>(puc => puc.translationSuggestionsEnabled, this.suggestionsEnabledSwitch.value)
-      );
-    });
-    this.subscribe(this.pwaService.onlineStatus$, isOnline => {
-      isOnline ? this.suggestionsSwitchFormGroup.enable() : this.suggestionsEnabledSwitch.disable();
-    });
   }
 
   get settingsDisabled(): boolean {
