@@ -76,6 +76,7 @@ $material-app-theme: mat.define-light-theme(
 @include mat.radio-theme($material-app-theme);
 @include mat.select-theme($material-app-theme);
 @include mat.slider-theme($material-app-theme);
+@include mat.slide-toggle-theme($material-app-theme);
 @include mat.table-theme($material-app-theme);
 @include mat.toolbar-theme($material-app-theme);
 

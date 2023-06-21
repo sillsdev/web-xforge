@@ -2,10 +2,9 @@
   <h1 mat-dialog-title>{{ t("translation_suggestions_settings") }}</h1>
   <mat-dialog-content class="content-padding" fxLayout="column" fxLayoutGap="25px">
     <div class="offline-text" *ngIf="!pwaService.isOnline">{{ t("settings_not_available_offline") }}</div>
-    <mdc-form-field [formGroup]="suggestionsSwitchFormGroup" class="suggestions-switch">
-      <mdc-switch id="suggestions-enabled-switch" *ngIf="open" formControlName="suggestionsEnabledSwitch"></mdc-switch>
-      <label>{{ t("translation_suggestions") }}</label>
-    </mdc-form-field>
+    <mat-slide-toggle #suggestionsToggle id="suggestions-enabled-switch">{{
+      t("translation_suggestions")
+    }}</mat-slide-toggle>
     <mdc-select
       id="num-suggestions-select"
       [disabled]="settingsDisabled"
