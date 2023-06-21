@@ -765,12 +765,16 @@ public class ParatextSyncRunnerTests
             .Returns(Task.FromResult<IReadOnlyDictionary<string, string>>(ptUserRoles));
         int fontSize = 10;
         string font = ProjectSettings.defaultFontName;
+        string sourceWritingSystemTag = "en";
         SFProject project = env.GetProject();
         Assert.That(project.DefaultFontSize, Is.EqualTo(fontSize));
         Assert.That(project.DefaultFont, Is.EqualTo(font));
+        Assert.IsNull(project.WritingSystem.Tag);
+        Assert.That(project.TranslateConfig.Source.WritingSystem.Tag, Is.EqualTo(sourceWritingSystemTag));
         int newFontSize = 16;
         string newFont = "Doulos SIL";
         string customIcon = "customIcon01";
+        string newWritingSystemTag = "en-US";
         List<NoteTag> noteTags = new List<NoteTag>
         {
             new NoteTag
@@ -787,7 +791,8 @@ public class ParatextSyncRunnerTests
                 {
                     DefaultFontSize = newFontSize,
                     DefaultFont = newFont,
-                    NoteTags = noteTags
+                    NoteTags = noteTags,
+                    LanguageTag = newWritingSystemTag,
                 }
             );
 
@@ -797,6 +802,8 @@ public class ParatextSyncRunnerTests
         Assert.That(project.DefaultFontSize, Is.EqualTo(newFontSize));
         Assert.That(project.DefaultFont, Is.EqualTo(newFont));
         Assert.That(project.NoteTags.Select(t => t.Icon), Is.EquivalentTo(new[] { customIcon }));
+        Assert.That(project.WritingSystem.Tag, Is.EqualTo(newWritingSystemTag));
+        Assert.That(project.TranslateConfig.Source.WritingSystem.Tag, Is.EqualTo(newWritingSystemTag));
     }
 
     [Test]

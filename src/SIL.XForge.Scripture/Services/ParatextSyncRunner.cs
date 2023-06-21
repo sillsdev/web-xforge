@@ -1459,6 +1459,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 op.Set(pd => pd.DefaultFontSize, settings.DefaultFontSize);
                 if (settings.NoteTags != null)
                     op.Set(pd => pd.NoteTags, settings.NoteTags, _noteTagListEqualityComparer);
+                if (settings.LanguageTag != null)
+                    op.Set(pd => pd.WritingSystem.Tag, settings.LanguageTag);
             }
             // The source can be null if there was an error getting a resource from the DBL
             if (TranslationSuggestionsEnabled && _projectDoc.Data.TranslateConfig.Source != null)
@@ -1468,7 +1470,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     _projectDoc.Data.TranslateConfig.Source.ParatextId
                 );
                 if (sourceSettings != null)
+                {
                     op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
+                    if (sourceSettings.LanguageTag != null)
+                        op.Set(pd => pd.TranslateConfig.Source.WritingSystem.Tag, sourceSettings.LanguageTag);
+                }
             }
         });
         await NotifySyncProgress(SyncPhase.Phase7, 80.0);
