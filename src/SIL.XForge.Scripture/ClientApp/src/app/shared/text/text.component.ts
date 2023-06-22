@@ -655,7 +655,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       if (textAnchor.start === 0) {
         insertFormat = {};
       }
-      insertFormat = { ...insertFormat, ...{ 'text-anchor': true } };
+      const segmentLastPosition: number = editorPosOfSegmentToModify.index + editorPosOfSegmentToModify.length;
+      if (segmentLastPosition === embedInsertPos) {
+        // the last position needs the segment format info
+        insertFormat = { ...insertFormat, ...{ 'text-anchor': true } };
+      } else {
+        insertFormat = { 'text-anchor': true };
+      }
       this.editor.formatText(embedInsertPos, formatLength, insertFormat, 'api');
     }
     this.updateSegment();

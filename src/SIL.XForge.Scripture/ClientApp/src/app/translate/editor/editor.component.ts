@@ -926,6 +926,19 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
+  toggleAddingMobileNote(): void {
+    this.addingMobileNote = !this.addingMobileNote;
+    if (this.addingMobileNote) {
+      this.mobileNoteControl.reset();
+      // On-screen keyboards appearing can interfere with the resize height logic which then changes the focus
+      // Waiting for 100ms was found to be a good amount of time for that to be resolved
+      setTimeout(() => this.mobileNoteTextarea?.nativeElement.focus(), 650);
+    } else if (this.hasEditRight) {
+      this.bottomSheetRef?.dismiss();
+      this.setNoteFabVisibility('visible');
+    }
+  }
+
   async saveMobileNote(): Promise<void> {
     if (!this.mobileNoteControl.valid || this.projectId == null || this.commenterSelectedVerseRef == null) {
       return;
@@ -934,9 +947,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     await this.saveNote({ content: this.mobileNoteControl.value, verseRef: this.commenterSelectedVerseRef });
     this.addingMobileNote = false;
     this.bottomSheetRef?.dismiss();
+    this.toggleNoteThreadVerseRefs$.next();
   }
 
-  async saveNote(params: SaveNoteParameters): Promise<void> {
+  private async saveNote(params: SaveNoteParameters): Promise<void> {
     if (this.projectId == null || this.bookNum == null) {
       return;
     }
@@ -991,21 +1005,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         await threadDoc.submitJson0Op(op => op.add(t => t.notes, note));
         await this.updateNoteReadRefs(note.dataId);
       }
-    }
-    this.toggleNoteThreadVerses(false);
-    this.toggleNoteThreadVerses(true);
-  }
-
-  toggleAddingMobileNote(): void {
-    this.addingMobileNote = !this.addingMobileNote;
-    if (this.addingMobileNote) {
-      this.mobileNoteControl.reset();
-      // On-screen keyboards appearing can interfere with the resize height logic which then changes the focus
-      // Waiting for 100ms was found to be a good amount of time for that to be resolved
-      setTimeout(() => this.mobileNoteTextarea?.nativeElement.focus(), 650);
-    } else if (this.hasEditRight) {
-      this.bottomSheetRef?.dismiss();
-      this.setNoteFabVisibility('visible');
     }
   }
 

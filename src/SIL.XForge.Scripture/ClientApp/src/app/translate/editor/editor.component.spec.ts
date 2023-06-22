@@ -2754,8 +2754,14 @@ describe('EditorComponent', () => {
       env.fixture.detectChanges();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).twice();
 
-      env.setSelectionAndInsertNote('verse_1_3');
+      // can open note on existing verse
+      const existingNoteIcon: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'thread03')!;
+      existingNoteIcon.click();
+      env.wait();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).thrice();
+      env.mockNoteDialogRef.close();
+      env.setSelectionAndInsertNote('verse_1_3');
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).times(4);
       env.dispose();
     }));
 
