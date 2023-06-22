@@ -83,11 +83,11 @@ public interface IParatextService
     void FreeCommentManager(UserSecret userSecret, string paratextId);
     void InitializeCommentManager(UserSecret userSecret, string paratextId);
 
-    Task<ParatextProject> SendReceiveAsync(
+    Task<(ParatextProject, ParatextSyncResults)> SendReceiveAsync(
         UserSecret userSecret,
         string paratextId,
-        IProgress<ProgressState> progress = null,
+        IProgress<ProgressState>? progress = null,
         CancellationToken token = default,
-        SyncMetrics syncMetrics = null
+        SyncMetrics? syncMetrics = null
     );
 }
