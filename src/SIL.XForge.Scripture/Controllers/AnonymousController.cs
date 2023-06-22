@@ -12,6 +12,9 @@ using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Controllers;
 
+/// <summary>
+/// Provides methods for authentication of anonymous users.
+/// </summary>
 [Route(UrlConstants.Anonymous)]
 [ApiController]
 [AllowAnonymous]
@@ -26,8 +29,14 @@ public class AnonymousController : ControllerBase
         _exceptionHandler = exceptionHandler;
     }
 
+    /// <summary>
+    /// Checks whether or not the share key is valid.
+    /// </summary>
+    /// <param name="content">The share key to check.</param>
+    /// <response code="200">The share key is valid.</response>
+    /// <response code="404">The share key is invalid or not found.</response>
     [HttpPost("checkShareKey")]
-    public async Task<IActionResult> CheckShareKey([FromBody] CheckShareKeyRequest content)
+    public async Task<ActionResult<AnonymousShareKeyResponse>> CheckShareKey([FromBody] CheckShareKeyRequest content)
     {
         try
         {
@@ -50,8 +59,15 @@ public class AnonymousController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Generates an anonymous account.
+    /// </summary>
+    /// <param name="request">The parameters to generate the account.</param>
+    /// <response code="200">The account was generated.</response>
+    /// <response code="204">There was a problem communicating with the authentication server.</response>
+    /// <response code="404">The share key does not exist.</response>
     [HttpPost("generateAccount")]
-    public async Task<IActionResult> GenerateAccount([FromBody] GenerateAccountRequest request)
+    public async Task<ActionResult<bool>> GenerateAccount([FromBody] GenerateAccountRequest request)
     {
         _exceptionHandler.RecordEndpointInfoForException(
             new Dictionary<string, string>

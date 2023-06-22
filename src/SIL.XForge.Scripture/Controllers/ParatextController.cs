@@ -13,6 +13,9 @@ using SIL.XForge.Utils;
 
 namespace SIL.XForge.Scripture.Controllers;
 
+/// <summary>
+/// Provides methods for retrieving data from Paratext.
+/// </summary>
 [Route("paratext-api")]
 [ApiController]
 [Authorize]
@@ -37,6 +40,11 @@ public class ParatextController : ControllerBase
         _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
     }
 
+    /// <summary>
+    /// Retrieves the Paratext projects the user has access to.
+    /// </summary>
+    /// <response code="200">The projects were successfully retrieved.</response>
+    /// <response code="204">The user does not have permission to access Paratext.</response>
     [HttpGet("projects")]
     public async Task<ActionResult<IEnumerable<ParatextProject>>> GetAsync()
     {
@@ -56,15 +64,13 @@ public class ParatextController : ControllerBase
     }
 
     /// <summary>
-    /// GET /paratext-api/resources/
+    /// Retrieves the Paratext resources the user has access to.
     /// </summary>
-    /// <returns>
-    /// The resources as projects
-    /// </returns>
-    /// <remarks>
-    /// The UI does not need the extra properties found in the <see cref="ParatextResource" /> class,
-    /// so we just return the base class <see cref="ParatextProject" />.
-    /// </remarks>
+    /// <response code="200">
+    /// The resources were successfully retrieved. A dictionary is returned where the Paratext Id is the key, and the
+    /// values are an array with the short name followed by the name.
+    /// </response>
+    /// <response code="204">The user does not have permission to access Paratext.</response>
     [HttpGet("resources")]
     public async Task<ActionResult<Dictionary<string, string[]>>> ResourcesAsync()
     {
@@ -83,6 +89,11 @@ public class ParatextController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Retrieves the Paratext username for the currently logged in user.
+    /// </summary>
+    /// <response code="200">The logged in user has access to Paratext.</response>
+    /// <response code="204">The user does not have permission to access Paratext.</response>
     [HttpGet("username")]
     public async Task<ActionResult<string>> UsernameAsync()
     {
