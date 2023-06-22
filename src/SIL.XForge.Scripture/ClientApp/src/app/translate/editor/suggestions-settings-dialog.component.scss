@@ -1,10 +1,19 @@
 .slider-labels {
   margin-top: 15px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
-mat-dialog-content.content-padding {
-  padding-top: 15px;
+mat-dialog-content {
+  padding-block: 20px;
   overflow: visible; // prevent mat-select menu from causing scroll bar
+  display: flex;
+  flex-direction: column;
+}
+
+#suggestions-enabled-switch {
+  margin-block-end: 30px;
 }
 
 .suggestions-confidence-field {
