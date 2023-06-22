@@ -520,6 +520,19 @@ describe('RealtimeServer', () => {
     ]);
   });
 
+  it('connection from the backend server does not validate data', async () => {
+    const env = new TestEnvironment();
+    await env.createData();
+
+    const userConn = env.server.connect('user01');
+    await submitOp(userConn, USERS_COLLECTION, 'user01', [
+      {
+        p: ['this_property_does_not_exist'],
+        oi: 'invalid data'
+      }
+    ]);
+  });
+
   it('validation schemas are loaded for every doc service', async () => {
     const env = new TestEnvironment();
     await env.server.addValidationSchema(env.mongo);

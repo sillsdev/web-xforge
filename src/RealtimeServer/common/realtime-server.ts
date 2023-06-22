@@ -184,8 +184,14 @@ export class RealtimeServer extends ShareDB {
       }
 
       // Perform data validation, if enabled. It will be disabled during migration.
+      // Also, do not validate if the connection is from the backend server - we can trust it
       const validationSchema: ValidationSchema | undefined = this.docServices.get(context.collection)?.validationSchema;
-      if (!this.dataValidationDisabled && validationSchema != null && context.op.op != null) {
+      if (
+        !this.dataValidationDisabled &&
+        validationSchema != null &&
+        context.op.op != null &&
+        !context.agent.connectSession.isServer
+      ) {
         let ops;
         if (Array.isArray(context.op.op)) {
           ops = context.op.op;
