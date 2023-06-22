@@ -16,6 +16,7 @@
     <AngularConfig>production</AngularConfig>
     <Nullable>annotations</Nullable>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Suppress complier warning "Missing XML comment for publicly visible type or member" -->
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
