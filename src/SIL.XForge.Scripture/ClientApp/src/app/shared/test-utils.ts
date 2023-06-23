@@ -63,6 +63,8 @@ export function getCombinedVerseTextDoc(id: TextDocId, rtl: boolean = false): Te
   });
   delta.insert({ verse: { number: '6a', style: 'v' } });
   delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 6a.`, { segment: `verse_${id.chapterNum}_6a` });
+  delta.insert({ verse: { number: '6b', style: 'v' } });
+  delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 6b.`, { segment: `verse_${id.chapterNum}_6b` });
   delta.insert('\n', { para: { style: 'p' } });
   return delta;
 }

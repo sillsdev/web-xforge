@@ -1664,7 +1664,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       !this.showAddCommentUI
     )
       return;
-    const verseSegments: string[] = this.target.getVerseSegments(verseRef);
+    const verseSegments: string[] = this.target.getCompatibleSegments(verseRef);
     const segmentElement: Element | null = this.target.getSegmentElement(verseSegments[0]);
     if (segmentElement == null) {
       return;
