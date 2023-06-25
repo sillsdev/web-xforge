@@ -12,7 +12,8 @@ export enum SFProjectDomain {
   Likes = 'likes',
   PTNoteThreads = 'pt_note_threads',
   SFNoteThreads = 'sf_note_threads',
-  Notes = 'notes'
+  Notes = 'notes',
+  TextAudio = 'text_audio'
 }
 
 // See https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html
@@ -22,7 +23,8 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     project_user_configs: ['view_own', 'edit_own'],
     texts: ['view'],
     sf_note_threads: ['view'],
-    notes: ['view']
+    notes: ['view'],
+    text_audio: ['view']
   },
   pt_observer: {
     project_user_configs: ['view_own', 'edit_own'],
@@ -35,13 +37,15 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     likes: ['view'],
     pt_note_threads: ['view'],
     sf_note_threads: ['view'],
-    notes: ['view']
+    notes: ['view'],
+    text_audio: ['view']
   },
   sf_commenter: {
     project_user_configs: ['view_own', 'edit_own'],
     texts: ['view'],
     sf_note_threads: ['view', 'create', 'delete_own'],
-    notes: ['view', 'create', 'edit_own', 'delete_own']
+    notes: ['view', 'create', 'edit_own', 'delete_own'],
+    text_audio: ['view']
   },
   sf_community_checker: {
     project_user_configs: ['view_own', 'edit_own'],
@@ -50,7 +54,8 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     answers: ['view', 'create', 'edit_own', 'delete_own'],
     answer_status: ['view'],
     answer_comments: ['view', 'create', 'edit_own', 'delete_own'],
-    likes: ['view', 'create', 'delete_own']
+    likes: ['view', 'create', 'delete_own'],
+    text_audio: ['view']
   },
   pt_consultant: {
     project_user_configs: ['view_own', 'edit_own'],
@@ -63,7 +68,8 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     likes: ['view'],
     pt_note_threads: ['view', 'create', 'delete_own'],
     sf_note_threads: ['view', 'create', 'delete_own'],
-    notes: ['view', 'create', 'edit_own', 'delete_own']
+    notes: ['view', 'create', 'edit_own', 'delete_own'],
+    text_audio: ['view']
   },
   pt_translator: {
     project_user_configs: ['view_own', 'edit_own'],
@@ -76,7 +82,8 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     likes: ['view', 'create', 'delete_own'],
     pt_note_threads: ['view', 'create', 'edit', 'delete_own'],
     sf_note_threads: ['view', 'create', 'edit', 'delete_own'],
-    notes: ['view', 'create', 'edit_own', 'delete_own']
+    notes: ['view', 'create', 'edit_own', 'delete_own'],
+    text_audio: ['view', 'edit', 'create']
   },
   pt_administrator: {
     project_user_configs: ['view_own', 'edit_own'],
@@ -89,7 +96,8 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     likes: ['view', 'create', 'delete_own'],
     pt_note_threads: ['view', 'create', 'edit', 'delete'],
     sf_note_threads: ['view', 'create', 'edit', 'delete'],
-    notes: ['view', 'create', 'edit_own', 'delete']
+    notes: ['view', 'create', 'edit_own', 'delete'],
+    text_audio: ['view', 'edit', 'create']
   },
   none: {}
 };
