@@ -361,8 +361,8 @@ export class TextViewModel {
       if (verseStr != null) {
         // update numbers for the new verse
         const verseParts: string[] = verseStr.split('-');
-        matchStartNum = +verseParts[0];
-        matchLastNum = +verseParts[verseParts.length - 1];
+        matchStartNum = Number.parseInt(verseParts[0]);
+        matchLastNum = Number.parseInt(verseParts[verseParts.length - 1]);
       }
       const matchStartsWithin: boolean = matchStartNum >= startVerseNum && matchStartNum <= lastVerseNum;
       const matchEndsWithin: boolean = matchLastNum >= startVerseNum && matchLastNum <= lastVerseNum;

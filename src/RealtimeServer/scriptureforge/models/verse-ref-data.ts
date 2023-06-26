@@ -13,7 +13,7 @@ export function fromVerseRef(input: VerseRef): VerseRefData {
     bookNum: input.bookNum,
     chapterNum: input.chapterNum,
     verseNum: input.verseNum,
-    verse: input.hasMultiple ? input.verse : undefined
+    verse: input.verse === input.verseNum.toString() ? undefined : input.verse
   };
 }
 

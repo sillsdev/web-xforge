@@ -1536,6 +1536,19 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('shows note on verse with letter', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig();
+      env.updateParams({ projectId: 'project01', bookId: 'LUK' });
+      env.addParatextNoteThread(6, 'LUK 1:6a', '', { start: 0, length: 0 }, ['user01']);
+      env.addParatextNoteThread(7, 'LUK 1:6b', '', { start: 0, length: 0 }, ['user01']);
+      env.wait();
+
+      expect(env.getNoteThreadIconElement('verse_1_6a', 'thread06')).not.toBeNull();
+      expect(env.getNoteThreadIconElement('verse_1_6b', 'thread07')).not.toBeNull();
+      env.dispose();
+    }));
+
     it('highlights note icons when new content is unread', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser('user02');

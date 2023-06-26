@@ -7,7 +7,7 @@ import { SelectableProject } from '../core/paratext.service';
 
 // Regular expression for getting the verse from a segment ref
 // Some projects will have the right to left marker in the segment attribute which we need to account for
-const VERSE_FROM_SEGMENT_REF_REGEX = /verse_\d+_(\d+[\u200f]?[,-]?\d*[^\/]?)/;
+const VERSE_FROM_SEGMENT_REF_REGEX = /verse_\d+_(\d+[\u200f]?[a-z]?[,-]?\d*[a-z]?[^\/]?)/;
 // Regular expression for the verse segment ref of scripture content
 export const VERSE_REGEX = /verse_[0-9]+_[0-9]+/;
 export const RIGHT_TO_LEFT_MARK = '\u200f';
@@ -67,7 +67,7 @@ export function getVerseRefFromSegmentRef(bookNum: number, segmentRef: string): 
   return new VerseRef(bookNum, parts[1], parts[2]);
 }
 
-/** Returns the verse string from a segment ref. e.g. 6, 6-7, 6,8 */
+/** Returns the verse string from a segment ref. e.g. 6, 6a, 6-7, 6,8 */
 export function getVerseStrFromSegmentRef(segmentRef: string): string | undefined {
   const match: RegExpExecArray | null = VERSE_FROM_SEGMENT_REF_REGEX.exec(segmentRef);
   if (match != null) {
