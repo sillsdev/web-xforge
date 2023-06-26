@@ -14,7 +14,7 @@ import { Connection } from 'sharedb/lib/client';
 import WebSocket from 'ws';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { ConnectionSettings, createWS, databaseConfigs, useColor } from './utils';
+import utils from './utils';
 
 type ProgArgs = {
   server: string;
@@ -23,7 +23,7 @@ type ProgArgs = {
 
 class Program {
   server: string | undefined;
-  connectionConfig: ConnectionSettings | undefined;
+  connectionConfig: utils.ConnectionSettings | undefined;
 
   constructor() {
     this.processArguments();
@@ -47,9 +47,9 @@ class Program {
       .parseSync();
 
     const shouldUseColor: boolean = args.color;
-    useColor(shouldUseColor);
+    utils.useColor(shouldUseColor);
     this.server = args.server;
-    this.connectionConfig = databaseConfigs.get(this.server);
+    this.connectionConfig = utils.databaseConfigs.get(this.server);
   }
 
   /** Run the lambda with a connection to the db. */
@@ -58,7 +58,7 @@ class Program {
       throw new Error('null connection config');
     }
     console.log(`Connecting to ${this.server}.`);
-    const ws: WebSocket = createWS(this.connectionConfig);
+    const ws: WebSocket = utils.createWS(this.connectionConfig);
     const conn: Connection = new Connection(ws);
 
     const client: MongoClient = await MongoClient.connect(this.connectionConfig.dbLocation);
@@ -77,9 +77,9 @@ class Program {
       // Here, manipulate sharedb or mongodb.
       // For example:
       // const userDoc: Doc = conn.get('users', '1234');
-      // await fetchDoc(userDoc);
+      // await utils.fetchDoc(userDoc);
       // console.log(JSON.stringify(userDoc.data));
-      // await submitDocOp(userDoc, {
+      // await utils.submitDocOp(userDoc, {
       //   p: ['paratextId'],
       //   od: 'abc123'
       // });
