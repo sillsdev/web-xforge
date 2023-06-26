@@ -20,6 +20,7 @@ public class SFDblRestClientFactory : ISFRestClientFactory
     /// Initializes a new instance of the <see cref="SFDblRestClientFactory"/> class.
     /// </summary>
     /// <param name="jwtTokenHelper">The JWT token helper.</param>
+    /// <param name="siteOptions">The site options.</param>
     public SFDblRestClientFactory(IJwtTokenHelper jwtTokenHelper, IOptions<SiteOptions> siteOptions)
     {
         _jwtTokenHelper = jwtTokenHelper;

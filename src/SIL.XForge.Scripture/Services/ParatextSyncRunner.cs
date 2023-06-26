@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -46,11 +46,11 @@ namespace SIL.XForge.Scripture.Services;
 /// <code>
 /// Diagram showing a high-level look at the order of data being transmitted:
 /// ┌─────┐  ┌─────┐  ┌───────────┐
-/// │SF DB├─>│Local│  │PT Archives│
-/// │     │  │PT hg├─>│           │
+/// │SF DB├─→│Local│  │PT Archives│
+/// │     │  │PT hg├─→│           │
 /// │     │  │repo │  │           │
-/// │     │  │     │<─┤           │
-/// │     │<─┤     │  │           │
+/// │     │  │     │←─┤           │
+/// │     │←─┤     │  │           │
 /// └─────┘  └─────┘  └───────────┘
 /// </code>
 /// </summary>
@@ -131,9 +131,14 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// Synchronize content and user permissions in SF DB with Paratext SendReceive servers and PT Registry, for
     /// a project.
     /// </summary>
+    /// <param name="projectSFId">The project's Scripture Forge identifier.</param>
+    /// <param name="userId">The user identifier.</param>
+    /// <param name="syncMetricsId">The sync metrics identifier.</param>
+    /// <param name="trainEngine"><c>true</c> if we are to train the SMT translation engine; otherwise <c>false</c>.</param>
+    /// <param name="token">The cancellation token.</param>
     /// <remarks>
     /// Do not allow multiple sync jobs to run in parallel on the same project by creating a hangfire mutex on the
-    /// <param name="projectSFId"/> parameter, i.e. "{0}".
+    /// <paramref name="projectSFId"/> parameter, i.e. "{0}".
     /// </remarks>
     [Mutex("{0}")]
     public async Task RunAsync(
@@ -150,7 +155,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         {
             if (!await InitAsync(projectSFId, userId, syncMetricsId, token))
             {
-                await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                await CompleteSync(false, canRollbackParatext, trainEngine, false, token);
                 return;
             }
 
@@ -223,13 +228,14 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Check for cancellation
             if (token.IsCancellationRequested)
             {
-                await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                await CompleteSync(false, canRollbackParatext, trainEngine, false, token);
                 return;
             }
 
             // Use the new progress bar
             var progress = new SyncProgress();
             ParatextProject paratextProject;
+            ParatextSyncResults syncResults;
             try
             {
                 // Create the handler
@@ -237,7 +243,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
                 Log($"RunAsync: Going to do ParatextData SendReceive.");
                 // perform Paratext send/receive
-                paratextProject = await _paratextService.SendReceiveAsync(
+                (paratextProject, syncResults) = await _paratextService.SendReceiveAsync(
                     _userSecret,
                     targetParatextId,
                     progress,
@@ -257,7 +263,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Check for cancellation
             if (token.IsCancellationRequested)
             {
-                await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                await CompleteSync(false, canRollbackParatext, trainEngine, syncResults.UpdateRoles, token);
                 return;
             }
 
@@ -272,7 +278,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Check for cancellation
             if (token.IsCancellationRequested)
             {
-                await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                await CompleteSync(false, canRollbackParatext, trainEngine, syncResults.UpdateRoles, token);
                 return;
             }
 
@@ -303,7 +309,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Check for cancellation
             if (token.IsCancellationRequested)
             {
-                await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                await CompleteSync(false, canRollbackParatext, trainEngine, syncResults.UpdateRoles, token);
                 return;
             }
 
@@ -396,7 +402,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     questionDocsByBook,
                     noteThreadDocsByBook,
                     targetBooks,
-                    sourceBooks
+                    sourceBooks,
+                    syncResults
                 );
             }
             LogMetric("Back from UpdateDocsAsync");
@@ -405,7 +412,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             // Check for cancellation
             if (token.IsCancellationRequested)
             {
-                await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                await CompleteSync(false, canRollbackParatext, trainEngine, syncResults.UpdateRoles, token);
                 return;
             }
 
@@ -416,20 +423,22 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 await UpdateResourceConfig(paratextProject);
             }
 
-            // We will always update permissions, even if this is a resource project
-            LogMetric("Updating permissions");
-            await _projectService.UpdatePermissionsAsync(userId, _projectDoc, token);
+            if (syncResults.UpdatePermissions)
+            {
+                LogMetric("Updating permissions");
+                await _projectService.UpdatePermissionsAsync(userId, _projectDoc, token);
+            }
 
             await NotifySyncProgress(SyncPhase.Phase7, 40.0);
 
             // Check for cancellation
             if (token.IsCancellationRequested)
             {
-                await CompleteSync(false, canRollbackParatext, trainEngine, token);
+                await CompleteSync(false, canRollbackParatext, trainEngine, syncResults.UpdateRoles, token);
                 return;
             }
 
-            await CompleteSync(true, canRollbackParatext, trainEngine, token);
+            await CompleteSync(true, canRollbackParatext, trainEngine, syncResults.UpdateRoles, token);
         }
         catch (Exception e)
         {
@@ -448,7 +457,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 LogMetric(message);
             }
 
-            await CompleteSync(false, canRollbackParatext, trainEngine, token);
+            await CompleteSync(false, canRollbackParatext, trainEngine, false, token);
         }
         finally
         {
@@ -465,6 +474,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// <param name="paratextId">The Paratext ID.</param>
     /// <param name="textDocsByBook">The text documents with the book number as key.</param>
     /// <param name="questionDocsByBook">The question documents with the book number as key.</param>
+    /// <param name="noteThreadDocsByBook">The note thread documents with the book number as key.</param>
     /// <returns>The task.</returns>
     /// <exception cref="ArgumentException">The Paratext project repository does not exist.</exception>
     private async Task GetAndUpdateParatextBooksAndNotes(
@@ -514,7 +524,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             LogMetric($"Getting Paratext book {text.BookNum}");
             SortedList<int, IDocument<TextData>> targetTextDocs = GetTextDocsForBook(text, textDocs);
             textDocsByBook[text.BookNum] = targetTextDocs;
-            if (settings.Editable && !_paratextService.IsResource(paratextId))
+            if (settings.Editable && !_paratextService.IsResource(paratextId) && Canon.IsCanonical(text.BookNum))
             {
                 LogMetric("Updating Paratext book");
                 await UpdateParatextBook(text, paratextId, targetTextDocs);
@@ -555,7 +565,6 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// <summary>
     /// Updates the resource configuration
     /// </summary>
-    /// <param name="project">The SF project.</param>
     /// <param name="paratextProject">The Paratext project. This should be a resource.</param>
     /// <returns>The asynchronous task.</returns>
     /// <remarks>Only call this if the config requires an update.</remarks>
@@ -609,7 +618,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
         Dictionary<int, IReadOnlyList<IDocument<Question>>> questionDocsByBook,
         Dictionary<int, IEnumerable<IDocument<NoteThread>>> noteThreadDocsByBook,
         HashSet<int> targetBooks,
-        HashSet<int> sourceBooks
+        HashSet<int> sourceBooks,
+        ParatextSyncResults syncResults
     )
     {
         // update source and target real-time docs
@@ -621,65 +631,86 @@ public class ParatextSyncRunner : IParatextSyncRunner
             LogMetric($"Updating text info for book {bookNum}");
             bool hasSource = sourceBooks.Contains(bookNum);
             int textIndex = _projectDoc.Data.Texts.FindIndex(t => t.BookNum == bookNum);
-            TextInfo text;
-            if (textIndex == -1)
+            if (!syncResults.UpdateBook(bookNum) && textIndex > -1)
             {
-                text = new TextInfo { BookNum = bookNum, HasSource = hasSource };
-                _syncMetrics.Books.Added++;
+                // Update hasSource, as the earlier sync of the source project may have added or removed a book that is
+                // already in the target project and not updated in this sync of the target project.
+                LogMetric("Updating project metadata");
+                await _projectDoc.SubmitJson0OpAsync(op => op.Set(pd => pd.Texts[textIndex].HasSource, hasSource));
             }
             else
             {
-                text = _projectDoc.Data.Texts[textIndex];
-                _syncMetrics.Books.Updated++;
-            }
-
-            // update target text docs
-            if (
-                !targetTextDocsByBook.TryGetValue(text.BookNum, out SortedList<int, IDocument<TextData>> targetTextDocs)
-            )
-            {
-                targetTextDocs = new SortedList<int, IDocument<TextData>>();
-            }
-
-            LogMetric("Updating text docs");
-            List<Chapter> newSetOfChapters = await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs);
-
-            // update question docs
-            if (questionDocsByBook.TryGetValue(text.BookNum, out IReadOnlyList<IDocument<Question>> questionDocs))
-            {
-                LogMetric("Updating question docs");
-                await UpdateQuestionDocsAsync(questionDocs, newSetOfChapters);
-            }
-
-            LogMetric("Updating thread docs - get deltas");
-            Dictionary<int, ChapterDelta> chapterDeltas = GetDeltasByChapter(text, targetParatextId);
-
-            LogMetric("Updating thread docs - updating");
-
-            // update note thread docs
-            if (!noteThreadDocsByBook.TryGetValue(text.BookNum, out IEnumerable<IDocument<NoteThread>> noteThreadDocs))
-            {
-                noteThreadDocs = Array.Empty<IDocument<NoteThread>>();
-            }
-            await UpdateNoteThreadDocsAsync(text, noteThreadDocs.ToDictionary(nt => nt.Data.DataId), chapterDeltas);
-
-            // update project metadata
-            LogMetric("Updating project metadata");
-            await _projectDoc.SubmitJson0OpAsync(op =>
-            {
+                // The book was updated on sync, or it does not exist
+                TextInfo text;
                 if (textIndex == -1)
                 {
-                    // insert text info for new text
-                    text.Chapters = newSetOfChapters;
-                    op.Add(pd => pd.Texts, text);
+                    text = new TextInfo { BookNum = bookNum, HasSource = hasSource };
+                    _syncMetrics.Books.Added++;
                 }
                 else
                 {
-                    // update text info
-                    op.Set(pd => pd.Texts[textIndex].Chapters, newSetOfChapters, _chapterListEqualityComparer);
-                    op.Set(pd => pd.Texts[textIndex].HasSource, hasSource);
+                    text = _projectDoc.Data.Texts[textIndex];
+                    _syncMetrics.Books.Updated++;
                 }
-            });
+
+                // update target text docs
+                if (
+                    !targetTextDocsByBook.TryGetValue(
+                        text.BookNum,
+                        out SortedList<int, IDocument<TextData>> targetTextDocs
+                    )
+                )
+                {
+                    targetTextDocs = new SortedList<int, IDocument<TextData>>();
+                }
+
+                LogMetric("Updating text docs");
+                List<Chapter> newSetOfChapters = await UpdateTextDocsAsync(text, targetParatextId, targetTextDocs);
+
+                // Remove question docs for deleted chapters
+                if (questionDocsByBook.TryGetValue(text.BookNum, out IReadOnlyList<IDocument<Question>> questionDocs))
+                {
+                    LogMetric("Updating question docs");
+                    await UpdateQuestionDocsAsync(questionDocs, newSetOfChapters);
+                }
+
+                // update project metadata
+                LogMetric("Updating project metadata");
+                await _projectDoc.SubmitJson0OpAsync(op =>
+                {
+                    if (textIndex == -1)
+                    {
+                        // insert text info for new text
+                        text.Chapters = newSetOfChapters;
+                        op.Add(pd => pd.Texts, text);
+                    }
+                    else
+                    {
+                        // update text info
+                        op.Set(pd => pd.Texts[textIndex].Chapters, newSetOfChapters, _chapterListEqualityComparer);
+                        op.Set(pd => pd.Texts[textIndex].HasSource, hasSource);
+                    }
+                });
+            }
+
+            // Update note threads
+            if (syncResults.UpdateNotes)
+            {
+                LogMetric("Updating thread docs - get deltas");
+                Dictionary<int, ChapterDelta> chapterDeltas = GetDeltasByChapter(bookNum, targetParatextId);
+
+                LogMetric("Updating thread docs - updating");
+
+                if (!noteThreadDocsByBook.TryGetValue(bookNum, out IEnumerable<IDocument<NoteThread>> noteThreadDocs))
+                {
+                    noteThreadDocs = Array.Empty<IDocument<NoteThread>>();
+                }
+                await UpdateNoteThreadDocsAsync(
+                    bookNum,
+                    noteThreadDocs.ToDictionary(nt => nt.Data.DataId),
+                    chapterDeltas
+                );
+            }
         }
     }
 
@@ -1016,7 +1047,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// Updates ParatextNoteThread docs for a book
     /// </summary>
     private async Task UpdateNoteThreadDocsAsync(
-        TextInfo text,
+        int bookNum,
         Dictionary<string, IDocument<NoteThread>> noteThreadDocs,
         Dictionary<int, ChapterDelta> chapterDeltas
     )
@@ -1024,7 +1055,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         IEnumerable<NoteThreadChange> noteThreadChanges = _paratextService.GetNoteThreadChanges(
             _userSecret,
             _projectDoc.Data.ParatextId,
-            text.BookNum,
+            bookNum,
             noteThreadDocs.Values,
             chapterDeltas,
             _currentPtSyncUsers
@@ -1075,7 +1106,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
     }
 
     /// <summary>
-    /// Gets the text docs from <see cref="docs"/> for the book specified in <see cref="text"/>.
+    /// Gets the text docs from <paramref name="docs"/> for the book specified in <paramref name="text"/>.
     /// </summary>
     private SortedList<int, IDocument<TextData>> GetTextDocsForBook(
         TextInfo text,
@@ -1115,6 +1146,14 @@ public class ParatextSyncRunner : IParatextSyncRunner
     /// </summary>
     private async Task SubmitChangesOnNoteThreadDocAsync(IDocument<NoteThread> threadDoc, NoteThreadChange change)
     {
+        bool hasNotesInThread =
+            change.NotesAdded.Count > 0 || threadDoc.Data.Notes.Any(n => !change.NoteIdsRemoved.Contains(n.DataId));
+        if (!hasNotesInThread)
+        {
+            await threadDoc.DeleteAsync();
+            return;
+        }
+
         await threadDoc.SubmitJson0OpAsync(op =>
         {
             // Update thread details
@@ -1305,6 +1344,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         bool successful,
         bool canRollbackParatext,
         bool trainEngine,
+        bool updateRoles,
         CancellationToken token
     )
     {
@@ -1321,9 +1361,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
         }
 
         LogMetric("Completing sync");
-        bool updateRoles = true;
         IReadOnlyDictionary<string, string> ptUserRoles;
-        if (_paratextService.IsResource(_projectDoc.Data.ParatextId) || token.IsCancellationRequested)
+        if (!updateRoles || _paratextService.IsResource(_projectDoc.Data.ParatextId) || token.IsCancellationRequested)
         {
             // Do not update permissions on sync, if this is a resource project, as then,
             // permission updates will be performed when a target project is synchronized.
@@ -1459,6 +1498,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 op.Set(pd => pd.DefaultFontSize, settings.DefaultFontSize);
                 if (settings.NoteTags != null)
                     op.Set(pd => pd.NoteTags, settings.NoteTags, _noteTagListEqualityComparer);
+                if (settings.LanguageTag != null)
+                    op.Set(pd => pd.WritingSystem.Tag, settings.LanguageTag);
             }
             // The source can be null if there was an error getting a resource from the DBL
             if (TranslationSuggestionsEnabled && _projectDoc.Data.TranslateConfig.Source != null)
@@ -1468,7 +1509,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     _projectDoc.Data.TranslateConfig.Source.ParatextId
                 );
                 if (sourceSettings != null)
+                {
                     op.Set(pd => pd.TranslateConfig.Source.IsRightToLeft, sourceSettings.IsRightToLeft);
+                    if (sourceSettings.LanguageTag != null)
+                        op.Set(pd => pd.TranslateConfig.Source.WritingSystem.Tag, sourceSettings.LanguageTag);
+                }
             }
         });
         await NotifySyncProgress(SyncPhase.Phase7, 80.0);
@@ -1667,9 +1712,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
     private IDocument<NoteThread> GetNoteThreadDoc(string threadId) =>
         _conn.Get<NoteThread>($"{_projectDoc.Id}:{threadId}");
 
-    private Dictionary<int, ChapterDelta> GetDeltasByChapter(TextInfo text, string paratextId)
+    private Dictionary<int, ChapterDelta> GetDeltasByChapter(int bookNum, string paratextId)
     {
-        string bookText = _paratextService.GetBookText(_userSecret, paratextId, text.BookNum);
+        string bookText = _paratextService.GetBookText(_userSecret, paratextId, bookNum);
         XDocument usxDoc = XDocument.Parse(bookText);
         Dictionary<int, ChapterDelta> chapterDeltas = _deltaUsxMapper
             .ToChapterDeltas(usxDoc)

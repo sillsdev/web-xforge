@@ -60,36 +60,13 @@
                 <mat-checkbox formControlName="translationSuggestionsEnabled" id="checkbox-translation-suggestions">
                   {{ t("translation_suggestions") }}
                 </mat-checkbox>
+                <app-info [text]="t('translations_will_be_suggested')"></app-info>
                 <app-write-status
                   [state]="getControlState('translationSuggestionsEnabled')"
                   [formGroup]="form"
                   id="translation-suggestions-status"
                 ></app-write-status>
               </div>
-              <mat-hint
-                class="helper-text checkbox-helper-text"
-                [innerHTML]="i18n.translateAndInsertTags('settings.translations_will_be_suggested')"
-              ></mat-hint>
-            </div>
-            <h2 class="sharing-heading">{{ t("sharing") }}</h2>
-            <div class="tool-setting">
-              <div class="tool-setting-field checkbox-field">
-                <mat-checkbox formControlName="translateShareEnabled" id="checkbox-translate-share">
-                  {{ t("share") }}
-                </mat-checkbox>
-                <app-write-status
-                  [state]="getControlState('translateShareEnabled')"
-                  [formGroup]="form"
-                  id="translate-share-status"
-                ></app-write-status>
-              </div>
-              <mat-hint class="helper-text checkbox-helper-text" fxLayout="row">
-                <span>
-                  <span [innerHTML]="shareDescription?.before"></span>
-                  <a [appRouterLink]="['/projects', projectId, 'users']">{{ shareDescription?.templateTagText }}</a>
-                  <span>{{ shareDescription?.after }}</span>
-                </span>
-              </mat-hint>
             </div>
           </mat-card-content>
           <mat-divider></mat-divider>
@@ -100,13 +77,13 @@
                 <mat-checkbox formControlName="checkingEnabled" id="checkbox-community-checking">
                   {{ t("enable_community_checking") }}
                 </mat-checkbox>
+                <app-info [text]="t('engage_the_wider_community')"></app-info>
                 <app-write-status
                   [state]="getControlState('checkingEnabled')"
                   [formGroup]="form"
                   id="checking-status"
                 ></app-write-status>
               </div>
-              <mat-hint class="helper-text checkbox-helper-text">{{ t("engage_the_wider_community") }}</mat-hint>
             </div>
             <ng-container *ngIf="isCheckingEnabled">
               <div class="tool-setting">
@@ -120,32 +97,8 @@
                     id="see-others-responses-status"
                   ></app-write-status>
                 </div>
-                <mat-hint class="helper-text checkbox-helper-text">
-                  {{ t("users_can_interact_with_each_other") }}
-                </mat-hint>
-              </div>
-              <h2 class="sharing-heading">{{ t("sharing") }}</h2>
-              <div class="tool-setting">
-                <div class="tool-setting-field checkbox-field">
-                  <mat-checkbox formControlName="checkingShareEnabled" id="checkbox-checking-share">
-                    {{ t("share") }}
-                  </mat-checkbox>
-                  <app-write-status
-                    [state]="getControlState('checkingShareEnabled')"
-                    [formGroup]="form"
-                    id="checking-share-status"
-                  ></app-write-status>
-                </div>
-                <mat-hint class="helper-text checkbox-helper-text" fxLayout="row">
-                  <span>
-                    <span [innerHTML]="shareDescription?.before"></span>
-                    <a [appRouterLink]="['/projects', projectId, 'users']">{{ shareDescription?.templateTagText }}</a>
-                    <span>{{ shareDescription?.after }}</span>
-                  </span>
-                </mat-hint>
               </div>
               <div>
-                <h2 class="sharing-heading">{{ t("exporting_answers") }}</h2>
                 <p class="helper-text">{{ t("export_checking_answers") }}</p>
                 <div class="tool-setting">
                   <mat-radio-group
@@ -175,6 +128,44 @@
                 </div>
               </div>
             </ng-container>
+          </mat-card-content>
+          <mat-divider></mat-divider>
+          <mat-card-content>
+            <mat-card-title>{{ t("sharing") }}</mat-card-title>
+            <div class="tool-setting">
+              <div class="tool-setting-field checkbox-field">
+                <mat-checkbox formControlName="translateShareEnabled" id="checkbox-translate-share">
+                  {{ t("shareTranslate") }}
+                </mat-checkbox>
+                <app-info [text]="t('users_can_share_the_project')"></app-info>
+                <app-write-status
+                  [state]="getControlState('translateShareEnabled')"
+                  [formGroup]="form"
+                  id="translate-share-status"
+                ></app-write-status>
+              </div>
+            </div>
+            <div class="tool-setting" *ngIf="isCheckingEnabled">
+              <div class="tool-setting-field checkbox-field">
+                <mat-checkbox formControlName="checkingShareEnabled" id="checkbox-checking-share">
+                  {{ t("shareChecking") }}
+                </mat-checkbox>
+                <app-info [text]="t('users_can_share_the_project')"></app-info>
+                <app-write-status
+                  [state]="getControlState('checkingShareEnabled')"
+                  [formGroup]="form"
+                  id="checking-share-status"
+                ></app-write-status>
+              </div>
+            </div>
+            <div class="indent">
+              <mat-icon class="no-hover">admin_panel_settings</mat-icon>
+              <span>
+                <span [innerHTML]="shareDescription?.before"></span>
+                <a [appRouterLink]="['/projects', projectId, 'users']">{{ shareDescription?.templateTagText }}</a>
+                <span>{{ shareDescription?.after }}</span>
+              </span>
+            </div>
           </mat-card-content>
         </form>
       </mat-card>

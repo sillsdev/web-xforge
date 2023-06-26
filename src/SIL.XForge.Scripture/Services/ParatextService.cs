@@ -30,6 +30,7 @@ using Paratext.Data.RegistryServerAccess;
 using Paratext.Data.Repository;
 using Paratext.Data.Users;
 using PtxUtils;
+using SIL.Extensions;
 using SIL.ObjectModel;
 using SIL.Scripture;
 using SIL.XForge.Configuration;
@@ -181,13 +182,16 @@ public class ParatextService : DisposableBase, IParatextService
     /// project referred to by paratextId. Or if paratextId refers to a DBL Resource, update the local copy of the
     /// resource if needed.
     /// </summary>
-    /// <returns>The project that was synced. This is returned so we can use it for other Paratext logic.</returns>
-    public async Task<ParatextProject> SendReceiveAsync(
+    /// <returns>
+    /// The project that was synced, and the sync results.
+    /// This is returned so we can use it for other Paratext logic.
+    /// </returns>
+    public async Task<(ParatextProject, ParatextSyncResults)> SendReceiveAsync(
         UserSecret userSecret,
         string paratextId,
-        IProgress<ProgressState>? progress,
-        CancellationToken token,
-        SyncMetrics syncMetrics
+        IProgress<ProgressState>? progress = null,
+        CancellationToken token = default,
+        SyncMetrics? syncMetrics = null
     )
     {
         if (userSecret == null || paratextId == null)
@@ -195,8 +199,8 @@ public class ParatextService : DisposableBase, IParatextService
             throw new ArgumentNullException();
         }
 
-        void traceListener(string message) => syncMetrics.Log.Add($"{DateTime.UtcNow:u} Trace: {message}");
-        void alertListener(string message) => syncMetrics.Log.Add($"{DateTime.UtcNow:u} {message}");
+        void traceListener(string message) => syncMetrics?.Log.Add($"{DateTime.UtcNow:u} Trace: {message}");
+        void alertListener(string message) => syncMetrics?.Log.Add($"{DateTime.UtcNow:u} {message}");
         LambdaTraceListener listener = new LambdaTraceListener(traceListener);
         try
         {
@@ -216,6 +220,7 @@ public class ParatextService : DisposableBase, IParatextService
             IEnumerable<ProjectMetadata> projectsMetadata = source.GetProjectsMetaData();
             IEnumerable<string> projectGuids = projectsMetadata.Select(pmd => pmd.ProjectGuid.Id);
             SharedRepository sendReceiveRepository = repositories.FirstOrDefault(r => r.SendReceiveId.Id == paratextId);
+            ParatextSyncResults syncResults = new ParatextSyncResults();
             if (TryGetProject(userSecret, sendReceiveRepository, projectsMetadata, out ParatextProject ptProject))
             {
                 if (!projectGuids.Contains(paratextId))
@@ -239,7 +244,7 @@ public class ParatextService : DisposableBase, IParatextService
                         + $"{paratextId}"
                 );
             }
-            EnsureProjectReposExists(userSecret, ptProject, source);
+            EnsureProjectReposExists(userSecret, ptProject, source, syncResults);
             if (ptProject is not ParatextResource)
             {
                 StartProgressReporting(progress);
@@ -307,12 +312,26 @@ public class ParatextService : DisposableBase, IParatextService
                     );
                 }
 
+                GetSyncResults(results, syncResults, scrText);
+
                 // Update the cached comment manager
                 CommentManager manager = CommentManager.Get(scrText);
                 manager.Load();
             }
+            else
+            {
+                // We have a resource - always flag update all
+                syncResults.IsResource = true;
+            }
 
-            return ptProject;
+            // If we have sync metrics, record the sync results there
+            if (syncMetrics is not null)
+            {
+                syncMetrics.ParatextSyncResults = syncResults;
+            }
+
+            // Return the project and the sync results
+            return (ptProject, syncResults);
         }
         finally
         {
@@ -519,6 +538,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// </summary>
     /// <param name="paratextId">The paratext resource identifier.</param>
     /// <param name="sfUserId">The user SF identifier.</param>
+    /// <param name="token">The cancellation token.</param>
     /// <returns>
     /// Read or None.
     /// </returns>
@@ -547,7 +567,105 @@ public class ParatextService : DisposableBase, IParatextService
         return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
     }
 
-    private static string ExplainSRResults(IEnumerable<SendReceiveResult> srResults)
+    /// <summary>
+    /// Parses the SendReceiveResults into a ParatextSyncResults object we can use to identify what to update in SF.
+    /// </summary>
+    /// <param name="srResults">The send/receive results</param>
+    /// <param name="syncResults">The sync results we are to add to.</param>
+    /// <param name="scrText">The Paratext ScrText.</param>
+    /// <remarks>This method is marked internal for unit testing only.</remarks>
+    internal void GetSyncResults(
+        IEnumerable<SendReceiveResult>? srResults,
+        ParatextSyncResults syncResults,
+        ScrText scrText
+    )
+    {
+        if (srResults is null)
+        {
+            return;
+        }
+
+        // Parse the sync results
+        foreach (SendReceiveResult result in srResults)
+        {
+            // If we have received any revisions (including merge revisions)
+            string[] revisionIds = result.RevisionsReceived ?? Array.Empty<string>();
+            if (!revisionIds.Any())
+            {
+                continue;
+            }
+
+            foreach (
+                (ProjectFileType fileType, int[] books) in _paratextDataHelper.GetRevisionChanges(scrText, revisionIds)
+            )
+            {
+                switch (fileType)
+                {
+                    case ProjectFileType.BookNames:
+                    case ProjectFileType.Canons:
+                    case ProjectFileType.LanguageSettings:
+                    case ProjectFileType.ProjectUpdate:
+                    case ProjectFileType.PropertiesAndSettings:
+                    case ProjectFileType.Stylesheet:
+                    case ProjectFileType.Versification:
+                    case ProjectFileType.XmlResourceProject:
+                        // Project level change
+                        syncResults.ProjectChanged = true;
+                        break;
+                    case ProjectFileType.Books:
+                        // Add the books that have changed
+                        syncResults.Books.AddRange(books);
+
+                        // If no books were flagged as changed, it may be an error, so force a full sync
+                        if (books.Length == 0)
+                        {
+                            syncResults.ProjectChanged = true;
+                        }
+
+                        break;
+                    case ProjectFileType.Notes:
+                    case ProjectFileType.NoteLanguages:
+                    case ProjectFileType.NoteTags:
+                        // Notes have changed
+                        syncResults.NotesChanged = true;
+                        break;
+                    case ProjectFileType.RolesPermissions:
+                        // Permissions have changed
+                        syncResults.PermissionsChanged = true;
+                        break;
+                    case ProjectFileType.Renderings:
+                    case ProjectFileType.Terms:
+                        // TODO: Biblical Terms Support
+                        break;
+                    case ProjectFileType.Autocorrect:
+                    case ProjectFileType.Denials:
+                    case ProjectFileType.Figures:
+                    case ProjectFileType.Hyphenation:
+                    case ProjectFileType.Interlinear:
+                    case ProjectFileType.Lexicon:
+                    case ProjectFileType.ModuleSpecifications:
+                    case ProjectFileType.NotAProjectFile:
+                    case ProjectFileType.Passages:
+                    case ProjectFileType.PluginData:
+                    case ProjectFileType.Progress:
+                    case ProjectFileType.RubyGlosses:
+                    case ProjectFileType.SavedFilters:
+                    case ProjectFileType.SharedFiles:
+                    case ProjectFileType.SimplifiedMenus:
+                    case ProjectFileType.Spelling:
+                    case ProjectFileType.StatusCheckBoxes:
+                    case ProjectFileType.StudyBibleAdditions:
+                    case ProjectFileType.StudyBibleAdditionBooks:
+                    case ProjectFileType.Unspecified:
+                    default:
+                        // Ignore - does not affect Scripture Forge
+                        break;
+                }
+            }
+        }
+    }
+
+    private static string ExplainSRResults(IEnumerable<SendReceiveResult>? srResults)
     {
         return string.Join(
             ";",
@@ -694,6 +812,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// <param name="ptUsernameMapping">A mapping of user ID to Paratext username.</param>
     /// <param name="book">The book number. Set to zero to check for all books.</param>
     /// <param name="chapter">The chapter number. Set to zero to check for all books.</param>
+    /// <param name="token">The cancellation token.</param>
     /// <returns>
     /// A dictionary of permissions where the key is the user ID and the value is the permission.
     /// </returns>
@@ -981,7 +1100,8 @@ public class ParatextService : DisposableBase, IParatextService
             Editable = scrText.Settings.Editable,
             DefaultFontSize = scrText.Settings.DefaultFontSize,
             DefaultFont = scrText.Settings.DefaultFont,
-            NoteTags = noteTags
+            NoteTags = noteTags,
+            LanguageTag = scrText.Settings.LanguageID?.Id,
         };
     }
 
@@ -1863,7 +1983,8 @@ public class ParatextService : DisposableBase, IParatextService
     private void EnsureProjectReposExists(
         UserSecret userSecret,
         ParatextProject target,
-        IInternetSharedRepositorySource repositorySource
+        IInternetSharedRepositorySource repositorySource,
+        ParatextSyncResults syncResults
     )
     {
         string username = GetParatextUsername(userSecret);
@@ -1882,6 +2003,7 @@ public class ParatextService : DisposableBase, IParatextService
                 RepositoryType.Shared
             );
             CloneProjectRepo(repositorySource, target.ParatextId, targetRepo);
+            syncResults.ProjectChanged = true;
         }
     }
 
@@ -2119,8 +2241,9 @@ public class ParatextService : DisposableBase, IParatextService
     /// <summary>
     /// Get Paratext resources that a user has access to.
     /// </summary>
-    /// <param name="userSecret">The user secret.</param>
+    /// <param name="sfUserId">The Scripture Forge user identifier.</param>
     /// <param name="includeInstallableResource">If set to <c>true</c> include the installable resource.</param>
+    /// <param name="token">The cancellation token.</param>
     /// <returns>
     /// The available resources.
     /// </returns>
@@ -2689,7 +2812,7 @@ public class ParatextService : DisposableBase, IParatextService
     /// Writes the chapter to the <see cref="ScrText" />.
     /// </summary>
     /// <param name="scrText">The Scripture Text from Paratext.</param>
-    /// <param name="authorId">The user identifier for the author.</param>
+    /// <param name="userId">The user identifier for the author.</param>
     /// <param name="bookNum">The book number.</param>
     /// <param name="chapterNum">The chapter number. Set to 0 to write the entire book.</param>
     /// <param name="usfm">The USFM to write.</param>

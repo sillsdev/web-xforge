@@ -11,7 +11,7 @@ using SIL.XForge.Services;
 namespace SIL.XForge.Scripture.Controllers;
 
 /// <summary>
-/// This controller contains upload endpoints.
+/// Provides methods for uploading files.
 /// </summary>
 [Authorize]
 [Route(UrlConstants.CommandApiNamespace + "/" + UrlConstants.Projects)]
@@ -33,6 +33,16 @@ public class SFProjectsUploadController : ControllerBase
         _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
     }
 
+    /// <summary>
+    /// Uploads an audio file.
+    /// </summary>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="dataId">The data identifier.</param>
+    /// <param name="file">The file contents.</param>
+    /// <response code="200">The file was uploaded successfully.</response>
+    /// <response code="400">The data or parameters were malformed.</response>
+    /// <response code="403">Insufficient permission to upload a file to this project.</response>
+    /// <response code="404">The project does not exist.</response>
     [HttpPost("audio")]
     [RequestSizeLimit(100_000_000)]
     public async Task<IActionResult> UploadAudioAsync(

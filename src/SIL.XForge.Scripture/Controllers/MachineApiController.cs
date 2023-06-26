@@ -12,6 +12,9 @@ using SIL.XForge.Services;
 
 namespace SIL.XForge.Scripture.Controllers;
 
+/// <summary>
+/// Provides methods for Machine Learning assisted translating.
+/// </summary>
 [Route(MachineApi.Namespace)]
 [ApiController]
 [Authorize]
@@ -34,6 +37,19 @@ public class MachineApiController : ControllerBase
         _exceptionHandler.RecordUserIdForException(_userAccessor.UserId);
     }
 
+    /// <summary>
+    /// Gets a build job.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="buildId">The build identifier.</param>
+    /// <param name="minRevision">The minimum revision.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <remarks>Omitting <paramref name="buildId"/> returns the current build running for the project.</remarks>
+    /// <response code="200">The build is running.</response>
+    /// <response code="204">No build is running.</response>
+    /// <response code="403">You do not have permission to run a build for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpGet(MachineApi.GetBuild)]
     public async Task<ActionResult<BuildDto?>> GetBuildAsync(
         string sfProjectId,
@@ -82,6 +98,15 @@ public class MachineApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Gets a translation engine.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The translation engine is configured for the project.</response>
+    /// <response code="403">You do not have permission to retrieve the translation engine for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpGet(MachineApi.GetEngine)]
     public async Task<ActionResult<EngineDto>> GetEngineAsync(string sfProjectId, CancellationToken cancellationToken)
     {
@@ -109,6 +134,16 @@ public class MachineApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Gets the word graph that represents all possible translations of a segment of text.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="segment">The source segment.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The word graph was successfully generated.</response>
+    /// <response code="403">You do not have permission to retrieve the word graph for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpPost(MachineApi.GetWordGraph)]
     public async Task<ActionResult<WordGraph>> GetWordGraphAsync(
         string sfProjectId,
@@ -141,6 +176,15 @@ public class MachineApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Starts a build job for a translation engine.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The build was successfully started.</response>
+    /// <response code="403">You do not have permission to build this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpPost(MachineApi.StartBuild)]
     public async Task<ActionResult<BuildDto>> StartBuildAsync(
         [FromBody] string sfProjectId,
@@ -171,6 +215,16 @@ public class MachineApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Incrementally trains a translation engine with a segment pair.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="segmentPair">The segment pair.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The segment was successfully trained.</response>
+    /// <response code="403">You do not have permission to train a segment for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpPost(MachineApi.TrainSegment)]
     public async Task<ActionResult> TrainSegmentAsync(
         string sfProjectId,
@@ -203,6 +257,16 @@ public class MachineApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Translates a segment of text.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="segment">The source segment.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The translation was successfully generated.</response>
+    /// <response code="403">You do not have permission to translate a segment for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpPost(MachineApi.Translate)]
     public async Task<ActionResult<TranslationResult>> TranslateAsync(
         string sfProjectId,
@@ -235,6 +299,17 @@ public class MachineApiController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Translates a segment of text into the top N results.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="n">The number of translations.</param>
+    /// <param name="segment">The source segment.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The translation was successfully generated.</response>
+    /// <response code="403">You do not have permission to translate a segment for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpPost(MachineApi.TranslateN)]
     public async Task<ActionResult<TranslationResult[]>> TranslateNAsync(
         string sfProjectId,

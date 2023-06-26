@@ -15,20 +15,10 @@
 .tool-setting {
   display: flex;
   flex-direction: column;
-  &.mat-radio-group.indent {
-    margin-left: 16px;
-  }
-  &.indent {
-    margin-top: 16px;
-    margin-left: 24px;
-  }
+  row-gap: 16px;
 
-  &.select-indent {
-    margin-top: 16px;
-    margin-left: 24px;
-    > .tool-setting-field {
-      padding-bottom: 0 !important;
-    }
+  p {
+    margin: 0;
   }
 
   > .checkbox-field {
@@ -39,15 +29,12 @@
     &:not(:last-child) {
       padding-bottom: 16px;
     }
-    @include media-breakpoint-up(sm) {
-      display: flex;
-    }
+    column-gap: 10px;
 
     > app-write-status {
-      @include media-breakpoint-only(xs) {
-        margin-left: 10px;
+      @include media-breakpoint-up(sm) {
+        margin-inline-start: 22px;
       }
-      margin-left: 32px;
     }
   }
 
@@ -57,11 +44,27 @@
       margin: 0 0 0 24px;
     }
   }
-  .select-helper-text,
   .mat-error {
     margin-top: 10px;
     font-size: 14px;
   }
+}
+
+a {
+  color: $blueMedium;
+}
+
+mat-icon {
+  color: $greyLight;
+  overflow: visible;
+}
+
+.indent {
+  margin-block-start: 4px;
+  margin-inline-start: 16px;
+  display: flex;
+  column-gap: 8px;
+  align-items: center;
 }
 
 #btn-log-in-settings {
@@ -87,6 +90,14 @@
   > .more-options {
     margin-left: 16px;
   }
+}
+
+.mat-checkbox {
+  padding: 3px 0px;
+}
+
+::ng-deep .mat-checkbox-label {
+  line-height: normal !important;
 }
 
 ::ng-deep .checkbox-placeholder {
@@ -116,14 +127,9 @@
 }
 
 mat-radio-group.tool-setting {
-  display: initial;
   mat-radio-button {
-    margin: 0.5em;
+    margin: 0.5em 1em;
   }
-}
-
-app-project-select {
-  margin-top: 16px;
 }
 
 .mat-card-content {
@@ -138,11 +144,11 @@ app-project-select {
 }
 
 .mat-card-content:not(:first-child) {
-  padding-top: 16px;
+  padding-top: 32px;
 }
 
 .mat-card-content:not(:last-child) {
-  padding-bottom: 16px;
+  padding-bottom: 32px;
 }
 
 .sharing-heading {

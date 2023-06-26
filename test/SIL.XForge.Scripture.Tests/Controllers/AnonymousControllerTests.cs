@@ -48,7 +48,7 @@ public class AnonymousControllerTests
     }
 
     [Test]
-    public void GenerateAccount_NotFound()
+    public async Task GenerateAccount_NotFound()
     {
         var env = new TestEnvironment();
         var request = new GenerateAccountRequest()
@@ -62,12 +62,12 @@ public class AnonymousControllerTests
             .Throws(new DataNotFoundException(""));
 
         // SUT
-        var actual = env.Controller.GenerateAccount(request);
+        var actual = await env.Controller.GenerateAccount(request);
         Assert.IsInstanceOf<NotFoundObjectResult>(actual.Result);
     }
 
     [Test]
-    public void GenerateAccount_NotFound_HttpRequestException()
+    public async Task GenerateAccount_NotFound_HttpRequestException()
     {
         var env = new TestEnvironment();
         var request = new GenerateAccountRequest()
@@ -81,12 +81,12 @@ public class AnonymousControllerTests
             .Throws(new HttpRequestException(""));
 
         // SUT
-        var actual = env.Controller.GenerateAccount(request);
+        var actual = await env.Controller.GenerateAccount(request);
         Assert.IsInstanceOf<NoContentResult>(actual.Result);
     }
 
     [Test]
-    public void GenerateAccount_NotFound_SecurityException()
+    public async Task GenerateAccount_NotFound_SecurityException()
     {
         var env = new TestEnvironment();
         var request = new GenerateAccountRequest()
@@ -100,12 +100,12 @@ public class AnonymousControllerTests
             .Throws(new SecurityException());
 
         // SUT
-        var actual = env.Controller.GenerateAccount(request);
+        var actual = await env.Controller.GenerateAccount(request);
         Assert.IsInstanceOf<NoContentResult>(actual.Result);
     }
 
     [Test]
-    public void GenerateAccount_NotFound_TaskCanceledException()
+    public async Task GenerateAccount_NotFound_TaskCanceledException()
     {
         var env = new TestEnvironment();
         var request = new GenerateAccountRequest()
@@ -119,7 +119,7 @@ public class AnonymousControllerTests
             .Throws(new TaskCanceledException());
 
         // SUT
-        var actual = env.Controller.GenerateAccount(request);
+        var actual = await env.Controller.GenerateAccount(request);
         Assert.IsInstanceOf<NoContentResult>(actual.Result);
     }
 

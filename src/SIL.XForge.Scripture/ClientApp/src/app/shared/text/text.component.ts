@@ -31,7 +31,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { NoteThreadIcon } from '../../core/models/note-thread-doc';
-import { attributeFromMouseEvent, getBaseVerse, VERSE_REGEX } from '../utils';
+import { attributeFromMouseEvent, getBaseVerse, getVerseStrFromSegmentRef, VERSE_REGEX } from '../utils';
 import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
 import { getAttributesAtPosition, registerScripture } from './quill-scripture';
 import { Segment } from './segment';
@@ -521,6 +521,17 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return this.viewModel.getVerseSegments(verseRef);
   }
 
+  /**
+   * Get segments compatible for a given verseRef. For verses with letters, only return the segments
+   * that explicitly contain the letter or non-verse segment in the range.
+   * i.e. LUK 1:1a will match segments verse_1_1a, verse_1_1a/p1, s_1 but not verse_1_1 or verse_1_1b.
+   */
+  getCompatibleSegments(verseRef: VerseRef): string[] {
+    const segments: string[] = this.getVerseSegments(verseRef);
+    const defaultValue: string = verseRef.verse;
+    return segments.filter(s => verseRef.verse === (getVerseStrFromSegmentRef(s) ?? defaultValue));
+  }
+
   getSegmentElement(segment: string): Element | null {
     return this.editor == null ? null : this.editor.container.querySelector(`usx-segment[data-segment="${segment}"]`);
   }
@@ -591,8 +602,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       return;
     }
 
-    // A single verse can be associated with multiple segments (e.g verse_1_1, verse_1_1/p_1)
-    const verseSegments: string[] = this.viewModel.getVerseSegments(verseRef);
+    // A single verse can be associated with multiple compatible segments (e.g verse_1_1, verse_1_1/p_1)
+    const verseSegments: string[] = this.getCompatibleSegments(verseRef);
     if (verseSegments.length === 0) {
       return;
     }
@@ -655,7 +666,13 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       if (textAnchor.start === 0) {
         insertFormat = {};
       }
-      insertFormat = { ...insertFormat, ...{ 'text-anchor': true } };
+      const segmentLastPosition: number = editorPosOfSegmentToModify.index + editorPosOfSegmentToModify.length;
+      if (segmentLastPosition === embedInsertPos) {
+        // the last position needs the segment format info
+        insertFormat = { ...insertFormat, ...{ 'text-anchor': true } };
+      } else {
+        insertFormat = { 'text-anchor': true };
+      }
       this.editor.formatText(embedInsertPos, formatLength, insertFormat, 'api');
     }
     this.updateSegment();
@@ -671,7 +688,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   toggleVerseSelection(verseRef: VerseRef): boolean {
     if (this.editor == null) return false;
-    const verseSegments: string[] = this.getVerseSegments(verseRef);
+    const verseSegments: string[] = this.getCompatibleSegments(verseRef);
     const verseRange: RangeStatic | undefined = this.getSegmentRange(verseSegments[0]);
     let selectionValue: true | null = true;
     if (verseRange != null) {

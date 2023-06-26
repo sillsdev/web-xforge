@@ -165,7 +165,6 @@ public class Startup
 
         services
             .AddMvc()
-            // TODO: check if JSON.NET is required
             .AddNewtonsoftJson()
             .AddViewLocalization()
             .AddDataAnnotationsLocalization(
@@ -174,6 +173,8 @@ public class Startup
             );
 
         services.AddXFJsonRpc();
+
+        services.AddApiDocumentation();
 
         if (SpaDevServerStartup == SpaDevServerStartup.None)
         {
@@ -199,6 +200,8 @@ public class Startup
         if (IsDevelopmentEnvironment || IsTestingEnvironment)
         {
             app.UseDeveloperExceptionPage();
+            app.UseSwagger();
+            app.UseSwaggerUI();
         }
         else
         {

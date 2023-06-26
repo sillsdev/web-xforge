@@ -1,0 +1,21 @@
+@import 'src/variables';
+
+:host {
+  display: flex;
+  align-items: center;
+}
+
+a {
+  color: $blueMedium;
+  cursor: pointer;
+  display: flex;
+
+  mat-icon {
+    font-size: 18px;
+    // https://github.com/google/material-design-icons/issues/648
+    transform: rotate(0.03deg);
+    width: unset;
+    height: unset;
+    overflow: unset;
+  }
+}
