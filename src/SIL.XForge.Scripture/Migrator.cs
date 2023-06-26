@@ -9,7 +9,7 @@ public static class Migrator
 {
     public static void RunMigrations(string environment)
     {
-        string version = FileVersionInfo.GetVersionInfo(Assembly.GetEntryAssembly().Location).ProductVersion;
+        string version = Product.Version;
         string projectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         string migratorPath = Path.Combine(

@@ -15,10 +15,6 @@ public static class ExceptionHandlerServiceCollectionExtensions
         return services
             .AddBugsnag()
             .Configure<Bugsnag.Configuration>(configuration.GetSection("Bugsnag"))
-            .Configure<Bugsnag.Configuration>(config =>
-            {
-                string location = System.Reflection.Assembly.GetEntryAssembly().Location;
-                config.AppVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(location).ProductVersion;
-            });
+            .Configure<Bugsnag.Configuration>(config => config.AppVersion = Product.Version);
     }
 }

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
@@ -29,9 +28,7 @@ public class FooterViewComponent : ViewComponent
 
     public IViewComponentResult Invoke()
     {
-        var appSettings = new RazorPageSettings();
-        var location = Assembly.GetEntryAssembly().Location;
-        appSettings.ProductVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(location).ProductVersion;
+        var appSettings = new RazorPageSettings { ProductVersion = Product.Version };
 
         var bugsnagConfig = new Dictionary<string, object>
         {

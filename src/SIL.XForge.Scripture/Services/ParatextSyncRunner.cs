@@ -729,6 +729,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
             return false;
         }
 
+        _syncMetrics.ProductVersion = Product.Version;
         _syncMetrics.DateStarted = DateTime.UtcNow;
         _syncMetrics.Status = SyncStatus.Running;
         if (!await _syncMetricsRepository.ReplaceAsync(_syncMetrics, true))
