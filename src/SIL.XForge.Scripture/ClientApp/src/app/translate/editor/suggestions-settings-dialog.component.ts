@@ -1,6 +1,6 @@
 import { Component, Inject, ViewChild } from '@angular/core';
+import { UntypedFormControl } from '@angular/forms';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { MatSlider } from '@angular/material/slider';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
@@ -20,7 +20,8 @@ export interface SuggestionsSettingsDialogData {
 })
 export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
   @ViewChild('confidenceThresholdSlider') confidenceThresholdSlider?: MatSlider;
-  @ViewChild('suggestionsToggle') suggestionsToggle?: MatSlideToggle;
+
+  suggestionsEnabledSwitch = new UntypedFormControl();
 
   private readonly projectUserConfigDoc: SFProjectUserConfigDoc;
   private confidenceThreshold$ = new BehaviorSubject<number>(20);
@@ -39,24 +40,14 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
         this.confidenceThresholdSlider.value = this.projectUserConfigDoc.data!.confidenceThreshold * 100;
         this.confidenceThresholdSlider.disabled = this.settingsDisabled;
       }
-
-      if (this.suggestionsToggle != null) {
-        this.suggestionsToggle.writeValue(this.translationSuggestionsUserEnabled);
-        this.subscribe(this.suggestionsToggle.change, value => {
-          this.projectUserConfigDoc.submitJson0Op(op =>
-            op.set<boolean>(puc => puc.translationSuggestionsEnabled, value.checked)
-          );
-        });
-        this.subscribe(this.pwaService.onlineStatus$, isOnline => {
-          this.suggestionsToggle?.setDisabledState(!isOnline);
-        });
-      }
     });
 
     if (this.projectUserConfigDoc.data != null) {
       const percent = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
       this.confidenceThreshold$.next(percent);
     }
+
+    this.suggestionsEnabledSwitch.setValue(this.translationSuggestionsUserEnabled);
 
     this.subscribe(
       this.confidenceThreshold$.pipe(
@@ -66,6 +57,10 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
       ),
       threshold => this.projectUserConfigDoc.submitJson0Op(op => op.set(puc => puc.confidenceThreshold, threshold))
     );
+  }
+
+  setTranslationSettingsEnabled(value: boolean): void {
+    this.projectUserConfigDoc.submitJson0Op(op => op.set<boolean>(puc => puc.translationSuggestionsEnabled, value));
   }
 
   get settingsDisabled(): boolean {
