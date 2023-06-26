@@ -1,7 +1,6 @@
-import { Component, Inject, ViewChild } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { UntypedFormControl } from '@angular/forms';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { MatSlider } from '@angular/material/slider';
+import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -19,28 +18,14 @@ export interface SuggestionsSettingsDialogData {
   styleUrls: ['./suggestions-settings-dialog.component.scss']
 })
 export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
-  @ViewChild('confidenceThresholdSlider') confidenceThresholdSlider?: MatSlider;
-
   suggestionsEnabledSwitch = new UntypedFormControl();
 
   private readonly projectUserConfigDoc: SFProjectUserConfigDoc;
   private confidenceThreshold$ = new BehaviorSubject<number>(20);
 
-  constructor(
-    dialogRef: MatDialogRef<SuggestionsSettingsDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) data: SuggestionsSettingsDialogData,
-    readonly pwaService: PwaService
-  ) {
+  constructor(@Inject(MAT_DIALOG_DATA) data: SuggestionsSettingsDialogData, readonly pwaService: PwaService) {
     super();
     this.projectUserConfigDoc = data.projectUserConfigDoc;
-
-    dialogRef.afterOpened().subscribe(() => {
-      if (this.confidenceThresholdSlider != null) {
-        this.confidenceThresholdSlider.disabled = false; // cannot set value when slider is disabled
-        this.confidenceThresholdSlider.value = this.projectUserConfigDoc.data!.confidenceThreshold * 100;
-        this.confidenceThresholdSlider.disabled = this.settingsDisabled;
-      }
-    });
 
     if (this.projectUserConfigDoc.data != null) {
       const percent = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
