@@ -239,9 +239,7 @@ public class RealtimeService : DisposableBase, IRealtimeService
             ReleaseStage = this._configuration.GetValue<string>("Bugsnag:ReleaseStage"),
             this._realtimeOptions.Value.MigrationsDisabled,
             SiteId = this._siteOptions.Value.Id,
-            Version = System.Diagnostics.FileVersionInfo
-                .GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location)
-                .ProductVersion
+            Product.Version,
         };
     }
 }
