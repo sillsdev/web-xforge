@@ -1,6 +1,7 @@
 import { Component, Inject } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatTableDataSource } from '@angular/material/table';
+import { I18nService } from 'xforge-common/i18n.service';
 
 export interface ImportQuestionsConfirmationDialogData {
   questions: EditedQuestion[];
@@ -28,7 +29,8 @@ export class ImportQuestionsConfirmationDialogComponent {
     private readonly dialogRef: MatDialogRef<
       ImportQuestionsConfirmationDialogComponent,
       ImportQuestionsConfirmationDialogResult
-    >
+    >,
+    readonly i18n: I18nService
   ) {
     this.questions = data.questions;
     this.dataSource = new MatTableDataSource<EditedQuestion>(this.questions);
