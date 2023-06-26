@@ -13,6 +13,7 @@ import { SFProjectService } from './services/sf-project-service';
 import { SFProjectUserConfigService } from './services/sf-project-user-config-service';
 import { TextService } from './services/text-service';
 import { SF_PROJECT_MIGRATIONS } from './services/sf-project-migrations';
+import { TextAudioService } from './services/text-audio-service';
 
 const SF_DOC_SERVICES: DocService[] = [
   new UserService(),
@@ -20,7 +21,8 @@ const SF_DOC_SERVICES: DocService[] = [
   new SFProjectUserConfigService(),
   new TextService(),
   new QuestionService(),
-  new NoteThreadService()
+  new NoteThreadService(),
+  new TextAudioService()
 ];
 
 /**
