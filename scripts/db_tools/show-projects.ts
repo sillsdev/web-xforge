@@ -126,6 +126,7 @@ class ProjectInquirer {
   getProjectBookMetadata(projectDoc: any): BookMetadata {
     const bookMetadata: BookMetadata = new Map();
     const booksInProject: any = projectDoc.texts;
+    if (booksInProject == null) return new Map();
     for (const book of booksInProject) {
       const bookNumber = book.bookNum;
       const bookAbbr: string = Canon.bookNumberToId(bookNumber);
@@ -231,7 +232,6 @@ class ProjectInquirer {
           }${optionalBooksDisplay}`
         );
       }
-      return;
     } finally {
       client.close();
       (conn as any).close();
