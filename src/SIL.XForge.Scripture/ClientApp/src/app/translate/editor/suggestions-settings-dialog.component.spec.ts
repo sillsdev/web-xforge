@@ -144,7 +144,7 @@ class TestEnvironment {
   }
 
   get confidenceThresholdSlider(): MatSlider {
-    return this.component!.confidenceThresholdSlider!;
+    return this.fixture.debugElement.query(By.css('#confidence-threshold-slider')).componentInstance;
   }
 
   get matSuggestionsEnabledSwitch(): HTMLElement {
