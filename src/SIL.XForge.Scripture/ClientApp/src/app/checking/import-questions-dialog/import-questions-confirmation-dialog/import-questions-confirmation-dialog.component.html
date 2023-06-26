@@ -1,49 +1,55 @@
 <ng-container *transloco="let t; read: 'import_questions_confirmation_dialog'">
-  <mdc-dialog>
-    <mdc-dialog-container>
-      <mdc-dialog-surface>
-        <mdc-dialog-title>{{ t("some_questions_edited") }}</mdc-dialog-title>
-        <mdc-dialog-content>
-          {{ t("edited_questions_explanation") }}
-          <mdc-data-table>
-            <table mdcDataTableTable>
-              <thead>
-                <tr mdcDataTableHeaderRow>
-                  <th mdcDataTableHeaderCell>
-                    <mat-checkbox
-                      [checked]="allSelected"
-                      [indeterminate]="someSelected()"
-                      (change)="selectAll($event.checked)"
-                    ></mat-checkbox>
-                  </th>
-                  <th>{{ t("scripture_forge") }}</th>
-                  <th>{{ t("transcelerator") }}</th>
-                  <th>{{ t("number_answers") }}</th>
-                </tr>
-              </thead>
-              <tbody mdcDataTableContent>
-                <tr mdcDataTableRow *ngFor="let listItem of questions" [selected]="listItem.checked">
-                  <td>
-                    <mat-checkbox
-                      color="primary"
-                      [(ngModel)]="listItem.checked"
-                      (ngModelChange)="updateAllSelected()"
-                    ></mat-checkbox>
-                  </td>
-                  <td>{{ listItem.before }}</td>
-                  <td>{{ listItem.after }}</td>
-                  <td>{{ listItem.answerCount }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </mdc-data-table>
-        </mdc-dialog-content>
-        <mdc-dialog-actions>
-          <button mdcDialogButton mdcDialogAction="close" [unelevated]="true" type="submit" (click)="submit()">
-            {{ t("done") }}
-          </button>
-        </mdc-dialog-actions>
-      </mdc-dialog-surface>
-    </mdc-dialog-container>
-  </mdc-dialog>
+  <mat-dialog>
+    <h2 mat-dialog-title>
+      {{ t("some_questions_edited") }}
+    </h2>
+    <mat-dialog-content>
+      {{ t("edited_questions_explanation") }}
+      <div class="table-container">
+        <table mat-table [dataSource]="questions">
+          <ng-container matColumnDef="select">
+            <th mat-header-cell *matHeaderCellDef>
+              <mat-checkbox
+                (change)="$event ? selectAll($event.checked) : null"
+                [checked]="allSelected()"
+                [indeterminate]="someSelected()"
+              >
+              </mat-checkbox>
+            </th>
+            <td mat-cell *matCellDef="let row">
+              <mat-checkbox
+                (click)="$event.stopPropagation()"
+                (change)="row.checked = !row.checked"
+                [checked]="row.checked"
+              >
+              </mat-checkbox>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="before">
+            <th mat-header-cell *matHeaderCellDef>{{ t("scripture_forge") }}</th>
+            <td mat-cell *matCellDef="let element">{{ element.before }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="after">
+            <th mat-header-cell *matHeaderCellDef>{{ t("transcelerator") }}</th>
+            <td mat-cell *matCellDef="let element">{{ element.after }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="answerCount">
+            <th mat-header-cell *matHeaderCellDef>{{ t("number_answers") }}</th>
+            <td mat-cell *matCellDef="let element">{{ element.answerCount }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['select', 'before', 'after', 'answerCount']; sticky: true"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['select', 'before', 'after', 'answerCount']"></tr>
+        </table>
+      </div>
+    </mat-dialog-content>
+    <mat-dialog-actions>
+      <button mat-flat-button color="primary" [mat-dialog-close]="'close'" type="submit" (click)="submit()">
+        {{ t("done") }}
+      </button>
+    </mat-dialog-actions>
+  </mat-dialog>
 </ng-container>

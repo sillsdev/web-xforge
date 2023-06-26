@@ -1,8 +1,9 @@
-import { MdcDialog, MdcDialogRef } from '@angular-mdc/web/dialog';
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import {
@@ -14,7 +15,7 @@ import {
 
 describe('ImportQuestionsConfirmationDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [ReactiveFormsModule, FormsModule, DialogTestModule]
+    imports: [ReactiveFormsModule, FormsModule, DialogTestModule, NoopAnimationsModule]
   }));
 
   it('Allows selecting and unselecting all questions', fakeAsync(async () => {
@@ -78,12 +79,12 @@ class DialogTestModule {}
 class TestEnvironment {
   fixture: ComponentFixture<ChildViewContainerComponent>;
   component: ImportQuestionsConfirmationDialogComponent;
-  dialogRef: MdcDialogRef<ImportQuestionsConfirmationDialogComponent>;
+  dialogRef: MatDialogRef<ImportQuestionsConfirmationDialogComponent>;
 
   constructor(questionCount: number = 2) {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     const configData: ImportQuestionsConfirmationDialogData = { questions: this.getQuestions(questionCount) };
-    this.dialogRef = TestBed.inject(MdcDialog).open(ImportQuestionsConfirmationDialogComponent, { data: configData });
+    this.dialogRef = TestBed.inject(MatDialog).open(ImportQuestionsConfirmationDialogComponent, { data: configData });
     this.component = this.dialogRef.componentInstance;
     this.update();
   }
@@ -93,7 +94,7 @@ class TestEnvironment {
   }
 
   get dialogTitle(): HTMLElement {
-    return this.overlayContainerElement.querySelector('mdc-dialog-title') as HTMLElement;
+    return this.overlayContainerElement.querySelector('mat-dialog-title') as HTMLElement;
   }
 
   get table(): HTMLElement {
@@ -113,7 +114,7 @@ class TestEnvironment {
   }
 
   get closeButton(): HTMLInputElement {
-    return this.overlayContainerElement.querySelector('mdc-dialog-actions button') as HTMLInputElement;
+    return this.overlayContainerElement.querySelector('mat-dialog-actions button') as HTMLInputElement;
   }
 
   get closeValuePromise(): Promise<ImportQuestionsConfirmationDialogResult> {

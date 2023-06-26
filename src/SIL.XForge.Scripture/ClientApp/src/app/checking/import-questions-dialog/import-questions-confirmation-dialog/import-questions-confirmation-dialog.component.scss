@@ -1,11 +1,23 @@
-tr td:first-child {
-  padding-left: 16px;
+.mat-dialog-content {
+  max-width: 560px;
+  display: flex;
+  gap: 20px;
+  flex-direction: column;
+}
+
+.table-container {
+  max-height: 150px;
 }
 
 tr td:not(:last-child) {
-  padding-right: 0.5em;
+  padding-inline-end: 1em;
 }
 
-table {
-  white-space: initial;
+.mat-header-cell {
+  color: black;
+  background-color: darken(#ffffff, 10%);
+}
+
+.mat-dialog-actions {
+  justify-content: end;
 }
