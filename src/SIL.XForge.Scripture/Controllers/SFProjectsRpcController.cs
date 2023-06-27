@@ -123,6 +123,7 @@ public class SFProjectsRpcController : RpcControllerBase
                     { "TranslateShareEnabled", settings?.TranslateShareEnabled?.ToString() },
                     { "TranslationSuggestionsEnabled", settings?.TranslationSuggestionsEnabled?.ToString() },
                     { "UsersSeeEachOthersResponses", settings?.UsersSeeEachOthersResponses?.ToString() },
+                    { "HideCommunityCheckingText", settings?.HideCommunityCheckingText?.ToString() },
                 }
             );
             throw;

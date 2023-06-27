@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { combineLatest } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { combineLatest, from } from 'rxjs';
+import { map, mergeMap, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
@@ -13,11 +14,13 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
+import { TextAudioDoc } from '../core/models/text-audio-doc';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
@@ -34,6 +37,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   usersSeeEachOthersResponses = new UntypedFormControl(false);
   checkingShareEnabled = new UntypedFormControl(false);
   checkingAnswerExport = new UntypedFormControl(undefined);
+  hideCommunityCheckingText = new UntypedFormControl(false);
 
   CheckingAnswerExport = CheckingAnswerExport;
 
@@ -44,7 +48,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     checkingEnabled: this.checkingEnabled,
     usersSeeEachOthersResponses: this.usersSeeEachOthersResponses,
     checkingShareEnabled: this.checkingShareEnabled,
-    checkingAnswerExport: this.checkingAnswerExport
+    checkingAnswerExport: this.checkingAnswerExport,
+    hideCommunityCheckingText: this.hideCommunityCheckingText
   });
 
   isActiveSourceProject: boolean = false;
@@ -53,8 +58,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   nonSelectableProjects?: SelectableProject[];
   projectLoadingFailed = false;
   resourceLoadingFailed = false;
-
   mainSettingsLoaded = false;
+  hasTextAudioDocs: boolean = false;
 
   private static readonly projectSettingValueUnset = 'unset';
   private projectDoc?: SFProjectDoc;
@@ -72,7 +77,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     private readonly dialogService: DialogService,
     private readonly router: Router,
     private readonly pwaService: PwaService,
-    readonly i18n: I18nService
+    readonly i18n: I18nService,
+    readonly featureFlags: FeatureFlagService
   ) {
     super(noticeService);
     this.loading = true;
@@ -293,6 +299,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     ) {
       this.updateSetting(newValue, 'checkingAnswerExport');
     }
+    if (newValue.hideCommunityCheckingText !== this.previousFormValues.hideCommunityCheckingText) {
+      this.updateSetting(newValue, 'hideCommunityCheckingText');
+    }
   }
 
   private checkUpdateStatus(setting: Extract<keyof SFProjectSettings, string>, updatePromise: Promise<void>): void {
@@ -315,6 +324,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
       checkingShareEnabled: this.projectDoc.data.checkingConfig.shareEnabled,
+      hideCommunityCheckingText: this.projectDoc.data.checkingConfig.hideCommunityCheckingText,
       checkingAnswerExport: this.projectDoc.data.checkingConfig.answerExportMethod ?? CheckingAnswerExport.All
     };
     this.form.reset(this.previousFormValues);
@@ -334,6 +344,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('translateShareEnabled', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);
     this.controlStates.set('usersSeeEachOthersResponses', ElementState.InSync);
+    this.controlStates.set('hideCommunityCheckingText', ElementState.InSync);
     this.controlStates.set('checkingShareEnabled', ElementState.InSync);
     this.controlStates.set('checkingAnswerExport', ElementState.InSync);
   }
