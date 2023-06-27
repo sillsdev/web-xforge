@@ -41,7 +41,7 @@ export class ImportQuestionsConfirmationDialogComponent {
   }
 
   someSelected(): boolean {
-    const numSelected = this.questions.filter(question => question.checked).length;
+    const numSelected: number = this.questions.filter(question => question.checked).length;
     return numSelected > 0 && numSelected < this.questions.length;
   }
 

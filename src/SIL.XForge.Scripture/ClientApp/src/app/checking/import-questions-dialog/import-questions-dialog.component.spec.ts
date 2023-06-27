@@ -1,8 +1,7 @@
-import { MdcDialogRef } from '@angular-mdc/web';
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { UntypedFormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -188,9 +187,9 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.component.filteredList[2].checked).toBe(false);
     expect(env.component.filteredList[3].checked).toBe(false);
 
-    when(env.mockedImportQuestionsConfirmationMdcDialogRef.afterClosed()).thenReturn(of([false, false]));
+    when(env.mockedImportQuestionsConfirmationDialogRef.afterClosed()).thenReturn(of([false, false]));
     env.clickSelectAll();
-    verify(mockedDialogService.openMdcDialog(anything(), anything())).once();
+    verify(mockedDialogService.openMatDialog(anything(), anything())).once();
     expect(env.tableRows.length).toBe(4);
     expect(env.component.filteredList[0].checked).toBe(false);
     expect(env.component.filteredList[1].checked).toBe(false);
@@ -201,11 +200,11 @@ describe('ImportQuestionsDialogComponent', () => {
 
   it('allows updating questions that have been edited in Transcelerator', fakeAsync(() => {
     const env = new TestEnvironment({ includeAllBooks: true, editedQuestionIds: [1, 4] });
-    when(env.mockedImportQuestionsConfirmationMdcDialogRef.afterClosed()).thenReturn(of([true, true]));
+    when(env.mockedImportQuestionsConfirmationDialogRef.afterClosed()).thenReturn(of([true, true]));
     env.click(env.importFromTransceleratorButton);
     expect(env.tableRows.length).toBe(4);
     env.clickSelectAll();
-    verify(mockedDialogService.openMdcDialog(anything(), anything())).once();
+    verify(mockedDialogService.openMatDialog(anything(), anything())).once();
     env.click(env.importSelectedQuestionsButton);
     expect(env.editedTransceleratorQuestionIds).toEqual(['1', '4']);
   }));
@@ -462,8 +461,8 @@ class TestEnvironment {
   component: ImportQuestionsDialogComponent;
   dialogRef: MatDialogRef<ImportQuestionsDialogComponent>;
   mockedScriptureChooserMatDialogRef = mock<MatDialogRef<ScriptureChooserDialogComponent>>(MatDialogRef);
-  mockedImportQuestionsConfirmationMdcDialogRef =
-    mock<MdcDialogRef<ImportQuestionsConfirmationDialogComponent>>(MdcDialogRef);
+  mockedImportQuestionsConfirmationDialogRef =
+    mock<MatDialogRef<ImportQuestionsConfirmationDialogComponent>>(MatDialogRef);
   editedTransceleratorQuestionIds: string[] = [];
   online$ = new BehaviorSubject<boolean>(true);
 
@@ -558,9 +557,9 @@ class TestEnvironment {
     when(mockedDialogService.openMatDialog(ScriptureChooserDialogComponent, anything())).thenReturn(
       instance<MatDialogRef<ScriptureChooserDialogComponent>>(this.mockedScriptureChooserMatDialogRef)
     );
-    when(mockedDialogService.openMdcDialog(ImportQuestionsConfirmationDialogComponent, anything())).thenReturn(
-      instance<MdcDialogRef<ImportQuestionsConfirmationDialogComponent>>(
-        this.mockedImportQuestionsConfirmationMdcDialogRef
+    when(mockedDialogService.openMatDialog(ImportQuestionsConfirmationDialogComponent, anything())).thenReturn(
+      instance<MatDialogRef<ImportQuestionsConfirmationDialogComponent>>(
+        this.mockedImportQuestionsConfirmationDialogRef
       )
     );
     when(mockedProjectService.createQuestion(anything(), anything(), anything(), anything())).thenResolve();
