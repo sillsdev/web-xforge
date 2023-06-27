@@ -787,6 +787,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.projectService.onlineCreateAudioTimingData(this.projectDoc.id, this.book, this.chapter, 'hard_coded');
   }
 
+  deleteAudioTimingData(): void {
+    if (this.projectDoc?.id == null || this.book == null || this.chapter == null) {
+      return;
+    }
+    this.projectService.onlineDeleteAudioTimingData(this.projectDoc.id, this.book, this.chapter);
+  }
+
   private triggerUpdate(): void {
     if (this.questionsQuery != null) {
       this.questionsQuery.localUpdate();
