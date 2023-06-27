@@ -296,6 +296,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             UpdateSetting(op, p => p.CheckingConfig.UsersSeeEachOthersResponses, settings.UsersSeeEachOthersResponses);
             UpdateSetting(op, p => p.CheckingConfig.ShareEnabled, settings.CheckingShareEnabled);
             UpdateSetting(op, p => p.CheckingConfig.AnswerExportMethod, settings.CheckingAnswerExport);
+            UpdateSetting(op, p => p.CheckingConfig.HideCommunityCheckingText, settings.HideCommunityCheckingText);
         });
 
         bool suggestionsEnabledSet = settings.TranslationSuggestionsEnabled != null;

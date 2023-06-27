@@ -17,4 +17,5 @@ public class SFProjectSettings
     public bool? DownloadAudioFiles { get; set; }
     public bool? CheckingShareEnabled { get; set; }
     public string CheckingAnswerExport { get; set; }
+    public bool? HideCommunityCheckingText { get; set; }
 }
