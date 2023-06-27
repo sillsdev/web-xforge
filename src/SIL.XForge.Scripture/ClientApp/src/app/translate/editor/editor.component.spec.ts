@@ -1544,8 +1544,8 @@ describe('EditorComponent', () => {
       env.addParatextNoteThread(7, 'LUK 1:6b', '', { start: 0, length: 0 }, ['user01']);
       env.wait();
 
-      expect(env.getNoteThreadIconElement('verse_1_6a', 'thread06')).not.toBeNull();
-      expect(env.getNoteThreadIconElement('verse_1_6b', 'thread07')).not.toBeNull();
+      expect(env.getNoteThreadIconElement('verse_1_6a', 'dataid06')).not.toBeNull();
+      expect(env.getNoteThreadIconElement('verse_1_6b', 'dataid07')).not.toBeNull();
       env.dispose();
     }));
 
@@ -2768,7 +2768,7 @@ describe('EditorComponent', () => {
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).twice();
 
       // can open note on existing verse
-      const existingNoteIcon: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'thread03')!;
+      const existingNoteIcon: HTMLElement = env.getNoteThreadIconElement('verse_1_3', 'dataid03')!;
       existingNoteIcon.click();
       env.wait();
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).thrice();
