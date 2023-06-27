@@ -18,7 +18,7 @@ export interface SuggestionsSettingsDialogData {
   styleUrls: ['./suggestions-settings-dialog.component.scss']
 })
 export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
-  suggestionsEnabledSwitch = new UntypedFormControl();
+  suggestionsEnabledSwitch = new UntypedFormControl({ disabled: !this.pwaService.isOnline });
 
   private readonly projectUserConfigDoc: SFProjectUserConfigDoc;
   private confidenceThreshold$ = new BehaviorSubject<number>(20);
@@ -33,6 +33,13 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
     }
 
     this.suggestionsEnabledSwitch.setValue(this.translationSuggestionsUserEnabled);
+    pwaService.onlineStatus$.subscribe(() => {
+      if (pwaService.isOnline) {
+        this.suggestionsEnabledSwitch.enable();
+      } else {
+        this.suggestionsEnabledSwitch.disable();
+      }
+    });
 
     this.subscribe(
       this.confidenceThreshold$.pipe(

@@ -7,7 +7,6 @@
     <mat-slide-toggle
       id="suggestions-enabled-switch"
       [formControl]="suggestionsEnabledSwitch"
-      [disabled]="!pwaService.isOnline"
       (change)="setTranslationSettingsEnabled($event.checked)"
     >
       {{ t("translation_suggestions") }}
