@@ -1,6 +1,5 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
-import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { TextDocId } from 'src/app/core/models/text-doc';
 import { getVerseStrFromSegmentRef } from 'src/app/shared/utils';
