@@ -8,16 +8,21 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
+import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-test-data';
+import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { QueryParameters } from 'xforge-common/query-parameters';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -26,6 +31,7 @@ import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
+import { TextAudioDoc } from '../core/models/text-audio-doc';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectSelectComponent } from '../project-select/project-select.component';
@@ -43,6 +49,7 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedDialog = mock(MatDialog);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -72,6 +79,7 @@ describe('SettingsComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: FeatureFlagService, useValue: instance(mockedFeatureFlagService) },
       { provide: MatDialog, useMock: mockedDialog }
     ]
   }));
@@ -361,20 +369,24 @@ describe('SettingsComponent', () => {
     describe('Checking options', () => {
       it('should hide options when Checking is disabled', fakeAsync(() => {
         const env = new TestEnvironment();
+        env.makeProjectHaveTextAudio();
         env.setupProject();
         env.wait();
         expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(false);
         expect(env.seeOthersResponsesCheckbox).toBeNull();
         expect(env.checkingShareCheckbox).toBeNull();
+        expect(env.checkingHideCommunityCheckingTextCheckbox).toBeNull();
         env.clickElement(env.inputElement(env.checkingCheckbox));
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
         expect(env.seeOthersResponsesCheckbox).not.toBeNull();
         expect(env.checkingShareCheckbox).not.toBeNull();
+        expect(env.checkingHideCommunityCheckingTextCheckbox).not.toBeNull();
       }));
 
       it('changing state of checking option results in status icon', fakeAsync(() => {
         const env = new TestEnvironment();
+        env.makeProjectHaveTextAudio();
         env.setupProject();
         env.wait();
         env.clickElement(env.inputElement(env.checkingCheckbox));
@@ -397,6 +409,23 @@ describe('SettingsComponent', () => {
         tick();
         env.fixture.detectChanges();
         expect(env.statusDone(env.checkingExportStatus)).not.toBeNull();
+
+        expect(env.statusDone(env.checkingHideCommunityCheckingTextStatus)).toBeNull();
+        env.clickElement(env.inputElement(env.checkingHideCommunityCheckingTextCheckbox));
+        tick();
+        env.fixture.detectChanges();
+        expect(env.statusDone(env.checkingHideCommunityCheckingTextStatus)).not.toBeNull();
+      }));
+
+      it('has hide-text option', fakeAsync(async () => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        env.clickElement(env.inputElement(env.checkingCheckbox));
+        expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
+
+        // SUT
+        expect(env.checkingHideCommunityCheckingTextCheckbox).withContext('checkbox should be shown').not.toBeNull();
       }));
     });
   });
@@ -475,7 +504,6 @@ class TestEnvironment {
   readonly component: SettingsComponent;
   readonly fixture: ComponentFixture<SettingsComponent>;
   readonly location: Location;
-
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isOnline: BehaviorSubject<boolean>;
   private mockedDialogRef = mock<MatDialogRef<DeleteProjectDialogComponent>>(MatDialogRef);
@@ -519,6 +547,14 @@ class TestEnvironment {
       },
       { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
     ]);
+    when(mockedFeatureFlagService.scriptureAudio).thenReturn({ enabled: true } as FeatureFlag);
+
+    when(mockedSFProjectService.queryAudioText(anything())).thenCall(sfProjectId => {
+      const queryParams: QueryParameters = {
+        [obj<TextAudio>().pathStr(t => t.projectRef)]: sfProjectId
+      };
+      return this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, queryParams);
+    });
 
     this.fixture = TestBed.createComponent(SettingsComponent);
     this.component = this.fixture.componentInstance;
@@ -581,6 +617,14 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#checking-share-status'));
   }
 
+  get checkingHideCommunityCheckingTextCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-hide-community-checking-text'));
+  }
+
+  get checkingHideCommunityCheckingTextStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#hide-community-checking-text-status'));
+  }
+
   get dangerZoneTitle(): HTMLElement {
     return this.fixture.nativeElement.querySelector('#danger-zone div');
   }
@@ -625,6 +669,13 @@ class TestEnvironment {
 
   get basedOnSelectProjectsResources(): SelectableProject[] {
     return (this.basedOnSelectComponent.projects || []).concat(this.basedOnSelectComponent.resources || []);
+  }
+
+  makeProjectHaveTextAudio(): void {
+    this.realtimeService.addSnapshot<TextAudio>(TextAudioDoc.COLLECTION, {
+      id: 'sAudio1',
+      data: createTestTextAudio({ projectRef: 'project01' })
+    });
   }
 
   setDialogResponse(confirm: boolean): void {
