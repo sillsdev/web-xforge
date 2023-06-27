@@ -786,6 +786,50 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, null);
     }
 
+    public async Task CreateAudioTimingData(string userId, string projectId, int book, int chapter, string audioUrl)
+    {
+        using IConnection conn = await RealtimeService.ConnectAsync(userId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+        if (!IsProjectAdmin(projectDoc.Data, userId))
+        {
+            throw new ForbiddenException();
+        }
+
+        string textAudioId = TextAudio.GetDocId(projectDoc.Id, book, chapter);
+        var textAudio = new TextAudio
+        {
+            OwnerRef = userId,
+            ProjectRef = projectId,
+            // TODO (scripture audio) Should the ID be set here? How does the DataId differ from the document ID?
+            DataId = textAudioId,
+            Timings = new List<AudioTiming>
+            {
+                // TODO (scripture audio) Create real timing data
+                new AudioTiming
+                {
+                    TextRef = "verse_1_1",
+                    From = 0.0,
+                    To = 0.0
+                }
+            },
+            // TODO get mimetype from client and make sure it is an acceptable value
+            MimeType = "audio/mp3",
+            AudioUrl = audioUrl
+        };
+
+        await conn.CreateAsync<TextAudio>(textAudioId, textAudio);
+
+        int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == book);
+        int chapterIndex = projectDoc.Data.Texts[textIndex].Chapters.FindIndex(c => c.Number == chapter);
+        await projectDoc.SubmitJson0OpAsync(
+            op => op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].HasAudio, true)
+        );
+    }
+
     protected override async Task AddUserToProjectAsync(
         IConnection conn,
         IDocument<SFProject> projectDoc,

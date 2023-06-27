@@ -240,6 +240,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return this.isProjectAdmin || this.projectDoc?.data?.checkingConfig.shareEnabled === true;
   }
 
+  get chapterHasAudio(): boolean {
+    return this.text?.chapters.find(c => c.number === this.chapter)?.hasAudio === true;
+  }
+
   private get book(): number | undefined {
     return this._book;
   }
@@ -772,6 +776,15 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     if (bestMatch != null) {
       this.questionsPanel.activateQuestion(bestMatch);
     }
+  }
+
+  addAudioTimingData(): void {
+    if (this.projectDoc?.id == null || this.book == null || this.chapter == null) {
+      return;
+    }
+    // TODO (scripture audio) set actual audio file url
+    // In the meantime you can hard-code the URL to a file that has already been uploaded
+    this.projectService.onlineCreateAudioTimingData(this.projectDoc.id, this.book, this.chapter, 'hard_coded');
   }
 
   private triggerUpdate(): void {

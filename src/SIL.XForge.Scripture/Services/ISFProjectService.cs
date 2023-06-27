@@ -31,4 +31,5 @@ public interface ISFProjectService : IProjectService
     Task<IEnumerable<TransceleratorQuestion>> TransceleratorQuestions(string curUserId, string projectId);
     Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc, CancellationToken token);
     Task EnsureWritingSystemTagIsSetAsync(string curUserId, string projectId);
+    Task CreateAudioTimingData(string userId, string projectId, int book, int chapter, string audioUrl);
 }

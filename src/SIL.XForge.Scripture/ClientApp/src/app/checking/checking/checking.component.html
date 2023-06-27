@@ -85,6 +85,14 @@
                 <div class="action-icons">
                   <ng-container *ngIf="canCreateQuestions">
                     <button
+                      *ngIf="featureFlags.scriptureAudio.enabled && !chapterHasAudio"
+                      type="button"
+                      mat-button
+                      (click)="addAudioTimingData()"
+                    >
+                      Add Timing Data
+                    </button>
+                    <button
                       fxHide
                       fxShow.lt-xl
                       mdc-icon-button
@@ -105,7 +113,7 @@
                     </button>
                   </ng-container>
                   <button
-                    *ngIf="featureFlags.scriptureAudio.enabled"
+                    *ngIf="featureFlags.scriptureAudio.enabled && chapterHasAudio"
                     type="button"
                     mat-icon-button
                     (click)="showScriptureAudioPlayer = !showScriptureAudioPlayer"
@@ -126,8 +134,9 @@
               >
                 <as-split-area [size]="100">
                   <div class="panel-content" #scripturePanelContainer>
+                    <!-- TODO (scripture audio) Instead of covering scripture panel, move the audio player below it -->
                     <div class="scripture-audio-player-wrapper" *ngIf="showScriptureAudioPlayer">
-                      <!-- TODO (scripture audio) replace this with an actually useful component -->
+                      <!-- TODO (scripture audio) Fetch audio URL from text_audio collection -->
                       <app-checking-audio-player></app-checking-audio-player>
                     </div>
                     <app-checking-text

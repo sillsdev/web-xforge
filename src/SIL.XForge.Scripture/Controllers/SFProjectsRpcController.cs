@@ -615,4 +615,38 @@ public class SFProjectsRpcController : RpcControllerBase
             throw;
         }
     }
+
+    // TODO (scripture audio) Add ability to update audio timing data and associated file URL
+    public async Task<IRpcMethodResult> CreateAudioTimingData(string projectId, int book, int chapter, string audioUrl)
+    {
+        try
+        {
+            await _projectService.CreateAudioTimingData(UserId, projectId, book, chapter, audioUrl);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "CreateAudioTimingData" },
+                    { "projectId", projectId },
+                    { "book", book.ToString() },
+                    { "chapter", chapter.ToString() },
+                    { "audioUrl", audioUrl },
+                }
+            );
+            throw;
+        }
+    }
+
+    // TODO (scripture audio) add method to delete audio timing data
 }
