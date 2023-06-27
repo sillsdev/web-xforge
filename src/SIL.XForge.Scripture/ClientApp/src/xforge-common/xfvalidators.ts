@@ -9,12 +9,13 @@ export class XFValidators {
       return null;
     }
 
-    const result = Validators.email(control);
+    const emailPattern = /^.+@.+\..{2,}$/;
+    const result = Validators.pattern(emailPattern)(control);
+
     if (result != null) {
       return result;
     }
-
-    return EMAIL_REGEXP.test(control.value) ? null : { email: true };
+    return null;
   }
 
   /** Pass if control value contains any non-whitespace. Error otherwise. */
