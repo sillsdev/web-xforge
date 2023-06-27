@@ -19,6 +19,7 @@ import {
   CheckingAudioPlayerComponent
 } from './checking/checking-audio-player/checking-audio-player.component';
 import { CheckingAudioRecorderComponent } from './checking/checking-audio-recorder/checking-audio-recorder.component';
+import { CheckingScriptureAudioPlayerComponent } from './checking/checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { CheckingQuestionsComponent } from './checking/checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking/checking-text/checking-text.component';
 import { CheckingComponent } from './checking/checking.component';
@@ -43,6 +44,7 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     CheckingAudioRecorderComponent,
     CheckingAudioRecorderComponent,
     CheckingAudioPlayerComponent,
+    CheckingScriptureAudioPlayerComponent,
     AudioTimePipe,
     CheckingAudioCombinedComponent,
     TextChooserDialogComponent

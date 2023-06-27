@@ -8,6 +8,7 @@ import { QuestionDoc } from './question-doc';
 import { SFProjectDoc } from './sf-project-doc';
 import { SFProjectProfileDoc } from './sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from './sf-project-user-config-doc';
+import { TextAudioDoc } from './text-audio-doc';
 import { TextDoc } from './text-doc';
 
 export const SF_TYPE_REGISTRY = new TypeRegistry(
@@ -19,7 +20,8 @@ export const SF_TYPE_REGISTRY = new TypeRegistry(
     SFProjectUserConfigDoc,
     QuestionDoc,
     TextDoc,
-    NoteThreadDoc
+    NoteThreadDoc,
+    TextAudioDoc
   ],
   [FileType.Audio],
   [EDITED_SEGMENTS]

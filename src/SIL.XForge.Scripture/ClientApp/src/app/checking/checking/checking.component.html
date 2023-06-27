@@ -145,7 +145,11 @@
                     <!-- TODO (scripture audio) Instead of covering scripture panel, move the audio player below it -->
                     <div class="scripture-audio-player-wrapper" *ngIf="showScriptureAudioPlayer">
                       <!-- TODO (scripture audio) Fetch audio URL from text_audio collection -->
-                      <app-checking-audio-player></app-checking-audio-player>
+                      <app-checking-scripture-audio-player
+                        [source]="chapterAudioSource"
+                        [timing]="chapterTextAudioTiming"
+                        [textDocId]="textDocId"
+                      ></app-checking-scripture-audio-player>
                     </div>
                     <app-checking-text
                       #textPanel
