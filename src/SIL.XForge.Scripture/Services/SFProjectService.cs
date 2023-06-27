@@ -786,6 +786,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, null);
     }
 
+    /// TODO (scripture audio) Document this method and add tests
     public async Task CreateAudioTimingData(string userId, string projectId, int book, int chapter, string audioUrl)
     {
         using IConnection conn = await RealtimeService.ConnectAsync(userId);
@@ -827,6 +828,37 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         int chapterIndex = projectDoc.Data.Texts[textIndex].Chapters.FindIndex(c => c.Number == chapter);
         await projectDoc.SubmitJson0OpAsync(
             op => op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].HasAudio, true)
+        );
+    }
+
+    /// TODO (scripture audio) Document this method and add tests
+    public async Task DeleteAudioTimingData(string userId, string projectId, int book, int chapter)
+    {
+        using IConnection conn = await RealtimeService.ConnectAsync(userId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+        if (!IsProjectAdmin(projectDoc.Data, userId))
+        {
+            throw new ForbiddenException();
+        }
+
+        string textAudioId = TextAudio.GetDocId(projectDoc.Id, book, chapter);
+        IDocument<TextAudio> textAudioDoc = await conn.FetchAsync<TextAudio>(textAudioId);
+        if (!textAudioDoc.IsLoaded)
+        {
+            // TODO (scripture audio) Do we really want to throw when the data we are trying to delete is not found?
+            // We can still try to set HasAudio to false on the project
+            throw new DataNotFoundException("The audio timing data does not exist.");
+        }
+        await textAudioDoc.DeleteAsync();
+
+        int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == book);
+        int chapterIndex = projectDoc.Data.Texts[textIndex].Chapters.FindIndex(c => c.Number == chapter);
+        await projectDoc.SubmitJson0OpAsync(
+            op => op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].HasAudio, false)
         );
     }
 

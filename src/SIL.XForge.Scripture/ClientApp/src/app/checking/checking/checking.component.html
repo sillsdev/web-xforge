@@ -93,6 +93,14 @@
                       Add Timing Data
                     </button>
                     <button
+                      *ngIf="featureFlags.scriptureAudio.enabled && chapterHasAudio"
+                      type="button"
+                      mat-button
+                      (click)="deleteAudioTimingData()"
+                    >
+                      Delete Timing Data
+                    </button>
+                    <button
                       fxHide
                       fxShow.lt-xl
                       mdc-icon-button
