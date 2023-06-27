@@ -229,4 +229,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   async onlineSetUserProjectPermissions(projectId: string, userId: string, permissions: string[]): Promise<void> {
     return (await this.onlineInvoke<void>('setUserProjectPermissions', { projectId, userId, permissions }))!;
   }
+
+  async onlineCreateAudioTimingData(projectId: string, book: number, chapter: number, audioUrl: string): Promise<void> {
+    return await this.onlineInvoke('createAudioTimingData', { projectId, book, chapter, audioUrl });
+  }
 }
