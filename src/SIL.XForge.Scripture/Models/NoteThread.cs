@@ -5,10 +5,10 @@ namespace SIL.XForge.Scripture.Models;
 
 public class NoteThread : ProjectData
 {
-    public static string GetDocId(string sfProjectId, string threadId) => $"{sfProjectId}:{threadId}";
+    public static string GetDocId(string sfProjectId, string dataId) => $"{sfProjectId}:{dataId}";
 
-    /// <summary>Thread id. Not to be confused with the doc id.</summary>
     public string DataId { get; set; }
+    public string ThreadId { get; set; }
     public VerseRefData VerseRef { get; set; }
     public List<Note> Notes { get; set; } = new List<Note>();
     public string OriginalSelectedText { get; set; }

@@ -49,4 +49,24 @@ class NoteThreadMigration2 implements Migration {
   }
 }
 
-export const NOTE_THREAD_MIGRATIONS: MigrationConstructor[] = [NoteThreadMigration1, NoteThreadMigration2];
+class NoteThreadMigration3 implements Migration {
+  static readonly VERSION = 3;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    if (doc.data.threadId != null) return;
+    ops.push({ p: ['threadId'], oi: doc.data.dataId });
+
+    await submitMigrationOp(NoteThreadMigration2.VERSION, doc, ops);
+  }
+
+  migrateOp(_op: RawOp): void {
+    // do nothing
+  }
+}
+
+export const NOTE_THREAD_MIGRATIONS: MigrationConstructor[] = [
+  NoteThreadMigration1,
+  NoteThreadMigration2,
+  NoteThreadMigration3
+];

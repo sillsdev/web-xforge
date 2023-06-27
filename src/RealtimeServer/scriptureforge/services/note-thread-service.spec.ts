@@ -51,7 +51,7 @@ describe('NoteThreadService', () => {
 
     // Assert that data is set up as expected for testing.
     const noteThread01: NoteThread =
-      env.db.docs[NOTE_THREAD_COLLECTION][getNoteThreadDocId('project01', 'noteThread01')].data;
+      env.db.docs[NOTE_THREAD_COLLECTION][getNoteThreadDocId('project01', env.dataId1)].data;
     env.assertHaveReadNotes();
 
     let adminProjectUserConfig: SFProjectUserConfig =
@@ -72,16 +72,11 @@ describe('NoteThreadService', () => {
     const nt01n03index = (noteThread01.notes as Note[]).findIndex((note: Note) => note.dataId === 'noteThread01note03');
 
     // SUT
-    await submitJson0Op<NoteThread>(
-      conn,
-      NOTE_THREAD_COLLECTION,
-      getNoteThreadDocId('project01', 'noteThread01'),
-      ops => {
-        ops.remove((noteThread: NoteThread) => noteThread.notes, nt01n03index);
-        ops.remove((noteThread: NoteThread) => noteThread.notes, nt01n02index);
-        ops.remove((noteThread: NoteThread) => noteThread.notes, nt01n01index);
-      }
-    );
+    await submitJson0Op<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', env.dataId1), ops => {
+      ops.remove((noteThread: NoteThread) => noteThread.notes, nt01n03index);
+      ops.remove((noteThread: NoteThread) => noteThread.notes, nt01n02index);
+      ops.remove((noteThread: NoteThread) => noteThread.notes, nt01n01index);
+    });
     await flushPromises();
 
     adminProjectUserConfig = env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][
@@ -110,7 +105,7 @@ describe('NoteThreadService', () => {
     const env = new TestEnvironment();
     await env.createData();
     const conn: Connection = clientConnect(env.server, env.projectAdminId);
-    const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'));
+    const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', env.dataId1));
     expect(doc).not.toBeNull();
   });
 
@@ -118,7 +113,7 @@ describe('NoteThreadService', () => {
     const env = new TestEnvironment();
     await env.createData();
     const conn: Connection = clientConnect(env.server, env.translator);
-    const noteThreadId: string = getNoteThreadDocId('project01', 'noteThread01');
+    const noteThreadId: string = getNoteThreadDocId('project01', env.dataId1);
     const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadId);
     expect(doc.data.position).toEqual({ start: 0, length: 0 });
     const position: TextAnchor = { start: 0, length: 7 };
@@ -133,13 +128,12 @@ describe('NoteThreadService', () => {
     await env.createData();
     const conn: Connection = clientConnect(env.server, env.commenterId);
 
-    const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread01');
+    const noteThreadDocId: string = getNoteThreadDocId('project01', env.dataId1);
     await expect(async () => fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId)).rejects.toEqual(
       new Error(`403: Permission denied (read), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
     );
 
-    const threadId = 'noteThread03';
-    const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', threadId));
+    const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', env.dataId3));
     expect(doc).not.toBeNull();
   });
 
@@ -149,9 +143,10 @@ describe('NoteThreadService', () => {
     // the user id 'commenter' is assigned to have the commenter role on the project
     const conn: Connection = clientConnect(env.server, env.commenterId);
 
-    const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread04');
+    const noteThreadDocId: string = getNoteThreadDocId('project01', 'dataId04');
     const noteThread: NoteThread = {
-      dataId: 'noteThread04',
+      dataId: 'dataId04',
+      threadId: 'noteThread04',
       ownerRef: env.commenterId,
       projectRef: 'project01',
       publishedToSF: true,
@@ -172,7 +167,7 @@ describe('NoteThreadService', () => {
     const env = new TestEnvironment();
     await env.createData();
     const conn: Connection = clientConnect(env.server, env.commenterId);
-    const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread01');
+    const noteThreadDocId: string = getNoteThreadDocId('project01', env.dataId1);
     const note: Note = env.getNewNote('noteThread01', 'commenterNote01', env.commenterId);
     // since the user cannot read the note thread, they should not be able to add a note
     await expect(() =>
@@ -181,7 +176,7 @@ describe('NoteThreadService', () => {
       new Error(`403: Permission denied (read), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
     );
 
-    const sfNoteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread02');
+    const sfNoteThreadDocId: string = getNoteThreadDocId('project01', env.dataId2);
     const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, sfNoteThreadDocId);
     let sfNoteThread: NoteThread = doc.data as NoteThread;
     expect(sfNoteThread.notes.length).toEqual(1);
@@ -196,7 +191,7 @@ describe('NoteThreadService', () => {
     const env = new TestEnvironment();
     await env.createData();
     const conn: Connection = clientConnect(env.server, env.commenterId);
-    const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread02');
+    const noteThreadDocId: string = getNoteThreadDocId('project01', env.dataId2);
     const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId);
     const noteThread: NoteThread = doc.data as NoteThread;
     expect(noteThread).not.toBeNull();
@@ -218,7 +213,7 @@ describe('NoteThreadService', () => {
       new Error(`403: Permission denied (update), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
     );
 
-    const commenterNoteThreadId: string = getNoteThreadDocId('project01', 'noteThread03');
+    const commenterNoteThreadId: string = getNoteThreadDocId('project01', env.dataId3);
     const commenterDoc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, commenterNoteThreadId);
     let commenterNoteThread: NoteThread = commenterDoc.data as NoteThread;
     expect(commenterNoteThread).not.toBeNull();
@@ -242,12 +237,12 @@ describe('NoteThreadService', () => {
     const env = new TestEnvironment();
     await env.createData();
     const conn: Connection = clientConnect(env.server, env.commenterId);
-    const noteThreadDocId: string = getNoteThreadDocId('project01', 'noteThread02');
+    const noteThreadDocId: string = getNoteThreadDocId('project01', env.dataId2);
     await expect(() => deleteDoc(conn, NOTE_THREAD_COLLECTION, noteThreadDocId)).rejects.toEqual(
       new Error(`403: Permission denied (delete), collection: ${NOTE_THREAD_COLLECTION}, docId: ${noteThreadDocId}`)
     );
 
-    const commenterThreadDocId: string = getNoteThreadDocId('project01', 'noteThread03');
+    const commenterThreadDocId: string = getNoteThreadDocId('project01', env.dataId3);
     const doc = await fetchDoc(conn, NOTE_THREAD_COLLECTION, commenterThreadDocId);
     let commenterNoteThread: NoteThread = doc.data as NoteThread;
     expect(commenterNoteThread).toBeDefined();
@@ -264,7 +259,7 @@ describe('NoteThreadService', () => {
     await env.setHaveReadNoteRefs(conn);
 
     // Assert that data is set up as expected for testing.
-    expect(await hasDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'))).toEqual(true);
+    expect(await hasDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', env.dataId1))).toEqual(true);
     env.assertHaveReadNotes();
     let adminProjectUserConfig: SFProjectUserConfig =
       env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', env.projectAdminId)]
@@ -277,11 +272,11 @@ describe('NoteThreadService', () => {
     expect(checkerProjectUserConfig.noteRefsRead).toContain('noteThread01note03');
 
     // SUT
-    await deleteDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'));
+    await deleteDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', env.dataId1));
     await flushPromises();
 
     // Doc should be gone.
-    expect(await hasDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'))).toEqual(false);
+    expect(await hasDoc(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', env.dataId1))).toEqual(false);
     adminProjectUserConfig =
       env.db.docs[SF_PROJECT_USER_CONFIGS_COLLECTION][getSFProjectUserConfigDocId('project01', env.projectAdminId)]
         .data;
@@ -306,6 +301,12 @@ class TestEnvironment {
   readonly server: RealtimeServer;
   readonly db: ShareDBMingo;
   readonly mockedSchemaVersionRepository = mock(SchemaVersionRepository);
+  readonly dataId1 = 'dataId01';
+  readonly dataId2 = 'dataId02';
+  readonly dataId3 = 'dataId03';
+  readonly threadId1 = 'noteThread01';
+  readonly threadId2 = 'noteThread02';
+  readonly threadId3 = 'noteThread03';
 
   constructor() {
     this.service = new NoteThreadService();
@@ -453,16 +454,17 @@ class TestEnvironment {
     const position: TextAnchor = { start: 0, length: 0 };
     const status: NoteStatus = NoteStatus.Todo;
 
-    await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread01'), {
+    await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', this.dataId1), {
       projectRef: 'project01',
       ownerRef: 'some-owner',
-      dataId: 'noteThread01',
+      dataId: this.dataId1,
+      threadId: this.threadId1,
       verseRef,
       notes: [
-        this.getNewNote('noteThread01', 'noteThread01note01', 'ptUser01'),
-        this.getNewNote('noteThread01', 'noteThread01note02', 'ptUser01'),
-        this.getNewNote('noteThread01', 'noteThread01note03', 'ptUser01'),
-        this.getNewNote('noteThread01', 'noteThread01note04', 'ptUser01')
+        this.getNewNote(this.threadId1, 'noteThread01note01', 'ptUser01'),
+        this.getNewNote(this.threadId1, 'noteThread01note02', 'ptUser01'),
+        this.getNewNote(this.threadId1, 'noteThread01note03', 'ptUser01'),
+        this.getNewNote(this.threadId1, 'noteThread01note04', 'ptUser01')
       ],
       originalSelectedText: '',
       originalContextBefore: '',
@@ -472,12 +474,13 @@ class TestEnvironment {
       publishedToSF: false
     });
 
-    await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread02'), {
+    await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', this.dataId2), {
       projectRef: 'project01',
       ownerRef: 'some-owner',
-      dataId: 'noteThread02',
+      dataId: this.dataId2,
+      threadId: this.threadId2,
       verseRef,
-      notes: [this.getNewNote('noteThread02', 'noteThread02note01', 'ptUser01')],
+      notes: [this.getNewNote(this.dataId2, 'noteThread02note01', 'ptUser01')],
       originalSelectedText: '',
       originalContextBefore: '',
       originalContextAfter: '',
@@ -486,12 +489,13 @@ class TestEnvironment {
       publishedToSF: true
     });
 
-    await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', 'noteThread03'), {
+    await createDoc<NoteThread>(conn, NOTE_THREAD_COLLECTION, getNoteThreadDocId('project01', this.dataId3), {
       projectRef: 'project01',
       ownerRef: this.commenterId,
-      dataId: 'noteThread03',
+      dataId: this.dataId3,
+      threadId: this.threadId3,
       verseRef,
-      notes: [this.getNewNote('noteThread03', 'noteThread03note01', this.commenterId)],
+      notes: [this.getNewNote(this.threadId3, 'noteThread03note01', this.commenterId)],
       originalSelectedText: '',
       originalContextBefore: '',
       originalContextAfter: '',
@@ -528,14 +532,14 @@ class TestEnvironment {
 
   assertHaveReadNotes(): void {
     const noteThread01: NoteThread =
-      this.db.docs[NOTE_THREAD_COLLECTION][getNoteThreadDocId('project01', 'noteThread01')].data;
+      this.db.docs[NOTE_THREAD_COLLECTION][getNoteThreadDocId('project01', this.dataId1)].data;
     const noteThread01noteIds: string[] = noteThread01.notes.map((note: Note) => note.dataId);
     expect(noteThread01noteIds).toContain('noteThread01note01');
     expect(noteThread01noteIds).toContain('noteThread01note02');
     expect(noteThread01noteIds).toContain('noteThread01note03');
     expect(noteThread01noteIds).toContain('noteThread01note04');
     const noteThread02: NoteThread =
-      this.db.docs[NOTE_THREAD_COLLECTION][getNoteThreadDocId('project01', 'noteThread02')].data;
+      this.db.docs[NOTE_THREAD_COLLECTION][getNoteThreadDocId('project01', this.dataId2)].data;
     const noteThread02noteIds: string[] = noteThread02.notes.map((note: Note) => note.dataId);
     expect(noteThread02noteIds).toContain('noteThread02note01');
   }
