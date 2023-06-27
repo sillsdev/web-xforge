@@ -29,9 +29,15 @@ const SF_DOC_SERVICES: DocService[] = [
  * This class represents the SF real-time server.
  */
 export default class SFRealtimeServer extends RealtimeServer {
-  constructor(siteId: string, migrationsDisabled: boolean, db: ShareDB.DB, schemaVersions: SchemaVersionRepository) {
-    super(siteId, migrationsDisabled, SF_DOC_SERVICES, SF_PROJECTS_COLLECTION, db, schemaVersions);
-    this.use('query', (context: ShareDB.middleware.QueryContext, next: (err?: any) => void) => {
+  constructor(
+    siteId: string,
+    migrationsDisabled: boolean,
+    db: ShareDB.DB,
+    schemaVersions: SchemaVersionRepository,
+    milestoneDb?: ShareDB.MilestoneDB
+  ) {
+    super(siteId, migrationsDisabled, SF_DOC_SERVICES, SF_PROJECTS_COLLECTION, db, schemaVersions, milestoneDb);
+    this.use('query', (context: ShareDB.middleware.QueryContext, next: (err?: any) => void): void => {
       if (context.collection === NOTE_THREAD_COLLECTION) {
         if (context.agent.connectSession.isServer) {
           next();

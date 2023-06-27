@@ -16,7 +16,8 @@ export type RealtimeServerConstructor = new (
   siteId: string,
   migrationsDisabled: boolean,
   db: ShareDB.DB,
-  schemaVersions: SchemaVersionRepository
+  schemaVersions: SchemaVersionRepository,
+  milestoneDb?: ShareDB.MilestoneDB
 ) => RealtimeServer;
 
 /**
@@ -124,10 +125,12 @@ export class RealtimeServer extends ShareDB {
     docServices: DocService[],
     private readonly projectsCollection: string,
     db: ShareDB.DB,
-    private readonly schemaVersions: SchemaVersionRepository
+    private readonly schemaVersions: SchemaVersionRepository,
+    milestoneDb?: ShareDB.MilestoneDB
   ) {
     super({
       db,
+      milestoneDb,
       presence: true,
       disableDocAction: true,
       disableSpaceDelimitedActions: true
@@ -139,6 +142,25 @@ export class RealtimeServer extends ShareDB {
       this.setConnectSession(context)
         .then(() => done())
         .catch(err => done(err));
+    });
+
+    // Configure milestone creation
+    this.use('commit', (request, callback) => {
+      switch (request.collection) {
+        case 'texts':
+          // Save a milestone for texts, every 1000 ops (about 7-10 verses typed live)
+          if (request.snapshot != null) {
+            request.saveMilestoneSnapshot = request.snapshot.v % 1000 === 0;
+          }
+          break;
+        default:
+          // Don't save any milestones for collections not named here.
+          // IMPORTANT: We have to set this to false to actively disable milestones
+          // If left to null, then the default interval will still apply
+          request.saveMilestoneSnapshot = false;
+      }
+
+      callback();
     });
 
     for (const docService of docServices) {
