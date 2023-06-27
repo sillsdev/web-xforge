@@ -23,7 +23,8 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
       checkingEnabled: true,
       usersSeeEachOthersResponses: true,
       shareEnabled: false,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
+      answerExportMethod: CheckingAnswerExport.MarkedForExport,
+      hideCommunityCheckingText: false
     },
     texts: [],
     sync: {

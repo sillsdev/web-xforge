@@ -12,4 +12,5 @@ export interface SFProjectSettings {
   usersSeeEachOthersResponses?: boolean;
   checkingShareEnabled?: boolean;
   checkingAnswerExport?: CheckingAnswerExport;
+  hideCommunityCheckingText?: boolean;
 }
