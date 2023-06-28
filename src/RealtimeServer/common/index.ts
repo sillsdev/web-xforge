@@ -3,6 +3,7 @@ import { MongoClient } from 'mongodb';
 import * as OTJson0 from 'ot-json0';
 import * as RichText from 'rich-text';
 import ShareDB from 'sharedb';
+import MongoMilestoneDB from 'sharedb-milestone-mongo';
 import ShareDBMongo from 'sharedb-mongo';
 import { Connection, Doc, OTType } from 'sharedb/lib/client';
 import { ExceptionReporter } from './exception-reporter';
@@ -69,7 +70,8 @@ async function startServer(options: RealtimeServerOptions): Promise<void> {
       options.siteId,
       options.migrationsDisabled,
       new DBType(callback => callback(null, client)),
-      new SchemaVersionRepository(db)
+      new SchemaVersionRepository(db),
+      new MongoMilestoneDB(options.connectionString)
     );
     await server.createIndexes(db);
 

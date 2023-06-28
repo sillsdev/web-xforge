@@ -31,6 +31,7 @@ declare class ShareDB {
   constructor(options?: {
     db?: any;
     pubsub?: ShareDB.PubSub;
+    milestoneDb?: ShareDB.MilestoneDB;
     presence?: boolean;
     disableDocAction?: boolean;
     disableSpaceDelimitedActions?: boolean;
@@ -154,6 +155,24 @@ declare namespace ShareDB {
     protected _emit(channel: string, data: { [k: string]: any }): void;
     private _createStream(channel): void;
     private _removeStream(channel, stream): void;
+  }
+
+  abstract class MilestoneDB {
+    close(callback: (err: Error | null) => void): void;
+    getMilestoneSnapshot(collection: string, id: string, version: number, callback: (err: Error | null) => void): void;
+    saveMilestoneSnapshot(collection: string, snapshot: Snapshot, callback: (err: Error | null) => void): void;
+    getMilestoneSnapshotAtOrBeforeTime(
+      collection: string,
+      id: string,
+      timestamp: number,
+      callback: (err: Error | null) => void
+    ): void;
+    getMilestoneSnapshotAtOrAfterTime(
+      collection: string,
+      id: string,
+      timestamp: number,
+      callback: (err: Error | null) => void
+    ): void;
   }
 
   type Op = common.Op;
