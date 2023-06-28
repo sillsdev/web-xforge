@@ -25,6 +25,7 @@ export class AudioPlayer extends SubscriptionDisposable {
   constructor(source: string, private readonly pwaService: PwaService) {
     super();
     this.audio.addEventListener('loadeddata', () => {
+      this.currentTime = 0;
       this.audioDataLoaded = true;
       this.status$.next(AudioStatus.Available);
     });
