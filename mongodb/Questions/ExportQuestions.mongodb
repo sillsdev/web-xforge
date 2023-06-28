@@ -1,0 +1,104 @@
+use('xforge')
+
+// Set this to the project ID you want to export questions for
+const projectId = null;
+
+const questions = db.questions.aggregate([
+  {
+    $match: {
+      projectRef: projectId
+    }
+  },
+  {
+    $project: {
+      text: 1,
+      verseRef: 1
+    }
+  }
+]).toArray();
+
+const books = [
+  'GEN',
+  'EXO',
+  'LEV',
+  'NUM',
+  'DEU',
+  'JOS',
+  'JDG',
+  'RUT',
+  '1SA',
+  '2SA', // 10
+
+  '1KI',
+  '2KI',
+  '1CH',
+  '2CH',
+  'EZR',
+  'NEH',
+  'EST',
+  'JOB',
+  'PSA',
+  'PRO', // 20
+
+  'ECC',
+  'SNG',
+  'ISA',
+  'JER',
+  'LAM',
+  'EZK',
+  'DAN',
+  'HOS',
+  'JOL',
+  'AMO', // 30
+
+  'OBA',
+  'JON',
+  'MIC',
+  'NAM',
+  'HAB',
+  'ZEP',
+  'HAG',
+  'ZEC',
+  'MAL',
+  'MAT', // 40
+
+  'MRK',
+  'LUK',
+  'JHN',
+  'ACT',
+  'ROM',
+  '1CO',
+  '2CO',
+  'GAL',
+  'EPH',
+  'PHP', // 50
+
+  'COL',
+  '1TH',
+  '2TH',
+  '1TI',
+  '2TI',
+  'TIT',
+  'PHM',
+  'HEB',
+  'JAS',
+  '1PE', // 60
+
+  '2PE',
+  '1JN',
+  '2JN',
+  '3JN',
+  'JUD',
+  'REV',
+]
+
+const separator = '\t'
+
+console.log(`Reference${separator}Question`);
+for (const question of questions) {
+  const verse = question.verseRef.verse ?? question.verseRef.verseNum;
+  const book = books[question.verseRef.bookNum - 1];
+  const chapter = question.verseRef.chapterNum;
+  const ref = `${book} ${chapter}:${verse}`;
+  console.log(`${ref}${separator}${question.text}`);
+}
