@@ -70,7 +70,8 @@ public class RealtimeService : DisposableBase, IRealtimeService
 
     public async Task<IConnection> ConnectAsync(string userId = null)
     {
-        var conn = new Connection(this);
+        RealtimeOptions options = _realtimeOptions.Value;
+        var conn = new Connection(this, options.DocumentCacheDisabled);
         try
         {
             await conn.StartAsync(userId);

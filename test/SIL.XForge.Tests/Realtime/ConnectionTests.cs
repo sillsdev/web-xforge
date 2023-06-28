@@ -254,7 +254,75 @@ public class ConnectionTests
     }
 
     [Test]
-    public async Task GetAndFetchDocAsync_RetrievesDocsWithData()
+    public async Task Get_RetrievesCachedDoc()
+    {
+        // Setup
+        var env = new TestEnvironment();
+        string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
+        const string id = "id1";
+        env.RealtimeService.Server
+            .FetchDocAsync<Project>(Arg.Any<int>(), collection, id)
+            .Returns(
+                new Snapshot<Project>
+                {
+                    Data = new TestProject(),
+                    Id = "id1",
+                    Version = 1,
+                }
+            );
+
+        // SUT
+        var doc = env.Service.Get<Project>(id);
+        await doc.FetchAsync();
+        var result = env.Service.Get<Project>(id);
+
+        // Verify doc is fetched
+        Assert.AreEqual("id1", doc.Id);
+        Assert.AreEqual(1, doc.Version);
+        Assert.IsNotNull(doc.Data);
+
+        // Verify result has the data of the fetched doc
+        Assert.AreEqual("id1", result.Id);
+        Assert.AreEqual(1, result.Version);
+        Assert.IsNotNull(result.Data);
+    }
+
+    [Test]
+    public async Task Get_DoesNotUseCacheIfCacheDisabled()
+    {
+        // Setup
+        var env = new TestEnvironment(documentCacheDisabled: true);
+        string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
+        const string id = "id1";
+        env.RealtimeService.Server
+            .FetchDocAsync<Project>(Arg.Any<int>(), collection, id)
+            .Returns(
+                new Snapshot<Project>
+                {
+                    Data = new TestProject(),
+                    Id = "id1",
+                    Version = 1,
+                }
+            );
+
+        // SUT
+        var doc = env.Service.Get<Project>(id);
+        await doc.FetchAsync();
+        var result = env.Service.Get<Project>(id);
+
+        // Verify doc is fetched
+        Assert.AreEqual("id1", doc.Id);
+        Assert.AreEqual(1, doc.Version);
+        Assert.IsNotNull(doc.Data);
+
+        // Verify result does not have the data of the fetched doc
+        Assert.AreEqual("id1", result.Id);
+        Assert.AreEqual(-1, result.Version);
+        Assert.Null(result.Data);
+    }
+
+    [Test]
+    public async Task GetAndFetchDocsAsync_RetrievesDocsWithData()
     {
         // Setup
         var env = new TestEnvironment();
@@ -287,6 +355,37 @@ public class ConnectionTests
         Assert.AreEqual(1, result.Count);
         Assert.AreEqual("id2", result.First().Id);
         Assert.AreEqual(2, result.First().Version);
+        Assert.IsNotNull(result.First().Data);
+    }
+
+    [Test]
+    public async Task GetAndFetchDocsAsync_RetrievesDocWithCacheDisabled()
+    {
+        // Setup
+        var env = new TestEnvironment(documentCacheDisabled: true);
+        string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
+        string[] ids = { "id1" };
+        env.RealtimeService.Server
+            .FetchDocsAsync<Project>(Arg.Any<int>(), collection, ids)
+            .Returns(
+                new Snapshot<Project>[]
+                {
+                    new Snapshot<Project>
+                    {
+                        Data = new TestProject(),
+                        Id = "id1",
+                        Version = 1,
+                    },
+                }
+            );
+
+        // SUT
+        var result = await env.Service.GetAndFetchDocsAsync<Project>(ids);
+
+        // Verify
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual("id1", result.First().Id);
+        Assert.AreEqual(1, result.First().Version);
         Assert.IsNotNull(result.First().Data);
     }
 
@@ -445,7 +544,7 @@ public class ConnectionTests
         public readonly Connection Service;
         public readonly RealtimeService RealtimeService;
 
-        public TestEnvironment()
+        public TestEnvironment(bool documentCacheDisabled = false)
         {
             var realtimeServer = Substitute.For<IRealtimeServer>();
             var siteOptions = Options.Create(Substitute.For<SiteOptions>());
@@ -470,7 +569,7 @@ public class ConnectionTests
                 mongoClient,
                 configuration
             );
-            Service = new Connection(RealtimeService);
+            Service = new Connection(RealtimeService, documentCacheDisabled);
         }
     }
 }

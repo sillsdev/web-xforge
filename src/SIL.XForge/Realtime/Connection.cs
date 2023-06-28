@@ -20,7 +20,7 @@ public class Connection : DisposableBase, IConnection
     /// <summary>
     /// The documents cache.
     /// </summary>
-    private readonly ConcurrentDictionary<(string, string), object> _documents;
+    private readonly ConcurrentDictionary<(string, string), object>? _documents;
 
     /// <summary>
     /// The properties to excluded from the transaction (i.e. to commit immediately).
@@ -28,7 +28,7 @@ public class Connection : DisposableBase, IConnection
     /// <remarks>
     /// These are in the form "Type.Property.Property", in lower case.
     /// </remarks>
-    private List<string> _excludedProperties = new List<string>();
+    private readonly List<string> _excludedProperties = new List<string>();
 
     /// <summary>
     /// The connection handle.
@@ -43,12 +43,12 @@ public class Connection : DisposableBase, IConnection
     /// <summary>
     /// The queued operations.
     /// </summary>
-    private ConcurrentQueue<QueuedOperation> _queuedOperations = new ConcurrentQueue<QueuedOperation>();
+    private readonly ConcurrentQueue<QueuedOperation> _queuedOperations = new ConcurrentQueue<QueuedOperation>();
 
     /// <summary>
     /// The realtime server to create/modify documents with.
     /// </summary>
-    private IRealtimeServer _realtimeServer;
+    private readonly IRealtimeServer _realtimeServer;
 
     /// <summary>
     /// The realtime service to use for this connection.
@@ -59,11 +59,15 @@ public class Connection : DisposableBase, IConnection
     /// Initializes a new instance of the <see cref="Connection"/> class.
     /// </summary>
     /// <param name="realtimeService">The realtime service.</param>
-    internal Connection(RealtimeService realtimeService)
+    /// <param name="documentCacheDisabled">If <c>true</c>, disable the document cache.</param>
+    internal Connection(RealtimeService realtimeService, bool documentCacheDisabled)
     {
         _realtimeService = realtimeService;
         _realtimeServer = realtimeService.Server;
-        _documents = new ConcurrentDictionary<(string, string), object>();
+        if (!documentCacheDisabled)
+        {
+            _documents = new ConcurrentDictionary<(string, string), object>();
+        }
     }
 
     /// <summary>
@@ -273,14 +277,12 @@ public class Connection : DisposableBase, IConnection
         where T : IIdentifiable
     {
         DocConfig docConfig = _realtimeService.GetDocConfig<T>();
-        object doc = _documents.GetOrAdd(
-            (docConfig.CollectionName, id),
-            key =>
-            {
-                string otTypeName = docConfig.OTTypeName;
-                return new Document<T>(this, otTypeName, docConfig.CollectionName, id, null);
-            }
-        );
+        if (_documents is null)
+        {
+            return GetDocument<T>(id, docConfig);
+        }
+
+        object doc = _documents.GetOrAdd((docConfig.CollectionName, id), _ => GetDocument<T>(id, docConfig));
         return (Document<T>)doc;
     }
 
@@ -297,22 +299,12 @@ public class Connection : DisposableBase, IConnection
         Snapshot<T>[] snapshots = await _realtimeServer.FetchDocsAsync<T>(_handle, docConfig.CollectionName, ids);
         foreach (Snapshot<T> snapshot in snapshots)
         {
-            IDocument<T> doc =
-                (IDocument<T>)
+            IDocument<T> doc = _documents is null
+                ? GetDocument(snapshot.Id, docConfig, snapshot)
+                : (IDocument<T>)
                     _documents.GetOrAdd(
                         (docConfig.CollectionName, snapshot.Id),
-                        key =>
-                        {
-                            string otTypeName = docConfig.OTTypeName;
-                            var doc = new Document<T>(
-                                this,
-                                otTypeName,
-                                docConfig.CollectionName,
-                                snapshot.Id,
-                                snapshot
-                            );
-                            return doc;
-                        }
+                        _ => GetDocument(snapshot.Id, docConfig, snapshot)
                     );
 
             if (doc.IsLoaded)
@@ -432,4 +424,11 @@ public class Connection : DisposableBase, IConnection
     /// Disposes the managed resources.
     /// </summary>
     protected override void DisposeManagedResources() => _realtimeService.Server.Disconnect(_handle);
+
+    private IDocument<T> GetDocument<T>(string id, DocConfig docConfig, Snapshot<T>? snapshot = null)
+        where T : IIdentifiable
+    {
+        string otTypeName = docConfig.OTTypeName;
+        return new Document<T>(this, otTypeName, docConfig.CollectionName, id, snapshot);
+    }
 }
