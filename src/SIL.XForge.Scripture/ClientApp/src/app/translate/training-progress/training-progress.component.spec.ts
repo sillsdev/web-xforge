@@ -18,6 +18,7 @@ import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
 import { TrainingProgressComponent } from './training-progress.component';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
@@ -177,31 +178,14 @@ class TestEnvironment {
   setupProjectData(translationSuggestionsEnabled: boolean): void {
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: 'project01',
-      data: {
-        name: 'project 01',
-        paratextId: 'pt01',
-        shortName: 'P01',
-        writingSystem: {
-          tag: 'qaa'
-        },
+      data: createTestProjectProfile({
         translateConfig: {
-          translationSuggestionsEnabled,
-          shareEnabled: false,
-          preTranslate: false
+          translationSuggestionsEnabled
         },
-        checkingConfig: {
-          checkingEnabled: false,
-          usersSeeEachOthersResponses: true,
-          shareEnabled: true,
-          answerExportMethod: CheckingAnswerExport.MarkedForExport
-        },
-        sync: { queuedCount: 0 },
-        editable: true,
         userRoles: {
           user01: SFProjectRole.ParatextTranslator,
           user02: SFProjectRole.ParatextConsultant
         },
-        userPermissions: {},
         texts: [
           {
             bookNum: 41,
@@ -210,7 +194,7 @@ class TestEnvironment {
             permissions: {}
           }
         ]
-      }
+      })
     });
 
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));

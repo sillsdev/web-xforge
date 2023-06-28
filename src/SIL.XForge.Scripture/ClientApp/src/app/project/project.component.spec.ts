@@ -18,11 +18,13 @@ import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectComponent } from './project.component';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 
 const mockedUserService = mock(UserService);
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -45,61 +47,61 @@ describe('ProjectComponent', () => {
 
   it('navigate to last text', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setProjectData({ selectedTask: 'translate', selectedBooknum: 41, memberProjects: ['project01'] });
+    env.setProjectData({ selectedTask: 'translate', selectedBooknum: 41, memberProjectIdSuffixes: [1] });
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'translate', 'MRK']), anything())).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'translate', 'MRK']), anything())).once();
     expect().nothing();
   }));
 
   it('navigate to first text when no last selected text', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setProjectData({ memberProjects: ['project01'] });
+    env.setProjectData({ memberProjectIdSuffixes: [1] });
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'translate', 'MAT']), anything())).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'translate', 'MAT']), anything())).once();
     expect().nothing();
   }));
 
   it('navigate to checking tool if a checker and no last selected text', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setProjectData({ role: SFProjectRole.CommunityChecker, memberProjects: ['project01'] });
+    env.setProjectData({ role: SFProjectRole.CommunityChecker, memberProjectIdSuffixes: [1] });
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'checking', 'ALL']), anything())).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'checking', 'ALL']), anything())).once();
     expect().nothing();
   }));
 
   it('navigates to last checking question if question stored but bookNum is null', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setProjectData({ selectedTask: 'checking', memberProjects: ['project01'] });
+    env.setProjectData({ selectedTask: 'checking', memberProjectIdSuffixes: [1] });
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'checking', 'ALL']), anything())).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'checking', 'ALL']), anything())).once();
     expect().nothing();
   }));
 
   it('navigates to last checking book if the last book was saved', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setProjectData({ selectedTask: 'checking', selectedBooknum: 41, memberProjects: ['project01'] });
+    env.setProjectData({ selectedTask: 'checking', selectedBooknum: 41, memberProjectIdSuffixes: [1] });
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'checking', 'MRK']), anything())).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'checking', 'MRK']), anything())).once();
     expect().nothing();
   }));
 
   it('navigate to overview when no texts', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.setProjectData({ hasTexts: false, memberProjects: ['project01'] });
+    env.setProjectData({ hasTexts: false, memberProjectIdSuffixes: [1] });
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'translate']), anything())).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'translate']), anything())).once();
     expect().nothing();
   }));
 
@@ -110,18 +112,18 @@ describe('ProjectComponent', () => {
       selectedBooknum: 41,
       hasTexts: true,
       checkingEnabled: false,
-      memberProjects: ['project01']
+      memberProjectIdSuffixes: [1]
     });
     env.fixture.detectChanges();
     tick();
 
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'translate', 'MAT']), anything())).once();
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'translate', 'MAT']), anything())).once();
     expect().nothing();
   }));
 
   it('do not navigate when project does not exist', fakeAsync(() => {
     const env = new TestEnvironment();
-    env.subscribeRealtimeDocs('project01');
+    env.subscribeRealtimeDocs('project1');
     env.fixture.detectChanges();
     tick();
 
@@ -145,15 +147,15 @@ describe('ProjectComponent', () => {
       selectedBooknum: 41,
       hasTexts: true,
       checkingEnabled: false,
-      memberProjects: []
+      memberProjectIdSuffixes: []
     });
     env.fixture.detectChanges();
     tick();
 
     verify(mockedRouter.navigate(anything(), anything())).never();
 
-    env.addUserToProject('project01');
-    verify(mockedRouter.navigate(deepEqual(['projects', 'project01', 'translate', 'MAT']), anything())).once();
+    env.addUserToProject(1);
+    verify(mockedRouter.navigate(deepEqual(['projects', 'project1', 'translate', 'MAT']), anything())).once();
     expect().nothing();
   }));
 });
@@ -164,9 +166,9 @@ class TestEnvironment {
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor(enableSharing = false) {
-    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
+    when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project1' }));
     when(mockedUserService.currentUserId).thenReturn('user01');
-    when(mockedUserService.currentProjectId(anything())).thenReturn('project01');
+    when(mockedUserService.currentProjectId(anything())).thenReturn('project1');
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
@@ -181,20 +183,21 @@ class TestEnvironment {
 
   setProjectData(
     args: {
-      projectId?: string;
+      projectIdSuffix?: number;
       hasTexts?: boolean;
       selectedTask?: string;
       selectedBooknum?: number;
       role?: SFProjectRole;
       checkingEnabled?: boolean;
-      memberProjects?: string[];
+      memberProjectIdSuffixes?: number[];
     } = {}
   ): void {
-    if (args.projectId != null) {
-      when(mockedActivatedRoute.params).thenReturn(of({ projectId: args.projectId }));
+    if (args.projectIdSuffix != null) {
+      when(mockedActivatedRoute.params).thenReturn(of({ projectId: `project${args.projectIdSuffix}` }));
     }
-    const memberProjects: string[] = args.memberProjects ?? [];
-    for (const projectId of memberProjects) {
+    const memberProjectIdSuffixes: number[] = args.memberProjectIdSuffixes ?? [];
+    for (const projectIdSuffix of memberProjectIdSuffixes) {
+      const projectId = `project${projectIdSuffix}`;
       this.realtimeService.addSnapshot<SFProjectUserConfig>(SFProjectUserConfigDoc.COLLECTION, {
         id: getSFProjectUserConfigDocId(projectId, 'user01'),
         data: {
@@ -216,26 +219,10 @@ class TestEnvironment {
 
       this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
         id: projectId,
-        data: {
-          name: projectId,
-          shortName: 'P01',
-          paratextId: `pt-${projectId}`,
-          writingSystem: {
-            tag: 'qaa'
-          },
-          translateConfig: {
-            translationSuggestionsEnabled: false,
-            shareEnabled: false,
-            preTranslate: false
-          },
+        data: createTestProjectProfile({
           checkingConfig: {
-            checkingEnabled: args.checkingEnabled == null ? true : args.checkingEnabled,
-            usersSeeEachOthersResponses: true,
-            shareEnabled: true,
-            answerExportMethod: CheckingAnswerExport.MarkedForExport
+            checkingEnabled: args.checkingEnabled == null ? true : args.checkingEnabled
           },
-          sync: { queuedCount: 0 },
-          editable: true,
           texts:
             args.hasTexts == null || args.hasTexts
               ? [
@@ -253,36 +240,25 @@ class TestEnvironment {
                   }
                 ]
               : [],
-          noteTags: [],
           userRoles:
-            args.memberProjects == null
+            args.memberProjectIdSuffixes == null
               ? {}
-              : { user01: args.role == null ? SFProjectRole.ParatextTranslator : args.role },
-          userPermissions: {}
-        }
+              : { user01: args.role == null ? SFProjectRole.ParatextTranslator : args.role }
+        })
       });
       this.subscribeRealtimeDocs(projectId);
     }
 
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',
-      data: {
-        name: 'User 01',
-        email: 'user1@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth01',
-        displayName: 'User 01',
-        sites: { sf: { projects: memberProjects } }
-      }
+      data: createTestUser({ sites: { sf: { projects: memberProjectIdSuffixes.map(suffix => `project${suffix}`) } } })
     });
   }
 
-  addUserToProject(projectId: string): void {
-    this.setProjectData({ memberProjects: [projectId] });
+  addUserToProject(projectIdSuffix: number): void {
+    this.setProjectData({ memberProjectIdSuffixes: [projectIdSuffix] });
     const userDoc: UserDoc = this.realtimeService.get(UserDoc.COLLECTION, 'user01');
-    userDoc.submitJson0Op(op => op.set(u => u.sites, { sf: { projects: [projectId] } }), false);
+    userDoc.submitJson0Op(op => op.set(u => u.sites, { sf: { projects: [`project${projectIdSuffix}`] } }), false);
     tick();
   }
 

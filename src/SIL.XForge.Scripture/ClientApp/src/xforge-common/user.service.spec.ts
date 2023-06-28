@@ -16,6 +16,7 @@ import { configureTestingModule, TestTranslocoModule } from './test-utils';
 import { TestRealtimeModule } from './test-realtime.module';
 import { TypeRegistry } from './type-registry';
 import { NoticeService } from './notice.service';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 
 const mockedAuthService = mock(AuthService);
 const mockedLocalSettingsService = mock(LocalSettingsService);
@@ -97,16 +98,9 @@ class TestEnvironment {
     this.realtimeService = TestBed.inject(TestRealtimeService);
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',
-      data: {
-        name: 'User 01',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        displayName: 'User 01',
-        email: 'user01@test.com',
-        authId: 'authuser01',
-        avatarUrl: 'avatar01',
+      data: createTestUser({
         sites: { sf: { currentProjectId: testArgs.storedProjectId, projects: ['project01', 'project02'] } }
-      }
+      })
     });
 
     this.service = TestBed.inject(UserService);

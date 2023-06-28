@@ -21,6 +21,7 @@ import {
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
@@ -576,26 +577,7 @@ class TestEnvironment {
     commentRefsRead: [],
     noteRefsRead: []
   };
-  private testProject: SFProjectProfile = {
-    name: 'Project 01',
-    paratextId: 'pt01',
-    shortName: 'P01',
-    writingSystem: {
-      tag: 'en'
-    },
-    checkingConfig: {
-      usersSeeEachOthersResponses: true,
-      checkingEnabled: true,
-      shareEnabled: true,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
-    },
-    translateConfig: {
-      translationSuggestionsEnabled: false,
-      shareEnabled: false,
-      preTranslate: false
-    },
-    sync: { queuedCount: 0 },
-    editable: true,
+  private testProject: SFProjectProfile = createTestProjectProfile({
     texts: [
       {
         bookNum: 40,
@@ -613,7 +595,6 @@ class TestEnvironment {
         permissions: {}
       }
     ],
-    noteTags: [],
     userRoles: {
       [this.adminUser.id]: this.adminUser.role,
       [this.checkerUser.id]: this.checkerUser.role,
@@ -625,7 +606,7 @@ class TestEnvironment {
         SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit)
       ]
     }
-  };
+  });
 
   private readonly anotherUserId = 'anotherUserId';
   private isOnline: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);

@@ -2,8 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { expect } from '@storybook/jest';
 import { within } from '@storybook/testing-library';
+import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { instance, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
@@ -19,48 +21,19 @@ const mockedUserService = mock(UserService);
 when(mockedUserService.currentUserId).thenReturn('user01');
 when(mockedUserService.getProfile('user01')).thenResolve({
   id: 'user01',
-  data: {
-    displayName: 'Test User',
-    avatarUrl: ''
-  }
+  data: createTestUserProfile({}, 1)
 } as UserProfileDoc);
 when(mockedUserService.getProfile('user02')).thenResolve({
   id: 'user02',
-  data: {
-    displayName: 'Other User',
-    avatarUrl: ''
-  }
+  data: createTestUserProfile({}, 2)
 } as UserProfileDoc);
 
 const defaultArgs = {
-  project: {
-    paratextId: '',
-    shortName: '',
-    writingSystem: {
-      tag: ''
-    },
-    translateConfig: {
-      translationSuggestionsEnabled: false,
-      shareEnabled: false,
-      preTranslate: false
-    },
-    checkingConfig: {
-      checkingEnabled: true,
-      usersSeeEachOthersResponses: true,
-      shareEnabled: true,
-      answerExportMethod: CheckingAnswerExport.All
-    },
-    texts: [],
-    sync: {
-      queuedCount: 0
-    },
-    editable: true,
-    name: '',
+  project: createTestProject({
     userRoles: {
       user01: 'sf_community_checker'
-    },
-    userPermissions: {}
-  },
+    }
+  }),
   answer: {
     text: 'answer',
     comments: [],

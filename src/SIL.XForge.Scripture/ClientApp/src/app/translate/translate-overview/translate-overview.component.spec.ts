@@ -10,6 +10,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
@@ -288,31 +289,14 @@ class TestEnvironment {
   setupProjectData(translationSuggestionsEnabled: boolean = true): void {
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: 'project01',
-      data: {
-        name: 'project 01',
-        paratextId: 'pt01',
-        shortName: 'P01',
-        writingSystem: {
-          tag: 'qaa'
-        },
+      data: createTestProjectProfile({
         translateConfig: {
-          translationSuggestionsEnabled,
-          shareEnabled: false,
-          preTranslate: false
+          translationSuggestionsEnabled
         },
-        checkingConfig: {
-          checkingEnabled: false,
-          usersSeeEachOthersResponses: true,
-          shareEnabled: true,
-          answerExportMethod: CheckingAnswerExport.MarkedForExport
-        },
-        sync: { queuedCount: 0 },
-        editable: true,
         userRoles: {
           user01: SFProjectRole.ParatextTranslator,
           user02: SFProjectRole.ParatextConsultant
         },
-        userPermissions: {},
         texts: [
           {
             bookNum: 41,
@@ -350,9 +334,8 @@ class TestEnvironment {
             hasSource: true,
             permissions: {}
           }
-        ],
-        noteTags: []
-      }
+        ]
+      })
     });
 
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));

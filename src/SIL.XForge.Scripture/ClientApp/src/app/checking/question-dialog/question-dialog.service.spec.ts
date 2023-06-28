@@ -30,6 +30,7 @@ import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
 import { QuestionDialogComponent, QuestionDialogData, QuestionDialogResult } from './question-dialog.component';
 import { QuestionDialogService } from './question-dialog.service';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 
 const mockedDialogService = mock(DialogService);
 const mockedProjectService = mock(SFProjectService);
@@ -176,34 +177,15 @@ class TestEnvironment {
   readonly PROJECT01: string = 'project01';
   adminUser: UserInfo = { id: 'user01', role: SFProjectRole.ParatextAdministrator };
 
-  private testProject: SFProject = {
-    paratextId: 'pt01',
-    shortName: 'P01',
-    name: 'Project 01',
-    writingSystem: { tag: 'en' },
-    translateConfig: {
-      translationSuggestionsEnabled: false,
-      shareEnabled: false,
-      preTranslate: false
-    },
-    checkingConfig: {
-      usersSeeEachOthersResponses: true,
-      checkingEnabled: true,
-      shareEnabled: true,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
-    },
+  private testProject: SFProject = createTestProject({
     texts: [this.matthewText],
-    noteTags: [],
-    sync: { queuedCount: 0 },
-    editable: true,
     userRoles: {
       [this.adminUser.id]: this.adminUser.role
     },
     paratextUsers: [
       { sfUserId: this.adminUser.id, username: `pt${this.adminUser.id}`, opaqueUserId: `opaque${this.adminUser.id}` }
-    ],
-    userPermissions: {}
-  };
+    ]
+  });
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {

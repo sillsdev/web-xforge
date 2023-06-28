@@ -24,6 +24,7 @@ import { ProjectNotificationService } from '../core/project-notification.service
 import { SFProjectService } from '../core/sf-project.service';
 import { SyncProgressComponent } from './sync-progress/sync-progress.component';
 import { SyncComponent } from './sync.component';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 
 const mockedAuthService = mock(AuthService);
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -256,37 +257,15 @@ class TestEnvironment {
     date.setMonth(date.getMonth() - 2);
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: this.projectId,
-      data: {
+      data: createTestProject({
         name: 'Sync Test Project',
-        paratextId: 'pt01',
-        shortName: 'P01',
-        writingSystem: {
-          tag: 'en'
-        },
-        translateConfig: {
-          translationSuggestionsEnabled: false,
-          shareEnabled: false,
-          preTranslate: false
-        },
-        checkingConfig: {
-          checkingEnabled: false,
-          usersSeeEachOthersResponses: true,
-          shareEnabled: true,
-          answerExportMethod: CheckingAnswerExport.MarkedForExport
-        },
         sync: {
           queuedCount: isInProgress ? 1 : 0,
           lastSyncSuccessful: lastSyncWasSuccessful,
           dateLastSuccessfulSync: date.toJSON()
         },
-        syncDisabled: isSyncDisabled,
-        editable: true,
-        texts: [],
-        noteTags: [],
-        userRoles: {},
-        paratextUsers: [],
-        userPermissions: {}
-      }
+        syncDisabled: isSyncDisabled
+      })
     });
 
     when(mockedProjectService.get(anyString())).thenCall(projectId =>

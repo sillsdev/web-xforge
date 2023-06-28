@@ -38,6 +38,7 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../../shared/shared.module';
 import { CollaboratorsComponent } from './collaborators.component';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 
 const mockedAuthService = mock(AuthService);
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -627,30 +628,13 @@ class TestEnvironment {
   }
 
   private createProject(userRoles: { [userRef: string]: string }): SFProject {
-    return {
-      name: 'Project 01',
-      paratextId: 'pt01',
-      shortName: 'P01',
-      texts: [],
-      writingSystem: { tag: 'en' },
-      sync: { queuedCount: 0 },
-      translateConfig: {
-        translationSuggestionsEnabled: false,
-        shareEnabled: false,
-        preTranslate: false
-      },
+    return createTestProject({
       checkingConfig: {
-        checkingEnabled: false,
-        usersSeeEachOthersResponses: false,
-        shareEnabled: false,
-        answerExportMethod: CheckingAnswerExport.MarkedForExport
+        checkingEnabled: false
       },
-      noteTags: [],
-      editable: true,
       userRoles,
-      paratextUsers: paratextUsersFromRoles(userRoles),
-      userPermissions: {}
-    };
+      paratextUsers: paratextUsersFromRoles(userRoles)
+    });
   }
 
   private setupThisProjectData(projectId: string, project: SFProject): void {

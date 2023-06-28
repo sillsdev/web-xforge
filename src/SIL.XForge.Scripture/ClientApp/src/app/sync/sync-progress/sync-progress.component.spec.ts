@@ -15,6 +15,7 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { ProjectNotificationService } from '../../core/project-notification.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ProgressState, SyncProgressComponent } from './sync-progress.component';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
@@ -130,86 +131,45 @@ class TestEnvironment {
   private userRoleSource = { user01: SFProjectRole.ParatextAdministrator };
 
   constructor(args: TestEnvArgs) {
-    const date = new Date();
-    date.setMonth(date.getMonth() - 2);
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'testProject01',
-      data: {
-        name: 'Sync Test Project',
-        paratextId: 'pt01',
-        shortName: 'P01',
-        writingSystem: {
-          tag: 'en'
-        },
-        translateConfig: {
-          translationSuggestionsEnabled: !!args.translationSuggestionsEnabled,
-          shareEnabled: false,
+      data: createTestProject(
+        {
+          translateConfig: {
+            translationSuggestionsEnabled: !!args.translationSuggestionsEnabled,
           preTranslate: false,
-          source:
-            args.sourceProject != null
-              ? {
-                  paratextId: 'pt02',
-                  projectRef: args.sourceProject,
-                  isRightToLeft: false,
-                  writingSystem: { tag: 'en' },
-                  name: 'Sync Source Project',
-                  shortName: 'P02'
-                }
-              : undefined
+            source:
+              args.sourceProject != null
+                ? {
+                    paratextId: 'pt02',
+                    projectRef: args.sourceProject,
+                    isRightToLeft: false,
+                    writingSystem: { tag: 'en' },
+                    name: 'Sync Source Project',
+                    shortName: 'P02'
+                  }
+                : undefined
+          },
+          sync: {
+            queuedCount: args.isInProgress === true ? 1 : 0
+          },
+          userRoles: this.userRoleTarget,
+          paratextUsers: paratextUsersFromRoles(this.userRoleTarget)
         },
-        checkingConfig: {
-          checkingEnabled: false,
-          usersSeeEachOthersResponses: true,
-          shareEnabled: true,
-          answerExportMethod: CheckingAnswerExport.MarkedForExport
-        },
-        sync: {
-          queuedCount: args.isInProgress === true ? 1 : 0,
-          lastSyncSuccessful: true,
-          dateLastSuccessfulSync: date.toJSON()
-        },
-        editable: true,
-        texts: [],
-        noteTags: [],
-        userRoles: this.userRoleTarget,
-        paratextUsers: paratextUsersFromRoles(this.userRoleTarget),
-        userPermissions: {}
-      }
+        1
+      )
     });
 
     if (args.sourceProject != null) {
       this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
         id: 'sourceProject02',
-        data: {
-          name: 'Sync Source Project',
-          paratextId: 'pt02',
-          shortName: 'P02',
-          writingSystem: {
-            tag: 'en'
+        data: createTestProject(
+          {
+            userRoles: this.userRoleSource,
+            paratextUsers: paratextUsersFromRoles(this.userRoleSource)
           },
-          translateConfig: {
-            translationSuggestionsEnabled: false,
-            shareEnabled: false,
-            preTranslate: false
-          },
-          checkingConfig: {
-            checkingEnabled: false,
-            usersSeeEachOthersResponses: true,
-            shareEnabled: true,
-            answerExportMethod: CheckingAnswerExport.MarkedForExport
-          },
-          sync: {
-            queuedCount: 0,
-            lastSyncSuccessful: true,
-            dateLastSuccessfulSync: date.toJSON()
-          },
-          editable: true,
-          texts: [],
-          noteTags: [],
-          userRoles: this.userRoleSource,
-          paratextUsers: paratextUsersFromRoles(this.userRoleSource),
-          userPermissions: {}
-        }
+          2
+        )
       });
     }
     when(mockedProjectService.get('testProject01')).thenCall(() =>

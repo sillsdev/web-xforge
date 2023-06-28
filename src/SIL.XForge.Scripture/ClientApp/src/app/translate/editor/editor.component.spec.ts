@@ -83,6 +83,11 @@ import { NoteDialogComponent, NoteDialogResult } from './note-dialog/note-dialog
 import { SuggestionsComponent } from './suggestions.component';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
 import { NoteDialogData } from './note-dialog/note-dialog.component';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import {
+  createTestProject,
+  createTestProjectProfile
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 
 const mockedAuthService = mock(AuthService);
 const mockedSFProjectService = mock(SFProjectService);
@@ -3298,18 +3303,13 @@ class TestEnvironment {
     { tagId: 3, name: 'SF Note Tag', icon: SF_TAG_ICON, creatorResolve: false }
   ];
 
-  private testProjectProfile: SFProjectProfile = {
-    name: 'project 01',
-    paratextId: 'target01',
+  private testProjectProfile: SFProjectProfile = createTestProjectProfile({
     shortName: 'TRG',
     isRightToLeft: false,
     userRoles: this.userRolesOnProject,
-    userPermissions: {},
-    writingSystem: { tag: 'qaa' },
     translateConfig: {
       translationSuggestionsEnabled: true,
       defaultNoteTagId: 2,
-      shareEnabled: false,
       preTranslate: false,
       source: {
         paratextId: 'source01',
@@ -3323,12 +3323,8 @@ class TestEnvironment {
     },
     checkingConfig: {
       checkingEnabled: false,
-      usersSeeEachOthersResponses: true,
-      shareEnabled: true,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
+      shareEnabled: true
     },
-    sync: { queuedCount: 0, dataInSync: true },
-    editable: true,
     texts: [
       {
         bookNum: 40,
@@ -3432,7 +3428,7 @@ class TestEnvironment {
       }
     ],
     noteTags: this.noteTags
-  };
+  });
 
   constructor() {
     this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: 'MAT' });
@@ -3686,33 +3682,29 @@ class TestEnvironment {
 
   setupUsers(): void {
     for (const user of Object.keys(this.userRolesOnProject)) {
-      const name = 'U' + user.substring(1);
+      const i: number = parseInt(user.substring(user.length - 2));
       this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
         id: user,
-        data: {
-          name,
-          email: user + '@example.com',
-          role: SystemRole.User,
-          isDisplayNameConfirmed: true,
-          avatarUrl: '',
-          authId: 'auth' + user,
-          displayName: name,
-          sites: {
-            sf: {
-              projects: ['project01', 'project02', 'project03']
+        data: createTestUser(
+          {
+            sites: {
+              sf: {
+                projects: ['project01', 'project02', 'project03']
+              }
             }
-          }
-        }
+          },
+          i
+        )
       });
     }
   }
 
   setupProject(data: Partial<SFProject> = {}, id?: string): void {
     const projectProfileData = cloneDeep(this.testProjectProfile);
-    const projectData: SFProject = {
+    const projectData: SFProject = createTestProject({
       ...this.testProjectProfile,
       paratextUsers: this.paratextUsersOnProject
-    };
+    });
     if (data.translateConfig?.translationSuggestionsEnabled != null) {
       projectProfileData.translateConfig.translationSuggestionsEnabled =
         data.translateConfig.translationSuggestionsEnabled;

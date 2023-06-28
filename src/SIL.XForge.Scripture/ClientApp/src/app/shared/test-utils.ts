@@ -110,42 +110,6 @@ export function getEmptyChapterDoc(id: TextDocId): TextData {
   return delta;
 }
 
-export function getSFProject(id: string): SFProjectProfile {
-  return {
-    name: `${id} name`,
-    paratextId: `${id}_target`,
-    shortName: 'TRG',
-    userRoles: { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.ParatextConsultant },
-    userPermissions: {},
-    writingSystem: { tag: 'qaa' },
-    translateConfig: {
-      translationSuggestionsEnabled: false,
-      shareEnabled: false,
-      preTranslate: false
-    },
-    checkingConfig: {
-      checkingEnabled: false,
-      usersSeeEachOthersResponses: true,
-      shareEnabled: true,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
-    },
-    sync: { queuedCount: 0 },
-    editable: true,
-    texts: [
-      {
-        bookNum: 40,
-        chapters: [
-          { number: 1, lastVerse: 3, isValid: true, permissions: {} },
-          { number: 2, lastVerse: 3, isValid: true, permissions: {} }
-        ],
-        hasSource: true,
-        permissions: {}
-      }
-    ],
-    noteTags: []
-  };
-}
-
 export function paratextUsersFromRoles(userRoles: { [id: string]: string }): ParatextUserProfile[] {
   return Object.keys(userRoles)
     .filter(u => isParatextRole(userRoles[u]))

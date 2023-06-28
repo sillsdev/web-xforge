@@ -1,3 +1,4 @@
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { Location } from '@angular/common';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -1725,25 +1726,12 @@ class TestEnvironment {
 
   private projectBookRoute: string = 'JHN';
 
-  private readonly testProject: SFProject = {
-    name: 'Project 01',
-    paratextId: 'pt01',
-    shortName: 'P01',
+  private readonly testProject: SFProject = createTestProject({
     writingSystem: {
       tag: this.project01WritingSystemTag
     },
-    sync: {
-      queuedCount: 0
-    },
-    checkingConfig: {
-      usersSeeEachOthersResponses: true,
-      checkingEnabled: true,
-      shareEnabled: true,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
-    },
     translateConfig: {
       translationSuggestionsEnabled: true,
-      shareEnabled: false,
       preTranslate: false,
       source: {
         paratextId: 'project02',
@@ -1753,7 +1741,6 @@ class TestEnvironment {
         writingSystem: { tag: 'qaa' }
       }
     },
-    editable: true,
     texts: [
       {
         bookNum: 43,
@@ -1771,19 +1758,17 @@ class TestEnvironment {
         permissions: {}
       }
     ],
-    noteTags: [],
     userRoles: {
       [ADMIN_USER.id]: ADMIN_USER.role,
       [CHECKER_USER.id]: CHECKER_USER.role,
       [CLEAN_CHECKER_USER.id]: CLEAN_CHECKER_USER.role,
       [OBSERVER_USER.id]: OBSERVER_USER.role
     },
-    userPermissions: {},
     paratextUsers: [
       { sfUserId: ADMIN_USER.id, username: ADMIN_USER.user.name, opaqueUserId: `opaque${ADMIN_USER.id}` },
       { sfUserId: OBSERVER_USER.id, username: OBSERVER_USER.user.name, opaqueUserId: `opaque${OBSERVER_USER.id}` }
     ]
-  };
+  });
 
   constructor(user: UserInfo, projectBookRoute: string = 'JHN', hasConnection: boolean = true) {
     reset(mockedFileService);

@@ -23,6 +23,7 @@ import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../co
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareDialogComponent, ShareDialogData, ShareLinkType } from './share-dialog.component';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedNavigator = mock(Navigator);
@@ -356,7 +357,7 @@ class TestEnvironment {
     when(mockedPwaService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
     when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
     when(mockedUserService.currentUserId).thenReturn(userId);
-    when(mockedUserService.getCurrentUser()).thenResolve({ data: { displayName: 'name' } } as UserDoc);
+    when(mockedUserService.getCurrentUser()).thenResolve({ data: createTestUser() } as UserDoc);
     when(mockedProjectService.onlineGetLinkSharingKey(projectId, anything(), anything())).thenResolve(
       checkingShareEnabled || translateShareEnabled ? 'linkSharing01' : ''
     );

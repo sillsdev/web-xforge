@@ -16,10 +16,10 @@ public class TranslateSource
     public string ParatextId { get; set; }
 
     /// <summary>
-    /// Gets or sets the project reference.
+    /// Gets or sets the project reference. This is a reference to a SF project id.
     /// </summary>
     /// <value>
-    /// The project reference.
+    /// The SF project id reference.
     /// </value>
     /// <remarks>
     /// Only use this if <see cref="TranslateConfig.TranslationSuggestionsEnabled" /> is set to <c>true.</c>

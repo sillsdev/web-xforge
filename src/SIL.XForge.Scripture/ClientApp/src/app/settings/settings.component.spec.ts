@@ -10,6 +10,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
 import { CheckingAnswerExport, CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
@@ -677,9 +678,8 @@ class TestEnvironment {
   }
 
   setupProject(
-    translateConfig: TranslateConfig = {
+    translateConfig: Partial<TranslateConfig> = {
       translationSuggestionsEnabled: true,
-      shareEnabled: false,
       preTranslate: false,
       source: {
         paratextId: 'paratextId01',
@@ -691,31 +691,17 @@ class TestEnvironment {
         }
       }
     },
-    checkingConfig: CheckingConfig = {
+    checkingConfig: Partial<CheckingConfig> = {
       checkingEnabled: false,
-      usersSeeEachOthersResponses: false,
-      shareEnabled: false,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
+      usersSeeEachOthersResponses: false
     }
   ): void {
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'project01',
-      data: {
-        name: 'project 01',
-        paratextId: 'pt01',
-        shortName: 'P01',
-        writingSystem: {
-          tag: 'en'
-        },
+      data: createTestProject({
         translateConfig,
-        checkingConfig,
-        sync: { queuedCount: 0 },
-        editable: true,
-        texts: [],
-        userRoles: {},
-        userPermissions: {},
-        paratextUsers: []
-      }
+        checkingConfig
+      })
     });
   }
 }

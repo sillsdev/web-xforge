@@ -53,6 +53,10 @@ import { SFProjectService } from '../../../core/sf-project.service';
 import { getCombinedVerseTextDoc, getTextDoc, paratextUsersFromRoles } from '../../../shared/test-utils';
 import { TranslateModule } from '../../translate.module';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog.component';
+import {
+  createTestProject,
+  createTestProjectProfile
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 
 const mockedAuthService = mock(AuthService);
 const mockedCookieService = mock(CookieService);
@@ -518,23 +522,7 @@ class TestEnvironment {
     user01: SFProjectRole.ParatextAdministrator,
     user02: SFProjectRole.Viewer
   };
-  static testProjectProfile: SFProjectProfile = {
-    paratextId: 'pt01',
-    shortName: 'P01',
-    name: 'Project 01',
-    writingSystem: { tag: 'en' },
-    userPermissions: {},
-    translateConfig: {
-      translationSuggestionsEnabled: false,
-      shareEnabled: false,
-      preTranslate: false
-    },
-    checkingConfig: {
-      usersSeeEachOthersResponses: true,
-      checkingEnabled: true,
-      shareEnabled: true,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
-    },
+  static testProjectProfile: SFProjectProfile = createTestProjectProfile({
     texts: [TestEnvironment.matthewText],
     noteTags: [
       { tagId: 1, name: 'PT Tag 1', icon: 'flag01', creatorResolve: false },
@@ -544,15 +532,13 @@ class TestEnvironment {
       { tagId: 5, name: 'PT Tag 5', icon: 'asterisk01', creatorResolve: false },
       { tagId: 6, name: 'SF Note Tag', icon: 'defaultIcon', creatorResolve: false }
     ],
-    sync: { queuedCount: 0 },
-    editable: true,
     userRoles: TestEnvironment.userRoles
-  };
+  });
   static paratextUsers: ParatextUserProfile[] = paratextUsersFromRoles(TestEnvironment.userRoles);
-  static testProject: SFProject = {
+  static testProject: SFProject = createTestProject({
     ...TestEnvironment.testProjectProfile,
     paratextUsers: TestEnvironment.paratextUsers
-  };
+  });
   static projectUserConfig: SFProjectUserConfig = {
     questionRefsRead: [],
     answerRefsRead: [],
