@@ -14,6 +14,7 @@ import { TranslateOverviewComponent } from './translate-overview/translate-overv
 import { TranslateRoutingModule } from './translate-routing.module';
 import { GenerateDraftComponent } from './generate-draft/generate-draft.component';
 import { DraftViewerComponent } from './generate-draft/draft-viewer/draft-viewer.component';
+import { DraftAvailableIndicatorComponent } from './editor/draft-available-indicator/draft-available-indicator.component';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,8 @@ import { DraftViewerComponent } from './generate-draft/draft-viewer/draft-viewer
     TrainingProgressComponent,
     TranslateOverviewComponent,
     GenerateDraftComponent,
-    DraftViewerComponent
+    DraftViewerComponent,
+    DraftAvailableIndicatorComponent
   ],
   imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, XForgeCommonModule, TranslocoModule]
 })
