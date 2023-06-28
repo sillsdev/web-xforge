@@ -1,4 +1,5 @@
 @import 'src/variables';
+@import 'bootstrap/scss/mixins/breakpoints';
 
 h1 {
   font-size: 24px;
@@ -8,45 +9,89 @@ h1 {
 
 h2 {
   display: flex;
-  align-items: center;
+  align-items: baseline;
+  gap: 32px;
   min-height: 36px;
 }
 
-.button-group {
-  display: flex;
-  gap: 8px;
-  margin-inline-start: auto;
+em {
+  font-weight: 500;
+}
 
-  &.divider::before {
-    content: '';
-    width: 1px;
-    margin-inline-end: 0;
-    margin-inline-start: 8px;
-    background-color: $border-color;
+.draft-buttons {
+  display: flex;
+  margin-inline-start: 8px;
+
+  [mat-button] {
+    border-inline-start: 1px solid $border-color;
   }
+
+  // Smaller icons on button when accompanied by text on larger screens
+  @include media-breakpoint-up(sm) {
+    mat-icon {
+      font-size: 22px;
+      margin-inline-end: 4px;
+    }
+
+    // Hide icon-only button when lar
+    [mat-icon-button] {
+      display: none;
+    }
+  }
+
+  // Show only icon when small screen
+  @include media-breakpoint-down(xs) {
+    [mat-button] {
+      display: none;
+    }
+
+    [mat-icon-button] {
+      display: inline-block;
+    }
+  }
+}
+
+.apply-draft-button {
+  animation: glow-button 1.2s infinite alternate;
+}
+
+.apply-draft-icon-button {
+  color: cornflowerblue;
+  animation: glow-icon 0.8s infinite alternate;
 }
 
 .draft-viewer-body {
   display: grid;
   align-items: start;
   gap: 1em;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   grid-template-areas:
-    'controls . . .'
-    'source source draft draft';
+    'controls controls'
+    'source draft';
+
+  @include media-breakpoint-down(sm) {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'controls'
+      'draft';
+  }
 }
 
 .controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   grid-area: controls;
-  place-self: self-start;
-  padding: 5px 10px;
+
+  mat-card {
+    display: inline-flex;
+    padding: 5px 10px;
+  }
 }
 
 .source {
   grid-area: source;
+
+  @include media-breakpoint-down(sm) {
+    display: none;
+  }
 }
 
 .draft {
@@ -56,16 +101,25 @@ h2 {
 .draft-indicator {
   color: #bbb;
   font-style: italic;
-  margin-inline-start: 16px;
   font-family: monospace;
   text-transform: uppercase;
   font-size: 18px;
+  display: inline-flex;
+  align-items: end;
+
+  &.applied {
+    color: green;
+  }
+
+  &:not(.applied) {
+    .check-icon {
+      display: none;
+    }
+  }
 }
 
 .check-icon {
-  animation: fadeIn 1s;
-  color: green;
-  font-size: 32px;
+  animation: fade-in 1s;
   width: auto;
   height: auto;
   font-weight: 700;
@@ -86,12 +140,12 @@ app-text {
       right: 0;
       background-color: #deeaff;
       opacity: 0;
-      animation: fadeOut 1.5s ease-out;
+      animation: fade-out 1.5s ease-out;
     }
   }
 }
 
-@keyframes fadeIn {
+@keyframes fade-in {
   from {
     opacity: 0;
   }
@@ -100,11 +154,29 @@ app-text {
   }
 }
 
-@keyframes fadeOut {
+@keyframes fade-out {
   from {
     opacity: 0.8;
   }
   to {
     opacity: 0;
+  }
+}
+
+@keyframes glow-button {
+  from {
+    background-color: transparent;
+  }
+  to {
+    background-color: #6494ed41;
+  }
+}
+
+@keyframes glow-icon {
+  from {
+    opacity: 0.3;
+  }
+  to {
+    opacity: 1;
   }
 }
