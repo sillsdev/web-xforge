@@ -1,4 +1,3 @@
-import { Directive, OnDestroy } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -16,8 +15,7 @@ export enum AudioStatus {
 // See explanatory comment where this number is used
 const ARBITRARILY_LARGE_NUMBER = 1e10;
 
-@Directive()
-export class AudioPlayer extends SubscriptionDisposable implements OnDestroy {
+export class AudioPlayer extends SubscriptionDisposable {
   private static lastPlayedAudio: HTMLAudioElement;
   private audio: HTMLAudioElement = new Audio();
   private audioDataLoaded = false;
@@ -120,12 +118,5 @@ export class AudioPlayer extends SubscriptionDisposable implements OnDestroy {
 
   get isPlaying(): boolean {
     return !this.audio.paused && !this.audio.ended && this.audio.readyState > 2;
-  }
-
-  ngOnDestroy(): void {
-    super.ngOnDestroy();
-    if (this.isPlaying) {
-      this.audio.pause();
-    }
   }
 }
