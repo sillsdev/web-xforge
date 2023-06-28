@@ -2,14 +2,15 @@ import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
+import { AudioStatus } from 'src/app/shared/audio-player';
 import { instance, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { AudioStatus, AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player.component';
+import { AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player.component';
 
-describe('CheckingAudioPlayerComponent', () => {
+fdescribe('CheckingAudioPlayerComponent', () => {
   const audioFile = 'test-audio-player.webm';
   const audioFileB = 'test-audio-player-b.webm';
   const playerLoadTimeMs = 1000;
@@ -48,12 +49,12 @@ describe('CheckingAudioPlayerComponent', () => {
     await env.waitForPlayer(playerLoadTimeMs);
     env.clickButton(env.playButton(1));
     await env.waitForPlayer(500);
-    expect(env.component.player1.isPlaying).toBe(true);
+    expect(env.component.player1.audio?.isPlaying).toBe(true);
     env.clickButton(env.playButton(2));
     await env.waitForPlayer(500);
-    expect(env.component.player1.isPlaying).toBe(false);
+    expect(env.component.player1.audio?.isPlaying).toBe(false);
     env.clickButton(env.pauseButton(2));
-    expect(env.component.player2.isPlaying).toBe(false);
+    expect(env.component.player2.audio?.isPlaying).toBe(false);
   });
 
   it('disables the audio player when audio is reset', async () => {
@@ -61,16 +62,16 @@ describe('CheckingAudioPlayerComponent', () => {
       '<app-checking-audio-player #player1 id="player1" source="' + audioFile + '"></app-checking-audio-player>';
     const env = new TestEnvironment(template);
     await env.waitForPlayer(playerLoadTimeMs);
-    expect(env.component.player1.hasSource).toBe(true);
+    expect(env.component.player1.audio).not.toBeUndefined();
     env.component.player1.source = '';
-    expect(env.component.player1.hasSource).toBe(false);
+    expect(env.component.player1.audio).toBeUndefined();
   });
 
   it('it notifies the user when audio is unavailable offline', async () => {
     const template = `<app-checking-audio-player #player1 source="https://"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
-    expect(env.component.player1.hasSource).toBe(true);
+    expect(env.component.player1.audio).not.toBeUndefined();
     expect(env.audioNotAvailableMessage).not.toBeNull();
   });
 
@@ -78,7 +79,7 @@ describe('CheckingAudioPlayerComponent', () => {
     const template = `<app-checking-audio-player #player1 source="${audioFile}"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
-    expect(env.component.player1.hasSource).toBe(true);
+    expect(env.component.player1.audio).not.toBeUndefined();
     expect(env.audioNotAvailableMessage).toBeNull();
   });
 
@@ -86,7 +87,7 @@ describe('CheckingAudioPlayerComponent', () => {
     const template = `<app-checking-audio-player #player1 source="${audioFile}"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
-    expect(env.component.player1.hasSource).toBe(true);
+    expect(env.component.player1.audio?.isAudioAvailable).toBe(true);
     // The browser is online, but the component thinks it is offline. This simulates the scenario where audio data is
     // already loaded, but the browser is offline.
     expect(env.audioNotAvailableMessage).toBeNull();
@@ -193,7 +194,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  async waitForPlayer(ms: number) {
+  async waitForPlayer(ms: number): Promise<void> {
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }

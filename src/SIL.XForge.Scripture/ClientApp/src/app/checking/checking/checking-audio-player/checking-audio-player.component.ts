@@ -33,19 +33,21 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
   }
 
   get audioStatus(): AudioStatus {
-    return this.audio?.status$.value ?? this.pwaService.isOnline ? AudioStatus.Unavailable : AudioStatus.Offline;
+    return this.audio?.status$.value ?? (this.pwaService.isOnline ? AudioStatus.Unavailable : AudioStatus.Offline);
   }
 
   @Input() set source(source: string | undefined) {
     this.enabled = false;
+    this.audio?.dispose();
     if (source != null && source !== '') {
-      this.audio?.dispose();
       this.audio = new AudioPlayer(source, this.pwaService);
       this.subscribe(this.audio?.status$, newVal => {
         if (newVal === AudioStatus.Available) {
-          this.enabled = false;
+          this.enabled = true;
         }
       });
+    } else {
+      this.audio = undefined;
     }
   }
 
