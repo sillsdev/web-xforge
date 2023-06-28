@@ -259,8 +259,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get chapterAudioSource(): string {
-    // TODO (audio scripture): get the actual audio source
-    return '/' + this.projectDoc?.id + '/MRK_003.wav';
+    return `/${this.projectDoc?.id}/${this.getAudioFileName()}`;
   }
 
   private get book(): number | undefined {
@@ -437,6 +436,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
             }
           }
         });
+        // TODO (scripture audio) Only fetch the timing data for the currently active chapter
         this.textAudioQuery = await this.projectService.queryAudioText(projectId);
         const prevBook = this.book;
         // There may be some race conditions which means the questions query is ready before we subscribe to ready$
@@ -804,9 +804,21 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     if (this.projectDoc?.id == null || this.book == null || this.chapter == null) {
       return;
     }
-    // TODO (scripture audio) set actual audio file url
-    // In the meantime you can hard-code the URL to a file that has already been uploaded
-    this.projectService.onlineCreateAudioTimingData(this.projectDoc.id, this.book, this.chapter, 'hard_coded');
+
+    const audioPath = this.getAudioFileName()!;
+    this.projectService.onlineCreateAudioTimingData(this.projectDoc.id, this.book, this.chapter, audioPath);
+  }
+
+  // TODO (scripture audio) This method is a temporary hack to make the audio file name predictable based on the book
+  // and chapter. Copy test audio files to /var/lib/scriptureforge/audio/<project_id>/ with a name like MRK_003.wav and
+  // it can be played back in the audio player.
+  private getAudioFileName(): string | undefined {
+    if (this.book == null || this.chapter == null) {
+      return;
+    }
+
+    const bookId = Canon.bookNumberToId(this.book);
+    return `${bookId}_${this.chapter.toString().padStart(3, '0')}.wav`;
   }
 
   deleteAudioTimingData(): void {
