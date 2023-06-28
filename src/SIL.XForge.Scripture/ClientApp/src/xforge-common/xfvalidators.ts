@@ -1,6 +1,6 @@
 import { AbstractControl, ValidationErrors, Validators } from '@angular/forms';
 
-const EMAIL_REGEXP = /^[a-zA-Z0-9.+_-]{1,}@[a-zA-Z0-9.-]{1,}[.]{1}[a-zA-Z]{2,}$/;
+const EMAIL_REGEXP = /^.+@.+\..{2,}$/;
 const DATE_REGEXP = /^\d{4}-\d{2}-\d{2}$/;
 
 export class XFValidators {
@@ -9,13 +9,7 @@ export class XFValidators {
       return null;
     }
 
-    const emailPattern = /^.+@.+\..{2,}$/;
-    const result = Validators.pattern(emailPattern)(control);
-
-    if (result != null) {
-      return result;
-    }
-    return null;
+    return Validators.pattern(EMAIL_REGEXP)(control);
   }
 
   /** Pass if control value contains any non-whitespace. Error otherwise. */
