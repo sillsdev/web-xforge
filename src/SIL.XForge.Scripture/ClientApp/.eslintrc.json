@@ -68,6 +68,7 @@
           {
             "ignorePattern": "^import ",
             "ignoreStrings": true,
+            "ignoreTemplateLiterals": true,
             "code": 120
           }
         ],

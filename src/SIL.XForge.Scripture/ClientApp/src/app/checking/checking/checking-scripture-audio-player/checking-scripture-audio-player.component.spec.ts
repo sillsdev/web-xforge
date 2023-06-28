@@ -19,8 +19,7 @@ const timingData: AudioTiming[] = [
 
 describe('ScriptureAudioComponent', () => {
   it('can play and pause audio', async () => {
-    const template =
-      '<app-checking-scripture-audio-player source="' + audioFile + '"></app-checking-scripture-audio-player>';
+    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
     const env = new TestEnvironment(template);
     await env.waitForPlayer();
     env.playButton.nativeElement.click();
@@ -35,8 +34,7 @@ describe('ScriptureAudioComponent', () => {
   });
 
   it('can skip to next verse', async () => {
-    const template =
-      '<app-checking-scripture-audio-player source="' + audioFile + '"></app-checking-scripture-audio-player>';
+    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
     const env = new TestEnvironment(template);
     await env.waitForPlayer();
 
