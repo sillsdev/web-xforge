@@ -648,5 +648,33 @@ public class SFProjectsRpcController : RpcControllerBase
         }
     }
 
-    // TODO (scripture audio) add method to delete audio timing data
+    public async Task<IRpcMethodResult> DeleteAudioTimingData(string projectId, int book, int chapter)
+    {
+        try
+        {
+            await _projectService.DeleteAudioTimingData(UserId, projectId, book, chapter);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFoundError("Audio timing data not found");
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "DeleteAudioTimingData" },
+                    { "projectId", projectId },
+                    { "book", book.ToString() },
+                    { "chapter", chapter.ToString() },
+                }
+            );
+            throw;
+        }
+    }
 }

@@ -32,4 +32,5 @@ public interface ISFProjectService : IProjectService
     Task UpdatePermissionsAsync(string curUserId, IDocument<SFProject> projectDoc, CancellationToken token);
     Task EnsureWritingSystemTagIsSetAsync(string curUserId, string projectId);
     Task CreateAudioTimingData(string userId, string projectId, int book, int chapter, string audioUrl);
+    Task DeleteAudioTimingData(string userId, string projectId, int book, int chapter);
 }
