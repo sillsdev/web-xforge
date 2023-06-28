@@ -1,21 +1,44 @@
-<h1>Draft generation complete</h1>
-<p>Select "Apply to project" for each chapter that you want to overwrite with the draft text.</p>
+<h1>Draft preview and apply</h1>
+<p>Select <em>"Apply to project"</em> for each chapter that you want to overwrite with the draft text.</p>
+<p>Select <em>"Edit"</em> to go to the editor page for this chapter.</p>
 
 <div class="draft-viewer-body">
-  <mat-card class="controls">
-    <app-book-chapter-chooser
-      [books]="books"
-      [book]="currentBook"
-      (bookChange)="setBook($event)"
-      [chapters]="chapters"
-      [chapter]="currentChapter"
-      (chapterChange)="setChapter($event)"
-    ></app-book-chapter-chooser>
-  </mat-card>
+  <div class="controls">
+    <mat-card>
+      <app-book-chapter-chooser
+        [books]="books"
+        [book]="currentBook"
+        (bookChange)="navigateBookChapter($event, currentChapter!)"
+        [chapters]="chapters"
+        [chapter]="currentChapter"
+        (chapterChange)="navigateBookChapter(currentBook!, $event)"
+      ></app-book-chapter-chooser>
+
+      <div class="draft-buttons">
+        <button mat-button (click)="editChapter()">
+          <mat-icon>edit</mat-icon>
+          Edit
+        </button>
+        <button mat-icon-button (click)="editChapter()">
+          <mat-icon>edit</mat-icon>
+        </button>
+
+        <ng-container *ngIf="!isDraftApplied && hasDraft">
+          <button mat-button color="primary" (click)="applyDraft()" class="apply-draft-button">
+            <mat-icon>auto_awesome</mat-icon>
+            Apply to project
+          </button>
+          <button mat-icon-button color="primary" (click)="applyDraft()" class="apply-draft-icon-button">
+            <mat-icon>auto_awesome</mat-icon>
+          </button>
+        </ng-container>
+      </div>
+    </mat-card>
+  </div>
 
   <ng-container *ngIf="sourceTextDocId && targetTextDocId">
     <mat-card class="source">
-      <h2 mat-card-title>{{ sourceProject?.name }}</h2>
+      <h2 mat-card-title>{{ sourceProject?.shortName }}</h2>
       <app-text
         #sourceText
         [isReadOnly]="true"
@@ -27,23 +50,12 @@
     </mat-card>
 
     <mat-card class="draft">
-      <h2 mat-card-title *ngIf="!isDraftApplied">
-        <div>{{ targetProject?.name }} <span class="draft-indicator">Draft</span></div>
-        <div class="button-group divider">
-          <button mat-button color="primary" (click)="goNextDraftChapter()">Skip</button>
-          <button mat-flat-button color="primary" (click)="applyDraft()">Apply to project</button>
-        </div>
-      </h2>
-      <h2 mat-card-title *ngIf="isDraftApplied">
-        {{ targetProject?.name }}
-        <mat-icon class="check-icon">check</mat-icon>
-        <div class="button-group">
-          <button mat-flat-button color="primary" (click)="goNextDraftChapter()">
-            Next chapter
-            <mat-icon *ngIf="i18n.direction === 'rtl'">navigate_before</mat-icon>
-            <mat-icon *ngIf="i18n.direction === 'ltr'">navigate_next</mat-icon>
-          </button>
-        </div>
+      <h2 mat-card-title>
+        {{ targetProject?.shortName }}
+        <span *ngIf="hasDraft" class="draft-indicator" [ngClass]="{ applied: isDraftApplied }">
+          Draft {{ isDraftApplied ? " applied" : "" }}
+          <mat-icon class="check-icon">check</mat-icon>
+        </span>
       </h2>
       <app-text
         [ngClass]="{ applied: isDraftApplied }"

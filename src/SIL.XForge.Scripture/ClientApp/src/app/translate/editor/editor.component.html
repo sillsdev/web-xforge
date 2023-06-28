@@ -26,6 +26,11 @@
           >
             <mat-icon>settings</mat-icon>
           </button>
+          <app-draft-available-indicator
+            *ngIf="featureFlags.showNmtDrafting.enabled && hasDraft"
+            (confirmNav)="goToDraftPreview()"
+          >
+          </app-draft-available-indicator>
         </ng-container>
         <ng-container *ngIf="canShare">
           <div class="toolbar-separator">&nbsp;</div>
