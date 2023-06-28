@@ -25,7 +25,7 @@ import { UserService } from 'xforge-common/user.service';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { CheckingModule } from '../checking/checking.module';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
@@ -467,19 +467,7 @@ class TestEnvironment {
       id: TestEnvironment.PROJECT01,
       data: TestEnvironment.testProject
     });
-    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
-      id: 'user01',
-      data: {
-        name: 'User 01',
-        email: 'user1@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth01',
-        displayName: 'name',
-        sites: {}
-      }
-    });
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, { id: 'user01', data: createTestUser() });
 
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)

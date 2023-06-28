@@ -1,6 +1,6 @@
 import { Project } from '../../common/models/project';
 import { WritingSystem } from '../../common/models/writing-system';
-import { CheckingConfig } from './checking-config';
+import { CheckingAnswerExport, CheckingConfig } from './checking-config';
 import { NoteTag } from './note-tag';
 import { ParatextUserProfile } from './paratext-user-profile';
 import { Sync } from './sync';
@@ -40,3 +40,42 @@ export interface ResourceConfig {
   permissionsChecksum: string;
   revision: number;
 }
+
+const defaultSFProjectProfile: SFProjectProfile = {
+  name: 'Test project',
+  userRoles: {},
+  userPermissions: {},
+  syncDisabled: false,
+  paratextId: 'paratextId01',
+  shortName: 'P01',
+  writingSystem: { tag: 'en' },
+  isRightToLeft: false,
+  translateConfig: {
+    translationSuggestionsEnabled: false,
+    shareEnabled: false,
+    defaultNoteTagId: 1
+  },
+  checkingConfig: {
+    checkingEnabled: true,
+    usersSeeEachOthersResponses: true,
+    shareEnabled: false,
+    answerExportMethod: CheckingAnswerExport.MarkedForExport,
+    noteTagId: 1
+  },
+  texts: [],
+  sync: {
+    queuedCount: 0,
+    lastSyncSuccessful: true,
+    dateLastSuccessfulSync: new Date(0).toISOString(),
+    dataInSync: true
+  },
+  editable: true,
+  defaultFontSize: 12,
+  defaultFont: 'Charis SIL',
+  maxGeneratedUsersPerShareKey: 250
+};
+
+const defaultSFProject: SFProject = {
+  ...defaultSFProjectProfile,
+  paratextUsers: []
+};

@@ -146,7 +146,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
           if (this.projectDoc != null) {
             this.updateSettingsInfo();
             this.updateNonSelectableProjects();
-            this.subscribe(this.projectDoc.remoteChanges$, () => this.updateNonSelectableProjects());
+            // this.subscribe(this.projectDoc.remoteChanges$, () => this.updateNonSelectableProjects());
             this.mainSettingsLoaded = true;
             this.updateFormEnabled();
           }

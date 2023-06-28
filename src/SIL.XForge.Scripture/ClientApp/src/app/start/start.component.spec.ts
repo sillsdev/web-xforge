@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -106,16 +106,7 @@ class TestEnvironment {
 
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',
-      data: {
-        name: 'User 01',
-        email: 'user1@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth01',
-        displayName: 'User 01',
-        sites: { sf: { projects } }
-      }
+      data: createTestUser({ sites: { sf: { projects } } })
     });
   }
 

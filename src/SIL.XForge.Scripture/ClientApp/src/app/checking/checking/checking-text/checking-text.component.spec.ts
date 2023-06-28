@@ -1,3 +1,4 @@
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -14,7 +15,6 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
@@ -150,19 +150,7 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId('project01', 40, 2, 'target'));
     this.addCombinedVerseTextDoc(new TextDocId('project01', 41, 1, 'target'));
     this.setupProject('project01');
-    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
-      id: 'user01',
-      data: {
-        name: 'User 01',
-        email: 'user1@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth01',
-        displayName: 'name',
-        sites: {}
-      }
-    });
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, { id: 'user01', data: createTestUser() });
     when(mockedSFProjectService.getProfile('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
     );
