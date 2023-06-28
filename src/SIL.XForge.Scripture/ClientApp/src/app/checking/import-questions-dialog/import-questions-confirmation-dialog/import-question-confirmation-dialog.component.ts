@@ -1,5 +1,7 @@
-import { MdcDialogRef, MDC_DIALOG_DATA } from '@angular-mdc/web';
 import { Component, Inject } from '@angular/core';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatTableDataSource } from '@angular/material/table';
+import { I18nService } from 'xforge-common/i18n.service';
 
 export interface ImportQuestionsConfirmationDialogData {
   questions: EditedQuestion[];
@@ -19,33 +21,35 @@ export interface EditedQuestion {
   styleUrls: ['./import-questions-confirmation-dialog.component.scss']
 })
 export class ImportQuestionsConfirmationDialogComponent {
-  allSelected: boolean = false;
   questions: EditedQuestion[];
+  dataSource: MatTableDataSource<EditedQuestion>;
 
   constructor(
-    @Inject(MDC_DIALOG_DATA) data: ImportQuestionsConfirmationDialogData,
-    private readonly dialogRef: MdcDialogRef<
+    @Inject(MAT_DIALOG_DATA) data: ImportQuestionsConfirmationDialogData,
+    private readonly dialogRef: MatDialogRef<
       ImportQuestionsConfirmationDialogComponent,
       ImportQuestionsConfirmationDialogResult
-    >
+    >,
+    readonly i18n: I18nService
   ) {
     this.questions = data.questions;
-    this.updateAllSelected();
+    this.dataSource = new MatTableDataSource<EditedQuestion>(this.questions);
   }
 
-  updateAllSelected() {
-    this.allSelected = this.questions.every(question => question.checked);
+  allSelected(): boolean {
+    return this.questions.every(q => q.checked);
   }
 
   someSelected(): boolean {
-    return this.questions.filter(question => question.checked).length > 0 && !this.allSelected;
+    const numSelected: number = this.questions.filter(question => question.checked).length;
+    return numSelected > 0 && numSelected < this.questions.length;
   }
 
   selectAll(checked: boolean): void {
     this.questions.forEach(question => (question.checked = checked));
   }
 
-  submit() {
+  submit(): void {
     this.dialogRef.close(this.questions.map(question => question.checked));
   }
 }
