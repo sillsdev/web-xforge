@@ -1,0 +1,14 @@
+.scripture-audio-player {
+  display: flex;
+  flex-direction: column;
+}
+
+.audio-action-buttons {
+  display: flex;
+  justify-content: center;
+}
+
+.verse-label {
+  padding: 8px;
+  font-weight: bold;
+}
