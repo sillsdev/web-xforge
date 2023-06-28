@@ -11,7 +11,7 @@ import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player.component';
 
-fdescribe('CheckingAudioPlayerComponent', () => {
+describe('CheckingAudioPlayerComponent', () => {
   const audioFile = 'test-audio-player.webm';
   const audioFileB = 'test-audio-player-b.webm';
   const playerLoadTimeMs = 1000;
