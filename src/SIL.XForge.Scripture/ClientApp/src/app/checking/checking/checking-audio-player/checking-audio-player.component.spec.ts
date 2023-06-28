@@ -2,6 +2,7 @@ import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
+import { InfoComponent } from 'src/app/shared/info/info.component';
 import { instance, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -141,7 +142,7 @@ class TestEnvironment {
 
   constructor(template: string, isOnline = true) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, CheckingAudioPlayerComponent, AudioTimePipe],
+      declarations: [HostComponent, CheckingAudioPlayerComponent, AudioTimePipe, InfoComponent],
       providers: [
         { provide: PwaService, useFactory: () => instance(this.mockedPwaService) },
         { provide: I18nService, useFactory: () => instance(this.mockedI18nService) }
