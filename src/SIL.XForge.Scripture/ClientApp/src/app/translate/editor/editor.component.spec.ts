@@ -69,6 +69,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { merge } from 'lodash-es';
+import { HttpClient } from 'src/app/machine-api/http-client';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -100,6 +101,7 @@ const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedMediaObserver = mock(MediaObserver);
+const mockedHttpClient = mock(HttpClient);
 
 class MockComponent {}
 
@@ -141,7 +143,8 @@ describe('EditorComponent', () => {
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
-      { provide: MediaObserver, useMock: mockedMediaObserver }
+      { provide: MediaObserver, useMock: mockedMediaObserver },
+      { provide: HttpClient, useMock: mockedHttpClient }
     ]
   }));
 
@@ -3525,6 +3528,7 @@ class TestEnvironment {
       this.openNoteDialogs = [];
     });
     when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
+    when(mockedFeatureFlagService.showNmtDrafting).thenReturn({ enabled: true } as FeatureFlag);
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
     when(mockedMediaObserver.isActive(anything())).thenReturn(false);
