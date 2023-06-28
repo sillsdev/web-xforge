@@ -7,17 +7,19 @@ import {
   ViewChild,
   ViewChildren
 } from '@angular/core';
-import isString from 'lodash-es/isString';
+import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { DeltaOperation } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { combineLatest, Subject } from 'rxjs';
-import { map, switchMap, withLatestFrom } from 'rxjs/operators';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
+import { zip } from 'rxjs';
+import { filter, map, switchMap } from 'rxjs/operators';
 import { Delta, TextDocId } from 'src/app/core/models/text-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 import { TextComponent } from 'src/app/shared/text/text.component';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { DraftGenerationService, DraftSegmentMap } from '../draft-generation.service';
+import { DraftViewerService } from './draft-viewer.service';
 
 @Component({
   selector: 'app-draft-viewer',
@@ -35,8 +37,8 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
   books: number[] = [];
   currentBook?: number;
 
-  currentChapter?: number;
   chapters: number[] = [];
+  currentChapter?: number;
 
   sourceProjectId!: string;
   targetProjectId!: string;
@@ -47,13 +49,16 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
   sourceTextDocId?: TextDocId;
   targetTextDocId?: TextDocId;
 
-  chapterSet$ = new Subject();
   isDraftApplied = false;
+  hasDraft = false;
 
   constructor(
     private readonly draftGenerationService: DraftGenerationService,
+    private readonly draftViewerService: DraftViewerService,
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly projectService: SFProjectService,
+    private readonly activatedRoute: ActivatedRoute,
+    private readonly router: Router,
     public readonly i18n: I18nService
   ) {}
 
@@ -66,26 +71,30 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Wait to populate draft until editor is loaded and a book and chapter are selected
+    // Wait to populate draft until both editors are loaded with current chapter
     this.targetEditorQueryList.changes
-      .pipe(
-        switchMap(() => combineLatest([this.sourceEditor.loaded, this.targetEditor.loaded])),
-        withLatestFrom(this.chapterSet$)
-      )
+      .pipe(switchMap(() => zip(this.sourceEditor.loaded, this.targetEditor.loaded)))
       .subscribe(() => {
+        // Both editors are now loaded
         this.isDraftApplied = false;
         this.populateDraftText();
       });
 
     this.books = this.targetProject?.texts.map(t => t.bookNum) ?? [];
-    this.setBook(this.books[0]);
+
+    // Set book/chapter from route, or first book/chapter if not provided
+    this.activatedRoute.paramMap.subscribe((params: ParamMap) => {
+      const bookId = params.get('bookId');
+      const book = bookId ? Canon.bookIdToNumber(bookId) : this.books[0];
+      this.setBook(book, Number(params.get('chapter')));
+    });
   }
 
-  setBook(book: number): void {
+  setBook(book: number, chapter?: number): void {
     this.currentBook = book;
     this.chapters = this.targetProject?.texts?.find(t => t.bookNum === book)?.chapters.map(c => c.number) ?? [];
 
-    this.setChapter(this.chapters[0]);
+    this.setChapter(chapter || this.chapters[0]);
   }
 
   setChapter(chapter: number): void {
@@ -98,9 +107,6 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     // Editor TextDocId needs to be set before it is created
     this.sourceTextDocId = new TextDocId(this.sourceProjectId, this.currentBook, this.currentChapter, 'target');
     this.targetTextDocId = new TextDocId(this.targetProjectId, this.currentBook, this.currentChapter, 'target');
-
-    // Notify so draft population can start once editor is loaded
-    this.chapterSet$.next();
   }
 
   populateDraftText(): void {
@@ -108,37 +114,18 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
       throw new Error(`'populateDraftText()' called when 'currentBook' or 'currentChapter' is not set`);
     }
 
+    const targetOps = this.targetEditor.editor?.getContents().ops!;
+
     this.draftGenerationService
       .getGeneratedDraft(this.targetProjectId!, this.currentBook, this.currentChapter)
-      .pipe(map(this.toDraftOps.bind(this)))
+      .pipe(
+        filter((draft: DraftSegmentMap) => (this.hasDraft = this.draftViewerService.hasDraftOps(draft, targetOps))),
+        map((draft: DraftSegmentMap) => this.draftViewerService.toDraftOps(draft, targetOps))
+      )
       .subscribe((draftOps: DeltaOperation[]) => {
         // Set the draft editor with the pre-translation segments
         this.targetEditor.editor?.setContents(new Delta(draftOps), 'api');
       });
-  }
-
-  // Copy ops for draft from target, but substitute pre-translation segments when available and translation not done
-  toDraftOps(draft: DraftSegmentMap): DeltaOperation[] {
-    const currentTargetOps = this.targetEditor.editor?.getContents().ops ?? [];
-
-    return currentTargetOps.map(op => {
-      const draftSegmentText = draft[op.attributes?.segment];
-
-      // Use any existing translation
-      if (!draftSegmentText || (isString(op.insert) && op.insert.trim())) {
-        return op;
-      }
-
-      // Otherwise, use pre-translation
-      return {
-        ...op,
-        insert: draftSegmentText,
-        attributes: {
-          ...op.attributes,
-          draft: true
-        }
-      };
-    });
   }
 
   applyDraft(): void {
@@ -151,8 +138,6 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     this.targetEditor.editor?.setContents(new Delta(cleanedOps)!, 'api');
 
     this.targetEditor.editor?.disable();
-
-    // TODO - Handle book/chapter that has no draft suggestions (let user know when done)
     this.isDraftApplied = true;
   }
 
@@ -164,19 +149,17 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     return draftOps;
   }
 
-  // TODO - Handle last book/chapter
-  goNextDraftChapter(): void {
-    // Next chapter in this book if current is not last
-    const currentChapterIndex = this.chapters.indexOf(this.currentChapter!);
-    if (currentChapterIndex !== this.chapters.length - 1) {
-      this.setChapter(this.chapters[currentChapterIndex + 1]);
-      return;
-    }
+  // Navigate to editor component for editing this book/chapter
+  editChapter(): void {
+    this.router.navigateByUrl(
+      `/projects/${this.targetProjectId}/translate/${Canon.bookNumberToId(this.currentBook!)}/${this.currentChapter}`
+    );
+  }
 
-    // Otherwise, go to next book
-    const currentBookIndex = this.books.indexOf(this.currentBook!);
-    if (currentBookIndex !== this.books.length - 1) {
-      this.setBook(this.books[currentBookIndex + 1]);
-    }
+  // Book/chapter chooser navigate book/chapter for this component
+  navigateBookChapter(book: number, chapter: number): void {
+    this.router.navigateByUrl(
+      `/projects/${this.targetProjectId}/draft-preview/${Canon.bookNumberToId(book)}/${chapter}`
+    );
   }
 }
