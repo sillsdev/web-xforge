@@ -1,20 +1,21 @@
 <ng-container *transloco="let t; read: 'checking_audio_player'">
   <div class="audio-area">
-    <div *ngIf="audio !== undefined && isAudioAvailable" class="player" dir="ltr">
-      <button *ngIf="!audio.isPlaying" mat-icon-button type="button" (click)="play()" class="play">
+    <div *ngIf="hasSource && isAudioAvailable" class="player" dir="ltr">
+      <button *ngIf="!isPlaying" mat-icon-button type="button" (click)="play()" class="play">
         <mat-icon>play_arrow</mat-icon>
       </button>
-      <button *ngIf="audio.isPlaying" mat-icon-button type="button" (click)="pause()" class="pause">
+      <button *ngIf="isPlaying" mat-icon-button type="button" (click)="pause()" class="pause">
         <mat-icon>pause</mat-icon>
       </button>
-      <div class="current-time">{{ audio.currentTime | audioTime }}</div>
-      <mat-slider class="slider" [min]="0" [max]="100" [step]="1" [value]="seek" (input)="onSeek($event)"></mat-slider>
+      <div class="current-time">{{ currentTime | audioTime }}</div>
+      <mat-slider class="slider" [min]="0" [max]="100" [step]="1" [value]="seek" (input)="seeking($event)"></mat-slider>
+
       <div class="duration">{{ duration | audioTime }}</div>
     </div>
     <div *ngIf="!isAudioAvailable" class="audio-not-available">
       <mat-icon>volume_off</mat-icon>
       <span>{{ t("audio_unavailable") }}</span>
-      <div *ngIf="audio?.hasErrorState">
+      <div *ngIf="hasErrorState">
         <app-info id="error-load" [text]="t(audioStatus)"></app-info>
       </div>
     </div>
