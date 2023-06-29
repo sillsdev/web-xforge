@@ -39,13 +39,16 @@ mat-card {
     }
   }
 
-  mdc-list {
+  mat-list {
     @include list.item-graphic-ink-color(rgba(0, 0, 0, 0.6));
     overflow-y: auto;
-    mdc-list-item {
+    mat-list-item {
       cursor: pointer;
       &:hover {
         background-color: lighten($sf_grey, 75%);
+      }
+      .mat-icon {
+        color: $greyDark;
       }
     }
   }
