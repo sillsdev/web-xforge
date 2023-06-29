@@ -19,25 +19,18 @@ export class AudioPlayer extends SubscriptionDisposable {
   private static lastPlayedAudio: HTMLAudioElement;
   private audio: HTMLAudioElement = new Audio();
   private audioDataLoaded: boolean = false;
-  private _seek: number = 0;
 
   status$: BehaviorSubject<AudioStatus> = new BehaviorSubject<AudioStatus>(AudioStatus.Init);
 
   constructor(source: string, private readonly pwaService: PwaService) {
     super();
     this.audio.addEventListener('loadeddata', () => {
-      this._seek = 0;
+      this.currentTime = 0;
       this.audioDataLoaded = true;
       this.status$.next(AudioStatus.Available);
     });
 
-    this.audio.addEventListener('timeupdate', () => {
-      if (this.isPlaying) {
-        this._seek = (this.currentTime / this.duration) * 100;
-      } else if (this.currentTime === this.duration) {
-        this._seek = 100;
-      }
-    });
+    this.audio.addEventListener('timeupdate', () => {});
 
     this.audio.addEventListener('error', () => {
       if (isLocalBlobUrl(this.audio.src)) {
@@ -98,7 +91,14 @@ export class AudioPlayer extends SubscriptionDisposable {
   }
 
   get seek(): number {
-    return this._seek;
+    if (this.duration > 0) {
+      if (this.isPlaying) {
+        return (this.currentTime / this.duration) * 100;
+      } else if (this.currentTime === this.duration) {
+        return 100;
+      }
+    }
+    return 0;
   }
 
   setSeek(value: number): void {
