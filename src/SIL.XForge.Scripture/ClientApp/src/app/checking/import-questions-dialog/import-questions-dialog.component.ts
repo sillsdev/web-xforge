@@ -5,8 +5,7 @@ import { MatDialogConfig, MatDialogRef, MAT_DIALOG_DATA } from '@angular/materia
 import { TranslocoService } from '@ngneat/transloco';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';

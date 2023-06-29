@@ -34,8 +34,7 @@ import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-a
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { DeltaOperation } from 'rich-text';
 import { BehaviorSubject, fromEvent, merge, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, first, repeat, retryWhen, tap } from 'rxjs/operators';

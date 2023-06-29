@@ -5,7 +5,7 @@ import { ANY_INDEX, obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
+import { Canon } from '@sillsdev/scripture';
 import { asyncScheduler, Subscription, timer } from 'rxjs';
 import { delayWhen, filter, map, repeat, retryWhen, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';

@@ -16,7 +16,7 @@ import Quill, { DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from '@sillsdev/scripture';
 import { fromEvent, Subject, Subscription, timer } from 'rxjs';
 import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
 import { PwaService } from 'xforge-common/pwa.service';

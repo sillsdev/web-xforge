@@ -1,7 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { I18nService } from 'xforge-common/i18n.service';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 

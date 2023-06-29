@@ -26,8 +26,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { getTextDocId, TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -420,7 +419,7 @@ describe('CheckingComponent', () => {
       expect(env.isSegmentHighlighted(1, 1)).toBe(false);
       expect(env.isSegmentHighlighted(1, 5)).toBe(true);
       expect(env.segmentHasQuestion(1, 5)).toBe(true);
-      expect(env.component.questionVerseRefs[0]).toEqual(VerseRef.parse('JHN 1:5'));
+      expect(env.component.questionVerseRefs[0].equals(VerseRef.parse('JHN 1:5'))).toBe(true);
     }));
 
     it('unread answers badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
