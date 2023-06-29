@@ -1,6 +1,6 @@
 import cloneDeep from 'lodash-es/cloneDeep';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from '@sillsdev/scripture';
 import { Subscription } from 'rxjs';
 
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';

@@ -9,7 +9,7 @@ import * as crc from 'crc-32';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
+import { Canon } from '@sillsdev/scripture';
 import { Observable } from 'rxjs';
 import { filter, share } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';

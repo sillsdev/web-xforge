@@ -26,7 +26,7 @@ import {
   visualizeOps,
   createWS
 } from './utils';
-import { Canon } from '../../src/RealtimeServer/scriptureforge/scripture-utils/canon';
+import { Canon } from '@sillsdev/scripture';
 
 type ProgArgs = { color: boolean; server: string; proj: string | undefined };
 type StyleUsage = { style: string; cid: string };

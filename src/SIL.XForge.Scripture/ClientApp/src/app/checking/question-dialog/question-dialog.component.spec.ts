@@ -8,7 +8,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from '@sillsdev/scripture';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, objectContaining, spy, verify, when } from 'ts-mockito';

@@ -1,7 +1,7 @@
 import { Component, ElementRef, Inject, Optional, ViewChild } from '@angular/core';
 import { MatDialogConfig, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from '@sillsdev/scripture';
 import { fromEvent } from 'rxjs';
 import { auditTime } from 'rxjs/operators';
 import { DOCUMENT } from 'xforge-common/browser-globals';
