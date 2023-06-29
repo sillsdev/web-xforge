@@ -92,10 +92,10 @@ export class AudioPlayer extends SubscriptionDisposable {
 
   get seek(): number {
     if (this.duration > 0) {
-      if (this.isPlaying) {
-        return (this.currentTime / this.duration) * 100;
-      } else if (this.currentTime === this.duration) {
+      if (this.currentTime === this.duration) {
         return 100;
+      } else {
+        return (this.currentTime / this.duration) * 100;
       }
     }
     return 0;
