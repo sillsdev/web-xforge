@@ -17,7 +17,9 @@ describe('CheckingAudioPlayerNewComponent', () => {
 
   it('should be created', async () => {
     const template =
-      '<app-checking-audio-player #player1 id="player1" source="' + audioFile + '"></app-checking-audio-player>';
+      '<app-checking-audio-player-new #player1 id="player1" source="' +
+      audioFile +
+      '"></app-checking-audio-player-new>';
     const env = new TestEnvironment(template);
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.component.player1.enabled).toBe(true);
@@ -27,7 +29,9 @@ describe('CheckingAudioPlayerNewComponent', () => {
 
   it('can play', async () => {
     const template =
-      '<app-checking-audio-player #player1 id="player1" source="' + audioFile + '"></app-checking-audio-player>';
+      '<app-checking-audio-player-new #player1 id="player1" source="' +
+      audioFile +
+      '"></app-checking-audio-player-new>';
     const env = new TestEnvironment(template);
     await env.waitForPlayer(playerLoadTimeMs);
     env.clickButton(env.playButton(1));
@@ -39,12 +43,12 @@ describe('CheckingAudioPlayerNewComponent', () => {
 
   it('plays and pauses the other playing audio', async () => {
     const template =
-      '<app-checking-audio-player #player1 id="player1" source="' +
+      '<app-checking-audio-player-new #player1 id="player1" source="' +
       audioFile +
-      '"></app-checking-audio-player>' +
-      '<app-checking-audio-player #player2 id="player2" source="' +
+      '"></app-checking-audio-player-new>' +
+      '<app-checking-audio-player-new #player2 id="player2" source="' +
       audioFileB +
-      '"></app-checking-audio-player>';
+      '"></app-checking-audio-player-new>';
     const env = new TestEnvironment(template);
     await env.waitForPlayer(playerLoadTimeMs);
     env.clickButton(env.playButton(1));
@@ -59,7 +63,9 @@ describe('CheckingAudioPlayerNewComponent', () => {
 
   it('disables the audio player when audio is reset', async () => {
     const template =
-      '<app-checking-audio-player #player1 id="player1" source="' + audioFile + '"></app-checking-audio-player>';
+      '<app-checking-audio-player-new #player1 id="player1" source="' +
+      audioFile +
+      '"></app-checking-audio-player-new>';
     const env = new TestEnvironment(template);
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.component.player1.audio).not.toBeUndefined();
@@ -68,7 +74,7 @@ describe('CheckingAudioPlayerNewComponent', () => {
   });
 
   it('it notifies the user when audio is unavailable offline', async () => {
-    const template = `<app-checking-audio-player #player1 source="https://"></app-checking-audio-player>`;
+    const template = `<app-checking-audio-player-new #player1 source="https://"></app-checking-audio-player-new>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.component.player1.audio).not.toBeUndefined();
@@ -76,7 +82,7 @@ describe('CheckingAudioPlayerNewComponent', () => {
   });
 
   it('it can play blobs even when offline', async () => {
-    const template = `<app-checking-audio-player #player1 source="${audioFile}"></app-checking-audio-player>`;
+    const template = `<app-checking-audio-player-new #player1 source="${audioFile}"></app-checking-audio-player-new>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.component.player1.audio).not.toBeUndefined();
@@ -84,7 +90,7 @@ describe('CheckingAudioPlayerNewComponent', () => {
   });
 
   it('it can play preloaded audio when offline', async () => {
-    const template = `<app-checking-audio-player #player1 source="${audioFile}"></app-checking-audio-player>`;
+    const template = `<app-checking-audio-player-new #player1 source="${audioFile}"></app-checking-audio-player-new>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.component.player1.audio?.isAudioAvailable).toBe(true);
@@ -95,7 +101,7 @@ describe('CheckingAudioPlayerNewComponent', () => {
 
   it('show error tooltip if error loading audio while online and the file does not exist', async () => {
     const template =
-      '<app-checking-audio-player #player1 source="audio-file-not-exists.webm"></app-checking-audio-player>';
+      '<app-checking-audio-player-new #player1 source="audio-file-not-exists.webm"></app-checking-audio-player-new>';
     const env = new TestEnvironment(template, true);
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.audioNotAvailableMessage).not.toBeNull();
@@ -106,7 +112,7 @@ describe('CheckingAudioPlayerNewComponent', () => {
 
   it('show error tooltip if error loading audio while offline and the file does not exist', async () => {
     const template =
-      '<app-checking-audio-player #player1 source="audio-file-not-exists.webm"></app-checking-audio-player>';
+      '<app-checking-audio-player-new #player1 source="audio-file-not-exists.webm"></app-checking-audio-player-new>';
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.audioNotAvailableMessage).not.toBeNull();
@@ -116,7 +122,7 @@ describe('CheckingAudioPlayerNewComponent', () => {
   });
 
   it('show error tooltip if error loading audio is unsupported', async () => {
-    const template = `<app-checking-audio-player #player1 source="blob://unsupported"></app-checking-audio-player>`;
+    const template = `<app-checking-audio-player-new #player1 source="blob://unsupported"></app-checking-audio-player-new>`;
     const env = new TestEnvironment(template, true);
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.audioNotAvailableMessage).not.toBeNull();
