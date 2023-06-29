@@ -1,11 +1,10 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { TextDocId } from 'src/app/core/models/text-doc';
-import { AudioPlayer } from 'src/app/shared/audio-player';
 import { getVerseStrFromSegmentRef } from 'src/app/shared/utils';
 import { I18nService } from 'xforge-common/i18n.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
 
 @Component({
   selector: 'app-checking-scripture-audio-player',
@@ -13,17 +12,12 @@ import { PwaService } from 'xforge-common/pwa.service';
   styleUrls: ['./checking-scripture-audio-player.component.scss']
 })
 export class CheckingScriptureAudioPlayerComponent {
-  private audioPlayer: AudioPlayer | undefined;
-
+  @Input() source?: string;
   @Input() timing?: AudioTiming[];
   @Input() textDocId?: TextDocId;
-  @Input() set source(source: string | undefined) {
-    if (source != null && source !== '') {
-      this.audioPlayer = new AudioPlayer(source, this.pwaService);
-    }
-  }
+  @ViewChild('audioPlayer') audioPlayer?: CheckingAudioPlayerComponent;
 
-  constructor(private readonly i18n: I18nService, private readonly pwaService: PwaService) {}
+  constructor(private readonly i18n: I18nService) {}
 
   get currentRef(): string | undefined {
     if (this.timing == null) return;
