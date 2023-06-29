@@ -1,6 +1,6 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from '@sillsdev/scripture';
 import { TextDocId } from 'src/app/core/models/text-doc';
 import { getVerseStrFromSegmentRef } from 'src/app/shared/utils';
 import { I18nService } from 'xforge-common/i18n.service';

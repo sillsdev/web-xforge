@@ -10,7 +10,7 @@ const bookId = '';
 use('xforge');
 
 const path = require('path');
-const { Canon } = require(path.resolve('./src/RealtimeServer/lib/cjs/scriptureforge/scripture-utils/canon.js'));
+const { Canon } = require(path.resolve('./src/RealtimeServer/node_modules/@sillsdev/scripture'));
 
 const bookNum = Canon.bookIdToNumber(bookId);
 const project = db.sf_projects.findOne({ _id: projectRef });

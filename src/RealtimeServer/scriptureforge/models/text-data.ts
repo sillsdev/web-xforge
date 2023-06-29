@@ -1,5 +1,5 @@
 import { DeltaOperation } from 'rich-text';
-import { Canon } from '../scripture-utils/canon';
+import { Canon } from '@sillsdev/scripture';
 
 export const TEXTS_COLLECTION = 'texts';
 export const TEXT_INDEX_PATHS: string[] = [];

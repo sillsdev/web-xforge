@@ -1,4 +1,4 @@
-import { VerseRef } from '../scripture-utils/verse-ref';
+import { VerseRef } from '@sillsdev/scripture';
 
 export function toVerseRef(verseRefData: VerseRefData): VerseRef {
   return new VerseRef(

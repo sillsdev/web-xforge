@@ -17,7 +17,7 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { Connection } from 'sharedb/lib/client';
 import { colored, colors, ConnectionSettings, databaseConfigs, useColor, createWS } from './utils';
-import { Canon } from '../../src/RealtimeServer/scriptureforge/scripture-utils/canon';
+import { Canon } from '@sillsdev/scripture';
 
 type ProgArgs = {
   color: boolean;

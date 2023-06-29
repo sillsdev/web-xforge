@@ -10,7 +10,7 @@ import { TestBed } from '@angular/core/testing';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from '@sillsdev/scripture';
 import { DEFAULT_TAG_ICON, NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { SFProjectService } from '../sf-project.service';
 import { NoteThreadDoc, NoteThreadIcon } from './note-thread-doc';
