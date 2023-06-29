@@ -776,7 +776,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// </remarks>
     public async Task EnsureWritingSystemTagIsSetAsync(string curUserId, string projectId)
     {
-        using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
         if (!projectDoc.IsLoaded)
         {
@@ -789,7 +789,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// TODO (scripture audio) Document this method and add tests
     public async Task CreateAudioTimingData(string userId, string projectId, int book, int chapter, string audioUrl)
     {
-        using IConnection conn = await RealtimeService.ConnectAsync(userId);
+        await using IConnection conn = await RealtimeService.ConnectAsync(userId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
         if (!projectDoc.IsLoaded)
         {
@@ -834,7 +834,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// TODO (scripture audio) Document this method and add tests
     public async Task DeleteAudioTimingData(string userId, string projectId, int book, int chapter)
     {
-        using IConnection conn = await RealtimeService.ConnectAsync(userId);
+        await using IConnection conn = await RealtimeService.ConnectAsync(userId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
         if (!projectDoc.IsLoaded)
         {
