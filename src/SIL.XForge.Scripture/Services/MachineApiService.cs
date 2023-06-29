@@ -119,10 +119,10 @@ public class MachineApiService : IMachineApiService
             // Clear the pre-translation queued status
             if (
                 (await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret)
-                && projectSecret.ServalData?.PreTranslationQueued is not null
+                && projectSecret.ServalData?.PreTranslationQueuedAt is not null
             )
             {
-                await _projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.PreTranslationQueued));
+                await _projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.PreTranslationQueuedAt));
             }
         }
         catch (Exception e)
@@ -318,7 +318,7 @@ public class MachineApiService : IMachineApiService
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
 
-        // We only support Serval for canceling the current build
+        // We only support Serval for pre-translations
         if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
         {
             throw new DataNotFoundException("The translation engine does not support pre-translations");
@@ -354,11 +354,11 @@ public class MachineApiService : IMachineApiService
         // If there is a pre-translation queued, return a build dto with a status showing it is queued
         if (
             (await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret)
-            && projectSecret.ServalData?.PreTranslationQueued is not null
+            && projectSecret.ServalData?.PreTranslationQueuedAt is not null
         )
         {
             // If the build was queued 6 hours or more ago, it will have failed to upload
-            if (projectSecret.ServalData?.PreTranslationQueued <= DateTime.UtcNow.AddHours(-6))
+            if (projectSecret.ServalData?.PreTranslationQueuedAt <= DateTime.UtcNow.AddHours(-6))
             {
                 return new BuildDto
                 {
@@ -519,7 +519,7 @@ public class MachineApiService : IMachineApiService
         // Set the pre-translation queued date and time
         await _projectSecrets.UpdateAsync(
             sfProjectId,
-            u => u.Set(p => p.ServalData.PreTranslationQueued, DateTime.UtcNow)
+            u => u.Set(p => p.ServalData.PreTranslationQueuedAt, DateTime.UtcNow)
         );
     }
 
