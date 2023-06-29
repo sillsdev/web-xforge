@@ -9,7 +9,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player.component';
+import { AudioStatus, AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player.component';
 
 describe('CheckingAudioPlayerComponent', () => {
   const audioFile = 'test-audio-player.webm';
@@ -50,12 +50,12 @@ describe('CheckingAudioPlayerComponent', () => {
     await env.waitForPlayer(playerLoadTimeMs);
     env.clickButton(env.playButton(1));
     await env.waitForPlayer(500);
-    expect(env.component.player1.audio?.isPlaying).toBe(true);
+    expect(env.component.player1.isPlaying).toBe(true);
     env.clickButton(env.playButton(2));
     await env.waitForPlayer(500);
-    expect(env.component.player1.audio?.isPlaying).toBe(false);
+    expect(env.component.player1.isPlaying).toBe(false);
     env.clickButton(env.pauseButton(2));
-    expect(env.component.player2.audio?.isPlaying).toBe(false);
+    expect(env.component.player2.isPlaying).toBe(false);
   });
 
   it('disables the audio player when audio is reset', async () => {
@@ -63,16 +63,16 @@ describe('CheckingAudioPlayerComponent', () => {
       '<app-checking-audio-player #player1 id="player1" source="' + audioFile + '"></app-checking-audio-player>';
     const env = new TestEnvironment(template);
     await env.waitForPlayer(playerLoadTimeMs);
-    expect(env.component.player1.audio).not.toBeUndefined();
+    expect(env.component.player1.hasSource).toBe(true);
     env.component.player1.source = '';
-    expect(env.component.player1.audio).toBeUndefined();
+    expect(env.component.player1.hasSource).toBe(false);
   });
 
   it('it notifies the user when audio is unavailable offline', async () => {
     const template = `<app-checking-audio-player #player1 source="https://"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
-    expect(env.component.player1.audio).not.toBeUndefined();
+    expect(env.component.player1.hasSource).toBe(true);
     expect(env.audioNotAvailableMessage).not.toBeNull();
   });
 
@@ -80,7 +80,7 @@ describe('CheckingAudioPlayerComponent', () => {
     const template = `<app-checking-audio-player #player1 source="${audioFile}"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
-    expect(env.component.player1.audio).not.toBeUndefined();
+    expect(env.component.player1.hasSource).toBe(true);
     expect(env.audioNotAvailableMessage).toBeNull();
   });
 
@@ -88,7 +88,7 @@ describe('CheckingAudioPlayerComponent', () => {
     const template = `<app-checking-audio-player #player1 source="${audioFile}"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
-    expect(env.component.player1.audio?.isAudioAvailable).toBe(true);
+    expect(env.component.player1.hasSource).toBe(true);
     // The browser is online, but the component thinks it is offline. This simulates the scenario where audio data is
     // already loaded, but the browser is offline.
     expect(env.audioNotAvailableMessage).toBeNull();
@@ -195,7 +195,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  async waitForPlayer(ms: number): Promise<void> {
+  async waitForPlayer(ms: number) {
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }
