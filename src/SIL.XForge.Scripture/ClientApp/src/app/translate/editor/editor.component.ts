@@ -178,6 +178,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private shouldNoteThreadsRespondToEdits: boolean = false;
   private commenterSelectedVerseRef?: VerseRef;
   private scrollSubscription?: Subscription;
+  private readonly fabDiameter = 40;
+  private readonly fabHorizMargin = 20;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -1493,10 +1495,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     setTimeout(() => {
       const targetRect: DOMRect | undefined = this.targetContainer?.nativeElement.getBoundingClientRect();
       if (targetRect != null) {
-        const adjustment: number = this.isTargetRightToLeft ? 20 : -60;
-        const leftCoordinate: number =
-          (this.isTargetRightToLeft ? targetRect.left : targetRect.right - targetRect.left) + adjustment;
-        this.insertNoteFabLeft = `${leftCoordinate}px`;
+        const targetLeftBoundary: number = this.fabHorizMargin;
+        const targetRightBoundary: number = targetRect.right - targetRect.left - this.fabHorizMargin - this.fabDiameter;
+        const leftOffset: number = this.isTargetRightToLeft ? targetLeftBoundary : targetRightBoundary;
+        this.insertNoteFabLeft = `${leftOffset}px`;
       }
     }, 10);
   }
@@ -1967,13 +1969,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.scrollSubscription = this.subscribe(fromEvent(editor.root, 'scroll'), () => {
       if (this.insertNoteFab == null || this.target == null || this.targetContainer == null) return;
       const bounds: DOMRect = this.targetContainer.nativeElement.getBoundingClientRect();
-      const fabHeight = 40;
       const editorMargin = 5;
 
       // bound the FAB to the top of the editor
       let scrollTop: number = Math.min(this.target.selectionBoundsTop - editorMargin, editor.root.scrollTop);
       // bound the FAB to the bottom of the editor
-      const targetContainerBottom: number = bounds.bottom - bounds.top - fabHeight - editorMargin;
+      const targetContainerBottom: number = bounds.bottom - bounds.top - this.fabDiameter - editorMargin;
       const minScroll: number = Math.max(this.target.selectionBoundsTop - targetContainerBottom, 0);
       if (scrollTop < minScroll) {
         scrollTop = minScroll;
