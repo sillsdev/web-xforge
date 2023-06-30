@@ -1,9 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
+import { BuildDto } from 'src/app/machine-api/build-dto';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { SubscriptionDisposable } from '../../../xforge-common/subscription-disposable';
-import { DraftGenerationService, DraftJob } from './draft-generation.service';
+import { BuildStates } from '../../machine-api/build-states';
+import { ACTIVE_BUILD_STATES, DraftGenerationService } from './draft-generation.service';
 
 @Component({
   selector: 'app-generate-draft',
@@ -12,23 +15,30 @@ import { DraftGenerationService, DraftJob } from './draft-generation.service';
 })
 export class GenerateDraftComponent extends SubscriptionDisposable implements OnInit {
   constructor(
+    private readonly matDialog: MatDialog,
     private readonly dialog: DialogService,
-    private readonly activatedProject: ActivatedProjectService,
-    private readonly draftGenerationService: DraftGenerationService
+    public readonly activatedProject: ActivatedProjectService,
+    private readonly draftGenerationService: DraftGenerationService,
+    @Inject(ACTIVE_BUILD_STATES) private readonly activeBuildStates: BuildStates[]
   ) {
     super();
   }
 
-  status: string = 'init';
-  progress = 0;
+  draftJob?: BuildDto;
+
+  draftViewerUrl = `/projects/${this.activatedProject.projectId}/draft-preview`;
 
   ngOnInit(): void {
     if (this.activatedProject.projectId) {
       this.subscribe(
         this.draftGenerationService.getBuildProgress(this.activatedProject.projectId),
-        (draftRequest: DraftJob) => {
-          this.status = draftRequest.state;
-          this.progress = draftRequest.percentCompleted;
+        (draftJob?: BuildDto) => {
+          this.draftJob = draftJob;
+
+          // Handle automatic closing of dialog if job finishes while cancel dialog is open
+          if (!this.canCancel()) {
+            this.matDialog.closeAll();
+          }
         }
       );
     }
@@ -40,7 +50,7 @@ export class GenerateDraftComponent extends SubscriptionDisposable implements On
 
   async cancel(): Promise<void> {
     if (this.canCancel()) {
-      if (this.status === 'generating') {
+      if (this.draftJob?.state === BuildStates.Active) {
         const result = await this.dialog.confirm(
           of('Are you sure you want to cancel generating the draft?'),
           of('Yes, cancel draft generation'),
@@ -57,7 +67,19 @@ export class GenerateDraftComponent extends SubscriptionDisposable implements On
   }
 
   isDraftInProgress(): boolean {
-    return this.status === 'queued' || this.status === 'generating';
+    return this.activeBuildStates.includes(this.draftJob?.state as BuildStates);
+  }
+
+  isDraftQueued(): boolean {
+    return [BuildStates.Queued, BuildStates.Pending].includes(this.draftJob?.state as BuildStates);
+  }
+
+  isDraftActive(): boolean {
+    return (this.draftJob?.state as BuildStates) === BuildStates.Active;
+  }
+
+  isDraftComplete(): boolean {
+    return (this.draftJob?.state as BuildStates) === BuildStates.Completed;
   }
 
   canCancel(): boolean {
