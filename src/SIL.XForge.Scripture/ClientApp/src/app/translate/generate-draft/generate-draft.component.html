@@ -1,4 +1,4 @@
-<mat-card *ngIf="status !== 'generated'">
+<mat-card>
   <h1 mat-card-title>Generate back translation drafts</h1>
 
   <mat-divider inset></mat-divider>
@@ -23,44 +23,53 @@
 
   <mat-divider inset></mat-divider>
 
-  <ng-container *ngIf="status === 'init'">
-    <h3>Draft generation</h3>
-    <p>
-      Click "Generate draft" to start the process of generating a back translation draft. This will take at least a few
-      hours.
-    </p>
-  </ng-container>
+  <section *ngIf="isDraftComplete() || !isDraftInProgress()" class="view-or-create-options">
+    <ng-container *ngIf="isDraftComplete()">
+      <div>
+        <h3>Preview draft</h3>
+        <p>
+          Go to <a routerLink="/projects/{{ activatedProject.projectId }}/draft-preview">draft viewer</a> to preview and
+          apply the generated draft to chapters of your choice.
+        </p>
+        <a mat-flat-button color="primary" routerLink="/projects/{{ activatedProject.projectId }}/draft-preview">
+          Preview draft
+        </a>
+      </div>
 
-  <ng-container *ngIf="status === 'queued'">
+      <mat-divider inset vertical></mat-divider>
+    </ng-container>
+
+    <div *ngIf="!isDraftInProgress()">
+      <h3>Generate new draft</h3>
+      <p>
+        Click <em>"Generate draft"</em> to start the process of generating a back translation draft. This will take at
+        least a few hours.
+      </p>
+
+      <button *ngIf="!isDraftInProgress()" mat-flat-button color="primary" (click)="generateDraft()">
+        Generate draft
+      </button>
+    </div>
+  </section>
+
+  <section *ngIf="isDraftQueued()">
     <h3>Draft queued</h3>
     <p>The back translation draft has been queued. Please check back later.</p>
-  </ng-container>
+    <button *ngIf="canCancel()" mat-flat-button color="primary" (click)="cancel()">Cancel generation</button>
+  </section>
 
-  <ng-container *ngIf="status === 'generating'">
+  <section *ngIf="isDraftActive()">
     <h3>Draft in progress</h3>
     <p>Generating draft; this can take a few hours.</p>
-
-    <div class="working-animation">
-      <mat-icon>settings</mat-icon>
-      <mat-icon class="material-icons-outlined">settings</mat-icon>
-      <mat-icon>settings</mat-icon>
-    </div>
-  </ng-container>
-
-  <mat-card-actions>
-    <button *ngIf="status === 'init'" mat-flat-button color="primary" (click)="generateDraft()">Generate draft</button>
+    <app-working-animated-indicator></app-working-animated-indicator>
     <button *ngIf="canCancel()" mat-flat-button color="primary" (click)="cancel()">Cancel generation</button>
-  </mat-card-actions>
+  </section>
 
   <mat-card-footer>
     <mat-progress-bar
       *ngIf="isDraftInProgress()"
-      [mode]="status === 'queued' ? 'indeterminate' : 'determinate'"
-      [value]="progress"
+      [mode]="isDraftQueued() ? 'indeterminate' : 'determinate'"
+      [value]="draftJob?.percentCompleted ?? 0"
     ></mat-progress-bar>
   </mat-card-footer>
 </mat-card>
-
-<ng-container *ngIf="status === 'generated'">
-  <app-draft-viewer></app-draft-viewer>
-</ng-container>
