@@ -146,6 +146,14 @@
             {{ t("overview") }}
           </a>
           <a
+            *ngIf="featureFlags.showNmtDrafting.enabled"
+            mat-list-item
+            [appRouterLink]="getRouterLink('generate-draft')"
+          >
+            <mat-icon mat-list-icon>draw</mat-icon>
+            Generate draft <span class="nav-label">beta</span>
+          </a>
+          <a
             mat-list-item
             *ngFor="let text of texts"
             [appRouterLink]="getRouterLink('translate', getBookId(text))"
