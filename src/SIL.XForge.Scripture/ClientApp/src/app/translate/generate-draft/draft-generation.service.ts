@@ -107,7 +107,7 @@ export class DraftGenerationService {
       (result: DraftSegmentMap, curr: PreTranslation) => {
         let verseRef = VerseRef.parse(curr.reference);
         const segmentRef = `verse_${verseRef.chapter}_${verseRef.verse}`;
-        result[segmentRef] = curr.translation;
+        result[segmentRef] = curr.translation.trimEnd() + ' '; // Ensure single space at end
         return result;
       },
       {}
