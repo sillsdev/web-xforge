@@ -3,14 +3,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { AudioStatus } from 'src/app/shared/audio/audio-player';
+import { AudioPlayerComponent } from 'src/app/shared/audio/audio-player.component';
 import { instance, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { AudioTimePipe, CheckingAudioPlayerNewComponent } from './checking-audio-player-new.component';
+import { AudioTimePipe } from '../checking-audio-player/checking-audio-player.component';
+import { CheckingAudioPlayerNewComponent } from './checking-audio-player-new.component';
 
-describe('CheckingAudioPlayerNewComponent', () => {
+fdescribe('CheckingAudioPlayerNewComponent', () => {
   const audioFile = 'test-audio-player.webm';
   const audioFileB = 'test-audio-player-b.webm';
   const playerLoadTimeMs = 1000;
@@ -22,7 +24,7 @@ describe('CheckingAudioPlayerNewComponent', () => {
       '"></app-checking-audio-player-new>';
     const env = new TestEnvironment(template);
     await env.waitForPlayer(playerLoadTimeMs);
-    expect(env.component.player1.enabled).toBe(true);
+    expect(env.component.player1.audioPlayer?.enabled).toBe(true);
     expect(env.duration).toBe('0:05');
     expect(env.currentTime).toBe('0:00');
   });
@@ -53,12 +55,12 @@ describe('CheckingAudioPlayerNewComponent', () => {
     await env.waitForPlayer(playerLoadTimeMs);
     env.clickButton(env.playButton(1));
     await env.waitForPlayer(500);
-    expect(env.component.player1.audio?.isPlaying).toBe(true);
+    expect(env.component.player1.audioPlayer?.audio?.isPlaying).toBe(true);
     env.clickButton(env.playButton(2));
     await env.waitForPlayer(500);
-    expect(env.component.player1.audio?.isPlaying).toBe(false);
+    expect(env.component.player1.audioPlayer?.audio?.isPlaying).toBe(false);
     env.clickButton(env.pauseButton(2));
-    expect(env.component.player2.audio?.isPlaying).toBe(false);
+    expect(env.component.player2.audioPlayer?.audio?.isPlaying).toBe(false);
   });
 
   it('disables the audio player when audio is reset', async () => {
@@ -68,16 +70,16 @@ describe('CheckingAudioPlayerNewComponent', () => {
       '"></app-checking-audio-player-new>';
     const env = new TestEnvironment(template);
     await env.waitForPlayer(playerLoadTimeMs);
-    expect(env.component.player1.audio).not.toBeUndefined();
+    expect(env.component.player1.audioPlayer?.audio).not.toBeUndefined();
     env.component.player1.source = '';
-    expect(env.component.player1.audio).toBeUndefined();
+    expect(env.component.player1.audioPlayer?.audio).toBeUndefined();
   });
 
   it('it notifies the user when audio is unavailable offline', async () => {
     const template = `<app-checking-audio-player-new #player1 source="https://"></app-checking-audio-player-new>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
-    expect(env.component.player1.audio).not.toBeUndefined();
+    expect(env.component.player1.audioPlayer?.audio).not.toBeUndefined();
     expect(env.audioNotAvailableMessage).not.toBeNull();
   });
 
@@ -85,7 +87,7 @@ describe('CheckingAudioPlayerNewComponent', () => {
     const template = `<app-checking-audio-player-new #player1 source="${audioFile}"></app-checking-audio-player-new>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
-    expect(env.component.player1.audio).not.toBeUndefined();
+    expect(env.component.player1.audioPlayer?.audio).not.toBeUndefined();
     expect(env.audioNotAvailableMessage).toBeNull();
   });
 
@@ -93,7 +95,7 @@ describe('CheckingAudioPlayerNewComponent', () => {
     const template = `<app-checking-audio-player-new #player1 source="${audioFile}"></app-checking-audio-player-new>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
-    expect(env.component.player1.audio?.isAudioAvailable).toBe(true);
+    expect(env.component.player1.audioPlayer?.audio?.isAudioAvailable).toBe(true);
     // The browser is online, but the component thinks it is offline. This simulates the scenario where audio data is
     // already loaded, but the browser is offline.
     expect(env.audioNotAvailableMessage).toBeNull();
@@ -106,7 +108,7 @@ describe('CheckingAudioPlayerNewComponent', () => {
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.audioNotAvailableMessage).not.toBeNull();
     expect(env.audioNotAvailableMessage.query(By.css('#error-load'))).not.toBeNull();
-    expect(env.component.player1.audioStatus).toEqual(AudioStatus.Unavailable);
+    expect(env.component.player1.audioPlayer?.audioStatus).toEqual(AudioStatus.Unavailable);
     expect(env.playButton(1)).toBeNull();
   });
 
@@ -117,7 +119,7 @@ describe('CheckingAudioPlayerNewComponent', () => {
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.audioNotAvailableMessage).not.toBeNull();
     expect(env.audioNotAvailableMessage.query(By.css('#error-load'))).not.toBeNull();
-    expect(env.component.player1.audioStatus).toEqual(AudioStatus.Offline);
+    expect(env.component.player1.audioPlayer?.audioStatus).toEqual(AudioStatus.Offline);
     expect(env.playButton(1)).toBeNull();
   });
 
@@ -127,7 +129,7 @@ describe('CheckingAudioPlayerNewComponent', () => {
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.audioNotAvailableMessage).not.toBeNull();
     expect(env.audioNotAvailableMessage.query(By.css('#error-load'))).not.toBeNull();
-    expect(env.component.player1.audioStatus).toEqual(AudioStatus.LocalNotAvailable);
+    expect(env.component.player1.audioPlayer?.audioStatus).toEqual(AudioStatus.LocalNotAvailable);
     expect(env.playButton(1)).toBeNull();
   });
 });
@@ -148,7 +150,7 @@ class TestEnvironment {
 
   constructor(template: string, isOnline = true) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, CheckingAudioPlayerNewComponent, AudioTimePipe],
+      declarations: [HostComponent, CheckingAudioPlayerNewComponent, AudioPlayerComponent, AudioTimePipe],
       providers: [
         { provide: PwaService, useFactory: () => instance(this.mockedPwaService) },
         { provide: I18nService, useFactory: () => instance(this.mockedI18nService) }

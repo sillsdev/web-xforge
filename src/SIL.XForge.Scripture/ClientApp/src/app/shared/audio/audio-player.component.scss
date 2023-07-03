@@ -1,0 +1,23 @@
+.content {
+  display: flex;
+  align-items: center;
+
+  .duration,
+  .current-time {
+    padding: 0 10px;
+  }
+  .slider {
+    flex: 1;
+    width: 100%;
+    overflow: hidden; // prevent overflow when UI is RTL
+  }
+}
+
+.audio-not-available {
+  display: flex;
+  align-items: center;
+
+  padding: 5px;
+  // Same spacing as .content .current-time
+  column-gap: 10px;
+}
