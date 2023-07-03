@@ -49,6 +49,7 @@ describe('GenerateDraftComponent', () => {
       component.ngOnInit();
       expect(draftGenerationService.getBuildProgress).toHaveBeenCalledWith(activatedProjectService.projectId!);
       expect(component.draftJob).toEqual(buildDto);
+      expect(component.draftViewerUrl).toEqual('/projects/testProjectId/draft-preview');
     });
   });
 
