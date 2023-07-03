@@ -6,7 +6,8 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { SubscriptionDisposable } from '../../../xforge-common/subscription-disposable';
 import { BuildStates } from '../../machine-api/build-states';
-import { ACTIVE_BUILD_STATES, DraftGenerationService } from './draft-generation.service';
+import { ACTIVE_BUILD_STATES } from './draft-generation';
+import { DraftGenerationService } from './draft-generation.service';
 
 @Component({
   selector: 'app-generate-draft',
@@ -14,19 +15,18 @@ import { ACTIVE_BUILD_STATES, DraftGenerationService } from './draft-generation.
   styleUrls: ['./generate-draft.component.scss']
 })
 export class GenerateDraftComponent extends SubscriptionDisposable implements OnInit {
+  draftJob?: BuildDto;
+  draftViewerUrl = `/projects/${this.activatedProject.projectId}/draft-preview`;
+
   constructor(
     private readonly matDialog: MatDialog,
-    private readonly dialog: DialogService,
+    private readonly dialogService: DialogService,
     public readonly activatedProject: ActivatedProjectService,
     private readonly draftGenerationService: DraftGenerationService,
     @Inject(ACTIVE_BUILD_STATES) private readonly activeBuildStates: BuildStates[]
   ) {
     super();
   }
-
-  draftJob?: BuildDto;
-
-  draftViewerUrl = `/projects/${this.activatedProject.projectId}/draft-preview`;
 
   ngOnInit(): void {
     if (this.activatedProject.projectId) {
@@ -51,7 +51,7 @@ export class GenerateDraftComponent extends SubscriptionDisposable implements On
   async cancel(): Promise<void> {
     if (this.canCancel()) {
       if (this.draftJob?.state === BuildStates.Active) {
-        const result = await this.dialog.confirm(
+        const result = await this.dialogService.confirm(
           of('Are you sure you want to cancel generating the draft?'),
           of('Yes, cancel draft generation'),
           of('No')
