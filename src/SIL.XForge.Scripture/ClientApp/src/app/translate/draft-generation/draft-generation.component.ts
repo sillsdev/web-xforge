@@ -10,9 +10,9 @@ import { ACTIVE_BUILD_STATES } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 
 @Component({
-  selector: 'app-generate-draft',
-  templateUrl: './generate-draft.component.html',
-  styleUrls: ['./generate-draft.component.scss']
+  selector: 'app-draft-generation',
+  templateUrl: './draft-generation.component.html',
+  styleUrls: ['./draft-generation.component.scss']
 })
 export class GenerateDraftComponent extends SubscriptionDisposable implements OnInit {
   draftJob?: BuildDto;
