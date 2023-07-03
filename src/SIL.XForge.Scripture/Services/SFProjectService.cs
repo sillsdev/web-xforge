@@ -1076,7 +1076,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// The role may be the PT role from PT Registry, or a SF role.
     /// The returned Attempt will be Success if they have a non-None role, or otherwise Failure.
     /// </summary>
-    protected async override Task<Attempt<string>> TryGetProjectRoleAsync(SFProject project, string userId)
+    protected override async Task<Attempt<string>> TryGetProjectRoleAsync(SFProject project, string userId)
     {
         Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userId);
         if (userSecretAttempt.TryResult(out UserSecret userSecret))

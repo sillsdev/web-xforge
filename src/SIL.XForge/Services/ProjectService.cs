@@ -288,7 +288,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         await userDoc.SubmitJson0OpAsync(op => op.Add(u => u.Sites[siteId].Projects, projectDoc.Id));
     }
 
-    internal protected virtual async Task RemoveUserFromProjectAsync(
+    protected internal virtual async Task RemoveUserFromProjectAsync(
         IConnection conn,
         IDocument<TModel> projectDoc,
         IDocument<User> userDoc
