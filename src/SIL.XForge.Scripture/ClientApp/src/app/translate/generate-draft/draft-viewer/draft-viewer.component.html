@@ -19,26 +19,13 @@
           <mat-icon>edit</mat-icon>
           Edit
         </button>
-        <button mat-icon-button (click)="editChapter()">
-          <mat-icon>edit</mat-icon>
-        </button>
-
-        <ng-container *ngIf="!isDraftApplied && hasDraft">
-          <button mat-button color="primary" (click)="applyDraft()" class="apply-draft-button">
-            <mat-icon>auto_awesome</mat-icon>
-            Apply to project
-          </button>
-          <button mat-icon-button color="primary" (click)="applyDraft()" class="apply-draft-icon-button">
-            <mat-icon>auto_awesome</mat-icon>
-          </button>
-        </ng-container>
       </div>
     </mat-card>
   </div>
 
   <ng-container *ngIf="sourceTextDocId && targetTextDocId">
-    <mat-card class="source">
-      <h2 mat-card-title>{{ sourceProject?.shortName }}</h2>
+    <div class="source">
+      <h2>{{ sourceProject?.shortName }}</h2>
       <app-text
         #sourceText
         [isReadOnly]="true"
@@ -47,15 +34,21 @@
         [isRightToLeft]="!!sourceProject?.isRightToLeft"
         [id]="sourceTextDocId"
       ></app-text>
-    </mat-card>
+    </div>
 
-    <mat-card class="draft">
-      <h2 mat-card-title>
+    <div class="draft">
+      <h2>
         {{ targetProject?.shortName }}
         <span *ngIf="hasDraft" class="draft-indicator" [ngClass]="{ applied: isDraftApplied }">
           Draft {{ isDraftApplied ? " applied" : "" }}
           <mat-icon class="check-icon">check</mat-icon>
         </span>
+        <div *ngIf="!isDraftApplied && hasDraft" class="apply-draft-button-container">
+          <button mat-flat-button color="primary" (click)="applyDraft()">
+            <mat-icon>auto_awesome</mat-icon>
+            Apply to project
+          </button>
+        </div>
       </h2>
       <app-text
         [ngClass]="{ applied: isDraftApplied }"
@@ -66,6 +59,6 @@
         [isRightToLeft]="!!targetProject?.isRightToLeft"
         [id]="targetTextDocId"
       ></app-text>
-    </mat-card>
+    </div>
   </ng-container>
 </div>
