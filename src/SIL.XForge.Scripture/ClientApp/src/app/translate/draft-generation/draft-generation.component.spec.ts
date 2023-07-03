@@ -5,7 +5,7 @@ import { BuildStates } from 'src/app/machine-api/build-states';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { DraftGenerationService } from './draft-generation.service';
-import { GenerateDraftComponent } from './generate-draft.component';
+import { GenerateDraftComponent } from './draft-generation.component';
 
 describe('GenerateDraftComponent', () => {
   let component: GenerateDraftComponent;
