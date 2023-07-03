@@ -12,10 +12,10 @@ import { SuggestionsComponent } from './editor/suggestions.component';
 import { TrainingProgressComponent } from './training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview/translate-overview.component';
 import { TranslateRoutingModule } from './translate-routing.module';
-import { GenerateDraftComponent } from './generate-draft/generate-draft.component';
-import { DraftViewerComponent } from './generate-draft/draft-viewer/draft-viewer.component';
-import { DraftGenerationService } from './generate-draft/draft-generation.service';
-import { MockDraftGenerationService } from './generate-draft/draft-generation.mock.service';
+import { GenerateDraftComponent } from './draft-generation/draft-generation.component';
+import { DraftViewerComponent } from './draft-generation/draft-viewer/draft-viewer.component';
+import { DraftGenerationService } from './draft-generation/draft-generation.service';
+import { MockDraftGenerationService } from './draft-generation/draft-generation.mock.service';
 
 @NgModule({
   declarations: [
