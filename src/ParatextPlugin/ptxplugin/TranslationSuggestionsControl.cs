@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
 using Microsoft.Web.WebView2.Core;
+using Newtonsoft.Json;
 using Paratext.PluginInterfaces;
 using SIL.SFPlugin.Properties;
 
@@ -14,6 +15,16 @@ namespace SIL.SFPlugin
     public partial class TranslationSuggestionsControl : EmbeddedPluginControl
     {
         /// <summary>
+        /// The project.
+        /// </summary>
+        private IProject _project;
+
+        /// <summary>
+        /// The verse reference.
+        /// </summary>
+        private IVerseRef _verseRef;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="TranslationSuggestionsControl"/> class.
         /// </summary>
         public TranslationSuggestionsControl() => InitializeComponent();
@@ -21,13 +32,17 @@ namespace SIL.SFPlugin
         /// <inheritdoc />
         public override async void OnAddedToParent(IPluginChildWindow parent, IWindowPluginHost host, string state)
         {
-            // Set up the window
+            // Set up the window and event handlers
             parent.SetTitle(Resources.PluginTitle);
+            _project = parent.CurrentState.Project;
+            _verseRef = parent.CurrentState.VerseRef;
+            parent.ProjectChanged += ProjectChanged;
+            parent.VerseRefChanged += VerseRefChanged;
 
             // Set up the web view
             string initialUrl = host.UserSettings.IsInternetAccessEnabled
-                ? "https://scriptureforge.org/"
-                : "http://localhost:5000/";
+                ? "https://scriptureforge.org/draft-suggestions"
+                : "http://localhost:5000/draft-suggestions";
             try
             {
                 // Change the cache location from the program directory to the temp directory
@@ -87,6 +102,9 @@ namespace SIL.SFPlugin
                     throw;
                 }
             }
+
+            // Send the message to Scripture Forge
+            GenerateTranslationSuggestions();
         }
 
         /// <inheritdoc />
@@ -94,5 +112,44 @@ namespace SIL.SFPlugin
 
         /// <inheritdoc />
         public override void DoLoad(IProgressInfo progressInfo) { }
+
+        /// <summary>
+        /// Sends a message to Scripture Forge to generate translation suggestions.
+        /// </summary>
+        private void GenerateTranslationSuggestions()
+        {
+            var request = new TranslationSuggestionsRequest
+            {
+                BBBCCCVVV = _verseRef.BBBCCCVVV,
+                ParatextId = _project.ID,
+            };
+            WebView.CoreWebView2.PostWebMessageAsJson(JsonConvert.SerializeObject(request));
+        }
+
+        /// <summary>
+        /// The IPluginChildWindow ProjectChanged event handler.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="newProject">The new project.</param>
+        private void ProjectChanged(IPluginChildWindow sender, IProject newProject)
+        {
+            _project = newProject;
+            GenerateTranslationSuggestions();
+        }
+
+        /// <summary>
+        /// The IPluginChildWindow VerseRefChanged event handler.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="oldReference">The old reference.</param>
+        /// <param name="newReference">The new reference.</param>
+        private void VerseRefChanged(IPluginChildWindow sender, IVerseRef oldReference, IVerseRef newReference)
+        {
+            if (_verseRef?.BBBCCCVVV != newReference.BBBCCCVVV)
+            {
+                _verseRef = newReference;
+                GenerateTranslationSuggestions();
+            }
+        }
     }
 }

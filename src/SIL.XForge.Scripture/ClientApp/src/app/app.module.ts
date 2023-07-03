@@ -34,6 +34,7 @@ import { UsersModule } from './users/users.module';
 import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-note-dialog.component';
 import { JoinComponent } from './join/join.component';
 import { SharedModule } from './shared/shared.module';
+import { DraftSuggestionsComponent } from './draft-suggestions/draft-suggestions.component';
 
 @NgModule({
   declarations: [
@@ -52,7 +53,8 @@ import { SharedModule } from './shared/shared.module';
     ProjectSelectComponent,
     SyncProgressComponent,
     TextNoteDialogComponent,
-    JoinComponent
+    JoinComponent,
+    DraftSuggestionsComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),

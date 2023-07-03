@@ -11,6 +11,7 @@ import { SettingsAuthGuard, SyncAuthGuard } from './shared/project-router.guard'
 import { StartComponent } from './start/start.component';
 import { SyncComponent } from './sync/sync.component';
 import { JoinComponent } from './join/join.component';
+import { DraftSuggestionsComponent } from './draft-suggestions/draft-suggestions.component';
 
 const routes: Routes = [
   { path: 'callback/auth0', component: StartComponent, canActivate: [AuthGuard] },
@@ -21,6 +22,7 @@ const routes: Routes = [
   { path: 'projects/:projectId/settings', component: SettingsComponent, canActivate: [SettingsAuthGuard] },
   { path: 'projects/:projectId/sync', component: SyncComponent, canActivate: [SyncAuthGuard] },
   { path: 'projects/:projectId', component: ProjectComponent, canActivate: [AuthGuard] },
+  { path: 'draft-suggestions', component: DraftSuggestionsComponent, canActivate: [AuthGuard] },
   { path: 'projects', component: StartComponent, canActivate: [AuthGuard] },
   { path: 'system-administration', component: SystemAdministrationComponent, canActivate: [SystemAdminAuthGuard] },
   { path: '**', component: PageNotFoundComponent }

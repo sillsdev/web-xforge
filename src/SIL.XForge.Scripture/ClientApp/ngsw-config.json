@@ -38,6 +38,8 @@
     "/login/",
     "/connect-project",
     "/connect-project/",
+    "/draft-suggestions",
+    "/draft-suggestions/",
     "/system-administration",
     "/system-administration/"
   ]
