@@ -9,55 +9,30 @@ h1 {
 
 h2 {
   display: flex;
-  align-items: baseline;
+  align-items: flex-end;
   gap: 32px;
   min-height: 36px;
+  font-weight: 500;
+  margin: 0 0 2px;
 }
 
 em {
   font-weight: 500;
 }
 
+[mat-button],
+[mat-flat-button] {
+  mat-icon {
+    // Smaller icons on button when accompanied by text
+    font-size: 22px;
+    margin-inline-end: 4px;
+  }
+}
+
 .draft-buttons {
   display: flex;
   margin-inline-start: 8px;
-
-  [mat-button] {
-    border-inline-start: 1px solid $border-color;
-  }
-
-  // Smaller icons on button when accompanied by text on larger screens
-  @include media-breakpoint-up(sm) {
-    mat-icon {
-      font-size: 22px;
-      margin-inline-end: 4px;
-    }
-
-    // Hide icon-only button when lar
-    [mat-icon-button] {
-      display: none;
-    }
-  }
-
-  // Show only icon when small screen
-  @include media-breakpoint-down(xs) {
-    [mat-button] {
-      display: none;
-    }
-
-    [mat-icon-button] {
-      display: inline-block;
-    }
-  }
-}
-
-.apply-draft-button {
-  animation: glow-button 1.2s infinite alternate;
-}
-
-.apply-draft-icon-button {
-  color: cornflowerblue;
-  animation: glow-icon 0.8s infinite alternate;
+  border-inline-start: 1px solid $border-color;
 }
 
 .draft-viewer-body {
@@ -104,6 +79,7 @@ em {
   font-family: monospace;
   text-transform: uppercase;
   font-size: 18px;
+  line-height: 24px;
   display: inline-flex;
   align-items: flex-end;
 
@@ -124,6 +100,12 @@ em {
   height: auto;
   font-weight: 700;
   margin-inline-start: 16px;
+}
+
+.apply-draft-button-container {
+  flex-grow: 1;
+  display: flex;
+  justify-content: end;
 }
 
 app-text {
@@ -160,23 +142,5 @@ app-text {
   }
   to {
     opacity: 0;
-  }
-}
-
-@keyframes glow-button {
-  from {
-    background-color: transparent;
-  }
-  to {
-    background-color: #6494ed41;
-  }
-}
-
-@keyframes glow-icon {
-  from {
-    opacity: 0.3;
-  }
-  to {
-    opacity: 1;
   }
 }
