@@ -14,7 +14,6 @@ import { TranslateOverviewComponent } from './translate-overview/translate-overv
 import { TranslateRoutingModule } from './translate-routing.module';
 import { GenerateDraftComponent } from './generate-draft/generate-draft.component';
 import { DraftViewerComponent } from './generate-draft/draft-viewer/draft-viewer.component';
-import { DraftAvailableIndicatorComponent } from './editor/draft-available-indicator/draft-available-indicator.component';
 import { DraftGenerationService } from './generate-draft/draft-generation.service';
 import { MockDraftGenerationService } from './generate-draft/draft-generation.mock.service';
 
@@ -28,8 +27,7 @@ import { MockDraftGenerationService } from './generate-draft/draft-generation.mo
     TrainingProgressComponent,
     TranslateOverviewComponent,
     GenerateDraftComponent,
-    DraftViewerComponent,
-    DraftAvailableIndicatorComponent
+    DraftViewerComponent
   ],
   imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, XForgeCommonModule, TranslocoModule],
   providers: [
