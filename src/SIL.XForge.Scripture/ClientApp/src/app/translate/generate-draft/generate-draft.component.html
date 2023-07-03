@@ -28,15 +28,13 @@
       <div>
         <h3>Preview draft</h3>
         <p>
-          Go to <a routerLink="/projects/{{ activatedProject.projectId }}/draft-preview">draft viewer</a> to preview and
-          apply the generated draft to chapters of your choice.
+          Go to <a [routerLink]="draftViewerUrl">draft viewer</a> to preview and apply the generated draft to chapters
+          of your choice.
         </p>
-        <a mat-flat-button color="primary" routerLink="/projects/{{ activatedProject.projectId }}/draft-preview">
-          Preview draft
-        </a>
+        <a mat-flat-button color="primary" [routerLink]="draftViewerUrl"> Preview draft </a>
       </div>
 
-      <mat-divider inset vertical></mat-divider>
+      <mat-divider inset vertical data-text="or"></mat-divider>
     </ng-container>
 
     <div *ngIf="!isDraftInProgress()">
