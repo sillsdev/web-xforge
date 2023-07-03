@@ -21,6 +21,7 @@ src/RealtimeServer/lib/
 [Dd]ebug*/
 obj/
 [Rr]elease*/
+packages/
 !/src/releasenotes
 _ReSharper*/
 *.user
