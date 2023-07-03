@@ -19,8 +19,10 @@
 }
 
 .language-label {
-  height: 28px;
+  height: 36px; // To match label containing button
   line-height: 28px;
+  display: flex;
+  align-items: end;
 }
 
 .toolbar {
@@ -124,5 +126,21 @@ app-text {
   .fab-action-buttons {
     display: flex;
     justify-content: flex-end;
+  }
+}
+
+.project-name-bar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 2px;
+
+  button {
+    margin-inline-start: 10px;
+
+    mat-icon {
+      font-size: 22px;
+      margin-inline-end: 4px;
+    }
   }
 }
