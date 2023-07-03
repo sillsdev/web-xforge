@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { isEmpty } from 'lodash-es';
 import isString from 'lodash-es/isString';
 import { DeltaOperation } from 'quill';
-import { DraftSegmentMap } from './../draft-generation.service';
+import { DraftSegmentMap } from '../draft-generation';
 
 @Injectable({
   providedIn: 'root'
