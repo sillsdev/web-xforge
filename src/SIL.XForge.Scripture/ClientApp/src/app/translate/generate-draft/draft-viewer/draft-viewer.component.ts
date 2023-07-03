@@ -18,7 +18,8 @@ import { SFProjectService } from 'src/app/core/sf-project.service';
 import { TextComponent } from 'src/app/shared/text/text.component';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { DraftGenerationService, DraftSegmentMap } from '../draft-generation.service';
+import { DraftSegmentMap } from '../draft-generation';
+import { DraftGenerationService } from '../draft-generation.service';
 import { DraftViewerService } from './draft-viewer.service';
 
 @Component({
