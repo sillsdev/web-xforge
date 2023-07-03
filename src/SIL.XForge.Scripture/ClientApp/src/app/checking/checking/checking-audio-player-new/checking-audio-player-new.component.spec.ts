@@ -2,7 +2,7 @@ import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
-import { AudioStatus } from 'src/app/shared/audio-player';
+import { AudioStatus } from 'src/app/shared/audio/audio-player';
 import { instance, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { PwaService } from 'xforge-common/pwa.service';
