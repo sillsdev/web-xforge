@@ -16,7 +16,7 @@ import { DraftGenerationService } from './draft-generation.service';
 })
 export class GenerateDraftComponent extends SubscriptionDisposable implements OnInit {
   draftJob?: BuildDto;
-  draftViewerUrl = `/projects/${this.activatedProject.projectId}/draft-preview`;
+  draftViewerUrl?: string;
 
   constructor(
     private readonly matDialog: MatDialog,
@@ -41,6 +41,8 @@ export class GenerateDraftComponent extends SubscriptionDisposable implements On
           }
         }
       );
+
+      this.draftViewerUrl = `/projects/${this.activatedProject.projectId}/draft-preview`;
     }
   }
 
