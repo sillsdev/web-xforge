@@ -9,7 +9,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import {
   AudioTimePipe,
   CheckingAudioPlayerNewComponent
-} from '../checking/checking/checking-audio-player-new/checking-audio-player-new.component';
+} from '../../checking/checking/checking-audio-player-new/checking-audio-player-new.component';
 
 const mockedPwaService = mock(PwaService);
 when(mockedPwaService.isOnline).thenReturn(true);

@@ -1,6 +1,6 @@
 import { Component, Input, OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { MatSliderChange } from '@angular/material/slider';
-import { AudioPlayer, AudioStatus } from 'src/app/shared/audio-player';
+import { AudioPlayer, AudioStatus } from 'src/app/shared/audio/audio-player';
 import { I18nService } from 'xforge-common/i18n.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
