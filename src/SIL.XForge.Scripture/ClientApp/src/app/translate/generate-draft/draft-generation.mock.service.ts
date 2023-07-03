@@ -1,10 +1,99 @@
-export interface PreTranslationData {
-  preTranslations: PreTranslation[];
-}
+import { reduce } from 'lodash-es';
+import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { BehaviorSubject, Observable, of, Subscription, timer } from 'rxjs';
+import { map, takeWhile } from 'rxjs/operators';
+import { BuildStates } from 'src/app/machine-api/build-states';
+import { BuildDto } from '../../machine-api/build-dto';
+import { DraftSegmentMap, PreTranslation, PreTranslationData } from './draft-generation';
 
-export interface PreTranslation {
-  reference: string;
-  translation: string;
+export class MockDraftGenerationService {
+  private readonly activeBuildStates = [BuildStates.Active, BuildStates.Pending, BuildStates.Queued];
+  private readonly job$ = new BehaviorSubject<BuildDto | undefined>(undefined);
+  private timerSub?: Subscription;
+  private readonly initialJobState: BuildDto = {
+    id: '',
+    href: '',
+    engine: { id: '', href: '' },
+    revision: 0,
+    state: BuildStates.Queued,
+    percentCompleted: 0,
+    message: ''
+  };
+
+  pollBuildProgress(projectId: string): Observable<BuildDto | undefined> {
+    return this.job$;
+  }
+  getBuildProgress(projectId: string): Observable<BuildDto | undefined> {
+    return this.job$;
+  }
+  startBuild(projectId: string): Observable<BuildDto | undefined> {
+    if (!this.activeBuildStates.includes(this.job$.value?.state as BuildStates)) {
+      this.startGeneration();
+    }
+    return this.job$;
+  }
+  cancelBuild(projectId: string): Observable<BuildDto | undefined> {
+    this.job$.next({ ...this.initialJobState, state: BuildStates.Canceled });
+    this.timerSub?.unsubscribe();
+    return this.job$;
+  }
+  getGeneratedDraft(projectId: string, book: number, chapter: number): Observable<DraftSegmentMap> {
+    return of({
+      preTranslations: samplePreTranslations[`${book}_${chapter}`]
+    }).pipe(map((data: PreTranslationData) => this.toDraftSegmentMap(data.preTranslations)));
+  }
+
+  private toDraftSegmentMap(preTranslations: PreTranslation[]): DraftSegmentMap {
+    return reduce(
+      preTranslations,
+      (result: DraftSegmentMap, curr: PreTranslation) => {
+        let verseRef = VerseRef.parse(curr.reference);
+        const segmentRef = `verse_${verseRef.chapter}_${verseRef.verse}`;
+        result[segmentRef] = curr.translation;
+        return result;
+      },
+      {}
+    );
+  }
+
+  // Mock generation
+  private startGeneration(): void {
+    const interval = 100;
+    const duration = 2000;
+    const pendingAfter = duration / 4;
+    const activeAfter = (duration / 4) * 2;
+    const generationTimer$ = timer(0, interval).pipe(
+      takeWhile(x => interval * x <= duration) // Inclusive of last emission
+    );
+
+    this.job$.next({ ...this.initialJobState });
+
+    this.timerSub = generationTimer$.subscribe((intervalNum: number) => {
+      const elapsed = intervalNum * interval;
+      const newStatus: BuildDto = { ...(this.job$.value ?? this.initialJobState) };
+
+      if (elapsed >= pendingAfter) {
+        newStatus.state = BuildStates.Pending;
+      }
+
+      if (elapsed >= activeAfter) {
+        newStatus.state = BuildStates.Active;
+      }
+
+      if (elapsed >= duration) {
+        newStatus.state = BuildStates.Completed;
+      }
+
+      if (newStatus.state === BuildStates.Active) {
+        newStatus.percentCompleted = (elapsed / duration) * 100;
+      }
+
+      // console.log('elapsed', elapsed);
+      // console.log('percentCompleted', newStatus.percentCompleted);
+      // console.log('state', newStatus.state);
+      this.job$.next(newStatus);
+    });
+  }
 }
 
 const samplePreTranslations1_1: PreTranslation[] = [
