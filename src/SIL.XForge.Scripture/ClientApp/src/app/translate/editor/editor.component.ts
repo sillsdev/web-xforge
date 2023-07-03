@@ -86,7 +86,7 @@ import {
   VERSE_REGEX,
   verseRefFromMouseEvent
 } from '../../shared/utils';
-import { DraftGenerationService, DraftSegmentMap } from '../generate-draft/draft-generation.service';
+import { DraftGenerationService } from '../generate-draft/draft-generation.service';
 import { DraftViewerService } from '../generate-draft/draft-viewer/draft-viewer.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
@@ -96,6 +96,7 @@ import {
 } from './suggestions-settings-dialog.component';
 import { Suggestion } from './suggestions.component';
 import { TranslateMetricsSession } from './translate-metrics-session';
+import { DraftSegmentMap } from '../generate-draft/draft-generation';
 
 export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 
