@@ -125,7 +125,7 @@ public class MachineApiServiceTests
         await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
 
         await env.TranslationEnginesClient.Received(1).CancelBuildAsync(TranslationEngine01, CancellationToken.None);
-        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueued);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
     }
 
     [Test]
@@ -2224,7 +2224,7 @@ public class MachineApiServiceTests
         public async Task QueuePreTranslationBuildAsync(DateTime? dateTime = null) =>
             await ProjectSecrets.UpdateAsync(
                 Project01,
-                u => u.Set(p => p.ServalData.PreTranslationQueued, dateTime ?? DateTime.UtcNow)
+                u => u.Set(p => p.ServalData.PreTranslationQueuedAt, dateTime ?? DateTime.UtcNow)
             );
     }
 }

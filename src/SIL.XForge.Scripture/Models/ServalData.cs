@@ -38,7 +38,7 @@ public class ServalData
     /// This is used to keep track of whether a build and its corpus is currently uploading to Serval.
     /// If this is longer than 6 hours ago (UTC), there will have been a crash, so an error should be reported.
     /// </remarks>
-    public DateTime? PreTranslationQueued { get; set; }
+    public DateTime? PreTranslationQueuedAt { get; set; }
 
     /// <summary>
     /// Gets or sets the corpora uploaded to Serval.

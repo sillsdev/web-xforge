@@ -233,7 +233,7 @@ public class MachineProjectService : IMachineProjectService
             // Start a build if:
             // - This is an SMT build (i.e. preTranslate is false)
             // - This is an NMT build and no pre-translation build is queued
-            if (!preTranslate || !await PreTranslationBuildQueuedAsync(translationEngineId))
+            if (!preTranslate || !await IsPreTranslationBuildQueuedAsync(translationEngineId))
             {
                 TranslationBuild translationBuild = await _translationEnginesClient.StartBuildAsync(
                     translationEngineId,
@@ -246,7 +246,7 @@ public class MachineProjectService : IMachineProjectService
                 {
                     await _projectSecrets.UpdateAsync(
                         sfProjectId,
-                        u => u.Unset(p => p.ServalData.PreTranslationQueued)
+                        u => u.Unset(p => p.ServalData.PreTranslationQueuedAt)
                     );
                 }
 
@@ -434,7 +434,7 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // See if there is a corpus
-        string? corpusId = projectSecret.ServalData.Corpora
+        string corpusId = projectSecret.ServalData.Corpora
             .FirstOrDefault(c => c.Value.PreTranslate == preTranslate)
             .Key;
 
@@ -686,7 +686,7 @@ public class MachineProjectService : IMachineProjectService
     /// </summary>
     /// <param name="translationEngineId">The translation engine id</param>
     /// <returns><c>true</c> if the pre-translation build is running; otherwise, <c>false</c>.</returns>
-    private async Task<bool> PreTranslationBuildQueuedAsync(string translationEngineId)
+    private async Task<bool> IsPreTranslationBuildQueuedAsync(string translationEngineId)
     {
         bool buildRunning;
         try

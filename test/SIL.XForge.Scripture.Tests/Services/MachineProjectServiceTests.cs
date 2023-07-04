@@ -184,7 +184,7 @@ public class MachineProjectServiceTests
         await env.DataFilesClient
             .DidNotReceiveWithAnyArgs()
             .UpdateAsync(Arg.Any<string>(), Arg.Any<FileParameter>(), CancellationToken.None);
-        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationQueued);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationQueuedAt);
     }
 
     [Test]
@@ -739,7 +739,7 @@ public class MachineProjectServiceTests
                         Id = Project02,
                         ServalData = new ServalData
                         {
-                            PreTranslationQueued = options.PreTranslationBuildIsQueued ? DateTime.UtcNow : null,
+                            PreTranslationQueuedAt = options.PreTranslationBuildIsQueued ? DateTime.UtcNow : null,
                             TranslationEngineId = TranslationEngine02,
                             Corpora = new Dictionary<string, ServalCorpus>
                             {
