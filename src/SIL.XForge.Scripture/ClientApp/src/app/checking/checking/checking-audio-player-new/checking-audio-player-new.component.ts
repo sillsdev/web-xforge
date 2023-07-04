@@ -25,7 +25,7 @@ export class CheckingAudioPlayerNewComponent extends SubscriptionDisposable impl
   }
 
   get isAudioAvailable(): boolean {
-    return this.audioPlayer?.audio?.isAudioAvailable ?? false;
+    return this.audioPlayer?.enabled ?? false;
   }
 
   pause(): void {
