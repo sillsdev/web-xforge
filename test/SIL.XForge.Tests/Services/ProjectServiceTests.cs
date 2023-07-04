@@ -46,6 +46,7 @@ public class ProjectServiceTests
         var env = new TestEnvironment();
         const string dataId = "507f1f77bcf86cd799439011";
         string filePath = Path.Combine("site", "audio", Project01, $"{User01}_{dataId}.mp3");
+        env.AudioService.IsMp3DataAsync(Arg.Any<Stream>()).Returns(Task.FromResult(true));
         env.FileSystemService.OpenFile(Arg.Any<string>(), FileMode.Create).Returns(new MemoryStream());
         env.FileSystemService.FileExists(filePath).Returns(true);
 

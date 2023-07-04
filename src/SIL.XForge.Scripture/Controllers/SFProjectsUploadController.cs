@@ -48,11 +48,17 @@ public class SFProjectsUploadController : ControllerBase
     public async Task<IActionResult> UploadAudioAsync(
         [FromForm] string projectId,
         [FromForm] string dataId,
-        [FromForm] IFormFile file
+        [FromForm] IFormFile? file
     )
     {
         try
         {
+            // Ensure we have a file
+            if (file is null)
+            {
+                return BadRequest();
+            }
+
             await using Stream stream = file.OpenReadStream();
             Uri uri = await _projectService.SaveAudioAsync(
                 _userAccessor.UserId,
