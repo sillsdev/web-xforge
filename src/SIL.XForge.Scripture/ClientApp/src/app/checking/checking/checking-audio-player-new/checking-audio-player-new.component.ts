@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnDestroy, ViewChild } from '@angular/core';
 import { AudioPlayerComponent } from 'src/app/shared/audio/audio-player.component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -8,24 +8,24 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
   templateUrl: './checking-audio-player-new.component.html',
   styleUrls: ['./checking-audio-player-new.component.scss']
 })
-export class CheckingAudioPlayerNewComponent extends SubscriptionDisposable implements OnDestroy {
+export class CheckingAudioPlayerNewComponent extends SubscriptionDisposable implements OnDestroy, AfterViewInit {
+  private _isAudioAvailable = false;
   @ViewChild(AudioPlayerComponent) audioPlayer?: AudioPlayerComponent;
-  private _source: string | undefined;
+  @Input() source: string = '';
 
   constructor(readonly i18n: I18nService) {
     super();
   }
 
-  getSource(): string | undefined {
-    return this._source;
-  }
-
-  @Input() set source(source: string | undefined) {
-    this._source = source;
+  ngAfterViewInit(): void {
+    this.subscribe(this.audioPlayer!.isAudioAvailableChanged, () => {
+      setTimeout(() => (this._isAudioAvailable = this.audioPlayer!.enabled));
+    });
+    this._isAudioAvailable = this.audioPlayer!.enabled;
   }
 
   get isAudioAvailable(): boolean {
-    return this.audioPlayer?.enabled ?? false;
+    return this._isAudioAvailable;
   }
 
   pause(): void {

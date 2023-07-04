@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, Pipe, PipeTransform } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, Pipe, PipeTransform } from '@angular/core';
 import { MatSliderChange } from '@angular/material/slider';
 import { AudioPlayer, AudioStatus } from 'src/app/shared/audio/audio-player';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -14,6 +14,7 @@ export class AudioPlayerComponent extends SubscriptionDisposable implements OnDe
   private _enabled: boolean = false;
 
   audio: AudioPlayer | undefined;
+  @Output() isAudioAvailableChanged = new EventEmitter<void>();
 
   constructor(private readonly pwaService: PwaService, readonly i18n: I18nService) {
     super();
@@ -44,11 +45,13 @@ export class AudioPlayerComponent extends SubscriptionDisposable implements OnDe
       this.subscribe(this.audio?.status$, newVal => {
         if (newVal === AudioStatus.Available) {
           this.enabled = true;
+          this.isAudioAvailableChanged.emit();
         }
       });
     } else {
       this.audio = undefined;
     }
+    this.isAudioAvailableChanged.emit();
   }
 
   get isAudioAvailable(): boolean {

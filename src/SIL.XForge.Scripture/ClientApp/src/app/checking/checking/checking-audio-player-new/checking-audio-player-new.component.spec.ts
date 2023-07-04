@@ -12,7 +12,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioTimePipe } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingAudioPlayerNewComponent } from './checking-audio-player-new.component';
 
-fdescribe('CheckingAudioPlayerNewComponent', () => {
+describe('CheckingAudioPlayerNewComponent', () => {
   const audioFile = 'test-audio-player.webm';
   const audioFileB = 'test-audio-player-b.webm';
   const playerLoadTimeMs = 1000;
@@ -72,6 +72,7 @@ fdescribe('CheckingAudioPlayerNewComponent', () => {
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.component.player1.audioPlayer?.audio).not.toBeUndefined();
     env.component.player1.source = '';
+    env.fixture.detectChanges();
     expect(env.component.player1.audioPlayer?.audio).toBeUndefined();
   });
 
