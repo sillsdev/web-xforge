@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -38,11 +39,56 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
+    /// Cancels the current pre-translation build.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The build was cancelled successfully.</response>
+    /// <response code="403">You do not have permission to cancel the build.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="405">The build cannot be cancelled.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpPost(MachineApi.CancelPreTranslationBuild)]
+    public async Task<ActionResult> CancelPreTranslationBuildAsync(
+        [FromBody] string sfProjectId,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await _machineApiService.CancelPreTranslationBuildAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                cancellationToken
+            );
+            return Ok();
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (NotSupportedException)
+        {
+            return new StatusCodeResult(405);
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
+    /// <summary>
     /// Gets a build job.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
     /// <param name="buildId">The build identifier.</param>
     /// <param name="minRevision">The minimum revision.</param>
+    /// <param name="preTranslate"><c>true</c> if the build is a pre-translation build.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <remarks>Omitting <paramref name="buildId"/> returns the current build running for the project.</remarks>
     /// <response code="200">The build is running.</response>
@@ -55,16 +101,29 @@ public class MachineApiController : ControllerBase
         string sfProjectId,
         string? buildId,
         [FromQuery] int? minRevision,
+        [FromQuery] bool preTranslate,
         CancellationToken cancellationToken
     )
     {
         try
         {
-            BuildDto? build = string.IsNullOrWhiteSpace(buildId)
+            BuildDto? build = null;
+            if (preTranslate && buildId is null)
+            {
+                build = await _machineApiService.GetPreTranslationQueuedStateAsync(
+                    _userAccessor.UserId,
+                    sfProjectId,
+                    cancellationToken
+                );
+            }
+
+            // If a build identifier is not specified, get the current build
+            build ??= string.IsNullOrWhiteSpace(buildId)
                 ? await _machineApiService.GetCurrentBuildAsync(
                     _userAccessor.UserId,
                     sfProjectId,
                     minRevision,
+                    preTranslate,
                     cancellationToken
                 )
                 : await _machineApiService.GetBuildAsync(
@@ -72,6 +131,7 @@ public class MachineApiController : ControllerBase
                     sfProjectId,
                     buildId,
                     minRevision,
+                    preTranslate,
                     cancellationToken
                 );
 
@@ -118,6 +178,55 @@ public class MachineApiController : ControllerBase
                 cancellationToken
             );
             return Ok(engine);
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
+    /// <summary>
+    /// Gets all of the pre-translations for the specified chapter.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="bookNum">The book number.</param>
+    /// <param name="chapterNum">The chapter number.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <remarks>
+    /// If there are no pre-translations (because the build has not started, has not finished, or was cancelled),
+    /// The <c>preTranslations</c> property in the return object will be an empty collection.
+    /// </remarks>
+    /// <response code="200">The pre-translations were successfully queried for.</response>
+    /// <response code="403">You do not have permission to retrieve the pre-translations for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpGet(MachineApi.GetPreTranslation)]
+    public async Task<ActionResult<PreTranslationDto>> GetPreTranslationAsync(
+        string sfProjectId,
+        int bookNum,
+        int chapterNum,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            PreTranslationDto preTranslation = await _machineApiService.GetPreTranslationAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                bookNum,
+                chapterNum,
+                cancellationToken
+            );
+            return Ok(preTranslation);
         }
         catch (BrokenCircuitException e)
         {
@@ -186,10 +295,7 @@ public class MachineApiController : ControllerBase
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpPost(MachineApi.StartBuild)]
-    public async Task<ActionResult<BuildDto>> StartBuildAsync(
-        [FromBody] string sfProjectId,
-        CancellationToken cancellationToken
-    )
+    public async Task<ActionResult> StartBuildAsync([FromBody] string sfProjectId, CancellationToken cancellationToken)
     {
         try
         {
@@ -199,6 +305,45 @@ public class MachineApiController : ControllerBase
                 cancellationToken
             );
             return Ok(build);
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
+    /// <summary>
+    /// Starts a pre-translation build job.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The pre-translation build was successfully started.</response>
+    /// <response code="403">You do not have permission to build this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpPost(MachineApi.StartPreTranslationBuild)]
+    public async Task<ActionResult> StartPreTranslationBuildAsync(
+        [FromBody] string sfProjectId,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await _machineApiService.StartPreTranslationBuildAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                cancellationToken
+            );
+            return Ok();
         }
         catch (BrokenCircuitException e)
         {

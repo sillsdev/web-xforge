@@ -210,7 +210,8 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           translationSuggestionsEnabled: false,
-          shareEnabled: false
+          shareEnabled: false,
+          preTranslate: false
         });
         tick();
         env.fixture.detectChanges();
@@ -304,7 +305,8 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           translationSuggestionsEnabled: false,
-          shareEnabled: false
+          shareEnabled: false,
+          preTranslate: false
         });
         env.wait();
         expect(env.translationSuggestionsCheckbox).toBeNull();
@@ -336,6 +338,7 @@ describe('SettingsComponent', () => {
         env.setupProject({
           translationSuggestionsEnabled: false,
           shareEnabled: false,
+          preTranslate: false,
           source: {
             paratextId: 'paratextId01',
             projectRef: 'paratext01',
@@ -677,6 +680,7 @@ class TestEnvironment {
     translateConfig: TranslateConfig = {
       translationSuggestionsEnabled: true,
       shareEnabled: false,
+      preTranslate: false,
       source: {
         paratextId: 'paratextId01',
         projectRef: 'paratext01',
