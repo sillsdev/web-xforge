@@ -1481,6 +1481,34 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     op.Set(pd => pd.NoteTags, settings.NoteTags, _noteTagListEqualityComparer);
                 if (settings.LanguageTag != null)
                     op.Set(pd => pd.WritingSystem.Tag, settings.LanguageTag);
+                op.Set(pd => pd.TranslateConfig.ProjectType, settings.ProjectType);
+                if (!string.IsNullOrEmpty(settings.BaseProjectParatextId))
+                {
+                    // Set the base project
+                    if (_projectDoc.Data.TranslateConfig.BaseProject is null)
+                    {
+                        // Create a new base project record
+                        op.Set(
+                            pd => pd.TranslateConfig.BaseProject,
+                            new BaseProject
+                            {
+                                ParatextId = settings.BaseProjectParatextId,
+                                ShortName = settings.BaseProjectShortName,
+                            }
+                        );
+                    }
+                    else
+                    {
+                        // Update the existing base project record
+                        op.Set(pd => pd.TranslateConfig.BaseProject.ParatextId, settings.BaseProjectParatextId);
+                        op.Set(pd => pd.TranslateConfig.BaseProject.ShortName, settings.BaseProjectShortName);
+                    }
+                }
+                else if (_projectDoc.Data.TranslateConfig.BaseProject is not null)
+                {
+                    // There is no longer a base project, so remove the base project record
+                    op.Unset(pd => pd.TranslateConfig.BaseProject);
+                }
             }
             // The source can be null if there was an error getting a resource from the DBL
             if (TranslationSuggestionsEnabled && _projectDoc.Data.TranslateConfig.Source != null)
