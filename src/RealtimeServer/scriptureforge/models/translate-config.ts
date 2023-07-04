@@ -1,8 +1,29 @@
 import { WritingSystem } from '../../common/models/writing-system';
 
+export enum ProjectType {
+  Standard = 'Standard',
+  BackTranslation = 'BackTranslation',
+  Daughter = 'Daughter',
+  TransliterationManual = 'TransliterationManual',
+  TransliterationWithEncoder = 'TransliterationWithEncoder',
+  StudyBible = 'StudyBible',
+  ConsultantNotes = 'ConsultantNotes',
+  StudyBibleAdditions = 'StudyBibleAdditions',
+  Auxiliary = 'Auxiliary',
+  Xml = 'Xml',
+  SourceLanguage = 'SourceLanguage',
+  Dictionary = 'Dictionary',
+  EnhancedResource = 'EnhancedResource'
+}
+
 export enum TranslateShareLevel {
   Anyone = 'anyone',
   Specific = 'specific'
+}
+
+export interface BaseProject {
+  paratextId: string;
+  shortName: string;
 }
 
 export interface TranslateConfig {
@@ -10,6 +31,8 @@ export interface TranslateConfig {
   source?: TranslateSource;
   shareEnabled: boolean;
   defaultNoteTagId?: number;
+  projectType?: ProjectType;
+  baseProject?: BaseProject;
 }
 
 export interface TranslateSource {

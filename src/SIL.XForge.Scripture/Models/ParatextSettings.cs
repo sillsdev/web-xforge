@@ -18,4 +18,7 @@ public class ParatextSettings
     /// <summary> The tag icon used by default for note threads created in SF. </summary>
     public IEnumerable<NoteTag> NoteTags { get; set; }
     public string? LanguageTag { get; set; }
+    public string ProjectType { get; set; } = string.Empty;
+    public string BaseProjectShortName { get; set; } = string.Empty;
+    public string? BaseProjectParatextId { get; set; }
 }

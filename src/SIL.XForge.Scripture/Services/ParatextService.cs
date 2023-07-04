@@ -985,6 +985,9 @@ public class ParatextService : DisposableBase, IParatextService
             DefaultFont = scrText.Settings.DefaultFont,
             NoteTags = noteTags,
             LanguageTag = scrText.Settings.LanguageID?.Id,
+            ProjectType = scrText.Settings.TranslationInfo.Type.ToString(),
+            BaseProjectParatextId = scrText.Settings.TranslationInfo.BaseProjectGuid?.Id,
+            BaseProjectShortName = scrText.Settings.TranslationInfo.BaseProjectName,
         };
     }
 
