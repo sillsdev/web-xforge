@@ -4,7 +4,7 @@ import { TranslateAuthGuard } from '../shared/project-router.guard';
 import { EditorComponent } from './editor/editor.component';
 import { TranslateOverviewComponent } from './translate-overview/translate-overview.component';
 import { DraftViewerComponent } from './draft-generation/draft-viewer/draft-viewer.component';
-import { GenerateDraftComponent } from './draft-generation/draft-generation.component';
+import { DraftGenerationComponent } from './draft-generation/draft-generation.component';
 
 const routes: Routes = [
   {
@@ -16,7 +16,7 @@ const routes: Routes = [
   { path: 'projects/:projectId/translate', component: TranslateOverviewComponent, canActivate: [TranslateAuthGuard] },
   {
     path: 'projects/:projectId/draft-generation',
-    component: GenerateDraftComponent,
+    component: DraftGenerationComponent,
     canActivate: [TranslateAuthGuard]
   },
   {
