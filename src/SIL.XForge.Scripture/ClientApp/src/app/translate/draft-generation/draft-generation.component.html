@@ -23,51 +23,72 @@
 
   <mat-divider inset></mat-divider>
 
-  <section *ngIf="isDraftComplete() || !isDraftInProgress()" class="view-or-create-options">
-    <ng-container *ngIf="isDraftComplete()">
-      <div>
-        <h3>Preview draft</h3>
+  <section *ngIf="!isBackTranslation">
+    <h3>Project type is not supported for draft generation</h3>
+    <p>In order to generate a draft translation, the project must be a back translation project.</p>
+  </section>
+
+  <section *ngIf="isBackTranslation && !isTargetLanguageNllb">
+    <h3>Target language is not supported for draft generation</h3>
+    <p>
+      In order to generate a draft translation, the target language must be in the
+      <a
+        href="https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion"
+        target="_blank"
+        rel="noopener noreferrer"
+        >No Language Left Behind</a
+      >
+      set.
+    </p>
+  </section>
+
+  <ng-container *ngIf="canGenerate()">
+    <section *ngIf="isDraftComplete() || !isDraftInProgress()" class="view-or-create-options">
+      <ng-container *ngIf="isDraftComplete()">
+        <div>
+          <h3>Preview draft</h3>
+          <p>
+            Go to <a [routerLink]="draftViewerUrl">draft viewer</a> to preview and apply the generated draft to chapters
+            of your choice.
+          </p>
+          <a mat-flat-button color="primary" [routerLink]="draftViewerUrl"> Preview draft </a>
+        </div>
+
+        <mat-divider inset vertical data-text="or"></mat-divider>
+      </ng-container>
+
+      <div *ngIf="!isDraftInProgress()">
+        <h3>Generate new draft</h3>
         <p>
-          Go to <a [routerLink]="draftViewerUrl">draft viewer</a> to preview and apply the generated draft to chapters
-          of your choice.
+          Click <em>"Generate draft"</em> to start the process of generating a back translation draft. This will take at
+          least a few hours.
         </p>
-        <a mat-flat-button color="primary" [routerLink]="draftViewerUrl"> Preview draft </a>
+
+        <button *ngIf="!isDraftInProgress()" mat-flat-button color="primary" (click)="generateDraft()">
+          Generate draft
+        </button>
       </div>
+    </section>
 
-      <mat-divider inset vertical data-text="or"></mat-divider>
-    </ng-container>
+    <section *ngIf="isDraftQueued()">
+      <h3>Draft queued</h3>
+      <p>The back translation draft has been queued. Please check back later.</p>
+      <button *ngIf="canCancel()" mat-flat-button color="primary" (click)="cancel()">Cancel generation</button>
+    </section>
 
-    <div *ngIf="!isDraftInProgress()">
-      <h3>Generate new draft</h3>
-      <p>
-        Click <em>"Generate draft"</em> to start the process of generating a back translation draft. This will take at
-        least a few hours.
-      </p>
+    <section *ngIf="isDraftActive()">
+      <h3>Draft in progress</h3>
+      <p>Generating draft; this can take a few hours.</p>
+      <app-working-animated-indicator></app-working-animated-indicator>
+      <button *ngIf="canCancel()" mat-flat-button color="primary" (click)="cancel()">Cancel generation</button>
+    </section>
 
-      <button *ngIf="!isDraftInProgress()" mat-flat-button color="primary" (click)="generateDraft()">
-        Generate draft
-      </button>
-    </div>
-  </section>
-
-  <section *ngIf="isDraftQueued()">
-    <h3>Draft queued</h3>
-    <p>The back translation draft has been queued. Please check back later.</p>
-    <button *ngIf="canCancel()" mat-flat-button color="primary" (click)="cancel()">Cancel generation</button>
-  </section>
-
-  <section *ngIf="isDraftActive()">
-    <h3>Draft in progress</h3>
-    <p>Generating draft; this can take a few hours.</p>
-    <app-working-animated-indicator></app-working-animated-indicator>
-    <button *ngIf="canCancel()" mat-flat-button color="primary" (click)="cancel()">Cancel generation</button>
-  </section>
-
-  <mat-card-footer>
-    <mat-progress-bar
-      *ngIf="isDraftInProgress()"
-      [mode]="isDraftQueued() ? 'indeterminate' : 'determinate'"
-      [value]="draftJob?.percentCompleted ?? 0"
-    ></mat-progress-bar>
-  </mat-card-footer>
+    <mat-card-footer>
+      <mat-progress-bar
+        *ngIf="isDraftInProgress()"
+        [mode]="isDraftQueued() ? 'indeterminate' : 'determinate'"
+        [value]="draftJob?.percentCompleted ?? 0"
+      ></mat-progress-bar>
+    </mat-card-footer>
+  </ng-container>
 </mat-card>
