@@ -2,12 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
 import { of } from 'rxjs';
+import { AudioPlayerComponent, AudioTimePipe } from 'src/app/shared/audio/audio-player.component';
 import { instance, mock, when } from 'ts-mockito';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { CheckingAudioPlayerNewComponent } from '../../checking/checking/checking-audio-player-new/checking-audio-player-new.component';
-import { AudioPlayerComponent, AudioTimePipe } from './audio-player.component';
+import { CheckingAudioPlayerNewComponent } from './checking-audio-player-new.component';
 
 const mockedPwaService = mock(PwaService);
 when(mockedPwaService.isOnline).thenReturn(true);

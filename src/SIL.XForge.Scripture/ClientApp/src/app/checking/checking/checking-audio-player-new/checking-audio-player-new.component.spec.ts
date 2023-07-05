@@ -24,7 +24,7 @@ describe('CheckingAudioPlayerNewComponent', () => {
       '"></app-checking-audio-player-new>';
     const env = new TestEnvironment(template);
     await env.waitForPlayer(playerLoadTimeMs);
-    expect(env.component.player1.audioPlayer?.enabled).toBe(true);
+    expect(env.component.player1.audioPlayer?.isAudioAvailable$.value).toBe(true);
     expect(env.duration).toBe('0:05');
     expect(env.currentTime).toBe('0:00');
   });

@@ -18,10 +18,10 @@ export class CheckingAudioPlayerNewComponent extends SubscriptionDisposable impl
   }
 
   ngAfterViewInit(): void {
-    this.subscribe(this.audioPlayer!.isAudioAvailableChanged, () => {
-      setTimeout(() => (this._isAudioAvailable = this.audioPlayer!.enabled));
+    this.subscribe(this.audioPlayer!.isAudioAvailable$, newValue => {
+      setTimeout(() => (this._isAudioAvailable = newValue));
     });
-    this._isAudioAvailable = this.audioPlayer!.enabled;
+    this._isAudioAvailable = this.audioPlayer!.isAudioAvailable$.value;
   }
 
   get isAudioAvailable(): boolean {
