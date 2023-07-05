@@ -266,6 +266,22 @@ public class Connection : DisposableBase, IConnection
         await _realtimeServer.FetchDocAsync<T>(_handle, collection, id);
 
     /// <summary>
+    /// Fetches a document snapshot at the specified timestamp asynchronously.
+    /// </summary>
+    /// <typeparam name="T">The document type.</typeparam>
+    /// <param name="id">The identifier.</param>
+    /// <param name="timestamp">The timestamp.</param>
+    /// <returns>
+    /// A snapshot of the fetched document from the realtime server.
+    /// </returns>
+    public async Task<Snapshot<T>> FetchSnapshotAsync<T>(string id, DateTime timestamp)
+        where T : IIdentifiable
+    {
+        DocConfig docConfig = _realtimeService.GetDocConfig<T>();
+        return await _realtimeServer.FetchSnapshotAsync<T>(_handle, docConfig.CollectionName, id, timestamp);
+    }
+
+    /// <summary>
     /// Gets the specified document, bound to the current realtime server.
     /// </summary>
     /// <typeparam name="T">The document type.</typeparam>

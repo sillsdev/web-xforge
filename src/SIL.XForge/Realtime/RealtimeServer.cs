@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -48,6 +49,15 @@ public class RealtimeServer : IRealtimeServer
 
     public Task<Snapshot<T>[]> FetchDocsAsync<T>(int handle, string collection, IReadOnlyCollection<string> ids) =>
         InvokeExportAsync<Snapshot<T>[]>("fetchDocs", handle, collection, ids);
+
+    public Task<Snapshot<T>> FetchSnapshotAsync<T>(int handle, string collection, string id, DateTime timestamp) =>
+        InvokeExportAsync<Snapshot<T>>(
+            "fetchSnapshotByTimestamp",
+            handle,
+            collection,
+            id,
+            new DateTimeOffset(timestamp).ToUnixTimeMilliseconds()
+        );
 
     public Task<Snapshot<T>> SubmitOpAsync<T>(int handle, string collection, string id, object op) =>
         InvokeExportAsync<Snapshot<T>>("submitOp", handle, collection, id, op);
