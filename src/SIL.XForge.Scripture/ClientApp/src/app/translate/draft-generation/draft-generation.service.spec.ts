@@ -112,8 +112,8 @@ describe('DraftGenerationService', () => {
       httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationData));
       service.getGeneratedDraft(projectId, book, chapter).subscribe(result => {
         expect(result).toEqual({
-          verse_3_16: 'For God so loved the world',
-          verse_1_1: 'In the beginning was the Word'
+          verse_3_16: 'For God so loved the world ',
+          verse_1_1: 'In the beginning was the Word '
         });
       });
       expect(httpClient.get).toHaveBeenCalledWith(
@@ -154,7 +154,7 @@ describe('DraftGenerationService', () => {
       httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationData));
       service.getGeneratedDraft(projectId, book, chapter).subscribe(result => {
         expect(result).toEqual({
-          verse_3_16: 'For God so loved the world'
+          verse_3_16: 'For God so loved the world '
         });
       });
       expect(httpClient.get).toHaveBeenCalledWith(
