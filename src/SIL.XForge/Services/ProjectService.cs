@@ -100,7 +100,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
             throw new ArgumentNullException();
         }
         IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
-        IDocument<User> userDoc = await GetUserDocAsync(projectUserId, conn);
+        IDocument<User> userDoc = await conn.FetchAsync<User>(projectUserId);
         await RemoveUserFromProjectAsync(conn, projectDoc, userDoc);
     }
 
@@ -303,14 +303,17 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
             await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.UserRoles[userDoc.Id]));
             await projectDoc.SubmitJson0OpAsync(op => op.Unset(p => p.UserPermissions[userDoc.Id]));
         }
-        string siteId = SiteOptions.Value.Id;
-        await userDoc.SubmitJson0OpAsync(op =>
+        if (userDoc.IsLoaded)
         {
-            int index = userDoc.Data.Sites[siteId].Projects.IndexOf(projectDoc.Id);
-            op.Remove(u => u.Sites[siteId].Projects, index);
-            if (userDoc.Data.Sites[siteId].CurrentProjectId == projectDoc.Id)
-                op.Unset(u => u.Sites[siteId].CurrentProjectId);
-        });
+            string siteId = SiteOptions.Value.Id;
+            await userDoc.SubmitJson0OpAsync(op =>
+            {
+                int index = userDoc.Data.Sites[siteId].Projects.IndexOf(projectDoc.Id);
+                op.Remove(u => u.Sites[siteId].Projects, index);
+                if (userDoc.Data.Sites[siteId].CurrentProjectId == projectDoc.Id)
+                    op.Unset(u => u.Sites[siteId].CurrentProjectId);
+            });
+        }
     }
 
     protected bool IsOnProject(TModel project, string userId) => project.UserRoles.ContainsKey(userId);

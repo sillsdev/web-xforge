@@ -1063,7 +1063,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         IDocument<SFProjectUserConfig> projectUserConfigDoc = await conn.FetchAsync<SFProjectUserConfig>(
             SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id)
         );
-        await projectUserConfigDoc.DeleteAsync();
+        if (projectUserConfigDoc.IsLoaded)
+        {
+            await projectUserConfigDoc.DeleteAsync();
+        }
+
         // Delete any share keys used by this user
         await ProjectSecrets.UpdateAsync(
             projectDoc.Id,
