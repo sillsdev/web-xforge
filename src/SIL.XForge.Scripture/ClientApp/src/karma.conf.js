@@ -55,6 +55,10 @@ module.exports = function (config) {
 
     port: 9876,
     colors: true,
+    mochaReporter: {
+      // https://github.com/litixsoft/karma-mocha-reporter
+      output: 'autowatch'
+    },
     logLevel: config.LOG_INFO,
     autoWatch: true,
     captureTimeout: 120000, // compile needs to finished otherwise first capture fails
