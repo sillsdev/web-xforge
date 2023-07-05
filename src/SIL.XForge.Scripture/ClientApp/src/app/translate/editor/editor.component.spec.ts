@@ -83,6 +83,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
+import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { NoteDialogComponent, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
@@ -102,10 +103,15 @@ const mockedMatDialog = mock(MatDialog);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedMediaObserver = mock(MediaObserver);
 const mockedHttpClient = mock(HttpClient);
+const mockedDraftGenerationService = mock(DraftGenerationService);
 
 class MockComponent {}
 
-const ROUTES: Route[] = [{ path: 'projects/:projectId/translate', component: MockComponent }];
+const ROUTES: Route[] = [
+  { path: 'projects/:projectId/translate/:bookId/:chapter', component: MockComponent },
+  { path: 'projects/:projectId/translate/:bookId', component: MockComponent },
+  { path: 'projects/:projectId/translate', component: MockComponent }
+];
 
 class MockConsole {
   log(val: any): void {
@@ -144,7 +150,8 @@ describe('EditorComponent', () => {
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: MediaObserver, useMock: mockedMediaObserver },
-      { provide: HttpClient, useMock: mockedHttpClient }
+      { provide: HttpClient, useMock: mockedHttpClient },
+      { provide: DraftGenerationService, useMock: mockedDraftGenerationService }
     ]
   }));
 
@@ -3254,6 +3261,48 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
   });
+
+  describe('Back translation draft', () => {
+    it('detects available back translation draft', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const targetDelta = new Delta([{ insert: '', attributes: { segment: 'verse_1_1' } }]);
+
+      env.setProjectUserConfig();
+      env.wait();
+
+      when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
+        of({
+          verse_3_16: 'For God so loved the world',
+          verse_1_1: 'In the beginning was the Word'
+        })
+      );
+
+      env.targetEditor.getContents = jasmine.createSpy().and.returnValue(targetDelta);
+      env.component['checkForPreTranslations']();
+      expect(env.component.hasDraft).toBe(true);
+      env.dispose();
+    }));
+
+    it('detects when back translation draft is not available', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const targetDelta = new Delta([{ insert: 'Translation already exists', attributes: { segment: 'verse_1_1' } }]);
+
+      env.setProjectUserConfig();
+      env.wait();
+
+      when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
+        of({
+          verse_3_16: 'For God so loved the world',
+          verse_1_1: 'In the beginning was the Word'
+        })
+      );
+
+      env.targetEditor.getContents = jasmine.createSpy().and.returnValue(targetDelta);
+      env.component['checkForPreTranslations']();
+      expect(env.component.hasDraft).toBe(false);
+      env.dispose();
+    }));
+  });
 });
 
 const defaultTranslateConfig = {
@@ -3532,6 +3581,7 @@ class TestEnvironment {
       const [projectId, threadId] = id.split(':');
       return this.getNoteThreadDoc(projectId, threadId);
     });
+    when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of({}));
 
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);
