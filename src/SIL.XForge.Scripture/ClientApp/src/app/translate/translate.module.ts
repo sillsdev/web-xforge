@@ -12,7 +12,7 @@ import { SuggestionsComponent } from './editor/suggestions.component';
 import { TrainingProgressComponent } from './training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview/translate-overview.component';
 import { TranslateRoutingModule } from './translate-routing.module';
-import { GenerateDraftComponent } from './draft-generation/draft-generation.component';
+import { DraftGenerationComponent } from './draft-generation/draft-generation.component';
 import { DraftViewerComponent } from './draft-generation/draft-viewer/draft-viewer.component';
 import { DraftGenerationService } from './draft-generation/draft-generation.service';
 import { MockDraftGenerationService } from './draft-generation/draft-generation.mock.service';
@@ -26,7 +26,7 @@ import { MockDraftGenerationService } from './draft-generation/draft-generation.
     SuggestionsSettingsDialogComponent,
     TrainingProgressComponent,
     TranslateOverviewComponent,
-    GenerateDraftComponent,
+    DraftGenerationComponent,
     DraftViewerComponent
   ],
   imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, XForgeCommonModule, TranslocoModule],
