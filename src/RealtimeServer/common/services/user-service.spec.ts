@@ -1,6 +1,7 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
+import { createTestUser } from '../models/user-test-data';
 import { SystemRole } from '../models/system-role';
 import { User, USERS_COLLECTION, USER_PROFILES_COLLECTION } from '../models/user';
 import { RealtimeServer } from '../realtime-server';
@@ -108,26 +109,18 @@ class TestEnvironment {
 
   async createData(): Promise<void> {
     const conn = this.server.connect();
-    await createDoc<User>(conn, USERS_COLLECTION, 'user01', {
-      name: 'User 01',
-      email: 'user01@example.com',
-      role: SystemRole.SystemAdmin,
-      isDisplayNameConfirmed: true,
-      authId: 'auth01',
-      displayName: 'User 01',
-      avatarUrl: '',
-      sites: {}
-    });
+    await createDoc<User>(
+      conn,
+      USERS_COLLECTION,
+      'user01',
+      createTestUser(
+        {
+          role: SystemRole.SystemAdmin
+        },
+        1
+      )
+    );
 
-    await createDoc<User>(conn, USERS_COLLECTION, 'user02', {
-      name: 'User 02',
-      email: 'user02@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth02',
-      displayName: 'User 02',
-      avatarUrl: '',
-      sites: {}
-    });
+    await createDoc<User>(conn, USERS_COLLECTION, 'user02', createTestUser({}, 2));
   }
 }

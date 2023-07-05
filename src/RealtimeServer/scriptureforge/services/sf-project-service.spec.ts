@@ -5,9 +5,9 @@ import { SF_PROJECT_PROFILES_COLLECTION, SF_PROJECTS_COLLECTION, SFProject } fro
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { clientConnect, createDoc, fetchDoc } from '../../common/utils/test-utils';
-import { CheckingAnswerExport } from '../models/checking-config';
 import { SystemRole } from '../../common/models/system-role';
 import { ParatextUserProfile } from '../models/paratext-user-profile';
+import { createTestProject } from '../models/sf-project-test-data';
 import { SF_PROJECT_MIGRATIONS } from './sf-project-migrations';
 import { SFProjectService } from './sf-project-service';
 
@@ -83,57 +83,39 @@ class TestEnvironment {
   async createData(): Promise<void> {
     const conn = this.server.connect();
 
-    await createDoc<SFProject>(conn, SF_PROJECTS_COLLECTION, 'project01', {
-      name: 'Project 01',
-      shortName: 'P01',
-      paratextId: 'Project01Id',
-      userRoles: {
-        projectAdmin: 'pt_administrator',
-        translator: 'pt_translator',
-        observer: 'sf_observer'
-      },
-      paratextUsers: this.paratextUsers,
-      userPermissions: {},
-      sync: {
-        queuedCount: 0
-      },
-      editable: true,
-      checkingConfig: {
-        checkingEnabled: false,
-        shareEnabled: false,
-        usersSeeEachOthersResponses: false,
-        answerExportMethod: CheckingAnswerExport.MarkedForExport
-      },
-      translateConfig: {
-        translationSuggestionsEnabled: false,
-        shareEnabled: false,
-        preTranslate: false
-      },
-      writingSystem: {
-        tag: 'en'
-      },
-      texts: [
-        {
-          bookNum: 1,
-          hasSource: false,
-          chapters: [
-            {
-              number: 1,
-              lastVerse: 3,
-              isValid: true,
-              permissions: {
-                projectAdmin: 'write',
-                translator: 'write'
+    await createDoc<SFProject>(
+      conn,
+      SF_PROJECTS_COLLECTION,
+      'project01',
+      createTestProject({
+        userRoles: {
+          projectAdmin: 'pt_administrator',
+          translator: 'pt_translator',
+          observer: 'sf_observer'
+        },
+        paratextUsers: this.paratextUsers,
+        texts: [
+          {
+            bookNum: 1,
+            hasSource: false,
+            chapters: [
+              {
+                number: 1,
+                lastVerse: 3,
+                isValid: true,
+                permissions: {
+                  projectAdmin: 'write',
+                  translator: 'write'
+                }
               }
+            ],
+            permissions: {
+              projectAdmin: 'write',
+              translator: 'write'
             }
-          ],
-          permissions: {
-            projectAdmin: 'write',
-            translator: 'write'
           }
-        }
-      ],
-      noteTags: []
-    });
+        ]
+      })
+    );
   }
 }

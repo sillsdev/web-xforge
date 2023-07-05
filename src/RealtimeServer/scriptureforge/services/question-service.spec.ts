@@ -1,12 +1,11 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
-import { SystemRole } from '../../common/models/system-role';
+import { createTestUser } from '../../common/models/user-test-data';
 import { User, USERS_COLLECTION } from '../../common/models/user';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { allowAll, clientConnect, createDoc, flushPromises, submitJson0Op } from '../../common/utils/test-utils';
-import { CheckingAnswerExport } from '../models/checking-config';
 import { getQuestionDocId, Question, QUESTIONS_COLLECTION } from '../models/question';
 import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
@@ -15,6 +14,7 @@ import {
   SF_PROJECT_USER_CONFIGS_COLLECTION,
   SFProjectUserConfig
 } from '../models/sf-project-user-config';
+import { createTestProject } from '../models/sf-project-test-data';
 import { QuestionService } from './question-service';
 
 describe('QuestionService', () => {
@@ -88,16 +88,7 @@ class TestEnvironment {
 
   async createData(): Promise<void> {
     const conn = this.server.connect();
-    await createDoc<User>(conn, USERS_COLLECTION, 'projectAdmin', {
-      name: 'User 01',
-      email: 'user01@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth01',
-      displayName: 'User 01',
-      avatarUrl: '',
-      sites: {}
-    });
+    await createDoc<User>(conn, USERS_COLLECTION, 'projectAdmin', createTestUser({}, 1));
 
     await createDoc<SFProjectUserConfig>(
       conn,
@@ -118,16 +109,7 @@ class TestEnvironment {
       }
     );
 
-    await createDoc<User>(conn, USERS_COLLECTION, 'checker', {
-      name: 'User 02',
-      email: 'user02@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth02',
-      displayName: 'User 02',
-      avatarUrl: '',
-      sites: {}
-    });
+    await createDoc<User>(conn, USERS_COLLECTION, 'checker', createTestUser({}, 2));
 
     await createDoc<SFProjectUserConfig>(
       conn,
@@ -148,33 +130,18 @@ class TestEnvironment {
       }
     );
 
-    await createDoc<SFProject>(conn, SF_PROJECTS_COLLECTION, 'project01', {
-      name: 'Project 01',
-      shortName: 'PT01',
-      paratextId: 'pt01',
-      writingSystem: { tag: 'qaa' },
-      translateConfig: {
-        translationSuggestionsEnabled: false,
-        shareEnabled: true,
-        preTranslate: false
-      },
-      checkingConfig: {
-        checkingEnabled: false,
-        usersSeeEachOthersResponses: true,
-        shareEnabled: true,
-        answerExportMethod: CheckingAnswerExport.MarkedForExport
-      },
-      texts: [],
-      noteTags: [],
-      sync: { queuedCount: 0 },
-      editable: true,
-      userRoles: {
-        projectAdmin: SFProjectRole.ParatextAdministrator,
-        checker: SFProjectRole.CommunityChecker
-      },
-      paratextUsers: [{ sfUserId: 'projectAdmin', username: 'ptprojectAdmin', opaqueUserId: 'opaqueprojectAdmin' }],
-      userPermissions: {}
-    });
+    await createDoc<SFProject>(
+      conn,
+      SF_PROJECTS_COLLECTION,
+      'project01',
+      createTestProject({
+        userRoles: {
+          projectAdmin: SFProjectRole.ParatextAdministrator,
+          checker: SFProjectRole.CommunityChecker
+        },
+        paratextUsers: [{ sfUserId: 'projectAdmin', username: 'ptprojectAdmin', opaqueUserId: 'opaqueprojectAdmin' }]
+      })
+    );
 
     await createDoc<Question>(conn, QUESTIONS_COLLECTION, getQuestionDocId('project01', 'question01'), {
       dataId: 'question01',

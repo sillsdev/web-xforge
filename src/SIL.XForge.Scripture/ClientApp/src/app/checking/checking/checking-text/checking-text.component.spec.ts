@@ -1,26 +1,27 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { VerseRef } from '@sillsdev/scripture';
 import * as RichText from 'rich-text';
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { User } from 'realtime-server/lib/esm/common/models/user';
-import { UserDoc } from 'xforge-common/models/user-doc';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { SharedModule } from '../../../shared/shared.module';
-import { getCombinedVerseTextDoc, getSFProject, getTextDoc } from '../../../shared/test-utils';
+import { getCombinedVerseTextDoc, getTextDoc } from '../../../shared/test-utils';
 import { CheckingTextComponent } from './checking-text.component';
 
 const mockedPwaService = mock(PwaService);
@@ -149,20 +150,8 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
     this.addTextDoc(new TextDocId('project01', 40, 2, 'target'));
     this.addCombinedVerseTextDoc(new TextDocId('project01', 41, 1, 'target'));
-    this.setupProject('project01');
-    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
-      id: 'user01',
-      data: {
-        name: 'User 01',
-        email: 'user1@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth01',
-        displayName: 'name',
-        sites: {}
-      }
-    });
+    this.setupProject();
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, { id: 'user01', data: createTestUser() });
     when(mockedSFProjectService.getProfile('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
     );
@@ -224,10 +213,22 @@ class TestEnvironment {
     });
   }
 
-  private setupProject(id: string): void {
+  private setupProject(): void {
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
-      id,
-      data: getSFProject(id)
+      id: 'project01',
+      data: createTestProjectProfile({
+        texts: [
+          {
+            bookNum: 40,
+            chapters: [
+              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+            ],
+            hasSource: true,
+            permissions: {}
+          }
+        ]
+      })
     });
   }
 }

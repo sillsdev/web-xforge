@@ -2,7 +2,6 @@ import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
 import { Connection } from 'sharedb/lib/client';
-import { SystemRole } from '../../common/models/system-role';
 import { User, USERS_COLLECTION } from '../../common/models/user';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
@@ -16,7 +15,6 @@ import {
   hasDoc,
   submitJson0Op
 } from '../../common/utils/test-utils';
-import { CheckingAnswerExport } from '../models/checking-config';
 import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import {
@@ -35,7 +33,8 @@ import {
 import { Note } from '../models/note';
 import { VerseRefData } from '../models/verse-ref-data';
 import { TextAnchor } from '../models/text-anchor';
-
+import { createTestProject } from '../models/sf-project-test-data';
+import { createTestUser } from '../../common/models/user-test-data';
 import { NoteThreadService } from './note-thread-service';
 
 describe('NoteThreadService', () => {
@@ -327,16 +326,7 @@ class TestEnvironment {
 
   async createData(): Promise<void> {
     const conn = this.server.connect();
-    await createDoc<User>(conn, USERS_COLLECTION, this.projectAdminId, {
-      name: 'User 01',
-      email: 'user01@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth01',
-      displayName: 'User 01',
-      avatarUrl: '',
-      sites: {}
-    });
+    await createDoc<User>(conn, USERS_COLLECTION, this.projectAdminId, createTestUser({}, 1));
 
     await createDoc<SFProjectUserConfig>(
       conn,
@@ -357,16 +347,7 @@ class TestEnvironment {
       }
     );
 
-    await createDoc<User>(conn, USERS_COLLECTION, this.checkerId, {
-      name: 'User 02',
-      email: 'user02@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth02',
-      displayName: 'User 02',
-      avatarUrl: '',
-      sites: {}
-    });
+    await createDoc<User>(conn, USERS_COLLECTION, this.checkerId, createTestUser({}, 2));
 
     await createDoc<SFProjectUserConfig>(
       conn,
@@ -387,16 +368,7 @@ class TestEnvironment {
       }
     );
 
-    await createDoc<User>(conn, USERS_COLLECTION, this.commenterId, {
-      name: 'User 03',
-      email: 'user03@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth03',
-      displayName: 'User 03',
-      avatarUrl: '',
-      sites: {}
-    });
+    await createDoc<User>(conn, USERS_COLLECTION, this.commenterId, createTestUser({}, 3));
 
     await createDoc<SFProjectUserConfig>(
       conn,
@@ -417,35 +389,19 @@ class TestEnvironment {
       }
     );
 
-    await createDoc<SFProject>(conn, SF_PROJECTS_COLLECTION, 'project01', {
-      name: 'Project 01',
-      shortName: 'PT01',
-      paratextId: 'pt01',
-      writingSystem: { tag: 'qaa' },
-      translateConfig: {
-        translationSuggestionsEnabled: false,
-        shareEnabled: true,
-        preTranslate: false
-      },
-      checkingConfig: {
-        checkingEnabled: false,
-        usersSeeEachOthersResponses: true,
-        shareEnabled: true,
-        answerExportMethod: CheckingAnswerExport.MarkedForExport
-      },
-      texts: [],
-      noteTags: [],
-      editable: true,
-      sync: { queuedCount: 0 },
-      userRoles: {
-        projectAdmin: SFProjectRole.ParatextAdministrator,
-        translator: SFProjectRole.ParatextTranslator,
-        checker: SFProjectRole.CommunityChecker,
-        commenter: SFProjectRole.Commenter
-      },
-      userPermissions: {},
-      paratextUsers: []
-    });
+    await createDoc<SFProject>(
+      conn,
+      SF_PROJECTS_COLLECTION,
+      'project01',
+      createTestProject({
+        userRoles: {
+          projectAdmin: SFProjectRole.ParatextAdministrator,
+          translator: SFProjectRole.ParatextTranslator,
+          checker: SFProjectRole.CommunityChecker,
+          commenter: SFProjectRole.Commenter
+        }
+      })
+    );
 
     const verseRef: VerseRefData = {
       bookNum: 40,

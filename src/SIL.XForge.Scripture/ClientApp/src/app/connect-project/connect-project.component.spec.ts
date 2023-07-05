@@ -6,9 +6,9 @@ import { MatSelect } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject } from 'rxjs';
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
@@ -377,15 +377,10 @@ class TestEnvironment {
 
   constructor(hasConnection: boolean = true) {
     when(mockedSFProjectService.onlineCreate(anything())).thenCall((settings: SFProjectCreateSettings) => {
-      const newProject: SFProject = {
-        name: 'project 01',
-        shortName: 'P01',
+      const newProject: SFProject = createTestProject({
         paratextId: settings.paratextId,
-        writingSystem: { tag: 'qaa' },
         translateConfig: {
           translationSuggestionsEnabled: settings.translationSuggestionsEnabled,
-          shareEnabled: false,
-          preTranslate: false,
           source:
             settings.sourceParatextId == null
               ? undefined
@@ -398,21 +393,14 @@ class TestEnvironment {
                 }
         },
         checkingConfig: {
-          checkingEnabled: settings.checkingEnabled,
-          shareEnabled: false,
-          usersSeeEachOthersResponses: true,
-          answerExportMethod: CheckingAnswerExport.MarkedForExport
+          checkingEnabled: settings.checkingEnabled
         },
         sync: { queuedCount: 1 },
-        editable: true,
-        texts: [],
-        noteTags: [],
         userRoles: {
           user01: SFProjectRole.ParatextAdministrator
         },
-        paratextUsers: [{ sfUserId: 'user01', username: 'ptuser01', opaqueUserId: 'opaqueuser01' }],
-        userPermissions: {}
-      };
+        paratextUsers: [{ sfUserId: 'user01', username: 'ptuser01', opaqueUserId: 'opaqueuser01' }]
+      });
       this.realtimeService.create(SFProjectDoc.COLLECTION, 'project01', newProject);
       return Promise.resolve('project01');
     });

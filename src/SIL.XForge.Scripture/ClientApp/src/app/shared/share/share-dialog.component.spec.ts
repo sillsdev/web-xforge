@@ -18,6 +18,7 @@ import { CommonModule } from '@angular/common';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -356,7 +357,7 @@ class TestEnvironment {
     when(mockedPwaService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
     when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
     when(mockedUserService.currentUserId).thenReturn(userId);
-    when(mockedUserService.getCurrentUser()).thenResolve({ data: { displayName: 'name' } } as UserDoc);
+    when(mockedUserService.getCurrentUser()).thenResolve({ data: createTestUser() } as UserDoc);
     when(mockedProjectService.onlineGetLinkSharingKey(projectId, anything(), anything())).thenResolve(
       checkingShareEnabled || translateShareEnabled ? 'linkSharing01' : ''
     );

@@ -8,7 +8,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { paratextUsersFromRoles } from '../../shared/test-utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -130,86 +130,44 @@ class TestEnvironment {
   private userRoleSource = { user01: SFProjectRole.ParatextAdministrator };
 
   constructor(args: TestEnvArgs) {
-    const date = new Date();
-    date.setMonth(date.getMonth() - 2);
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: 'testProject01',
-      data: {
-        name: 'Sync Test Project',
-        paratextId: 'pt01',
-        shortName: 'P01',
-        writingSystem: {
-          tag: 'en'
+      data: createTestProject(
+        {
+          translateConfig: {
+            translationSuggestionsEnabled: !!args.translationSuggestionsEnabled,
+            source:
+              args.sourceProject != null
+                ? {
+                    paratextId: 'pt02',
+                    projectRef: args.sourceProject,
+                    isRightToLeft: false,
+                    writingSystem: { tag: 'en' },
+                    name: 'Sync Source Project',
+                    shortName: 'P02'
+                  }
+                : undefined
+          },
+          sync: {
+            queuedCount: args.isInProgress === true ? 1 : 0
+          },
+          userRoles: this.userRoleTarget,
+          paratextUsers: paratextUsersFromRoles(this.userRoleTarget)
         },
-        translateConfig: {
-          translationSuggestionsEnabled: !!args.translationSuggestionsEnabled,
-          shareEnabled: false,
-          preTranslate: false,
-          source:
-            args.sourceProject != null
-              ? {
-                  paratextId: 'pt02',
-                  projectRef: args.sourceProject,
-                  isRightToLeft: false,
-                  writingSystem: { tag: 'en' },
-                  name: 'Sync Source Project',
-                  shortName: 'P02'
-                }
-              : undefined
-        },
-        checkingConfig: {
-          checkingEnabled: false,
-          usersSeeEachOthersResponses: true,
-          shareEnabled: true,
-          answerExportMethod: CheckingAnswerExport.MarkedForExport
-        },
-        sync: {
-          queuedCount: args.isInProgress === true ? 1 : 0,
-          lastSyncSuccessful: true,
-          dateLastSuccessfulSync: date.toJSON()
-        },
-        editable: true,
-        texts: [],
-        noteTags: [],
-        userRoles: this.userRoleTarget,
-        paratextUsers: paratextUsersFromRoles(this.userRoleTarget),
-        userPermissions: {}
-      }
+        1
+      )
     });
 
     if (args.sourceProject != null) {
       this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
         id: 'sourceProject02',
-        data: {
-          name: 'Sync Source Project',
-          paratextId: 'pt02',
-          shortName: 'P02',
-          writingSystem: {
-            tag: 'en'
+        data: createTestProject(
+          {
+            userRoles: this.userRoleSource,
+            paratextUsers: paratextUsersFromRoles(this.userRoleSource)
           },
-          translateConfig: {
-            translationSuggestionsEnabled: false,
-            shareEnabled: false,
-            preTranslate: false
-          },
-          checkingConfig: {
-            checkingEnabled: false,
-            usersSeeEachOthersResponses: true,
-            shareEnabled: true,
-            answerExportMethod: CheckingAnswerExport.MarkedForExport
-          },
-          sync: {
-            queuedCount: 0,
-            lastSyncSuccessful: true,
-            dateLastSuccessfulSync: date.toJSON()
-          },
-          editable: true,
-          texts: [],
-          noteTags: [],
-          userRoles: this.userRoleSource,
-          paratextUsers: paratextUsersFromRoles(this.userRoleSource),
-          userPermissions: {}
-        }
+          2
+        )
       });
     }
     when(mockedProjectService.get('testProject01')).thenCall(() =>

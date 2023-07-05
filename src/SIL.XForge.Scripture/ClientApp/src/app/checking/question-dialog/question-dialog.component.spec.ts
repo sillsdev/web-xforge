@@ -8,6 +8,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { VerseRef } from '@sillsdev/scripture';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
@@ -30,7 +31,6 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { DialogService } from 'xforge-common/dialog.service';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -595,16 +595,7 @@ class TestEnvironment {
     };
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',
-      data: {
-        name: 'User 01',
-        email: 'user1@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
-        authId: 'auth01',
-        displayName: 'name',
-        sites: {}
-      }
+      data: createTestUser()
     });
 
     this.dialogRef = TestBed.inject(MatDialog).open(QuestionDialogComponent, config);

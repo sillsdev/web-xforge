@@ -10,9 +10,8 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ngfModule } from 'angular-file';
 import { CookieService } from 'ngx-cookie-service';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import {
   getQuestionDocId,
   Question,
@@ -21,6 +20,7 @@ import {
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
@@ -533,9 +533,9 @@ class TestEnvironment {
   readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  adminUser = this.createUser('01', SFProjectRole.ParatextAdministrator);
-  checkerUser = this.createUser('02', SFProjectRole.CommunityChecker);
-  translatorUser = this.createUser('03', SFProjectRole.ParatextTranslator);
+  adminUser = this.createUser(1, SFProjectRole.ParatextAdministrator);
+  checkerUser = this.createUser(2, SFProjectRole.CommunityChecker);
+  translatorUser = this.createUser(3, SFProjectRole.ParatextTranslator);
 
   private adminProjectUserConfig: SFProjectUserConfig = {
     ownerRef: this.adminUser.id,
@@ -576,26 +576,7 @@ class TestEnvironment {
     commentRefsRead: [],
     noteRefsRead: []
   };
-  private testProject: SFProjectProfile = {
-    name: 'Project 01',
-    paratextId: 'pt01',
-    shortName: 'P01',
-    writingSystem: {
-      tag: 'en'
-    },
-    checkingConfig: {
-      usersSeeEachOthersResponses: true,
-      checkingEnabled: true,
-      shareEnabled: true,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
-    },
-    translateConfig: {
-      translationSuggestionsEnabled: false,
-      shareEnabled: false,
-      preTranslate: false
-    },
-    sync: { queuedCount: 0 },
-    editable: true,
+  private testProject: SFProjectProfile = createTestProjectProfile({
     texts: [
       {
         bookNum: 40,
@@ -613,7 +594,6 @@ class TestEnvironment {
         permissions: {}
       }
     ],
-    noteTags: [],
     userRoles: {
       [this.adminUser.id]: this.adminUser.role,
       [this.checkerUser.id]: this.checkerUser.role,
@@ -625,7 +605,7 @@ class TestEnvironment {
         SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit)
       ]
     }
-  };
+  });
 
   private readonly anotherUserId = 'anotherUserId';
   private isOnline: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
@@ -1047,19 +1027,15 @@ class TestEnvironment {
     });
   }
 
-  private createUser(id: string, role: string, nameConfirmed: boolean = true): UserInfo {
+  private createUser(idSuffix: number, role: string, nameConfirmed: boolean = true): UserInfo {
     return {
-      id: 'user' + id,
-      user: {
-        name: 'User ' + id,
-        email: 'user1@example.com',
-        role: SystemRole.User,
-        authId: 'auth01',
-        avatarUrl: '',
-        displayName: 'User ' + id,
-        isDisplayNameConfirmed: nameConfirmed,
-        sites: {}
-      },
+      id: 'user' + idSuffix,
+      user: createTestUser(
+        {
+          isDisplayNameConfirmed: nameConfirmed
+        },
+        idSuffix
+      ),
       role
     };
   }
