@@ -13,7 +13,7 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 })
 export class AudioPlayerComponent extends SubscriptionDisposable {
   readonly isAudioAvailable$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  audio: AudioPlayer | undefined;
+  private _audio: AudioPlayer | undefined;
 
   constructor(private readonly pwaService: PwaService, readonly i18n: I18nService) {
     super();
@@ -21,6 +21,10 @@ export class AudioPlayerComponent extends SubscriptionDisposable {
     this.subscribe(this.isAudioAvailable$, () => {
       this.audio?.setSeek(0);
     });
+  }
+
+  get audio(): AudioPlayer | undefined {
+    return this._audio;
   }
 
   get duration(): number {
@@ -35,14 +39,14 @@ export class AudioPlayerComponent extends SubscriptionDisposable {
     this.isAudioAvailable$.next(false);
     this.audio?.dispose();
     if (source != null && source !== '') {
-      this.audio = new AudioPlayer(source, this.pwaService);
-      this.subscribe(this.audio?.status$, newVal => {
+      this._audio = new AudioPlayer(source, this.pwaService);
+      this.subscribe(this._audio.status$, newVal => {
         if (newVal === AudioStatus.Available) {
           this.isAudioAvailable$.next(true);
         }
       });
     } else {
-      this.audio = undefined;
+      this._audio = undefined;
     }
   }
 
