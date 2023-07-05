@@ -3,11 +3,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { of } from 'rxjs';
+import { AudioPlayerComponent } from 'src/app/shared/audio/audio-player.component';
 import { instance, mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { AudioTimePipe, CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
+import { AudioTimePipe } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
 
 const audioFile = 'test-audio-player.webm';
@@ -62,7 +63,7 @@ class TestEnvironment {
 
   constructor(template: string) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, CheckingScriptureAudioPlayerComponent, CheckingAudioPlayerComponent, AudioTimePipe],
+      declarations: [HostComponent, CheckingScriptureAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe],
       providers: [{ provide: PwaService, useFactory: () => instance(this.mockPwaService) }],
       imports: [UICommonModule, TestTranslocoModule]
     });
