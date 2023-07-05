@@ -1,3 +1,4 @@
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { Location } from '@angular/common';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -11,11 +12,9 @@ import { AngularSplitModule } from 'angular-split';
 import { cloneDeep } from 'lodash-es';
 import clone from 'lodash-es/clone';
 import { CookieService } from 'ngx-cookie-service';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -55,6 +54,7 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatMenuHarness } from '@angular/material/menu/testing';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { QueryParameters } from 'xforge-common/query-parameters';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -94,27 +94,23 @@ const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedFileService = mock(FileService);
 
-function createUser(id: string, role: string, nameConfirmed: boolean = true): UserInfo {
+function createUser(idSuffix: number, role: string, nameConfirmed: boolean = true): UserInfo {
   return {
-    id: 'user' + id,
-    user: {
-      name: 'User ' + id,
-      email: 'user1@example.com',
-      role: SystemRole.User,
-      authId: 'auth01',
-      avatarUrl: '',
-      displayName: 'User ' + id,
-      isDisplayNameConfirmed: nameConfirmed,
-      sites: {}
-    },
+    id: 'user' + idSuffix,
+    user: createTestUser(
+      {
+        isDisplayNameConfirmed: nameConfirmed
+      },
+      idSuffix
+    ),
     role
   };
 }
 
-const ADMIN_USER: UserInfo = createUser('01', SFProjectRole.ParatextAdministrator);
-const CHECKER_USER: UserInfo = createUser('02', SFProjectRole.CommunityChecker);
-const CLEAN_CHECKER_USER: UserInfo = createUser('03', SFProjectRole.CommunityChecker, false);
-const OBSERVER_USER: UserInfo = createUser('04', SFProjectRole.ParatextObserver);
+const ADMIN_USER: UserInfo = createUser(1, SFProjectRole.ParatextAdministrator);
+const CHECKER_USER: UserInfo = createUser(2, SFProjectRole.CommunityChecker);
+const CLEAN_CHECKER_USER: UserInfo = createUser(3, SFProjectRole.CommunityChecker, false);
+const OBSERVER_USER: UserInfo = createUser(4, SFProjectRole.ParatextObserver);
 
 class MockComponent {}
 
@@ -1725,26 +1721,12 @@ class TestEnvironment {
 
   private projectBookRoute: string = 'JHN';
 
-  private readonly testProject: SFProject = {
-    name: 'Project 01',
-    paratextId: 'pt01',
-    shortName: 'P01',
+  private readonly testProject: SFProject = createTestProject({
     writingSystem: {
       tag: this.project01WritingSystemTag
     },
-    sync: {
-      queuedCount: 0
-    },
-    checkingConfig: {
-      usersSeeEachOthersResponses: true,
-      checkingEnabled: true,
-      shareEnabled: true,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
-    },
     translateConfig: {
       translationSuggestionsEnabled: true,
-      shareEnabled: false,
-      preTranslate: false,
       source: {
         paratextId: 'project02',
         projectRef: 'project02',
@@ -1753,7 +1735,6 @@ class TestEnvironment {
         writingSystem: { tag: 'qaa' }
       }
     },
-    editable: true,
     texts: [
       {
         bookNum: 43,
@@ -1771,19 +1752,17 @@ class TestEnvironment {
         permissions: {}
       }
     ],
-    noteTags: [],
     userRoles: {
       [ADMIN_USER.id]: ADMIN_USER.role,
       [CHECKER_USER.id]: CHECKER_USER.role,
       [CLEAN_CHECKER_USER.id]: CLEAN_CHECKER_USER.role,
       [OBSERVER_USER.id]: OBSERVER_USER.role
     },
-    userPermissions: {},
     paratextUsers: [
       { sfUserId: ADMIN_USER.id, username: ADMIN_USER.user.name, opaqueUserId: `opaque${ADMIN_USER.id}` },
       { sfUserId: OBSERVER_USER.id, username: OBSERVER_USER.user.name, opaqueUserId: `opaque${OBSERVER_USER.id}` }
     ]
-  };
+  });
 
   constructor(user: UserInfo, projectBookRoute: string = 'JHN', hasConnection: boolean = true) {
     reset(mockedFileService);

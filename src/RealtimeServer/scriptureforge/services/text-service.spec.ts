@@ -3,15 +3,15 @@ import { Delta } from 'rich-text';
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
-import { SystemRole } from '../../common/models/system-role';
+import { createTestUser } from '../../common/models/user-test-data';
 import { User, USERS_COLLECTION } from '../../common/models/user';
 import { RealtimeServer } from '../../common/realtime-server';
 import { SchemaVersionRepository } from '../../common/schema-version-repository';
 import { allowAll, clientConnect, createDoc, fetchDoc, submitOp } from '../../common/utils/test-utils';
-import { CheckingAnswerExport } from '../models/checking-config';
 import { SF_PROJECTS_COLLECTION, SFProject } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { getTextDocId, TextData, TEXTS_COLLECTION } from '../models/text-data';
+import { createTestProject } from '../models/sf-project-test-data';
 import { TextService } from './text-service';
 
 ShareDB.types.register(RichText.type);
@@ -76,66 +76,22 @@ class TestEnvironment {
 
   async createData(): Promise<void> {
     const conn = this.server.connect();
-    await createDoc<User>(conn, USERS_COLLECTION, 'translator', {
-      name: 'User 01',
-      email: 'user01@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth01',
-      displayName: 'User 01',
-      avatarUrl: '',
-      sites: {}
-    });
+    await createDoc<User>(conn, USERS_COLLECTION, 'translator', createTestUser({}, 1));
+    await createDoc<User>(conn, USERS_COLLECTION, 'observer', createTestUser({}, 2));
+    await createDoc<User>(conn, USERS_COLLECTION, 'nonmember', createTestUser({}, 3));
 
-    await createDoc<User>(conn, USERS_COLLECTION, 'observer', {
-      name: 'User 02',
-      email: 'user02@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth02',
-      displayName: 'User 02',
-      avatarUrl: '',
-      sites: {}
-    });
-
-    await createDoc<User>(conn, USERS_COLLECTION, 'nonmember', {
-      name: 'User 03',
-      email: 'user03@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth03',
-      displayName: 'User 03',
-      avatarUrl: '',
-      sites: {}
-    });
-
-    await createDoc<SFProject>(conn, SF_PROJECTS_COLLECTION, 'project01', {
-      name: 'Project 01',
-      shortName: 'PT01',
-      paratextId: 'pt01',
-      writingSystem: { tag: 'qaa' },
-      translateConfig: {
-        translationSuggestionsEnabled: false,
-        shareEnabled: true,
-        preTranslate: false
-      },
-      checkingConfig: {
-        checkingEnabled: false,
-        usersSeeEachOthersResponses: true,
-        shareEnabled: true,
-        answerExportMethod: CheckingAnswerExport.MarkedForExport
-      },
-      texts: [],
-      noteTags: [],
-      sync: { queuedCount: 0 },
-      editable: true,
-      userRoles: {
-        translator: SFProjectRole.ParatextTranslator,
-        observer: SFProjectRole.ParatextObserver
-      },
-      paratextUsers: [{ sfUserId: 'translator', username: 'pttranslator', opaqueUserId: 'opaquetranslator' }],
-      userPermissions: {}
-    });
+    await createDoc<SFProject>(
+      conn,
+      SF_PROJECTS_COLLECTION,
+      'project01',
+      createTestProject({
+        userRoles: {
+          translator: SFProjectRole.ParatextTranslator,
+          observer: SFProjectRole.ParatextObserver
+        },
+        paratextUsers: [{ sfUserId: 'translator', username: 'pttranslator', opaqueUserId: 'opaquetranslator' }]
+      })
+    );
 
     await createDoc<TextData>(conn, TEXTS_COLLECTION, getTextDocId('project01', 40, 1), new Delta(), 'rich-text');
   }

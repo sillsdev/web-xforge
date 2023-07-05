@@ -27,19 +27,14 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { LocalPresence } from 'sharedb/lib/sharedb';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { User } from 'realtime-server/common/models/user';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../shared.module';
-import {
-  getCombinedVerseTextDoc,
-  getEmptyChapterDoc,
-  getPoetryVerseTextDoc,
-  getSFProject,
-  getTextDoc
-} from '../test-utils';
+import { getCombinedVerseTextDoc, getEmptyChapterDoc, getPoetryVerseTextDoc, getTextDoc } from '../test-utils';
 import { PresenceData, PRESENCE_EDITOR_ACTIVE_TIMEOUT, RemotePresences, TextComponent } from './text.component';
 import { TextNoteDialogComponent, TextNoteType } from './text-note-dialog/text-note-dialog.component';
 
@@ -325,16 +320,7 @@ describe('TextComponent', () => {
       const callback: (env: TestEnvironment) => void = (env: TestEnvironment) => {
         env.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
           id: 'user02',
-          data: {
-            name: 'User 02',
-            email: 'user2@example.com',
-            role: SystemRole.User,
-            isDisplayNameConfirmed: true,
-            avatarUrl: '',
-            authId: 'auth02',
-            displayName: '',
-            sites: {}
-          }
+          data: createTestUser({ displayName: '' }, 2)
         });
         when(mockedUserService.getCurrentUser()).thenCall(() =>
           env.realtimeService.subscribe(UserDoc.COLLECTION, 'user02')
@@ -495,7 +481,6 @@ describe('TextComponent', () => {
     }));
 
     it('should update presence if the user data changes', fakeAsync(() => {
-      const currentAvatarUrl: string = 'https://example.com/avatar.png';
       const updatedAvatarUrl: string = 'https://example.com/avatar-updated.png';
       const env: TestEnvironment = new TestEnvironment();
       env.fixture.detectChanges();
@@ -504,7 +489,7 @@ describe('TextComponent', () => {
       env.fixture.detectChanges();
       const presenceChannelSubmit = spyOn<any>(env.localPresenceChannel, 'submit');
       const userDoc: UserDoc = env.getUserDoc('user01');
-      expect(userDoc.data?.avatarUrl).toEqual(currentAvatarUrl);
+      expect(userDoc.data?.avatarUrl).not.toEqual(updatedAvatarUrl);
 
       userDoc.submitJson0Op(op => op.set(u => u.avatarUrl, updatedAvatarUrl));
       expect(userDoc.data?.avatarUrl).toEqual(updatedAvatarUrl);
@@ -1214,7 +1199,24 @@ class TestEnvironment {
     const jhnTextDocId = new TextDocId('project01', 43, 1);
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: 'project01',
-      data: getSFProject('project01')
+      data: createTestProjectProfile({
+        userRoles: { user01: SFProjectRole.ParatextTranslator, user02: SFProjectRole.ParatextConsultant },
+        checkingConfig: {
+          checkingEnabled: false,
+          shareEnabled: true
+        },
+        texts: [
+          {
+            bookNum: 40,
+            chapters: [
+              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
+              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+            ],
+            hasSource: true,
+            permissions: {}
+          }
+        ]
+      })
     });
     this.realtimeService.addSnapshots<TextData>(TextDoc.COLLECTION, [
       {
@@ -1236,16 +1238,7 @@ class TestEnvironment {
     ]);
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',
-      data: {
-        name: 'User 01',
-        email: 'user1@example.com',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: 'https://example.com/avatar.png',
-        authId: 'auth01',
-        displayName: 'name',
-        sites: {}
-      }
+      data: createTestUser({}, 1)
     });
 
     when(mockedProjectService.getText(anything())).thenCall(id =>

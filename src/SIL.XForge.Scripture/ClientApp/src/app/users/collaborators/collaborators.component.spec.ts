@@ -30,6 +30,8 @@ import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from '
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { paratextUsersFromRoles } from '../../shared/test-utils';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -464,15 +466,15 @@ class TestEnvironment {
     this.realtimeService.addSnapshots<UserProfile>(UserProfileDoc.COLLECTION, [
       {
         id: 'user01',
-        data: { displayName: 'User 01', avatarUrl: '' }
+        data: createTestUserProfile({ displayName: 'User 01', avatarUrl: '' }, 1)
       },
       {
         id: 'user02',
-        data: { displayName: 'User 02', avatarUrl: '' }
+        data: createTestUserProfile({ displayName: 'User 02', avatarUrl: '' }, 2)
       },
       {
         id: 'user03',
-        data: { displayName: 'User 03', avatarUrl: '' }
+        data: createTestUserProfile({ displayName: 'User 03', avatarUrl: '' }, 3)
       }
     ]);
 
@@ -627,30 +629,15 @@ class TestEnvironment {
   }
 
   private createProject(userRoles: { [userRef: string]: string }): SFProject {
-    return {
-      name: 'Project 01',
-      paratextId: 'pt01',
-      shortName: 'P01',
-      texts: [],
-      writingSystem: { tag: 'en' },
-      sync: { queuedCount: 0 },
-      translateConfig: {
-        translationSuggestionsEnabled: false,
-        shareEnabled: false,
-        preTranslate: false
-      },
+    return createTestProject({
       checkingConfig: {
         checkingEnabled: false,
         usersSeeEachOthersResponses: false,
-        shareEnabled: false,
         answerExportMethod: CheckingAnswerExport.MarkedForExport
       },
-      noteTags: [],
-      editable: true,
       userRoles,
-      paratextUsers: paratextUsersFromRoles(userRoles),
-      userPermissions: {}
-    };
+      paratextUsers: paratextUsersFromRoles(userRoles)
+    });
   }
 
   private setupThisProjectData(projectId: string, project: SFProject): void {

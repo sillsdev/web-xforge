@@ -5,6 +5,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import { AvatarService } from 'ngx-avatar';
 import { CookieService } from 'ngx-cookie-service';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
+import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -111,10 +112,7 @@ class TestEnvironment {
     this.realtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
     this.realtimeService.addSnapshot<UserProfile>(UserProfileDoc.COLLECTION, {
       id: 'user01',
-      data: {
-        displayName: 'User 01',
-        avatarUrl: ''
-      }
+      data: createTestUserProfile({ displayName: 'User 01' })
     });
     when(this.mockedUserService.getProfile('user01')).thenCall(() =>
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, 'user01')

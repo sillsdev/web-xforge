@@ -3,8 +3,8 @@ import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { AvatarTestingModule } from '../avatar/avatar-testing.module';
 import { ChildViewContainerComponent, configureTestingModule } from '../test-utils';
 import { UICommonModule } from '../ui-common.module';
@@ -49,16 +49,7 @@ class TestEnvironment {
     const config: MatDialogConfig<SaDeleteUserDialogData> = {
       viewContainerRef,
       data: {
-        user: {
-          name: 'Billy T James',
-          displayName: 'Billy T James',
-          isDisplayNameConfirmed: true,
-          email: 'user01@example.com',
-          avatarUrl: '',
-          authId: 'auth01',
-          role: SystemRole.User,
-          sites: {}
-        }
+        user: createTestUser()
       }
     };
     this.dialogRef = TestBed.inject(MatDialog).open(SaDeleteDialogComponent, config);
