@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
+using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
@@ -60,6 +62,44 @@ public class ParatextController : ControllerBase
         catch (SecurityException)
         {
             return NoContent();
+        }
+    }
+
+    /// <summary>
+    /// Retrieves a snapshot at a point in time for a text.
+    /// </summary>
+    /// <param name="projectId">The project id.</param>
+    /// <param name="book">The three letter book code.</param>
+    /// <param name="chapter">The chapter number.</param>
+    /// <param name="timestamp">The point in time to get the snapshot at.</param>
+    /// <response code="200">The snapshot was retrieved for the specified point in time.</response>
+    /// <response code="403">The user does not have permission to access the document.</response>
+    /// <response code="404">The document does not exist.</response>
+    [HttpGet("history/texts/{projectId}_{book}_{chapter:int}_target")]
+    public async Task<ActionResult<Snapshot<TextData>>> GetHistoryAsync(
+        string projectId,
+        string book,
+        int chapter,
+        DateTime timestamp
+    )
+    {
+        Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
+        if (!attempt.TryResult(out UserSecret userSecret))
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            return Ok(await _paratextService.GetHistoryAsync(userSecret, projectId, book, chapter, timestamp));
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
         }
     }
 
