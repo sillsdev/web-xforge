@@ -57,7 +57,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
     env.openDialog();
     expect(env.component!.translationSuggestionsUserEnabled).toBe(true);
 
-    env.clickSwitch(env.matSuggestionsEnabledSwitch);
+    env.clickSwitch(env.suggestionsEnabledSwitch);
     expect(env.component!.translationSuggestionsUserEnabled).toBe(false);
     const userConfigDoc = env.getProjectUserConfigDoc();
     expect(userConfigDoc.data!.translationSuggestionsEnabled).toBe(false);
@@ -88,14 +88,14 @@ describe('SuggestionsSettingsDialogComponent', () => {
     env.openDialog();
 
     expect(env.offlineText).toBeNull();
-    expect(env.suggestionsEnabledSwitch.disabled).toBe(false);
+    expect(env.suggestionsEnabledCheckbox.disabled).toBe(false);
     expect(env.confidenceThresholdSlider.disabled).toBe(false);
     expect(env.numSuggestionsSelect.disabled).toBe(false);
 
     env.isOnline = false;
 
     expect(env.offlineText).not.toBeNull();
-    expect(env.suggestionsEnabledSwitch.disabled).toBe(true);
+    expect(env.suggestionsEnabledCheckbox.disabled).toBe(true);
     expect(env.confidenceThresholdSlider.disabled).toBe(true);
     expect(env.numSuggestionsSelect.disabled).toBe(true);
     env.closeDialog();
@@ -106,8 +106,8 @@ describe('SuggestionsSettingsDialogComponent', () => {
     env.isOnline = false;
     env.openDialog();
 
-    expect(env.suggestionsEnabledSwitch.disabled).toBe(true);
-    expect(env.suggestionsEnabledSwitch.checked).toBe(true);
+    expect(env.suggestionsEnabledCheckbox.disabled).toBe(true);
+    expect(env.suggestionsEnabledCheckbox.checked).toBe(true);
     env.closeDialog();
   }));
 });
@@ -147,12 +147,12 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#confidence-threshold-slider')).componentInstance;
   }
 
-  get matSuggestionsEnabledSwitch(): HTMLElement {
+  get suggestionsEnabledSwitch(): HTMLElement {
     return this.overlayContainerElement.querySelector('#suggestions-enabled-switch') as HTMLElement;
   }
 
-  get suggestionsEnabledSwitch(): HTMLInputElement {
-    return this.matSuggestionsEnabledSwitch.querySelector('input[type="checkbox"]') as HTMLInputElement;
+  get suggestionsEnabledCheckbox(): HTMLInputElement {
+    return this.suggestionsEnabledSwitch.querySelector('input[type="checkbox"]') as HTMLInputElement;
   }
 
   get numSuggestionsSelect(): MatSelect {
