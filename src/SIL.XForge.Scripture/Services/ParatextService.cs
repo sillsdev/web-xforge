@@ -15,6 +15,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
 using IdentityModel;
@@ -2412,26 +2413,34 @@ public class ParatextService : DisposableBase, IParatextService
             return content;
         XDocument doc = XDocument.Parse(content);
         XElement contentNode = (XElement)doc.FirstNode;
-        XElement[] elements = contentNode.Elements().ToArray();
-        if (!elements.Any())
+        XNode[] nodes = contentNode.Nodes().ToArray();
+        if (!nodes.Any())
             return contentNode.Value;
 
         int paragraphNodeCount = ((XElement)doc.FirstNode).Elements("p").Count();
         StringBuilder sb = new StringBuilder();
         bool isReviewer = false;
-        for (int i = 0; i < elements.Length; i++)
+        for (int i = 0; i < nodes.Length; i++)
         {
-            XElement elem = elements[i];
+            XNode node = nodes[i];
+            if (node.NodeType == XmlNodeType.Text)
+            {
+                // append text to the content string
+                sb.Append(node);
+                continue;
+            }
+
+            XElement element = (XElement)node;
             // check if the paragraph element contains the user label class
-            if (elem.Attribute("sf-user-label")?.Value == "true")
+            if (element.Attribute("sf-user-label")?.Value == "true")
                 isReviewer = true;
             if (i == 0 && isReviewer)
                 continue;
             // If there is only one paragraph node other than the SF user label then omit the paragraph tags
             if (isReviewer && paragraphNodeCount <= 2)
-                sb.Append(elem.Value);
+                sb.Append(element.Value);
             else
-                sb.Append(elem);
+                sb.Append(node);
         }
         return sb.ToString();
     }
