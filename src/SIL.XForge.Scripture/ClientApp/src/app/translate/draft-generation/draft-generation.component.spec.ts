@@ -1,18 +1,22 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { BuildStates } from 'src/app/machine-api/build-states';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { UICommonModule } from '../../../xforge-common/ui-common.module';
+import { ACTIVE_BUILD_STATES } from './draft-generation';
+import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
-import { GenerateDraftComponent } from './draft-generation.component';
 
-describe('GenerateDraftComponent', () => {
-  let component: GenerateDraftComponent;
-  let matDialog: jasmine.SpyObj<MatDialog>;
-  let dialogService: jasmine.SpyObj<DialogService>;
-  let draftGenerationService: jasmine.SpyObj<DraftGenerationService>;
-  let activatedProjectService: jasmine.SpyObj<ActivatedProjectService>;
+describe('DraftGenerationComponent', () => {
+  let component: DraftGenerationComponent;
+  let fixture: ComponentFixture<DraftGenerationComponent>;
+  let mockMatDialog: jasmine.SpyObj<MatDialog>;
+  let mockDialogService: jasmine.SpyObj<DialogService>;
+  let mockDraftGenerationService: jasmine.SpyObj<DraftGenerationService>;
+  let mockActivatedProjectService: jasmine.SpyObj<ActivatedProjectService>;
 
   const buildDto: BuildDto = {
     id: 'testId',
@@ -28,35 +32,55 @@ describe('GenerateDraftComponent', () => {
   };
 
   beforeEach(() => {
-    matDialog = jasmine.createSpyObj('MatDialog', ['cancelAll']);
-    dialogService = jasmine.createSpyObj('DialogService', ['confirm']);
-    draftGenerationService = jasmine.createSpyObj('DraftGenerationService', [
+    mockMatDialog = jasmine.createSpyObj('MatDialog', ['cancelAll']);
+    mockDialogService = jasmine.createSpyObj('DialogService', ['confirm']);
+    mockDraftGenerationService = jasmine.createSpyObj('DraftGenerationService', [
       'startBuild',
       'cancelBuild',
       'getBuildProgress'
     ]);
-    activatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], { projectId: 'testProjectId' });
-    component = new GenerateDraftComponent(matDialog, dialogService, activatedProjectService, draftGenerationService, [
-      BuildStates.Active,
-      BuildStates.Pending,
-      BuildStates.Queued
-    ]);
+    mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+      projectId: 'testProjectId',
+      projectDoc$: of({
+        data: {
+          writingSystem: {
+            tag: 'en'
+          }
+        }
+      })
+    });
+
+    TestBed.configureTestingModule({
+      declarations: [DraftGenerationComponent],
+      imports: [UICommonModule],
+      providers: [
+        { provide: DraftGenerationService, useValue: mockDraftGenerationService },
+        { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
+        { provide: MatDialog, useValue: mockMatDialog },
+        { provide: DialogService, useValue: mockDialogService },
+        { provide: ACTIVE_BUILD_STATES, useValue: [BuildStates.Active, BuildStates.Pending, BuildStates.Queued] }
+      ]
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(DraftGenerationComponent);
+    component = fixture.componentInstance;
   });
 
   describe('ngOnInit', () => {
     it('should subscribe to build progress', () => {
-      draftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
+      mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       component.ngOnInit();
-      expect(draftGenerationService.getBuildProgress).toHaveBeenCalledWith(activatedProjectService.projectId!);
+      expect(mockDraftGenerationService.getBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
       expect(component.draftJob).toEqual(buildDto);
       expect(component.draftViewerUrl).toEqual('/projects/testProjectId/draft-preview');
+      expect(component.isTargetLanguageNllb).toBe(true);
     });
   });
 
   describe('generateDraft', () => {
     it('should start the draft build', () => {
       component.generateDraft();
-      expect(draftGenerationService.startBuild).toHaveBeenCalledWith('testProjectId');
+      expect(mockDraftGenerationService.startBuild).toHaveBeenCalledWith('testProjectId');
     });
   });
 
@@ -64,25 +88,25 @@ describe('GenerateDraftComponent', () => {
     it('should cancel the draft build if user confirms "cancel" dialog', async () => {
       const job: BuildDto = { ...buildDto, state: BuildStates.Active };
       component.draftJob = job;
-      dialogService.confirm.and.returnValue(Promise.resolve(true));
+      mockDialogService.confirm.and.returnValue(Promise.resolve(true));
       await component.cancel();
-      expect(dialogService.confirm).toHaveBeenCalled();
-      expect(draftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
+      expect(mockDialogService.confirm).toHaveBeenCalled();
+      expect(mockDraftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
     });
     it('should not cancel the draft build if user exits "cancel" dialog', async () => {
       const job: BuildDto = { ...buildDto, state: BuildStates.Active };
       component.draftJob = job;
-      dialogService.confirm.and.returnValue(Promise.resolve(false));
+      mockDialogService.confirm.and.returnValue(Promise.resolve(false));
       await component.cancel();
-      expect(dialogService.confirm).toHaveBeenCalled();
-      expect(draftGenerationService.cancelBuild).not.toHaveBeenCalled();
+      expect(mockDialogService.confirm).toHaveBeenCalled();
+      expect(mockDraftGenerationService.cancelBuild).not.toHaveBeenCalled();
     });
     it('should cancel the draft build without dialog if the build state is not active', async () => {
       const job: BuildDto = { ...buildDto, state: BuildStates.Queued };
       component.draftJob = job;
       await component.cancel();
-      expect(dialogService.confirm).not.toHaveBeenCalled();
-      expect(draftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
+      expect(mockDialogService.confirm).not.toHaveBeenCalled();
+      expect(mockDraftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
     });
   });
 
