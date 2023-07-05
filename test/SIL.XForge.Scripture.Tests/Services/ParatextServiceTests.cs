@@ -4686,6 +4686,7 @@ public class ParatextServiceTests
             MockRestClientFactory = Substitute.For<ISFRestClientFactory>();
             MockGuidService = Substitute.For<IGuidService>();
             MockRegistryHttpClient = Substitute.For<HttpClient>();
+            var mockDeltaUsxMapper = Substitute.For<IDeltaUsxMapper>();
 
             DateTime aSecondAgo = DateTime.Now - TimeSpan.FromSeconds(1);
             string accessToken1 = TokenHelper.CreateAccessToken(
@@ -4754,7 +4755,8 @@ public class ParatextServiceTests
                 MockInternetSharedRepositorySourceProvider,
                 MockGuidService,
                 MockRestClientFactory,
-                MockHgWrapper
+                MockHgWrapper,
+                mockDeltaUsxMapper
             )
             {
                 ScrTextCollection = MockScrTextCollection,

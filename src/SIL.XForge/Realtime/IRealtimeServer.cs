@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -13,6 +14,7 @@ public interface IRealtimeServer
     Task DisconnectAsync(int handle);
     Task<Snapshot<T>> FetchDocAsync<T>(int handle, string collection, string id);
     Task<Snapshot<T>[]> FetchDocsAsync<T>(int handle, string collection, IReadOnlyCollection<string> ids);
+    Task<Snapshot<T>> FetchSnapshotAsync<T>(int handle, string collection, string id, DateTime timestamp);
     void Start(object options);
     void Stop();
     Task<Snapshot<T>> SubmitOpAsync<T>(int handle, string collection, string id, object op);
