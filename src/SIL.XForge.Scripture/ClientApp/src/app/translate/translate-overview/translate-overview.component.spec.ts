@@ -277,11 +277,11 @@ class TestEnvironment {
   }
 
   expectContainsTextProgress(index: number, primary: string, secondary: string): void {
-    const items = this.progressTextList.querySelectorAll('mat-list-item');
-    const item = items.item(index);
-    const primaryElem = item.querySelectorAll('.mat-line')[0];
+    const items: NodeListOf<Element> = this.progressTextList.querySelectorAll('mat-list-item');
+    const item: Element = items.item(index);
+    const primaryElem: Element = item.querySelectorAll('.mat-line')[0];
     expect(primaryElem!.textContent).toBe(primary);
-    const secondaryElem = item.querySelectorAll('.mat-line')[1];
+    const secondaryElem: Element = item.querySelectorAll('.mat-line')[1];
     expect(secondaryElem!.textContent).toBe(secondary);
   }
 

@@ -40,7 +40,6 @@ mat-card {
   }
 
   mat-list {
-    @include list.item-graphic-ink-color(rgba(0, 0, 0, 0.6));
     overflow-y: auto;
     mat-list-item {
       cursor: pointer;
@@ -48,7 +47,7 @@ mat-card {
         background-color: lighten($sf_grey, 75%);
       }
       .mat-icon {
-        color: $greyDark;
+        color: rgba(0, 0, 0, 0.6);
       }
     }
   }
