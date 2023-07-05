@@ -6,6 +6,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { SubscriptionDisposable } from '../../../xforge-common/subscription-disposable';
 import { BuildStates } from '../../machine-api/build-states';
+import { NllbLanguageService } from '../nllb-language.service';
 import { ACTIVE_BUILD_STATES } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 
@@ -14,21 +15,33 @@ import { DraftGenerationService } from './draft-generation.service';
   templateUrl: './draft-generation.component.html',
   styleUrls: ['./draft-generation.component.scss']
 })
-export class GenerateDraftComponent extends SubscriptionDisposable implements OnInit {
+export class DraftGenerationComponent extends SubscriptionDisposable implements OnInit {
   draftJob?: BuildDto;
   draftViewerUrl?: string;
+
+  isTargetLanguageNllb = false;
+  isBackTranslation = false;
 
   constructor(
     private readonly matDialog: MatDialog,
     private readonly dialogService: DialogService,
     public readonly activatedProject: ActivatedProjectService,
     private readonly draftGenerationService: DraftGenerationService,
+    private readonly nllbService: NllbLanguageService,
     @Inject(ACTIVE_BUILD_STATES) private readonly activeBuildStates: BuildStates[]
   ) {
     super();
   }
 
   ngOnInit(): void {
+    this.subscribe(this.activatedProject.projectDoc$, projectDoc => {
+      if (projectDoc) {
+        // TODO - this.isBackTranslation = projectDoc.data?.translateConfig.projectType === ProjectType.BackTranslation;
+        this.isBackTranslation = true;
+        this.isTargetLanguageNllb = this.nllbService.isNllbLanguage(projectDoc.data?.writingSystem.tag);
+      }
+    });
+
     if (this.activatedProject.projectId) {
       this.subscribe(
         this.draftGenerationService.getBuildProgress(this.activatedProject.projectId),
@@ -82,6 +95,10 @@ export class GenerateDraftComponent extends SubscriptionDisposable implements On
 
   isDraftComplete(): boolean {
     return (this.draftJob?.state as BuildStates) === BuildStates.Completed;
+  }
+
+  canGenerate(): boolean {
+    return this.isBackTranslation && this.isTargetLanguageNllb;
   }
 
   canCancel(): boolean {
