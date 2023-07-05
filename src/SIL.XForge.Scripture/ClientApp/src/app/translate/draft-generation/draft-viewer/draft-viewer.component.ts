@@ -17,7 +17,6 @@ import { Delta, TextDocId } from 'src/app/core/models/text-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 import { TextComponent } from 'src/app/shared/text/text.component';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { DraftSegmentMap } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftViewerService } from './draft-viewer.service';
@@ -59,8 +58,7 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly projectService: SFProjectService,
     private readonly activatedRoute: ActivatedRoute,
-    private readonly router: Router,
-    public readonly i18n: I18nService
+    private readonly router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
