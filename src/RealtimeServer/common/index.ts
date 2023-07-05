@@ -204,6 +204,21 @@ export = {
     conn?.createFetchQuery(collection, query, {}, (err, results) => callback(err, createSnapshots(results)));
   },
 
+  fetchSnapshotByTimestamp: (
+    callback: InteropCallback,
+    handle: number,
+    collection: string,
+    id: string,
+    timestamp: number
+  ): void => {
+    if (server == null) {
+      callback(new Error('Server not started.'));
+      return;
+    }
+    const conn = connections.get(handle);
+    conn?.fetchSnapshotByTimestamp(collection, id, timestamp, (err, snapshot) => callback(err, snapshot));
+  },
+
   submitOp: (callback: InteropCallback, handle: number, collection: string, id: string, ops: ShareDB.Op[]): void => {
     if (server == null) {
       callback(new Error('Server not started.'));

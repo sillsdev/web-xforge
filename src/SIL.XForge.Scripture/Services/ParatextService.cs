@@ -77,6 +77,7 @@ public class ParatextService : DisposableBase, IParatextService
     private readonly IHgWrapper _hgHelper;
     private readonly IWebHostEnvironment _env;
     private readonly DotNetCoreAlert _alertSystem;
+    private readonly IDeltaUsxMapper _deltaUsxMapper;
 
     public ParatextService(
         IWebHostEnvironment env,
@@ -92,7 +93,8 @@ public class ParatextService : DisposableBase, IParatextService
         IInternetSharedRepositorySourceProvider internetSharedRepositorySourceProvider,
         IGuidService guidService,
         ISFRestClientFactory restClientFactory,
-        IHgWrapper hgWrapper
+        IHgWrapper hgWrapper,
+        IDeltaUsxMapper deltaUsxMapper
     )
     {
         _paratextOptions = paratextOptions;
@@ -110,6 +112,7 @@ public class ParatextService : DisposableBase, IParatextService
         _hgHelper = hgWrapper;
         _env = env;
         _alertSystem = new DotNetCoreAlert(_logger);
+        _deltaUsxMapper = deltaUsxMapper;
 
         _httpClientHandler = new HttpClientHandler();
         _registryClient = new HttpClient(_httpClientHandler);
@@ -1908,6 +1911,69 @@ public class ParatextService : DisposableBase, IParatextService
             Memento.AddParallelDeserializer<CommentList>(null);
             commentManager.Load();
         }
+    }
+
+    public async Task<Snapshot<TextData>> GetHistoryAsync(
+        UserSecret userSecret,
+        string sfProjectId,
+        string book,
+        int chapter,
+        DateTime timestamp
+    )
+    {
+        await using IConnection connection = await _realtimeService.ConnectAsync(userSecret.Id);
+
+        string id = $"{sfProjectId}:{book}:{chapter}:target";
+        Snapshot<TextData> snapshot = await connection.FetchSnapshotAsync<TextData>(id, timestamp);
+
+        // We do not have a snapshot, so retrieve the data from Paratext
+        if (snapshot.Data is null)
+        {
+            // Load the project so we can get the Paratext Id
+            IDocument<SFProject> projectDoc = connection.Get<SFProject>(sfProjectId);
+            await projectDoc.FetchAsync();
+            if (!projectDoc.IsLoaded)
+            {
+                throw new DataNotFoundException("Project does not exist.");
+            }
+
+            // Load the Paratext project
+            string ptProjectId = projectDoc.Data.ParatextId;
+            using ScrText scrText = GetScrText(userSecret, ptProjectId);
+
+            // Clear the versioning manager cache
+            VersioningManager.Reset();
+
+            // Retrieve the first revision before or at the timestamp
+            VersionedText versionedText = VersioningManager.Get(scrText);
+            HgRevisionCollection revisionCollection = HgRevisionCollection.Get(scrText);
+            DateTimeOffset timeStampOffset = new DateTimeOffset(timestamp);
+            HgRevision? revision = revisionCollection.MutableCollection
+                .Where(r => r.CommitTimeStamp <= timeStampOffset)
+                .MaxBy(r => r.CommitTimeStamp);
+
+            // No revision was before than the timestamp, so get the first revision
+            revision ??= revisionCollection.MinBy(r => r.LocalRevisionNumber);
+            if (revision is null)
+            {
+                throw new DataNotFoundException("A snapshot cannot be retrieved at that timestamp");
+            }
+
+            // Retrieve the USFM for the chapter, and convert to USX, then to deltas
+            IGetText version = versionedText.GetVersion(revision.Id);
+            VerseRef verseRef = new VerseRef($"{book} {chapter}:0");
+            string usfm = version.GetText(verseRef, true, false);
+            string usx = UsfmToUsx.ConvertToXmlString(scrText, verseRef.BookNum, usfm, false);
+            var usxDoc = XDocument.Parse(usx);
+            snapshot = new Snapshot<TextData>
+            {
+                Id = id,
+                Version = 0,
+                Data = new TextData(_deltaUsxMapper.ToChapterDeltas(usxDoc).First().Delta),
+            };
+        }
+
+        return snapshot;
     }
 
     protected override void DisposeManagedResources()

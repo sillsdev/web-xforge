@@ -85,6 +85,14 @@ public interface IParatextService
     void FreeCommentManager(UserSecret userSecret, string paratextId);
     void InitializeCommentManager(UserSecret userSecret, string paratextId);
 
+    Task<Snapshot<TextData>> GetHistoryAsync(
+        UserSecret userSecret,
+        string sfProjectId,
+        string book,
+        int chapter,
+        DateTime timestamp
+    );
+
     Task<ParatextProject> SendReceiveAsync(
         UserSecret userSecret,
         string paratextId,
