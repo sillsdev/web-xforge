@@ -45,6 +45,13 @@ app-donut-chart {
   }
 }
 
+#reviewer-questions-list {
+  .mat-list-item {
+    cursor: pointer;
+    margin-inline-start: 16px;
+  }
+}
+
 .no-overflow-ellipsis {
   white-space: nowrap;
   text-overflow: ellipsis;
