@@ -1,11 +1,11 @@
 <ng-container *transloco="let t; read: 'checking_audio_player'">
   <div>
-    <div *ngIf="audio !== undefined && isAudioAvailable$.value" class="content" dir="ltr">
+    <div *ngIf="audio !== undefined && (isAudioAvailable$ | async)" class="content" dir="ltr">
       <div class="current-time">{{ audio.currentTime | audioTime }}</div>
       <mat-slider class="slider" [min]="0" [max]="100" [step]="1" [value]="seek" (input)="onSeek($event)"></mat-slider>
       <div class="duration">{{ duration | audioTime }}</div>
     </div>
-    <div *ngIf="!isAudioAvailable$.value" class="audio-not-available">
+    <div *ngIf="(isAudioAvailable$ | async) !== true" class="audio-not-available">
       <mat-icon>volume_off</mat-icon>
       <span>{{ t("audio_unavailable") }}</span>
       <div *ngIf="audio?.hasErrorState">

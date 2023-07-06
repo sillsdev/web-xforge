@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, Input, OnDestroy, ViewChild } from '@angular/core';
-import { AudioPlayerComponent } from 'src/app/shared/audio/audio-player.component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { AudioPlayerComponent } from '../../../shared/audio/audio-player.component';
 
 @Component({
   selector: 'app-checking-audio-player-new',

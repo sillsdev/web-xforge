@@ -3,12 +3,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { AudioStatus } from 'src/app/shared/audio/audio-player';
-import { AudioPlayerComponent } from 'src/app/shared/audio/audio-player.component';
 import { instance, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { AudioPlayerComponent } from '../../../shared/audio/audio-player.component';
 import { AudioTimePipe } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingAudioPlayerNewComponent } from './checking-audio-player-new.component';
 
