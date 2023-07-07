@@ -49,8 +49,8 @@ describe('DraftGenerationService', () => {
       spyOn(service, 'getBuildProgress').and.returnValue(of(buildDto));
       service.pollBuildProgress(projectId).subscribe(result => {
         expect(result).toEqual(buildDto);
+        expect(service.getBuildProgress).toHaveBeenCalledWith(projectId);
       });
-      expect(service.getBuildProgress).toHaveBeenCalledWith(projectId);
     });
   });
 
@@ -59,8 +59,8 @@ describe('DraftGenerationService', () => {
       httpClient.get = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
       service.getBuildProgress(projectId).subscribe(result => {
         expect(result).toEqual(buildDto);
+        expect(httpClient.get).toHaveBeenCalledWith(`translation/builds/id:${projectId}?pretranslate=true`);
       });
-      expect(httpClient.get).toHaveBeenCalledWith(`translation/builds/id:${projectId}?pretranslate=true`);
     });
   });
 
@@ -70,9 +70,9 @@ describe('DraftGenerationService', () => {
       httpClient.post = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
       service.startBuild(projectId).subscribe(result => {
         expect(result).toEqual(buildDto);
+        expect(service.getBuildProgress).toHaveBeenCalledWith(projectId);
+        expect(httpClient.post).toHaveBeenCalledWith(`translation/pretranslations`, JSON.stringify(projectId));
       });
-      expect(service.getBuildProgress).toHaveBeenCalledWith(projectId);
-      expect(httpClient.post).toHaveBeenCalledWith(`translation/pretranslations`, JSON.stringify(projectId));
     });
 
     it('should return already active build job', () => {
@@ -80,19 +80,18 @@ describe('DraftGenerationService', () => {
       httpClient.post = jasmine.createSpy();
       service.startBuild(projectId).subscribe(result => {
         expect(result).toEqual(buildDto);
+        expect(service.getBuildProgress).toHaveBeenCalledWith(projectId);
+        expect(httpClient.post).not.toHaveBeenCalled();
       });
-      expect(service.getBuildProgress).toHaveBeenCalledWith(projectId);
-      expect(httpClient.post).not.toHaveBeenCalled();
     });
   });
 
   describe('cancelBuild', () => {
-    it('should cancel a pretranslation build job and return an observable of BuildDto', () => {
-      httpClient.post = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
-      service.cancelBuild(projectId).subscribe(result => {
-        expect(result).toEqual(buildDto);
+    it('should cancel a pretranslation build job and return an empty observable', () => {
+      httpClient.post = jasmine.createSpy().and.returnValue(of({ data: {} }));
+      service.cancelBuild(projectId).subscribe(() => {
+        expect(httpClient.post).toHaveBeenCalledWith(`translation/pretranslations/cancel`, JSON.stringify(projectId));
       });
-      expect(httpClient.post).toHaveBeenCalledWith(`translation/pretranslations/cancel`, JSON.stringify(projectId));
     });
   });
 
