@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@angular/core';
 import { reduce } from 'lodash-es';
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { Observable, of } from 'rxjs';
-import { delay, map, repeat, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
+import { Observable, of, throwError, timer } from 'rxjs';
+import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
 import { BuildStates } from 'src/app/machine-api/build-states';
 import { HttpClient } from 'src/app/machine-api/http-client';
 import { BuildDto } from '../../machine-api/build-dto';
@@ -32,10 +32,10 @@ export class DraftGenerationService {
    * or undefined if no build is running.
    */
   pollBuildProgress(projectId: string): Observable<BuildDto | undefined> {
-    return this.getBuildProgress(projectId).pipe(
-      repeat(),
-      delay(this.options.pollRate),
-      takeWhile(job => this.activeBuildStates.includes(job?.state as BuildStates), true),
+    return timer(0, this.options.pollRate).pipe(
+      switchMap(() => this.getBuildProgress(projectId)),
+      takeWhile(job => job === undefined || this.activeBuildStates.includes(job?.state as BuildStates), true),
+      distinct(job => `${job?.state}${job?.percentCompleted}`),
       shareReplay(1)
     );
   }
@@ -49,11 +49,23 @@ export class DraftGenerationService {
   getBuildProgress(projectId: string): Observable<BuildDto | undefined> {
     return this.httpClient.get<BuildDto>(`translation/builds/id:${projectId}?pretranslate=true`).pipe(
       map(res => {
+        // Conform 'state' to BuildStates enum
+        if (res.data) {
+          res.data.state = res.data.state.toUpperCase();
+        }
+
         if (res.data?.state === BuildStates.Faulted) {
           throw new Error('Error occurred during build: ' + res.data.message);
         }
 
         return res.data;
+      }),
+      catchError(err => {
+        if (err.status === 404) {
+          return of(undefined);
+        } else {
+          return throwError(err);
+        }
       })
     );
   }
@@ -63,12 +75,12 @@ export class DraftGenerationService {
    * @param projectId The SF project id for the target translation.
    * @returns An observable BuildDto describing the state and progress of a currently running or just started build job.
    */
-  startBuild(projectId: string): Observable<BuildDto> {
-    return this.pollBuildProgress(projectId).pipe(
+  startBuild(projectId: string): Observable<BuildDto | undefined> {
+    return this.getBuildProgress(projectId).pipe(
       switchMap((job?: BuildDto) =>
         // If existing build is currently active, return polling observable.  Otherwise, start build and then poll.
         this.activeBuildStates.includes(job?.state as BuildStates)
-          ? of(job!)
+          ? this.pollBuildProgress(projectId)
           : this.httpClient.post<void>(`translation/pretranslations`, JSON.stringify(projectId)).pipe(
               // No errors means build successfully started, so start polling
               switchMap(() => this.pollBuildProgress(projectId)),
