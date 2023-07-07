@@ -1,9 +1,11 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from '../../../xforge-common/subscription-disposable';
 import { BuildStates } from '../../machine-api/build-states';
 import { NllbLanguageService } from '../nllb-language.service';
@@ -19,6 +21,9 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   draftJob?: BuildDto;
   draftViewerUrl?: string;
 
+  targetLanguage?: string;
+  targetLanguageDisplayName?: string;
+
   isTargetLanguageNllb = false;
   isBackTranslation = false;
 
@@ -28,6 +33,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     public readonly activatedProject: ActivatedProjectService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly nllbService: NllbLanguageService,
+    private readonly i18n: I18nService,
     @Inject(ACTIVE_BUILD_STATES) private readonly activeBuildStates: BuildStates[]
   ) {
     super();
@@ -38,20 +44,24 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       if (projectDoc) {
         // TODO - this.isBackTranslation = projectDoc.data?.translateConfig.projectType === ProjectType.BackTranslation;
         this.isBackTranslation = true;
-        this.isTargetLanguageNllb = this.nllbService.isNllbLanguage(projectDoc.data?.writingSystem.tag);
+        this.targetLanguage = projectDoc.data?.writingSystem.tag;
+        this.targetLanguageDisplayName = this.getLanguageDisplayName(this.targetLanguage);
+        this.isTargetLanguageNllb = this.nllbService.isNllbLanguage(this.targetLanguage);
       }
     });
 
     if (this.activatedProject.projectId) {
       this.subscribe(
-        this.draftGenerationService.getBuildProgress(this.activatedProject.projectId),
-        (draftJob?: BuildDto) => {
-          this.draftJob = draftJob;
-
-          // Handle automatic closing of dialog if job finishes while cancel dialog is open
-          if (!this.canCancel()) {
-            this.matDialog.closeAll();
-          }
+        this.draftGenerationService.pollBuildProgress(this.activatedProject.projectId!).pipe(
+          tap((job?: BuildDto) => {
+            // Handle automatic closing of dialog if job finishes while cancel dialog is open
+            if (!this.canCancel(job)) {
+              this.matDialog.closeAll();
+            }
+          })
+        ),
+        (job?: BuildDto) => {
+          this.draftJob = job;
         }
       );
 
@@ -59,8 +69,19 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     }
   }
 
+  getLanguageDisplayName(languageCode?: string): string | undefined {
+    if (!languageCode) {
+      return undefined;
+    }
+
+    const languageNames = new Intl.DisplayNames([this.i18n.localeCode], { type: 'language' });
+    return languageNames.of(languageCode);
+  }
+
   generateDraft(): void {
-    this.draftGenerationService.startBuild(this.activatedProject.projectId!);
+    this.subscribe(this.draftGenerationService.startBuild(this.activatedProject.projectId!), (job: BuildDto) => {
+      this.draftJob = job;
+    });
   }
 
   async cancel(): Promise<void> {
@@ -81,27 +102,27 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     }
   }
 
-  isDraftInProgress(): boolean {
-    return this.activeBuildStates.includes(this.draftJob?.state as BuildStates);
+  isDraftInProgress(job?: BuildDto): boolean {
+    return this.activeBuildStates.includes(job?.state as BuildStates);
   }
 
-  isDraftQueued(): boolean {
-    return [BuildStates.Queued, BuildStates.Pending].includes(this.draftJob?.state as BuildStates);
+  isDraftQueued(job?: BuildDto): boolean {
+    return [BuildStates.Queued, BuildStates.Pending].includes(job?.state as BuildStates);
   }
 
-  isDraftActive(): boolean {
-    return (this.draftJob?.state as BuildStates) === BuildStates.Active;
+  isDraftActive(job?: BuildDto): boolean {
+    return (job?.state as BuildStates) === BuildStates.Active;
   }
 
-  isDraftComplete(): boolean {
-    return (this.draftJob?.state as BuildStates) === BuildStates.Completed;
+  isDraftComplete(job?: BuildDto): boolean {
+    return (job?.state as BuildStates) === BuildStates.Completed;
   }
 
   canGenerate(): boolean {
     return this.isBackTranslation && this.isTargetLanguageNllb;
   }
 
-  canCancel(): boolean {
-    return this.isDraftInProgress();
+  canCancel(job?: BuildDto): boolean {
+    return !job || this.isDraftInProgress(job);
   }
 }
