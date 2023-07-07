@@ -26,9 +26,10 @@ export class DraftGenerationService {
   ) {}
 
   /**
-   * Polls the build progress for specified project while build is active.
+   * Polls the build progress for specified project as long as build is active.
    * @param projectId The SF project id for the target translation.
-   * @returns A hot observable 'BuildDto' describing the state and progress of the build job.
+   * @returns A hot observable BuildDto describing the state and progress of the build job
+   * or undefined if no build is running.
    */
   pollBuildProgress(projectId: string): Observable<BuildDto | undefined> {
     return this.getBuildProgress(projectId).pipe(
@@ -42,7 +43,8 @@ export class DraftGenerationService {
   /**
    * Gets pretranslation build job state for specified project.
    * @param projectId The SF project id for the target translation.
-   * @returns An observable 'BuildDto' describing the state and progress of the build job.
+   * @returns An observable BuildDto describing the state and progress of the build job
+   * or undefined if no build is running.
    */
   getBuildProgress(projectId: string): Observable<BuildDto | undefined> {
     return this.httpClient.get<BuildDto>(`translation/builds/id:${projectId}?pretranslate=true`).pipe(
@@ -50,6 +52,7 @@ export class DraftGenerationService {
         if (res.data?.state === BuildStates.Faulted) {
           throw new Error('Error occurred during build: ' + res.data.message);
         }
+
         return res.data;
       })
     );
@@ -58,16 +61,27 @@ export class DraftGenerationService {
   /**
    * Starts a pretranslation build job if one is not already under way.
    * @param projectId The SF project id for the target translation.
-   * @returns An observable 'BuildDto' describing the state and progress of the build job.
+   * @returns An observable BuildDto describing the state and progress of a currently running or just started build job.
    */
-  startBuild(projectId: string): Observable<BuildDto | undefined> {
-    return this.getBuildProgress(projectId).pipe(
+  startBuild(projectId: string): Observable<BuildDto> {
+    return this.pollBuildProgress(projectId).pipe(
       switchMap((job?: BuildDto) =>
+        // If existing build is currently active, return polling observable.  Otherwise, start build and then poll.
         this.activeBuildStates.includes(job?.state as BuildStates)
-          ? of(job)
-          : this.httpClient
-              .post<BuildDto>(`translation/pretranslations`, JSON.stringify(projectId))
-              .pipe(map(res => res.data))
+          ? of(job!)
+          : this.httpClient.post<void>(`translation/pretranslations`, JSON.stringify(projectId)).pipe(
+              // No errors means build successfully started, so start polling
+              switchMap(() => this.pollBuildProgress(projectId)),
+
+              // Polling should not return undefined since build started successfully
+              map(job => {
+                if (!job) {
+                  throw new Error('Empty build after successful start.');
+                }
+
+                return job!;
+              })
+            )
       )
     );
   }
@@ -75,11 +89,10 @@ export class DraftGenerationService {
   /**
    * Cancels any pretranslation builds for the specified project.
    * @param projectId The SF project id for the target translation.
-   * @returns An observable 'BuildDto' describing the state and progress of the build job.
    */
-  cancelBuild(projectId: string): Observable<BuildDto | undefined> {
+  cancelBuild(projectId: string): Observable<void> {
     return this.httpClient
-      .post<BuildDto>(`translation/pretranslations/cancel`, JSON.stringify(projectId))
+      .post<void>(`translation/pretranslations/cancel`, JSON.stringify(projectId))
       .pipe(map(res => res.data));
   }
 
