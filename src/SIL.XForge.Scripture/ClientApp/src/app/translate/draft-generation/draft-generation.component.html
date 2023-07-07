@@ -7,17 +7,28 @@
     <p>
       Scripture Forge can assist with drafting a back translation, based on your existing back translation progress. For
       example, if your translation team has already drafted one or more books and then back translated one or more of
-      them, Scripture Forge can use the books you have already back translated to generate a draft a back translation of
-      the next book you are working on.
+      them, Scripture Forge can use the books you have already back translated to generate a draft of the next book you
+      are working on.
     </p>
     <p>
-      Keep in mind that the back translation draft will contain mistakes, and you will need to edit the draft that is
-      generated.
+      <em>Keep in mind that the back translation draft will contain mistakes</em>, and you will need to edit the draft
+      that is generated after applying it to your project.
     </p>
     <p>
-      The back translation draft will be generated in the background. You can continue to work on other tasks while is
-      is being generated. You can also cancel the generation process at any time. The process will typically take at
-      least 8 hours under ideal conditions, but may take longer if the server is busy.
+      The back translation draft will be generated in the background. You can continue to work on other tasks while it
+      is being generated. You can cancel the generation process at any time. The process will typically take at least 8
+      hours under ideal conditions, but may take longer if the server is busy.
+    </p>
+
+    <p>
+      In order to generate a draft translation, the back translation target language must be in the
+      <a
+        href="https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion"
+        target="_blank"
+        rel="noopener noreferrer"
+        >No Language Left Behind (NLLB)</a
+      >
+      set.
     </p>
   </section>
 
@@ -31,7 +42,11 @@
   <section *ngIf="isBackTranslation && !isTargetLanguageNllb">
     <h3>Target language is not supported for draft generation</h3>
     <p>
-      In order to generate a draft translation, the target language must be in the
+      Your project language
+      <ng-container *ngIf="targetLanguageDisplayName">
+        of <em>"{{ targetLanguageDisplayName }}"</em>
+      </ng-container>
+      is not in the
       <a
         href="https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion"
         target="_blank"
@@ -43,8 +58,8 @@
   </section>
 
   <ng-container *ngIf="canGenerate()">
-    <section *ngIf="isDraftComplete() || !isDraftInProgress()" class="view-or-create-options">
-      <ng-container *ngIf="isDraftComplete()">
+    <section *ngIf="isDraftComplete(draftJob) || !isDraftInProgress(draftJob)" class="view-or-create-options">
+      <ng-container *ngIf="isDraftComplete(draftJob)">
         <div>
           <h3>Preview draft</h3>
           <p>
@@ -57,26 +72,24 @@
         <mat-divider inset vertical data-text="or"></mat-divider>
       </ng-container>
 
-      <div *ngIf="!isDraftInProgress()">
+      <div *ngIf="!isDraftInProgress(draftJob)">
         <h3>Generate new draft</h3>
         <p>
           Click <em>"Generate draft"</em> to start the process of generating a back translation draft. This will take at
           least a few hours.
         </p>
 
-        <button *ngIf="!isDraftInProgress()" mat-flat-button color="primary" (click)="generateDraft()">
-          Generate draft
-        </button>
+        <button mat-flat-button color="primary" (click)="generateDraft()">Generate draft</button>
       </div>
     </section>
 
-    <section *ngIf="isDraftQueued()">
+    <section *ngIf="isDraftQueued(draftJob)">
       <h3>Draft queued</h3>
       <p>The back translation draft has been queued. Please check back later.</p>
       <button *ngIf="canCancel()" mat-flat-button color="primary" (click)="cancel()">Cancel generation</button>
     </section>
 
-    <section *ngIf="isDraftActive()">
+    <section *ngIf="isDraftActive(draftJob)">
       <h3>Draft in progress</h3>
       <p>Generating draft; this can take a few hours.</p>
       <app-working-animated-indicator></app-working-animated-indicator>
@@ -85,9 +98,9 @@
 
     <mat-card-footer>
       <mat-progress-bar
-        *ngIf="isDraftInProgress()"
-        [mode]="isDraftQueued() ? 'indeterminate' : 'determinate'"
-        [value]="draftJob?.percentCompleted ?? 0"
+        *ngIf="isDraftInProgress(draftJob)"
+        [mode]="isDraftQueued(draftJob) ? 'indeterminate' : 'determinate'"
+        [value]="draftJob?.percentCompleted"
       ></mat-progress-bar>
     </mat-card-footer>
   </ng-container>
