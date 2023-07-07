@@ -2415,7 +2415,7 @@ public class ParatextService : DisposableBase, IParatextService
         XElement contentNode = (XElement)doc.FirstNode;
         XNode[] nodes = contentNode.Nodes().ToArray();
         if (!nodes.Any())
-            return contentNode.Value;
+            return string.Empty;
 
         int paragraphNodeCount = ((XElement)doc.FirstNode).Elements("p").Count();
         StringBuilder sb = new StringBuilder();
@@ -2427,6 +2427,11 @@ public class ParatextService : DisposableBase, IParatextService
             {
                 // append text to the content string
                 sb.Append(node);
+                continue;
+            }
+            else if (node.NodeType != XmlNodeType.Element)
+            {
+                // we only know to handle strings and elements
                 continue;
             }
 
