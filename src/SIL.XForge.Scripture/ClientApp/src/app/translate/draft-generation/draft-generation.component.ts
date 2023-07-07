@@ -1,11 +1,12 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { of } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { combineLatest, EMPTY, Observable, of } from 'rxjs';
+import { filter, first, switchMap, tap } from 'rxjs/operators';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { Locale } from 'xforge-common/models/i18n-locale';
 import { SubscriptionDisposable } from '../../../xforge-common/subscription-disposable';
 import { BuildStates } from '../../machine-api/build-states';
 import { NllbLanguageService } from '../nllb-language.service';
@@ -15,10 +16,11 @@ import { DraftGenerationService } from './draft-generation.service';
 @Component({
   selector: 'app-draft-generation',
   templateUrl: './draft-generation.component.html',
-  styleUrls: ['./draft-generation.component.scss']
+  styleUrls: ['./draft-generation.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DraftGenerationComponent extends SubscriptionDisposable implements OnInit {
-  draftJob?: BuildDto;
+  draftJob$?: Observable<BuildDto | undefined>;
   draftViewerUrl?: string;
 
   targetLanguage?: string;
@@ -40,66 +42,85 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   ngOnInit(): void {
-    this.subscribe(this.activatedProject.projectDoc$, projectDoc => {
-      if (projectDoc) {
-        // TODO - this.isBackTranslation = projectDoc.data?.translateConfig.projectType === ProjectType.BackTranslation;
+    this.draftJob$ = combineLatest([
+      this.activatedProject.projectId$,
+      this.activatedProject.projectDoc$,
+      this.i18n.locale$
+    ]).pipe(
+      tap(([projectId, projectDoc, locale]) => {
+        // TODO: Get project type from translateConfig once SF-2128 is merged
+        // this.isBackTranslation = projectDoc.data?.translateConfig.projectType === ProjectType.BackTranslation;
         this.isBackTranslation = true;
-        this.targetLanguage = projectDoc.data?.writingSystem.tag;
-        this.targetLanguageDisplayName = this.getLanguageDisplayName(this.targetLanguage);
+        this.targetLanguage = projectDoc?.data?.writingSystem.tag;
+        this.targetLanguageDisplayName = this.getLanguageDisplayName(this.targetLanguage, locale);
         this.isTargetLanguageNllb = this.nllbService.isNllbLanguage(this.targetLanguage);
-      }
-    });
-
-    if (this.activatedProject.projectId) {
-      this.subscribe(
-        this.draftGenerationService.pollBuildProgress(this.activatedProject.projectId!).pipe(
-          tap((job?: BuildDto) => {
-            // Handle automatic closing of dialog if job finishes while cancel dialog is open
-            if (!this.canCancel(job)) {
-              this.matDialog.closeAll();
-            }
-          })
-        ),
-        (job?: BuildDto) => {
-          this.draftJob = job;
-        }
-      );
-
-      this.draftViewerUrl = `/projects/${this.activatedProject.projectId}/draft-preview`;
-    }
+        this.draftViewerUrl = `/projects/${projectId}/draft-preview`;
+      }),
+      // Check build status and start polling if build is in progress
+      switchMap(([projectId, ..._]) =>
+        this.draftGenerationService
+          .getBuildProgress(projectId!)
+          .pipe(
+            switchMap((job?: BuildDto) =>
+              this.isDraftInProgress(job) ? this.draftGenerationService.pollBuildProgress(projectId!) : of(job)
+            )
+          )
+      )
+    );
   }
 
-  getLanguageDisplayName(languageCode?: string): string | undefined {
+  /**
+   * Gets the language name for the specified code rendered in the specified locale.
+   * TODO: This seems like it could be factored out as a utility function
+   * @param languageCode The language code for the language name to be displayed.
+   * @param currentLocale The language to display the name in.
+   * @returns The display name or undefined if language code is not set.
+   */
+  getLanguageDisplayName(languageCode: string | undefined, currentLocale: Locale): string | undefined {
     if (!languageCode) {
       return undefined;
     }
 
-    const languageNames = new Intl.DisplayNames([this.i18n.localeCode], { type: 'language' });
+    const languageNames = new Intl.DisplayNames([currentLocale.canonicalTag], { type: 'language' });
     return languageNames.of(languageCode);
   }
 
   generateDraft(): void {
-    this.subscribe(this.draftGenerationService.startBuild(this.activatedProject.projectId!), (job: BuildDto) => {
-      this.draftJob = job;
-    });
+    this.draftJob$ = this.draftGenerationService.startBuild(this.activatedProject.projectId!).pipe(
+      tap((job?: BuildDto) => {
+        // Handle automatic closing of dialog if job finishes while cancel dialog is open
+        if (!this.canCancel(job)) {
+          this.matDialog.closeAll();
+        }
+      })
+    );
   }
 
   async cancel(): Promise<void> {
-    if (this.canCancel()) {
-      if (this.draftJob?.state === BuildStates.Active) {
-        const result = await this.dialogService.confirm(
-          of('Are you sure you want to cancel generating the draft?'),
-          of('Yes, cancel draft generation'),
-          of('No')
-        );
+    this.draftJob$
+      ?.pipe(
+        first(),
+        filter(this.canCancel.bind(this)),
+        switchMap(async (job?: BuildDto) => {
+          if (job?.state === BuildStates.Active) {
+            const isConfirmed = await this.dialogService.openGenericDialog({
+              title: of('Confirm draft cancellation'),
+              message: of('Are you sure you want to cancel generating the draft?'),
+              options: [
+                { value: false, label: of('No') },
+                { value: true, label: of('Yes, cancel draft generation'), highlight: true }
+              ]
+            });
 
-        if (!result) {
-          return;
-        }
-      }
+            if (!isConfirmed) {
+              return EMPTY;
+            }
+          }
 
-      this.draftGenerationService.cancelBuild(this.activatedProject.projectId!);
-    }
+          return this.draftGenerationService.cancelBuild(this.activatedProject.projectId!);
+        })
+      )
+      .subscribe();
   }
 
   isDraftInProgress(job?: BuildDto): boolean {
@@ -118,7 +139,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     return (job?.state as BuildStates) === BuildStates.Completed;
   }
 
-  canGenerate(): boolean {
+  isGenerationSupported(): boolean {
     return this.isBackTranslation && this.isTargetLanguageNllb;
   }
 
