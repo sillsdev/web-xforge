@@ -173,7 +173,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         if (!FileSystemService.DirectoryExists(audioDir))
             FileSystemService.CreateDirectory(audioDir);
         string outputPath = Path.Combine(audioDir, $"{curUserId}_{dataId}.mp3");
-        if (string.Equals(extension, ".mp3", StringComparison.InvariantCultureIgnoreCase))
+        if (await _audioService.IsMp3DataAsync(inputStream))
         {
             await using Stream fileStream = FileSystemService.OpenFile(outputPath, FileMode.Create);
             await inputStream.CopyToAsync(fileStream);
