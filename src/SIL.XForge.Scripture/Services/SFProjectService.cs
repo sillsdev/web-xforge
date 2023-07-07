@@ -1063,7 +1063,11 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         IDocument<SFProjectUserConfig> projectUserConfigDoc = await conn.FetchAsync<SFProjectUserConfig>(
             SFProjectUserConfig.GetDocId(projectDoc.Id, userDoc.Id)
         );
-        await projectUserConfigDoc.DeleteAsync();
+        if (projectUserConfigDoc.IsLoaded)
+        {
+            await projectUserConfigDoc.DeleteAsync();
+        }
+
         // Delete any share keys used by this user
         await ProjectSecrets.UpdateAsync(
             projectDoc.Id,
@@ -1076,7 +1080,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// The role may be the PT role from PT Registry, or a SF role.
     /// The returned Attempt will be Success if they have a non-None role, or otherwise Failure.
     /// </summary>
-    protected async override Task<Attempt<string>> TryGetProjectRoleAsync(SFProject project, string userId)
+    protected override async Task<Attempt<string>> TryGetProjectRoleAsync(SFProject project, string userId)
     {
         Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(userId);
         if (userSecretAttempt.TryResult(out UserSecret userSecret))

@@ -217,6 +217,18 @@ public class ProjectServiceTests
     }
 
     [Test]
+    public async Task RemoveUserFromProjectAsync_DoesNotCrashWithMissingUserAndProject()
+    {
+        var env = new TestEnvironment();
+        IConnection connection = Substitute.For<IConnection>();
+        IDocument<TestProject> projectDoc = Substitute.For<IDocument<TestProject>>();
+        IDocument<User> userDoc = Substitute.For<IDocument<User>>();
+        await env.Service.RemoveUserFromProjectAsync(connection, projectDoc, userDoc);
+        _ = projectDoc.Received().IsLoaded;
+        _ = userDoc.Received().IsLoaded;
+    }
+
+    [Test]
     public void RemoveUserAsync_BadArguments()
     {
         var env = new TestEnvironment();
@@ -250,6 +262,22 @@ public class ProjectServiceTests
         userSite = env.GetUser(userToDisassociate).Sites[SiteId];
         Assert.That(userSite.Projects, Does.Not.Contain(project));
         Assert.That(userSite.CurrentProjectId, Is.Null);
+    }
+
+    [Test]
+    public async Task RemoveUserAsync_RemovesMissingUsers()
+    {
+        var env = new TestEnvironment();
+        string requestingUser = User01;
+        string project = Project01;
+        string missingUser = "user_does_not_exist";
+        await env.Service.SetUserProjectPermissions(User01, Project01, missingUser, new string[] { "questions.edit" });
+        Assert.AreEqual(1, env.GetProject(project).UserPermissions.Count);
+        Assert.That(env.GetProject(project).UserPermissions, Does.ContainKey(missingUser), "setup");
+
+        // SUT
+        await env.Service.RemoveUserAsync(requestingUser, project, missingUser);
+        Assert.That(env.GetProject(project).UserPermissions, Does.Not.ContainKey(missingUser));
     }
 
     [Test]

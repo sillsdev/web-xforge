@@ -1479,6 +1479,27 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task RemoveUser_RemovesUsersWithMissingProjectUserConfig()
+    {
+        var env = new TestEnvironment();
+        string requestingUser = User07;
+        string userToRemove = User02;
+        string projectId = Project06;
+        string projectUserConfigId = SFProjectUserConfig.GetDocId(projectId, userToRemove);
+        Assert.IsTrue(env.GetProject(projectId).UserRoles.ContainsKey(userToRemove));
+
+        // Delete the project user config
+        int deleted = await env.RealtimeService
+            .GetRepository<SFProjectUserConfig>()
+            .DeleteAllAsync(p => p.Id == projectUserConfigId);
+        Assert.AreEqual(1, deleted);
+
+        // SUT
+        await env.Service.RemoveUserAsync(requestingUser, projectId, userToRemove);
+        Assert.IsFalse(env.GetProject(projectId).UserRoles.ContainsKey(userToRemove));
+    }
+
+    [Test]
     public void UninviteUser_BadProject_Error()
     {
         var env = new TestEnvironment();
