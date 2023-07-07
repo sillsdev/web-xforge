@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { Delta } from 'src/app/core/models/text-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
+import { SharedModule } from 'src/app/shared/shared.module';
 import { TextComponent } from 'src/app/shared/text/text.component';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -41,7 +42,7 @@ describe('DraftViewerComponent', () => {
 
     TestBed.configureTestingModule({
       declarations: [DraftViewerComponent, TextComponent],
-      imports: [UICommonModule],
+      imports: [UICommonModule, SharedModule],
       providers: [
         { provide: DraftGenerationService, useValue: mockDraftGenerationService },
         { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
