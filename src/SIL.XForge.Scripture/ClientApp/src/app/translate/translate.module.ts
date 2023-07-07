@@ -31,7 +31,7 @@ import { MockDraftGenerationService } from './draft-generation/draft-generation.
   ],
   imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, XForgeCommonModule, TranslocoModule],
   providers: [
-    // TODO - remove once machine api pretranslation endpoints are present
+    // TODO: remove once machine api pretranslation endpoints are present
     { provide: DraftGenerationService, useClass: MockDraftGenerationService }
   ]
 })
