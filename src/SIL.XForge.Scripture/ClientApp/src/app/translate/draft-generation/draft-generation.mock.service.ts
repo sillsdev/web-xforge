@@ -20,19 +20,19 @@ export class MockDraftGenerationService {
     message: ''
   };
 
-  pollBuildProgress(projectId: string): Observable<BuildDto | undefined> {
+  pollBuildProgress(_: string): Observable<BuildDto | undefined> {
     return this.job$;
   }
-  getBuildProgress(projectId: string): Observable<BuildDto | undefined> {
+  getBuildProgress(_: string): Observable<BuildDto | undefined> {
     return this.job$;
   }
-  startBuild(projectId: string): Observable<BuildDto | undefined> {
+  startBuild(_: string): Observable<BuildDto | undefined> {
     if (!this.activeBuildStates.includes(this.job$.value?.state as BuildStates)) {
       this.startGeneration();
     }
     return this.job$;
   }
-  cancelBuild(projectId: string): Observable<BuildDto | undefined> {
+  cancelBuild(_: string): Observable<BuildDto | undefined> {
     this.job$.next({ ...this.initialJobState, state: BuildStates.Canceled });
     this.timerSub?.unsubscribe();
     return this.job$;
