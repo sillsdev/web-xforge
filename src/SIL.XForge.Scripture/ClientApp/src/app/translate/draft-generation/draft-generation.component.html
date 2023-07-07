@@ -73,11 +73,12 @@
           <mat-divider inset vertical data-text="or"></mat-divider>
         </ng-container>
 
+        <!-- TODO: Add user guidance and constrain draft regeneration -->
         <div *ngIf="!isDraftInProgress(draftJob)">
           <h3>Generate new draft</h3>
           <p>
-            Click <em>"Generate draft"</em> to start the process of generating a back translation draft. This will take
-            at least a few hours.
+            Click <em>"Generate draft"</em> to start the process of generating a new back translation draft. This will
+            take at least a few hours.
           </p>
 
           <button mat-flat-button color="primary" (click)="generateDraft()">Generate draft</button>
@@ -113,7 +114,7 @@
 
   <ng-template #promptGenerate>
     <section>
-      <h3>Generate new draft</h3>
+      <h3>Generate draft</h3>
       <p>
         Click <em>"Generate draft"</em> to start the process of generating a back translation draft. This will take at
         least a few hours.
