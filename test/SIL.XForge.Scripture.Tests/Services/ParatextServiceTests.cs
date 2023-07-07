@@ -954,7 +954,7 @@ public class ParatextServiceTests
             chapterDeltas,
             ptProjectUsers
         );
-        // Assert.That(changes.Count, Is.EqualTo(8));
+        Assert.That(changes.Count, Is.EqualTo(8));
         Assert.That(changes.FirstOrDefault(c => c.ThreadId == "thread8"), Is.Null);
 
         // Edited comment
@@ -1028,6 +1028,75 @@ public class ParatextServiceTests
         // User 02 is added to the list of Paratext Users when thread3 is added to note thread docs
         // No users should be added from the new thread6 change which has no paratext user
         Assert.That(ptProjectUsers.Keys, Is.EquivalentTo(new[] { env.Username01, env.Username02 }));
+    }
+
+    [Test]
+    public void GetNoteThreadChanges_AddsNoteWithXmlFormatting()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        string formattedContent = "Text with <bold>bold</bold> and <italics>italics</italics> styles.";
+        string nonFormattedContent = "Text without formatting";
+        string formattedContentInParagraph =
+            "<p>Text with <bold>bold</bold> style.</p><p>Text with<italics>italics</italics> style.</p>";
+        string nonFormattedContentInParagraph = "<p>Text without formatting.</p><p>Second paragraph.</p>";
+        string whitespaceInContent = "<p>First paragraph.</p>\n<p>Second paragraph.</p>";
+        var note1 = new ThreadNoteComponents { content = formattedContent };
+        var note2 = new ThreadNoteComponents { content = nonFormattedContent };
+        var note3 = new ThreadNoteComponents { content = formattedContentInParagraph };
+        var note4 = new ThreadNoteComponents { content = nonFormattedContentInParagraph };
+        var note5 = new ThreadNoteComponents { content = whitespaceInContent };
+        env.AddParatextComments(
+            new[]
+            {
+                new ThreadComponents
+                {
+                    threadNum = 1,
+                    noteCount = 5,
+                    username = env.Username01,
+                    notes = new[] { note1, note2, note3, note4, note5 }
+                }
+            }
+        );
+
+        var noteThreadDocs = Array.Empty<IDocument<NoteThread>>();
+        Dictionary<int, ChapterDelta> chapterDeltas = env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected");
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
+        {
+            {
+                env.Username01,
+                new ParatextUserProfile
+                {
+                    SFUserId = env.User01,
+                    OpaqueUserId = "syncuser01",
+                    Username = env.Username01
+                }
+            }
+        };
+        IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
+            userSecret,
+            paratextId,
+            40,
+            noteThreadDocs,
+            chapterDeltas,
+            ptProjectUsers
+        );
+        Assert.That(changes.Count, Is.EqualTo(1));
+        NoteThreadChange change1 = changes.Single();
+        string expected1 = $"thread1-syncuser01-{formattedContent}";
+        Assert.That(change1.NotesAdded[0].NoteToString(), Is.EqualTo(expected1));
+        string expected2 = $"thread1-syncuser01-{nonFormattedContent}";
+        Assert.That(change1.NotesAdded[1].NoteToString(), Is.EqualTo(expected2));
+        string expected3 = $"thread1-syncuser01-{formattedContentInParagraph}";
+        Assert.That(change1.NotesAdded[2].NoteToString(), Is.EqualTo(expected3));
+        string expected4 = $"thread1-syncuser01-{nonFormattedContentInParagraph}";
+        Assert.That(change1.NotesAdded[3].NoteToString(), Is.EqualTo(expected4));
+        // whitespace does not get processed as a node in xml, so it gets omitted from note content
+        string expected5 = $"thread1-syncuser01-{whitespaceInContent}".Replace("\n", "");
+        Assert.That(change1.NotesAdded[4].NoteToString(), Is.EqualTo(expected5));
     }
 
     [Test]
@@ -2334,15 +2403,19 @@ public class ParatextServiceTests
         string content1a = "Reviewer comment";
         string content1b = "<p sf-user-label=\"true\">[User 05 - xForge]</p>\n<p>Reviewer comment</p>";
         string content2 = "Project admin comment";
+        string content3a = "<p>First paragraph content.</p><p>Second paragraph content.</p>";
+        // add new line character
+        string content3b = "<p>First paragraph content.</p>\n<p>Second paragraph content.</p>";
         ThreadNoteComponents[] notesSF = new[]
         {
             new ThreadNoteComponents { ownerRef = env.User05, content = content1a },
-            new ThreadNoteComponents { ownerRef = env.User01, content = content2 }
+            new ThreadNoteComponents { ownerRef = env.User01, content = content2 },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content3a }
         };
         ThreadComponents threadCompSF = new ThreadComponents
         {
             threadNum = 1,
-            noteCount = 2,
+            noteCount = 3,
             username = env.Username01,
             notes = notesSF
         };
@@ -2350,12 +2423,13 @@ public class ParatextServiceTests
         ThreadNoteComponents[] notesPT = new[]
         {
             new ThreadNoteComponents { ownerRef = env.User05, content = content1b },
-            new ThreadNoteComponents { ownerRef = env.User01, content = content2 }
+            new ThreadNoteComponents { ownerRef = env.User01, content = content2 },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content3b }
         };
         ThreadComponents threadCompPT = new ThreadComponents
         {
             threadNum = 1,
-            noteCount = 2,
+            noteCount = 3,
             username = env.Username01,
             notes = notesPT
         };
@@ -2383,7 +2457,7 @@ public class ParatextServiceTests
         );
 
         CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
-        Assert.That(thread.Comments.Count, Is.EqualTo(2));
+        Assert.That(thread.Comments.Count, Is.EqualTo(3));
         Paratext.Data.ProjectComments.Comment comment = thread.Comments.First();
         string expected1 =
             "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-" + "MAT 1:1-" + content1b + "-Start:15-" + "user05";
@@ -2391,6 +2465,9 @@ public class ParatextServiceTests
         Assert.That(comment.CommentToString(), Is.EqualTo(expected1));
         comment = thread.Comments[1];
         Assert.That(comment.CommentToString(), Is.EqualTo(expected2));
+        comment = thread.Comments[2];
+        string expected3 = "thread1/User 01/2019-01-03T08:00:00.0000000+00:00-" + "MAT 1:1-" + content3b + "-Start:15";
+        Assert.That(comment.CommentToString(), Is.EqualTo(expected3));
         Assert.That(ptProjectUsers.Count, Is.EqualTo(1));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
 
