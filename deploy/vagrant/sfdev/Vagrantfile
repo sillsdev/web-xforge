@@ -43,6 +43,18 @@ Vagrant.configure("2") do |config|
     [[ -z $GIT_USER ]] || git config --global user.name "${GIT_USER}"
     [[ -z $GIT_EMAIL ]] || git config --global user.email "${GIT_EMAIL}"
 
+    # The base box cames with Mongodb 4.0. Remove this, and its database, to be
+    # ready for an install of a newer mongodb. But don't delete the existing
+    # database in case the provision is run on an existing system. Just move
+    # it aside.
+    sudo systemctl stop mongod.service
+    sudo rm /etc/apt/sources.list.d/mongodb-org.list
+    sudo apt-get remove --assume-yes mongodb-org mongodb-org-mongos \
+      mongodb-org-server mongodb-org-shell mongodb-org-tools
+    sudo mv /var/lib/mongodb /var/lib/mongodb-previous
+    sudo mkdir /var/lib/mongodb
+    sudo chown mongodb:mongodb /var/lib/mongodb
+
     cd ~/src/web-xforge
     # Clear away some modified files. But not the whole tree in case a
     # user runs this against their data.
