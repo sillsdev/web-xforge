@@ -44,8 +44,8 @@ export enum NoteConflictType {
   DefaultValue = 'unknownConflictType'
 }
 
-export function getNoteThreadDocId(projectId: string, noteThreadId: string): string {
-  return `${projectId}:${noteThreadId}`;
+export function getNoteThreadDocId(projectId: string, dataId: string): string {
+  return `${projectId}:${dataId}`;
 }
 
 export enum AssignedUsers {
@@ -55,6 +55,7 @@ export enum AssignedUsers {
 
 export interface NoteThread extends ProjectData {
   dataId: string;
+  threadId: string;
   verseRef: VerseRefData;
   notes: Note[];
   originalSelectedText: string;

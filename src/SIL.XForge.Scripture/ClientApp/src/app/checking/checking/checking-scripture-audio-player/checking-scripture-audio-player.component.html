@@ -1,0 +1,13 @@
+<div class="scripture-audio-player">
+  <div class="audio-action-buttons">
+    <button mat-icon-button class="previous-ref-button" (click)="previousRef()">
+      <mat-icon>skip_previous</mat-icon>
+    </button>
+    <button mat-icon-button class="play-pause-button" (click)="isPlaying ? pause() : play()">
+      <mat-icon>{{ isPlaying ? "pause" : "play_arrow" }}</mat-icon>
+    </button>
+    <button mat-icon-button class="next-ref-button" (click)="nextRef()"><mat-icon>skip_next</mat-icon></button>
+  </div>
+  <app-checking-audio-player #audioPlayer [source]="source"></app-checking-audio-player>
+  <span class="verse-label">{{ currentVerseLabel }}</span>
+</div>

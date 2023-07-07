@@ -13,6 +13,7 @@ import { SFProjectService } from './services/sf-project-service';
 import { SFProjectUserConfigService } from './services/sf-project-user-config-service';
 import { TextService } from './services/text-service';
 import { SF_PROJECT_MIGRATIONS } from './services/sf-project-migrations';
+import { TextAudioService } from './services/text-audio-service';
 
 const SF_DOC_SERVICES: DocService[] = [
   new UserService(),
@@ -20,16 +21,23 @@ const SF_DOC_SERVICES: DocService[] = [
   new SFProjectUserConfigService(),
   new TextService(),
   new QuestionService(),
-  new NoteThreadService()
+  new NoteThreadService(),
+  new TextAudioService()
 ];
 
 /**
  * This class represents the SF real-time server.
  */
 export default class SFRealtimeServer extends RealtimeServer {
-  constructor(siteId: string, migrationsDisabled: boolean, db: ShareDB.DB, schemaVersions: SchemaVersionRepository) {
-    super(siteId, migrationsDisabled, SF_DOC_SERVICES, SF_PROJECTS_COLLECTION, db, schemaVersions);
-    this.use('query', (context: ShareDB.middleware.QueryContext, next: (err?: any) => void) => {
+  constructor(
+    siteId: string,
+    migrationsDisabled: boolean,
+    db: ShareDB.DB,
+    schemaVersions: SchemaVersionRepository,
+    milestoneDb?: ShareDB.MilestoneDB
+  ) {
+    super(siteId, migrationsDisabled, SF_DOC_SERVICES, SF_PROJECTS_COLLECTION, db, schemaVersions, milestoneDb);
+    this.use('query', (context: ShareDB.middleware.QueryContext, next: (err?: any) => void): void => {
       if (context.collection === NOTE_THREAD_COLLECTION) {
         if (context.agent.connectSession.isServer) {
           next();

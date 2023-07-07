@@ -7,6 +7,7 @@ import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/esm/scrip
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { Subject } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';
@@ -30,6 +31,7 @@ import { SFProjectUserConfigDoc } from './models/sf-project-user-config-doc';
 import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from './models/text-doc';
 import { TranslateMetrics } from './models/translate-metrics';
+import { TextAudioDoc } from './models/text-audio-doc';
 
 @Injectable({
   providedIn: 'root'
@@ -169,6 +171,13 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, queryParams);
   }
 
+  queryAudioText(sfProjectId: string): Promise<RealtimeQuery<TextAudioDoc>> {
+    const queryParams: QueryParameters = {
+      [obj<TextAudio>().pathStr(t => t.projectRef)]: sfProjectId
+    };
+    return this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, queryParams);
+  }
+
   onlineSync(id: string): Promise<void> {
     return this.onlineInvoke('sync', { projectId: id });
   }
@@ -228,5 +237,13 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   async onlineSetUserProjectPermissions(projectId: string, userId: string, permissions: string[]): Promise<void> {
     return (await this.onlineInvoke<void>('setUserProjectPermissions', { projectId, userId, permissions }))!;
+  }
+
+  async onlineCreateAudioTimingData(projectId: string, book: number, chapter: number, audioUrl: string): Promise<void> {
+    return await this.onlineInvoke('createAudioTimingData', { projectId, book, chapter, audioUrl });
+  }
+
+  async onlineDeleteAudioTimingData(projectId: string, book: number, chapter: number): Promise<void> {
+    return await this.onlineInvoke('deleteAudioTimingData', { projectId, book, chapter });
   }
 }

@@ -81,6 +81,11 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
     return isNaN(this._currentTime) || this._currentTime === ARBITRARILY_LARGE_NUMBER ? 0 : this._currentTime;
   }
 
+  set currentTime(time: number) {
+    this.audio.currentTime = time;
+    this._currentTime = this.audio.currentTime;
+  }
+
   get duration(): number {
     return isNaN(this._duration) || this._duration === ARBITRARILY_LARGE_NUMBER ? 0 : this._duration;
   }

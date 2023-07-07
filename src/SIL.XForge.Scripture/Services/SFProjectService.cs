@@ -81,10 +81,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         IReadOnlyList<ParatextProject> ptProjects = await _paratextService.GetProjectsAsync(userSecret);
 
-        ParatextProject ptProject = ptProjects.SingleOrDefault(p => p.ParatextId == settings.ParatextId);
-        if (ptProject == null)
-            throw new DataNotFoundException("The paratext project does not exist.");
-
+        ParatextProject ptProject =
+            ptProjects.SingleOrDefault(p => p.ParatextId == settings.ParatextId)
+            ?? throw new DataNotFoundException("The paratext project does not exist.");
         var project = new SFProject
         {
             ParatextId = settings.ParatextId,
@@ -139,7 +138,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             if (projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled)
             {
                 await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
-                await _machineProjectService.AddProjectAsync(curUserId, projectDoc.Id, CancellationToken.None);
+                await _machineProjectService.AddProjectAsync(curUserId, projectDoc.Id, false, CancellationToken.None);
             }
         }
 
@@ -226,7 +225,18 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         // The machine service requires the project secrets, so call it before removing them
-        await _machineProjectService.RemoveProjectAsync(curUserId, projectId, CancellationToken.None);
+        await _machineProjectService.RemoveProjectAsync(
+            curUserId,
+            projectId,
+            preTranslate: false,
+            CancellationToken.None
+        );
+        await _machineProjectService.RemoveProjectAsync(
+            curUserId,
+            projectId,
+            preTranslate: true,
+            CancellationToken.None
+        );
         await ProjectSecrets.DeleteAsync(projectId);
         await RealtimeService.DeleteProjectAsync(projectId);
         string projectDir = Path.Combine(SiteOptions.Value.SiteDir, "sync", ptProjectId);
@@ -307,17 +317,32 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                     // recreate Machine project only if one existed
                     if (hasExistingMachineProject)
                     {
-                        await _machineProjectService.RemoveProjectAsync(curUserId, projectId, CancellationToken.None);
+                        await _machineProjectService.RemoveProjectAsync(
+                            curUserId,
+                            projectId,
+                            preTranslate: false,
+                            CancellationToken.None
+                        );
                     }
 
                     await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, ptProjects);
-                    await _machineProjectService.AddProjectAsync(curUserId, projectId, CancellationToken.None);
+                    await _machineProjectService.AddProjectAsync(
+                        curUserId,
+                        projectId,
+                        preTranslate: false,
+                        CancellationToken.None
+                    );
                     trainEngine = true;
                 }
                 else if (hasExistingMachineProject)
                 {
                     // translation suggestions was disabled or source project set to null
-                    await _machineProjectService.RemoveProjectAsync(curUserId, projectId, CancellationToken.None);
+                    await _machineProjectService.RemoveProjectAsync(
+                        curUserId,
+                        projectId,
+                        preTranslate: false,
+                        CancellationToken.None
+                    );
                 }
             }
 
@@ -521,12 +546,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
     public async Task ReserveLinkSharingKeyAsync(string curUserId, string shareKey)
     {
-        ProjectSecret projectSecret = ProjectSecrets
-            .Query()
-            .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
-        if (projectSecret == null)
-            throw new DataNotFoundException("Unable to locate shareKey");
-
+        ProjectSecret projectSecret =
+            ProjectSecrets.Query().FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey))
+            ?? throw new DataNotFoundException("Unable to locate shareKey");
         string projectId = projectSecret.Id;
         SFProject project = await GetProjectAsync(projectId);
         if (!IsProjectAdmin(project, curUserId))
@@ -623,12 +645,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     public async Task<string> JoinWithShareKeyAsync(string curUserId, string shareKey)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
-        ProjectSecret projectSecret = ProjectSecrets
-            .Query()
-            .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
-        if (projectSecret == null)
-            throw new DataNotFoundException("project_link_is_invalid");
-
+        ProjectSecret projectSecret =
+            ProjectSecrets.Query().FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey))
+            ?? throw new DataNotFoundException("project_link_is_invalid");
         string projectId = projectSecret.Id;
         ShareKey projectSecretShareKey = projectSecret.ShareKeys.FirstOrDefault(sk => sk.Key == shareKey);
 
@@ -732,11 +751,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
     public SFProjectSecret GetProjectSecretByShareKey(string shareKey)
     {
-        SFProjectSecret projectSecret = ProjectSecrets
-            .Query()
-            .FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey));
-        if (projectSecret == null)
-            throw new DataNotFoundException("project_link_is_invalid");
+        SFProjectSecret projectSecret =
+            ProjectSecrets.Query().FirstOrDefault(ps => ps.ShareKeys.Any(sk => sk.Key == shareKey))
+            ?? throw new DataNotFoundException("project_link_is_invalid");
         return projectSecret;
     }
 
@@ -776,7 +793,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// </remarks>
     public async Task EnsureWritingSystemTagIsSetAsync(string curUserId, string projectId)
     {
-        using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
         if (!projectDoc.IsLoaded)
         {
@@ -784,6 +801,82 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, null);
+    }
+
+    /// TODO (scripture audio) Document this method and add tests
+    public async Task CreateAudioTimingData(string userId, string projectId, int book, int chapter, string audioUrl)
+    {
+        await using IConnection conn = await RealtimeService.ConnectAsync(userId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+        if (!IsProjectAdmin(projectDoc.Data, userId))
+        {
+            throw new ForbiddenException();
+        }
+
+        string textAudioId = TextAudio.GetDocId(projectDoc.Id, book, chapter);
+        var textAudio = new TextAudio
+        {
+            OwnerRef = userId,
+            ProjectRef = projectId,
+            // TODO (scripture audio) Should the ID be set here? How does the DataId differ from the document ID?
+            DataId = textAudioId,
+            Timings = new List<AudioTiming>
+            {
+                // TODO (scripture audio) Create real timing data
+                new AudioTiming
+                {
+                    TextRef = "verse_1_1",
+                    From = 0.0,
+                    To = 0.0
+                }
+            },
+            // TODO get mimetype from client and make sure it is an acceptable value
+            MimeType = "audio/mp3",
+            AudioUrl = audioUrl
+        };
+
+        await conn.CreateAsync<TextAudio>(textAudioId, textAudio);
+
+        int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == book);
+        int chapterIndex = projectDoc.Data.Texts[textIndex].Chapters.FindIndex(c => c.Number == chapter);
+        await projectDoc.SubmitJson0OpAsync(
+            op => op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].HasAudio, true)
+        );
+    }
+
+    /// TODO (scripture audio) Document this method and add tests
+    public async Task DeleteAudioTimingData(string userId, string projectId, int book, int chapter)
+    {
+        await using IConnection conn = await RealtimeService.ConnectAsync(userId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+        if (!IsProjectAdmin(projectDoc.Data, userId))
+        {
+            throw new ForbiddenException();
+        }
+
+        string textAudioId = TextAudio.GetDocId(projectDoc.Id, book, chapter);
+        IDocument<TextAudio> textAudioDoc = await conn.FetchAsync<TextAudio>(textAudioId);
+        if (!textAudioDoc.IsLoaded)
+        {
+            // TODO (scripture audio) Do we really want to throw when the data we are trying to delete is not found?
+            // We can still try to set HasAudio to false on the project
+            throw new DataNotFoundException("The audio timing data does not exist.");
+        }
+        await textAudioDoc.DeleteAsync();
+
+        int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == book);
+        int chapterIndex = projectDoc.Data.Texts[textIndex].Chapters.FindIndex(c => c.Number == chapter);
+        await projectDoc.SubmitJson0OpAsync(
+            op => op.Set(pd => pd.Texts[textIndex].Chapters[chapterIndex].HasAudio, false)
+        );
     }
 
     protected override async Task AddUserToProjectAsync(

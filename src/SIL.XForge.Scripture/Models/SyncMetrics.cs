@@ -16,6 +16,7 @@ public class SyncMetrics : IIdentifiable
     public string Id { get; set; }
     public string ErrorDetails { get; set; }
     public string RequiresId { get; set; }
+    public string ProductVersion { get; set; }
     public string ProjectRef { get; set; }
     public SyncStatus Status { get; set; }
     public string UserRef { get; set; }
@@ -26,7 +27,6 @@ public class SyncMetrics : IIdentifiable
     public SyncMetricInfo NoteThreads { get; set; } = new SyncMetricInfo();
     public SyncMetricInfo ParatextBooks { get; set; } = new SyncMetricInfo();
     public SyncMetricInfo ParatextNotes { get; set; } = new SyncMetricInfo();
-    public ParatextSyncResults ParatextSyncResults { get; set; } = new ParatextSyncResults();
     public SyncMetricInfo Questions { get; set; } = new SyncMetricInfo();
     public bool RepositoryBackupCreated { get; set; }
     public bool RepositoryRestoredFromBackup { get; set; }

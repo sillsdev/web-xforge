@@ -615,4 +615,66 @@ public class SFProjectsRpcController : RpcControllerBase
             throw;
         }
     }
+
+    // TODO (scripture audio) Add ability to update audio timing data and associated file URL
+    public async Task<IRpcMethodResult> CreateAudioTimingData(string projectId, int book, int chapter, string audioUrl)
+    {
+        try
+        {
+            await _projectService.CreateAudioTimingData(UserId, projectId, book, chapter, audioUrl);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "CreateAudioTimingData" },
+                    { "projectId", projectId },
+                    { "book", book.ToString() },
+                    { "chapter", chapter.ToString() },
+                    { "audioUrl", audioUrl },
+                }
+            );
+            throw;
+        }
+    }
+
+    public async Task<IRpcMethodResult> DeleteAudioTimingData(string projectId, int book, int chapter)
+    {
+        try
+        {
+            await _projectService.DeleteAudioTimingData(UserId, projectId, book, chapter);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFoundError("Audio timing data not found");
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "DeleteAudioTimingData" },
+                    { "projectId", projectId },
+                    { "book", book.ToString() },
+                    { "chapter", chapter.ToString() },
+                }
+            );
+            throw;
+        }
+    }
 }

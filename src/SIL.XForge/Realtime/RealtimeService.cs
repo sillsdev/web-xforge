@@ -70,7 +70,8 @@ public class RealtimeService : DisposableBase, IRealtimeService
 
     public async Task<IConnection> ConnectAsync(string userId = null)
     {
-        var conn = new Connection(this);
+        RealtimeOptions options = _realtimeOptions.Value;
+        var conn = new Connection(this, options.DocumentCacheDisabled);
         try
         {
             await conn.StartAsync(userId);
@@ -239,9 +240,7 @@ public class RealtimeService : DisposableBase, IRealtimeService
             ReleaseStage = this._configuration.GetValue<string>("Bugsnag:ReleaseStage"),
             this._realtimeOptions.Value.MigrationsDisabled,
             SiteId = this._siteOptions.Value.Id,
-            Version = System.Diagnostics.FileVersionInfo
-                .GetVersionInfo(@System.Reflection.Assembly.GetEntryAssembly().Location)
-                .ProductVersion
+            Product.Version,
         };
     }
 }

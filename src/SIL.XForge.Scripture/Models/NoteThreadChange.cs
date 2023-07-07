@@ -15,6 +15,7 @@ public enum ChangeType
 /// </summary>
 public class NoteThreadChange
 {
+    public string? ThreadDataId { get; set; }
     public string ThreadId { get; set; }
     public string VerseRefStr { get; set; }
     public string SelectedText { get; set; }
@@ -46,6 +47,7 @@ public class NoteThreadChange
     }
 
     public NoteThreadChange(
+        string dataId,
         string threadId,
         string verseRef,
         string selectedText,
@@ -55,6 +57,7 @@ public class NoteThreadChange
         string assignment
     )
     {
+        ThreadDataId = dataId;
         ThreadId = threadId;
         VerseRefStr = verseRef;
         SelectedText = selectedText;

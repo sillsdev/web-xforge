@@ -33,7 +33,8 @@ public static class SFRealtimeServiceCollectionExtensions
                         new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig)),
                         new DocConfig("texts", typeof(TextData), OTType.RichText),
                         new DocConfig("questions", typeof(Question)),
-                        new DocConfig("note_threads", typeof(NoteThread))
+                        new DocConfig("note_threads", typeof(NoteThread)),
+                        new DocConfig("text_audio", typeof(TextAudio)),
                     }
                 );
                 o.UserDataDocs.AddRange(

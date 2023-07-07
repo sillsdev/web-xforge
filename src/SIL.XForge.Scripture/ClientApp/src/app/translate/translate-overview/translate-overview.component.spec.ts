@@ -218,7 +218,7 @@ class TestEnvironment {
   }
 
   get progressTextList(): HTMLElement {
-    return this.fixture.nativeElement.querySelector('mdc-list');
+    return this.fixture.nativeElement.querySelector('mat-list');
   }
 
   get progressTitle(): HTMLElement {
@@ -277,11 +277,11 @@ class TestEnvironment {
   }
 
   expectContainsTextProgress(index: number, primary: string, secondary: string): void {
-    const items = this.progressTextList.querySelectorAll('mdc-list-item');
-    const item = items.item(index);
-    const primaryElem = item.querySelector('.mdc-list-item__primary-text');
+    const items: NodeListOf<Element> = this.progressTextList.querySelectorAll('mat-list-item');
+    const item: Element = items.item(index);
+    const primaryElem: Element = item.querySelectorAll('.mat-line')[0];
     expect(primaryElem!.textContent).toBe(primary);
-    const secondaryElem = item.querySelector('.mdc-list-item__secondary-text');
+    const secondaryElem: Element = item.querySelectorAll('.mat-line')[1];
     expect(secondaryElem!.textContent).toBe(secondary);
   }
 
@@ -297,7 +297,8 @@ class TestEnvironment {
         },
         translateConfig: {
           translationSuggestionsEnabled,
-          shareEnabled: false
+          shareEnabled: false,
+          preTranslate: false
         },
         checkingConfig: {
           checkingEnabled: false,

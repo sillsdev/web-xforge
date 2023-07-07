@@ -11,6 +11,7 @@ import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/
 import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { Subscription } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -123,6 +124,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly fileService: FileService,
     private readonly pwaService: PwaService,
     private readonly projectService: SFProjectService,
+    public featureFlags: FeatureFlagService,
     public media: MediaObserver
   ) {
     super();

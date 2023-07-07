@@ -1,6 +1,8 @@
 <ng-container *transloco="let t; read: 'checking_answers'">
   <div class="answers-component">
     <div class="answers-component-scrollable-content">
+      <app-checking-question *ngIf="featureFlags.scriptureAudio.enabled" [questionDoc]="questionDoc">
+      </app-checking-question>
       <div
         class="answer-question"
         [ngClass]="{
@@ -10,11 +12,13 @@
         }"
       >
         <div class="question">
-          <div class="question-text">{{ questionDoc?.data?.text }}</div>
-          <div *ngIf="questionDoc?.data?.audioUrl" class="question-audio">
-            <app-checking-audio-player [source]="getFileSource(questionDoc?.data?.audioUrl)">
-            </app-checking-audio-player>
-          </div>
+          <ng-container *ngIf="!featureFlags.scriptureAudio.enabled">
+            <div class="question-text">{{ questionDoc?.data?.text }}</div>
+            <div *ngIf="questionDoc?.data?.audioUrl" class="question-audio">
+              <app-checking-audio-player [source]="getFileSource(questionDoc?.data?.audioUrl)">
+              </app-checking-audio-player>
+            </div>
+          </ng-container>
           <div class="question-footer" *ngIf="canEditQuestion">
             <div class="actions">
               <button mat-button type="button" (click)="questionDialog()" class="edit-question-button short-button">

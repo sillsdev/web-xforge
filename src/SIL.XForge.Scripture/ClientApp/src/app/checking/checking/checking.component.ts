@@ -7,9 +7,11 @@ import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
+import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
@@ -32,6 +34,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SF_DEFAULT_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -112,6 +115,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private _activeQuestionVerseRef?: VerseRef;
   private setBookSub?: Subscription;
   private questionsSub?: Subscription;
+  private textAudioQuery?: RealtimeQuery<TextAudioDoc>;
   private projectDeleteSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
   private questionFilterFunctions: Record<QuestionFilter, (answers: Answer[]) => boolean> = {
@@ -238,6 +242,24 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   get canShare(): boolean {
     return this.isProjectAdmin || this.projectDoc?.data?.checkingConfig.shareEnabled === true;
+  }
+
+  get chapterHasAudio(): boolean {
+    return this.text?.chapters.find(c => c.number === this.chapter)?.hasAudio === true;
+  }
+
+  get chapterTextAudioTiming(): AudioTiming[] | undefined {
+    if (this.textDocId == null) return;
+    const textAudioId: string = getTextAudioId(
+      this.textDocId.projectId,
+      this.textDocId.bookNum,
+      this.textDocId.chapterNum
+    );
+    return this.textAudioQuery?.docs.find(t => t.id === textAudioId)?.data?.timings;
+  }
+
+  get chapterAudioSource(): string {
+    return `/${this.projectDoc?.id}/${this.getAudioFileName()}`;
   }
 
   private get book(): number | undefined {
@@ -392,6 +414,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.questionsSub?.unsubscribe();
         this.questionsRemoteChangesSub?.unsubscribe();
         this.questionsQuery?.dispose();
+        this.textAudioQuery?.dispose();
         this.resetFilter();
         const prevShowAllBooks = this.showAllBooks;
         this.showAllBooks = bookId === 'ALL';
@@ -413,6 +436,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
             }
           }
         });
+        // TODO (scripture audio) Only fetch the timing data for the currently active chapter
+        this.textAudioQuery = await this.projectService.queryAudioText(projectId);
         const prevBook = this.book;
         // There may be some race conditions which means the questions query is ready before we subscribe to ready$
         // The merge does an additional subscribe on the state of the ready boolean for when it is true
@@ -493,6 +518,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   ngOnDestroy(): void {
     super.ngOnDestroy();
     this.questionsQuery?.dispose();
+    this.textAudioQuery?.dispose();
     this.setBookSub?.unsubscribe();
   }
 
@@ -772,6 +798,34 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     if (bestMatch != null) {
       this.questionsPanel.activateQuestion(bestMatch);
     }
+  }
+
+  addAudioTimingData(): void {
+    if (this.projectDoc?.id == null || this.book == null || this.chapter == null) {
+      return;
+    }
+
+    const audioPath = this.getAudioFileName()!;
+    this.projectService.onlineCreateAudioTimingData(this.projectDoc.id, this.book, this.chapter, audioPath);
+  }
+
+  // TODO (scripture audio) This method is a temporary hack to make the audio file name predictable based on the book
+  // and chapter. Copy test audio files to /var/lib/scriptureforge/audio/<project_id>/ with a name like MRK_003.wav and
+  // it can be played back in the audio player.
+  private getAudioFileName(): string | undefined {
+    if (this.book == null || this.chapter == null) {
+      return;
+    }
+
+    const bookId = Canon.bookNumberToId(this.book);
+    return `${bookId}_${this.chapter.toString().padStart(3, '0')}.wav`;
+  }
+
+  deleteAudioTimingData(): void {
+    if (this.projectDoc?.id == null || this.book == null || this.chapter == null) {
+      return;
+    }
+    this.projectService.onlineDeleteAudioTimingData(this.projectDoc.id, this.book, this.chapter);
   }
 
   private triggerUpdate(): void {

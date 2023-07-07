@@ -1,17 +1,16 @@
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
-import { CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { CheckingAnswerExport, CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -29,6 +28,7 @@ import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectSelectComponent } from '../project-select/project-select.component';
+import { InfoComponent } from '../shared/info/info.component';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 import { SettingsComponent } from './settings.component';
 
@@ -60,7 +60,7 @@ describe('SettingsComponent', () => {
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       NoopAnimationsModule
     ],
-    declarations: [SettingsComponent, WriteStatusComponent, MockComponent, ProjectSelectComponent],
+    declarations: [SettingsComponent, WriteStatusComponent, MockComponent, ProjectSelectComponent, InfoComponent],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: AuthService, useMock: mockedAuthService },
@@ -210,7 +210,8 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           translationSuggestionsEnabled: false,
-          shareEnabled: false
+          shareEnabled: false,
+          preTranslate: false
         });
         tick();
         env.fixture.detectChanges();
@@ -304,7 +305,8 @@ describe('SettingsComponent', () => {
         const env = new TestEnvironment();
         env.setupProject({
           translationSuggestionsEnabled: false,
-          shareEnabled: false
+          shareEnabled: false,
+          preTranslate: false
         });
         env.wait();
         expect(env.translationSuggestionsCheckbox).toBeNull();
@@ -336,6 +338,7 @@ describe('SettingsComponent', () => {
         env.setupProject({
           translationSuggestionsEnabled: false,
           shareEnabled: false,
+          preTranslate: false,
           source: {
             paratextId: 'paratextId01',
             projectRef: 'paratext01',
@@ -677,6 +680,7 @@ class TestEnvironment {
     translateConfig: TranslateConfig = {
       translationSuggestionsEnabled: true,
       shareEnabled: false,
+      preTranslate: false,
       source: {
         paratextId: 'paratextId01',
         projectRef: 'paratext01',

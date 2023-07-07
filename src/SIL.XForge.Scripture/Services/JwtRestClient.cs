@@ -11,8 +11,6 @@ public class JwtRestClient : RESTClient, ISFRestClient
     {
         this.JwtToken = jwtToken;
         ReflectionHelperLite.SetField(this, "authentication", null);
-        string location = System.Reflection.Assembly.GetEntryAssembly().Location;
-        string version = System.Diagnostics.FileVersionInfo.GetVersionInfo(location).ProductVersion ?? "1.0";
-        OverrideApplicationAgent = applicationName.Replace(" ", "") + "/" + version;
+        OverrideApplicationAgent = applicationName.Replace(" ", "") + "/" + Product.Version;
     }
 }

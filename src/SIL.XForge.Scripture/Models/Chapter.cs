@@ -12,4 +12,5 @@ public class Chapter
     /// be editable in SF.</summary>
     public bool IsValid { get; set; }
     public Dictionary<string, string> Permissions { get; set; } = new Dictionary<string, string>();
+    public bool? HasAudio { get; set; }
 }

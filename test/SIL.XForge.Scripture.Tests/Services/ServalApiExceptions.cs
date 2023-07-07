@@ -37,6 +37,15 @@ public static class ServalApiExceptions
             null
         );
 
+    public static ServalApiException NotSupported =>
+        new ServalApiException(
+            "The translation engine does not support cancelling builds.",
+            StatusCodes.Status405MethodNotAllowed,
+            null,
+            new Dictionary<string, IEnumerable<string>>(),
+            null
+        );
+
     public static ServalApiException TimeOut =>
         new ServalApiException(
             "The long polling request timed out.",

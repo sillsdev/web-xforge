@@ -24,10 +24,13 @@ h3 {
 
 .helper-text {
   color: var(--mdc-theme-text-hint-on-background);
+  line-height: 1.4em;
   mat-icon {
     font-size: inherit;
     position: relative;
-    top: 10px;
+    height: 1em;
+    width: unset;
+    top: 2px;
   }
 }
 

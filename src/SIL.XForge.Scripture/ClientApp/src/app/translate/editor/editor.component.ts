@@ -100,7 +100,7 @@ export const UPDATE_SUGGESTIONS_TIMEOUT = 100;
 export interface SaveNoteParameters {
   content: string;
   dataId?: string;
-  threadId?: string;
+  threadDataId?: string;
   verseRef?: VerseRef;
 }
 
@@ -178,6 +178,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private shouldNoteThreadsRespondToEdits: boolean = false;
   private commenterSelectedVerseRef?: VerseRef;
   private scrollSubscription?: Subscription;
+  private readonly fabDiameter = 40;
+  private readonly fabHorizMargin = 20;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -955,10 +957,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     const currentDate: string = new Date().toJSON();
-    const threadId: string = params.threadId ?? objectId();
+    const threadId: string = params.threadDataId ?? objectId();
     // only set the tag id if it is the first note in the thread
     const tagId: number | undefined =
-      params.threadId == null ? this.projectDoc?.data?.translateConfig.defaultNoteTagId : undefined;
+      params.threadDataId == null ? this.projectDoc?.data?.translateConfig.defaultNoteTagId : undefined;
     // Configure the note
     const note: Note = {
       dateCreated: currentDate,
@@ -973,11 +975,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       status: NoteStatus.Todo,
       deleted: false
     };
-    if (params.threadId == null) {
+    if (params.threadDataId == null) {
       if (params.verseRef == null) return;
       // Create a new thread
       const noteThread: NoteThread = {
-        dataId: threadId,
+        dataId: objectId(),
+        threadId,
         verseRef: fromVerseRef(params.verseRef),
         projectRef: this.projectId,
         ownerRef: this.userService.currentUserId,
@@ -993,7 +996,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     } else {
       // updated the existing note
       const threadDoc: NoteThreadDoc = await this.projectService.getNoteThread(
-        getNoteThreadDocId(this.projectId, params.threadId)
+        getNoteThreadDocId(this.projectId, params.threadDataId)
       );
       const noteIndex: number = threadDoc.data!.notes.findIndex(n => n.dataId === params.dataId);
       if (noteIndex >= 0) {
@@ -1046,18 +1049,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     Promise.resolve().then(() => this.subscribeClickEvents(segments));
   }
 
-  private async showNoteThread(threadId?: string, verseRef?: VerseRef): Promise<void> {
+  private async showNoteThread(threadDataId?: string, verseRef?: VerseRef): Promise<void> {
     if (this.bookNum == null || this.chapter == null) {
       return;
     }
-    if (threadId == null && verseRef == null) {
+    if (threadDataId == null && verseRef == null) {
       // at least one must be defined
       return;
     }
 
     const noteDialogData: NoteDialogData = {
       projectId: this.projectDoc!.id,
-      threadId,
+      threadId: threadDataId,
       textDocId: new TextDocId(this.projectDoc!.id, this.bookNum, this.chapter),
       verseRef
     };
@@ -1080,7 +1083,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       if (result.noteContent != null) {
         await this.saveNote({
           content: result.noteContent,
-          threadId,
+          threadDataId: threadDataId,
           dataId: result.noteDataId,
           verseRef: currentVerseRef
         });
@@ -1410,11 +1413,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             if (this.bookNum == null) {
               return;
             }
-            const threadId = threadIdFromMouseEvent(event);
-            if (threadId != null) {
-              this.showNoteThread(threadId);
-              this.target?.formatEmbed(threadId, 'note-thread-embed', { ['highlight']: false });
-              this.updateReadNotes(threadId);
+            const threadDataId: string | undefined = threadIdFromMouseEvent(event);
+            if (threadDataId != null) {
+              this.showNoteThread(threadDataId);
+              this.target?.formatEmbed(threadDataId, 'note-thread-embed', { ['highlight']: false });
+              this.updateReadNotes(threadDataId);
             }
             // stops the event from causing the segment to be selected
             event.stopPropagation();
@@ -1492,10 +1495,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     setTimeout(() => {
       const targetRect: DOMRect | undefined = this.targetContainer?.nativeElement.getBoundingClientRect();
       if (targetRect != null) {
-        const adjustment: number = this.isTargetRightToLeft ? 20 : -60;
-        const leftCoordinate: number =
-          (this.isTargetRightToLeft ? targetRect.left : targetRect.right - targetRect.left) + adjustment;
-        this.insertNoteFabLeft = `${leftCoordinate}px`;
+        const targetLeftBoundary: number = this.fabHorizMargin;
+        const targetRightBoundary: number = targetRect.right - targetRect.left - this.fabHorizMargin - this.fabDiameter;
+        const leftOffset: number = this.isTargetRightToLeft ? targetLeftBoundary : targetRightBoundary;
+        this.insertNoteFabLeft = `${leftOffset}px`;
       }
     }, 10);
   }
@@ -1966,13 +1969,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.scrollSubscription = this.subscribe(fromEvent(editor.root, 'scroll'), () => {
       if (this.insertNoteFab == null || this.target == null || this.targetContainer == null) return;
       const bounds: DOMRect = this.targetContainer.nativeElement.getBoundingClientRect();
-      const fabHeight = 40;
       const editorMargin = 5;
 
       // bound the FAB to the top of the editor
       let scrollTop: number = Math.min(this.target.selectionBoundsTop - editorMargin, editor.root.scrollTop);
       // bound the FAB to the bottom of the editor
-      const targetContainerBottom: number = bounds.bottom - bounds.top - fabHeight - editorMargin;
+      const targetContainerBottom: number = bounds.bottom - bounds.top - this.fabDiameter - editorMargin;
       const minScroll: number = Math.max(this.target.selectionBoundsTop - targetContainerBottom, 0);
       if (scrollTop < minScroll) {
         scrollTop = minScroll;

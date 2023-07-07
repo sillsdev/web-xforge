@@ -17,19 +17,18 @@
         </mat-card-title>
       </mat-card-header>
       <mat-divider></mat-divider>
-      <mdc-list *ngIf="texts != null" [twoLine]="true" [interactive]="false">
-        <mdc-list-item
+      <mat-list *ngIf="texts != null" role="list">
+        <mat-list-item
+          role="listitem"
           *ngFor="let textProgress of texts; trackBy: trackTextByBookNum"
           [appRouterLink]="['./', getBookId(textProgress.text)]"
         >
-          <mat-icon mdcListItemGraphic class="mirror-rtl">book</mat-icon>
-          <mdc-list-item-text
-            [secondaryText]="
-              t('translated_segments', { translatedSegments: textProgress.translated, total: textProgress.total })
-            "
-            >{{ getBookName(textProgress.text) }}</mdc-list-item-text
-          >
-          <div class="progress" mdcListItemMeta [title]="textProgress.percentage + '%'">
+          <mat-icon matListIcon class="mirror-rtl">book</mat-icon>
+          <span matLine>{{ getBookName(textProgress.text) }}</span>
+          <span matLine>{{
+            t("translated_segments", { translatedSegments: textProgress.translated, total: textProgress.total })
+          }}</span>
+          <div class="progress" matListItemMeta [title]="textProgress.percentage + '%'">
             <app-donut-chart
               [colors]="['#b8d332', 'transparent']"
               [data]="[textProgress.translated, textProgress.blank]"
@@ -38,8 +37,8 @@
               [thickness]="22"
             ></app-donut-chart>
           </div>
-        </mdc-list-item>
-      </mdc-list>
+        </mat-list-item>
+      </mat-list>
     </mat-card>
 
     <mat-card *ngIf="translationSuggestionsEnabled && canEditTexts" class="engine-card">
