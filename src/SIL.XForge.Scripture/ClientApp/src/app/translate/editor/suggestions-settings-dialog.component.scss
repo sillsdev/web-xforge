@@ -1,18 +1,19 @@
 .slider-labels {
   margin-top: 15px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
-.suggestions-switch {
-  column-gap: 12px;
+mat-dialog-content {
+  padding-block: 20px;
+  overflow: visible; // prevent mat-select menu from causing scroll bar
+  display: flex;
+  flex-direction: column;
 }
 
-mat-dialog-content.content-padding {
-  padding-top: 15px;
-  overflow: visible; // prevent mdc-select menu from causing scroll bar
-}
-
-#num-suggestions-select ::ng-deep .mdc-select__anchor {
-  width: 100%;
+#suggestions-enabled-switch {
+  margin-block-end: 30px;
 }
 
 .suggestions-confidence-field {
@@ -25,6 +26,18 @@ mat-dialog-content.content-padding {
   }
 }
 
-mdc-list-item {
-  height: 2.5em;
+mat-option {
+  height: 2.5em !important;
+}
+
+.minor-header {
+  font-size: 0.875rem;
+  line-height: 1.375rem;
+  font-weight: 500;
+}
+
+span {
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  font-weight: 400;
 }
