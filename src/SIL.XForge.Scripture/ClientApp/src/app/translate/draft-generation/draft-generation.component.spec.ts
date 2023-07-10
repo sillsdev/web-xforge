@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
-import { of } from 'rxjs';
+import { EMPTY, of } from 'rxjs';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { BuildStates } from 'src/app/machine-api/build-states';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
@@ -131,23 +131,29 @@ describe('DraftGenerationComponent', () => {
   describe('cancel', () => {
     it('should cancel the draft build if user confirms "cancel" dialog', async () => {
       const job: BuildDto = { ...buildDto, state: BuildStates.Active };
+      component['job'] = job;
       component.draftJob$ = of(job);
       mockDialogService.openGenericDialog.and.returnValue(Promise.resolve(true));
+      mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
       await component.cancel();
       expect(mockDialogService.openGenericDialog).toHaveBeenCalled();
       expect(mockDraftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
     });
     it('should not cancel the draft build if user exits "cancel" dialog', async () => {
       const job: BuildDto = { ...buildDto, state: BuildStates.Active };
+      component['job'] = job;
       component.draftJob$ = of(job);
       mockDialogService.openGenericDialog.and.returnValue(Promise.resolve(false));
+      mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
       await component.cancel();
       expect(mockDialogService.openGenericDialog).toHaveBeenCalled();
       expect(mockDraftGenerationService.cancelBuild).not.toHaveBeenCalled();
     });
     it('should cancel the draft build without dialog if the build state is not active', async () => {
       const job: BuildDto = { ...buildDto, state: BuildStates.Queued };
+      component['job'] = job;
       component.draftJob$ = of(job);
+      mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
       await component.cancel();
       expect(mockDialogService.openGenericDialog).not.toHaveBeenCalled();
       expect(mockDraftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
