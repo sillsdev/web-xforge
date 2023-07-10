@@ -2406,16 +2406,20 @@ public class ParatextServiceTests
         string content3a = "<p>First paragraph content.</p><p>Second paragraph content.</p>";
         // add new line character
         string content3b = "<p>First paragraph content.</p>\n<p>Second paragraph content.</p>";
+        string content4 = "<p>Content with <bold>bold</bold> <italics>italics</italics> styling.</p>";
+        string content5 = "Text with content styled <bold>bold</bold> <italics>italics</italics>.";
         ThreadNoteComponents[] notesSF = new[]
         {
             new ThreadNoteComponents { ownerRef = env.User05, content = content1a },
             new ThreadNoteComponents { ownerRef = env.User01, content = content2 },
-            new ThreadNoteComponents { ownerRef = env.User01, content = content3a }
+            new ThreadNoteComponents { ownerRef = env.User01, content = content3a },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content4 },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content5 }
         };
         ThreadComponents threadCompSF = new ThreadComponents
         {
             threadNum = 1,
-            noteCount = 3,
+            noteCount = 4,
             username = env.Username01,
             notes = notesSF
         };
@@ -2424,12 +2428,14 @@ public class ParatextServiceTests
         {
             new ThreadNoteComponents { ownerRef = env.User05, content = content1b },
             new ThreadNoteComponents { ownerRef = env.User01, content = content2 },
-            new ThreadNoteComponents { ownerRef = env.User01, content = content3b }
+            new ThreadNoteComponents { ownerRef = env.User01, content = content3b },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content4 },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content5 }
         };
         ThreadComponents threadCompPT = new ThreadComponents
         {
             threadNum = 1,
-            noteCount = 3,
+            noteCount = 5,
             username = env.Username01,
             notes = notesPT
         };
@@ -2457,7 +2463,7 @@ public class ParatextServiceTests
         );
 
         CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
-        Assert.That(thread.Comments.Count, Is.EqualTo(3));
+        Assert.That(thread.Comments.Count, Is.EqualTo(5));
         Paratext.Data.ProjectComments.Comment comment = thread.Comments.First();
         string expected1 =
             "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-" + "MAT 1:1-" + content1b + "-Start:15-" + "user05";
@@ -2468,6 +2474,12 @@ public class ParatextServiceTests
         comment = thread.Comments[2];
         string expected3 = "thread1/User 01/2019-01-03T08:00:00.0000000+00:00-" + "MAT 1:1-" + content3b + "-Start:15";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected3));
+        comment = thread.Comments[3];
+        string expected4 = "thread1/User 01/2019-01-04T08:00:00.0000000+00:00-" + "MAT 1:1-" + content4 + "-Start:15";
+        Assert.That(comment.CommentToString(), Is.EqualTo(expected4));
+        comment = thread.Comments[4];
+        string expected5 = "thread1/User 01/2019-01-05T08:00:00.0000000+00:00-" + "MAT 1:1-" + content5 + "-Start:15";
+        Assert.That(comment.CommentToString(), Is.EqualTo(expected5));
         Assert.That(ptProjectUsers.Count, Is.EqualTo(1));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
 

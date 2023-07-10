@@ -2450,9 +2450,9 @@ public class ParatextService : DisposableBase, IParatextService
         return sb.ToString();
     }
 
-    /// <summary> Replace the meaningless white space between xml tags </summary>
+    /// <summary> Replace the white space between paragraph xml tags </summary>
     private static string GetXmlContentNoWhitespace(string xmlContent) =>
-        Regex.Replace(xmlContent.Trim(), @">\W+<", "><");
+        Regex.Replace(xmlContent.Trim(), @"p>\W+<p", "p><p");
 
     private void PopulateCommentFromNote(
         Note note,
