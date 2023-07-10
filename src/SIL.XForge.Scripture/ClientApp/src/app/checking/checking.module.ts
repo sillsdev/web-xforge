@@ -1,11 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-
 import { TranslocoModule } from '@ngneat/transloco';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
+import { AudioPlayerComponent } from '../shared/audio/audio-player.component';
 import { SharedModule } from '../shared/shared.module';
 import { TextChooserDialogComponent } from '../text-chooser-dialog/text-chooser-dialog.component';
 import { CheckingOverviewComponent } from './checking-overview/checking-overview.component';
@@ -14,13 +14,14 @@ import { CheckingAnswersComponent } from './checking/checking-answers/checking-a
 import { CheckingCommentFormComponent } from './checking/checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking/checking-answers/checking-comments/checking-comments.component';
 import { CheckingAudioCombinedComponent } from './checking/checking-audio-combined/checking-audio-combined.component';
+import { CheckingAudioPlayerNewComponent } from './checking/checking-audio-player-new/checking-audio-player-new.component';
 import {
   AudioTimePipe,
   CheckingAudioPlayerComponent
 } from './checking/checking-audio-player/checking-audio-player.component';
 import { CheckingAudioRecorderComponent } from './checking/checking-audio-recorder/checking-audio-recorder.component';
-import { CheckingScriptureAudioPlayerComponent } from './checking/checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { CheckingQuestionsComponent } from './checking/checking-questions/checking-questions.component';
+import { CheckingScriptureAudioPlayerComponent } from './checking/checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { CheckingTextComponent } from './checking/checking-text/checking-text.component';
 import { CheckingComponent } from './checking/checking.component';
 import { FontSizeComponent } from './checking/font-size/font-size.component';
@@ -44,6 +45,8 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     CheckingAudioRecorderComponent,
     CheckingAudioRecorderComponent,
     CheckingAudioPlayerComponent,
+    CheckingAudioPlayerNewComponent,
+    AudioPlayerComponent,
     CheckingScriptureAudioPlayerComponent,
     AudioTimePipe,
     CheckingAudioCombinedComponent,

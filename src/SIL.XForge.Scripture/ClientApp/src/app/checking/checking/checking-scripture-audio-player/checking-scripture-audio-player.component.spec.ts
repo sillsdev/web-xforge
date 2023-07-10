@@ -7,7 +7,8 @@ import { instance, mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { AudioTimePipe, CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
+import { AudioPlayerComponent } from '../../../shared/audio/audio-player.component';
+import { AudioTimePipe } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
 
 const audioFile = 'test-audio-player.webm';
@@ -62,7 +63,7 @@ class TestEnvironment {
 
   constructor(template: string) {
     TestBed.configureTestingModule({
-      declarations: [HostComponent, CheckingScriptureAudioPlayerComponent, CheckingAudioPlayerComponent, AudioTimePipe],
+      declarations: [HostComponent, CheckingScriptureAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe],
       providers: [{ provide: PwaService, useFactory: () => instance(this.mockPwaService) }],
       imports: [UICommonModule, TestTranslocoModule]
     });
@@ -89,7 +90,7 @@ class TestEnvironment {
     return this.component.audioPlayer.isPlaying;
   }
 
-  async waitForPlayer(ms: number = 20): Promise<void> {
+  async waitForPlayer(ms: number = 100): Promise<void> {
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }

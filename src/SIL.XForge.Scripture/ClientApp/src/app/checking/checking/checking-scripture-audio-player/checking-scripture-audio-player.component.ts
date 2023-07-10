@@ -4,7 +4,7 @@ import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils
 import { TextDocId } from 'src/app/core/models/text-doc';
 import { getVerseStrFromSegmentRef } from 'src/app/shared/utils';
 import { I18nService } from 'xforge-common/i18n.service';
-import { CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
+import { AudioPlayerComponent } from '../../../shared/audio/audio-player.component';
 
 @Component({
   selector: 'app-checking-scripture-audio-player',
@@ -15,13 +15,13 @@ export class CheckingScriptureAudioPlayerComponent {
   @Input() source?: string;
   @Input() timing?: AudioTiming[];
   @Input() textDocId?: TextDocId;
-  @ViewChild('audioPlayer') audioPlayer?: CheckingAudioPlayerComponent;
+  @ViewChild('audioPlayer') audioPlayer?: AudioPlayerComponent;
 
   constructor(private readonly i18n: I18nService) {}
 
   get currentRef(): string | undefined {
     if (this.timing == null) return;
-    const currentTime: number = this.audioPlayer?.currentTime ?? 0;
+    const currentTime: number = this.audioPlayer?.audio?.currentTime ?? 0;
     return this.timing.find(t => t.to > currentTime)?.textRef;
   }
 
@@ -36,33 +36,33 @@ export class CheckingScriptureAudioPlayerComponent {
   }
 
   get isPlaying(): boolean {
-    return !!this.audioPlayer?.isPlaying;
+    return !!this.audioPlayer?.audio?.isPlaying;
   }
 
   play(): void {
-    this.audioPlayer?.play();
+    this.audioPlayer?.audio?.play();
   }
 
   pause(): void {
-    this.audioPlayer?.pause();
+    this.audioPlayer?.audio?.pause();
   }
 
   previousRef(): void {
-    if (this.audioPlayer == null || this.timing == null) return;
+    if (this.audioPlayer == null || this.audioPlayer.audio == null || this.timing == null) return;
     const currentTimingIndex: number = this.timing.findIndex(t => t.textRef === this.currentRef);
     if (currentTimingIndex < 0) {
-      this.audioPlayer.currentTime = 0;
+      this.audioPlayer.audio.currentTime = 0;
     }
-    this.audioPlayer.currentTime = this.timing[currentTimingIndex - 1].from;
+    this.audioPlayer.audio.currentTime = this.timing[currentTimingIndex - 1].from;
   }
 
   nextRef(): void {
-    if (this.audioPlayer == null || this.timing == null) return;
+    if (this.audioPlayer == null || this.audioPlayer.audio == null || this.timing == null) return;
     const currentTimingIndex: number = this.timing.findIndex(t => t.textRef === this.currentRef);
     if (currentTimingIndex < 0) {
       // TODO (scripture audio): find a better solution than setting the current time to 0
-      this.audioPlayer.currentTime = 0;
+      this.audioPlayer.audio.currentTime = 0;
     }
-    this.audioPlayer.currentTime = this.timing[currentTimingIndex].to;
+    this.audioPlayer.audio.currentTime = this.timing[currentTimingIndex].to;
   }
 }
