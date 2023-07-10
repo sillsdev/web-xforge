@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
+using Paratext.Data;
 using Paratext.Data.ProjectComments;
 using Paratext.Data.ProjectSettingsAccess;
 using SIL.Scripture;
@@ -788,6 +789,9 @@ public class ParatextSyncRunnerTests
                 Name = "Tag Name"
             }
         };
+        string newProjectType = ProjectType.BackTranslation.ToString();
+        string? newBaseProjectParatextId = "base_pt";
+        string newBaseProjectShortName = "BPT";
         env.ParatextService
             .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
             .Returns(
@@ -797,6 +801,9 @@ public class ParatextSyncRunnerTests
                     DefaultFont = newFont,
                     NoteTags = noteTags,
                     LanguageTag = newWritingSystemTag,
+                    ProjectType = newProjectType,
+                    BaseProjectParatextId = newBaseProjectParatextId,
+                    BaseProjectShortName = newBaseProjectShortName,
                 }
             );
 
@@ -808,6 +815,48 @@ public class ParatextSyncRunnerTests
         Assert.That(project.NoteTags.Select(t => t.Icon), Is.EquivalentTo(new[] { customIcon }));
         Assert.That(project.WritingSystem.Tag, Is.EqualTo(newWritingSystemTag));
         Assert.That(project.TranslateConfig.Source.WritingSystem.Tag, Is.EqualTo(newWritingSystemTag));
+        Assert.That(project.TranslateConfig.ProjectType, Is.EqualTo(newProjectType));
+        Assert.That(project.TranslateConfig.BaseProject.ParatextId, Is.EqualTo(newBaseProjectParatextId));
+        Assert.That(project.TranslateConfig.BaseProject.ShortName, Is.EqualTo(newBaseProjectShortName));
+
+        // Change the base project configuration
+        newProjectType = ProjectType.Daughter.ToString();
+        newBaseProjectParatextId = "daughter_pt";
+        newBaseProjectShortName = "DPT";
+        env.ParatextService
+            .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
+            .Returns(
+                new ParatextSettings
+                {
+                    ProjectType = newProjectType,
+                    BaseProjectParatextId = newBaseProjectParatextId,
+                    BaseProjectShortName = newBaseProjectShortName,
+                }
+            );
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+        project = env.VerifyProjectSync(true);
+        Assert.That(project.TranslateConfig.ProjectType, Is.EqualTo(newProjectType));
+        Assert.That(project.TranslateConfig.BaseProject.ParatextId, Is.EqualTo(newBaseProjectParatextId));
+        Assert.That(project.TranslateConfig.BaseProject.ShortName, Is.EqualTo(newBaseProjectShortName));
+
+        // Remove the base project configuration
+        newProjectType = ProjectType.Standard.ToString();
+        newBaseProjectParatextId = null;
+        newBaseProjectShortName = string.Empty;
+        env.ParatextService
+            .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
+            .Returns(
+                new ParatextSettings
+                {
+                    ProjectType = newProjectType,
+                    BaseProjectParatextId = newBaseProjectParatextId,
+                    BaseProjectShortName = newBaseProjectShortName,
+                }
+            );
+        await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
+        project = env.VerifyProjectSync(true);
+        Assert.That(project.TranslateConfig.ProjectType, Is.EqualTo(newProjectType));
+        Assert.IsNull(project.TranslateConfig.BaseProject);
     }
 
     [Test]
