@@ -34,9 +34,9 @@ export class DraftGenerationService {
   pollBuildProgress(projectId: string): Observable<BuildDto | undefined> {
     return timer(0, this.options.pollRate).pipe(
       switchMap(() => this.getBuildProgress(projectId)),
-      takeWhile(job => job === undefined || this.activeBuildStates.includes(job?.state as BuildStates), true),
+      takeWhile(job => this.activeBuildStates.includes(job?.state as BuildStates), true),
       distinct(job => `${job?.state}${job?.percentCompleted}`),
-      shareReplay(1)
+      shareReplay({ bufferSize: 1, refCount: true })
     );
   }
 
@@ -83,16 +83,7 @@ export class DraftGenerationService {
           ? this.pollBuildProgress(projectId)
           : this.httpClient.post<void>(`translation/pretranslations`, JSON.stringify(projectId)).pipe(
               // No errors means build successfully started, so start polling
-              switchMap(() => this.pollBuildProgress(projectId)),
-
-              // Polling should not return undefined since build started successfully
-              map(job => {
-                if (!job) {
-                  throw new Error('Empty build after successful start.');
-                }
-
-                return job!;
-              })
+              switchMap(() => this.pollBuildProgress(projectId))
             )
       )
     );
