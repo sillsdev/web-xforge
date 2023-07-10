@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'app'">
   <mat-progress-bar
-    mode="indeterminate"
+    [mode]="featureFlags.stillness.enabled ? 'determinate' : 'indeterminate'"
     color="accent"
     [class.mat-progress-bar--closed]="isAppLoading !== true"
   ></mat-progress-bar>
@@ -209,7 +209,7 @@
               mat-list-icon
               matBadge="error"
               [matBadgeHidden]="!lastSyncFailed"
-              [class.sync-in-progress]="syncInProgress"
+              [class.sync-in-progress]="syncInProgress && !featureFlags.stillness.enabled"
               id="sync-icon"
               >sync</mat-icon
             >

@@ -3,6 +3,7 @@ import { ProgressBarMode } from '@angular/material/progress-bar';
 import { OtJson0Op } from 'ot-json0';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { merge, Observable } from 'rxjs';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { ProjectNotificationService } from '../../core/project-notification.service';
@@ -25,7 +26,8 @@ export class SyncProgressComponent extends SubscriptionDisposable {
 
   constructor(
     private readonly projectService: SFProjectService,
-    private readonly projectNotificationService: ProjectNotificationService
+    private readonly projectNotificationService: ProjectNotificationService,
+    private readonly featureFlags: FeatureFlagService
   ) {
     super();
 
@@ -48,6 +50,7 @@ export class SyncProgressComponent extends SubscriptionDisposable {
   }
 
   get mode(): ProgressBarMode {
+    if (this.featureFlags.stillness.enabled) return 'determinate';
     // Show indeterminate only at the beginning, as the sync has not yet started
     return this.syncProgressPercent > 0 ? 'determinate' : 'indeterminate';
   }
