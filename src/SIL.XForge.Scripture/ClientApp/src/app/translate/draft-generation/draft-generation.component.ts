@@ -1,13 +1,12 @@
 import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { combineLatest, EMPTY, Observable, of } from 'rxjs';
-import { filter, first, switchMap, tap } from 'rxjs/operators';
+import { combineLatest, Observable, of } from 'rxjs';
+import { switchMap, tap } from 'rxjs/operators';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
-import { SubscriptionDisposable } from '../../../xforge-common/subscription-disposable';
 import { BuildStates } from '../../machine-api/build-states';
 import { NllbLanguageService } from '../nllb-language.service';
 import { ACTIVE_BUILD_STATES } from './draft-generation';
@@ -19,7 +18,8 @@ import { DraftGenerationService } from './draft-generation.service';
   styleUrls: ['./draft-generation.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class DraftGenerationComponent extends SubscriptionDisposable implements OnInit {
+export class DraftGenerationComponent implements OnInit {
+  private job?: BuildDto;
   draftJob$?: Observable<BuildDto | undefined>;
   draftViewerUrl?: string;
 
@@ -37,9 +37,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     private readonly nllbService: NllbLanguageService,
     private readonly i18n: I18nService,
     @Inject(ACTIVE_BUILD_STATES) private readonly activeBuildStates: BuildStates[]
-  ) {
-    super();
-  }
+  ) {}
 
   ngOnInit(): void {
     this.draftJob$ = combineLatest([
@@ -65,7 +63,8 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
               this.isDraftInProgress(job) ? this.draftGenerationService.pollBuildProgress(projectId!) : of(job)
             )
           )
-      )
+      ),
+      tap(job => (this.job = job))
     );
   }
 
@@ -92,35 +91,28 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
         if (!this.canCancel(job)) {
           this.matDialog.closeAll();
         }
-      })
+      }),
+      tap(job => (this.job = job))
     );
   }
 
   async cancel(): Promise<void> {
-    this.draftJob$
-      ?.pipe(
-        first(),
-        filter(this.canCancel.bind(this)),
-        switchMap(async (job?: BuildDto) => {
-          if (job?.state === BuildStates.Active) {
-            const isConfirmed = await this.dialogService.openGenericDialog({
-              title: of('Confirm draft cancellation'),
-              message: of('Are you sure you want to cancel generating the draft?'),
-              options: [
-                { value: false, label: of('No') },
-                { value: true, label: of('Yes, cancel draft generation'), highlight: true }
-              ]
-            });
+    if (this.job?.state === BuildStates.Active) {
+      const isConfirmed = await this.dialogService.openGenericDialog({
+        title: of('Confirm draft cancellation'),
+        message: of('Are you sure you want to cancel generating the draft?'),
+        options: [
+          { value: false, label: of('No') },
+          { value: true, label: of('Yes, cancel draft generation'), highlight: true }
+        ]
+      });
 
-            if (!isConfirmed) {
-              return EMPTY;
-            }
-          }
+      if (!isConfirmed) {
+        return;
+      }
+    }
 
-          return this.draftGenerationService.cancelBuild(this.activatedProject.projectId!);
-        })
-      )
-      .subscribe();
+    this.draftGenerationService.cancelBuild(this.activatedProject.projectId!).subscribe();
   }
 
   isDraftInProgress(job?: BuildDto): boolean {
