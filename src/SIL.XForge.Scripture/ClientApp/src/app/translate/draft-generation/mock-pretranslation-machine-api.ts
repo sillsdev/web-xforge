@@ -1,15 +1,20 @@
-import { reduce } from 'lodash-es';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
-import { BehaviorSubject, Observable, of, Subscription, timer } from 'rxjs';
-import { map, takeWhile } from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { Observable, of, Subscription, timer } from 'rxjs';
+import { takeWhile } from 'rxjs/operators';
+import { BuildDto } from 'src/app/machine-api/build-dto';
 import { BuildStates } from 'src/app/machine-api/build-states';
-import { BuildDto } from '../../machine-api/build-dto';
-import { DraftSegmentMap, PreTranslation, PreTranslationData } from './draft-generation';
+import { HttpResponse } from 'src/app/machine-api/http-client';
+import { PreTranslation, PreTranslationData } from './draft-generation';
 
-export class MockDraftGenerationService {
-  private readonly activeBuildStates = [BuildStates.Active, BuildStates.Pending, BuildStates.Queued];
-  private readonly job$ = new BehaviorSubject<BuildDto | undefined>(undefined);
+/**
+ * Mocks the machine api http responses for the pretranslation endpoints.
+ */
+@Injectable({
+  providedIn: 'root'
+})
+export class MockPreTranslationHttpClient {
   private timerSub?: Subscription;
+
   private readonly initialJobState: BuildDto = {
     id: '',
     href: '',
@@ -20,78 +25,90 @@ export class MockDraftGenerationService {
     message: ''
   };
 
-  pollBuildProgress(_: string): Observable<BuildDto | undefined> {
-    return this.job$;
-  }
-  getBuildProgress(_: string): Observable<BuildDto | undefined> {
-    return this.job$;
-  }
-  startBuild(_: string): Observable<BuildDto | undefined> {
-    if (!this.activeBuildStates.includes(this.job$.value?.state as BuildStates)) {
-      this.startGeneration();
+  private currentJobState?: BuildDto;
+
+  get<T extends BuildDto | PreTranslationData | undefined>(url: string): Observable<HttpResponse<T>> {
+    const getDraftUrlRegex = /^translation\/engines\/project:[^\/]+\/actions\/preTranslate\/(\d+)_(\d+)$/;
+    const getBuildProgressUrlRegex = /^translation\/builds\/id:[^\/?]+\?pretranslate=true$/;
+
+    // Get build progress
+    if (getBuildProgressUrlRegex.test(url)) {
+      if (!this.currentJobState) {
+        return of({ status: 204, data: undefined });
+      }
+
+      return of({ status: 200, data: this.currentJobState as T });
     }
-    return this.job$;
-  }
-  cancelBuild(_: string): Observable<BuildDto | undefined> {
-    this.job$.next({ ...this.initialJobState, state: BuildStates.Canceled });
-    this.timerSub?.unsubscribe();
-    return this.job$;
-  }
-  getGeneratedDraft(projectId: string, book: number, chapter: number): Observable<DraftSegmentMap> {
-    return of({
-      preTranslations: samplePreTranslations[`${book}_${chapter}`]
-    }).pipe(map((data: PreTranslationData) => this.toDraftSegmentMap(data.preTranslations)));
+
+    // Get generated draft
+    else if (getDraftUrlRegex.test(url)) {
+      // Build has not started, has not finished, or was cancelled
+      if (!this.currentJobState) {
+        return of({ status: 200, data: { preTranslations: [] as PreTranslation[] } as T });
+      }
+
+      const matchResult = url.match(getDraftUrlRegex);
+
+      if (matchResult) {
+        const book = matchResult[1];
+        const chapter = matchResult[2];
+        return of({ status: 200, data: { preTranslations: samplePreTranslations[`${book}_${chapter}`] } as T });
+      }
+    }
+
+    throw new Error('unknown machine api endpoint');
   }
 
-  private toDraftSegmentMap(preTranslations: PreTranslation[]): DraftSegmentMap {
-    return reduce(
-      preTranslations,
-      (result: DraftSegmentMap, curr: PreTranslation) => {
-        let verseRef = VerseRef.parse(curr.reference);
-        const segmentRef = `verse_${verseRef.chapter}_${verseRef.verse}`;
-        result[segmentRef] = curr.translation.trimEnd() + ' '; // Ensure single space at end
-        return result;
-      },
-      {}
-    );
+  post<T>(url: string, _: any): Observable<HttpResponse<T>> {
+    // Start build
+    if (url === 'translation/pretranslations') {
+      this.startGeneration();
+      return of({ status: 200, data: undefined });
+    }
+
+    // Cancel build
+    else if (url === 'translation/pretranslations/cancel') {
+      this.timerSub?.unsubscribe();
+      this.currentJobState = undefined;
+      return of({ status: 200, data: undefined });
+    }
+
+    throw new Error('unknown machine api endpoint');
   }
 
   // Mock generation
   private startGeneration(): void {
-    const interval = 100;
-    const duration = 2000;
+    const interval = 2000;
+    const duration = 30000;
     const pendingAfter = duration / 4;
     const activeAfter = (duration / 4) * 2;
-    const generationTimer$ = timer(0, interval).pipe(
-      takeWhile(x => interval * x <= duration) // Inclusive of last emission
-    );
+    const generationTimer$ = timer(0, interval).pipe(takeWhile(x => interval * x <= duration, true));
 
-    this.job$.next({ ...this.initialJobState });
+    this.currentJobState = { ...this.initialJobState };
 
     this.timerSub = generationTimer$.subscribe((intervalNum: number) => {
+      if (!this.currentJobState) {
+        this.timerSub?.unsubscribe();
+        return;
+      }
+
       const elapsed = intervalNum * interval;
-      const newStatus: BuildDto = { ...(this.job$.value ?? this.initialJobState) };
 
       if (elapsed >= pendingAfter) {
-        newStatus.state = BuildStates.Pending;
+        this.currentJobState.state = BuildStates.Pending;
       }
 
       if (elapsed >= activeAfter) {
-        newStatus.state = BuildStates.Active;
+        this.currentJobState.state = BuildStates.Active;
       }
 
       if (elapsed >= duration) {
-        newStatus.state = BuildStates.Completed;
+        this.currentJobState.state = BuildStates.Completed;
       }
 
-      if (newStatus.state === BuildStates.Active) {
-        newStatus.percentCompleted = (elapsed / duration) * 100;
+      if (this.currentJobState.state === BuildStates.Active) {
+        this.currentJobState.percentCompleted = ((elapsed - activeAfter) / (duration - activeAfter)) * 100;
       }
-
-      // console.log('elapsed', elapsed);
-      // console.log('percentCompleted', newStatus.percentCompleted);
-      // console.log('state', newStatus.state);
-      this.job$.next(newStatus);
     });
   }
 }
@@ -553,7 +570,7 @@ const samplePreTranslations2_2: PreTranslation[] = [
   }
 ];
 
-export const samplePreTranslations: { [key: string]: PreTranslation[] } = {
+const samplePreTranslations: { [key: string]: PreTranslation[] } = {
   '1_1': samplePreTranslations1_1,
   '1_2': samplePreTranslations1_2,
   '2_1': samplePreTranslations2_1,
