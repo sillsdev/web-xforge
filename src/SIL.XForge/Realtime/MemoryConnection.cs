@@ -93,6 +93,15 @@ public class MemoryConnection : IConnection
     public Task<Snapshot<T>> FetchSnapshotAsync<T>(string id, DateTime timestamp)
         where T : IIdentifiable => throw new NotImplementedException();
 
+    /// <summary>
+    /// Gets the ops for a document.
+    /// </summary>
+    /// <exception cref="NotImplementedException">
+    /// This is not supported by a <see cref="MemoryConnection" />.
+    /// </exception>
+    public Task<Op[]> GetOpsAsync<T>(string id)
+        where T : IIdentifiable => throw new NotImplementedException();
+
     public IDocument<T> Get<T>(string id)
         where T : IIdentifiable
     {
