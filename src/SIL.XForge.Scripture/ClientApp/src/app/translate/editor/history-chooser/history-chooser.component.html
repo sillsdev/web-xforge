@@ -1,0 +1,20 @@
+<ng-container *transloco="let t; read: 'history_chooser'">
+  <button
+    mat-icon-button
+    (click)="showHideHistory()"
+    [disabled]="!appOnline"
+    title="{{ t(showHistory ? 'hide' : 'show') }}"
+  >
+    <mat-icon>history</mat-icon>
+  </button>
+  <ng-container *ngIf="showHistory && appOnline">
+    <mat-form-field appearance="outline" id="history-select">
+      <mat-select id="history-select" [(value)]="historyRevision" [disabled]="isLoading">
+        <mat-option *ngFor="let r of historyRevisions" [value]="r">{{ formatRevision(r) }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button mat-icon-button (click)="showHideHistory()" title="{{ t('hide') }}">
+      <mat-icon>close</mat-icon>
+    </button>
+  </ng-container>
+</ng-container>

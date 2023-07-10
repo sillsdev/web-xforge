@@ -12,6 +12,7 @@ import { SuggestionsComponent } from './editor/suggestions.component';
 import { TrainingProgressComponent } from './training-progress/training-progress.component';
 import { TranslateOverviewComponent } from './translate-overview/translate-overview.component';
 import { TranslateRoutingModule } from './translate-routing.module';
+import { HistoryChooserComponent } from './editor/history-chooser/history-chooser.component';
 
 @NgModule({
   declarations: [
@@ -21,7 +22,8 @@ import { TranslateRoutingModule } from './translate-routing.module';
     SuggestionsComponent,
     SuggestionsSettingsDialogComponent,
     TrainingProgressComponent,
-    TranslateOverviewComponent
+    TranslateOverviewComponent,
+    HistoryChooserComponent
   ],
   imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, XForgeCommonModule, TranslocoModule]
 })

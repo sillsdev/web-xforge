@@ -5,6 +5,10 @@ import { map } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { ParatextProject } from './models/paratext-project';
 
+export interface Revision {
+  [date: string]: string;
+}
+
 export interface SelectableProject {
   name: string;
   shortName: string;
@@ -44,6 +48,14 @@ export class ParatextService {
               name: projectName
             }))
       );
+  }
+
+  getRevisions(projectId: string, book: string, chapter: number): Promise<Revision[] | undefined> {
+    return this.http
+      .get<Revision[] | undefined>(`paratext-api/history/revisions/${projectId}_${book}_${chapter}_target`, {
+        headers: this.headers
+      })
+      .toPromise();
   }
 
   private get headers(): HttpHeaders {

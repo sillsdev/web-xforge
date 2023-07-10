@@ -31,6 +31,13 @@
           <div class="toolbar-separator">&nbsp;</div>
           <app-share-button [defaultRole]="defaultShareRole"></app-share-button>
         </ng-container>
+        <div class="toolbar-separator" fxHide.lt-md>&nbsp;</div>
+        <app-history-chooser
+          [projectId]="projectId"
+          [bookNum]="bookNum"
+          [chapter]="chapter"
+          fxHide.lt-md
+        ></app-history-chooser>
       </div>
       <ng-container *ngIf="showMultiViewers">
         <div fxFlexAlign="end" class="avatar-padding">
