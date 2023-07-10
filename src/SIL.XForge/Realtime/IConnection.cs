@@ -17,6 +17,8 @@ public interface IConnection : IDisposable, IAsyncDisposable
 
     Task<Snapshot<T>> FetchSnapshotAsync<T>(string id, DateTime timestamp)
         where T : IIdentifiable;
+    Task<Op[]> GetOpsAsync<T>(string id)
+        where T : IIdentifiable;
     IDocument<T> Get<T>(string id)
         where T : IIdentifiable;
     Task<IReadOnlyCollection<IDocument<T>>> GetAndFetchDocsAsync<T>(IReadOnlyCollection<string> ids)

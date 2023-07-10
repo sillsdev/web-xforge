@@ -124,7 +124,7 @@ export class RealtimeServer extends ShareDB {
     readonly migrationsDisabled: boolean,
     docServices: DocService[],
     private readonly projectsCollection: string,
-    db: ShareDB.DB,
+    readonly db: ShareDB.DB,
     private readonly schemaVersions: SchemaVersionRepository,
     milestoneDb?: ShareDB.MilestoneDB
   ) {

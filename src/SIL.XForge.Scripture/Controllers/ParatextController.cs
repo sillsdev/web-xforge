@@ -71,12 +71,12 @@ public class ParatextController : ControllerBase
     /// <param name="projectId">The project id.</param>
     /// <param name="book">The three letter book code.</param>
     /// <param name="chapter">The chapter number.</param>
-    /// <param name="timestamp">The point in time to get the snapshot at.</param>
+    /// <param name="timestamp">The point in time to get the snapshot at, in UTC.</param>
     /// <response code="200">The snapshot was retrieved for the specified point in time.</response>
     /// <response code="403">The user does not have permission to access the document.</response>
     /// <response code="404">The document does not exist.</response>
-    [HttpGet("history/texts/{projectId}_{book}_{chapter:int}_target")]
-    public async Task<ActionResult<Snapshot<TextData>>> GetHistoryAsync(
+    [HttpGet("history/snapshot/{projectId}_{book}_{chapter:int}_target")]
+    public async Task<ActionResult<Snapshot<TextData>>> GetSnapshotAsync(
         string projectId,
         string book,
         int chapter,
@@ -91,7 +91,49 @@ public class ParatextController : ControllerBase
 
         try
         {
-            return Ok(await _paratextService.GetHistoryAsync(userSecret, projectId, book, chapter, timestamp));
+            return Ok(await _paratextService.GetSnapshotAsync(userSecret, projectId, book, chapter, timestamp));
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
+    /// <summary>
+    /// Retrieves the revision history as a series of points in time with a description.
+    /// </summary>
+    /// <param name="projectId">The project id.</param>
+    /// <param name="book">The three letter book code.</param>
+    /// <param name="chapter">The chapter number.</param>
+    /// <remarks>
+    /// The timestamps returned from this can be used to guide the user towards history selection.
+    /// </remarks>
+    /// <returns>
+    /// The timestamps for the revisions in UTC, with a brief summary text.
+    /// </returns>
+    /// <response code="200">The revision history was retrieved successfully.</response>
+    /// <response code="403">The user does not have permission to access the document.</response>
+    /// <response code="404">The document does not exist.</response>
+    [HttpGet("history/revisions/{projectId}_{book}_{chapter:int}_target")]
+    public async Task<ActionResult<IAsyncEnumerable<KeyValuePair<DateTime, string>>>> GetRevisionHistoryAsync(
+        string projectId,
+        string book,
+        int chapter
+    )
+    {
+        Attempt<UserSecret> attempt = await _userSecrets.TryGetAsync(_userAccessor.UserId);
+        if (!attempt.TryResult(out UserSecret userSecret))
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            return Ok(_paratextService.GetRevisionHistoryAsync(userSecret, projectId, book, chapter));
         }
         catch (DataNotFoundException)
         {
