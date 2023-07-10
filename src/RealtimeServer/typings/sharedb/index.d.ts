@@ -91,7 +91,7 @@ declare namespace ShareDB {
       collection: string,
       id: string,
       from: number,
-      to: number,
+      to: number | null,
       options: any,
       callback: (...args: any[]) => any
     ): void;
