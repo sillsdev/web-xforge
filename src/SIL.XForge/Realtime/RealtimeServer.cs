@@ -56,8 +56,10 @@ public class RealtimeServer : IRealtimeServer
             handle,
             collection,
             id,
-            new DateTimeOffset(timestamp).ToUnixTimeMilliseconds()
+            new DateTimeOffset(timestamp, TimeSpan.Zero).ToUnixTimeMilliseconds()
         );
+
+    public Task<Op[]> GetOpsAsync(string collection, string id) => InvokeExportAsync<Op[]>("getOps", collection, id);
 
     public Task<Snapshot<T>> SubmitOpAsync<T>(int handle, string collection, string id, object op) =>
         InvokeExportAsync<Snapshot<T>>("submitOp", handle, collection, id, op);
