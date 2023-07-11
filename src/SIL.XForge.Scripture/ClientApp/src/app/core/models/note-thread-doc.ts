@@ -12,7 +12,7 @@ import {
 import { ProjectDataDoc } from 'xforge-common/models/project-data-doc';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { clone } from 'lodash-es';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from '@sillsdev/scripture';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { AssignedUsers } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';

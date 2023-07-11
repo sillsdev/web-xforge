@@ -42,8 +42,7 @@ import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-a
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Observable, of, Subject } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';

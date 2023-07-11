@@ -8,7 +8,7 @@ import QuillCursors from 'quill-cursors';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from '@sillsdev/scripture';
 import * as RichText from 'rich-text';
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';

@@ -6,7 +6,7 @@ import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { AssignedUsers, NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from '@sillsdev/scripture';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';

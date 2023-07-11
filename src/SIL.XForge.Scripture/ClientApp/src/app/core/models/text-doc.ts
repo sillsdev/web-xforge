@@ -6,7 +6,7 @@ import {
   TextType,
   TEXT_INDEX_PATHS
 } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from '@sillsdev/scripture';
 import { RealtimeDoc } from 'xforge-common/models/realtime-doc';
 import { getVerseStrFromSegmentRef } from '../../shared/utils';
 

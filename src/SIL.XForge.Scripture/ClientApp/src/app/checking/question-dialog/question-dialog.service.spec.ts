@@ -10,7 +10,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
+import { VerseRef } from '@sillsdev/scripture';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
