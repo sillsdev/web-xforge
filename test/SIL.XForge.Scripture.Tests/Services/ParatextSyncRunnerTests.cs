@@ -2026,6 +2026,50 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
+    public async Task SyncAsync_RemovesMultipleNotesFromThreadDoc()
+    {
+        var env = new TestEnvironment();
+        string sfProjectId = "project01";
+        string threadId = "thread01";
+        string dataId = "dataId01";
+        var book = new Book("MAT", 1, true);
+        env.SetupSFData(true, false, false, true, book);
+        List<Note> beginningNoteSet = env.GetNoteThread(sfProjectId, dataId).Notes;
+        beginningNoteSet.Add(
+            new Note
+            {
+                DataId = "n03",
+                ThreadId = threadId,
+                SyncUserRef = "syncuser02",
+                Content = "Paratext note 3.",
+                DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
+            }
+        );
+        await env.SetThreadNotesAsync(sfProjectId, dataId, beginningNoteSet);
+        env.SetupPTData(book);
+        NoteThread thread01 = env.GetNoteThread(sfProjectId, dataId);
+        Assert.That(
+            thread01.Notes.Select(n => n.DataId),
+            Is.EquivalentTo(new[] { "n01", "n02", "n03" }),
+            "setup: expecting several notes in doc"
+        );
+
+        // Remove note 2 and 3
+        env.SetupNoteRemovedChange(dataId, threadId, new[] { "n02", "n03" });
+        // SUT
+        await env.Runner.RunAsync(sfProjectId, "user01", sfProjectId, false, CancellationToken.None);
+        Assert.That(env.ContainsNoteThread(sfProjectId, dataId), Is.True);
+        thread01 = env.GetNoteThread(sfProjectId, dataId);
+        Assert.That(thread01.Notes.Select(n => n.DataId), Is.EquivalentTo(new[] { "n01" }));
+        var syncMetrics = env.GetSyncMetrics(sfProjectId);
+        Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+        Assert.That(
+            syncMetrics.Notes,
+            Is.EqualTo(new NoteSyncMetricInfo(added: 0, deleted: 0, updated: 0, removed: 2))
+        );
+    }
+
+    [Test]
     public async Task SyncAsync_NoteThreadDeleted()
     {
         var env = new TestEnvironment();
