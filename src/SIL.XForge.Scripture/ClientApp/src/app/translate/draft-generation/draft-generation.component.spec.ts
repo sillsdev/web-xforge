@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { EMPTY, of } from 'rxjs';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { BuildStates } from 'src/app/machine-api/build-states';
@@ -60,6 +61,9 @@ describe('DraftGenerationComponent', () => {
         data: {
           writingSystem: {
             tag: 'en'
+          },
+          translateConfig: {
+            projectType: ProjectType.BackTranslation
           }
         }
       })
@@ -96,6 +100,7 @@ describe('DraftGenerationComponent', () => {
           mockActivatedProjectService.projectId!
         );
         expect(component.draftViewerUrl).toEqual('/projects/testProjectId/draft-preview');
+        expect(component.isBackTranslation).toBe(true);
         expect(component.isTargetLanguageNllb).toBe(true);
         expect(component.targetLanguage).toBe('en');
         expect(component.targetLanguageDisplayName).toBe('English');
