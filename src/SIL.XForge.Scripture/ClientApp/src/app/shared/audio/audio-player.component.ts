@@ -61,6 +61,10 @@ export class AudioPlayerComponent extends SubscriptionDisposable {
   }
 }
 
+// TODO (scripture audio) This duplicates the audio pipe in checking-audio-player.component.ts. As of right now, the
+// audio time pipe in checking-audio-player.component.ts is registered in CheckingModule, so this one is not used, even
+// though its presence here gives the impression that it is. Since they're identical, it probably makes the most sense
+// to have one and move it to its own file. @josephmyers
 @Pipe({ name: 'audioTime' })
 export class AudioTimePipe implements PipeTransform {
   transform(seconds: number, ..._args: any[]): string {

@@ -15,6 +15,9 @@ export enum AudioStatus {
 // See explanatory comment where this number is used
 const ARBITRARILY_LARGE_NUMBER = 1e10;
 
+// TODO (scripture audio) FIXME This implements SubscriptionDisposable but isn't a component so Angular isn't going to
+// call dispose() on it. The dispose method is manually called by AudioPlayerComponent when the source changes, but not
+// when the AudioPlayerComponent is destroyed. @josephmyers
 export class AudioPlayer extends SubscriptionDisposable {
   private static lastPlayedAudio: HTMLAudioElement;
   private audio: HTMLAudioElement = new Audio();
@@ -30,6 +33,7 @@ export class AudioPlayer extends SubscriptionDisposable {
       this.status$.next(AudioStatus.Available);
     });
 
+    // TODO (scripture audio) Add comment explaining this workaround. @josephmyers
     this.audio.addEventListener('timeupdate', () => {});
 
     this.audio.addEventListener('error', () => {
