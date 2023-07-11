@@ -58,6 +58,8 @@ public class Program
             $"/home/vagrant/note-corruption/{projectDir}/target"
         );
         Console.WriteLine(commitListBlob);
+        List<CommitData> commitData = CommitParser.Parse(commitListBlob);
+        Console.WriteLine(commitData[0]);
     }
 
     private static async Task<string> RunCommand(string program, string arguments, string workingDirectory)
@@ -83,5 +85,64 @@ public class Program
         if (error.Length > 0)
             Console.WriteLine($"Warning: Command gave error output: {error}");
         return output.ToString();
+    }
+
+    public class CommitData
+    {
+        public string CommitId { get; set; }
+        public DateTime Date { get; set; }
+        public string Comment { get; set; }
+        public string MachineName { get; set; }
+        public string ApplicationVersion { get; set; }
+        public List<string> Files { get; set; }
+    }
+
+    public class CommitParser
+    {
+        public static List<CommitData> Parse(string data)
+        {
+            var commits = new List<CommitData>();
+            var lines = data.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+            var currentCommit = new CommitData();
+
+            foreach (var line in lines)
+            {
+                var parts = line.Split(':');
+                if (parts.Length != 2)
+                    continue;
+
+                var key = parts[0].Trim();
+                var value = parts[1].Trim();
+
+                switch (key)
+                {
+                    case "CommitId":
+                        currentCommit.CommitId = value;
+                        break;
+                    case "Date":
+                        currentCommit.Date = DateTime.Parse(value);
+                        break;
+                    case "Comment":
+                        currentCommit.Comment = value;
+                        break;
+                    case "MachineName":
+                        currentCommit.MachineName = value;
+                        break;
+                    case "ApplicationVersion":
+                        currentCommit.ApplicationVersion = value;
+                        break;
+                    case "Files":
+                        currentCommit.Files = value.Split(',').Select(f => f.Trim()).ToList();
+                        break;
+                    case "":
+                        // Blank line indicates the end of a commit, add it to the list
+                        commits.Add(currentCommit);
+                        currentCommit = new CommitData();
+                        break;
+                }
+            }
+
+            return commits;
+        }
     }
 }
