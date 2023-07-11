@@ -1,13 +1,13 @@
-import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, Observable, of } from 'rxjs';
+import { combineLatest, of, Subscription } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { BuildStates } from '../../machine-api/build-states';
 import { NllbLanguageService } from '../nllb-language.service';
 import { ACTIVE_BUILD_STATES } from './draft-generation';
@@ -16,20 +16,19 @@ import { DraftGenerationService } from './draft-generation.service';
 @Component({
   selector: 'app-draft-generation',
   templateUrl: './draft-generation.component.html',
-  styleUrls: ['./draft-generation.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: ['./draft-generation.component.scss']
 })
-export class DraftGenerationComponent implements OnInit {
-  private job?: BuildDto;
-  draftJob$?: Observable<BuildDto | undefined>;
+export class DraftGenerationComponent extends SubscriptionDisposable implements OnInit {
+  draftJob?: BuildDto;
   draftViewerUrl?: string;
 
-  projectSettings$?: Observable<any>; // Combined with async pipe, this allows OnPush change detection
   targetLanguage?: string;
   targetLanguageDisplayName?: string;
 
-  isTargetLanguageNllb = false;
+  isTargetLanguageNllb = true;
   isBackTranslation = true;
+
+  jobSubscription?: Subscription;
 
   constructor(
     private readonly matDialog: MatDialog,
@@ -39,31 +38,34 @@ export class DraftGenerationComponent implements OnInit {
     private readonly nllbService: NllbLanguageService,
     private readonly i18n: I18nService,
     @Inject(ACTIVE_BUILD_STATES) private readonly activeBuildStates: BuildStates[]
-  ) {}
+  ) {
+    super();
+  }
 
   ngOnInit(): void {
-    this.projectSettings$ = combineLatest([
-      this.activatedProject.projectId$,
-      this.activatedProject.projectDoc$,
-      this.i18n.locale$
-    ]).pipe(
-      tap(([projectId, projectDoc, locale]) => {
+    this.subscribe(
+      combineLatest([this.activatedProject.projectId$, this.activatedProject.projectDoc$, this.i18n.locale$]),
+      ([projectId, projectDoc, locale]) => {
         // TODO: Uncomment to enforce back translation projects
         // this.isBackTranslation = projectDoc?.data?.translateConfig.projectType === ProjectType.BackTranslation;
         this.targetLanguage = projectDoc?.data?.writingSystem.tag;
         this.targetLanguageDisplayName = this.getLanguageDisplayName(this.targetLanguage, locale);
         this.isTargetLanguageNllb = this.nllbService.isNllbLanguage(this.targetLanguage);
         this.draftViewerUrl = `/projects/${projectId}/draft-preview`;
-      })
+      }
     );
 
-    this.draftJob$ = this.draftGenerationService.getBuildProgress(this.activatedProject.projectId!).pipe(
-      switchMap((job?: BuildDto) =>
-        this.isDraftInProgress(job)
-          ? this.draftGenerationService.pollBuildProgress(this.activatedProject.projectId!)
-          : of(job)
-      ),
-      tap(job => (this.job = job))
+    this.jobSubscription = this.subscribe(
+      this.draftGenerationService
+        .getBuildProgress(this.activatedProject.projectId!)
+        .pipe(
+          switchMap((job?: BuildDto) =>
+            this.isDraftInProgress(job)
+              ? this.draftGenerationService.pollBuildProgress(this.activatedProject.projectId!)
+              : of(job)
+          )
+        ),
+      job => (this.draftJob = job)
     );
   }
 
@@ -84,19 +86,22 @@ export class DraftGenerationComponent implements OnInit {
   }
 
   generateDraft(): void {
-    this.draftJob$ = this.draftGenerationService.startBuild(this.activatedProject.projectId!).pipe(
-      tap((job?: BuildDto) => {
-        // Handle automatic closing of dialog if job finishes while cancel dialog is open
-        if (!this.canCancel(job)) {
-          this.matDialog.closeAll();
-        }
-      }),
-      tap(job => (this.job = job))
+    this.jobSubscription?.unsubscribe();
+    this.jobSubscription = this.subscribe(
+      this.draftGenerationService.startBuild(this.activatedProject.projectId!).pipe(
+        tap((job?: BuildDto) => {
+          // Handle automatic closing of dialog if job finishes while cancel dialog is open
+          if (!this.canCancel(job)) {
+            this.matDialog.closeAll();
+          }
+        })
+      ),
+      job => (this.draftJob = job)
     );
   }
 
   async cancel(): Promise<void> {
-    if (this.job?.state === BuildStates.Active) {
+    if (this.draftJob?.state === BuildStates.Active) {
       const isConfirmed = await this.dialogService.openGenericDialog({
         title: of('Confirm draft cancellation'),
         message: of('Are you sure you want to cancel generating the draft?'),
