@@ -109,7 +109,16 @@ export class DraftGenerationService {
   getGeneratedDraft(projectId: string, book: number, chapter: number): Observable<DraftSegmentMap> {
     return this.httpClient
       .get<PreTranslationData>(`translation/engines/project:${projectId}/actions/preTranslate/${book}_${chapter}`)
-      .pipe(map(res => (res.data && this.toDraftSegmentMap(res.data.preTranslations)) ?? {}));
+      .pipe(
+        map(res => (res.data && this.toDraftSegmentMap(res.data.preTranslations)) ?? {}),
+        catchError(err => {
+          if (err.status === 404) {
+            return of({});
+          } else {
+            return throwError(err);
+          }
+        })
+      );
   }
 
   /**
