@@ -3,7 +3,7 @@
   <mat-dialog-content>
     <p [innerHTML]="dialogMessage"></p>
   </mat-dialog-content>
-  <mat-dialog-actions>
-    <button mat-icon-button [mat-dialog-close]="'close'">{{ t("dismiss") }}</button>
+  <mat-dialog-actions [align]="'end'">
+    <button mat-button [mat-dialog-close]="'close'">{{ t("dismiss") }}</button>
   </mat-dialog-actions>
 </ng-container>
