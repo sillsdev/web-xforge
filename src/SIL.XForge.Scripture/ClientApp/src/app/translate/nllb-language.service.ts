@@ -14,7 +14,8 @@ export class NllbLanguageService {
   /**
    * Whether the supplied language code is either a ISO 369-1 (two-letter)
    * or ISO 369-2/T (three-letter) code in the NLLB set.
-   * @param languageCode The two- or three-letter code for the language.
+   * @param languageCode The two- or three-letter code for the language. Language code can have
+   * culture information attached with hyphens ('en-Latn-GB').
    * @returns `true` if language code is in the list of NLLB languages.
    */
   isNllbLanguage(languageCode: string | null | undefined): boolean {
@@ -22,7 +23,7 @@ export class NllbLanguageService {
       return false;
     }
 
-    const code = languageCode.toLowerCase();
+    const code = languageCode.split('-')[0].toLowerCase();
 
     if (this.nllbLanguages[code]) {
       return true;
