@@ -1,0 +1,8 @@
+{
+  "//": "Name of machine running SF that wrote bad notes.",
+  "sfMachineName": "",
+  "//": "Path to tree of Paratext repos.",
+  "syncDir": "",
+  "//": "Space-delimited list of dirs in syncDir.",
+  "paratextProjectIds": ""
+}
