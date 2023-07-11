@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, Inject, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, Observable, of } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { BuildDto } from 'src/app/machine-api/build-dto';
@@ -23,11 +24,12 @@ export class DraftGenerationComponent implements OnInit {
   draftJob$?: Observable<BuildDto | undefined>;
   draftViewerUrl?: string;
 
+  projectSettings$?: Observable<any>; // Combined with async pipe, this allows OnPush change detection
   targetLanguage?: string;
   targetLanguageDisplayName?: string;
 
   isTargetLanguageNllb = false;
-  isBackTranslation = false;
+  isBackTranslation = true;
 
   constructor(
     private readonly matDialog: MatDialog,
@@ -40,29 +42,26 @@ export class DraftGenerationComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.draftJob$ = combineLatest([
+    this.projectSettings$ = combineLatest([
       this.activatedProject.projectId$,
       this.activatedProject.projectDoc$,
       this.i18n.locale$
     ]).pipe(
       tap(([projectId, projectDoc, locale]) => {
-        // TODO: Get project type from translateConfig once SF-2128 is merged
-        // this.isBackTranslation = projectDoc.data?.translateConfig.projectType === ProjectType.BackTranslation;
-        this.isBackTranslation = true;
+        // TODO: Uncomment to enforce back translation projects
+        // this.isBackTranslation = projectDoc?.data?.translateConfig.projectType === ProjectType.BackTranslation;
         this.targetLanguage = projectDoc?.data?.writingSystem.tag;
         this.targetLanguageDisplayName = this.getLanguageDisplayName(this.targetLanguage, locale);
         this.isTargetLanguageNllb = this.nllbService.isNllbLanguage(this.targetLanguage);
         this.draftViewerUrl = `/projects/${projectId}/draft-preview`;
-      }),
-      // Check build status and start polling if build is in progress
-      switchMap(([projectId, ..._]) =>
-        this.draftGenerationService
-          .getBuildProgress(projectId!)
-          .pipe(
-            switchMap((job?: BuildDto) =>
-              this.isDraftInProgress(job) ? this.draftGenerationService.pollBuildProgress(projectId!) : of(job)
-            )
-          )
+      })
+    );
+
+    this.draftJob$ = this.draftGenerationService.getBuildProgress(this.activatedProject.projectId!).pipe(
+      switchMap((job?: BuildDto) =>
+        this.isDraftInProgress(job)
+          ? this.draftGenerationService.pollBuildProgress(this.activatedProject.projectId!)
+          : of(job)
       ),
       tap(job => (this.job = job))
     );
