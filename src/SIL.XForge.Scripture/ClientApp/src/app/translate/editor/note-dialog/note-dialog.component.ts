@@ -240,9 +240,9 @@ export class NoteDialogComponent implements OnInit {
 
   parseNote(content: string | undefined): string {
     const replace = new Map<RegExp, string>();
-    replace.set(/<bold>(.*)<\/bold>/gim, '<b>$1</b>'); // Bold style
-    replace.set(/<italic>(.*)<\/italic>/gim, '<i>$1</i>'); // Italic style
-    replace.set(/<p>(.*)<\/p>/gim, '$1<br />'); // Turn paragraphs into line breaks
+    replace.set(/<bold>(.*?)<\/bold>/gim, '<b>$1</b>'); // Bold style
+    replace.set(/<italic>(.*?)<\/italic>/gim, '<i>$1</i>'); // Italic style
+    replace.set(/<p>(.*?)<\/p>/gim, '$1<br />'); // Turn paragraphs into line breaks
     // Strip out any tags that don't match the above replacements
     replace.set(/<((?!(\/?)(i|b|br|span)))(.*?)>/gim, '');
     replace.forEach((replacement, regEx) => (content = content?.replace(regEx, replacement)));
