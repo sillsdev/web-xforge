@@ -11,7 +11,7 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { DeltaOperation } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
-import { zip } from 'rxjs';
+import { EMPTY, zip } from 'rxjs';
 import { filter, map, switchMap } from 'rxjs/operators';
 import { Delta, TextDocId } from 'src/app/core/models/text-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
@@ -28,7 +28,7 @@ import { DraftViewerService } from './draft-viewer.service';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DraftViewerComponent implements OnInit, AfterViewInit {
-  @ViewChild('sourceText') sourceEditor!: TextComponent; // Vernacular
+  @ViewChild('sourceText') sourceEditor?: TextComponent; // Vernacular (source might not be set in project settings)
   @ViewChild('targetText') targetEditor!: TextComponent; // Already translated interleaved with draft
 
   // ViewChildren gives observable notice when editors enter dom
@@ -40,7 +40,7 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
   chapters: number[] = [];
   currentChapter?: number;
 
-  sourceProjectId!: string;
+  sourceProjectId?: string;
   targetProjectId!: string;
 
   sourceProject?: SFProjectProfile;
@@ -51,6 +51,8 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
 
   isDraftApplied = false;
   hasDraft = false;
+
+  projectSettingsUrl?: string;
 
   constructor(
     private readonly draftGenerationService: DraftGenerationService,
@@ -64,17 +66,20 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
   async ngOnInit(): Promise<void> {
     this.targetProjectId = this.activatedProjectService.projectId!;
     this.targetProject = this.activatedProjectService.projectDoc?.data;
-
     this.sourceProjectId = this.targetProject?.translateConfig.source?.projectRef!;
-    this.sourceProject = (await this.projectService.getProfile(this.sourceProjectId)).data;
+    this.projectSettingsUrl = `/projects/${this.activatedProjectService.projectId}/settings`;
+
+    if (this.sourceProjectId) {
+      this.sourceProject = (await this.projectService.getProfile(this.sourceProjectId)).data;
+    }
   }
 
   ngAfterViewInit(): void {
     // Wait to populate draft until both editors are loaded with current chapter
     this.targetEditorQueryList.changes
-      .pipe(switchMap(() => zip(this.sourceEditor.loaded, this.targetEditor.loaded)))
+      .pipe(switchMap(() => zip(this.sourceEditor?.loaded ?? EMPTY, this.targetEditor.loaded)))
       .subscribe(() => {
-        // Both editors are now loaded
+        // Both editors are now loaded (or just target is loaded if no source text set in project settings)
         this.isDraftApplied = false;
         this.populateDraftText();
       });
@@ -104,8 +109,11 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     this.currentChapter = chapter;
 
     // Editor TextDocId needs to be set before it is created
-    this.sourceTextDocId = new TextDocId(this.sourceProjectId, this.currentBook, this.currentChapter, 'target');
     this.targetTextDocId = new TextDocId(this.targetProjectId, this.currentBook, this.currentChapter, 'target');
+
+    if (this.sourceProjectId) {
+      this.sourceTextDocId = new TextDocId(this.sourceProjectId, this.currentBook, this.currentChapter, 'target');
+    }
   }
 
   populateDraftText(): void {
