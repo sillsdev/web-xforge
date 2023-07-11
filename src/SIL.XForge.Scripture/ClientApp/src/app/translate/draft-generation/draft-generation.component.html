@@ -20,47 +20,71 @@
       hours under ideal conditions, but may take longer if the server is busy.
     </p>
 
+    <h3 class="requirements-header">Requirements</h3>
+    <ul class="requirements">
+      <li>
+        <mat-icon *ngIf="isTargetLanguageNllb" class="criteria-met">check</mat-icon>
+        <mat-icon *ngIf="!isTargetLanguageNllb" class="criteria-not-met">clear</mat-icon>
+        <p>
+          Your project language
+          <ng-container *ngIf="targetLanguageDisplayName">
+            of <em>"{{ targetLanguageDisplayName }}"</em>
+          </ng-container>
+          is <span *ngIf="!isTargetLanguageNllb">not</span> in the
+          <a
+            href="https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion"
+            target="_blank"
+            rel="noopener noreferrer"
+            >No Language Left Behind (NLLB)</a
+          >
+          set.
+        </p>
+      </li>
+      <li>
+        <mat-icon *ngIf="isBackTranslation" class="criteria-met">check</mat-icon>
+        <mat-icon *ngIf="!isBackTranslation" class="criteria-not-met">clear</mat-icon>
+        <p>Your project type is <span *ngIf="!isBackTranslation">not</span> a back translation project.</p>
+      </li>
+    </ul>
+  </section>
+
+  <mat-divider inset></mat-divider>
+
+  <section *ngIf="!isBackTranslation">
+    <h3><mat-icon>info</mat-icon>Project type is not supported for draft generation</h3>
+    <p>In order to generate a draft translation, the project must be a back translation project.</p>
+  </section>
+
+  <section *ngIf="isBackTranslation && !isTargetLanguageNllb">
+    <h3><mat-icon>info</mat-icon>Target language is not supported for draft generation</h3>
     <p>
-      In order to generate a draft translation, the back translation target language must be in the
+      Your project language
+      <ng-container *ngIf="targetLanguageDisplayName">
+        of <em>"{{ targetLanguageDisplayName }}"</em>
+      </ng-container>
+      is not in the
       <a
         href="https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion"
         target="_blank"
         rel="noopener noreferrer"
-        >No Language Left Behind (NLLB)</a
+        >No Language Left Behind</a
       >
       set.
     </p>
   </section>
 
-  <mat-divider inset></mat-divider>
-
-  <ng-container *ngIf="projectSettings$ | async">
-    <section *ngIf="!isBackTranslation">
-      <h3><mat-icon>info</mat-icon>Project type is not supported for draft generation</h3>
-      <p>In order to generate a draft translation, the project must be a back translation project.</p>
-    </section>
-
-    <section *ngIf="isBackTranslation && !isTargetLanguageNllb">
-      <h3><mat-icon>info</mat-icon>Target language is not supported for draft generation</h3>
+  <ng-container *ngIf="isGenerationSupported()">
+    <section *ngIf="!draftJob; else jobExists">
+      <h3>Generate draft</h3>
       <p>
-        Your project language
-        <ng-container *ngIf="targetLanguageDisplayName">
-          of <em>"{{ targetLanguageDisplayName }}"</em>
-        </ng-container>
-        is not in the
-        <a
-          href="https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion"
-          target="_blank"
-          rel="noopener noreferrer"
-          >No Language Left Behind</a
-        >
-        set.
+        Click <em>"Generate draft"</em> to start the process of generating a back translation draft. This will take at
+        least a few hours.
       </p>
-    </section>
-  </ng-container>
 
-  <ng-container *ngIf="draftJob$ | async as draftJob; else noDraftJob">
-    <ng-container *ngIf="isGenerationSupported()">
+      <button mat-flat-button color="primary" (click)="generateDraft()">Generate draft</button>
+    </section>
+
+    <ng-template #jobExists>
       <section *ngIf="isDraftComplete(draftJob) || !isDraftInProgress(draftJob)" class="view-or-create-options">
         <ng-container *ngIf="isDraftComplete(draftJob)">
           <div>
@@ -111,18 +135,6 @@
           [value]="draftJob?.percentCompleted"
         ></mat-progress-bar>
       </mat-card-footer>
-    </ng-container>
+    </ng-template>
   </ng-container>
-
-  <ng-template #noDraftJob>
-    <section *ngIf="isGenerationSupported()">
-      <h3>Generate draft</h3>
-      <p>
-        Click <em>"Generate draft"</em> to start the process of generating a back translation draft. This will take at
-        least a few hours.
-      </p>
-
-      <button mat-flat-button color="primary" (click)="generateDraft()">Generate draft</button>
-    </section>
-  </ng-template>
 </mat-card>
