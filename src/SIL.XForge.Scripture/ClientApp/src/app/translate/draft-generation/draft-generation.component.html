@@ -34,14 +34,14 @@
 
   <mat-divider inset></mat-divider>
 
-  <ng-container *ngIf="draftJob$ | async as draftJob; else promptGenerate">
+  <ng-container *ngIf="projectSettings$ | async">
     <section *ngIf="!isBackTranslation">
-      <h3>Project type is not supported for draft generation</h3>
+      <h3><mat-icon>info</mat-icon>Project type is not supported for draft generation</h3>
       <p>In order to generate a draft translation, the project must be a back translation project.</p>
     </section>
 
     <section *ngIf="isBackTranslation && !isTargetLanguageNllb">
-      <h3>Target language is not supported for draft generation</h3>
+      <h3><mat-icon>info</mat-icon>Target language is not supported for draft generation</h3>
       <p>
         Your project language
         <ng-container *ngIf="targetLanguageDisplayName">
@@ -57,7 +57,9 @@
         set.
       </p>
     </section>
+  </ng-container>
 
+  <ng-container *ngIf="draftJob$ | async as draftJob; else noDraftJob">
     <ng-container *ngIf="isGenerationSupported()">
       <section *ngIf="isDraftComplete(draftJob) || !isDraftInProgress(draftJob)" class="view-or-create-options">
         <ng-container *ngIf="isDraftComplete(draftJob)">
@@ -112,8 +114,8 @@
     </ng-container>
   </ng-container>
 
-  <ng-template #promptGenerate>
-    <section>
+  <ng-template #noDraftJob>
+    <section *ngIf="isGenerationSupported()">
       <h3>Generate draft</h3>
       <p>
         Click <em>"Generate draft"</em> to start the process of generating a back translation draft. This will take at
