@@ -67,6 +67,30 @@ em {
   @include media-breakpoint-down(sm) {
     display: none;
   }
+
+  &.missing {
+    h2 {
+      color: #bbb;
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    div {
+      border: 1px solid $border-color;
+      padding: 2em 15px;
+      display: flex;
+      gap: 10px;
+    }
+
+    p {
+      margin: 3px 0 0;
+    }
+
+    mat-icon {
+      color: $info-color;
+      flex-shrink: 0;
+    }
+  }
 }
 
 .draft {
