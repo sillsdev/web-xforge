@@ -23,7 +23,7 @@ import { TextDoc, TextDocId } from '../../../core/models/text-doc';
 import { canInsertNote, formatFontSizeToRems } from '../../../shared/utils';
 
 export interface NoteDialogData {
-  threadId?: string;
+  threadDataId?: string;
   textDocId: TextDocId;
   projectId: string;
   verseRef?: VerseRef;
@@ -65,10 +65,10 @@ export class NoteDialogComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     // This can be refactored so the asynchronous calls are done in parallel
-    if (this.threadId == null) {
+    if (this.threadDataId == null) {
       this.textDoc = await this.projectService.getText(this.textDocId);
     } else {
-      this.threadDoc = await this.projectService.getNoteThread(this.projectId + ':' + this.threadId);
+      this.threadDoc = await this.projectService.getNoteThread(this.projectId + ':' + this.threadDataId);
       this.textDoc = await this.projectService.getText(this.textDocId);
     }
 
@@ -113,7 +113,7 @@ export class NoteDialogComponent implements OnInit {
   }
 
   get isNewNote(): boolean {
-    return this.data.threadId == null;
+    return this.data.threadDataId == null;
   }
 
   get isRtl(): boolean {
@@ -196,8 +196,8 @@ export class NoteDialogComponent implements OnInit {
     return this.data.textDocId.toString();
   }
 
-  private get threadId(): string | undefined {
-    return this.data.threadId;
+  private get threadDataId(): string | undefined {
+    return this.data.threadDataId;
   }
 
   private get lastNoteId(): string | undefined {
