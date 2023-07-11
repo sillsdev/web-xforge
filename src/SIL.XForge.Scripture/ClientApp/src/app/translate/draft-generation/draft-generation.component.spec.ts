@@ -91,20 +91,14 @@ describe('DraftGenerationComponent', () => {
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));
       component.ngOnInit();
-      component.draftJob$?.subscribe(job => {
-        expect(job).toEqual(buildDto);
-        expect(mockDraftGenerationService.getBuildProgress).toHaveBeenCalledWith(
-          mockActivatedProjectService.projectId!
-        );
-        expect(mockDraftGenerationService.pollBuildProgress).toHaveBeenCalledWith(
-          mockActivatedProjectService.projectId!
-        );
-        expect(component.draftViewerUrl).toEqual('/projects/testProjectId/draft-preview');
-        expect(component.isBackTranslation).toBe(true);
-        expect(component.isTargetLanguageNllb).toBe(true);
-        expect(component.targetLanguage).toBe('en');
-        expect(component.targetLanguageDisplayName).toBe('English');
-      });
+      expect(component.draftJob).toEqual(buildDto);
+      expect(mockDraftGenerationService.getBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
+      expect(mockDraftGenerationService.pollBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
+      expect(component.draftViewerUrl).toEqual('/projects/testProjectId/draft-preview');
+      expect(component.isBackTranslation).toBe(true);
+      expect(component.isTargetLanguageNllb).toBe(true);
+      expect(component.targetLanguage).toBe('en');
+      expect(component.targetLanguageDisplayName).toBe('English');
     });
   });
 
@@ -118,26 +112,21 @@ describe('DraftGenerationComponent', () => {
     it('should not attempt MatDialog.closeAll() for queued build', () => {
       mockDraftGenerationService.startBuild.and.returnValue(of(buildDto));
       component.generateDraft();
-      component.draftJob$?.subscribe(() => {
-        expect(mockMatDialog.closeAll).not.toHaveBeenCalled();
-      });
+      expect(mockMatDialog.closeAll).not.toHaveBeenCalled();
     });
 
     it('should attempt MatDialog.closeAll() for cancelled build', () => {
       mockDraftGenerationService.startBuild.and.returnValue(of({ ...buildDto, state: BuildStates.Canceled }));
       component.generateDraft();
-      component.draftJob$?.subscribe(() => {
-        expect(mockDraftGenerationService.startBuild).toHaveBeenCalledWith('testProjectId');
-        expect(mockMatDialog.closeAll).toHaveBeenCalled();
-      });
+      expect(mockDraftGenerationService.startBuild).toHaveBeenCalledWith('testProjectId');
+      expect(mockMatDialog.closeAll).toHaveBeenCalled();
     });
   });
 
   describe('cancel', () => {
     it('should cancel the draft build if user confirms "cancel" dialog', async () => {
       const job: BuildDto = { ...buildDto, state: BuildStates.Active };
-      component['job'] = job;
-      component.draftJob$ = of(job);
+      component.draftJob = job;
       mockDialogService.openGenericDialog.and.returnValue(Promise.resolve(true));
       mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
       await component.cancel();
@@ -146,8 +135,7 @@ describe('DraftGenerationComponent', () => {
     });
     it('should not cancel the draft build if user exits "cancel" dialog', async () => {
       const job: BuildDto = { ...buildDto, state: BuildStates.Active };
-      component['job'] = job;
-      component.draftJob$ = of(job);
+      component.draftJob = job;
       mockDialogService.openGenericDialog.and.returnValue(Promise.resolve(false));
       mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
       await component.cancel();
@@ -156,8 +144,7 @@ describe('DraftGenerationComponent', () => {
     });
     it('should cancel the draft build without dialog if the build state is not active', async () => {
       const job: BuildDto = { ...buildDto, state: BuildStates.Queued };
-      component['job'] = job;
-      component.draftJob$ = of(job);
+      component.draftJob = job;
       mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
       await component.cancel();
       expect(mockDialogService.openGenericDialog).not.toHaveBeenCalled();
