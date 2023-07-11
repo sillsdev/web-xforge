@@ -30,23 +30,19 @@ describe('NllbLanguageService', () => {
 
   describe('isNllbLanguage', () => {
     it('should return true for valid two-letter NLLB language code', () => {
-      const result = service.isNllbLanguage('en');
-      expect(result).toBe(true);
+      expect(service.isNllbLanguage('en')).toBe(true);
     });
 
     it('should return true for valid three-letter NLLB language code', () => {
-      const result = service.isNllbLanguage('eng');
-      expect(result).toBe(true);
+      expect(service.isNllbLanguage('eng')).toBe(true);
     });
 
     it('should return false for invalid two-letter NLLB language code', () => {
-      const result = service.isNllbLanguage('xy');
-      expect(result).toBe(false);
+      expect(service.isNllbLanguage('xy')).toBe(false);
     });
 
     it('should return false for invalid three-letter NLLB language code', () => {
-      const result = service.isNllbLanguage('xyz');
-      expect(result).toBe(false);
+      expect(service.isNllbLanguage('xyz')).toBe(false);
     });
 
     it('should return false for invalid length NLLB language code', () => {
@@ -58,6 +54,14 @@ describe('NllbLanguageService', () => {
       expect(service.isNllbLanguage('')).toBe(false);
       expect(service.isNllbLanguage(null)).toBe(false);
       expect(service.isNllbLanguage(undefined)).toBe(false);
+    });
+
+    it('should return true for valid two-letter NLLB language code with culture', () => {
+      expect(service.isNllbLanguage('en-Latn-GB')).toBe(true);
+    });
+
+    it('should return false for invalid two-letter NLLB language code with culture', () => {
+      expect(service.isNllbLanguage('xy-Latn-GB')).toBe(false);
     });
   });
 });
