@@ -1207,14 +1207,22 @@ public class ParatextSyncRunner : IParatextSyncRunner
             }
 
             // Permanently removes a note
-            foreach (string removedId in change.NoteIdsRemoved)
+            List<int> removedIndices = new List<int>();
+            for (int i = 0; i < change.NoteIdsRemoved.Count; i++)
             {
+                string removedId = change.NoteIdsRemoved[i];
                 int index = threadDoc.Data.Notes.FindIndex(n => n.DataId == removedId);
                 if (index >= 0)
                 {
-                    op.Remove(td => td.Notes, index);
-                    _syncMetrics.Notes.Removed++;
+                    removedIndices.Add(index);
                 }
+            }
+            // Go through the indices in reverse order so subsequent removal indices are not affected
+            removedIndices.Sort((a, b) => b - a);
+            foreach (int index in removedIndices)
+            {
+                op.Remove(td => td.Notes, index);
+                _syncMetrics.Notes.Removed++;
             }
 
             if (change.Position != null)
