@@ -78,8 +78,8 @@ export class MockPreTranslationHttpClient {
 
   // Mock generation
   private startGeneration(): void {
-    const interval = 2000;
-    const duration = 30000;
+    const interval = 500;
+    const duration = 5000;
     const pendingAfter = duration / 4;
     const activeAfter = (duration / 4) * 2;
     const generationTimer$ = timer(0, interval).pipe(takeWhile(x => interval * x <= duration, true));
