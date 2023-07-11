@@ -1,3 +1,5 @@
+@import 'src/variables';
+
 app-working-animated-indicator {
   display: block;
   margin: 10px 0;
@@ -10,12 +12,42 @@ h3 {
   gap: 10px;
 
   mat-icon {
-    color: #547ec8;
+    color: $info-color;
   }
 }
 
 em {
   font-weight: 500;
+}
+
+.requirements-header {
+  margin-bottom: 8px;
+}
+
+.requirements {
+  padding-inline-start: 10px;
+  margin-top: 0;
+
+  li {
+    list-style-type: none;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 4px;
+
+    p {
+      margin: 0;
+    }
+  }
+
+  mat-icon {
+    &.criteria-met {
+      color: green;
+    }
+    &.criteria-not-met {
+      color: #cc0000;
+    }
+  }
 }
 
 .view-or-create-options {
