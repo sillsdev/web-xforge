@@ -738,7 +738,7 @@ class TestEnvironment {
     const configData: NoteDialogData = {
       projectId: TestEnvironment.PROJECT01,
       textDocId,
-      threadId: noteThread?.dataId,
+      threadDataId: noteThread?.dataId,
       verseRef
     };
     TestEnvironment.testProjectProfile.isRightToLeft = isRightToLeftProject;

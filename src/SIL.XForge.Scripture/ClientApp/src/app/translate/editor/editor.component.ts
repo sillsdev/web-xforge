@@ -957,7 +957,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     const currentDate: string = new Date().toJSON();
-    const threadId: string = params.threadDataId ?? objectId();
+    const threadId: string = params.threadDataId != null ? '' : objectId();
     // only set the tag id if it is the first note in the thread
     const tagId: number | undefined =
       params.threadDataId == null ? this.projectDoc?.data?.translateConfig.defaultNoteTagId : undefined;
@@ -1005,6 +1005,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           op.set(t => t.notes[noteIndex].dateModified, currentDate);
         });
       } else {
+        note.threadId = threadDoc.data!.threadId;
         await threadDoc.submitJson0Op(op => op.add(t => t.notes, note));
         await this.updateNoteReadRefs(note.dataId);
       }
@@ -1060,7 +1061,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     const noteDialogData: NoteDialogData = {
       projectId: this.projectDoc!.id,
-      threadId: threadDataId,
+      threadDataId: threadDataId,
       textDocId: new TextDocId(this.projectDoc!.id, this.bookNum, this.chapter),
       verseRef
     };
