@@ -18,7 +18,7 @@ import { MdcTextFieldModule } from '@angular-mdc/web/textfield';
 import { MdcTopAppBarModule } from '@angular-mdc/web/top-app-bar';
 import { MdcTypographyModule } from '@angular-mdc/web/typography';
 import { BidiModule } from '@angular/cdk/bidi';
-import { NgModule } from '@angular/core';
+import { ModuleWithProviders, NgModule } from '@angular/core';
 import { BREAKPOINT, FlexLayoutModule } from '@angular/flex-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -48,6 +48,7 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoService } from '@ngneat/transloco';
+import { NgCircleProgressModule } from 'ng-circle-progress';
 import { AutofocusDirective } from './autofocus.directive';
 import { BlurOnClickDirective } from './blur-on-click.directive';
 import { DonutChartModule } from './donut-chart/donut-chart.module';
@@ -105,7 +106,8 @@ const modules = [
   MdcTopAppBarModule,
   MdcTypographyModule,
   MDCDataTableModule,
-  ReactiveFormsModule
+  ReactiveFormsModule,
+  NgCircleProgressModule
 ];
 
 const appFlexLayoutBreakPoints = [
@@ -176,4 +178,25 @@ const appFlexLayoutBreakPoints = [
     }
   ]
 })
-export class UICommonModule {}
+export class UICommonModule {
+  static forRoot(): ModuleWithProviders<UICommonModule> {
+    return {
+      ngModule: UICommonModule,
+      providers: [
+        ...(NgCircleProgressModule.forRoot({
+          // Defaults
+          radius: 100,
+          outerStrokeWidth: 8,
+          innerStrokeWidth: 4,
+          outerStrokeColor: '#298ed1',
+          innerStrokeColor: '#95c4e6',
+          animationDuration: 1000,
+          titleFontSize: '48',
+          unitsFontSize: '20',
+          showSubtitle: false,
+          responsive: true
+        }).providers ?? [])
+      ]
+    };
+  }
+}
