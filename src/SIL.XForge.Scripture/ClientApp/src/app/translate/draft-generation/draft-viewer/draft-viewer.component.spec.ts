@@ -90,7 +90,7 @@ describe('DraftViewerComponent', () => {
     });
     component.applyDraft();
     expect(component.targetEditor.editor!.enable).toHaveBeenCalledWith(true);
-    expect(component.targetEditor.editor!.setContents).toHaveBeenCalledWith(delta_verse_2_accepted, 'api');
+    expect(component.targetEditor.editor!.setContents).toHaveBeenCalledWith(delta_verse_2_accepted, 'user');
     expect(component.targetEditor.editor!.disable).toHaveBeenCalled();
     expect(component.isDraftApplied).toBeTrue();
   });
