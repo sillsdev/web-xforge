@@ -48,95 +48,89 @@
     </ul>
   </section>
 
-  <mat-divider inset></mat-divider>
+  <ng-container *ngIf="isReady">
+    <mat-divider inset></mat-divider>
 
-  <section *ngIf="!isBackTranslation">
-    <h3><mat-icon>info</mat-icon>Project type is not supported for draft generation</h3>
-    <p>In order to generate a draft translation, the project must be a back translation project.</p>
-  </section>
-
-  <section *ngIf="isBackTranslation && !isTargetLanguageNllb">
-    <h3><mat-icon>info</mat-icon>Target language is not supported for draft generation</h3>
-    <p>
-      Your project language
-      <ng-container *ngIf="targetLanguageDisplayName">
-        of <em>"{{ targetLanguageDisplayName }}"</em>
-      </ng-container>
-      is not in the
-      <a
-        href="https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion"
-        target="_blank"
-        rel="noopener noreferrer"
-        >No Language Left Behind</a
-      >
-      set.
-    </p>
-  </section>
-
-  <ng-container *ngIf="isGenerationSupported()">
-    <section *ngIf="!draftJob; else jobExists">
-      <h3>Generate draft</h3>
-      <p>
-        Click <em>"Generate draft"</em> to start the process of generating a back translation draft. This will take at
-        least a few hours.
-      </p>
-
-      <button mat-flat-button color="primary" (click)="generateDraft()">Generate draft</button>
+    <section *ngIf="!isBackTranslation">
+      <h3><mat-icon>info</mat-icon>Project type is not supported for draft generation</h3>
+      <p>In order to generate a draft translation, the project must be a back translation project.</p>
     </section>
 
-    <ng-template #jobExists>
-      <section *ngIf="isDraftComplete(draftJob) || !isDraftInProgress(draftJob)" class="view-or-create-options">
-        <ng-container *ngIf="isDraftComplete(draftJob)">
-          <div>
-            <h3>Preview draft</h3>
-            <p>
-              Go to <a [routerLink]="draftViewerUrl">draft viewer</a> to preview and apply the generated draft to
-              chapters of your choice.
-            </p>
-            <a mat-flat-button color="primary" [routerLink]="draftViewerUrl"> Preview draft </a>
-          </div>
-
-          <mat-divider inset vertical data-text="or"></mat-divider>
+    <section *ngIf="isBackTranslation && !isTargetLanguageNllb">
+      <h3><mat-icon>info</mat-icon>Target language is not supported for draft generation</h3>
+      <p>
+        Your project language
+        <ng-container *ngIf="targetLanguageDisplayName">
+          of <em>"{{ targetLanguageDisplayName }}"</em>
         </ng-container>
+        is not in the
+        <a
+          href="https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion"
+          target="_blank"
+          rel="noopener noreferrer"
+          >No Language Left Behind</a
+        >
+        set.
+      </p>
+    </section>
 
-        <!-- TODO: Add user guidance and constrain draft regeneration -->
-        <div *ngIf="!isDraftInProgress(draftJob)">
-          <h3>Generate new draft</h3>
-          <p>
-            Click <em>"Generate draft"</em> to start the process of generating a new back translation draft. This will
-            take at least a few hours.
-          </p>
+    <ng-container *ngIf="isGenerationSupported()">
+      <section *ngIf="!draftJob; else jobExists">
+        <h3>Generate draft</h3>
+        <p>
+          Click <em>"Generate draft"</em> to start the process of generating a back translation draft. This will take at
+          least a few hours.
+        </p>
 
-          <p>A suggested workflow is to regenerate a draft after every completion of a few books.</p>
-
-          <button mat-flat-button color="primary" (click)="generateDraft(true)">Generate draft</button>
-        </div>
+        <button mat-flat-button color="primary" (click)="generateDraft()">Generate draft</button>
       </section>
 
-      <section *ngIf="isDraftQueued(draftJob)">
-        <h3>Draft queued</h3>
-        <p>The back translation draft has been queued. Please check back later.</p>
-        <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
-          Cancel generation
-        </button>
-      </section>
+      <ng-template #jobExists>
+        <section *ngIf="isDraftComplete(draftJob) || !isDraftInProgress(draftJob)" class="view-or-create-options">
+          <ng-container *ngIf="isDraftComplete(draftJob)">
+            <div>
+              <h3>Preview draft</h3>
+              <p>
+                Go to <a [routerLink]="draftViewerUrl">draft viewer</a> to preview and apply the generated draft to
+                chapters of your choice.
+              </p>
+              <a mat-flat-button color="primary" [routerLink]="draftViewerUrl"> Preview draft </a>
+            </div>
 
-      <section *ngIf="isDraftActive(draftJob)">
-        <h3>Draft in progress</h3>
-        <p>Generating draft; this can take a few hours.</p>
-        <app-working-animated-indicator></app-working-animated-indicator>
-        <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
-          Cancel generation
-        </button>
-      </section>
+            <mat-divider inset vertical data-text="or"></mat-divider>
+          </ng-container>
 
-      <mat-card-footer>
-        <mat-progress-bar
-          *ngIf="isDraftInProgress(draftJob)"
-          [mode]="isDraftQueued(draftJob) ? 'indeterminate' : 'determinate'"
-          [value]="draftJob?.percentCompleted"
-        ></mat-progress-bar>
-      </mat-card-footer>
-    </ng-template>
+          <div *ngIf="!isDraftInProgress(draftJob)">
+            <h3>Generate new draft</h3>
+            <p>
+              Click <em>"Generate draft"</em> to start the process of generating a new back translation draft. This will
+              take at least a few hours.
+            </p>
+
+            <p>A suggested workflow is to regenerate a draft after every completion of a few books.</p>
+
+            <button mat-flat-button color="primary" (click)="generateDraft(true)">Generate draft</button>
+          </div>
+        </section>
+
+        <section *ngIf="isDraftQueued(draftJob)">
+          <h3>Draft queued</h3>
+          <p>The back translation draft has been queued. Please check back later.</p>
+          <app-working-animated-indicator></app-working-animated-indicator>
+          <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
+            Cancel generation
+          </button>
+        </section>
+
+        <section *ngIf="isDraftActive(draftJob)" class="progress-active">
+          <h3>Draft in progress</h3>
+          <p>Generating draft; this can take a few hours.</p>
+          <circle-progress [percent]="draftJob!.percentCompleted"></circle-progress>
+          <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
+            Cancel generation
+          </button>
+        </section>
+      </ng-template>
+    </ng-container>
   </ng-container>
 </mat-card>
