@@ -1,5 +1,8 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
+using System.Xml;
+using System.Xml.Serialization;
 
 namespace SIL.XForge.Services;
 
@@ -30,4 +33,22 @@ public class FileSystemService : IFileSystemService
         Directory.EnumerateFiles(path, searchPattern);
 
     public IEnumerable<string> EnumerateDirectories(string path) => Directory.EnumerateDirectories(path);
+
+    public void WriteXmlFile<T>(Stream stream, T data)
+    {
+        XmlSerializerNamespaces xsn = new XmlSerializerNamespaces();
+        xsn.Add(string.Empty, string.Empty);
+        XmlSerializer serializer = new XmlSerializer(typeof(T));
+        XmlWriterSettings settings = new XmlWriterSettings
+        {
+            // Ensure that the BOM is written
+            Encoding = new UTF8Encoding(true),
+            Indent = true,
+            NewLineChars = "\r\n",
+        };
+
+        using XmlWriter xmlWriter = XmlWriter.Create(stream, settings);
+        serializer.Serialize(xmlWriter, data, xsn);
+        xmlWriter.Flush();
+    }
 }
