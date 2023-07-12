@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
+import { VerseRef } from '@sillsdev/scripture';
 import { reduce } from 'lodash-es';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
 import { BuildStates } from 'src/app/machine-api/build-states';
