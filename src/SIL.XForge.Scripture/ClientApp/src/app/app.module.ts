@@ -66,7 +66,7 @@ import { SharedModule } from './shared/shared.module';
     TranslateModule,
     CheckingModule,
     UsersModule,
-    UICommonModule,
+    UICommonModule.forRoot(),
     XForgeCommonModule,
     TranslocoModule,
     AppRoutingModule,
