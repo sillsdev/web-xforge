@@ -8,9 +8,9 @@ import {
   ViewChildren
 } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { Canon } from '@sillsdev/scripture';
 import { DeltaOperation } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { EMPTY, zip } from 'rxjs';
 import { filter, map, switchMap } from 'rxjs/operators';
 import { Delta, TextDocId } from 'src/app/core/models/text-doc';
