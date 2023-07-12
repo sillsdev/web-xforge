@@ -1,5 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, of, Subscription } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { BuildDto } from 'src/app/machine-api/build-dto';
@@ -29,6 +30,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   isBackTranslation = true;
 
   jobSubscription?: Subscription;
+  isReady = false;
 
   constructor(
     private readonly matDialog: MatDialog,
@@ -46,8 +48,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     this.subscribe(
       combineLatest([this.activatedProject.projectId$, this.activatedProject.projectDoc$, this.i18n.locale$]),
       ([projectId, projectDoc, locale]) => {
-        // TODO: Uncomment to enforce back translation projects
-        // this.isBackTranslation = projectDoc?.data?.translateConfig.projectType === ProjectType.BackTranslation;
+        this.isBackTranslation = projectDoc?.data?.translateConfig.projectType === ProjectType.BackTranslation;
         this.targetLanguage = projectDoc?.data?.writingSystem.tag;
         this.targetLanguageDisplayName = this.getLanguageDisplayName(this.targetLanguage, locale);
         this.isTargetLanguageNllb = this.nllbService.isNllbLanguage(this.targetLanguage);
@@ -65,7 +66,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
               : of(job)
           )
         ),
-      job => (this.draftJob = job)
+      job => {
+        this.draftJob = job;
+        this.isReady = true;
+      }
     );
   }
 
