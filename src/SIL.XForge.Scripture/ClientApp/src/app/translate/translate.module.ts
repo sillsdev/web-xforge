@@ -32,9 +32,9 @@ import { DRAFT_GENERATION_SERVICE_OPTIONS } from './draft-generation/draft-gener
   ],
   imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, XForgeCommonModule, TranslocoModule],
   providers: [
-    // TODO: remove these once machine api pretranslation endpoints are present
+    // TODO: Remove these two lines. They are for testing back translation with mock service.
     { provide: HttpClient, useClass: MockPreTranslationHttpClient },
-    { provide: DRAFT_GENERATION_SERVICE_OPTIONS, useValue: { pollRate: 200 } }
+    { provide: DRAFT_GENERATION_SERVICE_OPTIONS, useValue: { pollRate: 1000 } }
   ]
 })
 export class TranslateModule {}
