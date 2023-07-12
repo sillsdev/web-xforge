@@ -12,11 +12,11 @@
     <None Remove="large_xml.xml" />
   </ItemGroup>
 
-  <ItemGroup>
+  <!--ItemGroup>
     <Content Include="large_xml.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-  </ItemGroup>
+  </ItemGroup-->
 
   <ItemGroup>
     <PackageReference Include="ParatextData" Version="9.3.0.9" />
