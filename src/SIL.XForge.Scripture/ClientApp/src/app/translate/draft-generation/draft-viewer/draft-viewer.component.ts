@@ -139,11 +139,7 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     const cleanedOps = this.cleanDraftOps(this.targetEditor.editor?.getContents().ops!);
 
     this.targetEditor.editor?.enable(true);
-
-    // TODO: Set action source to 'user' to actually apply draft
-    // this.targetEditor.editor?.setContents(new Delta(cleanedOps)!, 'user');
-    this.targetEditor.editor?.setContents(new Delta(cleanedOps)!, 'api');
-
+    this.targetEditor.editor?.setContents(new Delta(cleanedOps)!, 'user');
     this.targetEditor.editor?.disable();
     this.isDraftApplied = true;
   }
