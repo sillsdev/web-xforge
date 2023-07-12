@@ -85,7 +85,22 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     return languageNames.of(languageCode);
   }
 
-  generateDraft(): void {
+  async generateDraft(shouldConfirm = false): Promise<void> {
+    if (shouldConfirm) {
+      const isConfirmed = await this.dialogService.openGenericDialog({
+        title: of('Confirm draft regeneration'),
+        message: of('This will re-create any unapplied draft text! Are you sure you want to generate a new draft?'),
+        options: [
+          { value: false, label: of('No') },
+          { value: true, label: of('Yes, start generation'), highlight: true }
+        ]
+      });
+
+      if (!isConfirmed) {
+        return;
+      }
+    }
+
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.subscribe(
       this.draftGenerationService.startBuild(this.activatedProject.projectId!).pipe(
