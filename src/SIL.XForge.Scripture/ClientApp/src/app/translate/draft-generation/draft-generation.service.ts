@@ -130,9 +130,13 @@ export class DraftGenerationService {
     return reduce(
       preTranslations,
       (result: DraftSegmentMap, curr: PreTranslation) => {
-        let verseRef = VerseRef.parse(curr.reference);
-        const segmentRef = `verse_${verseRef.chapter}_${verseRef.verse}`;
-        result[segmentRef] = curr.translation.trimEnd() + ' '; // Ensure single space at end
+        let { success, verseRef } = VerseRef.tryParse(curr.reference);
+
+        if (success) {
+          const segmentRef = `verse_${verseRef.chapter}_${verseRef.verse}`;
+          result[segmentRef] = curr.translation.trimEnd() + ' '; // Ensure single space at end
+        }
+
         return result;
       },
       {}
