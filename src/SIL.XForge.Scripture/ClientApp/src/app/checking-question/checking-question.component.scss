@@ -1,3 +1,5 @@
+@import 'src/variables';
+
 .question-wrapper {
   display: flex;
   flex-direction: column;
@@ -10,4 +12,8 @@
   column-gap: 8px;
   align-items: center;
   font-size: 1.2rem;
+}
+
+mat-icon {
+  color: $purpleLight;
 }
