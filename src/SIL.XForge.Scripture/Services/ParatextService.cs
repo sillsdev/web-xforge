@@ -15,6 +15,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 using System.Xml.XPath;
 using IdentityModel;
@@ -2412,33 +2413,46 @@ public class ParatextService : DisposableBase, IParatextService
             return content;
         XDocument doc = XDocument.Parse(content);
         XElement contentNode = (XElement)doc.FirstNode;
-        XElement[] elements = contentNode.Elements().ToArray();
-        if (!elements.Any())
-            return contentNode.Value;
+        XNode[] nodes = contentNode.Nodes().ToArray();
+        if (!nodes.Any())
+            return string.Empty;
 
         int paragraphNodeCount = ((XElement)doc.FirstNode).Elements("p").Count();
         StringBuilder sb = new StringBuilder();
         bool isReviewer = false;
-        for (int i = 0; i < elements.Length; i++)
+        for (int i = 0; i < nodes.Length; i++)
         {
-            XElement elem = elements[i];
+            XNode node = nodes[i];
+            if (node.NodeType == XmlNodeType.Text)
+            {
+                // append text to the content string
+                sb.Append(node);
+                continue;
+            }
+            else if (node.NodeType != XmlNodeType.Element)
+            {
+                // we only know to handle strings and elements
+                continue;
+            }
+
+            XElement element = (XElement)node;
             // check if the paragraph element contains the user label class
-            if (elem.Attribute("sf-user-label")?.Value == "true")
+            if (element.Attribute("sf-user-label")?.Value == "true")
                 isReviewer = true;
             if (i == 0 && isReviewer)
                 continue;
             // If there is only one paragraph node other than the SF user label then omit the paragraph tags
             if (isReviewer && paragraphNodeCount <= 2)
-                sb.Append(elem.Value);
+                sb.Append(element.Value);
             else
-                sb.Append(elem);
+                sb.Append(node);
         }
         return sb.ToString();
     }
 
-    /// <summary> Replace the meaningless white space between xml tags </summary>
+    /// <summary> Replace the white space between paragraph xml tags </summary>
     private static string GetXmlContentNoWhitespace(string xmlContent) =>
-        Regex.Replace(xmlContent.Trim(), @">\W+<", "><");
+        Regex.Replace(xmlContent.Trim(), @"p>\W+<p", "p><p");
 
     private void PopulateCommentFromNote(
         Note note,
