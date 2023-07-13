@@ -4,7 +4,7 @@ import { VerseRef } from '@sillsdev/scripture';
 import { TextDocId } from 'src/app/core/models/text-doc';
 import { getVerseStrFromSegmentRef } from 'src/app/shared/utils';
 import { I18nService } from 'xforge-common/i18n.service';
-import { AudioPlayerComponent } from '../../../shared/audio/audio-player.component';
+import { AudioPlayerComponent } from '../../../shared/audio/audio-player.component/audio-player.component';
 
 @Component({
   selector: 'app-checking-scripture-audio-player',

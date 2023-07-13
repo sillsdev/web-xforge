@@ -12,16 +12,16 @@ export enum AudioStatus {
   Offline = 'audio_cannot_be_played'
 }
 
-// See explanatory comment where this number is used
-const ARBITRARILY_LARGE_NUMBER = 1e10;
-
 // TODO (scripture audio) FIXME This implements SubscriptionDisposable but isn't a component so Angular isn't going to
 // call dispose() on it. The dispose method is manually called by AudioPlayerComponent when the source changes, but not
 // when the AudioPlayerComponent is destroyed. @josephmyers
 export class AudioPlayer extends SubscriptionDisposable {
   private static lastPlayedAudio: HTMLAudioElement;
-  private audio: HTMLAudioElement = new Audio();
   private audioDataLoaded: boolean = false;
+
+  protected audio: HTMLAudioElement = new Audio();
+  // See explanatory comment where this number is used
+  protected static ARBITRARILY_LARGE_NUMBER = 1e10;
 
   status$: BehaviorSubject<AudioStatus> = new BehaviorSubject<AudioStatus>(AudioStatus.Init);
 
@@ -60,7 +60,7 @@ export class AudioPlayer extends SubscriptionDisposable {
     // assume is past the end. This number should be large, but numbers as small as 1e16 have been observed to cause
     // audio playback to skip to the end of the audio when the user presses play in Chromium. Normal audio files will
     // know the duration once metadata has loaded.
-    this.audio.currentTime = ARBITRARILY_LARGE_NUMBER;
+    this.audio.currentTime = AudioPlayer.ARBITRARILY_LARGE_NUMBER;
     this.audio.src = formatFileSource(FileType.Audio, source);
     this.status$.next(AudioStatus.Init);
   }
@@ -106,7 +106,7 @@ export class AudioPlayer extends SubscriptionDisposable {
   }
 
   setSeek(value: number): void {
-    this.audio.currentTime = value > 0 ? this.duration * (value / 100) : 0;
+    this.currentTime = value > 0 ? this.duration * (value / 100) : 0;
   }
 
   get duration(): number {
@@ -114,7 +114,7 @@ export class AudioPlayer extends SubscriptionDisposable {
   }
 
   get currentTime(): number {
-    return isNaN(this.audio.currentTime) || this.audio.currentTime === ARBITRARILY_LARGE_NUMBER
+    return isNaN(this.audio.currentTime) || this.audio.currentTime === AudioPlayer.ARBITRARILY_LARGE_NUMBER
       ? 0
       : this.audio.currentTime;
   }
