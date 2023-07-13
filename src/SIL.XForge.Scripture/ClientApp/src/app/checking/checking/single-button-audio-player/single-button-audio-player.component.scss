@@ -25,6 +25,11 @@ button:hover {
   cursor: pointer;
 }
 
+button:focus-visible {
+  outline: none;
+  background-color: darken(white, 15%);
+}
+
 mat-icon {
   color: $buttonColor;
 }
