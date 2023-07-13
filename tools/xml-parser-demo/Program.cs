@@ -49,9 +49,8 @@ public class Program
             .EnumerateDirectories(program.projectRootDir)
             .Select((string dirPath) => Path.GetFileName(dirPath));
 
-        //       Show how did SF meaningfully change the content.
-
         await program.ProcessProjectsAsync(projectDirs);
+        // Testing shows that if we remove community checking answer notes, they will come back when SF syncs.
         foreach (ProblemLocation location in program.problemLocations)
         {
             Console.WriteLine(
