@@ -12,9 +12,6 @@ export enum AudioStatus {
   Offline = 'audio_cannot_be_played'
 }
 
-// TODO (scripture audio) FIXME This implements SubscriptionDisposable but isn't a component so Angular isn't going to
-// call dispose() on it. The dispose method is manually called by AudioPlayerComponent when the source changes, but not
-// when the AudioPlayerComponent is destroyed. @josephmyers
 export class AudioPlayer extends SubscriptionDisposable {
   private static lastPlayedAudio: HTMLAudioElement;
   private audioDataLoaded: boolean = false;
@@ -33,7 +30,7 @@ export class AudioPlayer extends SubscriptionDisposable {
       this.status$.next(AudioStatus.Available);
     });
 
-    // TODO (scripture audio) Add comment explaining this workaround. @josephmyers
+    // Listening to update events causes the UI to rerender as the audio plays
     this.audio.addEventListener('timeupdate', () => {});
 
     this.audio.addEventListener('error', () => {

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnDestroy } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -7,7 +7,7 @@ import { AudioPlayer, AudioStatus } from '../audio-player';
 @Component({
   template: ``
 })
-export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable {
+export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable implements OnDestroy {
   readonly isAudioAvailable$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   protected _audio: AudioPlayer | undefined;
 
@@ -40,5 +40,10 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable {
     } else {
       this._audio = undefined;
     }
+  }
+
+  override ngOnDestroy(): void {
+    super.ngOnDestroy();
+    this.audio?.dispose();
   }
 }
