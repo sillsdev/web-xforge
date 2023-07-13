@@ -1,3 +1,4 @@
+import { EventEmitter } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -20,7 +21,8 @@ export class AudioPlayer extends SubscriptionDisposable {
   // See explanatory comment where this number is used
   protected static ARBITRARILY_LARGE_NUMBER = 1e10;
 
-  status$: BehaviorSubject<AudioStatus> = new BehaviorSubject<AudioStatus>(AudioStatus.Init);
+  readonly status$: BehaviorSubject<AudioStatus> = new BehaviorSubject<AudioStatus>(AudioStatus.Init);
+  readonly finishedPlaying$: EventEmitter<void> = new EventEmitter<void>();
 
   constructor(source: string, private readonly pwaService: PwaService) {
     super();
@@ -31,7 +33,12 @@ export class AudioPlayer extends SubscriptionDisposable {
     });
 
     // Listening to update events causes the UI to rerender as the audio plays
-    this.audio.addEventListener('timeupdate', () => {});
+    this.audio.addEventListener('timeupdate', () => {
+      if (this.currentTime >= this.duration && this.isPlaying) {
+        this.pause();
+        this.finishedPlaying$.emit();
+      }
+    });
 
     this.audio.addEventListener('error', () => {
       if (isLocalBlobUrl(this.audio.src)) {
@@ -51,6 +58,12 @@ export class AudioPlayer extends SubscriptionDisposable {
         }
       }
     });
+
+    this.audio.onended = () => {
+      if (this.currentTime > 0 && this.currentTime >= this.duration) {
+        this.finishedPlaying$.emit();
+      }
+    };
 
     // In Chromium the duration of blobs isn't known even after metadata is loaded
     // By making it skip to the end the duration becomes available. To do this we have to skip to some point that we
