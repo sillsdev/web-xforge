@@ -9,7 +9,6 @@ import { AudioPlayerBaseComponent } from '../audio-player-base.component/audio-p
   templateUrl: './audio-player.component.html',
   styleUrls: ['./audio-player.component.scss']
 })
-//todo rename to slider
 export class AudioPlayerComponent extends AudioPlayerBaseComponent {
   constructor(pwaService: PwaService, readonly i18n: I18nService) {
     super(pwaService);
