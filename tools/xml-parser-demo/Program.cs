@@ -8,8 +8,8 @@ using System.Text.RegularExpressions;
 public class Program
 {
     string machineName = "";
-    string projectDir = "";
     string projectRootDir = "";
+
     public static void Timing()
     {
         // Warm up on a small file
@@ -36,8 +36,9 @@ public class Program
     public static async Task Main()
     {
         var program = new Program();
-        List<string> projectDirs = new();
-        projectDirs.Add(program.projectDir);
+        IEnumerable<string> projectDirs = Directory
+            .EnumerateDirectories(program.projectRootDir)
+            .Select((string dirPath) => Path.GetFileName(dirPath));
 
         // For each project:
         //   List all commits on notes xml files since 2023-06-21
@@ -50,7 +51,7 @@ public class Program
         await program.ProcessProjectsAsync(projectDirs);
     }
 
-    private async Task ProcessProjectsAsync(List<string> projectDirs)
+    private async Task ProcessProjectsAsync(IEnumerable<string> projectDirs)
     {
         foreach (string projectDir in projectDirs)
             await ProcessProjectAsync(projectDir);
@@ -72,11 +73,17 @@ public class Program
             data.RepoDir = repoDir;
         }
         // Console.WriteLine(commitData[0]);
-        IEnumerable<CommitData> relevantCommits = commitData.Where(c => c.MachineName == machineName).Where(c => c.Files.Any(f => Regex.Match(f, "notes.*.xml", RegexOptions.IgnoreCase).Length > 0));
+        IEnumerable<CommitData> relevantCommits = commitData
+            .Where(c => c.MachineName == machineName)
+            .Where(c => c.Files.Any(f => Regex.Match(f, "notes.*.xml", RegexOptions.IgnoreCase).Length > 0));
 
         foreach (CommitData commit in relevantCommits)
         {
-            foreach (string notesFile in commit.Files.Where(f => Regex.Match(f, "notes.*.xml", RegexOptions.IgnoreCase).Length > 0))
+            foreach (
+                string notesFile in commit.Files.Where(
+                    f => Regex.Match(f, "notes.*.xml", RegexOptions.IgnoreCase).Length > 0
+                )
+            )
             {
                 await ProcessNotesFileAsync(commit, notesFile);
             }
@@ -181,7 +188,10 @@ public class Program
                             currentCommit.MachineName = machineName.Value;
                             break;
                         case "Files":
-                            currentCommit.Files = value.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).Select(f => f.Trim()).ToList();
+                            currentCommit.Files = value
+                                .Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                                .Select(f => f.Trim())
+                                .ToList();
                             break;
                         case "":
                             // Blank line indicates the end of a commit, add it to the list
