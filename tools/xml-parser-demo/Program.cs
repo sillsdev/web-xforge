@@ -33,6 +33,15 @@ public class Program
         Console.WriteLine($"Comments: {largeCommentList?.Count}");
     }
 
+    class ProblemLocation
+    {
+        public string projectRepo = string.Empty;
+        public string commitId = string.Empty;
+        public string fileName = string.Empty;
+    }
+
+    private List<ProblemLocation> problemLocations = new();
+
     public static async Task Main()
     {
         var program = new Program();
@@ -40,15 +49,15 @@ public class Program
             .EnumerateDirectories(program.projectRootDir)
             .Select((string dirPath) => Path.GetFileName(dirPath));
 
-        // For each project:
-        //   List all commits on notes xml files since 2023-06-21
-        //   Ignore commits not made by specific machine name.
-        //   For each remaining commit:
-        //     For each notes file changed in the commit:
-        //       Fetch a copy of the before and after of the notes file (before and after the commit)
         //       Show how did SF meaningfully change the content.
 
         await program.ProcessProjectsAsync(projectDirs);
+        foreach (ProblemLocation location in program.problemLocations)
+        {
+            Console.WriteLine(
+                $"cd {location.projectRepo} && hg backout --rev {location.commitId} --include '{location.fileName} --message 'Backing out {location.commitId} {location.fileName}'' &&"
+            );
+        }
     }
 
     private async Task ProcessProjectsAsync(IEnumerable<string> projectDirs)
@@ -62,7 +71,6 @@ public class Program
         string repoDir = $"{projectRootDir}/{projectDir}/target";
         string commitListBlob = await RunCommandAsync(
             "hg",
-            // "log --no-merges --date >2023-06-21 --template CommitId:{node}\tDate:{date|date}",
             "log --no-merges --date >2023-06-21 --template CommitId:{node}---Date:{date|date}---Desc:{desc}---Files:{files%'{file}\n'}-----",
             repoDir
         );
@@ -72,7 +80,6 @@ public class Program
         {
             data.RepoDir = repoDir;
         }
-        // Console.WriteLine(commitData[0]);
         IEnumerable<CommitData> relevantCommits = commitData
             .Where(c => c.MachineName == machineName)
             .Where(c => c.Files.Any(f => Regex.Match(f, "notes.*.xml", RegexOptions.IgnoreCase).Length > 0));
@@ -88,13 +95,9 @@ public class Program
                 await ProcessNotesFileAsync(commit, notesFile);
             }
         }
-        // For each notes file
-
-
-        // Get a snapshot of before and after
     }
 
-    private static async Task ProcessNotesFileAsync(CommitData data, string filename)
+    private async Task ProcessNotesFileAsync(CommitData data, string filename)
     {
         string fileBefore = await FetchFileAsync(data.CommitId + '^', filename, data.RepoDir);
         string fileAfter = await FetchFileAsync(data.CommitId, filename, data.RepoDir);
@@ -109,8 +112,15 @@ public class Program
             bool isEqual = beforeDocStr.Equals(afterDocStr);
             if (!isEqual)
             {
-                // Console.WriteLine("*********** problem detected *****************");
                 Console.WriteLine($"{data.RepoDir} {data.CommitId} {filename}");
+                problemLocations.Add(
+                    new ProblemLocation()
+                    {
+                        projectRepo = data.RepoDir,
+                        commitId = data.CommitId,
+                        fileName = filename
+                    }
+                );
             }
         }
     }
