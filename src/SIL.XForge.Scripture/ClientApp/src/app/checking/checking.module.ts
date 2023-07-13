@@ -5,7 +5,7 @@ import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
-import { AudioPlayerComponent } from '../shared/audio/audio-player.component';
+import { AudioPlayerComponent } from '../shared/audio/audio-player.component/audio-player.component';
 import { SharedModule } from '../shared/shared.module';
 import { TextChooserDialogComponent } from '../text-chooser-dialog/text-chooser-dialog.component';
 import { CheckingOverviewComponent } from './checking-overview/checking-overview.component';
