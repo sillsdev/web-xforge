@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 import { AudioPlayer, AudioStatus } from 'src/app/shared/audio/audio-player';
 import { AudioPlayerBaseComponent } from 'src/app/shared/audio/audio-player-base.component/audio-player-base.component';
 import { AudioSegmentPlayer } from 'src/app/shared/audio/audio-segment-player';
@@ -11,6 +12,8 @@ import { PwaService } from 'xforge-common/pwa.service';
 })
 export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent implements OnChanges {
   private _source?: string;
+
+  readonly hasFinishedPlayingOnce$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 
   @Input() start?: number;
   @Input() end?: number;
@@ -45,10 +48,14 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
     }
 
     this.isAudioAvailable$.next(false);
+    this.hasFinishedPlayingOnce$.next(false);
     this.audio?.dispose();
     if (this._source != null && this._source !== '') {
       if (this.start != null && this.end != null) {
         this._audio = new AudioSegmentPlayer(this._source, this.start, this.end, this.pwaService);
+        this.subscribe(this._audio.finishedPlaying$, () => {
+          this.hasFinishedPlayingOnce$.next(true);
+        });
       } else {
         this._audio = new AudioPlayer(this._source, this.pwaService);
       }

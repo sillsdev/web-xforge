@@ -3,7 +3,13 @@
 .question-wrapper {
   display: flex;
   flex-direction: column;
-  row-gap: 8px;
+}
+
+:host {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 8px;
 }
 
 .scripture-audio,
@@ -11,7 +17,15 @@
   display: flex;
   column-gap: 8px;
   align-items: center;
-  font-size: 1.2rem;
+  font-size: small;
+  color: $greyLight;
+}
+
+.scripture-audio > .scripture-audio-label,
+.question-text > .question-audio-label {
+  font-weight: bold;
+  font-size: large;
+  color: black;
 }
 
 mat-icon {

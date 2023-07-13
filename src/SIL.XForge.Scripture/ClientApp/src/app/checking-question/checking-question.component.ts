@@ -7,6 +7,7 @@ import {
   VerseRefData
 } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { I18nService } from 'xforge-common/i18n.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SingleButtonAudioPlayerComponent } from '../checking/checking/single-button-audio-player/single-button-audio-player.component';
 import { QuestionDoc } from '../core/models/question-doc';
 import { SFProjectService } from '../core/sf-project.service';
@@ -16,14 +17,17 @@ import { SFProjectService } from '../core/sf-project.service';
   templateUrl: './checking-question.component.html',
   styleUrls: ['./checking-question.component.scss']
 })
-export class CheckingQuestionComponent implements AfterViewInit {
+export class CheckingQuestionComponent extends SubscriptionDisposable implements AfterViewInit {
   private _scriptureAudio?: TextAudio;
+  private _focusedText = 'scripture-audio-label';
 
   @Input() questionDoc?: QuestionDoc;
   @ViewChild('questionAudio') questionAudio?: SingleButtonAudioPlayerComponent;
   @ViewChild('scriptureAudio') scriptureAudio?: SingleButtonAudioPlayerComponent;
 
-  constructor(private readonly projectService: SFProjectService, private readonly i18n: I18nService) {}
+  constructor(private readonly projectService: SFProjectService, private readonly i18n: I18nService) {
+    super();
+  }
 
   ngAfterViewInit(): void {
     const projectId = this.questionDoc!.data!.projectRef;
@@ -36,6 +40,16 @@ export class CheckingQuestionComponent implements AfterViewInit {
     this.projectService.queryAudioText(projectId).then(audioQuery => {
       this._scriptureAudio = audioQuery.docs.find(t => t.id === audioId)?.data;
     });
+
+    this.subscribe(this.scriptureAudio!.hasFinishedPlayingOnce$, newVal => {
+      if (newVal) {
+        this._focusedText = 'question-audio-label';
+      }
+    });
+  }
+
+  get focusedText(): string {
+    return this._focusedText;
   }
 
   get referenceForDisplay(): string {
@@ -56,7 +70,7 @@ export class CheckingQuestionComponent implements AfterViewInit {
   }
 
   get questionText(): string {
-    return this.questionDoc?.data?.text ?? '';
+    return this.questionDoc?.data?.text ?? 'Listen to the question for ' + this.referenceForDisplay;
   }
 
   get questionAudioUrl(): string | undefined {

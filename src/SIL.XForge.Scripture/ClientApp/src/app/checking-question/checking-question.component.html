@@ -1,22 +1,29 @@
 <ng-container transloco>
+  <app-single-button-audio-player
+    #scriptureAudio
+    *ngIf="focusedText === 'scripture-audio-label'"
+    [source]="scriptureAudioUrl"
+    [start]="scriptureAudioStart"
+    [end]="scriptureAudioEnd"
+    (click)="playScripture()"
+  >
+    <mat-icon>{{ scriptureAudio.playing ? "stop" : "play_arrow" }}</mat-icon>
+  </app-single-button-audio-player>
+  <app-single-button-audio-player
+    #questionAudio
+    *ngIf="focusedText === 'question-audio-label'"
+    [source]="questionAudioUrl"
+    (click)="playQuestion()"
+  >
+    <mat-icon>{{ questionAudio.playing ? "stop" : "play_arrow" }}</mat-icon>
+  </app-single-button-audio-player>
+  <!-- todo add audio icon and selectability -->
   <div class="question-wrapper">
     <div class="scripture-audio">
-      <app-single-button-audio-player
-        #scriptureAudio
-        [source]="scriptureAudioUrl"
-        [start]="scriptureAudioStart"
-        [end]="scriptureAudioEnd"
-        (click)="playScripture()"
-      >
-        <mat-icon>{{ scriptureAudio.playing ? "stop" : "play_arrow" }}</mat-icon>
-      </app-single-button-audio-player>
-      Listen to {{ referenceForDisplay }} to answer the question that follows.
+      <span [class]="focusedText">Listen to {{ referenceForDisplay }} to answer the question that follows.</span>
     </div>
     <div class="question-text">
-      <app-single-button-audio-player #questionAudio [source]="questionAudioUrl" (click)="playQuestion()">
-        <mat-icon>{{ questionAudio.playing ? "stop" : "play_arrow" }}</mat-icon>
-      </app-single-button-audio-player>
-      {{ questionText }}
+      <span [class]="focusedText">{{ questionText }}</span>
     </div>
   </div>
 </ng-container>
