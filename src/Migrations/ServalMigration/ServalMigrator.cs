@@ -153,9 +153,19 @@ public class ServalMigrator : DisposableBase
                 if (doWrite)
                 {
                     Program.Log("Adding project to Serval...");
-                    await _machineProjectService.AddProjectAsync(sfUserId, project.Id, cancellationToken);
+                    await _machineProjectService.AddProjectAsync(
+                        sfUserId,
+                        project.Id,
+                        preTranslate: false,
+                        cancellationToken
+                    );
                     Program.Log("Initiating first build...");
-                    await _machineProjectService.BuildProjectAsync(sfUserId, project.Id, cancellationToken);
+                    await _machineProjectService.BuildProjectAsync(
+                        sfUserId,
+                        project.Id,
+                        preTranslate: false,
+                        cancellationToken
+                    );
                 }
                 else
                 {

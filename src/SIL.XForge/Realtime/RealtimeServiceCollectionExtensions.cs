@@ -16,18 +16,27 @@ public static class RealtimeServiceCollectionExtensions
         ILoggerFactory loggerFactory,
         IConfiguration configuration,
         Action<RealtimeOptions> configureOptions,
-        string? nodeOptions = null
+        string? nodeOptions = null,
+        bool useExistingRealtimeServer = false
     )
     {
         services.AddNodeJS();
         services.Configure<NodeJSProcessOptions>(options =>
         {
+            // Specify the port so NodeJS can be shared with other processes
+            options.Port = 5002;
             options.ProjectPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty;
             if (!string.IsNullOrWhiteSpace(nodeOptions))
             {
                 options.NodeAndV8Options = nodeOptions;
             }
         });
+
+        // If we are using another NodeJS process, be sure to use our factory implementation
+        if (useExistingRealtimeServer)
+        {
+            services.AddSingleton<INodeJSProcessFactory, ExistingNodeJSProcessFactory>();
+        }
 
         // Disable timeout so the debugger can be paused
         if (nodeOptions?.Contains("--inspect", StringComparison.OrdinalIgnoreCase) == true)

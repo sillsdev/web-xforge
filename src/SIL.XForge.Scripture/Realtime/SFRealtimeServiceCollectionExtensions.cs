@@ -16,7 +16,8 @@ public static class SFRealtimeServiceCollectionExtensions
         ILoggerFactory loggerFactory,
         IConfiguration configuration,
         string? nodeOptions = null,
-        bool migrationsDisabled = false
+        bool migrationsDisabled = false,
+        bool useExistingRealtimeServer = false
     )
     {
         services.AddRealtimeServer(
@@ -26,6 +27,7 @@ public static class SFRealtimeServiceCollectionExtensions
             {
                 o.AppModuleName = "scriptureforge";
                 o.MigrationsDisabled = migrationsDisabled;
+                o.UseExistingRealtimeServer = useExistingRealtimeServer;
                 o.ProjectDoc = new DocConfig("sf_projects", typeof(SFProject));
                 o.ProjectDataDocs.AddRange(
                     new[]
@@ -41,7 +43,8 @@ public static class SFRealtimeServiceCollectionExtensions
                     new[] { new DocConfig("sf_project_user_configs", typeof(SFProjectUserConfig)) }
                 );
             },
-            nodeOptions
+            nodeOptions,
+            useExistingRealtimeServer
         );
         return services;
     }

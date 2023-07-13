@@ -62,11 +62,20 @@ public class RealtimeService : DisposableBase, IRealtimeService
 
     public void StartServer()
     {
-        object options = CreateOptions();
-        Server.Start(options);
+        if (!_realtimeOptions.Value.UseExistingRealtimeServer)
+        {
+            object options = CreateOptions();
+            Server.Start(options);
+        }
     }
 
-    public void StopServer() => Server.Stop();
+    public void StopServer()
+    {
+        if (!_realtimeOptions.Value.UseExistingRealtimeServer)
+        {
+            Server.Stop();
+        }
+    }
 
     public async Task<IConnection> ConnectAsync(string userId = null)
     {
