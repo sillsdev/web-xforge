@@ -1,6 +1,5 @@
 @import 'src/variables';
 
-$buttonColor: $purpleLight;
 $progressColor: $purpleLight;
 $progressBackgroundColor: rgba(205, 219, 204, 0.33);
 
@@ -27,9 +26,4 @@ button:hover {
 
 button:focus-visible {
   outline: none;
-  background-color: darken(white, 15%);
-}
-
-mat-icon {
-  color: $buttonColor;
 }
