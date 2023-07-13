@@ -6,8 +6,8 @@ import { ConnectSession } from './connect-session';
 import { MetadataDB } from './metadata-db';
 import { Migration } from './migration';
 import { Project } from './models/project';
-import { SystemRole } from './models/system-role';
 import { User, USERS_COLLECTION } from './models/user';
+import { createTestUser } from './models/user-test-data';
 import { RealtimeServer, submitMigrationOp } from './realtime-server';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { ProjectService } from './services/project-service';
@@ -172,16 +172,7 @@ class TestEnvironment {
 
   async createData(): Promise<void> {
     const conn = this.server.connect();
-    await createDoc<User>(conn, USERS_COLLECTION, 'user01', {
-      name: 'User 01',
-      email: 'user01@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth01',
-      displayName: 'User 01',
-      avatarUrl: '',
-      sites: {}
-    });
+    await createDoc<User>(conn, USERS_COLLECTION, 'user01', createTestUser({}));
 
     await createDoc<Project>(conn, PROJECTS_COLLECTION, 'project01', {
       name: 'Project 01',

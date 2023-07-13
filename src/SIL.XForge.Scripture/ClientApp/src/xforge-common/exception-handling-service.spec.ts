@@ -1,3 +1,4 @@
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
@@ -232,12 +233,7 @@ class TestEnvironment {
   timeoutUser = false;
 
   userDoc: UserDoc | undefined = {
-    data: {
-      authId: 'a',
-      name: 'b',
-      displayName: 'c',
-      email: 'd'
-    } as Readonly<User>,
+    data: createTestUser() as Readonly<User>,
     id: 'some id'
   } as UserDoc;
 

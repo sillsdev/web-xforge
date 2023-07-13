@@ -7,8 +7,8 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { escapeRegExp } from 'lodash-es';
 import merge from 'lodash-es/merge';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { combineLatest, from, Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
@@ -85,18 +85,18 @@ describe('SaUsersComponent', () => {
     expect(env.component.totalRecordCount).toEqual(env.numUsersOnProject);
     expect(env.userRows.length).toEqual(env.numUsersOnProject);
 
-    expect(env.cellDisplayName(0, 1).innerText).toEqual('User01');
-    expect(env.cellName(0, 1).innerText).toEqual('User 01');
+    expect(env.cellDisplayName(0, 1).innerText).toEqual('Test user 1');
+    expect(env.cellName(0, 1).innerText).toEqual('Name of test user 1');
     expect(env.cellProjectLink(0, 2).text).toEqual('Project 01');
     expect(env.removeUserButtonOnRow(0)).not.toBeNull();
 
-    expect(env.cellDisplayName(1, 1).innerText).toEqual('User 02');
-    expect(env.cellName(1, 1)).toBeNull();
+    expect(env.cellDisplayName(1, 1).innerText).toEqual('Test user 2');
+    expect(env.cellName(1, 1).innerText).toEqual('Name of test user 2');
     expect(env.cellProjectLink(1, 2)).toBeNull();
     expect(env.removeUserButtonOnRow(1)).not.toBeNull();
 
-    expect(env.cellDisplayName(2, 1).innerText).toEqual('User 03');
-    expect(env.cellName(2, 1)).toBeNull();
+    expect(env.cellDisplayName(2, 1).innerText).toEqual('Test user 3');
+    expect(env.cellName(2, 1).innerText).toEqual('Name of test user 3');
     expect(env.cellProjectLink(2, 2).text).toEqual('Project 01');
     expect(env.removeUserButtonOnRow(2)).not.toBeNull();
   }));
@@ -126,7 +126,7 @@ describe('SaUsersComponent', () => {
 
     // All users shown
     expect(env.userRows.length).toEqual(3);
-    env.setInputValue(env.filterInput, '02');
+    env.setInputValue(env.filterInput, '2');
     // Subset shown
     expect(env.userRows.length).toEqual(1);
   }));
@@ -261,42 +261,30 @@ class TestEnvironment {
     this.realtimeService.addSnapshots<User>(UserDoc.COLLECTION, [
       {
         id: 'user01',
-        data: {
-          name: 'User 01',
-          displayName: 'User01',
-          isDisplayNameConfirmed: true,
-          email: 'user01@example.com',
-          avatarUrl: '',
-          authId: 'auth01',
-          role: SystemRole.User,
-          sites: { [environment.siteId]: { projects: ['project01'] } }
-        }
+        data: createTestUser(
+          {
+            sites: { [environment.siteId]: { projects: ['project01'] } }
+          },
+          1
+        )
       },
       {
         id: 'user02',
-        data: {
-          name: 'User 02',
-          displayName: 'User 02',
-          isDisplayNameConfirmed: true,
-          email: 'user02@example.com',
-          avatarUrl: '',
-          authId: 'auth02',
-          role: SystemRole.User,
-          sites: { [environment.siteId]: { projects: [] } }
-        }
+        data: createTestUser(
+          {
+            sites: { [environment.siteId]: { projects: [] } }
+          },
+          2
+        )
       },
       {
         id: 'user03',
-        data: {
-          name: 'user03@example.com',
-          displayName: 'User 03',
-          isDisplayNameConfirmed: true,
-          email: 'user03@example.com',
-          avatarUrl: '',
-          authId: 'auth03',
-          role: SystemRole.User,
-          sites: { [environment.siteId]: { projects: ['project01'] } }
-        }
+        data: createTestUser(
+          {
+            sites: { [environment.siteId]: { projects: ['project01'] } }
+          },
+          3
+        )
       }
     ]);
     this.realtimeService.addSnapshots<Project>(TestProjectDoc.COLLECTION, [

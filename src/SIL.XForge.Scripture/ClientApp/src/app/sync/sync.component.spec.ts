@@ -5,7 +5,6 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anyString, anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -17,6 +16,7 @@ import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ParatextService } from '../core/paratext.service';
@@ -256,37 +256,15 @@ class TestEnvironment {
     date.setMonth(date.getMonth() - 2);
     this.realtimeService.addSnapshot<SFProject>(SFProjectDoc.COLLECTION, {
       id: this.projectId,
-      data: {
+      data: createTestProject({
         name: 'Sync Test Project',
-        paratextId: 'pt01',
-        shortName: 'P01',
-        writingSystem: {
-          tag: 'en'
-        },
-        translateConfig: {
-          translationSuggestionsEnabled: false,
-          shareEnabled: false,
-          preTranslate: false
-        },
-        checkingConfig: {
-          checkingEnabled: false,
-          usersSeeEachOthersResponses: true,
-          shareEnabled: true,
-          answerExportMethod: CheckingAnswerExport.MarkedForExport
-        },
         sync: {
           queuedCount: isInProgress ? 1 : 0,
           lastSyncSuccessful: lastSyncWasSuccessful,
           dateLastSuccessfulSync: date.toJSON()
         },
-        syncDisabled: isSyncDisabled,
-        editable: true,
-        texts: [],
-        noteTags: [],
-        userRoles: {},
-        paratextUsers: [],
-        userPermissions: {}
-      }
+        syncDisabled: isSyncDisabled
+      })
     });
 
     when(mockedProjectService.get(anyString())).thenCall(projectId =>

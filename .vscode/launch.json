@@ -137,9 +137,9 @@
       }
     },
     {
+      "name": "Run and debug current ts-node script",
       "type": "node",
       "request": "launch",
-      "name": "Run and debug current ts-node script",
       "cwd": "${fileDirname}",
       "runtimeArgs": ["-r", "ts-node/register", "--inspect"],
       "args": ["${file}"]

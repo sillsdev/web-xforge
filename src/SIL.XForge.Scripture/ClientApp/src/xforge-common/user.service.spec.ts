@@ -1,10 +1,10 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { of } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { EditNameDialogComponent } from 'xforge-common/edit-name-dialog/edit-name-dialog.component';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { CURRENT_PROJECT_ID_SETTING, UserService } from './user.service';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
@@ -97,16 +97,9 @@ class TestEnvironment {
     this.realtimeService = TestBed.inject(TestRealtimeService);
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: 'user01',
-      data: {
-        name: 'User 01',
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        displayName: 'User 01',
-        email: 'user01@test.com',
-        authId: 'authuser01',
-        avatarUrl: 'avatar01',
+      data: createTestUser({
         sites: { sf: { currentProjectId: testArgs.storedProjectId, projects: ['project01', 'project02'] } }
-      }
+      })
     });
 
     this.service = TestBed.inject(UserService);

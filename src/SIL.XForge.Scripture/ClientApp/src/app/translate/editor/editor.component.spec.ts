@@ -21,7 +21,6 @@ import {
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
@@ -60,10 +59,16 @@ import { UserService } from 'xforge-common/user.service';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { MediaObserver } from '@angular/flex-layout';
 import { getNoteThreadDocId } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import {
+  createTestProject,
+  createTestProjectProfile
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
+import { merge } from 'lodash-es';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -1047,7 +1052,6 @@ describe('EditorComponent', () => {
         translateConfig: {
           translationSuggestionsEnabled: true,
           shareEnabled: false,
-          preTranslate: false,
           source: {
             paratextId: 'resource01',
             name: 'Resource 1',
@@ -3144,7 +3148,6 @@ describe('EditorComponent', () => {
         translateConfig: {
           translationSuggestionsEnabled: false,
           shareEnabled: false,
-          preTranslate: false,
           source: {
             paratextId: 'resource01',
             name: 'Resource 1',
@@ -3235,7 +3238,7 @@ describe('EditorComponent', () => {
 
     it('hides translation suggestions settings when suggestions are disabled for the project', fakeAsync(() => {
       const projectConfig = {
-        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false, preTranslate: false }
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false }
       };
       const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
 
@@ -3252,8 +3255,7 @@ describe('EditorComponent', () => {
 
 const defaultTranslateConfig = {
   translationSuggestionsEnabled: false,
-  shareEnabled: false,
-  preTranslate: false
+  shareEnabled: false
 };
 
 class TestEnvironment {
@@ -3297,19 +3299,13 @@ class TestEnvironment {
     { tagId: 3, name: 'SF Note Tag', icon: SF_TAG_ICON, creatorResolve: false }
   ];
 
-  private testProjectProfile: SFProjectProfile = {
-    name: 'project 01',
-    paratextId: 'target01',
+  private testProjectProfile: SFProjectProfile = createTestProjectProfile({
     shortName: 'TRG',
     isRightToLeft: false,
     userRoles: this.userRolesOnProject,
-    userPermissions: {},
-    writingSystem: { tag: 'qaa' },
     translateConfig: {
       translationSuggestionsEnabled: true,
       defaultNoteTagId: 2,
-      shareEnabled: false,
-      preTranslate: false,
       source: {
         paratextId: 'source01',
         projectRef: 'project02',
@@ -3322,12 +3318,8 @@ class TestEnvironment {
     },
     checkingConfig: {
       checkingEnabled: false,
-      usersSeeEachOthersResponses: true,
-      shareEnabled: true,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
+      shareEnabled: true
     },
-    sync: { queuedCount: 0, dataInSync: true },
-    editable: true,
     texts: [
       {
         bookNum: 40,
@@ -3431,7 +3423,7 @@ class TestEnvironment {
       }
     ],
     noteTags: this.noteTags
-  };
+  });
 
   constructor() {
     this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: 'MAT' });
@@ -3685,39 +3677,38 @@ class TestEnvironment {
 
   setupUsers(): void {
     for (const user of Object.keys(this.userRolesOnProject)) {
-      const name = 'U' + user.substring(1);
+      const i: number = parseInt(user.substring(user.length - 2));
       this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
         id: user,
-        data: {
-          name,
-          email: user + '@example.com',
-          role: SystemRole.User,
-          isDisplayNameConfirmed: true,
-          avatarUrl: '',
-          authId: 'auth' + user,
-          displayName: name,
-          sites: {
-            sf: {
-              projects: ['project01', 'project02', 'project03']
+        data: createTestUser(
+          {
+            sites: {
+              sf: {
+                projects: ['project01', 'project02', 'project03']
+              }
             }
-          }
-        }
+          },
+          i
+        )
       });
     }
   }
 
-  setupProject(data: Partial<SFProject> = {}, id?: string): void {
+  setupProject(data: RecursivePartial<SFProject> = {}, id?: string): void {
     const projectProfileData = cloneDeep(this.testProjectProfile);
-    const projectData: SFProject = {
+    const projectData: SFProject = createTestProject({
       ...this.testProjectProfile,
       paratextUsers: this.paratextUsersOnProject
-    };
+    });
     if (data.translateConfig?.translationSuggestionsEnabled != null) {
       projectProfileData.translateConfig.translationSuggestionsEnabled =
         data.translateConfig.translationSuggestionsEnabled;
     }
     if (data.translateConfig?.source !== undefined) {
-      projectProfileData.translateConfig.source = data.translateConfig?.source;
+      projectProfileData.translateConfig.source = merge(
+        projectProfileData.translateConfig.source,
+        data.translateConfig?.source
+      );
     }
     if (data.isRightToLeft != null) {
       projectProfileData.isRightToLeft = data.isRightToLeft;
@@ -3729,7 +3720,7 @@ class TestEnvironment {
       projectProfileData.defaultFontSize = data.defaultFontSize;
     }
     if (data.texts != null) {
-      projectProfileData.texts = data.texts;
+      projectProfileData.texts = merge(projectProfileData.texts, data.texts);
     }
     if (id !== undefined) {
       this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {

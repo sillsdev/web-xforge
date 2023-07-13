@@ -8,13 +8,13 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { User } from 'realtime-server/lib/esm/common/models/user';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
@@ -935,52 +935,29 @@ class TestEnvironment {
   private addUser(userId: string, name: string, authId: string): void {
     this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
       id: userId,
-      data: {
+      data: createTestUser({
         name,
-        email: `${userId}@example.com`,
-        role: SystemRole.User,
-        isDisplayNameConfirmed: true,
-        avatarUrl: '',
         authId,
-        displayName: name,
         sites: {
           sf: {
             projects: ['project01', 'project02', 'project03']
           }
         }
-      }
+      })
     });
   }
 
   private addProject(projectId: string, userRoles: { [userRef: string]: string }, texts: TextInfo[]): void {
     this.realtimeService.addSnapshot<SFProject>(SFProjectProfileDoc.COLLECTION, {
       id: projectId,
-      data: {
+      data: createTestProject({
         name: projectId,
         paratextId: projectId,
         shortName: projectId,
-        writingSystem: {
-          tag: 'en'
-        },
-        translateConfig: {
-          translationSuggestionsEnabled: false,
-          shareEnabled: false,
-          preTranslate: false
-        },
-        checkingConfig: {
-          checkingEnabled: true,
-          shareEnabled: true,
-          usersSeeEachOthersResponses: true,
-          answerExportMethod: CheckingAnswerExport.MarkedForExport
-        },
-        sync: { queuedCount: 0, lastSyncSuccessful: true },
-        editable: true,
         userRoles,
-        userPermissions: {},
         texts,
-        noteTags: [],
         paratextUsers: paratextUsersFromRoles(userRoles)
-      }
+      })
     });
   }
 }

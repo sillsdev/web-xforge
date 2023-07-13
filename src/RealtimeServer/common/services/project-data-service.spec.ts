@@ -1,11 +1,11 @@
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock, when } from 'ts-mockito';
+import { createTestUser } from '../models/user-test-data';
 import { OwnedData } from '../models/owned-data';
 import { Project } from '../models/project';
 import { ProjectData } from '../models/project-data';
 import { Operation, ProjectRights } from '../models/project-rights';
-import { SystemRole } from '../models/system-role';
 import { User, USERS_COLLECTION } from '../models/user';
 import { RealtimeServer } from '../realtime-server';
 import { SchemaVersionRepository } from '../schema-version-repository';
@@ -425,60 +425,11 @@ class TestEnvironment {
 
   async createData(): Promise<void> {
     const conn = this.server.connect();
-    await createDoc<User>(conn, USERS_COLLECTION, 'admin', {
-      name: 'User 01',
-      email: 'user01@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth01',
-      displayName: 'User 01',
-      avatarUrl: '',
-      sites: {}
-    });
-
-    await createDoc<User>(conn, USERS_COLLECTION, 'user', {
-      name: 'User 02',
-      email: 'user02@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth02',
-      displayName: 'User 02',
-      avatarUrl: '',
-      sites: {}
-    });
-
-    await createDoc<User>(conn, USERS_COLLECTION, 'userOwn', {
-      name: 'User 03',
-      email: 'user03@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth03',
-      displayName: 'User 03',
-      avatarUrl: '',
-      sites: {}
-    });
-
-    await createDoc<User>(conn, USERS_COLLECTION, 'observer', {
-      name: 'User 04',
-      email: 'user04@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth04',
-      displayName: 'User 04',
-      avatarUrl: '',
-      sites: {}
-    });
-
-    await createDoc<User>(conn, USERS_COLLECTION, 'nonmember', {
-      name: 'User 05',
-      email: 'user05@example.com',
-      role: SystemRole.User,
-      isDisplayNameConfirmed: true,
-      authId: 'auth05',
-      displayName: 'User 05',
-      avatarUrl: '',
-      sites: {}
-    });
+    await createDoc<User>(conn, USERS_COLLECTION, 'admin', createTestUser({}, 1));
+    await createDoc<User>(conn, USERS_COLLECTION, 'user', createTestUser({}, 2));
+    await createDoc<User>(conn, USERS_COLLECTION, 'userOwn', createTestUser({}, 3));
+    await createDoc<User>(conn, USERS_COLLECTION, 'observer', createTestUser({}, 4));
+    await createDoc<User>(conn, USERS_COLLECTION, 'nonmember', createTestUser({}, 5));
 
     await createDoc<Project>(conn, PROJECTS_COLLECTION, 'project01', {
       name: 'Project 01',
