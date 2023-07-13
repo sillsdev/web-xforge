@@ -53,8 +53,9 @@ public class Program
         // Testing shows that if we remove community checking answer notes, they will come back when SF syncs.
         foreach (ProblemLocation location in program.problemLocations)
         {
+            // After backing out notes xml files, some other files may be left as modified in the working directory, such as .SFM files. We revert these before proceeding.
             Console.WriteLine(
-                $"cd {location.projectRepo} && hg backout --rev {location.commitId} --include '{location.fileName} --message 'Backing out {location.commitId} {location.fileName}'' &&"
+                $"cd {location.projectRepo} && hg backout --rev {location.commitId} --include '{location.fileName}' --message 'Backing out {location.commitId} {location.fileName}' --encoding utf-8   --tool internal:other ; hg revert --all ;"
             );
         }
     }
