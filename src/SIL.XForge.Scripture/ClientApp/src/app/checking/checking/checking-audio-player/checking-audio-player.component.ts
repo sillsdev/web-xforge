@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, Pipe, PipeTransform, ViewChild } from '@angular/core';
+import { Component, Input, OnDestroy, ViewChild } from '@angular/core';
 import { MatSlider, MatSliderChange } from '@angular/material/slider';
 import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -178,15 +178,5 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
       this._currentTime = 0;
       this.seek = 0;
     }
-  }
-}
-
-@Pipe({ name: 'audioTime' })
-export class AudioTimePipe implements PipeTransform {
-  transform(seconds: number, ..._args: any[]): string {
-    const minutesString = Math.floor(seconds / 60);
-    seconds = Math.floor(seconds % 60);
-    const secondsString = seconds >= 10 ? seconds : '0' + seconds;
-    return minutesString + ':' + secondsString;
   }
 }

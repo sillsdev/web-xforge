@@ -14,7 +14,8 @@ import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforg
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
-import { AudioTimePipe, CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
+import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
+import { CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingAudioRecorderComponent } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingAudioCombinedComponent } from './checking-audio-combined.component';
 
