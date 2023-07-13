@@ -193,9 +193,16 @@ public class Program
                             currentCommit.Date = DateTime.Parse(value);
                             break;
                         case "Desc":
-                            XDocument doc = XDocument.Parse(value);
-                            var machineName = doc.Descendants("MachineName").SingleOrDefault();
-                            currentCommit.MachineName = machineName.Value;
+                            try
+                            {
+                                XDocument doc = XDocument.Parse(value);
+                                var machineName = doc.Descendants("MachineName").SingleOrDefault();
+                                currentCommit.MachineName = machineName.Value;
+                            }
+                            catch
+                            {
+                                currentCommit.MachineName = "unknown";
+                            }
                             break;
                         case "Files":
                             currentCommit.Files = value
