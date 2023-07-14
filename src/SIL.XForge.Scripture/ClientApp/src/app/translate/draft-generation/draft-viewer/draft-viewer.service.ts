@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
-import { isEmpty } from 'lodash-es';
-import isString from 'lodash-es/isString';
+import { isEmpty, isString } from 'lodash-es';
 import { DeltaOperation } from 'quill';
 import { DraftSegmentMap } from '../draft-generation';
 
