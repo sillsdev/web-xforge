@@ -60,7 +60,7 @@
             "scripts": [],
             "aot": false,
             "vendorChunk": true,
-            "extractLicenses": false,
+            "extractLicenses": true,
             "buildOptimizer": false,
             "sourceMap": true,
             "optimization": false,
@@ -84,7 +84,6 @@
               "outputHashing": "all",
               "namedChunks": false,
               "aot": true,
-              "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true,
               "serviceWorker": true
@@ -106,7 +105,6 @@
               "outputHashing": "all",
               "namedChunks": false,
               "aot": true,
-              "extractLicenses": true,
               "vendorChunk": false,
               "buildOptimizer": true,
               "serviceWorker": true
@@ -120,7 +118,6 @@
               ],
               "outputHashing": "all",
               "namedChunks": false,
-              "extractLicenses": true,
               "vendorChunk": false,
               "serviceWorker": true
             },

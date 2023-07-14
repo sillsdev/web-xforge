@@ -46,7 +46,8 @@ public class Startup
         "main.js",
         "main.js.map",
         "manifest.json",
-        "sockjs-node"
+        "sockjs-node",
+        "3rdpartylicenses.txt"
     };
 
     // examples of filenames are "main-es5.4e5295b95e4b6c37b696.js", "styles.a2f070be0b37085d72ba.css"
