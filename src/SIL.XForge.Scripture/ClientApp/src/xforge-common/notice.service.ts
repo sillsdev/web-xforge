@@ -41,7 +41,7 @@ export class NoticeService {
 
   private async showSnackBar(message: string, classes: string[] = []): Promise<void> {
     let config: MatSnackBarConfig<any> | undefined;
-    config = { announcementMessage: classes.join(' '), direction: this.i18n.direction };
+    config = { announcementMessage: classes.join(' '), direction: this.i18n.direction, duration: 5000 };
     if (this.messageOnDisplay === message) {
       // Do nothing if the message is the same as one currently on display
       return;
