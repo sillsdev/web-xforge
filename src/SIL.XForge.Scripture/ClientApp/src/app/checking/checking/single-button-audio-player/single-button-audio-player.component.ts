@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { AudioPlayer, AudioStatus } from 'src/app/shared/audio/audio-player';
 import { AudioPlayerBaseComponent } from 'src/app/shared/audio/audio-player-base.component/audio-player-base.component';
@@ -42,11 +42,7 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
     this._audio?.setSeek(0);
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['source']?.isFirstChange() && changes['start']?.isFirstChange() && changes['end']?.isFirstChange()) {
-      return;
-    }
-
+  ngOnChanges(): void {
     this.isAudioAvailable$.next(false);
     this.hasFinishedPlayingOnce$.next(false);
     this.audio?.dispose();
