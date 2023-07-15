@@ -40,6 +40,12 @@ export class AudioPlayer extends SubscriptionDisposable {
       }
     });
 
+    this.audio.addEventListener('play', () => {
+      if (this.currentTime >= this.duration) {
+        this.setSeek(0);
+      }
+    });
+
     this.audio.addEventListener('error', () => {
       if (isLocalBlobUrl(this.audio.src)) {
         this.status$.next(AudioStatus.LocalNotAvailable);
