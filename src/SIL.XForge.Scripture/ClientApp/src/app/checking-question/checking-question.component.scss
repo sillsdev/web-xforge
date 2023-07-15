@@ -14,11 +14,11 @@
 
 .scripture-audio,
 .question-text {
-  display: flex;
-  column-gap: 8px;
-  align-items: center;
   font-size: small;
   color: $greyLight;
+  p {
+    margin: 0px;
+  }
 }
 
 .scripture-audio > .scripture-audio-label,
@@ -28,6 +28,18 @@
   color: black;
 }
 
-mat-icon {
-  color: $purpleLight;
+app-single-button-audio-player {
+  mat-icon {
+    color: $purpleLight;
+  }
+}
+
+.question-wrapper {
+  mat-icon {
+    font-size: large;
+    vertical-align: bottom;
+    height: unset;
+    width: unset;
+    cursor: pointer;
+  }
 }
