@@ -39,17 +39,28 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
 
     this.projectService.queryAudioText(projectId).then(audioQuery => {
       this._scriptureAudio = audioQuery.docs.find(t => t.id === audioId)?.data;
+      if (!this.scriptureAudioUrl) {
+        this.selectQuestion();
+      }
     });
 
     this.subscribe(this.scriptureAudio!.hasFinishedPlayingOnce$, newVal => {
       if (newVal) {
-        this._focusedText = 'question-audio-label';
+        this.selectQuestion();
       }
     });
   }
 
   get focusedText(): string {
     return this._focusedText;
+  }
+
+  selectQuestion(): void {
+    this._focusedText = 'question-audio-label';
+  }
+
+  selectScripture(): void {
+    this._focusedText = 'scripture-audio-label';
   }
 
   get referenceForDisplay(): string {
