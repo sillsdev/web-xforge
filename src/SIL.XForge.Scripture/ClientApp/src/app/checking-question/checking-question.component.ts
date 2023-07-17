@@ -90,7 +90,9 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   get questionText(): string {
-    return this.questionDoc?.data?.text ?? 'Listen to the question for ' + this.referenceForDisplay;
+    return this.questionDoc?.data?.text
+      ? this.questionDoc.data.text
+      : 'Listen to the question for ' + this.referenceForDisplay;
   }
 
   get questionAudioUrl(): string | undefined {
