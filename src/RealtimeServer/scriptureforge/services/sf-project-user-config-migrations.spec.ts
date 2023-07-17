@@ -10,14 +10,49 @@ import { SFProjectUserConfigService } from './sf-project-user-config-service';
 
 describe('SFProjectUserConfigMigrations', () => {
   describe('version 1', () => {
-    it('migrates docs', async () => {
+    it('adds numSuggestions property', async () => {
       const env = new TestEnvironment(0);
       const conn = env.server.connect();
       await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {});
+      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.numSuggestions).not.toBeDefined();
+
       await env.server.migrateIfNecessary();
 
-      const userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
       expect(userConfigDoc.data.numSuggestions).toEqual(1);
+    });
+  });
+
+  describe('version 2', () => {
+    it('adds noteRefsRead property', async () => {
+      const env = new TestEnvironment(1);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {});
+      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.noteRefsRead).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.noteRefsRead).toEqual([]);
+    });
+  });
+
+  describe('version 3', () => {
+    it('adds biblicalTermsEnabled and transliterateBiblicalTerms properties', async () => {
+      const env = new TestEnvironment(2);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {});
+      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.biblicalTermsEnabled).not.toBeDefined();
+      expect(userConfigDoc.data.transliterateBiblicalTerms).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.biblicalTermsEnabled).toEqual(true);
+      expect(userConfigDoc.data.transliterateBiblicalTerms).toEqual(false);
     });
   });
 });
