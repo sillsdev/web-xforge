@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
-import { DeltaOperation } from 'quill';
+import { DeltaOperation, DeltaStatic } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { EMPTY, zip } from 'rxjs';
 import { filter, map, switchMap } from 'rxjs/operators';
@@ -53,6 +53,7 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
   hasDraft = false;
 
   projectSettingsUrl?: string;
+  preDraftTargetDelta?: DeltaStatic;
 
   constructor(
     private readonly draftGenerationService: DraftGenerationService,
@@ -81,6 +82,7 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
       .subscribe(() => {
         // Both editors are now loaded (or just target is loaded if no source text set in project settings)
         this.isDraftApplied = false;
+        this.preDraftTargetDelta = this.targetEditor.editor?.getContents();
         this.populateDraftText();
       });
 
@@ -121,13 +123,18 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
       throw new Error(`'populateDraftText()' called when 'currentBook' or 'currentChapter' is not set`);
     }
 
-    const targetOps = this.targetEditor.editor?.getContents().ops!;
+    if (!this.preDraftTargetDelta?.ops) {
+      throw new Error(`'populateDraftText()' called when 'preDraftTargetDelta' is not set`);
+    }
 
     this.draftGenerationService
       .getGeneratedDraft(this.targetProjectId!, this.currentBook, this.currentChapter)
       .pipe(
-        filter((draft: DraftSegmentMap) => (this.hasDraft = this.draftViewerService.hasDraftOps(draft, targetOps))),
-        map((draft: DraftSegmentMap) => this.draftViewerService.toDraftOps(draft, targetOps))
+        filter(
+          (draft: DraftSegmentMap) =>
+            (this.hasDraft = this.draftViewerService.hasDraftOps(draft, this.preDraftTargetDelta!.ops!))
+        ),
+        map((draft: DraftSegmentMap) => this.draftViewerService.toDraftOps(draft, this.preDraftTargetDelta!.ops!))
       )
       .subscribe((draftOps: DeltaOperation[]) => {
         // Set the draft editor with the pre-translation segments
@@ -137,16 +144,24 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
 
   applyDraft(): void {
     const cleanedOps = this.cleanDraftOps(this.targetEditor.editor?.getContents().ops!);
+    const diff = this.preDraftTargetDelta?.diff(new Delta(cleanedOps));
 
+    // Set content back to original to prepare for update with diff
+    this.targetEditor.editor?.setContents(this.preDraftTargetDelta!, 'silent');
+
+    // Call updateContents() with diff instead of setContents() with entire contents because
+    // setContents() is causing a 'delete' op to be appended because of the final '\n'.
+    // This delete op is persisted and triggers the 'corrupted data' notice back in the editor component.
     this.targetEditor.editor?.enable(true);
-    this.targetEditor.editor?.setContents(new Delta(cleanedOps)!, 'user');
+    this.targetEditor.editor?.updateContents(diff!, 'user');
     this.targetEditor.editor?.disable();
+
     this.isDraftApplied = true;
   }
 
   // Remove draft flag from attributes
   cleanDraftOps(draftOps: DeltaOperation[]): DeltaOperation[] {
-    draftOps.forEach(op => {
+    draftOps.forEach((op: DeltaOperation) => {
       delete op.attributes?.draft;
     });
     return draftOps;
