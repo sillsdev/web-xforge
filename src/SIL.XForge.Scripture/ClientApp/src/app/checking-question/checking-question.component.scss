@@ -22,6 +22,11 @@
   }
 }
 
+#scriptureAudio.question-audio-label,
+#questionAudio.scripture-audio-label {
+  display: none;
+}
+
 .scripture-audio > .scripture-audio-label,
 .question-text > .question-audio-label {
   font-weight: bold;
