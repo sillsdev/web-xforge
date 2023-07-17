@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import { reduce } from 'lodash-es';
-import { Observable, of, throwError, timer } from 'rxjs';
+import { EMPTY, Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
 import { BuildStates } from 'src/app/machine-api/build-states';
 import { HttpClient } from 'src/app/machine-api/http-client';
@@ -63,9 +63,8 @@ export class DraftGenerationService {
       catchError(err => {
         if (err.status === 404) {
           return of(undefined);
-        } else {
-          return throwError(err);
         }
+        return throwError(err);
       })
     );
   }
@@ -94,9 +93,15 @@ export class DraftGenerationService {
    * @param projectId The SF project id for the target translation.
    */
   cancelBuild(projectId: string): Observable<void> {
-    return this.httpClient
-      .post<void>(`translation/pretranslations/cancel`, JSON.stringify(projectId))
-      .pipe(map(res => res.data));
+    return this.httpClient.post<void>(`translation/pretranslations/cancel`, JSON.stringify(projectId)).pipe(
+      map(res => res.data),
+      catchError(err => {
+        if (err.status === 404) {
+          return EMPTY;
+        }
+        return throwError(err);
+      })
+    );
   }
 
   /**
@@ -114,9 +119,8 @@ export class DraftGenerationService {
         catchError(err => {
           if (err.status === 404) {
             return of({});
-          } else {
-            return throwError(err);
           }
+          return throwError(err);
         })
       );
   }
