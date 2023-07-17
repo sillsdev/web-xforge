@@ -221,11 +221,25 @@ public class MachineApiService : IMachineApiService
 
             try
             {
-                TranslationBuild translationBuild = await _translationEnginesClient.GetCurrentBuildAsync(
-                    translationEngineId,
-                    minRevision,
-                    cancellationToken
-                );
+                TranslationBuild translationBuild;
+                try
+                {
+                    translationBuild = await _translationEnginesClient.GetCurrentBuildAsync(
+                        translationEngineId,
+                        minRevision,
+                        cancellationToken
+                    );
+                }
+                catch (ServalApiException e) when (preTranslate && e.StatusCode == StatusCodes.Status204NoContent)
+                {
+                    // This is the expected result if there is no current build.
+                    // If there is no pre-translation build, just get the latest one.
+                    translationBuild =
+                        (
+                            await _translationEnginesClient.GetAllBuildsAsync(translationEngineId, cancellationToken)
+                        ).MaxBy(b => b.DateFinished) ?? throw new DataNotFoundException("Entity Deleted");
+                }
+
                 buildDto = CreateDto(translationBuild);
             }
             catch (Exception e)
