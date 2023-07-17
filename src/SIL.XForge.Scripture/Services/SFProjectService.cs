@@ -289,6 +289,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 p => p.TranslateConfig.TranslationSuggestionsEnabled,
                 settings.TranslationSuggestionsEnabled
             );
+            UpdateSetting(op, p => p.BiblicalTermsConfig.BiblicalTermsEnabled, settings.BiblicalTermsEnabled);
             UpdateSetting(op, p => p.TranslateConfig.Source, source, unsetSourceProject);
             UpdateSetting(op, p => p.TranslateConfig.ShareEnabled, settings.TranslateShareEnabled);
 
@@ -301,8 +302,9 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         bool suggestionsEnabledSet = settings.TranslationSuggestionsEnabled != null;
         bool sourceParatextIdSet = settings.SourceParatextId != null || unsetSourceProject;
         bool checkingEnabledSet = settings.CheckingEnabled != null;
+        bool biblicalTermsEnabledSet = settings.BiblicalTermsEnabled != null;
         // check if a sync needs to be run
-        if (suggestionsEnabledSet || sourceParatextIdSet || checkingEnabledSet)
+        if (suggestionsEnabledSet || sourceParatextIdSet || checkingEnabledSet || biblicalTermsEnabledSet)
         {
             bool trainEngine = false;
             if (suggestionsEnabledSet || sourceParatextIdSet)

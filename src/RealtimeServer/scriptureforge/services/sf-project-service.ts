@@ -23,6 +23,7 @@ const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   shortName: true,
   writingSystem: true,
   isRightToLeft: true,
+  biblicalTermsConfig: true,
   editable: true,
   defaultFontSize: true,
   defaultFont: true,

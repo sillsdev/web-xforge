@@ -1,0 +1,47 @@
+<ng-container *transloco="let t; read: 'biblical_term_dialog'">
+  <h1 mat-dialog-title>{{ t(canEdit() ? "edit_renderings" : "view_renderings") }}</h1>
+  <mat-dialog-content>
+    <mdc-form-field [formGroup]="form">
+      <mdc-textarea
+        appAutofocus
+        label="{{ t('term') }}"
+        type="text"
+        id="term"
+        formControlName="term"
+        [outlined]="true"
+        [fullwidth]="true"
+        [readonly]="true"
+      ></mdc-textarea>
+    </mdc-form-field>
+    <mdc-form-field [formGroup]="form">
+      <mdc-textarea
+        appAutofocus
+        label="{{ t('renderings') }}"
+        type="text"
+        id="renderings"
+        formControlName="renderings"
+        [outlined]="true"
+        [fullwidth]="true"
+        [readonly]="!canEdit()"
+      ></mdc-textarea>
+    </mdc-form-field>
+    <mdc-form-field [formGroup]="form">
+      <mdc-textarea
+        appAutofocus
+        label="{{ t('description') }}"
+        type="text"
+        id="description"
+        formControlName="description"
+        [outlined]="true"
+        [fullwidth]="true"
+        [readonly]="!canEdit()"
+      ></mdc-textarea>
+    </mdc-form-field>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <button mat-button mat-dialog-close>{{ t(canEdit() ? "cancel" : "close") }}</button>
+    <button *ngIf="canEdit()" mat-flat-button class="save-button" color="primary" (click)="submit()">
+      {{ t("save") }}
+    </button>
+  </mat-dialog-actions>
+</ng-container>
