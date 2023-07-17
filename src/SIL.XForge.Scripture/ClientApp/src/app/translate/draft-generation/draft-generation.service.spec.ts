@@ -1,6 +1,7 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { first } from 'rxjs/operators';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { BuildStates } from 'src/app/machine-api/build-states';
 import { HttpClient } from 'src/app/machine-api/http-client';
@@ -28,7 +29,7 @@ describe('DraftGenerationService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
-      providers: [DraftGenerationService, { provide: HttpClient, useValue: { get: () => {}, post: () => {} } }]
+      providers: [DraftGenerationService, { provide: HttpClient, useValue: { get: () => of({}), post: () => of({}) } }]
     });
 
     service = TestBed.inject(DraftGenerationService);
@@ -45,58 +46,73 @@ describe('DraftGenerationService', () => {
   });
 
   describe('pollBuildProgress', () => {
-    it('should poll build progress and return an observable of BuildDto', () => {
-      spyOn(service, 'getBuildProgress').and.returnValue(of(buildDto));
-      service.pollBuildProgress(projectId).subscribe(result => {
-        expect(result).toEqual(buildDto);
-        expect(service.getBuildProgress).toHaveBeenCalledWith(projectId);
-      });
+    it('should poll build progress and return an observable of BuildDto', done => {
+      httpClient.get = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
+      service
+        .pollBuildProgress(projectId)
+        .pipe(first())
+        .subscribe(result => {
+          expect(result).toEqual(buildDto);
+          expect(httpClient.get).toHaveBeenCalledWith(`translation/builds/id:${projectId}?pretranslate=true`);
+          done();
+        });
     });
   });
 
   describe('getBuildProgress', () => {
-    it('should get build progress and return an observable of BuildDto', () => {
+    it('should get build progress and return an observable of BuildDto', done => {
       httpClient.get = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
       service.getBuildProgress(projectId).subscribe(result => {
         expect(result).toEqual(buildDto);
         expect(httpClient.get).toHaveBeenCalledWith(`translation/builds/id:${projectId}?pretranslate=true`);
+        done();
       });
     });
   });
 
   describe('startBuild', () => {
-    it('should start a pretranslation build job and return an observable of BuildDto', () => {
-      spyOn(service, 'getBuildProgress').and.returnValue(of(undefined));
+    it('should start a pretranslation build job and return an observable of BuildDto', done => {
+      const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(undefined));
+      const spyPollBuildProgress = spyOn(service, 'pollBuildProgress').and.returnValue(of(buildDto));
       httpClient.post = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
-      service.startBuild(projectId).subscribe(result => {
-        expect(result).toEqual(buildDto);
-        expect(service.getBuildProgress).toHaveBeenCalledWith(projectId);
-        expect(httpClient.post).toHaveBeenCalledWith(`translation/pretranslations`, JSON.stringify(projectId));
-      });
+      service
+        .startBuild(projectId)
+        .pipe(first())
+        .subscribe(result => {
+          expect(result).toEqual(buildDto);
+          expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
+          expect(spyPollBuildProgress).toHaveBeenCalledWith(projectId);
+          expect(httpClient.post).toHaveBeenCalledWith(`translation/pretranslations`, JSON.stringify(projectId));
+          done();
+        });
     });
 
-    it('should return already active build job', () => {
-      spyOn(service, 'getBuildProgress').and.returnValue(of(buildDto));
+    it('should return already active build job', done => {
+      const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(buildDto));
+      const spyPollBuildProgress = spyOn(service, 'pollBuildProgress').and.returnValue(of(buildDto));
       httpClient.post = jasmine.createSpy();
       service.startBuild(projectId).subscribe(result => {
         expect(result).toEqual(buildDto);
-        expect(service.getBuildProgress).toHaveBeenCalledWith(projectId);
+        expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
+        expect(spyPollBuildProgress).toHaveBeenCalledWith(projectId);
         expect(httpClient.post).not.toHaveBeenCalled();
+        done();
       });
     });
   });
 
   describe('cancelBuild', () => {
-    it('should cancel a pretranslation build job and return an empty observable', () => {
+    it('should cancel a pretranslation build job and return an empty observable', done => {
       httpClient.post = jasmine.createSpy().and.returnValue(of({ data: {} }));
       service.cancelBuild(projectId).subscribe(() => {
         expect(httpClient.post).toHaveBeenCalledWith(`translation/pretranslations/cancel`, JSON.stringify(projectId));
+        done();
       });
     });
   });
 
   describe('getGeneratedDraft', () => {
-    it('should get the pretranslations for the specified book/chapter and return an observable of DraftSegmentMap', () => {
+    it('should get the pretranslations for the specified book/chapter and return an observable of DraftSegmentMap', done => {
       const book = 44;
       const chapter = 2;
       const preTranslationData = {
@@ -114,13 +130,14 @@ describe('DraftGenerationService', () => {
           verse_3_16: 'For God so loved the world ',
           verse_1_1: 'In the beginning was the Word '
         });
+        expect(httpClient.get).toHaveBeenCalledWith(
+          `translation/engines/project:${projectId}/actions/preTranslate/${book}_${chapter}`
+        );
+        done();
       });
-      expect(httpClient.get).toHaveBeenCalledWith(
-        `translation/engines/project:${projectId}/actions/preTranslate/${book}_${chapter}`
-      );
     });
 
-    it('should handle empty preTranslations array', () => {
+    it('should handle empty preTranslations array', done => {
       const book = 44;
       const chapter = 2;
       const preTranslationData = {
@@ -132,13 +149,14 @@ describe('DraftGenerationService', () => {
       httpClient.get = jasmine.createSpy().and.returnValue(of(preTranslationData));
       service.getGeneratedDraft(projectId, book, chapter).subscribe(result => {
         expect(result).toEqual({});
+        expect(httpClient.get).toHaveBeenCalledWith(
+          `translation/engines/project:${projectId}/actions/preTranslate/${book}_${chapter}`
+        );
+        done();
       });
-      expect(httpClient.get).toHaveBeenCalledWith(
-        `translation/engines/project:${projectId}/actions/preTranslate/${book}_${chapter}`
-      );
     });
 
-    it('should handle invalid verse references', () => {
+    it('should handle invalid verse references', done => {
       const book = 44;
       const chapter = 2;
       const preTranslationData = {
@@ -155,10 +173,11 @@ describe('DraftGenerationService', () => {
         expect(result).toEqual({
           verse_3_16: 'For God so loved the world '
         });
+        expect(httpClient.get).toHaveBeenCalledWith(
+          `translation/engines/project:${projectId}/actions/preTranslate/${book}_${chapter}`
+        );
+        done();
       });
-      expect(httpClient.get).toHaveBeenCalledWith(
-        `translation/engines/project:${projectId}/actions/preTranslate/${book}_${chapter}`
-      );
     });
   });
 });
