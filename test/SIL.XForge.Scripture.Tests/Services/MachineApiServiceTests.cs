@@ -716,6 +716,87 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetCurrentBuildAsync_ServalPreTranslationCompleted()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string buildDtoId = $"{Project01}.{Build01}";
+        const string message = "Completed";
+        const double percentCompleted = 0;
+        const int revision = 43;
+        const JobState state = JobState.Completed;
+        env.TranslationEnginesClient
+            .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None)
+            .Throws(ServalApiExceptions.NoContent);
+        env.TranslationEnginesClient
+            .GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>(
+                    new List<TranslationBuild>
+                    {
+                        new TranslationBuild
+                        {
+                            Url = "https://example.com",
+                            Id = Build01,
+                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                            Message = message,
+                            PercentCompleted = percentCompleted,
+                            Revision = revision,
+                            State = state,
+                            DateFinished = DateTimeOffset.UtcNow,
+                        },
+                    }
+                )
+            );
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+        // SUT
+        BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+            User01,
+            Project01,
+            minRevision: null,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        Assert.IsNotNull(actual);
+        Assert.AreEqual(message, actual.Message);
+        Assert.AreEqual(percentCompleted, actual.PercentCompleted);
+        Assert.AreEqual(revision, actual.Revision);
+        Assert.AreEqual(state.ToString().ToUpperInvariant(), actual.State);
+        Assert.AreEqual(buildDtoId, actual.Id);
+        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
+        Assert.AreEqual(Project01, actual.Engine.Id);
+        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+    }
+
+    [Test]
+    public void GetCurrentBuildAsync_ServalPreTranslationNoBuilds()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None)
+            .Throws(ServalApiExceptions.NoContent);
+        env.TranslationEnginesClient
+            .GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(Task.FromResult<IList<TranslationBuild>>(new List<TranslationBuild>()));
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.GetCurrentBuildAsync(
+                    User01,
+                    Project01,
+                    minRevision: null,
+                    preTranslate: true,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
     public async Task GetCurrentBuildAsync_ExecutesOnlyInProcessIfBothEnabled()
     {
         // Set up test environment
