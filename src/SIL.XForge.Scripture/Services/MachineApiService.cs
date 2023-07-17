@@ -127,7 +127,7 @@ public class MachineApiService : IMachineApiService
         }
         catch (Exception e)
         {
-            await ProcessServalApiExceptionAsync(e);
+            await ProcessServalApiExceptionAsync(e, preTranslate: true);
         }
     }
 
@@ -172,7 +172,7 @@ public class MachineApiService : IMachineApiService
             }
             catch (Exception e)
             {
-                await ProcessServalApiExceptionAsync(e);
+                await ProcessServalApiExceptionAsync(e, preTranslate);
             }
         }
         else
@@ -230,7 +230,24 @@ public class MachineApiService : IMachineApiService
             }
             catch (Exception e)
             {
-                await ProcessServalApiExceptionAsync(e);
+                await ProcessServalApiExceptionAsync(e, preTranslate);
+            }
+
+            // If there is no pre-translation build, just get the latest one
+            if (preTranslate && buildDto is null)
+            {
+                try
+                {
+                    TranslationBuild translationBuild =
+                        (
+                            await _translationEnginesClient.GetAllBuildsAsync(translationEngineId, cancellationToken)
+                        ).MaxBy(b => b.DateFinished) ?? throw new DataNotFoundException("Entity Deleted");
+                    buildDto = CreateDto(translationBuild);
+                }
+                catch (Exception e)
+                {
+                    await ProcessServalApiExceptionAsync(e, preTranslate: false);
+                }
             }
         }
         else
@@ -276,7 +293,7 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(e, preTranslate: false, doNotThrowIfInProcessEnabled: true);
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -336,7 +353,7 @@ public class MachineApiService : IMachineApiService
         }
         catch (Exception e)
         {
-            await ProcessServalApiExceptionAsync(e);
+            await ProcessServalApiExceptionAsync(e, preTranslate: true);
         }
 
         return preTranslation;
@@ -403,7 +420,7 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(e, preTranslate: false, doNotThrowIfInProcessEnabled: true);
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -468,7 +485,7 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(e, preTranslate: false, doNotThrowIfInProcessEnabled: true);
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -550,7 +567,7 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(e, preTranslate: false, doNotThrowIfInProcessEnabled: true);
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -599,7 +616,7 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(e, preTranslate: false, doNotThrowIfInProcessEnabled: true);
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -662,7 +679,7 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(e, preTranslate: false, doNotThrowIfInProcessEnabled: true);
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -804,14 +821,21 @@ public class MachineApiService : IMachineApiService
     /// This method maps Serval API exceptions to the exceptions that Machine.js understands.
     /// </summary>
     /// <param name="e">The Serval API Exception</param>
+    /// <param name="preTranslate">Whether or not this is a pre-translation build.</param>
     /// <param name="doNotThrowIfInProcessEnabled">Report but do not throw the exception if in-process machine is enabled</param>
     /// <exception cref="DataNotFoundException">Entity Deleted.</exception>
     /// <exception cref="ForbiddenException">Access Denied.</exception>
     /// <remarks>If this method returns, it is expected that the DTO will be null.</remarks>
-    private async Task ProcessServalApiExceptionAsync(Exception e, bool doNotThrowIfInProcessEnabled = false)
+    private async Task ProcessServalApiExceptionAsync(
+        Exception e,
+        bool preTranslate,
+        bool doNotThrowIfInProcessEnabled = false
+    )
     {
         switch (e)
         {
+            case ServalApiException { StatusCode: StatusCodes.Status204NoContent } when preTranslate:
+                return;
             case ServalApiException { StatusCode: StatusCodes.Status204NoContent }:
                 throw new DataNotFoundException("Entity Deleted");
             case ServalApiException { StatusCode: StatusCodes.Status403Forbidden }:
