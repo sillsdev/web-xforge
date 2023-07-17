@@ -1,7 +1,9 @@
 <ng-container transloco>
   <app-single-button-audio-player
     #scriptureAudio
-    *ngIf="focusedText === 'scripture-audio-label'"
+    *ngIf="scriptureAudioUrl"
+    id="scriptureAudio"
+    [class]="focusedText"
     [source]="scriptureAudioUrl"
     [start]="scriptureAudioStart"
     [end]="scriptureAudioEnd"
@@ -11,7 +13,9 @@
   </app-single-button-audio-player>
   <app-single-button-audio-player
     #questionAudio
-    *ngIf="focusedText === 'question-audio-label' && questionAudioUrl"
+    *ngIf="questionAudioUrl"
+    id="questionAudio"
+    [class]="focusedText"
     [source]="questionAudioUrl"
     (click)="playQuestion()"
   >

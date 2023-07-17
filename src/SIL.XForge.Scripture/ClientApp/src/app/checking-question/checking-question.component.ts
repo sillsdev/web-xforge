@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import {
@@ -17,13 +17,23 @@ import { SFProjectService } from '../core/sf-project.service';
   templateUrl: './checking-question.component.html',
   styleUrls: ['./checking-question.component.scss']
 })
-export class CheckingQuestionComponent extends SubscriptionDisposable implements AfterViewInit, OnChanges {
-  private _scriptureAudio?: TextAudio;
+export class CheckingQuestionComponent extends SubscriptionDisposable implements OnChanges {
+  private _scriptureTextAudioData?: TextAudio;
   private _focusedText = 'scripture-audio-label';
 
   @Input() questionDoc?: QuestionDoc;
   @ViewChild('questionAudio') questionAudio?: SingleButtonAudioPlayerComponent;
-  @ViewChild('scriptureAudio') scriptureAudio?: SingleButtonAudioPlayerComponent;
+  private _scriptureAudio?: SingleButtonAudioPlayerComponent;
+  @ViewChild('scriptureAudio') set scriptureAudio(comp: SingleButtonAudioPlayerComponent) {
+    this._scriptureAudio = comp;
+    if (comp) {
+      this.subscribe(comp.hasFinishedPlayingOnce$, newVal => {
+        if (newVal) {
+          this.selectQuestion();
+        }
+      });
+    }
+  }
 
   constructor(private readonly projectService: SFProjectService, private readonly i18n: I18nService) {
     super();
@@ -31,31 +41,19 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['questionDoc']) {
-      // Manually refresh component, since swapping questions doesn't produce a new questionDoc
       this.dispose();
-      this.ngAfterViewInit();
-    }
-  }
 
-  ngAfterViewInit(): void {
-    this._focusedText = 'scripture-audio-label';
-    const projectId = this.questionDoc!.data!.projectRef;
-    const audioId = getTextAudioId(
-      projectId,
-      this.questionDoc!.data!.verseRef!.bookNum,
-      this.questionDoc!.data!.verseRef!.chapterNum
-    );
+      this._focusedText = 'scripture-audio-label';
+      const projectId = this.questionDoc!.data!.projectRef;
+      const audioId = getTextAudioId(
+        projectId,
+        this.questionDoc!.data!.verseRef!.bookNum,
+        this.questionDoc!.data!.verseRef!.chapterNum
+      );
 
-    this.projectService.queryAudioText(projectId).then(audioQuery => {
-      this._scriptureAudio = audioQuery.docs.find(t => t.id === audioId)?.data;
-      if (!this.scriptureAudioUrl) {
-        this.selectQuestion();
-      }
-    });
-
-    if (this.scriptureAudio) {
-      this.subscribe(this.scriptureAudio!.hasFinishedPlayingOnce$, newVal => {
-        if (newVal) {
+      this.projectService.queryAudioText(projectId).then(audioQuery => {
+        this._scriptureTextAudioData = audioQuery.docs.find(t => t.id === audioId)?.data;
+        if (!this.scriptureAudioUrl) {
           this.selectQuestion();
         }
       });
@@ -80,15 +78,15 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   get scriptureAudioUrl(): string | undefined {
-    return this._scriptureAudio?.audioUrl;
+    return this._scriptureTextAudioData?.audioUrl;
   }
 
   get scriptureAudioStart(): number | undefined {
-    return this._scriptureAudio?.timings.find(t => t.textRef === 'v' + this.startVerse.toString())?.from;
+    return this._scriptureTextAudioData?.timings.find(t => t.textRef === 'v' + this.startVerse.toString())?.from;
   }
 
   get scriptureAudioEnd(): number | undefined {
-    return this._scriptureAudio?.timings.find(t => t.textRef === 'v' + this.endVerse.toString())?.to;
+    return this._scriptureTextAudioData?.timings.find(t => t.textRef === 'v' + this.endVerse.toString())?.to;
   }
 
   get questionText(): string {
@@ -100,7 +98,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   playScripture(): void {
-    this.scriptureAudio?.audio?.isPlaying ? this.scriptureAudio?.stop() : this.scriptureAudio?.play();
+    this._scriptureAudio?.audio?.isPlaying ? this._scriptureAudio?.stop() : this._scriptureAudio?.play();
   }
 
   playQuestion(): void {
