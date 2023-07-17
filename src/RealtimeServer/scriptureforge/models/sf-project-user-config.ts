@@ -14,6 +14,8 @@ export interface SFProjectUserConfig extends ProjectData {
   selectedChapterNum?: number;
   isTargetTextRight: boolean;
   confidenceThreshold: number;
+  biblicalTermsEnabled: boolean;
+  transliterateBiblicalTerms: boolean;
   translationSuggestionsEnabled: boolean;
   numSuggestions: number;
   selectedSegment: string;
