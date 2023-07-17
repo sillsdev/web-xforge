@@ -6,6 +6,23 @@
     "translate": "Menerjemahkan",
     "users": "Pengguna"
   },
+  "biblical_term_dialog": {
+    "cancel": "Batal",
+    "close": "Tutup",
+    "description": "Penjelasan",
+    "edit_renderings": "Sunting Padanan",
+    "renderings": "Padanan",
+    "save": "Simpan",
+    "term": "Istilah/Definisi"
+  },
+  "biblical_terms": {
+    "actions": "Actions",
+    "category": "Kategori",
+    "gloss": "Petunjuk Arti",
+    "renderings": "Padanan",
+    "term": "Istilah",
+    "biblical_terms_renderings": "Padanan Istilah Alkitab"
+  },
   "chapter_nav": {
     "previous_chapter": "Pasal sebelumnya",
     "next_chapter": "Pasal berikutnya"
@@ -233,6 +250,8 @@
   },
   "settings": {
     "anyone_with_a_link": "Siapapun yang punya tautan",
+    "biblical_terms_will_be_enabled": "Biblical Terms will be displayed and can be updated in Scripture Forge",
+    "biblical_terms": "Enable Biblical Terms",
     "community_checking_settings": "Pemeriksaan Komunitas",
     "connect_network_to_change_settings": "Project settings cannot be changed while offline. Please connect to the internet to make changes.",
     "danger_zone": "Zona Bahaya",
@@ -269,13 +288,15 @@
   },
   "suggestions_settings_dialog": {
     "better": "Lebih baik",
+    "biblical_terms": "Show/Hide Biblical Terms",
     "close": "Tutup",
     "more": "Lebih banyak",
     "number_of_suggestions": "Jumlah saran",
     "settings_not_available_offline": "These settings are not available while you are offline.",
     "suggestion_confidence": "Saran meyakinkan",
     "translation_suggestions": "Saran Terjemahan",
-    "translation_suggestions_settings": "Pengaturan Saran Terjemahan"
+    "translator_settings": "Translator settings",
+    "transliterate_biblical_terms": "Transliterate Biblical Terms"
   },
   "sync": {
     "cancel": "Batal",

@@ -4,7 +4,7 @@ import { translate } from '@ngneat/transloco';
 import { sortBy } from 'lodash-es';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { BIBLICAL_TERM_TAG_ICON, NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { AssignedUsers, NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { VerseRef } from '@sillsdev/scripture';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
@@ -15,6 +15,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { BiblicalTermDoc } from '../../../core/models/biblical-term-doc';
 import { defaultNoteThreadIcon, NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -27,6 +28,7 @@ export interface NoteDialogData {
   textDocId: TextDocId;
   projectId: string;
   verseRef?: VerseRef;
+  biblicalTermId?: string;
 }
 
 export interface NoteDialogResult {
@@ -58,6 +60,7 @@ export class NoteDialogComponent implements OnInit {
   currentNoteContent: string = '';
   notesToDisplay: NoteDisplayInfo[] = [];
 
+  private biblicalTermDoc?: BiblicalTermDoc;
   private isAssignedToOtherUser: boolean = false;
   private threadDoc?: NoteThreadDoc;
   private projectProfileDoc?: SFProjectProfileDoc;
@@ -83,6 +86,10 @@ export class NoteDialogComponent implements OnInit {
     } else {
       this.threadDoc = await this.projectService.getNoteThread(this.projectId + ':' + this.threadDataId);
       this.textDoc = await this.projectService.getText(this.textDocId);
+    }
+
+    if (this.biblicalTermId != null) {
+      this.biblicalTermDoc = await this.projectService.getBiblicalTerm(this.projectId + ':' + this.biblicalTermId);
     }
 
     this.projectProfileDoc = await this.projectService.getProfile(this.projectId);
@@ -113,6 +120,7 @@ export class NoteDialogComponent implements OnInit {
   }
 
   get flagIcon(): string {
+    if (this.biblicalTermId != null) return defaultNoteThreadIcon(BIBLICAL_TERM_TAG_ICON).url;
     if (this.threadDoc?.data == null) {
       if (this.defaultNoteTagId == null) return defaultNoteThreadIcon(SF_TAG_ICON).url;
       const noteTag: NoteTag | undefined = this.noteTags.find(t => t.tagId === this.defaultNoteTagId);
@@ -131,6 +139,10 @@ export class NoteDialogComponent implements OnInit {
     return this.data.threadDataId == null;
   }
 
+  get isBiblicalTermNote(): boolean {
+    return this.data.biblicalTermId != null;
+  }
+
   get isRtl(): boolean {
     if (this.projectProfileDoc?.data == null) {
       return false;
@@ -143,6 +155,7 @@ export class NoteDialogComponent implements OnInit {
   }
 
   get verseRefDisplay(): string {
+    if (this.isBiblicalTermNote) return translate('note_dialog.biblical_term');
     const verseRef: VerseRef | undefined = this.verseRef;
     return verseRef == null ? '' : this.i18n.localizeReference(verseRef);
   }
@@ -170,6 +183,10 @@ export class NoteDialogComponent implements OnInit {
 
   private get noteTags(): NoteTag[] {
     return this.projectProfileDoc?.data?.noteTags ?? [];
+  }
+
+  private get biblicalTermId(): string | undefined {
+    return this.data.biblicalTermId;
   }
 
   private get projectId(): string {
@@ -220,16 +237,40 @@ export class NoteDialogComponent implements OnInit {
   }
 
   getNoteContextText(plainText: boolean = false): string {
-    if (this.threadDoc?.data == null) {
-      return '';
+    if (this.isBiblicalTermNote) {
+      if (this.threadDoc?.data?.extraHeadingInfo != null) {
+        let termLang = this.threadDoc.data.extraHeadingInfo.language === 'greek' ? 'grc' : 'hbo';
+        return (
+          `<span lang="${termLang}">${this.threadDoc.data.extraHeadingInfo.lemma}</span> ` +
+          `<span>(${this.threadDoc.data.extraHeadingInfo.transliteration})</span> ` +
+          `<span>${this.threadDoc.data.extraHeadingInfo.gloss}</span>`
+        );
+      } else if (this.biblicalTermDoc?.data != null) {
+        let termLang = this.biblicalTermDoc.data.language === 'greek' ? 'grc' : 'hbo';
+        let biblicalTermGloss = this.biblicalTermDoc.getBiblicalTermGloss(
+          this.i18n.localeCode,
+          I18nService.defaultLocale.canonicalTag
+        );
+        return (
+          `<span lang="${termLang}">${this.biblicalTermDoc.data.termId}</span> ` +
+          `<span>(${this.biblicalTermDoc.data.transliteration})</span> ` +
+          `<span>${biblicalTermGloss}</span>`
+        );
+      } else {
+        return '';
+      }
+    } else {
+      if (this.threadDoc?.data == null) {
+        return '';
+      }
+      return (
+        this.threadDoc.data.originalContextBefore +
+        (plainText ? '' : '<b>') +
+        this.threadDoc.data.originalSelectedText +
+        (plainText ? '' : '</b>') +
+        this.threadDoc.data.originalContextAfter
+      );
     }
-    return (
-      this.threadDoc.data.originalContextBefore +
-      (plainText ? '' : '<b>') +
-      this.threadDoc.data.originalSelectedText +
-      (plainText ? '' : '</b>') +
-      this.threadDoc.data.originalContextAfter
-    );
   }
 
   getAssignedUserString(assignedNoteUserRef: string | undefined): string | undefined {

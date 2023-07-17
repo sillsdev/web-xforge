@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { NoteThread, NoteStatus, getNoteThreadDocId } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -22,6 +23,7 @@ import { AudioTiming } from 'realtime-server/scriptureforge/models/audio-timing'
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { ShareLinkType } from '../shared/share/share-dialog.component';
+import { BiblicalTermDoc } from './models/biblical-term-doc';
 import { NoteThreadDoc } from './models/note-thread-doc';
 import { QuestionDoc } from './models/question-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
@@ -99,6 +101,10 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   getNoteThread(threadDataId: string): Promise<NoteThreadDoc> {
     return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadDataId);
+  }
+
+  getBiblicalTerm(biblicalTermId: string): Promise<BiblicalTermDoc> {
+    return this.realtimeService.subscribe(BiblicalTermDoc.COLLECTION, biblicalTermId);
   }
 
   queryQuestions(
@@ -179,6 +185,13 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       [obj<TextAudio>().pathStr(t => t.projectRef)]: sfProjectId
     };
     return this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, queryParams);
+  }
+
+  queryBiblicalTerms(sfProjectId: string): Promise<RealtimeQuery<BiblicalTermDoc>> {
+    const queryParams: QueryParameters = {
+      [obj<BiblicalTerm>().pathStr(t => t.projectRef)]: sfProjectId
+    };
+    return this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, queryParams);
   }
 
   onlineSync(id: string): Promise<void> {

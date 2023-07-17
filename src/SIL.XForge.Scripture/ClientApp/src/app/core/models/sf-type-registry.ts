@@ -2,6 +2,7 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { TypeRegistry } from 'xforge-common/type-registry';
+import { BiblicalTermDoc } from './biblical-term-doc';
 import { EDITED_SEGMENTS } from './edited-segment-data';
 import { NoteThreadDoc } from './note-thread-doc';
 import { QuestionDoc } from './question-doc';
@@ -18,6 +19,7 @@ export const SF_TYPE_REGISTRY = new TypeRegistry(
     SFProjectDoc,
     SFProjectProfileDoc,
     SFProjectUserConfigDoc,
+    BiblicalTermDoc,
     QuestionDoc,
     TextDoc,
     NoteThreadDoc,

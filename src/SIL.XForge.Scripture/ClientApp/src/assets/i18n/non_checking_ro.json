@@ -6,6 +6,23 @@
     "translate": "Traducere",
     "users": "Utilizatori"
   },
+  "biblical_term_dialog": {
+    "cancel": "Renunță",
+    "close": "Închide",
+    "description": "Descriere",
+    "edit_renderings": "Editare traduceri",
+    "renderings": "Traducerile",
+    "save": "Salvează",
+    "term": "Cuvânt/Definiție"
+  },
+  "biblical_terms": {
+    "actions": "Actions",
+    "category": "Categoria",
+    "gloss": "Traducere cuvânt cu cuvânt",
+    "renderings": "Traducerile",
+    "term": "Cuvânt",
+    "biblical_terms_renderings": "Cuvintele cheie pe scurt"
+  },
   "chapter_nav": {
     "previous_chapter": "Capitolul anterior",
     "next_chapter": "Capitolul următor"
@@ -233,6 +250,8 @@
   },
   "settings": {
     "anyone_with_a_link": "Oricine cu un link",
+    "biblical_terms_will_be_enabled": "Biblical Terms will be displayed and can be updated in Scripture Forge",
+    "biblical_terms": "Enable Biblical Terms",
     "community_checking_settings": "Verificare în comunitate",
     "connect_network_to_change_settings": "Setările proiectului nu pot fi modificate în timp vă aflați offline. Vă rugăm să vă conectați la internet pentru a face modificări.",
     "danger_zone": "Zonă periculoasă",
@@ -269,13 +288,15 @@
   },
   "suggestions_settings_dialog": {
     "better": "Sugestii mai bune",
+    "biblical_terms": "Show/Hide Biblical Terms",
     "close": "Închide",
     "more": "Mai multe sugestii",
     "number_of_suggestions": "Numărul sugestiilor",
     "settings_not_available_offline": "Aceste setări nu sunt disponibile în timp ce vă aflați offline.",
     "suggestion_confidence": "Calitatea sugestiilor",
     "translation_suggestions": "Sugestii de traducere",
-    "translation_suggestions_settings": "Setări pentru sugestiile de traducere"
+    "translator_settings": "Translator settings",
+    "transliterate_biblical_terms": "Transliterate Biblical Terms"
   },
   "sync": {
     "cancel": "Renunță",
