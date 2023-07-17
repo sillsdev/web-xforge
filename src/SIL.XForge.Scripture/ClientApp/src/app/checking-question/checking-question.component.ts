@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import {
@@ -17,7 +17,7 @@ import { SFProjectService } from '../core/sf-project.service';
   templateUrl: './checking-question.component.html',
   styleUrls: ['./checking-question.component.scss']
 })
-export class CheckingQuestionComponent extends SubscriptionDisposable implements AfterViewInit {
+export class CheckingQuestionComponent extends SubscriptionDisposable implements AfterViewInit, OnChanges {
   private _scriptureAudio?: TextAudio;
   private _focusedText = 'scripture-audio-label';
 
@@ -29,7 +29,16 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     super();
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['questionDoc']) {
+      // Manually refresh component, since swapping questions doesn't produce a new questionDoc
+      this.dispose();
+      this.ngAfterViewInit();
+    }
+  }
+
   ngAfterViewInit(): void {
+    this._focusedText = 'scripture-audio-label';
     const projectId = this.questionDoc!.data!.projectRef;
     const audioId = getTextAudioId(
       projectId,
@@ -44,11 +53,13 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
       }
     });
 
-    this.subscribe(this.scriptureAudio!.hasFinishedPlayingOnce$, newVal => {
-      if (newVal) {
-        this.selectQuestion();
-      }
-    });
+    if (this.scriptureAudio) {
+      this.subscribe(this.scriptureAudio!.hasFinishedPlayingOnce$, newVal => {
+        if (newVal) {
+          this.selectQuestion();
+        }
+      });
+    }
   }
 
   get focusedText(): string {
