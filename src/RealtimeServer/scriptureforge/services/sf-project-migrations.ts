@@ -223,6 +223,28 @@ class SFProjectMigration10 implements Migration {
   }
 }
 
+class SFProjectMigration11 implements Migration {
+  static readonly VERSION = 11;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    if (doc.data.biblicalTermsConfig == null) {
+      ops.push({ p: ['biblicalTermsConfig'], oi: {} });
+    }
+    if (doc.data.biblicalTermsConfig == null || doc.data.biblicalTermsConfig.biblicalTermsEnabled == null) {
+      ops.push({ p: ['biblicalTermsConfig', 'biblicalTermsEnabled'], oi: false });
+    }
+    if (doc.data.biblicalTermsConfig == null || doc.data.biblicalTermsConfig.hasRenderings == null) {
+      ops.push({ p: ['biblicalTermsConfig', 'hasRenderings'], oi: false });
+    }
+    await submitMigrationOp(SFProjectMigration10.VERSION, doc, ops);
+  }
+
+  migrateOp(_op: RawOp): void {
+    //do nothing
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
@@ -233,5 +255,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration7,
   SFProjectMigration8,
   SFProjectMigration9,
-  SFProjectMigration10
+  SFProjectMigration10,
+  SFProjectMigration11
 ];

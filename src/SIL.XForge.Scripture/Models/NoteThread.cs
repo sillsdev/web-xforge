@@ -24,4 +24,14 @@ public class NoteThread : ProjectData
     /// or a category such as team or unassigned.
     /// </summary>
     public string Assignment { get; set; }
+
+    /// <summary>
+    /// The Biblical Term this note is for. Null if not for a Biblical Term.
+    /// </summary>
+    public string? BiblicalTermId { get; set; }
+
+    /// <summary>
+    /// Extra heading information that is defined for Biblical Term notes. Null if not for a Biblical Term.
+    /// </summary>
+    public BiblicalTermNoteHeadingInfo? ExtraHeadingInfo { get; set; }
 }
