@@ -19,7 +19,7 @@ export class AudioPlayer extends SubscriptionDisposable {
 
   protected audio: HTMLAudioElement = new Audio();
   // See explanatory comment where this number is used
-  protected static ARBITRARILY_LARGE_NUMBER = 1e10;
+  protected static readonly ARBITRARILY_LARGE_NUMBER = 1e10;
 
   readonly status$: BehaviorSubject<AudioStatus> = new BehaviorSubject<AudioStatus>(AudioStatus.Init);
   readonly finishedPlaying$: EventEmitter<void> = new EventEmitter<void>();
