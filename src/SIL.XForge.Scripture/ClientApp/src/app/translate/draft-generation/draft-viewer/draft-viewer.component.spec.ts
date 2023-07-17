@@ -51,6 +51,7 @@ describe('DraftViewerComponent', () => {
         { provide: Router, useValue: mockRouter }
       ]
     }).compileComponents();
+
     fixture = TestBed.createComponent(DraftViewerComponent);
     component = fixture.componentInstance;
   });
@@ -74,6 +75,7 @@ describe('DraftViewerComponent', () => {
       }
     });
     mockDraftGenerationService.getGeneratedDraft.and.returnValue(of(cloneDeep(draftSegmentMap)));
+    component.preDraftTargetDelta = delta_no_verse_2;
     component.populateDraftText();
     expect(mockDraftGenerationService.getGeneratedDraft).toHaveBeenCalledWith('targetProjectId', 1, 1);
     expect(component.targetEditor.editor!.setContents).toHaveBeenCalledWith(delta_verse_2_suggested, 'api');
@@ -85,12 +87,18 @@ describe('DraftViewerComponent', () => {
         getContents: jasmine.createSpy('getContents').and.returnValue(cloneDeep(delta_verse_2_suggested)),
         enable: jasmine.createSpy('enable'),
         setContents: jasmine.createSpy('setContents'),
+        updateContents: jasmine.createSpy('updateContents'),
         disable: jasmine.createSpy('disable')
       }
     });
+    component.preDraftTargetDelta = delta_no_verse_2;
+    const cleanedOps = component.cleanDraftOps(cloneDeep(delta_verse_2_suggested).ops!);
+    const draftDiff = delta_no_verse_2.diff(new Delta(cleanedOps));
     component.applyDraft();
     expect(component.targetEditor.editor!.enable).toHaveBeenCalledWith(true);
-    expect(component.targetEditor.editor!.setContents).toHaveBeenCalledWith(delta_verse_2_accepted, 'user');
+    expect(component.targetEditor.editor!.getContents).toHaveBeenCalled();
+    expect(component.targetEditor.editor!.setContents).toHaveBeenCalledWith(delta_no_verse_2, 'silent');
+    expect(component.targetEditor.editor!.updateContents).toHaveBeenCalledWith(draftDiff, 'user');
     expect(component.targetEditor.editor!.disable).toHaveBeenCalled();
     expect(component.isDraftApplied).toBeTrue();
   });
