@@ -6,6 +6,23 @@
     "translate": "الترجمة",
     "users": "المُستخدمون"
   },
+  "biblical_term_dialog": {
+    "cancel": "إلغاء",
+    "close": "إغلاق",
+    "description": "وصف",
+    "edit_renderings": "تحرير المرادفات",
+    "renderings": "مرادفات",
+    "save": "حفظ",
+    "term": "مصطلح/تعريف"
+  },
+  "biblical_terms": {
+    "actions": "Actions",
+    "category": "فئة",
+    "gloss": "توضيح",
+    "renderings": "مرادفات",
+    "term": "مصطلح",
+    "biblical_terms_renderings": "مرادفات مصطلحات الكتاب المقدس"
+  },
   "chapter_nav": {
     "previous_chapter": "الأصحاح / الفصل السابق",
     "next_chapter": "الأصحاح / الفصل التالي"
@@ -217,6 +234,8 @@
   },
   "settings": {
     "anyone_with_a_link": "أي شخص لديه الرابط",
+    "biblical_terms_will_be_enabled": "Biblical Terms will be displayed and can be updated in Scripture Forge",
+    "biblical_terms": "Enable Biblical Terms",
     "community_checking_settings": "إعدادات المراجعة المجتمعية",
     "connect_network_to_change_settings": "لا يمكن تغيير إعدادات المشروع عند عدم الاتصال بالإنترنت. الرجاء الاتصال بالإنترنت لإجراء التغييرات.",
     "danger_zone": "منطقة خطر",
@@ -252,13 +271,15 @@
   },
   "suggestions_settings_dialog": {
     "better": "أفضل",
+    "biblical_terms": "Show/Hide Biblical Terms",
     "close": "إغلاق",
     "more": "أكثر",
     "number_of_suggestions": "عدد الاقتراحات",
     "settings_not_available_offline": "هذا الإجراء غير متوفر عندما تكون غير متصل بالإنترنت.",
     "suggestion_confidence": "درجة الثقة في الاقتراح",
     "translation_suggestions": "ترجمات مقترحة",
-    "translation_suggestions_settings": "إعدادات اقتراحات الترجمة"
+    "translator_settings": "Translator settings",
+    "transliterate_biblical_terms": "Transliterate Biblical Terms"
   },
   "sync": {
     "cancel": "إلغاء",

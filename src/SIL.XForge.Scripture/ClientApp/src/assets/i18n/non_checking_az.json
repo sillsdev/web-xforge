@@ -6,6 +6,23 @@
     "translate": "Tərcümə etmək",
     "users": "İstifadəçilər"
   },
+  "biblical_term_dialog": {
+    "cancel": "Ləğv etmək",
+    "close": "Bağla",
+    "description": "Təsvir",
+    "edit_renderings": "Tərcümələri redaktə et",
+    "renderings": "Tərcümələr",
+    "save": "Yadda saxlamaq",
+    "term": "Termin/Tərif"
+  },
+  "biblical_terms": {
+    "actions": "Actions",
+    "category": "Kateqoriya",
+    "gloss": "Şərh",
+    "renderings": "Tərcümələr",
+    "term": "Termin",
+    "biblical_terms_renderings": "Müqəddəs Kitab terminlərinin tərcümələri"
+  },
   "chapter_nav": {
     "previous_chapter": "Əvvəlki fəsil",
     "next_chapter": "Növbəti fəsil"
@@ -217,6 +234,8 @@
   },
   "settings": {
     "anyone_with_a_link": "Keçid ilə hər bir kəs",
+    "biblical_terms_will_be_enabled": "Biblical Terms will be displayed and can be updated in Scripture Forge",
+    "biblical_terms": "Enable Biblical Terms",
     "community_checking_settings": "Community Checking Settings",
     "connect_network_to_change_settings": "Şəbəkədə olmayan zaman layihə parametrləri deyişdirmək mümkün deyil. Xahiş edirik, deyişliklər etmək üçün internetə qoşulun.",
     "danger_zone": "Təhlükə Zonası",
@@ -252,13 +271,15 @@
   },
   "suggestions_settings_dialog": {
     "better": "Daha yaxşı",
+    "biblical_terms": "Show/Hide Biblical Terms",
     "close": "Bağla",
     "more": "Daha çox",
     "number_of_suggestions": "Təkliflərin sayı",
     "settings_not_available_offline": "Şəbəkədə olmayan vaxtınızda bu paramətrlər ələ çatmazdır.",
     "suggestion_confidence": "Təklifə əminlik",
     "translation_suggestions": "Tərcümə təklifləri",
-    "translation_suggestions_settings": "Tərcümə təkliflərinin parametrləri"
+    "translator_settings": "Translator settings",
+    "transliterate_biblical_terms": "Transliterate Biblical Terms"
   },
   "sync": {
     "cancel": "Ləğv etmək",

@@ -6,13 +6,13 @@ namespace SIL.XForge.Scripture.Models;
 /// <summary>Description of an SF project.</summary>
 public class SFProject : Project
 {
-    public string ParatextId { get; set; }
-    public string ShortName { get; set; }
+    public string ParatextId { get; set; } = string.Empty;
+    public string ShortName { get; set; } = string.Empty;
     public WritingSystem WritingSystem { get; set; } = new WritingSystem();
     public bool? IsRightToLeft { get; set; }
     public TranslateConfig TranslateConfig { get; set; } = new TranslateConfig();
     public CheckingConfig CheckingConfig { get; set; } = new CheckingConfig();
-    public ResourceConfig ResourceConfig { get; set; }
+    public ResourceConfig? ResourceConfig { get; set; }
     public List<TextInfo> Texts { get; set; } = new List<TextInfo>();
     public Sync Sync { get; set; } = new Sync();
 
@@ -22,8 +22,9 @@ public class SFProject : Project
     public List<ParatextUserProfile> ParatextUsers { get; set; } = new List<ParatextUserProfile>();
     public bool Editable { get; set; } = true;
     public int? DefaultFontSize { get; set; }
-    public string DefaultFont { get; set; }
+    public string? DefaultFont { get; set; }
     public List<NoteTag> NoteTags { get; set; } = new List<NoteTag>();
+    public BiblicalTermsConfig BiblicalTermsConfig { get; set; } = new BiblicalTermsConfig();
 
     /// <summary>
     /// Used as a rate limiter for transparent authentication to limit the risk of abuse creating auth0 users.

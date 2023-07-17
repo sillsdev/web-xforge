@@ -6,6 +6,23 @@
     "translate": "Traduire",
     "users": "Utilisateurs"
   },
+  "biblical_term_dialog": {
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "description": "Description",
+    "edit_renderings": "Modifier les équivalents",
+    "renderings": "Équivalents",
+    "save": "Enregistrer",
+    "term": "Terme/Définition"
+  },
+  "biblical_terms": {
+    "actions": "Actions",
+    "category": "Catégorie",
+    "gloss": "Glose",
+    "renderings": "Équivalents",
+    "term": "Terme",
+    "biblical_terms_renderings": "Équivalents des termes bibliques"
+  },
   "chapter_nav": {
     "previous_chapter": "Chapitre précédent",
     "next_chapter": "Chapitre suivant"
@@ -217,6 +234,8 @@
   },
   "settings": {
     "anyone_with_a_link": "Toute personne ayant le lien",
+    "biblical_terms_will_be_enabled": "Biblical Terms will be displayed and can be updated in Scripture Forge",
+    "biblical_terms": "Enable Biblical Terms",
     "community_checking_settings": "Paramètres de Vérification par la communauté",
     "connect_network_to_change_settings": "Les paramètres du projet ne peuvent pas être modifiés lorsque vous êtes hors connexion. Veuillez vous connecter à Internet pour effectuer des modifications.",
     "danger_zone": "Attention danger",
@@ -252,13 +271,15 @@
   },
   "suggestions_settings_dialog": {
     "better": "Meilleures",
+    "biblical_terms": "Show/Hide Biblical Terms",
     "close": "Fermer",
     "more": "Plus",
     "number_of_suggestions": "Nombre de suggestions",
     "settings_not_available_offline": "Ces paramètres ne sont pas disponibles lorsque vous êtes hors connexion.",
     "suggestion_confidence": "Confiance dans les suggestions",
     "translation_suggestions": "Suggestions de traduction",
-    "translation_suggestions_settings": "Paramètres des suggestions de traduction"
+    "translator_settings": "Translator settings",
+    "transliterate_biblical_terms": "Transliterate Biblical Terms"
   },
   "sync": {
     "cancel": "Annuler",
