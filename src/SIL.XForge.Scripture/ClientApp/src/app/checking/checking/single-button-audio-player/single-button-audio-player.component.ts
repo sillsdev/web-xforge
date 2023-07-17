@@ -50,7 +50,9 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
       if (this.start != null && this.end != null) {
         this._audio = new AudioSegmentPlayer(this._source, this.start, this.end, this.pwaService);
         this.subscribe(this._audio.finishedPlaying$, () => {
-          this.hasFinishedPlayingOnce$.next(true);
+          if (!this.hasFinishedPlayingOnce$.value) {
+            this.hasFinishedPlayingOnce$.next(true);
+          }
         });
       } else {
         this._audio = new AudioPlayer(this._source, this.pwaService);
