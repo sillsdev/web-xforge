@@ -5,7 +5,8 @@ import { instance, mock, when } from 'ts-mockito';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { AudioPlayerComponent, AudioTimePipe } from './audio-player.component';
+import { AudioTimePipe } from '../audio-time-pipe';
+import { AudioPlayerComponent } from './audio-player.component';
 
 const mockedPwaService = mock(PwaService);
 when(mockedPwaService.isOnline).thenReturn(true);
