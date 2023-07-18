@@ -20,6 +20,9 @@
   p {
     margin: 0px;
     transition: color 0.3s;
+    display: inline-block;
+    min-height: 18px;
+    vertical-align: sub;
   }
 }
 
@@ -39,6 +42,10 @@ app-single-button-audio-player {
   mat-icon {
     color: $purpleLight;
   }
+}
+
+.clickable {
+  cursor: pointer;
 }
 
 .question-wrapper {
