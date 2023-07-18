@@ -18,6 +18,7 @@
     "only_community_checkers_can_like": "Only Community Checkers can like answers."
   },
   "checking_overview": {
+    "add_chapter_audio": "Add chapter audio",
     "add_question": "Add Question",
     "answer_count_label": "{{ count }} answers",
     "archive_multiple": "Archive all questions in {{ location }}",
