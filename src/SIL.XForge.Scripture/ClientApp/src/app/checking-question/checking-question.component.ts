@@ -25,6 +25,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   @ViewChild('questionAudio') questionAudio?: SingleButtonAudioPlayerComponent;
   private _scriptureAudio?: SingleButtonAudioPlayerComponent;
   @ViewChild('scriptureAudio') set scriptureAudio(comp: SingleButtonAudioPlayerComponent) {
+    if (this._scriptureAudio === comp) return;
     this._scriptureAudio = comp;
     if (comp) {
       this.subscribe(comp.hasFinishedPlayingOnce$, newVal => {
