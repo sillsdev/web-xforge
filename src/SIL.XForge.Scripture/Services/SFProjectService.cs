@@ -804,7 +804,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     }
 
     /// TODO (scripture audio) Document this method and add tests
-    public async Task CreateAudioTimingData(string userId, string projectId, int book, int chapter, string audioUrl)
+    public async Task CreateAudioTimingData(
+        string userId,
+        string projectId,
+        int book,
+        int chapter,
+        List<AudioTiming> timingData,
+        string audioUrl
+    )
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(userId);
         IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
@@ -824,34 +831,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             ProjectRef = projectId,
             // TODO (scripture audio) Should the ID be set here? How does the DataId differ from the document ID?
             DataId = textAudioId,
-            Timings = new List<AudioTiming>
-            {
-                // TODO (scripture audio) Create real timing data
-                new AudioTiming
-                {
-                    TextRef = "v1",
-                    From = 7.231,
-                    To = 18.133
-                },
-                new AudioTiming
-                {
-                    TextRef = "v2",
-                    From = 18.133,
-                    To = 32.244
-                },
-                new AudioTiming
-                {
-                    TextRef = "v3",
-                    From = 32.244,
-                    To = 38.495
-                },
-                new AudioTiming
-                {
-                    TextRef = "v4",
-                    From = 38.495,
-                    To = 57.475
-                }
-            },
+            Timings = timingData,
             // TODO get mimetype from client and make sure it is an acceptable value
             MimeType = "audio/mp3",
             AudioUrl = audioUrl

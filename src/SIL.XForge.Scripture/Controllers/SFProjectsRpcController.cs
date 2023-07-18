@@ -617,11 +617,17 @@ public class SFProjectsRpcController : RpcControllerBase
     }
 
     // TODO (scripture audio) Add ability to update audio timing data and associated file URL
-    public async Task<IRpcMethodResult> CreateAudioTimingData(string projectId, int book, int chapter, string audioUrl)
+    public async Task<IRpcMethodResult> CreateAudioTimingData(
+        string projectId,
+        int book,
+        int chapter,
+        List<AudioTiming> timingData,
+        string audioUrl
+    )
     {
         try
         {
-            await _projectService.CreateAudioTimingData(UserId, projectId, book, chapter, audioUrl);
+            await _projectService.CreateAudioTimingData(UserId, projectId, book, chapter, timingData, audioUrl);
             return Ok();
         }
         catch (ForbiddenException)
@@ -641,6 +647,7 @@ public class SFProjectsRpcController : RpcControllerBase
                     { "projectId", projectId },
                     { "book", book.ToString() },
                     { "chapter", chapter.ToString() },
+                    { "timingData", timingData.ToString() },
                     { "audioUrl", audioUrl },
                 }
             );

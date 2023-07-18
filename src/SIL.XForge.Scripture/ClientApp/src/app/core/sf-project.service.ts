@@ -18,6 +18,7 @@ import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
 import { LocationService } from 'xforge-common/location.service';
+import { AudioTiming } from 'realtime-server/scriptureforge/models/audio-timing';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
 import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { ShareLinkType } from '../shared/share/share-dialog.component';
@@ -239,8 +240,14 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return (await this.onlineInvoke<void>('setUserProjectPermissions', { projectId, userId, permissions }))!;
   }
 
-  async onlineCreateAudioTimingData(projectId: string, book: number, chapter: number, audioUrl: string): Promise<void> {
-    return await this.onlineInvoke('createAudioTimingData', { projectId, book, chapter, audioUrl });
+  async onlineCreateAudioTimingData(
+    projectId: string,
+    book: number,
+    chapter: number,
+    timingData: AudioTiming[],
+    audioUrl: string
+  ): Promise<void> {
+    return await this.onlineInvoke('createAudioTimingData', { projectId, book, chapter, timingData, audioUrl });
   }
 
   async onlineDeleteAudioTimingData(projectId: string, book: number, chapter: number): Promise<void> {
