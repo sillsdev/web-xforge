@@ -935,7 +935,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       SuggestionsSettingsDialogComponent,
       {
         autoFocus: false,
-        data: { projectUserConfigDoc: this.projectUserConfigDoc }
+        data: { projectDoc: this.projectDoc, projectUserConfigDoc: this.projectUserConfigDoc }
       }
     );
     dialogRef
