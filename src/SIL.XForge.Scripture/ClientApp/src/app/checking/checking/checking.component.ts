@@ -805,7 +805,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
 
     const audioPath = this.chapterAudioSource;
-    this.projectService.onlineCreateAudioTimingData(this.projectDoc.id, this.book, this.chapter, audioPath);
+    this.projectService.onlineCreateAudioTimingData(this.projectDoc.id, this.book, this.chapter, [], audioPath);
   }
 
   // TODO (scripture audio) This method is a temporary hack to make the audio file name predictable based on the book

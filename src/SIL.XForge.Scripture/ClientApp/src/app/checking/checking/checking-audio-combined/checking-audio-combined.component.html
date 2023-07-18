@@ -6,7 +6,7 @@
       'uploader-active': isUploaderActive
     }"
   >
-    <ng-container *ngIf="!isUploaderActive">
+    <ng-container *ngIf="!isUploaderActive && isRecorderEnabled">
       <app-checking-audio-recorder (status)="recorderStatus($event)"></app-checking-audio-recorder>
     </ng-container>
     <ng-container class="audio-uploader" *ngIf="!isRecorderActive">
