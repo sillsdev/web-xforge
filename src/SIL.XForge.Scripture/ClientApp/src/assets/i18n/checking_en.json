@@ -202,6 +202,11 @@
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Your answer"
   },
+  "checking_audio_dialog": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "upload_timing_file": "Upload timing file"
+  },
   "checking_audio_combined": {
     "remove_audio_file": "Remove Audio File",
     "upload_audio_file": "Upload Audio File",
