@@ -16,6 +16,16 @@
       >
         <mat-icon class="mirror-rtl">post_add</mat-icon> <span fxHide.xs>{{ t("add_question") }}</span>
       </button>
+      <button
+        *ngIf="!isLoading && featureFlags.scriptureAudio.enabled"
+        mat-flat-button
+        type="button"
+        color="primary"
+        (click)="chapterAudioDialog()"
+        id="add-chapter-audio-button"
+      >
+        <mat-icon class="mirror-rtl">post_add</mat-icon> <span fxHide.xs>{{ t("add_chapter_audio") }}</span>
+      </button>
     </ng-container>
     <ng-template #overallProgressChart>
       <div id="overall-progress-chart">
