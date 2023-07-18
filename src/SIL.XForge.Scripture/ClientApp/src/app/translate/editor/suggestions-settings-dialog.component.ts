@@ -1,15 +1,19 @@
 import { Component, Inject } from '@angular/core';
 import { UntypedFormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
 import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 
 export const CONFIDENCE_THRESHOLD_TIMEOUT = 500;
 
 export interface SuggestionsSettingsDialogData {
+  projectDoc: SFProjectProfileDoc;
   projectUserConfigDoc: SFProjectUserConfigDoc;
 }
 
@@ -19,12 +23,16 @@ export interface SuggestionsSettingsDialogData {
 })
 export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
   suggestionsEnabledSwitch = new UntypedFormControl({ disabled: !this.pwaService.isOnline });
+  biblicalTermsEnabledSwitch = new UntypedFormControl({ disabled: !this.pwaService.isOnline });
+  transliterateBiblicalTermsSwitch = new UntypedFormControl({ disabled: !this.pwaService.isOnline });
 
+  private readonly projectDoc: SFProjectProfileDoc;
   private readonly projectUserConfigDoc: SFProjectUserConfigDoc;
   private confidenceThreshold$ = new BehaviorSubject<number>(20);
 
   constructor(@Inject(MAT_DIALOG_DATA) data: SuggestionsSettingsDialogData, readonly pwaService: PwaService) {
     super();
+    this.projectDoc = data.projectDoc;
     this.projectUserConfigDoc = data.projectUserConfigDoc;
 
     if (this.projectUserConfigDoc.data != null) {
@@ -33,13 +41,18 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
     }
 
     this.suggestionsEnabledSwitch.setValue(this.translationSuggestionsUserEnabled);
+    this.biblicalTermsEnabledSwitch.setValue(this.biblicalTermsUserEnabled);
+    this.transliterateBiblicalTermsSwitch.setValue(this.transliterateBiblicalTerms);
     pwaService.onlineStatus$.subscribe(() => {
-      if (pwaService.isOnline) {
-        this.suggestionsEnabledSwitch.enable();
-      } else {
-        this.suggestionsEnabledSwitch.disable();
-      }
+      this.updateSwitches();
     });
+    this.projectDoc.changes$.subscribe(() => {
+      this.updateSwitches();
+    });
+    this.projectUserConfigDoc.changes$.subscribe(() => {
+      this.updateSwitches();
+    });
+    this.updateSwitches();
 
     this.subscribe(
       this.confidenceThreshold$.pipe(
@@ -51,12 +64,38 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
     );
   }
 
+  setBiblicalTermsEnabled(value: boolean): void {
+    this.projectUserConfigDoc.submitJson0Op(op => op.set<boolean>(puc => puc.biblicalTermsEnabled, value));
+  }
+
+  setTransliterateBiblicalTerms(value: boolean): void {
+    this.projectUserConfigDoc.submitJson0Op(op => op.set<boolean>(puc => puc.transliterateBiblicalTerms, value));
+  }
+
   setTranslationSettingsEnabled(value: boolean): void {
     this.projectUserConfigDoc.submitJson0Op(op => op.set<boolean>(puc => puc.translationSuggestionsEnabled, value));
   }
 
-  get settingsDisabled(): boolean {
-    return !this.translationSuggestionsUserEnabled || !this.pwaService.isOnline;
+  updateSwitches(): void {
+    if (this.canUseTranslationSuggestions && this.pwaService.isOnline) {
+      this.suggestionsEnabledSwitch.enable();
+    } else {
+      this.suggestionsEnabledSwitch.disable();
+    }
+    if (this.canUseBiblicalTerms && this.pwaService.isOnline) {
+      this.biblicalTermsEnabledSwitch.enable();
+    } else {
+      this.biblicalTermsEnabledSwitch.disable();
+    }
+    if (this.biblicalTermsDisabled || !this.pwaService.isOnline) {
+      this.transliterateBiblicalTermsSwitch.disable();
+    } else {
+      this.transliterateBiblicalTermsSwitch.enable();
+    }
+  }
+
+  get translationSuggestionsDisabled(): boolean {
+    return !this.translationSuggestionsUserEnabled || !this.canUseTranslationSuggestions || !this.pwaService.isOnline;
   }
 
   get translationSuggestionsUserEnabled(): boolean {
@@ -77,5 +116,41 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
 
   set confidenceThreshold(value: number) {
     this.confidenceThreshold$.next(value);
+  }
+
+  get biblicalTermsDisabled(): boolean {
+    return !this.biblicalTermsUserEnabled || !this.canUseBiblicalTerms || !this.pwaService.isOnline;
+  }
+
+  get biblicalTermsUserEnabled(): boolean {
+    return this.projectUserConfigDoc.data == null ? true : this.projectUserConfigDoc.data.biblicalTermsEnabled;
+  }
+
+  get transliterateBiblicalTerms(): boolean {
+    return this.projectUserConfigDoc.data == null ? true : this.projectUserConfigDoc.data.transliterateBiblicalTerms;
+  }
+
+  get canUseBiblicalTerms(): boolean {
+    const userRole: string | undefined =
+      this.projectUserConfigDoc.data?.ownerRef != null
+        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data?.ownerRef]
+        : undefined;
+    return (
+      this.projectDoc?.data?.biblicalTermsConfig.biblicalTermsEnabled === true &&
+      userRole != null &&
+      SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.View)
+    );
+  }
+
+  get canUseTranslationSuggestions(): boolean {
+    const userRole: string | undefined =
+      this.projectUserConfigDoc.data?.ownerRef != null
+        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data?.ownerRef]
+        : undefined;
+    return (
+      this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled === true &&
+      userRole != null &&
+      SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.Texts, Operation.Edit)
+    );
   }
 }
