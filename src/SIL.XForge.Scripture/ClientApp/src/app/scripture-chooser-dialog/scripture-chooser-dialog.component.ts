@@ -58,10 +58,10 @@ export class ScriptureChooserDialogComponent implements OnInit {
   ngOnInit(): void {
     const books = Object.keys(this.data.booksAndChaptersToShow);
     this.otBooks = books
-      .filter(book => this.isOT(book))
+      .filter(book => Canon.isBookOT(book))
       .sort((a, b) => this.data.booksAndChaptersToShow[a].bookNum - this.data.booksAndChaptersToShow[b].bookNum);
     this.ntBooks = books
-      .filter(book => !this.isOT(book))
+      .filter(book => !Canon.isBookOT(book))
       .sort((a, b) => this.data.booksAndChaptersToShow[a].bookNum - this.data.booksAndChaptersToShow[b].bookNum);
 
     if (this.data.rangeStart != null) {
@@ -104,7 +104,7 @@ export class ScriptureChooserDialogComponent implements OnInit {
   onClickChapter(chapter: number): void {
     this.selection.chapter = chapter.toString();
     if (this.data.includeVerseSelection === false) {
-      this.dialogRef.close(new VerseRef(this.selection.book, this.selection.chapter, 0));
+      this.dialogRef.close(new VerseRef(this.selection.book!, this.selection.chapter!, ''));
     } else {
       this.showVerseSelection();
     }
@@ -112,7 +112,7 @@ export class ScriptureChooserDialogComponent implements OnInit {
 
   onClickVerse(verse: number): void {
     this.selection.verse = verse.toString();
-    this.dialogRef.close(new VerseRef(this.selection.book, this.selection.chapter, this.selection.verse));
+    this.dialogRef.close(new VerseRef(this.selection.book!, this.selection.chapter!, this.selection.verse));
   }
 
   onClickBackoutButton(): void {
@@ -141,14 +141,6 @@ export class ScriptureChooserDialogComponent implements OnInit {
 
   showRangeEndSelection(): void {
     this.showing = 'rangeEnd';
-  }
-
-  /** Is the book in the OT?
-   * False if in NT or invalid. */
-  isOT(bookId: string): boolean {
-    const firstBook = 0;
-    const numOTBooks = 39;
-    return Canon.allBookIds.slice(firstBook, numOTBooks).includes(bookId);
   }
 
   /** Returns an array of all chapters for a given book that the dialog was told about.

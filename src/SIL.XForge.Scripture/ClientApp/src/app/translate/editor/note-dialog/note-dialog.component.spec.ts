@@ -110,13 +110,13 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('shows segment text for rtl combined verses', fakeAsync(() => {
-    const verseRef: VerseRef = VerseRef.parse('MAT 1:2-3');
+    const verseRef: VerseRef = new VerseRef('MAT 1:2-3');
     env = new TestEnvironment({ verseRef, isRightToLeftProject: true, combinedVerseTextDoc: true });
     expect(env.noteText.nativeElement.textContent).toBe('target: chapter 1, verse 2-3.');
   }));
 
   it('shows segment text for rtl multiple verses', fakeAsync(() => {
-    const verseRef: VerseRef = VerseRef.parse('MAT 1:5,7');
+    const verseRef: VerseRef = new VerseRef('MAT 1:5,7');
     env = new TestEnvironment({ verseRef, isRightToLeftProject: true, combinedVerseTextDoc: true });
     expect(env.noteText.nativeElement.textContent).toBe('target: chapter 1, verse 5,7.');
   }));
@@ -328,7 +328,7 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('show insert note dialog content', fakeAsync(() => {
-    env = new TestEnvironment({ verseRef: VerseRef.parse('MAT 1:1'), noteTagId: 6 });
+    env = new TestEnvironment({ verseRef: new VerseRef('MAT 1:1'), noteTagId: 6 });
     expect(env.noteInputElement).toBeTruthy();
     expect(env.flagIcon).toEqual('/assets/icons/TagIcons/defaultIcon.png');
     expect(env.verseRef).toEqual('Matthew 1:1');
@@ -337,7 +337,7 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('can insert a note', fakeAsync(() => {
-    const verseRef = VerseRef.parse('MAT 1:3');
+    const verseRef = new VerseRef('MAT 1:3');
     env = new TestEnvironment({ verseRef, noteTagId: 2 });
     expect(env.noteInputElement).toBeTruthy();
     expect(env.verseRef).toEqual('Matthew 1:3');
@@ -356,7 +356,7 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('does not save note if textarea is empty', fakeAsync(() => {
-    env = new TestEnvironment({ verseRef: VerseRef.parse('MAT 1:1') });
+    env = new TestEnvironment({ verseRef: new VerseRef('MAT 1:1') });
     expect(env.noteInputElement).toBeTruthy();
     env.submit();
     verify(mockedProjectService.createNoteThread(anything(), anything())).never();
@@ -364,7 +364,7 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('does not show text area for users without write permissions', fakeAsync(() => {
-    const verseRef = VerseRef.parse('MAT 1:3');
+    const verseRef = new VerseRef('MAT 1:3');
     env = new TestEnvironment({ currentUserId: 'user02', verseRef });
     expect(env.noteInputElement).toBeNull();
     expect(env.saveButton).toBeNull();

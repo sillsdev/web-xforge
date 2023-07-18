@@ -185,7 +185,7 @@ describe('QuestionDialogComponent', () => {
   }));
 
   it('should set default verse and text direction when provided', fakeAsync(() => {
-    const verseRef: VerseRef = VerseRef.parse('LUK 1:1');
+    const verseRef: VerseRef = new VerseRef('LUK 1:1');
     env = new TestEnvironment(undefined, verseRef, true);
     flush();
     expect(env.component.scriptureStart.value).toBe('LUK 1:1');
@@ -241,7 +241,7 @@ describe('QuestionDialogComponent', () => {
     env.clickElement(env.scriptureStartInputIcon);
     flush();
     verify(
-      env.dialogServiceSpy.openMatDialog(anything(), objectContaining({ data: { input: VerseRef.parse('MAT 3:4') } }))
+      env.dialogServiceSpy.openMatDialog(anything(), objectContaining({ data: { input: new VerseRef('MAT 3:4') } }))
     ).once();
     flush();
     expect(env.component.scriptureStart.value).toEqual('LUK 1:2');
@@ -289,7 +289,7 @@ describe('QuestionDialogComponent', () => {
     verify(
       env.dialogServiceSpy.openMatDialog(
         anything(),
-        objectContaining({ data: { input: VerseRef.parse('GEN 5:6'), rangeStart: VerseRef.parse('LUK 1:1') } })
+        objectContaining({ data: { input: new VerseRef('GEN 5:6'), rangeStart: new VerseRef('LUK 1:1') } })
       )
     ).once();
     flush();
@@ -307,7 +307,7 @@ describe('QuestionDialogComponent', () => {
     verify(
       env.dialogServiceSpy.openMatDialog(
         anything(),
-        objectContaining({ data: { input: VerseRef.parse('LUK 1:1'), rangeStart: undefined } })
+        objectContaining({ data: { input: new VerseRef('LUK 1:1'), rangeStart: undefined } })
       )
     ).once();
     flush();
@@ -383,7 +383,7 @@ describe('QuestionDialogComponent', () => {
       dataId: 'question01',
       ownerRef: 'user01',
       projectRef: 'project01',
-      verseRef: fromVerseRef(VerseRef.parse('LUK 1:3')),
+      verseRef: fromVerseRef(new VerseRef('LUK 1:3')),
       answers: [],
       isArchived: false,
       dateCreated: '',
@@ -403,7 +403,7 @@ describe('QuestionDialogComponent', () => {
       dataId: 'question01',
       ownerRef: 'user01',
       projectRef: 'project01',
-      verseRef: fromVerseRef(VerseRef.parse('LUK 1:3')),
+      verseRef: fromVerseRef(new VerseRef('LUK 1:3')),
       answers: [],
       isArchived: false,
       dateCreated: '',
@@ -426,7 +426,7 @@ describe('QuestionDialogComponent', () => {
       dataId: 'question01',
       ownerRef: 'user01',
       projectRef: 'project01',
-      verseRef: fromVerseRef(VerseRef.parse('LUK 1:3-4')),
+      verseRef: fromVerseRef(new VerseRef('LUK 1:3-4')),
       answers: [],
       isArchived: false,
       dateCreated: '',

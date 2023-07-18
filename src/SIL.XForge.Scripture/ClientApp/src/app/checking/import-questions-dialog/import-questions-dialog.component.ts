@@ -423,7 +423,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
         const fullReference: string =
           refStartsWithBook || defaultBookId == null ? reference : defaultBookId + ' ' + reference;
         questions.push({
-          verseRef: VerseRef.parse(fullReference),
+          verseRef: new VerseRef(fullReference),
           text: questionText
         });
       } catch {

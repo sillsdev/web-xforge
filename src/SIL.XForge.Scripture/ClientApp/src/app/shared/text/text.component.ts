@@ -16,7 +16,7 @@ import Quill, { DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
-import { VerseRef } from '@sillsdev/scripture';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { fromEvent, Subject, Subscription, timer } from 'rxjs';
 import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -1302,7 +1302,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
       // If verse segment ref has no exact match, check for segments that fall within a verse reference
       if (VERSE_REGEX.test(segmentRef)) {
         const [_, chapterNum, verseNum] = segmentRef.split('_');
-        const verseRef: VerseRef = new VerseRef(this.id?.bookNum, chapterNum, verseNum);
+        const verseRef: VerseRef = new VerseRef(Canon.bookNumberToId(this.id?.bookNum ?? 0), chapterNum, verseNum);
         const correspondingSegments: string[] = this.getVerseSegments(verseRef);
 
         if (correspondingSegments.length > 0) {

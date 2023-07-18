@@ -188,7 +188,7 @@ describe('TextComponent', () => {
     tick();
     env.fixture.detectChanges();
 
-    const verseSegments: string[] = env.component.getVerseSegments(VerseRef.parse('LUK 1:1'));
+    const verseSegments: string[] = env.component.getVerseSegments(new VerseRef('LUK 1:1'));
     expect(verseSegments).toEqual(['verse_1_1', 'verse_1_1/q_1', 'verse_1_1/q_2', 'verse_1_1/q_3']);
     const segmentText = env.component.getSegmentText('verse_1_1/q_2');
     expect(segmentText).toEqual('Poetry third line');
@@ -1057,7 +1057,7 @@ describe('TextComponent', () => {
     tick();
     env.fixture.detectChanges();
     // the current text is on chapter 1, so this should result in no matching segments
-    const verseRef: VerseRef = VerseRef.parse('MAT 2:1');
+    const verseRef: VerseRef = new VerseRef('MAT 2:1');
     const segments: string[] = env.component.getVerseSegments(verseRef);
     expect(segments.length).withContext('should be no matching segments when chapter does not match').toBe(0);
   }));
@@ -1068,7 +1068,7 @@ describe('TextComponent', () => {
     tick();
     env.fixture.detectChanges();
     // the current text is in Matthew, so this should result in no matching segments
-    const verseRef: VerseRef = VerseRef.parse('MRK 1:1');
+    const verseRef: VerseRef = new VerseRef('MRK 1:1');
     const segments: string[] = env.component.getVerseSegments(verseRef);
     expect(segments.length).withContext('should be no matching segments when book does not match').toBe(0);
   }));
@@ -1341,7 +1341,7 @@ class TestEnvironment {
 
   /** Where reference is like 'MAT 1:2'. */
   embedThreadAt(reference: string, textAnchor: TextAnchor, role: string = SFProjectRole.ParatextTranslator): void {
-    const verseRef: VerseRef = VerseRef.parse(reference);
+    const verseRef: VerseRef = new VerseRef(reference);
     const uniqueSuffix: string = Math.random().toString();
     const id: string = `embedid${reference}${uniqueSuffix}`;
     const iconSource: string = '--icon-file: url(/assets/icons/TagIcons/01flag1.png)';

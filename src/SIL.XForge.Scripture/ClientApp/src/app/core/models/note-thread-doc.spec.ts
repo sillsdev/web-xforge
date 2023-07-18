@@ -36,7 +36,7 @@ describe('NoteThreadDoc', () => {
       url: '/assets/icons/TagIcons/flag2.png'
     };
     expect(noteThreadDoc.getIcon(env.noteTags)).toEqual(expectedIcon);
-    const expectedVerseRef = VerseRef.parse('MAT 1:1');
+    const expectedVerseRef = new VerseRef('MAT 1:1');
     expect(noteThreadDoc.currentVerseRef()!.equals(expectedVerseRef)).toBe(true);
   });
 
@@ -133,7 +133,7 @@ describe('NoteThreadDoc', () => {
       url: '/assets/icons/TagIcons/flag3.png'
     };
     expect(noteThreadDoc.getIcon(env.noteTags)).toEqual(expectedIcon);
-    const expectedVerseRef = VerseRef.parse('MAT 1:1');
+    const expectedVerseRef = new VerseRef('MAT 1:1');
     expect(noteThreadDoc.currentVerseRef()!.equals(expectedVerseRef)).toBe(true);
   });
 
@@ -175,7 +175,7 @@ describe('NoteThreadDoc', () => {
 
     const noteThreadDoc: NoteThreadDoc = await env.setupDoc(notes);
     const verseRef: VerseRef = noteThreadDoc.currentVerseRef()!;
-    const expected: VerseRef = VerseRef.parse('MAT 1:2');
+    const expected: VerseRef = new VerseRef('MAT 1:2');
     expect(verseRef.equals(expected)).toBe(true);
   });
 });

@@ -170,7 +170,7 @@ describe('ImportQuestionsDialogComponent', () => {
   it('show scripture chooser dialog', fakeAsync(() => {
     const env = new TestEnvironment();
     env.click(env.importFromTransceleratorButton);
-    when(env.mockedScriptureChooserMatDialogRef.afterClosed()).thenReturn(of(VerseRef.parse('MAT 1:1')));
+    when(env.mockedScriptureChooserMatDialogRef.afterClosed()).thenReturn(of(new VerseRef('MAT 1:1')));
     env.openFromScriptureChooser();
     verify(mockedDialogService.openMatDialog(anything(), anything())).once();
     expect(env.component.fromControl.value).toBe('MAT 1:1');

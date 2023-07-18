@@ -206,13 +206,6 @@ describe('ScriptureChooserDialog', () => {
     expect(env.dialogText).not.toContain(nonexistentVerseOfRomans11);
   }));
 
-  it('identifies OT book', () => {
-    env = new TestEnvironment();
-    expect(env.component.isOT('GEN')).toBe(true);
-    expect(env.component.isOT('LUK')).toBe(false);
-    expect(env.component.isOT('XYZ')).toBe(false);
-  });
-
   it('splits input books by OT and NT', () => {
     env = new TestEnvironment();
     expect(env.component.otBooks.includes('EXO')).toBe(true);

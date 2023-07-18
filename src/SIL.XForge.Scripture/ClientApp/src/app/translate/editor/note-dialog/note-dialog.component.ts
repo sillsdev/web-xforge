@@ -312,7 +312,7 @@ export class NoteDialogComponent implements OnInit {
     }
     const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
     const verseStr: string = reattachedParts[0];
-    const vref: VerseRef = VerseRef.parse(verseStr);
+    const vref: VerseRef = new VerseRef(verseStr);
     const verseRef: string = this.i18n.localizeReference(vref);
     const reattached: string = translate('note_dialog.reattached');
     return `${verseRef} ${reattached}`;
