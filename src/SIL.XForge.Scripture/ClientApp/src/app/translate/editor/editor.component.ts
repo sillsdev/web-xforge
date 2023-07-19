@@ -956,7 +956,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     }
     const currentDate: string = new Date().toJSON();
-    const threadId: string = params.threadDataId != null ? '' : objectId();
+    // if adding a note to an existing thread, the empty string must be replaced by the existing thread id
+    const newThreadId: string = params.threadDataId != null ? '' : objectId();
     // only set the tag id if it is the first note in the thread
     const tagId: number | undefined =
       params.threadDataId == null ? this.projectDoc?.data?.translateConfig.defaultNoteTagId : undefined;
@@ -964,7 +965,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const note: Note = {
       dateCreated: currentDate,
       dateModified: currentDate,
-      threadId,
+      threadId: newThreadId,
       dataId: params.dataId ?? objectId(),
       tagId,
       ownerRef: this.userService.currentUserId,
@@ -979,7 +980,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       // Create a new thread
       const noteThread: NoteThread = {
         dataId: objectId(),
-        threadId,
+        threadId: newThreadId,
         verseRef: fromVerseRef(params.verseRef),
         projectRef: this.projectId,
         ownerRef: this.userService.currentUserId,
