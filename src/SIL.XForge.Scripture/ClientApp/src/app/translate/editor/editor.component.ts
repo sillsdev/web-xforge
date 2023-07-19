@@ -1488,7 +1488,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private loadProjectUserConfig(chapterFromUrl?: number): void {
-    let chapter = chapterFromUrl ?? this.chapters.length > 0 ? this.chapters[0] : 1;
+    let chapter = chapterFromUrl ?? (this.chapters.length > 0 ? this.chapters[0] : 1);
 
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
       const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
