@@ -66,7 +66,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
               : of(job)
           )
         ),
-      job => {
+      (job?: BuildDto) => {
         this.draftJob = job;
         this.isReady = true;
       }
@@ -85,13 +85,13 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       return undefined;
     }
 
-    const languageNames = new Intl.DisplayNames([currentLocale.canonicalTag], { type: 'language' });
+    const languageNames: Intl.DisplayNames = new Intl.DisplayNames([currentLocale.canonicalTag], { type: 'language' });
     return languageNames.of(languageCode);
   }
 
   async generateDraft(shouldConfirm = false): Promise<void> {
     if (shouldConfirm) {
-      const isConfirmed = await this.dialogService.openGenericDialog({
+      const isConfirmed: boolean | undefined = await this.dialogService.openGenericDialog({
         title: of('Confirm draft regeneration'),
         message: of('This will re-create any unapplied draft text! Are you sure you want to generate a new draft?'),
         options: [
@@ -115,13 +115,13 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
           }
         })
       ),
-      job => (this.draftJob = job)
+      (job?: BuildDto) => (this.draftJob = job)
     );
   }
 
   async cancel(): Promise<void> {
     if (this.draftJob?.state === BuildStates.Active) {
-      const isConfirmed = await this.dialogService.openGenericDialog({
+      const isConfirmed: boolean | undefined = await this.dialogService.openGenericDialog({
         title: of('Confirm draft cancellation'),
         message: of('Are you sure you want to cancel generating the draft?'),
         options: [
