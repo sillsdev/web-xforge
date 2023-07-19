@@ -90,8 +90,8 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
 
     // Set book/chapter from route, or first book/chapter if not provided
     this.activatedRoute.paramMap.subscribe((params: ParamMap) => {
-      const bookId = params.get('bookId');
-      const book = bookId ? Canon.bookIdToNumber(bookId) : this.books[0];
+      const bookId: string | null = params.get('bookId');
+      const book: number = bookId ? Canon.bookIdToNumber(bookId) : this.books[0];
       this.setBook(book, Number(params.get('chapter')));
     });
   }
@@ -143,8 +143,12 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
   }
 
   applyDraft(): void {
-    const cleanedOps = this.cleanDraftOps(this.targetEditor.editor?.getContents().ops!);
-    const diff = this.preDraftTargetDelta?.diff(new Delta(cleanedOps));
+    if (!this.preDraftTargetDelta?.ops) {
+      throw new Error(`'applyDraft()' called when 'preDraftTargetDelta' is not set`);
+    }
+
+    const cleanedOps: DeltaOperation[] = this.cleanDraftOps(this.targetEditor.editor?.getContents().ops!);
+    const diff: DeltaStatic = this.preDraftTargetDelta.diff(new Delta(cleanedOps));
 
     // Set content back to original to prepare for update with diff
     this.targetEditor.editor?.setContents(this.preDraftTargetDelta!, 'silent');
@@ -153,7 +157,7 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     // setContents() is causing a 'delete' op to be appended because of the final '\n'.
     // This delete op is persisted and triggers the 'corrupted data' notice back in the editor component.
     this.targetEditor.editor?.enable(true);
-    this.targetEditor.editor?.updateContents(diff!, 'user');
+    this.targetEditor.editor?.updateContents(diff, 'user');
     this.targetEditor.editor?.disable();
 
     this.isDraftApplied = true;
