@@ -26,7 +26,7 @@ describe('DraftGenerationService', () => {
     state: BuildStates.Queued
   };
 
-  beforeEach(() => {
+  beforeAll(() => {
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [DraftGenerationService, { provide: HttpClient, useValue: { get: () => of({}), post: () => of({}) } }]
@@ -113,8 +113,8 @@ describe('DraftGenerationService', () => {
 
   describe('getGeneratedDraft', () => {
     it('should get the pretranslations for the specified book/chapter and return an observable of DraftSegmentMap', done => {
-      const book = 44;
-      const chapter = 2;
+      const book = 43;
+      const chapter = 3;
       const preTranslationData = {
         data: {
           preTranslations: [
@@ -131,15 +131,15 @@ describe('DraftGenerationService', () => {
           verse_1_1: 'In the beginning was the Word '
         });
         expect(httpClient.get).toHaveBeenCalledWith(
-          `translation/engines/project:${projectId}/actions/preTranslate/${book}_${chapter}`
+          `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
         );
         done();
       });
     });
 
     it('should handle empty preTranslations array', done => {
-      const book = 44;
-      const chapter = 2;
+      const book = 43;
+      const chapter = 3;
       const preTranslationData = {
         data: {
           preTranslations: []
@@ -150,15 +150,15 @@ describe('DraftGenerationService', () => {
       service.getGeneratedDraft(projectId, book, chapter).subscribe(result => {
         expect(result).toEqual({});
         expect(httpClient.get).toHaveBeenCalledWith(
-          `translation/engines/project:${projectId}/actions/preTranslate/${book}_${chapter}`
+          `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
         );
         done();
       });
     });
 
     it('should handle invalid verse references', done => {
-      const book = 44;
-      const chapter = 2;
+      const book = 43;
+      const chapter = 3;
       const preTranslationData = {
         data: {
           preTranslations: [
@@ -174,7 +174,7 @@ describe('DraftGenerationService', () => {
           verse_3_16: 'For God so loved the world '
         });
         expect(httpClient.get).toHaveBeenCalledWith(
-          `translation/engines/project:${projectId}/actions/preTranslate/${book}_${chapter}`
+          `translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`
         );
         done();
       });
