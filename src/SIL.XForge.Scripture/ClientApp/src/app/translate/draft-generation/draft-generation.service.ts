@@ -28,8 +28,9 @@ export class DraftGenerationService {
   /**
    * Polls the build progress for specified project as long as build is active.
    * @param projectId The SF project id for the target translation.
-   * @returns A hot observable BuildDto describing the state and progress of the build job
-   * or undefined if no build is running.
+   * @returns A hot observable BuildDto describing the state and progress of the current build job,
+   * or the latest build job if no build is currently running, or undefined if no build has ever
+   * been started.  Observable will complete when build is no longer active.
    */
   pollBuildProgress(projectId: string): Observable<BuildDto | undefined> {
     return timer(0, this.options.pollRate).pipe(
@@ -43,8 +44,9 @@ export class DraftGenerationService {
   /**
    * Gets pretranslation build job state for specified project.
    * @param projectId The SF project id for the target translation.
-   * @returns An observable BuildDto describing the state and progress of the build job
-   * or undefined if no build is running.
+   * @returns An observable BuildDto describing the state and progress of the current build job,
+   * or the latest build job if no build is currently running, or undefined if no build has ever
+   * been started.
    */
   getBuildProgress(projectId: string): Observable<BuildDto | undefined> {
     return this.httpClient.get<BuildDto>(`translation/builds/id:${projectId}?pretranslate=true`).pipe(
@@ -61,6 +63,7 @@ export class DraftGenerationService {
         return res.data;
       }),
       catchError(err => {
+        // If no build has ever been started, return undefined
         if (err.status === 404) {
           return of(undefined);
         }
@@ -96,6 +99,7 @@ export class DraftGenerationService {
     return this.httpClient.post<void>(`translation/pretranslations/cancel`, JSON.stringify(projectId)).pipe(
       map(res => res.data),
       catchError(err => {
+        // Handle gracefully if no build is currently running
         if (err.status === 404) {
           return EMPTY;
         }
@@ -105,18 +109,19 @@ export class DraftGenerationService {
   }
 
   /**
-   * Gets the pretranslations for the specified book/chapter.
+   * Gets the pretranslations for the specified book/chapter using the last completed build.
    * @param projectId The SF project id for the target translation.
    * @param book The book number.
    * @param chapter The chapter number.
-   * @returns An observable dictionary of segmentRef -> verse.
+   * @returns An observable dictionary of segmentRef -> verse, or an empty dictionary if no pretranslations exist.
    */
   getGeneratedDraft(projectId: string, book: number, chapter: number): Observable<DraftSegmentMap> {
     return this.httpClient
-      .get<PreTranslationData>(`translation/engines/project:${projectId}/actions/preTranslate/${book}_${chapter}`)
+      .get<PreTranslationData>(`translation/engines/project:${projectId}/actions/pretranslate/${book}_${chapter}`)
       .pipe(
         map(res => (res.data && this.toDraftSegmentMap(res.data.preTranslations)) ?? {}),
         catchError(err => {
+          // If no pretranslations exist, return empty dictionary
           if (err.status === 404) {
             return of({});
           }
@@ -137,7 +142,7 @@ export class DraftGenerationService {
         let { success, verseRef } = VerseRef.tryParse(curr.reference);
 
         if (success) {
-          const segmentRef = `verse_${verseRef.chapter}_${verseRef.verse}`;
+          const segmentRef: string = `verse_${verseRef.chapter}_${verseRef.verse}`;
           result[segmentRef] = curr.translation.trimEnd() + ' '; // Ensure single space at end
         }
 
