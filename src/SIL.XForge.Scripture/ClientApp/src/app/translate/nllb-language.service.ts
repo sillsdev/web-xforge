@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
 import { findKey } from 'lodash-es';
-import { NLLB_LANGUAGES, NllbLanguageDict } from './nllb-languages';
+import { NllbLanguage, NllbLanguageDict, NLLB_LANGUAGES } from './nllb-languages';
 
 /**
  * Methods for working with the No Language Left Behind (NLLB) language codes.
@@ -15,20 +15,21 @@ export class NllbLanguageService {
    * Whether the supplied language code is either a ISO 369-1 (two-letter)
    * or ISO 369-2/T (three-letter) code in the NLLB set.
    * @param languageCode The two- or three-letter code for the language. Language code can have
-   * culture information attached with hyphens ('en-Latn-GB').
+   * culture information attached with hyphens or underscores ('en-Latn-GB').
    * @returns `true` if language code is in the list of NLLB languages.
    */
   isNllbLanguage(languageCode: string | null | undefined): boolean {
-    if (!languageCode) {
+    if (languageCode == null || languageCode.length < 2) {
       return false;
     }
 
-    const code = languageCode.split('-')[0].toLowerCase();
+    // Handle hyphen or underscore delimited
+    const code: string = languageCode.split(/[_-]/)[0].toLowerCase();
 
     if (this.nllbLanguages[code]) {
       return true;
     }
 
-    return !!findKey(this.nllbLanguages, lang => lang.iso639_1 === code);
+    return !!findKey(this.nllbLanguages, (lang: NllbLanguage) => lang.iso639_1 === code);
   }
 }
