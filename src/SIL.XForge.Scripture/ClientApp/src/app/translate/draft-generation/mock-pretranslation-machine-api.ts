@@ -30,7 +30,7 @@ export class MockPreTranslationHttpClient {
 
   get<T extends BuildDto | PreTranslationData | undefined>(url: string): Observable<HttpResponse<T>> {
     const GET_DRAFT_URL_REGEX: RegExp = /^translation\/engines\/project:[^\/]+\/actions\/pretranslate\/(\d+)_(\d+)$/i;
-    const GET_BUILD_PROGRESS_URL_REGEX: RegExp = /^translation\/builds\/id:[^\/?]+\?(?-i)pretranslate=true$/i;
+    const GET_BUILD_PROGRESS_URL_REGEX: RegExp = /^translation\/builds\/id:[^\/?]+\?pretranslate=true$/i;
 
     // Get build progress
     if (GET_BUILD_PROGRESS_URL_REGEX.test(url)) {
