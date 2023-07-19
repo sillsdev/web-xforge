@@ -29,11 +29,11 @@ export class MockPreTranslationHttpClient {
   private currentJobState?: BuildDto;
 
   get<T extends BuildDto | PreTranslationData | undefined>(url: string): Observable<HttpResponse<T>> {
-    const getDraftUrlRegex = /^translation\/engines\/project:[^\/]+\/actions\/preTranslate\/(\d+)_(\d+)$/;
-    const getBuildProgressUrlRegex = /^translation\/builds\/id:[^\/?]+\?pretranslate=true$/;
+    const GET_DRAFT_URL_REGEX: RegExp = /^translation\/engines\/project:[^\/]+\/actions\/pretranslate\/(\d+)_(\d+)$/i;
+    const GET_BUILD_PROGRESS_URL_REGEX: RegExp = /^translation\/builds\/id:[^\/?]+\?(?-i)pretranslate=true$/i;
 
     // Get build progress
-    if (getBuildProgressUrlRegex.test(url)) {
+    if (GET_BUILD_PROGRESS_URL_REGEX.test(url)) {
       if (!this.currentJobState) {
         return of({ status: 204, data: undefined });
       }
@@ -42,17 +42,17 @@ export class MockPreTranslationHttpClient {
     }
 
     // Get generated draft
-    else if (getDraftUrlRegex.test(url)) {
+    else if (GET_DRAFT_URL_REGEX.test(url)) {
       // Build has not started, has not finished, or was cancelled
       if (!this.currentJobState) {
         return of({ status: 200, data: { preTranslations: [] as PreTranslation[] } as T });
       }
 
-      const matchResult = url.match(getDraftUrlRegex);
+      const matchResult: RegExpMatchArray | null = url.match(GET_DRAFT_URL_REGEX);
 
       if (matchResult) {
-        const book = matchResult[1];
-        const chapter = matchResult[2];
+        const book: string = matchResult[1];
+        const chapter: string = matchResult[2];
         return of({ status: 200, data: { preTranslations: samplePreTranslations[`${book}_${chapter}`] } as T });
       }
     }
@@ -79,11 +79,13 @@ export class MockPreTranslationHttpClient {
 
   // Mock generation
   private startGeneration(): void {
-    const interval = 500;
-    const duration = 5000;
-    const pendingAfter = duration / 4;
-    const activeAfter = (duration / 4) * 2;
-    const generationTimer$ = timer(0, interval).pipe(takeWhile(x => interval * x <= duration, true));
+    const interval: number = 500;
+    const duration: number = 5000;
+    const pendingAfter: number = duration / 4;
+    const activeAfter: number = (duration / 4) * 2;
+    const generationTimer$: Observable<number> = timer(0, interval).pipe(
+      takeWhile(x => interval * x <= duration, true)
+    );
 
     this.currentJobState = { ...this.initialJobState };
 
@@ -93,7 +95,7 @@ export class MockPreTranslationHttpClient {
         return;
       }
 
-      const elapsed = intervalNum * interval;
+      const elapsed: number = intervalNum * interval;
 
       if (elapsed >= pendingAfter) {
         this.currentJobState.state = BuildStates.Pending;

@@ -24,10 +24,6 @@ describe('NllbLanguageService', () => {
     service = TestBed.inject(NllbLanguageService);
   });
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
-
   describe('isNllbLanguage', () => {
     it('should return true for valid two-letter NLLB language code', () => {
       expect(service.isNllbLanguage('en')).toBe(true);
@@ -56,12 +52,20 @@ describe('NllbLanguageService', () => {
       expect(service.isNllbLanguage(undefined)).toBe(false);
     });
 
-    it('should return true for valid two-letter NLLB language code with culture', () => {
+    it('should return true for valid two-letter NLLB language code with culture (hyphen delimited)', () => {
       expect(service.isNllbLanguage('en-Latn-GB')).toBe(true);
     });
 
-    it('should return false for invalid two-letter NLLB language code with culture', () => {
+    it('should return false for invalid two-letter NLLB language code with culture (hyphen delimited)', () => {
       expect(service.isNllbLanguage('xy-Latn-GB')).toBe(false);
+    });
+
+    it('should return true for valid two-letter NLLB language code with culture (underscore delimited)', () => {
+      expect(service.isNllbLanguage('en_Latn_GB')).toBe(true);
+    });
+
+    it('should return false for invalid two-letter NLLB language code with culture (underscore delimited)', () => {
+      expect(service.isNllbLanguage('xy_Latn_GB')).toBe(false);
     });
   });
 });
