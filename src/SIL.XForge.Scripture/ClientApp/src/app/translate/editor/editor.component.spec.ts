@@ -3306,6 +3306,20 @@ describe('EditorComponent', () => {
       expect(env.component.hasDraft).toBe(false);
       env.dispose();
     }));
+
+    it('sets book and chapter according to route', fakeAsync(() => {
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK', chapter: '2' };
+      const env = new TestEnvironment();
+
+      env.setProjectUserConfig();
+      env.updateParams(navigationParams);
+      env.wait();
+
+      expect(env.bookName).toEqual('Mark');
+      expect(env.component.chapter).toBe(2);
+
+      env.dispose();
+    }));
   });
 });
 
