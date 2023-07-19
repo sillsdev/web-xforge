@@ -10,20 +10,25 @@ namespace SIL.XForge.Services;
 public class AudioService : IAudioService
 {
     private readonly IOptions<AudioOptions> _audioOptions;
+    private readonly IFileSystemService _fileSystemService;
 
-    public AudioService(IOptions<AudioOptions> audioOptions) => _audioOptions = audioOptions;
+    public AudioService(IOptions<AudioOptions> audioOptions, IFileSystemService fileSystemService)
+    {
+        _audioOptions = audioOptions;
+        _fileSystemService = fileSystemService;
+    }
 
     public async Task ConvertToMp3Async(string inputPath, string outputPath)
     {
-        using var process = new Process()
+        using var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
                 FileName = _audioOptions.Value.FfmpegPath,
                 Arguments = $"-y -i \"{inputPath}\" \"{outputPath}\"",
                 UseShellExecute = false,
-                CreateNoWindow = true
-            }
+                CreateNoWindow = true,
+            },
         };
         process.Start();
         await WaitForExitAsync(process);
@@ -32,15 +37,15 @@ public class AudioService : IAudioService
     }
 
     /// <summary>
-    /// Reads the first three bytes of the stream to see if it is MP3 data
+    /// Reads the first three bytes of the file to see if it is MP3 data
     /// </summary>
-    /// <param name="stream">The stream.</param>
+    /// <param name="path">The path to the file.</param>
     /// <returns><c>true</c> if the stream is and MP3 file; otherwise, <c>false</c>.</returns>
     /// <remarks>This code is based on the data in magic.mime.</remarks>
-    public async Task<bool> IsMp3DataAsync(Stream stream)
+    public async Task<bool> IsMp3FileAsync(string path)
     {
-        // Reset the stream to the start
-        stream.Seek(0, SeekOrigin.Begin);
+        // Open the file
+        await using Stream stream = _fileSystemService.OpenFile(path, FileMode.Open);
 
         // Declare variables for stream reading
         byte[] buffer;
@@ -55,8 +60,6 @@ public class AudioService : IAudioService
             // End of stream reached without finding a non-null byte
             if (bytesRead == 0)
             {
-                // Reset the stream to the start
-                stream.Seek(0, SeekOrigin.Begin);
                 return false;
             }
 
@@ -71,9 +74,6 @@ public class AudioService : IAudioService
         // Read the first 3 non-null bytes of the stream
         buffer = new byte[3];
         bytesRead = await stream.ReadAsync(buffer.AsMemory(0, 3));
-
-        // Reset the stream to the start
-        stream.Seek(0, SeekOrigin.Begin);
 
         // If we read less than 3 bytes, this is not a valid MP3 file
         if (bytesRead < 3)
