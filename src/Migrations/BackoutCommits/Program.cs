@@ -37,7 +37,6 @@ public class Program
             sfAppDir = Environment.GetEnvironmentVariable("SF_APP_DIR") ?? "../../SIL.XForge.Scripture";
         }
 
-        Console.WriteLine(sfAppDir);
         Directory.SetCurrentDirectory(sfAppDir);
         IWebHostBuilder builder = CreateWebHostBuilder(args);
         IWebHost webHost = builder.Build();
@@ -60,14 +59,13 @@ public class Program
         program.projectTool = webHost.Services.GetService<ISFProjectTool>();
         await program.projectTool.ConnectToRealtimeServiceAsync();
 
+        program.machineName = Environment.GetEnvironmentVariable("MACHINE_NAME");
         string projectIdsString = Environment.GetEnvironmentVariable("PROJECT_IDS");
-        Console.WriteLine($"Paratext IDs: {projectIdsString}");
+        Logger.Log($"Project IDs: {projectIdsString}");
         bool runMode = Environment.GetEnvironmentVariable("RUN_MODE") == "true";
-        Console.WriteLine($"Running in {(runMode ? "run" : "dry run")} mode.");
-        // TODO: Use this project root dir
-        string projectRootDir = Environment.GetEnvironmentVariable("PROJECT_ROOT_DIR") ?? string.Empty;
-        Console.WriteLine($"Project root dir: {projectRootDir}");
-        // IEnumerable<string> projectDirs = paratextIds.Split(' ').Select(id => Path.Combine(projectRootDir, id));
+        Logger.Log($"Running in {(runMode ? "run" : "dry run")} mode.");
+        program.projectRootDir = Environment.GetEnvironmentVariable("PROJECT_ROOT_DIR");
+        Logger.Log($"Project root dir: {program.projectRootDir}");
         IEnumerable<string> projectIds = projectIdsString.Split(' ');
 
         // Find all of the revisions that introduce changes to notes files
@@ -89,7 +87,7 @@ public class Program
     private async Task<List<ProblemCommit>> ProcessProjectAsync(string projectDir)
     {
         string repoDir = $"{projectRootDir}/{projectDir}/target";
-        Console.WriteLine($"Processing project at {repoDir}");
+        Logger.Log($"Processing project at {repoDir}");
         string commitListBlob = await RunCommandAsync(
             "hg",
             "log --no-merges --date >2023-06-21 --template CommitId:{node}---Date:{date|date}---Desc:{desc}---Files:{files%'{file}\n'}-----",
@@ -103,7 +101,7 @@ public class Program
         IEnumerable<CommitData> relevantCommits = commitData
             .Where(c => c.MachineName == machineName)
             .Where(c => c.Files.Any(f => Regex.Match(f, "notes.*.xml", RegexOptions.IgnoreCase).Length > 0));
-        Console.WriteLine($">  Found {relevantCommits.Count()} commits made after 2023-06-21 that modify notes files.");
+        Logger.Log($">  Found {relevantCommits.Count()} commits made after 2023-06-21 that modify notes files.");
         List<ProblemCommit> problemCommits = new();
         foreach (CommitData commit in relevantCommits)
         {
@@ -121,7 +119,7 @@ public class Program
                 }
             }
         }
-        Console.WriteLine($">  Found {problemCommits.Count} commits where SF writes notes data.");
+        Logger.Log($">  Found {problemCommits.Count} commits where SF writes notes data.");
         return problemCommits;
     }
 
@@ -159,7 +157,7 @@ public class Program
     {
         if (problemCommits.Count == 0)
         {
-            Console.WriteLine(">  No problem commits found, nothing to do.");
+            Logger.Log(">  No problem commits found, nothing to do.");
             return;
         }
         // Testing shows that if we remove community checking answer notes, they will come back when SF syncs.
@@ -168,10 +166,10 @@ public class Program
         {
             if (!runMode)
             {
-                Console.WriteLine("  >  Dry run, no files will be changed.");
+                Logger.Log("  >  Dry run, no files will be changed.");
                 break;
             }
-            Console.WriteLine($"  >  Backing out commit {commit.commitId}");
+            Logger.Log($"  >  Backing out commit {commit.commitId}");
 
             await RunCommandAsync(
                 "hg",
@@ -181,9 +179,9 @@ public class Program
             // After backing out notes xml files, some other files may be left as modified in the working directory, such as .SFM files. We revert these before proceeding.
             await RunCommandAsync("hg", $"revert --all", commit.projectRepo);
         }
-        Console.WriteLine(">  Successfully backed out problem commits.");
+        Logger.Log(">  Successfully backed out problem commits.");
         string currentId = await RunCommandAsync("hg", $"id --debug -i", projectDir);
-        Console.WriteLine($">  Current commit id: {currentId}");
+        Logger.Log($">  Current commit id: {currentId}");
         await projectTool.UpdateProjectRepositoryVersionAsync(projectDoc, currentId);
     }
 
@@ -208,7 +206,7 @@ public class Program
             error.Append(await process.StandardError.ReadToEndAsync());
         }
         if (error.Length > 0)
-            Console.WriteLine($"Warning: Command gave error output: {error}");
+            Logger.Log($"Warning: Command gave error output: {error}");
         return output.ToString();
     }
 
