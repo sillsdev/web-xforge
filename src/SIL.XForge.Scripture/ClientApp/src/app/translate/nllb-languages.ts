@@ -1,5 +1,20 @@
 import { InjectionToken } from '@angular/core';
 
+/**
+ * NllbLanguage interface represents a language in Facebook's No Language Left Behind (NLLB) project.
+ * The NLLB project has developed an AI model called NLLB-200, which is capable of translating
+ * between 200 different languages, including low-resource languages.
+ *
+ * List of language codes can be found here:
+ * - https://huggingface.co/facebook/nllb-200-3.3B/blob/main/README.md
+ * - https://github.com/facebookresearch/flores/blob/main/flores200/README.md#languages-in-flores-200
+ *
+ * This interface uses ISO 639 language codes to uniquely identify each language.
+ *
+ * To update this file with new languages, refer to the following resources:
+ * - List of ISO 639-1 codes: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
+ * - List of ISO 639-2 codes: https://en.wikipedia.org/wiki/List_of_ISO_639-2_codes
+ */
 export interface NllbLanguage {
   /**
    * ISO language name.
