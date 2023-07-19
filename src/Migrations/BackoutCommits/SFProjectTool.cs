@@ -9,7 +9,7 @@ namespace BackoutCommits;
 
 public class SFProjectTool : ISFProjectTool
 {
-    private IConnection _realtimeServiceConnection;
+    private IConnection? realtimeServiceConnection;
 
     public SFProjectTool(IRealtimeService realtimeService, IParatextService paratextService)
     {
@@ -23,12 +23,14 @@ public class SFProjectTool : ISFProjectTool
 
     public async Task ConnectToRealtimeServiceAsync()
     {
-        _realtimeServiceConnection = await RealtimeService.ConnectAsync();
+        realtimeServiceConnection = await RealtimeService.ConnectAsync();
     }
 
     public async Task<IDocument<SFProject>> GetProjectDocAsync(string sfProjectId)
     {
-        return await _realtimeServiceConnection.FetchAsync<SFProject>(sfProjectId);
+        if (realtimeServiceConnection == null)
+            throw new InvalidOperationException("Must call ConnectToRealtimeServiceAsync first.");
+        return await realtimeServiceConnection.FetchAsync<SFProject>(sfProjectId);
     }
 
     public async Task UpdateProjectRepositoryVersionAsync(IDocument<SFProject> projectDoc, string revision)
@@ -41,6 +43,6 @@ public class SFProjectTool : ISFProjectTool
 
     public void Dispose()
     {
-        _realtimeServiceConnection?.Dispose();
+        realtimeServiceConnection?.Dispose();
     }
 }
