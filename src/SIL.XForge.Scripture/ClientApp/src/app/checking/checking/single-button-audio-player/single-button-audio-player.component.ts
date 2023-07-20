@@ -49,11 +49,6 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
     if (this._source != null && this._source !== '') {
       if (this.start != null && this.end != null) {
         this._audio = new AudioSegmentPlayer(this._source, this.start, this.end, this.pwaService);
-        this.subscribe(this._audio.finishedPlaying$, () => {
-          if (!this.hasFinishedPlayingOnce$.value) {
-            this.hasFinishedPlayingOnce$.next(true);
-          }
-        });
       } else {
         this._audio = new AudioPlayer(this._source, this.pwaService);
       }
@@ -61,6 +56,11 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
       this.subscribe(this._audio.status$, newVal => {
         if (newVal === AudioStatus.Available) {
           this.isAudioAvailable$.next(true);
+        }
+      });
+      this.subscribe(this._audio.finishedPlaying$, () => {
+        if (!this.hasFinishedPlayingOnce$.value) {
+          this.hasFinishedPlayingOnce$.next(true);
         }
       });
     } else {

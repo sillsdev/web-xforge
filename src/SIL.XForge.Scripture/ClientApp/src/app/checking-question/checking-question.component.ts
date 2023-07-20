@@ -53,8 +53,8 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
       );
 
       this.projectService.queryAudioText(projectId).then(audioQuery => {
-        this._scriptureTextAudioData = audioQuery.docs.find(t => t.id === audioId)?.data;
-        if (!this.scriptureAudioUrl) {
+        this._scriptureTextAudioData = audioQuery?.docs?.find(t => t.id === audioId)?.data;
+        if (!this._scriptureTextAudioData || !this.scriptureAudioUrl) {
           this.selectQuestion();
         }
       });
