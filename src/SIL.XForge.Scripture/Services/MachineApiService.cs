@@ -190,6 +190,57 @@ public class MachineApiService : IMachineApiService
         return buildDto;
     }
 
+    public async Task<BuildDto?> GetLastCompletedPreTranslationBuildAsync(
+        string curUserId,
+        string sfProjectId,
+        CancellationToken cancellationToken
+    )
+    {
+        BuildDto? buildDto = null;
+
+        // Ensure that the user has permission
+        await EnsurePermissionAsync(curUserId, sfProjectId);
+
+        // We only support Serval for this feature
+        if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
+        {
+            throw new DataNotFoundException("The translation engine does not support this feature");
+        }
+
+        // Get the translation engine
+        string translationEngineId = await GetTranslationIdAsync(sfProjectId, preTranslate: true);
+        if (string.IsNullOrWhiteSpace(translationEngineId))
+        {
+            throw new DataNotFoundException("The translation engine is not configured");
+        }
+
+        try
+        {
+            // Get the last completed build
+            TranslationBuild? translationBuild = (
+                await _translationEnginesClient.GetAllBuildsAsync(translationEngineId, cancellationToken)
+            )
+                .Where(b => b.State == JobState.Completed)
+                .MaxBy(b => b.DateFinished);
+            if (translationBuild is not null)
+            {
+                buildDto = CreateDto(translationBuild);
+            }
+        }
+        catch (Exception e)
+        {
+            await ProcessServalApiExceptionAsync(e);
+        }
+
+        // Make sure the DTO conforms to the machine-api V2 URLs
+        if (buildDto is not null)
+        {
+            UpdateDto(buildDto, sfProjectId);
+        }
+
+        return buildDto;
+    }
+
     public async Task<BuildDto?> GetCurrentBuildAsync(
         string curUserId,
         string sfProjectId,

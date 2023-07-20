@@ -91,7 +91,6 @@ public class MachineApiServiceTests
     {
         // Set up test environment
         var env = new TestEnvironment();
-        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
@@ -111,6 +110,18 @@ public class MachineApiServiceTests
         // SUT
         Assert.ThrowsAsync<NotSupportedException>(
             () => env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void CancelPreTranslationBuildAsync_ServalNoTranslationEngine()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.CancelPreTranslationBuildAsync(User01, Project03, CancellationToken.None)
         );
     }
 
@@ -874,6 +885,24 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public void GetEngineAsync_ServalApiExceptionFailsToInProcess()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .GetAsync(TranslationEngine01, CancellationToken.None)
+            .Throws(ServalApiExceptions.InternalServerError);
+        env.Engines
+            .GetByLocatorAsync(EngineLocatorType.Project, Project01, CancellationToken.None)
+            .Returns(Task.FromResult(new Engine()));
+
+        // SUT
+        _ = env.Service.GetEngineAsync(User01, Project01, CancellationToken.None);
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<ServalApiException>());
+    }
+
+    [Test]
     public void GetEngineAsync_ServalDoesNotOwnTranslationEngine()
     {
         // Set up test environment
@@ -1041,6 +1070,162 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetLastCompletedPreTranslationBuildAsync_NoCompletedBuild()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>(
+                    new List<TranslationBuild>
+                    {
+                        new TranslationBuild
+                        {
+                            Url = "https://example.com",
+                            Id = Build01,
+                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                            Message = string.Empty,
+                            PercentCompleted = 0,
+                            Revision = 0,
+                            State = JobState.Faulted,
+                        },
+                    }
+                )
+            );
+
+        // SUT
+        BuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
+            User01,
+            Project01,
+            CancellationToken.None
+        );
+
+        Assert.IsNull(actual);
+    }
+
+    [Test]
+    public void GetLastCompletedPreTranslationBuildAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () =>
+                env.Service.GetLastCompletedPreTranslationBuildAsync(
+                    "invalid_user_id",
+                    Project01,
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public void GetLastCompletedPreTranslationBuildAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () =>
+                env.Service.GetLastCompletedPreTranslationBuildAsync(
+                    User01,
+                    "invalid_project_id",
+                    CancellationToken.None
+                )
+        );
+    }
+
+    [Test]
+    public void GetLastCompletedPreTranslationBuildAsync_NoFeatureFlagEnabled()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void GetLastCompletedPreTranslationBuildAsync_NoTranslationEngine()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project03, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void GetLastCompletedPreTranslationBuildAsync_ServalDown()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient.GetAllBuildsAsync(TranslationEngine01).Throws(new BrokenCircuitException());
+
+        // SUT
+        Assert.ThrowsAsync<BrokenCircuitException>(
+            () => env.Service.GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public async Task GetLastCompletedPreTranslationBuildAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string buildDtoId = $"{Project01}.{Build01}";
+        const string message = "Completed";
+        const double percentCompleted = 0;
+        const int revision = 43;
+        const JobState state = JobState.Completed;
+        env.TranslationEnginesClient
+            .GetAllBuildsAsync(TranslationEngine01, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<TranslationBuild>>(
+                    new List<TranslationBuild>
+                    {
+                        new TranslationBuild
+                        {
+                            Url = "https://example.com",
+                            Id = Build01,
+                            Engine = new ResourceLink { Id = "engineId", Url = "https://example.com" },
+                            Message = message,
+                            PercentCompleted = percentCompleted,
+                            Revision = revision,
+                            State = state,
+                            DateFinished = DateTimeOffset.UtcNow,
+                        },
+                    }
+                )
+            );
+
+        // SUT
+        BuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
+            User01,
+            Project01,
+            CancellationToken.None
+        );
+
+        Assert.IsNotNull(actual);
+        Assert.AreEqual(message, actual.Message);
+        Assert.AreEqual(percentCompleted, actual.PercentCompleted);
+        Assert.AreEqual(revision, actual.Revision);
+        Assert.AreEqual(state.ToString().ToUpperInvariant(), actual.State);
+        Assert.AreEqual(buildDtoId, actual.Id);
+        Assert.AreEqual(MachineApi.GetBuildHref(Project01, Build01), actual.Href);
+        Assert.AreEqual(Project01, actual.Engine.Id);
+        Assert.AreEqual(MachineApi.GetEngineHref(Project01), actual.Engine.Href);
+    }
+
+    [Test]
     public void GetPreTranslationAsync_NoFeatureFlagEnabled()
     {
         // Set up test environment
@@ -1074,6 +1259,21 @@ public class MachineApiServiceTests
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
             () => env.Service.GetPreTranslationAsync(User01, "invalid_project_id", 40, 1, CancellationToken.None)
+        );
+    }
+
+    [Test]
+    public void GetPreTranslationsAsync_ServalDown()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.PreTranslationService
+            .GetPreTranslationsAsync(User01, Project01, 40, 1, CancellationToken.None)
+            .Throws(new BrokenCircuitException());
+
+        // SUT
+        Assert.ThrowsAsync<BrokenCircuitException>(
+            () => env.Service.GetPreTranslationAsync(User01, Project01, 40, 1, CancellationToken.None)
         );
     }
 
