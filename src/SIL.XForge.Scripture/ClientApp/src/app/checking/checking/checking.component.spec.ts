@@ -415,7 +415,7 @@ describe('CheckingComponent', () => {
       expect(env.isSegmentHighlighted(1, 1)).toBe(false);
       expect(env.isSegmentHighlighted(1, 5)).toBe(true);
       expect(env.segmentHasQuestion(1, 5)).toBe(true);
-      expect(env.component.questionVerseRefs[0].equals(VerseRef.parse('JHN 1:5'))).toBe(true);
+      expect(env.component.questionVerseRefs[0].equals(new VerseRef('JHN 1:5'))).toBe(true);
     }));
 
     it('unread answers badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
@@ -723,7 +723,7 @@ describe('CheckingComponent', () => {
       const answerAction: AnswerAction = {
         action: 'save',
         text: 'answer 01',
-        verseRef: fromVerseRef(VerseRef.parse('JHN 1:1')),
+        verseRef: fromVerseRef(new VerseRef('JHN 1:1')),
         audio: {
           status: 'processed',
           fileName: 'audioFile.mp3',
@@ -1623,7 +1623,7 @@ describe('CheckingComponent', () => {
       expect(segment.classList.contains('highlight-segment')).toBe(true);
       expect(fromVerseRef(env.component.activeQuestionVerseRef!).verseNum).toEqual(3);
       env.component.questionsPanel!.activeQuestionDoc!.submitJson0Op(op => {
-        op.set(qd => qd.verseRef, fromVerseRef(VerseRef.parse('JHN 1:5')));
+        op.set(qd => qd.verseRef, fromVerseRef(new VerseRef('JHN 1:5')));
       }, false);
       env.waitForSliderUpdate();
       tick();

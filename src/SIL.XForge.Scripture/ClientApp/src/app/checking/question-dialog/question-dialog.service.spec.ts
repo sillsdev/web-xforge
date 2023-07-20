@@ -54,7 +54,7 @@ describe('QuestionDialogService', () => {
     const env = new TestEnvironment();
     const result: QuestionDialogResult = {
       text: 'question added',
-      verseRef: VerseRef.parse('MAT 1:3'),
+      verseRef: new VerseRef('MAT 1:3'),
       audio: {}
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
@@ -75,7 +75,7 @@ describe('QuestionDialogService', () => {
     const env = new TestEnvironment();
     const result: QuestionDialogResult = {
       text: 'This question is added just as user role is changed',
-      verseRef: VerseRef.parse('MAT 1:3'),
+      verseRef: new VerseRef('MAT 1:3'),
       audio: {}
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
@@ -90,7 +90,7 @@ describe('QuestionDialogService', () => {
     const env = new TestEnvironment();
     const result: QuestionDialogResult = {
       text: 'question added',
-      verseRef: VerseRef.parse('MAT 1:3'),
+      verseRef: new VerseRef('MAT 1:3'),
       audio: { fileName: 'someFileName.mp3', blob: new Blob() }
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
@@ -103,7 +103,7 @@ describe('QuestionDialogService', () => {
     const env = new TestEnvironment();
     const result: QuestionDialogResult = {
       text: 'question edited',
-      verseRef: VerseRef.parse('MAT 1:3'),
+      verseRef: new VerseRef('MAT 1:3'),
       audio: {}
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
@@ -117,7 +117,7 @@ describe('QuestionDialogService', () => {
     const env = new TestEnvironment();
     const result: QuestionDialogResult = {
       text: 'question added',
-      verseRef: VerseRef.parse('MAT 1:3'),
+      verseRef: new VerseRef('MAT 1:3'),
       audio: { fileName: 'someFileName.mp3', blob: new Blob() }
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
@@ -142,7 +142,7 @@ describe('QuestionDialogService', () => {
     const env = new TestEnvironment();
     const result: QuestionDialogResult = {
       text: 'question edited',
-      verseRef: VerseRef.parse('MAT 1:3'),
+      verseRef: new VerseRef('MAT 1:3'),
       audio: { status: 'reset' }
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
@@ -216,7 +216,7 @@ class TestEnvironment {
     return {
       dataId: 'q1Id',
       text: 'question to be edited',
-      verseRef: fromVerseRef(VerseRef.parse('MAT 1:3')),
+      verseRef: fromVerseRef(new VerseRef('MAT 1:3')),
       answers: [],
       isArchived: false,
       audioUrl: audioUrl,

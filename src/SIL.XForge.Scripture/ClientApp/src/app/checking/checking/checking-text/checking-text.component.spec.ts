@@ -114,8 +114,8 @@ describe('CheckingTextComponent', () => {
   it('highlights combined verse', fakeAsync(() => {
     const env = new TestEnvironment();
     env.component.id = new TextDocId('project01', 41, 1);
-    env.component.questionVerses = [new VerseRef(41, 1, '2-3')];
-    env.component.activeVerse = new VerseRef(41, 1, '2-3');
+    env.component.questionVerses = [new VerseRef('MRK', '1', '2-3')];
+    env.component.activeVerse = new VerseRef('MRK', '1', '2-3');
     env.wait();
     expect(env.segmentHasQuestion(1, 1)).toBe(false);
     expect(env.segmentHasQuestion(1, '2-3')).toBe(true);

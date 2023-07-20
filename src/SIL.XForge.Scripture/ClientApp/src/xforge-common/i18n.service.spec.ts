@@ -137,10 +137,10 @@ describe('I18nService', () => {
   it('should localize references', () => {
     when(mockedTranslocoService.translate<string>('canon.book_names.GEN')).thenReturn('Genesis');
     const service = getI18nService();
-    expect(service.localizeReference(VerseRef.parse('GEN 1:2-3'))).toBe('Genesis 1:2-3');
+    expect(service.localizeReference(new VerseRef('GEN 1:2-3'))).toBe('Genesis 1:2-3');
     service.setLocale('ar', mockedAuthService);
     // Expect right to left mark before : and - characters
-    expect(service.localizeReference(VerseRef.parse('GEN 1:2-3'))).toBe('Genesis 1\u200F:2\u200F-3');
+    expect(service.localizeReference(new VerseRef('GEN 1:2-3'))).toBe('Genesis 1\u200F:2\u200F-3');
   });
 });
 

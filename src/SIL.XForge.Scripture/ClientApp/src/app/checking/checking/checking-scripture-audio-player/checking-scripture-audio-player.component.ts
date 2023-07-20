@@ -1,6 +1,6 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
-import { VerseRef } from '@sillsdev/scripture';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { TextDocId } from 'src/app/core/models/text-doc';
 import { getVerseStrFromSegmentRef } from 'src/app/shared/utils';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -28,9 +28,9 @@ export class CheckingScriptureAudioPlayerComponent {
   get currentVerseLabel(): string | undefined {
     if (this.currentRef == null || this.textDocId == null) return;
     const verseRef = new VerseRef(
-      this.textDocId.bookNum,
-      this.textDocId.chapterNum,
-      getVerseStrFromSegmentRef(this.currentRef)
+      Canon.bookNumberToId(this.textDocId.bookNum),
+      this.textDocId.chapterNum.toString(),
+      getVerseStrFromSegmentRef(this.currentRef) ?? ''
     );
     return this.i18n.localizeReference(verseRef);
   }

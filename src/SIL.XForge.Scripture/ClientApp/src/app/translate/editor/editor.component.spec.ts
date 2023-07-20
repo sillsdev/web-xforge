@@ -2578,7 +2578,7 @@ describe('EditorComponent', () => {
       const content: string = 'content in the thread';
       const userId: string = 'user05';
       const segmentRef: string = 'verse_1_2';
-      const verseRef: VerseRef = new VerseRef('MAT', 1, '2');
+      const verseRef: VerseRef = new VerseRef('MAT', '1', '2');
       const env = new TestEnvironment();
       env.setProjectUserConfig({
         selectedBookNum: verseRef.bookNum,
@@ -2649,7 +2649,7 @@ describe('EditorComponent', () => {
       env.saveMobileNoteButton!.click();
       env.wait();
       const [, noteThread] = capture(mockedSFProjectService.createNoteThread).last();
-      expect(noteThread.verseRef).toEqual(fromVerseRef(VerseRef.parse('LUK 1:1')));
+      expect(noteThread.verseRef).toEqual(fromVerseRef(new VerseRef('LUK 1:1')));
       expect(noteThread.notes[0].content).toEqual(content);
       env.dispose();
     }));
@@ -2941,7 +2941,7 @@ describe('EditorComponent', () => {
 
       const segmentRef = 'verse_1_2-3';
       env.setSelectionAndInsertNote(segmentRef);
-      const verseRef = new VerseRef('LUK', 1, '2-3');
+      const verseRef = new VerseRef('LUK', '1', '2-3');
       verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
       const [, config] = capture(mockedMatDialog.open).last();
       expect((config!.data! as NoteDialogData).verseRef!.equals(verseRef)).toBeTrue();
@@ -4056,7 +4056,7 @@ class TestEnvironment {
       notes.push(note);
     }
 
-    const verseRef: VerseRef = VerseRef.parse(verseStr);
+    const verseRef: VerseRef = new VerseRef(verseStr);
     this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
       id: `project01:${dataId}`,
       data: {
@@ -4080,7 +4080,7 @@ class TestEnvironment {
   reattachNote(projectId: string, threadDataId: string, verseStr: string, position: TextAnchor): void {
     const noteThreadDoc: NoteThreadDoc = this.getNoteThreadDoc(projectId, threadDataId);
     const template: Note = noteThreadDoc.data!.notes[0];
-    const verseRef: VerseRef = VerseRef.parse(verseStr);
+    const verseRef: VerseRef = new VerseRef(verseStr);
     const contextAfter: string = ` ${verseRef.verseNum}.`;
     const reattachParts: string[] = [verseStr, 'verse', position.start.toString(), 'target: chapter 1, ', contextAfter];
     const reattached: string = reattachParts.join(REATTACH_SEPARATOR);

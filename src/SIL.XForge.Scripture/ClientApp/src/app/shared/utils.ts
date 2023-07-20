@@ -1,7 +1,7 @@
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { VerseRef } from '@sillsdev/scripture';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { DeltaOperation } from 'rich-text';
 import { SelectableProject } from '../core/paratext.service';
 
@@ -64,7 +64,7 @@ export function getVerseRefFromSegmentRef(bookNum: number, segmentRef: string): 
     return;
   }
   const parts = baseRef.split('_');
-  return new VerseRef(bookNum, parts[1], parts[2]);
+  return new VerseRef(Canon.bookNumberToId(bookNum), parts[1], parts[2]);
 }
 
 /** Returns the verse string from a segment ref. e.g. 6, 6a, 6-7, 6,8 */
@@ -87,7 +87,7 @@ export function verseRefFromMouseEvent(event: MouseEvent, bookNum: number): Vers
   }
   const segmentParts = clickSegment.split('_', 3);
   const versePart = segmentParts[2].split('/')[0];
-  return new VerseRef(bookNum, segmentParts[1], versePart);
+  return new VerseRef(Canon.bookNumberToId(bookNum), segmentParts[1], versePart);
 }
 
 export function threadIdFromMouseEvent(event: MouseEvent): string | undefined {

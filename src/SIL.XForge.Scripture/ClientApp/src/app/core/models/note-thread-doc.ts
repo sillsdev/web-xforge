@@ -76,7 +76,7 @@ export class NoteThreadDoc extends ProjectDataDoc<NoteThread> {
     }
 
     const verseStr: string = lastReattach.reattached.split(REATTACH_SEPARATOR)[0];
-    return VerseRef.parse(verseStr);
+    return new VerseRef(verseStr);
   }
 
   isAssignedToOtherUser(currentUserId: string, paratextProjectUsers: ParatextUserProfile[]): boolean {

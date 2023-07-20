@@ -83,7 +83,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
 
   get textDocId(): TextDocId | undefined {
     if (this.scriptureStart.value && this.scriptureStart.valid) {
-      const verseData = VerseRef.parse(this.scriptureStart.value);
+      const verseData = new VerseRef(this.scriptureStart.value);
       return new TextDocId(this.data.projectId, verseData.bookNum, verseData.chapterNum);
     }
     return undefined;

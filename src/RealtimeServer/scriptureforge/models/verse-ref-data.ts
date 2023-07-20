@@ -1,10 +1,10 @@
-import { VerseRef } from '@sillsdev/scripture';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 
 export function toVerseRef(verseRefData: VerseRefData): VerseRef {
   return new VerseRef(
-    verseRefData.bookNum,
-    verseRefData.chapterNum,
-    verseRefData.verse != null ? verseRefData.verse : verseRefData.verseNum
+    Canon.bookNumberToId(verseRefData.bookNum),
+    verseRefData.chapterNum.toString(),
+    verseRefData.verse != null ? verseRefData.verse : verseRefData.verseNum.toString()
   );
 }
 

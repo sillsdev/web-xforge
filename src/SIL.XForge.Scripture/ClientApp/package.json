@@ -47,7 +47,7 @@
     "@ngneat/transloco": "^3.2.0",
     "@ngneat/transloco-locale": "^3.0.1",
     "@sillsdev/machine": "^2.4.1",
-    "@sillsdev/scripture": "^1.1.2",
+    "@sillsdev/scripture": "^1.4.0",
     "angular-file": "^3.6.0",
     "angular-split": "^5.0.0",
     "arraydiff": "^0.1.3",
