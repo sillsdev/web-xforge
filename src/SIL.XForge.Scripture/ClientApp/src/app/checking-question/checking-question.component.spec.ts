@@ -96,7 +96,7 @@ describe('CheckingQuestionComponent', () => {
     await env.wait();
     env.component.question.playScripture();
 
-    await env.wait(600); //wait for the audio to finish playing
+    await env.wait(1000); //wait for the audio to finish playing
     expect(env.component.question.focusedText).toBe('question-audio-label');
 
     env.component.question.selectScripture();
@@ -104,7 +104,7 @@ describe('CheckingQuestionComponent', () => {
     await env.wait();
     env.component.question.playScripture();
 
-    await env.wait(600); //wait for the audio to finish playing
+    await env.wait(1000); //wait for the audio to finish playing
     expect(env.component.question.focusedText).toBe('scripture-audio-label');
   });
 
@@ -119,7 +119,7 @@ describe('CheckingQuestionComponent', () => {
     env.scriptureAudio.componentInstance.audio.setSeek(98);
     await env.wait();
     env.component.question.playScripture();
-    await env.wait(600); //wait for the audio to finish playing
+    await env.wait(1000); //wait for the audio to finish playing
     expect(env.component.question.focusedText).toBe('question-audio-label');
 
     env.component.question.selectScripture();
