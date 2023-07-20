@@ -195,6 +195,53 @@ public class MachineApiController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the last completed pre-translation build.
+    /// </summary>
+    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <response code="200">The last completed pre-translation build.</response>
+    /// <response code="204">There is no completed pre-translation build.</response>
+    /// <response code="403">You do not have permission to get the builds for this project.</response>
+    /// <response code="404">The project does not exist or is not configured on the ML server.</response>
+    /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    [HttpGet(MachineApi.GetLastCompletedPreTranslationBuild)]
+    public async Task<ActionResult<BuildDto?>> GetLastCompletedPreTranslationBuildAsync(
+        string sfProjectId,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            BuildDto? build = await _machineApiService.GetLastCompletedPreTranslationBuildAsync(
+                _userAccessor.UserId,
+                sfProjectId,
+                cancellationToken
+            );
+
+            // A null means no build is running
+            if (build is null)
+            {
+                return NoContent();
+            }
+
+            return Ok(build);
+        }
+        catch (BrokenCircuitException e)
+        {
+            _exceptionHandler.ReportException(e);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, MachineApiUnavailable);
+        }
+        catch (DataNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ForbiddenException)
+        {
+            return Forbid();
+        }
+    }
+
+    /// <summary>
     /// Gets all of the pre-translations for the specified chapter.
     /// </summary>
     /// <param name="sfProjectId">The Scripture Forge project identifier.</param>

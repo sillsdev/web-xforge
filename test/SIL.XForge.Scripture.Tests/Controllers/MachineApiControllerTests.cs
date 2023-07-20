@@ -510,6 +510,98 @@ public class MachineApiControllerTests
     }
 
     [Test]
+    public async Task GetLastCompletedPreTranslationBuildAsync_MachineApiDown()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            .Throws(new BrokenCircuitException());
+
+        // SUT
+        ActionResult<BuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
+            Project01,
+            CancellationToken.None
+        );
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
+        Assert.IsInstanceOf<ObjectResult>(actual.Result);
+        Assert.AreEqual(StatusCodes.Status503ServiceUnavailable, (actual.Result as ObjectResult)?.StatusCode);
+    }
+
+    [Test]
+    public async Task GetLastCompletedPreTranslationBuildAsync_NoCompletedBuild()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            .Returns(Task.FromResult<BuildDto>(null));
+
+        // SUT
+        ActionResult<BuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
+            Project01,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NoContentResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetLastCompletedPreTranslationBuildAsync_NoPermission()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            .Throws(new ForbiddenException());
+
+        // SUT
+        ActionResult<BuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
+            Project01,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<ForbidResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetLastCompletedPreTranslationBuildAsync_NoProject()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            .Throws(new DataNotFoundException(string.Empty));
+
+        // SUT
+        ActionResult<BuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
+            Project01,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<NotFoundResult>(actual.Result);
+    }
+
+    [Test]
+    public async Task GetLastCompletedPreTranslationBuildAsync_Success()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.MachineApiService
+            .GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            .Returns(Task.FromResult(new BuildDto()));
+
+        // SUT
+        ActionResult<BuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
+            Project01,
+            CancellationToken.None
+        );
+
+        Assert.IsInstanceOf<OkObjectResult>(actual.Result);
+    }
+
+    [Test]
     public async Task GetPreTranslationAsync_MachineApiDown()
     {
         // Set up test environment
