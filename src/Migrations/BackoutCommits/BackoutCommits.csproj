@@ -4,6 +4,7 @@
     <ProjectReference Include="..\..\SIL.XForge.Scripture\SIL.XForge.Scripture.csproj" />
     <ProjectReference Include="..\..\SIL.XForge\SIL.XForge.csproj" />
     <PackageReference Include="ParatextData" Version="9.3.0.9" />
+    <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" Version="2.6.1" />
   </ItemGroup>
 
   <PropertyGroup>
