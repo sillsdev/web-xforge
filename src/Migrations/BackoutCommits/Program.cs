@@ -57,7 +57,6 @@ public class Program
 
         var program = new Program();
         program.projectTool = webHost.Services.GetService<ISFProjectTool>();
-        await program.projectTool.ConnectToRealtimeServiceAsync();
 
         program.machineName = Environment.GetEnvironmentVariable("MACHINE_NAME");
         string projectIdsString = Environment.GetEnvironmentVariable("PROJECT_IDS");
@@ -66,9 +65,16 @@ public class Program
         Logger.Log($"Running in {(runMode ? "run" : "dry run")} mode.");
         program.projectRootDir = Environment.GetEnvironmentVariable("PROJECT_ROOT_DIR");
         Logger.Log($"Project root dir: {program.projectRootDir}");
+        if (
+            string.IsNullOrWhiteSpace(program.machineName)
+            || string.IsNullOrWhiteSpace(projectIdsString)
+            || string.IsNullOrWhiteSpace(program.machineName)
+        )
+            throw new Exception("Please set the MACHINE_NAME, PROJECT_IDS and PROJECT_ROOT_DIR variables.");
         IEnumerable<string> projectIds = projectIdsString.Split(' ');
 
         // Find all of the revisions that introduce changes to notes files
+        await program.projectTool.ConnectToRealtimeServiceAsync();
         await program.ProcessProjectsAsync(projectIds, runMode);
         program.projectTool.Dispose();
         await webHost.StopAsync();
@@ -111,7 +117,7 @@ public class Program
                 )
             )
             {
-                ProblemCommit? problemCommit = await ProcessNotesFileAsync(commit, notesFile);
+                ProblemCommit problemCommit = await ProcessNotesFileAsync(commit, notesFile);
                 if (problemCommit != null)
                 {
                     problemCommits.Add(problemCommit);
@@ -123,7 +129,7 @@ public class Program
         return problemCommits;
     }
 
-    private async Task<ProblemCommit?> ProcessNotesFileAsync(CommitData data, string filename)
+    private static async Task<ProblemCommit> ProcessNotesFileAsync(CommitData data, string filename)
     {
         string fileBefore = await FetchFileAsync(data.CommitId + '^', filename, data.RepoDir);
         string fileAfter = await FetchFileAsync(data.CommitId, filename, data.RepoDir);
@@ -162,27 +168,33 @@ public class Program
         }
         // Testing shows that if we remove community checking answer notes, they will come back when SF syncs.
         string projectDir = problemCommits[0].projectRepo;
+        if (!runMode)
+            Logger.Log("  >  Dry run, no files will be changed.");
+
         foreach (ProblemCommit commit in problemCommits)
         {
-            if (!runMode)
-            {
-                Logger.Log("  >  Dry run, no files will be changed.");
-                break;
-            }
             Logger.Log($"  >  Backing out commit {commit.commitId}");
 
-            await RunCommandAsync(
-                "hg",
-                $"backout --rev {commit.commitId} --include Notes_*.xml --message \"Backing out {commit.commitId}\" --encoding utf-8   --tool internal:merge-local",
-                commit.projectRepo
-            );
+            // Backout of the commit but only the notes files. Use the internal:merge-local tool which will
+            // use the revision at the tip as the authoritative version in the event there are conflicts.
+            // This works because conflicts occurs on xml format changes, and the tip revision is from
+            // Paratext which has the formatting we want to conform to.
+            string hgCommand =
+                $"backout --rev {commit.commitId} --include Notes_*.xml --message \"Backing out {commit.commitId}\" --encoding utf-8   --tool internal:merge-local";
+            if (!runMode)
+            {
+                Logger.Log($"  >  Dry run: {hgCommand}");
+                continue;
+            }
+            await RunCommandAsync("hg", hgCommand, commit.projectRepo);
             // After backing out notes xml files, some other files may be left as modified in the working directory, such as .SFM files. We revert these before proceeding.
             await RunCommandAsync("hg", $"revert --all", commit.projectRepo);
         }
         Logger.Log(">  Successfully backed out problem commits.");
-        string currentId = await RunCommandAsync("hg", $"id --debug -i", projectDir);
+        string currentId = (await RunCommandAsync("hg", $"id --debug -i", projectDir)).Trim();
         Logger.Log($">  Current commit id: {currentId}");
-        await projectTool.UpdateProjectRepositoryVersionAsync(projectDoc, currentId);
+        if (runMode)
+            await projectTool.UpdateProjectRepositoryVersionAsync(projectDoc, currentId);
     }
 
     private static async Task<string> RunCommandAsync(string program, string arguments, string workingDirectory)
@@ -288,7 +300,7 @@ public class Program
                             try
                             {
                                 XDocument doc = XDocument.Parse(value);
-                                XElement? machineName = doc.Descendants("MachineName").SingleOrDefault();
+                                XElement machineName = doc.Descendants("MachineName").SingleOrDefault();
                                 currentCommit.MachineName = machineName?.Value ?? string.Empty;
                             }
                             catch
