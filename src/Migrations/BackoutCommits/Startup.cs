@@ -46,7 +46,7 @@ public class Startup
 
         services.AddConfiguration(Configuration);
 
-        string? nodeOptions = Configuration.GetValue<string>("node-options");
+        string nodeOptions = Configuration.GetValue<string>("node-options");
         services.AddSFRealtimeServer(LoggerFactory, Configuration, nodeOptions);
 
         services.AddSFServices();
@@ -61,10 +61,8 @@ public class Startup
         services.AddSingleton<IProgramLogger>(
             (IServiceProvider serviceProvider) =>
             {
-                using (Process thisProcess = Process.GetCurrentProcess())
-                {
-                    return new ProgramLogger(thisProcess.Id);
-                }
+                using Process thisProcess = Process.GetCurrentProcess();
+                return new ProgramLogger(thisProcess.Id);
             }
         );
         services.AddSingleton<ISFProjectTool, SFProjectTool>();
