@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.FeatureManagement;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Autofac;
@@ -46,6 +47,10 @@ public class Startup
 
         services.AddConfiguration(Configuration);
 
+        services.AddFeatureManagement();
+
+        services.AddSignalR();
+
         string nodeOptions = Configuration.GetValue<string>("node-options");
         services.AddSFRealtimeServer(LoggerFactory, Configuration, nodeOptions);
 
@@ -66,6 +71,7 @@ public class Startup
             }
         );
         services.AddSingleton<ISFProjectTool, SFProjectTool>();
+        services.AddSingleton<ISyncAllService, SyncAllService>();
         services.Configure<RequestLocalizationOptions>(opts =>
         {
             var supportedCultures = new List<CultureInfo>();
@@ -97,6 +103,7 @@ public class Startup
         Console.WriteLine($"Realtime:Port : {realtimePort}");
         app.UseRealtimeServer();
         app.UseSFDataAccess();
+        app.UseSFServices();
         appLifetime.ApplicationStopped.Register(() => ApplicationContainer.Dispose());
     }
 }

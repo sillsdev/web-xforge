@@ -20,6 +20,7 @@ public class Program
     string machineName = "";
     string projectRootDir = "";
     public ISFProjectTool projectTool;
+    public ISyncAllService syncAllService;
     public static IProgramLogger Logger;
 
     class ProblemCommit
@@ -57,6 +58,7 @@ public class Program
 
         var program = new Program();
         program.projectTool = webHost.Services.GetService<ISFProjectTool>();
+        program.syncAllService = webHost.Services.GetService<ISyncAllService>();
 
         program.machineName = Environment.GetEnvironmentVariable("MACHINE_NAME");
         string projectIdsString = Environment.GetEnvironmentVariable("PROJECT_IDS");
@@ -71,11 +73,13 @@ public class Program
             || string.IsNullOrWhiteSpace(program.machineName)
         )
             throw new Exception("Please set the MACHINE_NAME, PROJECT_IDS and PROJECT_ROOT_DIR variables.");
+        bool syncOnly = Environment.GetEnvironmentVariable("SYNC_ONLY") == "true";
         IEnumerable<string> projectIds = projectIdsString.Split(' ');
 
         // Find all of the revisions that introduce changes to notes files
         await program.projectTool.ConnectToRealtimeServiceAsync();
-        await program.ProcessProjectsAsync(projectIds, runMode);
+        await program.ProcessProjectsAsync(projectIds, runMode && !syncOnly);
+        await program.SyncProjectAsync(projectIds, runMode);
         program.projectTool.Dispose();
         await webHost.StopAsync();
     }
@@ -195,6 +199,12 @@ public class Program
         Logger.Log($">  Current commit id: {currentId}");
         if (runMode)
             await projectTool.UpdateProjectRepositoryVersionAsync(projectDoc, currentId);
+    }
+
+    private async Task SyncProjectAsync(IEnumerable<string> projectId, bool runMode)
+    {
+        Logger.Log("> Syncing projects");
+        await syncAllService.SynchronizeAllProjectsAsync(runMode, projectId.ToHashSet());
     }
 
     private static async Task<string> RunCommandAsync(string program, string arguments, string workingDirectory)
