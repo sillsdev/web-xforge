@@ -9,7 +9,10 @@ namespace BackoutCommits;
 
 public class SFProjectTool : ISFProjectTool
 {
-    private IConnection? realtimeServiceConnection;
+    private IConnection realtimeServiceConnection;
+
+    // To detect redundant calls
+    private bool disposedValue = false;
 
     public SFProjectTool(IRealtimeService realtimeService, IParatextService paratextService)
     {
@@ -43,6 +46,21 @@ public class SFProjectTool : ISFProjectTool
 
     public void Dispose()
     {
-        realtimeServiceConnection?.Dispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                realtimeServiceConnection?.Dispose();
+            }
+
+            realtimeServiceConnection = null;
+            disposedValue = true;
+        }
     }
 }
