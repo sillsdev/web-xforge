@@ -25,6 +25,11 @@ public interface IMachineApiService
         CancellationToken cancellationToken
     );
     Task<EngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
+    Task<BuildDto?> GetLastCompletedPreTranslationBuildAsync(
+        string curUserId,
+        string sfProjectId,
+        CancellationToken cancellationToken
+    );
     Task<PreTranslationDto> GetPreTranslationAsync(
         string curUserId,
         string sfProjectId,

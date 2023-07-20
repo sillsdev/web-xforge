@@ -19,6 +19,15 @@ public static class ServalApiExceptions
             null
         );
 
+    public static ServalApiException InternalServerError =>
+        new ServalApiException(
+            "The HTTP status code of the response was not expected (500).",
+            StatusCodes.Status500InternalServerError,
+            null,
+            new Dictionary<string, IEnumerable<string>>(),
+            null
+        );
+
     public static ServalApiException NoContent =>
         new ServalApiException(
             "There is no build currently running.",
