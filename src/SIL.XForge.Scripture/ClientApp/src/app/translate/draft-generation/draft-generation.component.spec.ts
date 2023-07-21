@@ -52,7 +52,8 @@ describe('DraftGenerationComponent', () => {
       'startBuild',
       'cancelBuild',
       'getBuildProgress',
-      'pollBuildProgress'
+      'pollBuildProgress',
+      'getLastCompletedBuild'
     ]);
     mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
       projectId: 'testProjectId',
@@ -87,13 +88,17 @@ describe('DraftGenerationComponent', () => {
   });
 
   describe('ngOnInit', () => {
-    it('should subscribe to build progress', () => {
+    fit('should subscribe to build progress', () => {
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));
+      mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
       component.ngOnInit();
       expect(component.draftJob).toEqual(buildDto);
       expect(mockDraftGenerationService.getBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
       expect(mockDraftGenerationService.pollBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
+      expect(mockDraftGenerationService.getLastCompletedBuild).toHaveBeenCalledWith(
+        mockActivatedProjectService.projectId!
+      );
       expect(component.draftViewerUrl).toEqual('/projects/testProjectId/draft-preview');
       expect(component.isBackTranslation).toBe(true);
       expect(component.isTargetLanguageNllb).toBe(true);
