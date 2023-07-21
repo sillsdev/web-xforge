@@ -11,7 +11,7 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { DeltaOperation, DeltaStatic } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { EMPTY, zip } from 'rxjs';
+import { of, zip } from 'rxjs';
 import { filter, map, switchMap } from 'rxjs/operators';
 import { Delta, TextDocId } from 'src/app/core/models/text-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
@@ -78,7 +78,7 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     // Wait to populate draft until both editors are loaded with current chapter
     this.targetEditorQueryList.changes
-      .pipe(switchMap(() => zip(this.sourceEditor?.loaded ?? EMPTY, this.targetEditor.loaded)))
+      .pipe(switchMap(() => zip(this.sourceEditor?.loaded ?? of(null), this.targetEditor.loaded)))
       .subscribe(() => {
         // Both editors are now loaded (or just target is loaded if no source text set in project settings)
         this.isDraftApplied = false;
@@ -143,7 +143,7 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
   }
 
   applyDraft(): void {
-    if (!this.preDraftTargetDelta?.ops) {
+    if (this.preDraftTargetDelta?.ops == null) {
       throw new Error(`'applyDraft()' called when 'preDraftTargetDelta' is not set`);
     }
 
