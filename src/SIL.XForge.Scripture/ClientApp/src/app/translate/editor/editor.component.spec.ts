@@ -3287,7 +3287,7 @@ describe('EditorComponent', () => {
       env.targetEditor.getContents = jasmine.createSpy().and.returnValue(targetDelta);
       env.component['checkForPreTranslations']();
       expect(env.component.hasDraft).toBe(true);
-      verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).called();
+      verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).once();
       env.dispose();
     }));
 
@@ -3314,7 +3314,7 @@ describe('EditorComponent', () => {
       env.targetEditor.getContents = jasmine.createSpy().and.returnValue(targetDelta);
       env.component['checkForPreTranslations']();
       expect(env.component.hasDraft).toBe(false);
-      verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).called();
+      verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).once();
       env.dispose();
     }));
 
