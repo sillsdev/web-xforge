@@ -41,10 +41,6 @@ describe('DraftGenerationService', () => {
     httpTestingController.verify();
   });
 
-  it('should be created', () => {
-    expect(service).toBeTruthy();
-  });
-
   describe('pollBuildProgress', () => {
     it('should poll build progress and return an observable of BuildDto', done => {
       httpClient.get = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
