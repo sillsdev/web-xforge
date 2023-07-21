@@ -88,7 +88,7 @@ describe('DraftGenerationComponent', () => {
   });
 
   describe('ngOnInit', () => {
-    fit('should subscribe to build progress', () => {
+    it('should subscribe to build progress', () => {
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
@@ -124,7 +124,7 @@ describe('DraftGenerationComponent', () => {
       mockDraftGenerationService.startBuild.and.returnValue(of({ ...buildDto, state: BuildStates.Canceled }));
       component.generateDraft();
       expect(mockDraftGenerationService.startBuild).toHaveBeenCalledWith('testProjectId');
-      expect(mockMatDialog.closeAll).toHaveBeenCalled();
+      expect(mockMatDialog.closeAll).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -135,7 +135,7 @@ describe('DraftGenerationComponent', () => {
       mockDialogService.openGenericDialog.and.returnValue(Promise.resolve(true));
       mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
       await component.cancel();
-      expect(mockDialogService.openGenericDialog).toHaveBeenCalled();
+      expect(mockDialogService.openGenericDialog).toHaveBeenCalledTimes(1);
       expect(mockDraftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
     });
     it('should not cancel the draft build if user exits "cancel" dialog', async () => {
@@ -144,7 +144,7 @@ describe('DraftGenerationComponent', () => {
       mockDialogService.openGenericDialog.and.returnValue(Promise.resolve(false));
       mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
       await component.cancel();
-      expect(mockDialogService.openGenericDialog).toHaveBeenCalled();
+      expect(mockDialogService.openGenericDialog).toHaveBeenCalledTimes(1);
       expect(mockDraftGenerationService.cancelBuild).not.toHaveBeenCalled();
     });
     it('should cancel the draft build without dialog if the build state is not active', async () => {
