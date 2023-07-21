@@ -1,3 +1,4 @@
+import { HttpStatusCode } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
@@ -52,6 +53,30 @@ describe('DraftGenerationService', () => {
           expect(httpClient.get).toHaveBeenCalledWith(`translation/builds/id:${projectId}?pretranslate=true`);
           done();
         });
+    });
+  });
+
+  describe('getLastCompletedBuild', () => {
+    it('should get last completed build and return an observable of BuildDto', done => {
+      httpClient.get = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
+      service.getLastCompletedBuild(projectId).subscribe(result => {
+        expect(result).toEqual(buildDto);
+        expect(httpClient.get).toHaveBeenCalledWith(
+          `translation/engines/project:${projectId}/actions/getLastCompletedPreTranslationBuild`
+        );
+        done();
+      });
+    });
+
+    it('should return undefined when no build has ever completed', done => {
+      httpClient.get = jasmine.createSpy().and.returnValue(of({ status: HttpStatusCode.NoContent }));
+      service.getLastCompletedBuild(projectId).subscribe(result => {
+        expect(result).toEqual(undefined);
+        expect(httpClient.get).toHaveBeenCalledWith(
+          `translation/engines/project:${projectId}/actions/getLastCompletedPreTranslationBuild`
+        );
+        done();
+      });
     });
   });
 

@@ -21,7 +21,7 @@ import {
   RangeTokenizer,
   TranslationSuggester
 } from '@sillsdev/machine';
-import { isEmpty, isEqual } from 'lodash-es';
+import { isEmpty, isEqual, isString } from 'lodash-es';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -2019,8 +2019,23 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private checkForPreTranslations(): void {
+    const targetOps = this.target?.editor?.getContents().ops!;
+    const isChapterComplete = targetOps.every(op => {
+      // If segment is a verse, check if it has a translation
+      if (VERSE_REGEX.test(op.attributes?.segment)) {
+        return isString(op.insert) && op.insert.trim();
+      }
+
+      return true;
+    });
+
     // Set false until service can check actual draft status for chapter
     this.hasDraft = false;
+
+    // Don't fetch draft if all editor segments have existing translations
+    if (isChapterComplete) {
+      return;
+    }
 
     // If build progress is 'completed', get pretranslations for current chapter
     this.draftGenerationService
@@ -2030,7 +2045,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           return;
         }
 
-        const targetOps = this.target?.editor?.getContents().ops!;
         this.hasDraft = this.draftViewerService.hasDraftOps(draft, targetOps);
       });
   }
