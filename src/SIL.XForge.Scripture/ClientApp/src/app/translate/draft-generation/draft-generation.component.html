@@ -91,9 +91,23 @@
         <section *ngIf="isDraftComplete(draftJob) || !isDraftInProgress(draftJob)" class="view-or-create-options">
           <ng-container *ngIf="isDraftComplete(draftJob)">
             <div>
-              <h3>Preview draft</h3>
+              <h3>Draft generation complete</h3>
               <p>
                 Go to <a [routerLink]="draftViewerUrl">draft viewer</a> to preview and apply the generated draft to
+                chapters of your choice.
+              </p>
+              <a mat-flat-button color="primary" [routerLink]="draftViewerUrl"> Preview draft </a>
+            </div>
+
+            <mat-divider inset vertical data-text="or"></mat-divider>
+          </ng-container>
+
+          <ng-container *ngIf="!isDraftComplete(draftJob) && (hasAnyCompletedBuild$ | async)">
+            <div>
+              <h3>Preview last draft</h3>
+              <p>
+                No builds are in currently in progress, but you can go to
+                <a [routerLink]="draftViewerUrl">draft viewer</a> to preview and apply the last generated draft to
                 chapters of your choice.
               </p>
               <a mat-flat-button color="primary" [routerLink]="draftViewerUrl"> Preview draft </a>

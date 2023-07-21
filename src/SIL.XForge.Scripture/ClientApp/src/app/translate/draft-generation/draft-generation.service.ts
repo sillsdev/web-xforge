@@ -73,6 +73,34 @@ export class DraftGenerationService {
   }
 
   /**
+   * Gets the last completed pre-translation build.
+   * @param projectId The SF project id for the target translation.
+   * @returns An observable BuildDto for the last build with state 'Completed',
+   * or undefined if no build has ever been completed.
+   */
+  getLastCompletedBuild(projectId: string): Observable<BuildDto | undefined> {
+    return this.httpClient
+      .get<BuildDto>(`translation/engines/project:${projectId}/actions/getLastCompletedPreTranslationBuild`)
+      .pipe(
+        map(res => {
+          // Conform 'state' to BuildStates enum
+          if (res.data) {
+            res.data.state = res.data.state.toUpperCase();
+          }
+
+          return res.data;
+        }),
+        catchError(err => {
+          // If project doesn't exist on ML server, return undefined
+          if (err.status === 404) {
+            return of(undefined);
+          }
+          return throwError(err);
+        })
+      );
+  }
+
+  /**
    * Starts a pretranslation build job if one is not already under way.
    * @param projectId The SF project id for the target translation.
    * @returns An observable BuildDto describing the state and progress of a currently running or just started build job.
