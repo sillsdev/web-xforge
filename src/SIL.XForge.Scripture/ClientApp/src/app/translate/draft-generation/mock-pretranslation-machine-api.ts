@@ -1,14 +1,31 @@
 /* eslint-disable brace-style */
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { Observable, of, Subscription, timer } from 'rxjs';
-import { takeWhile } from 'rxjs/operators';
+import { map, takeWhile } from 'rxjs/operators';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { BuildStates } from 'src/app/machine-api/build-states';
 import { HttpResponse } from 'src/app/machine-api/http-client';
-import { PreTranslation, PreTranslationData } from './draft-generation';
+import { ACTIVE_BUILD_STATES, PreTranslation, PreTranslationData } from './draft-generation';
 
 /**
- * Mocks the machine api http responses for the pretranslation endpoints.
+ * Mocks the machine api http responses for the pre-translation endpoints.
+ *
+ * Stores the most recent job state and last completed build state in browser session storage
+ * so that the mock build can be resumed if user refreshes, simulating a long running build.
+ *
+ * Set `MockPreTranslationHttpClient` in `TranslateModule` providers to use the mock service.
+ * @example
+ * import { HttpClient } from '../machine-api/http-client';  // Use this HttpClient
+ * // ... other imports
+ *
+ * \@NgModule({
+ *   // ...
+ *   providers: [
+ *     { provide: HttpClient, useClass: MockPreTranslationHttpClient },
+ *     { provide: DRAFT_GENERATION_SERVICE_OPTIONS, useValue: { pollRate: 200 } }
+ *   ]
+ * })
+ * export class TranslateModule {}
  */
 @Injectable({
   providedIn: 'root'
@@ -26,25 +43,54 @@ export class MockPreTranslationHttpClient {
     message: ''
   };
 
-  private currentJobState?: BuildDto;
+  private readonly completedJobState: BuildDto = {
+    id: '',
+    href: '',
+    engine: { id: '', href: '' },
+    revision: 0,
+    state: BuildStates.Completed,
+    percentCompleted: 100,
+    message: ''
+  };
+
+  // Restore most recent job state from browser session if available
+  private mostRecentJobState?: BuildDto = this.getFromBrowserSessionStorage<BuildDto>('mostRecentJobState');
+
+  constructor(@Inject(ACTIVE_BUILD_STATES) private readonly activeBuildStates: BuildStates[]) {
+    // If a build was in progress when browser session ended, resume it
+    if (this.mostRecentJobState && this.activeBuildStates.includes(this.mostRecentJobState.state as BuildStates)) {
+      this.startGeneration(true);
+    }
+  }
 
   get<T extends BuildDto | PreTranslationData | undefined>(url: string): Observable<HttpResponse<T>> {
     const GET_DRAFT_URL_REGEX: RegExp = /^translation\/engines\/project:[^\/]+\/actions\/pretranslate\/(\d+)_(\d+)$/i;
     const GET_BUILD_PROGRESS_URL_REGEX: RegExp = /^translation\/builds\/id:[^\/?]+\?pretranslate=true$/i;
+    const GET_LAST_COMPLETED_BUILD_URL_REGEX: RegExp =
+      /^translation\/engines\/project:[^\/]+\/actions\/getLastCompletedPreTranslationBuild$/i;
 
     // Get build progress
     if (GET_BUILD_PROGRESS_URL_REGEX.test(url)) {
-      if (!this.currentJobState) {
+      if (!this.mostRecentJobState) {
         return of({ status: 204, data: undefined });
       }
 
-      return of({ status: 200, data: this.currentJobState as T });
+      return of({ status: 200, data: this.mostRecentJobState as T });
+    }
+
+    // Get last completed build if a mock build has completed
+    else if (GET_LAST_COMPLETED_BUILD_URL_REGEX.test(url)) {
+      if (this.hasCompletedBuild()) {
+        return of({ status: 200, data: this.completedJobState as T });
+      }
+
+      return of({ status: 204, data: undefined });
     }
 
     // Get generated draft
     else if (GET_DRAFT_URL_REGEX.test(url)) {
       // Build has not started, has not finished, or was cancelled
-      if (!this.currentJobState) {
+      if (!this.mostRecentJobState) {
         return of({ status: 200, data: { preTranslations: [] as PreTranslation[] } as T });
       }
 
@@ -70,7 +116,11 @@ export class MockPreTranslationHttpClient {
     // Cancel build
     else if (url === 'translation/pretranslations/cancel') {
       this.timerSub?.unsubscribe();
-      this.currentJobState = undefined;
+      this.mostRecentJobState!.state = BuildStates.Canceled;
+
+      // Store most recent job state in browser session
+      this.storeBrowserSessionStorage<BuildDto>('mostRecentJobState', this.mostRecentJobState!);
+
       return of({ status: 200, data: undefined });
     }
 
@@ -78,41 +128,79 @@ export class MockPreTranslationHttpClient {
   }
 
   // Mock generation
-  private startGeneration(): void {
-    const interval: number = 500;
-    const duration: number = 5000;
+  private startGeneration(isContinue: boolean = false): void {
+    const interval: number = 200;
+    const duration: number = 12000;
     const pendingAfter: number = duration / 4;
     const activeAfter: number = (duration / 4) * 2;
+
+    // If continuing a build, start at the last known percent completed
+    const stepOffset: number =
+      isContinue && this.mostRecentJobState?.state === BuildStates.Active
+        ? activeAfter / interval +
+          Math.floor((this.mostRecentJobState!.percentCompleted / 100) * ((duration - activeAfter) / interval))
+        : 0;
+
     const generationTimer$: Observable<number> = timer(0, interval).pipe(
+      map(x => x + stepOffset),
       takeWhile(x => interval * x <= duration, true)
     );
 
-    this.currentJobState = { ...this.initialJobState };
+    // Reset most recent job state if fresh start
+    if (!isContinue) {
+      this.mostRecentJobState = { ...this.initialJobState };
+    }
 
-    this.timerSub = generationTimer$.subscribe((intervalNum: number) => {
-      if (!this.currentJobState) {
+    this.timerSub = generationTimer$.subscribe((step: number) => {
+      if (!this.mostRecentJobState) {
         this.timerSub?.unsubscribe();
         return;
       }
 
-      const elapsed: number = intervalNum * interval;
+      const elapsed: number = step * interval;
 
       if (elapsed >= pendingAfter) {
-        this.currentJobState.state = BuildStates.Pending;
+        this.mostRecentJobState.state = BuildStates.Pending;
       }
 
       if (elapsed >= activeAfter) {
-        this.currentJobState.state = BuildStates.Active;
+        this.mostRecentJobState.state = BuildStates.Active;
       }
 
       if (elapsed >= duration) {
-        this.currentJobState.state = BuildStates.Completed;
+        this.mostRecentJobState.state = BuildStates.Completed;
+        this.mostRecentJobState.percentCompleted = 100;
+        this.setHasCompletedBuild(true);
       }
 
-      if (this.currentJobState.state === BuildStates.Active) {
-        this.currentJobState.percentCompleted = ((elapsed - activeAfter) / (duration - activeAfter)) * 100;
+      if (this.mostRecentJobState.state === BuildStates.Active) {
+        this.mostRecentJobState.percentCompleted = ((elapsed - activeAfter) / (duration - activeAfter)) * 100;
       }
+
+      // Store most recent job state in browser session
+      this.storeBrowserSessionStorage<BuildDto>('mostRecentJobState', this.mostRecentJobState);
     });
+  }
+
+  // Get whether user has completed build from browser session flag
+  private hasCompletedBuild(): boolean {
+    return !!this.getFromBrowserSessionStorage<boolean>('hasCompletedBuild');
+  }
+
+  // Store whether user has completed build in browser session flag
+  private setHasCompletedBuild(hasCompletedBuild: boolean): void {
+    this.storeBrowserSessionStorage<boolean>('hasCompletedBuild', hasCompletedBuild);
+  }
+
+  // Store in browser session storage.  Will be cleared when browser session ends.
+  private storeBrowserSessionStorage<T>(key: string, val: T): void {
+    sessionStorage.setItem(`mockPreTranslationHttpClient:${key}`, JSON.stringify(val));
+  }
+
+  // Get from browser session storage
+  private getFromBrowserSessionStorage<T>(key: string): T | undefined {
+    const val: string | null = sessionStorage.getItem(`mockPreTranslationHttpClient:${key}`);
+    return val ? JSON.parse(val) : undefined;
   }
 }
 
