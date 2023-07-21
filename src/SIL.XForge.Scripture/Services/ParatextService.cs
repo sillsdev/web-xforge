@@ -2048,7 +2048,7 @@ public class ParatextService : DisposableBase, IParatextService
         try
         {
             foreach (string user in users)
-                manager.SaveUser(user, false);
+                WriteCommentXml(manager, user);
             _paratextDataHelper.CommitVersionedText(
                 scrText,
                 $"{syncMetricInfo.Added} notes added and "
@@ -2068,6 +2068,17 @@ public class ParatextService : DisposableBase, IParatextService
         }
 
         return syncMetricInfo;
+    }
+
+    private void WriteCommentXml(CommentManager commentManager, string username)
+    {
+        CommentList userComments = new CommentList(
+            commentManager.AllComments.Where(comment => comment.User == username)
+        );
+        string fileName = commentManager.GetUserFileName(username);
+        string path = Path.Combine(commentManager.ScrText.Directory, fileName);
+        using Stream stream = _fileSystemService.CreateFile(path);
+        _fileSystemService.WriteXmlFile(stream, userComments);
     }
 
     private CommentTags? GetCommentTags(UserSecret userSecret, string paratextId)
