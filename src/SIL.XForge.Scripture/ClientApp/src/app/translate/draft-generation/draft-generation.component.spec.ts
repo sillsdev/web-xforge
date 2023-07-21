@@ -8,7 +8,7 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
-import { UICommonModule } from '../../../xforge-common/ui-common.module';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { ACTIVE_BUILD_STATES } from './draft-generation';
 import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
@@ -80,7 +80,7 @@ describe('DraftGenerationComponent', () => {
         { provide: I18nService, useValue: mockI18nService },
         { provide: ACTIVE_BUILD_STATES, useValue: [BuildStates.Active, BuildStates.Pending, BuildStates.Queued] }
       ]
-    }).compileComponents();
+    });
 
     fixture = TestBed.createComponent(DraftGenerationComponent);
     component = fixture.componentInstance;
