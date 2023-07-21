@@ -1,128 +1,250 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { ActivatedRoute, ActivatedRouteSnapshot, ActivationEnd, ParamMap, Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { cloneDeep } from 'lodash-es';
+import { DeltaStatic } from 'quill';
+import { User } from 'realtime-server/common/models/user';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
-import { Delta } from 'src/app/core/models/text-doc';
+import { SF_TYPE_REGISTRY } from 'src/app/core/models/sf-type-registry';
+import { Delta, TextDoc, TextDocId } from 'src/app/core/models/text-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 import { SharedModule } from 'src/app/shared/shared.module';
-import { TextComponent } from 'src/app/shared/text/text.component';
+import { isBadDelta } from 'src/app/shared/utils';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { UserDoc } from 'xforge-common/models/user-doc';
+import { PwaService } from 'xforge-common/pwa.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { UserService } from 'xforge-common/user.service';
 import { DraftSegmentMap } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftViewerComponent } from './draft-viewer.component';
 
 describe('DraftViewerComponent', () => {
-  let component: DraftViewerComponent;
-  let fixture: ComponentFixture<DraftViewerComponent>;
-  let mockDraftGenerationService: jasmine.SpyObj<DraftGenerationService>;
-  let mockActivatedProjectService: jasmine.SpyObj<ActivatedProjectService>;
-  let mockProjectService: jasmine.SpyObj<SFProjectService>;
-  let mockActivatedRoute: jasmine.SpyObj<ActivatedRoute>;
-  let mockRouter: jasmine.SpyObj<Router>;
+  const mockDraftGenerationService = mock(DraftGenerationService);
+  const mockProjectService = mock(SFProjectService);
+  const mockPwaService = mock(PwaService);
+  const mockUserService = mock(UserService);
+  const mockActivatedProjectService = mock(ActivatedProjectService);
+  const mockActivatedRoute = mock(ActivatedRoute);
+  const mockRouter = mock(Router);
 
-  beforeEach(() => {
-    mockDraftGenerationService = jasmine.createSpyObj('DraftGenerationService', ['getGeneratedDraft']);
-    mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', ['get projectId', 'get projectDoc'], {
-      projectId: 'targetProjectId',
-      projectDoc: {
-        data: {
-          translateConfig: {
-            source: {
-              projectRef: 'sourceProjectId'
+  class TestEnvironment {
+    fixture!: ComponentFixture<DraftViewerComponent>;
+    component!: DraftViewerComponent;
+    readonly targetProjectId = 'targetProjectId';
+    readonly targetTextDocId = new TextDocId(this.targetProjectId, 1, 2, 'target');
+    private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+
+    constructor(initialTargetDelta?: DeltaStatic) {
+      this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
+        id: this.targetTextDocId.toString(),
+        type: RichText.type.name,
+        data: cloneDeep(initialTargetDelta)
+      });
+      this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+        id: 'user01',
+        data: createTestUser()
+      });
+
+      when(mockActivatedProjectService.projectId).thenReturn(this.targetProjectId);
+      when(mockActivatedProjectService.projectDoc).thenReturn(projectProfileDoc);
+      when(mockProjectService.getText(anything())).thenCall(id =>
+        this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+      );
+      when(mockProjectService.getProfile(anything())).thenResolve(cloneDeep(projectProfileDoc));
+      when(mockProjectService.getProfile(anything())).thenResolve(cloneDeep(projectProfileDoc));
+      when(mockPwaService.isOnline).thenReturn(true);
+      when(mockPwaService.onlineStatus$).thenReturn(of(true));
+      when(mockUserService.getCurrentUser()).thenCall(() =>
+        this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
+      );
+      when(mockRouter.events).thenReturn(
+        of(new ActivationEnd({ params: { projectId: this.targetProjectId } } as unknown as ActivatedRouteSnapshot))
+      );
+      when(mockDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
+        of(cloneDeep(draftSegmentMap))
+      );
+      when(mockActivatedRoute.paramMap).thenReturn(
+        of({
+          get: (p: string) => {
+            if (p === 'bookId') {
+              return 'GEN';
             }
+            if (p === 'chapter') {
+              return '2';
+            }
+            return null;
           }
-        }
-      }
-    });
-    mockProjectService = jasmine.createSpyObj('SFProjectService', ['getProfile']);
-    mockActivatedRoute = jasmine.createSpyObj('ActivatedRoute', ['paramMap']);
-    mockRouter = jasmine.createSpyObj('Router', ['navigateByUrl']);
+        } as ParamMap)
+      );
 
-    TestBed.configureTestingModule({
-      declarations: [DraftViewerComponent, TextComponent],
-      imports: [UICommonModule, SharedModule],
-      providers: [
-        { provide: DraftGenerationService, useValue: mockDraftGenerationService },
-        { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
-        { provide: SFProjectService, useValue: mockProjectService },
-        { provide: ActivatedRoute, useValue: mockActivatedRoute },
-        { provide: Router, useValue: mockRouter }
-      ]
-    }).compileComponents();
+      this.fixture = TestBed.createComponent(DraftViewerComponent);
+      this.component = this.fixture.componentInstance;
+      this.fixture.detectChanges();
+      tick();
+    }
+  }
 
-    fixture = TestBed.createComponent(DraftViewerComponent);
-    component = fixture.componentInstance;
-  });
+  configureTestingModule(() => ({
+    declarations: [DraftViewerComponent],
+    imports: [
+      UICommonModule,
+      CommonModule,
+      SharedModule,
+      RouterTestingModule,
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      NoopAnimationsModule
+    ],
+    providers: [
+      { provide: DraftGenerationService, useMock: mockDraftGenerationService },
+      { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
+      { provide: SFProjectService, useMock: mockProjectService },
+      { provide: ActivatedRoute, useMock: mockActivatedRoute },
+      { provide: UserService, useMock: mockUserService },
+      { provide: PwaService, useMock: mockPwaService },
+      { provide: Router, useMock: mockRouter }
+    ]
+  }));
 
-  it('should initialize component correctly', () => {
-    mockProjectService.getProfile.and.returnValue(Promise.resolve({ data: {} } as SFProjectProfileDoc));
-    component.ngOnInit();
-    expect(component.targetProjectId).toEqual('targetProjectId');
-    expect(component.sourceProjectId).toEqual('sourceProjectId');
-    expect(mockProjectService.getProfile).toHaveBeenCalledWith('sourceProjectId');
-  });
+  it('should initialize component correctly', fakeAsync(() => {
+    const env = new TestEnvironment(delta_no_verse_2);
 
-  it('should populate draft text correctly', () => {
-    component.currentBook = 1;
-    component.currentChapter = 1;
-    component.targetProjectId = 'targetProjectId';
-    component.targetEditor = jasmine.createSpyObj('TextComponent', ['editor'], {
-      editor: {
-        getContents: jasmine.createSpy('getContents').and.returnValue(cloneDeep(delta_no_verse_2)),
-        setContents: jasmine.createSpy('setContents')
-      }
-    });
-    mockDraftGenerationService.getGeneratedDraft.and.returnValue(of(cloneDeep(draftSegmentMap)));
-    component.preDraftTargetDelta = delta_no_verse_2;
-    component.populateDraftText();
-    expect(mockDraftGenerationService.getGeneratedDraft).toHaveBeenCalledWith('targetProjectId', 1, 1);
-    expect(component.targetEditor.editor!.setContents).toHaveBeenCalledWith(delta_verse_2_suggested, 'api');
-  });
+    expect(env.component.targetProjectId).toEqual('targetProjectId');
+    expect(env.component.sourceProjectId).toEqual('sourceProjectId');
+    expect(env.component.projectSettingsUrl).toEqual('/projects/targetProjectId/settings');
+    expect(env.component.targetProject).toEqual(projectProfileDoc.data);
+    verify(mockProjectService.getProfile('sourceProjectId')).called();
+  }));
 
-  it('should apply draft correctly', () => {
-    component.targetEditor = jasmine.createSpyObj('TextComponent', ['editor'], {
-      editor: {
-        getContents: jasmine.createSpy('getContents').and.returnValue(cloneDeep(delta_verse_2_suggested)),
-        enable: jasmine.createSpy('enable'),
-        setContents: jasmine.createSpy('setContents'),
-        updateContents: jasmine.createSpy('updateContents'),
-        disable: jasmine.createSpy('disable')
-      }
-    });
-    component.preDraftTargetDelta = delta_no_verse_2;
-    const cleanedOps = component.cleanDraftOps(cloneDeep(delta_verse_2_suggested).ops!);
+  it('should call populateDraftText method after both editors are loaded', fakeAsync(() => {
+    const env = new TestEnvironment(delta_no_verse_2);
+    const spyPopulateDraftText = spyOn(env.component, 'populateDraftText').and.callThrough();
+
+    tick();
+    env.fixture.detectChanges();
+    tick();
+
+    expect(env.component.isDraftApplied).toBe(false);
+    expect(env.component.preDraftTargetDelta).toEqual(delta_no_verse_2);
+    expect(env.component.books).toEqual([1, 2]);
+    expect(env.component.currentBook).toEqual(1);
+    expect(env.component.currentChapter).toEqual(2);
+    expect(spyPopulateDraftText).toHaveBeenCalled();
+  }));
+
+  it('should populate draft text correctly', fakeAsync(() => {
+    const env = new TestEnvironment(delta_no_verse_2);
+
+    tick();
+    env.fixture.detectChanges();
+    tick();
+
+    verify(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 2)).called();
+    expect(env.component.hasDraft).toBeTrue();
+    expect(env.component.targetEditor.editor!.getContents()).toEqual(delta_verse_2_suggested);
+  }));
+
+  it('should apply draft correctly', fakeAsync(() => {
+    const env = new TestEnvironment(delta_no_verse_2);
+
+    tick();
+    env.fixture.detectChanges();
+    tick();
+
+    const draftEditor = env.component.targetEditor.editor!;
+
+    const spyEditorSetContents = spyOn(draftEditor, 'setContents').and.callThrough();
+    const spyEditorEnable = spyOn(draftEditor, 'enable').and.callThrough();
+    const spyEditorUpdateContents = spyOn(draftEditor, 'updateContents').and.callThrough();
+    const spyEditorDisable = spyOn(draftEditor, 'disable').and.callThrough();
+
+    const cleanedOps = env.component.cleanDraftOps(cloneDeep(delta_verse_2_suggested).ops!);
     const draftDiff = delta_no_verse_2.diff(new Delta(cleanedOps));
-    component.applyDraft();
-    expect(component.targetEditor.editor!.enable).toHaveBeenCalledWith(true);
-    expect(component.targetEditor.editor!.getContents).toHaveBeenCalled();
-    expect(component.targetEditor.editor!.setContents).toHaveBeenCalledWith(delta_no_verse_2, 'silent');
-    expect(component.targetEditor.editor!.updateContents).toHaveBeenCalledWith(draftDiff, 'user');
-    expect(component.targetEditor.editor!.disable).toHaveBeenCalled();
-    expect(component.isDraftApplied).toBeTrue();
-  });
 
-  it('should clean draft ops correctly', () => {
-    const cleanedOps = component.cleanDraftOps(cloneDeep(delta_verse_2_suggested).ops!);
+    env.component.applyDraft();
+    expect(spyEditorSetContents).toHaveBeenCalledWith(delta_no_verse_2, 'silent');
+    expect(spyEditorEnable).toHaveBeenCalledWith(true);
+    expect(spyEditorUpdateContents).toHaveBeenCalledWith(draftDiff, 'user');
+    expect(spyEditorDisable).toHaveBeenCalled();
+    expect(isBadDelta(env.component.targetEditor.editor?.getContents().ops!)).toBeFalse();
+    tick();
+  }));
+
+  it('should clean draft ops correctly', fakeAsync(() => {
+    const env = new TestEnvironment(delta_no_verse_2);
+    const cleanedOps = env.component.cleanDraftOps(cloneDeep(delta_verse_2_suggested).ops!);
     expect(cleanedOps).toEqual(delta_verse_2_accepted.ops!);
-  });
+  }));
 
-  it('should navigate to the correct URL for editing the book/chapter', () => {
-    component.currentBook = 1;
-    component.currentChapter = 2;
-    component.targetProjectId = '123';
-    component.editChapter();
-    expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/projects/123/translate/GEN/2');
-  });
+  it('should navigate to the correct URL for editing the book/chapter', fakeAsync(() => {
+    const env = new TestEnvironment(delta_no_verse_2);
+    env.component.currentBook = 1;
+    env.component.currentChapter = 2;
+    env.component.targetProjectId = '123';
+    env.component.editChapter();
+    verify(mockRouter.navigateByUrl('/projects/123/translate/GEN/2')).called();
+  }));
 
-  it('should navigate to the correct URL for the given book and chapter', () => {
+  it('should navigate to the correct URL for the given book and chapter', fakeAsync(() => {
+    const env = new TestEnvironment(delta_no_verse_2);
     const book = 1;
     const chapter = 2;
-    component.targetProjectId = '123';
-    component.navigateBookChapter(book, chapter);
-    expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/projects/123/draft-preview/GEN/2');
-  });
+    env.component.currentBook = 2;
+    env.component.currentChapter = 3;
+    env.component.targetProjectId = '123';
+    env.component.navigateBookChapter(book, chapter);
+    verify(mockRouter.navigateByUrl('/projects/123/draft-preview/GEN/2')).called();
+  }));
+
+  const projectProfileDoc = {
+    data: {
+      writingSystem: {
+        tag: 'en'
+      },
+      translateConfig: {
+        source: {
+          projectRef: 'sourceProjectId'
+        }
+      },
+      texts: [
+        {
+          bookNum: 1,
+          chapters: [
+            {
+              number: 1,
+              lastVerse: 10
+            },
+            {
+              number: 2,
+              lastVerse: 10
+            }
+          ]
+        },
+        {
+          bookNum: 2,
+          chapters: [
+            {
+              number: 1,
+              lastVerse: 10
+            },
+            {
+              number: 2,
+              lastVerse: 10
+            }
+          ]
+        }
+      ]
+    }
+  } as SFProjectProfileDoc;
 
   const draftSegmentMap: DraftSegmentMap = {
     verse_1_1: 'This is verse 1. ',
@@ -138,6 +260,14 @@ describe('DraftViewerComponent', () => {
           style: 'c'
         }
       }
+    },
+    {
+      attributes: {
+        initial: true,
+        segment: 'p_1',
+        'para-contents': true
+      },
+      insert: { blank: true }
     },
     {
       attributes: {
@@ -173,9 +303,7 @@ describe('DraftViewerComponent', () => {
         segment: 'verse_1_2',
         'para-contents': true
       },
-      insert: {
-        blank: true
-      }
+      insert: { blank: true }
     },
     {
       attributes: {
@@ -194,6 +322,14 @@ describe('DraftViewerComponent', () => {
         'para-contents': true
       },
       insert: 'And God said '
+    },
+    {
+      insert: '\n',
+      attributes: {
+        para: {
+          style: 'p'
+        }
+      }
     }
   ]);
 
@@ -205,6 +341,14 @@ describe('DraftViewerComponent', () => {
           style: 'c'
         }
       }
+    },
+    {
+      attributes: {
+        initial: true,
+        segment: 'p_1',
+        'para-contents': true
+      },
+      insert: { blank: true }
     },
     {
       attributes: {
@@ -260,6 +404,14 @@ describe('DraftViewerComponent', () => {
         'para-contents': true
       },
       insert: 'And God said '
+    },
+    {
+      insert: '\n',
+      attributes: {
+        para: {
+          style: 'p'
+        }
+      }
     }
   ]);
 
@@ -271,6 +423,14 @@ describe('DraftViewerComponent', () => {
           style: 'c'
         }
       }
+    },
+    {
+      attributes: {
+        initial: true,
+        segment: 'p_1',
+        'para-contents': true
+      },
+      insert: { blank: true }
     },
     {
       attributes: {
@@ -325,6 +485,14 @@ describe('DraftViewerComponent', () => {
         'para-contents': true
       },
       insert: 'And God said '
+    },
+    {
+      insert: '\n',
+      attributes: {
+        para: {
+          style: 'p'
+        }
+      }
     }
   ]);
 });
