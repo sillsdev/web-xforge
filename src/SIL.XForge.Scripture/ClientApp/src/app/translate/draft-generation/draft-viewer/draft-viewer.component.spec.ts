@@ -9,12 +9,7 @@ import { User } from 'realtime-server/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
-import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
-import { SF_TYPE_REGISTRY } from 'src/app/core/models/sf-type-registry';
-import { Delta, TextDoc, TextDocId } from 'src/app/core/models/text-doc';
-import { SFProjectService } from 'src/app/core/sf-project.service';
 import { SharedModule } from 'src/app/shared/shared.module';
-import { isBadDelta } from 'src/app/shared/utils';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -24,8 +19,13 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { SFProjectService } from '../../../core/sf-project.service';
+import { isBadDelta } from '../../../shared/utils';
 import { DraftSegmentMap } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
+import { SFProjectProfileDoc } from './../../../core/models/sf-project-profile-doc';
+import { SF_TYPE_REGISTRY } from './../../../core/models/sf-type-registry';
+import { Delta, TextDoc, TextDocId } from './../../../core/models/text-doc';
 import { DraftViewerComponent } from './draft-viewer.component';
 
 describe('DraftViewerComponent', () => {
