@@ -38,8 +38,8 @@ describe('DraftViewerComponent', () => {
   const mockRouter = mock(Router);
 
   class TestEnvironment {
-    fixture!: ComponentFixture<DraftViewerComponent>;
-    component!: DraftViewerComponent;
+    fixture: ComponentFixture<DraftViewerComponent>;
+    component: DraftViewerComponent;
     readonly targetProjectId = 'targetProjectId';
     readonly targetTextDocId = new TextDocId(this.targetProjectId, 1, 2, 'target');
     private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
@@ -122,7 +122,7 @@ describe('DraftViewerComponent', () => {
     expect(env.component.sourceProjectId).toEqual('sourceProjectId');
     expect(env.component.projectSettingsUrl).toEqual('/projects/targetProjectId/settings');
     expect(env.component.targetProject).toEqual(projectProfileDoc.data);
-    verify(mockProjectService.getProfile('sourceProjectId')).called();
+    verify(mockProjectService.getProfile('sourceProjectId')).once();
   }));
 
   it('should call populateDraftText method after both editors are loaded', fakeAsync(() => {
@@ -138,7 +138,7 @@ describe('DraftViewerComponent', () => {
     expect(env.component.books).toEqual([1, 2]);
     expect(env.component.currentBook).toEqual(1);
     expect(env.component.currentChapter).toEqual(2);
-    expect(spyPopulateDraftText).toHaveBeenCalled();
+    expect(spyPopulateDraftText).toHaveBeenCalledTimes(1);
   }));
 
   it('should populate draft text correctly', fakeAsync(() => {
@@ -148,7 +148,7 @@ describe('DraftViewerComponent', () => {
     env.fixture.detectChanges();
     tick();
 
-    verify(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 2)).called();
+    verify(mockDraftGenerationService.getGeneratedDraft('targetProjectId', 1, 2)).once();
     expect(env.component.hasDraft).toBeTrue();
     expect(env.component.targetEditor.editor!.getContents()).toEqual(delta_verse_2_suggested);
   }));
@@ -174,7 +174,7 @@ describe('DraftViewerComponent', () => {
     expect(spyEditorSetContents).toHaveBeenCalledWith(delta_no_verse_2, 'silent');
     expect(spyEditorEnable).toHaveBeenCalledWith(true);
     expect(spyEditorUpdateContents).toHaveBeenCalledWith(draftDiff, 'user');
-    expect(spyEditorDisable).toHaveBeenCalled();
+    expect(spyEditorDisable).toHaveBeenCalledTimes(1);
     expect(isBadDelta(env.component.targetEditor.editor?.getContents().ops!)).toBeFalse();
     tick();
   }));
@@ -191,7 +191,7 @@ describe('DraftViewerComponent', () => {
     env.component.currentChapter = 2;
     env.component.targetProjectId = '123';
     env.component.editChapter();
-    verify(mockRouter.navigateByUrl('/projects/123/translate/GEN/2')).called();
+    verify(mockRouter.navigateByUrl('/projects/123/translate/GEN/2')).once();
   }));
 
   it('should navigate to the correct URL for the given book and chapter', fakeAsync(() => {
@@ -202,7 +202,7 @@ describe('DraftViewerComponent', () => {
     env.component.currentChapter = 3;
     env.component.targetProjectId = '123';
     env.component.navigateBookChapter(book, chapter);
-    verify(mockRouter.navigateByUrl('/projects/123/draft-preview/GEN/2')).called();
+    verify(mockRouter.navigateByUrl('/projects/123/draft-preview/GEN/2')).once();
   }));
 
   const projectProfileDoc = {
