@@ -3267,6 +3267,9 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       const targetDelta = new Delta([{ insert: '', attributes: { segment: 'verse_1_1' } }]);
 
+      // Stop text loading from triggering
+      spyOn(env.component, 'onTextLoaded');
+
       env.setProjectUserConfig();
       env.wait();
 
@@ -3280,12 +3283,19 @@ describe('EditorComponent', () => {
       env.targetEditor.getContents = jasmine.createSpy().and.returnValue(targetDelta);
       env.component['checkForPreTranslations']();
       expect(env.component.hasDraft).toBe(true);
+      verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).called();
       env.dispose();
     }));
 
     it('detects when back translation draft is not available', fakeAsync(() => {
       const env = new TestEnvironment();
-      const targetDelta = new Delta([{ insert: 'Translation already exists', attributes: { segment: 'verse_1_1' } }]);
+      const targetDelta = new Delta([
+        { insert: 'verse 1 already exists', attributes: { segment: 'verse_1_1' } },
+        { insert: { blank: true }, attributes: { segment: 'verse_1_2' } }
+      ]);
+
+      // Stop text loading from triggering
+      spyOn(env.component, 'onTextLoaded');
 
       env.setProjectUserConfig();
       env.wait();
@@ -3300,6 +3310,34 @@ describe('EditorComponent', () => {
       env.targetEditor.getContents = jasmine.createSpy().and.returnValue(targetDelta);
       env.component['checkForPreTranslations']();
       expect(env.component.hasDraft).toBe(false);
+      verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).called();
+      env.dispose();
+    }));
+
+    it('does not fetch draft if all segments are translated', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const targetDelta = new Delta([
+        { insert: 'verse 1 already exists', attributes: { segment: 'verse_1_1' } },
+        { insert: 'verse 2 already exists', attributes: { segment: 'verse_1_2' } }
+      ]);
+
+      // Stop text loading from triggering
+      spyOn(env.component, 'onTextLoaded');
+
+      env.setProjectUserConfig();
+      env.wait();
+
+      when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
+        of({
+          verse_3_16: 'For God so loved the world',
+          verse_1_1: 'In the beginning was the Word'
+        })
+      );
+
+      env.targetEditor.getContents = jasmine.createSpy().and.returnValue(targetDelta);
+      env.component['checkForPreTranslations']();
+      expect(env.component.hasDraft).toBe(false);
+      verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).never();
       env.dispose();
     }));
 
