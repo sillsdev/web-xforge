@@ -193,6 +193,7 @@ export class UICommonModule {
           outerStrokeColor: '#298ed1',
           innerStrokeColor: '#95c4e6',
           animationDuration: 1000,
+          startFromZero: false,
           titleFontSize: '48',
           unitsFontSize: '20',
           showSubtitle: false,
