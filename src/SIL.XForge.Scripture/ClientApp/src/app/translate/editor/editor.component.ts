@@ -2016,8 +2016,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private checkForPreTranslations(): void {
-    const targetOps = this.target?.editor?.getContents().ops!;
-    const isChapterComplete = targetOps.every(op => {
+    const targetOps: DeltaOperation[] = this.target?.editor?.getContents().ops!;
+    const isChapterComplete: boolean = targetOps.every(op => {
       // If segment is a verse, check if it has a translation
       if (VERSE_REGEX.test(op.attributes?.segment)) {
         return isString(op.insert) && op.insert.trim();
