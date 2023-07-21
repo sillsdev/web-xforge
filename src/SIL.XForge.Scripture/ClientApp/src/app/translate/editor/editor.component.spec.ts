@@ -2734,23 +2734,27 @@ describe('EditorComponent', () => {
     it('allows adding a note to an existing thread', fakeAsync(() => {
       const projectId: string = 'project01';
       const threadDataId: string = 'dataid04';
+      const threadId: string = 'thread04';
       const segmentRef: string = 'verse_1_3';
       const env = new TestEnvironment();
       const content: string = 'content in the thread';
       let noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadDataId);
       expect(noteThread.data!.notes.length).toEqual(1);
+
       env.setProjectUserConfig();
       env.wait();
       const noteThreadIconElem: HTMLElement = env.getNoteThreadIconElement(segmentRef, threadDataId)!;
       noteThreadIconElem.click();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      const [, noteDialogData] = capture(mockedMatDialog.open).last();
+      expect((noteDialogData!.data as NoteDialogData).threadDataId).toEqual(threadDataId);
       env.mockNoteDialogRef.close({ noteContent: content });
       env.wait();
       noteThread = env.getNoteThreadDoc(projectId, threadDataId);
       expect(noteThread.data!.notes.length).toEqual(2);
-      expect(noteThread.data!.notes[1].threadId).toEqual(threadDataId);
+      expect(noteThread.data!.notes[1].threadId).toEqual(threadId);
       expect(noteThread.data!.notes[1].content).toEqual(content);
       expect(noteThread.data!.notes[1].tagId).toBe(undefined);
-
       env.dispose();
     }));
 
