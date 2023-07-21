@@ -1,8 +1,9 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { isEmpty } from 'lodash-es';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, of, Subscription } from 'rxjs';
-import { switchMap, tap } from 'rxjs/operators';
+import { combineLatest, Observable, of, Subscription } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs/operators';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -32,6 +33,14 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   jobSubscription?: Subscription;
   isReady = false;
 
+  /**
+   * Whether any completed draft build exists for this project.
+   * This is useful for when the last build did not complete successfully or was canceled,
+   * in which case a 'Preview draft' button can still be shown, as the pre-translations
+   * from that build can still be retrieved.
+   */
+  hasAnyCompletedBuild$!: Observable<boolean>;
+
   constructor(
     private readonly matDialog: MatDialog,
     private readonly dialogService: DialogService,
@@ -55,6 +64,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
         this.draftViewerUrl = `/projects/${projectId}/draft-preview`;
       }
     );
+
+    this.hasAnyCompletedBuild$ = this.draftGenerationService
+      .getLastCompletedBuild(this.activatedProject.projectId!)
+      .pipe(map(build => !isEmpty(build)));
 
     this.jobSubscription = this.subscribe(
       this.draftGenerationService
