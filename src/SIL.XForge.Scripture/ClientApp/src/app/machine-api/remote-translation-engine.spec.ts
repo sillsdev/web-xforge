@@ -422,7 +422,7 @@ describe('RemoteTranslationEngine', () => {
     );
   });
 
-  fit('sends notice when getWordGraph has error', async function () {
+  it('sends notice when getWordGraph has error', async function () {
     const env = new TestEnvironment();
     const sourceSegment = 'Esto es una prueba.';
     when(
