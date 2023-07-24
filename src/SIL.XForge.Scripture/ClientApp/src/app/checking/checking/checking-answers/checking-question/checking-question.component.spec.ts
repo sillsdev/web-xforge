@@ -146,11 +146,12 @@ describe('CheckingQuestionComponent', () => {
     when(newQuestion.projectRef).thenReturn('project01');
     when(newQuestion.text).thenReturn('another question');
     when(newQuestion.audioUrl).thenReturn('test-audio-player-b.webm');
-    const verseRef = mock<VerseRefData>();
-    when(verseRef.bookNum).thenReturn(1);
-    when(verseRef.chapterNum).thenReturn(11);
-    when(verseRef.verseNum).thenReturn(111);
-    when(newQuestion.verseRef).thenReturn(instance(verseRef));
+    const verseRef: VerseRefData = {
+      bookNum: 1,
+      chapterNum: 11,
+      verseNum: 111
+    };
+    when(newQuestion.verseRef).thenReturn(verseRef);
     when(newQuestionDoc.data).thenReturn(instance(newQuestion));
 
     //new scripture audio
