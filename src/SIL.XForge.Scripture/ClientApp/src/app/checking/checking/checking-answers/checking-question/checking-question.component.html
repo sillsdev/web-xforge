@@ -24,7 +24,7 @@
   <div class="question-wrapper">
     <div class="scripture-audio" *ngIf="scriptureAudioUrl">
       <p [class]="focusedText">
-        {{ t("scripture_audio_label") }}
+        {{ t("scripture_audio_label", { referenceForDisplay: referenceForDisplay }) }}
         <mat-icon *ngIf="focusedText === 'question-audio-label'" (click)="selectScripture()">
           play_circle_outline
         </mat-icon>
