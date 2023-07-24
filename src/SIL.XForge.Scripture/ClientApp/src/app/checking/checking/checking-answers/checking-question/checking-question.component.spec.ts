@@ -32,11 +32,12 @@ class MockComponent {
     when(mockedQuestion.projectRef).thenReturn('project01');
     when(mockedQuestion.text).thenReturn('some text');
     when(mockedQuestion.audioUrl).thenReturn('test-audio-player.webm');
-    const verseRef = mock<VerseRefData>();
-    when(verseRef.bookNum).thenReturn(8);
-    when(verseRef.chapterNum).thenReturn(22);
-    when(verseRef.verseNum).thenReturn(17);
-    when(mockedQuestion.verseRef).thenReturn(instance(verseRef));
+    const verseRef: VerseRefData = {
+      bookNum: 8,
+      chapterNum: 22,
+      verseNum: 17
+    };
+    when(mockedQuestion.verseRef).thenReturn(verseRef);
     when(mockedQuestionDoc.data).thenReturn(instance(mockedQuestion));
   }
 }
