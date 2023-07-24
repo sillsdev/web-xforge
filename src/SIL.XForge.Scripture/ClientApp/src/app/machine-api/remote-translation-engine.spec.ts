@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { NgModule } from '@angular/core';
+import { NgModule, NgZone } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { MAX_SEGMENT_LENGTH, TranslationSources, WordGraph } from '@sillsdev/machine';
 import { of, throwError } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
@@ -421,7 +422,7 @@ describe('RemoteTranslationEngine', () => {
     );
   });
 
-  it('sends notice when getWordGraph has error', async function () {
+  fit('sends notice when getWordGraph has error', async function () {
     const env = new TestEnvironment();
     const sourceSegment = 'Esto es una prueba.';
     when(
@@ -430,6 +431,8 @@ describe('RemoteTranslationEngine', () => {
         JSON.stringify(sourceSegment)
       )
     ).thenThrow(new Error());
+
+    env.wait();
 
     const result: WordGraph = await env.client.getWordGraph(sourceSegment);
     expect(result.isEmpty).toBeTruthy();
@@ -445,6 +448,7 @@ class TestEnvironment {
   readonly mockedHttpClient: HttpClient;
   readonly client: RemoteTranslationEngine;
   readonly mockedNoticeService: NoticeService;
+  readonly ngZone: NgZone;
 
   constructor() {
     this.mockedHttpClient = mock(HttpClient);
@@ -469,6 +473,8 @@ class TestEnvironment {
       instance(this.mockedHttpClient),
       instance(this.mockedNoticeService)
     );
+
+    this.ngZone = TestBed.inject(NgZone);
   }
 
   addCreateBuild(): void {
@@ -505,5 +511,9 @@ class TestEnvironment {
         })
       );
     }
+  }
+
+  async wait(ms: number = 500): Promise<void> {
+    await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
   }
 }
