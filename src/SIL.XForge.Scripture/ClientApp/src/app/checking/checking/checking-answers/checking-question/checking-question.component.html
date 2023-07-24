@@ -1,4 +1,4 @@
-<ng-container transloco>
+<ng-container *transloco="let t; read: 'checking_questions'">
   <app-single-button-audio-player
     #scriptureAudio
     *ngIf="scriptureAudioUrl"
@@ -24,7 +24,7 @@
   <div class="question-wrapper">
     <div class="scripture-audio" *ngIf="scriptureAudioUrl">
       <p [class]="focusedText">
-        Listen to {{ referenceForDisplay }} to answer the question that follows.
+        {{ t("scripture_audio_label") }}
         <mat-icon *ngIf="focusedText === 'question-audio-label'" (click)="selectScripture()">
           play_circle_outline
         </mat-icon>

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { MatSliderChange } from '@angular/material/slider';
 import { I18nService } from 'xforge-common/i18n.service';
 import { PwaService } from 'xforge-common/pwa.service';
-import { AudioPlayerBaseComponent } from '../audio-player-base.component/audio-player-base.component';
+import { AudioPlayerBaseComponent } from '../audio-player-base/audio-player-base.component';
 
 @Component({
   selector: 'app-audio-player',

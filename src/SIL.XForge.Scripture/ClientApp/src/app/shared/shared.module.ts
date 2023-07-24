@@ -3,7 +3,7 @@ import { NgModule } from '@angular/core';
 import { TranslocoModule } from '@ngneat/transloco';
 import { QuillModule } from 'ngx-quill';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { CheckingQuestionComponent } from '../checking-question/checking-question.component';
+import { CheckingQuestionComponent } from '../checking/checking/checking-answers/checking-question/checking-question.component';
 import { SingleButtonAudioPlayerComponent } from '../checking/checking/single-button-audio-player/single-button-audio-player.component';
 import { BookChapterChooserComponent } from './book-chapter-chooser/book-chapter-chooser.component';
 import { ChapterNavComponent } from './chapter-nav/chapter-nav.component';

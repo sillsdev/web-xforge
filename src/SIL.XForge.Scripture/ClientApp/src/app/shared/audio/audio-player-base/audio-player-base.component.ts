@@ -9,7 +9,7 @@ import { AudioPlayer, AudioStatus } from '../audio-player';
 })
 export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable implements OnDestroy {
   readonly isAudioAvailable$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  protected _audio: AudioPlayer | undefined;
+  private _audio: AudioPlayer | undefined;
 
   constructor(protected readonly pwaService: PwaService) {
     super();
@@ -21,6 +21,10 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
 
   get audio(): AudioPlayer | undefined {
     return this._audio;
+  }
+
+  protected set audio(value: AudioPlayer | undefined) {
+    this._audio = value;
   }
 
   get audioStatus(): AudioStatus {

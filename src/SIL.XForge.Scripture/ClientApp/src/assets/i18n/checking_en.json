@@ -246,7 +246,9 @@
     "questions": "Questions"
   },
   "checking_questions": {
-    "no_questions_found": "No questions found to match your filter"
+    "no_questions_found": "No questions found to match your filter",
+    "no_question_text": "Listen to the question for ",
+    "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows."
   },
   "edit_name_dialog": {
     "cancel": "Cancel",

@@ -11,10 +11,10 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { PwaService } from 'xforge-common/pwa.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { SingleButtonAudioPlayerComponent } from '../checking/checking/single-button-audio-player/single-button-audio-player.component';
-import { QuestionDoc } from '../core/models/question-doc';
-import { TextAudioDoc } from '../core/models/text-audio-doc';
-import { SFProjectService } from '../core/sf-project.service';
+import { QuestionDoc } from '../../../../core/models/question-doc';
+import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
+import { SFProjectService } from '../../../../core/sf-project.service';
+import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-player/single-button-audio-player.component';
 import { CheckingQuestionComponent } from './checking-question.component';
 
 const mockedSFProjectService = mock(SFProjectService);

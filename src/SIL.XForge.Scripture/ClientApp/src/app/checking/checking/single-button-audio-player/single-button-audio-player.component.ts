@@ -1,9 +1,9 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { AudioPlayer, AudioStatus } from 'src/app/shared/audio/audio-player';
-import { AudioPlayerBaseComponent } from 'src/app/shared/audio/audio-player-base.component/audio-player-base.component';
-import { AudioSegmentPlayer } from 'src/app/shared/audio/audio-segment-player';
 import { PwaService } from 'xforge-common/pwa.service';
+import { AudioPlayer, AudioStatus } from '../../../shared/audio/audio-player';
+import { AudioPlayerBaseComponent } from '../../../shared/audio/audio-player-base/audio-player-base.component';
+import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
 
 @Component({
   selector: 'app-single-button-audio-player',
@@ -26,20 +26,20 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
   }
 
   get progressInDegrees(): string {
-    return this._audio?.seek !== undefined ? `${(this._audio?.seek / 100) * 360}deg` : '';
+    return this.audio?.seek !== undefined ? `${(this.audio?.seek / 100) * 360}deg` : '';
   }
 
   get playing(): boolean {
-    return this._audio?.isPlaying ?? false;
+    return this.audio?.isPlaying ?? false;
   }
 
   play(): void {
-    this._audio?.play();
+    this.audio?.play();
   }
 
   stop(): void {
-    this._audio?.pause();
-    this._audio?.setSeek(0);
+    this.audio?.pause();
+    this.audio?.setSeek(0);
   }
 
   ngOnChanges(): void {
@@ -48,23 +48,23 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
     this.audio?.dispose();
     if (this._source != null && this._source !== '') {
       if (this.start != null && this.end != null) {
-        this._audio = new AudioSegmentPlayer(this._source, this.start, this.end, this.pwaService);
+        this.audio = new AudioSegmentPlayer(this._source, this.start, this.end, this.pwaService);
       } else {
-        this._audio = new AudioPlayer(this._source, this.pwaService);
+        this.audio = new AudioPlayer(this._source, this.pwaService);
       }
 
-      this.subscribe(this._audio.status$, newVal => {
+      this.subscribe(this.audio.status$, newVal => {
         if (newVal === AudioStatus.Available) {
           this.isAudioAvailable$.next(true);
         }
       });
-      this.subscribe(this._audio.finishedPlaying$, () => {
+      this.subscribe(this.audio.finishedPlaying$, () => {
         if (!this.hasFinishedPlayingOnce$.value) {
           this.hasFinishedPlayingOnce$.next(true);
         }
       });
     } else {
-      this._audio = undefined;
+      this.audio = undefined;
     }
   }
 }

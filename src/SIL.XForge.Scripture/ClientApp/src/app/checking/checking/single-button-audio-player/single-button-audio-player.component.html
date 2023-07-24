@@ -1,5 +1,5 @@
 <button type="button" [style.--audio-progress]="progressInDegrees" *transloco="let t; read: 'checking_audio_player'">
-  <ng-content *ngIf="isAudioAvailable$.value"></ng-content>
+  <ng-content *ngIf="isAudioAvailable$ | async"></ng-content>
   <mat-spinner *ngIf="audioStatus === 'audio_initialized'" [diameter]="20" color="primary"></mat-spinner>
   <mat-icon *ngIf="!isAudioAvailable$.value && audioStatus !== 'audio_initialized'" [matTooltip]="t(audioStatus)">
     play_disabled

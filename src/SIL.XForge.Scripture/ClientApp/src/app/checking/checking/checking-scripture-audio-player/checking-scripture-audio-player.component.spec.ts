@@ -7,7 +7,7 @@ import { instance, mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { AudioPlayerComponent } from '../../../shared/audio/audio-player.component/audio-player.component';
+import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
 

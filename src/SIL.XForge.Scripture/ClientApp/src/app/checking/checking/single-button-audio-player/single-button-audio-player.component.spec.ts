@@ -3,12 +3,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
-import { AudioPlayer } from 'src/app/shared/audio/audio-player';
-import { AudioSegmentPlayer } from 'src/app/shared/audio/audio-segment-player';
 import { mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { AudioPlayer } from '../../../shared/audio/audio-player';
+import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
 import { SingleButtonAudioPlayerComponent } from './single-button-audio-player.component';
 
 const mockedPwaService = mock(PwaService);
@@ -27,6 +27,8 @@ class MockComponent {
     this.source = 'test-audio-player.webm';
   }
 }
+
+const AlmostDone = 98;
 
 describe('SingleButtonAudioPlayerComponent', () => {
   configureTestingModule(() => ({
@@ -84,7 +86,7 @@ describe('SingleButtonAudioPlayerComponent', () => {
     await env.wait();
     await env.wait();
 
-    env.component.player.audio?.setSeek(98);
+    env.component.player.audio?.setSeek(AlmostDone);
     await env.wait();
     env.component.player.play();
     await env.wait(1000);
@@ -105,7 +107,7 @@ describe('SingleButtonAudioPlayerComponent', () => {
       }
     });
 
-    env.component.player.audio?.setSeek(98);
+    env.component.player.audio?.setSeek(AlmostDone);
     await env.wait();
     env.component.player.play();
     await env.wait(1000);
@@ -113,7 +115,7 @@ describe('SingleButtonAudioPlayerComponent', () => {
     expect(env.component.player.playing).toBe(false);
     expect(count).toBe(1);
 
-    env.component.player.audio?.setSeek(98);
+    env.component.player.audio?.setSeek(AlmostDone);
     await env.wait();
     env.component.player.play();
     await env.wait(1000);
