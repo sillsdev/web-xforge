@@ -24,28 +24,30 @@ namespace BackoutCommits;
 public class SyncAllService : ISyncAllService
 {
     private readonly Func<IParatextSyncRunner> _syncRunnerFactory;
-    private readonly IRealtimeService _realtimeService;
     private readonly IParatextService _paratextService;
     private readonly IRepository<UserSecret> _userSecretRepo;
     private readonly IRepository<SyncMetrics> _syncMetricsRepo;
-    private IConnection _realtimeServiceConnection;
+    private readonly ISFProjectTool _sfProjectTool;
 
     private readonly IProgramLogger _logger;
+    private readonly IHgWrapper _hgWrapper;
 
     public SyncAllService(
         Func<IParatextSyncRunner> syncRunnerFactory,
-        IRealtimeService realtimeService,
         IParatextService paratextService,
         IRepository<UserSecret> userSecretRepo,
         IRepository<SyncMetrics> syncMetricsRepo,
+        ISFProjectTool sfProjectTool,
+        IHgWrapper hgWrapper,
         IProgramLogger logger
     )
     {
         _syncRunnerFactory = syncRunnerFactory;
-        _realtimeService = realtimeService;
         _paratextService = paratextService;
         _userSecretRepo = userSecretRepo;
         _syncMetricsRepo = syncMetricsRepo;
+        _sfProjectTool = sfProjectTool;
+        _hgWrapper = hgWrapper;
         _logger = logger;
     }
 
@@ -60,15 +62,14 @@ public class SyncAllService : ISyncAllService
     public async Task SynchronizeAllProjectsAsync(
         bool doSynchronizations,
         ISet<string> sfProjectIdsToSynchronize,
+        string projectRootDir,
         IDictionary<string, string> sfAdminsToUse = null
     )
     {
-        List<SFProject> allSfProjects = _realtimeService.QuerySnapshots<SFProject>().ToList<SFProject>();
+        List<SFProject> allSfProjects = _sfProjectTool.GetProjectSnapshots();
         allSfProjects.RemoveAll((SFProject sfProject) => !sfProjectIdsToSynchronize.Contains(sfProject.Id));
         string ids = string.Join(' ', allSfProjects.Select((SFProject sfProject) => sfProject.Id));
         int count = allSfProjects.Count;
-
-        _realtimeServiceConnection = await _realtimeService.ConnectAsync();
         List<Task> syncTasks = new List<Task>();
 
         // Report on all SF projects.
@@ -211,10 +212,10 @@ public class SyncAllService : ISyncAllService
                                 + $"SF project {sfProject.Id} as SF user {sfUserId}."
                         );
                         Task syncTask = SynchronizeProjectAsync(sfUserId, sfProject.Id);
-                        var projectDoc = await _realtimeServiceConnection.FetchAsync<SFProject>(sfProject.Id);
+                        IDocument<SFProject> projectDoc = await _sfProjectTool.GetProjectDocAsync(sfProject.Id);
                         // Increment the queued count (such as done in SyncService), since it gets decremented
                         // later by ParatextSyncRunner.
-                        await projectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));
+                        await _sfProjectTool.IncrementProjectQueuedCountAsync(projectDoc);
                         _logger.Log(
                             $"    > Synchronization task for SF project {sfProject.Id} as "
                                 + $"SF user {sfUserId} has Sync Task Id {syncTask.Id}."
@@ -298,7 +299,11 @@ public class SyncAllService : ISyncAllService
             }
         }
 
+        allSfProjects = _sfProjectTool.GetProjectSnapshots();
+        allSfProjects.RemoveAll((SFProject sfProject) => !sfProjectIdsToSynchronize.Contains(sfProject.Id));
         ReportLastSyncSuccesses(allSfProjects);
+        if (doSynchronizations)
+            await CleanupProjectsAsync(allSfProjects, projectRootDir);
     }
 
     /// <summary>
@@ -347,6 +352,39 @@ public class SyncAllService : ISyncAllService
                     + $"DateLastSuccessfulSync: {sfProject.Sync.DateLastSuccessfulSync?.ToString("o")}. "
                     + $"LastSyncSuccessful: {sfProject.Sync.LastSyncSuccessful}."
             );
+        }
+    }
+
+    private async Task CleanupProjectsAsync(IEnumerable<SFProject> projects, string projectRootDir)
+    {
+        IEnumerable<SFProject> projectsWithSyncQueued = projects.Where(
+            (SFProject sfProject) => sfProject.Sync.QueuedCount > 0
+        );
+        foreach (SFProject sfProject in projectsWithSyncQueued)
+        {
+            _logger.Log(
+                $"  > SF project {sfProject.Id} has a sync queued count of {sfProject.Sync.QueuedCount}. Setting to 0."
+            );
+            IDocument<SFProject> projectDoc = await _sfProjectTool.GetProjectDocAsync(sfProject.Id);
+            await _sfProjectTool.ResetProjectQueuedCountAsync(projectDoc, 0);
+        }
+
+        foreach (SFProject project in projects)
+        {
+            string projectPath = Path.Combine(projectRootDir, project.ParatextId, "target");
+            string repoRevision = _hgWrapper.GetRepoRevision(projectPath);
+            if (repoRevision != project.Sync.SyncedToRepositoryVersion)
+            {
+                _logger.Log(
+                    $"  > SF project {project.Id} has a repo revision of {repoRevision}. "
+                        + $"Setting SyncedToRepositoryVersion to {repoRevision}."
+                );
+                // The SyncedToRepositoryVersion was set to the revision after running the backout tool
+                // and if a sync failed, a backup repo may have been restored, so we need to reset the
+                // repo version
+                IDocument<SFProject> projectDoc = await _sfProjectTool.GetProjectDocAsync(project.Id);
+                await _sfProjectTool.UpdateProjectRepositoryVersionAsync(projectDoc, repoRevision);
+            }
         }
     }
 
