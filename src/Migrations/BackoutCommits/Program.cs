@@ -74,13 +74,14 @@ public class Program
             || string.IsNullOrWhiteSpace(program.machineName)
         )
             throw new Exception("Please set the MACHINE_NAME, PROJECT_IDS and PROJECT_ROOT_DIR variables.");
+        bool backoutOnly = Environment.GetEnvironmentVariable("BACKOUT_ONLY") == "true";
         bool syncOnly = Environment.GetEnvironmentVariable("SYNC_ONLY") == "true";
         IEnumerable<string> projectIds = projectIdsString.Split(' ');
 
         // Find all of the revisions that introduce changes to notes files
         await program.projectTool.ConnectToRealtimeServiceAsync();
         await program.ProcessProjectsAsync(projectIds, runMode && !syncOnly);
-        await program.SyncProjectsAsync(projectIds, runMode);
+        await program.SyncProjectsAsync(projectIds, runMode && !backoutOnly);
         program.projectTool.Dispose();
         await webHost.StopAsync();
     }
