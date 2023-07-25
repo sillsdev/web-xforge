@@ -10,7 +10,8 @@ public interface ISyncAllService
 {
     Task SynchronizeAllProjectsAsync(
         bool doSynchronizations,
-        ISet<string> sfProjectIdsToSynchronize = null,
+        ISet<string> sfProjectIdsToSynchronize,
+        string projectRootDir,
         IDictionary<string, string> sfAdminsToUse = null
     );
 }

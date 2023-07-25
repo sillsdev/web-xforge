@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
@@ -36,11 +37,32 @@ public class SFProjectTool : ISFProjectTool
         return await realtimeServiceConnection.FetchAsync<SFProject>(sfProjectId);
     }
 
+    public List<SFProject> GetProjectSnapshots()
+    {
+        return RealtimeService.QuerySnapshots<SFProject>().ToList();
+    }
+
     public async Task UpdateProjectRepositoryVersionAsync(IDocument<SFProject> projectDoc, string revision)
     {
         await projectDoc.SubmitJson0OpAsync(op =>
         {
             op.Set(p => p.Sync.SyncedToRepositoryVersion, revision);
+        });
+    }
+
+    public async Task ResetProjectQueuedCountAsync(IDocument<SFProject> projectDoc, int queuedCount)
+    {
+        await projectDoc.SubmitJson0OpAsync(op =>
+        {
+            op.Set(p => p.Sync.QueuedCount, queuedCount);
+        });
+    }
+
+    public async Task IncrementProjectQueuedCountAsync(IDocument<SFProject> projectDoc)
+    {
+        await projectDoc.SubmitJson0OpAsync(op =>
+        {
+            op.Inc(p => p.Sync.QueuedCount, 1);
         });
     }
 
