@@ -129,8 +129,8 @@ export class MockPreTranslationHttpClient {
 
   // Mock generation
   private startGeneration(isContinue: boolean = false): void {
-    const interval: number = 200;
-    const duration: number = 12000;
+    const interval: number = 100; // Something small enough to simulate progress, but not too small to slow down browser
+    const duration: number = 12000; // 12 seconds until completion. This can be adjusted as desired.
     const pendingAfter: number = duration / 4;
     const activeAfter: number = (duration / 4) * 2;
 
