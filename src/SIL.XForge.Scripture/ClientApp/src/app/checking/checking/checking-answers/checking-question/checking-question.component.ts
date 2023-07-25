@@ -66,7 +66,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   get questionText(): string {
     return this.questionDoc?.data?.text
       ? this.questionDoc.data.text
-      : translate('checking_questions.no_question_text') + this.referenceForDisplay;
+      : translate('checking_questions.listen_to_question') + this.referenceForDisplay;
   }
 
   get questionAudioUrl(): string | undefined {
@@ -114,7 +114,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
 
       this.projectService.queryAudioText(projectId).then(audioQuery => {
         this._scriptureTextAudioData = audioQuery?.docs?.find(t => t.id === audioId)?.data;
-        if (!this._scriptureTextAudioData || !this.scriptureAudioUrl) {
+        if (this._scriptureTextAudioData == null || this.scriptureAudioUrl == null) {
           this.selectQuestion();
         }
       });

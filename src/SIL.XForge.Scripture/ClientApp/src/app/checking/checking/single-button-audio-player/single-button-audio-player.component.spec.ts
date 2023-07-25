@@ -132,7 +132,7 @@ describe('SingleButtonAudioPlayerComponent', () => {
     let count = 0;
     env.component.player.hasFinishedPlayingOnce$.subscribe(newVal => {
       if (!newVal) {
-        count++;
+        count++; //increment only if event fires as false
       }
     });
 
