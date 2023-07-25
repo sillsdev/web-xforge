@@ -1,0 +1,53 @@
+@import 'src/variables';
+
+.question-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+:host {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 8px;
+  padding-inline: 12px;
+}
+
+.scripture-audio,
+.question-text {
+  font-size: small;
+  color: $greyLight;
+  p {
+    margin: 0px;
+    transition: color 0.3s;
+    display: inline-block;
+    min-height: 18px;
+    vertical-align: sub;
+  }
+}
+
+#scriptureAudio.question-audio-label,
+#questionAudio.scripture-audio-label {
+  display: none;
+}
+
+.scripture-audio > .scripture-audio-label,
+.question-text > .question-audio-label {
+  font-weight: bold;
+  font-size: large;
+  color: black;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.question-wrapper {
+  mat-icon {
+    font-size: large;
+    vertical-align: bottom;
+    height: unset;
+    width: unset;
+    cursor: pointer;
+  }
+}

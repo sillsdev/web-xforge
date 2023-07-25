@@ -829,9 +829,27 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 // TODO (scripture audio) Create real timing data
                 new AudioTiming
                 {
-                    TextRef = "verse_1_1",
-                    From = 0.0,
-                    To = 0.0
+                    TextRef = "v1",
+                    From = 7.231,
+                    To = 18.133
+                },
+                new AudioTiming
+                {
+                    TextRef = "v2",
+                    From = 18.133,
+                    To = 32.244
+                },
+                new AudioTiming
+                {
+                    TextRef = "v3",
+                    From = 32.244,
+                    To = 38.495
+                },
+                new AudioTiming
+                {
+                    TextRef = "v4",
+                    From = 38.495,
+                    To = 57.475
                 }
             },
             // TODO get mimetype from client and make sure it is an acceptable value

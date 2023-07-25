@@ -7,8 +7,8 @@ import { instance, mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { AudioPlayerComponent } from '../../../shared/audio/audio-player.component';
-import { AudioTimePipe } from '../checking-audio-player/checking-audio-player.component';
+import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
+import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
 
 const audioFile = 'test-audio-player.webm';
@@ -22,7 +22,9 @@ describe('ScriptureAudioComponent', () => {
   it('can play and pause audio', async () => {
     const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
     const env = new TestEnvironment(template);
-    await env.waitForPlayer();
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
+
     env.playButton.nativeElement.click();
     await env.waitForPlayer();
     env.fixture.detectChanges();
@@ -37,7 +39,8 @@ describe('ScriptureAudioComponent', () => {
   it('can skip to next verse', async () => {
     const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
     const env = new TestEnvironment(template);
-    await env.waitForPlayer();
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
 
     env.component.audioPlayer.timing = timingData;
     await env.waitForPlayer();
@@ -90,7 +93,7 @@ class TestEnvironment {
     return this.component.audioPlayer.isPlaying;
   }
 
-  async waitForPlayer(ms: number = 100): Promise<void> {
+  async waitForPlayer(ms: number = 50): Promise<void> {
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }

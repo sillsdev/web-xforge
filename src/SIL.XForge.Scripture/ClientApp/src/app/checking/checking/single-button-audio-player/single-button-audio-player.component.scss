@@ -1,6 +1,5 @@
 @import 'src/variables';
 
-$buttonColor: $purpleLight;
 $progressColor: $purpleLight;
 $progressBackgroundColor: rgba(205, 219, 204, 0.33);
 
@@ -25,6 +24,14 @@ button:hover {
   cursor: pointer;
 }
 
+button:focus-visible {
+  outline: none;
+}
+
 mat-icon {
-  color: $buttonColor;
+  color: $greyLight;
+}
+
+.ng-star-inserted {
+  color: $purpleLight;
 }

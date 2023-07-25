@@ -10,6 +10,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Route, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
 import { cloneDeep } from 'lodash-es';
@@ -30,7 +31,6 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { getTextDocId, TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Canon, VerseRef } from '@sillsdev/scripture';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -61,6 +61,7 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { AudioTimePipe } from '../../shared/audio/audio-time-pipe';
 import { SharedModule } from '../../shared/shared.module';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
@@ -69,7 +70,7 @@ import { AnswerAction, CheckingAnswersComponent } from './checking-answers/check
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingAudioCombinedComponent } from './checking-audio-combined/checking-audio-combined.component';
-import { AudioTimePipe, CheckingAudioPlayerComponent } from './checking-audio-player/checking-audio-player.component';
+import { CheckingAudioPlayerComponent } from './checking-audio-player/checking-audio-player.component';
 import {
   AudioAttachment,
   CheckingAudioRecorderComponent

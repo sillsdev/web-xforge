@@ -6,7 +6,8 @@ import { instance, mock, when } from 'ts-mockito';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { AudioPlayerComponent, AudioTimePipe } from '../../../shared/audio/audio-player.component';
+import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
+import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { CheckingAudioPlayerNewComponent } from './checking-audio-player-new.component';
 
 const mockedPwaService = mock(PwaService);

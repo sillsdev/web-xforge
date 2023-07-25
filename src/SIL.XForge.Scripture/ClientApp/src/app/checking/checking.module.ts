@@ -5,7 +5,8 @@ import { ngfModule } from 'angular-file';
 import { AngularSplitModule } from 'angular-split';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
-import { AudioPlayerComponent } from '../shared/audio/audio-player.component';
+import { AudioPlayerComponent } from '../shared/audio/audio-player/audio-player.component';
+import { AudioTimePipe } from '../shared/audio/audio-time-pipe';
 import { SharedModule } from '../shared/shared.module';
 import { TextChooserDialogComponent } from '../text-chooser-dialog/text-chooser-dialog.component';
 import { CheckingOverviewComponent } from './checking-overview/checking-overview.component';
@@ -15,10 +16,7 @@ import { CheckingCommentFormComponent } from './checking/checking-answers/checki
 import { CheckingCommentsComponent } from './checking/checking-answers/checking-comments/checking-comments.component';
 import { CheckingAudioCombinedComponent } from './checking/checking-audio-combined/checking-audio-combined.component';
 import { CheckingAudioPlayerNewComponent } from './checking/checking-audio-player-new/checking-audio-player-new.component';
-import {
-  AudioTimePipe,
-  CheckingAudioPlayerComponent
-} from './checking/checking-audio-player/checking-audio-player.component';
+import { CheckingAudioPlayerComponent } from './checking/checking-audio-player/checking-audio-player.component';
 import { CheckingAudioRecorderComponent } from './checking/checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingQuestionsComponent } from './checking/checking-questions/checking-questions.component';
 import { CheckingScriptureAudioPlayerComponent } from './checking/checking-scripture-audio-player/checking-scripture-audio-player.component';

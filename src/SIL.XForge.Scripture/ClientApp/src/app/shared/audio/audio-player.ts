@@ -1,3 +1,4 @@
+import { EventEmitter } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -12,18 +13,16 @@ export enum AudioStatus {
   Offline = 'audio_cannot_be_played'
 }
 
-// See explanatory comment where this number is used
-const ARBITRARILY_LARGE_NUMBER = 1e10;
-
-// TODO (scripture audio) FIXME This implements SubscriptionDisposable but isn't a component so Angular isn't going to
-// call dispose() on it. The dispose method is manually called by AudioPlayerComponent when the source changes, but not
-// when the AudioPlayerComponent is destroyed. @josephmyers
 export class AudioPlayer extends SubscriptionDisposable {
   private static lastPlayedAudio: HTMLAudioElement;
-  private audio: HTMLAudioElement = new Audio();
   private audioDataLoaded: boolean = false;
 
-  status$: BehaviorSubject<AudioStatus> = new BehaviorSubject<AudioStatus>(AudioStatus.Init);
+  protected audio: HTMLAudioElement = new Audio();
+  // See explanatory comment where this number is used
+  protected static readonly ARBITRARILY_LARGE_NUMBER = 1e10;
+
+  readonly status$: BehaviorSubject<AudioStatus> = new BehaviorSubject<AudioStatus>(AudioStatus.Init);
+  readonly finishedPlaying$: EventEmitter<void> = new EventEmitter<void>();
 
   constructor(source: string, private readonly pwaService: PwaService) {
     super();
@@ -33,8 +32,19 @@ export class AudioPlayer extends SubscriptionDisposable {
       this.status$.next(AudioStatus.Available);
     });
 
-    // TODO (scripture audio) Add comment explaining this workaround. @josephmyers
-    this.audio.addEventListener('timeupdate', () => {});
+    // Listening to update events causes the UI to rerender as the audio plays
+    this.audio.addEventListener('timeupdate', () => {
+      if (this.currentTime >= this.duration && this.isPlaying) {
+        this.pause();
+        this.finishedPlaying$.emit();
+      }
+    });
+
+    this.audio.addEventListener('play', () => {
+      if (this.currentTime >= this.duration) {
+        this.setSeek(0);
+      }
+    });
 
     this.audio.addEventListener('error', () => {
       if (isLocalBlobUrl(this.audio.src)) {
@@ -55,12 +65,18 @@ export class AudioPlayer extends SubscriptionDisposable {
       }
     });
 
+    this.audio.onended = () => {
+      if (this.currentTime > 0 && this.currentTime >= this.duration) {
+        this.finishedPlaying$.emit();
+      }
+    };
+
     // In Chromium the duration of blobs isn't known even after metadata is loaded
     // By making it skip to the end the duration becomes available. To do this we have to skip to some point that we
     // assume is past the end. This number should be large, but numbers as small as 1e16 have been observed to cause
     // audio playback to skip to the end of the audio when the user presses play in Chromium. Normal audio files will
     // know the duration once metadata has loaded.
-    this.audio.currentTime = ARBITRARILY_LARGE_NUMBER;
+    this.audio.currentTime = AudioPlayer.ARBITRARILY_LARGE_NUMBER;
     this.audio.src = formatFileSource(FileType.Audio, source);
     this.status$.next(AudioStatus.Init);
   }
@@ -106,7 +122,7 @@ export class AudioPlayer extends SubscriptionDisposable {
   }
 
   setSeek(value: number): void {
-    this.audio.currentTime = value > 0 ? this.duration * (value / 100) : 0;
+    this.currentTime = value > 0 ? this.duration * (value / 100) : 0;
   }
 
   get duration(): number {
@@ -114,7 +130,7 @@ export class AudioPlayer extends SubscriptionDisposable {
   }
 
   get currentTime(): number {
-    return isNaN(this.audio.currentTime) || this.audio.currentTime === ARBITRARILY_LARGE_NUMBER
+    return isNaN(this.audio.currentTime) || this.audio.currentTime === AudioPlayer.ARBITRARILY_LARGE_NUMBER
       ? 0
       : this.audio.currentTime;
   }
