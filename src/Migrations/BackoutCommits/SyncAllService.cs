@@ -1,18 +1,10 @@
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
-using Autofac;
 using MongoDB.Bson;
-using MongoDB.Driver;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
-using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 
@@ -118,8 +110,8 @@ public class SyncAllService : ISyncAllService
                     $"  > PT user '{ptUsername}', " + $"id {ptUserId}, using SF admin user id {sfUserId} on SF project."
                 );
 
-                string rt = $"{userSecret.ParatextTokens.RefreshToken.Substring(0, 5)}..";
-                string at = $"{userSecret.ParatextTokens.AccessToken.Substring(0, 5)}..";
+                string rt = $"{userSecret.ParatextTokens.RefreshToken[..5]}..";
+                string at = $"{userSecret.ParatextTokens.AccessToken[..5]}..";
                 bool atv = userSecret.ParatextTokens.ValidateLifetime();
                 _logger.Log(
                     $"    > Paratext RefreshToken: {rt}, " + $"AccessToken: {at}, AccessToken initially valid: {atv}."
@@ -230,7 +222,6 @@ public class SyncAllService : ISyncAllService
                             $"    > There was a problem with synchronizing. It might be "
                                 + $"tried next with another admin user. Exception is:{Environment.NewLine}{e}"
                         );
-                        continue;
                     }
                 }
             }
