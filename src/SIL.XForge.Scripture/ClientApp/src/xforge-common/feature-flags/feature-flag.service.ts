@@ -78,6 +78,11 @@ export class FeatureFlagService {
     'Prevent op acknowledgement (intentionally breaks things)'
   );
 
+  stillness: FeatureFlag = new FeatureFlag(
+    new LocalStorageFlagStore('STILLNESS'),
+    'Stillness (non-distracting progress indicators)'
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlag);
   }
