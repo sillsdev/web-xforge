@@ -225,11 +225,7 @@ public class ParatextService : DisposableBase, IParatextService
             else
             {
                 // See if this is a resource
-                IReadOnlyList<ParatextResource> resources = await this.GetResourcesInternalAsync(
-                    userSecret.Id,
-                    true,
-                    token
-                );
+                IReadOnlyList<ParatextResource> resources = await GetResourcesInternalAsync(userSecret.Id, true, token);
                 ptProject = resources.SingleOrDefault(r => r.ParatextId == paratextId);
             }
 
@@ -268,7 +264,7 @@ public class ParatextService : DisposableBase, IParatextService
                     {
                         source.UnlockRemoteRepository(sharedProj.Repository);
                     }
-                    catch (Paratext.Data.HttpException)
+                    catch (HttpException)
                     {
                         // A 403 error will be thrown if the repo is not locked
                     }
@@ -388,7 +384,7 @@ public class ParatextService : DisposableBase, IParatextService
 
     /// <summary>Get Paratext resources that a user has access to. </summary>
     public async Task<IReadOnlyList<ParatextResource>> GetResourcesAsync(string userId) =>
-        await this.GetResourcesInternalAsync(userId, false, CancellationToken.None);
+        await GetResourcesInternalAsync(userId, false, CancellationToken.None);
 
     /// <summary>
     /// Is the PT project referred to by `paratextId` a DBL resource?
@@ -619,7 +615,7 @@ public class ParatextService : DisposableBase, IParatextService
                 .ToDictionary(m => (string)m["userId"], m => (string)m["username"]);
 
             // Get the mapping of Scripture Forge user IDs to Paratext usernames
-            IQueryable<User> relevantUsers = this._realtimeService
+            IQueryable<User> relevantUsers = _realtimeService
                 .QuerySnapshots<User>()
                 .Where(u => paratextMapping.Keys.Contains(u.ParatextId));
             string sfUserIdToPTUserIdMap = string.Join(
@@ -1366,7 +1362,41 @@ public class ParatextService : DisposableBase, IParatextService
             ptProjectUsers
         );
 
-        return PutCommentThreads(userSecret, paratextId, noteThreadChangeList);
+        // TODO: Remove these warning logs once the feature is tested and implemented
+        string sfCommentWarning = "SF Comment Warning: ";
+        ScrText scrText =
+            ScrTextCollection.FindById(username, paratextId)
+            ?? throw new DataNotFoundException("Can't get access to cloned project.");
+        CommentManager manager = CommentManager.Get(scrText);
+        foreach (List<Paratext.Data.ProjectComments.Comment> thread in noteThreadChangeList)
+        {
+            CommentThread existingThread = manager.FindThread(thread[0].Thread);
+            foreach (Paratext.Data.ProjectComments.Comment comment in thread)
+            {
+                var existingComment = existingThread?.Comments.FirstOrDefault(c => c.Id == comment.Id);
+                if (existingComment == null)
+                    _logger.LogWarning(
+                        $"{sfCommentWarning} Adding sf comment before feature enabled. ID: {comment.Thread}"
+                    );
+                else if (comment.Deleted)
+                    _logger.LogWarning(
+                        $"{sfCommentWarning} Deleting sf comment before feature enabled. ID: {comment.Thread}"
+                    );
+                else
+                {
+                    if (existingComment.Contents?.ToString() != comment.Contents?.ToString())
+                        _logger.LogWarning(
+                            $"{sfCommentWarning} Comment contents differ\n {existingComment.Contents?.ToString()} \n {comment.Contents?.ToString()}"
+                        );
+                    _logger.LogWarning(
+                        sfCommentWarning + "Updating sf comment before feature enabled. ID: " + comment.Thread
+                    );
+                }
+            }
+        }
+        // Do not update PT comments at this moment
+        // return PutCommentThreads(userSecret, paratextId, noteThreadChangeList);
+        return new SyncMetricInfo();
     }
 
     /// <summary> Adds the comment tag to the list of comment tags if that tag does not already exist. </summary>
@@ -1469,7 +1499,7 @@ public class ParatextService : DisposableBase, IParatextService
         }
 
         // Use the Paratext implementation
-        return this.BackupExistsInternal(scrText);
+        return BackupExistsInternal(scrText);
     }
 
     public bool BackupRepository(UserSecret userSecret, string paratextId)
@@ -1557,7 +1587,7 @@ public class ParatextService : DisposableBase, IParatextService
         // Mongo is the source of truth for a project's state in Scripture Forge.
         // The following is a re-implementation of VersionedText.RestoreProject with error trapping,
         // and file system and Mercurial dependency injection so this method can be unit tested.
-        if (this.BackupExistsInternal(scrText))
+        if (BackupExistsInternal(scrText))
         {
             string source = scrText.Directory;
             string destination = Path.Combine(
