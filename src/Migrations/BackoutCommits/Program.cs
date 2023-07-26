@@ -68,7 +68,7 @@ public class Program
         if (
             string.IsNullOrWhiteSpace(program.machineName)
             || string.IsNullOrWhiteSpace(projectIdsString)
-            || string.IsNullOrWhiteSpace(program.machineName)
+            || string.IsNullOrWhiteSpace(program.projectRootDir)
         )
             throw new Exception("Please set the MACHINE_NAME, PROJECT_IDS and PROJECT_ROOT_DIR variables.");
         IEnumerable<string> projectIds = projectIdsString.Split(' ');
