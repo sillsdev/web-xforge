@@ -3322,7 +3322,8 @@ describe('EditorComponent', () => {
       const env = new TestEnvironment();
       const targetDelta = new Delta([
         { insert: 'verse 1 already exists', attributes: { segment: 'verse_1_1' } },
-        { insert: 'verse 2 already exists', attributes: { segment: 'verse_1_2' } }
+        { insert: 'verse 2 already exists', attributes: { segment: 'verse_1_2' } },
+        { insert: { 'note-thread-embed': {} }, attributes: { segment: 'verse_1_3' } }
       ]);
 
       // Stop text loading from triggering
@@ -3334,7 +3335,8 @@ describe('EditorComponent', () => {
       when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
         of({
           verse_3_16: 'For God so loved the world',
-          verse_1_1: 'In the beginning was the Word'
+          verse_1_1: 'In the beginning was the Word',
+          verse_1_3: 'All things came into being through Him'
         })
       );
 
