@@ -102,7 +102,7 @@ public class Program
         Logger.Log($"Processing project at {repoDir}");
         string commitListBlob = await RunCommandAsync(
             "hg",
-            "log --no-merges --date >2023-06-21 --template CommitId:{node}---Date:{date|date}---Desc:{desc}---Files:{files%'{file}\n'}-----",
+            "log --no-merges --date \"jun 21 2023 to jul 5 2023\" --template CommitId:{node}---Date:{date|date}---Desc:{desc}---Files:{files%'{file}\n'}-----",
             repoDir
         );
         List<CommitData> commitData = CommitParser.Parse(commitListBlob);
