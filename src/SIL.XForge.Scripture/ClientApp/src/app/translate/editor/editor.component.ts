@@ -2023,7 +2023,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const isChapterComplete: boolean = targetOps.every(op => {
       // If segment is a verse, check if it has a translation
       if (VERSE_REGEX.test(op.attributes?.segment)) {
-        return isString(op.insert) && op.insert.trim();
+        // Check if insert is non-blank string
+        if (isString(op.insert)) {
+          return op.insert.trim();
+        }
+
+        // Check if insert is object that doesn't have 'blank: true' property (e.g. 'note-thread-embed')
+        return !op.insert?.blank;
       }
 
       return true;
