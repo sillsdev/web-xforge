@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { TranslocoModule } from '@ngneat/transloco';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SharedModule } from '../shared/shared.module';
@@ -27,6 +28,14 @@ import { TranslateRoutingModule } from './translate-routing.module';
     DraftGenerationComponent,
     DraftViewerComponent
   ],
-  imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, XForgeCommonModule, TranslocoModule]
+  imports: [
+    TranslateRoutingModule,
+    CommonModule,
+    SharedModule,
+    UICommonModule,
+    XForgeCommonModule,
+    TranslocoModule,
+    TranslocoMarkupModule
+  ]
 })
 export class TranslateModule {}

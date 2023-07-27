@@ -7,8 +7,8 @@
     "users": "Users"
   },
   "chapter_nav": {
-    "previous_chapter": "Previous chapter",
-    "next_chapter": "Next chapter"
+    "next_chapter": "Next chapter",
+    "previous_chapter": "Previous chapter"
   },
   "checking": {
     "add_question": "Add question"
@@ -21,8 +21,8 @@
     "add_chapter_audio": "Add chapter audio",
     "add_question": "Add Question",
     "answer_count_label": "{{ count }} answers",
-    "archive_multiple": "Archive all questions in {{ location }}",
     "archive": "Archive",
+    "archive_multiple": "Archive all questions in {{ location }}",
     "archived_questions": "Archived Questions",
     "chapter_audio_attached": "Chapter audio and timing data attached",
     "click_add_question": "Click {{ boldStart }}Add question{{ boldEnd }}, above.",
@@ -37,8 +37,8 @@
     "no_archived_questions": "There are no archived questions.",
     "no_questions": "There are no published questions. ",
     "question_count_label": "{{ count }} questions",
-    "republish_multiple": "Republish all questions in {{ location }}",
     "republish": "Republish",
+    "republish_multiple": "Republish all questions in {{ location }}",
     "time_archived_stamp": "Archived on {{ timeStamp }}"
   },
   "collaborators": {
@@ -66,9 +66,9 @@
   },
   "connect_project": {
     "already_connected": "(already connected)",
+    "connect": "Connect",
     "connect_network_to_connect_project": "Please connect to the internet to enable connecting to a project",
     "connect_paratext_project": "Connect Paratext Project",
-    "connect": "Connect",
     "connecting_to_project": "Connecting to {{ projectName }}...",
     "enable_community_checking": "Enable Community Checking",
     "enable_translation_suggestions": "Enable translation suggestions",
@@ -97,6 +97,59 @@
     "please_type_project_name": "Please type in the name of the project to confirm.",
     "project_name": "Project Name"
   },
+  "draft_generation": {
+    "back_translation_process": "The back translation draft will be generated in the background. You can continue to work on other tasks while it is being generated. You can cancel the generation process at any time. The process will typically take at least 8 hours under ideal conditions, but may take longer if the server is busy.",
+    "cancel_generation": "Cancel generation",
+    "dialog_confirm_draft_cancellation_message": "Are you sure you want to cancel generating the draft?",
+    "dialog_confirm_draft_cancellation_no": "No",
+    "dialog_confirm_draft_cancellation_title": "Confirm draft cancellation",
+    "dialog_confirm_draft_cancellation_yes": "Yes, cancel draft generation",
+    "dialog_confirm_draft_regeneration_message": "This will re-create any unapplied draft text! Are you sure you want to generate a new draft?",
+    "dialog_confirm_draft_regeneration_no": "No",
+    "dialog_confirm_draft_regeneration_title": "Confirm draft regeneration",
+    "dialog_confirm_draft_regeneration_yes": "Yes, start generation",
+    "draft_active": "Draft in progress",
+    "draft_active_detail": "Generating draft; this can take a few hours.",
+    "draft_generation_complete": "Draft generation complete",
+    "draft_queued": "Draft queued",
+    "draft_queued_detail": "The back translation draft has been queued. Please check back later.",
+    "generate_back_translation_drafts": "Generate back translation drafts",
+    "generate_draft": "Generate draft",
+    "generate_draft_detail": "Click [em]\"Generate draft\"[/em] to start the process of generating a back translation draft. This will take at least a few hours.",
+    "generate_new_draft": "Generate new draft",
+    "generate_new_draft_detail": "Click [em]\"Generate draft\"[/em] to start the process of generating a new back translation draft. This will take at least a few hours.",
+    "go_to_draft_viewer": "Go to [link:draftViewerUrl]draft viewer[/link] to preview and apply the generated draft to chapters of your choice.",
+    "keep_in_mind": "[em]Keep in mind that the back translation draft will contain mistakes[/em], and you will need to edit the draft that is generated after applying it to your project.",
+    "no_builds_in_progress": "No builds are in currently in progress, but you can go to [link:draftViewerUrl]draft viewer[/link] to preview and apply the last generated draft to chapters of your choice.",
+    "no_language_left_behind": "No Language Left Behind",
+    "or": "or",
+    "preview_draft": "Preview draft",
+    "preview_last_draft": "Preview last draft",
+    "project_language_in_nllb": "Your project language is in the [link:nllbUrl]{{ draft_generation.no_language_left_behind }}[/link] set.",
+    "project_language_in_nllb_with_language": "Your project language of [em]\"{{ targetLanguageDisplayName }}\"[/em] is in the [link:nllbUrl]{{ draft_generation.no_language_left_behind }}[/link] set.",
+    "project_language_not_in_nllb": "Your project language is not in the [link:nllbUrl]{{ draft_generation.no_language_left_behind }}[/link] set.",
+    "project_language_not_in_nllb_with_language": "Your project language of [em]\"{{ targetLanguageDisplayName }}\"[/em] is not in the [link:nllbUrl]{{ draft_generation.no_language_left_behind }}[/link] set.",
+    "project_type_back_translation": "Your project type is a back translation project.",
+    "project_type_not_back_translation": "Your project type is not a back translation project.",
+    "project_type_not_supported": "Project type is not supported for draft generation",
+    "project_type_not_supported_detail": "In order to generate a draft translation, the project must be a back translation project.",
+    "requirements": "Requirements",
+    "scripture_forge_assist": "Scripture Forge can assist with drafting a back translation, based on your existing back translation progress. For example, if your translation team has already drafted one or more books and then back translated one or more of them, Scripture Forge can use the books you have already back translated to generate a draft of the next book you are working on.",
+    "suggested_workflow": "A suggested workflow is to regenerate a draft after every completion of a few books.",
+    "target_language_not_supported": "Target language is not supported for draft generation"
+  },
+  "draft_viewer": {
+    "apply_to_project": "Apply to project",
+    "draft": "Draft",
+    "draft_applied": "Draft applied",
+    "draft_preview_and_apply": "Draft preview and apply",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "select_apply_to_project": "Select [em]\"Apply to project\"[/em] for each chapter that you want to overwrite with the draft text.",
+    "select_edit": "Select [em]\"Edit\"[/em] to go to the editor page for this chapter.",
+    "select_source_text": "A source text has not been selected for this project. You can select a source text in [link:projectSettingsUrl]project settings[/link].",
+    "source_not_set": "Source not set"
+  },
   "editor": {
     "add_comment": "Add Comment",
     "anonymous": "Anonymous",
@@ -107,6 +160,7 @@
     "more_notes": "--- {{ count }} more note(s) ---",
     "navigate_to_a_valid_text": "Navigate to a valid text to insert a note",
     "no_permission_edit_chapter": "You don't have permission to edit this chapter, even though you have the {{ userRole }} role. Permissions can only be changed in Paratext.",
+    "preview_draft": "Preview draft",
     "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "project_text_not_editable": "Text in this project is not editable. This setting can be changed in Paratext.",
     "save": "Save",
@@ -127,21 +181,21 @@
   },
   "import_questions_dialog": {
     "cancel": "Cancel",
-    "canceling_import_not_remove_questions": "Note: Cancelling will not delete questions that are already imported.",
     "canceling_import": "Canceling import...",
+    "canceling_import_not_remove_questions": "Note: Cancelling will not delete questions that are already imported.",
     "close": "Close",
     "continue_import": "Continue import",
     "csv_instructions": "Create a spreadsheet with a column for the reference and a column for the question, as shown below:\nExport or save the spreadsheet as a CSV or TSV file.\nClick {{ boldStart }}{{ importFromCsvFile }}{{ boldEnd }} below and select the file.",
     "csv_questions_duplicates": "Note: Some of the selected questions are exact duplicates of questions that are already part of your project. They will not be re-imported.",
     "filter_questions": "Filter questions",
     "help_options": "If you need help with either of these import methods, ask a question on { 1 }the community support site{ 2 }, or reach out to the team at { 3 }{ 4 }.",
+    "import": "Import",
     "import_count_questions": "Import {{ count }} Selected Questions",
     "import_from_csv_file": "Import from spreadsheet",
     "import_from_spreadsheet": "Import from spreadsheet",
     "import_from_transcelerator": "Import from Transcelerator",
     "import_progress": "Imported {{ completed }} of {{ total }} questions...",
     "import_questions": "Import Questions",
-    "import": "Import",
     "invalid_csv_rows_will_be_skipped": "These rows in the CSV file were invalid and will be skipped.",
     "learn_more": "Learn more",
     "loading": "Loading...",
@@ -150,11 +204,11 @@
     "network_error_transcelerator": "Network error fetching Transcelerator questions. Retrying ({{ count }}).",
     "no_questions_available": "There are no questions for the books in this project.",
     "no_transcelerator_offline": "Importing from Transcelerator is not available offline.",
-    "question_for_verse": "Question for verse {{ number }}",
     "question": "Question",
+    "question_for_verse": "Question for verse {{ number }}",
+    "reference": "Reference",
     "reference_from": "Reference from",
     "reference_to": "Reference to",
-    "reference": "Reference",
     "row": "Row",
     "select_all": "Select All",
     "select_questions": "Select questions to import",
@@ -216,20 +270,20 @@
     "save": "Save",
     "scripture_reference": "Scripture reference"
   },
+  "role_descriptions": {
+    "sf_commenter": "View translation, Add comments",
+    "sf_community_checker": "Answer questions, Comment on answers",
+    "sf_observer": "View translation"
+  },
   "roles": {
     "none": "None",
     "pt_administrator": "Administrator",
     "pt_consultant": "Consultant/Reviewer/Archivist/Typesetter",
     "pt_observer": "Observer",
     "pt_translator": "Translator",
-    "sf_community_checker": "Community Checker",
     "sf_commenter": "Commenter",
+    "sf_community_checker": "Community Checker",
     "sf_observer": "Viewer"
-  },
-  "role_descriptions": {
-    "sf_community_checker": "Answer questions, Comment on answers",
-    "sf_commenter": "View translation, Add comments",
-    "sf_observer": "View translation"
   },
   "settings": {
     "anyone_with_a_link": "Anyone with a link",
@@ -242,8 +296,8 @@
     "enable_community_checking": "Enable Community Checking",
     "enable_translation_suggestions": "to enable {{ boldStart }}Translate Suggestions{{ boldEnd }} and see more options",
     "engage_the_wider_community": "Engage the wider community to ensure that the translation is clear, accurate, and natural. Select verses, ask questions, and discuss answers.",
-    "error_fetching_projects_resources": "There was an error fetching projects and resources. You can't change what the project is based on.",
     "error_fetching_projects": "There was an error fetching projects. You will only be able to select resources from Digital Bible Library.",
+    "error_fetching_projects_resources": "There was an error fetching projects and resources. You can't change what the project is based on.",
     "error_fetching_resources": "There was an error fetching the Digital Bible Library resources. You will only be able to select projects.",
     "export_all": "All answers",
     "export_checking_answers": "Set which answers will be exported as comments when syncing with Paratext.",
@@ -255,14 +309,14 @@
     "see_others_answers_and_comments": "Allow checkers to see each other's answers and comments",
     "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
     "settings": "Settings",
-    "shareTranslate": "Allow users of Translate to invite others",
     "shareChecking": "Allow users of Community Checking to invite others",
+    "shareTranslate": "Allow users of Translate to invite others",
     "sharing": "User Invites",
     "source_projects_cannot_be_deleted": "Another project is based on this project and so it cannot be deleted.",
     "source_text_placeholder": "Source text (optional)",
     "translate": "Translate",
-    "translation_suggestions_require_source_text": "Note: Translation suggestions are only available if a source text is selected.",
     "translation_suggestions": "Enable Translation Suggestions",
+    "translation_suggestions_require_source_text": "Note: Translation suggestions are only available if a source text is selected.",
     "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture based on the project or resource selected above.",
     "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
     "will_not_delete_paratext_project": "This will {{ boldStart }}not{{ boldEnd }} delete your Paratext project, but it will delete any unsynchronized data stored in Scripture Forge. It is recommended to {{ templateTagBoundary }}Synchronize{{ templateTagBoundary }} first before deleting."
@@ -285,11 +339,11 @@
     "never_been_synced": "Never been synced",
     "something_went_wrong_synchronizing_this_project": "Something went wrong while synchronizing {{ projectName }} with Paratext. Please try again.",
     "successfully_synchronized_with_paratext": "Successfully synchronized {{ projectName }} with Paratext.",
+    "sync_failure_support_message": "Something went wrong the last time Scripture Forge attempted to synchronize the project with Paratext. If it still doesn't work after you try again, please post a problem report about it by writing to {{email}}.",
+    "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again.",
     "synchronize": "Synchronize",
     "synchronize_project": "Synchronize {{ projectName }} with Paratext",
-    "your_project_is_being_synchronized": "Your project is being synchronized...",
-    "sync_is_disabled": "Synchronization for this project needed to be disabled, so it is not available at this time. Please contact {{ email }} to discuss what needs to be done so project synchronization can be enabled again.",
-    "sync_failure_support_message": "Something went wrong the last time Scripture Forge attempted to synchronize the project with Paratext. If it still doesn't work after you try again, please post a problem report about it by writing to {{email}}."
+    "your_project_is_being_synchronized": "Your project is being synchronized..."
   },
   "text": {
     "book_does_not_exist": "This book does not exist.",
@@ -304,8 +358,8 @@
   },
   "training_progress": {
     "completed_successfully": "Completed successfully",
-    "training_completed_successfully": "Training completed successfully",
-    "training": "Training"
+    "training": "Training",
+    "training_completed_successfully": "Training completed successfully"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",

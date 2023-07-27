@@ -72,6 +72,8 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     );
   }
 
+  readonly nllbUrl: string = 'https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion';
+
   constructor(
     private readonly dialogService: DialogService,
     public readonly activatedProject: ActivatedProjectService,
@@ -137,8 +139,12 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
         title: of('Regenerate draft?'),
         message: of('This will re-create any unapplied draft text.'),
         options: [
-          { value: false, label: of('No') },
-          { value: true, label: of('Yes, start generation'), highlight: true }
+          { value: false, label: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_no') },
+          {
+            value: true,
+            label: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_yes'),
+            highlight: true
+          }
         ]
       }).result;
 
@@ -172,8 +178,12 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
           'Canceling will reset progress for this draft request. You will still be able to use the last completed draft.'
         ),
         options: [
-          { value: false, label: of('No') },
-          { value: true, label: of('Yes, cancel draft generation'), highlight: true }
+          { value: false, label: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_no') },
+          {
+            value: true,
+            label: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_yes'),
+            highlight: true
+          }
         ]
       });
 
