@@ -1363,7 +1363,7 @@ public class ParatextService : DisposableBase, IParatextService
         );
 
         // TODO: Remove these warning logs once the feature is tested and implemented
-        string sfCommentWarning = "SF Comment Warning: ";
+        string sfCommentWarning = "SF Comment Warning:";
         ScrText scrText =
             ScrTextCollection.FindById(username, paratextId)
             ?? throw new DataNotFoundException("Can't get access to cloned project.");
@@ -1384,12 +1384,12 @@ public class ParatextService : DisposableBase, IParatextService
                     );
                 else
                 {
-                    if (existingComment.Contents?.ToString() != comment.Contents?.ToString())
+                    if (existingComment.Contents?.OuterXml != comment.Contents?.OuterXml)
                         _logger.LogWarning(
-                            $"{sfCommentWarning} Comment contents differ\n {existingComment.Contents?.ToString()} \n {comment.Contents?.ToString()}"
+                            $"{sfCommentWarning} Comment contents differ\n{existingComment.Contents?.OuterXml}\n{comment.Contents?.OuterXml}"
                         );
                     _logger.LogWarning(
-                        sfCommentWarning + "Updating sf comment before feature enabled. ID: " + comment.Thread
+                        $"{sfCommentWarning} Updating SF comment before feature enabled. ID: " + comment.Thread
                     );
                 }
             }
