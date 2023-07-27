@@ -18,20 +18,21 @@ export class DraftViewerService {
     }
 
     return targetOps.some(op => {
-      const draftSegmentText: string = draft[op.attributes?.segment];
+      const draftSegmentText: string | undefined = draft[op.attributes?.segment];
 
-      if (!draftSegmentText) {
+      // No draft (undefined or empty string) for this segment; can't populate draft
+      if (isEmpty(draftSegmentText?.trim())) {
         return false;
       }
 
       // Can populate draft if insert is a blank string
       if (isString(op.insert)) {
-        return !op.insert.trim();
+        return isEmpty(op.insert.trim());
       }
 
       // Can populate draft if insert is object that has 'blank: true' property.
       // Other objects are not draftable (e.g. 'note-thread-embed').
-      return op.insert?.blank;
+      return op.insert?.blank === true;
     });
   }
 
@@ -47,24 +48,24 @@ export class DraftViewerService {
     }
 
     return targetOps.map(op => {
-      const draftSegmentText: string = draft[op.attributes?.segment];
+      const draftSegmentText: string | undefined = draft[op.attributes?.segment];
 
-      // No draft for this segment; use any existing translation
-      if (!draftSegmentText) {
+      // No draft (undefined or empty string) for this segment; use any existing translation
+      if (isEmpty(draftSegmentText?.trim())) {
         return op;
       }
 
       if (isString(op.insert)) {
-        if (op.insert.trim()) {
+        if (!isEmpty(op.insert.trim())) {
           // 'insert' is non-blank string; use existing translation
           return op;
         }
-      } else if (!op.insert?.blank) {
-        // 'insert' is an object that is not draftable (e.g. 'note-thread-embed')
+      } else if (op.insert?.blank !== true) {
+        // 'insert' is an object that is not draftable (e.g. 'note-thread-embed'); use existing translation
         return op;
       }
 
-      // Otherwise, use pre-translation
+      // Otherwise, populate op with pre-translation
       return {
         ...op,
         insert: draftSegmentText,
