@@ -1,5 +1,14 @@
 @import 'src/variables';
 
+:host {
+  // Needed to style inside <transloco> element
+  ::ng-deep {
+    em {
+      font-weight: 500;
+    }
+  }
+}
+
 app-working-animated-indicator {
   display: block;
   margin: 10px 0;
@@ -18,10 +27,6 @@ h3 {
   + p {
     margin-top: 0;
   }
-}
-
-em {
-  font-weight: 500;
 }
 
 .requirements-header {

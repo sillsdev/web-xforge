@@ -8,6 +8,7 @@
     "community_checking": "Community Checking",
     "community_support": "Community Support",
     "connect_project": "Connect project",
+    "generate_draft": "Generate draft",
     "help": "Help",
     "language": "Language",
     "log_out": "Log out",
@@ -24,8 +25,8 @@
     "project_home": "Project home",
     "redirecting_in_moments": "Redirecting in a few moments...",
     "refresh": "Refresh",
-    "report_issue_email": "email {{ email }}",
     "report_issue": "Report an issue",
+    "report_issue_email": "email {{ email }}",
     "scripture_checking_not_available": "Scripture checking is not available in this project.",
     "update_is_available": "An update is available. Please refresh the page."
   },

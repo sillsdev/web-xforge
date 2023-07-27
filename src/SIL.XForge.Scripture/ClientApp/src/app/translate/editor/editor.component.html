@@ -71,7 +71,7 @@
             (click)="goToDraftPreview()"
           >
             <mat-icon>edit_note</mat-icon>
-            Preview draft
+            {{ t("preview_draft") }}
           </button>
         </div>
         <div *ngIf="!isUsfmValid && hasEditRight" class="formatting-invalid-warning">
