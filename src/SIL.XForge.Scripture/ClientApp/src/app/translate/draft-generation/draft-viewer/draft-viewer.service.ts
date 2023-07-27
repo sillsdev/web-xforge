@@ -18,10 +18,20 @@ export class DraftViewerService {
     }
 
     return targetOps.some(op => {
-      const draftSegmentText = draft[op.attributes?.segment];
+      const draftSegmentText: string = draft[op.attributes?.segment];
 
-      // Draft text exists for segment that has no existing translation
-      return draftSegmentText && !(isString(op.insert) && op.insert.trim());
+      if (!draftSegmentText) {
+        return false;
+      }
+
+      // Can populate draft if insert is a blank string
+      if (isString(op.insert)) {
+        return !op.insert.trim();
+      }
+
+      // Can populate draft if insert is object that has 'blank: true' property.
+      // Other objects are not draftable (e.g. 'note-thread-embed').
+      return op.insert?.blank;
     });
   }
 
@@ -37,10 +47,20 @@ export class DraftViewerService {
     }
 
     return targetOps.map(op => {
-      const draftSegmentText = draft[op.attributes?.segment];
+      const draftSegmentText: string = draft[op.attributes?.segment];
 
-      // Use any existing translation
-      if (!draftSegmentText || (isString(op.insert) && op.insert.trim())) {
+      // No draft for this segment; use any existing translation
+      if (!draftSegmentText) {
+        return op;
+      }
+
+      if (isString(op.insert)) {
+        if (op.insert.trim()) {
+          // 'insert' is non-blank string; use existing translation
+          return op;
+        }
+      } else if (!op.insert?.blank) {
+        // 'insert' is an object that is not draftable (e.g. 'note-thread-embed')
         return op;
       }
 
