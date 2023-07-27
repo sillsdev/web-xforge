@@ -1,3 +1,4 @@
+using System;
 using System.Text;
 using System.Diagnostics;
 using System.Reflection;
@@ -20,6 +21,7 @@ public class Program
     string machineName = "";
     string projectRootDir = "";
     public ISFProjectTool projectTool;
+    public ISyncAllService syncAllService;
     public static IProgramLogger Logger;
 
     class ProblemCommit
@@ -57,6 +59,7 @@ public class Program
 
         var program = new Program();
         program.projectTool = webHost.Services.GetService<ISFProjectTool>();
+        program.syncAllService = webHost.Services.GetService<ISyncAllService>();
 
         program.machineName = Environment.GetEnvironmentVariable("MACHINE_NAME");
         string projectIdsString = Environment.GetEnvironmentVariable("PROJECT_IDS");
@@ -71,11 +74,14 @@ public class Program
             || string.IsNullOrWhiteSpace(program.projectRootDir)
         )
             throw new Exception("Please set the MACHINE_NAME, PROJECT_IDS and PROJECT_ROOT_DIR variables.");
+        bool backoutOnly = Environment.GetEnvironmentVariable("BACKOUT_ONLY") == "true";
+        bool syncOnly = Environment.GetEnvironmentVariable("SYNC_ONLY") == "true";
         IEnumerable<string> projectIds = projectIdsString.Split(' ');
 
         // Find all of the revisions that introduce changes to notes files
         await program.projectTool.ConnectToRealtimeServiceAsync();
-        await program.ProcessProjectsAsync(projectIds, runMode);
+        await program.ProcessProjectsAsync(projectIds, runMode && !syncOnly);
+        await program.SyncProjectsAsync(projectIds, runMode && !backoutOnly);
         program.projectTool.Dispose();
         await webHost.StopAsync();
     }
@@ -166,6 +172,15 @@ public class Program
             Logger.Log(">  No problem commits found, nothing to do.");
             return;
         }
+
+        string adminUser = projectDoc.Data.UserRoles
+            .Where(ur => ur.Value == SFProjectRole.Administrator)
+            .Select(ur => projectDoc.Data.ParatextUsers.SingleOrDefault(pu => pu.SFUserId == ur.Key)?.Username)
+            .FirstOrDefault(user => !string.IsNullOrEmpty(user));
+        if (string.IsNullOrEmpty(adminUser))
+            throw new InvalidOperationException("No admin user found for project " + projectDoc.Id);
+
+        Logger.Log("  > Backing out as user: " + adminUser);
         // Testing shows that if we remove community checking answer notes, they will come back when SF syncs.
         string projectDir = problemCommits[0].projectRepo;
         if (!runMode)
@@ -180,7 +195,7 @@ public class Program
             // This works because conflicts occurs on xml format changes, and the tip revision is from
             // Paratext which has the formatting we want to conform to.
             string hgCommand =
-                $"backout --rev {commit.commitId} --include Notes_*.xml --message \"Backing out {commit.commitId}\" --encoding utf-8   --tool internal:merge-local";
+                $"backout --rev {commit.commitId} --user \"{adminUser}\" --include Notes_*.xml --message \"Backing out {commit.commitId}\" --encoding utf-8   --tool internal:merge-local";
             if (!runMode)
             {
                 Logger.Log($"  >  Dry run: {hgCommand}");
@@ -195,6 +210,12 @@ public class Program
         Logger.Log($">  Current commit id: {currentId}");
         if (runMode)
             await projectTool.UpdateProjectRepositoryVersionAsync(projectDoc, currentId);
+    }
+
+    private async Task SyncProjectsAsync(IEnumerable<string> projectId, bool runMode)
+    {
+        Logger.Log("> Syncing projects");
+        await syncAllService.SynchronizeAllProjectsAsync(runMode, projectId.ToHashSet(), projectRootDir);
     }
 
     private static async Task<string> RunCommandAsync(string program, string arguments, string workingDirectory)
