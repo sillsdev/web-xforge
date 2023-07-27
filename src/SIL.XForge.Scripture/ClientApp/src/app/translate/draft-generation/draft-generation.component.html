@@ -1,49 +1,35 @@
-<mat-card>
-  <h1 mat-card-title>Generate back translation drafts</h1>
+<mat-card *transloco="let t; read: 'draft_generation'">
+  <h1 mat-card-title>{{ t("generate_back_translation_drafts") }}</h1>
 
   <mat-divider inset></mat-divider>
 
   <section>
-    <p>
-      Scripture Forge can assist with drafting a back translation, based on your existing back translation progress. For
-      example, if your translation team has already drafted one or more books and then back translated one or more of
-      them, Scripture Forge can use the books you have already back translated to generate a draft of the next book you
-      are working on.
-    </p>
-    <p>
-      <em>Keep in mind that the back translation draft will contain mistakes</em>, and you will need to edit the draft
-      that is generated after applying it to your project.
-    </p>
-    <p>
-      The back translation draft will be generated in the background. You can continue to work on other tasks while it
-      is being generated. You can cancel the generation process at any time. The process will typically take at least 8
-      hours under ideal conditions, but may take longer if the server is busy.
-    </p>
+    <p>{{ t("scripture_forge_assist") }}</p>
+    <p><transloco key="draft_generation.keep_in_mind"></transloco></p>
+    <p>{{ t("back_translation_process") }}</p>
 
     <!-- TODO Find better link to languages or include in-app table with link to "learn more" -->
-    <h3 class="requirements-header">Requirements</h3>
+    <h3 class="requirements-header">{{ t("requirements") }}</h3>
     <ul class="requirements">
       <li>
         <mat-icon *ngIf="isBackTranslation" class="criteria-met">check</mat-icon>
         <mat-icon *ngIf="!isBackTranslation" class="criteria-not-met">clear</mat-icon>
-        <p>Your project type is <span *ngIf="!isBackTranslation">not</span> a back translation project.</p>
+        <p *ngIf="isBackTranslation">{{ t("project_type_back_translation") }}</p>
+        <p *ngIf="!isBackTranslation">{{ t("project_type_not_back_translation") }}</p>
       </li>
       <li>
         <mat-icon *ngIf="isTargetLanguageSupported" class="criteria-met">check</mat-icon>
         <mat-icon *ngIf="!isTargetLanguageSupported" class="criteria-not-met">clear</mat-icon>
         <p>
-          Your project language
-          <ng-container *ngIf="targetLanguageDisplayName">
-            of <em>"{{ targetLanguageDisplayName }}"</em>
-          </ng-container>
-          is <span *ngIf="!isTargetLanguageSupported">not</span> in the
-          <a
-            href="https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion"
-            target="_blank"
-            rel="noopener noreferrer"
-            >No Language Left Behind (NLLB)</a
-          >
-          set.
+          <transloco
+            [key]="
+              'draft_generation.project_language_' +
+              (!isTargetLanguageSupported ? 'not_' : '') +
+              'in_nllb' +
+              (targetLanguageDisplayName ? '_with_language' : '')
+            "
+            [params]="{ targetLanguageDisplayName, nllbUrl }"
+          ></transloco>
         </p>
       </li>
       <li>
@@ -59,26 +45,18 @@
     <mat-divider inset></mat-divider>
 
     <section *ngIf="infoAlert === InfoAlert.NotBackTranslation">
-      <h3><mat-icon>info</mat-icon>Project type is not supported for draft generation</h3>
-      <p>In order to generate a draft translation, the project must be a back translation project.</p>
+      <h3><mat-icon>info</mat-icon>{{ t("project_type_not_supported") }}</h3>
+      <p>{{ t("project_type_not_supported_detail") }}</p>
     </section>
 
     <section *ngIf="infoAlert === InfoAlert.NotSupportedLanguage">
-      <h3><mat-icon>info</mat-icon>Target language is not supported for draft generation</h3>
-      <p>
-        Your project language
-        <ng-container *ngIf="targetLanguageDisplayName">
-          of <em>"{{ targetLanguageDisplayName }}"</em>
-        </ng-container>
-        is not in the
-        <a
-          href="https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion"
-          target="_blank"
-          rel="noopener noreferrer"
-          >No Language Left Behind</a
-        >
-        set.
-      </p>
+      <h3><mat-icon>info</mat-icon>{{ t("target_language_not_supported") }}</h3>
+      <transloco
+        *ngIf="targetLanguageDisplayName"
+        [key]="'project_language_not_in_nllb_with_language'"
+        [params]="{targetLanguageDisplayName}"
+      ></transloco>
+      <transloco *ngIf="!targetLanguageDisplayName" [key]="'project_language_not_in_nllb'"></transloco>
     </section>
 
     <section *ngIf="infoAlert === InfoAlert.NoSourceProjectSet">
@@ -96,72 +74,69 @@
 
     <ng-container *ngIf="isGenerationSupported">
       <section *ngIf="draftJob == null; else jobExists">
-        <h3>Generate draft</h3>
-        <p>
-          Click <em>"Generate draft"</em> to start the process of generating a back translation draft. This will take at
-          least a few hours.
-        </p>
+        <h3>{{ t("generate_draft") }}</h3>
+        <p><transloco key="draft_generation.generate_draft_detail"></transloco></p>
 
-        <button mat-flat-button color="primary" (click)="generateDraft()">Generate draft</button>
+        <button mat-flat-button color="primary" (click)="generateDraft()">{{ t("generate_draft") }}</button>
       </section>
 
       <ng-template #jobExists>
         <section *ngIf="isDraftComplete(draftJob) || !isDraftInProgress(draftJob)" class="view-or-create-options">
           <ng-container *ngIf="isDraftComplete(draftJob)">
             <div>
-              <h3>Draft generation complete</h3>
+              <h3>{{ t("draft_generation_complete") }}</h3>
               <p>
-                Go to <a [routerLink]="draftViewerUrl">draft viewer</a> to preview and apply the generated draft to
-                chapters of your choice.
+                <transloco
+                  key="draft_generation.go_to_draft_viewer"
+                  [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
+                ></transloco>
               </p>
-              <a mat-flat-button color="primary" [routerLink]="draftViewerUrl"> Preview draft </a>
+              <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">{{ t("preview_draft") }}</a>
             </div>
 
-            <mat-divider inset vertical data-text="or"></mat-divider>
+            <mat-divider inset vertical [attr.data-text]="t('or')"></mat-divider>
           </ng-container>
 
           <ng-container *ngIf="!isDraftComplete(draftJob) && (hasAnyCompletedBuild$ | async)">
             <div>
-              <h3>Preview last draft</h3>
+              <h3>{{ t("preview_last_draft") }}</h3>
               <p>
-                No builds are in currently in progress, but you can go to
-                <a [routerLink]="draftViewerUrl">draft viewer</a> to preview and apply the last generated draft to
-                chapters of your choice.
+                <transloco
+                  key="draft_generation.no_builds_in_progress"
+                  [params]="{ draftViewerUrl: { route: draftViewerUrl } }"
+                ></transloco>
               </p>
-              <a mat-flat-button color="primary" [routerLink]="draftViewerUrl"> Preview draft </a>
+              <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">{{ t("preview_draft") }}</a>
             </div>
 
-            <mat-divider inset vertical data-text="or"></mat-divider>
+            <mat-divider inset vertical [attr.data-text]="t('or')"></mat-divider>
           </ng-container>
 
           <div *ngIf="!isDraftInProgress(draftJob)">
-            <h3>Generate new draft</h3>
-            <p>
-              Click <em>"Generate draft"</em> to start the process of generating a new back translation draft. This will
-              take at least a few hours.
-            </p>
+            <h3>{{ t("generate_new_draft") }}</h3>
+            <p><transloco key="draft_generation.generate_new_draft_detail"></transloco></p>
 
-            <p>A suggested workflow is to regenerate a draft after every completion of a few books.</p>
+            <p>{{ t("suggested_workflow") }}</p>
 
-            <button mat-flat-button color="primary" (click)="generateDraft(true)">Generate draft</button>
+            <button mat-flat-button color="primary" (click)="generateDraft(true)">{{ t("generate_draft") }}</button>
           </div>
         </section>
 
         <section *ngIf="isDraftQueued(draftJob)">
-          <h3>Draft queued</h3>
-          <p>The back translation draft has been queued. Please check back later.</p>
+          <h3>{{ t("draft_queued") }}</h3>
+          <p>{{ t("draft_queued_detail") }}</p>
           <app-working-animated-indicator></app-working-animated-indicator>
           <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
-            Cancel generation
+            {{ t("cancel_generation") }}
           </button>
         </section>
 
         <section *ngIf="isDraftActive(draftJob)" class="progress-active">
-          <h3>Draft in progress</h3>
-          <p>Generating draft; this can take a few hours.</p>
+          <h3>{{ t("draft_active") }}</h3>
+          <p>{{ t("draft_active_detail") }}</p>
           <circle-progress [percent]="draftJob!.percentCompleted"></circle-progress>
           <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
-            Cancel generation
+            {{ t("cancel_generation") }}
           </button>
         </section>
       </ng-template>

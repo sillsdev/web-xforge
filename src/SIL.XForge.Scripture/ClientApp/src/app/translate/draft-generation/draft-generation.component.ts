@@ -70,6 +70,8 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     );
   }
 
+  readonly nllbUrl: string = 'https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion';
+
   constructor(
     private readonly matDialog: MatDialog,
     private readonly dialogService: DialogService,
@@ -141,11 +143,15 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   async generateDraft(shouldConfirm = false): Promise<void> {
     if (shouldConfirm) {
       const isConfirmed: boolean | undefined = await this.dialogService.openGenericDialog({
-        title: of('Confirm draft regeneration'),
-        message: of('This will re-create any unapplied draft text! Are you sure you want to generate a new draft?'),
+        title: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_title'),
+        message: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_message'),
         options: [
-          { value: false, label: of('No') },
-          { value: true, label: of('Yes, start generation'), highlight: true }
+          { value: false, label: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_no') },
+          {
+            value: true,
+            label: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_yes'),
+            highlight: true
+          }
         ]
       });
 
@@ -171,11 +177,15 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   async cancel(): Promise<void> {
     if (this.draftJob?.state === BuildStates.Active) {
       const isConfirmed: boolean | undefined = await this.dialogService.openGenericDialog({
-        title: of('Confirm draft cancellation'),
-        message: of('Are you sure you want to cancel generating the draft?'),
+        title: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_title'),
+        message: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_message'),
         options: [
-          { value: false, label: of('No') },
-          { value: true, label: of('Yes, cancel draft generation'), highlight: true }
+          { value: false, label: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_no') },
+          {
+            value: true,
+            label: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_yes'),
+            highlight: true
+          }
         ]
       });
 
