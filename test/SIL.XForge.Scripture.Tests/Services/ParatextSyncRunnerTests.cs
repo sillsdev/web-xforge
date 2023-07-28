@@ -1693,7 +1693,6 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
-    [Ignore("Not ready to send note changes")]
     public async Task SyncAsync_UpdatesParatextComments()
     {
         var env = new TestEnvironment();
@@ -1735,7 +1734,6 @@ public class ParatextSyncRunnerTests
     }
 
     [Test]
-    [Ignore("Not ready to send note changes")]
     public async Task SyncAsync_AddParatextComments()
     {
         var env = new TestEnvironment();
