@@ -532,6 +532,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     return segments.filter(s => verseRef.verse === (getVerseStrFromSegmentRef(s) ?? defaultValue));
   }
 
+  getVerseSegmentsNoHeadings(verseRef: VerseRef): string[] {
+    const segments: string[] = this.getVerseSegments(verseRef);
+    return segments.filter(s => VERSE_REGEX.test(s));
+  }
+
   getSegmentElement(segment: string): Element | null {
     return this.editor == null ? null : this.editor.container.querySelector(`usx-segment[data-segment="${segment}"]`);
   }
@@ -552,7 +557,8 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     const verseFeatureCount = new Map<string, number>();
     const chapterFeaturedVerseRefs: VerseRef[] = featureVerseRefs.filter(fvr => fvr.chapterNum === this.id!.chapterNum);
     for (const verseRef of chapterFeaturedVerseRefs) {
-      const featuredVerseSegments: string[] = this.viewModel.getVerseSegments(verseRef);
+      const featuredVerseSegments: string[] =
+        featureName === 'question' ? this.getVerseSegmentsNoHeadings(verseRef) : this.getVerseSegments(verseRef);
       if (featuredVerseSegments.length === 0) {
         continue;
       }
