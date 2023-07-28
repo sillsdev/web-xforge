@@ -686,7 +686,9 @@ class TestEnvironment {
   }
 
   isSegmentHighlighted(verse: string): boolean {
-    const segment = this.quillEditor.querySelector('usx-segment[data-segment=verse_1_' + verse + ']')!;
+    const segment: HTMLElement | null = this.quillEditor.querySelector(
+      'usx-segment[data-segment=verse_1_' + verse + ']'
+    )!;
     return segment.classList.toString().includes('highlight-segment');
   }
 
