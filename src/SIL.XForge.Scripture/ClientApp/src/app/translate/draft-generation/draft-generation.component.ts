@@ -22,13 +22,16 @@ import { DraftGenerationService } from './draft-generation.service';
 })
 export class DraftGenerationComponent extends SubscriptionDisposable implements OnInit {
   draftJob?: BuildDto;
+
   draftViewerUrl?: string;
+  projectSettingsUrl?: string;
 
   targetLanguage?: string;
   targetLanguageDisplayName?: string;
 
   isTargetLanguageNllb = true;
   isBackTranslation = true;
+  isSourceProjectSet = true;
 
   jobSubscription?: Subscription;
   isReady = false;
@@ -58,10 +61,12 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       combineLatest([this.activatedProject.projectId$, this.activatedProject.projectDoc$, this.i18n.locale$]),
       ([projectId, projectDoc, locale]) => {
         this.isBackTranslation = projectDoc?.data?.translateConfig.projectType === ProjectType.BackTranslation;
+        this.isSourceProjectSet = projectDoc?.data?.translateConfig.source?.projectRef !== undefined;
         this.targetLanguage = projectDoc?.data?.writingSystem.tag;
         this.targetLanguageDisplayName = this.getLanguageDisplayName(this.targetLanguage, locale);
         this.isTargetLanguageNllb = this.nllbService.isNllbLanguage(this.targetLanguage);
         this.draftViewerUrl = `/projects/${projectId}/draft-preview`;
+        this.projectSettingsUrl = `/projects/${projectId}/settings`;
       }
     );
 
@@ -168,7 +173,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   isGenerationSupported(): boolean {
-    return this.isBackTranslation && this.isTargetLanguageNllb;
+    return this.isBackTranslation && this.isTargetLanguageNllb && this.isSourceProjectSet;
   }
 
   canCancel(job?: BuildDto): boolean {
