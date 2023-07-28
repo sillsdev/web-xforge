@@ -21,13 +21,13 @@ export class DraftViewerService {
       const draftSegmentText: string | undefined = draft[op.attributes?.segment];
 
       // No draft (undefined or empty string) for this segment; can't populate draft
-      if (isEmpty(draftSegmentText?.trim())) {
+      if (!draftSegmentText?.trim()) {
         return false;
       }
 
       // Can populate draft if insert is a blank string
       if (isString(op.insert)) {
-        return isEmpty(op.insert.trim());
+        return !op.insert.trim();
       }
 
       // Can populate draft if insert is object that has 'blank: true' property.
@@ -51,12 +51,12 @@ export class DraftViewerService {
       const draftSegmentText: string | undefined = draft[op.attributes?.segment];
 
       // No draft (undefined or empty string) for this segment; use any existing translation
-      if (isEmpty(draftSegmentText?.trim())) {
+      if (!draftSegmentText?.trim()) {
         return op;
       }
 
       if (isString(op.insert)) {
-        if (!isEmpty(op.insert.trim())) {
+        if (op.insert.trim()) {
           // 'insert' is non-blank string; use existing translation
           return op;
         }
