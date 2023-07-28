@@ -51,35 +51,35 @@ describe('CheckingTextComponent', () => {
     const env = new TestEnvironment();
     env.wait();
     expect(env.segmentHasQuestion(1, 1)).toBe(true);
-    expect(env.isSegmentHighlighted(1, 1)).toBe(true);
+    expect(env.isSegmentHighlighted('verse_1_1')).toBe(true);
     // verse 2 is blank
     expect(env.segmentHasQuestion(1, 3)).toBe(true);
-    expect(env.isSegmentHighlighted(1, 3)).toBe(false);
+    expect(env.isSegmentHighlighted('verse_1_3')).toBe(false);
     expect(env.segmentHasQuestion(1, 4)).toBe(false);
-    expect(env.isSegmentHighlighted(1, 4)).toBe(false);
+    expect(env.isSegmentHighlighted('verse_1_4')).toBe(false);
 
     // change 2nd question from v3 to v4
     env.component.questionVerses = [new VerseRef(40, 1, 1), new VerseRef(40, 1, 4)];
 
     env.wait();
     expect(env.segmentHasQuestion(1, 1)).toBe(true);
-    expect(env.isSegmentHighlighted(1, 1)).toBe(true);
+    expect(env.isSegmentHighlighted('verse_1_1')).toBe(true);
     expect(env.segmentHasQuestion(1, 3)).toBe(false);
-    expect(env.isSegmentHighlighted(1, 3)).toBe(false);
+    expect(env.isSegmentHighlighted('verse_1_3')).toBe(false);
     expect(env.segmentHasQuestion(1, 4)).toBe(true);
-    expect(env.isSegmentHighlighted(1, 4)).toBe(false);
+    expect(env.isSegmentHighlighted('verse_1_4')).toBe(false);
   }));
 
   it('should highlight the new verse when the question moves verses and is now active', fakeAsync(() => {
     const env = new TestEnvironment();
     env.wait();
     expect(env.segmentHasQuestion(1, 1)).toBe(true);
-    expect(env.isSegmentHighlighted(1, 1)).toBe(true);
+    expect(env.isSegmentHighlighted('verse_1_1')).toBe(true);
     // verse 2 is blank
     expect(env.segmentHasQuestion(1, 3)).toBe(true);
-    expect(env.isSegmentHighlighted(1, 3)).toBe(false);
+    expect(env.isSegmentHighlighted('verse_1_3')).toBe(false);
     expect(env.segmentHasQuestion(1, 4)).toBe(false);
-    expect(env.isSegmentHighlighted(1, 4)).toBe(false);
+    expect(env.isSegmentHighlighted('verse_1_4')).toBe(false);
 
     // change 2nd question from v3 to v4 and make it active
     const activeVerse = new VerseRef(40, 1, 4);
@@ -88,11 +88,11 @@ describe('CheckingTextComponent', () => {
 
     env.wait();
     expect(env.segmentHasQuestion(1, 1)).toBe(true);
-    expect(env.isSegmentHighlighted(1, 1)).toBe(false);
+    expect(env.isSegmentHighlighted('verse_1_1')).toBe(false);
     expect(env.segmentHasQuestion(1, 3)).toBe(false);
-    expect(env.isSegmentHighlighted(1, 3)).toBe(false);
+    expect(env.isSegmentHighlighted('verse_1_3')).toBe(false);
     expect(env.segmentHasQuestion(1, 4)).toBe(true);
-    expect(env.isSegmentHighlighted(1, 4)).toBe(true);
+    expect(env.isSegmentHighlighted('verse_1_4')).toBe(true);
   }));
 
   it('should show related questions when the text changes ', fakeAsync(() => {
@@ -119,7 +119,9 @@ describe('CheckingTextComponent', () => {
     env.wait();
     expect(env.segmentHasQuestion(1, 1)).toBe(false);
     expect(env.segmentHasQuestion(1, '2-3')).toBe(true);
-    expect(env.isSegmentHighlighted(1, '2-3')).toBe(true);
+    expect(env.isSegmentHighlighted('verse_1_2-3')).toBe(true);
+    expect(env.isSegmentHighlighted('s_2')).toBe(false);
+    expect(env.getSegmentElement('s_2')!.classList).not.toContain('question-segment');
   }));
 
   it('can set text direction explicitly', fakeAsync(() => {
@@ -181,13 +183,19 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  isSegmentHighlighted(chapter: number, verse: number | string): boolean {
-    const segment = this.quillEditor.querySelector(`usx-segment[data-segment="verse_${chapter}_${verse}"]`)!;
+  getSegmentElement(segmentRef: string): HTMLElement | null {
+    return this.quillEditor.querySelector(`usx-segment[data-segment="${segmentRef}"]`);
+  }
+
+  isSegmentHighlighted(segmentRef: string): boolean {
+    const segment: HTMLElement | null = this.getSegmentElement(segmentRef)!;
     return segment != null && segment.classList.contains('highlight-segment');
   }
 
   segmentHasQuestion(chapter: number, verse: number | string): boolean {
-    const segment = this.quillEditor.querySelector(`usx-segment[data-segment="verse_${chapter}_${verse}"]`)!;
+    const segment: HTMLElement | null = this.quillEditor.querySelector(
+      `usx-segment[data-segment="verse_${chapter}_${verse}"]`
+    )!;
     return segment != null && segment.classList.contains('question-segment');
   }
 
