@@ -2134,6 +2134,96 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task GetNoteThreadChanges_NoChanges()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        string dataId = "dataId1";
+        string content1a = "Reviewer comment";
+        string content1b = "<p sf-user-label=\"true\">[User 05 - xForge]</p>\n<p>Reviewer comment</p>";
+        string content2 = "Project admin comment";
+        string content3 = "<p>Content with <bold>bold</bold> <italics>italics</italics> styling.</p>";
+        string content4 = "Text with content styled <bold>bold</bold> <italics>italics</italics>.";
+
+        // Test non-essential whitespace differences
+        string baseContent = "<p>First paragraph content.</p><p>Second paragraph content.</p>";
+        // new lines between paragraph
+        string content5a = "<p>First paragraph content.</p>\n  <p>Second paragraph content.</p>";
+        string content5b = baseContent;
+        // new lines before and after all paragraphs
+        string content6a = "\n  <p>First paragraph content.</p><p>Second paragraph content.</p>\n  ";
+        string content6b = baseContent;
+        // new lines between paragraph and bold tags
+        string content7a = "<p>\n  <bold>First paragraph content.</bold>\n  </p><p>Second paragraph content.</p>";
+        string content7b = "<p><bold>First paragraph content.</bold></p><p>Second paragraph content.</p>";
+
+        ThreadNoteComponents[] notesSF = new[]
+        {
+            new ThreadNoteComponents { ownerRef = env.User05, content = content1a },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content2 },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content3 },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content4 },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content5a },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content6a },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content7a }
+        };
+        ThreadComponents threadCompSF = new ThreadComponents
+        {
+            threadNum = 1,
+            noteCount = 7,
+            username = env.Username01,
+            notes = notesSF
+        };
+        env.AddNoteThreadData(new[] { threadCompSF });
+        ThreadNoteComponents[] notesPT = new[]
+        {
+            new ThreadNoteComponents { ownerRef = env.User05, content = content1b },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content2 },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content3 },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content4 },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content5b },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content6b },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content7b }
+        };
+        ThreadComponents threadCompPT = new ThreadComponents
+        {
+            threadNum = 1,
+            noteCount = 7,
+            username = env.Username01,
+            notes = notesPT
+        };
+        env.AddParatextComments(new[] { threadCompPT });
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
+        {
+            {
+                env.Username01,
+                new ParatextUserProfile
+                {
+                    OpaqueUserId = "syncuser01",
+                    Username = env.Username01,
+                    SFUserId = env.User01
+                }
+            }
+        };
+
+        IEnumerable<NoteThreadChange> changes = env.Service.GetNoteThreadChanges(
+            userSecret,
+            paratextId,
+            40,
+            new[] { noteThreadDoc },
+            env.GetChapterDeltasByBook(1, env.ContextBefore, "Text selected"),
+            ptProjectUsers
+        );
+        Assert.That(changes.Count(), Is.EqualTo(0));
+    }
+
+    [Test]
     [Ignore("Not ready to push SF comments to PT")]
     public async Task UpdateParatextComments_AddsComment()
     {
@@ -2406,23 +2496,35 @@ public class ParatextServiceTests
         string content1a = "Reviewer comment";
         string content1b = "<p sf-user-label=\"true\">[User 05 - xForge]</p>\n<p>Reviewer comment</p>";
         string content2 = "Project admin comment";
-        string content3a = "<p>First paragraph content.</p><p>Second paragraph content.</p>";
-        // add new line character
-        string content3b = "<p>First paragraph content.</p>\n<p>Second paragraph content.</p>";
-        string content4 = "<p>Content with <bold>bold</bold> <italics>italics</italics> styling.</p>";
-        string content5 = "Text with content styled <bold>bold</bold> <italics>italics</italics>.";
+        string content3 = "<p>Content with <bold>bold</bold> <italics>italics</italics> styling.</p>";
+        string content4 = "Text with content styled <bold>bold</bold> <italics>italics</italics>.";
+
+        // Test non-essential whitespace differences
+        string baseContent = "<p>First paragraph content.</p><p>Second paragraph content.</p>";
+        // new lines between paragraph
+        string content5a = "<p>First paragraph content.</p>\n  <p>Second paragraph content.</p>";
+        string content5b = baseContent;
+        // new lines before and after all paragraphs
+        string content6a = "\n  <p>First paragraph content.</p><p>Second paragraph content.</p>\n  ";
+        string content6b = baseContent;
+        // new lines between paragraph and bold tags
+        string content7a = "<p>\n  <bold>First paragraph content.</bold>\n  </p><p>Second paragraph content.</p>";
+        string content7b = "<p><bold>First paragraph content.</bold></p><p>Second paragraph content.</p>";
+
         ThreadNoteComponents[] notesSF = new[]
         {
             new ThreadNoteComponents { ownerRef = env.User05, content = content1a },
             new ThreadNoteComponents { ownerRef = env.User01, content = content2 },
-            new ThreadNoteComponents { ownerRef = env.User01, content = content3a },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content3 },
             new ThreadNoteComponents { ownerRef = env.User01, content = content4 },
-            new ThreadNoteComponents { ownerRef = env.User01, content = content5 }
+            new ThreadNoteComponents { ownerRef = env.User01, content = content5a },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content6a },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content7a }
         };
         ThreadComponents threadCompSF = new ThreadComponents
         {
             threadNum = 1,
-            noteCount = 4,
+            noteCount = 7,
             username = env.Username01,
             notes = notesSF
         };
@@ -2431,14 +2533,16 @@ public class ParatextServiceTests
         {
             new ThreadNoteComponents { ownerRef = env.User05, content = content1b },
             new ThreadNoteComponents { ownerRef = env.User01, content = content2 },
-            new ThreadNoteComponents { ownerRef = env.User01, content = content3b },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content3 },
             new ThreadNoteComponents { ownerRef = env.User01, content = content4 },
-            new ThreadNoteComponents { ownerRef = env.User01, content = content5 }
+            new ThreadNoteComponents { ownerRef = env.User01, content = content5b },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content6b },
+            new ThreadNoteComponents { ownerRef = env.User01, content = content7b }
         };
         ThreadComponents threadCompPT = new ThreadComponents
         {
             threadNum = 1,
-            noteCount = 5,
+            noteCount = 7,
             username = env.Username01,
             notes = notesPT
         };
@@ -2466,7 +2570,7 @@ public class ParatextServiceTests
         );
 
         CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
-        Assert.That(thread.Comments.Count, Is.EqualTo(5));
+        Assert.That(thread.Comments.Count, Is.EqualTo(7));
         Paratext.Data.ProjectComments.Comment comment = thread.Comments.First();
         string expected1 =
             "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-" + "MAT 1:1-" + content1b + "-Start:15-" + "user05";
@@ -2475,13 +2579,13 @@ public class ParatextServiceTests
         comment = thread.Comments[1];
         Assert.That(comment.CommentToString(), Is.EqualTo(expected2));
         comment = thread.Comments[2];
-        string expected3 = "thread1/User 01/2019-01-03T08:00:00.0000000+00:00-" + "MAT 1:1-" + content3b + "-Start:15";
+        string expected3 = "thread1/User 01/2019-01-03T08:00:00.0000000+00:00-" + "MAT 1:1-" + content3 + "-Start:15";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected3));
         comment = thread.Comments[3];
         string expected4 = "thread1/User 01/2019-01-04T08:00:00.0000000+00:00-" + "MAT 1:1-" + content4 + "-Start:15";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected4));
         comment = thread.Comments[4];
-        string expected5 = "thread1/User 01/2019-01-05T08:00:00.0000000+00:00-" + "MAT 1:1-" + content5 + "-Start:15";
+        string expected5 = "thread1/User 01/2019-01-05T08:00:00.0000000+00:00-" + "MAT 1:1-" + content5b + "-Start:15";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected5));
         Assert.That(ptProjectUsers.Count, Is.EqualTo(1));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));

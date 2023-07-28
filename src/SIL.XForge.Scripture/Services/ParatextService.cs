@@ -2363,7 +2363,7 @@ public class ParatextService : DisposableBase, IParatextService
         bool conflictTypeChanged = comment.ConflictType.InternalValue != note.ConflictType;
         bool acceptedChangeXmlChanged = comment.AcceptedChangeXmlStr != note.AcceptedChangeXml;
         string equivalentNoteContent = GetNoteContentFromComment(comment);
-        bool contentChanged = note.Content != equivalentNoteContent;
+        bool contentChanged = GetUpdatedContentIfChanged(equivalentNoteContent, note.Content) != null;
         bool tagChanged = commentTag?.Id != note.TagId;
         bool assignedUserChanged = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers) != note.Assignment;
         if (
@@ -2389,11 +2389,11 @@ public class ParatextService : DisposableBase, IParatextService
     {
         string equivalentCommentContent = GetCommentContentsFromNote(note, displayNames, ptProjectUsers);
         string contents = comment.Contents?.InnerXml ?? string.Empty;
-        // Replace whitespace characters between xml tags
-        string contentWithoutWhiteSpace = GetXmlContentNoWhitespace(contents);
-        if (equivalentCommentContent != contentWithoutWhiteSpace)
+
+        string updatedContent = GetUpdatedContentIfChanged(equivalentCommentContent, contents);
+        if (updatedContent is not null)
         {
-            xml = equivalentCommentContent;
+            xml = updatedContent;
             return true;
         }
         xml = string.Empty;
@@ -2494,6 +2494,32 @@ public class ParatextService : DisposableBase, IParatextService
     /// <summary> Replace the white space between paragraph xml tags </summary>
     private static string GetXmlContentNoWhitespace(string xmlContent) =>
         Regex.Replace(xmlContent.Trim(), @"p>\W+<p", "p><p");
+
+    /// <summary>
+    /// Compares the xml contents and return the string representation of the other xml content if changed.
+    /// </summary>
+    /// <returns> The other xml content if changed; otherwise, <c>null</c>. </returns>
+    private static string GetUpdatedContentIfChanged(string currentXml, string otherXml)
+    {
+        if (string.IsNullOrEmpty(currentXml))
+        {
+            if (string.IsNullOrEmpty(otherXml))
+                return null;
+            return XDocument.Parse(otherXml).ToString();
+        }
+        if (string.IsNullOrEmpty(otherXml))
+            return string.Empty;
+
+        string xmlWithRoot = $"<root>{currentXml}</root>";
+        string otherXmlWithRoot = $"<root>{otherXml}</root>";
+        XDocument doc = XDocument.Parse(xmlWithRoot);
+        XDocument docOther = XDocument.Parse(otherXmlWithRoot);
+
+        if (XNode.DeepEquals(doc, docOther))
+            return null;
+
+        return docOther.ToString();
+    }
 
     private void PopulateCommentFromNote(
         Note note,
