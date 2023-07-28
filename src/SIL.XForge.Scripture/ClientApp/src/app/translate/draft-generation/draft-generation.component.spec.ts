@@ -14,8 +14,6 @@ import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 
 describe('DraftGenerationComponent', () => {
-  let component: DraftGenerationComponent;
-  let fixture: ComponentFixture<DraftGenerationComponent>;
   let mockMatDialog: jasmine.SpyObj<MatDialog>;
   let mockDialogService: jasmine.SpyObj<DialogService>;
   let mockDraftGenerationService: jasmine.SpyObj<DraftGenerationService>;
@@ -44,85 +42,142 @@ describe('DraftGenerationComponent', () => {
     production: false
   };
 
-  beforeEach(() => {
-    mockMatDialog = jasmine.createSpyObj('MatDialog', ['closeAll']);
-    mockDialogService = jasmine.createSpyObj('DialogService', ['openGenericDialog']);
-    mockI18nService = jasmine.createSpyObj('I18nService', [''], { locale$: of(locale) });
-    mockDraftGenerationService = jasmine.createSpyObj('DraftGenerationService', [
-      'startBuild',
-      'cancelBuild',
-      'getBuildProgress',
-      'pollBuildProgress',
-      'getLastCompletedBuild'
-    ]);
-    mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
-      projectId: 'testProjectId',
-      projectId$: of('testProjectId'),
-      projectDoc$: of({
-        data: {
-          writingSystem: {
-            tag: 'en'
-          },
-          translateConfig: {
-            projectType: ProjectType.BackTranslation
+  class TestEnvironment {
+    component!: DraftGenerationComponent;
+    fixture!: ComponentFixture<DraftGenerationComponent>;
+
+    constructor(preInit?: () => void) {
+      this.setup();
+
+      if (preInit) {
+        preInit();
+      }
+
+      this.init();
+    }
+
+    // Default setup
+    setup(): void {
+      mockMatDialog = jasmine.createSpyObj('MatDialog', ['closeAll']);
+      mockDialogService = jasmine.createSpyObj('DialogService', ['openGenericDialog']);
+      mockI18nService = jasmine.createSpyObj('I18nService', [''], { locale$: of(locale) });
+      mockDraftGenerationService = jasmine.createSpyObj('DraftGenerationService', [
+        'startBuild',
+        'cancelBuild',
+        'getBuildProgress',
+        'pollBuildProgress',
+        'getLastCompletedBuild'
+      ]);
+      mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+        projectId: 'testProjectId',
+        projectId$: of('testProjectId'),
+        projectDoc$: of({
+          data: {
+            writingSystem: {
+              tag: 'en'
+            },
+            translateConfig: {
+              projectType: ProjectType.BackTranslation,
+              source: {
+                projectRef: 'testSourceProjectId'
+              }
+            }
           }
-        }
-      })
-    });
+        })
+      });
 
-    TestBed.configureTestingModule({
-      declarations: [DraftGenerationComponent],
-      imports: [UICommonModule],
-      providers: [
-        { provide: DraftGenerationService, useValue: mockDraftGenerationService },
-        { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
-        { provide: MatDialog, useValue: mockMatDialog },
-        { provide: DialogService, useValue: mockDialogService },
-        { provide: I18nService, useValue: mockI18nService },
-        { provide: ACTIVE_BUILD_STATES, useValue: [BuildStates.Active, BuildStates.Pending, BuildStates.Queued] }
-      ]
-    });
-
-    fixture = TestBed.createComponent(DraftGenerationComponent);
-    component = fixture.componentInstance;
-  });
-
-  describe('ngOnInit', () => {
-    it('should subscribe to build progress', () => {
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
-      component.ngOnInit();
-      expect(component.draftJob).toEqual(buildDto);
+    }
+
+    init(): void {
+      TestBed.configureTestingModule({
+        declarations: [DraftGenerationComponent],
+        imports: [UICommonModule],
+        providers: [
+          { provide: DraftGenerationService, useValue: mockDraftGenerationService },
+          { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
+          { provide: MatDialog, useValue: mockMatDialog },
+          { provide: DialogService, useValue: mockDialogService },
+          { provide: I18nService, useValue: mockI18nService },
+          { provide: ACTIVE_BUILD_STATES, useValue: [BuildStates.Active, BuildStates.Pending, BuildStates.Queued] }
+        ]
+      });
+
+      this.fixture = TestBed.createComponent(DraftGenerationComponent);
+      this.component = this.fixture.componentInstance;
+      this.fixture.detectChanges();
+    }
+  }
+
+  describe('ngOnInit', () => {
+    it('should subscribe to build progress', () => {
+      let env = new TestEnvironment();
+
+      expect(env.component.draftJob).toEqual(buildDto);
       expect(mockDraftGenerationService.getBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
       expect(mockDraftGenerationService.pollBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
       expect(mockDraftGenerationService.getLastCompletedBuild).toHaveBeenCalledWith(
         mockActivatedProjectService.projectId!
       );
-      expect(component.draftViewerUrl).toEqual('/projects/testProjectId/draft-preview');
-      expect(component.isBackTranslation).toBe(true);
-      expect(component.isTargetLanguageNllb).toBe(true);
-      expect(component.targetLanguage).toBe('en');
-      expect(component.targetLanguageDisplayName).toBe('English');
+      expect(env.component.draftViewerUrl).toEqual('/projects/testProjectId/draft-preview');
+      expect(env.component.isBackTranslation).toBe(true);
+      expect(env.component.isTargetLanguageNllb).toBe(true);
+      expect(env.component.isSourceProjectSet).toBe(true);
+      expect(env.component.targetLanguage).toBe('en');
+      expect(env.component.targetLanguageDisplayName).toBe('English');
+    });
+
+    it('should detect project requirements', () => {
+      let env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: 'testProjectId',
+          projectId$: of('testProjectId'),
+          projectDoc$: of({
+            data: {
+              writingSystem: {
+                tag: 'xyz'
+              },
+              translateConfig: {
+                projectType: ProjectType.Standard
+              }
+            }
+          })
+        });
+      });
+
+      expect(env.component.isBackTranslation).toBe(false);
+      expect(env.component.isTargetLanguageNllb).toBe(false);
+      expect(env.component.isSourceProjectSet).toBe(false);
     });
   });
 
   describe('generateDraft', () => {
     it('should start the draft build', () => {
-      mockDraftGenerationService.startBuild.and.returnValue(of(buildDto));
-      component.generateDraft();
+      let env = new TestEnvironment(() => {
+        mockDraftGenerationService.startBuild.and.returnValue(of(buildDto));
+      });
+
+      env.component.generateDraft();
       expect(mockDraftGenerationService.startBuild).toHaveBeenCalledWith('testProjectId');
     });
 
     it('should not attempt MatDialog.closeAll() for queued build', () => {
-      mockDraftGenerationService.startBuild.and.returnValue(of(buildDto));
-      component.generateDraft();
+      let env = new TestEnvironment(() => {
+        mockDraftGenerationService.startBuild.and.returnValue(of(buildDto));
+      });
+
+      env.component.generateDraft();
       expect(mockMatDialog.closeAll).not.toHaveBeenCalled();
     });
 
     it('should attempt MatDialog.closeAll() for cancelled build', () => {
-      mockDraftGenerationService.startBuild.and.returnValue(of({ ...buildDto, state: BuildStates.Canceled }));
-      component.generateDraft();
+      let env = new TestEnvironment(() => {
+        mockDraftGenerationService.startBuild.and.returnValue(of({ ...buildDto, state: BuildStates.Canceled }));
+      });
+
+      env.component.generateDraft();
       expect(mockDraftGenerationService.startBuild).toHaveBeenCalledWith('testProjectId');
       expect(mockMatDialog.closeAll).toHaveBeenCalledTimes(1);
     });
@@ -130,28 +185,36 @@ describe('DraftGenerationComponent', () => {
 
   describe('cancel', () => {
     it('should cancel the draft build if user confirms "cancel" dialog', async () => {
-      const job: BuildDto = { ...buildDto, state: BuildStates.Active };
-      component.draftJob = job;
-      mockDialogService.openGenericDialog.and.returnValue(Promise.resolve(true));
-      mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
-      await component.cancel();
+      let env = new TestEnvironment(() => {
+        mockDialogService.openGenericDialog.and.returnValue(Promise.resolve(true));
+        mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
+      });
+
+      env.component.draftJob = { ...buildDto, state: BuildStates.Active };
+      await env.component.cancel();
       expect(mockDialogService.openGenericDialog).toHaveBeenCalledTimes(1);
       expect(mockDraftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
     });
+
     it('should not cancel the draft build if user exits "cancel" dialog', async () => {
-      const job: BuildDto = { ...buildDto, state: BuildStates.Active };
-      component.draftJob = job;
-      mockDialogService.openGenericDialog.and.returnValue(Promise.resolve(false));
-      mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
-      await component.cancel();
+      let env = new TestEnvironment(() => {
+        mockDialogService.openGenericDialog.and.returnValue(Promise.resolve(false));
+        mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
+      });
+
+      env.component.draftJob = { ...buildDto, state: BuildStates.Active };
+      await env.component.cancel();
       expect(mockDialogService.openGenericDialog).toHaveBeenCalledTimes(1);
       expect(mockDraftGenerationService.cancelBuild).not.toHaveBeenCalled();
     });
+
     it('should cancel the draft build without dialog if the build state is not active', async () => {
-      const job: BuildDto = { ...buildDto, state: BuildStates.Queued };
-      component.draftJob = job;
-      mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
-      await component.cancel();
+      let env = new TestEnvironment(() => {
+        mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
+      });
+
+      env.component.draftJob = { ...buildDto, state: BuildStates.Queued };
+      await env.component.cancel();
       expect(mockDialogService.openGenericDialog).not.toHaveBeenCalled();
       expect(mockDraftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
     });
@@ -159,78 +222,98 @@ describe('DraftGenerationComponent', () => {
 
   describe('getLanguageDisplayName', () => {
     it('should return the display name for a valid language code', () => {
-      expect(component.getLanguageDisplayName('en', locale)).toBe('English');
+      let env = new TestEnvironment();
+      expect(env.component.getLanguageDisplayName('en', locale)).toBe('English');
     });
+
     it('should return undefined for an undefined language code', () => {
-      expect(component.getLanguageDisplayName(undefined, locale)).toBeUndefined();
+      let env = new TestEnvironment();
+      expect(env.component.getLanguageDisplayName(undefined, locale)).toBeUndefined();
     });
+
     it('should return language code for an unknown language code', () => {
-      expect(component.getLanguageDisplayName('xyz', locale)).toBe('xyz');
+      let env = new TestEnvironment();
+      expect(env.component.getLanguageDisplayName('xyz', locale)).toBe('xyz');
     });
   });
 
   describe('isDraftInProgress', () => {
     it('should return true if the draft build is in progress', () => {
-      expect(component.isDraftInProgress({ state: BuildStates.Active } as BuildDto)).toBe(true);
-      expect(component.isDraftInProgress({ state: BuildStates.Pending } as BuildDto)).toBe(true);
-      expect(component.isDraftInProgress({ state: BuildStates.Queued } as BuildDto)).toBe(true);
+      let env = new TestEnvironment();
+      expect(env.component.isDraftInProgress({ state: BuildStates.Active } as BuildDto)).toBe(true);
+      expect(env.component.isDraftInProgress({ state: BuildStates.Pending } as BuildDto)).toBe(true);
+      expect(env.component.isDraftInProgress({ state: BuildStates.Queued } as BuildDto)).toBe(true);
     });
+
     it('should return false if the draft build is not in progress', () => {
-      expect(component.isDraftInProgress({ state: BuildStates.Completed } as BuildDto)).toBe(false);
-      expect(component.isDraftInProgress({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
-      expect(component.isDraftInProgress({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
+      let env = new TestEnvironment();
+      expect(env.component.isDraftInProgress({ state: BuildStates.Completed } as BuildDto)).toBe(false);
+      expect(env.component.isDraftInProgress({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
+      expect(env.component.isDraftInProgress({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
     });
   });
 
   describe('isDraftQueued', () => {
     it('should return true if the draft build is queued', () => {
-      expect(component.isDraftQueued({ state: BuildStates.Queued } as BuildDto)).toBe(true);
-      expect(component.isDraftQueued({ state: BuildStates.Pending } as BuildDto)).toBe(true);
+      let env = new TestEnvironment();
+      expect(env.component.isDraftQueued({ state: BuildStates.Queued } as BuildDto)).toBe(true);
+      expect(env.component.isDraftQueued({ state: BuildStates.Pending } as BuildDto)).toBe(true);
     });
+
     it('should return false if the draft build is not queued', () => {
-      expect(component.isDraftQueued({ state: BuildStates.Active } as BuildDto)).toBe(false);
-      expect(component.isDraftQueued({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
-      expect(component.isDraftQueued({ state: BuildStates.Completed } as BuildDto)).toBe(false);
-      expect(component.isDraftQueued({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
+      let env = new TestEnvironment();
+      expect(env.component.isDraftQueued({ state: BuildStates.Active } as BuildDto)).toBe(false);
+      expect(env.component.isDraftQueued({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
+      expect(env.component.isDraftQueued({ state: BuildStates.Completed } as BuildDto)).toBe(false);
+      expect(env.component.isDraftQueued({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
     });
   });
 
   describe('isDraftActive', () => {
     it('should return true if the draft build is active', () => {
-      expect(component.isDraftActive({ state: BuildStates.Active } as BuildDto)).toBe(true);
+      let env = new TestEnvironment();
+      expect(env.component.isDraftActive({ state: BuildStates.Active } as BuildDto)).toBe(true);
     });
+
     it('should return false if the draft build is not active', () => {
-      expect(component.isDraftActive({ state: BuildStates.Completed } as BuildDto)).toBe(false);
-      expect(component.isDraftActive({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
-      expect(component.isDraftActive({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
-      expect(component.isDraftActive({ state: BuildStates.Pending } as BuildDto)).toBe(false);
-      expect(component.isDraftActive({ state: BuildStates.Queued } as BuildDto)).toBe(false);
+      let env = new TestEnvironment();
+      expect(env.component.isDraftActive({ state: BuildStates.Completed } as BuildDto)).toBe(false);
+      expect(env.component.isDraftActive({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
+      expect(env.component.isDraftActive({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
+      expect(env.component.isDraftActive({ state: BuildStates.Pending } as BuildDto)).toBe(false);
+      expect(env.component.isDraftActive({ state: BuildStates.Queued } as BuildDto)).toBe(false);
     });
   });
 
   describe('isDraftComplete', () => {
     it('should return true if the draft build is complete', () => {
-      expect(component.isDraftComplete({ state: BuildStates.Completed } as BuildDto)).toBe(true);
+      let env = new TestEnvironment();
+      expect(env.component.isDraftComplete({ state: BuildStates.Completed } as BuildDto)).toBe(true);
     });
+
     it('should return false if the draft build is not complete', () => {
-      expect(component.isDraftComplete({ state: BuildStates.Active } as BuildDto)).toBe(false);
-      expect(component.isDraftComplete({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
-      expect(component.isDraftComplete({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
-      expect(component.isDraftComplete({ state: BuildStates.Pending } as BuildDto)).toBe(false);
-      expect(component.isDraftComplete({ state: BuildStates.Queued } as BuildDto)).toBe(false);
+      let env = new TestEnvironment();
+      expect(env.component.isDraftComplete({ state: BuildStates.Active } as BuildDto)).toBe(false);
+      expect(env.component.isDraftComplete({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
+      expect(env.component.isDraftComplete({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
+      expect(env.component.isDraftComplete({ state: BuildStates.Pending } as BuildDto)).toBe(false);
+      expect(env.component.isDraftComplete({ state: BuildStates.Queued } as BuildDto)).toBe(false);
     });
   });
 
   describe('canCancel', () => {
     it('should return true if the draft build is in progress', () => {
-      expect(component.isDraftInProgress({ state: BuildStates.Active } as BuildDto)).toBe(true);
-      expect(component.isDraftInProgress({ state: BuildStates.Pending } as BuildDto)).toBe(true);
-      expect(component.isDraftInProgress({ state: BuildStates.Queued } as BuildDto)).toBe(true);
+      let env = new TestEnvironment();
+      expect(env.component.isDraftInProgress({ state: BuildStates.Active } as BuildDto)).toBe(true);
+      expect(env.component.isDraftInProgress({ state: BuildStates.Pending } as BuildDto)).toBe(true);
+      expect(env.component.isDraftInProgress({ state: BuildStates.Queued } as BuildDto)).toBe(true);
     });
+
     it('should return false if the draft build is not in progress', () => {
-      expect(component.isDraftInProgress({ state: BuildStates.Completed } as BuildDto)).toBe(false);
-      expect(component.isDraftInProgress({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
-      expect(component.isDraftInProgress({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
+      let env = new TestEnvironment();
+      expect(env.component.isDraftInProgress({ state: BuildStates.Completed } as BuildDto)).toBe(false);
+      expect(env.component.isDraftInProgress({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
+      expect(env.component.isDraftInProgress({ state: BuildStates.Faulted } as BuildDto)).toBe(false);
     });
   });
 });
