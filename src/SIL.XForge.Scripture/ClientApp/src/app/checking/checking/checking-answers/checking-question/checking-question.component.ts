@@ -54,13 +54,12 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     return this._scriptureTextAudioData?.audioUrl;
   }
 
-  // TODO (scripture audio) fill this in when timing data is working
   get scriptureAudioStart(): number | undefined {
-    return this._scriptureTextAudioData?.timings.find(t => t.textRef === 'v' + this.startVerse.toString())?.from;
+    return this._scriptureTextAudioData?.timings.find(t => t.textRef === this.startVerse.toString())?.from;
   }
 
   get scriptureAudioEnd(): number | undefined {
-    return this._scriptureTextAudioData?.timings.find(t => t.textRef === 'v' + this.endVerse.toString())?.to;
+    return this._scriptureTextAudioData?.timings.find(t => t.textRef === this.endVerse.toString())?.to;
   }
 
   get questionText(): string {

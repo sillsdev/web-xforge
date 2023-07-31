@@ -1,9 +1,28 @@
-button {
-  span {
-    margin-inline-start: 4px;
+.mat-dialog-content {
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  button {
+    padding-inline: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .mat-icon {
-    vertical-align: text-top;
+  mat-icon {
+    //to match checking-audio-combined
     font-size: 18px;
+    vertical-align: text-top;
+    margin-inline-end: 4px;
   }
+}
+
+.auto-size-button {
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mat-dialog-actions {
+  justify-content: end;
 }
