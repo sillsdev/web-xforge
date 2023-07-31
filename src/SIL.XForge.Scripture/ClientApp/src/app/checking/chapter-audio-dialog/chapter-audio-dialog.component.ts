@@ -1,16 +1,16 @@
 import { Component, Inject } from '@angular/core';
-import { CsvService } from 'xforge-common/csv-service.service';
-import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
-import { I18nService } from 'xforge-common/i18n.service';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';
+import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
+import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
+import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
+import { CsvService } from 'xforge-common/csv-service.service';
 import { FileService } from 'xforge-common/file.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { objectId } from 'xforge-common/utils';
-import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
-import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 
 export interface ChapterAudioDialogData {
@@ -42,7 +42,7 @@ export class ChapterAudioDialogComponent {
     private readonly dialogRef: MatDialogRef<ChapterAudioDialogComponent, ChapterAudioDialogResult | undefined>,
     private readonly fileService: FileService
   ) {
-    // TODO: Make this smarter i.e. base off books that have questions setup and no audio attached
+    // TODO: Make this smarter i.e. first book to have questions setup and no audio attached
     this._book = this.books[0];
     this._chapter = 1;
   }
@@ -121,11 +121,40 @@ export class ChapterAudioDialogComponent {
       // TODO: Show an error
       return;
     }
+
+    for (const timing of this.timing) {
+      timing.to = await this.populateToField(this.timing.indexOf(timing), this.timing);
+    }
+
     this.dialogRef.close({
       timingData: this.timing,
       book: this.book,
       chapter: this.chapter,
       audioUrl
+    });
+  }
+
+  private async populateToField(index: number, rows: AudioTiming[]): Promise<number> {
+    const row: AudioTiming = rows[index];
+    const to: number = row.to;
+    if (to > 0) return to;
+
+    if (index < rows.length - 1) {
+      const nextRow: AudioTiming = rows[index + 1];
+      const nextTo: number = nextRow.from;
+      return nextTo;
+    } else {
+      return await this.getDuration(this.audio!.url!);
+    }
+  }
+
+  private getDuration(src: string): Promise<number> {
+    return new Promise(function (resolve) {
+      var audio = new Audio();
+      audio.addEventListener('loadedmetadata', function () {
+        resolve(audio.duration);
+      });
+      audio.src = src;
     });
   }
 
