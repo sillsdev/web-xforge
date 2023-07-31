@@ -225,7 +225,7 @@ describe('DraftViewerComponent', () => {
     expect(env.component.currentChapter).toEqual(2);
   }));
 
-  it('should navigate to the highest chapter of the given book if chapter is above range', fakeAsync(() => {
+  it('should navigate to the first chapter of the given book if chapter is out of range', fakeAsync(() => {
     new TestEnvironment(() => {
       when(mockActivatedRoute.paramMap).thenReturn(
         of({
@@ -242,7 +242,15 @@ describe('DraftViewerComponent', () => {
       );
     });
 
-    verify(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/2')).once();
+    verify(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1')).once();
+  }));
+
+  it('should navigate to the first chapter of the new book when user changes book', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.component.currentBook = 2;
+    env.component.currentChapter = 2;
+    env.component.onBookChange(1);
+    verify(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1')).once();
   }));
 
   const projectProfileDoc = {
