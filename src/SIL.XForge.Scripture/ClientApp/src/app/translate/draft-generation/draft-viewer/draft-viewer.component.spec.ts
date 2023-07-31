@@ -36,74 +36,72 @@ const mockActivatedProjectService = mock(ActivatedProjectService);
 const mockActivatedRoute = mock(ActivatedRoute);
 const mockRouter = mock(Router);
 
-  class TestEnvironment {
-    fixture!: ComponentFixture<DraftViewerComponent>;
-    component!: DraftViewerComponent;
-    readonly targetProjectId = 'targetProjectId';
-    readonly targetTextDocId = new TextDocId(this.targetProjectId, 1, 2, 'target');
-    private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+class TestEnvironment {
+  fixture!: ComponentFixture<DraftViewerComponent>;
+  component!: DraftViewerComponent;
+  readonly targetProjectId = 'targetProjectId';
+  readonly targetTextDocId = new TextDocId(this.targetProjectId, 1, 2, 'target');
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-    constructor(preInit?: () => void) {
-      this.setup();
+  constructor(preInit?: () => void) {
+    this.setup();
 
-      if (preInit) {
-        preInit();
-      }
-
-      this.init();
+    if (preInit) {
+      preInit();
     }
 
-    setup(): void {
-      this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
-        id: this.targetTextDocId.toString(),
-        type: RichText.type.name,
-        data: cloneDeep(delta_no_verse_2)
-      });
-      this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
-        id: 'user01',
-        data: createTestUser()
-      });
-
-      when(mockActivatedProjectService.projectId).thenReturn(this.targetProjectId);
-      when(mockActivatedProjectService.projectDoc).thenReturn(projectProfileDoc);
-      when(mockProjectService.getText(anything())).thenCall(id =>
-        this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
-      );
-      when(mockProjectService.getProfile(anything())).thenResolve(cloneDeep(projectProfileDoc));
-      when(mockProjectService.getProfile(anything())).thenResolve(cloneDeep(projectProfileDoc));
-      when(mockPwaService.isOnline).thenReturn(true);
-      when(mockPwaService.onlineStatus$).thenReturn(of(true));
-      when(mockUserService.getCurrentUser()).thenCall(() =>
-        this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
-      );
-      when(mockRouter.events).thenReturn(
-        of(new ActivationEnd({ params: { projectId: this.targetProjectId } } as unknown as ActivatedRouteSnapshot))
-      );
-      when(mockDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
-        of(cloneDeep(draftSegmentMap))
-      );
-      when(mockActivatedRoute.paramMap).thenReturn(
-        of({
-          get: (p: string) => {
-            if (p === 'bookId') {
-              return 'GEN';
-            }
-            if (p === 'chapter') {
-              return '2';
-            }
-            return null;
-          }
-        } as ParamMap)
-      );
-    }
-
-    init(): void {
-      this.fixture = TestBed.createComponent(DraftViewerComponent);
-      this.component = this.fixture.componentInstance;
-      this.fixture.detectChanges();
-      tick();
-    }
+    this.init();
   }
+
+  setup(): void {
+    this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
+      id: this.targetTextDocId.toString(),
+      type: RichText.type.name,
+      data: cloneDeep(delta_no_verse_2)
+    });
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: 'user01',
+      data: createTestUser()
+    });
+
+    when(mockActivatedProjectService.projectId).thenReturn(this.targetProjectId);
+    when(mockActivatedProjectService.projectDoc).thenReturn(projectProfileDoc);
+    when(mockProjectService.getText(anything())).thenCall(id =>
+      this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
+    );
+    when(mockProjectService.getProfile(anything())).thenResolve(cloneDeep(projectProfileDoc));
+    when(mockProjectService.getProfile(anything())).thenResolve(cloneDeep(projectProfileDoc));
+    when(mockPwaService.isOnline).thenReturn(true);
+    when(mockPwaService.onlineStatus$).thenReturn(of(true));
+    when(mockUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01'));
+    when(mockRouter.events).thenReturn(
+      of(new ActivationEnd({ params: { projectId: this.targetProjectId } } as unknown as ActivatedRouteSnapshot))
+    );
+    when(mockDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
+      of(cloneDeep(draftSegmentMap))
+    );
+    when(mockActivatedRoute.paramMap).thenReturn(
+      of({
+        get: (p: string) => {
+          if (p === 'bookId') {
+            return 'GEN';
+          }
+          if (p === 'chapter') {
+            return '2';
+          }
+          return null;
+        }
+      } as ParamMap)
+    );
+  }
+
+  init(): void {
+    this.fixture = TestBed.createComponent(DraftViewerComponent);
+    this.component = this.fixture.componentInstance;
+    this.fixture.detectChanges();
+    tick();
+  }
+}
 
 describe('DraftViewerComponent', () => {
   configureTestingModule(() => ({
@@ -254,51 +252,52 @@ describe('DraftViewerComponent', () => {
     env.component.onBookChange(1);
     verify(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1')).once();
   }));
+});
 
-  const projectProfileDoc = {
-    data: {
-      writingSystem: {
-        tag: 'en'
+const projectProfileDoc = {
+  data: {
+    writingSystem: {
+      tag: 'en'
+    },
+    translateConfig: {
+      source: {
+        projectRef: 'sourceProjectId'
+      }
+    },
+    texts: [
+      {
+        bookNum: 1,
+        chapters: [
+          {
+            number: 1,
+            lastVerse: 10
+          },
+          {
+            number: 2,
+            lastVerse: 10
+          }
+        ]
       },
-      translateConfig: {
-        source: {
-          projectRef: 'sourceProjectId'
-        }
-      },
-      texts: [
-        {
-          bookNum: 1,
-          chapters: [
-            {
-              number: 1,
-              lastVerse: 10
-            },
-            {
-              number: 2,
-              lastVerse: 10
-            }
-          ]
-        },
-        {
-          bookNum: 2,
-          chapters: [
-            {
-              number: 1,
-              lastVerse: 10
-            },
-            {
-              number: 2,
-              lastVerse: 10
-            },
-            {
-              number: 3,
-              lastVerse: 10
-            }
-          ]
-        }
-      ]
-    }
-  } as SFProjectProfileDoc;
+      {
+        bookNum: 2,
+        chapters: [
+          {
+            number: 1,
+            lastVerse: 10
+          },
+          {
+            number: 2,
+            lastVerse: 10
+          },
+          {
+            number: 3,
+            lastVerse: 10
+          }
+        ]
+      }
+    ]
+  }
+} as SFProjectProfileDoc;
 
 const draftSegmentMap: DraftSegmentMap = {
   verse_1_1: 'This is verse 1. ',
