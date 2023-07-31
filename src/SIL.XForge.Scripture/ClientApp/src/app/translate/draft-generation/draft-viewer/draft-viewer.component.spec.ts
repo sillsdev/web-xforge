@@ -4,6 +4,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, ActivationEnd, ParamMap, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { cloneDeep } from 'lodash-es';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { User } from 'realtime-server/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import * as RichText from 'rich-text';
@@ -15,7 +16,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, MockTranslocoDirective } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -27,14 +28,13 @@ import { SF_TYPE_REGISTRY } from './../../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from './../../../core/models/text-doc';
 import { DraftViewerComponent } from './draft-viewer.component';
 
-describe('DraftViewerComponent', () => {
-  const mockDraftGenerationService = mock(DraftGenerationService);
-  const mockProjectService = mock(SFProjectService);
-  const mockPwaService = mock(PwaService);
-  const mockUserService = mock(UserService);
-  const mockActivatedProjectService = mock(ActivatedProjectService);
-  const mockActivatedRoute = mock(ActivatedRoute);
-  const mockRouter = mock(Router);
+const mockDraftGenerationService = mock(DraftGenerationService);
+const mockProjectService = mock(SFProjectService);
+const mockPwaService = mock(PwaService);
+const mockUserService = mock(UserService);
+const mockActivatedProjectService = mock(ActivatedProjectService);
+const mockActivatedRoute = mock(ActivatedRoute);
+const mockRouter = mock(Router);
 
   class TestEnvironment {
     fixture!: ComponentFixture<DraftViewerComponent>;
@@ -105,13 +105,15 @@ describe('DraftViewerComponent', () => {
     }
   }
 
+describe('DraftViewerComponent', () => {
   configureTestingModule(() => ({
-    declarations: [DraftViewerComponent],
+    declarations: [DraftViewerComponent, MockTranslocoDirective],
     imports: [
       UICommonModule,
       CommonModule,
       SharedModule,
       RouterTestingModule,
+      TranslocoMarkupModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       NoopAnimationsModule
     ],
@@ -298,253 +300,252 @@ describe('DraftViewerComponent', () => {
     }
   } as SFProjectProfileDoc;
 
-  const draftSegmentMap: DraftSegmentMap = {
-    verse_1_1: 'This is verse 1. ',
-    verse_1_2: 'This is verse 2. ',
-    verse_1_3: 'This is verse 3. '
-  };
+const draftSegmentMap: DraftSegmentMap = {
+  verse_1_1: 'This is verse 1. ',
+  verse_1_2: 'This is verse 2. ',
+  verse_1_3: 'This is verse 3. '
+};
 
-  const delta_no_verse_2 = new Delta([
-    {
-      insert: {
-        chapter: {
-          number: '1',
-          style: 'c'
-        }
-      }
-    },
-    {
-      attributes: {
-        initial: true,
-        segment: 'p_1',
-        'para-contents': true
-      },
-      insert: { blank: true }
-    },
-    {
-      attributes: {
-        'para-contents': true
-      },
-      insert: {
-        verse: {
-          number: '1',
-          style: 'v'
-        }
-      }
-    },
-    {
-      attributes: {
-        segment: 'verse_1_1',
-        'para-contents': true
-      },
-      insert: 'Existing verse 1. '
-    },
-    {
-      attributes: {
-        'para-contents': true
-      },
-      insert: {
-        verse: {
-          number: '2',
-          style: 'v'
-        }
-      }
-    },
-    {
-      attributes: {
-        segment: 'verse_1_2',
-        'para-contents': true
-      },
-      insert: { blank: true }
-    },
-    {
-      attributes: {
-        'para-contents': true
-      },
-      insert: {
-        verse: {
-          number: '3',
-          style: 'v'
-        }
-      }
-    },
-    {
-      attributes: {
-        segment: 'verse_1_3',
-        'para-contents': true
-      },
-      insert: 'And God said '
-    },
-    {
-      insert: '\n',
-      attributes: {
-        para: {
-          style: 'p'
-        }
+const delta_no_verse_2 = new Delta([
+  {
+    insert: {
+      chapter: {
+        number: '1',
+        style: 'c'
       }
     }
-  ]);
-
-  const delta_verse_2_suggested = new Delta([
-    {
-      insert: {
-        chapter: {
-          number: '1',
-          style: 'c'
-        }
-      }
+  },
+  {
+    attributes: {
+      initial: true,
+      segment: 'p_1',
+      'para-contents': true
     },
-    {
-      attributes: {
-        initial: true,
-        segment: 'p_1',
-        'para-contents': true
-      },
-      insert: { blank: true }
+    insert: { blank: true }
+  },
+  {
+    attributes: {
+      'para-contents': true
     },
-    {
-      attributes: {
-        'para-contents': true
-      },
-      insert: {
-        verse: {
-          number: '1',
-          style: 'v'
-        }
-      }
-    },
-    {
-      attributes: {
-        segment: 'verse_1_1',
-        'para-contents': true
-      },
-      insert: 'Existing verse 1. '
-    },
-    {
-      attributes: {
-        'para-contents': true
-      },
-      insert: {
-        verse: {
-          number: '2',
-          style: 'v'
-        }
-      }
-    },
-    {
-      attributes: {
-        segment: 'verse_1_2',
-        'para-contents': true,
-        draft: true
-      },
-      insert: 'This is verse 2. '
-    },
-    {
-      attributes: {
-        'para-contents': true
-      },
-      insert: {
-        verse: {
-          number: '3',
-          style: 'v'
-        }
-      }
-    },
-    {
-      attributes: {
-        segment: 'verse_1_3',
-        'para-contents': true
-      },
-      insert: 'And God said '
-    },
-    {
-      insert: '\n',
-      attributes: {
-        para: {
-          style: 'p'
-        }
+    insert: {
+      verse: {
+        number: '1',
+        style: 'v'
       }
     }
-  ]);
-
-  const delta_verse_2_accepted = new Delta([
-    {
-      insert: {
-        chapter: {
-          number: '1',
-          style: 'c'
-        }
-      }
+  },
+  {
+    attributes: {
+      segment: 'verse_1_1',
+      'para-contents': true
     },
-    {
-      attributes: {
-        initial: true,
-        segment: 'p_1',
-        'para-contents': true
-      },
-      insert: { blank: true }
+    insert: 'Existing verse 1. '
+  },
+  {
+    attributes: {
+      'para-contents': true
     },
-    {
-      attributes: {
-        'para-contents': true
-      },
-      insert: {
-        verse: {
-          number: '1',
-          style: 'v'
-        }
-      }
-    },
-    {
-      attributes: {
-        segment: 'verse_1_1',
-        'para-contents': true
-      },
-      insert: 'Existing verse 1. '
-    },
-    {
-      attributes: {
-        'para-contents': true
-      },
-      insert: {
-        verse: {
-          number: '2',
-          style: 'v'
-        }
-      }
-    },
-    {
-      attributes: {
-        segment: 'verse_1_2',
-        'para-contents': true
-      },
-      insert: 'This is verse 2. '
-    },
-    {
-      attributes: {
-        'para-contents': true
-      },
-      insert: {
-        verse: {
-          number: '3',
-          style: 'v'
-        }
-      }
-    },
-    {
-      attributes: {
-        segment: 'verse_1_3',
-        'para-contents': true
-      },
-      insert: 'And God said '
-    },
-    {
-      insert: '\n',
-      attributes: {
-        para: {
-          style: 'p'
-        }
+    insert: {
+      verse: {
+        number: '2',
+        style: 'v'
       }
     }
-  ]);
-});
+  },
+  {
+    attributes: {
+      segment: 'verse_1_2',
+      'para-contents': true
+    },
+    insert: { blank: true }
+  },
+  {
+    attributes: {
+      'para-contents': true
+    },
+    insert: {
+      verse: {
+        number: '3',
+        style: 'v'
+      }
+    }
+  },
+  {
+    attributes: {
+      segment: 'verse_1_3',
+      'para-contents': true
+    },
+    insert: 'And God said '
+  },
+  {
+    insert: '\n',
+    attributes: {
+      para: {
+        style: 'p'
+      }
+    }
+  }
+]);
+
+const delta_verse_2_suggested = new Delta([
+  {
+    insert: {
+      chapter: {
+        number: '1',
+        style: 'c'
+      }
+    }
+  },
+  {
+    attributes: {
+      initial: true,
+      segment: 'p_1',
+      'para-contents': true
+    },
+    insert: { blank: true }
+  },
+  {
+    attributes: {
+      'para-contents': true
+    },
+    insert: {
+      verse: {
+        number: '1',
+        style: 'v'
+      }
+    }
+  },
+  {
+    attributes: {
+      segment: 'verse_1_1',
+      'para-contents': true
+    },
+    insert: 'Existing verse 1. '
+  },
+  {
+    attributes: {
+      'para-contents': true
+    },
+    insert: {
+      verse: {
+        number: '2',
+        style: 'v'
+      }
+    }
+  },
+  {
+    attributes: {
+      segment: 'verse_1_2',
+      'para-contents': true,
+      draft: true
+    },
+    insert: 'This is verse 2. '
+  },
+  {
+    attributes: {
+      'para-contents': true
+    },
+    insert: {
+      verse: {
+        number: '3',
+        style: 'v'
+      }
+    }
+  },
+  {
+    attributes: {
+      segment: 'verse_1_3',
+      'para-contents': true
+    },
+    insert: 'And God said '
+  },
+  {
+    insert: '\n',
+    attributes: {
+      para: {
+        style: 'p'
+      }
+    }
+  }
+]);
+
+const delta_verse_2_accepted = new Delta([
+  {
+    insert: {
+      chapter: {
+        number: '1',
+        style: 'c'
+      }
+    }
+  },
+  {
+    attributes: {
+      initial: true,
+      segment: 'p_1',
+      'para-contents': true
+    },
+    insert: { blank: true }
+  },
+  {
+    attributes: {
+      'para-contents': true
+    },
+    insert: {
+      verse: {
+        number: '1',
+        style: 'v'
+      }
+    }
+  },
+  {
+    attributes: {
+      segment: 'verse_1_1',
+      'para-contents': true
+    },
+    insert: 'Existing verse 1. '
+  },
+  {
+    attributes: {
+      'para-contents': true
+    },
+    insert: {
+      verse: {
+        number: '2',
+        style: 'v'
+      }
+    }
+  },
+  {
+    attributes: {
+      segment: 'verse_1_2',
+      'para-contents': true
+    },
+    insert: 'This is verse 2. '
+  },
+  {
+    attributes: {
+      'para-contents': true
+    },
+    insert: {
+      verse: {
+        number: '3',
+        style: 'v'
+      }
+    }
+  },
+  {
+    attributes: {
+      segment: 'verse_1_3',
+      'para-contents': true
+    },
+    insert: 'And God said '
+  },
+  {
+    insert: '\n',
+    attributes: {
+      para: {
+        style: 'p'
+      }
+    }
+  }
+]);

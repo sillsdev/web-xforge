@@ -1,3 +1,4 @@
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -60,7 +61,7 @@ describe('DraftGenerationComponent', () => {
     setup(): void {
       mockMatDialog = jasmine.createSpyObj('MatDialog', ['closeAll']);
       mockDialogService = jasmine.createSpyObj('DialogService', ['openGenericDialog']);
-      mockI18nService = jasmine.createSpyObj('I18nService', [''], { locale$: of(locale) });
+      mockI18nService = jasmine.createSpyObj('I18nService', ['translate'], { locale$: of(locale) });
       mockDraftGenerationService = jasmine.createSpyObj('DraftGenerationService', [
         'startBuild',
         'cancelBuild',
