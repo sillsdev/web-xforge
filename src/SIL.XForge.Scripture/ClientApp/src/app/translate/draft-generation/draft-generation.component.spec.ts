@@ -1,3 +1,4 @@
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -8,7 +9,6 @@ import { ActivatedProjectService } from 'xforge-common/activated-project.service
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
-import { UICommonModule } from 'xforge-common/ui-common.module';
 import { ACTIVE_BUILD_STATES } from './draft-generation';
 import { DraftGenerationComponent } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
@@ -60,7 +60,7 @@ describe('DraftGenerationComponent', () => {
     setup(): void {
       mockMatDialog = jasmine.createSpyObj('MatDialog', ['closeAll']);
       mockDialogService = jasmine.createSpyObj('DialogService', ['openGenericDialog']);
-      mockI18nService = jasmine.createSpyObj('I18nService', [''], { locale$: of(locale) });
+      mockI18nService = jasmine.createSpyObj('I18nService', ['translate'], { locale$: of(locale) });
       mockDraftGenerationService = jasmine.createSpyObj('DraftGenerationService', [
         'startBuild',
         'cancelBuild',
@@ -94,7 +94,7 @@ describe('DraftGenerationComponent', () => {
     init(): void {
       TestBed.configureTestingModule({
         declarations: [DraftGenerationComponent],
-        imports: [UICommonModule],
+        schemas: [NO_ERRORS_SCHEMA],
         providers: [
           { provide: DraftGenerationService, useValue: mockDraftGenerationService },
           { provide: ActivatedProjectService, useValue: mockActivatedProjectService },

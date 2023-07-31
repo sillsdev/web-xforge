@@ -1,4 +1,4 @@
-import { Component, Directive, NgModule, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, Directive, Input, NgModule, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
 import { TestBed, TestModuleMetadata } from '@angular/core/testing';
 import { HAMMER_LOADER } from '@angular/platform-browser';
 import { TranslocoTestingModule } from '@ngneat/transloco';
@@ -187,4 +187,21 @@ export function arrayOfIntsFromZero(size: number): number[] {
 
 export function arrayOfIntsFromOne(size: number): number[] {
   return Array.from({ length: size }, (_, i) => i + 1);
+}
+
+/**
+ * Ignore the transloco directive and any usage of the {{ t('key') }} function.
+ */
+@Directive({
+  // eslint-disable-next-line @angular-eslint/directive-selector
+  selector: '[transloco]'
+})
+export class MockTranslocoDirective {
+  @Input() translocoRead?: string;
+
+  constructor(private templateRef: TemplateRef<any>, private viewContainer: ViewContainerRef) {
+    this.viewContainer.createEmbeddedView(this.templateRef, {
+      $implicit: (s: string) => s
+    });
+  }
 }
