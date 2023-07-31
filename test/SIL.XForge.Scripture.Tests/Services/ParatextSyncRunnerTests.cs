@@ -2643,7 +2643,7 @@ public class ParatextSyncRunnerTests
                 Arg.Any<UserSecret>(),
                 "target",
                 null,
-                Arg.Is<IEnumerable<IDocument<NoteThread>>>(t => t.Single().Id == "project01:thread01"),
+                Arg.Is<IEnumerable<IDocument<NoteThread>>>(t => t.Single().Id == "project01:dataId01"),
                 Arg.Any<Dictionary<string, string>>(),
                 Arg.Any<Dictionary<string, ParatextUserProfile>>(),
                 Arg.Any<int>()
@@ -2660,7 +2660,7 @@ public class ParatextSyncRunnerTests
                 Arg.Any<Dictionary<string, ParatextUserProfile>>()
             );
         SFProject project = env.GetProject();
-        NoteThread noteThread = env.GetNoteThread("project01", "thread01");
+        NoteThread noteThread = env.GetNoteThread("project01", "dataId01");
         Assert.That(noteThread.Notes[0].OwnerRef, Is.EqualTo("user03"));
         Assert.That(noteThread.BiblicalTermId, Is.EqualTo("biblicalTerm01"));
         Assert.That(noteThread.ExtraHeadingInfo?.Gloss, Is.EqualTo("gloss01"));
