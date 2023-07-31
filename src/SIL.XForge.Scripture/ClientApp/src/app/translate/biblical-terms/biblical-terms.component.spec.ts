@@ -17,6 +17,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
@@ -40,7 +41,6 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { NoteDialogComponent } from '../editor/note-dialog/note-dialog.component';
 import { MockNoteDialogRef } from '../editor/editor.component.spec';
 import { BiblicalTermsComponent, BiblicalTermNoteIcon, BiblicalTermDialogIcon } from './biblical-terms.component';
-import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 
 const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedI18nService = mock(I18nService);
@@ -475,8 +475,8 @@ class TestEnvironment {
       id: 'project01:threadId01',
       data: {
         projectRef: 'project01',
-        dataId: 'BT_termId01',
-        threadId: 'threadId01',
+        dataId: 'threadId01',
+        threadId: 'BT_termId01',
         verseRef: fromVerseRef(new VerseRef(1, 1, 1)),
         ownerRef: 'user01',
         originalContextBefore: '',
@@ -494,8 +494,8 @@ class TestEnvironment {
       id: 'project02:threadId02',
       data: {
         projectRef: 'project02',
-        dataId: 'BT_termId03',
-        threadId: 'threadId02',
+        dataId: 'threadId02',
+        threadId: 'BT_termId03',
         verseRef: fromVerseRef(new VerseRef(1, 1, 1)),
         ownerRef: 'user02',
         originalContextBefore: '',

@@ -38,7 +38,7 @@ import {
 
 const mockedPwaService = mock(PwaService);
 
-fdescribe('SuggestionsSettingsDialogComponent', () => {
+describe('SuggestionsSettingsDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [{ provide: PwaService, useMock: mockedPwaService }]
