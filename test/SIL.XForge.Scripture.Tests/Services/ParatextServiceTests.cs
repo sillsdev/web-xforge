@@ -2389,6 +2389,7 @@ public class ParatextServiceTests
     }
 
     [Test]
+    [Ignore("Not ready to push SF comments to PT")]
     public async Task UpdateParatextComments_AddsComment()
     {
         var env = new TestEnvironment();

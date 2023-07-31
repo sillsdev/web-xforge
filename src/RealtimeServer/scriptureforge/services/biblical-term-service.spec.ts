@@ -1,3 +1,4 @@
+import { VerseRef } from '@sillsdev/scripture';
 import ShareDB from 'sharedb';
 import ShareDBMingo from 'sharedb-mingo-memory';
 import { instance, mock } from 'ts-mockito';
@@ -16,7 +17,6 @@ import {
 } from '../models/sf-project-user-config';
 import { SFProjectRole } from '../models/sf-project-role';
 import { createTestProjectProfile } from '../models/sf-project-test-data';
-import { toVerseRef } from '../models/verse-ref-data';
 import { BiblicalTermService } from './biblical-term-service';
 
 describe('BiblicalTermService', () => {
@@ -110,12 +110,6 @@ class TestEnvironment {
       })
     );
 
-    const verseRef: number = toVerseRef({
-      bookNum: 40,
-      chapterNum: 1,
-      verseNum: 1
-    }).BBBCCCVVV;
-
     await createDoc<BiblicalTerm>(conn, BIBLICAL_TERM_COLLECTION, getBiblicalTermDocId('project01', 'biblicalTerm01'), {
       projectRef: 'project01',
       ownerRef: 'some-owner',
@@ -126,7 +120,7 @@ class TestEnvironment {
       description: '',
       language: 'greek',
       links: ['realia:3.21.4'],
-      references: [verseRef],
+      references: [new VerseRef(40, 1, 1).BBBCCCVVV],
       definitions: {
         en: {
           categories: ['beings'],

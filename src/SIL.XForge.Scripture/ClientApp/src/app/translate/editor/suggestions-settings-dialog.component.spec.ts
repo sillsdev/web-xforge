@@ -38,7 +38,7 @@ import {
 
 const mockedOnlineStatusService = mock(OnlineStatusService);
 
-fdescribe('SuggestionsSettingsDialogComponent', () => {
+describe('SuggestionsSettingsDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [{ provide: OnlineStatusService, useMock: mockedOnlineStatusService }]
