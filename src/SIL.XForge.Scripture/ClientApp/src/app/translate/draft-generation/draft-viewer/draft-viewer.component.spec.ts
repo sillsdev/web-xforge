@@ -38,17 +38,27 @@ describe('DraftViewerComponent', () => {
   const mockRouter = mock(Router);
 
   class TestEnvironment {
-    fixture: ComponentFixture<DraftViewerComponent>;
-    component: DraftViewerComponent;
+    fixture!: ComponentFixture<DraftViewerComponent>;
+    component!: DraftViewerComponent;
     readonly targetProjectId = 'targetProjectId';
     readonly targetTextDocId = new TextDocId(this.targetProjectId, 1, 2, 'target');
     private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-    constructor(initialTargetDelta?: DeltaStatic) {
+    constructor(preInit?: () => void) {
+      this.setup();
+
+      if (preInit) {
+        preInit();
+      }
+
+      this.init();
+    }
+
+    setup(): void {
       this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
         id: this.targetTextDocId.toString(),
         type: RichText.type.name,
-        data: cloneDeep(initialTargetDelta)
+        data: cloneDeep(delta_no_verse_2)
       });
       this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
         id: 'user01',
@@ -86,7 +96,9 @@ describe('DraftViewerComponent', () => {
           }
         } as ParamMap)
       );
+    }
 
+    init(): void {
       this.fixture = TestBed.createComponent(DraftViewerComponent);
       this.component = this.fixture.componentInstance;
       this.fixture.detectChanges();
@@ -116,7 +128,7 @@ describe('DraftViewerComponent', () => {
   }));
 
   it('should initialize component correctly', fakeAsync(() => {
-    const env = new TestEnvironment(delta_no_verse_2);
+    const env = new TestEnvironment();
 
     expect(env.component.targetProjectId).toEqual('targetProjectId');
     expect(env.component.sourceProjectId).toEqual('sourceProjectId');
@@ -126,7 +138,7 @@ describe('DraftViewerComponent', () => {
   }));
 
   it('should call populateDraftText method after both editors are loaded', fakeAsync(() => {
-    const env = new TestEnvironment(delta_no_verse_2);
+    const env = new TestEnvironment();
     const spyPopulateDraftText = spyOn(env.component, 'populateDraftText').and.callThrough();
 
     tick();
@@ -142,7 +154,7 @@ describe('DraftViewerComponent', () => {
   }));
 
   it('should populate draft text correctly', fakeAsync(() => {
-    const env = new TestEnvironment(delta_no_verse_2);
+    const env = new TestEnvironment();
 
     tick();
     env.fixture.detectChanges();
@@ -154,7 +166,7 @@ describe('DraftViewerComponent', () => {
   }));
 
   it('should apply draft correctly', fakeAsync(() => {
-    const env = new TestEnvironment(delta_no_verse_2);
+    const env = new TestEnvironment();
 
     tick();
     env.fixture.detectChanges();
@@ -180,13 +192,13 @@ describe('DraftViewerComponent', () => {
   }));
 
   it('should clean draft ops correctly', fakeAsync(() => {
-    const env = new TestEnvironment(delta_no_verse_2);
+    const env = new TestEnvironment();
     const cleanedOps = env.component.cleanDraftOps(cloneDeep(delta_verse_2_suggested).ops!);
     expect(cleanedOps).toEqual(delta_verse_2_accepted.ops!);
   }));
 
   it('should navigate to the correct URL for editing the book/chapter', fakeAsync(() => {
-    const env = new TestEnvironment(delta_no_verse_2);
+    const env = new TestEnvironment();
     env.component.currentBook = 1;
     env.component.currentChapter = 2;
     env.component.targetProjectId = '123';
@@ -195,7 +207,7 @@ describe('DraftViewerComponent', () => {
   }));
 
   it('should navigate to the correct URL for the given book and chapter', fakeAsync(() => {
-    const env = new TestEnvironment(delta_no_verse_2);
+    const env = new TestEnvironment();
     const book = 1;
     const chapter = 2;
     env.component.currentBook = 2;
@@ -203,6 +215,35 @@ describe('DraftViewerComponent', () => {
     env.component.targetProjectId = '123';
     env.component.navigateBookChapter(book, chapter);
     verify(mockRouter.navigateByUrl('/projects/123/draft-preview/GEN/2')).once();
+  }));
+
+  it('should navigate to the given chapter of the given book if chapter is in range', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.component.currentBook = 2;
+    env.component.currentChapter = 2;
+    env.component.setBook(1, 2);
+    expect(env.component.currentBook).toEqual(1);
+    expect(env.component.currentChapter).toEqual(2);
+  }));
+
+  it('should navigate to the highest chapter of the given book if chapter is above range', fakeAsync(() => {
+    new TestEnvironment(() => {
+      when(mockActivatedRoute.paramMap).thenReturn(
+        of({
+          get: (p: string) => {
+            if (p === 'bookId') {
+              return 'GEN';
+            }
+            if (p === 'chapter') {
+              return '3';
+            }
+            return null;
+          }
+        } as ParamMap)
+      );
+    });
+
+    verify(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/2')).once();
   }));
 
   const projectProfileDoc = {
@@ -238,6 +279,10 @@ describe('DraftViewerComponent', () => {
             },
             {
               number: 2,
+              lastVerse: 10
+            },
+            {
+              number: 3,
               lastVerse: 10
             }
           ]
