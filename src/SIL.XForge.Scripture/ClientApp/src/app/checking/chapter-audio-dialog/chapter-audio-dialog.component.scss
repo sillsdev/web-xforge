@@ -26,3 +26,9 @@
 .mat-dialog-actions {
   justify-content: end;
 }
+
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
