@@ -10,8 +10,6 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { objectId } from 'xforge-common/utils';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
-import { TextDoc, TextDocId } from '../../core/models/text-doc';
-import { SFProjectService } from '../../core/sf-project.service';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 
@@ -36,20 +34,17 @@ export class ChapterAudioDialogComponent {
   private audio?: AudioAttachment;
   private _book: number;
   private _chapter: number;
-  private textDoc?: TextDoc;
   private timing: AudioTiming[] = [];
   constructor(
     readonly i18n: I18nService,
     @Inject(MAT_DIALOG_DATA) public data: ChapterAudioDialogData,
     private readonly csvService: CsvService,
     private readonly dialogRef: MatDialogRef<ChapterAudioDialogComponent, ChapterAudioDialogResult | undefined>,
-    private readonly fileService: FileService,
-    private readonly projectService: SFProjectService
+    private readonly fileService: FileService
   ) {
     // TODO: Make this smarter i.e. base off books that have questions setup and no audio attached
     this._book = this.books[0];
     this._chapter = 1;
-    this.setTextDoc();
   }
 
   get book(): number {
@@ -59,7 +54,6 @@ export class ChapterAudioDialogComponent {
   set book(book: number) {
     this._book = book;
     this.chapter = this.chapters[0];
-    this.setTextDoc();
   }
 
   get chapter(): number {
@@ -68,7 +62,6 @@ export class ChapterAudioDialogComponent {
 
   set chapter(chapter: number) {
     this._chapter = chapter;
-    this.setTextDoc();
   }
 
   get books(): number[] {
@@ -105,13 +98,12 @@ export class ChapterAudioDialogComponent {
     }
     timing.sort((a, b) => a.from - b.from);
     this.timing = timing;
-    console.log(timing);
     // TODO: Add validation to ensure timing markers match a relevant segment in the text
   }
 
   async save(): Promise<void> {
-    // TODO: Improve validation
-    if (this.textDoc == null || this.audio?.blob == null || this.audio?.fileName == null) {
+    // TODO: Improve validation including a check if uploading data to a chapter that already contains data
+    if (this.audio?.blob == null || this.audio?.fileName == null) {
       return;
     }
     // TODO: Implement progress UI as these files can be hundreds of MB
@@ -119,8 +111,8 @@ export class ChapterAudioDialogComponent {
       FileType.Audio,
       this.data.projectId,
       TextAudioDoc.COLLECTION,
-      getTextDocId(this.data.projectId, this.book, this.chapter),
       objectId(),
+      getTextDocId(this.data.projectId, this.book, this.chapter),
       this.audio.blob,
       this.audio.fileName,
       true
@@ -140,10 +132,5 @@ export class ChapterAudioDialogComponent {
   private parseTime(time: string): number {
     // TODO: Add support for hh:mm:ss and mm:ss strings
     return parseFloat(time);
-  }
-
-  private async setTextDoc(): Promise<void> {
-    const textDocId: TextDocId = new TextDocId(this.data.projectId, this.book, this.chapter);
-    this.textDoc = await this.projectService.getText(textDocId.toString());
   }
 }

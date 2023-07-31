@@ -13,7 +13,6 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
-import { MatDialogConfig } from '@angular/material/dialog';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -28,11 +27,8 @@ import {
 } from '../import-questions-dialog/import-questions-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import {
-  ChapterAudioDialogComponent,
-  ChapterAudioDialogData,
-  ChapterAudioDialogResult
-} from '../chapter-audio-dialog/chapter-audio-dialog.component';
+import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
+import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog-service';
 
 @Component({
   selector: 'app-checking-overview',
@@ -59,7 +55,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly questionDialogService: QuestionDialogService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly chapterAudioDialogService: ChapterAudioDialogService
   ) {
     super(noticeService);
   }
@@ -313,22 +310,11 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       return;
     }
 
-    const dialogConfig: MatDialogConfig<ChapterAudioDialogData> = {
-      data: { projectId: this.projectId, textsByBookId: this.textsByBookId },
-      width: '300px'
+    const dialogConfig: ChapterAudioDialogData = {
+      projectId: this.projectId,
+      textsByBookId: this.textsByBookId
     };
-    const dialogRef = this.dialogService.openMatDialog(ChapterAudioDialogComponent, dialogConfig);
-    const result: ChapterAudioDialogResult | 'close' | undefined = await dialogRef.afterClosed().toPromise();
-    if (result == null || result === 'close') {
-      return;
-    }
-    await this.projectService.onlineCreateAudioTimingData(
-      this.projectId,
-      result.book,
-      result.chapter,
-      result.timingData,
-      result.audioUrl
-    );
+    await this.chapterAudioDialogService.openDialog(dialogConfig);
     // TODO: Update dashboard to show audio data
   }
 

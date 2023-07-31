@@ -44,6 +44,8 @@ import {
 import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
+import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog-service';
+import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
@@ -144,7 +146,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly questionDialogService: QuestionDialogService,
     readonly i18n: I18nService,
     readonly featureFlags: FeatureFlagService,
-    private readonly pwaService: PwaService
+    private readonly pwaService: PwaService,
+    private readonly chapterAudioDialogService: ChapterAudioDialogService
   ) {
     super(noticeService);
   }
@@ -799,13 +802,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  addAudioTimingData(): void {
-    if (this.projectDoc?.id == null || this.book == null || this.chapter == null) {
+  async addAudioTimingData(): Promise<void> {
+    if (this.projectDoc?.id == null || this.textsByBookId == null) {
       return;
     }
 
-    const audioPath = this.chapterAudioSource;
-    this.projectService.onlineCreateAudioTimingData(this.projectDoc.id, this.book, this.chapter, [], audioPath);
+    const dialogConfig: ChapterAudioDialogData = {
+      projectId: this.projectDoc?.id,
+      textsByBookId: this.textsByBookId
+    };
+    await this.chapterAudioDialogService.openDialog(dialogConfig);
   }
 
   // TODO (scripture audio) This method is a temporary hack to make the audio file name predictable based on the book
