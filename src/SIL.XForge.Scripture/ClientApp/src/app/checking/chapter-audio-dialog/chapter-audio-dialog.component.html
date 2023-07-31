@@ -1,13 +1,18 @@
 <ng-container *transloco="let t; read: 'checking_audio_dialog'">
   <h2 mat-dialog-title>Chapter Audio</h2>
   <mat-dialog-content class="mat-typography">
-    <app-book-chapter-chooser
-      [books]="books"
-      [(book)]="book"
-      [(chapter)]="chapter"
-      [chapters]="chapters"
-    ></app-book-chapter-chooser>
-    <div class="upload-row">
+    <div class="row">
+      <app-book-chapter-chooser
+        [books]="books"
+        [(book)]="book"
+        [(chapter)]="chapter"
+        [chapters]="chapters"
+        (bookChange)="checkForPreexistingAudio()"
+        (chapterChange)="checkForPreexistingAudio()"
+      ></app-book-chapter-chooser>
+      <app-info *ngIf="selectionHasAudioAlready" [text]="t('audio_already_exists')"></app-info>
+    </div>
+    <div>
       <app-checking-audio-combined
         [enableRecorder]="false"
         (update)="audioUpdate($event)"
