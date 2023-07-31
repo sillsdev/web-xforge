@@ -8,10 +8,10 @@
       <app-book-chapter-chooser
         [books]="books"
         [book]="currentBook"
-        (bookChange)="navigateBookChapter($event, currentChapter!)"
+        (bookChange)="onBookChange($event)"
         [chapters]="chapters"
         [chapter]="currentChapter"
-        (chapterChange)="navigateBookChapter(currentBook!, $event)"
+        (chapterChange)="onChapterChange($event)"
       ></app-book-chapter-chooser>
 
       <div class="draft-buttons">
