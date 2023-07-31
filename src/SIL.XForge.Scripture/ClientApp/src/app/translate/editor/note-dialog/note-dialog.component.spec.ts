@@ -8,7 +8,6 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { cloneDeep } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { BiblicalTerm, getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
