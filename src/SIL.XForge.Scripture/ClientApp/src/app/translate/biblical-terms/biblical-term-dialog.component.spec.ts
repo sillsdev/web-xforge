@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { VerseRef } from '@sillsdev/scripture';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { BiblicalTerm } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -13,7 +14,6 @@ import {
   SFProjectUserConfig,
   SF_PROJECT_USER_CONFIGS_COLLECTION
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { VerseRef } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/verse-ref';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
