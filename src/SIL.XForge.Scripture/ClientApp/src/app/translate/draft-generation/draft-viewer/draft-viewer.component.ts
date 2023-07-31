@@ -100,6 +100,12 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     this.currentBook = book;
     this.chapters = this.targetProject?.texts?.find(t => t.bookNum === book)?.chapters.map(c => c.number) ?? [];
 
+    // Navigate to highest chapter of book if chapter from route is above chapter range for book
+    if (chapter != null && chapter > this.chapters.length) {
+      this.navigateBookChapter(book, this.chapters.length);
+      return;
+    }
+
     this.setChapter(chapter || this.chapters[0]);
   }
 
