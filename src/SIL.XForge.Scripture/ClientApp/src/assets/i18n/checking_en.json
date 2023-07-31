@@ -205,6 +205,7 @@
   "checking_audio_dialog": {
     "cancel": "Cancel",
     "save": "Save",
+    "upload": "Upload",
     "upload_timing_file": "Upload timing file"
   },
   "checking_audio_combined": {
