@@ -4,7 +4,6 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, ActivationEnd, ParamMap, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { cloneDeep } from 'lodash-es';
-import { DeltaStatic } from 'quill';
 import { User } from 'realtime-server/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import * as RichText from 'rich-text';
