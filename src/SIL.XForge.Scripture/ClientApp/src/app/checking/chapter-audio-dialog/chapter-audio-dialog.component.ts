@@ -1,14 +1,19 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
+import { QuestionDoc } from 'src/app/core/models/question-doc';
+import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
+import { SFProjectService } from 'src/app/core/sf-project.service';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { objectId } from 'xforge-common/utils';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
@@ -30,21 +35,49 @@ export interface ChapterAudioDialogResult {
   templateUrl: './chapter-audio-dialog.component.html',
   styleUrls: ['./chapter-audio-dialog.component.scss']
 })
-export class ChapterAudioDialogComponent {
+export class ChapterAudioDialogComponent extends SubscriptionDisposable implements OnInit {
   private audio?: AudioAttachment;
-  private _book: number;
-  private _chapter: number;
+  private _book: number = this.books[0];
+  private _chapter: number = 1;
   private timing: AudioTiming[] = [];
+  private projectDoc!: SFProjectProfileDoc;
+  private questionsQuery!: RealtimeQuery<QuestionDoc>;
   constructor(
     readonly i18n: I18nService,
     @Inject(MAT_DIALOG_DATA) public data: ChapterAudioDialogData,
     private readonly csvService: CsvService,
     private readonly dialogRef: MatDialogRef<ChapterAudioDialogComponent, ChapterAudioDialogResult | undefined>,
-    private readonly fileService: FileService
+    private readonly fileService: FileService,
+    private readonly projectService: SFProjectService
   ) {
-    // TODO: Make this smarter i.e. first book to have questions setup and no audio attached
-    this._book = this.books[0];
-    this._chapter = 1;
+    super();
+  }
+
+  async ngOnInit(): Promise<void> {
+    this.projectDoc = await this.projectService.getProfile(this.data.projectId);
+    this.questionsQuery = await this.projectService.queryQuestions(this.data.projectId, { activeOnly: true });
+
+    this.getStartingLocation();
+  }
+
+  private getStartingLocation(): void {
+    const sortedByChapter = [...this.questionsQuery.docs].sort(
+      (a, b) => a.data?.verseRef.chapterNum! - b.data?.verseRef.chapterNum!
+    );
+    const sortedByBookChapter = sortedByChapter.sort((a, b) => a.data?.verseRef.bookNum! - b.data?.verseRef.bookNum!);
+
+    for (const question of sortedByBookChapter) {
+      const book = question.data?.verseRef.bookNum!;
+      const chapter = question.data?.verseRef.chapterNum;
+
+      const text = this.projectDoc.data?.texts.find(t => t.bookNum === book);
+      const textChapter = text?.chapters.find(c => c.number === chapter);
+      if (!textChapter?.hasAudio) {
+        this._book = book;
+        this._chapter = textChapter?.number!;
+        return;
+      }
+    }
   }
 
   get book(): number {
