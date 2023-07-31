@@ -100,9 +100,9 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     this.currentBook = book;
     this.chapters = this.targetProject?.texts?.find(t => t.bookNum === book)?.chapters.map(c => c.number) ?? [];
 
-    // Navigate to highest chapter of book if chapter from route is above chapter range for book
-    if (chapter != null && chapter > this.chapters.length) {
-      this.navigateBookChapter(book, this.chapters.length);
+    // Navigate to first included chapter of book if specified chapter is not included in book
+    if (chapter != null && !this.chapters.includes(chapter)) {
+      this.navigateBookChapter(book, this.chapters[0]);
       return;
     }
 
@@ -188,6 +188,18 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
   navigateBookChapter(book: number, chapter: number): void {
     this.router.navigateByUrl(
       `/projects/${this.targetProjectId}/draft-preview/${Canon.bookNumberToId(book)}/${chapter}`
+    );
+  }
+
+  // Book/chapter chooser book changed
+  onBookChange(book: number): void {
+    this.router.navigateByUrl(`/projects/${this.targetProjectId}/draft-preview/${Canon.bookNumberToId(book)}/1`);
+  }
+
+  // Book/chapter chooser chapter changed
+  onChapterChange(chapter: number): void {
+    this.router.navigateByUrl(
+      `/projects/${this.targetProjectId}/draft-preview/${Canon.bookNumberToId(this.currentBook!)}/${chapter}`
     );
   }
 }
