@@ -45,6 +45,8 @@ em {
   }
 
   mat-icon {
+    flex-shrink: 0;
+
     &.criteria-met {
       color: green;
     }
