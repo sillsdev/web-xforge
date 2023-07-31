@@ -1,6 +1,6 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Sort } from '@angular/material/sort';
-import { VerseRef } from '@sillsdev/scripture';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { BIBLICAL_TERM_TAG_ID } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
@@ -82,6 +82,10 @@ class Row {
     return this.biblicalTermDoc.data?.renderings.join(', ') ?? '';
   }
 
+  get noteDataId(): string | undefined {
+    return this.noteThreadDoc?.data?.dataId;
+  }
+
   get noteThreadId(): string | undefined {
     return this.noteThreadDoc?.data?.threadId;
   }
@@ -122,7 +126,7 @@ class Row {
   }
 
   private get hasNoteThread(): boolean {
-    return this.noteThreadDoc != null;
+    return this.noteThreadDoc?.data != null && this.noteThreadDoc.data.notes.filter(n => !n.deleted).length > 0;
   }
 
   private get isAddNotesEnabled(): boolean {
@@ -215,7 +219,11 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     } else if ((this._verse ?? '0') === '0') {
       return ` (${this.i18n.localizeBook(this._bookNum ?? 0)} ${this._chapter})`;
     } else {
-      let verseRef = new VerseRef(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+      let verseRef = new VerseRef(
+        Canon.bookNumberToId(this._bookNum ?? 0),
+        (this._chapter ?? 0).toString(),
+        this._verse!
+      );
       return ` (${this.i18n.localizeReference(verseRef)})`;
     }
   }
@@ -287,7 +295,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       biblicalTermId: row.id,
       projectId: this._projectId,
       textDocId: new TextDocId(this._projectId, this._bookNum, this._chapter),
-      threadId: row.noteThreadId
+      threadDataId: row.noteDataId
     };
     const dialogRef = this.dialogService.openMatDialog<NoteDialogComponent, NoteDialogData, NoteDialogResult>(
       NoteDialogComponent,
@@ -303,7 +311,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       if (result.noteContent != null) {
         await this.saveNote({
           content: result.noteContent,
-          threadDataId: row.noteThreadId,
+          threadDataId: row.noteDataId,
           dataId: result.noteDataId,
           biblicalTermId: row.id
         });
@@ -350,7 +358,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     if (scrollToTop) this.biblicalTerms?.nativeElement.scrollIntoView();
 
     const rows: Row[] = [];
-    let verses: number[] = this.getVerses(new VerseRef(bookNum, chapter, verse));
+    let verses: number[] = this.getVerses(new VerseRef(Canon.bookNumberToId(bookNum), chapter.toString(), verse));
     for (const biblicalTermDoc of this.biblicalTermQuery?.docs || []) {
       let displayTerm = false;
       for (const bbbcccvvv of biblicalTermDoc.data?.references || []) {
@@ -479,17 +487,21 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     if (biblicalTermDoc.data.references.length > 0) {
       verseRef = this.getVerseRef(biblicalTermDoc.data.references[0]);
     } else {
-      verseRef = new VerseRef(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
+      verseRef = new VerseRef(
+        Canon.bookNumberToId(this._bookNum ?? 0),
+        (this._chapter ?? 0).toString(),
+        this._verse ?? '0'
+      );
     }
 
     const currentDate: string = new Date().toJSON();
-    const threadId: string = params.threadDataId ?? objectId();
+    const threadId = `BT_${biblicalTermDoc.data.termId}`;
     // Configure the note
     const note: Note = {
       dateCreated: currentDate,
       dateModified: currentDate,
-      threadId,
       dataId: params.dataId ?? objectId(),
+      threadId,
       tagId: BIBLICAL_TERM_TAG_ID,
       ownerRef: this.userService.currentUserId,
       content: params.content,
@@ -501,8 +513,8 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     if (params.threadDataId == null) {
       // Create a new thread
       const noteThread: NoteThread = {
-        threadId: threadId,
-        dataId: `BT_${biblicalTermDoc.data.termId}`,
+        dataId: objectId(),
+        threadId,
         verseRef: fromVerseRef(verseRef),
         projectRef: this._projectId,
         ownerRef: this.userService.currentUserId,
@@ -534,6 +546,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
           op.set(t => t.notes[noteIndex].dateModified, currentDate);
         });
       } else {
+        note.threadId = threadDoc.data!.threadId;
         await threadDoc.submitJson0Op(op => op.add(t => t.notes, note));
       }
     }
