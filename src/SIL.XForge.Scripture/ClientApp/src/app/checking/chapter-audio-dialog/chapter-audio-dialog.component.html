@@ -7,13 +7,26 @@
       [(chapter)]="chapter"
       [chapters]="chapters"
     ></app-book-chapter-chooser>
-    <app-checking-audio-combined [enableRecorder]="false" (update)="audioUpdate($event)"></app-checking-audio-combined>
-    <button mat-button ngfSelect type="button" (fileChange)="prepareTimingFileUpload($event)" accept=".csv,.tsv,.txt">
-      <mat-icon>cloud_upload</mat-icon>
-      <span fxShow fxHide.lt-sm>{{ t("upload_timing_file") }}</span> <span fxHide fxShow.xs>{{ t("upload") }}</span>
-    </button>
+    <div class="upload-row">
+      <app-checking-audio-combined
+        [enableRecorder]="false"
+        (update)="audioUpdate($event)"
+      ></app-checking-audio-combined>
+      <div class="auto-size-button">
+        <button
+          mat-button
+          ngfSelect
+          type="button"
+          (fileChange)="prepareTimingFileUpload($event)"
+          accept=".csv,.tsv,.txt"
+        >
+          <mat-icon>cloud_upload</mat-icon>
+          <span fxShow fxHide.lt-sm>{{ t("upload_timing_file") }}</span> <span fxHide fxShow.xs>{{ t("upload") }}</span>
+        </button>
+      </div>
+    </div>
   </mat-dialog-content>
-  <mat-dialog-actions align="end">
+  <mat-dialog-actions>
     <button mat-button [mat-dialog-close]="'close'" type="button" id="audio-cancel-btn">
       {{ t("cancel") }}
     </button>
