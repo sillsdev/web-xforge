@@ -203,6 +203,7 @@
     "your_answer": "Your answer"
   },
   "checking_audio_dialog": {
+    "audio_already_exists": "Audio already exists for this selection.",
     "cancel": "Cancel",
     "save": "Save",
     "upload": "Upload",
