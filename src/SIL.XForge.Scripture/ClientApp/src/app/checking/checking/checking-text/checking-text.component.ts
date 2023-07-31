@@ -142,8 +142,8 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     if (this.activeVerse != null && this.textComponent.editor != null) {
       const firstSegment: string = this.textComponent.getVerseSegments(this.activeVerse)[0];
       const editor: Element | null = this.textComponent.editor.container.querySelector('.ql-editor');
-      if (firstSegment != null && editor != null) {
-        const element = this.textComponent.getSegmentElement(firstSegment) as HTMLElement;
+      if (editor != null) {
+        const element: HTMLElement = this.textComponent.getSegmentElement(firstSegment) as HTMLElement;
         if (element != null) {
           editor.scrollTo({ top: element.offsetTop - 20, behavior: 'smooth' });
         }
