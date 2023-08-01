@@ -13,6 +13,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -51,7 +52,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly questionDialogService: QuestionDialogService,
-    private readonly router: Router
+    private readonly router: Router,
+    readonly featureFlagsService: FeatureFlagService
   ) {
     super(noticeService);
   }
@@ -224,6 +226,27 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     }
   }
 
+  async deleteChapterAudio(text: TextInfo, chapter: Chapter): Promise<void> {
+    if (this.projectId == null) {
+      return;
+    }
+    if (
+      await this.dialogService.confirm(
+        this.i18n.translate('checking_overview.confirm_delete_chapter_audio', {
+          book: this.getBookName(text),
+          chapter: chapter.number
+        }),
+        'checking_overview.delete'
+      )
+    ) {
+      await this.projectService.onlineDeleteAudioTimingData(this.projectId, text.bookNum, chapter.number);
+    }
+  }
+
+  editChapterAudio(_text: TextInfo, _chapter: Chapter): void {
+    // TODO: Open dialog
+  }
+
   getRouterLink(bookId: string): string[] {
     if (this.projectId == null) {
       return [];
@@ -345,6 +368,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     }
 
     return [totalUnread, totalRead, totalAnswered];
+  }
+
+  bookHasChapterAudio(text: TextInfo): boolean {
+    if (!this.featureFlagsService.scriptureAudio.enabled) {
+      return false;
+    }
+    return text.chapters.filter((c: Chapter) => c.hasAudio).length > 0;
   }
 
   bookProgress(text: TextInfo): number[] {
