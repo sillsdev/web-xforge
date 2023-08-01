@@ -142,10 +142,10 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     const result: string[][] = await this.csvService.parse(file);
     const timing: AudioTiming[] = [];
     for (const [_, row] of result.entries()) {
-      // TODO: Determine if a header needs to be ignored
       const textRef: string = row[2];
       const from: number = this.parseTime(row[0]);
       const to: number = this.parseTime(row[1]);
+      if (textRef === undefined || from === NaN || to === NaN) continue;
       timing.push({
         textRef,
         from,
