@@ -42,8 +42,10 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   private timing: AudioTiming[] = [];
   private projectDoc!: SFProjectProfileDoc;
   private questionsQuery!: RealtimeQuery<QuestionDoc>;
-  private _selectionHasAudioAlready = false;
-  private _hasTimingBeenUploaded = false;
+  private _selectionHasAudioAlready: boolean = false;
+  private _hasTimingBeenUploaded: boolean = false;
+  private _audioLength: number = 0;
+  private _errorText: string = '';
 
   constructor(
     readonly i18n: I18nService,
@@ -133,8 +135,18 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     return this._hasTimingBeenUploaded;
   }
 
-  audioUpdate(audio: AudioAttachment): void {
+  get errorMessage(): string {
+    return this._errorText;
+  }
+
+  async audioUpdate(audio: AudioAttachment): Promise<void> {
     this.audio = audio;
+    if (audio.url) {
+      this._audioLength = await this.getDuration(audio.url);
+      if (this._hasTimingBeenUploaded) {
+        this.validateTimingEntries(this.timing, this._audioLength);
+      }
+    }
   }
 
   async prepareTimingFileUpload(file: File): Promise<void> {
@@ -155,7 +167,31 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     timing.sort((a, b) => a.from - b.from);
     this.timing = timing;
     this._hasTimingBeenUploaded = true;
-    // TODO: Add validation to ensure timing markers match a relevant segment in the text
+    this.validateTimingEntries(this.timing, this._audioLength);
+  }
+
+  private async validateTimingEntries(timing: AudioTiming[], audioLength: number): Promise<void> {
+    this._errorText = '';
+
+    if (timing.length === 0) {
+      this._errorText = 'Zero segments found.';
+    }
+
+    if (audioLength === 0) return;
+
+    for (const timing of this.timing) {
+      timing.to = await this.populateToField(this.timing.indexOf(timing), this.timing);
+    }
+
+    const firstValidation = timing.filter(t => t.from < t.to);
+    if (firstValidation.length !== timing.length) {
+      this._errorText = 'One or more ending values end before their beginning values.';
+    }
+
+    const validated = firstValidation.filter(t => t.from < audioLength && t.to <= audioLength);
+    if (validated.length !== firstValidation.length) {
+      this._errorText = 'One or more timing values extend past the end of the audio file.';
+    }
   }
 
   async save(): Promise<void> {
@@ -176,10 +212,6 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     if (audioUrl == null) {
       // TODO: Show an error
       return;
-    }
-
-    for (const timing of this.timing) {
-      timing.to = await this.populateToField(this.timing.indexOf(timing), this.timing);
     }
 
     this.dialogRef.close({
@@ -204,13 +236,13 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     }
   }
 
-  private getDuration(src: string): Promise<number> {
+  private getDuration(url: string): Promise<number> {
     return new Promise(function (resolve) {
       var audio = new Audio();
       audio.addEventListener('loadedmetadata', function () {
         resolve(audio.duration);
       });
-      audio.src = src;
+      audio.src = url;
     });
   }
 
