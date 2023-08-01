@@ -16,8 +16,7 @@
   }
 }
 
-.auto-size-button {
-  margin: auto;
+app-checking-audio-combined {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -28,7 +27,10 @@
 }
 
 .row {
+  min-height: 75px; //to match checking-audio-combined
   display: flex;
   flex-direction: row;
   align-items: center;
+  justify-content: center;
+  column-gap: 4px;
 }
