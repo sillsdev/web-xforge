@@ -11,10 +11,13 @@
       <app-info *ngIf="selectionHasAudioAlready" [text]="t('audio_already_exists')"></app-info>
     </div>
     <div>
+      <span>{{ t("audio") }}</span>
       <app-checking-audio-combined
         [enableRecorder]="false"
         (update)="audioUpdate($event)"
       ></app-checking-audio-combined>
+      <hr />
+      <span>{{ t("timing") }}</span>
       <div class="row">
         <button
           mat-button
