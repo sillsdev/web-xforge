@@ -25,6 +25,13 @@
 
 .mat-expansion-panel-header {
   padding-inline-end: 0;
+  &[aria-disabled='true'] {
+    color: unset;
+  }
+  .book-chapter-heading {
+    gap: 10px;
+    align-items: center;
+  }
 }
 
 .mat-list-base {

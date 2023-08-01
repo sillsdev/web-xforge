@@ -42,7 +42,7 @@
   >
     <ng-container *ngFor="let text of texts">
       <mat-expansion-panel
-        *ngIf="bookQuestionCount(text) > 0"
+        *ngIf="bookQuestionCount(text) > 0 || bookHasChapterAudio(text)"
         [togglePosition]="'before'"
         class="book-expander mat-elevation-z0"
       >
@@ -58,6 +58,7 @@
             <span fxFlex="64px" fxLayoutAlign="end center">
               <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
               <button
+                *ngIf="bookQuestionCount(text) > 0"
                 mat-icon-button
                 (click)="$event.stopPropagation(); setArchiveStatusForQuestionsInBook(text, true)"
                 [title]="t('archive_multiple', { location: getBookName(text) })"
@@ -72,14 +73,25 @@
           <mat-selection-list>
             <ng-container *ngFor="let chapter of text.chapters">
               <mat-expansion-panel
+                [disabled]="!questionCount(text.bookNum, chapter.number)"
                 dense
-                *ngIf="questionCount(text.bookNum, chapter.number) > 0"
+                *ngIf="
+                  questionCount(text.bookNum, chapter.number) > 0 ||
+                  (chapter.hasAudio && featureFlagsService.scriptureAudio)
+                "
                 [togglePosition]="'before'"
                 class="mat-elevation-z0"
               >
                 <mat-expansion-panel-header>
                   <mat-panel-title fxLayoutAlign="start center">
-                    <span fxFlex>{{ getBookName(text) + " " + chapter?.number }}</span>
+                    <span fxFlex fxLayout class="book-chapter-heading"
+                      >{{ getBookName(text) + " " + chapter?.number }}
+                      <mat-icon
+                        *ngIf="featureFlagsService.scriptureAudio && chapter.hasAudio"
+                        title="{{ t('chapter_audio_attached') }}"
+                        >headset</mat-icon
+                      ></span
+                    >
                     <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center" class="questions-count">
                       {{ questionCountLabel(questionCount(text.bookNum, chapter.number)) }}
                     </span>
@@ -89,13 +101,39 @@
                     <span fxFlex="64px" fxLayoutAlign="end center">
                       <!-- $event.stopPropagation() is needed because the button is within a row that is listening for clicks -->
                       <button
+                        class="chapter-menu-button"
                         mat-icon-button
-                        (click)="$event.stopPropagation(); setArchiveStatusForQuestionsInChapter(text, chapter, true)"
-                        [title]="t('archive_multiple', { location: getBookName(text) })"
-                        class="archive-btn"
+                        [matMenuTriggerFor]="menu"
+                        (click)="$event.stopPropagation()"
                       >
-                        <mat-icon>archive</mat-icon>
+                        <mat-icon>more_vert</mat-icon>
                       </button>
+                      <mat-menu #menu="matMenu">
+                        <button
+                          *ngIf="questionCount(text.bookNum, chapter.number) > 0"
+                          mat-menu-item
+                          (click)="setArchiveStatusForQuestionsInChapter(text, chapter, true)"
+                          class="archive-btn"
+                        >
+                          <mat-icon>archive</mat-icon>
+                          <span>{{ t("archive_multiple", { location: getBookName(text) }) }}</span>
+                        </button>
+                        <ng-container *ngIf="featureFlagsService.scriptureAudio && chapter.hasAudio">
+                          <button
+                            mat-menu-item
+                            disabled
+                            (click)="editChapterAudio(text, chapter)"
+                            class="edit-audio-btn"
+                          >
+                            <mat-icon>edit</mat-icon>
+                            <span>{{ t("edit_chapter_audio") }}</span>
+                          </button>
+                          <button mat-menu-item (click)="deleteChapterAudio(text, chapter)" class="delete-audio-btn">
+                            <mat-icon>delete</mat-icon>
+                            <span>{{ t("delete_chapter_audio") }}</span>
+                          </button>
+                        </ng-container>
+                      </mat-menu>
                     </span>
                   </mat-panel-title>
                 </mat-expansion-panel-header>
