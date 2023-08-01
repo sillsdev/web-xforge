@@ -37,6 +37,8 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -58,6 +60,7 @@ const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 
 class MockComponent {}
 
@@ -79,7 +82,8 @@ describe('CheckingOverviewComponent', () => {
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: PwaService, useMock: mockedPwaService },
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ]
   }));
 
@@ -440,6 +444,7 @@ describe('CheckingOverviewComponent', () => {
       // ARCHIVE QUESTIONS IN A CHAPTER
 
       // archive questions from the only chapter of the first book
+      env.clickElement(env.questionButtonsMenu[1]);
       env.clickElement(env.questionArchiveButtons[1]);
       // now there should be just one book with published questions
       expect(env.textRows.length).toEqual(1);
@@ -489,6 +494,94 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toEqual(2);
       expect(env.getPublishedQuestionsCountTextByRow(0)).toContain('7 questions');
       expect(env.getPublishedQuestionsCountTextByRow(1)).toContain('1 questions');
+    }));
+  });
+
+  describe('Chapter Audio', () => {
+    it('show audio icon on chapter heading', fakeAsync(() => {
+      const env = new TestEnvironment(true, true);
+      env.waitForQuestions();
+
+      env.clickExpanderAtRow(2);
+      expect(env.checkChapterHasAudio(3)).toBeTrue();
+    }));
+
+    it('chapter with audio has heading visible when no questions ', fakeAsync(() => {
+      const env = new TestEnvironment(true, true);
+      env.waitForQuestions();
+      const johnIndex = 2;
+      const johnChapter1Index = 3;
+
+      env.clickExpanderAtRow(johnIndex);
+      env.clickExpanderAtRow(johnChapter1Index);
+      expect(env.questionEditButtons.length).toEqual(1);
+
+      // Archive questions in John
+      env.clickElement(env.questionButtonsMenu[johnIndex]);
+      env.clickElement(env.questionArchiveButtons[johnIndex]);
+      env.clickElement(env.questionButtonsMenu[johnIndex]);
+
+      // Chapter should still be visible as it has audio
+      expect(env.questionEditButtons.length).toEqual(0);
+      expect(env.checkChapterHasAudio(johnChapter1Index)).toBeTrue();
+    }));
+
+    it('click chapter with audio and no questions should not open panel ', fakeAsync(() => {
+      const env = new TestEnvironment(true, true);
+      env.waitForQuestions();
+      const johnIndex = 2;
+      const johnChapter2Index = 4;
+
+      env.clickExpanderAtRow(johnIndex);
+      expect(env.checkChapterHasAudio(johnChapter2Index)).toBeTrue();
+      expect(env.checkRowIsExpanded(johnChapter2Index)).toBeFalse();
+      env.clickExpanderAtRow(johnChapter2Index);
+      expect(env.checkRowIsExpanded(johnChapter2Index)).toBeFalse();
+    }));
+
+    it('hide archive questions on book when only audio is available ', fakeAsync(() => {
+      const env = new TestEnvironment(true, true);
+      env.waitForQuestions();
+      const johnIndex = 2;
+
+      expect(env.questionArchiveButtons[johnIndex]).toBeDefined();
+      expect(env.textRows.length).toBe(3);
+
+      // Archive button should disappear but all rows remain visible
+      env.clickElement(env.questionArchiveButtons[johnIndex]);
+      expect(env.questionArchiveButtons[johnIndex]).toBeNull();
+      expect(env.textRows.length).toBe(3);
+    }));
+
+    it('can delete chapter audio ', fakeAsync(() => {
+      const env = new TestEnvironment(true, true);
+      env.waitForQuestions();
+      const johnIndex = 2;
+      const johnChapter1Index = 3;
+      const johnChapter2Index = 4;
+
+      // Archive all questions in John
+      env.clickExpanderAtRow(johnIndex);
+      expect(env.textRows.length).toBe(5);
+      env.clickElement(env.questionArchiveButtons[johnIndex]);
+      expect(env.questionArchiveButtons[johnIndex]).toBeNull();
+      expect(env.textRows.length).toBe(5);
+      expect(env.checkChapterHasAudio(johnChapter1Index)).toBeTrue();
+      expect(env.checkChapterHasAudio(johnChapter2Index)).toBeTrue();
+
+      // Remove audio from both chapter 1 & 2
+      env.clickElement(env.questionButtonsMenu[johnChapter2Index]);
+      env.clickElement(env.audioDeleteButtons[johnChapter2Index]);
+      env.clickElement(env.questionButtonsMenu[johnChapter1Index]);
+      env.clickElement(env.audioDeleteButtons[johnChapter1Index]);
+      env.waitForProjectDocChanges();
+
+      // Only MAT and LUK should be left
+      expect(env.textRows.length).toBe(2);
+    }));
+
+    xit('can open chapter audio ', fakeAsync(() => {
+      // TODO: Write this test when the dialog service is merged in
     }));
   });
 
@@ -610,7 +703,7 @@ class TestEnvironment {
   private readonly anotherUserId = 'anotherUserId';
   private isOnline: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
-  constructor(withQuestionData: boolean = true) {
+  constructor(withQuestionData: boolean = true, withChapterAudioData: boolean = false) {
     if (withQuestionData) {
       // Question 2 deliberately before question 1 to test sorting
       this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, [
@@ -835,6 +928,9 @@ class TestEnvironment {
         data: this.translatorProjectUserConfig
       }
     ]);
+    if (withChapterAudioData) {
+      this.addChapterAudio();
+    }
 
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedQuestionDialogService.questionDialog(anything())).thenResolve();
@@ -848,10 +944,19 @@ class TestEnvironment {
     when(mockedProjectService.queryQuestions('project01')).thenCall(() =>
       this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {})
     );
+    when(mockedProjectService.onlineDeleteAudioTimingData(anything(), anything(), anything())).thenCall(
+      (projectId, book, chapter) => {
+        const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
+        const textIndex: number = projectDoc.data!.texts.findIndex(t => t.bookNum === book);
+        const chapterIndex: number = projectDoc.data!.texts[textIndex].chapters.findIndex(c => c.number === chapter);
+        projectDoc.submitJson0Op(op => op.set(p => p.texts[textIndex].chapters[chapterIndex].hasAudio, false), false);
+      }
+    );
     this.setCurrentUser(this.adminUser);
 
     when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
     when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
+    when(mockedFeatureFlagService.scriptureAudio).thenReturn({ enabled: true } as FeatureFlag);
 
     this.fixture = TestBed.createComponent(CheckingOverviewComponent);
     this.component = this.fixture.componentInstance;
@@ -864,6 +969,12 @@ class TestEnvironment {
 
   get archivedQuestions(): DebugElement {
     return this.fixture.debugElement.query(By.css('#text-with-archived-questions'));
+  }
+
+  get audioDeleteButtons(): DebugElement[] {
+    const ret: DebugElement[] = [];
+    this.textRows.forEach(e => ret.push(e.query(By.css('.delete-audio-btn'))));
+    return ret;
   }
 
   get importButton(): DebugElement {
@@ -921,6 +1032,12 @@ class TestEnvironment {
     return ret;
   }
 
+  get questionButtonsMenu(): DebugElement[] {
+    const ret: DebugElement[] = [];
+    this.textRows.forEach(e => ret.push(e.query(By.css('.chapter-menu-button'))));
+    return ret;
+  }
+
   get questionPublishButtons(): DebugElement[] {
     const ret: DebugElement[] = [];
     this.textArchivedRows.forEach(e => ret.push(e.query(By.css('.publish-btn'))));
@@ -957,12 +1074,24 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  checkChapterHasAudio(row: number): boolean {
+    return this.getChapterHeadingByRow(row).query(By.css('mat-icon')) != null;
+  }
+
+  checkRowIsExpanded(row: number): boolean {
+    return this.textRows[row].query(By.css('mat-expansion-panel-header[aria-expanded=true]')) != null;
+  }
+
   getPublishedQuestionsCountTextByRow(row: number): string {
     return this.textRows[row].query(By.css('.questions-count')).nativeElement.textContent;
   }
 
   getArchivedQuestionsCountTextByRow(row: number): string {
     return this.textArchivedRows[row].query(By.css('.archived-questions-count')).nativeElement.textContent;
+  }
+
+  getChapterHeadingByRow(row: number): DebugElement {
+    return this.textRows[row].query(By.css('.book-chapter-heading'));
   }
 
   waitForQuestions(): void {
@@ -995,11 +1124,13 @@ class TestEnvironment {
   }
 
   clickExpanderAtRow(rowIndex: number, fromArchives?: boolean): void {
+    let panel: MatExpansionPanel;
     if (fromArchives) {
-      const panel = this.textArchivedRows[rowIndex].componentInstance as MatExpansionPanel;
-      panel.toggle();
+      panel = this.textArchivedRows[rowIndex].componentInstance;
     } else {
-      const panel = this.textRows[rowIndex].componentInstance as MatExpansionPanel;
+      panel = this.textRows[rowIndex].componentInstance;
+    }
+    if (!panel.disabled) {
       panel.toggle();
     }
     this.fixture.detectChanges();
@@ -1024,6 +1155,36 @@ class TestEnvironment {
     this.realtimeService.addSnapshot<Question>(QUESTIONS_COLLECTION, {
       id: getQuestionDocId('project01', question.dataId),
       data: question
+    });
+  }
+
+  private addChapterAudio(): void {
+    const text: TextInfo = {
+      bookNum: 43,
+      hasSource: false,
+      chapters: [
+        { number: 1, lastVerse: 51, isValid: true, permissions: {}, hasAudio: true },
+        { number: 2, lastVerse: 25, isValid: true, permissions: {}, hasAudio: true }
+      ],
+      permissions: {}
+    };
+    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
+    const index: number = projectDoc.data!.texts.length - 1;
+    projectDoc.submitJson0Op(op => op.insert(p => p.texts, index, text), false);
+    this.addQuestion({
+      dataId: 'q9Id',
+      projectRef: 'project01',
+      ownerRef: this.anotherUserId,
+      text: 'Book 3, Q1 text',
+      verseRef: {
+        bookNum: 43,
+        chapterNum: 1,
+        verseNum: 1
+      },
+      answers: [],
+      isArchived: false,
+      dateCreated: '',
+      dateModified: ''
     });
   }
 
