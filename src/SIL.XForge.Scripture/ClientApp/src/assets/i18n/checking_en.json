@@ -203,9 +203,11 @@
     "your_answer": "Your answer"
   },
   "checking_audio_dialog": {
+    "audio": "Audio",
     "audio_already_exists": "Audio already exists for this selection.",
     "cancel": "Cancel",
     "save": "Save",
+    "timing": "Timing",
     "upload": "Upload",
     "upload_timing_file": "Upload Timing File"
   },
