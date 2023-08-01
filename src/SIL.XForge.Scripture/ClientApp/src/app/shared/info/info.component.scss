@@ -6,7 +6,6 @@
 }
 
 a {
-  color: $blueMedium;
   cursor: pointer;
   display: flex;
 
@@ -17,5 +16,15 @@ a {
     width: unset;
     height: unset;
     overflow: unset;
+
+    &.normal {
+      color: $blueMedium;
+    }
+    &.error {
+      color: var(--mdc-theme-error);
+    }
+    &.warning {
+      color: $orange;
+    }
   }
 }
