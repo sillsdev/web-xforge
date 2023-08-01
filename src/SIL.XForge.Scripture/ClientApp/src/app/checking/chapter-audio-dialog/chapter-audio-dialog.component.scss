@@ -16,6 +16,12 @@
   }
 }
 
+div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 app-checking-audio-combined {
   display: flex;
   flex-direction: column;
