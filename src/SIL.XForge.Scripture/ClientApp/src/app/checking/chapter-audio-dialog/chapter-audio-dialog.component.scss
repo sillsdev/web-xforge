@@ -21,6 +21,9 @@
     font-size: 21px;
     margin-inline-end: unset;
     color: $orange;
+    position: absolute;
+    top: 0;
+    right: 0;
   }
 }
 
@@ -38,6 +41,10 @@ app-checking-audio-combined {
 
 .mat-dialog-actions {
   justify-content: end;
+}
+
+.wrapper {
+  position: relative;
 }
 
 .row {
