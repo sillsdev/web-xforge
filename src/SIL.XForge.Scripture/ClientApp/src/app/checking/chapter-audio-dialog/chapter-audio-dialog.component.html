@@ -7,8 +7,6 @@
         [(book)]="book"
         [(chapter)]="chapter"
         [chapters]="chapters"
-        (bookChange)="checkForPreexistingAudio()"
-        (chapterChange)="checkForPreexistingAudio()"
       ></app-book-chapter-chooser>
       <app-info *ngIf="selectionHasAudioAlready" [text]="t('audio_already_exists')"></app-info>
     </div>
