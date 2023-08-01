@@ -15,7 +15,7 @@
         [enableRecorder]="false"
         (update)="audioUpdate($event)"
       ></app-checking-audio-combined>
-      <div class="auto-size-button">
+      <div class="row">
         <button
           mat-button
           ngfSelect
@@ -26,6 +26,7 @@
           <mat-icon>cloud_upload</mat-icon>
           <span fxShow fxHide.lt-sm>{{ t("upload_timing_file") }}</span> <span fxHide fxShow.xs>{{ t("upload") }}</span>
         </button>
+        <span *ngIf="hasTimingBeenUploaded">{{ numberOfTimingSegments }} segments found</span>
       </div>
     </div>
   </mat-dialog-content>
