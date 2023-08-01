@@ -31,7 +31,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     this._placeholder = value;
   }
 
-  get placeholder() {
+  get placeholder(): string {
     return this._placeholder || translate('text.loading');
   }
 
@@ -93,7 +93,11 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     if (!this.isEditorLoaded || this.questionVerses == null) {
       return;
     }
-    const segments = this.textComponent.toggleFeaturedVerseRefs(value, this.questionVersesInCurrentText, 'question');
+    const segments: string[] = this.textComponent.toggleFeaturedVerseRefs(
+      value,
+      this.questionVersesInCurrentText,
+      'question'
+    );
     if (value) {
       this.subscribeClickEvents(segments);
     } else {
@@ -109,7 +113,8 @@ export class CheckingTextComponent extends SubscriptionDisposable {
       return;
     }
 
-    const refs = this.textComponent.getVerseSegments(this._activeVerse);
+    const refs: string[] =
+      this._activeVerse != null ? this.textComponent.getVerseSegmentsNoHeadings(this._activeVerse) : [];
     this.textComponent.highlight(refs);
   }
 
@@ -124,7 +129,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
           if (this._id == null) {
             return;
           }
-          const verseRef = verseRefFromMouseEvent(event, this._id.bookNum);
+          const verseRef: VerseRef | undefined = verseRefFromMouseEvent(event, this._id.bookNum);
           if (verseRef != null) {
             this.questionVerseSelected.emit(verseRef);
           }
@@ -133,12 +138,12 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     }
   }
 
-  private scrollToActiveVerse() {
+  private scrollToActiveVerse(): void {
     if (this.activeVerse != null && this.textComponent.editor != null) {
-      const firstSegment = this.textComponent.getVerseSegments(this.activeVerse)[0];
-      const editor = this.textComponent.editor.container.querySelector('.ql-editor');
-      if (firstSegment != null && editor != null) {
-        const element = this.textComponent.getSegmentElement(firstSegment) as HTMLElement;
+      const firstSegment: string = this.textComponent.getVerseSegments(this.activeVerse)[0];
+      const editor: Element | null = this.textComponent.editor.container.querySelector('.ql-editor');
+      if (editor != null) {
+        const element: HTMLElement = this.textComponent.getSegmentElement(firstSegment) as HTMLElement;
         if (element != null) {
           editor.scrollTo({ top: element.offsetTop - 20, behavior: 'smooth' });
         }

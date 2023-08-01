@@ -44,11 +44,14 @@
             {{ t("report_issue") }}
             <span class="mat-hint">{{ t("report_issue_email", { email: issueEmail }) }}</span>
           </a>
-          <ng-container *ngIf="versionNumberClickCount >= 10 || featureFlags.showFeatureFlags.enabled">
-            <mat-divider></mat-divider>
-            <button mat-menu-item (click)="openFeatureFlagDialog()">Feature flags</button>
-          </ng-container>
           <a mat-menu-item target="_blank" href="/3rdpartylicenses.txt">{{ t("open_source_licenses") }}</a>
+          <button
+            *ngIf="versionNumberClickCount >= 10 || featureFlags.showFeatureFlags.enabled"
+            mat-menu-item
+            (click)="openFeatureFlagDialog()"
+          >
+            Feature flags
+          </button>
           <mat-divider></mat-divider>
           <div
             mat-menu-item

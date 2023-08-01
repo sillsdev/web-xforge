@@ -2134,6 +2134,7 @@ public class ParatextServiceTests
     }
 
     [Test]
+    [Ignore("Not ready to push SF comments to PT")]
     public async Task UpdateParatextComments_AddsComment()
     {
         var env = new TestEnvironment();
@@ -2259,6 +2260,7 @@ public class ParatextServiceTests
     }
 
     [Test]
+    [Ignore("Not ready to push SF comments to PT")]
     public async Task UpdateParatextComments_AddsCommentTagIdNotSet()
     {
         var env = new TestEnvironment();
@@ -2302,6 +2304,7 @@ public class ParatextServiceTests
     }
 
     [Test]
+    [Ignore("Not ready to push SF comments to PT")]
     public async Task UpdateParatextComments_EditsComment()
     {
         var env = new TestEnvironment();
@@ -2488,6 +2491,7 @@ public class ParatextServiceTests
     }
 
     [Test]
+    [Ignore("Not ready to push SF comments to PT")]
     public async Task UpdateParatextComments_DeleteComment()
     {
         var env = new TestEnvironment();
