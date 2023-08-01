@@ -43,6 +43,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   private projectDoc!: SFProjectProfileDoc;
   private questionsQuery!: RealtimeQuery<QuestionDoc>;
   private _selectionHasAudioAlready = false;
+  private _hasTimingBeenUploaded = false;
 
   constructor(
     readonly i18n: I18nService,
@@ -124,6 +125,14 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     return text.chapters.map(c => c.number);
   }
 
+  get numberOfTimingSegments(): number {
+    return this.timing.length;
+  }
+
+  get hasTimingBeenUploaded(): boolean {
+    return this._hasTimingBeenUploaded;
+  }
+
   audioUpdate(audio: AudioAttachment): void {
     this.audio = audio;
   }
@@ -145,6 +154,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     }
     timing.sort((a, b) => a.from - b.from);
     this.timing = timing;
+    this._hasTimingBeenUploaded = true;
     // TODO: Add validation to ensure timing markers match a relevant segment in the text
   }
 
