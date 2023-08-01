@@ -43,6 +43,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   private projectDoc!: SFProjectProfileDoc;
   private questionsQuery!: RealtimeQuery<QuestionDoc>;
   private _selectionHasAudioAlready = false;
+
   constructor(
     readonly i18n: I18nService,
     @Inject(MAT_DIALOG_DATA) public data: ChapterAudioDialogData,
@@ -59,7 +60,6 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     this.questionsQuery = await this.projectService.queryQuestions(this.data.projectId, { activeOnly: true });
 
     this.getStartingLocation();
-    this.checkForPreexistingAudio();
   }
 
   private getStartingLocation(): void {
@@ -86,7 +86,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     return this._selectionHasAudioAlready;
   }
 
-  checkForPreexistingAudio(): void {
+  private checkForPreexistingAudio(): void {
     const text = this.projectDoc.data?.texts.find(t => t.bookNum === this.book);
     const textChapter = text?.chapters.find(c => c.number === this.chapter);
     this._selectionHasAudioAlready = textChapter?.hasAudio ?? false;
@@ -99,6 +99,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   set book(book: number) {
     this._book = book;
     this.chapter = this.chapters[0];
+    this.checkForPreexistingAudio();
   }
 
   get chapter(): number {
@@ -107,6 +108,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
 
   set chapter(chapter: number) {
     this._chapter = chapter;
+    this.checkForPreexistingAudio();
   }
 
   get books(): number[] {
