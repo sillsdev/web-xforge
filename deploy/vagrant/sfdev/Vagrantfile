@@ -94,6 +94,9 @@ Vagrant.configure("2") do |config|
     fs.inotify.max_user_instances=10000000
     END
 
+    # Add MP3 support to Chromium
+    sudo apt install -y chromium-codecs-ffmpeg-extra
+
     # Remove canary
     rm ~/Desktop/warning-not-provisioned.txt
     echo Provisioning finished successfully.
