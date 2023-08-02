@@ -41,6 +41,14 @@ app-checking-audio-combined {
 
 .mat-dialog-actions {
   justify-content: end;
+
+  .uploading {
+    flex-grow: 1;
+
+    display: flex;
+    column-gap: 8px;
+    flex-direction: row;
+  }
 }
 
 .wrapper {
