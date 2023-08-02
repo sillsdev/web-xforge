@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@angular/core';
-import { findKey } from 'lodash-es';
 import { NllbLanguage, NllbLanguageDict, NLLB_LANGUAGES } from './nllb-languages';
 
 /**
@@ -26,10 +25,12 @@ export class NllbLanguageService {
     // Handle hyphen or underscore delimited
     const code: string = languageCode.split(/[_-]/)[0].toLowerCase();
 
+    // Check if ISO 369-2/T match
     if (this.nllbLanguages[code]) {
       return true;
     }
 
-    return !!findKey(this.nllbLanguages, (lang: NllbLanguage) => lang.iso639_1 === code);
+    // Check if ISO 369-1 match
+    return Object.values(this.nllbLanguages).some((lang: NllbLanguage) => lang.iso639_1 === code);
   }
 }
