@@ -103,7 +103,7 @@
                     <button
                       fxHide
                       fxShow.lt-xl
-                      mdc-icon-button
+                      mat-icon-button
                       type="button"
                       icon="post_add"
                       title="{{ t('add_question') }}"
@@ -112,7 +112,7 @@
                     ></button>
                     <button
                       fxHide.lt-xl
-                      mdc-button
+                      mat-button
                       type="button"
                       (click)="questionDialog()"
                       class="add-question-button"
@@ -181,49 +181,52 @@
           </div>
         </div>
         <div *ngIf="projectDoc" id="project-navigation">
-          <button mdc-button *ngIf="!this.isDrawerPermanent" type="button" (click)="toggleDrawer()">
+          <button mat-button *ngIf="!this.isDrawerPermanent" type="button" (click)="toggleDrawer()">
             <span class="mdc-button__label">{{ t("view_questions") }}</span>
           </button>
           <div class="d-flex justify-content-end">
             <button
-              mdc-button
+              mat-button
               fxHide.xs
               type="button"
               (click)="questionsPanel.previousQuestion()"
               [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
               class="prev-question"
             >
-              <mdc-icon>chevron_{{ i18n.backwardDirectionWord }}</mdc-icon
+              <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon
               >{{ t("previous") }}
             </button>
             <button
-              mdc-button
+              mat-button
               fxHide.xs
               type="button"
               (click)="questionsPanel.nextQuestion()"
               [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
               class="next-question"
             >
-              {{ t("next") }}<mdc-icon>chevron_{{ i18n.forwardDirectionWord }}</mdc-icon>
+              {{ t("next") }}<mat-icon>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
             </button>
             <button
-              mdc-icon-button
+              mat-icon-button
               fxHide.gt-xs
               type="button"
               (click)="questionsPanel.previousQuestion()"
               [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
               class="prev-question"
-              icon="chevron_{{ i18n.backwardDirectionWord }}"
-            ></button>
+            >
+              <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon
+              >{{ t("previous") }}
+            </button>
             <button
-              mdc-icon-button
+              mat-icon-button
               fxHide.gt-xs
               type="button"
               (click)="questionsPanel.nextQuestion()"
               [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
               class="next-question"
-              icon="chevron_{{ i18n.forwardDirectionWord }}"
-            ></button>
+            >
+              {{ t("next") }}<mat-icon>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+            </button>
             <a [appRouterLink]="routerLink" id="project-summary">
               <app-donut-chart
                 [colors]="['#3a3a3a', '#fff', '#B8D332']"
