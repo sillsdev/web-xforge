@@ -13,4 +13,6 @@ export interface Note extends Comment {
   assignment?: string;
   content?: string;
   acceptedChangeXml?: string;
+  editable?: boolean;
+  versionNumber?: number;
 }
