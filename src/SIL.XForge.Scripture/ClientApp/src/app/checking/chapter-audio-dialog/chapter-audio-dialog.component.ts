@@ -1,5 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
@@ -9,6 +10,7 @@ import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc'
 import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 import { CsvService } from 'xforge-common/csv-service.service';
+import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -54,7 +56,8 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     private readonly csvService: CsvService,
     private readonly dialogRef: MatDialogRef<ChapterAudioDialogComponent, ChapterAudioDialogResult | undefined>,
     private readonly fileService: FileService,
-    private readonly projectService: SFProjectService
+    private readonly projectService: SFProjectService,
+    private readonly dialogService: DialogService
   ) {
     super();
   }
@@ -215,8 +218,8 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
       true
     );
     this._loadingAudio = false;
-    if (audioUrl == null) {
-      // TODO: Show an error
+    if (audioUrl === null || audioUrl === undefined) {
+      this.dialogService.message(translate('checking_audio_dialog.upload_failed'));
       return;
     }
 
