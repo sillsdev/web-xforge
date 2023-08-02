@@ -1,16 +1,17 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, flush, tick, fakeAsync } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { EMPTY, of } from 'rxjs';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { BuildStates } from 'src/app/machine-api/build-states';
+import { SharedModule } from 'src/app/shared/shared.module';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { ACTIVE_BUILD_STATES } from './draft-generation';
-import { DraftGenerationComponent } from './draft-generation.component';
+import { DraftGenerationComponent, InfoAlert } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 
 describe('DraftGenerationComponent', () => {
@@ -79,7 +80,10 @@ describe('DraftGenerationComponent', () => {
             translateConfig: {
               projectType: ProjectType.BackTranslation,
               source: {
-                projectRef: 'testSourceProjectId'
+                projectRef: 'testSourceProjectId',
+                writingSystem: {
+                  tag: 'es'
+                }
               }
             }
           }
@@ -94,7 +98,7 @@ describe('DraftGenerationComponent', () => {
     init(): void {
       TestBed.configureTestingModule({
         declarations: [DraftGenerationComponent],
-        imports: [UICommonModule],
+        imports: [UICommonModule, SharedModule],
         providers: [
           { provide: DraftGenerationService, useValue: mockDraftGenerationService },
           { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
@@ -125,6 +129,7 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageNllb).toBe(true);
       expect(env.component.isSourceProjectSet).toBe(true);
+      expect(env.component.isSourceAndTargetDifferent).toBe(true);
       expect(env.component.targetLanguage).toBe('en');
       expect(env.component.targetLanguageDisplayName).toBe('English');
     });
@@ -150,6 +155,78 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isBackTranslation).toBe(false);
       expect(env.component.isTargetLanguageNllb).toBe(false);
       expect(env.component.isSourceProjectSet).toBe(false);
+    });
+
+    it('should detect source language same as target language', () => {
+      let env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: 'testProjectId',
+          projectId$: of('testProjectId'),
+          projectDoc$: of({
+            data: {
+              writingSystem: {
+                tag: 'xyz'
+              },
+              translateConfig: {
+                projectType: ProjectType.BackTranslation,
+                source: {
+                  projectRef: 'testSourceProjectId',
+                  writingSystem: {
+                    tag: 'xyz'
+                  }
+                }
+              }
+            }
+          })
+        });
+      });
+
+      expect(env.component.isBackTranslation).toBe(true);
+      expect(env.component.isTargetLanguageNllb).toBe(false);
+      expect(env.component.isSourceProjectSet).toBe(true);
+      expect(env.component.isSourceAndTargetDifferent).toBe(false);
+    });
+  });
+
+  describe('getInfoAlert', () => {
+    let env: TestEnvironment;
+
+    beforeAll(() => {
+      env = new TestEnvironment();
+    });
+
+    it('should return NotBackTranslation when isBackTranslation is false', () => {
+      env.component.isBackTranslation = false;
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.NotBackTranslation);
+    });
+
+    it('should return NotNllb when isTargetLanguageNllb is false', () => {
+      env.component.isBackTranslation = true;
+      env.component.isTargetLanguageNllb = false;
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.NotNllb);
+    });
+
+    it('should return NotSourceProjectSet when isSourceProjectSet is false', () => {
+      env.component.isBackTranslation = true;
+      env.component.isTargetLanguageNllb = true;
+      env.component.isSourceProjectSet = false;
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.NotSourceProjectSet);
+    });
+
+    it('should return NotSourceAndTargetLanguageDifferent when isSourceAndTargetDifferent is false', () => {
+      env.component.isBackTranslation = true;
+      env.component.isTargetLanguageNllb = true;
+      env.component.isSourceProjectSet = true;
+      env.component.isSourceAndTargetDifferent = false;
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.NotSourceAndTargetLanguageDifferent);
+    });
+
+    it('should return None when all requirements are met', () => {
+      env.component.isBackTranslation = true;
+      env.component.isTargetLanguageNllb = true;
+      env.component.isSourceProjectSet = true;
+      env.component.isSourceAndTargetDifferent = true;
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.None);
     });
   });
 
