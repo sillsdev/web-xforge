@@ -1,9 +1,9 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { Canon } from '@sillsdev/scripture';
 import { TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { Canon } from 'realtime-server/lib/esm/scriptureforge/scripture-utils/canon';
 import { QuestionDoc } from 'src/app/core/models/question-doc';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
