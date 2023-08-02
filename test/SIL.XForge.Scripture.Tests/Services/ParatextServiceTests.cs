@@ -2676,7 +2676,9 @@ public class ParatextServiceTests
             threadNum = 1,
             noteCount = 1,
             username = env.Username01,
-            isNew = false
+            isNew = false,
+            editable = true,
+            versionNumber = 1,
         };
         env.AddNoteThreadData(new[] { thread });
 
@@ -3338,6 +3340,8 @@ public class ParatextServiceTests
         public bool isConflict;
         public bool appliesToVerse;
         public string reattachedVerseStr;
+        public bool editable;
+        public int versionNumber;
     }
 
     struct ReattachedThreadInfo
@@ -4475,7 +4479,9 @@ public class ParatextServiceTests
                         TagId = noteComponent.tagsAdded == null ? null : int.Parse(noteComponent.tagsAdded[0]),
                         Deleted = comp.deletedNotes != null && comp.deletedNotes[i - 1],
                         Status = noteComponent.status.InternalValue,
-                        Assignment = noteComponent.assignedPTUser
+                        Assignment = noteComponent.assignedPTUser,
+                        Editable = comp.editable,
+                        VersionNumber = comp.versionNumber,
                     };
                     notes.Add(note);
                     if (noteComponent.duplicate)
