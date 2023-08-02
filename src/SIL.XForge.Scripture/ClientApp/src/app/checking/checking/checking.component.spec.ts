@@ -952,7 +952,7 @@ describe('CheckingComponent', () => {
       expect(env.answers.length).toEqual(0);
     }));
 
-    it("can like and unlike another's answer", fakeAsync(() => {
+    it("checker user can like and unlike another's answer", fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(7);
       env.answerQuestion('Answer question 7');
@@ -987,7 +987,28 @@ describe('CheckingComponent', () => {
       env.clickButton(env.likeButtons[0]);
       env.waitForSliderUpdate();
       expect(env.getLikeTotal(0)).toBe(0);
-      verify(mockedNoticeService.show('Only Community Checkers can like answers.')).once();
+      verify(mockedNoticeService.show("You don't have permission to like answers.")).once();
+    }));
+
+    it("admin user can like and unlike another's answer", fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      env.selectQuestion(9);
+      expect(env.getAnswerText(0)).toBe('Answer 0 on question');
+      expect(env.getAnswerText(1)).toBe('Answer 1 on question');
+      expect(env.getLikeTotal(0)).toBe(0);
+      expect(env.getLikeTotal(1)).toBe(0);
+      env.clickButton(env.likeButtons[0]);
+      env.waitForSliderUpdate();
+      expect(env.getLikeTotal(0)).toBe(1);
+      expect(env.getLikeTotal(1)).toBe(0);
+      expect(env.likeButtons[0].classes.liked).toBe(true);
+      expect(env.likeButtons[1].classes.liked).toBeUndefined();
+      env.clickButton(env.likeButtons[0]);
+      env.waitForSliderUpdate();
+      expect(env.getLikeTotal(0)).toBe(0);
+      expect(env.getLikeTotal(1)).toBe(0);
+      expect(env.likeButtons[0].classes.like).toBeUndefined();
+      expect(env.likeButtons[1].classes.like).toBeUndefined();
     }));
 
     it('hides the like icon if see other users responses is disabled', fakeAsync(() => {
