@@ -170,12 +170,9 @@ export class JoinComponent extends DataLoadingComponent {
     if (this.pwaService.isOnline && this.status === 'unavailable') {
       this.name.enable();
       this.status = 'input';
-      return;
-    }
-    if (await this.authService.isLoggedIn) {
+    } else if (!this.pwaService.isOnline && (await this.authService.isLoggedIn)) {
       await this.dialogService.message('join.please_connect_to_use_link');
       this.router.navigateByUrl('/projects', { replaceUrl: true });
-      return;
     } else {
       this.name.disable();
       this.status = 'unavailable';

@@ -65,6 +65,20 @@ describe('JoinComponent', () => {
     expect().nothing();
   }));
 
+  it('check sharing link does not show offline error when online', fakeAsync(() => {
+    var env = new TestEnvironment({ isLoggedIn: true, isOnline: true });
+
+    // Set the online status again to trigger updateOfflineJoiningStatus a second time
+    env.onlineStatus = true;
+    tick();
+
+    verify(mockedSFProjectService.onlineJoinWithShareKey(anything())).once();
+    verify(mockedDialogService.message(anything())).never();
+    verify(mockedRouter.navigateByUrl('/projects/project01', anything())).once();
+    verify(mockedRouter.navigateByUrl('/projects', anything())).never();
+    expect().nothing();
+  }));
+
   it('check sharing link forbidden', fakeAsync(() => {
     const callback = (_: TestEnvironment): void => {
       when(mockedSFProjectService.onlineJoinWithShareKey(anything())).thenReject(
