@@ -157,7 +157,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
       const textRef: string = row[2];
       const from: number = this.parseTime(row[0]);
       const to: number = this.parseTime(row[1]);
-      if (textRef === undefined || from === NaN || to === NaN) continue;
+      if (textRef === undefined || isNaN(from) || isNaN(to)) continue;
       timing.push({
         textRef,
         from,
