@@ -209,6 +209,7 @@
     "save": "Save",
     "timing": "Timing",
     "upload": "Upload",
+    "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
     "upload_timing_file": "Upload Timing File"
   },
   "checking_audio_combined": {
