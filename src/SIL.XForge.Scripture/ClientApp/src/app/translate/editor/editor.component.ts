@@ -973,7 +973,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       conflictType: NoteConflictType.DefaultValue,
       type: NoteType.Normal,
       status: NoteStatus.Todo,
-      deleted: false
+      deleted: false,
+      editable: true,
+      versionNumber: 1
     };
     if (params.threadDataId == null) {
       if (params.verseRef == null) return;
@@ -1000,10 +1002,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       );
       const noteIndex: number = threadDoc.data!.notes.findIndex(n => n.dataId === params.dataId);
       if (noteIndex >= 0) {
-        await threadDoc!.submitJson0Op(op => {
-          op.set(t => t.notes[noteIndex].content, params.content);
-          op.set(t => t.notes[noteIndex].dateModified, currentDate);
-        });
+        if (threadDoc.data?.notes[noteIndex].editable === true) {
+          await threadDoc!.submitJson0Op(op => {
+            op.set(t => t.notes[noteIndex].content, params.content);
+            op.set(t => t.notes[noteIndex].dateModified, currentDate);
+          });
+        } else {
+          this.dialogService.message(this.i18n.translate('editor.cannot_edit_note_paratext'));
+        }
       } else {
         note.threadId = threadDoc.data!.threadId;
         await threadDoc.submitJson0Op(op => op.add(t => t.notes, note));

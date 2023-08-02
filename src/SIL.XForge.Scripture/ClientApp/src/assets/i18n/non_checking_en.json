@@ -95,6 +95,7 @@
     "anonymous": "Anonymous",
     "cancel": "Cancel",
     "cannot_edit_chapter_formatting_invalid": "This chapter cannot be edited because the formatting is invalid. Please fix the formatting in Paratext.",
+    "cannot_edit_note_paratext": "You cannot edit this note as it has been edited in Paratext.",
     "configure_translation_suggestions": "Configure translation suggestions",
     "more_notes": "--- {{ count }} more note(s) ---",
     "navigate_to_a_valid_text": "Navigate to a valid text to insert a note",
