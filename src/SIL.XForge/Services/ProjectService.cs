@@ -153,13 +153,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[curUserId], projectRole));
     }
 
-    public async Task<Uri> SaveAudioAsync(
-        string curUserId,
-        string projectId,
-        string dataId,
-        string extension,
-        Stream inputStream
-    )
+    public async Task<Uri> SaveAudioAsync(string curUserId, string projectId, string dataId, string path)
     {
         if (!StringUtils.ValidateId(dataId))
             throw new FormatException($"{nameof(dataId)} is not a valid id.");
@@ -173,24 +167,31 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         if (!FileSystemService.DirectoryExists(audioDir))
             FileSystemService.CreateDirectory(audioDir);
         string outputPath = Path.Combine(audioDir, $"{curUserId}_{dataId}.mp3");
-        if (await _audioService.IsMp3DataAsync(inputStream))
+        if (await _audioService.IsMp3FileAsync(path))
         {
-            await using Stream fileStream = FileSystemService.OpenFile(outputPath, FileMode.Create);
-            await inputStream.CopyToAsync(fileStream);
+            // Delete the existing file, if it exists
+            if (FileSystemService.FileExists(outputPath))
+            {
+                FileSystemService.DeleteFile(outputPath);
+            }
+
+            // Relocate the temporary file to the new directory
+            FileSystemService.MoveFile(path, outputPath);
         }
         else
         {
-            string tempPath = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + extension);
+            // Convert the file to mp3
             try
             {
-                await using (Stream fileStream = FileSystemService.OpenFile(tempPath, FileMode.Create))
-                    await inputStream.CopyToAsync(fileStream);
-                await _audioService.ConvertToMp3Async(tempPath, outputPath);
+                await _audioService.ConvertToMp3Async(path, outputPath);
             }
             finally
             {
-                if (FileSystemService.FileExists(tempPath))
-                    FileSystemService.DeleteFile(tempPath);
+                // Remove the temporary file, if it still exists
+                if (FileSystemService.FileExists(path))
+                {
+                    FileSystemService.DeleteFile(path);
+                }
             }
         }
         string outputFileName = Path.GetFileName(outputPath);

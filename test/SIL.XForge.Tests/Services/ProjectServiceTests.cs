@@ -27,14 +27,13 @@ public class ProjectServiceTests
     {
         var env = new TestEnvironment();
         const string dataId = "507f1f77bcf86cd799439011";
+        const string path = "file.wav";
         string filePath = Path.Combine("site", "audio", Project01, $"{User01}_{dataId}.mp3");
-        env.FileSystemService.OpenFile(Arg.Any<string>(), FileMode.Create).Returns(new MemoryStream());
-        env.FileSystemService.FileExists(filePath).Returns(true);
 
-        using var stream = new MemoryStream();
-        Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, ".wav", stream);
+        // SUT
+        Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, path);
         Assert.That(
-            uri.ToString().StartsWith($"http://localhost/assets/audio/project01/user01_{dataId}.mp3?t="),
+            uri.ToString().StartsWith($"http://localhost/assets/audio/{Project01}/{User01}_{dataId}.mp3?t="),
             Is.True
         );
         await env.AudioService.Received().ConvertToMp3Async(Arg.Any<string>(), filePath);
@@ -45,18 +44,17 @@ public class ProjectServiceTests
     {
         var env = new TestEnvironment();
         const string dataId = "507f1f77bcf86cd799439011";
+        const string path = "file.mp3";
         string filePath = Path.Combine("site", "audio", Project01, $"{User01}_{dataId}.mp3");
-        env.AudioService.IsMp3DataAsync(Arg.Any<Stream>()).Returns(Task.FromResult(true));
-        env.FileSystemService.OpenFile(Arg.Any<string>(), FileMode.Create).Returns(new MemoryStream());
-        env.FileSystemService.FileExists(filePath).Returns(true);
+        env.AudioService.IsMp3FileAsync(path).Returns(Task.FromResult(true));
 
-        using var stream = new MemoryStream();
-        Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, ".mp3", stream);
+        // SUT
+        Uri uri = await env.Service.SaveAudioAsync(User01, Project01, dataId, path);
         Assert.That(
             uri.ToString().StartsWith($"http://localhost/assets/audio/project01/user01_{dataId}.mp3?t="),
             Is.True
         );
-        env.FileSystemService.Received().OpenFile(filePath, FileMode.Create);
+        env.FileSystemService.Received().MoveFile(path, filePath);
         await env.AudioService.DidNotReceive().ConvertToMp3Async(Arg.Any<string>(), filePath);
     }
 
@@ -65,9 +63,9 @@ public class ProjectServiceTests
     {
         var env = new TestEnvironment();
 
-        using var stream = new MemoryStream();
+        // SUT
         Assert.ThrowsAsync<FormatException>(
-            () => env.Service.SaveAudioAsync(User01, Project01, "/../test/abc.txt", ".wav", stream)
+            () => env.Service.SaveAudioAsync(User01, Project01, "/../test/abc.txt", "file.wav")
         );
     }
 
@@ -76,9 +74,9 @@ public class ProjectServiceTests
     {
         var env = new TestEnvironment();
 
-        using var stream = new MemoryStream();
+        // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.SaveAudioAsync(User01, "/../abc.txt", "507f1f77bcf86cd799439011", ".wav", stream)
+            () => env.Service.SaveAudioAsync(User01, "/../abc.txt", "507f1f77bcf86cd799439011", "file.wav")
         );
     }
 
