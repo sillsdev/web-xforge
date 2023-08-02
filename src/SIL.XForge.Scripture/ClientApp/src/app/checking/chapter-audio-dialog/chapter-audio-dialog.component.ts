@@ -256,7 +256,17 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   }
 
   private parseTime(time: string): number {
-    // TODO: Add support for hh:mm:ss and mm:ss strings
-    return parseFloat(time);
+    var a = time?.split(':');
+    if (a?.length === 1) {
+      return parseFloat(time);
+    } else if (a?.length === 2) {
+      var seconds = +a[0] * 60 + +a[1];
+      return seconds;
+    } else if (a?.length === 3) {
+      var seconds = +a[0] * 60 * 60 + +a[1] * 60 + +a[2];
+      return seconds;
+    }
+
+    return NaN;
   }
 }
