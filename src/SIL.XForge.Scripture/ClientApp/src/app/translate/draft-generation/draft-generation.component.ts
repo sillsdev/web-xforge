@@ -15,6 +15,14 @@ import { NllbLanguageService } from '../nllb-language.service';
 import { ACTIVE_BUILD_STATES } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 
+export enum InfoAlert {
+  None,
+  NotBackTranslation,
+  NotNllb,
+  NotSourceProjectSet,
+  NotSourceAndTargetLanguageDifferent
+}
+
 @Component({
   selector: 'app-draft-generation',
   templateUrl: './draft-generation.component.html',
@@ -32,6 +40,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   isTargetLanguageNllb = true;
   isBackTranslation = true;
   isSourceProjectSet = true;
+  isSourceAndTargetDifferent = true;
+
+  InfoAlert = InfoAlert;
+  infoAlert?: InfoAlert;
 
   jobSubscription?: Subscription;
   isReady = false;
@@ -60,13 +72,19 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     this.subscribe(
       combineLatest([this.activatedProject.projectId$, this.activatedProject.projectDoc$, this.i18n.locale$]),
       ([projectId, projectDoc, locale]) => {
-        this.isBackTranslation = projectDoc?.data?.translateConfig.projectType === ProjectType.BackTranslation;
-        this.isSourceProjectSet = projectDoc?.data?.translateConfig.source?.projectRef !== undefined;
+        const translateConfig = projectDoc?.data?.translateConfig;
+
+        this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
+        this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
         this.targetLanguage = projectDoc?.data?.writingSystem.tag;
         this.targetLanguageDisplayName = this.getLanguageDisplayName(this.targetLanguage, locale);
         this.isTargetLanguageNllb = this.nllbService.isNllbLanguage(this.targetLanguage);
+        this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
+
         this.draftViewerUrl = `/projects/${projectId}/draft-preview`;
         this.projectSettingsUrl = `/projects/${projectId}/settings`;
+
+        this.infoAlert = this.getInfoAlert();
       }
     );
 
@@ -156,6 +174,31 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     this.draftGenerationService.cancelBuild(this.activatedProject.projectId!).subscribe();
   }
 
+  /**
+   * Gets the highest priority info alert to be displayed.
+   */
+  getInfoAlert(): InfoAlert {
+    // In order of priority...
+
+    if (!this.isBackTranslation) {
+      return InfoAlert.NotBackTranslation;
+    }
+
+    if (!this.isTargetLanguageNllb) {
+      return InfoAlert.NotNllb;
+    }
+
+    if (!this.isSourceProjectSet) {
+      return InfoAlert.NotSourceProjectSet;
+    }
+
+    if (!this.isSourceAndTargetDifferent) {
+      return InfoAlert.NotSourceAndTargetLanguageDifferent;
+    }
+
+    return InfoAlert.None;
+  }
+
   isDraftInProgress(job?: BuildDto): boolean {
     return this.activeBuildStates.includes(job?.state as BuildStates);
   }
@@ -173,7 +216,9 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   isGenerationSupported(): boolean {
-    return this.isBackTranslation && this.isTargetLanguageNllb && this.isSourceProjectSet;
+    return (
+      this.isBackTranslation && this.isTargetLanguageNllb && this.isSourceProjectSet && this.isSourceAndTargetDifferent
+    );
   }
 
   canCancel(job?: BuildDto): boolean {

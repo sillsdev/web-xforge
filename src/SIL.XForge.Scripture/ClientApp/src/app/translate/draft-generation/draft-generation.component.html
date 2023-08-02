@@ -60,12 +60,12 @@
   <ng-container *ngIf="isReady">
     <mat-divider inset></mat-divider>
 
-    <section *ngIf="!isBackTranslation">
+    <section *ngIf="infoAlert === InfoAlert.NotBackTranslation">
       <h3><mat-icon>info</mat-icon>Project type is not supported for draft generation</h3>
       <p>In order to generate a draft translation, the project must be a back translation project.</p>
     </section>
 
-    <section *ngIf="isBackTranslation && !isTargetLanguageNllb">
+    <section *ngIf="infoAlert === InfoAlert.NotNllb">
       <h3><mat-icon>info</mat-icon>Target language is not supported for draft generation</h3>
       <p>
         Your project language
@@ -83,12 +83,17 @@
       </p>
     </section>
 
-    <section *ngIf="isBackTranslation && isTargetLanguageNllb && !isSourceProjectSet">
+    <section *ngIf="infoAlert === InfoAlert.NotSourceProjectSet">
       <h3><mat-icon>info</mat-icon>Source text not selected</h3>
       <p>
         A source text has not been selected for this project. You can select a source text in
         <a [routerLink]="projectSettingsUrl">project settings</a>.
       </p>
+    </section>
+
+    <section *ngIf="infoAlert === InfoAlert.NotSourceAndTargetLanguageDifferent">
+      <h3><mat-icon>info</mat-icon>Same source and target language</h3>
+      <p>The language for your source text must be different than the target language.</p>
     </section>
 
     <ng-container *ngIf="isGenerationSupported()">
