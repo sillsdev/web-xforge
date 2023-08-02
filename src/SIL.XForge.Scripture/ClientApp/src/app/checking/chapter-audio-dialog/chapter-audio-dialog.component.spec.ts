@@ -1,22 +1,24 @@
+import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
-import { mock } from 'ts-mockito';
+import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { Canon } from '@sillsdev/scripture';
+import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
+import { mock, when } from 'ts-mockito';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { FileService } from 'xforge-common/file.service';
-import { UICommonModule } from 'xforge-common/ui-common.module';
-import { NgModule } from '@angular/core';
-import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { Canon } from '@sillsdev/scripture';
-import { SFProjectService } from '../../core/sf-project.service';
-import { TextsByBookId } from '../../core/models/texts-by-book-id';
-import { TextDocId } from '../../core/models/text-doc';
+import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
+import { TextDocId } from '../../core/models/text-doc';
+import { TextsByBookId } from '../../core/models/texts-by-book-id';
+import { SFProjectService } from '../../core/sf-project.service';
 import { ChapterAudioDialogComponent, ChapterAudioDialogData } from './chapter-audio-dialog.component';
 
 const mockedProjectService = mock(SFProjectService);
+const mockedProjectDoc = mock(SFProjectProfileDoc);
 const mockedCsvService = mock(CsvService);
 const mockedFileService = mock(FileService);
 
@@ -38,7 +40,7 @@ describe('ChapterAudioDialogComponent', () => {
     flush();
   }));
 
-  it('should upload audio and return timing data on save', fakeAsync(() => {
+  fit('should upload audio and return timing data on save', fakeAsync(() => {
     env = new TestEnvironment();
     // const result: QuestionDialogResult = {
     //   text: 'question added',
@@ -81,6 +83,12 @@ class TestEnvironment {
         textsByBookId: TestEnvironment.textsByBookId
       }
     };
+
+    when(mockedProjectService.getProfile('project01')).thenResolve(mockedProjectDoc);
+    // const projectProfile = mock<SFProjectProfile>();
+    // when(projectProfile.texts).thenReturn([]);
+    // when(mockedProjectDoc.data).thenReturn(projectProfile);
+
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     this.dialogRef = TestBed.inject(MatDialog).open(ChapterAudioDialogComponent, config);
     this.component = this.dialogRef.componentInstance;
