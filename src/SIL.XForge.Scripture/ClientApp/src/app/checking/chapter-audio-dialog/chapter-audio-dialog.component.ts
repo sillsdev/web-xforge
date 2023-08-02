@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Canon } from '@sillsdev/scripture';
 import { TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
@@ -46,6 +46,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   private _hasTimingBeenUploaded: boolean = false;
   private _audioLength: number = 0;
   private _errorText: string = '';
+  private _loadingAudio: boolean = false;
 
   constructor(
     readonly i18n: I18nService,
@@ -139,6 +140,10 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     return this._errorText;
   }
 
+  get isLoadingAudio(): boolean {
+    return this._loadingAudio;
+  }
+
   async audioUpdate(audio: AudioAttachment): Promise<void> {
     this.audio = audio;
     if (audio.url) {
@@ -198,7 +203,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     if (this.audio?.blob == null || this.audio?.fileName == null) {
       return;
     }
-    // TODO: Implement progress UI as these files can be hundreds of MB
+    this._loadingAudio = true;
     const audioUrl: string | undefined = await this.fileService.uploadFile(
       FileType.Audio,
       this.data.projectId,
@@ -209,6 +214,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
       this.audio.fileName,
       true
     );
+    this._loadingAudio = false;
     if (audioUrl == null) {
       // TODO: Show an error
       return;
