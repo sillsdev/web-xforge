@@ -23,6 +23,12 @@ quill-editor {
   border: 1px solid $border-color;
 }
 
+.has-draft {
+  .ql-container {
+    border: 4px dashed $draft-color;
+  }
+}
+
 .read-only-editor.selectable-verses usx-segment {
   cursor: pointer;
 }
@@ -239,6 +245,6 @@ quill-editor.rtl .highlight-para usx-segment:first-child:before {
 }
 
 usx-segment.draft {
-  color: #6495ed;
+  color: $draft-color;
   font-style: italic;
 }

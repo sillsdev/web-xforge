@@ -1,4 +1,4 @@
-@import 'src/variables';
+@use 'src/variables';
 
 app-working-animated-indicator {
   display: block;
@@ -12,11 +12,7 @@ h3 {
   gap: 10px;
 
   mat-icon {
-    color: $info-color;
-  }
-
-  + p {
-    margin-top: 0;
+    color: variables.$info-color;
   }
 }
 
@@ -33,7 +29,6 @@ em {
   margin-top: 0;
 
   li {
-    list-style-type: none;
     display: flex;
     gap: 14px;
     align-items: center;
@@ -51,7 +46,7 @@ em {
       color: green;
     }
     &.criteria-not-met {
-      color: #cc0000;
+      color: var(--mdc-theme-error);
     }
   }
 }
@@ -100,6 +95,10 @@ section {
 
   h3 {
     grid-area: header;
+
+    + p {
+      margin-top: 0;
+    }
   }
 
   p {
