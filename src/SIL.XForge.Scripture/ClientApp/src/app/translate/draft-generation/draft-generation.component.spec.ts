@@ -125,7 +125,7 @@ describe('DraftGenerationComponent', () => {
       );
       expect(env.component.draftViewerUrl).toEqual('/projects/testProjectId/draft-preview');
       expect(env.component.isBackTranslation).toBe(true);
-      expect(env.component.isTargetLanguageNllb).toBe(true);
+      expect(env.component.isTargetLanguageSupported).toBe(true);
       expect(env.component.isSourceProjectSet).toBe(true);
       expect(env.component.isSourceAndTargetDifferent).toBe(true);
       expect(env.component.targetLanguage).toBe('en');
@@ -151,7 +151,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       expect(env.component.isBackTranslation).toBe(false);
-      expect(env.component.isTargetLanguageNllb).toBe(false);
+      expect(env.component.isTargetLanguageSupported).toBe(false);
       expect(env.component.isSourceProjectSet).toBe(false);
     });
 
@@ -180,7 +180,7 @@ describe('DraftGenerationComponent', () => {
       });
 
       expect(env.component.isBackTranslation).toBe(true);
-      expect(env.component.isTargetLanguageNllb).toBe(false);
+      expect(env.component.isTargetLanguageSupported).toBe(false);
       expect(env.component.isSourceProjectSet).toBe(true);
       expect(env.component.isSourceAndTargetDifferent).toBe(false);
     });
@@ -198,30 +198,30 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.getInfoAlert()).toBe(InfoAlert.NotBackTranslation);
     });
 
-    it('should return NotNllb when isTargetLanguageNllb is false', () => {
+    it('should return NotSupportedLanguage when isTargetLanguageSupported is false', () => {
       env.component.isBackTranslation = true;
-      env.component.isTargetLanguageNllb = false;
-      expect(env.component.getInfoAlert()).toBe(InfoAlert.NotNllb);
+      env.component.isTargetLanguageSupported = false;
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.NotSupportedLanguage);
     });
 
-    it('should return NotSourceProjectSet when isSourceProjectSet is false', () => {
+    it('should return NoSourceProjectSet when isSourceProjectSet is false', () => {
       env.component.isBackTranslation = true;
-      env.component.isTargetLanguageNllb = true;
+      env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = false;
-      expect(env.component.getInfoAlert()).toBe(InfoAlert.NotSourceProjectSet);
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.NoSourceProjectSet);
     });
 
-    it('should return NotSourceAndTargetLanguageDifferent when isSourceAndTargetDifferent is false', () => {
+    it('should return SourceAndTargetLanguageIdentical when isSourceAndTargetDifferent is false', () => {
       env.component.isBackTranslation = true;
-      env.component.isTargetLanguageNllb = true;
+      env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = true;
       env.component.isSourceAndTargetDifferent = false;
-      expect(env.component.getInfoAlert()).toBe(InfoAlert.NotSourceAndTargetLanguageDifferent);
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.SourceAndTargetLanguageIdentical);
     });
 
     it('should return None when all requirements are met', () => {
       env.component.isBackTranslation = true;
-      env.component.isTargetLanguageNllb = true;
+      env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = true;
       env.component.isSourceAndTargetDifferent = true;
       expect(env.component.getInfoAlert()).toBe(InfoAlert.None);
