@@ -18,9 +18,9 @@ import { DraftGenerationService } from './draft-generation.service';
 export enum InfoAlert {
   None,
   NotBackTranslation,
-  NotNllb,
-  NotSourceProjectSet,
-  NotSourceAndTargetLanguageDifferent
+  NotSupportedLanguage,
+  NoSourceProjectSet,
+  SourceAndTargetLanguageIdentical
 }
 
 @Component({
@@ -37,7 +37,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   targetLanguage?: string;
   targetLanguageDisplayName?: string;
 
-  isTargetLanguageNllb = true;
+  isTargetLanguageSupported = true;
   isBackTranslation = true;
   isSourceProjectSet = true;
   isSourceAndTargetDifferent = true;
@@ -46,7 +46,12 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   infoAlert?: InfoAlert;
 
   jobSubscription?: Subscription;
-  isReady = false;
+
+  /**
+   * Once true, UI can proceed with display according to status of fetched job.
+   * This is needed as an undefined `draftJob` could mean that no job has ever been started.
+   */
+  isDraftJobFetched = false;
 
   /**
    * Whether any completed draft build exists for this project.
@@ -77,7 +82,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
         this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
         this.targetLanguage = projectDoc?.data?.writingSystem.tag;
         this.targetLanguageDisplayName = this.getLanguageDisplayName(this.targetLanguage, locale);
-        this.isTargetLanguageNllb = this.nllbService.isNllbLanguage(this.targetLanguage);
+        this.isTargetLanguageSupported = this.nllbService.isNllbLanguage(this.targetLanguage);
         this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
 
         this.draftViewerUrl = `/projects/${projectId}/draft-preview`;
@@ -103,7 +108,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
         ),
       (job?: BuildDto) => {
         this.draftJob = job;
-        this.isReady = true;
+        this.isDraftJobFetched = true;
       }
     );
   }
@@ -183,16 +188,16 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       return InfoAlert.NotBackTranslation;
     }
 
-    if (!this.isTargetLanguageNllb) {
-      return InfoAlert.NotNllb;
+    if (!this.isTargetLanguageSupported) {
+      return InfoAlert.NotSupportedLanguage;
     }
 
     if (!this.isSourceProjectSet) {
-      return InfoAlert.NotSourceProjectSet;
+      return InfoAlert.NoSourceProjectSet;
     }
 
     if (!this.isSourceAndTargetDifferent) {
-      return InfoAlert.NotSourceAndTargetLanguageDifferent;
+      return InfoAlert.SourceAndTargetLanguageIdentical;
     }
 
     return InfoAlert.None;
@@ -216,7 +221,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   isGenerationSupported(): boolean {
     return (
-      this.isBackTranslation && this.isTargetLanguageNllb && this.isSourceProjectSet && this.isSourceAndTargetDifferent
+      this.isBackTranslation &&
+      this.isTargetLanguageSupported &&
+      this.isSourceProjectSet &&
+      this.isSourceAndTargetDifferent
     );
   }
 
