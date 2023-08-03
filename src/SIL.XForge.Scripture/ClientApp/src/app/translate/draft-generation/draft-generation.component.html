@@ -20,18 +20,23 @@
       hours under ideal conditions, but may take longer if the server is busy.
     </p>
 
+    <!-- TODO Find better link to languages or include in-app table with link to "learn more" -->
     <h3 class="requirements-header">Requirements</h3>
     <ul class="requirements">
       <li>
-        <mat-icon [ngClass]="{ 'criteria-met': isTargetLanguageNllb, 'criteria-not-met': !isTargetLanguageNllb }">{{
-          isTargetLanguageNllb ? "check" : "clear"
-        }}</mat-icon>
+        <mat-icon *ngIf="isBackTranslation" class="criteria-met">check</mat-icon>
+        <mat-icon *ngIf="!isBackTranslation" class="criteria-not-met">clear</mat-icon>
+        <p>Your project type is <span *ngIf="!isBackTranslation">not</span> a back translation project.</p>
+      </li>
+      <li>
+        <mat-icon *ngIf="isTargetLanguageSupported" class="criteria-met">check</mat-icon>
+        <mat-icon *ngIf="!isTargetLanguageSupported" class="criteria-not-met">clear</mat-icon>
         <p>
           Your project language
           <ng-container *ngIf="targetLanguageDisplayName">
             of <em>"{{ targetLanguageDisplayName }}"</em>
           </ng-container>
-          is <span *ngIf="!isTargetLanguageNllb">not</span> in the
+          is <span *ngIf="!isTargetLanguageSupported">not</span> in the
           <a
             href="https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion"
             target="_blank"
@@ -42,22 +47,15 @@
         </p>
       </li>
       <li>
-        <mat-icon [ngClass]="{ 'criteria-met': isBackTranslation, 'criteria-not-met': !isBackTranslation }">{{
-          isBackTranslation ? "check" : "clear"
-        }}</mat-icon>
-        <p>Your project type is <span *ngIf="!isBackTranslation">not</span> a back translation project.</p>
-      </li>
-      <li>
-        <mat-icon [ngClass]="{ 'criteria-met': isSourceProjectSet, 'criteria-not-met': !isSourceProjectSet }">{{
-          isSourceProjectSet ? "check" : "clear"
-        }}</mat-icon>
+        <mat-icon *ngIf="isSourceProjectSet" class="criteria-met">check</mat-icon>
+        <mat-icon *ngIf="!isSourceProjectSet" class="criteria-not-met">clear</mat-icon>
         <p *ngIf="isSourceProjectSet">Your project has source text selected.</p>
         <p *ngIf="!isSourceProjectSet">Your project has no source text selected.</p>
       </li>
     </ul>
   </section>
 
-  <ng-container *ngIf="isReady">
+  <ng-container *ngIf="isDraftJobFetched">
     <mat-divider inset></mat-divider>
 
     <section *ngIf="infoAlert === InfoAlert.NotBackTranslation">
@@ -65,7 +63,7 @@
       <p>In order to generate a draft translation, the project must be a back translation project.</p>
     </section>
 
-    <section *ngIf="infoAlert === InfoAlert.NotNllb">
+    <section *ngIf="infoAlert === InfoAlert.NotSupportedLanguage">
       <h3><mat-icon>info</mat-icon>Target language is not supported for draft generation</h3>
       <p>
         Your project language
@@ -83,7 +81,7 @@
       </p>
     </section>
 
-    <section *ngIf="infoAlert === InfoAlert.NotSourceProjectSet">
+    <section *ngIf="infoAlert === InfoAlert.NoSourceProjectSet">
       <h3><mat-icon>info</mat-icon>Source text not selected</h3>
       <p>
         A source text has not been selected for this project. You can select a source text in
@@ -91,7 +89,7 @@
       </p>
     </section>
 
-    <section *ngIf="infoAlert === InfoAlert.NotSourceAndTargetLanguageDifferent">
+    <section *ngIf="infoAlert === InfoAlert.SourceAndTargetLanguageIdentical">
       <h3><mat-icon>info</mat-icon>Same source and target language</h3>
       <p>The language for your source text must be different than the target language.</p>
     </section>
