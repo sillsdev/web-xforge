@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { isEmpty } from 'lodash-es';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
@@ -12,7 +12,7 @@ import { Locale } from 'xforge-common/models/i18n-locale';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { BuildStates } from '../../machine-api/build-states';
 import { NllbLanguageService } from '../nllb-language.service';
-import { ACTIVE_BUILD_STATES } from './draft-generation';
+import { activeBuildStates } from './draft-generation';
 import { DraftGenerationService } from './draft-generation.service';
 
 export enum InfoAlert {
@@ -62,8 +62,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     public readonly activatedProject: ActivatedProjectService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly nllbService: NllbLanguageService,
-    private readonly i18n: I18nService,
-    @Inject(ACTIVE_BUILD_STATES) private readonly activeBuildStates: BuildStates[]
+    private readonly i18n: I18nService
   ) {
     super();
   }
@@ -200,7 +199,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   isDraftInProgress(job?: BuildDto): boolean {
-    return this.activeBuildStates.includes(job?.state as BuildStates);
+    return activeBuildStates.includes(job?.state as BuildStates);
   }
 
   isDraftQueued(job?: BuildDto): boolean {
