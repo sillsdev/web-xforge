@@ -241,12 +241,16 @@ public class MachineProjectService : IMachineProjectService
                     cancellationToken
                 );
 
-                // Clear the pre-translation queued status
+                // Clear the pre-translation queued status and job id
                 if (preTranslate)
                 {
                     await _projectSecrets.UpdateAsync(
                         sfProjectId,
-                        u => u.Unset(p => p.ServalData.PreTranslationQueuedAt)
+                        u =>
+                        {
+                            u.Unset(p => p.ServalData.PreTranslationJobId);
+                            u.Unset(p => p.ServalData.PreTranslationQueuedAt);
+                        }
                     );
                 }
 

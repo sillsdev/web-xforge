@@ -111,19 +111,40 @@ public class MachineApiService : IMachineApiService
             throw new DataNotFoundException("The translation engine is not configured");
         }
 
+        // If we have pre-translation job information
+        if (
+            (await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret)
+            && (
+                projectSecret.ServalData?.PreTranslationJobId is not null
+                || projectSecret.ServalData?.PreTranslationQueuedAt is not null
+            )
+        )
+        {
+            // Cancel the Hangfire job
+            if (projectSecret.ServalData?.PreTranslationJobId is not null)
+            {
+                _backgroundJobClient.Delete(projectSecret.ServalData?.PreTranslationJobId);
+            }
+
+            // Clear the pre-translation queued status and job id
+            await _projectSecrets.UpdateAsync(
+                sfProjectId,
+                u =>
+                {
+                    u.Unset(p => p.ServalData.PreTranslationJobId);
+                    u.Unset(p => p.ServalData.PreTranslationQueuedAt);
+                }
+            );
+        }
+
         try
         {
             // Cancel the build on Serval
             await _translationEnginesClient.CancelBuildAsync(translationEngineId, cancellationToken);
-
-            // Clear the pre-translation queued status
-            if (
-                (await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret)
-                && projectSecret.ServalData?.PreTranslationQueuedAt is not null
-            )
-            {
-                await _projectSecrets.UpdateAsync(sfProjectId, u => u.Unset(p => p.ServalData.PreTranslationQueuedAt));
-            }
+        }
+        catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
+        {
+            // We do not mind if a 404 exception comes from Serval - we can assume the job is now cancelled
         }
         catch (Exception e)
         {
@@ -577,14 +598,18 @@ public class MachineApiService : IMachineApiService
         }
 
         // This will take a while, so we run it in the background
-        _backgroundJobClient.Enqueue<MachineProjectService>(
+        string jobId = _backgroundJobClient.Enqueue<MachineProjectService>(
             r => r.BuildProjectAsync(curUserId, sfProjectId, true, CancellationToken.None)
         );
 
-        // Set the pre-translation queued date and time
+        // Set the pre-translation queued date and time, and hang fire job id
         await _projectSecrets.UpdateAsync(
             sfProjectId,
-            u => u.Set(p => p.ServalData.PreTranslationQueuedAt, DateTime.UtcNow)
+            u =>
+            {
+                u.Set(p => p.ServalData.PreTranslationJobId, jobId);
+                u.Set(p => p.ServalData.PreTranslationQueuedAt, DateTime.UtcNow);
+            }
         );
     }
 
