@@ -1,11 +1,11 @@
 /* eslint-disable brace-style */
-import { Inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Observable, of, Subscription, timer } from 'rxjs';
 import { map, takeWhile } from 'rxjs/operators';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { BuildStates } from 'src/app/machine-api/build-states';
 import { HttpResponse } from 'src/app/machine-api/http-client';
-import { ACTIVE_BUILD_STATES, PreTranslation, PreTranslationData } from './draft-generation';
+import { activeBuildStates, PreTranslation, PreTranslationData } from './draft-generation';
 
 /**
  * Mocks the machine api http responses for the pre-translation endpoints.
@@ -56,9 +56,9 @@ export class MockPreTranslationHttpClient {
   // Restore most recent job state from browser session if available
   private mostRecentJobState?: BuildDto = this.getFromBrowserSessionStorage<BuildDto>('mostRecentJobState');
 
-  constructor(@Inject(ACTIVE_BUILD_STATES) private readonly activeBuildStates: BuildStates[]) {
+  constructor() {
     // If a build was in progress when browser session ended, resume it
-    if (this.mostRecentJobState && this.activeBuildStates.includes(this.mostRecentJobState.state as BuildStates)) {
+    if (this.mostRecentJobState && activeBuildStates.includes(this.mostRecentJobState.state as BuildStates)) {
       this.startGeneration(true);
     }
   }

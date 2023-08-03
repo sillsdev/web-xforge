@@ -7,7 +7,7 @@ import { BuildStates } from 'src/app/machine-api/build-states';
 import { HttpClient } from 'src/app/machine-api/http-client';
 import { BuildDto } from '../../machine-api/build-dto';
 import {
-  ACTIVE_BUILD_STATES,
+  activeBuildStates,
   DraftGenerationServiceOptions,
   DraftSegmentMap,
   DRAFT_GENERATION_SERVICE_OPTIONS,
@@ -21,7 +21,6 @@ import {
 export class DraftGenerationService {
   constructor(
     private readonly httpClient: HttpClient,
-    @Inject(ACTIVE_BUILD_STATES) private readonly activeBuildStates: BuildStates[],
     @Inject(DRAFT_GENERATION_SERVICE_OPTIONS) private readonly options: DraftGenerationServiceOptions
   ) {}
 
@@ -35,7 +34,7 @@ export class DraftGenerationService {
   pollBuildProgress(projectId: string): Observable<BuildDto | undefined> {
     return timer(0, this.options.pollRate).pipe(
       switchMap(() => this.getBuildProgress(projectId)),
-      takeWhile(job => this.activeBuildStates.includes(job?.state as BuildStates), true),
+      takeWhile(job => activeBuildStates.includes(job?.state as BuildStates), true),
       distinct(job => `${job?.state}${job?.percentCompleted}`),
       shareReplay({ bufferSize: 1, refCount: true })
     );
@@ -109,7 +108,7 @@ export class DraftGenerationService {
     return this.getBuildProgress(projectId).pipe(
       switchMap((job?: BuildDto) =>
         // If existing build is currently active, return polling observable.  Otherwise, start build and then poll.
-        this.activeBuildStates.includes(job?.state as BuildStates)
+        activeBuildStates.includes(job?.state as BuildStates)
           ? this.pollBuildProgress(projectId)
           : this.httpClient.post<void>(`translation/pretranslations`, JSON.stringify(projectId)).pipe(
               // No errors means build successfully started, so start polling
