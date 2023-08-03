@@ -101,7 +101,8 @@
                       (click)="questionDialog()"
                       class="add-question-button"
                     >
-                      <mat-icon class="mat-icon-rtl-mirror">post_add</mat-icon> <span>{{ t("add_question") }}</span>
+                      <mat-icon class="mat-icon-rtl-mirror" fontIcon="post_add"></mat-icon>
+                      <span>{{ t("add_question") }}</span>
                     </button>
                     <button
                       *ngIf="featureFlags.scriptureAudio.enabled && !chapterHasAudio"
