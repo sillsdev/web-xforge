@@ -35,10 +35,7 @@ export const DRAFT_GENERATION_SERVICE_OPTIONS = new InjectionToken<DraftGenerati
  * Build states for builds that are under way.  A new build should not be started if current build
  * is in one of these states.
  */
-export const ACTIVE_BUILD_STATES = new InjectionToken<BuildStates[]>('ACTIVE_BUILD_STATES', {
-  providedIn: 'root',
-  factory: () => [BuildStates.Active, BuildStates.Pending, BuildStates.Queued]
-});
+export const activeBuildStates: BuildStates[] = [BuildStates.Active, BuildStates.Pending, BuildStates.Queued];
 
 /**
  * Data returned from machine api.
