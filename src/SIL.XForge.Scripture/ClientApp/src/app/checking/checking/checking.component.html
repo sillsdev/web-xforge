@@ -101,7 +101,7 @@
                       (click)="questionDialog()"
                       class="add-question-button"
                     >
-                      <mdc-icon class="mirror-rtl">post_add</mdc-icon> <span>{{ t("add_question") }}</span>
+                      <mat-icon class="mat-icon-rtl-mirror">post_add</mat-icon> <span>{{ t("add_question") }}</span>
                     </button>
                     <button
                       *ngIf="featureFlags.scriptureAudio.enabled && !chapterHasAudio"
@@ -174,7 +174,7 @@
         </div>
         <div *ngIf="projectDoc" id="project-navigation">
           <button mat-button *ngIf="!this.isDrawerPermanent" type="button" (click)="toggleDrawer()">
-            <span class="mdc-button__label">{{ t("view_questions") }}</span>
+            <span>{{ t("view_questions") }}</span>
           </button>
           <div class="d-flex justify-content-end">
             <button
