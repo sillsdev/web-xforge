@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -6,16 +6,12 @@ import { TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-in
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { QuestionDoc } from 'src/app/core/models/question-doc';
-import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
-import { SFProjectService } from 'src/app/core/sf-project.service';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { objectId } from 'xforge-common/utils';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
@@ -23,6 +19,7 @@ import { AudioAttachment } from '../checking/checking-audio-recorder/checking-au
 export interface ChapterAudioDialogData {
   projectId: string;
   textsByBookId: TextsByBookId;
+  questionsSorted: readonly QuestionDoc[];
 }
 
 export interface ChapterAudioDialogResult {
@@ -37,13 +34,11 @@ export interface ChapterAudioDialogResult {
   templateUrl: './chapter-audio-dialog.component.html',
   styleUrls: ['./chapter-audio-dialog.component.scss']
 })
-export class ChapterAudioDialogComponent extends SubscriptionDisposable implements OnInit {
+export class ChapterAudioDialogComponent {
   private audio?: AudioAttachment;
   private _book: number = this.books[0];
   private _chapter: number = 1;
   private timing: AudioTiming[] = [];
-  private projectDoc!: SFProjectProfileDoc;
-  private questionsQuery!: RealtimeQuery<QuestionDoc>;
   private _selectionHasAudioAlready: boolean = false;
   private _hasTimingBeenUploaded: boolean = false;
   private _audioLength: number = 0;
@@ -56,33 +51,21 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     private readonly csvService: CsvService,
     private readonly dialogRef: MatDialogRef<ChapterAudioDialogComponent, ChapterAudioDialogResult | undefined>,
     private readonly fileService: FileService,
-    private readonly projectService: SFProjectService,
     private readonly dialogService: DialogService
   ) {
-    super();
-  }
-
-  async ngOnInit(): Promise<void> {
-    this.projectDoc = await this.projectService.getProfile(this.data.projectId);
-    this.questionsQuery = await this.projectService.queryQuestions(this.data.projectId, { activeOnly: true });
-
     this.getStartingLocation();
   }
 
   private getStartingLocation(): void {
-    const sortedByChapter = [...this.questionsQuery.docs].sort(
-      (a, b) => a.data?.verseRef.chapterNum! - b.data?.verseRef.chapterNum!
-    );
-    const sortedByBookChapter = sortedByChapter.sort((a, b) => a.data?.verseRef.bookNum! - b.data?.verseRef.bookNum!);
+    const publishedQuestions = this.data.questionsSorted.filter(q => !q.data?.isArchived);
+    for (const question of publishedQuestions) {
+      const bookNum = question.data?.verseRef.bookNum!;
+      const chapterNum = question.data?.verseRef.chapterNum;
 
-    for (const question of sortedByBookChapter) {
-      const book = question.data?.verseRef.bookNum!;
-      const chapter = question.data?.verseRef.chapterNum;
-
-      const text = this.projectDoc.data?.texts.find(t => t.bookNum === book);
-      const textChapter = text?.chapters.find(c => c.number === chapter);
+      const text = this.data.textsByBookId[Canon.bookNumberToId(bookNum)];
+      const textChapter = text?.chapters.find(c => c.number === chapterNum);
       if (!textChapter?.hasAudio) {
-        this._book = book;
+        this._book = bookNum;
         this._chapter = textChapter?.number!;
         return;
       }
@@ -94,7 +77,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   }
 
   private checkForPreexistingAudio(): void {
-    const text = this.projectDoc.data?.texts.find(t => t.bookNum === this.book);
+    const text = this.data.textsByBookId[Canon.bookNumberToId(this.book)];
     const textChapter = text?.chapters.find(c => c.number === this.chapter);
     this._selectionHasAudioAlready = textChapter?.hasAudio ?? false;
   }

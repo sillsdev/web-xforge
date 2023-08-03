@@ -1,25 +1,27 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
+import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { Canon } from '@sillsdev/scripture';
-import { asyncScheduler, merge, Subscription } from 'rxjs';
+import { Subscription, asyncScheduler, merge } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
+import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog-service';
+import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
 import {
   ImportQuestionsDialogComponent,
@@ -27,8 +29,6 @@ import {
 } from '../import-questions-dialog/import-questions-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
-import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog-service';
 
 @Component({
   selector: 'app-checking-overview',
@@ -187,7 +187,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         if (this.questionsQuery != null) {
           this.questionsQuery.dispose();
         }
-        this.questionsQuery = await this.projectService.queryQuestions(projectId);
+        this.questionsQuery = await this.projectService.queryQuestions(projectId, { sort: true });
         this.initTexts();
       } finally {
         this.loadingFinished();
@@ -312,7 +312,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
 
     const dialogConfig: ChapterAudioDialogData = {
       projectId: this.projectId,
-      textsByBookId: this.textsByBookId
+      textsByBookId: this.textsByBookId,
+      questionsSorted: this.allPublishedQuestions
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
     // TODO: Update dashboard to show audio data
