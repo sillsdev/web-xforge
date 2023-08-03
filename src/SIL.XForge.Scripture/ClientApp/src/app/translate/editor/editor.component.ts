@@ -285,16 +285,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   set chapter(value: number | undefined) {
     if (this._chapter !== value) {
-      this.showSuggestions = false;
-      this.toggleNoteThreadVerses(false);
-      this._chapter = value;
-      this.changeText();
-      this.toggleNoteThreadVerses(true);
-      this.bottomSheet.dismiss();
-
-      // Update url to reflect current chapter
+      // Update url to reflect current chapter, triggering ActivatedRoute
       this.router.navigateByUrl(
-        `/projects/${this.projectId}/translate/${Canon.bookNumberToId(this.bookNum!)}/${this.chapter}`
+        `/projects/${this.projectId}/translate/${Canon.bookNumberToId(this.bookNum!)}/${value}`
       );
     }
   }

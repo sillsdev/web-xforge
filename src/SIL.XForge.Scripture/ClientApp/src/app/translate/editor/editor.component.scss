@@ -19,7 +19,6 @@
 }
 
 .language-label {
-  height: 36px; // To match label containing button
   line-height: 28px;
   display: flex;
   align-items: flex-end;
@@ -45,6 +44,11 @@
   margin: 0 4px;
   height: 36px;
   width: 0;
+}
+
+.preview-draft-button {
+  // Border helps associate button with target editor that shows similar border when it has a draft
+  border: 3px dashed $draft-color;
 }
 
 .ql-suggestions {
