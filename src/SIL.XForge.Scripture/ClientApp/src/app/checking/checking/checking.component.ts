@@ -4,6 +4,7 @@ import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -15,8 +16,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Canon, VerseRef } from '@sillsdev/scripture';
-import { merge, of, Subscription } from 'rxjs';
+import { Subscription, merge, of } from 'rxjs';
 import { filter, map, take } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -41,11 +41,11 @@ import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
+import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog-service';
+import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog-service';
-import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
@@ -809,7 +809,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
     const dialogConfig: ChapterAudioDialogData = {
       projectId: this.projectDoc?.id,
-      textsByBookId: this.textsByBookId
+      textsByBookId: this.textsByBookId,
+      questionsSorted: this.questionDocs
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
   }
