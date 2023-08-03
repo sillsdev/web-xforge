@@ -726,6 +726,7 @@ describe('EditorComponent', () => {
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.component.chapter = 2;
+      env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
       env.wait();
       const verseText = env.component.target!.getSegmentText('verse_2_1');
       expect(verseText).toBe('target: chapter 2, verse 1.');
@@ -734,6 +735,7 @@ describe('EditorComponent', () => {
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.component.chapter = 1;
+      env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
@@ -2907,6 +2909,7 @@ describe('EditorComponent', () => {
       env.setSelectionAndInsertNote(segmentRef);
       expect(env.mobileNoteTextArea).toBeTruthy();
       env.component.chapter = 2;
+      env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
       env.wait();
       env.clickSegmentRef('verse_2_2');
       env.wait();
