@@ -174,9 +174,7 @@
           </div>
         </div>
         <div *ngIf="projectDoc" id="project-navigation">
-          <button mat-button *ngIf="!this.isDrawerPermanent" type="button" (click)="toggleDrawer()">
-            <span>{{ t("view_questions") }}</span>
-          </button>
+          <button mat-button *ngIf="!this.isDrawerPermanent" type="button" (click)="toggleDrawer()"></button>
           <div class="d-flex justify-content-end">
             <button
               mat-button
