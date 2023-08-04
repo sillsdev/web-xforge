@@ -1,6 +1,7 @@
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   OnInit,
   QueryList,
@@ -61,7 +62,8 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly projectService: SFProjectService,
     private readonly activatedRoute: ActivatedRoute,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly changeDetectorRef: ChangeDetectorRef
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -136,10 +138,15 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     this.draftGenerationService
       .getGeneratedDraft(this.targetProjectId!, this.currentBook, this.currentChapter)
       .pipe(
-        filter(
-          (draft: DraftSegmentMap) =>
-            (this.hasDraft = this.draftViewerService.hasDraftOps(draft, this.preDraftTargetDelta!.ops!))
-        ),
+        filter((draft: DraftSegmentMap) => {
+          this.hasDraft = this.draftViewerService.hasDraftOps(draft, this.preDraftTargetDelta!.ops!);
+
+          // Needed to trigger OnPush change detection because service response
+          // occurs after change detection due to component event emission
+          this.changeDetectorRef.markForCheck();
+
+          return this.hasDraft;
+        }),
         map((draft: DraftSegmentMap) => this.draftViewerService.toDraftOps(draft, this.preDraftTargetDelta!.ops!))
       )
       .subscribe((draftOps: DeltaOperation[]) => {
