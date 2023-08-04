@@ -89,11 +89,12 @@
                       fxShow.lt-xl
                       mat-icon-button
                       type="button"
-                      icon="post_add"
                       title="{{ t('add_question') }}"
                       (click)="questionDialog()"
                       class="add-question-button"
-                    ></button>
+                    >
+                      <mat-icon>post_add</mat-icon>
+                    </button>
                     <button
                       fxHide.lt-xl
                       mat-button
@@ -101,7 +102,7 @@
                       (click)="questionDialog()"
                       class="add-question-button"
                     >
-                      <mat-icon class="mat-icon-rtl-mirror">post_add</mat-icon>
+                      <mat-icon class="mirror-rtl">post_add</mat-icon>
                       <span>{{ t("add_question") }}</span>
                     </button>
                     <button
