@@ -1,4 +1,3 @@
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
