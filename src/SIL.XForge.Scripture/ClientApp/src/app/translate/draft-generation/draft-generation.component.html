@@ -94,7 +94,7 @@
       <p>The language for your source text must be different than the target language.</p>
     </section>
 
-    <ng-container *ngIf="isGenerationSupported()">
+    <ng-container *ngIf="isGenerationSupported">
       <section *ngIf="draftJob == null; else jobExists">
         <h3>Generate draft</h3>
         <p>
