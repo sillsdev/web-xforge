@@ -1,0 +1,9 @@
+:host ::ng-deep .mat-button-wrapper {
+  display: flex;
+  .mat-icon {
+    align-self: center;
+  }
+  .text-padding {
+    padding: 0 0.5em;
+  }
+}
