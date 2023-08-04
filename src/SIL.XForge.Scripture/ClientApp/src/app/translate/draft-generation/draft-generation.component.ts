@@ -61,6 +61,15 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
    */
   hasAnyCompletedBuild$!: Observable<boolean>;
 
+  get isGenerationSupported(): boolean {
+    return (
+      this.isBackTranslation &&
+      this.isTargetLanguageSupported &&
+      this.isSourceProjectSet &&
+      this.isSourceAndTargetDifferent
+    );
+  }
+
   constructor(
     private readonly matDialog: MatDialog,
     private readonly dialogService: DialogService,
@@ -217,15 +226,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   isDraftComplete(job?: BuildDto): boolean {
     return (job?.state as BuildStates) === BuildStates.Completed;
-  }
-
-  isGenerationSupported(): boolean {
-    return (
-      this.isBackTranslation &&
-      this.isTargetLanguageSupported &&
-      this.isSourceProjectSet &&
-      this.isSourceAndTargetDifferent
-    );
   }
 
   canCancel(job?: BuildDto): boolean {
