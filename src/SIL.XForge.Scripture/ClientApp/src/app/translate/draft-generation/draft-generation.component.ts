@@ -53,10 +53,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
    */
   isDraftJobFetched = false;
 
-  get isGenerationSupported(): boolean {
-    return this.isBackTranslation && this.isTargetLanguageSupported && this.isSourceProjectSet && this.isSourceAndTargetDifferent;
-  }
-
   /**
    * Whether any completed draft build exists for this project.
    * This is useful for when the last build did not complete successfully or was canceled,
@@ -64,6 +60,8 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
    * from that build can still be retrieved.
    */
   hasAnyCompletedBuild$!: Observable<boolean>;
+
+  readonly nllbUrl: string = 'https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion';
 
   get isGenerationSupported(): boolean {
     return (
@@ -73,8 +71,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       this.isSourceAndTargetDifferent
     );
   }
-
-  readonly nllbUrl: string = 'https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion';
 
   constructor(
     private readonly matDialog: MatDialog,
