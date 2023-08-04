@@ -1,9 +1,9 @@
 <ng-container *transloco="let t; read: 'start'">
   <div fxLayout="column" fxLayoutAlign="center center" *ngIf="!isAppLoading">
-    <p mdcBody1>{{ t("not_connected_to_any_projects") }}</p>
+    <p>{{ t("not_connected_to_any_projects") }}</p>
     <p>
-      <button mdc-button [unelevated]="true" type="button" [appRouterLink]="['/connect-project']">
-        <mdc-icon>add</mdc-icon>{{ t("connect_project") }}
+      <button mat-flat-button color="primary" type="button" [appRouterLink]="['/connect-project']">
+        <mat-icon>add</mat-icon><span class="text-padding">{{ t("connect_project") }}</span>
       </button>
     </p>
   </div>
