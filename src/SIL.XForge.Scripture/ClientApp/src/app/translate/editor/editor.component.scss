@@ -19,7 +19,6 @@
 }
 
 .language-label {
-  height: 28px;
   line-height: 28px;
 }
 
@@ -43,6 +42,11 @@
   margin: 0 4px;
   height: 36px;
   width: 0;
+}
+
+.preview-draft-button {
+  // Border helps associate button with target editor that shows similar border when it has a draft
+  border: 3px dashed $draft-color;
 }
 
 .ql-suggestions {
@@ -124,5 +128,21 @@ app-text {
   .fab-action-buttons {
     display: flex;
     justify-content: flex-end;
+  }
+}
+
+.project-name-bar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 2px;
+
+  button {
+    margin-inline-start: 10px;
+
+    mat-icon {
+      font-size: 22px;
+      margin-inline-end: 4px;
+    }
   }
 }
