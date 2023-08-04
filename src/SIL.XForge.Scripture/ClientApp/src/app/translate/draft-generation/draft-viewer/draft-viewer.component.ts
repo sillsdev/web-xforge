@@ -193,6 +193,7 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
 
   // Book/chapter chooser book changed
   onBookChange(book: number): void {
+    // When user changes book, always navigate to the first chapter of the book
     this.router.navigateByUrl(`/projects/${this.targetProjectId}/draft-preview/${Canon.bookNumberToId(book)}/1`);
   }
 
