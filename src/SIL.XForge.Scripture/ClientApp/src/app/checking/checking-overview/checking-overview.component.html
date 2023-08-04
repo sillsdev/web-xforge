@@ -67,7 +67,7 @@
                 dense
                 *ngIf="
                   questionCount(text.bookNum, chapter.number) > 0 ||
-                  (chapter.hasAudio && featureFlagsService.scriptureAudio)
+                  (chapter.hasAudio && featureFlagsService.scriptureAudio.enabled)
                 "
                 [togglePosition]="'before'"
                 class="mat-elevation-z0"
@@ -77,7 +77,7 @@
                     <span fxFlex fxLayout class="book-chapter-heading"
                       >{{ getBookName(text) + " " + chapter?.number }}
                       <mat-icon
-                        *ngIf="featureFlagsService.scriptureAudio && chapter.hasAudio"
+                        *ngIf="featureFlagsService.scriptureAudio.enabled && chapter.hasAudio"
                         title="{{ t('chapter_audio_attached') }}"
                         >headset</mat-icon
                       ></span
@@ -108,7 +108,7 @@
                           <mat-icon>archive</mat-icon>
                           <span>{{ t("archive_multiple", { location: getBookName(text) }) }}</span>
                         </button>
-                        <ng-container *ngIf="featureFlagsService.scriptureAudio && chapter.hasAudio">
+                        <ng-container *ngIf="featureFlagsService.scriptureAudio.enabled && chapter.hasAudio">
                           <button
                             mat-menu-item
                             disabled
