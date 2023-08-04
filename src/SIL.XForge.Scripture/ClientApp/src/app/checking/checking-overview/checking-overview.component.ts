@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Canon } from '@sillsdev/scripture';
 import { asyncScheduler, merge, Subscription } from 'rxjs';
@@ -405,15 +405,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     if (this.projectDoc == null || this.textsByBookId == null) {
       return;
     }
-    if (questionDoc != null && questionDoc.data != null) {
-      if (questionDoc?.data != null && questionDoc.getAnswers().length > 0) {
-        const confirm = await this.dialogService.confirm(
-          'question_answered_dialog.question_has_answer',
-          'question_answered_dialog.edit_anyway'
-        );
-        if (!confirm) {
-          return;
-        }
+    if (questionDoc?.data != null && questionDoc.getAnswers().length > 0) {
+      const confirm = await this.dialogService.confirm(
+        'question_answered_dialog.question_has_answer',
+        'question_answered_dialog.edit_anyway'
+      );
+      if (!confirm) {
+        return;
       }
     }
 
@@ -448,13 +446,12 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   private async confirmArchiveQuestions(archive: boolean, scope: string): Promise<boolean> {
-    const confirmation = await this.dialogService.confirm(
+    return await this.dialogService.confirm(
       this.i18n.translate(`checking_overview.${archive ? 'confirm_bulk_archive' : 'confirm_bulk_republish'}`, {
         scope
       }),
       `checking_overview.${archive ? 'archive' : 'republish'}`
     );
-    return confirmation === true;
   }
 
   private initTextsWithLoadingIndicator(): void {
