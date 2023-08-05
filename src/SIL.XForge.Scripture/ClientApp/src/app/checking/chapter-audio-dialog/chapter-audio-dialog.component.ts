@@ -2,6 +2,7 @@ import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
+import { reject } from 'lodash-es';
 import { TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -133,10 +134,12 @@ export class ChapterAudioDialogComponent {
   async audioUpdate(audio: AudioAttachment): Promise<void> {
     this.audio = audio;
     if (audio.url) {
-      this._audioLength = await this.getDuration(audio.url);
-      if (this._hasTimingBeenUploaded) {
-        this.validateTimingEntries(this.timing, this._audioLength);
-      }
+      await this.getDuration(audio.url).then(l => {
+        this._audioLength = l;
+        if (this._hasTimingBeenUploaded) {
+          this.validateTimingEntries(this.timing, this._audioLength);
+        }
+      });
     }
   }
 
@@ -224,7 +227,7 @@ export class ChapterAudioDialogComponent {
       const nextTo: number = nextRow.from;
       return nextTo;
     } else {
-      return await this.getDuration(this.audio!.url!);
+      return this._audioLength;
     }
   }
 
@@ -233,6 +236,9 @@ export class ChapterAudioDialogComponent {
       var audio = new Audio();
       audio.addEventListener('loadedmetadata', function () {
         resolve(audio.duration);
+      });
+      audio.addEventListener('error', () => {
+        reject(new Error(`Audio Load Failed Code ${audio.error?.code ?? 'Unknown'}: ${audio.error?.message}`));
       });
       audio.src = url;
     });
