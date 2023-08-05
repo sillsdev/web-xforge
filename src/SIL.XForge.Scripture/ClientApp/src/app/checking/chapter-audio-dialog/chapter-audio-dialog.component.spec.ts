@@ -1,5 +1,6 @@
-import { DebugElement, NgModule } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { OverlayContainer } from '@angular/cdk/overlay';
+import { DebugElement, NgModule, NgZone } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Canon } from '@sillsdev/scripture';
@@ -7,15 +8,19 @@ import { ngfModule } from 'angular-file';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { QuestionDoc } from 'src/app/core/models/question-doc';
 import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
-import { TextDocId } from 'src/app/core/models/text-doc';
 import { TextsByBookId } from 'src/app/core/models/texts-by-book-id';
-import { anything, instance, mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { ChildViewContainerComponent, TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
+import {
+  ChildViewContainerComponent,
+  TestTranslocoModule,
+  configureTestingModule,
+  getAudioBlob
+} from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { CheckingModule } from '../checking.module';
@@ -41,55 +46,108 @@ describe('ChapterAudioDialogComponent', () => {
   }));
 
   let env: TestEnvironment;
-  afterEach(fakeAsync(() => {
-    if (env.closeButton != null) {
-      env.clickElement(env.closeButton);
+
+  let overlayContainer: OverlayContainer;
+  beforeEach(() => {
+    overlayContainer = TestBed.inject(OverlayContainer);
+  });
+  afterEach(() => {
+    // Prevents 'Error: Test did not clean up its overlay container content.'
+    overlayContainer.ngOnDestroy();
+  });
+
+  it('should upload audio and return timing data on save', fakeAsync(async () => {
+    env = new TestEnvironment();
+
+    const url = URL.createObjectURL(new File([getAudioBlob()], 'test.wav'));
+    const audio: AudioAttachment = {
+      status: 'uploaded',
+      blob: getAudioBlob(),
+      fileName: 'test-audio-player.webm',
+      url: url
+    };
+
+    const promiseForResult: Promise<ChapterAudioDialogResult> = env.dialogRef.afterClosed().toPromise();
+    await env.component.audioUpdate(audio);
+    await env.component.prepareTimingFileUpload(anything());
+    await env.component.save();
+    await env.wait(1000);
+
+    const result = await promiseForResult;
+
+    expect(result.audioUrl).toEqual('audio url');
+    expect(result.book).toEqual(env.component.book);
+    expect(result.chapter).toEqual(env.component.chapter);
+    expect(result.timingData.length > 0).toBeTruthy();
+    for (let row of result.timingData) {
+      expect(row.to).not.toEqual(0);
     }
-    flush();
+    expect(env.component.errorMessage).toEqual('');
   }));
 
-  describe('Add Question', () => {
-    it('should upload audio and return timing data on save', fakeAsync(async () => {
-      env = new TestEnvironment();
+  it('should default selection to first chapter with question and no audio', fakeAsync(async () => {
+    env = new TestEnvironment();
 
-      const blob = instance(mock(Blob));
-      const audio: AudioAttachment = {
-        status: 'uploaded',
-        blob: blob,
-        fileName: 'audio.mp3',
-        url: ''
-      };
+    const chapterOfFirstQuestion = TestEnvironment.textsByBookId[
+      Canon.bookNumberToId(env.question1.data?.verseRef.bookNum!)
+    ].chapters.find(c => c.number === env.question1.data?.verseRef.chapterNum)!;
 
-      const promiseForResult: Promise<ChapterAudioDialogResult> = env.dialogRef.afterClosed().toPromise();
+    expect(!chapterOfFirstQuestion.hasAudio);
+    expect(env.component.book).toEqual(env.question1.data?.verseRef.bookNum!);
+    expect(env.component.chapter).toEqual(env.question1.data?.verseRef.chapterNum!);
+  }));
 
-      env.component.prepareTimingFileUpload(anything());
-      env.component.audioUpdate(audio);
-      env.component.save();
-      tick();
-      env.fixture.detectChanges();
-      flush();
-      env.fixture.detectChanges();
+  it('detects if selection has audio already', fakeAsync(async () => {
+    env = new TestEnvironment();
 
-      const result = await promiseForResult;
+    const firstChapterWithAudio = Object.entries(TestEnvironment.textsByBookId)
+      .map(([, value]) => value.chapters)
+      .flat(1)
+      .find(c => c.hasAudio)!;
+    const containingBook = Object.entries(TestEnvironment.textsByBookId).find(([, value]) =>
+      value.chapters.includes(firstChapterWithAudio!)
+    )?.[1]!;
 
-      expect(result.audioUrl).toEqual('audio url');
-      expect(result.book).toEqual(env.component.book);
-      expect(result.chapter).toEqual(env.component.chapter);
-      expect(result.timingData.length > 0).toBeTruthy();
-    }));
+    expect(env.component.chapter).not.toEqual(firstChapterWithAudio.number);
+    expect(env.component.selectionHasAudioAlready).not.toBeTruthy();
 
-    it('should default selection to first chapter with question and no audio', fakeAsync(async () => {
-      env = new TestEnvironment();
+    env.component.book = containingBook.bookNum;
+    env.component.chapter = firstChapterWithAudio.number;
 
-      const firstChapterWithQuestion = TestEnvironment.textsByBookId[
-        Canon.bookNumberToId(env.question1.data?.verseRef.bookNum!)
-      ].chapters.find(c => c.number === env.question1.data?.verseRef.chapterNum)!;
+    expect(env.component.book).toEqual(containingBook.bookNum);
+    expect(env.component.chapter).toEqual(firstChapterWithAudio.number);
+    expect(env.component.selectionHasAudioAlready).toBeTruthy();
+  }));
 
-      expect(!firstChapterWithQuestion.hasAudio);
-      expect(env.component.book).toEqual(env.question1.data?.verseRef.bookNum!);
-      expect(env.component.chapter).toEqual(env.question1.data?.verseRef.chapterNum!);
-    }));
-  });
+  it('populates books and chapters', fakeAsync(async () => {
+    env = new TestEnvironment();
+
+    expect(env.component.books.length).toEqual(2);
+
+    for (let i of Object.entries(TestEnvironment.textsByBookId)) {
+      const bookNum = i[1].bookNum;
+      const numChapters = i[1].chapters.length;
+      env.component.book = bookNum;
+
+      expect(env.component.chapters.length).toEqual(numChapters);
+    }
+  }));
+
+  it('shows warning if zero timing entries are found', fakeAsync(async () => {
+    env = new TestEnvironment();
+  }));
+
+  it('shows warning if From field goes beyond audio length', fakeAsync(() => {
+    env = new TestEnvironment();
+  }));
+
+  it('can also parse mm:ss', fakeAsync(() => {
+    env = new TestEnvironment();
+  }));
+
+  it('can also parse hh:mm:ss', fakeAsync(() => {
+    env = new TestEnvironment();
+  }));
 });
 
 @NgModule({
@@ -98,16 +156,17 @@ describe('ChapterAudioDialogComponent', () => {
 class DialogTestModule {}
 
 class TestEnvironment {
-  static genTextDocId: TextDocId = new TextDocId('project01', 1, 2);
   static genesisText: TextInfo = {
-    bookNum: TestEnvironment.genTextDocId.bookNum,
+    bookNum: 1,
     hasSource: false,
-    chapters: [{ number: 2, lastVerse: 50, isValid: true, permissions: {} }],
+    chapters: [
+      { number: 2, lastVerse: 50, isValid: true, permissions: {}, hasAudio: true },
+      { number: 3, lastVerse: 33, isValid: true, permissions: {} }
+    ],
     permissions: {}
   };
-  static matTextDocId: TextDocId = new TextDocId('project01', 40, 1);
   static matthewText: TextInfo = {
-    bookNum: TestEnvironment.matTextDocId.bookNum,
+    bookNum: 40,
     hasSource: false,
     chapters: [
       { number: 1, lastVerse: 25, isValid: true, permissions: {} },
@@ -116,12 +175,12 @@ class TestEnvironment {
     permissions: {}
   };
   static textsByBookId: TextsByBookId = {
-    [Canon.bookNumberToId(TestEnvironment.genTextDocId.bookNum)]: TestEnvironment.genesisText,
-    [Canon.bookNumberToId(TestEnvironment.matTextDocId.bookNum)]: TestEnvironment.matthewText
+    [Canon.bookNumberToId(1)]: TestEnvironment.genesisText,
+    [Canon.bookNumberToId(40)]: TestEnvironment.matthewText
   };
 
   readonly question1: QuestionDoc = {
-    data: { text: 'Genesis 2:1 question', verseRef: { bookNum: 1, chapterNum: 2, verseNum: 1 } }
+    data: { text: 'Genesis 3:1 question', verseRef: { bookNum: 1, chapterNum: 3, verseNum: 1 } }
   } as QuestionDoc;
   readonly question2: QuestionDoc = {
     data: { text: 'Matthew 1:1 question', verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 } }
@@ -129,6 +188,7 @@ class TestEnvironment {
   readonly questions = [this.question1, this.question2];
 
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
+  readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly component: ChapterAudioDialogComponent;
   readonly dialogRef: MatDialogRef<ChapterAudioDialogComponent>;
 
@@ -142,7 +202,10 @@ class TestEnvironment {
     };
 
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
-    when(mockedCsvService.parse(anything())).thenResolve([['1', '2', 'label']]);
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['0.1', '0', 'v1'],
+      ['1', '0', 'v2']
+    ]);
     when(
       mockedFileService.uploadFile(
         FileType.Audio,
@@ -159,8 +222,6 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     this.dialogRef = TestBed.inject(MatDialog).open(ChapterAudioDialogComponent, config);
     this.component = this.dialogRef.componentInstance;
-    this.fixture.detectChanges();
-    tick();
   }
 
   clickElement(element: HTMLElement | DebugElement): void {
@@ -183,5 +244,10 @@ class TestEnvironment {
 
   private fetchElement(query: string): HTMLElement {
     return this.overlayContainerElement.querySelector(query) as HTMLElement;
+  }
+
+  async wait(ms: number = 100): Promise<void> {
+    await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
+    this.fixture.detectChanges();
   }
 }
