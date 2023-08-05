@@ -60,8 +60,6 @@ describe('ChapterAudioDialogComponent', () => {
         url: ''
       };
 
-      // const spy: jasmine.Spy<any> = spyOn<any>(mockedFileService, 'uploadFile');
-
       const promiseForResult: Promise<ChapterAudioDialogResult> = env.dialogRef.afterClosed().toPromise();
 
       env.component.prepareTimingFileUpload(anything());
@@ -73,8 +71,6 @@ describe('ChapterAudioDialogComponent', () => {
       env.fixture.detectChanges();
 
       const result = await promiseForResult;
-
-      // expect(spy).toHaveBeenCalledTimes(1);
 
       expect(result.audioUrl).toEqual('audio url');
       expect(result.book).toEqual(env.component.book);
