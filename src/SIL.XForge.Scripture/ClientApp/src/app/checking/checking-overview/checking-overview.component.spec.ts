@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { By } from '@angular/platform-browser';
@@ -13,17 +13,17 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import {
-  getQuestionDocId,
+  QUESTIONS_COLLECTION,
   Question,
-  QUESTIONS_COLLECTION
+  getQuestionDocId
 } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
-  getSFProjectUserConfigDocId,
-  SFProjectUserConfig
+  SFProjectUserConfig,
+  getSFProjectUserConfigDocId
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
@@ -34,7 +34,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -274,7 +274,7 @@ describe('CheckingOverviewComponent', () => {
     it('should not show import questions button until list of texts have loaded', fakeAsync(() => {
       const env = new TestEnvironment();
       const delayPromise = new Promise<void>(resolve => setTimeout(resolve, 10 * 1000));
-      when(mockedProjectService.queryQuestions(anything())).thenReturn(
+      when(mockedProjectService.queryQuestions(anything(), anything())).thenReturn(
         delayPromise.then(() => env.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {}))
       );
 
@@ -845,7 +845,7 @@ class TestEnvironment {
     when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
       this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId))
     );
-    when(mockedProjectService.queryQuestions('project01')).thenCall(() =>
+    when(mockedProjectService.queryQuestions('project01', anything())).thenCall(() =>
       this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {})
     );
     this.setCurrentUser(this.adminUser);
