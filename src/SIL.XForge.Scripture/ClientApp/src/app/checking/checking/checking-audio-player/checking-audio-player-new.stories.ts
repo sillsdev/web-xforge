@@ -8,19 +8,19 @@ import { PwaService } from 'xforge-common/pwa.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
-import { CheckingAudioPlayerNewComponent } from './checking-audio-player-new.component';
+import { CheckingAudioPlayerComponent } from './checking-audio-player.component';
 
 const mockedPwaService = mock(PwaService);
 when(mockedPwaService.isOnline).thenReturn(true);
 when(mockedPwaService.onlineStatus$).thenReturn(of(true));
 
-const meta: Meta<CheckingAudioPlayerNewComponent> = {
+const meta: Meta<CheckingAudioPlayerComponent> = {
   title: 'Components/Checking Audio',
-  component: CheckingAudioPlayerNewComponent,
+  component: CheckingAudioPlayerComponent,
   decorators: [
     moduleMetadata({
       imports: [UICommonModule, CommonModule, I18nStoryModule],
-      declarations: [CheckingAudioPlayerNewComponent, AudioPlayerComponent, AudioTimePipe],
+      declarations: [CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe],
       providers: [{ provide: PwaService, useValue: instance(mockedPwaService) }]
     })
   ],
@@ -29,7 +29,7 @@ const meta: Meta<CheckingAudioPlayerNewComponent> = {
 
 export default meta;
 
-type Story = StoryObj<CheckingAudioPlayerNewComponent>;
+type Story = StoryObj<CheckingAudioPlayerComponent>;
 
 export const Default: Story = {};
 
