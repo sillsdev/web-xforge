@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -1151,7 +1151,16 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 if (index >= 0)
                 {
                     if (threadDoc.Data.Notes[index].Content != updated.Content)
+                    {
                         op.Set(td => td.Notes[index].Content, updated.Content);
+
+                        // As the note content has been updated by PT, disable editing
+                        if (threadDoc.Data.Notes[index].Editable == true)
+                        {
+                            op.Set(td => td.Notes[index].Editable, false);
+                        }
+                    }
+
                     if (threadDoc.Data.Notes[index].Status != updated.Status)
                         op.Set(td => td.Notes[index].Status, updated.Status);
                     if (threadDoc.Data.Notes[index].Type != updated.Type)
@@ -1164,6 +1173,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                         op.Set(td => td.Notes[index].Assignment, updated.Assignment);
                     if (threadDoc.Data.Notes[index].AcceptedChangeXml != updated.AcceptedChangeXml)
                         op.Set(td => td.Notes[index].AcceptedChangeXml, updated.AcceptedChangeXml);
+                    if (threadDoc.Data.Notes[index].VersionNumber != updated.VersionNumber)
+                        op.Set(td => td.Notes[index].VersionNumber, updated.VersionNumber);
                     _syncMetrics.Notes.Updated++;
                 }
                 else

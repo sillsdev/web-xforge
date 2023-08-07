@@ -2285,26 +2285,41 @@ public class ParatextService : DisposableBase, IParatextService
             for (int i = 0; i < threadDoc.Data.Notes.Count; i++)
             {
                 Note note = threadDoc.Data.Notes[i];
+
+                // Do not update a note if it is not editable
+                if (note.Editable != true)
+                {
+                    continue;
+                }
+
                 Paratext.Data.ProjectComments.Comment matchedComment =
                     existingThread == null ? null : GetMatchingCommentFromNote(note, existingThread, ptProjectUsers);
                 if (matchedComment != null)
                 {
                     var comment = (Paratext.Data.ProjectComments.Comment)matchedComment.Clone();
-                    bool commentUpdated = false;
-                    if (note.Deleted && !comment.Deleted)
+
+                    // We can only update a note if the comment and note have the same version number
+                    if (note.VersionNumber == comment.VersionNumber)
                     {
-                        comment.Deleted = true;
-                        commentUpdated = true;
+                        bool commentUpdated = false;
+                        if (note.Editable == true && note.Deleted && !comment.Deleted)
+                        {
+                            comment.Deleted = true;
+                            commentUpdated = true;
+                        }
+                        else if (
+                            GetUpdatedCommentXmlIfChanged(comment, note, displayNames, ptProjectUsers, out string xml)
+                        )
+                        {
+                            if (comment.Contents == null)
+                                comment.AddTextToContent(string.Empty, false);
+                            comment.Contents!.InnerXml = xml;
+                            commentUpdated = true;
+                        }
+
+                        if (commentUpdated)
+                            thread.Add(comment);
                     }
-                    else if (GetUpdatedCommentXmlIfChanged(comment, note, displayNames, ptProjectUsers, out string xml))
-                    {
-                        if (comment.Contents == null)
-                            comment.AddTextToContent(string.Empty, false);
-                        comment.Contents.InnerXml = xml;
-                        commentUpdated = true;
-                    }
-                    if (commentUpdated)
-                        thread.Add(comment);
                 }
                 else
                 {
@@ -2554,7 +2569,8 @@ public class ParatextService : DisposableBase, IParatextService
             Status = comment.Status.InternalValue,
             TagId = commentTag?.Id,
             Reattached = comment.Reattached,
-            Assignment = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers)
+            Assignment = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers),
+            VersionNumber = comment.VersionNumber,
         };
     }
 
@@ -2567,7 +2583,7 @@ public class ParatextService : DisposableBase, IParatextService
         };
     }
 
-    private static CommentTag GetCommentTag(
+    private static CommentTag? GetCommentTag(
         CommentThread thread,
         Paratext.Data.ProjectComments.Comment comment,
         CommentTags commentTags
