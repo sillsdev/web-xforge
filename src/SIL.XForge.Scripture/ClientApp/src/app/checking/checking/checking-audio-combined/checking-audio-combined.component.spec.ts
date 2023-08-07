@@ -17,6 +17,7 @@ import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingAudioRecorderComponent } from '../checking-audio-recorder/checking-audio-recorder.component';
+import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { CheckingAudioCombinedComponent } from './checking-audio-combined.component';
 
 const mockedUserService = mock(UserService);
@@ -30,7 +31,8 @@ describe('CheckingAudioCombinedComponent', () => {
       CheckingAudioCombinedComponent,
       CheckingAudioRecorderComponent,
       CheckingAudioPlayerComponent,
-      AudioTimePipe
+      AudioTimePipe,
+      AudioPlayerComponent
     ],
     imports: [UICommonModule, ngfModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
@@ -140,12 +142,12 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  setAudioSource() {
+  setAudioSource(): void {
     this.component.source = this.audioFile;
     this.fixture.detectChanges();
   }
 
-  async waitForRecorder(ms: number) {
+  async waitForRecorder(ms: number): Promise<void> {
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }
