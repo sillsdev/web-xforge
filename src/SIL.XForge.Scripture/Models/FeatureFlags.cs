@@ -8,4 +8,5 @@ public static class FeatureFlags
     public const string Serval = "Serval";
     public const string UseEchoForPreTranslation = "UseEchoForPreTranslation";
     public const string MachineInProcess = "MachineInProcess";
+    public const string WriteNotesToParatext = "WriteNotesToParatext";
 }
