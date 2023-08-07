@@ -50,6 +50,7 @@ describe('ChapterAudioDialogComponent', () => {
   let overlayContainer: OverlayContainer;
   beforeEach(() => {
     overlayContainer = TestBed.inject(OverlayContainer);
+    env = new TestEnvironment();
   });
   afterEach(() => {
     // Prevents 'Error: Test did not clean up its overlay container content.'
@@ -57,21 +58,11 @@ describe('ChapterAudioDialogComponent', () => {
   });
 
   it('should upload audio and return timing data on save', fakeAsync(async () => {
-    env = new TestEnvironment();
-
-    const url = URL.createObjectURL(new File([getAudioBlob()], 'test.wav'));
-    const audio: AudioAttachment = {
-      status: 'uploaded',
-      blob: getAudioBlob(),
-      fileName: 'test-audio-player.webm',
-      url: url
-    };
-
     const promiseForResult: Promise<ChapterAudioDialogResult> = env.dialogRef.afterClosed().toPromise();
-    await env.component.audioUpdate(audio);
+    await env.component.audioUpdate(env.audioFile);
     await env.component.prepareTimingFileUpload(anything());
     await env.component.save();
-    await env.wait(1000);
+    await env.wait();
 
     const result = await promiseForResult;
 
@@ -86,8 +77,6 @@ describe('ChapterAudioDialogComponent', () => {
   }));
 
   it('should default selection to first chapter with question and no audio', fakeAsync(async () => {
-    env = new TestEnvironment();
-
     const chapterOfFirstQuestion = TestEnvironment.textsByBookId[
       Canon.bookNumberToId(env.question1.data?.verseRef.bookNum!)
     ].chapters.find(c => c.number === env.question1.data?.verseRef.chapterNum)!;
@@ -98,8 +87,6 @@ describe('ChapterAudioDialogComponent', () => {
   }));
 
   it('detects if selection has audio already', fakeAsync(async () => {
-    env = new TestEnvironment();
-
     const firstChapterWithAudio = Object.entries(TestEnvironment.textsByBookId)
       .map(([, value]) => value.chapters)
       .flat(1)
@@ -120,8 +107,6 @@ describe('ChapterAudioDialogComponent', () => {
   }));
 
   it('populates books and chapters', fakeAsync(async () => {
-    env = new TestEnvironment();
-
     expect(env.component.books.length).toEqual(2);
 
     for (let i of Object.entries(TestEnvironment.textsByBookId)) {
@@ -134,19 +119,78 @@ describe('ChapterAudioDialogComponent', () => {
   }));
 
   it('shows warning if zero timing entries are found', fakeAsync(async () => {
-    env = new TestEnvironment();
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['error here', '0', 'v1'],
+      ['1', 'error there', 'v2'],
+      ['1.1', '0']
+    ]);
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+
+    expect(env.component.errorMessage).toContain('Zero segments found');
   }));
 
-  it('shows warning if From field goes beyond audio length', fakeAsync(() => {
-    env = new TestEnvironment();
+  it('shows warning if From field goes beyond audio length', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['0.01', '0', 'v1'],
+      ['1', '0', 'v2'],
+      ['5.2', '0', 'v3']
+    ]);
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+    await env.wait();
+
+    expect(env.component.errorMessage).toContain('One or more timing values extend past the end of the audio file');
   }));
 
-  it('can also parse mm:ss', fakeAsync(() => {
-    env = new TestEnvironment();
+  it('can also parse mm:ss', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['00:00', '0', 'v1'],
+      ['00:01', '0', 'v2']
+    ]);
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+
+    expect(env.component.errorMessage).toEqual('');
   }));
 
-  it('can also parse hh:mm:ss', fakeAsync(() => {
-    env = new TestEnvironment();
+  it('can also parse hh:mm:ss', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['00:00:00', '0', 'v1'],
+      ['00:00:01', '0', 'v2']
+    ]);
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+
+    expect(env.component.errorMessage).toEqual('');
+  }));
+
+  it('will not save or upload if there is no audio', fakeAsync(async () => {
+    let count = 0;
+    env.dialogRef.afterClosed().subscribe(() => {
+      count++;
+    });
+
+    await env.component.prepareTimingFileUpload(anything());
+    await env.component.save();
+
+    expect(count).toEqual(0);
+  }));
+
+  it('will not save or upload if there is no timing data', fakeAsync(async () => {
+    let count = 0;
+    env.dialogRef.afterClosed().subscribe(() => {
+      count++;
+    });
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.save();
+
+    expect(count).toEqual(0);
   }));
 });
 
@@ -191,6 +235,7 @@ class TestEnvironment {
   readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly component: ChapterAudioDialogComponent;
   readonly dialogRef: MatDialogRef<ChapterAudioDialogComponent>;
+  readonly audioFile: AudioAttachment;
 
   constructor() {
     const config: MatDialogConfig<ChapterAudioDialogData> = {
@@ -218,6 +263,12 @@ class TestEnvironment {
         true
       )
     ).thenResolve('audio url');
+    this.audioFile = {
+      status: 'uploaded',
+      blob: getAudioBlob(),
+      fileName: 'test-audio-player.webm',
+      url: URL.createObjectURL(new File([getAudioBlob()], 'test.wav'))
+    };
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     this.dialogRef = TestBed.inject(MatDialog).open(ChapterAudioDialogComponent, config);
@@ -246,7 +297,7 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector(query) as HTMLElement;
   }
 
-  async wait(ms: number = 100): Promise<void> {
+  async wait(ms: number = 200): Promise<void> {
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }
