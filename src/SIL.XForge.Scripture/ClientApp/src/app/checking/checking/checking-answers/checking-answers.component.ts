@@ -62,7 +62,7 @@ export interface AnswerAction {
 
 enum LikeAnswerResponse {
   DeniedOwnAnswer,
-  DeniedNonCommunityChecker,
+  DeniedNoPermission,
   Granted
 }
 
@@ -460,8 +460,8 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       });
     } else if (likeAnswerResponse === LikeAnswerResponse.DeniedOwnAnswer) {
       this.noticeService.show(translate('checking_answers.cannot_like_own_answer'));
-    } else if (likeAnswerResponse === LikeAnswerResponse.DeniedNonCommunityChecker) {
-      this.noticeService.show(translate('checking_answers.only_community_checkers_can_like'));
+    } else if (likeAnswerResponse === LikeAnswerResponse.DeniedNoPermission) {
+      this.noticeService.show(translate('checking_answers.no_permission_to_like'));
     }
   }
 
@@ -558,12 +558,9 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       result = LikeAnswerResponse.DeniedOwnAnswer;
     } else if (
       this.project == null ||
-      !(
-        SF_PROJECT_RIGHTS.hasRight(this.project, userId, SFProjectDomain.Answers, Operation.DeleteOwn, answer) &&
-        SF_PROJECT_RIGHTS.hasRight(this.project, userId, SFProjectDomain.Answers, Operation.Create)
-      )
+      !SF_PROJECT_RIGHTS.hasRight(this.project, userId, SFProjectDomain.Likes, Operation.Create)
     ) {
-      result = LikeAnswerResponse.DeniedNonCommunityChecker;
+      result = LikeAnswerResponse.DeniedNoPermission;
     }
     return result;
   }

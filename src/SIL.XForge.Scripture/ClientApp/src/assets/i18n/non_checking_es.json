@@ -14,8 +14,7 @@
     "add_question": "Agregar pregunta"
   },
   "checking_answers": {
-    "archive": "Archivar",
-    "only_community_checkers_can_like": "Sólo los revisores de la comunidad pueden dar \"Me gusta\" a las respuestas."
+    "archive": "Archivar"
   },
   "checking_overview": {
     "add_question": "Agregar pregunta",
