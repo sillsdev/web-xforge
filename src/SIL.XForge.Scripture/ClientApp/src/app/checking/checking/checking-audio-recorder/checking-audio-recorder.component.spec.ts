@@ -17,6 +17,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
+import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { CheckingAudioRecorderComponent } from './checking-audio-recorder.component';
 
 const mockedNoticeService = mock(NoticeService);
@@ -27,7 +28,7 @@ const mockedI18nService = mock(I18nService);
 
 describe('CheckingAudioRecorderComponent', () => {
   configureTestingModule(() => ({
-    declarations: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent, AudioTimePipe],
+    declarations: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe],
     imports: [UICommonModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: NoticeService, useMock: mockedNoticeService },

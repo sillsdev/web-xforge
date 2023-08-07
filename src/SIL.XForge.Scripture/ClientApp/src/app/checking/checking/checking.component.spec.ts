@@ -66,6 +66,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
+import { AudioPlayerComponent } from '../../shared/audio/audio-player/audio-player.component';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
@@ -124,6 +125,7 @@ describe('CheckingComponent', () => {
   configureTestingModule(() => ({
     declarations: [
       AudioTimePipe,
+      AudioPlayerComponent,
       CheckingAnswersComponent,
       CheckingAudioCombinedComponent,
       CheckingAudioPlayerComponent,
@@ -193,6 +195,7 @@ describe('CheckingComponent', () => {
       env.selectQuestion(15);
       expect(prev.nativeElement.disabled).toBe(false);
       expect(next.nativeElement.disabled).toBe(true);
+      env.waitForAudioPlayer();
     }));
 
     it('should open question dialog', fakeAsync(() => {
@@ -255,6 +258,7 @@ describe('CheckingComponent', () => {
       expect(env.questions.length).toEqual(15);
       const question = env.selectQuestion(15);
       expect(env.getQuestionText(question)).toBe('Question relating to chapter 2');
+      env.waitForAudioPlayer();
     }));
 
     it('questions are displaying for all books', fakeAsync(() => {
@@ -299,6 +303,7 @@ describe('CheckingComponent', () => {
       tick(env.questionReadTimer);
       env.fixture.detectChanges();
       expect(env.getUnread(question)).toEqual(0);
+      env.waitForAudioPlayer();
     }));
 
     it('allows admin to archive a question', fakeAsync(async () => {
@@ -377,6 +382,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
       expect(env.component.answersPanel?.getFileSource(questionDoc.data?.audioUrl)).toBeDefined();
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', questionId, 'anAudioFile.mp3')).once();
+      env.waitForAudioPlayer();
     }));
 
     it('user must confirm question answered dialog before question dialog appears', fakeAsync(() => {
@@ -453,6 +459,7 @@ describe('CheckingComponent', () => {
       };
       env.insertQuestion(newQuestion);
       env.waitForSliderUpdate();
+      env.waitForAudioPlayer();
       expect(env.component.questionsPanel!.activeQuestionDoc!.id).toBe(questionId);
       expect(env.questions.length).toEqual(16);
       question = env.selectQuestion(16);
@@ -1484,6 +1491,7 @@ describe('CheckingComponent', () => {
         const env = new TestEnvironment(OBSERVER_USER);
         env.selectQuestion(6);
         expect(env.getAddCommentButton(0)).toBeNull();
+        env.waitForAudioPlayer();
       }));
 
       it('project admins can only edit own comments', fakeAsync(() => {
@@ -1547,6 +1555,7 @@ describe('CheckingComponent', () => {
           expect(env.getExportAnswerButton(0)).withContext(`${USER.role} can not see export button`).toBeNull();
           expect(env.getResolveAnswerButton(0)).withContext(`${USER.role} can not see resolve button`).toBeNull();
         }
+        env.waitForAudioPlayer();
       });
     }));
 
@@ -1625,6 +1634,7 @@ describe('CheckingComponent', () => {
 
     it('quill editor element lang attribute is set from project language', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
+      env.waitForAudioPlayer();
       const quillElementLang = env.quillEditorElement.getAttribute('lang');
       expect(quillElementLang).toEqual(env.project01WritingSystemTag);
     }));
@@ -2231,16 +2241,16 @@ class TestEnvironment {
     this.waitForSliderUpdate();
   }
 
+  waitForAudioPlayer(): void {
+    this.waitForTimersToComplete();
+  }
+
   waitForSliderUpdate(): void {
-    tick(100);
-    this.fixture.detectChanges();
-    flush();
+    this.waitForTimersToComplete(100);
   }
 
   waitForQuestionTimersToComplete(): void {
-    this.fixture.detectChanges();
-    tick(this.questionReadTimer);
-    flush();
+    this.waitForTimersToComplete(this.questionReadTimer);
   }
 
   insertQuestion(newQuestion: Question): void {
@@ -2667,5 +2677,11 @@ class TestEnvironment {
     delta.insert(`ישע`, { segment: `verse_${chapter}_6` });
     delta.insert('\n', { para: { style: 'p' } });
     return delta;
+  }
+
+  private waitForTimersToComplete(time: number = 0): void {
+    this.fixture.detectChanges();
+    tick(time);
+    flush();
   }
 }
