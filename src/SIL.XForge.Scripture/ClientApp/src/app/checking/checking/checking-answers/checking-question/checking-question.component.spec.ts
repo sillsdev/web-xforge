@@ -42,7 +42,7 @@ class MockComponent {
   }
 }
 
-fdescribe('CheckingQuestionComponent', () => {
+describe('CheckingQuestionComponent', () => {
   configureTestingModule(() => ({
     imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
     declarations: [CheckingQuestionComponent, SingleButtonAudioPlayerComponent, MockComponent],
