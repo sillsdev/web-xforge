@@ -9,6 +9,7 @@ import { AudioPlayer, AudioStatus } from '../audio-player';
 })
 export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable implements OnDestroy {
   readonly isAudioAvailable$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  isAudioInitComplete: boolean = false;
   private _audio: AudioPlayer | undefined;
 
   constructor(protected readonly pwaService: PwaService) {
@@ -39,6 +40,9 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
       this.subscribe(this._audio.status$, newVal => {
         if (newVal === AudioStatus.Available) {
           this.isAudioAvailable$.next(true);
+        }
+        if (newVal !== AudioStatus.Init) {
+          this.isAudioInitComplete = true;
         }
       });
     } else {

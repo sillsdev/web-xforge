@@ -76,8 +76,11 @@ export class AudioPlayer extends SubscriptionDisposable {
     // assume is past the end. This number should be large, but numbers as small as 1e16 have been observed to cause
     // audio playback to skip to the end of the audio when the user presses play in Chromium. Normal audio files will
     // know the duration once metadata has loaded.
+    // if (!isLocalBlobUrl(source)) {
     this.audio.currentTime = AudioPlayer.ARBITRARILY_LARGE_NUMBER;
+    // }
     this.audio.src = formatFileSource(FileType.Audio, source);
+    console.log(this.audio.src, source);
     this.status$.next(AudioStatus.Init);
   }
 
