@@ -3,13 +3,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { TextAudio, getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { PwaService } from 'xforge-common/pwa.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
@@ -42,7 +42,7 @@ class MockComponent {
   }
 }
 
-describe('CheckingQuestionComponent', () => {
+fdescribe('CheckingQuestionComponent', () => {
   configureTestingModule(() => ({
     imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
     declarations: [CheckingQuestionComponent, SingleButtonAudioPlayerComponent, MockComponent],
@@ -177,6 +177,25 @@ describe('CheckingQuestionComponent', () => {
     expect(env.component.question.scriptureAudioUrl).toEqual('test-audio-player.webm');
   });
 
+  it('reloads audio files when audio data changes', async () => {
+    const env = new TestEnvironment();
+    await env.wait();
+    await env.wait();
+
+    expect(env.component.question.scriptureAudioUrl).not.toEqual(undefined);
+    expect(env.component.question.focusedText).toEqual('scripture-audio-label');
+
+    //modify the query
+    when(env.query.docs).thenReturn([]);
+
+    //fire the event
+    env.queryChanged$.next();
+    await env.wait();
+
+    expect(env.component.question.scriptureAudioUrl).toEqual(undefined);
+    expect(env.component.question.focusedText).toEqual('question-audio-label');
+  });
+
   it('has default question text', async () => {
     const env = new TestEnvironment();
     when(mockedQuestion.text).thenReturn('');
@@ -191,22 +210,24 @@ class TestEnvironment {
   readonly component: MockComponent;
   readonly fixture: ComponentFixture<MockComponent>;
   readonly ngZone: NgZone;
+  readonly query: RealtimeQuery<TextAudioDoc> = mock(RealtimeQuery<TextAudioDoc>) as RealtimeQuery<TextAudioDoc>;
+  readonly queryChanged$: Subject<void> = new Subject<void>();
 
   constructor() {
-    const query = mock(RealtimeQuery<TextAudioDoc>) as RealtimeQuery<TextAudioDoc>;
     const audioDoc = mock(TextAudioDoc);
     const textAudio = mock<TextAudio>();
     when(textAudio.audioUrl).thenReturn('test-audio-player-b.webm');
     when(textAudio.timings).thenReturn([]);
     when(audioDoc.data).thenReturn(instance(textAudio));
     when(audioDoc.id).thenReturn(getTextAudioId('project01', 8, 22));
-    when(query.docs).thenReturn([instance(audioDoc)]);
+    when(this.query.remoteChanges$).thenReturn(this.queryChanged$);
+    when(this.query.docs).thenReturn([instance(audioDoc)]);
 
     when(mockedPwaService.onlineStatus$).thenReturn(of(true));
     when(mockedSFProjectService.onlineIsSourceProject('project01')).thenResolve(false);
     when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
-    when(mockedSFProjectService.queryAudioText('project01')).thenResolve(instance(query));
+    when(mockedSFProjectService.queryAudioText('project01')).thenResolve(instance(this.query));
 
     this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(MockComponent);

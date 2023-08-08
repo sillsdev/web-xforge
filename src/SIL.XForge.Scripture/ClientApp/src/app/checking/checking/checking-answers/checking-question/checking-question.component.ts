@@ -1,13 +1,15 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
-import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { TextAudio, getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import {
+  VerseRefData,
   toStartAndEndVerseRefs,
-  toVerseRef,
-  VerseRefData
+  toVerseRef
 } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
 import { I18nService } from 'xforge-common/i18n.service';
+import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
@@ -113,11 +115,20 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
       );
 
       this.projectService.queryAudioText(projectId).then(audioQuery => {
-        this._scriptureTextAudioData = audioQuery?.docs?.find(t => t.id === audioId)?.data;
-        if (this._scriptureTextAudioData == null || this.scriptureAudioUrl == null) {
-          this.selectQuestion();
-        }
+        this.updateScriptureAudio(audioQuery, audioId);
+        audioQuery?.remoteChanges$.subscribe(() => {
+          this.updateScriptureAudio(audioQuery, audioId);
+        });
       });
+    }
+  }
+
+  private updateScriptureAudio(audioQuery: RealtimeQuery<TextAudioDoc>, audioId: string): void {
+    this._scriptureTextAudioData = audioQuery?.docs?.find(t => t.id === audioId)?.data;
+    if (this._scriptureTextAudioData == null || this.scriptureAudioUrl == null) {
+      this.selectQuestion();
+    } else {
+      this.selectScripture();
     }
   }
 }
