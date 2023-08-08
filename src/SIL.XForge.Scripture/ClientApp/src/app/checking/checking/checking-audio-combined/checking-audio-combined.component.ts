@@ -48,7 +48,7 @@ export class CheckingAudioCombinedComponent {
     }
   }
 
-  prepareAudioFileUpload() {
+  prepareAudioFileUpload(): void {
     if (this.uploadAudioFile.name != null) {
       this.audio.url = URL.createObjectURL(this.uploadAudioFile);
       this.audio.blob = this.uploadAudioFile;
@@ -75,7 +75,7 @@ export class CheckingAudioCombinedComponent {
     this.update.emit(this.audio);
   }
 
-  resetAudioAttachment() {
+  resetAudioAttachment(): void {
     this.uploadAudioFile = NOT_A_FILE;
     this.source = '';
     this.audio = { status: 'reset' };
