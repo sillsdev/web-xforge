@@ -115,7 +115,9 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
 
       this.projectService.queryAudioText(projectId).then(audioQuery => {
         this.updateScriptureAudio(audioQuery, audioId);
-        audioQuery?.remoteChanges$.subscribe(() => {
+        console.log(audioQuery);
+        console.log(audioQuery?.remoteChanges$);
+        audioQuery?.remoteChanges$?.subscribe(() => {
           this.updateScriptureAudio(audioQuery, audioId);
         });
       });
