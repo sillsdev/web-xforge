@@ -247,14 +247,25 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return this.text?.chapters.find(c => c.number === this.chapter)?.hasAudio === true;
   }
 
-  get chapterTextAudioTiming(): AudioTiming[] | undefined {
-    if (this.textDocId == null) return;
+  get showChapterAudioToggle(): boolean {
+    // const isEnabled = this.featureFlags.scriptureAudio.enabled;
+    const isEnabled = true;
+    const chapterAud = this.chapterHasAudio;
+    console.log('isEnabled: ' + isEnabled);
+    console.log('chapterAud: ' + chapterAud);
+    console.log(this.text?.chapters);
+    console.log(this.chapter);
+    return isEnabled && chapterAud;
+  }
+
+  get chapterTextAudioTiming(): AudioTiming[] {
+    if (this.textDocId == null) return [];
     const textAudioId: string = getTextAudioId(
       this.textDocId.projectId,
       this.textDocId.bookNum,
       this.textDocId.chapterNum
     );
-    return this.textAudioQuery?.docs.find(t => t.id === textAudioId)?.data?.timings;
+    return this.textAudioQuery?.docs.find(t => t.id === textAudioId)?.data?.timings ?? [];
   }
 
   get chapterAudioSource(): string {
@@ -721,12 +732,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   questionChanged(questionDoc: QuestionDoc): void {
+    console.log('question changed null?');
     if (this.questionsPanel == null) {
       return;
     }
 
     this.book = questionDoc.data?.verseRef.bookNum;
     this.chapter = this.questionsPanel.activeQuestionChapter;
+    console.log('chapter changed: ' + this.chapter);
     this.updateActiveQuestionVerseRef(questionDoc);
     this.calculateScriptureSliderPosition(true);
     this.refreshSummary();
@@ -806,6 +819,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
     const audioPath = this.chapterAudioSource;
     this.projectService.onlineCreateAudioTimingData(this.projectDoc.id, this.book, this.chapter, audioPath);
+  }
+
+  handleVerseChanged(ref: string): void {
+    this.scripturePanel!.audioVerse = ref!;
   }
 
   // TODO (scripture audio) This method is a temporary hack to make the audio file name predictable based on the book

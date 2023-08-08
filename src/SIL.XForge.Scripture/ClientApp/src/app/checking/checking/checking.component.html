@@ -149,6 +149,7 @@
                         [source]="chapterAudioSource"
                         [timing]="chapterTextAudioTiming"
                         [textDocId]="textDocId"
+                        (currentVerseChanged)="handleVerseChanged($event)"
                       ></app-checking-scripture-audio-player>
                     </div>
                     <app-checking-text
