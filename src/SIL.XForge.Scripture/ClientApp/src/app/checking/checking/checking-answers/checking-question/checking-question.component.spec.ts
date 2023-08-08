@@ -42,7 +42,7 @@ class MockComponent {
   }
 }
 
-fdescribe('CheckingQuestionComponent', () => {
+describe('CheckingQuestionComponent', () => {
   configureTestingModule(() => ({
     imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
     declarations: [CheckingQuestionComponent, SingleButtonAudioPlayerComponent, MockComponent],
@@ -119,8 +119,9 @@ fdescribe('CheckingQuestionComponent', () => {
     //play through the scripture audio once
     env.scriptureAudio.componentInstance.audio.setSeek(98);
     await env.wait();
+    await env.wait();
     env.component.question.playScripture();
-    await env.wait(1000); //wait for the audio to finish playing
+    await env.wait(1200); //wait for the audio to finish playing
     expect(env.component.question.focusedText).toBe('question-audio-label');
 
     env.component.question.selectScripture();
