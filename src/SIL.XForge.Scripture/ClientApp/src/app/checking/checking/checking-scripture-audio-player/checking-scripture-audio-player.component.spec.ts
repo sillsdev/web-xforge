@@ -1,23 +1,20 @@
 import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { of } from 'rxjs';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 import { instance, mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { TextDocId } from '../../../core/models/text-doc';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
+import { getAudioTimings } from '../../../shared/test-utils';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
 
 const audioFile = 'test-audio-player.webm';
-const timingData: AudioTiming[] = [
-  { textRef: 'verse_1_1', from: 0.0, to: 1.0 },
-  { textRef: 'verse_1_2', from: 1.0, to: 2.0 },
-  { textRef: 'verse_1_3', from: 2.0, to: 3.0 }
-];
+const textDocId: TextDocId = new TextDocId('project01', 1, 1);
 
 describe('ScriptureAudioComponent', () => {
   it('can play and pause audio', async () => {
@@ -43,7 +40,8 @@ describe('ScriptureAudioComponent', () => {
     env.fixture.detectChanges();
     await env.waitForPlayer(500);
 
-    env.component.audioPlayer.timing = timingData;
+    env.component.audioPlayer.textDocId = textDocId;
+    env.component.audioPlayer.timing = getAudioTimings();
     await env.waitForPlayer();
     env.nextRefButton.nativeElement.click();
     await env.waitForPlayer();
@@ -51,6 +49,22 @@ describe('ScriptureAudioComponent', () => {
     env.previousRefButton.nativeElement.click();
     await env.waitForPlayer();
     expect(env.component.audioPlayer.currentRef).toEqual('verse_1_1');
+  });
+
+  it('emits verse changed event', async () => {
+    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
+
+    env.component.audioPlayer.textDocId = textDocId;
+    env.component.audioPlayer.timing = getAudioTimings();
+    await env.waitForPlayer();
+    const verseChangedSpy = jasmine.createSpy('verseChanged');
+    env.component.audioPlayer.currentVerseChanged.subscribe(verseChangedSpy);
+    env.playButton.nativeElement.click();
+    await env.waitForPlayer(1500);
+    expect(verseChangedSpy).toHaveBeenCalledWith('verse_1_2');
   });
 });
 

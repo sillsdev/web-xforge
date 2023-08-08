@@ -1,3 +1,4 @@
+import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
@@ -112,4 +113,12 @@ export function paratextUsersFromRoles(userRoles: { [id: string]: string }): Par
   return Object.keys(userRoles)
     .filter(u => isParatextRole(userRoles[u]))
     .map(u => ({ sfUserId: u, username: `pt${u}`, opaqueUserId: `opaque${u}` }));
+}
+
+export function getAudioTimings(): AudioTiming[] {
+  return [
+    { textRef: 'verse_1_1', from: 0.0, to: 1.0 },
+    { textRef: 'verse_1_2', from: 1.0, to: 2.0 },
+    { textRef: 'verse_1_3', from: 2.0, to: 3.0 }
+  ];
 }
