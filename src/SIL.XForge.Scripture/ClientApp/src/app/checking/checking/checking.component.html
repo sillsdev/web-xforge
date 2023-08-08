@@ -143,6 +143,7 @@
                         [timing]="chapterTextAudioTiming"
                         [textDocId]="textDocId"
                         [canDelete]="canCreateQuestions"
+                        (currentVerseChanged)="handleVerseChanged($event)"
                       ></app-checking-scripture-audio-player>
                     </div>
                     <app-checking-text
