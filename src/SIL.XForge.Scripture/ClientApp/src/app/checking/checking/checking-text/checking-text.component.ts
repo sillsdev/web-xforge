@@ -2,12 +2,12 @@ import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core
 import { translate } from '@ngneat/transloco';
 import clone from 'lodash-es/clone';
 import isEqual from 'lodash-es/isEqual';
-import { VerseRef } from '@sillsdev/scripture';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { fromEvent, Subscription } from 'rxjs';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../../../core/models/text-doc';
 import { TextComponent } from '../../../shared/text/text.component';
-import { verseRefFromMouseEvent } from '../../../shared/utils';
+import { getVerseStrFromSegmentRef, verseRefFromMouseEvent } from '../../../shared/utils';
 
 @Component({
   selector: 'app-checking-text',
@@ -43,6 +43,10 @@ export class CheckingTextComponent extends SubscriptionDisposable {
 
   get activeVerse(): VerseRef | undefined {
     return this._activeVerse;
+  }
+
+  set audioVerse(reference: string) {
+    this.highlightSegments(reference);
   }
 
   get isEditorLoaded(): boolean {
@@ -115,6 +119,27 @@ export class CheckingTextComponent extends SubscriptionDisposable {
 
     const refs: string[] =
       this._activeVerse != null ? this.textComponent.getVerseSegmentsNoHeadings(this._activeVerse) : [];
+    this.textComponent.highlight(refs);
+  }
+
+  /**
+   * Highlight segments based off of a base verse reference. If the reference is verse_1_3, this will
+   * highlight verse_1_3, verse_1_3/p1, verse_1_3/p2, etc.
+   */
+  private highlightSegments(baseRef: string): void {
+    if (!this.isEditorLoaded || this.id == null) {
+      return;
+    }
+
+    let refs: string[] = [];
+    const verseStr: string | undefined = getVerseStrFromSegmentRef(baseRef);
+    if (verseStr != null) {
+      const verseRef = new VerseRef(Canon.bookNumberToId(this.id.bookNum), this.id.chapterNum.toString(), verseStr);
+      refs = this.textComponent.getVerseSegmentsNoHeadings(verseRef);
+    } else {
+      // TODO (scripture audio): Depending on how section headings are keyed, this may need to be updated
+      refs.push(baseRef);
+    }
     this.textComponent.highlight(refs);
   }
 
