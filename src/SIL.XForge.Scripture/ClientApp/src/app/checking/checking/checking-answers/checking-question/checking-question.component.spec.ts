@@ -243,7 +243,7 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#questionAudio'));
   }
 
-  async wait(ms: number = 150): Promise<void> {
+  async wait(ms: number = 200): Promise<void> {
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }
