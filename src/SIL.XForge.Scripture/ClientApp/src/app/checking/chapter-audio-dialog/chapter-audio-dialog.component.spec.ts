@@ -5,7 +5,7 @@ import { MatDialog, MatDialogConfig, MatDialogModule, MatDialogRef } from '@angu
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Canon } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
-import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { QuestionDoc } from 'src/app/core/models/question-doc';
 import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
 import { TextsByBookId } from 'src/app/core/models/texts-by-book-id';
@@ -64,12 +64,12 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.save();
     await env.wait();
 
-    const result = await promiseForResult;
+    const result: ChapterAudioDialogResult = await promiseForResult;
 
     expect(result.audioUrl).toEqual('audio url');
     expect(result.book).toEqual(env.component.book);
     expect(result.chapter).toEqual(env.component.chapter);
-    expect(result.timingData.length > 0).toBeTruthy();
+    expect(result.timingData.length).toEqual(2);
     for (let row of result.timingData) {
       expect(row.to).not.toEqual(0);
     }
@@ -77,7 +77,7 @@ describe('ChapterAudioDialogComponent', () => {
   }));
 
   it('should default selection to first chapter with question and no audio', fakeAsync(async () => {
-    const chapterOfFirstQuestion = TestEnvironment.textsByBookId[
+    const chapterOfFirstQuestion: Chapter = TestEnvironment.textsByBookId[
       Canon.bookNumberToId(env.question1.data?.verseRef.bookNum!)
     ].chapters.find(c => c.number === env.question1.data?.verseRef.chapterNum)!;
 
@@ -87,11 +87,11 @@ describe('ChapterAudioDialogComponent', () => {
   }));
 
   it('detects if selection has audio already', fakeAsync(async () => {
-    const firstChapterWithAudio = Object.entries(TestEnvironment.textsByBookId)
+    const firstChapterWithAudio: Chapter = Object.entries(TestEnvironment.textsByBookId)
       .map(([, value]) => value.chapters)
       .flat(1)
       .find(c => c.hasAudio)!;
-    const containingBook = Object.entries(TestEnvironment.textsByBookId).find(([, value]) =>
+    const containingBook: TextInfo = Object.entries(TestEnvironment.textsByBookId).find(([, value]) =>
       value.chapters.includes(firstChapterWithAudio!)
     )?.[1]!;
 
@@ -170,27 +170,17 @@ describe('ChapterAudioDialogComponent', () => {
   }));
 
   it('will not save or upload if there is no audio', fakeAsync(async () => {
-    let count = 0;
-    env.dialogRef.afterClosed().subscribe(() => {
-      count++;
-    });
-
     await env.component.prepareTimingFileUpload(anything());
     await env.component.save();
 
-    expect(count).toEqual(0);
+    expect(env.numberOfTimesDialogClosed).toEqual(0);
   }));
 
   it('will not save or upload if there is no timing data', fakeAsync(async () => {
-    let count = 0;
-    env.dialogRef.afterClosed().subscribe(() => {
-      count++;
-    });
-
     await env.component.audioUpdate(env.audioFile);
     await env.component.save();
 
-    expect(count).toEqual(0);
+    expect(env.numberOfTimesDialogClosed).toEqual(0);
   }));
 });
 
@@ -229,13 +219,14 @@ class TestEnvironment {
   readonly question2: QuestionDoc = {
     data: { text: 'Matthew 1:1 question', verseRef: { bookNum: 40, chapterNum: 1, verseNum: 1 } }
   } as QuestionDoc;
-  readonly questions = [this.question1, this.question2];
+  readonly questions: QuestionDoc[] = [this.question1, this.question2];
 
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly component: ChapterAudioDialogComponent;
   readonly dialogRef: MatDialogRef<ChapterAudioDialogComponent>;
   readonly audioFile: AudioAttachment;
+  private numTimesClosedFired: number;
 
   constructor() {
     const config: MatDialogConfig<ChapterAudioDialogData> = {
@@ -273,6 +264,11 @@ class TestEnvironment {
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     this.dialogRef = TestBed.inject(MatDialog).open(ChapterAudioDialogComponent, config);
     this.component = this.dialogRef.componentInstance;
+
+    this.numTimesClosedFired = 0;
+    this.dialogRef.afterClosed().subscribe(() => {
+      this.numTimesClosedFired++;
+    });
   }
 
   clickElement(element: HTMLElement | DebugElement): void {
@@ -285,16 +281,8 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  get closeButton(): HTMLElement {
-    return this.fetchElement('#audio-cancel-btn');
-  }
-
-  private get overlayContainerElement(): HTMLElement {
-    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
-  }
-
-  private fetchElement(query: string): HTMLElement {
-    return this.overlayContainerElement.querySelector(query) as HTMLElement;
+  get numberOfTimesDialogClosed(): number {
+    return this.numTimesClosedFired;
   }
 
   async wait(ms: number = 200): Promise<void> {

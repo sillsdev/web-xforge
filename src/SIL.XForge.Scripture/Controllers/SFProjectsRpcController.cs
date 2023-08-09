@@ -647,7 +647,7 @@ public class SFProjectsRpcController : RpcControllerBase
                     { "projectId", projectId },
                     { "book", book.ToString() },
                     { "chapter", chapter.ToString() },
-                    { "timingData", timingData.ToString() },
+                    { "timingData", string.Join("\n", timingData) },
                     { "audioUrl", audioUrl },
                 }
             );

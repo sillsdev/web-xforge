@@ -819,7 +819,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
 
     const dialogConfig: ChapterAudioDialogData = {
-      projectId: this.projectDoc?.id,
+      projectId: this.projectDoc.id,
       textsByBookId: this.textsByBookId,
       questionsSorted: this.questionDocs
     };
