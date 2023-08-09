@@ -206,11 +206,14 @@
     "audio": "Audio",
     "audio_already_exists": "Audio already exists for this selection.",
     "cancel": "Cancel",
+    "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
     "save": "Save",
     "timing": "Timing",
+    "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
     "upload": "Upload",
     "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
-    "upload_timing_file": "Upload Timing File"
+    "upload_timing_file": "Upload Timing File",
+    "zero_segments": "Zero segments found."
   },
   "checking_audio_combined": {
     "remove_audio_file": "Remove Audio File",

@@ -3,7 +3,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { reject } from 'lodash-es';
-import { TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';
+import { Chapter, TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { QuestionDoc } from 'src/app/core/models/question-doc';
@@ -43,7 +43,7 @@ export class ChapterAudioDialogComponent {
   private _selectionHasAudioAlready: boolean = false;
   private _hasTimingBeenUploaded: boolean = false;
   private _audioLength: number = 0;
-  private _errorText: string = '';
+  private _timingErrorText: string = '';
   private _loadingAudio: boolean = false;
 
   constructor(
@@ -60,14 +60,16 @@ export class ChapterAudioDialogComponent {
   private getStartingLocation(): void {
     const publishedQuestions = this.data.questionsSorted.filter(q => !q.data?.isArchived);
     for (const question of publishedQuestions) {
-      const bookNum = question.data?.verseRef.bookNum!;
+      const bookNum = question.data?.verseRef.bookNum;
       const chapterNum = question.data?.verseRef.chapterNum;
 
-      const text = this.data.textsByBookId[Canon.bookNumberToId(bookNum)];
+      if (bookNum === undefined || chapterNum === undefined) continue;
+
+      const text: TextInfo = this.data.textsByBookId[Canon.bookNumberToId(bookNum)];
       const textChapter = text?.chapters.find(c => c.number === chapterNum);
-      if (!textChapter?.hasAudio) {
+      if (textChapter !== undefined && !textChapter?.hasAudio) {
         this._book = bookNum;
-        this._chapter = textChapter?.number!;
+        this._chapter = textChapter.number!;
         return;
       }
     }
@@ -78,8 +80,8 @@ export class ChapterAudioDialogComponent {
   }
 
   private checkForPreexistingAudio(): void {
-    const text = this.data.textsByBookId[Canon.bookNumberToId(this.book)];
-    const textChapter = text?.chapters.find(c => c.number === this.chapter);
+    const text: TextInfo = this.data.textsByBookId[Canon.bookNumberToId(this.book)];
+    const textChapter: Chapter | undefined = text?.chapters.find(c => c.number === this.chapter);
     this._selectionHasAudioAlready = textChapter?.hasAudio ?? false;
   }
 
@@ -124,7 +126,7 @@ export class ChapterAudioDialogComponent {
   }
 
   get errorMessage(): string {
-    return this._errorText;
+    return this._timingErrorText;
   }
 
   get isLoadingAudio(): boolean {
@@ -149,8 +151,8 @@ export class ChapterAudioDialogComponent {
     const timing: AudioTiming[] = [];
     for (const [_, row] of result.entries()) {
       const textRef: string = row[2];
-      const from: number = this.parseTime(row[0]);
-      const to: number = this.parseTime(row[1]);
+      const from: number = this.parseTimeToSeconds(row[0]);
+      const to: number = this.parseTimeToSeconds(row[1]);
       if (textRef === undefined || isNaN(from) || isNaN(to)) continue;
       timing.push({
         textRef,
@@ -164,27 +166,27 @@ export class ChapterAudioDialogComponent {
     this.validateTimingEntries(this.timing, this._audioLength);
   }
 
-  private async validateTimingEntries(timing: AudioTiming[], audioLength: number): Promise<void> {
-    this._errorText = '';
+  private validateTimingEntries(timing: AudioTiming[], audioLength: number): void {
+    this._timingErrorText = '';
 
     if (timing.length === 0) {
-      this._errorText = 'Zero segments found.';
+      this._timingErrorText = translate('checking_audio_dialog.zero_segments');
     }
 
     if (audioLength === 0) return;
 
     for (const timing of this.timing) {
-      timing.to = await this.populateToField(this.timing.indexOf(timing), this.timing);
+      timing.to = this.populateToField(this.timing.indexOf(timing), this.timing);
     }
 
     const firstValidation = timing.filter(t => t.from < t.to);
     if (firstValidation.length !== timing.length) {
-      this._errorText = 'One or more ending values end before their beginning values.';
+      this._timingErrorText = translate('checking_audio_dialog.from_timing_past_to_timing');
     }
 
     const validated = firstValidation.filter(t => t.from < audioLength && t.to <= audioLength);
     if (validated.length !== firstValidation.length) {
-      this._errorText = 'One or more timing values extend past the end of the audio file.';
+      this._timingErrorText = translate('checking_audio_dialog.timing_past_audio_length');
     }
   }
 
@@ -204,7 +206,7 @@ export class ChapterAudioDialogComponent {
       true
     );
     this._loadingAudio = false;
-    if (audioUrl === null || audioUrl === undefined) {
+    if (audioUrl == null) {
       this.dialogService.message(translate('checking_audio_dialog.upload_failed'));
       return;
     }
@@ -217,15 +219,13 @@ export class ChapterAudioDialogComponent {
     });
   }
 
-  private async populateToField(index: number, rows: AudioTiming[]): Promise<number> {
+  private populateToField(index: number, rows: AudioTiming[]): number {
     const row: AudioTiming = rows[index];
-    const to: number = row.to;
-    if (to > 0) return to;
+    if (row.to > 0) return row.to;
 
     if (index < rows.length - 1) {
       const nextRow: AudioTiming = rows[index + 1];
-      const nextTo: number = nextRow.from;
-      return nextTo;
+      return nextRow.from;
     } else {
       return this._audioLength;
     }
@@ -233,7 +233,7 @@ export class ChapterAudioDialogComponent {
 
   private getDuration(url: string): Promise<number> {
     return new Promise(function (resolve) {
-      var audio = new Audio();
+      const audio = new Audio();
       audio.addEventListener('loadedmetadata', function () {
         resolve(audio.duration);
       });
@@ -244,15 +244,18 @@ export class ChapterAudioDialogComponent {
     });
   }
 
-  private parseTime(time: string): number {
-    var a = time?.split(':');
+  /**
+   * It supports multiple time formats: ss, mm:ss, hh:mm:ss
+   */
+  private parseTimeToSeconds(time: string): number {
+    const a: string[] = time?.split(':');
     if (a?.length === 1) {
       return parseFloat(time);
     } else if (a?.length === 2) {
-      var seconds = +a[0] * 60 + +a[1];
+      const seconds = +a[0] * 60 + +a[1];
       return seconds;
     } else if (a?.length === 3) {
-      var seconds = +a[0] * 60 * 60 + +a[1] * 60 + +a[2];
+      const seconds = +a[0] * 60 * 60 + +a[1] * 60 + +a[2];
       return seconds;
     }
 
