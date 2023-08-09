@@ -2390,6 +2390,7 @@ public class ParatextService : DisposableBase, IParatextService
         bool contentChanged = note.Content != equivalentNoteContent;
         bool tagChanged = commentTag?.Id != note.TagId;
         bool assignedUserChanged = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers) != note.Assignment;
+        bool versionNumberChanged = (note.VersionNumber ?? 0) != comment.VersionNumber;
         if (
             contentChanged
             || statusChanged
@@ -2398,6 +2399,7 @@ public class ParatextService : DisposableBase, IParatextService
             || conflictTypeChanged
             || assignedUserChanged
             || acceptedChangeXmlChanged
+            || versionNumberChanged
         )
             return ChangeType.Updated;
         return ChangeType.None;
