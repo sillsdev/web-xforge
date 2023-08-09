@@ -2362,7 +2362,6 @@ public class ParatextServiceTests
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
-        // Edit a comment
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
             new ParatextUserProfile
@@ -2453,7 +2452,6 @@ public class ParatextServiceTests
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
-        // Edit a comment
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
             new ParatextUserProfile
@@ -2473,6 +2471,14 @@ public class ParatextServiceTests
             env.TagCount
         );
 
+        // Verify that the Scripture Forge comments were edited
+        Assert.That(noteThreadDoc.Data.Notes.Count, Is.EqualTo(2));
+        const string expectedSF1 = "thread1 note 1: EDITED.";
+        Assert.That(noteThreadDoc.Data.Notes.First().Content, Is.EqualTo(expectedSF1));
+        const string expectedSF2 = "thread1 note 2: EDITED.";
+        Assert.That(noteThreadDoc.Data.Notes.Last().Content, Is.EqualTo(expectedSF2));
+
+        // Verify the Paratext comments have not changed
         CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
         Assert.That(thread.Comments.Count, Is.EqualTo(2));
         Paratext.Data.ProjectComments.Comment comment = thread.Comments.First();
@@ -2546,7 +2552,6 @@ public class ParatextServiceTests
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
-        // Edit a comment
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
             new ParatextUserProfile
