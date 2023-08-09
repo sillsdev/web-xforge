@@ -128,7 +128,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.audioUpdate(env.audioFile);
     await env.component.prepareTimingFileUpload(anything());
 
-    expect(env.component.errorMessage).toContain('Zero segments found');
+    expect(env.component.errorMessage).toContain('zero_segments');
   }));
 
   it('shows warning if From field goes beyond audio length', fakeAsync(async () => {
@@ -142,7 +142,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.wait();
 
-    expect(env.component.errorMessage).toContain('One or more timing values extend past the end of the audio file');
+    expect(env.component.errorMessage).toContain('timing_past_audio_length');
   }));
 
   it('can also parse mm:ss', fakeAsync(async () => {
