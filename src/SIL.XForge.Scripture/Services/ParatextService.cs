@@ -2291,8 +2291,15 @@ public class ParatextService : DisposableBase, IParatextService
                     {
                         if (comment.Contents == null)
                             comment.AddTextToContent(string.Empty, false);
-                        comment.Contents.InnerXml = xml;
-                        commentUpdated = true;
+                        try
+                        {
+                            comment.Contents.InnerXml = xml;
+                            commentUpdated = true;
+                        }
+                        catch (XmlException)
+                        {
+                            _logger.LogError($"Could not update comment xml for note {note.DataId}.\n{xml}");
+                        }
                     }
                     if (commentUpdated)
                         thread.Add(comment);
