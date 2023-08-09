@@ -11,7 +11,7 @@ import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-p
 export class CheckingAudioPlayerComponent extends SubscriptionDisposable implements OnDestroy, AfterViewInit {
   private _isAudioAvailable = false;
   @ViewChild(AudioPlayerComponent) audioPlayer?: AudioPlayerComponent;
-  @Input() source: string = '';
+  @Input() source?: string = '';
 
   constructor(readonly i18n: I18nService) {
     super();
