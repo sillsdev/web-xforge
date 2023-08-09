@@ -85,22 +85,6 @@
                 <div class="action-icons">
                   <ng-container *ngIf="canCreateQuestions">
                     <button
-                      *ngIf="featureFlags.scriptureAudio.enabled && !chapterHasAudio"
-                      type="button"
-                      mat-button
-                      (click)="addAudioTimingData()"
-                    >
-                      Add Timing Data
-                    </button>
-                    <button
-                      *ngIf="featureFlags.scriptureAudio.enabled && chapterHasAudio"
-                      type="button"
-                      mat-button
-                      (click)="deleteAudioTimingData()"
-                    >
-                      Delete Timing Data
-                    </button>
-                    <button
                       fxHide
                       fxShow.lt-xl
                       mdc-icon-button
@@ -118,6 +102,14 @@
                       class="add-question-button"
                     >
                       <mdc-icon class="mirror-rtl">post_add</mdc-icon> <span>{{ t("add_question") }}</span>
+                    </button>
+                    <button
+                      *ngIf="featureFlags.scriptureAudio.enabled && !chapterHasAudio"
+                      type="button"
+                      mat-icon-button
+                      (click)="addAudioTimingData()"
+                    >
+                      <mat-icon>audiotrack</mat-icon>
                     </button>
                   </ng-container>
                   <button
@@ -148,6 +140,7 @@
                         [source]="chapterAudioSource"
                         [timing]="chapterTextAudioTiming"
                         [textDocId]="textDocId"
+                        [canDelete]="canCreateQuestions"
                       ></app-checking-scripture-audio-player>
                     </div>
                     <app-checking-text

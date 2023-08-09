@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { of } from 'rxjs';
+import { SFProjectService } from 'src/app/core/sf-project.service';
 import { instance, mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
@@ -60,6 +61,7 @@ class HostComponent {
 
 class TestEnvironment {
   readonly mockPwaService = mock(PwaService);
+  readonly mockedProjectService = mock(SFProjectService);
   fixture: ComponentFixture<HostComponent>;
   component: HostComponent;
   ngZone: NgZone;
@@ -67,7 +69,10 @@ class TestEnvironment {
   constructor(template: string) {
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingScriptureAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe],
-      providers: [{ provide: PwaService, useFactory: () => instance(this.mockPwaService) }],
+      providers: [
+        { provide: PwaService, useFactory: () => instance(this.mockPwaService) },
+        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
+      ],
       imports: [UICommonModule, TestTranslocoModule]
     });
     when(this.mockPwaService.onlineStatus$).thenReturn(of(true));

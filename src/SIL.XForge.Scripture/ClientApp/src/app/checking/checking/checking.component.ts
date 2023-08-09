@@ -446,6 +446,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         });
         // TODO (scripture audio) Only fetch the timing data for the currently active chapter
         this.textAudioQuery = await this.projectService.queryAudioText(projectId);
+        this.textAudioQuery.remoteChanges$.subscribe(() => {
+          if (this.chapterAudioSource === '') {
+            this.showScriptureAudioPlayer = false;
+          }
+        });
         const prevBook = this.book;
         // There may be some race conditions which means the questions query is ready before we subscribe to ready$
         // The merge does an additional subscribe on the state of the ready boolean for when it is true
@@ -819,13 +824,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       questionsSorted: this.questionDocs
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
-  }
-
-  deleteAudioTimingData(): void {
-    if (this.projectDoc?.id == null || this.book == null || this.chapter == null) {
-      return;
-    }
-    this.projectService.onlineDeleteAudioTimingData(this.projectDoc.id, this.book, this.chapter);
   }
 
   private triggerUpdate(): void {
