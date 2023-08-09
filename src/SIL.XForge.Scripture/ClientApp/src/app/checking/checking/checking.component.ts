@@ -261,7 +261,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get chapterAudioSource(): string {
-    return `/${this.projectDoc?.id}/${this.getAudioFileName()}`;
+    if (this.book == null || this.chapter == null || this.projectDoc?.id == null || this.textAudioQuery == null) {
+      return '';
+    }
+
+    const audioId: string = getTextAudioId(this.projectDoc.id, this.book, this.chapter);
+    const audioData = this.textAudioQuery.docs.find(t => t.id === audioId)?.data;
+    return audioData?.audioUrl ?? '';
   }
 
   private get book(): number | undefined {
@@ -813,18 +819,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       questionsSorted: this.questionDocs
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
-  }
-
-  // TODO (scripture audio) This method is a temporary hack to make the audio file name predictable based on the book
-  // and chapter. Copy test audio files to /var/lib/scriptureforge/audio/<project_id>/ with a name like MRK_003.wav and
-  // it can be played back in the audio player.
-  private getAudioFileName(): string | undefined {
-    if (this.book == null || this.chapter == null) {
-      return;
-    }
-
-    const bookId = Canon.bookNumberToId(this.book);
-    return `${bookId}_${this.chapter.toString().padStart(3, '0')}.wav`;
   }
 
   deleteAudioTimingData(): void {
