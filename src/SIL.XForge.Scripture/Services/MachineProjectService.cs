@@ -627,12 +627,19 @@ public class MachineProjectService : IMachineProjectService
             || (string.IsNullOrWhiteSpace(projectSecret.ServalData?.TranslationEngineId) && !preTranslate)
         )
         {
+            bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
+            string type = preTranslate switch
+            {
+                true when useEcho => "Echo",
+                true => "Nmt",
+                false => "SmtTransfer",
+            };
             TranslationEngineConfig engineConfig = new TranslationEngineConfig
             {
                 Name = sfProject.Id,
                 SourceLanguage = sfProject.TranslateConfig.Source.WritingSystem.Tag,
                 TargetLanguage = sfProject.WritingSystem.Tag,
-                Type = preTranslate ? "Nmt" : "SmtTransfer",
+                Type = type,
             };
             // Add the project to Serval
             TranslationEngine translationEngine = await _translationEnginesClient.CreateAsync(
