@@ -21,6 +21,8 @@ export interface ChapterAudioDialogData {
   projectId: string;
   textsByBookId: TextsByBookId;
   questionsSorted: readonly QuestionDoc[];
+  currentBook: number | undefined;
+  currentChapter: number | undefined;
 }
 
 export interface ChapterAudioDialogResult {
@@ -58,6 +60,12 @@ export class ChapterAudioDialogComponent {
   }
 
   private getStartingLocation(): void {
+    if (this.data.currentBook !== undefined && this.data.currentChapter !== undefined) {
+      this._book = this.data.currentBook;
+      this._chapter = this.data.currentChapter;
+      return;
+    }
+
     const publishedQuestions = this.data.questionsSorted.filter(q => !q.data?.isArchived);
     for (const question of publishedQuestions) {
       const bookNum = question.data?.verseRef.bookNum;
