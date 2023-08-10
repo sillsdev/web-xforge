@@ -11,7 +11,7 @@ import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
-import { I18nService } from 'xforge-common/i18n.service';
+import { I18nKey, I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { objectId } from 'xforge-common/utils';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
@@ -45,7 +45,7 @@ export class ChapterAudioDialogComponent {
   private _selectionHasAudioAlready: boolean = false;
   private _hasTimingBeenUploaded: boolean = false;
   private _audioLength: number = 0;
-  private _timingErrorText: string = '';
+  private _timingErrorText?: I18nKey;
   private _loadingAudio: boolean = false;
 
   constructor(
@@ -134,7 +134,7 @@ export class ChapterAudioDialogComponent {
   }
 
   get errorMessage(): string {
-    return this._timingErrorText;
+    return this._timingErrorText ?? '';
   }
 
   get isLoadingAudio(): boolean {
@@ -175,7 +175,7 @@ export class ChapterAudioDialogComponent {
   }
 
   private validateTimingEntries(timing: AudioTiming[], audioLength: number): void {
-    this._timingErrorText = '';
+    this._timingErrorText = undefined;
 
     if (timing.length === 0) {
       this._timingErrorText = translate('checking_audio_dialog.zero_segments');
