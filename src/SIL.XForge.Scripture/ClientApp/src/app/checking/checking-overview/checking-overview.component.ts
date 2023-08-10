@@ -293,7 +293,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   questionCountLabel(count: number): string {
-    return count > 0 ? translate('checking_overview.question_count_label', { count: count }) : '';
+    return translate('checking_overview.question_count_label', { count: count });
   }
 
   timeArchivedStamp(date: string | undefined): string {
