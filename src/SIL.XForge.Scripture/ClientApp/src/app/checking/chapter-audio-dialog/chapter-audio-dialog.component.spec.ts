@@ -86,6 +86,25 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.component.chapter).toEqual(env.question1.data?.verseRef.chapterNum!);
   }));
 
+  it('defaults selection to provided book and chapter', fakeAsync(async () => {
+    const config: MatDialogConfig<ChapterAudioDialogData> = {
+      data: {
+        projectId: 'project01',
+        textsByBookId: TestEnvironment.textsByBookId,
+        questionsSorted: env.questions,
+        currentBook: 40,
+        currentChapter: 1
+      }
+    };
+
+    env = new TestEnvironment(config);
+
+    expect(env.component.book).toEqual(40);
+    expect(env.component.chapter).toEqual(1);
+
+    flush();
+  }));
+
   it('detects if selection has audio already', fakeAsync(async () => {
     const firstChapterWithAudio: Chapter = Object.entries(TestEnvironment.textsByBookId)
       .map(([, value]) => value.chapters)
@@ -228,14 +247,18 @@ class TestEnvironment {
   readonly audioFile: AudioAttachment;
   private numTimesClosedFired: number;
 
-  constructor() {
-    const config: MatDialogConfig<ChapterAudioDialogData> = {
-      data: {
-        projectId: 'project01',
-        textsByBookId: TestEnvironment.textsByBookId,
-        questionsSorted: this.questions
-      }
-    };
+  constructor(config?: MatDialogConfig<ChapterAudioDialogData>) {
+    if (!config) {
+      config = {
+        data: {
+          projectId: 'project01',
+          textsByBookId: TestEnvironment.textsByBookId,
+          questionsSorted: this.questions,
+          currentBook: undefined,
+          currentChapter: undefined
+        }
+      };
+    }
 
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
     when(mockedCsvService.parse(anything())).thenResolve([

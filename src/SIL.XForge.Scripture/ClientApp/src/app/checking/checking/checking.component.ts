@@ -814,14 +814,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   async addAudioTimingData(): Promise<void> {
-    if (this.projectDoc?.id == null || this.textsByBookId == null) {
+    if (this.projectDoc?.id == null || this.textsByBookId == null || this.questionsPanel == null) {
       return;
     }
 
     const dialogConfig: ChapterAudioDialogData = {
       projectId: this.projectDoc.id,
       textsByBookId: this.textsByBookId,
-      questionsSorted: this.questionDocs
+      questionsSorted: this.questionDocs,
+      currentBook: this.questionsPanel.activeQuestionBook,
+      currentChapter: this.questionsPanel.activeQuestionChapter
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
   }
