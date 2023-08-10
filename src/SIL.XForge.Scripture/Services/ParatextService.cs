@@ -2298,6 +2298,7 @@ public class ParatextService : DisposableBase, IParatextService
                         }
                         catch (XmlException)
                         {
+                            // FIXME Properly handle characters that need to be escaped instead of just logging an error
                             _logger.LogError($"Could not update comment xml for note {note.DataId}.\n{xml}");
                         }
                     }
