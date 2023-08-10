@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialogRef } from '@angular/material/dialog';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { EMPTY, of } from 'rxjs';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { BuildStates } from 'src/app/machine-api/build-states';
 import { SharedModule } from 'src/app/shared/shared.module';
+import { instance, mock, verify } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -14,7 +15,6 @@ import { DraftGenerationComponent, InfoAlert } from './draft-generation.componen
 import { DraftGenerationService } from './draft-generation.service';
 
 describe('DraftGenerationComponent', () => {
-  let mockMatDialog: jasmine.SpyObj<MatDialog>;
   let mockDialogService: jasmine.SpyObj<DialogService>;
   let mockDraftGenerationService: jasmine.SpyObj<DraftGenerationService>;
   let mockActivatedProjectService: jasmine.SpyObj<ActivatedProjectService>;
@@ -58,11 +58,10 @@ describe('DraftGenerationComponent', () => {
 
     // Default setup
     setup(): void {
-      mockMatDialog = jasmine.createSpyObj('MatDialog', ['closeAll']);
       mockDialogService = jasmine.createSpyObj('DialogService', ['openGenericDialog']);
       mockI18nService = jasmine.createSpyObj('I18nService', [''], { locale$: of(locale) });
       mockDraftGenerationService = jasmine.createSpyObj('DraftGenerationService', [
-        'startBuild',
+        'startBuildOrGetActiveBuild',
         'cancelBuild',
         'getBuildProgress',
         'pollBuildProgress',
@@ -101,7 +100,6 @@ describe('DraftGenerationComponent', () => {
         providers: [
           { provide: DraftGenerationService, useValue: mockDraftGenerationService },
           { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
-          { provide: MatDialog, useValue: mockMatDialog },
           { provide: DialogService, useValue: mockDialogService },
           { provide: I18nService, useValue: mockI18nService }
         ]
@@ -120,9 +118,6 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.draftJob).toEqual(buildDto);
       expect(mockDraftGenerationService.getBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
       expect(mockDraftGenerationService.pollBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
-      expect(mockDraftGenerationService.getLastCompletedBuild).toHaveBeenCalledWith(
-        mockActivatedProjectService.projectId!
-      );
       expect(env.component.draftViewerUrl).toEqual('/projects/testProjectId/draft-preview');
       expect(env.component.isBackTranslation).toBe(true);
       expect(env.component.isTargetLanguageSupported).toBe(true);
@@ -231,49 +226,68 @@ describe('DraftGenerationComponent', () => {
   describe('generateDraft', () => {
     it('should start the draft build', () => {
       let env = new TestEnvironment(() => {
-        mockDraftGenerationService.startBuild.and.returnValue(of(buildDto));
+        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(of(buildDto));
       });
 
       env.component.generateDraft();
-      expect(mockDraftGenerationService.startBuild).toHaveBeenCalledWith('testProjectId');
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
     });
 
-    it('should not attempt MatDialog.closeAll() for queued build', () => {
+    it('should not attempt "cancel dialog" close for queued build', () => {
       let env = new TestEnvironment(() => {
-        mockDraftGenerationService.startBuild.and.returnValue(of(buildDto));
+        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(of(buildDto));
       });
 
+      const dialogRef = mock(MatDialogRef);
+      env.component.cancelDialogRef = instance(dialogRef);
+
       env.component.generateDraft();
-      expect(mockMatDialog.closeAll).not.toHaveBeenCalled();
+      verify(dialogRef.close()).never();
     });
 
-    it('should attempt MatDialog.closeAll() for cancelled build', () => {
+    it('should attempt "cancel dialog" close for cancelled build', () => {
       let env = new TestEnvironment(() => {
-        mockDraftGenerationService.startBuild.and.returnValue(of({ ...buildDto, state: BuildStates.Canceled }));
+        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(
+          of({ ...buildDto, state: BuildStates.Canceled })
+        );
       });
 
+      const dialogRef = mock(MatDialogRef);
+      env.component.cancelDialogRef = instance(dialogRef);
+
       env.component.generateDraft();
-      expect(mockDraftGenerationService.startBuild).toHaveBeenCalledWith('testProjectId');
-      expect(mockMatDialog.closeAll).toHaveBeenCalledTimes(1);
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
+      verify(dialogRef.close()).once();
     });
   });
 
   describe('cancel', () => {
     it('should cancel the draft build if user confirms "cancel" dialog', async () => {
       let env = new TestEnvironment(() => {
-        mockDialogService.openGenericDialog.and.returnValue(Promise.resolve(true));
+        mockDialogService.openGenericDialog.and.returnValue({
+          dialogRef: {} as MatDialogRef<any>,
+          result: Promise.resolve(true)
+        });
         mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
       });
 
       env.component.draftJob = { ...buildDto, state: BuildStates.Active };
       await env.component.cancel();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Canceled };
+      env.fixture.detectChanges();
       expect(mockDialogService.openGenericDialog).toHaveBeenCalledTimes(1);
       expect(mockDraftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
+      expect(mockDraftGenerationService.getLastCompletedBuild).toHaveBeenCalledWith(
+        mockActivatedProjectService.projectId!
+      );
     });
 
     it('should not cancel the draft build if user exits "cancel" dialog', async () => {
       let env = new TestEnvironment(() => {
-        mockDialogService.openGenericDialog.and.returnValue(Promise.resolve(false));
+        mockDialogService.openGenericDialog.and.returnValue({
+          dialogRef: {} as MatDialogRef<any>,
+          result: Promise.resolve(false)
+        });
         mockDraftGenerationService.cancelBuild.and.returnValue(EMPTY);
       });
 
@@ -290,25 +304,13 @@ describe('DraftGenerationComponent', () => {
 
       env.component.draftJob = { ...buildDto, state: BuildStates.Queued };
       await env.component.cancel();
+      env.component.draftJob = { ...buildDto, state: BuildStates.Canceled };
+      env.fixture.detectChanges();
       expect(mockDialogService.openGenericDialog).not.toHaveBeenCalled();
       expect(mockDraftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
-    });
-  });
-
-  describe('getLanguageDisplayName', () => {
-    it('should return the display name for a valid language code', () => {
-      let env = new TestEnvironment();
-      expect(env.component.getLanguageDisplayName('en', locale)).toBe('English');
-    });
-
-    it('should return undefined for an undefined language code', () => {
-      let env = new TestEnvironment();
-      expect(env.component.getLanguageDisplayName(undefined, locale)).toBeUndefined();
-    });
-
-    it('should return language code for an unknown language code', () => {
-      let env = new TestEnvironment();
-      expect(env.component.getLanguageDisplayName('xyz', locale)).toBe('xyz');
+      expect(mockDraftGenerationService.getLastCompletedBuild).toHaveBeenCalledWith(
+        mockActivatedProjectService.projectId!
+      );
     });
   });
 
