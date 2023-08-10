@@ -7,6 +7,7 @@ import {
   toStartAndEndVerseRefs,
   toVerseRef
 } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { Subscription } from 'rxjs';
 import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -38,6 +39,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   private _scriptureAudio?: SingleButtonAudioPlayerComponent;
   private _scriptureTextAudioData?: TextAudio;
   private _focusedText: string = 'scripture-audio-label';
+  private _audioChangeSub?: Subscription;
 
   constructor(private readonly projectService: SFProjectService, private readonly i18n: I18nService) {
     super();
@@ -115,8 +117,11 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
       );
 
       this.projectService.queryAudioText(projectId).then(audioQuery => {
+        if (this._audioChangeSub != null) {
+          this._audioChangeSub.unsubscribe();
+        }
         this.updateScriptureAudio(audioQuery, audioId);
-        audioQuery?.remoteChanges$?.subscribe(() => {
+        this._audioChangeSub = audioQuery?.remoteChanges$?.subscribe(() => {
           this.updateScriptureAudio(audioQuery, audioId);
         });
       });
