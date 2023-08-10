@@ -2,7 +2,7 @@ import { InjectionToken } from '@angular/core';
 import { BuildStates } from 'src/app/machine-api/build-states';
 
 /**
- * Dictionary of segmentRef -> verse.
+ * Dictionary of 'segmentRef -> segment text'.
  */
 export interface DraftSegmentMap {
   [segmentRefId: string]: string;

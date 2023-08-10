@@ -3,7 +3,11 @@ import { ComponentType } from '@angular/cdk/portal';
 import { Injectable, TemplateRef } from '@angular/core';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
-import { GenericDialogComponent, GenericDialogOptions } from './generic-dialog/generic-dialog.component';
+import {
+  GenericDialogComponent,
+  GenericDialogOptions,
+  GenericDialogRef
+} from './generic-dialog/generic-dialog.component';
 import { I18nKey, I18nService } from './i18n.service';
 
 @Injectable({
@@ -27,15 +31,21 @@ export class DialogService {
     return this.matDialog.open(component, { direction: this.i18n.direction, ...(config ?? {}) });
   }
 
-  async openGenericDialog<T>(options: GenericDialogOptions<T>): Promise<T | undefined> {
-    return this.matDialog
-      .open<GenericDialogComponent<T>, GenericDialogOptions<T>, T>(GenericDialogComponent, {
-        direction: this.i18n.direction,
-        autoFocus: false,
-        data: options
-      })
-      .afterClosed()
-      .toPromise();
+  openGenericDialog<T>(options: GenericDialogOptions<T>): GenericDialogRef<T> {
+    const dialogRef: MatDialogRef<GenericDialogComponent<T>, T> = this.matDialog.open<
+      GenericDialogComponent<T>,
+      GenericDialogOptions<T>,
+      T
+    >(GenericDialogComponent, {
+      direction: this.i18n.direction,
+      autoFocus: false,
+      data: options
+    });
+
+    return {
+      dialogRef,
+      result: dialogRef.afterClosed().toPromise()
+    };
   }
 
   async confirm(
@@ -49,7 +59,7 @@ export class DialogService {
         { value: false, label: this.ensureLocalized(negative ?? 'dialog.cancel') },
         { value: true, label: this.ensureLocalized(affirmative), highlight: true }
       ]
-    });
+    }).result;
     return result === true;
   }
 
