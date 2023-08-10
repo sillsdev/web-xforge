@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
-import { reduce } from 'lodash-es';
 import { EMPTY, Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
 import { BuildStates } from 'src/app/machine-api/build-states';
@@ -50,6 +49,7 @@ export class DraftGenerationService {
   getBuildProgress(projectId: string): Observable<BuildDto | undefined> {
     return this.httpClient.get<BuildDto>(`translation/builds/id:${projectId}?pretranslate=true`).pipe(
       map(res => {
+        // TODO: Remove once state is upper-cased on server
         // Conform 'state' to BuildStates enum
         if (res.data) {
           res.data.state = res.data.state.toUpperCase();
@@ -82,6 +82,7 @@ export class DraftGenerationService {
       .get<BuildDto>(`translation/engines/project:${projectId}/actions/getLastCompletedPreTranslationBuild`)
       .pipe(
         map(res => {
+          // TODO: Remove once state is upper-cased on server
           // Conform 'state' to BuildStates enum
           if (res.data) {
             res.data.state = res.data.state.toUpperCase();
@@ -90,7 +91,7 @@ export class DraftGenerationService {
           return res.data;
         }),
         catchError(err => {
-          // If project doesn't exist on ML server, return undefined
+          // If project doesn't exist on Serval, return undefined
           if (err.status === 404) {
             return of(undefined);
           }
@@ -100,21 +101,24 @@ export class DraftGenerationService {
   }
 
   /**
-   * Starts a pretranslation build job if one is not already under way.
+   * Starts a pretranslation build job if one is not already active.
    * @param projectId The SF project id for the target translation.
-   * @returns An observable BuildDto describing the state and progress of a currently running or just started build job.
+   * @returns An observable BuildDto describing the state and progress of a currently active or newly started build job.
    */
-  startBuild(projectId: string): Observable<BuildDto | undefined> {
+  startBuildOrGetActiveBuild(projectId: string): Observable<BuildDto | undefined> {
     return this.getBuildProgress(projectId).pipe(
-      switchMap((job?: BuildDto) =>
-        // If existing build is currently active, return polling observable.  Otherwise, start build and then poll.
-        activeBuildStates.includes(job?.state as BuildStates)
-          ? this.pollBuildProgress(projectId)
-          : this.httpClient.post<void>(`translation/pretranslations`, JSON.stringify(projectId)).pipe(
-              // No errors means build successfully started, so start polling
-              switchMap(() => this.pollBuildProgress(projectId))
-            )
-      )
+      switchMap((job?: BuildDto) => {
+        // If existing build is currently active, return polling observable
+        if (activeBuildStates.includes(job?.state as BuildStates)) {
+          return this.pollBuildProgress(projectId);
+        }
+
+        // Otherwise, start build and then poll
+        return this.startBuild(projectId).pipe(
+          // No errors means build successfully started, so start polling
+          switchMap(() => this.pollBuildProgress(projectId))
+        );
+      })
     );
   }
 
@@ -140,7 +144,8 @@ export class DraftGenerationService {
    * @param projectId The SF project id for the target translation.
    * @param book The book number.
    * @param chapter The chapter number.
-   * @returns An observable dictionary of segmentRef -> verse, or an empty dictionary if no pretranslations exist.
+   * @returns An observable dictionary of 'segmentRef -> segment text',
+   * or an empty dictionary if no pretranslations exist.
    */
   getGeneratedDraft(projectId: string, book: number, chapter: number): Observable<DraftSegmentMap> {
     return this.httpClient
@@ -158,24 +163,36 @@ export class DraftGenerationService {
   }
 
   /**
-   * Transforms collection into dictionary of segmentRef -> verse for faster lookups.
+   * Calls the machine api to start a pretranslation build job.
+   * This should only be called if no build is currently active.
+   * @param projectId The SF project id for the target translation.
+   */
+  private startBuild(projectId: string): Observable<void> {
+    return this.httpClient
+      .post<void>(`translation/pretranslations`, JSON.stringify(projectId))
+      .pipe(map(res => res.data));
+  }
+
+  /**
+   * Transforms collection into dictionary of 'segmentRef -> segment text' for faster lookups.
    * @param preTranslations Collection returned from the machine api.
-   * @returns A dictionary of segmentRef -> verse.
+   * @returns A dictionary of 'segmentRef -> segment text'.
    */
   private toDraftSegmentMap(preTranslations: PreTranslation[]): DraftSegmentMap {
-    return reduce(
-      preTranslations,
-      (result: DraftSegmentMap, curr: PreTranslation) => {
-        let { success, verseRef } = VerseRef.tryParse(curr.reference);
+    const draftSegmentMap: DraftSegmentMap = {};
 
-        if (success) {
-          const segmentRef: string = `verse_${verseRef.chapter}_${verseRef.verse}`;
-          result[segmentRef] = curr.translation.trimEnd() + ' '; // Ensure single space at end
-        }
+    for (let preTranslation of preTranslations) {
+      const { success, verseRef } = VerseRef.tryParse(preTranslation.reference);
 
-        return result;
-      },
-      {}
-    );
+      if (success) {
+        const segmentRef: string = `verse_${verseRef.chapter}_${verseRef.verse}`;
+
+        // Ensure single space at end to not crowd a following verse number.
+        // TODO: Make this more sophisticated to check next segment for `{ insert: { verse: {} } }` before adding space.
+        draftSegmentMap[segmentRef] = preTranslation.translation.trimEnd() + ' ';
+      }
+    }
+
+    return draftSegmentMap;
   }
 }

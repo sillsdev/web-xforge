@@ -8,8 +8,9 @@ import { configureTestingModule } from 'xforge-common/test-utils';
 import { AuthService } from './auth.service';
 import { DOCUMENT } from './browser-globals';
 import { BugsnagService } from './bugsnag.service';
-import { I18nService } from './i18n.service';
+import { getLanguageDisplayName, I18nService } from './i18n.service';
 import { LocationService } from './location.service';
+import { Locale } from './models/i18n-locale';
 
 const mockedLocationService = mock(LocationService);
 const mockedBugsnagService = mock(BugsnagService);
@@ -141,6 +142,29 @@ describe('I18nService', () => {
     service.setLocale('ar', mockedAuthService);
     // Expect right to left mark before : and - characters
     expect(service.localizeReference(new VerseRef('GEN 1:2-3'))).toBe('Genesis 1\u200F:2\u200F-3');
+  });
+
+  describe('getLanguageDisplayName', () => {
+    const locale: Locale = {
+      localName: 'Test',
+      englishName: 'Test',
+      canonicalTag: 'en',
+      direction: 'ltr',
+      tags: ['test'],
+      production: false
+    };
+
+    it('should return the display name for a valid language code', () => {
+      expect(getLanguageDisplayName('en', locale)).toBe('English');
+    });
+
+    it('should return undefined for an undefined language code', () => {
+      expect(getLanguageDisplayName(undefined, locale)).toBeUndefined();
+    });
+
+    it('should return language code for an unknown language code', () => {
+      expect(getLanguageDisplayName('xyz', locale)).toBe('xyz');
+    });
   });
 });
 
