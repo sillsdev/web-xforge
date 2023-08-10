@@ -27,7 +27,7 @@
     "click_add_question": "Click {{ boldStart }}Add question{{ boldEnd }}, above.",
     "confirm_bulk_archive": "Are you sure you want to archive all the questions in {{ scope }}?",
     "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
-    "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} chapter {{ chapter }}?",
+    "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} {{ chapter }}?",
     "delete": "Delete",
     "delete_chapter_audio": "Delete chapter audio",
     "edit_chapter_audio": "Edit chapter audio",
