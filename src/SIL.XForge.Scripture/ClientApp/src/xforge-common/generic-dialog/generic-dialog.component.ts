@@ -1,5 +1,5 @@
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 
 export interface GenericDialogOptions<T> {
@@ -10,6 +10,14 @@ export interface GenericDialogOptions<T> {
     value: T;
     highlight?: boolean;
   }[];
+}
+
+/**
+ * An object that contains a reference to the dialog and a promise that resolves to the result of the dialog.
+ */
+export interface GenericDialogRef<T> {
+  dialogRef: MatDialogRef<GenericDialogComponent<T>, T>;
+  result: Promise<T | undefined>;
 }
 
 @Component({

@@ -1,15 +1,15 @@
 import { Component, OnInit } from '@angular/core';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialogRef } from '@angular/material/dialog';
 import { isEmpty } from 'lodash-es';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, Observable, of, Subscription } from 'rxjs';
+import { combineLatest, Observable, of, Subscription, zip } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { I18nService } from 'xforge-common/i18n.service';
-import { Locale } from 'xforge-common/models/i18n-locale';
+import { getLanguageDisplayName, I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { filterNullUndefined } from 'xforge-common/util/rxjs-util';
 import { BuildStates } from '../../machine-api/build-states';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates } from './draft-generation';
@@ -61,6 +61,8 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
    */
   hasAnyCompletedBuild$!: Observable<boolean>;
 
+  cancelDialogRef?: MatDialogRef<any>;
+
   get isGenerationSupported(): boolean {
     return (
       this.isBackTranslation &&
@@ -71,7 +73,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   constructor(
-    private readonly matDialog: MatDialog,
     private readonly dialogService: DialogService,
     public readonly activatedProject: ActivatedProjectService,
     private readonly draftGenerationService: DraftGenerationService,
@@ -82,15 +83,23 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   ngOnInit(): void {
+    // Handle locale changes
     this.subscribe(
-      combineLatest([this.activatedProject.projectId$, this.activatedProject.projectDoc$, this.i18n.locale$]),
-      ([projectId, projectDoc, locale]) => {
-        const translateConfig = projectDoc?.data?.translateConfig;
+      combineLatest([
+        this.i18n.locale$,
+        // Pair project id and doc emissions, ensuring not undefined
+        zip(
+          this.activatedProject.projectId$.pipe(filterNullUndefined()),
+          this.activatedProject.projectDoc$.pipe(filterNullUndefined())
+        )
+      ]),
+      ([locale, [projectId, projectDoc]]) => {
+        const translateConfig = projectDoc.data?.translateConfig;
 
         this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
         this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
-        this.targetLanguage = projectDoc?.data?.writingSystem.tag;
-        this.targetLanguageDisplayName = this.getLanguageDisplayName(this.targetLanguage, locale);
+        this.targetLanguage = projectDoc.data?.writingSystem.tag;
+        this.targetLanguageDisplayName = getLanguageDisplayName(this.targetLanguage, locale);
         this.isTargetLanguageSupported = this.nllbService.isNllbLanguage(this.targetLanguage);
         this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
 
@@ -101,20 +110,26 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       }
     );
 
-    this.hasAnyCompletedBuild$ = this.draftGenerationService
-      .getLastCompletedBuild(this.activatedProject.projectId!)
-      .pipe(map(build => !isEmpty(build)));
+    this.hasAnyCompletedBuild$ = this.activatedProject.projectId$.pipe(
+      filterNullUndefined(),
+      switchMap(projectId =>
+        this.draftGenerationService.getLastCompletedBuild(projectId).pipe(map(build => !isEmpty(build)))
+      )
+    );
 
     this.jobSubscription = this.subscribe(
-      this.draftGenerationService
-        .getBuildProgress(this.activatedProject.projectId!)
-        .pipe(
-          switchMap((job?: BuildDto) =>
-            this.isDraftInProgress(job)
-              ? this.draftGenerationService.pollBuildProgress(this.activatedProject.projectId!)
-              : of(job)
-          )
-        ),
+      this.activatedProject.projectId$.pipe(
+        filterNullUndefined(),
+        switchMap(projectId =>
+          this.draftGenerationService
+            .getBuildProgress(projectId)
+            .pipe(
+              switchMap((job?: BuildDto) =>
+                this.isDraftInProgress(job) ? this.draftGenerationService.pollBuildProgress(projectId) : of(job)
+              )
+            )
+        )
+      ),
       (job?: BuildDto) => {
         this.draftJob = job;
         this.isDraftJobFetched = true;
@@ -122,32 +137,17 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     );
   }
 
-  /**
-   * Gets the language name for the specified code rendered in the specified locale.
-   * TODO: This seems like it could be factored out as a utility function
-   * @param languageCode The language code for the language name to be displayed.
-   * @param currentLocale The language to display the name in.
-   * @returns The display name or undefined if language code is not set.
-   */
-  getLanguageDisplayName(languageCode: string | undefined, currentLocale: Locale): string | undefined {
-    if (!languageCode) {
-      return undefined;
-    }
-
-    const languageNames: Intl.DisplayNames = new Intl.DisplayNames([currentLocale.canonicalTag], { type: 'language' });
-    return languageNames.of(languageCode);
-  }
-
-  async generateDraft(shouldConfirm = false): Promise<void> {
-    if (shouldConfirm) {
+  // TODO: update i18n
+  async generateDraft({ withConfirm = false } = {}): Promise<void> {
+    if (withConfirm) {
       const isConfirmed: boolean | undefined = await this.dialogService.openGenericDialog({
-        title: of('Confirm draft regeneration'),
-        message: of('This will re-create any unapplied draft text! Are you sure you want to generate a new draft?'),
+        title: of('Regenerate draft?'),
+        message: of('This will re-create any unapplied draft text.'),
         options: [
           { value: false, label: of('No') },
           { value: true, label: of('Yes, start generation'), highlight: true }
         ]
-      });
+      }).result;
 
       if (!isConfirmed) {
         return;
@@ -156,11 +156,11 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.subscribe(
-      this.draftGenerationService.startBuild(this.activatedProject.projectId!).pipe(
+      this.draftGenerationService.startBuildOrGetActiveBuild(this.activatedProject.projectId!).pipe(
         tap((job?: BuildDto) => {
           // Handle automatic closing of dialog if job finishes while cancel dialog is open
           if (!this.canCancel(job)) {
-            this.matDialog.closeAll();
+            this.cancelDialogRef?.close();
           }
         })
       ),
@@ -168,16 +168,22 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     );
   }
 
+  // TODO: update i18n
   async cancel(): Promise<void> {
     if (this.draftJob?.state === BuildStates.Active) {
-      const isConfirmed: boolean | undefined = await this.dialogService.openGenericDialog({
-        title: of('Confirm draft cancellation'),
-        message: of('Are you sure you want to cancel generating the draft?'),
+      const { dialogRef, result } = this.dialogService.openGenericDialog({
+        title: of('Cancel draft generation?'),
+        message: of(
+          'Canceling will reset progress for this draft request. You will still be able to use the last completed draft.'
+        ),
         options: [
           { value: false, label: of('No') },
           { value: true, label: of('Yes, cancel draft generation'), highlight: true }
         ]
       });
+
+      this.cancelDialogRef = dialogRef;
+      const isConfirmed: boolean | undefined = await result;
 
       if (!isConfirmed) {
         return;
