@@ -9,7 +9,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextDocId } from '../../../core/models/text-doc';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
-import { getAudioTimings } from '../../../shared/test-utils';
+import { getAudioTimings, getAudioTimingWithHeadings } from '../../../shared/test-utils';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
 
 const audioFile = 'test-audio-player.webm';
@@ -44,10 +44,10 @@ describe('ScriptureAudioComponent', () => {
     await env.waitForPlayer();
     env.nextRefButton.nativeElement.click();
     await env.waitForPlayer();
-    expect(env.component.audioPlayer.currentRef).toEqual('verse_1_2');
+    expect(env.component.audioPlayer.currentRef).toEqual('2');
     env.previousRefButton.nativeElement.click();
     await env.waitForPlayer();
-    expect(env.component.audioPlayer.currentRef).toEqual('verse_1_1');
+    expect(env.component.audioPlayer.currentRef).toEqual('1');
   });
 
   it('emits verse changed event', async () => {
@@ -62,8 +62,28 @@ describe('ScriptureAudioComponent', () => {
     const verseChangedSpy = jasmine.createSpy('verseChanged');
     env.component.audioPlayer.currentVerseChanged.subscribe(verseChangedSpy);
     env.playButton.nativeElement.click();
-    await env.waitForPlayer(1500);
+    await env.waitForPlayer(2000);
     expect(verseChangedSpy).toHaveBeenCalledWith('verse_1_2');
+  });
+
+  it('emits verse changed event for section headings', async () => {
+    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
+
+    env.component.audioPlayer.textDocId = textDocId;
+    env.component.audioPlayer.timing = getAudioTimingWithHeadings();
+    await env.waitForPlayer();
+    const verseChangedSpy = jasmine.createSpy('verseChanged');
+    env.component.audioPlayer.currentVerseChanged.subscribe(verseChangedSpy);
+    env.playButton.nativeElement.click();
+    await env.waitForPlayer(1400);
+    expect(verseChangedSpy).toHaveBeenCalledWith('s_1');
+    expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
+    await env.waitForPlayer(1400);
+    expect(verseChangedSpy).toHaveBeenCalledWith('s_2');
+    expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
   });
 });
 
@@ -101,6 +121,10 @@ class TestEnvironment {
 
   get nextRefButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('.next-ref-button'));
+  }
+
+  get verseLabel(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.verse-label'));
   }
 
   get isPlaying(): boolean {
