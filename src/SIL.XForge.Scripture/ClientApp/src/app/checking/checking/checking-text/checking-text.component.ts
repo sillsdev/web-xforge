@@ -38,15 +38,11 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   @Input() set activeVerse(verseRef: VerseRef | undefined) {
     this._activeVerse = verseRef;
     this.highlightActiveVerse();
-    this.scrollToActiveVerse();
+    this.scrollToActiveVerse(this.activeVerse);
   }
 
   get activeVerse(): VerseRef | undefined {
     return this._activeVerse;
-  }
-
-  set audioVerse(reference: string) {
-    this.highlightSegments(reference);
   }
 
   get isEditorLoaded(): boolean {
@@ -83,7 +79,11 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     this._editorLoaded = true;
     this.toggleQuestionVerses(true);
     this.highlightActiveVerse();
-    this.scrollToActiveVerse();
+    this.scrollToActiveVerse(this.activeVerse);
+  }
+
+  setAudioTextRef(reference: string): void {
+    this.highlightSegments(reference);
   }
 
   private get questionVersesInCurrentText(): VerseRef[] {
@@ -134,10 +134,14 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     let refs: string[] = [];
     const verseStr: string | undefined = getVerseStrFromSegmentRef(baseRef);
     if (verseStr != null) {
-      const verseRef = new VerseRef(Canon.bookNumberToId(this.id.bookNum), this.id.chapterNum.toString(), verseStr);
+      const verseRef: VerseRef = new VerseRef(
+        Canon.bookNumberToId(this.id.bookNum),
+        this.id.chapterNum.toString(),
+        verseStr
+      );
+      this.scrollToActiveVerse(verseRef);
       refs = this.textComponent.getVerseSegmentsNoHeadings(verseRef);
     } else {
-      // TODO (scripture audio): Depending on how section headings are keyed, this may need to be updated
       refs.push(baseRef);
     }
     this.textComponent.highlight(refs);
@@ -163,9 +167,9 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     }
   }
 
-  private scrollToActiveVerse(): void {
-    if (this.activeVerse != null && this.textComponent.editor != null) {
-      const firstSegment: string = this.textComponent.getVerseSegments(this.activeVerse)[0];
+  private scrollToActiveVerse(verseRef: VerseRef | undefined): void {
+    if (verseRef != null && this.textComponent.editor != null) {
+      const firstSegment: string = this.textComponent.getVerseSegments(verseRef)[0];
       const editor: Element | null = this.textComponent.editor.container.querySelector('.ql-editor');
       if (editor != null) {
         const element: HTMLElement = this.textComponent.getSegmentElement(firstSegment) as HTMLElement;

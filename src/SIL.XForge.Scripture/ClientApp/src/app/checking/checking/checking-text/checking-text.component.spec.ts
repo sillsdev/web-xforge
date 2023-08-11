@@ -131,7 +131,7 @@ describe('CheckingTextComponent', () => {
     env.component.activeVerse = new VerseRef('MRK', '1', '1');
     env.wait();
     expect(env.isSegmentHighlighted('verse_1_1')).toBe(true);
-    env.component.audioVerse = 'verse_1_2-3';
+    env.component.setAudioTextRef('verse_1_2-3');
     env.wait();
     expect(env.isSegmentHighlighted('verse_1_1')).toBe(false);
     expect(env.isSegmentHighlighted('verse_1_2-3')).toBe(true);
