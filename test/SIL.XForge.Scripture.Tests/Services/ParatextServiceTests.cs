@@ -13,6 +13,7 @@ using System.Xml.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -2134,10 +2135,10 @@ public class ParatextServiceTests
     }
 
     [Test]
-    [Ignore("Not ready to push SF comments to PT")]
     public async Task UpdateParatextComments_AddsComment()
     {
         var env = new TestEnvironment();
+        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
         var associatedPtUser = new SFParatextUser(env.Username01);
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -2150,11 +2151,23 @@ public class ParatextServiceTests
         string thread3 = "thread3";
         var thread1Notes = new[]
         {
-            new ThreadNoteComponents { ownerRef = env.User01, tagsAdded = new[] { "1" } }
+            new ThreadNoteComponents
+            {
+                ownerRef = env.User01,
+                tagsAdded = new[] { "1" },
+                editable = true,
+                versionNumber = 1,
+            }
         };
         var thread2Notes = new[]
         {
-            new ThreadNoteComponents { ownerRef = env.User05, tagsAdded = new[] { "1" } }
+            new ThreadNoteComponents
+            {
+                ownerRef = env.User05,
+                tagsAdded = new[] { "1" },
+                editable = true,
+                versionNumber = 1,
+            }
         };
         env.AddNoteThreadData(
             new[]
@@ -2260,10 +2273,10 @@ public class ParatextServiceTests
     }
 
     [Test]
-    [Ignore("Not ready to push SF comments to PT")]
     public async Task UpdateParatextComments_AddsCommentTagIdNotSet()
     {
         var env = new TestEnvironment();
+        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
         var associatedPtUser = new SFParatextUser(env.Username01);
         string paratextId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -2278,7 +2291,8 @@ public class ParatextServiceTests
                     threadNum = 1,
                     noteCount = 1,
                     isNew = true,
-                    notes = new[] { new ThreadNoteComponents { } }
+                    notes = new[] { new ThreadNoteComponents { } },
+                    editable = true,
                 }
             }
         );
@@ -2304,10 +2318,10 @@ public class ParatextServiceTests
     }
 
     [Test]
-    [Ignore("Not ready to push SF comments to PT")]
     public async Task UpdateParatextComments_EditsComment()
     {
         var env = new TestEnvironment();
+        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
         var associatedPtUser = new SFParatextUser(env.Username01);
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -2328,7 +2342,8 @@ public class ParatextServiceTests
                     noteCount = 2,
                     username = env.Username01,
                     notes = threadNoteComponents,
-                    isEdited = true
+                    isEdited = true,
+                    editable = true,
                 }
             }
         );
@@ -2347,7 +2362,6 @@ public class ParatextServiceTests
 
         await using IConnection conn = await env.RealtimeService.ConnectAsync();
         IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
-        // Edit a comment
         Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
         {
             new ParatextUserProfile
@@ -2388,6 +2402,196 @@ public class ParatextServiceTests
         Assert.That(comment.CommentToString(), Is.EqualTo(expected2));
         Assert.That(ptProjectUsers.Count, Is.EqualTo(1));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 2)));
+
+        // PT username is not written to server logs
+        env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
+    }
+
+    [Test]
+    public async Task UpdateParatextComments_DoesNotEditNonEditableComment()
+    {
+        var env = new TestEnvironment();
+        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        const string threadId = "thread1";
+        const string dataId = "dataId1";
+        var threadNoteComponents = new[]
+        {
+            new ThreadNoteComponents { ownerRef = env.User01, tagsAdded = new[] { "2" } },
+            new ThreadNoteComponents { ownerRef = env.User05 },
+        };
+        env.AddNoteThreadData(
+            new[]
+            {
+                new ThreadComponents
+                {
+                    threadNum = 1,
+                    noteCount = 2,
+                    username = env.Username01,
+                    notes = threadNoteComponents,
+                    isEdited = true,
+                    editable = false,
+                },
+            }
+        );
+        env.AddParatextComments(
+            new[]
+            {
+                new ThreadComponents
+                {
+                    threadNum = 1,
+                    noteCount = 2,
+                    username = env.Username01,
+                    notes = threadNoteComponents,
+                },
+            }
+        );
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
+        {
+            new ParatextUserProfile
+            {
+                OpaqueUserId = "syncuser01",
+                Username = env.Username01,
+                SFUserId = env.User01,
+            },
+        }.ToDictionary(u => u.Username);
+        SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
+            userSecret,
+            ptProjectId,
+            40,
+            new[] { noteThreadDoc },
+            env.usernames,
+            ptProjectUsers,
+            env.TagCount
+        );
+
+        // Verify that the Scripture Forge comments were edited
+        Assert.That(noteThreadDoc.Data.Notes.Count, Is.EqualTo(2));
+        const string expectedSF1 = "thread1 note 1: EDITED.";
+        Assert.That(noteThreadDoc.Data.Notes.First().Content, Is.EqualTo(expectedSF1));
+        const string expectedSF2 = "thread1 note 2: EDITED.";
+        Assert.That(noteThreadDoc.Data.Notes.Last().Content, Is.EqualTo(expectedSF2));
+
+        // Verify the Paratext comments have not changed
+        CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
+        Assert.That(thread.Comments.Count, Is.EqualTo(2));
+        Paratext.Data.ProjectComments.Comment comment = thread.Comments.First();
+        const string expected1 =
+            "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-"
+            + "MAT 1:1-"
+            + "thread1 note 1.-"
+            + "Start:15-"
+            + "Tag:2";
+        Assert.That(comment.CommentToString(), Is.EqualTo(expected1));
+
+        comment = thread.Comments[1];
+        const string expected2 =
+            "thread1/User 01/2019-01-02T08:00:00.0000000+00:00-"
+            + "MAT 1:1-"
+            + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread1 note 2.</p>-"
+            + "Start:15-"
+            + "user05";
+        Assert.That(comment.CommentToString(), Is.EqualTo(expected2));
+        Assert.That(ptProjectUsers.Count, Is.EqualTo(1));
+        Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
+
+        // PT username is not written to server logs
+        env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
+    }
+
+    [Test]
+    public async Task UpdateParatextComments_DoesNotEditCommentWithDifferentVersionNumber()
+    {
+        var env = new TestEnvironment();
+        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        const string threadId = "thread1";
+        const string dataId = "dataId1";
+        var threadNoteComponents = new[]
+        {
+            new ThreadNoteComponents { ownerRef = env.User01, tagsAdded = new[] { "2" } },
+            new ThreadNoteComponents { ownerRef = env.User05 },
+        };
+        env.AddNoteThreadData(
+            new[]
+            {
+                new ThreadComponents
+                {
+                    threadNum = 1,
+                    noteCount = 2,
+                    username = env.Username01,
+                    notes = threadNoteComponents,
+                    isEdited = true,
+                    editable = true,
+                    versionNumber = 1,
+                },
+            }
+        );
+        env.AddParatextComments(
+            new[]
+            {
+                new ThreadComponents
+                {
+                    threadNum = 1,
+                    noteCount = 2,
+                    username = env.Username01,
+                    notes = threadNoteComponents,
+                    versionNumber = 2,
+                },
+            }
+        );
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
+        {
+            new ParatextUserProfile
+            {
+                OpaqueUserId = "syncuser01",
+                Username = env.Username01,
+                SFUserId = env.User01,
+            },
+        }.ToDictionary(u => u.Username);
+        SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
+            userSecret,
+            ptProjectId,
+            40,
+            new[] { noteThreadDoc },
+            env.usernames,
+            ptProjectUsers,
+            env.TagCount
+        );
+
+        CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
+        Assert.That(thread.Comments.Count, Is.EqualTo(2));
+        Paratext.Data.ProjectComments.Comment comment = thread.Comments.First();
+        const string expected1 =
+            "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-"
+            + "MAT 1:1-"
+            + "thread1 note 1.-"
+            + "Start:15-"
+            + "Tag:2";
+        Assert.That(comment.CommentToString(), Is.EqualTo(expected1));
+
+        comment = thread.Comments[1];
+        const string expected2 =
+            "thread1/User 01/2019-01-02T08:00:00.0000000+00:00-"
+            + "MAT 1:1-"
+            + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread1 note 2.</p>-"
+            + "Start:15-"
+            + "user05";
+        Assert.That(comment.CommentToString(), Is.EqualTo(expected2));
+        Assert.That(ptProjectUsers.Count, Is.EqualTo(1));
+        Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
 
         // PT username is not written to server logs
         env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
@@ -2491,10 +2695,10 @@ public class ParatextServiceTests
     }
 
     [Test]
-    [Ignore("Not ready to push SF comments to PT")]
     public async Task UpdateParatextComments_DeleteComment()
     {
         var env = new TestEnvironment();
+        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
         var associatedPtUser = new SFParatextUser(env.Username01);
         string paratextId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -2505,7 +2709,8 @@ public class ParatextServiceTests
         {
             threadNum = 1,
             noteCount = 1,
-            username = env.Username01
+            username = env.Username01,
+            editable = true,
         };
         env.AddParatextComments(new[] { components });
         components.deletedNotes = new[] { true };
@@ -2618,6 +2823,51 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task UpdateParatextComments_DoesNotDeleteNonEditableComment()
+    {
+        var env = new TestEnvironment();
+        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        const string threadId = "thread1";
+        const string dataId = "dataId1";
+        var components = new ThreadComponents
+        {
+            threadNum = 1,
+            noteCount = 1,
+            username = env.Username01,
+            editable = false,
+        };
+        env.AddParatextComments(new[] { components });
+        components.deletedNotes = new[] { true };
+        env.AddNoteThreadData(new[] { components });
+        CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
+        Assert.NotNull(thread);
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
+
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new[]
+        {
+            new ParatextUserProfile { OpaqueUserId = "syncuser01", Username = env.Username01 },
+        }.ToDictionary(u => u.Username);
+        var syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
+            userSecret,
+            paratextId,
+            40,
+            new[] { noteThreadDoc },
+            env.usernames,
+            ptProjectUsers,
+            env.TagCount
+        );
+        Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, updated: 0, deleted: 0)));
+        thread = env.ProjectCommentManager.FindThread(threadId);
+        Assert.NotNull(thread);
+    }
+
+    [Test]
     public async Task UpdateParatextComments_DoesNotDeleteThread()
     {
         var env = new TestEnvironment();
@@ -2676,7 +2926,9 @@ public class ParatextServiceTests
             threadNum = 1,
             noteCount = 1,
             username = env.Username01,
-            isNew = false
+            isNew = false,
+            editable = true,
+            versionNumber = 1,
         };
         env.AddNoteThreadData(new[] { thread });
 
@@ -3338,6 +3590,8 @@ public class ParatextServiceTests
         public bool isConflict;
         public bool appliesToVerse;
         public string reattachedVerseStr;
+        public bool editable;
+        public int versionNumber;
     }
 
     struct ReattachedThreadInfo
@@ -3357,6 +3611,8 @@ public class ParatextServiceTests
         public string assignedPTUser;
         public bool duplicate;
         public string content;
+        public bool? editable;
+        public int? versionNumber;
     }
 
     [Test]
@@ -3985,6 +4241,7 @@ public class ParatextServiceTests
         public readonly SFMemoryRealtimeService RealtimeService;
         public readonly IExceptionHandler MockExceptionHandler;
         public readonly IOptions<SiteOptions> MockSiteOptions;
+        public readonly IFeatureManager MockFeatureManager;
         public readonly IFileSystemService MockFileSystemService;
         public readonly IScrTextCollection MockScrTextCollection;
         public readonly ISharingLogicWrapper MockSharingLogicWrapper;
@@ -4006,6 +4263,7 @@ public class ParatextServiceTests
             MockParatextOptions = Substitute.For<IOptions<ParatextOptions>>();
             MockExceptionHandler = Substitute.For<IExceptionHandler>();
             MockSiteOptions = Substitute.For<IOptions<SiteOptions>>();
+            MockFeatureManager = Substitute.For<IFeatureManager>();
             MockFileSystemService = Substitute.For<IFileSystemService>();
             MockLogger = new MockLogger<ParatextService>();
             MockScrTextCollection = Substitute.For<IScrTextCollection>();
@@ -4078,6 +4336,7 @@ public class ParatextServiceTests
                 RealtimeService,
                 MockExceptionHandler,
                 MockSiteOptions,
+                MockFeatureManager,
                 MockFileSystemService,
                 MockLogger,
                 MockJwtTokenHelper,
@@ -4475,7 +4734,9 @@ public class ParatextServiceTests
                         TagId = noteComponent.tagsAdded == null ? null : int.Parse(noteComponent.tagsAdded[0]),
                         Deleted = comp.deletedNotes != null && comp.deletedNotes[i - 1],
                         Status = noteComponent.status.InternalValue,
-                        Assignment = noteComponent.assignedPTUser
+                        Assignment = noteComponent.assignedPTUser,
+                        Editable = noteComponent.editable ?? comp.editable,
+                        VersionNumber = noteComponent.versionNumber ?? comp.versionNumber,
                     };
                     notes.Add(note);
                     if (noteComponent.duplicate)
@@ -4689,6 +4950,7 @@ public class ParatextServiceTests
                     comment.Type = comp.isConflict ? NoteType.Conflict : NoteType.Normal;
                     comment.ConflictType = NoteConflictType.None;
                     comment.AssignedUser = note.assignedPTUser;
+                    comment.VersionNumber = note.versionNumber ?? comp.versionNumber;
                     ProjectCommentManager.AddComment(comment);
                     if (note.duplicate)
                         ProjectCommentManager.AddComment(comment);

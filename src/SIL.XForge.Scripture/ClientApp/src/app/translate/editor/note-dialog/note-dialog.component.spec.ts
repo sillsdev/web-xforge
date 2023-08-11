@@ -390,7 +390,7 @@ describe('NoteDialogComponent', () => {
   }));
 
   it('allows user to edit the last note in the thread', fakeAsync(() => {
-    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread(undefined, undefined, true) });
     // note03 is marked as deleted
     expect(env.notes.length).toEqual(4);
     const noteThread: NoteThreadDoc = env.getNoteThreadDoc('dataid01');
@@ -409,8 +409,18 @@ describe('NoteDialogComponent', () => {
     expect(env.dialogResult).toEqual({ noteContent: content, noteDataId: 'note05' });
   }));
 
-  it('allows user to delete the last note in the thread', fakeAsync(() => {
+  it('does not allow user to edit the last note in the thread if it is not editable', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    // note03 is marked as deleted
+    expect(env.notes.length).toEqual(4);
+    const noteThread: NoteThreadDoc = env.getNoteThreadDoc('dataid01');
+    expect(noteThread.data!.notes[4].content).toEqual('note05');
+    const noteNumbers = [1, 2, 3, 4];
+    noteNumbers.forEach(n => expect(env.noteHasEditActions(n)).toBe(false));
+  }));
+
+  it('allows user to delete the last note in the thread', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread(undefined, undefined, true) });
     // note03 is marked as deleted
     expect(env.notes.length).toEqual(4);
     const noteThread: NoteThreadDoc = env.getNoteThreadDoc('dataid01');
@@ -425,8 +435,15 @@ describe('NoteDialogComponent', () => {
     expect(noteThread.data!.notes[4].deleted).toBe(true);
   }));
 
-  it('does not delete the note if a user cancels', fakeAsync(() => {
+  it('does not allow deleting a note that is not editable', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    expect(env.notes.length).toEqual(4);
+    const noteNumbers = [1, 2, 3, 4];
+    noteNumbers.forEach(n => expect(env.noteHasEditActions(n)).toBe(false));
+  }));
+
+  it('does not delete the note if a user cancels', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread(undefined, undefined, true) });
     expect(env.notes.length).toEqual(4);
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(false);
     expect(env.noteHasEditActions(4)).toBe(true);
@@ -575,6 +592,7 @@ class TestEnvironment {
           threadId: 'thread01',
           content: 'thread01',
           deleted: false,
+          editable: true,
           ownerRef: 'user01',
           status: NoteStatus.Todo,
           tagId: 1,
@@ -584,7 +602,7 @@ class TestEnvironment {
       ]
     };
   }
-  static getNoteThread(reattachedContent?: string, isInitialSFNote?: boolean): NoteThread {
+  static getNoteThread(reattachedContent?: string, isInitialSFNote?: boolean, editable?: boolean): NoteThread {
     const type: NoteType = NoteType.Normal;
     const conflictType: NoteConflictType = NoteConflictType.DefaultValue;
     const tagId: number | undefined = isInitialSFNote === true ? undefined : 1;
@@ -609,6 +627,7 @@ class TestEnvironment {
           threadId: 'thread01',
           content: 'note',
           deleted: false,
+          editable,
           ownerRef: 'user01',
           status: NoteStatus.Todo,
           tagId,
@@ -623,6 +642,7 @@ class TestEnvironment {
           threadId: 'thread01',
           content: 'note02',
           deleted: false,
+          editable,
           ownerRef: 'user01',
           status: NoteStatus.Resolved,
           tagId,
@@ -637,6 +657,7 @@ class TestEnvironment {
           threadId: 'thread01',
           content: 'note03',
           deleted: true,
+          editable,
           ownerRef: 'user01',
           status: NoteStatus.Todo,
           tagId,
@@ -650,6 +671,7 @@ class TestEnvironment {
           threadId: 'thread01',
           content: 'note04',
           deleted: false,
+          editable,
           ownerRef: 'user01',
           status: NoteStatus.Unspecified,
           dateCreated: '',
@@ -662,6 +684,7 @@ class TestEnvironment {
           threadId: 'thread01',
           content: 'note05',
           deleted: false,
+          editable,
           ownerRef: 'user01',
           status: NoteStatus.Done,
           tagId,
@@ -678,6 +701,7 @@ class TestEnvironment {
         threadId: 'thread01',
         content: reattachedContent,
         deleted: false,
+        editable,
         ownerRef: 'user01',
         status: reattachedContent === '' ? NoteStatus.Unspecified : NoteStatus.Todo,
         tagId: reattachedContent === '' ? undefined : 1,
@@ -692,6 +716,7 @@ class TestEnvironment {
         threadId: 'thread01',
         content: 'reattached02',
         deleted: false,
+        editable,
         ownerRef: 'user01',
         status: NoteStatus.Unspecified,
         tagId: 1,

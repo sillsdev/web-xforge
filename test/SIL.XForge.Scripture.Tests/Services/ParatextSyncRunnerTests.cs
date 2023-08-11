@@ -1813,6 +1813,8 @@ public class ParatextSyncRunnerTests
         Assert.That(thread01.Notes.Count, Is.EqualTo(startingNoteCount + expectedNoteCountChange));
         Assert.That(thread01.Notes[0].Content, Is.EqualTo("thread01 updated."));
         Assert.That(thread01.Notes[0].Assignment, Is.EqualTo(CommentThread.teamUser));
+        Assert.That(thread01.Notes[0].Editable, Is.False);
+        Assert.That(thread01.Notes[0].VersionNumber, Is.EqualTo(2));
         Assert.That(thread01.Notes[1].Deleted, Is.True);
         Assert.That(thread01.Notes[2].Content, Is.EqualTo("thread01 added."));
         string expected = "thread01-syncuser03-thread01 added.-tag:" + expectedNoteTagId;
@@ -3133,7 +3135,7 @@ public class ParatextSyncRunnerTests
                     Assignment = CommentThread.teamUser
                 };
                 noteThreadChange.AddChange(
-                    CreateNote(threadId, "n01", "syncuser01", $"{threadId} updated.", ChangeType.Updated),
+                    CreateNote(threadId, "n01", "syncuser01", $"{threadId} updated.", ChangeType.Updated, null, 2),
                     ChangeType.Updated
                 );
                 noteThreadChange.AddChange(
@@ -3411,9 +3413,11 @@ public class ParatextSyncRunnerTests
                             ThreadId = threadId,
                             OwnerRef = fromCommenter ? "user03" : "user01",
                             SyncUserRef = "syncuser01",
-                            Content = "Paratext note 1.",
+                            Content = "SF note 1.",
                             TagId = tagId,
-                            DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc)
+                            DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
+                            Editable = true,
+                            VersionNumber = 1,
                         },
                         new Note
                         {
@@ -3696,7 +3700,8 @@ public class ParatextSyncRunnerTests
             string user,
             string content,
             ChangeType type,
-            int? tagId = null
+            int? tagId = null,
+            int? versionNumber = null
         )
         {
             return new Note
@@ -3709,7 +3714,8 @@ public class ParatextSyncRunnerTests
                 DateCreated = new DateTime(2019, 1, 1, 8, 0, 0, DateTimeKind.Utc),
                 Deleted = type == ChangeType.Deleted,
                 TagId = tagId,
-                Assignment = CommentThread.teamUser
+                Assignment = CommentThread.teamUser,
+                VersionNumber = versionNumber,
             };
         }
 

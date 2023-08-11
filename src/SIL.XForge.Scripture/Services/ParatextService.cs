@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 using Newtonsoft.Json.Linq;
 using Paratext.Data;
 using Paratext.Data.Languages;
@@ -56,6 +57,7 @@ public class ParatextService : DisposableBase, IParatextService
     private readonly IRepository<UserSecret> _userSecretRepository;
     private readonly IRealtimeService _realtimeService;
     private readonly IOptions<SiteOptions> _siteOptions;
+    private readonly IFeatureManager _featureManager;
     private readonly IFileSystemService _fileSystemService;
     private readonly HttpClientHandler _httpClientHandler;
     private readonly IExceptionHandler _exceptionHandler;
@@ -83,6 +85,7 @@ public class ParatextService : DisposableBase, IParatextService
         IRealtimeService realtimeService,
         IExceptionHandler exceptionHandler,
         IOptions<SiteOptions> siteOptions,
+        IFeatureManager featureManager,
         IFileSystemService fileSystemService,
         ILogger<ParatextService> logger,
         IJwtTokenHelper jwtTokenHelper,
@@ -98,6 +101,7 @@ public class ParatextService : DisposableBase, IParatextService
         _realtimeService = realtimeService;
         _exceptionHandler = exceptionHandler;
         _siteOptions = siteOptions;
+        _featureManager = featureManager;
         _fileSystemService = fileSystemService;
         _logger = logger;
         _jwtTokenHelper = jwtTokenHelper;
@@ -1394,8 +1398,13 @@ public class ParatextService : DisposableBase, IParatextService
                 }
             }
         }
-        // Do not update PT comments at this moment
-        // return PutCommentThreads(userSecret, paratextId, noteThreadChangeList);
+
+        // Only update PT comments if the feature flag is enabled in the backend
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext))
+        {
+            return PutCommentThreads(userSecret, paratextId, noteThreadChangeList);
+        }
+
         return new SyncMetricInfo();
     }
 
@@ -2276,34 +2285,49 @@ public class ParatextService : DisposableBase, IParatextService
             for (int i = 0; i < threadDoc.Data.Notes.Count; i++)
             {
                 Note note = threadDoc.Data.Notes[i];
+
+                // Do not update a note if it is not editable
+                if (note.Editable != true)
+                {
+                    continue;
+                }
+
                 Paratext.Data.ProjectComments.Comment matchedComment =
                     existingThread == null ? null : GetMatchingCommentFromNote(note, existingThread, ptProjectUsers);
                 if (matchedComment != null)
                 {
                     var comment = (Paratext.Data.ProjectComments.Comment)matchedComment.Clone();
-                    bool commentUpdated = false;
-                    if (note.Deleted && !comment.Deleted)
+
+                    // We can only update a note if the comment and note have the same version number
+                    if (note.VersionNumber == comment.VersionNumber)
                     {
-                        comment.Deleted = true;
-                        commentUpdated = true;
-                    }
-                    else if (GetUpdatedCommentXmlIfChanged(comment, note, displayNames, ptProjectUsers, out string xml))
-                    {
-                        if (comment.Contents == null)
-                            comment.AddTextToContent(string.Empty, false);
-                        try
+                        bool commentUpdated = false;
+                        if (note.Editable == true && note.Deleted && !comment.Deleted)
                         {
-                            comment.Contents.InnerXml = xml;
+                            comment.Deleted = true;
                             commentUpdated = true;
                         }
-                        catch (XmlException)
+                        else if (
+                            GetUpdatedCommentXmlIfChanged(comment, note, displayNames, ptProjectUsers, out string xml)
+                        )
                         {
-                            // FIXME Properly handle characters that need to be escaped instead of just logging an error
-                            _logger.LogError($"Could not update comment xml for note {note.DataId}.\n{xml}");
+                            try
+                            {
+                                if (comment.Contents == null)
+                                    comment.AddTextToContent(string.Empty, false);
+                                comment.Contents!.InnerXml = xml;
+                                commentUpdated = true;
+                            }
+                            catch (XmlException)
+                            {
+                                // FIXME Properly handle characters that need to be escaped instead of just logging an error
+                                _logger.LogError($"Could not update comment xml for note {note.DataId}.\n{xml}");
+                            }
                         }
+
+                        if (commentUpdated)
+                            thread.Add(comment);
                     }
-                    if (commentUpdated)
-                        thread.Add(comment);
                 }
                 else
                 {
@@ -2374,6 +2398,7 @@ public class ParatextService : DisposableBase, IParatextService
         bool contentChanged = note.Content != equivalentNoteContent;
         bool tagChanged = commentTag?.Id != note.TagId;
         bool assignedUserChanged = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers) != note.Assignment;
+        bool versionNumberChanged = (note.VersionNumber ?? 0) != comment.VersionNumber;
         if (
             contentChanged
             || statusChanged
@@ -2382,6 +2407,7 @@ public class ParatextService : DisposableBase, IParatextService
             || conflictTypeChanged
             || assignedUserChanged
             || acceptedChangeXmlChanged
+            || versionNumberChanged
         )
             return ChangeType.Updated;
         return ChangeType.None;
@@ -2553,7 +2579,8 @@ public class ParatextService : DisposableBase, IParatextService
             Status = comment.Status.InternalValue,
             TagId = commentTag?.Id,
             Reattached = comment.Reattached,
-            Assignment = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers)
+            Assignment = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers),
+            VersionNumber = comment.VersionNumber,
         };
     }
 
@@ -2566,7 +2593,7 @@ public class ParatextService : DisposableBase, IParatextService
         };
     }
 
-    private static CommentTag GetCommentTag(
+    private static CommentTag? GetCommentTag(
         CommentThread thread,
         Paratext.Data.ProjectComments.Comment comment,
         CommentTags commentTags

@@ -284,6 +284,7 @@ export class NoteDialogComponent implements OnInit {
     return (
       this.isAddNotesEnabled &&
       note.dataId === this.lastNoteId &&
+      note.editable === true &&
       this.noteIdBeingEdited == null &&
       SF_PROJECT_RIGHTS.hasRight(
         this.projectProfileDoc.data,

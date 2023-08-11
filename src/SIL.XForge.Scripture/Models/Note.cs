@@ -35,8 +35,47 @@ public class Note : Comment
     /// </summary>
     public string AcceptedChangeXml { get; set; }
 
+    /// <summary>
+    /// Gets or sets a value indicating whether the note is editable in Scripture Forge.
+    /// </summary>
+    /// <value>
+    /// <list type="table">
+    /// <item>
+    ///     <term>
+    ///         <c>true</c>
+    ///     </term>
+    ///     <description>
+    ///         When the note has been created or edited in Scripture Forge.
+    ///     </description>
+    /// </item>
+    /// <item>
+    ///     <term>
+    ///         <c>false</c>
+    ///     </term>
+    ///     <description>
+    ///         When the note has been created or edited in Paratext.
+    ///     </description>
+    /// </item>
+    /// <item>
+    ///     <term>
+    ///         <c>null</c>
+    ///     </term>
+    ///     <description>
+    ///         When the note's state is unknown (assume <c>false</c>).
+    ///     </description>
+    /// </item>
+    /// </list>
+    /// </value>
+    public bool? Editable { get; set; }
+
+    /// <summary>
+    /// Gets or sets the note's version number.
+    /// </summary>
+    /// <remarks>This corresponds the comment version number in the Comment XML file.</remarks>
+    public int? VersionNumber { get; set; }
+
     /// <summary>The default value for ConflictType in Paratext is "unknownConflictType", which is present
     /// in Note XML files when the note is not a conflict note. However, this is not one of the values of
     /// the NoteConflictType enum.</summary>
-    public readonly static string NoConflictType = "unknownConflictType";
+    public const string NoConflictType = "unknownConflictType";
 }
