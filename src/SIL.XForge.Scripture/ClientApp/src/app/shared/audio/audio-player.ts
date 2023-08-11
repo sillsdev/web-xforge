@@ -1,5 +1,5 @@
 import { EventEmitter } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, interval, Subscription } from 'rxjs';
 import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -16,6 +16,7 @@ export enum AudioStatus {
 export class AudioPlayer extends SubscriptionDisposable {
   private static lastPlayedAudio: HTMLAudioElement;
   private audioDataLoaded: boolean = false;
+  private readonly POLL_INTERVAL = 500;
 
   protected audio: HTMLAudioElement = new Audio();
   // See explanatory comment where this number is used
@@ -23,6 +24,7 @@ export class AudioPlayer extends SubscriptionDisposable {
 
   readonly status$: BehaviorSubject<AudioStatus> = new BehaviorSubject<AudioStatus>(AudioStatus.Init);
   readonly finishedPlaying$: EventEmitter<void> = new EventEmitter<void>();
+  readonly playing$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
 
   constructor(source: string, private readonly pwaService: PwaService) {
     super();
@@ -44,6 +46,13 @@ export class AudioPlayer extends SubscriptionDisposable {
       if (this.currentTime >= this.duration) {
         this.setSeek(0);
       }
+      const playSubscription: Subscription = this.subscribe(interval(this.POLL_INTERVAL), () => {
+        if (this.isPlaying) {
+          this.playing$.next();
+          return;
+        }
+        playSubscription.unsubscribe();
+      });
     });
 
     this.audio.addEventListener('error', () => {

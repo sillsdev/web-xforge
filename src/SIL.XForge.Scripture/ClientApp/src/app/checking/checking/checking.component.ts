@@ -250,17 +250,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return this.text?.chapters.find(c => c.number === this.chapter)?.hasAudio === true;
   }
 
-  get showChapterAudioToggle(): boolean {
-    // const isEnabled = this.featureFlags.scriptureAudio.enabled;
-    const isEnabled = true;
-    const chapterAud = this.chapterHasAudio;
-    console.log('isEnabled: ' + isEnabled);
-    console.log('chapterAud: ' + chapterAud);
-    console.log(this.text?.chapters);
-    console.log(this.chapter);
-    return isEnabled && chapterAud;
-  }
-
   get chapterTextAudioTiming(): AudioTiming[] {
     if (this.textDocId == null) return [];
     const textAudioId: string = getTextAudioId(
@@ -746,14 +735,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   questionChanged(questionDoc: QuestionDoc): void {
-    console.log('question changed null?');
     if (this.questionsPanel == null) {
       return;
     }
 
     this.book = questionDoc.data?.verseRef.bookNum;
     this.chapter = this.questionsPanel.activeQuestionChapter;
-    console.log('chapter changed: ' + this.chapter);
     this.updateActiveQuestionVerseRef(questionDoc);
     this.calculateScriptureSliderPosition(true);
     this.refreshSummary();
@@ -841,8 +828,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     await this.chapterAudioDialogService.openDialog(dialogConfig);
   }
 
-  handleVerseChanged(ref: string): void {
-    this.scripturePanel!.audioVerse = ref!;
+  handleAudioTextRefChanged(ref: string): void {
+    this.scripturePanel!.setAudioTextRef(ref);
   }
 
   private triggerUpdate(): void {
