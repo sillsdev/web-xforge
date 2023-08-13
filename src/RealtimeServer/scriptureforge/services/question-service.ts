@@ -99,7 +99,7 @@ export class QuestionService extends SFProjectDataService<Question> {
                     bsonType: 'string'
                   },
                   text: {
-                    bsonType: 'string'
+                    bsonType: ['null', 'string']
                   },
                   dateModified: {
                     bsonType: 'string'
@@ -123,7 +123,7 @@ export class QuestionService extends SFProjectDataService<Question> {
                 properties: {
                   ownerRef: {
                     bsonType: 'string',
-                    pattern: '^[0-9a-f]$'
+                    pattern: '^[0-9a-f]+$'
                   }
                 },
                 additionalProperties: false
@@ -131,6 +131,18 @@ export class QuestionService extends SFProjectDataService<Question> {
             },
             status: {
               enum: ['', 'resolved', 'export']
+            },
+            scriptureText: {
+              bsonType: 'string'
+            },
+            selectionStartClipped: {
+              bsonType: 'bool'
+            },
+            selectionEndClipped: {
+              bsonType: 'bool'
+            },
+            audioUrl: {
+              bsonType: 'string'
             },
             dataId: {
               bsonType: 'string',
@@ -143,7 +155,7 @@ export class QuestionService extends SFProjectDataService<Question> {
               bsonType: 'string'
             },
             text: {
-              bsonType: 'string'
+              bsonType: ['null', 'string']
             },
             dateModified: {
               bsonType: 'string'

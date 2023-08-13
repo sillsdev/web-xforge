@@ -27,6 +27,9 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
       dataId: {
         bsonType: 'string'
       },
+      threadId: {
+        bsonType: 'string'
+      },
       verseRef: {
         bsonType: 'object',
         required: ['bookNum', 'chapterNum', 'verseNum'],
@@ -97,6 +100,12 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
             },
             dateCreated: {
               bsonType: 'string'
+            },
+            editable: {
+              bsonType: 'bool'
+            },
+            versionNumber: {
+              bsonType: 'int'
             },
             ownerRef: {
               bsonType: 'string',

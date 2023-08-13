@@ -108,6 +108,38 @@ export class SFProjectService extends ProjectService<SFProject> {
           },
           defaultNoteTagId: {
             bsonType: 'int'
+          },
+          preTranslate: {
+            bsonType: 'bool'
+          },
+          projectType: {
+            enum: [
+              'Standard',
+              'BackTranslation',
+              'Daughter',
+              'TransliterationManual',
+              'TransliterationWithEncoder',
+              'StudyBible',
+              'ConsultantNotes',
+              'StudyBibleAdditions',
+              'Auxiliary',
+              'Xml',
+              'SourceLanguage',
+              'Dictionary',
+              'EnhancedResource'
+            ]
+          },
+          baseProject: {
+            bsonType: 'object',
+            properties: {
+              paratextId: {
+                bsonType: 'string'
+              },
+              shortName: {
+                bsonType: 'string'
+              }
+            },
+            additionalProperties: false
           }
         },
         additionalProperties: false
