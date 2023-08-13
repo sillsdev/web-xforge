@@ -39,8 +39,21 @@ namespace SIL.XForge.Scripture.Services;
 /// </summary>
 public class MachineApiService : IMachineApiService
 {
-    internal const string BuildStateFaulted = "Faulted";
-    internal const string BuildStateQueued = "Queued";
+    /// <summary>
+    /// The Faulted build state.
+    /// </summary>
+    /// <remarks>
+    /// NOTE: Serval returns states in TitleCase, while the frontend requires uppercase.
+    /// </remarks>
+    internal const string BuildStateFaulted = "FAULTED";
+
+    /// <summary>
+    /// The Queued build state.
+    /// </summary>
+    /// <remarks>
+    /// SF returns this state while the files are being uploaded to Serval.
+    /// </remarks>
+    internal const string BuildStateQueued = "QUEUED";
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IBuildRepository _builds;
     private readonly IEngineRepository _engines;
