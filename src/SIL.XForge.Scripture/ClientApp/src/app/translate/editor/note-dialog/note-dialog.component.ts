@@ -20,7 +20,7 @@ import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TextDoc, TextDocId } from '../../../core/models/text-doc';
-import { canInsertNote, formatFontSizeToRems } from '../../../shared/utils';
+import { canInsertNote, formatFontSizeToRems, XmlUtils } from '../../../shared/utils';
 
 export interface NoteDialogData {
   threadDataId?: string;
@@ -167,9 +167,9 @@ export class NoteDialogComponent implements OnInit {
     return this.projectProfileDoc?.data?.noteTags ?? [];
   }
 
-  /** What to display for note content. Will be transformed for display, especially for a conflict note. */
+  /** What to display for note content. Will be transformed for display. */
   contentForDisplay(note: Note): string {
-    if (note == null) {
+    if (note.content == null) {
       return '';
     }
     return this.parseNote(note.content);
@@ -218,7 +218,7 @@ export class NoteDialogComponent implements OnInit {
 
   editNote(note: Note): void {
     this.noteIdBeingEdited = note.dataId;
-    this.currentNoteContent = note.content ?? '';
+    this.currentNoteContent = XmlUtils.decodeFromXml(note.content ?? '');
   }
 
   async deleteNote(note: Note): Promise<void> {
@@ -239,14 +239,8 @@ export class NoteDialogComponent implements OnInit {
   }
 
   parseNote(content: string | undefined): string {
-    const replace = new Map<RegExp, string>();
-    replace.set(/<bold>(.*?)<\/bold>/gim, '<b>$1</b>'); // Bold style
-    replace.set(/<italic>(.*?)<\/italic>/gim, '<i>$1</i>'); // Italic style
-    replace.set(/<p>(.*?)<\/p>/gim, '$1<br />'); // Turn paragraphs into line breaks
-    // Strip out any tags that don't match the above replacements
-    replace.set(/<((?!(\/?)(i|b|br|span)))(.*?)>/gim, '');
-    replace.forEach((replacement, regEx) => (content = content?.replace(regEx, replacement)));
-    return content ?? '';
+    if (content == null) return '';
+    return XmlUtils.convertXmlToHtml(content);
   }
 
   toggleSegmentText(): void {
@@ -339,7 +333,7 @@ export class NoteDialogComponent implements OnInit {
     }
 
     this.dialogRef.close({
-      noteContent: this.currentNoteContent,
+      noteContent: XmlUtils.encodeForXml(this.currentNoteContent),
       noteDataId: this.noteIdBeingEdited
     });
   }
