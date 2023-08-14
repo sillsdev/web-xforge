@@ -313,9 +313,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     const dialogConfig: ChapterAudioDialogData = {
       projectId: this.projectId,
       textsByBookId: this.textsByBookId,
-      questionsSorted: this.allPublishedQuestions,
-      currentBook: undefined,
-      currentChapter: undefined
+      questionsSorted: this.allPublishedQuestions
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
     // TODO: Update dashboard to show audio data

@@ -253,9 +253,7 @@ class TestEnvironment {
         data: {
           projectId: 'project01',
           textsByBookId: TestEnvironment.textsByBookId,
-          questionsSorted: this.questions,
-          currentBook: undefined,
-          currentChapter: undefined
+          questionsSorted: this.questions
         }
       };
     }
