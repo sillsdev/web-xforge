@@ -1,4 +1,4 @@
-<ng-container *transloco="let t; read: 'checking_audio_dialog'">
+<ng-container *transloco="let t">
   <h2 mat-dialog-title>Chapter Audio</h2>
   <mat-dialog-content class="mat-typography">
     <div class="row">
@@ -10,14 +10,14 @@
       ></app-book-chapter-chooser>
       <app-info
         *ngIf="selectionHasAudioAlready"
-        [text]="t('audio_already_exists')"
+        [text]="t('checking_audio_dialog.audio_already_exists')"
         icon="warning"
         type="warning"
       ></app-info>
     </div>
     <div>
       <div class="wrapper">
-        <span>{{ t("audio") }}</span>
+        <span>{{ t("checking_audio_dialog.audio") }}</span>
         <app-checking-audio-combined
           [enableRecorder]="false"
           (update)="audioUpdate($event)"
@@ -25,8 +25,8 @@
       </div>
       <hr />
       <div class="wrapper">
-        <span>{{ t("timing") }}</span>
-        <app-info class="warning" *ngIf="errorMessage !== ''" [text]="errorMessage" icon="warning" type="warning">
+        <span>{{ t("checking_audio_dialog.timing") }}</span>
+        <app-info class="warning" *ngIf="errorMessage !== ''" [text]="t(errorMessage)" icon="warning" type="warning">
         </app-info>
         <div class="row">
           <button
@@ -37,8 +37,8 @@
             accept=".csv,.tsv,.txt"
           >
             <mat-icon>cloud_upload</mat-icon>
-            <span fxShow fxHide.lt-sm>{{ t("upload_timing_file") }}</span>
-            <span fxHide fxShow.xs>{{ t("upload") }}</span>
+            <span fxShow fxHide.lt-sm>{{ t("checking_audio_dialog.upload_timing_file") }}</span>
+            <span fxHide fxShow.xs>{{ t("checking_audio_dialog.upload") }}</span>
           </button>
           <span *ngIf="hasTimingBeenUploaded">{{ numberOfTimingSegments }} segments found</span>
         </div>
@@ -51,10 +51,10 @@
       <mat-spinner diameter="24"></mat-spinner>
     </div>
     <button mat-button [mat-dialog-close]="'close'" type="button" id="audio-cancel-btn">
-      {{ t("cancel") }}
+      {{ t("checking_audio_dialog.cancel") }}
     </button>
     <button mat-flat-button color="primary" type="submit" (click)="save()" id="audio-save-btn">
-      {{ t("save") }}
+      {{ t("checking_audio_dialog.save") }}
     </button>
   </mat-dialog-actions>
 </ng-container>

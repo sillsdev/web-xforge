@@ -1,6 +1,5 @@
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { reject } from 'lodash-es';
 import { Chapter, TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';
@@ -21,8 +20,8 @@ export interface ChapterAudioDialogData {
   projectId: string;
   textsByBookId: TextsByBookId;
   questionsSorted: readonly QuestionDoc[];
-  currentBook: number | undefined;
-  currentChapter: number | undefined;
+  currentBook?: number;
+  currentChapter?: number;
 }
 
 export interface ChapterAudioDialogResult {
@@ -178,7 +177,7 @@ export class ChapterAudioDialogComponent {
     this._timingErrorText = undefined;
 
     if (timing.length === 0) {
-      this._timingErrorText = translate('checking_audio_dialog.zero_segments');
+      this._timingErrorText = 'checking_audio_dialog.zero_segments';
     }
 
     if (audioLength === 0) return;
@@ -189,12 +188,12 @@ export class ChapterAudioDialogComponent {
 
     const firstValidation = timing.filter(t => t.from < t.to);
     if (firstValidation.length !== timing.length) {
-      this._timingErrorText = translate('checking_audio_dialog.from_timing_past_to_timing');
+      this._timingErrorText = 'checking_audio_dialog.from_timing_past_to_timing';
     }
 
     const validated = firstValidation.filter(t => t.from < audioLength && t.to <= audioLength);
     if (validated.length !== firstValidation.length) {
-      this._timingErrorText = translate('checking_audio_dialog.timing_past_audio_length');
+      this._timingErrorText = 'checking_audio_dialog.timing_past_audio_length';
     }
   }
 
@@ -215,7 +214,7 @@ export class ChapterAudioDialogComponent {
     );
     this._loadingAudio = false;
     if (audioUrl == null) {
-      this.dialogService.message(translate('checking_audio_dialog.upload_failed'));
+      this.dialogService.message('checking_audio_dialog.upload_failed');
       return;
     }
 
