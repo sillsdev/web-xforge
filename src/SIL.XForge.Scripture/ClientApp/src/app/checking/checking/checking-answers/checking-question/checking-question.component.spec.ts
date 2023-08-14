@@ -141,7 +141,7 @@ describe('CheckingQuestionComponent', () => {
     await env.wait();
     await env.wait();
 
-    //new question
+    //new question with matching audio in query
     const newQuestionDoc = mock(QuestionDoc);
     const newQuestion = mock<Question>();
     when(newQuestion.projectRef).thenReturn('project01');
@@ -154,17 +154,6 @@ describe('CheckingQuestionComponent', () => {
     };
     when(newQuestion.verseRef).thenReturn(verseRef);
     when(newQuestionDoc.data).thenReturn(instance(newQuestion));
-
-    //new scripture audio
-    const query = mock(RealtimeQuery<TextAudioDoc>) as RealtimeQuery<TextAudioDoc>;
-    const audioDoc = mock(TextAudioDoc);
-    const textAudio = mock<TextAudio>();
-    when(textAudio.audioUrl).thenReturn('test-audio-player.webm');
-    when(textAudio.timings).thenReturn([]);
-    when(audioDoc.data).thenReturn(instance(textAudio));
-    when(audioDoc.id).thenReturn(getTextAudioId('project01', 1, 11));
-    when(query.docs).thenReturn([instance(audioDoc)]);
-    when(mockedSFProjectService.queryAudioText('project01')).thenResolve(instance(query));
 
     await env.wait();
 
@@ -215,14 +204,11 @@ class TestEnvironment {
   readonly queryChanged$: Subject<void> = new Subject<void>();
 
   constructor() {
-    const audioDoc = mock(TextAudioDoc);
-    const textAudio = mock<TextAudio>();
-    when(textAudio.audioUrl).thenReturn('test-audio-player-b.webm');
-    when(textAudio.timings).thenReturn([]);
-    when(audioDoc.data).thenReturn(instance(textAudio));
-    when(audioDoc.id).thenReturn(getTextAudioId('project01', 8, 22));
+    const audio1 = this.createTextAudioDoc(getTextAudioId('project01', 8, 22), 'test-audio-player-b.webm');
+    const audio2 = this.createTextAudioDoc(getTextAudioId('project01', 1, 11), 'test-audio-player.webm');
+
     when(this.query.remoteChanges$).thenReturn(this.queryChanged$);
-    when(this.query.docs).thenReturn([instance(audioDoc)]);
+    when(this.query.docs).thenReturn([instance(audio1), instance(audio2)]);
 
     when(mockedPwaService.onlineStatus$).thenReturn(of(true));
     when(mockedSFProjectService.onlineIsSourceProject('project01')).thenResolve(false);
@@ -233,6 +219,17 @@ class TestEnvironment {
     this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(MockComponent);
     this.component = this.fixture.componentInstance;
+  }
+
+  createTextAudioDoc(id: string, url: string): TextAudioDoc {
+    const audioDoc = mock(TextAudioDoc);
+    const textAudio = mock<TextAudio>();
+    when(textAudio.audioUrl).thenReturn(url);
+    when(textAudio.timings).thenReturn([]);
+    when(audioDoc.data).thenReturn(instance(textAudio));
+    when(audioDoc.id).thenReturn(id);
+
+    return audioDoc;
   }
 
   get scriptureAudio(): DebugElement {
