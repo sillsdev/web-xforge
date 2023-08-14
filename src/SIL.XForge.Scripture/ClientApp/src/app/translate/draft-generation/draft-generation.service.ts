@@ -49,12 +49,6 @@ export class DraftGenerationService {
   getBuildProgress(projectId: string): Observable<BuildDto | undefined> {
     return this.httpClient.get<BuildDto>(`translation/builds/id:${projectId}?pretranslate=true`).pipe(
       map(res => {
-        // TODO: Remove once state is upper-cased on server
-        // Conform 'state' to BuildStates enum
-        if (res.data) {
-          res.data.state = res.data.state.toUpperCase();
-        }
-
         if (res.data?.state === BuildStates.Faulted) {
           throw new Error('Error occurred during build: ' + res.data.message);
         }
@@ -81,15 +75,7 @@ export class DraftGenerationService {
     return this.httpClient
       .get<BuildDto>(`translation/engines/project:${projectId}/actions/getLastCompletedPreTranslationBuild`)
       .pipe(
-        map(res => {
-          // TODO: Remove once state is upper-cased on server
-          // Conform 'state' to BuildStates enum
-          if (res.data) {
-            res.data.state = res.data.state.toUpperCase();
-          }
-
-          return res.data;
-        }),
+        map(res => res.data),
         catchError(err => {
           // If project doesn't exist on Serval, return undefined
           if (err.status === 404) {
