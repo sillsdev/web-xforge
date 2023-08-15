@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Subscription, asyncScheduler, merge } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
@@ -56,7 +56,8 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly userService: UserService,
     private readonly questionDialogService: QuestionDialogService,
     private readonly router: Router,
-    private readonly chapterAudioDialogService: ChapterAudioDialogService
+    private readonly chapterAudioDialogService: ChapterAudioDialogService,
+    readonly featureFlagsService: FeatureFlagService
   ) {
     super(noticeService);
   }
@@ -229,6 +230,27 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     }
   }
 
+  async deleteChapterAudio(text: TextInfo, chapter: Chapter): Promise<void> {
+    if (this.projectId == null) {
+      return;
+    }
+    if (
+      await this.dialogService.confirm(
+        this.i18n.translate('checking_overview.confirm_delete_chapter_audio', {
+          book: this.getBookName(text),
+          chapter: chapter.number
+        }),
+        'checking_overview.delete'
+      )
+    ) {
+      await this.projectService.onlineDeleteAudioTimingData(this.projectId, text.bookNum, chapter.number);
+    }
+  }
+
+  editChapterAudio(_text: TextInfo, _chapter: Chapter): void {
+    // TODO: Open dialog
+  }
+
   getRouterLink(bookId: string): string[] {
     if (this.projectId == null) {
       return [];
@@ -271,7 +293,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   questionCountLabel(count: number): string {
-    return count > 0 ? translate('checking_overview.question_count_label', { count: count }) : '';
+    return translate('checking_overview.question_count_label', { count: count });
   }
 
   timeArchivedStamp(date: string | undefined): string {
@@ -366,6 +388,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return [totalUnread, totalRead, totalAnswered];
   }
 
+  bookHasChapterAudio(text: TextInfo): boolean {
+    if (!this.featureFlagsService.scriptureAudio.enabled) {
+      return false;
+    }
+    return text.chapters.filter((c: Chapter) => c.hasAudio).length > 0;
+  }
+
   bookProgress(text: TextInfo): number[] {
     let unread: number = 0;
     let read: number = 0;
@@ -394,15 +423,13 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     if (this.projectDoc == null || this.textsByBookId == null) {
       return;
     }
-    if (questionDoc != null && questionDoc.data != null) {
-      if (questionDoc?.data != null && questionDoc.getAnswers().length > 0) {
-        const confirm = await this.dialogService.confirm(
-          'question_answered_dialog.question_has_answer',
-          'question_answered_dialog.edit_anyway'
-        );
-        if (!confirm) {
-          return;
-        }
+    if (questionDoc?.data != null && questionDoc.getAnswers().length > 0) {
+      const confirm = await this.dialogService.confirm(
+        'question_answered_dialog.question_has_answer',
+        'question_answered_dialog.edit_anyway'
+      );
+      if (!confirm) {
+        return;
       }
     }
 
@@ -437,13 +464,12 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
   }
 
   private async confirmArchiveQuestions(archive: boolean, scope: string): Promise<boolean> {
-    const confirmation = await this.dialogService.confirm(
+    return await this.dialogService.confirm(
       this.i18n.translate(`checking_overview.${archive ? 'confirm_bulk_archive' : 'confirm_bulk_republish'}`, {
         scope
       }),
       `checking_overview.${archive ? 'archive' : 'republish'}`
     );
-    return confirmation === true;
   }
 
   private initTextsWithLoadingIndicator(): void {
