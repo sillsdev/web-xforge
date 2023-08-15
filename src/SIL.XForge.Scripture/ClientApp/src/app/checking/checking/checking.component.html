@@ -175,7 +175,9 @@
           </div>
         </div>
         <div *ngIf="projectDoc" id="project-navigation">
-          <button mat-button *ngIf="!this.isDrawerPermanent" type="button" (click)="toggleDrawer()"></button>
+          <button mdc-button *ngIf="!this.isDrawerPermanent" type="button" (click)="toggleDrawer()">
+            {{ t("view_questions") }}
+          </button>
           <div class="d-flex justify-content-end">
             <button
               mat-button
@@ -206,8 +208,7 @@
               [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
               class="prev-question"
             >
-              <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon
-              >{{ t("previous") }}
+              <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
             </button>
             <button
               mat-icon-button
@@ -217,7 +218,7 @@
               [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
               class="next-question"
             >
-              {{ t("next") }}<mat-icon>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
+              <mat-icon>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
             </button>
             <a [appRouterLink]="routerLink" id="project-summary">
               <app-donut-chart
