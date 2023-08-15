@@ -59,7 +59,7 @@ export class MultiViewerComponent extends SubscriptionDisposable implements OnIn
     this.isMenuOpen = false;
   }
 
-  clickAvatar(viewer: MultiCursorViewer) {
+  clickAvatar(viewer: MultiCursorViewer): void {
     this.viewerClick.emit(viewer);
   }
 }

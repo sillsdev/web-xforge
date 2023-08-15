@@ -231,7 +231,7 @@ class TestEnvironment {
     return { questionDoc, textsByBookId: this.textsByBookId, projectId: this.PROJECT01 };
   }
 
-  updateUserRole(role: string) {
+  updateUserRole(role: string): void {
     const projectDoc = this.realtimeService.get<SFProjectDoc>(SFProjectDoc.COLLECTION, this.PROJECT01);
     const userRole = projectDoc.data!.userRoles;
     userRole[this.adminUser.id] = role;

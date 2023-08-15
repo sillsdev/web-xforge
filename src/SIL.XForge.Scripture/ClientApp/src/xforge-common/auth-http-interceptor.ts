@@ -49,7 +49,7 @@ export class AuthHttpInterceptor implements HttpInterceptor {
     return await throwError(error).toPromise();
   }
 
-  handleResponseEvent(evt: HttpEvent<any>) {
+  handleResponseEvent(evt: HttpEvent<any>): HttpEvent<any> {
     if (evt instanceof HttpResponse) {
       // Throw any JSON RPC errors that are contained in the body even though they actually return a 200 status
       if (evt.body != null && evt.body.error != null) {

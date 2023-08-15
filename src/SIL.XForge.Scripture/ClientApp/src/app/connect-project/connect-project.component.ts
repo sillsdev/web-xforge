@@ -217,7 +217,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     }
   }
 
-  private async populateProjectList() {
+  private async populateProjectList(): Promise<void> {
     this.state = 'loading';
     this.loadingStarted();
     const resourceFetchPromise = this.fetchResources();
@@ -234,7 +234,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     this.loadingFinished();
   }
 
-  private async fetchResources() {
+  private async fetchResources(): Promise<void> {
     try {
       this.resources = await this.paratextService.getResources();
       this.showResourcesLoadingFailedMessage = false;

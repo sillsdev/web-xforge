@@ -83,7 +83,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  wait() {
+  wait(): void {
     this.fixture.detectChanges();
     tick();
     this.fixture.detectChanges();

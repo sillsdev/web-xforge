@@ -136,11 +136,11 @@ class TestEnvironment {
     window.dispatchEvent(new Event(status ? 'online' : 'offline'));
   }
 
-  dispose() {
+  dispose(): void {
     this.pwaService.dispose();
   }
 
-  triggerVersionEvent(type: 'VERSION_DETECTED' | 'VERSION_READY' | 'VERSION_INSTALLATION_FAILED') {
+  triggerVersionEvent(type: 'VERSION_DETECTED' | 'VERSION_READY' | 'VERSION_INSTALLATION_FAILED'): void {
     this.versionUpdates$.next({ currentVersion: {}, latestVersion: {}, type } as VersionEvent);
   }
 }

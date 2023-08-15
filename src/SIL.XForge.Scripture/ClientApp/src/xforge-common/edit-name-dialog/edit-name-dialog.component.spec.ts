@@ -169,7 +169,7 @@ class TestEnvironment {
     this.wait();
   }
 
-  setTextFieldValue(element: HTMLInputElement, value: string) {
+  setTextFieldValue(element: HTMLInputElement, value: string): void {
     element.value = value;
     element.dispatchEvent(new Event('input'));
     this.fixture.detectChanges();
@@ -202,7 +202,7 @@ class DialogOpenerComponent {
 
   constructor(private readonly dialogService: DialogService) {}
 
-  openDialog() {
+  openDialog(): void {
     const dialogRef = this.dialogService.openMatDialog(EditNameDialogComponent, {
       data: { name: this.publicName, isConfirmation: this.isConfirmContext }
     }) as MatDialogRef<EditNameDialogComponent, EditNameDialogResult | 'close'>;

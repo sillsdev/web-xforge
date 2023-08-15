@@ -5,7 +5,7 @@ import { ExceptionHandlingService } from 'xforge-common/exception-handling-servi
 import { AppModule } from './app/app.module';
 import { environment } from './environments/environment';
 
-export function getBaseUrl() {
+export function getBaseUrl(): string {
   return document.getElementsByTagName('base')[0].href;
 }
 

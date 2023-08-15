@@ -83,7 +83,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     return this.data.isRightToLeft == null ? false : this.data.isRightToLeft;
   }
 
-  updateSelection() {
+  updateSelection(): void {
     const selection = this.document.getSelection();
     const rawSelection = (selection || '').toString();
     if (selection != null && rawSelection.trim() !== '' && rawSelection !== this.rawTextSelection) {
@@ -116,7 +116,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     }
   }
 
-  openScriptureChooser() {
+  openScriptureChooser(): void {
     const dialogConfig: MatDialogConfig<ScriptureChooserDialogData> = {
       data: { booksAndChaptersToShow: this.data.textsByBookId, includeVerseSelection: false }
     };
@@ -134,11 +134,11 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     });
   }
 
-  get referenceForDisplay() {
+  get referenceForDisplay(): string {
     return this.selectedVerses ? `(${this.i18n.localizeReference(toVerseRef(this.selectedVerses))})` : '';
   }
 
-  submit() {
+  submit(): void {
     this.updateSelection();
     if (this.selectedVerses != null) {
       if (this.selectionChanged) {
@@ -391,7 +391,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     return parseInt(element.getAttribute('data-segment')!.split('_', 3)[2], 10);
   }
 
-  private getSegments(verse?: number) {
+  private getSegments(verse?: number): Element[] {
     return this.verseSegments().filter(el => (verse == null ? true : verse === this.getVerseFromElement(el)));
   }
 
@@ -405,7 +405,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     }
   }
 
-  private isVerseSegment(node: Node) {
+  private isVerseSegment(node: Node): boolean {
     return node.nodeType === node.ELEMENT_NODE && (node as Element).matches(this.verseSegmentSelector);
   }
 

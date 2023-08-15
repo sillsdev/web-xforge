@@ -76,19 +76,19 @@ export class MockConsole extends AbstractFunctionLogger {
     this.info(message, optionalParams);
   }
 
-  reset() {
+  reset(): void {
     this.logs = [];
     this.hushes = [];
     this.expectations = [];
   }
 
   /** When a message is logged with this regexp, log the event but don't print the message. */
-  muteFor(regex: RegExp) {
+  muteFor(regex: RegExp): void {
     this.hushes.push(regex);
   }
 
   /** Assert that a message was logged, matching a regex. */
-  assertHasLog(message: RegExp, context: string = 'should have contained expected log item') {
+  assertHasLog(message: RegExp, context: string = 'should have contained expected log item'): void {
     const has: boolean = this.logs.filter((logItem: LogItem) => message.test(logItem.message)).length > 0;
     if (!has) {
       if (this.logs.length === 0) {
@@ -102,7 +102,7 @@ export class MockConsole extends AbstractFunctionLogger {
   }
 
   /** Assert that a message was logged, and no other messages were logged. */
-  assertHasOnlyLog(message: RegExp, moreContext: string = '') {
+  assertHasOnlyLog(message: RegExp, moreContext: string = ''): void {
     const hits: number = this.logs.filter((logItem: LogItem) => message.test(logItem.message)).length;
     const has: boolean = hits > 0;
     const logCount: number = this.logs.length;
@@ -149,7 +149,7 @@ export class MockConsole extends AbstractFunctionLogger {
     });
   }
 
-  assertNoLogs(context: string = 'should not have log messages') {
+  assertNoLogs(context: string = 'should not have log messages'): void {
     if (this.logs.length !== 0) {
       this.originalConsole.log('The following was logged:');
       this.logs.forEach(this.originalConsole.log);

@@ -64,7 +64,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     return new Date(this.projectDoc.data.sync.dateLastSuccessfulSync);
   }
 
-  get lastSyncDisplayDate() {
+  get lastSyncDisplayDate(): string {
     return this.lastSyncDate?.toLocaleString() || '';
   }
 
@@ -116,7 +116,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     });
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.subscribe(this.pwaService.onlineStatus$, async isOnline => {
       this.isAppOnline = isOnline;
       if (this.isAppOnline && this.paratextUsername == null) {

@@ -195,7 +195,7 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  async waitForPlayer(ms: number) {
+  async waitForPlayer(ms: number): Promise<void> {
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }

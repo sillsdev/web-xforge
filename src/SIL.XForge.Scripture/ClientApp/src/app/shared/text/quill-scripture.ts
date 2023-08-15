@@ -334,7 +334,7 @@ export function registerScripture(): string[] {
     static blotName = 'note-thread-embed';
     static tagName = 'display-note';
 
-    static create(value: NoteThread) {
+    static create(value: NoteThread): HTMLElement {
       const node = super.create(value) as HTMLElement;
       node.setAttribute('style', value.iconsrc);
       node.setAttribute('title', value.preview);

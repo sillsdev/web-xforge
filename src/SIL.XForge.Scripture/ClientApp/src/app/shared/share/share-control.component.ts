@@ -201,7 +201,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
     this.email.reset();
   }
 
-  private async updateFormEnabledStateAndLinkSharingKey() {
+  private async updateFormEnabledStateAndLinkSharingKey(): Promise<void> {
     if (this.pwaService.isOnline) {
       if (this._projectId != null && this.shareRole != null) {
         this.linkSharingKey = await this.projectService.onlineGetLinkSharingKey(
