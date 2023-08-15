@@ -31,13 +31,18 @@
       </p>
     </div>
     <div class="question-text">
-      <p [class]="focusedText" *ngIf="questionAudioUrl">
+      <p [class]="focusedText" *ngIf="questionAudioUrl || !scriptureAudioUrl">
         {{ questionText }}
         <mat-icon *ngIf="focusedText === 'scripture-audio-label'" (click)="selectQuestion()">
           play_circle_outline
         </mat-icon>
       </p>
-      <p [class]="focusedText" *ngIf="!questionAudioUrl" (click)="selectQuestion()" class="clickable">
+      <p
+        [class]="focusedText"
+        *ngIf="!(questionAudioUrl || !scriptureAudioUrl)"
+        (click)="selectQuestion()"
+        class="clickable"
+      >
         {{ questionText }}
       </p>
     </div>
