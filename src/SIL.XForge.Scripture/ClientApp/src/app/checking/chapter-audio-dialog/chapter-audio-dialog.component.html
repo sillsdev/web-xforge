@@ -1,0 +1,60 @@
+<ng-container *transloco="let t">
+  <h2 mat-dialog-title>Chapter Audio</h2>
+  <mat-dialog-content class="mat-typography">
+    <div class="row">
+      <app-book-chapter-chooser
+        [books]="books"
+        [(book)]="book"
+        [(chapter)]="chapter"
+        [chapters]="chapters"
+      ></app-book-chapter-chooser>
+      <app-info
+        *ngIf="selectionHasAudioAlready"
+        [text]="t('checking_audio_dialog.audio_already_exists')"
+        icon="warning"
+        type="warning"
+      ></app-info>
+    </div>
+    <div>
+      <div class="wrapper">
+        <span>{{ t("checking_audio_dialog.audio") }}</span>
+        <app-checking-audio-combined
+          [enableRecorder]="false"
+          (update)="audioUpdate($event)"
+        ></app-checking-audio-combined>
+      </div>
+      <hr />
+      <div class="wrapper">
+        <span>{{ t("checking_audio_dialog.timing") }}</span>
+        <app-info class="warning" *ngIf="errorMessage !== ''" [text]="t(errorMessage)" icon="warning" type="warning">
+        </app-info>
+        <div class="row">
+          <button
+            mat-button
+            ngfSelect
+            type="button"
+            (fileChange)="prepareTimingFileUpload($event)"
+            accept=".csv,.tsv,.txt"
+          >
+            <mat-icon>cloud_upload</mat-icon>
+            <span fxShow fxHide.lt-sm>{{ t("checking_audio_dialog.upload_timing_file") }}</span>
+            <span fxHide fxShow.xs>{{ t("checking_audio_dialog.upload") }}</span>
+          </button>
+          <span *ngIf="hasTimingBeenUploaded">{{ numberOfTimingSegments }} segments found</span>
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions>
+    <div class="uploading" *ngIf="isLoadingAudio">
+      <span>Uploading...</span>
+      <mat-spinner diameter="24"></mat-spinner>
+    </div>
+    <button mat-button [mat-dialog-close]="'close'" type="button" id="audio-cancel-btn">
+      {{ t("checking_audio_dialog.cancel") }}
+    </button>
+    <button mat-flat-button color="primary" type="submit" (click)="save()" id="audio-save-btn">
+      {{ t("checking_audio_dialog.save") }}
+    </button>
+  </mat-dialog-actions>
+</ng-container>

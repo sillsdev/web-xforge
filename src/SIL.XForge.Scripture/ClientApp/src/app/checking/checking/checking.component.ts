@@ -4,6 +4,7 @@ import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { SplitComponent } from 'angular-split';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -15,8 +16,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Canon, VerseRef } from '@sillsdev/scripture';
-import { merge, of, Subscription } from 'rxjs';
+import { Subscription, merge, of } from 'rxjs';
 import { filter, map, take } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -41,6 +41,8 @@ import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
+import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog-service';
+import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
@@ -144,7 +146,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly questionDialogService: QuestionDialogService,
     readonly i18n: I18nService,
     readonly featureFlags: FeatureFlagService,
-    private readonly pwaService: PwaService
+    private readonly pwaService: PwaService,
+    private readonly chapterAudioDialogService: ChapterAudioDialogService
   ) {
     super(noticeService);
   }
@@ -258,7 +261,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get chapterAudioSource(): string {
-    return `/${this.projectDoc?.id}/${this.getAudioFileName()}`;
+    if (this.book == null || this.chapter == null || this.projectDoc?.id == null || this.textAudioQuery == null) {
+      return '';
+    }
+
+    const audioId: string = getTextAudioId(this.projectDoc.id, this.book, this.chapter);
+    const audioData = this.textAudioQuery.docs.find(t => t.id === audioId)?.data;
+    return audioData?.audioUrl ?? '';
   }
 
   private get book(): number | undefined {
@@ -437,6 +446,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         });
         // TODO (scripture audio) Only fetch the timing data for the currently active chapter
         this.textAudioQuery = await this.projectService.queryAudioText(projectId);
+        this.textAudioQuery.remoteChanges$.subscribe(() => {
+          if (this.chapterAudioSource === '') {
+            this.showScriptureAudioPlayer = false;
+          }
+        });
         const prevBook = this.book;
         // There may be some race conditions which means the questions query is ready before we subscribe to ready$
         // The merge does an additional subscribe on the state of the ready boolean for when it is true
@@ -799,32 +813,19 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  addAudioTimingData(): void {
-    if (this.projectDoc?.id == null || this.book == null || this.chapter == null) {
+  async addAudioTimingData(): Promise<void> {
+    if (this.projectDoc?.id == null || this.textsByBookId == null || this.questionsPanel == null) {
       return;
     }
 
-    const audioPath = this.chapterAudioSource;
-    this.projectService.onlineCreateAudioTimingData(this.projectDoc.id, this.book, this.chapter, audioPath);
-  }
-
-  // TODO (scripture audio) This method is a temporary hack to make the audio file name predictable based on the book
-  // and chapter. Copy test audio files to /var/lib/scriptureforge/audio/<project_id>/ with a name like MRK_003.wav and
-  // it can be played back in the audio player.
-  private getAudioFileName(): string | undefined {
-    if (this.book == null || this.chapter == null) {
-      return;
-    }
-
-    const bookId = Canon.bookNumberToId(this.book);
-    return `${bookId}_${this.chapter.toString().padStart(3, '0')}.wav`;
-  }
-
-  deleteAudioTimingData(): void {
-    if (this.projectDoc?.id == null || this.book == null || this.chapter == null) {
-      return;
-    }
-    this.projectService.onlineDeleteAudioTimingData(this.projectDoc.id, this.book, this.chapter);
+    const dialogConfig: ChapterAudioDialogData = {
+      projectId: this.projectDoc.id,
+      textsByBookId: this.textsByBookId,
+      questionsSorted: this.questionDocs,
+      currentBook: this.questionsPanel.activeQuestionBook,
+      currentChapter: this.questionsPanel.activeQuestionChapter
+    };
+    await this.chapterAudioDialogService.openDialog(dialogConfig);
   }
 
   private triggerUpdate(): void {

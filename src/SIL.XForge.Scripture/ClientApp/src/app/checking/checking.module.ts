@@ -26,6 +26,7 @@ import { FontSizeComponent } from './checking/font-size/font-size.component';
 import { ImportQuestionsConfirmationDialogComponent } from './import-questions-dialog/import-questions-confirmation-dialog/import-question-confirmation-dialog.component';
 import { ImportQuestionsDialogComponent } from './import-questions-dialog/import-questions-dialog.component';
 import { QuestionDialogComponent } from './question-dialog/question-dialog.component';
+import { ChapterAudioDialogComponent } from './chapter-audio-dialog/chapter-audio-dialog.component';
 
 @NgModule({
   declarations: [
@@ -48,7 +49,8 @@ import { QuestionDialogComponent } from './question-dialog/question-dialog.compo
     CheckingScriptureAudioPlayerComponent,
     AudioTimePipe,
     CheckingAudioCombinedComponent,
-    TextChooserDialogComponent
+    TextChooserDialogComponent,
+    ChapterAudioDialogComponent
   ],
   imports: [
     CheckingRoutingModule,

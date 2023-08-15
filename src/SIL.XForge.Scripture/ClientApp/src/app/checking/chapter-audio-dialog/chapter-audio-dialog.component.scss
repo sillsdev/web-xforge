@@ -1,0 +1,65 @@
+@import 'src/variables';
+
+.mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  button {
+    padding-inline: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  mat-icon {
+    //to match checking-audio-combined
+    font-size: 18px;
+    vertical-align: text-top;
+    margin-inline-end: 4px;
+  }
+
+  .warning {
+    font-size: 21px;
+    margin-inline-end: unset;
+    color: $orange;
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+}
+
+div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+app-checking-audio-combined {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mat-dialog-actions {
+  justify-content: end;
+
+  .uploading {
+    flex-grow: 1;
+
+    display: flex;
+    column-gap: 8px;
+    flex-direction: row;
+  }
+}
+
+.wrapper {
+  position: relative;
+}
+
+.row {
+  min-height: 75px; //to match checking-audio-combined
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  column-gap: 8px;
+}

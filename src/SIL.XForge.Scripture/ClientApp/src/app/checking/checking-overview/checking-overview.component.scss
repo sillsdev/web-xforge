@@ -12,7 +12,8 @@
   }
 }
 
-#add-question-button {
+#add-question-button,
+#add-chapter-audio-button {
   @include media-breakpoint-only(xs) {
     min-width: 48px;
   }
