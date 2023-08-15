@@ -43,15 +43,6 @@ export const decorators = [
     providers: [
       importProvidersFrom(I18nStoryModule),
       provideAnimations(),
-      {
-        provide: APP_INITIALIZER,
-        useFactory: (document: Document) => {
-          // Allows global font effects from mdc typography
-          return () => document.body.classList.add('mdc-typography');
-        },
-        deps: [DOCUMENT],
-        multi: true
-      },
       { provide: APP_ROOT_ELEMENT_SELECTOR, useValue: 'storybook-root' },
       { provide: OverlayContainer, useClass: InAppRootOverlayContainer }
     ]

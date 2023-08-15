@@ -17,7 +17,6 @@
 @use '@material/select/mdc-select';
 @use '@material/top-app-bar/mdc-top-app-bar';
 @use '@material/textfield/mdc-text-field';
-@use '@material/typography/mdc-typography';
 @use '@material/snackbar/mdc-snackbar';
 @use '@material/tab-bar/mdc-tab-bar';
 @use '@material/tab-scroller/mdc-tab-scroller';
@@ -36,6 +35,11 @@
 /* Only import relevant Bootstrap 4.x styles */
 @import 'bootstrap/scss/bootstrap-grid';
 @import 'text';
+
+body {
+  margin: 0;
+  font-family: Roboto, sans-serif;
+}
 
 .panel {
   display: flex;
