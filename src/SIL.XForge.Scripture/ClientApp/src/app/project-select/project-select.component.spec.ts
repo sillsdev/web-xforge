@@ -178,13 +178,13 @@ class TestEnvironment {
     return this.fixture.nativeElement.querySelector('mat-form-field input');
   }
 
-  clickInput() {
+  clickInput(): void {
     (this.fixture.nativeElement as HTMLElement).querySelector('input')!.click();
     this.fixture.detectChanges();
     tick();
   }
 
-  options(group: number) {
+  options(group: number): Element[] {
     return Array.from(this.optGroups[group].querySelectorAll('mat-option'));
   }
 
@@ -192,7 +192,7 @@ class TestEnvironment {
     return this.options(group).map(option => option.textContent || '');
   }
 
-  clickOption(group: number, item: number) {
+  clickOption(group: number, item: number): void {
     (this.options(group)[item] as HTMLElement).click();
     this.fixture.detectChanges();
     tick();
@@ -206,7 +206,7 @@ class TestEnvironment {
     tick();
   }
 
-  scrollMenu(top: number) {
+  scrollMenu(top: number): void {
     this.panel.scrollTop = top;
     // Just scrolling the element doesn't cause the event to be fired
     this.panel.dispatchEvent(new Event('scroll'));
@@ -218,7 +218,7 @@ class TestEnvironment {
     return this.component.projectSelect.autocomplete.panel.nativeElement as HTMLElement;
   }
 
-  get optGroups() {
+  get optGroups(): Element[] {
     return Array.from(this.panel.querySelectorAll('mat-optgroup'));
   }
 

@@ -91,7 +91,7 @@ export class SyncProgressComponent extends SubscriptionDisposable {
     super.dispose();
   }
 
-  public updateProgressState(projectId: string, progressState: ProgressState) {
+  public updateProgressState(projectId: string, progressState: ProgressState): void {
     const hasSourceProject = this.sourceProjectDoc?.data != null;
     if (projectId === this._projectDoc?.id) {
       this.progressPercent = hasSourceProject ? 0.5 + progressState.progressValue * 0.5 : progressState.progressValue;

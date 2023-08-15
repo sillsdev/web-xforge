@@ -217,7 +217,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
     }
   }
 
-  async setUpQuestionList(questions: SourceQuestion[], useQuestionIds: boolean) {
+  async setUpQuestionList(questions: SourceQuestion[], useQuestionIds: boolean): Promise<void> {
     const questionQuery = await this.promiseForQuestionDocQuery;
 
     questions.sort((a, b) => a.verseRef.BBBCCCVVV - b.verseRef.BBBCCCVVV);
@@ -248,17 +248,17 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
     return q.verseRef.toString();
   }
 
-  clearFilters() {
+  clearFilters(): void {
     this.fromControl.setValue('');
     this.toControl.setValue('');
     this.filterControl.setValue('');
   }
 
-  updateListOfFilteredQuestions() {
+  updateListOfFilteredQuestions(): void {
     this.filteredList = this.questionList.filter(listItem => listItem.matchesFilter);
   }
 
-  openScriptureChooser(control: AbstractControl) {
+  openScriptureChooser(control: AbstractControl): void {
     const dialogConfig: MatDialogConfig<ScriptureChooserDialogData> = {
       data: { booksAndChaptersToShow: this.data.textsByBookId },
       autoFocus: false
@@ -275,14 +275,14 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
     });
   }
 
-  checkboxChanged(listItem: DialogListItem) {
+  checkboxChanged(listItem: DialogListItem): void {
     this.updateSelectAllCheckbox();
     if (listItem.checked) {
       this.confirmEditsIfNecessary([listItem]);
     }
   }
 
-  async selectAllChanged(selectAllChecked: boolean) {
+  async selectAllChanged(selectAllChecked: boolean): Promise<void> {
     const editsToConfirm: DialogListItem[] = [];
     for (const listItem of this.filteredList) {
       if (selectAllChecked && !listItem.checked) {
@@ -293,7 +293,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
     this.confirmEditsIfNecessary(editsToConfirm);
   }
 
-  updateSelectAllCheckbox() {
+  updateSelectAllCheckbox(): void {
     const checkedCount = this.filteredList.filter(item => item.checked).length;
     this.selectAllCheckbox.checked = checkedCount === this.filteredList.length;
     this.selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < this.filteredList.length;
@@ -352,7 +352,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
     this.dialogRef.close();
   }
 
-  async importFromTranscelerator() {
+  async importFromTranscelerator(): Promise<void> {
     this.loading = true;
 
     await this.promiseForTransceleratorQuestions;
@@ -382,7 +382,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
     this.loading = false;
   }
 
-  async fileSelected(file: File) {
+  async fileSelected(file: File): Promise<void> {
     this.loading = true;
 
     // extract the book id from the file name, if it exists (unfoldingWord puts the book id in the file name, and omits
@@ -479,7 +479,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
     this.updateSelectAllCheckbox();
   }
 
-  private questionsDiffer(listItem: DialogListItem) {
+  private questionsDiffer(listItem: DialogListItem): boolean {
     const doc = listItem.sfVersionOfQuestion?.data;
     const q = listItem.question;
     return doc != null && (doc.text !== q.text || this.verseRefDataDiffers(doc.verseRef, fromVerseRef(q.verseRef)));

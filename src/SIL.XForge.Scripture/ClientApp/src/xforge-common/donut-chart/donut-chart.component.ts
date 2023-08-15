@@ -152,7 +152,7 @@ export class DonutChartComponent extends SubscriptionDisposable implements After
       const startTime = performance.now();
       const id = ++this.lastAnimationId;
 
-      const animate = () => {
+      const animate = (): void => {
         const currentTime = Math.min(performance.now() - startTime, duration);
         const curData = deltas.map((v, i) => easeOutQuart(currentTime, oldPercentages[i], v, duration));
         this.constructSegments(curData);

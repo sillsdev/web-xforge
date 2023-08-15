@@ -142,18 +142,18 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
     return !this.audio.paused && !this.audio.ended && this.audio.readyState > 2;
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     super.ngOnDestroy();
     if (this.isPlaying) {
       this.audio.pause();
     }
   }
 
-  pause() {
+  pause(): void {
     this.audio.pause();
   }
 
-  play() {
+  play(): void {
     if (CheckingAudioPlayerComponent.lastPlayedAudio) {
       CheckingAudioPlayerComponent.lastPlayedAudio.pause();
     }
@@ -164,13 +164,13 @@ export class CheckingAudioPlayerComponent extends SubscriptionDisposable impleme
     CheckingAudioPlayerComponent.lastPlayedAudio = this.audio;
   }
 
-  seeking(event: MatSliderChange) {
+  seeking(event: MatSliderChange): void {
     this.seek = event.value ?? 0;
     this.audio.currentTime = this.seek > 0 ? this.duration * (this.seek / 100) : 0;
     this._currentTime = this.audio.currentTime;
   }
 
-  private updateDuration() {
+  private updateDuration(): void {
     if (!this.enabled && this.audio.duration !== Infinity && !isNaN(this.audio.duration)) {
       this.enabled = true;
       this._duration = this.audio.duration;

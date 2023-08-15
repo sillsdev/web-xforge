@@ -6,11 +6,11 @@ import { AfterViewInit, Directive, ElementRef } from '@angular/core';
 export class ScrollIntoViewDirective implements AfterViewInit {
   constructor(private readonly elementRef: ElementRef<HTMLElement>) {}
 
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     setTimeout(() => this.scrollIntoViewIfNeeded(this.elementRef.nativeElement), 0);
   }
 
-  private scrollIntoViewIfNeeded(element: HTMLElement) {
+  private scrollIntoViewIfNeeded(element: HTMLElement): void {
     const scrollElement = this.nearestScrollingAncestor(element);
     const padding = 5;
     if (scrollElement) {

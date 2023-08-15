@@ -162,15 +162,15 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     });
   }
 
-  updateSelection() {
+  updateSelection(): void {
     this._selection = combineVerseRefStrs(this.scriptureStart.value, this.scriptureEnd.value);
   }
 
-  updateScriptureEndEnabled() {
+  updateScriptureEndEnabled(): void {
     this.scriptureStart.valid ? this.scriptureEnd.enable() : this.scriptureEnd.disable();
   }
 
-  async submit() {
+  async submit(): Promise<void> {
     if (this.audioCombinedComponent!.audioRecorderComponent != null && this.audio.status === 'recording') {
       await this.audioCombinedComponent!.audioRecorderComponent.stopRecording();
       this.noticeService.show(translate('question_dialog.recording_stopped'));
@@ -187,7 +187,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
   }
 
   /** Edit text of control using Scripture chooser dialog. */
-  openScriptureChooser(control: AbstractControl) {
+  openScriptureChooser(control: AbstractControl): void {
     let currentVerseSelection: VerseRef | undefined;
     const { verseRef } = VerseRef.tryParse(control.value);
     if (verseRef.valid) {
@@ -226,7 +226,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     });
   }
 
-  processAudio(audio: AudioAttachment) {
+  processAudio(audio: AudioAttachment): void {
     this.audio = audio;
     if (audio.status === 'uploaded' || audio.status === 'processed' || audio.status === 'recording') {
       this.questionText.clearValidators();
@@ -237,7 +237,7 @@ export class QuestionDialogComponent extends SubscriptionDisposable implements O
     this.questionText.updateValueAndValidity();
   }
 
-  private async setAudioSource() {
+  private async setAudioSource(): Promise<void> {
     const questionDoc = this.data.questionDoc;
     if (questionDoc != null && questionDoc.data != null) {
       const blob = await questionDoc.getFileContents(FileType.Audio, questionDoc.data.dataId);

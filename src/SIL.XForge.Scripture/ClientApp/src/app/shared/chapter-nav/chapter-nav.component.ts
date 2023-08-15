@@ -19,7 +19,7 @@ export class ChapterNavComponent {
     return this.bookNum == null ? '' : this.i18n.localizeBook(this.bookNum);
   }
 
-  chapterChanged() {
+  chapterChanged(): void {
     this.chapterChange.emit(this.chapter);
   }
 

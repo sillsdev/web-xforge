@@ -83,7 +83,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     return this.data.isRightToLeft == null ? false : this.data.isRightToLeft;
   }
 
-  updateSelection() {
+  updateSelection(): void {
     const selection = this.document.getSelection();
     const rawSelection = (selection || '').toString();
     if (selection != null && rawSelection.trim() !== '' && rawSelection !== this.rawTextSelection) {
@@ -116,7 +116,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     }
   }
 
-  openScriptureChooser() {
+  openScriptureChooser(): void {
     const dialogConfig: MatDialogConfig<ScriptureChooserDialogData> = {
       data: { booksAndChaptersToShow: this.data.textsByBookId, includeVerseSelection: false }
     };
@@ -134,11 +134,11 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     });
   }
 
-  get referenceForDisplay() {
+  get referenceForDisplay(): string {
     return this.selectedVerses ? `(${this.i18n.localizeReference(toVerseRef(this.selectedVerses))})` : '';
   }
 
-  submit() {
+  submit(): void {
     this.updateSelection();
     if (this.selectedVerses != null) {
       if (this.selectionChanged) {
@@ -230,7 +230,16 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
    *   and/or end the selection. If only white space was clipped it is not counted as being clipped.
    * - Normalizes whitespace between segments to a single space.
    */
-  private expandSelection(selection: Selection, segments: Element[]) {
+  private expandSelection(
+    selection: Selection,
+    segments: Element[]
+  ): {
+    startClipped: boolean;
+    endClipped: boolean;
+    firstVerseNum: number;
+    lastVerseNum: number;
+    result: string;
+  } {
     // All selected segments except the first and last. The portions of the first and last segments that were selected
     // will be determined, and then concatenated, like so:
     // [selected part of first segment] + [segments in the middle that were fully selected].
@@ -391,7 +400,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     return parseInt(element.getAttribute('data-segment')!.split('_', 3)[2], 10);
   }
 
-  private getSegments(verse?: number) {
+  private getSegments(verse?: number): Element[] {
     return this.verseSegments().filter(el => (verse == null ? true : verse === this.getVerseFromElement(el)));
   }
 
@@ -405,7 +414,7 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
     }
   }
 
-  private isVerseSegment(node: Node) {
+  private isVerseSegment(node: Node): boolean {
     return node.nodeType === node.ELEMENT_NODE && (node as Element).matches(this.verseSegmentSelector);
   }
 

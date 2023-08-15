@@ -133,7 +133,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     this.subscribe(this.valueChange, fn);
   }
 
-  autocompleteOpened() {
+  autocompleteOpened(): void {
     setTimeout(() => {
       if (this.autocomplete && this.autocomplete.panel && this.autocompleteTrigger) {
         fromEvent(this.autocomplete.panel.nativeElement, 'scroll')
@@ -152,7 +152,7 @@ export class ProjectSelectComponent extends SubscriptionDisposable implements Co
     });
   }
 
-  inputClicked() {
+  inputClicked(): void {
     this.autocompleteTrigger.openPanel();
   }
 

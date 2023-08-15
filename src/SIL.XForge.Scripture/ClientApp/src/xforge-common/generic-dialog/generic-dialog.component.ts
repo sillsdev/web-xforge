@@ -19,15 +19,19 @@ export interface GenericDialogOptions<T> {
 export class GenericDialogComponent<T> {
   constructor(@Inject(MAT_DIALOG_DATA) private readonly data: GenericDialogOptions<T>) {}
 
-  get title() {
+  get title(): Observable<string> | undefined {
     return this.data.title;
   }
 
-  get message() {
+  get message(): Observable<string> | undefined {
     return this.data.message;
   }
 
-  get options() {
+  get options(): {
+    label: Observable<string>;
+    value: T;
+    highlight?: boolean | undefined;
+  }[] {
     return this.data.options;
   }
 }

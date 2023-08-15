@@ -140,12 +140,12 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
-  setAudioSource() {
+  setAudioSource(): void {
     this.component.source = this.audioFile;
     this.fixture.detectChanges();
   }
 
-  async waitForRecorder(ms: number) {
+  async waitForRecorder(ms: number): Promise<void> {
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }
