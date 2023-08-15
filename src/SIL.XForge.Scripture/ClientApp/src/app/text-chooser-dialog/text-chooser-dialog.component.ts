@@ -230,7 +230,16 @@ export class TextChooserDialogComponent extends SubscriptionDisposable {
    *   and/or end the selection. If only white space was clipped it is not counted as being clipped.
    * - Normalizes whitespace between segments to a single space.
    */
-  private expandSelection(selection: Selection, segments: Element[]) {
+  private expandSelection(
+    selection: Selection,
+    segments: Element[]
+  ): {
+    startClipped: boolean;
+    endClipped: boolean;
+    firstVerseNum: number;
+    lastVerseNum: number;
+    result: string;
+  } {
     // All selected segments except the first and last. The portions of the first and last segments that were selected
     // will be determined, and then concatenated, like so:
     // [selected part of first segment] + [segments in the middle that were fully selected].
