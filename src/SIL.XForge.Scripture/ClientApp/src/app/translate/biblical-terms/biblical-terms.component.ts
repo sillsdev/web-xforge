@@ -508,7 +508,9 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
       conflictType: NoteConflictType.DefaultValue,
       type: NoteType.Normal,
       status: NoteStatus.Todo,
-      deleted: false
+      deleted: false,
+      editable: true,
+      versionNumber: 1
     };
     if (params.threadDataId == null) {
       // Create a new thread
