@@ -178,6 +178,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private toggleNoteThreadSub?: Subscription;
   private shouldNoteThreadsRespondToEdits: boolean = false;
   private commenterSelectedVerseRef?: VerseRef;
+  private resizeObserver?: ResizeObserver;
   private scrollSubscription?: Subscription;
   private readonly fabDiameter = 40;
   private readonly fabHorizMargin = 20;
@@ -552,6 +553,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.subscribe(fromEvent(window, 'resize'), () => {
       this.setTextHeight();
       this.resetInsertNoteFab(false);
+      this.positionInsertNoteFab();
     });
     this.subscribe(
       this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
@@ -819,6 +821,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.shouldNoteThreadsRespondToEdits = true;
         if (this.target?.editor != null) {
           this.positionInsertNoteFab();
+          this.observeResize(this.target.editor);
           this.subscribeScroll(this.target.editor);
         }
         break;
@@ -1250,10 +1253,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const bounds = elem.getBoundingClientRect();
     // add bottom padding
     const top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
-    if (this.target.editor != null && this.targetFocused) {
-      // reset scroll position
-      this.target.editor.scrollingContainer.scrollTop = 0;
-    }
     this.textHeight = `calc(100vh - ${top}px)`;
   }
 
@@ -2037,24 +2036,39 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.source.editor.scrollingContainer.scrollTop = newScrollTop;
   }
 
+  private observeResize(editor: Quill): void {
+    this.resizeObserver?.unobserve(editor.root);
+    this.resizeObserver = new ResizeObserver(entries => {
+      entries.forEach(_ => {
+        this.keepInsertNoteFabInView();
+      });
+    });
+    this.resizeObserver.observe(editor.root);
+  }
+
   private subscribeScroll(editor: Quill): void {
     this.scrollSubscription?.unsubscribe();
     this.scrollSubscription = this.subscribe(fromEvent(editor.root, 'scroll'), () => {
-      if (this.insertNoteFab == null || this.target == null || this.targetContainer == null) return;
-      const bounds: DOMRect = this.targetContainer.nativeElement.getBoundingClientRect();
-      const editorMargin = 5;
-
-      // bound the FAB to the top of the editor
-      let scrollTop: number = Math.min(this.target.selectionBoundsTop - editorMargin, editor.root.scrollTop);
-      // bound the FAB to the bottom of the editor
-      const targetContainerBottom: number = bounds.bottom - bounds.top - this.fabDiameter - editorMargin;
-      const minScroll: number = Math.max(this.target.selectionBoundsTop - targetContainerBottom, 0);
-      if (scrollTop < minScroll) {
-        scrollTop = minScroll;
-      }
-
-      this.insertNoteFab.nativeElement.style.marginTop = `-${scrollTop}px`;
+      this.keepInsertNoteFabInView();
     });
+  }
+
+  private keepInsertNoteFabInView(): void {
+    if (this.insertNoteFab == null || this.target == null || this.target.editor == null || this.targetContainer == null)
+      return;
+    const bounds: DOMRect = this.targetContainer.nativeElement.getBoundingClientRect();
+    const editorMargin = 5;
+
+    // bound the FAB to the top of the editor
+    let scrollTop: number = Math.min(this.target.selectionBoundsTop - editorMargin, this.target.editor.root.scrollTop);
+    // bound the FAB to the bottom of the editor
+    const targetContainerBottom: number = bounds.bottom - bounds.top - this.fabDiameter - editorMargin;
+    const minScroll: number = Math.max(this.target.selectionBoundsTop - targetContainerBottom, 0);
+    if (scrollTop < minScroll) {
+      scrollTop = minScroll;
+    }
+
+    this.insertNoteFab.nativeElement.style.marginTop = `-${scrollTop}px`;
   }
 
   onViewerClicked(viewer: MultiCursorViewer): void {
