@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { EMPTY, of } from 'rxjs';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { BuildStates } from 'src/app/machine-api/build-states';
 import { SharedModule } from 'src/app/shared/shared.module';
-import { instance, mock, verify } from 'ts-mockito';
+import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -59,7 +59,7 @@ describe('DraftGenerationComponent', () => {
     // Default setup
     setup(): void {
       mockDialogService = jasmine.createSpyObj('DialogService', ['openGenericDialog']);
-      mockI18nService = jasmine.createSpyObj('I18nService', [''], { locale$: of(locale) });
+      mockI18nService = jasmine.createSpyObj('I18nService', ['getLanguageDisplayName'], { locale$: of(locale) });
       mockDraftGenerationService = jasmine.createSpyObj('DraftGenerationService', [
         'startBuildOrGetActiveBuild',
         'cancelBuild',
@@ -71,6 +71,7 @@ describe('DraftGenerationComponent', () => {
         projectId: 'testProjectId',
         projectId$: of('testProjectId'),
         projectDoc$: of({
+          id: 'testProjectId',
           data: {
             writingSystem: {
               tag: 'en'
@@ -88,6 +89,7 @@ describe('DraftGenerationComponent', () => {
         })
       });
 
+      mockI18nService.getLanguageDisplayName.and.returnValue('English');
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
@@ -238,11 +240,12 @@ describe('DraftGenerationComponent', () => {
         mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(of(buildDto));
       });
 
-      const dialogRef = mock(MatDialogRef);
-      env.component.cancelDialogRef = instance(dialogRef);
+      const mockDialogRef = mock(MatDialogRef);
+      env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.generateDraft();
-      verify(dialogRef.close()).never();
+      verify(mockDialogRef.getState()).never();
+      verify(mockDialogRef.close()).never();
     });
 
     it('should attempt "cancel dialog" close for cancelled build', () => {
@@ -252,12 +255,13 @@ describe('DraftGenerationComponent', () => {
         );
       });
 
-      const dialogRef = mock(MatDialogRef);
-      env.component.cancelDialogRef = instance(dialogRef);
+      const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
+      when(mockDialogRef.getState()).thenReturn(MatDialogState.OPEN);
+      env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.generateDraft();
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
-      verify(dialogRef.close()).once();
+      verify(mockDialogRef.close()).once();
     });
   });
 

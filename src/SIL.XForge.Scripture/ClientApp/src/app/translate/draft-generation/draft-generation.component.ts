@@ -1,13 +1,13 @@
 import { Component, OnInit } from '@angular/core';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { isEmpty } from 'lodash-es';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, Observable, of, Subscription, zip } from 'rxjs';
+import { combineLatest, Observable, of, Subscription } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { getLanguageDisplayName, I18nService } from 'xforge-common/i18n.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { filterNullUndefined } from 'xforge-common/util/rxjs-util';
 import { BuildStates } from '../../machine-api/build-states';
@@ -85,26 +85,19 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   ngOnInit(): void {
     // Handle locale changes
     this.subscribe(
-      combineLatest([
-        this.i18n.locale$,
-        // Pair project id and doc emissions, ensuring not undefined
-        zip(
-          this.activatedProject.projectId$.pipe(filterNullUndefined()),
-          this.activatedProject.projectDoc$.pipe(filterNullUndefined())
-        )
-      ]),
-      ([locale, [projectId, projectDoc]]) => {
+      combineLatest([this.i18n.locale$, this.activatedProject.projectDoc$.pipe(filterNullUndefined())]),
+      ([_, projectDoc]) => {
         const translateConfig = projectDoc.data?.translateConfig;
 
         this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
         this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
         this.targetLanguage = projectDoc.data?.writingSystem.tag;
-        this.targetLanguageDisplayName = getLanguageDisplayName(this.targetLanguage, locale);
+        this.targetLanguageDisplayName = this.i18n.getLanguageDisplayName(this.targetLanguage);
         this.isTargetLanguageSupported = this.nllbService.isNllbLanguage(this.targetLanguage);
         this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
 
-        this.draftViewerUrl = `/projects/${projectId}/draft-preview`;
-        this.projectSettingsUrl = `/projects/${projectId}/settings`;
+        this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
+        this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
 
         this.infoAlert = this.getInfoAlert();
       }
@@ -160,7 +153,9 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
         tap((job?: BuildDto) => {
           // Handle automatic closing of dialog if job finishes while cancel dialog is open
           if (!this.canCancel(job)) {
-            this.cancelDialogRef?.close();
+            if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
+              this.cancelDialogRef.close();
+            }
           }
         })
       ),
