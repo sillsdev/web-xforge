@@ -110,12 +110,6 @@ em {
   &.applied {
     color: green;
   }
-
-  &:not(.applied) {
-    .check-icon {
-      display: none;
-    }
-  }
 }
 
 .check-icon {
