@@ -328,19 +328,18 @@ export class I18nService {
     this.interpolationCache[hashKey] = sections.filter(section => !(section.text === '' && section.id == null));
     return this.interpolationCache[hashKey];
   }
-}
 
-/**
- * Uses browser `Intl` to get the language name for the specified language code rendered in the specified locale.
- * @param languageCode The language code for the language name to be displayed.
- * @param currentLocale The language to display the name in.
- * @returns The display name or undefined if language code is not set.
- */
-export function getLanguageDisplayName(languageCode: string | undefined, currentLocale: Locale): string | undefined {
-  if (!languageCode) {
-    return undefined;
+  /**
+   * Uses browser `Intl` to get the language name for the specified language code rendered in the current locale.
+   * @param languageCode The language code for the language name to be displayed.
+   * @returns The display name or undefined if language code is not set.
+   */
+  getLanguageDisplayName(languageCode: string | undefined): string | undefined {
+    if (!languageCode) {
+      return undefined;
+    }
+
+    const languageNames: Intl.DisplayNames = new Intl.DisplayNames([this.localeCode], { type: 'language' });
+    return languageNames.of(languageCode);
   }
-
-  const languageNames: Intl.DisplayNames = new Intl.DisplayNames([currentLocale.canonicalTag], { type: 'language' });
-  return languageNames.of(languageCode);
 }
