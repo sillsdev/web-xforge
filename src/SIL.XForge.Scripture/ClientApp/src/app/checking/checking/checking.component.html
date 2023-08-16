@@ -1,57 +1,47 @@
 <ng-container *transloco="let t; read: 'checking'">
   <div id="projects-app" class="flex-max">
     <div id="checking-app-container" class="d-flex flex-fill flex-nowrap">
-      <mdc-drawer
-        id="question-drawer"
-        [drawer]="isDrawerPermanent ? 'permanent' : 'modal'"
-        [open]="isExpanded"
-        [autoFocus]="false"
-        (closed)="drawerCollapsed()"
-      >
-        <div class="d-flex flex-max" id="questions-panel">
-          <div class="flex-max">
-            <div class="panel">
-              <div class="panel-heading" [ngClass]="{ 'filter-applied': isQuestionFilterApplied }">
-                <h2>
-                  {{ t("questions") }} <span>({{ totalVisibleQuestionsString }})</span>
-                </h2>
-                <button mat-icon-button [matMenuTriggerFor]="questionFilterMenu">
-                  <mat-icon [ngClass]="{ 'material-icons-outlined': !isQuestionFilterApplied }">filter_alt</mat-icon>
-                </button>
-                <mat-menu #questionFilterMenu xPosition="before">
-                  <mat-selection-list [multiple]="false" id="question-filter-list">
-                    <h2 matSubheader>{{ t("filter_questions") }}</h2>
-                    <mat-list-option
-                      *ngFor="let f of questionFilters | keyvalue"
-                      [selected]="f.key === questionFilterSelected"
-                      (click)="setQuestionFilter(f.key)"
-                      >{{ t(f.value) }}</mat-list-option
-                    >
-                  </mat-selection-list>
-                </mat-menu>
-                <button mat-icon-button class="collapse-question-menu" (click)="collapseDrawer()">
-                  <mat-icon>close</mat-icon>
-                </button>
-                <div *ngIf="isQuestionFilterApplied" class="active-question-filter">
-                  {{ t("filter") }}: {{ t(appliedQuestionFilterKey) }}
-                </div>
-              </div>
-              <div class="panel-content">
-                <app-checking-questions
-                  #questionsPanel
-                  (update)="questionUpdated($event)"
-                  (changed)="questionChanged($event)"
-                  [visible]="isDrawerPermanent || isExpanded"
-                  [projectUserConfigDoc]="projectUserConfigDoc"
-                  [projectProfileDoc]="projectDoc"
-                  [questionDocs]="visibleQuestions"
-                  [isAllBooksShown]="showAllBooks"
-                ></app-checking-questions>
-              </div>
-            </div>
+      <div id="questions-panel" [ngClass]="{ 'overlay-visible': isQuestionsOverlayVisible }">
+        <header [ngClass]="{ 'filter-applied': isQuestionFilterApplied }">
+          <div class="header-main">
+            <h2>
+              {{ t("questions") }} <span>({{ totalVisibleQuestionsString }})</span>
+            </h2>
+            <button mat-icon-button [matMenuTriggerFor]="questionFilterMenu">
+              <mat-icon [ngClass]="{ 'material-icons-outlined': !isQuestionFilterApplied }">filter_alt</mat-icon>
+            </button>
+            <mat-menu #questionFilterMenu xPosition="before">
+              <mat-selection-list [multiple]="false" id="question-filter-list">
+                <h2 matSubheader>{{ t("filter_questions") }}</h2>
+                <mat-list-option
+                  *ngFor="let f of questionFilters | keyvalue"
+                  [selected]="f.key === questionFilterSelected"
+                  (click)="setQuestionFilter(f.key)"
+                  >{{ t(f.value) }}</mat-list-option
+                >
+              </mat-selection-list>
+            </mat-menu>
+            <button mat-icon-button class="questions-overlay-close" (click)="setQuestionsOverlayVisibility(false)">
+              <mat-icon>close</mat-icon>
+            </button>
           </div>
+          <div *ngIf="isQuestionFilterApplied" class="active-question-filter">
+            {{ t("filter") }}: {{ t(appliedQuestionFilterKey) }}
+          </div>
+        </header>
+        <div class="panel-content">
+          <app-checking-questions
+            #questionsPanel
+            (update)="questionUpdated($event)"
+            (changed)="questionChanged($event)"
+            [visible]="isDrawerPermanent || isQuestionsOverlayVisible"
+            [projectUserConfigDoc]="projectUserConfigDoc"
+            [projectProfileDoc]="projectDoc"
+            [questionDocs]="visibleQuestions"
+            [isAllBooksShown]="showAllBooks"
+          ></app-checking-questions>
         </div>
-      </mdc-drawer>
+      </div>
       <div id="text-panel">
         <div class="flex-max" id="scripture-panel">
           <div class="panel">
@@ -176,7 +166,12 @@
           </div>
         </div>
         <div *ngIf="projectDoc" id="project-navigation">
-          <button mat-button *ngIf="!this.isDrawerPermanent" type="button" (click)="toggleDrawer()">
+          <button
+            mat-button
+            *ngIf="!this.isDrawerPermanent"
+            type="button"
+            (click)="setQuestionsOverlayVisibility(true)"
+          >
             {{ t("view_questions") }}
           </button>
           <div class="d-flex justify-content-end">
