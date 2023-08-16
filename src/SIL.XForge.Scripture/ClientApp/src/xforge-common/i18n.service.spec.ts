@@ -1,16 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
-import { CookieService } from 'ngx-cookie-service';
 import { VerseRef } from '@sillsdev/scripture';
+import { CookieService } from 'ngx-cookie-service';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { AuthService } from './auth.service';
 import { DOCUMENT } from './browser-globals';
 import { BugsnagService } from './bugsnag.service';
-import { getLanguageDisplayName, I18nService } from './i18n.service';
+import { I18nService } from './i18n.service';
 import { LocationService } from './location.service';
-import { Locale } from './models/i18n-locale';
 
 const mockedLocationService = mock(LocationService);
 const mockedBugsnagService = mock(BugsnagService);
@@ -145,25 +144,22 @@ describe('I18nService', () => {
   });
 
   describe('getLanguageDisplayName', () => {
-    const locale: Locale = {
-      localName: 'Test',
-      englishName: 'Test',
-      canonicalTag: 'en',
-      direction: 'ltr',
-      tags: ['test'],
-      production: false
-    };
-
     it('should return the display name for a valid language code', () => {
-      expect(getLanguageDisplayName('en', locale)).toBe('English');
+      const service = getI18nService();
+      spyOnProperty(service, 'localeCode', 'get').and.returnValue('en');
+      expect(service.getLanguageDisplayName('en')).toBe('English');
     });
 
     it('should return undefined for an undefined language code', () => {
-      expect(getLanguageDisplayName(undefined, locale)).toBeUndefined();
+      const service = getI18nService();
+      spyOnProperty(service, 'localeCode', 'get').and.returnValue('en');
+      expect(service.getLanguageDisplayName(undefined)).toBeUndefined();
     });
 
     it('should return language code for an unknown language code', () => {
-      expect(getLanguageDisplayName('xyz', locale)).toBe('xyz');
+      const service = getI18nService();
+      spyOnProperty(service, 'localeCode', 'get').and.returnValue('en');
+      expect(service.getLanguageDisplayName('xyz')).toBe('xyz');
     });
   });
 });

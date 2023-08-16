@@ -50,7 +50,7 @@
       {{ targetProject?.shortName }}
       <span *ngIf="hasDraft" class="draft-indicator" [ngClass]="{ applied: isDraftApplied }">
         Draft {{ isDraftApplied ? " applied" : "" }}
-        <mat-icon class="check-icon">check</mat-icon>
+        <mat-icon *ngIf="isDraftApplied" class="check-icon">check</mat-icon>
       </span>
       <div *ngIf="!isDraftApplied && hasDraft" class="apply-draft-button-container">
         <button mat-flat-button color="primary" (click)="applyDraft()">
