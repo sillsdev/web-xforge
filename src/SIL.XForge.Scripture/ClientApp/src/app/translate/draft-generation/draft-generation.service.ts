@@ -174,7 +174,9 @@ export class DraftGenerationService {
         const segmentRef: string = `verse_${verseRef.chapter}_${verseRef.verse}`;
 
         // Ensure single space at end to not crowd a following verse number.
-        // TODO: Make this more sophisticated to check next segment for `{ insert: { verse: {} } }` before adding space.
+        // TODO: Make this more sophisticated to check next segment for `{ insert: { verse: {} } }` before adding space?
+        // TODO: ... and investigate if there is a better way to display a space before the next verse marker
+        // TODO: ... without counting the space as part of the verse text.
         draftSegmentMap[segmentRef] = preTranslation.translation.trimEnd() + ' ';
       }
     }
