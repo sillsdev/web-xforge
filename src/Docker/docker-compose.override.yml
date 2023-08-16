@@ -1,0 +1,36 @@
+# This override is loaded automatically via docker compose, and contains development/debug configuration
+version: "3.4"
+
+name: scripture-forge
+
+services:
+  db-xforge:
+    container_name: db-xforge
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_config:/data/configdb
+      - mongo_data:/data/db
+
+  web-xforge:
+    container_name: web-xforge
+    build:
+      args:
+        - configuration=Debug
+        - version=9.9.9
+        - AngularConfig=development
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DataAccess__ConnectionString=mongodb://db-xforge:27017
+      - urls=http://*:5000 # Docker apps cannot bind to localhost, so we bind to all IP addresses
+    ports:
+      - "5000:5000"
+      - "5003:5003"
+    depends_on:
+      - db-xforge
+    volumes:
+      - scriptureforge-data:/var/lib/scriptureforge
+      - xforge-data:/var/lib/xforge
+      - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro # Share User Secrets with Linux Host
+      - ~/.vsdbg:/remote_debugger:rw # Visual Studio Code Debugger Support

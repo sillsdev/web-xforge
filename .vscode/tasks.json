@@ -129,6 +129,22 @@
         "cwd": "${workspaceRoot}/src/Migrations/SyncUserToPTUser"
       },
       "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "docker-compose-up",
+      "type": "shell",
+      "command": "docker compose up -d --build",
+      "windows": {
+        "command": "docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.win.yml up -d --build"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "options": {
+        "cwd": "${workspaceRoot}/src/Docker"
+      },
+      "problemMatcher": []
     }
     // {
     //   "label": "build-migrator-foo",
