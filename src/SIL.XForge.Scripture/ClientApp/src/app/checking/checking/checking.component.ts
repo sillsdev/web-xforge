@@ -16,7 +16,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Subscription, merge, of } from 'rxjs';
+import { merge, of, Subscription } from 'rxjs';
 import { filter, map, take } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -48,7 +48,7 @@ import { QuestionDialogData } from '../question-dialog/question-dialog.component
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
-import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
+import { CheckingQuestionsComponent, QuestionChangedEvent } from './checking-questions/checking-questions.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
 
 interface Summary {
@@ -89,7 +89,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   @ViewChild('chapterMenuList') chapterMenuList?: MdcList;
 
   chapters: number[] = [];
-  isExpanded: boolean = false;
+  isQuestionsOverlayVisible: boolean = false;
   scriptureFontSize: string = '';
   showAllBooks: boolean = false;
   summary: Summary = {
@@ -193,7 +193,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     if (this._isDrawerPermanent !== value) {
       this._isDrawerPermanent = value;
       if (!this._isDrawerPermanent) {
-        this.collapseDrawer();
+        this.setQuestionsOverlayVisibility(false);
       }
     }
   }
@@ -625,16 +625,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.calculateScriptureSliderPosition(true);
   }
 
-  collapseDrawer(): void {
-    this.isExpanded = false;
-  }
-
-  toggleDrawer(): void {
-    this.isExpanded = !this.isExpanded;
-  }
-
-  drawerCollapsed(): void {
-    this.isExpanded = false;
+  setQuestionsOverlayVisibility(visible: boolean): void {
+    this.isQuestionsOverlayVisible = visible;
   }
 
   chapterMenuOpened(): void {
@@ -734,7 +726,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.refreshSummary();
   }
 
-  questionChanged(questionDoc: QuestionDoc): void {
+  questionChanged({ questionDoc, actionSource }: QuestionChangedEvent): void {
     if (this.questionsPanel == null) {
       return;
     }
@@ -744,7 +736,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this.updateActiveQuestionVerseRef(questionDoc);
     this.calculateScriptureSliderPosition(true);
     this.refreshSummary();
-    this.collapseDrawer();
+
+    // Hide the mobile question overlay unless question changed is due to a filter action (list change)
+    if (!actionSource?.isQuestionListChange) {
+      this.setQuestionsOverlayVisibility(false);
+    }
+
     if (this.pwaService.isOnline) {
       questionDoc.updateAnswerFileCache();
     }
