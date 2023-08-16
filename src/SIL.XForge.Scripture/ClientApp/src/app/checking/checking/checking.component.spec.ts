@@ -280,7 +280,7 @@ describe('CheckingComponent', () => {
     it('can select a question', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       const question = env.selectQuestion(1);
-      expect(question.classes['mdc-list-item--activated']).toBe(true);
+      expect(question.classes['selected']).toBe(true);
     }));
 
     it('question status change to read', fakeAsync(() => {
@@ -1877,8 +1877,8 @@ class TestEnvironment {
     const questions = this.questions;
     for (const questionNumber in questions) {
       if (
-        questions[questionNumber].classes.hasOwnProperty('mdc-list-item--activated') &&
-        questions[questionNumber].classes['mdc-list-item--activated']
+        questions[questionNumber].classes.hasOwnProperty('selected') &&
+        questions[questionNumber].classes['selected']
       ) {
         // Need to add one as css selector nth-child starts index from 1 instead of zero
         return Number(questionNumber) + 1;
@@ -1935,13 +1935,11 @@ class TestEnvironment {
   }
 
   get questionFilterTotal(): string {
-    return this.fixture.debugElement
-      .query(By.css('#questions-panel .panel-heading h2 span'))
-      .nativeElement.textContent.trim();
+    return this.fixture.debugElement.query(By.css('#questions-panel header h2 span')).nativeElement.textContent.trim();
   }
 
   get questions(): DebugElement[] {
-    return this.fixture.debugElement.queryAll(By.css('app-checking-questions .mdc-list-item'));
+    return this.fixture.debugElement.queryAll(By.css('app-checking-questions .mat-list-item'));
   }
 
   get quillEditor(): HTMLElement {
@@ -2186,7 +2184,7 @@ class TestEnvironment {
 
   selectQuestion(/** indexed starting at 1 */ questionNumber: number, includeReadTimer: boolean = true): DebugElement {
     const question = this.fixture.debugElement.query(
-      By.css('app-checking-questions .mdc-list-item:nth-child(' + questionNumber + ')')
+      By.css('app-checking-questions .mat-list-item:nth-child(' + questionNumber + ')')
     );
     question.nativeElement.click();
     tick(1);
