@@ -1,31 +1,36 @@
 <ng-container *transloco="let t; read: 'checking_questions'">
-  <mdc-list>
-    <mdc-list-item
+  <mat-list *ngIf="hasQuestions">
+    <mat-list-item
       *ngFor="let questionDoc of questionDocs"
       (click)="activateQuestion(questionDoc)"
       [ngClass]="{
         'question-read': hasUserReadQuestion(questionDoc),
         'question-unread': !hasUserReadQuestion(questionDoc),
         'question-answered': hasUserAnswered(questionDoc),
-        'question-has-answers': getUnreadAnswers(questionDoc)
+        'question-has-answers': getUnreadAnswers(questionDoc),
+        selected: activeQuestionDoc?.id === questionDoc.id
       }"
-      [activated]="activeQuestionDoc?.id === questionDoc.id"
       [matTooltip]="questionTooltip(questionDoc)"
     >
       <div class="question-title">
-        <mdc-icon *ngIf="questionDoc.data?.audioUrl">headset</mdc-icon>
+        <mat-icon *ngIf="questionDoc.data?.audioUrl">headset</mat-icon>
         <span class="question-text">{{ questionText(questionDoc) }}</span>
       </div>
       <a
         *ngIf="getUnreadAnswers(questionDoc) > 0"
         class="view-answers"
-        mdcListItemMeta
         title="{{ 'checking.view_questions' | transloco }}"
       >
-        <i mdcIcon class="mirror-rtl">forum</i> <span>{{ getUnreadAnswers(questionDoc) }}</span>
+        <mat-icon
+          class="mirror-rtl"
+          [matBadge]="getUnreadAnswers(questionDoc)"
+          matBadgePosition="before"
+          matBadgeSize="small"
+          >forum</mat-icon
+        >
       </a>
-    </mdc-list-item>
-  </mdc-list>
+    </mat-list-item>
+  </mat-list>
   <div *ngIf="!hasQuestions && haveQuestionsLoaded" class="no-questions-found">
     {{ t("no_questions_found") }}
   </div>

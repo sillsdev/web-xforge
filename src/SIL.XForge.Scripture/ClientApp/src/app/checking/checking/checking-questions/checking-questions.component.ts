@@ -1,34 +1,45 @@
-import { MdcList, MdcListItem } from '@angular-mdc/web';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  ElementRef,
   EventEmitter,
   Input,
+  OnInit,
   Output,
-  ViewChild,
+  QueryList,
   ViewChildren
 } from '@angular/core';
+import { MatListItem } from '@angular/material/list';
+import { translate } from '@ngneat/transloco';
 import sortBy from 'lodash-es/sortBy';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { Subject, Subscription } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { UserService } from 'xforge-common/user.service';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { translate } from '@ngneat/transloco';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
-import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
+import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { TranslationEngineService } from '../../../core/translation-engine.service';
 import { CheckingUtils } from '../../checking.utils';
-import { SFProjectService } from '../../../core/sf-project.service';
+
+export interface QuestionChangeActionSource {
+  /** True during events due to a questions doc change such as with a filter. */
+  isQuestionListChange?: boolean;
+}
+export interface QuestionChangedEvent {
+  questionDoc: QuestionDoc;
+  actionSource: QuestionChangeActionSource | undefined;
+}
 
 // For performance reasons, this component uses the OnPush change detection strategy rather than the default change
 // detection strategy. This means when change detection runs, this component will be skipped during change detection
@@ -47,36 +58,10 @@ import { SFProjectService } from '../../../core/sf-project.service';
   styleUrls: ['./checking-questions.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CheckingQuestionsComponent extends SubscriptionDisposable {
-  @Input() isAllBooksShown: boolean = false;
+export class CheckingQuestionsComponent extends SubscriptionDisposable implements OnInit {
   @Output() update = new EventEmitter<QuestionDoc>();
-  @Output() changed = new EventEmitter<QuestionDoc>();
-  activeQuestionDoc?: QuestionDoc;
-  activeQuestionDoc$ = new Subject<QuestionDoc>();
-  @ViewChild(MdcList, { static: true }) mdcList?: MdcList;
-  haveQuestionsLoaded: boolean = false;
-
-  private _projectProfileDoc?: SFProjectProfileDoc;
-  private _projectUserConfigDoc?: SFProjectUserConfigDoc;
-  private _questionDocs: Readonly<QuestionDoc[]> = [];
-  private isProjectAdmin: boolean = false;
-
-  private projectProfileDocChangesSubscription?: Subscription;
-  private projectUserConfigDocChangesSubscription?: Subscription;
-
-  constructor(
-    private readonly userService: UserService,
-    private readonly translationEngineService: TranslationEngineService,
-    private readonly changeDetector: ChangeDetectorRef,
-    private readonly projectService: SFProjectService,
-    private readonly i18n: I18nService
-  ) {
-    super();
-    // Only mark as read if it has been viewed for a set period of time and not an accidental click
-    this.subscribe(this.activeQuestionDoc$.pipe(debounceTime(2000)), questionDoc => {
-      this.updateElementsRead(questionDoc);
-    });
-  }
+  @Output() changed = new EventEmitter<QuestionChangedEvent>();
+  @Input() isAllBooksShown: boolean = false;
 
   @Input()
   set projectProfileDoc(projectProfileDoc: SFProjectProfileDoc | undefined) {
@@ -101,6 +86,60 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
         this.changeDetector.markForCheck();
       });
     }
+  }
+
+  @Input()
+  set questionDocs(questionDocs: Readonly<QuestionDoc[]> | undefined) {
+    if (questionDocs == null) {
+      return;
+    }
+    if (questionDocs.length > 0) {
+      this.activateStoredQuestion(questionDocs, { isQuestionListChange: true });
+    } else {
+      this.activeQuestionDoc = undefined;
+    }
+    this._questionDocs = questionDocs;
+    this.haveQuestionsLoaded = true;
+    this.changeDetector.markForCheck();
+  }
+
+  // When the list of questions is hidden it has display: none applied, which prevents scrolling to the active question
+  // The instant it becomes visible we scroll the active question into view
+  @Input() set visible(value: boolean) {
+    if (value) {
+      this.scrollToActiveQuestion();
+    }
+  }
+
+  @ViewChildren(MatListItem, { read: ElementRef }) questionListOptions?: QueryList<ElementRef>;
+
+  activeQuestionDoc?: QuestionDoc;
+  activeQuestionDoc$ = new Subject<QuestionDoc>();
+  haveQuestionsLoaded: boolean = false;
+
+  private _projectProfileDoc?: SFProjectProfileDoc;
+  private _projectUserConfigDoc?: SFProjectUserConfigDoc;
+  private _questionDocs: Readonly<QuestionDoc[]> = [];
+  private isProjectAdmin: boolean = false;
+
+  private projectProfileDocChangesSubscription?: Subscription;
+  private projectUserConfigDocChangesSubscription?: Subscription;
+
+  constructor(
+    private readonly userService: UserService,
+    private readonly translationEngineService: TranslationEngineService,
+    private readonly changeDetector: ChangeDetectorRef,
+    private readonly projectService: SFProjectService,
+    private readonly i18n: I18nService
+  ) {
+    super();
+  }
+
+  ngOnInit(): void {
+    // Only mark as read if it has been viewed for a set period of time and not an accidental click
+    this.subscribe(this.activeQuestionDoc$.pipe(debounceTime(2000)), questionDoc => {
+      this.updateElementsRead(questionDoc);
+    });
   }
 
   get activeQuestionBook(): number | undefined {
@@ -132,40 +171,6 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
   get projectId(): string | undefined {
     return this._projectProfileDoc?.id;
-  }
-
-  @Input()
-  set questionDocs(questionDocs: Readonly<QuestionDoc[]> | undefined) {
-    if (questionDocs == null) {
-      return;
-    }
-    if (questionDocs.length > 0) {
-      this.activateStoredQuestion(questionDocs);
-    } else {
-      this.activeQuestionDoc = undefined;
-    }
-    this._questionDocs = questionDocs;
-    this.haveQuestionsLoaded = true;
-    this.changeDetector.markForCheck();
-  }
-
-  // When the list of questions is hidden it has display: none applied, which prevents scrolling to the active question
-  // The instant it becomes visible we scroll the active question into view
-  @Input() set visible(value: boolean) {
-    if (value) {
-      this.scrollToActiveQuestion();
-    }
-  }
-
-  // The list of questions is rendered before there are any questions to render, so to scroll to the active question
-  // on page load we have to watch as each element is added to the view
-  @ViewChildren(MdcListItem) set questionElements(listItem: MdcListItem) {
-    if (
-      listItem.elementRef != null &&
-      (listItem.elementRef.nativeElement as HTMLElement).classList.contains('.mdc-list-item--activated')
-    ) {
-      this.scrollToActiveQuestion();
-    }
   }
 
   get questionDocs(): Readonly<QuestionDoc[]> {
@@ -220,7 +225,10 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   /**
    * Activates the question that a user has most recently viewed if available
    */
-  activateStoredQuestion(questionDocs: Readonly<QuestionDoc[]>): QuestionDoc {
+  activateStoredQuestion(
+    questionDocs: Readonly<QuestionDoc[]>,
+    actionSource?: QuestionChangeActionSource
+  ): QuestionDoc {
     let questionToActivate: QuestionDoc | undefined;
     let activeQuestionDocId: string | undefined;
     if (this.activeQuestionDoc != null) {
@@ -239,7 +247,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     if (questionToActivate == null) {
       questionToActivate = questionDocs[0];
     }
-    this.activateQuestion(questionToActivate);
+    this.activateQuestion(questionToActivate, actionSource);
     return questionToActivate;
   }
 
@@ -316,7 +324,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     this.changeQuestion(-1);
   }
 
-  activateQuestion(questionDoc: QuestionDoc): void {
+  activateQuestion(questionDoc: QuestionDoc, actionSource?: QuestionChangeActionSource): void {
     // The reason for the convoluted questionChanged logic is because the change needs to be emitted even if it's the
     // same question, but calling activeQuestionDoc$.next when the question is unchanged causes complicated test errors
     let questionChanged = true;
@@ -326,7 +334,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     this.activeQuestionDoc = questionDoc;
     if (questionDoc.data != null) {
       this.storeMostRecentQuestion(questionDoc.data.verseRef.bookNum).then(() => {
-        this.changed.emit(questionDoc);
+        this.changed.emit({ questionDoc, actionSource });
         if (questionChanged) {
           this.activeQuestionDoc$.next(questionDoc);
         }
@@ -353,10 +361,10 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   private scrollToActiveQuestion(): void {
-    const element = (this.mdcList?.elementRef.nativeElement as HTMLElement)?.querySelector('.mdc-list-item--activated');
-    if (element != null) {
-      element.scrollIntoView({ block: 'nearest' });
-    }
+    this.changeDetector.detectChanges();
+    this.questionListOptions
+      ?.find(opt => opt.nativeElement?.classList.contains('selected'))
+      ?.nativeElement.scrollIntoView({ block: 'nearest' });
   }
 
   private changeQuestion(newDifferential: number): void {
