@@ -91,26 +91,6 @@
             <mat-error *ngIf="biblicalTermsMessage">
               {{ biblicalTermsMessage }}
             </mat-error>
-            <h2 class="sharing-heading">{{ t("sharing") }}</h2>
-            <div class="tool-setting">
-              <div class="tool-setting-field checkbox-field">
-                <mat-checkbox formControlName="translateShareEnabled" id="checkbox-translate-share">
-                  {{ t("share") }}
-                </mat-checkbox>
-                <app-write-status
-                  [state]="getControlState('translateShareEnabled')"
-                  [formGroup]="form"
-                  id="translate-share-status"
-                ></app-write-status>
-              </div>
-              <mat-hint class="helper-text checkbox-helper-text" fxLayout="row">
-                <span>
-                  <span [innerHTML]="shareDescription?.before"></span>
-                  <a [appRouterLink]="['/projects', projectId, 'users']">{{ shareDescription?.templateTagText }}</a>
-                  <span>{{ shareDescription?.after }}</span>
-                </span>
-              </mat-hint>
-            </div>
           </mat-card-content>
           <mat-divider></mat-divider>
           <mat-card-content>
