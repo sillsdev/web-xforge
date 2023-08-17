@@ -1,10 +1,10 @@
+@use 'src/variables';
+
 @use '@material/icon-button/mixins' as icon-button;
 @use '@material/typography/mixins' as typography;
 @use '@material/top-app-bar/variables' as top-app-bar;
 
 @import 'bootstrap/scss/mixins/breakpoints';
-
-@import 'src/variables';
 
 // Set height of the app to 100% so that the app will fill the entire screen.
 // Don't use 100vh because that will cause the app to be too tall on mobile devices when the browser's address bar is
@@ -80,7 +80,7 @@
     > div {
       flex: 1;
       padding: 14px 20px;
-      @include media-breakpoint-only(xs) {
+      @include media-breakpoint-only(xs, variables.$grid-breakpoints) {
         padding: 10px;
       }
       display: flex;
@@ -150,7 +150,7 @@ header {
       flex-direction: row;
       column-gap: 5px;
       align-items: center;
-      color: $purpleLight;
+      color: variables.$purpleLight;
     }
     #user-menu-name {
       line-height: 1.5rem;
@@ -172,7 +172,7 @@ header {
     }
 
     .mat-menu-item {
-      font-family: $languageFonts;
+      font-family: variables.$languageFonts;
     }
   }
 }
@@ -225,8 +225,8 @@ mat-nav-list .mat-list-item {
 
   mat-icon,
   mdc-icon {
-    color: $purpleMedium;
-    fill: $purpleMedium;
+    color: variables.$purpleMedium;
+    fill: variables.$purpleMedium;
     transition: color 0.15s;
     padding: 0;
   }
@@ -234,8 +234,8 @@ mat-nav-list .mat-list-item {
   &:hover {
     mat-icon,
     mdc-icon {
-      color: $purpleLight;
-      fill: $purpleLight;
+      color: variables.$purpleLight;
+      fill: variables.$purpleLight;
     }
   }
 
@@ -281,7 +281,7 @@ mdc-drawer-content {
 ::ng-deep #sync-icon .mat-badge-content {
   font-family: 'Material Icons';
   background: transparent;
-  color: var(--mdc-theme-error);
+  color: variables.$errorColor;
   font-weight: normal;
   font-size: 1.4rem;
 }

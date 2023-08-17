@@ -1,4 +1,4 @@
-@import 'src/variables';
+@use 'src/variables';
 
 :host {
   display: flex;
@@ -18,13 +18,13 @@ a {
     overflow: unset;
 
     &.normal {
-      color: $blueMedium;
+      color: variables.$blueMedium;
     }
     &.error {
-      color: var(--mdc-theme-error);
+      color: variables.$errorColor;
     }
     &.warning {
-      color: $orange;
+      color: variables.$orange;
     }
   }
 }

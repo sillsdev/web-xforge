@@ -1,3 +1,4 @@
+@use 'src/variables';
 @import '../checking-global-vars';
 @import 'bootstrap/scss/mixins/breakpoints';
 
@@ -91,7 +92,7 @@
     }
   }
   .form-helper-text {
-    color: var(--mdc-theme-error);
+    color: variables.$errorColor;
     font-size: 0.75em;
     padding-left: 15px;
     margin-bottom: 1em;
@@ -185,7 +186,7 @@
             }
           }
           &.answer-delete {
-            color: var(--mdc-theme-error);
+            color: variables.$errorColor;
           }
         }
         .delete-divider {
