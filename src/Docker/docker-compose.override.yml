@@ -32,5 +32,5 @@ services:
     volumes:
       - scriptureforge-data:/var/lib/scriptureforge
       - xforge-data:/var/lib/xforge
-      - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro # Share User Secrets with Linux Host
+      - ~/.microsoft/usersecrets:/root/.microsoft/usersecrets:ro # Get the User Secrets from a Linux Host
       - ~/.vsdbg:/remote_debugger:rw # Visual Studio Code Debugger Support

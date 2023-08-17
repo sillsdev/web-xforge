@@ -10,12 +10,12 @@ WORKDIR /app
 VOLUME /var/lib/scriptureforge
 VOLUME /var/lib/xforge
 # Add Ubuntu Mirrors
-RUN sed -i 's/htt[p|ps]:\/\/archive.ubuntu.com\/ubuntu\//mirror:\/\/mirrors.ubuntu.com\/mirrors.txt/g' /etc/apt/sources.list
+RUN sed -i 's#htt[p|ps]://archive.ubuntu.com/ubuntu/#mirror://mirrors.ubuntu.com/mirrors.txt#g' /etc/apt/sources.list
 # Install Node Repository
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
-    && curl -sL https://deb.nodesource.com/setup_16.x | bash -
+    && curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
 # Install Dependencies
 RUN apt-get install -y \
     ffmpeg \
@@ -43,10 +43,10 @@ FROM mcr.microsoft.com/dotnet/sdk:$DOTNET_VERSION-$UBUNTU_NAME-$ARCHITECTURE AS 
 ARG configuration=Release
 WORKDIR /src
 # Add Ubuntu Mirrors
-RUN sed -i 's/htt[p|ps]:\/\/archive.ubuntu.com\/ubuntu\//mirror:\/\/mirrors.ubuntu.com\/mirrors.txt/g' /etc/apt/sources.list
+RUN sed -i 's#htt[p|ps]://archive.ubuntu.com/ubuntu/#mirror://mirrors.ubuntu.com/mirrors.txt#g' /etc/apt/sources.list
 # Install Node Repository
 RUN update-ca-certificates \
-    && curl -sL https://deb.nodesource.com/setup_16.x | bash -
+    && curl -fsSL https://deb.nodesource.com/setup_16.x | bash -
 # Install NPM
 RUN apt-get install -y \
     nodejs \

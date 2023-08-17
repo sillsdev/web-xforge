@@ -5,7 +5,7 @@
     "angular.ng-template",
     "csharpier.csharpier-vscode",
     "dbaeumer.vscode-eslint",
-    "EditorConfig.editorconfig",
+    "editorconfig.editorconfig",
     "esbenp.prettier-vscode",
     "formulahendry.dotnet-test-explorer",
     "ms-dotnettools.csharp",
@@ -14,6 +14,7 @@
     "streetsidesoftware.code-spell-checker",
     "yzhang.markdown-all-in-one",
     "ms-azuretools.vscode-cosmosdb",
-    "mongodb.mongodb-vscode"
+    "mongodb.mongodb-vscode",
+    "ms-azuretools.vscode-docker"
   ]
 }

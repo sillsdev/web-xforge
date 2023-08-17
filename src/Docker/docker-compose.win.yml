@@ -6,5 +6,5 @@ services:
     environment:
       - staticWebAssets=DISABLED # Fixes System.ArgumentException: 'The path must be absolute. (Parameter 'root')'
     volumes:
-      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro # Share User Secrets with Windows Host
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro # Get the User Secrets from a Windows Host
       - ../RealtimeServer/:/app/ClientApp/node_modules/realtime-server # Override the host symbolic link
