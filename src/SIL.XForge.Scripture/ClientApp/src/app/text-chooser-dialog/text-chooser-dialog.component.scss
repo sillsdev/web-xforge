@@ -1,3 +1,5 @@
+@use 'src/variables';
+
 .mat-dialog-content {
   display: flex;
   flex-direction: column;
@@ -40,7 +42,7 @@ app-text {
 }
 
 .error-message {
-  color: var(--mdc-theme-error);
+  color: variables.$errorColor;
   font-size: 0.85em;
 }
 

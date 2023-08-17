@@ -1,4 +1,5 @@
-@import '../checking-global-vars';
+@use 'src/variables';
+@use '../checking-global-vars' as checking-vars;
 @import 'bootstrap/scss/mixins/breakpoints';
 
 .answers-component {
@@ -30,12 +31,12 @@
   }
   &.question-unread {
     &:before {
-      background-color: $questionUnread;
+      background-color: checking-vars.$questionUnread;
     }
   }
   &.question-answered {
     &:before {
-      background-color: $questionAnswered;
+      background-color: checking-vars.$questionAnswered;
     }
   }
   .question {
@@ -91,7 +92,7 @@
     }
   }
   .form-helper-text {
-    color: var(--mdc-theme-error);
+    color: variables.$errorColor;
     font-size: 0.75em;
     padding-left: 15px;
     margin-bottom: 1em;
@@ -108,7 +109,7 @@
   .form-actions {
     display: flex;
     justify-content: flex-end;
-    column-gap: $button-spacing;
+    column-gap: checking-vars.$button-spacing;
   }
   .tab-label {
     display: flex;
@@ -120,7 +121,7 @@
 .answers-container {
   .answer {
     display: flex;
-    border-top: 1px solid $borderColor;
+    border-top: 1px solid checking-vars.$borderColor;
     padding-top: 10px;
     &:not(:last-child) {
       padding-bottom: 10px;
@@ -133,7 +134,7 @@
 
       @keyframes attention {
         from {
-          background: $attention;
+          background: checking-vars.$attention;
         }
         to {
           background: #fff;
@@ -146,17 +147,17 @@
       flex-direction: column;
       align-items: center;
       flex: 0 0 70px;
-      @include media-breakpoint-down(sm) {
+      @include media-breakpoint-down(sm, checking-vars.$grid-breakpoints) {
         flex: 0 0 35px;
       }
       mat-icon {
-        @include media-breakpoint-down(sm) {
+        @include media-breakpoint-down(sm, checking-vars.$grid-breakpoints) {
           font-size: 18px;
         }
       }
     }
     .liked {
-      color: $likes;
+      color: checking-vars.$likes;
     }
     .answer-detail {
       flex: 1;
@@ -166,7 +167,7 @@
         flex: 1;
         align-items: flex-end;
 
-        @include media-breakpoint-down(xs) {
+        @include media-breakpoint-down(xs, checking-vars.$grid-breakpoints) {
           align-items: flex-start;
           flex-direction: column;
           row-gap: 5px;
@@ -175,17 +176,17 @@
         button {
           &.answer-status {
             &.status-exportable {
-              background: $answerExportable;
+              background: checking-vars.$answerExportable;
               color: #fff;
             }
 
             &.status-resolved {
-              background: $answerResolved;
+              background: checking-vars.$answerResolved;
               color: #fff;
             }
           }
           &.answer-delete {
-            color: var(--mdc-theme-error);
+            color: variables.$errorColor;
           }
         }
         .delete-divider {
@@ -194,7 +195,7 @@
         }
         button + .delete-divider {
           display: inline;
-          @include media-breakpoint-down(xs) {
+          @include media-breakpoint-down(xs, checking-vars.$grid-breakpoints) {
             transform: rotate(90deg);
           }
         }
@@ -215,7 +216,7 @@
         display: flex;
         flex-direction: column;
         row-gap: 10px;
-        border-bottom: 1px solid $borderColor;
+        border-bottom: 1px solid checking-vars.$borderColor;
         padding: 10px 0;
         app-owner {
           align-self: flex-end;
@@ -227,7 +228,7 @@
 
 .answer-scripture,
 .scripture-text {
-  color: $greenDark;
+  color: checking-vars.$greenDark;
   background: rgba(0, 0, 0, 0.05);
   padding: 6px;
   border-radius: 4px;
