@@ -126,43 +126,6 @@ describe('NoteDialogComponent', () => {
     expect(env.notes.length).toBe(4);
   }));
 
-  it('should style notes', fakeAsync(() => {
-    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
-    const tests: { text: string | undefined; expected: string }[] = [
-      {
-        text: 'turn <bold>text bold</bold>',
-        expected: 'turn <b>text bold</b>'
-      },
-      {
-        text: 'turn <italic>text italic</italic>',
-        expected: 'turn <i>text italic</i>'
-      },
-      {
-        text: 'Alpha <unknown><bold>Bravo</bold></unknown> Charlie',
-        expected: 'Alpha <b>Bravo</b> Charlie'
-      },
-      {
-        text: '<p>this is a paragraph</p>',
-        expected: 'this is a paragraph<br />'
-      },
-      {
-        text: 'check <unknown id="anything">unknown</unknown> <italic>text</italic>',
-        expected: 'check unknown <i>text</i>'
-      },
-      {
-        text: '',
-        expected: ''
-      },
-      {
-        text: undefined,
-        expected: ''
-      }
-    ];
-    tests.forEach(test => {
-      expect(env.component.parseNote(test.text)).toEqual(test.expected);
-    });
-  }));
-
   it('produce correct default note icon', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
     expect(env.component.flagIcon).toEqual('/assets/icons/TagIcons/flag01.png');
@@ -308,8 +271,6 @@ describe('NoteDialogComponent', () => {
   it('should gracefully return when data not ready', fakeAsync(() => {
     env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread(), includeSnapshots: false });
     expect(env.component.segmentText).toEqual('');
-    const noteThread: NoteThread = TestEnvironment.getNoteThread();
-    expect(env.component.noteIcon(noteThread[0])).toEqual('');
   }));
 
   it('uses rtl direction with rtl project', fakeAsync(() => {

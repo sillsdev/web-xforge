@@ -28,23 +28,25 @@
       </mat-menu>
     </div>
     <div class="notes">
-      <div *ngFor="let note of notesToDisplay" class="note">
+      <div *ngFor="let noteInfo of notesToDisplay" class="note">
         <div class="content">
-          <div *ngIf="note.assignment != null" class="assigned-user">>{{ getAssignedUserString(note.assignment) }}</div>
-          <div *ngIf="note.reattached" class="verse-reattached">{{ reattachedVerse(note) }}</div>
-          <div *ngIf="note.reattached" class="text" [innerHTML]="reattachedText(note)"></div>
+          <div *ngIf="noteInfo.assignment != null" class="assigned-user">>{{ noteInfo.assignment }}</div>
+          <div *ngIf="noteInfo.reattachedVerse != null" class="verse-reattached">{{ noteInfo.reattachedVerse }}</div>
+          <div *ngIf="noteInfo.reattachedText != null" class="text" [innerHTML]="noteInfo.reattachedText"></div>
           <div class="note-content-and-actions">
-            <div class="note-content" [innerHTML]="contentForDisplay(note)" [ngStyle]="{ fontSize }"></div>
-            <div *ngIf="isNoteEditable(note)" class="edit-actions">
-              <button mat-icon-button class="edit-button" (click)="editNote(note)"><mat-icon>edit</mat-icon></button>
-              <button mat-icon-button class="delete-button" (click)="deleteNote(note)">
+            <div class="note-content" [innerHTML]="noteInfo.content" [ngStyle]="{ fontSize }"></div>
+            <div *ngIf="noteInfo.editable" class="edit-actions">
+              <button mat-icon-button class="edit-button" (click)="editNote(noteInfo.note)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button class="delete-button" (click)="deleteNote(noteInfo.note)">
                 <mat-icon>delete</mat-icon>
               </button>
             </div>
           </div>
         </div>
-        <img [src]="noteIcon(note)" alt="" [title]="noteTitle(note)" />
-        <app-owner [ownerRef]="note.ownerRef" [dateTime]="note.dateCreated"></app-owner>
+        <img [src]="noteInfo.icon" alt="" [title]="noteInfo.title" />
+        <app-owner [ownerRef]="noteInfo.note.ownerRef" [dateTime]="noteInfo.note.dateCreated"></app-owner>
       </div>
     </div>
     <mat-form-field *ngIf="canInsertNote" class="full-width" appearance="outline">
