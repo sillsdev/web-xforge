@@ -35,6 +35,17 @@ export interface NoteDialogResult {
   noteDataId?: string;
 }
 
+interface NoteDisplayInfo {
+  note: Note;
+  content: string;
+  icon: string;
+  title: string;
+  editable: boolean;
+  assignment?: string;
+  reattachedVerse?: string;
+  reattachedText?: string;
+}
+
 // TODO: Implement a diff - there is an accepted solution here that might be a good starting point:
 // https://codereview.stackexchange.com/questions/133586/a-string-prototype-diff-implementation-text-diff
 
@@ -45,6 +56,8 @@ export interface NoteDialogResult {
 export class NoteDialogComponent implements OnInit {
   showSegmentText: boolean = false;
   currentNoteContent: string = '';
+  notesToDisplay: NoteDisplayInfo[] = [];
+
   private isAssignedToOtherUser: boolean = false;
   private threadDoc?: NoteThreadDoc;
   private projectProfileDoc?: SFProjectProfileDoc;
@@ -87,6 +100,8 @@ export class NoteDialogComponent implements OnInit {
         );
       }
     }
+    // extract note info and content for display
+    this.updateNotesForDisplay();
   }
 
   get canViewAssignedUser(): boolean {
@@ -127,16 +142,6 @@ export class NoteDialogComponent implements OnInit {
     return this.getNoteContextText(true) !== this.segmentText;
   }
 
-  get notesToDisplay(): Note[] {
-    if (this.threadDoc?.data == null) {
-      return [];
-    }
-    return sortBy(
-      this.threadDoc.data.notes.filter(n => !n.deleted && n.dataId !== this.noteIdBeingEdited),
-      n => new Date(n.dateCreated)
-    );
-  }
-
   get verseRefDisplay(): string {
     const verseRef: VerseRef | undefined = this.verseRef;
     return verseRef == null ? '' : this.i18n.localizeReference(verseRef);
@@ -167,27 +172,6 @@ export class NoteDialogComponent implements OnInit {
     return this.projectProfileDoc?.data?.noteTags ?? [];
   }
 
-  /** What to display for note content. Will be transformed for display, especially for a conflict note. */
-  contentForDisplay(note: Note): string {
-    if (note == null) {
-      return '';
-    }
-    return this.parseNote(note.content);
-  }
-
-  getNoteContextText(plainText: boolean = false): string {
-    if (this.threadDoc?.data == null) {
-      return '';
-    }
-    return (
-      this.threadDoc.data.originalContextBefore +
-      (plainText ? '' : '<b>') +
-      this.threadDoc.data.originalSelectedText +
-      (plainText ? '' : '</b>') +
-      this.threadDoc.data.originalContextAfter
-    );
-  }
-
   private get projectId(): string {
     return this.data.projectId;
   }
@@ -198,11 +182,6 @@ export class NoteDialogComponent implements OnInit {
 
   private get threadDataId(): string | undefined {
     return this.data.threadDataId;
-  }
-
-  private get lastNoteId(): string | undefined {
-    const notesCount: number = this.notesToDisplay.length;
-    return notesCount > 0 ? this.notesToDisplay[notesCount - 1].dataId : undefined;
   }
 
   private get verseRef(): VerseRef | undefined {
@@ -219,6 +198,7 @@ export class NoteDialogComponent implements OnInit {
   editNote(note: Note): void {
     this.noteIdBeingEdited = note.dataId;
     this.currentNoteContent = note.content ?? '';
+    this.notesToDisplay.pop();
   }
 
   async deleteNote(note: Note): Promise<void> {
@@ -233,93 +213,27 @@ export class NoteDialogComponent implements OnInit {
       await this.threadDoc!.submitJson0Op(op => op.set(nt => nt.notes[index].deleted, true));
     }
 
+    this.updateNotesForDisplay();
     if (this.notesToDisplay.length === 0) {
       this.dialogRef.close({ deleted: true });
     }
   }
 
-  parseNote(content: string | undefined): string {
-    const replace = new Map<RegExp, string>();
-    replace.set(/<bold>(.*?)<\/bold>/gim, '<b>$1</b>'); // Bold style
-    replace.set(/<italic>(.*?)<\/italic>/gim, '<i>$1</i>'); // Italic style
-    replace.set(/<p>(.*?)<\/p>/gim, '$1<br />'); // Turn paragraphs into line breaks
-    // Strip out any tags that don't match the above replacements
-    replace.set(/<((?!(\/?)(i|b|br|span)))(.*?)>/gim, '');
-    replace.forEach((replacement, regEx) => (content = content?.replace(regEx, replacement)));
-    return content ?? '';
-  }
-
-  toggleSegmentText(): void {
-    this.showSegmentText = !this.showSegmentText;
-  }
-
-  noteIcon(note: Note): string {
+  getNoteContextText(plainText: boolean = false): string {
     if (this.threadDoc?.data == null) {
       return '';
     }
-    switch (note.status) {
-      case NoteStatus.Todo:
-        return this.threadDoc.getNoteIcon(note, this.noteTags).url;
-      case NoteStatus.Done:
-      case NoteStatus.Resolved:
-        return this.threadDoc.getNoteResolvedIcon(note, this.noteTags).url;
-    }
-    const noteIcon: string = this.threadDoc.getNoteIcon(note, this.noteTags).url;
-    return note.reattached != null && noteIcon === '' ? this.threadDoc.iconReattached.url : noteIcon;
-  }
-
-  noteTitle(note: Note): string {
-    switch (note.status) {
-      case NoteStatus.Todo:
-        return translate('note_dialog.status_to_do');
-      case NoteStatus.Done:
-      case NoteStatus.Resolved:
-        return translate('note_dialog.status_resolved');
-    }
-    return note.reattached != null ? translate('note_dialog.note_reattached') : '';
-  }
-
-  isNoteEditable(note: Note): boolean {
-    if (this.projectProfileDoc?.data == null) return false;
     return (
-      this.isAddNotesEnabled &&
-      note.dataId === this.lastNoteId &&
-      note.editable === true &&
-      this.noteIdBeingEdited == null &&
-      SF_PROJECT_RIGHTS.hasRight(
-        this.projectProfileDoc.data,
-        this.userService.currentUserId,
-        SFProjectDomain.Notes,
-        Operation.Edit,
-        note
-      )
+      this.threadDoc.data.originalContextBefore +
+      (plainText ? '' : '<b>') +
+      this.threadDoc.data.originalSelectedText +
+      (plainText ? '' : '</b>') +
+      this.threadDoc.data.originalContextAfter
     );
   }
 
-  reattachedText(note: Note): string {
-    if (note.reattached == null) {
-      return '';
-    }
-    const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
-    const selectedText: string = reattachedParts[1];
-    const contextBefore: string = reattachedParts[3];
-    const contextAfter: string = reattachedParts[4];
-    return contextBefore + '<b>' + selectedText + '</b>' + contextAfter;
-  }
-
-  reattachedVerse(note: Note): string {
-    if (note.reattached == null) {
-      return '';
-    }
-    const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
-    const verseStr: string = reattachedParts[0];
-    const vref: VerseRef = new VerseRef(verseStr);
-    const verseRef: string = this.i18n.localizeReference(vref);
-    const reattached: string = translate('note_dialog.reattached');
-    return `${verseRef} ${reattached}`;
-  }
-
-  getAssignedUserString(assignedNoteUserRef: string): string {
+  getAssignedUserString(assignedNoteUserRef: string | undefined): string | undefined {
+    if (assignedNoteUserRef == null) return;
     switch (assignedNoteUserRef) {
       case AssignedUsers.TeamUser:
         return translate('note_dialog.team');
@@ -342,5 +256,113 @@ export class NoteDialogComponent implements OnInit {
       noteContent: this.currentNoteContent,
       noteDataId: this.noteIdBeingEdited
     });
+  }
+
+  updateNotesForDisplay(): void {
+    if (this.threadDoc?.data == null) return;
+    const notesToDisplay: Note[] = sortBy(
+      this.threadDoc.data.notes.filter(n => !n.deleted),
+      n => new Date(n.dateCreated)
+    );
+    this.notesToDisplay = [];
+    if (notesToDisplay.length === 0) return;
+
+    const lastNoteId: string = notesToDisplay[notesToDisplay.length - 1].dataId;
+    for (const note of notesToDisplay) {
+      this.notesToDisplay.push({
+        note,
+        content: this.contentForDisplay(note),
+        icon: this.noteIcon(note),
+        title: this.noteTitle(note),
+        editable: this.isNoteEditable(note) && note.dataId === lastNoteId,
+        assignment: this.getAssignedUserString(note.assignment),
+        reattachedVerse: this.reattachedVerse(note),
+        reattachedText: this.reattachedText(note)
+      });
+    }
+  }
+
+  toggleSegmentText(): void {
+    this.showSegmentText = !this.showSegmentText;
+  }
+
+  /** What to display for note content. Will be transformed for display, especially for a conflict note. */
+  private contentForDisplay(note: Note): string {
+    if (note == null) {
+      return '';
+    }
+    return this.parseNote(note.content);
+  }
+
+  private parseNote(content: string | undefined): string {
+    const replace = new Map<RegExp, string>();
+    replace.set(/<bold>(.*?)<\/bold>/gim, '<b>$1</b>'); // Bold style
+    replace.set(/<italic>(.*?)<\/italic>/gim, '<i>$1</i>'); // Italic style
+    replace.set(/<p>(.*?)<\/p>/gim, '$1<br />'); // Turn paragraphs into line breaks
+    // Strip out any tags that don't match the above replacements
+    replace.set(/<((?!(\/?)(i|b|br|span)))(.*?)>/gim, '');
+    replace.forEach((replacement, regEx) => (content = content?.replace(regEx, replacement)));
+    return content ?? '';
+  }
+
+  private noteIcon(note: Note): string {
+    if (this.threadDoc?.data == null) {
+      return '';
+    }
+    switch (note.status) {
+      case NoteStatus.Todo:
+        return this.threadDoc.getNoteIcon(note, this.noteTags).url;
+      case NoteStatus.Done:
+      case NoteStatus.Resolved:
+        return this.threadDoc.getNoteResolvedIcon(note, this.noteTags).url;
+    }
+    const noteIcon: string = this.threadDoc.getNoteIcon(note, this.noteTags).url;
+    return note.reattached != null && noteIcon === '' ? this.threadDoc.iconReattached.url : noteIcon;
+  }
+
+  private noteTitle(note: Note): string {
+    switch (note.status) {
+      case NoteStatus.Todo:
+        return translate('note_dialog.status_to_do');
+      case NoteStatus.Done:
+      case NoteStatus.Resolved:
+        return translate('note_dialog.status_resolved');
+    }
+    return note.reattached != null ? translate('note_dialog.note_reattached') : '';
+  }
+
+  private isNoteEditable(note: Note): boolean {
+    if (this.projectProfileDoc?.data == null) return false;
+    return (
+      this.isAddNotesEnabled &&
+      note.editable === true &&
+      this.noteIdBeingEdited == null &&
+      SF_PROJECT_RIGHTS.hasRight(
+        this.projectProfileDoc.data,
+        this.userService.currentUserId,
+        SFProjectDomain.Notes,
+        Operation.Edit,
+        note
+      )
+    );
+  }
+
+  private reattachedText(note: Note): string | undefined {
+    if (note.reattached == null) return;
+    const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
+    const selectedText: string = reattachedParts[1];
+    const contextBefore: string = reattachedParts[3];
+    const contextAfter: string = reattachedParts[4];
+    return contextBefore + '<b>' + selectedText + '</b>' + contextAfter;
+  }
+
+  private reattachedVerse(note: Note): string | undefined {
+    if (note.reattached == null) return;
+    const reattachedParts: string[] = note.reattached.split(REATTACH_SEPARATOR);
+    const verseStr: string = reattachedParts[0];
+    const vref: VerseRef = new VerseRef(verseStr);
+    const verseRef: string = this.i18n.localizeReference(vref);
+    const reattached: string = translate('note_dialog.reattached');
+    return `${verseRef} ${reattached}`;
   }
 }
