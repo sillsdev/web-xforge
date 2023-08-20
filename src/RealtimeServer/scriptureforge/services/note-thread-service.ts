@@ -17,9 +17,10 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
   protected readonly indexPaths = NOTE_THREAD_INDEX_PATHS;
   protected readonly listenForUpdates = true;
   readonly validationSchema: ValidationSchema = {
-    bsonType: 'object',
-    required: ['_id', '_type', '_v', '_m', '_o'],
+    bsonType: SFProjectDataService.validationSchema.bsonType,
+    required: SFProjectDataService.validationSchema.required,
     properties: {
+      ...SFProjectDataService.validationSchema.properties,
       _id: {
         bsonType: 'string',
         pattern: '^[0-9a-f]+$'
@@ -142,36 +143,6 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
       },
       assignment: {
         bsonType: 'string'
-      },
-      projectRef: {
-        bsonType: 'string',
-        pattern: '^[0-9a-f]+$'
-      },
-      ownerRef: {
-        bsonType: 'string',
-        pattern: '^[0-9a-f]*$'
-      },
-      _type: {
-        bsonType: ['null', 'string']
-      },
-      _v: {
-        bsonType: 'int'
-      },
-      _m: {
-        bsonType: 'object',
-        required: ['ctime', 'mtime'],
-        properties: {
-          ctime: {
-            bsonType: 'number'
-          },
-          mtime: {
-            bsonType: 'number'
-          }
-        },
-        additionalProperties: false
-      },
-      _o: {
-        bsonType: 'objectId'
       }
     },
     additionalProperties: false

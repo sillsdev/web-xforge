@@ -15,9 +15,10 @@ export class TextService extends DocService<TextData> {
 
   protected readonly indexPaths = TEXT_INDEX_PATHS;
   readonly validationSchema: ValidationSchema = {
-    bsonType: 'object',
-    required: ['_id', '_type', '_v', '_m', '_o'],
+    bsonType: DocService.validationSchema.bsonType,
+    required: DocService.validationSchema.required,
     properties: {
+      ...DocService.validationSchema.properties,
       _id: {
         bsonType: 'string',
         pattern: '^[0-9a-f]+:[0-9A-Z]+:[0-9]+:target$'
@@ -27,28 +28,6 @@ export class TextService extends DocService<TextData> {
         items: {
           bsonType: 'object'
         }
-      },
-      _type: {
-        bsonType: ['null', 'string']
-      },
-      _v: {
-        bsonType: 'int'
-      },
-      _m: {
-        bsonType: 'object',
-        required: ['ctime', 'mtime'],
-        properties: {
-          ctime: {
-            bsonType: 'number'
-          },
-          mtime: {
-            bsonType: 'number'
-          }
-        },
-        additionalProperties: false
-      },
-      _o: {
-        bsonType: 'objectId'
       }
     },
     additionalProperties: false

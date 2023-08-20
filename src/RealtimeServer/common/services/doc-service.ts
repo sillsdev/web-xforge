@@ -13,6 +13,37 @@ export abstract class DocService<T = any> {
   protected server?: RealtimeServer;
   private readonly migrations = new Map<number, MigrationConstructor>();
 
+  // This is a base schema that covers the minimum required properties for a ShareDB collection
+  // NOTE: Schemas that use this must implement the property "_id"
+  static readonly validationSchema: ValidationSchema = {
+    bsonType: 'object',
+    required: ['_id', '_type', '_v', '_m', '_o'],
+    properties: {
+      _type: {
+        bsonType: ['null', 'string']
+      },
+      _v: {
+        bsonType: 'int'
+      },
+      _m: {
+        bsonType: 'object',
+        required: ['ctime', 'mtime'],
+        properties: {
+          ctime: {
+            bsonType: 'number'
+          },
+          mtime: {
+            bsonType: 'number'
+          }
+        },
+        additionalProperties: false
+      },
+      _o: {
+        bsonType: 'objectId'
+      }
+    }
+  };
+
   constructor(migrations: MigrationConstructor[]) {
     let maxVersion = 0;
     for (const migration of migrations) {

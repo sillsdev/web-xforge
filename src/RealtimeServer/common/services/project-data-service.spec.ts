@@ -7,6 +7,7 @@ import { Project } from '../models/project';
 import { ProjectData } from '../models/project-data';
 import { Operation, ProjectRights } from '../models/project-rights';
 import { User, USERS_COLLECTION } from '../models/user';
+import { ValidationSchema } from '../models/validation-schema';
 import { RealtimeServer } from '../realtime-server';
 import { SchemaVersionRepository } from '../schema-version-repository';
 import { ANY_INDEX, ObjPathTemplate } from '../utils/obj-path';
@@ -322,6 +323,65 @@ class TestDataService extends ProjectDataService<TestData> {
 
   protected readonly indexPaths = [];
   protected readonly immutableProps: ObjPathTemplate[] = [this.pathTemplate(d => d.immutable!)];
+  readonly validationSchema: ValidationSchema = {
+    bsonType: ProjectDataService.validationSchema.bsonType,
+    required: ProjectDataService.validationSchema.required,
+    properties: {
+      ...ProjectDataService.validationSchema.properties,
+      _id: {
+        bsonType: 'string',
+        pattern: '^[0-9a-f]+:[0-9A-Z]+:[0-9]+:target$'
+      },
+      num: {
+        bsonType: 'int'
+      },
+      immutable: {
+        bsonType: 'string'
+      },
+      children: {
+        bsonType: 'array',
+        items: {
+          bsonType: 'object',
+          required: ['id', 'children', 'ownerRef'],
+          properties: {
+            id: {
+              bsonType: 'string'
+            },
+            num: {
+              bsonType: 'int'
+            },
+            children: {
+              bsonType: 'array',
+              items: {
+                bsonType: 'object',
+                required: ['id', 'ownerRef'],
+                properties: {
+                  id: {
+                    bsonType: 'string'
+                  },
+                  num: {
+                    bsonType: 'int'
+                  },
+                  deleted: {
+                    bsonType: 'bool'
+                  },
+                  ownerRef: {
+                    bsonType: 'string'
+                  }
+                },
+                additionalProperties: false
+              }
+            },
+            ownerRef: {
+              bsonType: 'string'
+            }
+          },
+          additionalProperties: false
+        }
+      }
+    },
+    additionalProperties: false
+  };
 
   protected readonly projectRights = new ProjectRights({
     admin: [
