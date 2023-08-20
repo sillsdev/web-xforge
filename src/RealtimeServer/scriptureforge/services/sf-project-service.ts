@@ -207,6 +207,9 @@ export class SFProjectService extends ProjectService<SFProject> {
                   lastVerse: {
                     bsonType: 'int'
                   },
+                  hasAudio: {
+                    bsonType: 'bool'
+                  },
                   isValid: {
                     bsonType: 'bool'
                   },
