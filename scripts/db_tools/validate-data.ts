@@ -3,7 +3,7 @@
 //
 // Validate Data
 //
-// Validates the dta in MongoDB based on the validation schemas installed
+// Validates the data in MongoDB based on the validation schemas installed
 //
 // This script needs ts-node and must be run from the containing directory. Setup: npm ci
 // Usage info: ./validate-data.ts --help
@@ -14,7 +14,7 @@
 
 import Ajv from 'ajv';
 import ajvBsonType from 'ajv-bsontype';
-import { MongoClient, Db, CollectionInfo } from 'mongodb';
+import { CollectionInfo, Db, Document, MongoClient } from 'mongodb';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { colored, colors, ConnectionSettings, databaseConfigs, useColor } from './utils';
@@ -86,10 +86,10 @@ class ValidateData {
           process.stdout.write(`Validating Collection: ${collection.name}...`);
 
           // Retrieve all invalid documents from the collection
-          const documents = await db
+          const documents = (await db
             .collection(collection.name)
             .find({ $nor: [collection.options.validator] })
-            .toArray();
+            .toArray()) as Document[];
 
           if (documents.length === 0) {
             console.log(colored(colors.lightGreen, 'passed!'));
@@ -105,7 +105,7 @@ class ValidateData {
           for (let document of documents) {
             console.log(`${colored(colors.red, `${collection.name} document failed validation:`)} ${document._id}`);
             if (this.showValidationErrors) {
-              const isValid = validate(document);
+              const isValid: Boolean = validate(document);
               if (isValid) {
                 console.log(colored(colors.red, 'Could not generate validation errors - please validate manually.'));
               } else {
