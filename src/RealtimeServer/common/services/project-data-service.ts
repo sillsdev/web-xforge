@@ -5,6 +5,7 @@ import { OwnedData } from '../models/owned-data';
 import { Project } from '../models/project';
 import { ProjectData } from '../models/project-data';
 import { Operation, ProjectRights } from '../models/project-rights';
+import { ValidationSchema } from '../models/validation-schema';
 import { RealtimeServer } from '../realtime-server';
 import { ObjPathTemplate } from '../utils/obj-path';
 import { JsonDocService } from './json-doc-service';
@@ -32,6 +33,23 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
    */
   protected readonly listenForUpdates: boolean = false;
   private readonly domains: ProjectDomainConfig[];
+
+  // NOTE: Schemas that use this must implement the property "_id"
+  readonly validationSchema: ValidationSchema = {
+    bsonType: ProjectDataService.validationSchema.bsonType,
+    required: ProjectDataService.validationSchema.required,
+    properties: {
+      ...ProjectDataService.validationSchema.properties,
+      projectRef: {
+        bsonType: 'string',
+        pattern: '^[0-9a-f]+$'
+      },
+      ownerRef: {
+        bsonType: 'string',
+        pattern: '^[0-9a-f]*$'
+      }
+    }
+  };
 
   constructor(migrations: MigrationConstructor[]) {
     super(migrations);

@@ -34,9 +34,10 @@ export class UserService extends JsonDocService<User> {
   ];
 
   readonly validationSchema: ValidationSchema = {
-    bsonType: 'object',
-    required: ['_id', '_type', '_v', '_m', '_o'],
+    bsonType: JsonDocService.validationSchema.bsonType,
+    required: JsonDocService.validationSchema.required,
     properties: {
+      ...JsonDocService.validationSchema.properties,
       _id: {
         bsonType: 'string',
         pattern: '^[0-9a-f]+$'
@@ -87,28 +88,6 @@ export class UserService extends JsonDocService<User> {
       },
       avatarUrl: {
         bsonType: 'string'
-      },
-      _type: {
-        bsonType: ['null', 'string']
-      },
-      _v: {
-        bsonType: 'int'
-      },
-      _m: {
-        bsonType: 'object',
-        required: ['ctime', 'mtime'],
-        properties: {
-          ctime: {
-            bsonType: 'number'
-          },
-          mtime: {
-            bsonType: 'number'
-          }
-        },
-        additionalProperties: false
-      },
-      _o: {
-        bsonType: 'objectId'
       }
     },
     additionalProperties: false
