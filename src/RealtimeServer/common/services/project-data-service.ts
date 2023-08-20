@@ -35,11 +35,11 @@ export abstract class ProjectDataService<T extends ProjectData> extends JsonDocS
   private readonly domains: ProjectDomainConfig[];
 
   // NOTE: Schemas that use this must implement the property "_id"
-  readonly validationSchema: ValidationSchema = {
-    bsonType: ProjectDataService.validationSchema.bsonType,
-    required: ProjectDataService.validationSchema.required,
+  static readonly validationSchema: ValidationSchema = {
+    bsonType: JsonDocService.validationSchema.bsonType,
+    required: JsonDocService.validationSchema.required,
     properties: {
-      ...ProjectDataService.validationSchema.properties,
+      ...JsonDocService.validationSchema.properties,
       projectRef: {
         bsonType: 'string',
         pattern: '^[0-9a-f]+$'
