@@ -22,7 +22,7 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
     properties: {
       _id: {
         bsonType: 'string',
-        pattern: '^[0-9a-f]+:.+$' // Allow Latin, Greek, and Hebrew characters
+        pattern: '^[0-9a-f]+$'
       },
       dataId: {
         bsonType: 'string'
@@ -90,9 +90,6 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
               bsonType: 'bool'
             },
             syncUserRef: {
-              bsonType: 'string'
-            },
-            text: {
               bsonType: 'string'
             },
             dateModified: {

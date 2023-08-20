@@ -6,7 +6,7 @@ import shareDBAccess from 'sharedb-access';
 import { Connection, Doc, Op, RawOp } from 'sharedb/lib/client';
 import { ConnectSession } from './connect-session';
 import { Project } from './models/project';
-import { ValidationSchema } from './models/validation-schema';
+import { SchemaProperties, ValidationSchema } from './models/validation-schema';
 import { SchemaVersionRepository } from './schema-version-repository';
 import { DocService } from './services/doc-service';
 import { createFetchQuery, docFetch } from './utils/sharedb-utils';
@@ -200,15 +200,15 @@ export class RealtimeServer extends ShareDB {
         }
         // Iterate over every operation
         for (const op of ops) {
-          // Skip blank operations
+          // Skip operations with a null path as they will not be applied
           if (op.p == null) {
             continue;
           }
-          let properties = validationSchema.properties;
+          let properties: SchemaProperties | undefined = validationSchema.properties;
           let patternProperties = false;
           // For each property name in the path array
           for (let i = 0; i < op.p.length; i++) {
-            const propertyName = op.p[i];
+            const propertyName: string | number | symbol = op.p[i];
             let propertySchema: ValidationSchema | undefined;
             // If we have a valid property in our schema matching the current path
             if (typeof propertyName === 'string' && properties != undefined) {
