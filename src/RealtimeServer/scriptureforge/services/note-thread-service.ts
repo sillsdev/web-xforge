@@ -23,7 +23,7 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
       ...SFProjectDataService.validationSchema.properties,
       _id: {
         bsonType: 'string',
-        pattern: '^[0-9a-f]+$'
+        pattern: '^[0-9a-f]+:[0-9a-f]+$'
       },
       dataId: {
         bsonType: 'string'
