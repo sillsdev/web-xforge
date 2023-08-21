@@ -1,7 +1,7 @@
 import { MdcList } from '@angular-mdc/web/list';
 import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
+import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
@@ -17,7 +17,7 @@ import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/te
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { merge, of, Subscription } from 'rxjs';
-import { filter, map, take } from 'rxjs/operators';
+import { filter, take } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -139,7 +139,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly activatedRoute: ActivatedRoute,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    private readonly media: MediaObserver,
+    private readonly breakpointObserver: BreakpointObserver,
     private readonly dialogService: DialogService,
     noticeService: NoticeService,
     private readonly router: Router,
@@ -185,11 +185,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return this.chapters.map(c => c.toString());
   }
 
-  get isDrawerPermanent(): boolean {
+  get isQuestionListPermanent(): boolean {
     return this._isDrawerPermanent;
   }
 
-  set isDrawerPermanent(value: boolean) {
+  set isQuestionListPermanent(value: boolean) {
     if (this._isDrawerPermanent !== value) {
       this._isDrawerPermanent = value;
       if (!this._isDrawerPermanent) {
@@ -516,16 +516,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
       this.initQuestionFilters();
     });
-    this.subscribe(
-      this.media.asObservable().pipe(
-        filter((changes: MediaChange[]) => changes.length > 0),
-        map((changes: MediaChange[]) => changes[0])
-      ),
-      (change: MediaChange) => {
-        this.calculateScriptureSliderPosition();
-        this.isDrawerPermanent = ['xl', 'lt-xl', 'lg', 'lt-lg', 'md', 'lt-md'].includes(change.mqAlias);
-      }
-    );
+
+    // Allows scrolling to the active question in the question list once it becomes visible
+    this.subscribe(this.breakpointObserver.observe(['(min-width: 767.98px)']), (state: BreakpointState) => {
+      this.calculateScriptureSliderPosition();
+      this.isQuestionListPermanent = state.matches;
+    });
   }
 
   ngOnDestroy(): void {
