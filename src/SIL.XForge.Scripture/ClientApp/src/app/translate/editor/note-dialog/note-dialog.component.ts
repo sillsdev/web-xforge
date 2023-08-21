@@ -101,7 +101,7 @@ export class NoteDialogComponent implements OnInit {
       }
     }
     // extract note info and content for display
-    this.updateNotesForDisplay();
+    this.updateNotesToDisplay();
   }
 
   get canViewAssignedUser(): boolean {
@@ -213,7 +213,7 @@ export class NoteDialogComponent implements OnInit {
       await this.threadDoc!.submitJson0Op(op => op.set(nt => nt.notes[index].deleted, true));
     }
 
-    this.updateNotesForDisplay();
+    this.updateNotesToDisplay();
     if (this.notesToDisplay.length === 0) {
       this.dialogRef.close({ deleted: true });
     }
@@ -246,7 +246,7 @@ export class NoteDialogComponent implements OnInit {
     return paratextUser?.username ?? translate('note_dialog.paratext_user');
   }
 
-  async submit(): Promise<void> {
+  submit(): void {
     if (this.currentNoteContent == null || this.currentNoteContent.trim().length === 0) {
       this.dialogRef.close();
       return;
@@ -258,17 +258,21 @@ export class NoteDialogComponent implements OnInit {
     });
   }
 
-  updateNotesForDisplay(): void {
+  toggleSegmentText(): void {
+    this.showSegmentText = !this.showSegmentText;
+  }
+
+  private updateNotesToDisplay(): void {
     if (this.threadDoc?.data == null) return;
-    const notesToDisplay: Note[] = sortBy(
+    const sortedNotes: Note[] = sortBy(
       this.threadDoc.data.notes.filter(n => !n.deleted),
       n => new Date(n.dateCreated)
     );
     this.notesToDisplay = [];
-    if (notesToDisplay.length === 0) return;
+    if (sortedNotes.length === 0) return;
 
-    const lastNoteId: string = notesToDisplay[notesToDisplay.length - 1].dataId;
-    for (const note of notesToDisplay) {
+    const lastNoteId: string = sortedNotes[sortedNotes.length - 1].dataId;
+    for (const note of sortedNotes) {
       this.notesToDisplay.push({
         note,
         content: this.contentForDisplay(note),
@@ -282,10 +286,6 @@ export class NoteDialogComponent implements OnInit {
     }
   }
 
-  toggleSegmentText(): void {
-    this.showSegmentText = !this.showSegmentText;
-  }
-
   /** What to display for note content. Will be transformed for display, especially for a conflict note. */
   private contentForDisplay(note: Note): string {
     if (note == null) {
@@ -295,14 +295,8 @@ export class NoteDialogComponent implements OnInit {
   }
 
   private parseNote(content: string | undefined): string {
-    const replace = new Map<RegExp, string>();
-    replace.set(/<bold>(.*?)<\/bold>/gim, '<b>$1</b>'); // Bold style
-    replace.set(/<italic>(.*?)<\/italic>/gim, '<i>$1</i>'); // Italic style
-    replace.set(/<p>(.*?)<\/p>/gim, '$1<br />'); // Turn paragraphs into line breaks
-    // Strip out any tags that don't match the above replacements
-    replace.set(/<((?!(\/?)(i|b|br|span)))(.*?)>/gim, '');
-    replace.forEach((replacement, regEx) => (content = content?.replace(regEx, replacement)));
-    return content ?? '';
+    if (content == null) return '';
+    return XmlUtils.convertXmlToHtml(content);
   }
 
   private noteIcon(note: Note): string {
