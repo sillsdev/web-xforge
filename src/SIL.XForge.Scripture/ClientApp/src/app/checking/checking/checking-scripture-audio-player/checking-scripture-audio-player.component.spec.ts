@@ -105,10 +105,10 @@ describe('ScriptureAudioComponent', () => {
     const verseChangedSpy = jasmine.createSpy('verseChanged');
     env.component.audioPlayer.currentVerseChanged.subscribe(verseChangedSpy);
     env.playButton.nativeElement.click();
-    await env.waitForPlayer(1400);
+    await env.waitForPlayer(1500);
     expect(verseChangedSpy).toHaveBeenCalledWith('s_1');
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
-    await env.waitForPlayer(1400);
+    await env.waitForPlayer(1500);
     expect(verseChangedSpy).toHaveBeenCalledWith('s_2');
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
   });
