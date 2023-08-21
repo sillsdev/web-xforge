@@ -15,7 +15,7 @@
         <mat-icon *ngIf="questionDoc.data?.audioUrl">headset</mat-icon>
         <span class="question-text" *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
       </div>
-      <a class="view-answers" title="{{ 'checking.view_questions' | transloco }}">
+      <a class="view-answers" title="{{ t('view_answers') }}">
         <mat-icon
           class="mirror-rtl"
           [matBadge]="getUnreadAnswers(questionDoc)"
