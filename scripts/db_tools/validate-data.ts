@@ -105,7 +105,7 @@ class ValidateData {
           for (let document of documents) {
             console.log(`${colored(colors.red, `${collection.name} document failed validation:`)} ${document._id}`);
             if (this.showValidationErrors) {
-              const isValid: Boolean = validate(document);
+              const isValid: boolean = validate(document);
               if (isValid) {
                 console.log(colored(colors.red, 'Could not generate validation errors - please validate manually.'));
               } else {
