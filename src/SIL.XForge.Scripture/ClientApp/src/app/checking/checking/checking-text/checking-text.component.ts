@@ -38,7 +38,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
   @Input() set activeVerse(verseRef: VerseRef | undefined) {
     this._activeVerse = verseRef;
     this.highlightActiveVerse();
-    this.scrollToActiveVerse(this.activeVerse);
+    this.scrollToVerse(this.activeVerse);
   }
 
   get activeVerse(): VerseRef | undefined {
@@ -79,7 +79,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     this._editorLoaded = true;
     this.toggleQuestionVerses(true);
     this.highlightActiveVerse();
-    this.scrollToActiveVerse(this.activeVerse);
+    this.scrollToVerse(this.activeVerse);
   }
 
   setAudioTextRef(reference: string): void {
@@ -139,7 +139,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
         this.id.chapterNum.toString(),
         verseStr
       );
-      this.scrollToActiveVerse(verseRef);
+      this.scrollToVerse(verseRef);
       refs = this.textComponent.getVerseSegmentsNoHeadings(verseRef);
     } else {
       refs.push(baseRef);
@@ -167,7 +167,7 @@ export class CheckingTextComponent extends SubscriptionDisposable {
     }
   }
 
-  private scrollToActiveVerse(verseRef: VerseRef | undefined): void {
+  private scrollToVerse(verseRef: VerseRef | undefined): void {
     if (verseRef != null && this.textComponent.editor != null) {
       const firstSegment: string = this.textComponent.getVerseSegments(verseRef)[0];
       const editor: Element | null = this.textComponent.editor.container.querySelector('.ql-editor');

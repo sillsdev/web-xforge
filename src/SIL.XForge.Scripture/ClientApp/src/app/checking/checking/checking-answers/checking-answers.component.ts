@@ -47,7 +47,8 @@ export interface AnswerAction {
     | 'like'
     | 'recorder'
     | 'show-unread'
-    | 'status';
+    | 'status'
+    | 'play-audio';
   questionDoc?: QuestionDoc;
   answer?: Answer;
   text?: string;
@@ -495,6 +496,10 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.action.emit({
       action: 'show-form'
     });
+  }
+
+  playAudio(): void {
+    this.action.emit({ action: 'play-audio' });
   }
 
   async submit(): Promise<void> {

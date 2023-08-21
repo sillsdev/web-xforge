@@ -23,11 +23,16 @@ const mockedQuestionDoc = mock(QuestionDoc);
 const mockedQuestion = mock<Question>();
 
 @Component({
-  template: `<app-checking-question #question [questionDoc]="questionDoc"></app-checking-question>`
+  template: `<app-checking-question
+    #question
+    [questionDoc]="questionDoc"
+    (audioPlayed)="played = true"
+  ></app-checking-question>`
 })
 class MockComponent {
   @ViewChild('question') question!: CheckingQuestionComponent;
   questionDoc: QuestionDoc = instance(mockedQuestionDoc);
+  played: boolean = false;
   constructor() {
     when(mockedQuestion.projectRef).thenReturn('project01');
     when(mockedQuestion.text).thenReturn('some text');
@@ -193,6 +198,18 @@ describe('CheckingQuestionComponent', () => {
     await env.wait();
 
     expect(env.component.question.questionText).toContain('Listen to the question for');
+  });
+
+  it('emits audio played when audio play button is clicked', async () => {
+    const env = new TestEnvironment();
+    await env.wait();
+    await env.wait();
+
+    expect(env.component.played).toBe(false);
+    env.scriptureAudio.nativeElement.click();
+    await env.wait();
+
+    expect(env.component.played).toBe(true);
   });
 });
 

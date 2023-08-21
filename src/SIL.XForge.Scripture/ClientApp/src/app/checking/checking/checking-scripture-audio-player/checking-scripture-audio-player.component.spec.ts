@@ -34,7 +34,7 @@ describe('ScriptureAudioComponent', () => {
     expect(env.isPlaying).toBe(false);
   });
 
-  it('can skip to next verse', async () => {
+  it('can skip to next and previous verse', async () => {
     const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
     const env = new TestEnvironment(template);
     env.fixture.detectChanges();
@@ -46,6 +46,32 @@ describe('ScriptureAudioComponent', () => {
     env.nextRefButton.nativeElement.click();
     await env.waitForPlayer();
     expect(env.component.audioPlayer.currentRef).toEqual('2');
+    env.previousRefButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.component.audioPlayer.currentRef).toEqual('1');
+    env.previousRefButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.component.audioPlayer.currentRef).toEqual('1');
+  });
+
+  it('can skip through section headings', async () => {
+    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
+
+    env.component.audioPlayer.textDocId = textDocId;
+    env.component.audioPlayer.timing = getAudioTimingWithHeadings();
+    await env.waitForPlayer();
+    env.nextRefButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.component.audioPlayer.currentRef).toEqual('s_1');
+    env.nextRefButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.component.audioPlayer.currentRef).toEqual('2');
+    env.previousRefButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.component.audioPlayer.currentRef).toEqual('s_1');
     env.previousRefButton.nativeElement.click();
     await env.waitForPlayer();
     expect(env.component.audioPlayer.currentRef).toEqual('1');
