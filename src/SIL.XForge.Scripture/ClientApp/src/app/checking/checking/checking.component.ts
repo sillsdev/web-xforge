@@ -621,6 +621,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       case 'status':
         this.saveAnswer(answerAction.answer!, answerAction.questionDoc);
         break;
+      case 'play-audio':
+        this.scripturePanel!.activeVerse = this.activeQuestionVerseRef;
     }
     this.calculateScriptureSliderPosition(true);
   }
