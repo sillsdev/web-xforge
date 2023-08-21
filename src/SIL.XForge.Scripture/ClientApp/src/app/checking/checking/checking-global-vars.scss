@@ -1,8 +1,8 @@
 @import 'src/variables';
 
-$questionReadBGColor: #f9fcff;
+$questionReadBGColor: #fcfdff;
 $questionReadTextColor: #555;
-$questionSelectedColor: #4c83d6;
+$questionSelectedColor: $purpleMedium;
 $questionUnread: $sf_grey;
 $questionAnswered: $mdc-theme-secondary;
 $attention: lighten($mdc-theme-secondary, 20%);
