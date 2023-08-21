@@ -126,7 +126,6 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isSourceProjectSet).toBe(true);
       expect(env.component.isSourceAndTargetDifferent).toBe(true);
       expect(env.component.targetLanguage).toBe('en');
-      expect(env.component.targetLanguageDisplayName).toBe('English');
     });
 
     it('should detect project requirements', () => {

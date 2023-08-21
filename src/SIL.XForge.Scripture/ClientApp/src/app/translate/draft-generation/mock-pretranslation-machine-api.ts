@@ -99,7 +99,7 @@ export class MockPreTranslationHttpClient {
       if (matchResult) {
         const book: string = matchResult[1];
         const chapter: string = matchResult[2];
-        return of({ status: 200, data: { preTranslations: samplePreTranslations[`${book}_${chapter}`] } as T });
+        return of({ status: 200, data: { preTranslations: samplePreTranslations[`${book}_${chapter}`] ?? [] } as T });
       }
     }
 
