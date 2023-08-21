@@ -33,8 +33,8 @@
         <mat-icon *ngIf="!isTargetLanguageSupported" class="criteria-not-met">clear</mat-icon>
         <p>
           Your project language
-          <ng-container *ngIf="targetLanguageDisplayName">
-            of <em>"{{ targetLanguageDisplayName }}"</em>
+          <ng-container *ngIf="getTargetLanguageDisplayName()">
+            of <em>"{{ getTargetLanguageDisplayName() }}"</em>
           </ng-container>
           is <span *ngIf="!isTargetLanguageSupported">not</span> in the
           <a
@@ -67,8 +67,8 @@
       <h3>Target language is not supported for draft generation</h3>
       <p>
         Your project language
-        <ng-container *ngIf="targetLanguageDisplayName">
-          of <em>"{{ targetLanguageDisplayName }}"</em>
+        <ng-container *ngIf="getTargetLanguageDisplayName()">
+          of <em>"{{ getTargetLanguageDisplayName() }}"</em>
         </ng-container>
         is not in the
         <a

@@ -6,6 +6,6 @@ import { filter } from 'rxjs/operators';
  *
  * @returns {OperatorFunction<T | undefined, T>} An observable that emits only values that are not null or undefined.
  */
-export function filterNullUndefined<T>(): OperatorFunction<T | undefined | null, T> {
+export function filterNullish<T>(): OperatorFunction<T | undefined | null, T> {
   return filter((value): value is T => value != null);
 }
