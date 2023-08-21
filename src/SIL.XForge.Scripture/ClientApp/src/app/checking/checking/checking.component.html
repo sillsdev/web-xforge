@@ -34,7 +34,7 @@
             #questionsPanel
             (update)="questionUpdated($event)"
             (changed)="questionChanged($event)"
-            [visible]="isDrawerPermanent || isQuestionsOverlayVisible"
+            [visible]="isQuestionListPermanent || isQuestionsOverlayVisible"
             [projectUserConfigDoc]="projectUserConfigDoc"
             [projectProfileDoc]="projectDoc"
             [questionDocs]="visibleQuestions"
@@ -168,7 +168,7 @@
         <div *ngIf="projectDoc" id="project-navigation">
           <button
             mat-button
-            *ngIf="!this.isDrawerPermanent"
+            *ngIf="!this.isQuestionListPermanent"
             type="button"
             (click)="setQuestionsOverlayVisibility(true)"
           >
