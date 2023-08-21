@@ -2,14 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { isEmpty } from 'lodash-es';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { combineLatest, Observable, of, Subscription } from 'rxjs';
+import { Observable, of, Subscription } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { BuildDto } from 'src/app/machine-api/build-dto';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { filterNullUndefined } from 'xforge-common/util/rxjs-util';
+import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { BuildStates } from '../../machine-api/build-states';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates } from './draft-generation';
@@ -35,7 +35,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   projectSettingsUrl?: string;
 
   targetLanguage?: string;
-  targetLanguageDisplayName?: string;
 
   isTargetLanguageSupported = true;
   isBackTranslation = true;
@@ -84,27 +83,23 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   ngOnInit(): void {
     // Handle locale changes
-    this.subscribe(
-      combineLatest([this.i18n.locale$, this.activatedProject.projectDoc$.pipe(filterNullUndefined())]),
-      ([_, projectDoc]) => {
-        const translateConfig = projectDoc.data?.translateConfig;
+    this.subscribe(this.activatedProject.projectDoc$.pipe(filterNullish()), projectDoc => {
+      const translateConfig = projectDoc.data?.translateConfig;
 
-        this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
-        this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
-        this.targetLanguage = projectDoc.data?.writingSystem.tag;
-        this.targetLanguageDisplayName = this.i18n.getLanguageDisplayName(this.targetLanguage);
-        this.isTargetLanguageSupported = this.nllbService.isNllbLanguage(this.targetLanguage);
-        this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
+      this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
+      this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
+      this.targetLanguage = projectDoc.data?.writingSystem.tag;
+      this.isTargetLanguageSupported = this.nllbService.isNllbLanguage(this.targetLanguage);
+      this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
 
-        this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
-        this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
+      this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
+      this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
 
-        this.infoAlert = this.getInfoAlert();
-      }
-    );
+      this.infoAlert = this.getInfoAlert();
+    });
 
     this.hasAnyCompletedBuild$ = this.activatedProject.projectId$.pipe(
-      filterNullUndefined(),
+      filterNullish(),
       switchMap(projectId =>
         this.draftGenerationService.getLastCompletedBuild(projectId).pipe(map(build => !isEmpty(build)))
       )
@@ -112,7 +107,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
     this.jobSubscription = this.subscribe(
       this.activatedProject.projectId$.pipe(
-        filterNullUndefined(),
+        filterNullish(),
         switchMap(projectId =>
           this.draftGenerationService
             .getBuildProgress(projectId)
@@ -186,6 +181,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     }
 
     this.draftGenerationService.cancelBuild(this.activatedProject.projectId!).subscribe();
+  }
+
+  getTargetLanguageDisplayName(): string | undefined {
+    return this.i18n.getLanguageDisplayName(this.targetLanguage);
   }
 
   /**
