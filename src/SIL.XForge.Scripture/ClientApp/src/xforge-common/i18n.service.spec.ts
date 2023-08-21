@@ -146,19 +146,19 @@ describe('I18nService', () => {
   describe('getLanguageDisplayName', () => {
     it('should return the display name for a valid language code', () => {
       const service = getI18nService();
-      spyOnProperty(service, 'localeCode', 'get').and.returnValue('en');
+      service.setLocale('en', instance(mockedAuthService));
       expect(service.getLanguageDisplayName('en')).toBe('English');
     });
 
     it('should return undefined for an undefined language code', () => {
       const service = getI18nService();
-      spyOnProperty(service, 'localeCode', 'get').and.returnValue('en');
+      service.setLocale('en', instance(mockedAuthService));
       expect(service.getLanguageDisplayName(undefined)).toBeUndefined();
     });
 
     it('should return language code for an unknown language code', () => {
       const service = getI18nService();
-      spyOnProperty(service, 'localeCode', 'get').and.returnValue('en');
+      service.setLocale('en', instance(mockedAuthService));
       expect(service.getLanguageDisplayName('xyz')).toBe('xyz');
     });
   });

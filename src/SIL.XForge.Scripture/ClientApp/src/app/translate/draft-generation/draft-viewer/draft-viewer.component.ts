@@ -1,13 +1,4 @@
-import {
-  AfterViewInit,
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  OnInit,
-  QueryList,
-  ViewChild,
-  ViewChildren
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { DeltaOperation, DeltaStatic } from 'quill';
@@ -25,8 +16,7 @@ import { DraftViewerService } from './draft-viewer.service';
 @Component({
   selector: 'app-draft-viewer',
   templateUrl: './draft-viewer.component.html',
-  styleUrls: ['./draft-viewer.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: ['./draft-viewer.component.scss']
 })
 export class DraftViewerComponent implements OnInit, AfterViewInit {
   @ViewChild('sourceText') sourceEditor?: TextComponent; // Vernacular (source might not be set in project settings)
@@ -71,6 +61,7 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     this.targetProject = this.activatedProjectService.projectDoc?.data;
     this.sourceProjectId = this.targetProject?.translateConfig.source?.projectRef!;
     this.projectSettingsUrl = `/projects/${this.activatedProjectService.projectId}/settings`;
+    this.books = this.targetProject?.texts.map(t => t.bookNum) ?? [];
 
     if (this.sourceProjectId) {
       this.sourceProject = (await this.projectService.getProfile(this.sourceProjectId)).data;
@@ -88,13 +79,18 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
         this.populateDraftText();
       });
 
-    this.books = this.targetProject?.texts.map(t => t.bookNum) ?? [];
-
     // Set book/chapter from route, or first book/chapter if not provided
     this.activatedRoute.paramMap.subscribe((params: ParamMap) => {
       const bookId: string | null = params.get('bookId');
       const book: number = bookId ? Canon.bookIdToNumber(bookId) : this.books[0];
-      this.setBook(book, Number(params.get('chapter')));
+
+      // targetEditorQueryList is not defined until ngAfterViewInit, but we need to subscribe to it
+      // before the text doc ids are set due to chapter change triggered from url
+      // so that editor `loaded` events are not missed.  This causes an ExpressionChangedAfterItHasBeenCheckedError.
+      // Setting the properties in a timeout is a workaround for this.
+      setTimeout(() => {
+        this.setBook(book, Number(params.get('chapter')));
+      });
     });
   }
 
@@ -108,7 +104,7 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
       return;
     }
 
-    this.setChapter(chapter || this.chapters[0]);
+    this.setChapter(chapter ?? this.chapters[0]);
   }
 
   setChapter(chapter: number): void {
@@ -140,10 +136,6 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
       .pipe(
         filter((draft: DraftSegmentMap) => {
           this.hasDraft = this.draftViewerService.hasDraftOps(draft, this.preDraftTargetDelta!.ops!);
-
-          // Needed to trigger OnPush change detection because service response
-          // occurs after change detection due to component event emission
-          this.changeDetectorRef.markForCheck();
 
           return this.hasDraft;
         }),
@@ -191,7 +183,6 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     );
   }
 
-  // Book/chapter chooser navigate book/chapter for this component
   navigateBookChapter(book: number, chapter: number): void {
     this.router.navigateByUrl(
       `/projects/${this.targetProjectId}/draft-preview/${Canon.bookNumberToId(book)}/${chapter}`
@@ -201,13 +192,11 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
   // Book/chapter chooser book changed
   onBookChange(book: number): void {
     // When user changes book, always navigate to the first chapter of the book
-    this.router.navigateByUrl(`/projects/${this.targetProjectId}/draft-preview/${Canon.bookNumberToId(book)}/1`);
+    this.navigateBookChapter(book, 1);
   }
 
   // Book/chapter chooser chapter changed
   onChapterChange(chapter: number): void {
-    this.router.navigateByUrl(
-      `/projects/${this.targetProjectId}/draft-preview/${Canon.bookNumberToId(this.currentBook!)}/${chapter}`
-    );
+    this.navigateBookChapter(this.currentBook!, chapter);
   }
 }
