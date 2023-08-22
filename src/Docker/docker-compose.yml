@@ -1,0 +1,17 @@
+version: "3.4"
+
+services:
+  db-xforge:
+    image: mongo:5.0
+
+  web-xforge:
+    image: ${DOCKER_REGISTRY-}sillsdev/web-xforge
+    build:
+      context: ..
+      dockerfile: ./SIL.XForge.Scripture/Dockerfile
+
+volumes:
+  mongo_config:
+  mongo_data:
+  scriptureforge-data:
+  xforge-data:

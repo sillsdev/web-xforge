@@ -7,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace SIL.XForge.Scripture;
 
-public class Program
+public static class Program
 {
     public static void Main(string[] args) => CreateWebHostBuilder(args).Build().Run();
 
@@ -20,6 +20,7 @@ public class Program
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("hosting.json", true, true)
             .AddJsonFile($"hosting.{environment}.json", true, true)
+            .AddEnvironmentVariables()
             .Build();
 
         Migrator.RunMigrations(environment);

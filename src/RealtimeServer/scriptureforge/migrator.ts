@@ -27,11 +27,14 @@ const baseSettings = JSON.parse(fs.readFileSync('appsettings.json', 'utf8'));
 const settingsFile = stage === 'Production' ? 'appsettings.json' : `appsettings.${stage}.json`;
 const stageSettings = JSON.parse(fs.readFileSync(settingsFile, 'utf8'));
 
-const bugsnagApiKey = stageSettings.Bugsnag.ApiKey ?? baseSettings.Bugsnag.ApiKey;
-const bugsnagReleaseStage = stageSettings.Bugsnag.ReleaseStage ?? baseSettings.Bugsnag.ReleaseStage;
+const bugsnagApiKey = process.env.Bugsnag__ApiKey ?? stageSettings.Bugsnag.ApiKey ?? baseSettings.Bugsnag.ApiKey;
+const bugsnagReleaseStage =
+  process.env.Bugsnag__ReleaseStage ?? stageSettings.Bugsnag.ReleaseStage ?? baseSettings.Bugsnag.ReleaseStage;
 const dataAccessConnectionString =
-  stageSettings.DataAccess.ConnectionString ?? baseSettings.DataAccess.ConnectionString;
-const siteId = stageSettings.Site.Id ?? baseSettings.Site.Id;
+  process.env.DataAccess__ConnectionString ??
+  stageSettings.DataAccess.ConnectionString ??
+  baseSettings.DataAccess.ConnectionString;
+const siteId = process.env.Site__Id ?? stageSettings.Site.Id ?? baseSettings.Site.Id;
 
 const exceptionReporter = new ExceptionReporter(bugsnagApiKey, bugsnagReleaseStage, version);
 function reportError(...args: unknown[]): void {

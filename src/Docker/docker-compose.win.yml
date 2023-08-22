@@ -1,0 +1,10 @@
+# This additional file contains configuration for Windows and support for Visual Studio's Fast Mode
+version: "3.4"
+
+services:
+  web-xforge:
+    environment:
+      - staticWebAssets=DISABLED # Fixes System.ArgumentException: 'The path must be absolute. (Parameter 'root')'
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro # Get the User Secrets from a Windows Host
+      - ../RealtimeServer/:/app/ClientApp/node_modules/realtime-server # Override the host symbolic link

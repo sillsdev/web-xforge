@@ -159,6 +159,17 @@
         // "SYNC_USER_PROJECT_IDS": "6201831c0e13de5c38e0ed7d",
         "SYNC_USER_MODE_RUN": "true"
       }
+    },
+    {
+      "name": "Docker .NET Attach (Preview)",
+      "type": "docker",
+      "request": "attach",
+      "platform": "netCore",
+      "containerName": "web-xforge",
+      "processId": "${command:pickRemoteDockerProcess}",
+      "sourceFileMap": {
+        "/src": "${workspaceFolder}/src"
+      }
     }
     // {
     //   "name": "Migration Foo",
