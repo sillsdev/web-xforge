@@ -13,6 +13,7 @@ import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
 
 const audioFile = 'test-audio-player.webm';
+const shortAudioFile = 'test-audio-short.webm';
 const timingData: AudioTiming[] = [
   { textRef: 'verse_1_1', from: 0.0, to: 1.0 },
   { textRef: 'verse_1_2', from: 1.0, to: 2.0 },
@@ -52,11 +53,26 @@ describe('ScriptureAudioComponent', () => {
     await env.waitForPlayer();
     expect(env.component.audioPlayer.currentRef).toEqual('verse_1_1');
   });
+
+  it('emits when chapter audio finishes', async () => {
+    const template = `<app-checking-scripture-audio-player source="${shortAudioFile}" (finished)="finished = true"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
+    env.playButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.isPlaying).toBe(true);
+    expect(env.component.finished).toBe(false);
+    await env.waitForPlayer(2000);
+    expect(env.isPlaying).toBe(false);
+    expect(env.component.finished).toBe(true);
+  });
 });
 
 @Component({ selector: 'app-host', template: '' })
 class HostComponent {
   @ViewChild(CheckingScriptureAudioPlayerComponent) audioPlayer!: CheckingScriptureAudioPlayerComponent;
+  finished: boolean = false;
 }
 
 class TestEnvironment {

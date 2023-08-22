@@ -1,25 +1,30 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
-import { TextDocId } from 'src/app/core/models/text-doc';
-import { SFProjectService } from 'src/app/core/sf-project.service';
-import { getVerseStrFromSegmentRef } from 'src/app/shared/utils';
+import { Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { TextDocId } from '../../../core/models/text-doc';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
+import { getVerseStrFromSegmentRef } from '../../../shared/utils';
 
 @Component({
   selector: 'app-checking-scripture-audio-player',
   templateUrl: './checking-scripture-audio-player.component.html',
   styleUrls: ['./checking-scripture-audio-player.component.scss']
 })
-export class CheckingScriptureAudioPlayerComponent {
+export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposable {
   @Input() source?: string;
   @Input() timing?: AudioTiming[];
   @Input() textDocId?: TextDocId;
   @Input() canDelete: boolean = false;
+  @Output() finished: EventEmitter<void> = new EventEmitter<void>();
   @ViewChild('audioPlayer') audioPlayer?: AudioPlayerComponent;
 
-  constructor(private readonly i18n: I18nService, private readonly projectService: SFProjectService) {}
+  constructor(private readonly i18n: I18nService, private readonly projectService: SFProjectService) {
+    super();
+  }
 
   get currentRef(): string | undefined {
     if (this.timing == null) return;
@@ -43,6 +48,11 @@ export class CheckingScriptureAudioPlayerComponent {
 
   play(): void {
     this.audioPlayer?.audio?.play();
+    if (this.audioPlayer?.audio == null) return;
+    const finishedSubscription: Subscription = this.subscribe(this.audioPlayer.audio.finishedPlaying$, () => {
+      this.finished.emit();
+      finishedSubscription.unsubscribe();
+    });
   }
 
   pause(): void {

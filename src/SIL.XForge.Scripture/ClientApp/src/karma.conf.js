@@ -37,19 +37,25 @@ module.exports = function (config) {
     },
     files: [
       {
-        pattern: 'app/checking/checking/checking-audio-player/test-audio-player.webm',
+        pattern: 'app/checking/checking/test-audio/test-audio-player.webm',
         watched: false,
         included: false
       },
       {
-        pattern: 'app/checking/checking/checking-audio-player/test-audio-player-b.webm',
+        pattern: 'app/checking/checking/test-audio/test-audio-player-b.webm',
+        watched: false,
+        included: false
+      },
+      {
+        // roughly 1s in length
+        pattern: 'app/checking/checking/test-audio/test-audio-short.webm',
         watched: false,
         included: false
       }
     ],
     proxies: {
       '/assets/audio/audio.mp3': '',
-      '/assets/audio/': '/base/app/checking/checking/checking-audio-player/'
+      '/assets/audio/': '/base/app/checking/checking/test-audio/'
     },
     reporters: karmaReporters,
 
