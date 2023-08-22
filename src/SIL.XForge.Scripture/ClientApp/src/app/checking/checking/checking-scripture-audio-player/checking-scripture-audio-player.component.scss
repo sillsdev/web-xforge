@@ -10,10 +10,24 @@
 
 .verse-label {
   padding: 8px;
-  font-weight: bold;
+  font-weight: 500;
+  font-size: 0.9em;
 }
 
 .close-button {
   position: absolute;
   right: 8px;
+}
+
+.previous-ref-button,
+.next-ref-button {
+  transform: scale(1.1);
+}
+
+.play-pause-button mat-icon {
+  transform: scale(1.9);
+}
+
+app-audio-player {
+  margin: -10px 0;
 }
