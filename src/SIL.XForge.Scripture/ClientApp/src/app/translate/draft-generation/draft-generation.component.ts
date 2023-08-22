@@ -82,7 +82,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   ngOnInit(): void {
-    // Handle locale changes
     this.subscribe(this.activatedProject.projectDoc$.pipe(filterNullish()), projectDoc => {
       const translateConfig = projectDoc.data?.translateConfig;
 
