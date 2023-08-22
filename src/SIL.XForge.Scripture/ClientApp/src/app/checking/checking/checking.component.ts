@@ -84,6 +84,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   @ViewChild(CheckingAnswersComponent) answersPanel?: CheckingAnswersComponent;
   @ViewChild(CheckingTextComponent) scripturePanel?: CheckingTextComponent;
   @ViewChild(CheckingQuestionsComponent) questionsPanel?: CheckingQuestionsComponent;
+  @ViewChild(CheckingScriptureAudioPlayerComponent) chapterAudio?: CheckingScriptureAudioPlayerComponent;
   @ViewChild(SplitComponent) splitComponent?: SplitComponent;
   @ViewChild('splitContainer') splitContainerElement?: ElementRef;
   @ViewChild('scripturePanelContainer') scripturePanelContainerElement?: ElementRef;
@@ -1179,5 +1180,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         .set(QuestionFilter.CurrentUserHasAnswered, 'question_filter_answered')
         .set(QuestionFilter.CurrentUserHasNotAnswered, 'question_filter_not_answered');
     }
+  }
+
+  toggleAudio(): void {
+    this.showScriptureAudioPlayer = true;
+    this.chapterAudio?.isPlaying ? this.chapterAudio?.pause() : this.chapterAudio?.play();
   }
 }

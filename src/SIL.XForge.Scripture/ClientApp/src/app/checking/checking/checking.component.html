@@ -118,9 +118,9 @@
                     *ngIf="featureFlags.scriptureAudio.enabled && chapterHasAudio"
                     type="button"
                     mat-icon-button
-                    (click)="showScriptureAudioPlayer = !showScriptureAudioPlayer"
+                    (click)="toggleAudio()"
                   >
-                    <mat-icon>play_arrow</mat-icon>
+                    <mat-icon>{{ chapterAudio?.isPlaying ? "pause" : "play_arrow" }}</mat-icon>
                   </button>
                   <app-font-size (apply)="applyFontChange($event)"></app-font-size>
                   <app-share-button *ngIf="canShare" [defaultRole]="defaultShareRole"></app-share-button>
@@ -142,9 +142,8 @@
                         [source]="chapterAudioSource"
                         [timing]="chapterTextAudioTiming"
                         [textDocId]="textDocId"
-                        [canDelete]="canCreateQuestions"
                         (currentVerseChanged)="handleAudioTextRefChanged($event)"
-                        (hide)="showScriptureAudioPlayer = false"
+                        (closed)="showScriptureAudioPlayer = false"
                       ></app-checking-scripture-audio-player>
                     </div>
                     <app-checking-text
