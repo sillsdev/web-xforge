@@ -12,6 +12,7 @@ mat-dialog-content {
   display: flex;
 }
 
-mdc-textarea {
-  margin-top: 15px;
+/* Add spacing between the hint and the bottom textarea */
+mat-form-field:last-child {
+  margin-top: 1em;
 }

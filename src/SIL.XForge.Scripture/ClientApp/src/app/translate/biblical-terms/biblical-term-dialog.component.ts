@@ -58,9 +58,9 @@ export class BiblicalTermDialogComponent extends SubscriptionDisposable {
   }
 
   submit(): void {
-    const renderings = this.renderings.value.split(/\r?\n/).map((rendering: string) => rendering.trim());
-    const renderingsChanged = renderings.join('\n') !== this.biblicalTermDoc?.data?.renderings.join('\n');
-    const description = this.description.value;
+    const renderings: string[] = this.renderings.value.split(/\r?\n/).map((rendering: string) => rendering.trim());
+    const renderingsChanged: boolean = renderings.join('\n') !== this.biblicalTermDoc?.data?.renderings.join('\n');
+    const description: string = this.description.value;
     this.biblicalTermDoc?.submitJson0Op(op => {
       op.set<string>(b => b.description, description);
       if (renderingsChanged) {
@@ -71,11 +71,11 @@ export class BiblicalTermDialogComponent extends SubscriptionDisposable {
   }
 
   private getTermDefinition(): string {
-    const term = this.projectUserConfigDoc?.data?.transliterateBiblicalTerms
+    const term: string = this.projectUserConfigDoc?.data?.transliterateBiblicalTerms
       ? this.biblicalTermDoc?.data?.transliteration ?? ''
       : this.biblicalTermDoc?.data?.termId ?? '';
-    let gloss;
-    let notes;
+    let gloss: string;
+    let notes: string;
     if (this.biblicalTermDoc?.data?.definitions.hasOwnProperty(this.i18n.localeCode)) {
       gloss = this.biblicalTermDoc?.data.definitions[this.i18n.localeCode].gloss;
       notes = this.biblicalTermDoc?.data.definitions[this.i18n.localeCode].notes;

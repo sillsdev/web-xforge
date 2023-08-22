@@ -231,10 +231,10 @@ class SFProjectMigration11 implements Migration {
     if (doc.data.biblicalTermsConfig == null) {
       ops.push({ p: ['biblicalTermsConfig'], oi: {} });
     }
-    if (doc.data.biblicalTermsConfig == null || doc.data.biblicalTermsConfig.biblicalTermsEnabled == null) {
+    if (doc.data.biblicalTermsConfig == null || doc.data.biblicalTermsConfig.biblicalTermsEnabled === undefined) {
       ops.push({ p: ['biblicalTermsConfig', 'biblicalTermsEnabled'], oi: false });
     }
-    if (doc.data.biblicalTermsConfig == null || doc.data.biblicalTermsConfig.hasRenderings == null) {
+    if (doc.data.biblicalTermsConfig == null || doc.data.biblicalTermsConfig.hasRenderings === undefined) {
       ops.push({ p: ['biblicalTermsConfig', 'hasRenderings'], oi: false });
     }
     await submitMigrationOp(SFProjectMigration10.VERSION, doc, ops);

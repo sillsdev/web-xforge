@@ -29,6 +29,7 @@ import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { getVerseNumbers } from '../../shared/utils';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from '../editor/note-dialog/note-dialog.component';
 import { SaveNoteParameters } from '../editor/editor.component';
 import { BiblicalTermDialogComponent, BiblicalTermDialogData } from './biblical-term-dialog.component';
@@ -219,11 +220,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     } else if ((this._verse ?? '0') === '0') {
       return ` (${this.i18n.localizeBook(this._bookNum ?? 0)} ${this._chapter})`;
     } else {
-      let verseRef = new VerseRef(
-        Canon.bookNumberToId(this._bookNum ?? 0),
-        (this._chapter ?? 0).toString(),
-        this._verse!
-      );
+      let verseRef = new VerseRef(Canon.bookNumberToId(this._bookNum!), this._chapter!.toString(), this._verse!);
       return ` (${this.i18n.localizeReference(verseRef)})`;
     }
   }
@@ -324,23 +321,12 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     var biblicalTermDoc = await this.projectService.getBiblicalTerm(getBiblicalTermDocId(this._projectId!, id));
     this.dialogService.openMatDialog<BiblicalTermDialogComponent, BiblicalTermDialogData>(BiblicalTermDialogComponent, {
       data: { biblicalTermDoc, projectDoc: this.projectDoc, projectUserConfigDoc: this.projectUserConfigDoc },
-      width: '80vw'
+      width: '560px'
     });
   }
 
-  // TODO: Implement this functionality in @sillsdev/scripture
-  getVerseRef(bbbcccvvv: number): VerseRef {
-    const chapterDigitShifter = 1000;
-    const bookDigitShifter = chapterDigitShifter * chapterDigitShifter;
-
-    const verse = bbbcccvvv % chapterDigitShifter;
-    const chapter = Math.floor((bbbcccvvv % bookDigitShifter) / chapterDigitShifter);
-    const book = Math.floor(bbbcccvvv / bookDigitShifter);
-    return new VerseRef(book, chapter, verse);
-  }
-
   protected sortData(sort: Sort): void {
-    const data = this.rows.slice();
+    const data: Row[] = this.rows.slice();
     if (!sort.active || sort.direction === '') {
       this.rows = data;
     } else {
@@ -358,11 +344,11 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     if (scrollToTop) this.biblicalTerms?.nativeElement.scrollIntoView();
 
     const rows: Row[] = [];
-    let verses: number[] = this.getVerses(new VerseRef(Canon.bookNumberToId(bookNum), chapter.toString(), verse));
+    let verses: number[] = getVerseNumbers(new VerseRef(Canon.bookNumberToId(bookNum), chapter.toString(), verse));
     for (const biblicalTermDoc of this.biblicalTermQuery?.docs || []) {
       let displayTerm = false;
       for (const bbbcccvvv of biblicalTermDoc.data?.references || []) {
-        var verseRef = this.getVerseRef(bbbcccvvv);
+        var verseRef = new VerseRef(bbbcccvvv);
         if (
           verseRef.bookNum === bookNum &&
           verseRef.chapterNum === chapter &&
@@ -376,20 +362,20 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         }
       }
 
-      let noteThreadDoc: NoteThreadDoc | undefined;
-
-      // The code points will often be different, so we need to normalize the strings
-      const biblicalTermId = biblicalTermDoc.data?.termId.normalize('NFD');
-      if (biblicalTermId != null) {
-        const noteThreadIndex =
-          this.noteThreadQuery?.docs.findIndex(nt => nt.data?.biblicalTermId?.normalize('NFD') === biblicalTermId) ??
-          -1;
-        if (noteThreadIndex > -1) {
-          noteThreadDoc = this.noteThreadQuery?.docs[noteThreadIndex];
-        }
-      }
-
       if (displayTerm) {
+        let noteThreadDoc: NoteThreadDoc | undefined;
+
+        // The code points will often be different, so we need to normalize the strings
+        const biblicalTermId: string | undefined = biblicalTermDoc.data?.termId.normalize('NFD');
+        if (biblicalTermId != null) {
+          const noteThreadIndex =
+            this.noteThreadQuery?.docs.findIndex(nt => nt.data?.biblicalTermId?.normalize('NFD') === biblicalTermId) ??
+            -1;
+          if (noteThreadIndex > -1) {
+            noteThreadDoc = this.noteThreadQuery?.docs[noteThreadIndex];
+          }
+        }
+
         rows.push(
           new Row(
             biblicalTermDoc,
@@ -406,31 +392,6 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.sortData({ active: this.columnsToDisplay[0], direction: 'asc' });
 
     this.loadingFinished();
-  }
-
-  private getVerses(verseRef: VerseRef): number[] {
-    // Get the verses numbers from a verse reference
-    const verseList: number[] = [];
-    if (verseRef.verse == null) {
-      verseList.push(verseRef.verseNum); // no bridge or segment info included in verse
-      return verseList;
-    }
-
-    let verseStr = '';
-    for (let i = 0; i < verseRef.verse.length; i++) {
-      if (verseRef.verse[i].match(/[0-9]/i)) {
-        verseStr += verseRef.verse[i];
-      } else if (verseStr.length > 0) {
-        verseList.push(parseInt(verseStr));
-        verseStr = '';
-      }
-    }
-
-    if (verseStr.length > 0) {
-      verseList.push(parseInt(verseStr)); // add any accumulated digits
-    }
-
-    return verseList;
   }
 
   private async loadBiblicalTerms(sfProjectId: string): Promise<void> {
@@ -485,7 +446,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     // Paratext uses the first reference of a Biblical Term for the note verse reference
     let verseRef: VerseRef;
     if (biblicalTermDoc.data.references.length > 0) {
-      verseRef = this.getVerseRef(biblicalTermDoc.data.references[0]);
+      verseRef = new VerseRef(biblicalTermDoc.data.references[0]);
     } else {
       verseRef = new VerseRef(
         Canon.bookNumberToId(this._bookNum ?? 0),

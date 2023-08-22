@@ -233,7 +233,11 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     noteThreadDocsByBook,
                     biblicalTermNoteThreadDocs
                 );
-                await GetAndUpdateParatextBiblicalTerms(SyncPhase.Phase3, targetParatextId, biblicalTermDocs);
+                biblicalTermDocs = await GetAndUpdateParatextBiblicalTerms(
+                    SyncPhase.Phase3,
+                    targetParatextId,
+                    biblicalTermDocs
+                );
             }
 
             // Check for cancellation
@@ -602,7 +606,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         }
     }
 
-    private async Task GetAndUpdateParatextBiblicalTerms(
+    private async Task<List<IDocument<BiblicalTerm>>> GetAndUpdateParatextBiblicalTerms(
         SyncPhase syncPhase,
         string paratextId,
         List<IDocument<BiblicalTerm>> biblicalTermDocs
@@ -637,7 +641,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     op.Set(p => p.BiblicalTermsConfig.BiblicalTermsEnabled, false);
                 }
             });
-            return;
+            return biblicalTermDocs;
         }
 
         // Update the renderings
@@ -669,6 +673,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         LogMetric("Saving Paratext biblical terms");
         await NotifySyncProgress(syncPhase, 75);
         _paratextService.UpdateBiblicalTerms(_userSecret, paratextId, biblicalTermsToUpdate);
+        return biblicalTermDocs;
     }
 
     private async Task UpdateBiblicalTermsAsync(

@@ -1,7 +1,8 @@
+import { VerseRef } from '@sillsdev/scripture';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
 import { SelectableProject } from '../core/paratext.service';
-import { compareProjectsForSorting, isBadDelta, projectLabel } from './utils';
+import { compareProjectsForSorting, getVerseNumbers, isBadDelta, projectLabel } from './utils';
 
 describe('shared utils', () => {
   describe('projectLabel function', () => {
@@ -80,5 +81,20 @@ describe('shared utils', () => {
     const projects = [{ shortName: 'bbb' }, { shortName: 'CCC' }, { shortName: 'AAA' }] as SFProject[];
     projects.sort(compareProjectsForSorting);
     expect(projects.map(project => project.shortName)).toEqual(['AAA', 'bbb', 'CCC']);
+  });
+
+  describe('getVerseNumbers function', () => {
+    it('gets the verse number from a single verse number', () => {
+      expect(getVerseNumbers(new VerseRef(1, 2, 3))).toEqual([3]);
+    });
+    it('gets the verse number from a single verse string', () => {
+      expect(getVerseNumbers(new VerseRef('GEN 2:3'))).toEqual([3]);
+    });
+    it('gets the verse number from a partial verse reference', () => {
+      expect(getVerseNumbers(new VerseRef('GEN', '2', '3a'))).toEqual([3]);
+    });
+    it('gets the verse number from a verse range', () => {
+      expect(getVerseNumbers(new VerseRef('GEN', '2', '3,4-6'))).toEqual([3, 4, 6]);
+    });
   });
 });

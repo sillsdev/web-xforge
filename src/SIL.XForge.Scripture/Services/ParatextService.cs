@@ -1443,6 +1443,13 @@ public class ParatextService : DisposableBase, IParatextService
         return commentTags.FindMatchingTag(newCommentTag);
     }
 
+    /// <summary>
+    /// Gets the Biblical Terms with Renderings from the Paratext project.
+    /// </summary>
+    /// <param name="userSecret">The user secret.</param>
+    /// <param name="paratextId">The Paratext identifier.</param>
+    /// <param name="books">The book numbers to retrieve the terms for.</param>
+    /// <returns>An object with the Biblical Terms with Renderings or the error message.</returns>
     public async Task<BiblicalTermsChanges> GetBiblicalTermsAsync(
         UserSecret userSecret,
         string paratextId,
@@ -1581,6 +1588,12 @@ public class ParatextService : DisposableBase, IParatextService
         }
     }
 
+    /// <summary>
+    /// Updates Biblical Term renderings in Paratext with the values from Scripture Forge.
+    /// </summary>
+    /// <param name="userSecret">The user secret.</param>
+    /// <param name="paratextId">The Paratext identifier.</param>
+    /// <param name="biblicalTerms">The Biblical Terms to update in Paratext.</param>
     public void UpdateBiblicalTerms(UserSecret userSecret, string paratextId, IReadOnlyList<BiblicalTerm> biblicalTerms)
     {
         if (!biblicalTerms.Any())
@@ -1927,7 +1940,7 @@ public class ParatextService : DisposableBase, IParatextService
         };
 
     /// <summary>
-    /// Converts a Paratext language code into a language-country codes for the frontend.
+    /// Converts a Paratext language code into a language-country code for the frontend.
     /// </summary>
     /// <param name="languageCode">The Paratext Language code</param>
     /// <returns>The language-country code</returns>
