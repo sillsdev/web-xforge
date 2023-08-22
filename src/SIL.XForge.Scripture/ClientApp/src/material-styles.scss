@@ -51,34 +51,82 @@ $mat-sf-orange: (
   )
 );
 
+$mat-sf-error: (
+  100: $errorColor,
+  500: $errorColor,
+  700: $errorColor,
+  contrast: (
+    100: white,
+    500: white,
+    700: white
+  )
+);
+
 // Styles for angular material components. Refer to https://material.angular.io/guide/theming
-$matGrey: mat.define-palette($mat-sf-grey, 800);
-$matGreenLight: mat.define-palette($mat-sf-green, 500, 200);
+$matGreyPalette: mat.define-palette($mat-sf-grey, 800);
+$matGreenLightPalette: mat.define-palette($mat-sf-green, 500, 200);
+$matErrorPalette: mat.define-palette($mat-sf-error, 500);
 
 $material-app-theme: mat.define-light-theme(
   (
     color: (
-      primary: $matGrey,
-      accent: $matGreenLight
+      primary: $matGreyPalette,
+      accent: $matGreenLightPalette,
+      warn: $matErrorPalette
     )
   )
 );
 
+// A Material input uses the accent color for the asterisk, but light green is an odd color to use there.
+// This theme uses the error color for accent and can be applied only where needed.
+$material-theme-accent-error: mat.define-light-theme(
+  (
+    color: (
+      primary: $matGreyPalette,
+      accent: $matErrorPalette,
+      warn: $matErrorPalette
+    )
+  )
+);
+
+@include mat.core-theme($material-app-theme);
 @include mat.autocomplete-theme($material-app-theme);
+@include mat.badge-theme($material-app-theme);
+@include mat.bottom-sheet-theme($material-app-theme);
 @include mat.button-theme($material-app-theme);
 @include mat.card-theme($material-app-theme);
 @include mat.checkbox-theme($material-app-theme);
-@include mat.optgroup-theme($material-app-theme);
-@include mat.option-theme($material-app-theme);
+@include mat.dialog-theme($material-app-theme);
+@include mat.divider-theme($material-app-theme);
+@include mat.expansion-theme($material-app-theme);
+@include mat.form-field-theme($material-theme-accent-error);
+@include mat.icon-theme($material-app-theme);
+@include mat.input-theme($material-app-theme);
+@include mat.list-theme($material-app-theme);
+@include mat.menu-theme($material-app-theme);
 @include mat.paginator-theme($material-app-theme);
 @include mat.progress-bar-theme($material-app-theme);
 @include mat.progress-spinner-theme($material-app-theme);
 @include mat.radio-theme($material-app-theme);
 @include mat.select-theme($material-app-theme);
-@include mat.slider-theme($material-app-theme);
 @include mat.slide-toggle-theme($material-app-theme);
+@include mat.slider-theme($material-app-theme);
+@include mat.snack-bar-theme($material-app-theme);
 @include mat.table-theme($material-app-theme);
+@include mat.tabs-theme($material-app-theme);
 @include mat.toolbar-theme($material-app-theme);
+@include mat.tooltip-theme($material-app-theme);
+
+// Other components that appear to not be used at this time
+
+// @include mat.button-toggle-theme($material-app-theme);
+// @include mat.chips-theme($material-app-theme);
+// @include mat.grid-list-theme($material-app-theme);
+// @include mat.sidenav-theme($material-app-theme);
+// @include mat.slide-toggle-theme($material-app-theme);
+// @include mat.sort-theme($material-app-theme);
+// @include mat.stepper-theme($material-app-theme);
+// @include mat.tree-theme($material-app-theme);
 
 .card-outline {
   @include mat.elevation(0);
