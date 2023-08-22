@@ -103,6 +103,10 @@ describe('shared utils', () => {
       expect(XmlUtils.decodeFromXml('<p>content in paragraph.</p><p>second paragraph</p>')).toEqual(
         'content in paragraph.second paragraph'
       );
+
+      // malformed xml
+      expect(() => XmlUtils.decodeFromXml('<p')).toThrow();
+      expect(() => XmlUtils.decodeFromXml('<p>')).toThrow();
     });
 
     it('should convert xml to html', () => {

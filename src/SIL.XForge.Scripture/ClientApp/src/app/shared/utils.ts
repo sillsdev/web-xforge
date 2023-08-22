@@ -166,31 +166,25 @@ export function canInsertNote(project: SFProjectProfile, userId: string): boolea
 export class XmlUtils {
   /** Encode text to be valid xml text node. Escape reserved xml characters such as & and < >. */
   static encodeForXml(text: string): string {
-    const content = `<root></root>`;
-    const parser: DOMParser = new DOMParser();
-    const xmlDoc: Document = parser.parseFromString(content, 'text/xml');
-    xmlDoc.firstElementChild!.textContent = text;
-    return xmlDoc.firstElementChild!.innerHTML;
+    const xmlDoc: XMLDocument = document.implementation.createDocument(null, 'root');
+    xmlDoc.documentElement.textContent = text;
+    return xmlDoc.documentElement.innerHTML;
   }
 
   /** Decode xml text node to plain text. */
   static decodeFromXml(xml: string): string {
-    const content = `<root></root>`;
-    const parser: DOMParser = new DOMParser();
-    const xmlDoc: Document = parser.parseFromString(content, 'text/xml');
-    xmlDoc.firstElementChild!.innerHTML = xml;
-    return xmlDoc.firstElementChild!.textContent!;
+    const xmlDoc: XMLDocument = document.implementation.createDocument(null, 'root');
+    xmlDoc.documentElement.innerHTML = xml;
+    return xmlDoc.documentElement.textContent!;
   }
 
   /** Convert xml note content to html to display in the browser. */
   static convertXmlToHtml(xml: string): string {
-    const content = `<root></root>`;
-    const parser: DOMParser = new DOMParser();
-    const xmlDoc: Document = parser.parseFromString(content, 'text/xml');
-    xmlDoc.firstElementChild!.innerHTML = xml;
-    const treeWalker: TreeWalker = xmlDoc.createTreeWalker(xmlDoc.firstElementChild!);
+    const xmlDoc: XMLDocument = document.implementation.createDocument(null, 'root');
+    xmlDoc.documentElement.innerHTML = xml;
+    const treeWalker: TreeWalker = xmlDoc.createTreeWalker(xmlDoc.documentElement);
     let htmlString = '';
-    const nodeTypes = [Node.ELEMENT_NODE, Node.TEXT_NODE];
+    const nodeTypes: number[] = [Node.ELEMENT_NODE, Node.TEXT_NODE];
     while (treeWalker.nextNode() != null) {
       if (nodeTypes.includes(treeWalker.currentNode.nodeType)) {
         htmlString += this.processNode(treeWalker);
