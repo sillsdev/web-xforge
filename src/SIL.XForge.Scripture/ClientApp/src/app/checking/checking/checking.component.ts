@@ -84,6 +84,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   @ViewChild(CheckingAnswersComponent) answersPanel?: CheckingAnswersComponent;
   @ViewChild(CheckingTextComponent) scripturePanel?: CheckingTextComponent;
   @ViewChild(CheckingQuestionsComponent) questionsPanel?: CheckingQuestionsComponent;
+  @ViewChild(CheckingScriptureAudioPlayerComponent) chapterAudio?: CheckingScriptureAudioPlayerComponent;
   @ViewChild(SplitComponent) splitComponent?: SplitComponent;
   @ViewChild('splitContainer') splitContainerElement?: ElementRef;
   @ViewChild('scripturePanelContainer') scripturePanelContainerElement?: ElementRef;
