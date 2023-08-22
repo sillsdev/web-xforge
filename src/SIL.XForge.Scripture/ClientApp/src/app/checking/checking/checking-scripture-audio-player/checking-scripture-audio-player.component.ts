@@ -4,11 +4,11 @@ import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio
 import { distinctUntilChanged, map } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { AudioTextRef, CheckingUtils } from '../../checking.utils';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
+import { AudioTextRef, CheckingUtils } from '../../checking.utils';
 
 @Component({
   selector: 'app-checking-scripture-audio-player',
@@ -20,6 +20,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   @Input() textDocId?: TextDocId;
   @Input() canDelete: boolean = false;
   @Output() currentVerseChanged = new EventEmitter<string>();
+  @Output() hide: EventEmitter<void> = new EventEmitter<void>();
   @ViewChild('audioPlayer') audioPlayer?: AudioPlayerComponent;
 
   private _timing: AudioTiming[] = [];
@@ -111,6 +112,10 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
       this.textDocId.bookNum,
       this.textDocId.chapterNum
     );
+  }
+  
+  close(): void {
+    this.hide.emit();
   }
 
   private getRefIndexInTimings(ref: string): number {
