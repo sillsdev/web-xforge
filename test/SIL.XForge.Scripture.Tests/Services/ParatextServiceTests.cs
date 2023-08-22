@@ -2161,6 +2161,10 @@ public class ParatextServiceTests
         string content7a = "<p>\n  <bold>First paragraph content.</bold>\n  </p><p>Second paragraph content.</p>";
         string content7b = "<p><bold>First paragraph content.</bold></p><p>Second paragraph content.</p>";
 
+        // this is known to fail but is not critical to handle since formatted PT comments sync one way
+        // string content8a = "<p>\n  First paragraph content.\n</p><p>Second paragraph content.</p>";
+        // string content8b = "<p>\n      First paragraph content.\n</p><p>Second paragraph content.</p>";
+
         ThreadNoteComponents[] notesSF = new[]
         {
             new ThreadNoteComponents { ownerRef = env.User05, content = content1a },
