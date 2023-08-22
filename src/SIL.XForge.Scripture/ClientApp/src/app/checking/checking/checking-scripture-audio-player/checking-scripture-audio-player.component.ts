@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
-import { distinctUntilChanged, map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../../../core/models/text-doc';
@@ -61,22 +61,22 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     return this.i18n.localizeReference(verseRef);
   }
 
+  ngAfterViewInit(): void {
+    if (this.audioPlayer == null) return;
+    this.subscribe(
+      this.audioPlayer.isAudioAvailable$.pipe(
+        filter(a => a),
+        first()
+      ),
+      () => {
+        this.subscribe(this.audioPlayer!.audio!.finishedPlaying$.pipe(first()), () => this.close());
+      }
+    );
+  }
+
   close(): void {
     this.pause();
     this.closed.emit();
-  }
-
-  deleteAudioTimingData(): void {
-    if (this._textDocId?.projectId == null || this._textDocId.bookNum == null || this._textDocId.chapterNum == null) {
-      return;
-    }
-    this.audioPlayer?.audio?.pause();
-    this.audioPlayer?.audio?.dispose();
-    this.projectService.onlineDeleteAudioTimingData(
-      this._textDocId.projectId,
-      this._textDocId.bookNum,
-      this._textDocId.chapterNum
-    );
   }
 
   nextRef(): void {

@@ -153,7 +153,42 @@ describe('ScriptureAudioComponent', () => {
     expect(env.currentTime).toEqual(0);
     env.clickNextRef();
     expect(env.currentTime).toEqual(3);
-  }));
+  });
+
+  it('emits when chapter audio finishes', async () => {
+    const template = `<app-checking-scripture-audio-player source="${shortAudioFile}" (closed)="closed = closed + 1"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
+    env.playButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.isPlaying).toBe(true);
+    expect(env.component.closed).toBe(0);
+    await env.waitForPlayer(2500);
+    expect(env.isPlaying).toBe(false);
+    expect(env.component.closed).toBe(1);
+  });
+
+  it('emits finished when skipped to the end', async () => {
+    const template = `<app-checking-scripture-audio-player source="${shortAudioFile}" (closed)="closed = closed + 1"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer();
+
+    env.component.audioPlayer.timing = getAudioTimings();
+    await env.waitForPlayer(500);
+    env.playButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.isPlaying).toBe(true);
+    env.nextRefButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.isPlaying).toBe(true);
+    // skip to the end
+    env.nextRefButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.isPlaying).toBe(false);
+    expect(env.component.closed).toBe(1);
+  });
 });
 
 @Component({ selector: 'app-host', template: '' })
