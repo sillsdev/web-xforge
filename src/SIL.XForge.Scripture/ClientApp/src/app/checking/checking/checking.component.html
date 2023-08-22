@@ -144,6 +144,7 @@
                         [textDocId]="textDocId"
                         [canDelete]="canCreateQuestions"
                         (currentVerseChanged)="handleAudioTextRefChanged($event)"
+                        (hide)="showScriptureAudioPlayer = false"
                       ></app-checking-scripture-audio-player>
                     </div>
                     <app-checking-text
