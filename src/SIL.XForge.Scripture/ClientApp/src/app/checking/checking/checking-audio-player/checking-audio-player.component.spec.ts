@@ -5,17 +5,24 @@ import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { PwaService } from 'xforge-common/pwa.service';
-import { TestTranslocoModule } from 'xforge-common/test-utils';
+import { getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { InfoComponent } from '../../../shared/info/info.component';
+import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingAudioPlayerComponent } from './checking-audio-player.component';
 
 describe('CheckingAudioPlayerComponent', () => {
   const audioFile = 'test-audio-player.webm';
   const audioFileB = 'test-audio-player-b.webm';
+  const audioBlobFile: AudioAttachment = {
+    status: 'uploaded',
+    blob: getAudioBlob(),
+    fileName: audioFile,
+    url: URL.createObjectURL(new File([getAudioBlob()], audioFile))
+  };
   const playerLoadTimeMs = 1000;
 
   it('should be created', async () => {
@@ -28,13 +35,27 @@ describe('CheckingAudioPlayerComponent', () => {
     expect(env.currentTime).toBe('0:00');
   });
 
-  it('can play', async () => {
+  it('can play physical files', async () => {
     const template =
       '<app-checking-audio-player #player1 id="player1" source="' + audioFile + '"></app-checking-audio-player>';
     const env = new TestEnvironment(template);
     await env.waitForPlayer(playerLoadTimeMs);
     env.clickButton(env.playButton(1));
     await env.waitForPlayer(1500);
+    env.fixture.detectChanges();
+    env.clickButton(env.pauseButton(1));
+    expect(env.currentTime).toBe('0:01');
+  });
+
+  it('can play blob files', async () => {
+    const template =
+      '<app-checking-audio-player #player1 id="player1" source="' +
+      audioBlobFile.url +
+      '"></app-checking-audio-player>';
+    const env = new TestEnvironment(template);
+    await env.waitForPlayer(playerLoadTimeMs);
+    env.clickButton(env.playButton(1));
+    await env.waitForPlayer(1100);
     env.fixture.detectChanges();
     env.clickButton(env.pauseButton(1));
     expect(env.currentTime).toBe('0:01');
@@ -80,7 +101,7 @@ describe('CheckingAudioPlayerComponent', () => {
   });
 
   it('it can play blobs even when offline', async () => {
-    const template = `<app-checking-audio-player #player1 source="${audioFile}"></app-checking-audio-player>`;
+    const template = `<app-checking-audio-player #player1 source="${audioBlobFile.url}"></app-checking-audio-player>`;
     const env = new TestEnvironment(template, false);
     await env.waitForPlayer(playerLoadTimeMs);
     expect(env.component.player1.audioPlayer?.audio).not.toBeUndefined();
@@ -169,14 +190,6 @@ class TestEnvironment {
 
   get currentTime(): string {
     return this.fixture.debugElement.query(By.css('.current-time')).nativeElement.textContent;
-  }
-
-  get moreMenuButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.more-menu'));
-  }
-
-  get downloadButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.download'));
   }
 
   get audioNotAvailableMessage(): DebugElement {
