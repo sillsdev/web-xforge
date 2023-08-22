@@ -20,7 +20,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   @Input() textDocId?: TextDocId;
   @Input() canDelete: boolean = false;
   @Output() currentVerseChanged = new EventEmitter<string>();
-  @Output() hide: EventEmitter<void> = new EventEmitter<void>();
+  @Output() closed: EventEmitter<void> = new EventEmitter<void>();
   @ViewChild('audioPlayer') audioPlayer?: AudioPlayerComponent;
 
   private _timing: AudioTiming[] = [];
@@ -113,9 +113,9 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
       this.textDocId.chapterNum
     );
   }
-  
+
   close(): void {
-    this.hide.emit();
+    this.closed.emit();
   }
 
   private getRefIndexInTimings(ref: string): number {
