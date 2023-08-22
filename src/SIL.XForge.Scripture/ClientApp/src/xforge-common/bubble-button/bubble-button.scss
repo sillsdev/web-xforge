@@ -2,6 +2,14 @@
 @use 'sass:list';
 @use 'src/variables' as vars;
 
+/// Gets the min/max css function to constrain the size within a min and max size in px.
+/// @param {number} $sizePercentage - The size of the bubble as a percentage of the button size.
+@function sizeCalc($sizePercentage) {
+  @return min(max(#{$minBubbleSize}, #{$sizePercentage}), #{$maxBubbleSize});
+}
+
+$minBubbleSize: 30px;
+$maxBubbleSize: 50px;
 $bubbleColor: vars.$blueMedium;
 $animationDuration: 0.7s;
 
@@ -18,23 +26,23 @@ $bubbleTypes: (
 // prettier-ignore
 $bubbles: (
   // Top bubbles
-  (location: 'top', type: 1, size:(10% 10%), pos0:( 5% 90%), pos50:( 0% 80%), pos100:( 0%  70%)),
-  (location: 'top', type: 2, size:(20% 20%), pos0:(10% 90%), pos50:( 0% 20%), pos100:( 0%  10%)),
-  (location: 'top', type: 1, size:(15% 15%), pos0:(10% 90%), pos50:(10% 40%), pos100:(10%  30%)),
-  (location: 'top', type: 1, size:(20% 20%), pos0:(15% 90%), pos50:(20%  0%), pos100:(20% -10%)),
-  (location: 'top', type: 3, size:(18% 18%), pos0:(25% 90%), pos50:(30% 30%), pos100:(30%  20%)),
-  (location: 'top', type: 1, size:(10% 10%), pos0:(25% 90%), pos50:(22% 50%), pos100:(22%  40%)),
-  (location: 'top', type: 1, size:(15% 15%), pos0:(40% 90%), pos50:(50% 50%), pos100:(50%  40%)),
-  (location: 'top', type: 1, size:(10% 10%), pos0:(55% 90%), pos50:(65% 20%), pos100:(65%  10%)),
-  (location: 'top', type: 1, size:(18% 18%), pos0:(70% 90%), pos50:(90% 30%), pos100:(90%  20%)),
+  (location: 'top', type: 1, size: 10%, pos0: ( 5% 90%), pos50: ( 0% 80%), pos100: ( 0%  70%)),
+  (location: 'top', type: 2, size: 20%, pos0: (10% 90%), pos50: ( 0% 20%), pos100: ( 0%  10%)),
+  (location: 'top', type: 1, size: 15%, pos0: (10% 90%), pos50: (10% 40%), pos100: (10%  30%)),
+  (location: 'top', type: 1, size: 20%, pos0: (15% 90%), pos50: (20%  0%), pos100: (20% -10%)),
+  (location: 'top', type: 3, size: 18%, pos0: (25% 90%), pos50: (30% 30%), pos100: (30%  20%)),
+  (location: 'top', type: 1, size: 10%, pos0: (25% 90%), pos50: (22% 50%), pos100: (22%  40%)),
+  (location: 'top', type: 1, size: 15%, pos0: (40% 90%), pos50: (50% 50%), pos100: (50%  40%)),
+  (location: 'top', type: 1, size: 10%, pos0: (55% 90%), pos50: (65% 20%), pos100: (65%  10%)),
+  (location: 'top', type: 1, size: 18%, pos0: (70% 90%), pos50: (90% 30%), pos100: (90%  20%)),
   // Bottom bubbles
-  (location: 'bottom', type: 1, size:(15% 15%), pos0:(10% -10%), pos50:(  0%  80%), pos100:(  0%  90%)),
-  (location: 'bottom', type: 1, size:(20% 20%), pos0:(30%  10%), pos50:( 20%  80%), pos100:( 20%  90%)),
-  (location: 'bottom', type: 3, size:(18% 18%), pos0:(55% -10%), pos50:( 45%  60%), pos100:( 45%  70%)),
-  (location: 'bottom', type: 1, size:(20% 20%), pos0:(70% -10%), pos50:( 60% 100%), pos100:( 60% 110%)),
-  (location: 'bottom', type: 1, size:(15% 15%), pos0:(85% -10%), pos50:( 75%  70%), pos100:( 75%  80%)),
-  (location: 'bottom', type: 1, size:(10% 10%), pos0:(70% -10%), pos50:( 95%  60%), pos100:( 95%  70%)),
-  (location: 'bottom', type: 1, size:(20% 20%), pos0:(70%   0%), pos50:(105%   0%), pos100:(110%  10%))
+  (location: 'bottom', type: 1, size: 15%, pos0: (10% -10%), pos50: (  0%  80%), pos100: (  0%  90%)),
+  (location: 'bottom', type: 1, size: 20%, pos0: (30%  10%), pos50: ( 20%  80%), pos100: ( 20%  90%)),
+  (location: 'bottom', type: 3, size: 18%, pos0: (55% -10%), pos50: ( 45%  60%), pos100: ( 45%  70%)),
+  (location: 'bottom', type: 1, size: 20%, pos0: (70% -10%), pos50: ( 60% 100%), pos100: ( 60% 110%)),
+  (location: 'bottom', type: 1, size: 15%, pos0: (85% -10%), pos50: ( 75%  70%), pos100: ( 75%  80%)),
+  (location: 'bottom', type: 1, size: 10%, pos0: (70% -10%), pos50: ( 95%  60%), pos100: ( 95%  70%)),
+  (location: 'bottom', type: 1, size: 20%, pos0: (70%   0%), pos50: (105%   0%), pos100: (110%  10%))
 );
 
 // Initialize empty lists
@@ -52,20 +60,20 @@ $bottomBubblesPos100s: ();
 @each $bubble in $bubbles {
   $location: map.get($bubble, location);
   $type: map.get($bubble, type);
-  $size: map.get($bubble, size);
+  $size: sizeCalc(map.get($bubble, size));
   $pos0: map.get($bubble, pos0);
   $pos50: map.get($bubble, pos50);
   $pos100: map.get($bubble, pos100);
 
   @if $location == 'top' {
     $topBubblesImages: list.append($topBubblesImages, map.get($bubbleTypes, $type), comma);
-    $topBubblesSizes: list.append($topBubblesSizes, $size, comma);
+    $topBubblesSizes: list.append($topBubblesSizes, ($size $size), comma);
     $topBubblesPos0s: list.append($topBubblesPos0s, $pos0, comma);
     $topBubblesPos50s: list.append($topBubblesPos50s, $pos50, comma);
     $topBubblesPos100s: list.append($topBubblesPos100s, $pos100, comma);
   } @else if $location == 'bottom' {
     $bottomBubblesImages: list.append($bottomBubblesImages, map.get($bubbleTypes, $type), comma);
-    $bottomBubblesSizes: list.append($bottomBubblesSizes, $size, comma);
+    $bottomBubblesSizes: list.append($bottomBubblesSizes, ($size $size), comma);
     $bottomBubblesPos0s: list.append($bottomBubblesPos0s, $pos0, comma);
     $bottomBubblesPos50s: list.append($bottomBubblesPos50s, $pos50, comma);
     $bottomBubblesPos100s: list.append($bottomBubblesPos100s, $pos100, comma);
@@ -74,7 +82,9 @@ $bottomBubblesPos100s: ();
 
 .sf-bubble-button {
   position: relative;
-  transition: transform linear 0.02s;
+
+  // Transition the scale down effect of button press
+  transition: transform linear 50ms;
 
   &:active {
     transform: scale(0.95);
@@ -104,7 +114,6 @@ $bottomBubblesPos100s: ();
       padding-top: 30%; // Percentage of width of containing element
 
       z-index: -1;
-      transition: all ease-in-out 0.5s;
       background-repeat: no-repeat;
     }
 
@@ -125,11 +134,11 @@ $bottomBubblesPos100s: ();
     &.sf-bubble-animate {
       &:before {
         display: block;
-        animation: emit-bubbles-top ease-in-out $animationDuration forwards;
+        animation: emit-bubbles-top ease-out $animationDuration forwards;
       }
       &:after {
         display: block;
-        animation: emit-bubbles-bottom ease-in-out $animationDuration forwards;
+        animation: emit-bubbles-bottom ease-out $animationDuration forwards;
       }
     }
   }
