@@ -11,6 +11,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { DraftGenerationComponent, InfoAlert } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 
@@ -58,16 +59,16 @@ describe('DraftGenerationComponent', () => {
 
     // Default setup
     setup(): void {
-      mockDialogService = jasmine.createSpyObj('DialogService', ['openGenericDialog']);
-      mockI18nService = jasmine.createSpyObj('I18nService', ['getLanguageDisplayName'], { locale$: of(locale) });
-      mockDraftGenerationService = jasmine.createSpyObj('DraftGenerationService', [
+      mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
+      mockI18nService = jasmine.createSpyObj<I18nService>(['getLanguageDisplayName'], { locale$: of(locale) });
+      mockDraftGenerationService = jasmine.createSpyObj<DraftGenerationService>([
         'startBuildOrGetActiveBuild',
         'cancelBuild',
         'getBuildProgress',
         'pollBuildProgress',
         'getLastCompletedBuild'
       ]);
-      mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+      mockActivatedProjectService = jasmine.createSpyObj<ActivatedProjectService>([], {
         projectId: 'testProjectId',
         projectId$: of('testProjectId'),
         projectDoc$: of({
@@ -86,7 +87,7 @@ describe('DraftGenerationComponent', () => {
               }
             }
           }
-        })
+        } as SFProjectProfileDoc)
       });
 
       mockI18nService.getLanguageDisplayName.and.returnValue('English');
