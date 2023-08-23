@@ -1712,17 +1712,20 @@ describe('CheckingComponent', () => {
       expect(env.component.showScriptureAudioPlayer).toBe(true);
     }));
 
-    it('can close chapter audio', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
+    it('can close chapter audio and also pause audio', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
-      expect(env.component.showScriptureAudioPlayer).toBe(true);
+      expect(env.component.chapterAudio).not.toBe(undefined);
+      const audio = spy(env.component.chapterAudio);
+      verify(audio?.pause()).never();
 
       env.component.hideChapterAudio();
       env.fixture.detectChanges();
 
-      expect(env.component.showScriptureAudioPlayer).toBe(false);
+      verify(audio?.pause()).once();
+      expect(env.component.chapterAudio).toBe(undefined);
     }));
   });
 });

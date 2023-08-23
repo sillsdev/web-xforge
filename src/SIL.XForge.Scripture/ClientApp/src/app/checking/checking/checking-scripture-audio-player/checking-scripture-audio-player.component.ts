@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { distinctUntilChanged, map } from 'rxjs/operators';
