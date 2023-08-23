@@ -23,7 +23,7 @@
     </mat-card>
   </div>
 
-  <div *ngIf="sourceTextDocId" class="source">
+  <div class="source">
     <h2>{{ sourceProject?.shortName }}</h2>
     <app-text
       #sourceText
@@ -35,7 +35,7 @@
     ></app-text>
   </div>
 
-  <div *ngIf="!sourceTextDocId" class="source missing">
+  <div *ngIf="!sourceProjectId" class="source missing">
     <h2>Source not set</h2>
     <div>
       <mat-icon>info</mat-icon>
@@ -45,7 +45,7 @@
       </p>
     </div>
   </div>
-  <div *ngIf="targetTextDocId" class="draft">
+  <div class="draft">
     <h2>
       {{ targetProject?.shortName }}
       <!-- TODO: Update i18n -->
@@ -57,9 +57,6 @@
         <button mat-flat-button color="primary" (click)="applyDraft()">
           <mat-icon>auto_awesome</mat-icon>
           Apply to project
-        </button>
-        <button mat-icon-button color="primary" (click)="applyDraft()">
-          <mat-icon>auto_awesome</mat-icon>
         </button>
       </div>
     </h2>
