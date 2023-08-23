@@ -25,8 +25,6 @@ describe('ScriptureAudioComponent', () => {
     await env.waitForPlayer(500);
 
     env.playButton.nativeElement.click();
-    await env.waitForPlayer();
-    env.fixture.detectChanges();
     expect(env.isPlaying).toBe(true);
 
     env.playButton.nativeElement.click();
