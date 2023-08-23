@@ -1,6 +1,6 @@
 import { MdcList } from '@angular-mdc/web/list';
 import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
-import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewChecked, Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -74,7 +74,7 @@ export enum QuestionFilter {
   templateUrl: './checking.component.html',
   styleUrls: ['./checking.component.scss']
 })
-export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy {
+export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {
     // Need to trigger the calculation for the slider after DOM has been updated
     this.answersPanelContainerElement = answersPanelContainerElement;
@@ -136,6 +136,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private questionsRemoteChangesSub?: Subscription;
   private text?: TextInfo;
   private isProjectAdmin: boolean = false;
+  private currentChapterAudio?: object;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -1172,6 +1173,20 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         .set(QuestionFilter.CurrentUserHasAnswered, 'question_filter_answered')
         .set(QuestionFilter.CurrentUserHasNotAnswered, 'question_filter_not_answered');
     }
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.currentChapterAudio !== this.chapterAudio) {
+      if (this.chapterAudio !== undefined) {
+        this.chapterAudio.play();
+      }
+      this.currentChapterAudio = this.chapterAudio;
+    }
+  }
+
+  hideChapterAudio(): void {
+    this.chapterAudio?.pause();
+    this.showScriptureAudioPlayer = false;
   }
 
   toggleAudio(): void {

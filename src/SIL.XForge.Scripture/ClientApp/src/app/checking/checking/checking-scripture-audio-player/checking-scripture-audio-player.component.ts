@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { TextDocId } from 'src/app/core/models/text-doc';
@@ -11,7 +11,7 @@ import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-p
   templateUrl: './checking-scripture-audio-player.component.html',
   styleUrls: ['./checking-scripture-audio-player.component.scss']
 })
-export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
+export class CheckingScriptureAudioPlayerComponent {
   @Input() source?: string;
   @Input() timing?: AudioTiming[];
   @Input() textDocId?: TextDocId;
@@ -19,10 +19,6 @@ export class CheckingScriptureAudioPlayerComponent implements AfterViewInit {
   @ViewChild('audioPlayer') audioPlayer?: AudioPlayerComponent;
 
   constructor(private readonly i18n: I18nService) {}
-
-  ngAfterViewInit(): void {
-    this.play();
-  }
 
   get currentRef(): string | undefined {
     if (this.timing == null) return;
