@@ -16,7 +16,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { merge, of, Subscription } from 'rxjs';
+import { Subscription, merge, of } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
