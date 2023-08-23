@@ -828,8 +828,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       projectId: this.projectDoc.id,
       textsByBookId: this.textsByBookId,
       questionsSorted: this.questionDocs,
-      currentBook: this.questionsPanel.activeQuestionBook,
-      currentChapter: this.questionsPanel.activeQuestionChapter
+      currentBook: this._book,
+      currentChapter: this._chapter
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
   }
