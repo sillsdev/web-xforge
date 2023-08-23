@@ -20,6 +20,8 @@ import { debounceTime } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { translate } from '@ngneat/transloco';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
@@ -331,6 +333,14 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     setTimeout(() => this.scrollToActiveQuestion());
   }
 
+  questionText(questionDoc: QuestionDoc): string {
+    return questionDoc?.data?.text
+      ? questionDoc.data.text
+      : questionDoc?.data?.audioUrl
+      ? translate('checking_questions.listen_to_question') + this.referenceForDisplay(questionDoc)
+      : '';
+  }
+
   private scrollToActiveQuestion(): void {
     const element = (this.mdcList?.elementRef.nativeElement as HTMLElement)?.querySelector('.mdc-list-item--activated');
     if (element != null) {
@@ -342,6 +352,11 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
     if (this.activeQuestionDoc && this.checkCanChangeQuestion(newDifferential)) {
       this.activateQuestion(this.questionDocs[this.activeQuestionIndex + newDifferential]);
     }
+  }
+
+  private referenceForDisplay(questionDoc: QuestionDoc): string {
+    const verseRefData: VerseRefData | undefined = questionDoc?.data?.verseRef;
+    return verseRefData ? toVerseRef(verseRefData).toString() : '';
   }
 
   private setProjectAdmin(): void {
