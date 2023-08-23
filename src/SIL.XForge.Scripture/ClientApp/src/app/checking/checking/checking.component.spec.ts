@@ -1667,7 +1667,7 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       env.waitForAudioPlayer();
       const quillElementLang = env.quillEditorElement.getAttribute('lang');
-      expect(quillElementLang).toEqual(env.project01WritingSystemTag);
+      expect(quillElementLang).toEqual(TestEnvironment.project01WritingSystemTag);
     }));
 
     it('adds question count attribute to element', fakeAsync(() => {
@@ -1791,6 +1791,8 @@ interface UserInfo {
 }
 
 class TestEnvironment {
+  static project01WritingSystemTag = 'en';
+
   readonly component: CheckingComponent;
   readonly fixture: ComponentFixture<CheckingComponent>;
   readonly loader: HarnessLoader;
@@ -1801,7 +1803,6 @@ class TestEnvironment {
   readonly router: Router;
 
   questionReadTimer: number = 2000;
-  project01WritingSystemTag = 'en';
   isOnline: BehaviorSubject<boolean>;
   fileSyncComplete: Subject<void> = new Subject();
 
@@ -1874,61 +1875,23 @@ class TestEnvironment {
 
   private projectBookRoute: string = 'JHN';
 
-  private readonly testProject: SFProject = createTestProject({
-    writingSystem: {
-      tag: this.project01WritingSystemTag
-    },
-    translateConfig: {
-      translationSuggestionsEnabled: true,
-      source: {
-        paratextId: 'project02',
-        projectRef: 'project02',
-        name: 'Source',
-        shortName: 'SRC',
-        writingSystem: { tag: 'qaa' }
-      }
-    },
-    texts: [
-      {
-        bookNum: 43,
-        hasSource: false,
-        chapters: [
-          { number: 1, lastVerse: 18, isValid: true, permissions: {}, hasAudio: true },
-          { number: 2, lastVerse: 25, isValid: true, permissions: {}, hasAudio: true }
-        ],
-        permissions: {}
-      },
-      {
-        bookNum: 40,
-        hasSource: false,
-        chapters: [{ number: 1, lastVerse: 28, isValid: true, permissions: {} }],
-        permissions: {}
-      }
-    ],
-    userRoles: {
-      [ADMIN_USER.id]: ADMIN_USER.role,
-      [CHECKER_USER.id]: CHECKER_USER.role,
-      [CLEAN_CHECKER_USER.id]: CLEAN_CHECKER_USER.role,
-      [OBSERVER_USER.id]: OBSERVER_USER.role
-    },
-    paratextUsers: [
-      { sfUserId: ADMIN_USER.id, username: ADMIN_USER.user.name, opaqueUserId: `opaque${ADMIN_USER.id}` },
-      { sfUserId: OBSERVER_USER.id, username: OBSERVER_USER.user.name, opaqueUserId: `opaque${OBSERVER_USER.id}` }
-    ]
-  });
+  private readonly testProject: SFProject = TestEnvironment.generateTestProject();
 
   constructor({
     user,
     projectBookRoute = 'JHN',
     hasConnection = true,
-    scriptureAudio = false
+    scriptureAudio = false,
+    testProject = undefined
   }: {
     user: UserInfo;
     projectBookRoute?: string;
     hasConnection?: boolean;
     scriptureAudio?: boolean;
+    testProject?: SFProject;
   }) {
     reset(mockedFileService);
+    if (testProject != null) this.testProject = testProject;
     this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: projectBookRoute });
     this.setBookId(projectBookRoute);
     this.setupDefaultProjectData(user);
@@ -2158,6 +2121,51 @@ class TestEnvironment {
 
   get unreadAnswersBannerCount(): number | null {
     return this.getFirstNumberFromElementText('#show-unread-answers-button');
+  }
+
+  static generateTestProject(): SFProject {
+    return createTestProject({
+      writingSystem: {
+        tag: TestEnvironment.project01WritingSystemTag
+      },
+      translateConfig: {
+        translationSuggestionsEnabled: true,
+        source: {
+          paratextId: 'project02',
+          projectRef: 'project02',
+          name: 'Source',
+          shortName: 'SRC',
+          writingSystem: { tag: 'qaa' }
+        }
+      },
+      texts: [
+        {
+          bookNum: 43,
+          hasSource: false,
+          chapters: [
+            { number: 1, lastVerse: 18, isValid: true, permissions: {}, hasAudio: true },
+            { number: 2, lastVerse: 25, isValid: true, permissions: {}, hasAudio: true }
+          ],
+          permissions: {}
+        },
+        {
+          bookNum: 40,
+          hasSource: false,
+          chapters: [{ number: 1, lastVerse: 28, isValid: true, permissions: {} }],
+          permissions: {}
+        }
+      ],
+      userRoles: {
+        [ADMIN_USER.id]: ADMIN_USER.role,
+        [CHECKER_USER.id]: CHECKER_USER.role,
+        [CLEAN_CHECKER_USER.id]: CLEAN_CHECKER_USER.role,
+        [OBSERVER_USER.id]: OBSERVER_USER.role
+      },
+      paratextUsers: [
+        { sfUserId: ADMIN_USER.id, username: ADMIN_USER.user.name, opaqueUserId: `opaque${ADMIN_USER.id}` },
+        { sfUserId: OBSERVER_USER.id, username: OBSERVER_USER.user.name, opaqueUserId: `opaque${OBSERVER_USER.id}` }
+      ]
+    });
   }
 
   activateQuestion(dataId: string): void {
