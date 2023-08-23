@@ -1,10 +1,10 @@
-import { AfterViewInit, ChangeDetectorRef, Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { DeltaOperation, DeltaStatic } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { of, zip } from 'rxjs';
-import { filter, map, switchMap } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 import { Delta, TextDocId } from 'src/app/core/models/text-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 import { TextComponent } from 'src/app/shared/text/text.component';
@@ -18,12 +18,9 @@ import { DraftViewerService } from './draft-viewer.service';
   templateUrl: './draft-viewer.component.html',
   styleUrls: ['./draft-viewer.component.scss']
 })
-export class DraftViewerComponent implements OnInit, AfterViewInit {
+export class DraftViewerComponent implements OnInit {
   @ViewChild('sourceText') sourceEditor?: TextComponent; // Vernacular (source might not be set in project settings)
   @ViewChild('targetText') targetEditor!: TextComponent; // Already translated interleaved with draft
-
-  // ViewChildren gives observable notice when editors enter dom
-  @ViewChildren('sourceText, targetText') targetEditorQueryList!: QueryList<TextComponent>;
 
   books: number[] = [];
   currentBook?: number;
@@ -52,8 +49,7 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly projectService: SFProjectService,
     private readonly activatedRoute: ActivatedRoute,
-    private readonly router: Router,
-    private readonly changeDetectorRef: ChangeDetectorRef
+    private readonly router: Router
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -66,31 +62,21 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
     if (this.sourceProjectId) {
       this.sourceProject = (await this.projectService.getProfile(this.sourceProjectId)).data;
     }
-  }
 
-  ngAfterViewInit(): void {
     // Wait to populate draft until both editors are loaded with current chapter
-    this.targetEditorQueryList.changes
-      .pipe(switchMap(() => zip(this.sourceEditor?.loaded ?? of(null), this.targetEditor.loaded)))
-      .subscribe(() => {
-        // Both editors are now loaded (or just target is loaded if no source text set in project settings)
-        this.isDraftApplied = false;
-        this.preDraftTargetDelta = this.targetEditor.editor?.getContents();
-        this.populateDraftText();
-      });
+    zip(this.sourceEditor?.loaded ?? of(null), this.targetEditor.loaded).subscribe(() => {
+      // Both editors are now loaded (or just target is loaded if no source text set in project settings)
+      this.isDraftApplied = false;
+      this.preDraftTargetDelta = this.targetEditor.editor?.getContents();
+      this.populateDraftText();
+    });
 
     // Set book/chapter from route, or first book/chapter if not provided
     this.activatedRoute.paramMap.subscribe((params: ParamMap) => {
       const bookId: string | null = params.get('bookId');
       const book: number = bookId ? Canon.bookIdToNumber(bookId) : this.books[0];
 
-      // targetEditorQueryList is not defined until ngAfterViewInit, but we need to subscribe to it
-      // before the text doc ids are set due to chapter change triggered from url
-      // so that editor `loaded` events are not missed.  This causes an ExpressionChangedAfterItHasBeenCheckedError.
-      // Setting the properties in a timeout is a workaround for this.
-      setTimeout(() => {
-        this.setBook(book, Number(params.get('chapter')));
-      });
+      this.setBook(book, Number(params.get('chapter')));
     });
   }
 
@@ -108,7 +94,7 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
   }
 
   setChapter(chapter: number): void {
-    if (!this.currentBook) {
+    if (this.currentBook == null) {
       throw new Error(`'setChapter()' called when 'currentBook' is not set`);
     }
 
@@ -123,7 +109,7 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
   }
 
   populateDraftText(): void {
-    if (!this.currentBook || !this.currentChapter) {
+    if (this.currentBook == null || this.currentChapter == null) {
       throw new Error(`'populateDraftText()' called when 'currentBook' or 'currentChapter' is not set`);
     }
 
@@ -152,18 +138,22 @@ export class DraftViewerComponent implements OnInit, AfterViewInit {
       throw new Error(`'applyDraft()' called when 'preDraftTargetDelta' is not set`);
     }
 
-    const cleanedOps: DeltaOperation[] = this.cleanDraftOps(this.targetEditor.editor?.getContents().ops!);
+    if (this.targetEditor.editor == null) {
+      throw new Error(`'applyDraft()' called when 'targetEditor.editor' is not set`);
+    }
+
+    const cleanedOps: DeltaOperation[] = this.cleanDraftOps(this.targetEditor.editor.getContents().ops!);
     const diff: DeltaStatic = this.preDraftTargetDelta.diff(new Delta(cleanedOps));
 
     // Set content back to original to prepare for update with diff
-    this.targetEditor.editor?.setContents(this.preDraftTargetDelta!, 'silent');
+    this.targetEditor.editor.setContents(this.preDraftTargetDelta, 'silent');
 
     // Call updateContents() with diff instead of setContents() with entire contents because
     // setContents() is causing a 'delete' op to be appended because of the final '\n'.
     // This delete op is persisted and triggers the 'corrupted data' notice back in the editor component.
-    this.targetEditor.editor?.enable(true);
-    this.targetEditor.editor?.updateContents(diff, 'user');
-    this.targetEditor.editor?.disable();
+    this.targetEditor.editor.enable(true);
+    this.targetEditor.editor.updateContents(diff, 'user');
+    this.targetEditor.editor.disable();
 
     this.isDraftApplied = true;
   }

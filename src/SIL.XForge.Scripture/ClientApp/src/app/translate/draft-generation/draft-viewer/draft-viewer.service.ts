@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { isEmpty, isString } from 'lodash-es';
 import { DeltaOperation } from 'quill';
 import { DraftSegmentMap } from '../draft-generation';
 
@@ -13,26 +12,25 @@ export class DraftViewerService {
    * @param targetOps current delta ops for target editor
    */
   hasDraftOps(draft: DraftSegmentMap, targetOps: DeltaOperation[]): boolean {
-    if (isEmpty(draft)) {
+    // Check for empty draft
+    if (Object.keys(draft).length === 0) {
       return false;
     }
 
     return targetOps.some(op => {
-      const draftSegmentText: string | undefined = draft[op.attributes?.segment];
-
-      // No draft (undefined or empty string) for this segment; can't populate draft
-      if (!draftSegmentText?.trim()) {
+      if (op.insert == null) {
         return false;
       }
 
-      // Can populate draft if insert is a blank string
-      if (isString(op.insert)) {
-        return !op.insert.trim();
-      }
+      const draftSegmentText: string | undefined = draft[op.attributes?.segment];
+      const isSegmentDraftAvailable = draftSegmentText != null && draftSegmentText.trim().length > 0;
 
-      // Can populate draft if insert is object that has 'blank: true' property.
+      // Can populate draft if insert is a blank string OR insert is object that has 'blank: true' property.
       // Other objects are not draftable (e.g. 'note-thread-embed').
-      return op.insert?.blank === true;
+      const isInsertBlank =
+        (typeof op.insert === 'string' && op.insert.trim().length === 0) || op.insert.blank === true;
+
+      return isSegmentDraftAvailable && isInsertBlank;
     });
   }
 
@@ -43,20 +41,22 @@ export class DraftViewerService {
    * @param targetOps current delta ops for target editor
    */
   toDraftOps(draft: DraftSegmentMap, targetOps: DeltaOperation[]): DeltaOperation[] {
-    if (isEmpty(draft)) {
+    // Check for empty draft
+    if (Object.keys(draft).length === 0) {
       return targetOps;
     }
 
     return targetOps.map(op => {
       const draftSegmentText: string | undefined = draft[op.attributes?.segment];
+      const isSegmentDraftAvailable = draftSegmentText != null && draftSegmentText.trim().length > 0;
 
       // No draft (undefined or empty string) for this segment; use any existing translation
-      if (!draftSegmentText?.trim()) {
+      if (!isSegmentDraftAvailable) {
         return op;
       }
 
-      if (isString(op.insert)) {
-        if (op.insert.trim()) {
+      if (typeof op.insert === 'string') {
+        if (op.insert.trim().length > 0) {
           // 'insert' is non-blank string; use existing translation
           return op;
         }

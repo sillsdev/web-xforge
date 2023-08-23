@@ -5,7 +5,7 @@ import { BuildStates } from 'src/app/machine-api/build-states';
  * Dictionary of 'segmentRef -> segment text'.
  */
 export interface DraftSegmentMap {
-  [segmentRefId: string]: string;
+  [segmentRefId: string]: string | undefined;
 }
 
 /**
