@@ -40,6 +40,7 @@ import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileOfflineData, FileType, createStorageFileData } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -79,6 +80,7 @@ import {
   CheckingAudioRecorderComponent
 } from './checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
+import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
 import { CheckingComponent, QuestionFilter } from './checking.component';
 import { FontSizeComponent } from './font-size/font-size.component';
@@ -96,6 +98,7 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedFileService = mock(FileService);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 
 function createUser(idSuffix: number, role: string, nameConfirmed: boolean = true): UserInfo {
   return {
@@ -135,6 +138,7 @@ describe('CheckingComponent', () => {
       CheckingCommentFormComponent,
       CheckingCommentsComponent,
       CheckingComponent,
+      CheckingScriptureAudioPlayerComponent,
       OwnerComponent,
       CheckingQuestionsComponent,
       CheckingTextComponent,
@@ -164,7 +168,8 @@ describe('CheckingComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: PwaService, useMock: mockedPwaService },
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ]
   }));
 
@@ -1693,6 +1698,36 @@ describe('CheckingComponent', () => {
       expect(segment.classList.contains('highlight-segment')).toBe(true);
     }));
   });
+
+  describe('Chapter Audio', () => {
+    it('can open chapter audio', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      env.fixture.detectChanges();
+
+      expect(env.component.chapterAudio).toBe(undefined);
+
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      expect(env.component.chapterAudio).not.toBe(undefined);
+    }));
+
+    it('can close chapter audio and also pause audio', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER);
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      expect(env.component.chapterAudio).not.toBe(undefined);
+      const audio = spy(env.component.chapterAudio);
+      verify(audio?.pause()).never();
+
+      env.component.hideChapterAudio();
+      env.fixture.detectChanges();
+
+      verify(audio?.pause()).once();
+      expect(env.component.chapterAudio).toBe(undefined);
+    }));
+  });
 });
 
 interface UserInfo {
@@ -1837,6 +1872,7 @@ class TestEnvironment {
       mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), undefined)
     ).thenResolve(undefined);
     when(mockedFileService.fileSyncComplete$).thenReturn(this.fileSyncComplete);
+    when(mockedFeatureFlagService.scriptureAudio).thenReturn({ enabled: true } as FeatureFlag);
 
     const query = mock(RealtimeQuery<TextAudioDoc>) as RealtimeQuery<TextAudioDoc>;
     when(query.remoteChanges$).thenReturn(new BehaviorSubject<void>(undefined));
