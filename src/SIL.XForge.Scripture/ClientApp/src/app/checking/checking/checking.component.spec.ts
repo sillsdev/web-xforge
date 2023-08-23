@@ -468,6 +468,27 @@ describe('CheckingComponent', () => {
       expect(env.getQuestionText(question)).toBe('Admin just added a question.');
     }));
 
+    it('question with audio and no text should display default text', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      const dateNow = new Date();
+      const newQuestion: Question = {
+        dataId: objectId(),
+        ownerRef: ADMIN_USER.id,
+        projectRef: 'project01',
+        text: '',
+        audioUrl: 'audioFile.mp3',
+        answers: [],
+        verseRef: { bookNum: 43, chapterNum: 1, verseNum: 10 },
+        isArchived: false,
+        dateCreated: dateNow.toJSON(),
+        dateModified: dateNow.toJSON()
+      };
+      env.insertQuestion(newQuestion);
+      env.waitForSliderUpdate();
+      const question = env.selectQuestion(16);
+      expect(env.getQuestionText(question)).toBe('Listen to the question for JHN 1:10');
+    }));
+
     it('respond to remote question audio added or removed', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(1);
