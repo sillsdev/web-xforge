@@ -120,6 +120,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   userDoc?: UserDoc;
   visibleQuestions?: QuestionDoc[];
   showScriptureAudioPlayer: boolean = false;
+  hideChapterText: boolean = false;
 
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
@@ -439,6 +440,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       if (!this.projectDoc.isLoaded) {
         return;
       }
+      this.showOrHideScriptureText();
       const bookNum = bookId == null ? 0 : Canon.bookIdToNumber(bookId);
       this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
       if (prevProjectId !== this.projectDoc.id || this.book !== bookNum || (bookId !== 'ALL' && this.showAllBooks)) {
@@ -533,6 +535,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               this.onRemovedFromProject();
             }
           }
+          this.showOrHideScriptureText();
         }
       });
       this.projectDeleteSub?.unsubscribe();
@@ -1208,6 +1211,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
   isAudioPlaying(): boolean {
     return this._scriptureAudioPlayer?.isPlaying ?? false;
+  }
+
+  private showOrHideScriptureText(): void {
+    this.hideChapterText = this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText ?? false;
+    if (this.hideChapterText) this.showScriptureAudioPlayer = true;
   }
 
   hideChapterAudio(): void {

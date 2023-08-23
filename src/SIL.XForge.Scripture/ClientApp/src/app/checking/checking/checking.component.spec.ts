@@ -1698,6 +1698,81 @@ describe('CheckingComponent', () => {
       expect(segment.classList.contains('question-segment')).toBe(true);
       expect(segment.classList.contains('highlight-segment')).toBe(true);
     }));
+
+    it('is not hidden when project setting did not specify to hide it', fakeAsync(() => {
+      const env = new TestEnvironment({ user: CHECKER_USER });
+      expect(env.component.projectDoc!.data!.checkingConfig.hideCommunityCheckingText).withContext('setup').toBe(false);
+
+      // SUT 1
+      expect(env.component.hideChapterText)
+        .withContext('component should specify in accordance with project setting')
+        .toBe(false);
+
+      // SUT 2
+      expect(env.appCheckingTextElement.classes.hidden ?? false)
+        .withContext('Scripture text should be shown since the project is set not to hide it')
+        .toBe(false);
+    }));
+
+    it('is hidden when project setting specified', fakeAsync(() => {
+      const testProject: SFProject = TestEnvironment.generateTestProject();
+      testProject.checkingConfig.hideCommunityCheckingText = true;
+      const env = new TestEnvironment({ user: CHECKER_USER, testProject });
+      expect(env.component.projectDoc!.data!.checkingConfig.hideCommunityCheckingText).withContext('setup').toBe(true);
+
+      // SUT 1
+      expect(env.component.hideChapterText)
+        .withContext('component should specify in accordance with project setting')
+        .toBe(true);
+
+      // SUT 2
+      expect(env.appCheckingTextElement.classes.hidden ?? false)
+        .withContext('Scripture text should be hidden when project setting')
+        .toBe(true);
+    }));
+
+    it('dynamically hides when project setting changes to specify hide text', fakeAsync(() => {
+      const env = new TestEnvironment({ user: CHECKER_USER });
+      // Starts off not hiding text.
+      expect(env.component.projectDoc!.data!.checkingConfig.hideCommunityCheckingText).withContext('setup').toBe(false);
+
+      // After the page was originally set up, now set project setting to hide community checking text
+      const changeOriginatesLocally: boolean = false;
+      env.component.projectDoc?.submitJson0Op(op => {
+        op.set(proj => proj.checkingConfig.hideCommunityCheckingText, true);
+      }, changeOriginatesLocally);
+      env.fixture.detectChanges();
+      expect(env.component.projectDoc!.data!.checkingConfig.hideCommunityCheckingText).withContext('setup').toBe(true);
+      env.waitForSliderUpdate();
+
+      // SUT 1
+      expect(env.component.hideChapterText)
+        .withContext('component should specify in accordance with project setting')
+        .toBe(true);
+
+      // SUT 2
+      expect(env.appCheckingTextElement.classes.hidden ?? false)
+        .withContext('Scripture text should be hidden when project setting')
+        .toBe(true);
+
+      // And now set project setting NOT to hide community checking text
+      env.component.projectDoc?.submitJson0Op(op => {
+        op.set(proj => proj.checkingConfig.hideCommunityCheckingText, false);
+      }, changeOriginatesLocally);
+      env.fixture.detectChanges();
+      expect(env.component.projectDoc!.data!.checkingConfig.hideCommunityCheckingText).withContext('setup').toBe(false);
+      env.waitForSliderUpdate();
+
+      // SUT 3
+      expect(env.component.hideChapterText)
+        .withContext('component should specify in accordance with project setting')
+        .toBe(false);
+
+      // SUT 4
+      expect(env.appCheckingTextElement.classes.hidden ?? false)
+        .withContext('Scripture text should not be hidden')
+        .toBe(false);
+    }));
   });
 
   describe('Chapter Audio', () => {
@@ -2055,6 +2130,10 @@ class TestEnvironment {
     return this.getFirstNumberFromElementText('#show-unread-answers-button');
   }
 
+  get appCheckingTextElement(): DebugElement {
+    return this.fixture.debugElement.query(By.css('app-checking-text'));
+  }
+
   static generateTestProject(): SFProject {
     return createTestProject({
       writingSystem: {
@@ -2327,6 +2406,7 @@ class TestEnvironment {
     this.waitForTimersToComplete();
   }
 
+  /** Wait for the code in calculateScriptureSliderPosition() to wait for the DOM to update. */
   waitForSliderUpdate(): void {
     this.waitForTimersToComplete(100);
   }
