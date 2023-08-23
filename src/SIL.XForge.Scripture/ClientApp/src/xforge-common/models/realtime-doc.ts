@@ -117,7 +117,8 @@ export abstract class RealtimeDoc<T = any, Ops = any, P = any> {
    * realtime server. Data can only be updated using operations and should not be updated directly.
    *
    * @param {Ops} ops The operations to submit.
-   * @param {*} [source] The source.
+   * @param {*} [source] The source. In practice, `true` (the default) specifies that the op should be
+   * to considered to have originated locally, rather than `false` to specify remotely.
    * @returns {Promise<void>} Resolves when the operations have been successfully submitted.
    */
   async submit(ops: Ops, source?: any): Promise<void> {

@@ -108,6 +108,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   userDoc?: UserDoc;
   visibleQuestions?: QuestionDoc[];
   showScriptureAudioPlayer: boolean = false;
+  hideChapterText: boolean = false;
 
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
@@ -415,6 +416,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       if (!this.projectDoc.isLoaded) {
         return;
       }
+      this.showOrHideScriptureText();
       const bookNum = bookId == null ? 0 : Canon.bookIdToNumber(bookId);
       this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
       if (prevProjectId !== this.projectDoc.id || this.book !== bookNum || (bookId !== 'ALL' && this.showAllBooks)) {
@@ -509,6 +511,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
               this.onRemovedFromProject();
             }
           }
+          this.showOrHideScriptureText();
         }
       });
       this.projectDeleteSub?.unsubscribe();
@@ -1170,5 +1173,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         .set(QuestionFilter.CurrentUserHasAnswered, 'question_filter_answered')
         .set(QuestionFilter.CurrentUserHasNotAnswered, 'question_filter_not_answered');
     }
+  }
+
+  private showOrHideScriptureText(): void {
+    this.hideChapterText = this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText ?? false;
+    if (this.hideChapterText) this.showScriptureAudioPlayer = true;
   }
 }
