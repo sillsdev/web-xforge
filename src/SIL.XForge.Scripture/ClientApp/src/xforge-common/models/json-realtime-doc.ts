@@ -10,7 +10,8 @@ export abstract class JsonRealtimeDoc<T = any> extends RealtimeDoc<T, OtJson0Op[
    * that will be submitted to the document.
    *
    * @param {(op: Json0OpBuilder<T>) => void} build The function to build the operation.
-   * @param {*} [source] The source.
+   * @param {*} [source] The source. In practice, `true` (the default) specifies that the op should be
+   * to considered to have originated locally, rather than `false` to specify remotely.
    */
   async submitJson0Op(build: (op: Json0OpBuilder<T>) => void, source: any = true): Promise<boolean> {
     if (this.data == null) {
