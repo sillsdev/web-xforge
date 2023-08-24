@@ -1,6 +1,7 @@
 import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { AudioTiming } from 'realtime-server/scriptureforge/models/audio-timing';
 import { of } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -99,18 +100,21 @@ describe('ScriptureAudioComponent', () => {
     env.fixture.detectChanges();
     await env.waitForPlayer(500);
 
+    const timings: AudioTiming[] = getAudioTimingWithHeadings();
     env.component.audioPlayer.textDocId = textDocId;
-    env.component.audioPlayer.timing = getAudioTimingWithHeadings();
+    env.component.audioPlayer.timing = timings;
     await env.waitForPlayer();
     const verseChangedSpy = jasmine.createSpy('verseChanged');
     env.component.audioPlayer.currentVerseChanged.subscribe(verseChangedSpy);
     env.playButton.nativeElement.click();
-    await env.waitForPlayer(1500);
-    expect(verseChangedSpy).toHaveBeenCalledWith('s_1');
+    await env.waitForPlayer(1400);
+    expect(env.component.audioPlayer.audioPlayer!.audio!.currentTime).toBeGreaterThan(timings[1].from);
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
-    await env.waitForPlayer(1500);
-    expect(verseChangedSpy).toHaveBeenCalledWith('s_2');
+    await env.waitForPlayer(1400);
+    expect(env.component.audioPlayer.audioPlayer!.audio!.currentTime).toBeGreaterThan(timings[3].from);
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
+    expect(verseChangedSpy).toHaveBeenCalledWith('s_1');
+    expect(verseChangedSpy).toHaveBeenCalledWith('s_2');
   });
 
   it('can delete audio timing data', async () => {
