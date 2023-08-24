@@ -70,9 +70,14 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   get questionText(): string {
-    return this.questionDoc?.data?.text
+    if (this.questionDoc?.data == null) return '';
+    return this.questionDoc.data.text
       ? this.questionDoc.data.text
-      : translate('checking_questions.listen_to_question') + this.referenceForDisplay;
+      : this.questionDoc.data.audioUrl != null
+      ? translate('checking_questions.listen_to_question', {
+          referenceForDisplay: this.referenceForDisplay
+        })
+      : '';
   }
 
   get questionAudioUrl(): string | undefined {

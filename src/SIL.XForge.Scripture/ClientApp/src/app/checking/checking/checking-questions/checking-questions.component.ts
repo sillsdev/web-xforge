@@ -334,10 +334,13 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable {
   }
 
   questionText(questionDoc: QuestionDoc): string {
-    return questionDoc?.data?.text
+    if (questionDoc?.data == null) return '';
+    return questionDoc.data.text
       ? questionDoc.data.text
-      : questionDoc?.data?.audioUrl
-      ? translate('checking_questions.listen_to_question') + this.referenceForDisplay(questionDoc)
+      : questionDoc.data.audioUrl != null
+      ? translate('checking_questions.listen_to_question', {
+          referenceForDisplay: this.referenceForDisplay(questionDoc)
+        })
       : '';
   }
 

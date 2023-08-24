@@ -2198,7 +2198,8 @@ class TestEnvironment {
   }
 
   getUnread(question: DebugElement): number {
-    return parseInt(question.query(By.css('.view-answers span')).nativeElement.textContent, 10);
+    const questionAnswers = question.query(By.css('.view-answers span'));
+    return questionAnswers != null ? parseInt(questionAnswers.nativeElement.textContent, 10) : 0;
   }
 
   getYourCommentField(answerIndex: number): DebugElement {
