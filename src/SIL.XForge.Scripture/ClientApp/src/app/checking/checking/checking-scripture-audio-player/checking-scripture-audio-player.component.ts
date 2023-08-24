@@ -104,6 +104,8 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     if (this.textDocId?.projectId == null || this.textDocId?.bookNum == null || this.textDocId?.chapterNum == null) {
       return;
     }
+    this.audioPlayer?.audio?.pause();
+    this.audioPlayer?.audio?.dispose();
     this.projectService.onlineDeleteAudioTimingData(
       this.textDocId.projectId,
       this.textDocId.bookNum,

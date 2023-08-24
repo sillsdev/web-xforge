@@ -49,6 +49,7 @@ import { QuestionDialogService } from '../question-dialog/question-dialog.servic
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
+import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
 
 interface Summary {
@@ -86,6 +87,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   @ViewChild(SplitComponent) splitComponent?: SplitComponent;
   @ViewChild('splitContainer') splitContainerElement?: ElementRef;
   @ViewChild('scripturePanelContainer') scripturePanelContainerElement?: ElementRef;
+  @ViewChild(CheckingScriptureAudioPlayerComponent) scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
   @ViewChild('chapterMenuList') chapterMenuList?: MdcList;
 
   chapters: number[] = [];
@@ -178,6 +180,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.projectDoc != null && this.text != null && this.chapter != null
           ? new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target')
           : undefined;
+      this.scriptureAudioPlayer?.pause();
     }
   }
 
