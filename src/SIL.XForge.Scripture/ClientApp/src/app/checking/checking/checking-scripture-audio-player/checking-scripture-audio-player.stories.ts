@@ -24,7 +24,7 @@ const defaultArgs: StoryAppState = {
 };
 
 const meta: Meta = {
-  title: 'Checking/Text/Scripture Audio Player',
+  title: 'Checking/Scripture Audio',
   component: CheckingScriptureAudioPlayerComponent,
   argTypes: {
     online: {
