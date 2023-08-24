@@ -2,12 +2,12 @@ import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
-import { SFProjectService } from 'src/app/core/sf-project.service';
-import { instance, mock, when } from 'ts-mockito';
+import { instance, mock, verify, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextDocId } from '../../../core/models/text-doc';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { getAudioTimings, getAudioTimingWithHeadings } from '../../../shared/test-utils';
@@ -112,6 +112,26 @@ describe('ScriptureAudioComponent', () => {
     expect(verseChangedSpy).toHaveBeenCalledWith('s_2');
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
   });
+
+  it('can delete audio timing data', async () => {
+    const template = `<app-checking-scripture-audio-player source="${audioFile}" [canDelete]="true"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
+
+    env.component.audioPlayer.textDocId = textDocId;
+    env.component.audioPlayer.timing = getAudioTimings();
+    await env.waitForPlayer();
+    env.playButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.isPlaying).toBe(true);
+    env.removeAudioButton.nativeElement.click();
+    await env.waitForPlayer();
+    verify(
+      env.mockedProjectService.onlineDeleteAudioTimingData(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
+    ).once();
+    expect(env.isPlaying).toBe(false);
+  });
 });
 
 @Component({ selector: 'app-host', template: '' })
@@ -156,6 +176,10 @@ class TestEnvironment {
 
   get verseLabel(): DebugElement {
     return this.fixture.debugElement.query(By.css('.verse-label'));
+  }
+
+  get removeAudioButton(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.close-button'));
   }
 
   get isPlaying(): boolean {
