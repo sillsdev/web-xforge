@@ -1,7 +1,7 @@
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { DeltaOperation } from 'rich-text';
 import { SelectableProject } from '../core/paratext.service';
-import { compareProjectsForSorting, isBadDelta, projectLabel } from './utils';
+import { compareProjectsForSorting, isBadDelta, projectLabel, XmlUtils } from './utils';
 
 describe('shared utils', () => {
   describe('projectLabel function', () => {
@@ -80,5 +80,63 @@ describe('shared utils', () => {
     const projects = [{ shortName: 'bbb' }, { shortName: 'CCC' }, { shortName: 'AAA' }] as SFProject[];
     projects.sort(compareProjectsForSorting);
     expect(projects.map(project => project.shortName)).toEqual(['AAA', 'bbb', 'CCC']);
+  });
+
+  describe('Xml Utils', () => {
+    it('should convert plain text to xml', () => {
+      expect(XmlUtils.encodeForXml('')).toEqual('');
+      expect(XmlUtils.encodeForXml('string without formatting')).toEqual('string without formatting');
+      expect(XmlUtils.encodeForXml('string with & and <symbols>.')).toEqual('string with &amp; and &lt;symbols&gt;.');
+      expect(XmlUtils.encodeForXml('content in paragraph.\nsecond paragraph')).toEqual(
+        'content in paragraph.\nsecond paragraph'
+      );
+    });
+
+    it('should decode from xml to plain text', () => {
+      expect(XmlUtils.decodeFromXml('')).toEqual('');
+      expect(XmlUtils.decodeFromXml('string without formatting')).toEqual('string without formatting');
+      expect(XmlUtils.decodeFromXml('string with &amp; and &lt;symbols&gt;.')).toEqual('string with & and <symbols>.');
+      expect(XmlUtils.decodeFromXml('content in paragraph.\nsecond paragraph')).toEqual(
+        'content in paragraph.\nsecond paragraph'
+      );
+      // we do not expect to decode xml tags since Paratext notes will not be editable. Just show the text content
+      expect(XmlUtils.decodeFromXml('<p>content in paragraph.</p><p>second paragraph</p>')).toEqual(
+        'content in paragraph.second paragraph'
+      );
+
+      // malformed xml
+      expect(() => XmlUtils.decodeFromXml('<p')).toThrow();
+      expect(() => XmlUtils.decodeFromXml('<p>')).toThrow();
+    });
+
+    it('should convert xml to html', () => {
+      expect(XmlUtils.convertXmlToHtml('')).toEqual('');
+      expect(XmlUtils.convertXmlToHtml('string without formatting')).toEqual('string without formatting');
+      expect(XmlUtils.convertXmlToHtml('<p>Here is text</p>')).toEqual('Here is text<br />');
+      expect(XmlUtils.convertXmlToHtml('<p>Here is text</p><p>Second paragraph text</p>')).toEqual(
+        'Here is text<br />Second paragraph text<br />'
+      );
+      expect(XmlUtils.convertXmlToHtml('<bold>Here is text</bold>')).toEqual('<b>Here is text</b>');
+      expect(XmlUtils.convertXmlToHtml('<italic>Here is text</italic>')).toEqual('<i>Here is text</i>');
+      expect(XmlUtils.convertXmlToHtml('<p>Text with <bold>bold</bold> and <italic>italic</italic></p>')).toEqual(
+        'Text with <b>bold</b> and <i>italic</i><br />'
+      );
+      expect(XmlUtils.convertXmlToHtml('<p>Paragraph with <bold><italic>nested</italic> styles</bold></p>')).toEqual(
+        'Paragraph with <b><i>nested</i> styles</b><br />'
+      );
+      expect(XmlUtils.convertXmlToHtml('<p>Paragraph with <bold></bold>empty bold tag</p>')).toEqual(
+        'Paragraph with empty bold tag<br />'
+      );
+      expect(XmlUtils.convertXmlToHtml('<p>Text in <span>span</span> tag</p>')).toEqual(
+        'Text in <span>span</span> tag<br />'
+      );
+      expect(XmlUtils.convertXmlToHtml('<p>\nNode with whitespace\n</p>')).toEqual('\nNode with whitespace\n<br />');
+      expect(XmlUtils.convertXmlToHtml('Alpha <unknown><bold>Bravo</bold></unknown> Charlie')).toEqual(
+        'Alpha <b>Bravo</b> Charlie'
+      );
+      expect(XmlUtils.convertXmlToHtml('check <unknown id="anything">unknown</unknown> <italic>text</italic>')).toEqual(
+        'check unknown <i>text</i>'
+      );
+    });
   });
 });

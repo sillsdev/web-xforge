@@ -162,3 +162,81 @@ export function formatFontSizeToRems(fontSize: number | undefined): string | und
 export function canInsertNote(project: SFProjectProfile, userId: string): boolean {
   return SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.SFNoteThreads, Operation.Create);
 }
+
+export class XmlUtils {
+  /** Encode text to be valid xml text node. Escape reserved xml characters such as & and < >. */
+  static encodeForXml(text: string): string {
+    const xmlDoc: XMLDocument = document.implementation.createDocument(null, 'root');
+    xmlDoc.documentElement.textContent = text;
+    return xmlDoc.documentElement.innerHTML;
+  }
+
+  /** Decode xml text node to plain text. */
+  static decodeFromXml(xml: string): string {
+    const xmlDoc: XMLDocument = document.implementation.createDocument(null, 'root');
+    xmlDoc.documentElement.innerHTML = xml;
+    return xmlDoc.documentElement.textContent!;
+  }
+
+  /** Convert xml note content to html to display in the browser. */
+  static convertXmlToHtml(xml: string): string {
+    const xmlDoc: XMLDocument = document.implementation.createDocument(null, 'root');
+    xmlDoc.documentElement.innerHTML = xml;
+    const treeWalker: TreeWalker = xmlDoc.createTreeWalker(xmlDoc.documentElement);
+    let htmlString = '';
+    const nodeTypes: number[] = [Node.ELEMENT_NODE, Node.TEXT_NODE];
+    while (treeWalker.nextNode() != null) {
+      if (nodeTypes.includes(treeWalker.currentNode.nodeType)) {
+        htmlString += this.processNode(treeWalker);
+      }
+    }
+    return htmlString;
+  }
+
+  /** Get the html contents of the current node and siblings. */
+  private static processNodeAndSiblings(treeWalker: TreeWalker): string {
+    if (treeWalker.currentNode.nextSibling == null) {
+      return this.processNode(treeWalker);
+    }
+    let htmlString = '';
+    while (treeWalker.currentNode.nextSibling != null) {
+      htmlString += this.processNode(treeWalker);
+      // move to the next sibling node
+      treeWalker.nextNode();
+    }
+    htmlString += this.processNode(treeWalker);
+    return htmlString;
+  }
+
+  private static processNode(treeWalker: TreeWalker): string {
+    switch (treeWalker.currentNode.nodeName.toLowerCase()) {
+      case 'p':
+        if (!treeWalker.currentNode.hasChildNodes()) return '';
+        treeWalker.nextNode();
+        return this.processNodeAndSiblings(treeWalker) + '<br />';
+      case 'bold':
+        if (!treeWalker.currentNode.hasChildNodes()) return '';
+        treeWalker.nextNode();
+        return '<b>' + this.processNodeAndSiblings(treeWalker) + '</b>';
+      case 'italic':
+        if (!treeWalker.currentNode.hasChildNodes()) return '';
+        treeWalker.nextNode();
+        return '<i>' + this.processNodeAndSiblings(treeWalker) + '</i>';
+      case 'span':
+        if (!treeWalker.currentNode.hasChildNodes()) return '';
+        treeWalker.nextNode();
+        return '<span>' + this.processNodeAndSiblings(treeWalker) + '</span>';
+      case '#text':
+        // get the inner html of the span element to get the encoded text so that < and > symbols are
+        // not lost during html sanitation
+        const span = document.createElement('span');
+        span.textContent = treeWalker.currentNode.nodeValue;
+        return span.innerHTML;
+      default:
+        // the node is for a tag we do not recognize. Show just the text content.
+        if (!treeWalker.currentNode.hasChildNodes()) return '';
+        treeWalker.nextNode();
+        return this.processNodeAndSiblings(treeWalker);
+    }
+  }
+}
