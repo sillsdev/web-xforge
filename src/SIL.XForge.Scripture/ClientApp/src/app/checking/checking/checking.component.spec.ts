@@ -1701,7 +1701,7 @@ describe('CheckingComponent', () => {
 
   describe('Chapter Audio', () => {
     it('can open chapter audio', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
       env.fixture.detectChanges();
 
       expect(env.component.chapterAudio).toBe(undefined);
@@ -1713,7 +1713,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can close chapter audio and also pause audio', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
@@ -1855,7 +1855,12 @@ class TestEnvironment {
     ]
   });
 
-  constructor(user: UserInfo, projectBookRoute: string = 'JHN', hasConnection: boolean = true) {
+  constructor(
+    user: UserInfo,
+    projectBookRoute: string = 'JHN',
+    hasConnection: boolean = true,
+    scriptureAudio: boolean = false
+  ) {
     reset(mockedFileService);
     this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: projectBookRoute });
     this.setBookId(projectBookRoute);
@@ -1872,7 +1877,7 @@ class TestEnvironment {
       mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), undefined)
     ).thenResolve(undefined);
     when(mockedFileService.fileSyncComplete$).thenReturn(this.fileSyncComplete);
-    when(mockedFeatureFlagService.scriptureAudio).thenReturn({ enabled: true } as FeatureFlag);
+    when(mockedFeatureFlagService.scriptureAudio).thenReturn({ enabled: scriptureAudio } as FeatureFlag);
 
     const query = mock(RealtimeQuery<TextAudioDoc>) as RealtimeQuery<TextAudioDoc>;
     when(query.remoteChanges$).thenReturn(new BehaviorSubject<void>(undefined));
