@@ -468,7 +468,7 @@ describe('CheckingComponent', () => {
       expect(env.getQuestionText(question)).toBe('Admin just added a question.');
     }));
 
-    it('question with audio and no text should display default text', fakeAsync(() => {
+    it('question with audio and no text should display book/chapter as a reference', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       const dateNow = new Date();
       const newQuestion: Question = {
@@ -486,7 +486,7 @@ describe('CheckingComponent', () => {
       env.insertQuestion(newQuestion);
       env.waitForSliderUpdate();
       const question = env.selectQuestion(16);
-      expect(env.getQuestionText(question)).toBe('Listen to the question for JHN 1:10');
+      expect(env.getQuestionText(question)).toBe('John 1:10');
     }));
 
     it('respond to remote question audio added or removed', fakeAsync(() => {
