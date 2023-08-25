@@ -23,7 +23,6 @@ import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/mode
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { translate } from '@ngneat/transloco';
 import { I18nService } from 'xforge-common/i18n.service';
-import { Question } from 'realtime-server/scriptureforge/models/question';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { QuestionDoc } from '../../../core/models/question-doc';
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
