@@ -45,51 +45,35 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     return !!this.audioPlayer?.audio?.isPlaying;
   }
 
-  private get currentVerseLabel(): string {
-    if (this._textDocId == null) return '';
+  /**
+   * Gets the corresponding reference for the timing entry based on the current audio player time.
+   * This supports timing data where text refs can be in the form 'v1', '1', '1-2', '1a', and 's' for section headings.
+   * TODO (scripture audio): support phrase and verse level timing data
+   */
+  get currentRef(): string | undefined {
     const currentTime: number = this.audioPlayer?.audio?.currentTime ?? 0;
-    const currentVerseStr: string = this.getCurrentVerseStr(currentTime);
+    const audioTiming: AudioTiming | undefined = this._timing.find(t => t.to > currentTime);
+    if (audioTiming?.textRef === 's') {
+      return 's_' + this._timing.filter(t => t.textRef === 's' && t.to <= audioTiming.to).length;
+    }
+    return audioTiming?.textRef;
+  }
+
+  get currentVerseLabel(): string {
+    if (this.currentRef == null || this.textDocId == null) return '';
+    const audioTextRef: AudioTextRef | undefined = CheckingUtils.parseAudioRef(this.currentRef);
+    // return the current verse if the ref is not associated with a verse
     const verseRef = new VerseRef(
-      Canon.bookNumberToId(this._textDocId.bookNum),
-      this._textDocId.chapterNum.toString(),
-      currentVerseStr
+      Canon.bookNumberToId(this.textDocId.bookNum),
+      this.textDocId.chapterNum.toString(),
+      audioTextRef?.verseStr ?? this.currentVerseStr
     );
     return this.i18n.localizeReference(verseRef);
   }
 
-  play(): void {
-    if (this.audioPlayer?.audio == null) return;
-    this.audioPlayer.audio.play();
-    this.subscribePlayerVerseChange(this.audioPlayer.audio);
-  }
-
-  pause(): void {
-    this.audioPlayer?.audio?.pause();
-  }
-
-  previousRef(): void {
-    if (this.audioPlayer?.audio == null || this._timing.length < 1) return;
-
-    const currentTimingIndex: number = this.getRefIndexInTimings(this.audioPlayer.audio.currentTime);
-    if (currentTimingIndex <= 0) {
-      this.audioPlayer.audio.currentTime = 0;
-      return;
-    }
-    this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex - 1].from;
-    this.verseLabel = this.currentVerseLabel;
-  }
-
-  nextRef(): void {
-    if (this.audioPlayer?.audio == null || this._timing.length < 1) return;
-
-    const currentTimingIndex: number = this.getRefIndexInTimings(this.audioPlayer.audio.currentTime);
-    if (currentTimingIndex < 0) {
-      // TODO (scripture audio): find a better solution than setting the current time to 0
-      this.audioPlayer.audio.currentTime = 0;
-      return;
-    }
-    this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex].to;
-    this.verseLabel = this.currentVerseLabel;
+  close(): void {
+    this.pause();
+    this.closed.emit();
   }
 
   deleteAudioTimingData(): void {
@@ -105,13 +89,68 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     );
   }
 
-  close(): void {
-    this.pause();
-    this.closed.emit();
+  nextRef(): void {
+    if (this.audioPlayer?.audio == null || this.timing == null) return;
+    const currentTimingIndex: number = this.timing.findIndex(t => t.textRef === this.currentRef);
+    if (currentTimingIndex < 0) {
+      this.audioPlayer.audio.stop();
+    } else if (this.audioPlayer.audio.currentTime < this.timing[currentTimingIndex].from) {
+      // The first timing index doesn't always start at zero so this allows skipping to the start of the first reference
+      this.audioPlayer.audio.currentTime = this.timing[currentTimingIndex].from;
+    } else {
+      this.audioPlayer.audio.currentTime = this.timing[currentTimingIndex].to;
+    }
+    this.verseLabel = this.currentVerseLabel;
   }
 
-  private getRefIndexInTimings(currentTime: number): number {
-    return this._timing.findIndex(t => t.to > currentTime);
+  pause(): void {
+    this.audioPlayer?.audio?.pause();
+  }
+
+  play(): void {
+    if (this.audioPlayer?.audio == null) return;
+    this.audioPlayer.audio.play();
+    this.subscribePlayerVerseChange(this.audioPlayer.audio);
+  }
+
+  previousRef(): void {
+    if (this.audioPlayer?.audio == null || this.timing == null) return;
+    const skipBackGracePeriod = 3;
+    const currentTimingIndex: number = this.timing.findIndex(t => t.textRef === this.currentRef);
+    if (currentTimingIndex < 0) {
+      this.audioPlayer.audio.currentTime = 0;
+    } else if (this.audioPlayer.audio.currentTime > this.timing[currentTimingIndex].from + skipBackGracePeriod) {
+      // Move to the start of the reference that had already been playing
+      // rather than the start of the previous reference - this mimics Spotify previous track logic
+      this.audioPlayer.audio.currentTime = this.timing[currentTimingIndex].from;
+    } else if (currentTimingIndex === 0) {
+      // The first timing index doesn't always start at zero so this forces it to the beginning of the audio
+      this.audioPlayer.audio.currentTime = 0;
+    } else {
+      this.audioPlayer.audio.currentTime = this.timing[currentTimingIndex - 1].from;
+    }
+    this.verseLabel = this.currentVerseLabel;
+  }
+
+  stop(): void {
+    this.audioPlayer?.audio?.stop();
+  }
+
+  private getRefIndexInTimings(ref: string): number {
+    if (CheckingUtils.parseAudioRef(ref)?.verseStr != null) {
+      return this._timing.findIndex(t => t.textRef === ref)!;
+    }
+    // ref is a section heading
+    let headingNumber: number = +ref.split('_')[1];
+    for (let i = 0; i < this._timing.length; i++) {
+      if (this._timing[i].textRef === 's') {
+        headingNumber--;
+        if (headingNumber === 0) {
+          return i;
+        }
+      }
+    }
+    return -1;
   }
 
   private subscribePlayerVerseChange(audio: AudioPlayer): void {

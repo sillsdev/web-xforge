@@ -142,6 +142,14 @@ xdescribe('ScriptureAudioComponent', () => {
     expect(pauseSpy).toHaveBeenCalled();
     expect(count).toEqual(1);
   });
+
+  it('can skip to previous verse', async () => {});
+
+  it('skipping to previous verse remains on the current verse if within grace period', async () => {});
+
+  it('skipping to the next verse will skip to the start of the current timing data if it has not started yet', async () => {});
+
+  it('skipping beyond the last timing data will stop the player ', async () => {});
 });
 
 @Component({ selector: 'app-host', template: '' })

@@ -156,6 +156,11 @@ export class AudioPlayer extends SubscriptionDisposable {
     this.currentTime = value > 0 ? this.duration * (value / 100) : 0;
   }
 
+  stop(): void {
+    this.audio.pause();
+    this.currentTime = 0;
+  }
+
   private audioIsReady(): void {
     this.currentTime = 0;
     this.audioDataLoaded = true;
