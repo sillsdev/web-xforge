@@ -1,7 +1,7 @@
 import { MdcList } from '@angular-mdc/web/list';
 import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
@@ -22,6 +22,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -74,7 +75,7 @@ export enum QuestionFilter {
   templateUrl: './checking.component.html',
   styleUrls: ['./checking.component.scss']
 })
-export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy {
+export class CheckingComponent extends DataLoadingComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {
     // Need to trigger the calculation for the slider after DOM has been updated
     this.answersPanelContainerElement = answersPanelContainerElement;
@@ -83,12 +84,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   @HostBinding('class') classes = 'flex-max';
   @ViewChild(CheckingAnswersComponent) answersPanel?: CheckingAnswersComponent;
   @ViewChild(CheckingTextComponent) scripturePanel?: CheckingTextComponent;
-  @ViewChild(CheckingQuestionsComponent) questionsPanel?: CheckingQuestionsComponent;
+  @ViewChild(CheckingQuestionsComponent) questionsList?: CheckingQuestionsComponent;
   @ViewChild(SplitComponent) splitComponent?: SplitComponent;
   @ViewChild('splitContainer') splitContainerElement?: ElementRef;
   @ViewChild('scripturePanelContainer') scripturePanelContainerElement?: ElementRef;
   @ViewChild(CheckingScriptureAudioPlayerComponent) scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
   @ViewChild('chapterMenuList') chapterMenuList?: MdcList;
+  @ViewChild('questionsPanel') questionsPanel?: ElementRef;
 
   chapters: number[] = [];
   isQuestionsOverlayVisible: boolean = false;
@@ -142,6 +144,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     private readonly breakpointObserver: BreakpointObserver,
+    private readonly mediaBreakpointService: MediaBreakpointService,
     private readonly dialogService: DialogService,
     noticeService: NoticeService,
     private readonly router: Router,
@@ -155,7 +158,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   get activeQuestionVerseRef(): VerseRef | undefined {
-    if (this.questionsPanel != null && this.book === this.questionsPanel.activeQuestionBook) {
+    if (this.questionsList != null && this.book === this.questionsList.activeQuestionBook) {
       return this._activeQuestionVerseRef;
     }
     return undefined;
@@ -436,7 +439,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         });
         // TODO: check for remote changes to file data more generically
         this.questionsRemoteChangesSub = this.subscribe(this.questionsQuery.remoteDocChanges$, (qd: QuestionDoc) => {
-          const isActiveQuestionDoc = qd.id === this.questionsPanel!.activeQuestionDoc?.id;
+          const isActiveQuestionDoc = qd.id === this.questionsList!.activeQuestionDoc?.id;
           if (isActiveQuestionDoc) {
             this.updateActiveQuestionVerseRef(qd);
           }
@@ -462,8 +465,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           .subscribe(() => {
             // Get the book from the first question if showing all the questions
             if (this.showAllBooks) {
-              if (this.questionsPanel != null && this.questionDocs.length > 0) {
-                const question = this.questionsPanel.activateStoredQuestion(this.questionDocs);
+              if (this.questionsList != null && this.questionDocs.length > 0) {
+                const question = this.questionsList.activateStoredQuestion(this.questionDocs);
                 if (question.data != null) {
                   this.book = question.data.verseRef.bookNum;
                 }
@@ -497,9 +500,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
             this.onRemovedFromProject();
           } else if (!this.projectDoc.data.checkingConfig.checkingEnabled) {
             const currentBookId =
-              this.questionsPanel == null || this.questionsPanel.activeQuestionBook == null
+              this.questionsList == null || this.questionsList.activeQuestionBook == null
                 ? undefined
-                : Canon.bookNumberToId(this.questionsPanel.activeQuestionBook);
+                : Canon.bookNumberToId(this.questionsList.activeQuestionBook);
             if (this.projectUserConfigDoc != null) {
               const checkingAccessInfo: CheckingAccessInfo = {
                 userId: this.userService.currentUserId,
@@ -519,12 +522,23 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
       this.initQuestionFilters();
     });
+  }
 
+  ngAfterViewInit(): void {
     // Allows scrolling to the active question in the question list once it becomes visible
-    this.subscribe(this.breakpointObserver.observe(['(min-width: 767.98px)']), (state: BreakpointState) => {
-      this.calculateScriptureSliderPosition();
-      this.isQuestionListPermanent = state.matches;
-    });
+    this.subscribe(
+      this.breakpointObserver.observe([
+        this.mediaBreakpointService.width('>', Breakpoint.SM, this.questionsPanel?.nativeElement)
+      ]),
+      (state: BreakpointState) => {
+        this.calculateScriptureSliderPosition();
+        // `questionsPanel` is undefined until ngAfterViewInit, but setting `isQuestionListPermanent`
+        // here causes `ExpressionChangedAfterItHasBeenCheckedError`, so wrap in setTimeout
+        setTimeout(() => {
+          this.isQuestionListPermanent = state.matches;
+        });
+      }
+    );
   }
 
   ngOnDestroy(): void {
@@ -539,7 +553,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   async answerAction(answerAction: AnswerAction): Promise<void> {
-    if (this.projectDoc == null || this.questionsPanel == null) {
+    if (this.projectDoc == null || this.questionsList == null) {
       return;
     }
 
@@ -597,7 +611,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         break;
       case 'edit':
         if (answerAction.questionDoc != null) {
-          this.questionsPanel.activateQuestion(answerAction.questionDoc);
+          this.questionsList.activateQuestion(answerAction.questionDoc);
         }
         this.triggerUpdate();
         break;
@@ -611,7 +625,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         break;
       case 'show-unread':
         // Emit the question doc so that answers and comments get marked as read
-        this.questionsPanel.activeQuestionDoc$.next(this.questionsPanel.activeQuestionDoc);
+        this.questionsList.activeQuestionDoc$.next(this.questionsList.activeQuestionDoc);
         break;
       case 'show-form':
         break;
@@ -641,7 +655,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   commentAction(commentAction: CommentAction): void {
-    if (this.questionsPanel == null) {
+    if (this.questionsList == null) {
       return;
     }
 
@@ -670,7 +684,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           this.projectUserConfigDoc.submitJson0Op(op => {
             if (commentAction.answer != null) {
               for (const comm of commentAction.answer.comments.filter(comment => !comment.deleted)) {
-                if (!this.questionsPanel!.hasUserReadComment(comm)) {
+                if (!this.questionsList!.hasUserReadComment(comm)) {
                   op.add(puc => puc.commentRefsRead, comm.dataId);
                 }
               }
@@ -728,12 +742,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   questionChanged({ questionDoc, actionSource }: QuestionChangedEvent): void {
-    if (this.questionsPanel == null) {
+    if (this.questionsList == null) {
       return;
     }
 
     this.book = questionDoc.data?.verseRef.bookNum;
-    this.chapter = this.questionsPanel.activeQuestionChapter;
+    this.chapter = this.questionsList.activeQuestionChapter;
     this.updateActiveQuestionVerseRef(questionDoc);
     this.calculateScriptureSliderPosition(true);
     this.refreshSummary();
@@ -749,7 +763,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   async questionDialog(): Promise<void> {
-    if (this.projectDoc == null || this.questionsPanel == null) {
+    if (this.projectDoc == null || this.questionsList == null) {
       return;
     }
 
@@ -763,7 +777,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     const newQuestion = await this.questionDialogService.questionDialog(data);
     if (newQuestion != null) {
       this.resetFilter();
-      this.questionsPanel.activateQuestion(newQuestion);
+      this.questionsList.activateQuestion(newQuestion);
     }
   }
 
@@ -781,7 +795,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   verseRefClicked(verseRef: VerseRef): void {
-    if (this.questionsPanel == null) {
+    if (this.questionsList == null) {
       return;
     }
 
@@ -807,12 +821,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       }
     }
     if (bestMatch != null) {
-      this.questionsPanel.activateQuestion(bestMatch);
+      this.questionsList.activateQuestion(bestMatch);
     }
   }
 
   async addAudioTimingData(): Promise<void> {
-    if (this.projectDoc?.id == null || this.textsByBookId == null || this.questionsPanel == null) {
+    if (this.projectDoc?.id == null || this.textsByBookId == null || this.questionsList == null) {
       return;
     }
 
@@ -820,8 +834,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       projectId: this.projectDoc.id,
       textsByBookId: this.textsByBookId,
       questionsSorted: this.questionDocs,
-      currentBook: this.questionsPanel.activeQuestionBook,
-      currentChapter: this.questionsPanel.activeQuestionChapter
+      currentBook: this.questionsList.activeQuestionBook,
+      currentChapter: this.questionsList.activeQuestionChapter
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
   }
@@ -875,8 +889,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     if (
       !this.showAllBooks &&
       this.book != null &&
-      this.questionsPanel != null &&
-      this.questionsPanel.activeQuestionBook != null &&
+      this.questionsList != null &&
+      this.questionsList.activeQuestionBook != null &&
       Canon.bookNumberToId(this.book) !== this.activatedRoute.snapshot.params['bookId']
     ) {
       this._book = undefined;
@@ -884,7 +898,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         '/projects',
         this.projectDoc.id,
         'checking',
-        Canon.bookNumberToId(this.questionsPanel.activeQuestionBook)
+        Canon.bookNumberToId(this.questionsList.activeQuestionBook)
       ]);
     }
   }
@@ -923,20 +937,20 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   private getAnswerIndex(answer: Answer): number {
-    if (this.questionsPanel == null) {
+    if (this.questionsList == null) {
       return -1;
     }
-    const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
+    const activeQuestionDoc = this.questionsList.activeQuestionDoc;
     return activeQuestionDoc == null || activeQuestionDoc.data == null
       ? -1
       : activeQuestionDoc.data.answers.findIndex(existingAnswer => existingAnswer.dataId === answer.dataId);
   }
 
   private deleteAnswer(answer: Answer): void {
-    if (this.questionsPanel == null) {
+    if (this.questionsList == null) {
       return;
     }
-    const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
+    const activeQuestionDoc = this.questionsList.activeQuestionDoc;
     if (activeQuestionDoc == null) {
       return;
     }
@@ -960,7 +974,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   private saveAnswer(answer: Answer, questionDoc: QuestionDoc | undefined): void {
-    if (this.questionsPanel == null || questionDoc?.data == null) {
+    if (this.questionsList == null || questionDoc?.data == null) {
       return;
     }
     const answers = cloneDeep(questionDoc.data.answers);
@@ -996,15 +1010,15 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       questionDoc.submitJson0Op(op => op.insert(q => q.answers, 0, answers[0]));
     }
     questionDoc.updateAnswerFileCache();
-    this.questionsPanel.updateElementsRead(questionDoc);
+    this.questionsList.updateElementsRead(questionDoc);
     this.refreshSummary();
   }
 
   private saveComment(answer: Answer, comment: Comment): void {
-    if (this.questionsPanel == null) {
+    if (this.questionsList == null) {
       return;
     }
-    const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
+    const activeQuestionDoc = this.questionsList.activeQuestionDoc;
     if (activeQuestionDoc == null || activeQuestionDoc.data == null) {
       return;
     }
@@ -1023,10 +1037,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   private deleteComment(answer: Answer, comment: Comment): void {
-    if (this.questionsPanel == null) {
+    if (this.questionsList == null) {
       return;
     }
-    const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
+    const activeQuestionDoc = this.questionsList.activeQuestionDoc;
     if (activeQuestionDoc == null || activeQuestionDoc.data == null) {
       return;
     }
@@ -1039,10 +1053,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   private likeAnswer(answer: Answer): void {
-    if (this.questionsPanel == null) {
+    if (this.questionsList == null) {
       return;
     }
-    const activeQuestionDoc = this.questionsPanel.activeQuestionDoc;
+    const activeQuestionDoc = this.questionsList.activeQuestionDoc;
     if (activeQuestionDoc == null || activeQuestionDoc.data == null) {
       return;
     }
@@ -1090,8 +1104,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   // Unbind this component from the data when a user is removed from the project, otherwise console
   // errors appear before the app can navigate to the start component
   private onRemovedFromProject(): void {
-    if (this.questionsPanel != null) {
-      this.questionsPanel.activeQuestionDoc = undefined;
+    if (this.questionsList != null) {
+      this.questionsList.activeQuestionDoc = undefined;
     }
     this.projectUserConfigDoc = undefined;
     if (this.questionsQuery != null) {
