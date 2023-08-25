@@ -1,6 +1,9 @@
 @use '@material/icon-button/mixins' as icon-button;
+@use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 @import 'checking-global-vars';
 @import 'bootstrap/scss/mixins/breakpoints';
+
+$questionsPanelBreakpoint: 600px;
 
 .panel-content {
   display: flex;
@@ -17,6 +20,7 @@
   flex-direction: column;
   width: 300px;
   box-sizing: border-box;
+  flex-shrink: 0;
 
   header {
     display: flex;
@@ -60,18 +64,27 @@
     display: none;
   }
 
-  @include media-breakpoint-down(sm) {
-    display: none;
+  // Expand the side and bottom to fill space
+  @include media-breakpoint('<', md) {
+    margin-inline-start: -20px;
+    margin-bottom: -14px;
+  }
+
+  // Override 'sm' breakpoint for this element (also adjusts BreakPointObserver 'SM' for this element)
+  @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
+    display: flex;
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    z-index: 7;
+    background: #fff;
+    transition: left 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55); // Snap back effect
 
     &.overlay-visible {
-      display: flex;
-      position: absolute;
-      top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 7;
-      background: #fff;
 
       .questions-overlay-close {
         display: block;
@@ -195,8 +208,14 @@
     padding: 9px;
 
     @include media-breakpoint-down(sm) {
-      margin: 0 -20px -14px;
+      margin-bottom: -14px;
+      margin-inline: 0 -20px;
       justify-content: space-between;
+    }
+
+    // Widen once the questions panel is hidden
+    @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
+      margin-inline-start: -20px;
     }
 
     .next-question {
