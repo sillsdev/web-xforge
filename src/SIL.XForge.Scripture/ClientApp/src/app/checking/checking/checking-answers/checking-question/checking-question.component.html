@@ -21,6 +21,9 @@
   >
     <mat-icon>{{ questionAudio.playing ? "stop" : "play_arrow" }}</mat-icon>
   </app-single-button-audio-player>
+  <div *ngIf="!questionAudioUrl" id="noQuestionAudio" [class]="focusedText">
+    <mat-icon class="mirror-rtl" fontIcon="question_answer"></mat-icon>
+  </div>
   <div class="question-wrapper">
     <div class="scripture-audio" *ngIf="scriptureAudioUrl">
       <p [class]="focusedText">
