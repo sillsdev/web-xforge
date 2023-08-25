@@ -1,0 +1,12 @@
+// Load this file in styles.scss file to define css variables for each breakpoint.
+
+@use 'sass:string';
+@use 'breakpoints';
+
+// Define a css variable for each breakpoint
+:root {
+  @each $name, $breakpoint in breakpoints.$sfBreakpoints {
+    // prettier-ignore
+    --sf-breakpoint-#{string.to-lower-case($name)}:#{$breakpoint};
+  }
+}

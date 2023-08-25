@@ -1,0 +1,69 @@
+@use 'sass:map';
+
+/**
+ * Breakpoints that can be used along with `MediaBreakpointService`.
+ */
+$sfBreakpoints: (
+  xs: 360px,
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+  xxl: 1400px
+) !default;
+
+/**
+ * Gets the value of the specified breakpoint.
+ * @param $name - The name of the breakpoint
+ * @example
+ *  @use 'breakpoints';
+ *
+ *  breakpoints.get(sm);  // Returns 576px
+ */
+@function get($name) {
+  @return map.get($sfBreakpoints, $name);
+}
+
+/**
+ * Mixin to generate a media query.  :
+ * @media (width $operator $breakpoint) {
+ *     @content
+ * }
+ *
+ * An offset of .02 is used with '<' and '>' operators to account for viewports with fractional widths.
+ *
+ * @param $operator - Possible values are <, <=, >, >=
+ * @param $breakpointName - The name of the breakpoint from $sfBreakpoints.
+ * @param $override - Optional.  If specified, the value of the breakpoint will be overridden with this value,
+ * and the css variable for the breakpoint will be set to this value in the same scope as the media query.
+ * Setting this css variable allows the MediaBreakpointService to get the overridden value of the breakpoint.
+ */
+@mixin media-breakpoint($operator, $breakpointName, $override: null) {
+  // Error if the breakpoint name is not valid
+  @if map.has-key($sfBreakpoints, $breakpointName) == false {
+    @error 'Invalid breakpoint name "#{$breakpointName}" for media-breakpoint mixin.';
+  }
+
+  $breakpointVal: if($override != null, $override, get($breakpointName));
+  $query: null;
+
+  @if $operator == '>' {
+    $query: 'min-width: #{($breakpointVal + 0.02)}';
+  } @else if $operator == '>=' {
+    $query: 'min-width: #{$breakpointVal}';
+  } @else if $operator == '<' {
+    $query: 'max-width: #{($breakpointVal - 0.02)}';
+  } @else if $operator == '<=' {
+    $query: 'max-width: #{$breakpointVal}';
+  } @else {
+    @error 'Invalid operator "#{$operator}" for media-breakpoint mixin.';
+  }
+
+  @if $override != null {
+    --sf-breakpoint-#{$breakpointName}: #{$override};
+  }
+
+  @media (#{$query}) {
+    @content;
+  }
+}
