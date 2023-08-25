@@ -51,7 +51,8 @@ export class ErrorReportingService {
   }
 
   notify(error: NotifiableError, callback?: (err: any, report: any) => void): void {
-    Bugsnag.notify(error, event => ErrorReportingService.beforeSend(this.metadata, event), callback);
+    if (Bugsnag.isStarted())
+      Bugsnag.notify(error, event => ErrorReportingService.beforeSend(this.metadata, event), callback);
   }
 
   silentError(message: string, metadata?: object): void {

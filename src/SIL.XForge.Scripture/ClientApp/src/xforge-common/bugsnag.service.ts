@@ -14,7 +14,7 @@ export class BugsnagService {
   }
 
   leaveBreadcrumb(message: string, metadata?: { [key: string]: any }, type?: BreadcrumbType): void {
-    Bugsnag.leaveBreadcrumb(message, metadata, type);
+    if (Bugsnag.isStarted()) Bugsnag.leaveBreadcrumb(message, metadata, type);
   }
 
   setUser(id?: string, email?: string, name?: string): void {
