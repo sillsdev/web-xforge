@@ -43,10 +43,6 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     return audioTiming?.textRef;
   }
 
-  get isPlaying(): boolean {
-    return !!this.audioPlayer?.audio?.isPlaying;
-  }
-
   @Input() set timing(value: AudioTiming[]) {
     this._timing = value.sort((a, b) => a.from - b.from);
   }
@@ -63,41 +59,8 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     return this.i18n.localizeReference(verseRef);
   }
 
-  play(): void {
-    if (this.audioPlayer?.audio == null) return;
-    this.audioPlayer.audio.play();
-    this.subscribePlayerVerseChange(this.audioPlayer.audio);
-  }
-
-  pause(): void {
-    this.audioPlayer?.audio?.pause();
-  }
-
-  previousRef(): void {
-    if (this.audioPlayer == null || this.audioPlayer.audio == null || this._timing.length < 1) return;
-    const currentRef = this.currentRef;
-    if (currentRef == null) return;
-
-    const currentTimingIndex: number = this.getRefIndexInTimings(currentRef);
-    if (currentTimingIndex <= 0) {
-      this.audioPlayer.audio.currentTime = 0;
-      return;
-    }
-    this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex - 1].from;
-  }
-
-  nextRef(): void {
-    if (this.audioPlayer == null || this.audioPlayer.audio == null || this._timing.length < 1) return;
-    const currentRef = this.currentRef;
-    if (currentRef == null) return;
-
-    const currentTimingIndex: number = this.getRefIndexInTimings(currentRef);
-    if (currentTimingIndex < 0) {
-      // TODO (scripture audio): find a better solution than setting the current time to 0
-      this.audioPlayer.audio.currentTime = 0;
-      return;
-    }
-    this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex].to;
+  get isPlaying(): boolean {
+    return !!this.audioPlayer?.audio?.isPlaying;
   }
 
   deleteAudioTimingData(): void {
@@ -111,6 +74,51 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
       this.textDocId.bookNum,
       this.textDocId.chapterNum
     );
+  }
+
+  nextRef(): void {
+    if (this.audioPlayer?.audio == null || this.timing == null) return;
+    const currentTimingIndex: number = this.timing.findIndex(t => t.textRef === this.currentRef);
+    if (currentTimingIndex < 0) {
+      this.audioPlayer.audio.stop();
+    } else if (this.audioPlayer.audio.currentTime < this.timing[currentTimingIndex].from) {
+      // The first timing index doesn't always start at zero so this allows skipping to the start of the first reference
+      this.audioPlayer.audio.currentTime = this.timing[currentTimingIndex].from;
+    } else {
+      this.audioPlayer.audio.currentTime = this.timing[currentTimingIndex].to;
+    }
+  }
+
+  pause(): void {
+    this.audioPlayer?.audio?.pause();
+  }
+
+  play(): void {
+    if (this.audioPlayer?.audio == null) return;
+    this.audioPlayer.audio.play();
+    this.subscribePlayerVerseChange(this.audioPlayer.audio);
+  }
+
+  previousRef(): void {
+    if (this.audioPlayer?.audio == null || this.timing == null) return;
+    const skipBackGracePeriod = 3;
+    const currentTimingIndex: number = this.timing.findIndex(t => t.textRef === this.currentRef);
+    if (currentTimingIndex < 0) {
+      this.audioPlayer.audio.currentTime = 0;
+    } else if (this.audioPlayer.audio.currentTime > this.timing[currentTimingIndex].from + skipBackGracePeriod) {
+      // Move to the start of the reference that had already been playing
+      // rather than the start of the previous reference - this mimics Spotify previous track logic
+      this.audioPlayer.audio.currentTime = this.timing[currentTimingIndex].from;
+    } else if (currentTimingIndex === 0) {
+      // The first timing index doesn't always start at zero so this forces it to the beginning of the audio
+      this.audioPlayer.audio.currentTime = 0;
+    } else {
+      this.audioPlayer.audio.currentTime = this.timing[currentTimingIndex - 1].from;
+    }
+  }
+
+  stop(): void {
+    this.audioPlayer?.audio?.stop();
   }
 
   private getRefIndexInTimings(ref: string): number {
