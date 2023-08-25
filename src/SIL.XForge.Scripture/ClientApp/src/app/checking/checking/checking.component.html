@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; read: 'checking'">
   <div id="projects-app" class="flex-max">
     <div id="checking-app-container" class="d-flex flex-fill flex-nowrap">
-      <div id="questions-panel" [ngClass]="{ 'overlay-visible': isQuestionsOverlayVisible }">
+      <div id="questions-panel" #questionsPanel [ngClass]="{ 'overlay-visible': isQuestionsOverlayVisible }">
         <header [ngClass]="{ 'filter-applied': isQuestionFilterApplied }">
           <div class="header-main">
             <h2>
@@ -31,7 +31,7 @@
         </header>
         <div class="panel-content">
           <app-checking-questions
-            #questionsPanel
+            #questionsList
             (update)="questionUpdated($event)"
             (changed)="questionChanged($event)"
             [visible]="isQuestionListPermanent || isQuestionsOverlayVisible"
@@ -120,7 +120,7 @@
             <div id="split-container" #splitContainer>
               <as-split
                 direction="vertical"
-                [disabled]="!questionsPanel.activeQuestionDoc"
+                [disabled]="!questionsList.activeQuestionDoc"
                 (dragEnd)="checkSliderPosition($event)"
                 [useTransition]="true"
               >
@@ -148,13 +148,13 @@
                   </div>
                 </as-split-area>
                 <as-split-area [size]="0">
-                  <div *ngIf="questionsPanel.activeQuestionDoc" id="answer-panel" #answerPanelContainer>
+                  <div *ngIf="questionsList.activeQuestionDoc" id="answer-panel" #answerPanelContainer>
                     <app-checking-answers
                       #answersPanel
                       [checkingTextComponent]="textPanel"
                       [projectProfileDoc]="projectDoc"
                       [textsByBookId]="textsByBookId"
-                      [questionDoc]="questionsPanel.activeQuestionDoc"
+                      [questionDoc]="questionsList.activeQuestionDoc"
                       [projectUserConfigDoc]="projectUserConfigDoc"
                       (action)="answerAction($event)"
                       (commentAction)="commentAction($event)"
@@ -179,8 +179,8 @@
               mat-button
               fxHide.xs
               type="button"
-              (click)="questionsPanel.previousQuestion()"
-              [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
+              (click)="questionsList.previousQuestion()"
+              [disabled]="!questionsList.checkCanChangeQuestion(-1)"
               class="prev-question"
             >
               <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon
@@ -190,8 +190,8 @@
               mat-button
               fxHide.xs
               type="button"
-              (click)="questionsPanel.nextQuestion()"
-              [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
+              (click)="questionsList.nextQuestion()"
+              [disabled]="!questionsList.checkCanChangeQuestion(1)"
               class="next-question"
             >
               {{ t("next") }}<mat-icon>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
@@ -200,8 +200,8 @@
               mat-icon-button
               fxHide.gt-xs
               type="button"
-              (click)="questionsPanel.previousQuestion()"
-              [disabled]="!questionsPanel.checkCanChangeQuestion(-1)"
+              (click)="questionsList.previousQuestion()"
+              [disabled]="!questionsList.checkCanChangeQuestion(-1)"
               class="prev-question"
             >
               <mat-icon>chevron_{{ i18n.backwardDirectionWord }}</mat-icon>
@@ -210,8 +210,8 @@
               mat-icon-button
               fxHide.gt-xs
               type="button"
-              (click)="questionsPanel.nextQuestion()"
-              [disabled]="!questionsPanel.checkCanChangeQuestion(1)"
+              (click)="questionsList.nextQuestion()"
+              [disabled]="!questionsList.checkCanChangeQuestion(1)"
               class="next-question"
             >
               <mat-icon>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>

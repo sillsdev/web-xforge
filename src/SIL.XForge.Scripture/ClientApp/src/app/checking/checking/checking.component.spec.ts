@@ -260,7 +260,7 @@ describe('CheckingComponent', () => {
         31
       );
       // Question 5 has been stored as the last question to start at
-      expect(env.component.questionsPanel!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
+      expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
       // A sixteenth question is archived
       expect(env.questions.length).toEqual(15);
       const question = env.selectQuestion(15);
@@ -271,7 +271,7 @@ describe('CheckingComponent', () => {
     it('questions are displaying for all books', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER, 'ALL');
       // Question 5 has been stored as the question to start at
-      expect(env.component.questionsPanel!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
+      expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
       // A sixteenth question is archived
       expect(env.questions.length).toEqual(16);
       let question = env.selectQuestion(1);
@@ -333,7 +333,7 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment(ADMIN_USER);
       env.selectQuestion(15);
       when(mockedQuestionDialogService.questionDialog(anything())).thenResolve(
-        env.component.questionsPanel!.activeQuestionDoc
+        env.component.questionsList!.activeQuestionDoc
       );
       const questionId = 'q15Id';
       verify(
@@ -450,7 +450,7 @@ describe('CheckingComponent', () => {
     it('responds to remote question added', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       let question = env.selectQuestion(1);
-      const questionId = env.component.questionsPanel!.activeQuestionDoc!.id;
+      const questionId = env.component.questionsList!.activeQuestionDoc!.id;
       expect(env.questions.length).toEqual(15);
       const dateNow = new Date();
       const newQuestion: Question = {
@@ -467,7 +467,7 @@ describe('CheckingComponent', () => {
       env.insertQuestion(newQuestion);
       env.waitForSliderUpdate();
       env.waitForAudioPlayer();
-      expect(env.component.questionsPanel!.activeQuestionDoc!.id).toBe(questionId);
+      expect(env.component.questionsList!.activeQuestionDoc!.id).toBe(questionId);
       expect(env.questions.length).toEqual(16);
       question = env.selectQuestion(16);
       expect(env.getQuestionText(question)).toBe('Admin just added a question.');
@@ -770,7 +770,7 @@ describe('CheckingComponent', () => {
       };
       env.component.answerAction(answerAction);
       env.waitForSliderUpdate();
-      const questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      const questionDoc = env.component.questionsList!.activeQuestionDoc!;
       expect(questionDoc.data!.answers.length).toEqual(0);
       expect(env.saveAnswerButton).not.toBeNull();
     }));
@@ -1487,7 +1487,7 @@ describe('CheckingComponent', () => {
         expect(env.getAnswerComments(0).length).toEqual(0);
         const commentId: string = env.commentOnAnswerRemotely(
           'Comment left by admin',
-          env.component.questionsPanel!.activeQuestionDoc!
+          env.component.questionsList!.activeQuestionDoc!
         );
         tick(env.questionReadTimer);
         env.fixture.detectChanges();
@@ -1501,7 +1501,7 @@ describe('CheckingComponent', () => {
         env.selectQuestion(1);
         env.answerQuestion('Admin will add four comments');
         env.commentOnAnswer(0, 'First comment');
-        const questionDoc: QuestionDoc = clone(env.component.questionsPanel!.activeQuestionDoc!);
+        const questionDoc: QuestionDoc = clone(env.component.questionsList!.activeQuestionDoc!);
         env.selectQuestion(2);
         env.commentOnAnswerRemotely('Comment #2', questionDoc);
         env.commentOnAnswerRemotely('Comment #3', questionDoc);
@@ -1597,7 +1597,7 @@ describe('CheckingComponent', () => {
       expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBeUndefined();
       env.clickButton(env.getExportAnswerButton(buttonIndex));
       expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBe(true);
-      const questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      const questionDoc = env.component.questionsList!.activeQuestionDoc!;
       expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Exportable);
     }));
 
@@ -1609,7 +1609,7 @@ describe('CheckingComponent', () => {
       expect(env.getResolveAnswerButton(buttonIndex).classes['status-resolved']).toBeUndefined();
       env.clickButton(env.getResolveAnswerButton(buttonIndex));
       expect(env.getResolveAnswerButton(buttonIndex).classes['status-resolved']).toBe(true);
-      const questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      const questionDoc = env.component.questionsList!.activeQuestionDoc!;
       expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Resolved);
     }));
 
@@ -1624,19 +1624,19 @@ describe('CheckingComponent', () => {
       env.clickButton(env.getResolveAnswerButton(buttonIndex));
       expect(env.getResolveAnswerButton(buttonIndex).classes['status-resolved']).toBe(true);
       expect(env.getResolveAnswerButton(buttonIndex).classes['status-exportable']).toBeUndefined();
-      let questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      let questionDoc = env.component.questionsList!.activeQuestionDoc!;
       expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Resolved);
 
       env.clickButton(env.getExportAnswerButton(buttonIndex));
       expect(env.getExportAnswerButton(buttonIndex).classes['status-resolved']).toBeUndefined();
       expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBe(true);
-      questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      questionDoc = env.component.questionsList!.activeQuestionDoc!;
       expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.Exportable);
 
       env.clickButton(env.getExportAnswerButton(buttonIndex));
       expect(env.getExportAnswerButton(buttonIndex).classes['status-resolved']).toBeUndefined();
       expect(env.getExportAnswerButton(buttonIndex).classes['status-exportable']).toBeUndefined();
-      questionDoc = env.component.questionsPanel!.activeQuestionDoc!;
+      questionDoc = env.component.questionsList!.activeQuestionDoc!;
       expect(questionDoc.data!.answers[0].status).toEqual(AnswerStatus.None);
     }));
   });
@@ -1684,7 +1684,7 @@ describe('CheckingComponent', () => {
       expect(segment.classList.contains('question-segment')).toBe(true);
       expect(segment.classList.contains('highlight-segment')).toBe(true);
       expect(fromVerseRef(env.component.activeQuestionVerseRef!).verseNum).toEqual(3);
-      env.component.questionsPanel!.activeQuestionDoc!.submitJson0Op(op => {
+      env.component.questionsList!.activeQuestionDoc!.submitJson0Op(op => {
         op.set(qd => qd.verseRef, fromVerseRef(new VerseRef('JHN 1:5')));
       }, false);
       env.waitForSliderUpdate();
@@ -2082,7 +2082,7 @@ class TestEnvironment {
 
   activateQuestion(dataId: string): void {
     const questionDoc = this.getQuestionDoc(dataId);
-    this.ngZone.run(() => this.component.questionsPanel!.activateQuestion(questionDoc));
+    this.ngZone.run(() => this.component.questionsList!.activateQuestion(questionDoc));
     tick();
     this.waitForQuestionTimersToComplete();
     const bookId: string = Canon.bookNumberToId(questionDoc.data!.verseRef.bookNum);
@@ -2419,7 +2419,7 @@ class TestEnvironment {
 
   simulateRemoteEditQuestionAudio(filename?: string, questionId?: string): void {
     const questionDoc =
-      questionId != null ? this.getQuestionDoc(questionId) : this.component.questionsPanel!.activeQuestionDoc!;
+      questionId != null ? this.getQuestionDoc(questionId) : this.component.questionsList!.activeQuestionDoc!;
     questionDoc.submitJson0Op(op => {
       if (filename != null) {
         op.set(q => q.audioUrl!, filename);
@@ -2439,7 +2439,7 @@ class TestEnvironment {
   }
 
   simulateRemoteEditAnswer(index: number, text: string): void {
-    const questionDoc = this.component.questionsPanel!.activeQuestionDoc!;
+    const questionDoc = this.component.questionsList!.activeQuestionDoc!;
     questionDoc.submitJson0Op(op => {
       op.set(q => q.answers[index].text!, text);
       op.set(q => q.answers[index].dateModified, new Date().toJSON());
@@ -2450,7 +2450,7 @@ class TestEnvironment {
   }
 
   simulateSync(index: number): void {
-    const questionDoc = this.component.questionsPanel!.activeQuestionDoc!;
+    const questionDoc = this.component.questionsList!.activeQuestionDoc!;
     questionDoc.submitJson0Op(op => {
       op.set(q => (q.answers[index] as any).syncUserRef, objectId());
     }, false);
