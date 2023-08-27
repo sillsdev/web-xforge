@@ -11,9 +11,10 @@ import {
 } from '../models/sf-project';
 import { SFProjectRole } from '../models/sf-project-role';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from '../models/sf-project-rights';
-import { Operation } from '../../common/models/project-rights';
 import { ConnectSession } from '../../common/connect-session';
+import { Operation } from '../../common/models/project-rights';
 import { SystemRole } from '../../common/models/system-role';
+import { ValidationSchema } from '../../common/models/validation-schema';
 
 const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   name: true,
@@ -42,6 +43,279 @@ export class SFProjectService extends ProjectService<SFProject> {
 
   protected readonly indexPaths = SF_PROJECT_INDEX_PATHS;
   protected readonly projectAdminRole = SFProjectRole.ParatextAdministrator;
+  readonly validationSchema: ValidationSchema = {
+    bsonType: ProjectService.validationSchema.bsonType,
+    required: ProjectService.validationSchema.required,
+    properties: {
+      ...ProjectService.validationSchema.properties,
+      paratextId: {
+        bsonType: 'string'
+      },
+      shortName: {
+        bsonType: 'string'
+      },
+      writingSystem: {
+        bsonType: 'object',
+        properties: {
+          tag: {
+            bsonType: 'string'
+          }
+        },
+        additionalProperties: false
+      },
+      isRightToLeft: {
+        bsonType: 'bool'
+      },
+      translateConfig: {
+        bsonType: 'object',
+        properties: {
+          translationSuggestionsEnabled: {
+            bsonType: 'bool'
+          },
+          source: {
+            bsonType: 'object',
+            properties: {
+              paratextId: {
+                bsonType: 'string'
+              },
+              projectRef: {
+                bsonType: 'string',
+                pattern: '^[0-9a-f]+$'
+              },
+              name: {
+                bsonType: 'string'
+              },
+              shortName: {
+                bsonType: 'string'
+              },
+              writingSystem: {
+                bsonType: 'object',
+                properties: {
+                  tag: {
+                    bsonType: 'string'
+                  }
+                },
+                additionalProperties: false
+              },
+              isRightToLeft: {
+                bsonType: 'bool'
+              }
+            },
+            additionalProperties: false
+          },
+          shareEnabled: {
+            bsonType: 'bool'
+          },
+          defaultNoteTagId: {
+            bsonType: 'int'
+          },
+          preTranslate: {
+            bsonType: 'bool'
+          },
+          projectType: {
+            enum: [
+              'Standard',
+              'BackTranslation',
+              'Daughter',
+              'TransliterationManual',
+              'TransliterationWithEncoder',
+              'StudyBible',
+              'ConsultantNotes',
+              'StudyBibleAdditions',
+              'Auxiliary',
+              'Xml',
+              'SourceLanguage',
+              'Dictionary',
+              'EnhancedResource'
+            ]
+          },
+          baseProject: {
+            bsonType: 'object',
+            properties: {
+              paratextId: {
+                bsonType: 'string'
+              },
+              shortName: {
+                bsonType: 'string'
+              }
+            },
+            additionalProperties: false
+          }
+        },
+        additionalProperties: false
+      },
+      checkingConfig: {
+        bsonType: 'object',
+        properties: {
+          checkingEnabled: {
+            bsonType: 'bool'
+          },
+          usersSeeEachOthersResponses: {
+            bsonType: 'bool'
+          },
+          shareEnabled: {
+            bsonType: 'bool'
+          },
+          answerExportMethod: {
+            enum: ['', 'all', 'marked_for_export', 'none']
+          },
+          noteTagId: {
+            bsonType: 'int'
+          }
+        },
+        additionalProperties: false
+      },
+      resourceConfig: {
+        bsonType: 'object',
+        properties: {
+          createdTimestamp: {
+            bsonType: 'string'
+          },
+          manifestChecksum: {
+            bsonType: 'string'
+          },
+          permissionsChecksum: {
+            bsonType: 'string'
+          },
+          revision: {
+            bsonType: 'int'
+          }
+        },
+        additionalProperties: false
+      },
+      texts: {
+        bsonType: 'array',
+        items: {
+          bsonType: 'object',
+          required: ['bookNum', 'hasSource'],
+          properties: {
+            bookNum: {
+              bsonType: 'int'
+            },
+            hasSource: {
+              bsonType: 'bool'
+            },
+            chapters: {
+              bsonType: 'array',
+              items: {
+                bsonType: 'object',
+                required: ['number', 'lastVerse', 'isValid'],
+                properties: {
+                  number: {
+                    bsonType: 'int'
+                  },
+                  lastVerse: {
+                    bsonType: 'int'
+                  },
+                  hasAudio: {
+                    bsonType: 'bool'
+                  },
+                  isValid: {
+                    bsonType: 'bool'
+                  },
+                  permissions: {
+                    bsonType: 'object',
+                    patternProperties: {
+                      '^[0-9a-f]+$': {
+                        bsonType: 'string'
+                      }
+                    },
+                    additionalProperties: false
+                  }
+                },
+                additionalProperties: false
+              }
+            },
+            permissions: {
+              bsonType: 'object',
+              patternProperties: {
+                '^[0-9a-f]+$': {
+                  bsonType: 'string'
+                }
+              },
+              additionalProperties: false
+            }
+          },
+          additionalProperties: false
+        }
+      },
+      noteTags: {
+        bsonType: 'array',
+        items: {
+          bsonType: 'object',
+          required: ['tagId', 'name', 'icon', 'creatorResolve'],
+          properties: {
+            tagId: {
+              bsonType: 'int'
+            },
+            name: {
+              bsonType: 'string'
+            },
+            icon: {
+              bsonType: 'string'
+            },
+            creatorResolve: {
+              bsonType: 'bool'
+            }
+          },
+          additionalProperties: false
+        }
+      },
+      sync: {
+        bsonType: 'object',
+        properties: {
+          queuedCount: {
+            bsonType: 'int'
+          },
+          lastSyncSuccessful: {
+            bsonType: 'bool'
+          },
+          dateLastSuccessfulSync: {
+            bsonType: 'string'
+          },
+          syncedToRepositoryVersion: {
+            bsonType: 'string'
+          },
+          dataInSync: {
+            bsonType: 'bool'
+          }
+        },
+        additionalProperties: false
+      },
+      editable: {
+        bsonType: 'bool'
+      },
+      defaultFontSize: {
+        bsonType: 'int'
+      },
+      defaultFont: {
+        bsonType: 'string'
+      },
+      maxGeneratedUsersPerShareKey: {
+        bsonType: 'int'
+      },
+      paratextUsers: {
+        bsonType: 'array',
+        items: {
+          bsonType: 'object',
+          required: ['username', 'opaqueUserId'],
+          properties: {
+            username: {
+              bsonType: 'string'
+            },
+            opaqueUserId: {
+              bsonType: 'string'
+            },
+            sfUserId: {
+              bsonType: 'string'
+            }
+          },
+          additionalProperties: false
+        }
+      }
+    },
+    additionalProperties: false
+  };
 
   constructor(sfProjectMigrations: MigrationConstructor[]) {
     super(sfProjectMigrations);

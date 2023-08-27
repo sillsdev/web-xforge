@@ -1,6 +1,7 @@
 import { Connection, Doc } from 'sharedb/lib/client';
 import { createFetchQuery, docSubmitJson0Op } from '../../common/utils/sharedb-utils';
 import { OwnedData } from '../../common/models/owned-data';
+import { ValidationSchema } from '../../common/models/validation-schema';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { ANY_INDEX } from '../../common/utils/obj-path';
 import { NoteThread, NOTE_THREAD_COLLECTION, NOTE_THREAD_INDEX_PATHS } from '../models/note-thread';
@@ -15,6 +16,137 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
 
   protected readonly indexPaths = NOTE_THREAD_INDEX_PATHS;
   protected readonly listenForUpdates = true;
+  readonly validationSchema: ValidationSchema = {
+    bsonType: SFProjectDataService.validationSchema.bsonType,
+    required: SFProjectDataService.validationSchema.required,
+    properties: {
+      ...SFProjectDataService.validationSchema.properties,
+      _id: {
+        bsonType: 'string',
+        pattern: '^[0-9a-f]+:[0-9a-f]+$'
+      },
+      dataId: {
+        bsonType: 'string'
+      },
+      threadId: {
+        bsonType: 'string'
+      },
+      verseRef: {
+        bsonType: 'object',
+        required: ['bookNum', 'chapterNum', 'verseNum'],
+        properties: {
+          bookNum: {
+            bsonType: 'int'
+          },
+          chapterNum: {
+            bsonType: 'int'
+          },
+          verseNum: {
+            bsonType: 'int'
+          },
+          verse: {
+            bsonType: 'string'
+          }
+        },
+        additionalProperties: false
+      },
+      notes: {
+        bsonType: 'array',
+        items: {
+          bsonType: 'object',
+          required: ['threadId', 'type', 'status', 'dataId', 'deleted', 'dateModified', 'dateCreated'],
+          properties: {
+            threadId: {
+              bsonType: 'string'
+            },
+            type: {
+              bsonType: 'string'
+            },
+            conflictType: {
+              bsonType: 'string'
+            },
+            status: {
+              enum: ['', 'todo', 'done', 'deleted']
+            },
+            tagId: {
+              bsonType: 'int'
+            },
+            reattached: {
+              bsonType: 'string'
+            },
+            assignment: {
+              bsonType: 'string'
+            },
+            content: {
+              bsonType: 'string'
+            },
+            acceptedChangeXml: {
+              bsonType: 'string'
+            },
+            dataId: {
+              bsonType: 'string',
+              pattern: '^.+$'
+            },
+            deleted: {
+              bsonType: 'bool'
+            },
+            syncUserRef: {
+              bsonType: 'string'
+            },
+            dateModified: {
+              bsonType: 'string'
+            },
+            dateCreated: {
+              bsonType: 'string'
+            },
+            editable: {
+              bsonType: 'bool'
+            },
+            versionNumber: {
+              bsonType: 'int'
+            },
+            ownerRef: {
+              bsonType: 'string',
+              pattern: '^.*$'
+            }
+          },
+          additionalProperties: false
+        }
+      },
+      originalSelectedText: {
+        bsonType: 'string'
+      },
+      originalContextBefore: {
+        bsonType: 'string'
+      },
+      originalContextAfter: {
+        bsonType: 'string'
+      },
+      position: {
+        bsonType: 'object',
+        required: ['start', 'length'],
+        properties: {
+          start: {
+            bsonType: 'int'
+          },
+          length: {
+            bsonType: 'int'
+          }
+        },
+        additionalProperties: false
+      },
+      status: {
+        enum: ['', 'todo', 'done', 'deleted']
+      },
+      publishedToSF: {
+        bsonType: 'bool'
+      },
+      assignment: {
+        bsonType: 'string'
+      }
+    },
+    additionalProperties: false
+  };
 
   constructor() {
     super(NOTE_THREAD_MIGRATIONS);

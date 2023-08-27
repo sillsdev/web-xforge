@@ -1,6 +1,7 @@
 import { ConnectSession } from '../../common/connect-session';
 import { Project } from '../../common/models/project';
 import { Operation } from '../../common/models/project-rights';
+import { ValidationSchema } from '../../common/models/validation-schema';
 import { DocService } from '../../common/services/doc-service';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from '../models/sf-project-rights';
 import { TextData, TEXTS_COLLECTION, TEXT_INDEX_PATHS } from '../models/text-data';
@@ -13,6 +14,24 @@ export class TextService extends DocService<TextData> {
   readonly collection = TEXTS_COLLECTION;
 
   protected readonly indexPaths = TEXT_INDEX_PATHS;
+  readonly validationSchema: ValidationSchema = {
+    bsonType: DocService.validationSchema.bsonType,
+    required: DocService.validationSchema.required,
+    properties: {
+      ...DocService.validationSchema.properties,
+      _id: {
+        bsonType: 'string',
+        pattern: '^[0-9a-f]+:[0-9A-Z]+:[0-9]+:target$'
+      },
+      ops: {
+        bsonType: 'array',
+        items: {
+          bsonType: 'object'
+        }
+      }
+    },
+    additionalProperties: false
+  };
 
   constructor() {
     super(TEXT_MIGRATIONS);

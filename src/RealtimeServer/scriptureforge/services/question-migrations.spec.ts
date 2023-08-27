@@ -52,6 +52,7 @@ class TestEnvironment {
     this.server = new RealtimeServer(
       'TEST',
       false,
+      true,
       [new QuestionService()],
       QUESTIONS_COLLECTION,
       this.db,

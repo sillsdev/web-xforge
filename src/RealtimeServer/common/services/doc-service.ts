@@ -1,6 +1,7 @@
 import { Db } from 'mongodb';
 import { ConnectSession } from '../connect-session';
 import { Migration, MigrationConstructor } from '../migration';
+import { ValidationSchema } from '../models/validation-schema';
 import { RealtimeServer } from '../realtime-server';
 
 /**
@@ -11,6 +12,37 @@ export abstract class DocService<T = any> {
   readonly schemaVersion: number;
   protected server?: RealtimeServer;
   private readonly migrations = new Map<number, MigrationConstructor>();
+
+  // This is a base schema that covers the minimum required properties for a ShareDB collection
+  // NOTE: Schemas that use this must implement the property "_id"
+  static readonly validationSchema: ValidationSchema = {
+    bsonType: 'object',
+    required: ['_id', '_type', '_v', '_m', '_o'],
+    properties: {
+      _type: {
+        bsonType: ['null', 'string']
+      },
+      _v: {
+        bsonType: 'int'
+      },
+      _m: {
+        bsonType: 'object',
+        required: ['ctime', 'mtime'],
+        properties: {
+          ctime: {
+            bsonType: 'number'
+          },
+          mtime: {
+            bsonType: 'number'
+          }
+        },
+        additionalProperties: false
+      },
+      _o: {
+        bsonType: 'objectId'
+      }
+    }
+  };
 
   constructor(migrations: MigrationConstructor[]) {
     let maxVersion = 0;
@@ -23,6 +55,7 @@ export abstract class DocService<T = any> {
 
   abstract get collection(): string;
   protected abstract get indexPaths(): string[];
+  validationSchema: ValidationSchema | undefined = undefined;
 
   init(server: RealtimeServer): void {
     this.server = server;
@@ -46,6 +79,21 @@ export abstract class DocService<T = any> {
     for (const path of this.indexPaths) {
       const collection = db.collection(this.collection);
       await collection.createIndex({ [path]: 1 });
+    }
+  }
+
+  async addValidationSchema(db: Db): Promise<void> {
+    if (this.validationSchema != null) {
+      const collectionExists = await db.listCollections({ name: this.collection }).hasNext();
+      if (!collectionExists) await db.createCollection(this.collection);
+      await db.command({
+        collMod: this.collection,
+        validator: {
+          $jsonSchema: this.validationSchema
+        },
+        validationAction: 'warn',
+        validationLevel: 'strict'
+      });
     }
   }
 
