@@ -77,7 +77,13 @@ public class Startup
         services.AddExceptionReporting(Configuration);
         services.AddConfiguration(Configuration);
         services.AddFeatureManagement(Configuration).AddSessionManager<MigratorFeatureSessionManager>();
-        services.AddSFRealtimeServer(LoggerFactory, Configuration, nodeOptions: null, Program.MigrationsDisabled);
+        services.AddSFRealtimeServer(
+            LoggerFactory,
+            Configuration,
+            nodeOptions: null,
+            Program.MigrationsDisabled,
+            useExistingRealtimeServer: true
+        );
         services.AddSFServices();
         services.AddSFDataAccess(Configuration);
         services.AddSignalR();

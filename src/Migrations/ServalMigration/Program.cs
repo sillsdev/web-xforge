@@ -55,18 +55,6 @@ public class Program
         Directory.SetCurrentDirectory(sfAppDir);
         IWebHostBuilder builder = CreateWebHostBuilder(args);
         IWebHost webHost = builder.Build();
-        try
-        {
-            await webHost.StartAsync();
-        }
-        catch (HttpRequestException)
-        {
-            Log(
-                "There was an error starting the program before getting to the migration"
-                    + " part. Maybe the SF server is running and needs shut down? Rethrowing."
-            );
-            throw;
-        }
 
         // Get the project IDs and admin IDs, if they were set in the environment variables
         string[] sfProjectIdsToMigrate = sfProjectIdsSubset?.Split(' ') ?? Array.Empty<string>();
