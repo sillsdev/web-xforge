@@ -1,3 +1,4 @@
+#nullable enable annotations
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -2394,7 +2395,7 @@ public class ParatextService : DisposableBase, IParatextService
         bool conflictTypeChanged = comment.ConflictType.InternalValue != note.ConflictType;
         bool acceptedChangeXmlChanged = comment.AcceptedChangeXmlStr != note.AcceptedChangeXml;
         string equivalentNoteContent = GetNoteContentFromComment(comment);
-        bool contentChanged = GetUpdatedContentIfChanged(equivalentNoteContent, note.Content) != null;
+        bool contentChanged = GetUpdatedContentIfChanged(note.Content, equivalentNoteContent) != null;
         bool tagChanged = commentTag?.Id != note.TagId;
         bool assignedUserChanged = GetAssignedUserRef(comment.AssignedUser, ptProjectUsers) != note.Assignment;
         bool versionNumberChanged = (note.VersionNumber ?? 0) != comment.VersionNumber;
@@ -2526,16 +2527,19 @@ public class ParatextService : DisposableBase, IParatextService
     /// Compares the xml contents and return the string representation of the other xml content if changed.
     /// </summary>
     /// <returns> The other xml content if changed; otherwise, <c>null</c>. </returns>
-    private static string GetUpdatedContentIfChanged(string currentXml, string otherXml)
+    private static string? GetUpdatedContentIfChanged(string currentXml, string otherXml)
     {
         if (string.IsNullOrEmpty(currentXml))
         {
             if (string.IsNullOrEmpty(otherXml))
                 return null;
-            return XDocument.Parse(otherXml).ToString();
+            return otherXml;
         }
         if (string.IsNullOrEmpty(otherXml))
+        {
+            // return the empty string to indicate that the updated content should be empty
             return string.Empty;
+        }
 
         string xmlWithRoot = $"<root>{currentXml}</root>";
         string otherXmlWithRoot = $"<root>{otherXml}</root>";
