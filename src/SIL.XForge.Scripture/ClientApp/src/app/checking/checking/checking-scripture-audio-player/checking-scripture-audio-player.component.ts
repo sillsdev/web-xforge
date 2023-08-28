@@ -68,6 +68,7 @@ export class CheckingScriptureAudioPlayerComponent {
   }
 
   close(): void {
+    this.pause();
     this.closed.emit();
   }
 }
