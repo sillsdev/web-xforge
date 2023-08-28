@@ -65,6 +65,7 @@
     "xfvalidators",
     "xlink"
   ],
+  "dotnet.defaultSolution": "xForge.sln",
   "dotnet-test-explorer.testProjectPath": "test/**/*.Tests.csproj",
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
