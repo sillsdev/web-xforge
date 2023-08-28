@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AudioTiming } from 'realtime-server/scriptureforge/models/audio-timing';
 import { of } from 'rxjs';
-import { instance, mock, when } from 'ts-mockito';
+import { instance, mock, spy, verify, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
@@ -113,6 +113,42 @@ describe('ScriptureAudioComponent', () => {
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
     expect(verseChangedSpy).toHaveBeenCalledWith('s_1');
     expect(verseChangedSpy).toHaveBeenCalledWith('s_2');
+  });
+
+  it('pauses and emits on close', async () => {
+    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
+
+    let count = 0;
+    env.component.audioPlayer.closed.subscribe(() => count++);
+
+    const audio = spy(env.component.audioPlayer);
+    verify(audio?.pause()).never();
+
+    env.component.audioPlayer.close();
+
+    verify(audio?.pause()).once();
+    expect(count).toEqual(1);
+  });
+
+  it('pauses and emits on close', async () => {
+    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
+
+    let count = 0;
+    env.component.audioPlayer.closed.subscribe(() => count++);
+
+    const audio = spy(env.component.audioPlayer);
+    verify(audio?.pause()).never();
+
+    env.component.audioPlayer.close();
+
+    verify(audio?.pause()).once();
+    expect(count).toEqual(1);
   });
 });
 
