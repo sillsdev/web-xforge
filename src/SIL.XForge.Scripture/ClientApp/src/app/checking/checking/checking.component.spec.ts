@@ -35,6 +35,7 @@ import * as RichText from 'rich-text';
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
+import { AudioPlayerComponent } from 'src/app/shared/audio/audio-player/audio-player.component';
 import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -129,6 +130,7 @@ describe('CheckingComponent', () => {
   configureTestingModule(() => ({
     declarations: [
       AudioTimePipe,
+      AudioPlayerComponent,
       CheckingAnswersComponent,
       CheckingAudioCombinedComponent,
       CheckingAudioPlayerComponent,
