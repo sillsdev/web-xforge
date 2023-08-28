@@ -295,6 +295,21 @@ export class SFProjectService extends ProjectService<SFProject> {
       maxGeneratedUsersPerShareKey: {
         bsonType: 'int'
       },
+      biblicalTermsConfig: {
+        bsonType: 'object',
+        properties: {
+          biblicalTermsEnabled: {
+            bsonType: 'bool'
+          },
+          errorMessage: {
+            bsonType: 'string'
+          },
+          hasRenderings: {
+            bsonType: 'bool'
+          }
+        },
+        additionalProperties: false
+      },
       paratextUsers: {
         bsonType: 'array',
         items: {

@@ -143,6 +143,27 @@ export class NoteThreadService extends SFProjectDataService<NoteThread> {
       },
       assignment: {
         bsonType: 'string'
+      },
+      biblicalTermId: {
+        bsonType: 'string'
+      },
+      extraHeadingInfo: {
+        bsonType: 'object',
+        properties: {
+          gloss: {
+            bsonType: 'string'
+          },
+          language: {
+            bsonType: 'string'
+          },
+          lemma: {
+            bsonType: 'string'
+          },
+          transliteration: {
+            bsonType: 'string'
+          }
+        },
+        additionalProperties: false
       }
     },
     additionalProperties: false
