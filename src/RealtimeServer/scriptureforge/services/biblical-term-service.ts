@@ -1,3 +1,4 @@
+import { ValidationSchema } from '../../common/models/validation-schema';
 import { ProjectDomainConfig } from '../../common/services/project-data-service';
 import { BiblicalTerm, BIBLICAL_TERM_COLLECTION, BIBLICAL_TERM_INDEX_PATHS } from '../models/biblical-term';
 import { SFProjectDomain } from '../models/sf-project-rights';
@@ -9,6 +10,83 @@ export class BiblicalTermService extends SFProjectDataService<BiblicalTerm> {
 
   protected readonly indexPaths = BIBLICAL_TERM_INDEX_PATHS;
   protected readonly listenForUpdates = true;
+  readonly validationSchema: ValidationSchema = {
+    bsonType: SFProjectDataService.validationSchema.bsonType,
+    required: SFProjectDataService.validationSchema.required,
+    properties: {
+      ...SFProjectDataService.validationSchema.properties,
+      _id: {
+        bsonType: 'string',
+        pattern: '^[0-9a-f]+:[0-9a-f]+$'
+      },
+      dataId: {
+        bsonType: 'string',
+        pattern: '[a-z0-9]+'
+      },
+      termId: {
+        bsonType: 'string'
+      },
+      transliteration: {
+        bsonType: 'string'
+      },
+      renderings: {
+        bsonType: 'array',
+        items: {
+          bsonType: 'string'
+        }
+      },
+      description: {
+        bsonType: 'string'
+      },
+      language: {
+        bsonType: 'string'
+      },
+      links: {
+        bsonType: 'array',
+        items: {
+          bsonType: 'string'
+        }
+      },
+      references: {
+        bsonType: 'array',
+        items: {
+          bsonType: 'int'
+        }
+      },
+      definitions: {
+        bsonType: 'object',
+        patternProperties: {
+          '^[A-Za-z-]+$': {
+            bsonType: 'object',
+            required: ['categories', 'domains', 'gloss', 'notes'],
+            properties: {
+              categories: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'string'
+                }
+              },
+              domains: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'string'
+                }
+              },
+              gloss: {
+                bsonType: 'string'
+              },
+              notes: {
+                bsonType: 'string'
+              }
+            },
+            additionalProperties: false
+          }
+        },
+        additionalProperties: false
+      }
+    },
+    additionalProperties: false
+  };
 
   constructor() {
     super(BIBLICAL_TERM_MIGRATIONS);
