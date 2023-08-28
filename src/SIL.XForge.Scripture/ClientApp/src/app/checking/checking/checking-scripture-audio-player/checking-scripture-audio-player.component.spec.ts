@@ -11,7 +11,7 @@ import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
-import { getAudioTimings, getAudioTimingWithHeadings } from '../../../shared/test-utils';
+import { getAudioTimings, getAudioTimingWithHeadings } from '../../checking.utils.spec';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
 
 const audioFile = 'test-audio-player.webm';
@@ -46,13 +46,13 @@ describe('ScriptureAudioComponent', () => {
     await env.waitForPlayer();
     env.nextRefButton.nativeElement.click();
     await env.waitForPlayer();
-    expect(env.component.audioPlayer.currentRef).toEqual('2');
+    expect(env.component.audioPlayer.currentVerseLabel).toEqual('Genesis 1:2');
     env.previousRefButton.nativeElement.click();
     await env.waitForPlayer();
-    expect(env.component.audioPlayer.currentRef).toEqual('1');
+    expect(env.component.audioPlayer.currentVerseLabel).toEqual('Genesis 1:1');
     env.previousRefButton.nativeElement.click();
     await env.waitForPlayer();
-    expect(env.component.audioPlayer.currentRef).toEqual('1');
+    expect(env.component.audioPlayer.currentVerseLabel).toEqual('Genesis 1:1');
   });
 
   it('can skip through section headings', async () => {
@@ -66,16 +66,18 @@ describe('ScriptureAudioComponent', () => {
     await env.waitForPlayer();
     env.nextRefButton.nativeElement.click();
     await env.waitForPlayer();
-    expect(env.component.audioPlayer.currentRef).toEqual('s_1');
+    // section heading before verse 2
+    expect(env.component.audioPlayer.currentVerseLabel).toEqual('Genesis 1:1');
     env.nextRefButton.nativeElement.click();
     await env.waitForPlayer();
-    expect(env.component.audioPlayer.currentRef).toEqual('2');
+    expect(env.component.audioPlayer.currentVerseLabel).toEqual('Genesis 1:2');
     env.previousRefButton.nativeElement.click();
     await env.waitForPlayer();
-    expect(env.component.audioPlayer.currentRef).toEqual('s_1');
+    // section heading before verse 2
+    expect(env.component.audioPlayer.currentVerseLabel).toEqual('Genesis 1:1');
     env.previousRefButton.nativeElement.click();
     await env.waitForPlayer();
-    expect(env.component.audioPlayer.currentRef).toEqual('1');
+    expect(env.component.audioPlayer.currentVerseLabel).toEqual('Genesis 1:1');
   });
 
   it('emits verse changed event', async () => {
