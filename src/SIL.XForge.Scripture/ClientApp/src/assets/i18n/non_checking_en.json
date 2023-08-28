@@ -12,6 +12,7 @@
     "description": "Description",
     "edit_renderings": "Edit Renderings",
     "renderings": "Renderings",
+    "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
     "save": "Save",
     "term": "Term/Definition",
     "view_renderings": "View Renderings"
@@ -290,7 +291,7 @@
   },
   "suggestions_settings_dialog": {
     "better": "Better",
-    "biblical_terms": "Show/Hide Biblical Terms",
+    "biblical_terms": "Show Biblical Terms",
     "close": "Close",
     "more": "More",
     "number_of_suggestions": "Number of suggestions",

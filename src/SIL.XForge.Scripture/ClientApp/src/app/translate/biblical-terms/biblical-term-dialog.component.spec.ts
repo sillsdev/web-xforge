@@ -45,9 +45,9 @@ describe('BiblicalTermDialogComponent', () => {
     env.wait();
 
     env.openDialog('id01');
-    expect(env.getTextFieldValue(env.term)).toBe('termId01 --- gloss01_en --- notes01_en');
-    expect(env.getTextFieldValue(env.renderings)).toBe('rendering01');
-    expect(env.getTextFieldValue(env.description)).toBe('description01');
+    expect(env.term.value).toBe('termId01 --- gloss01_en --- notes01_en');
+    expect(env.renderings.value).toBe('rendering01');
+    expect(env.description.value).toBe('description01');
     env.closeDialog();
   }));
 
@@ -57,9 +57,9 @@ describe('BiblicalTermDialogComponent', () => {
     env.wait();
 
     env.openDialog('id01');
-    expect(env.getTextFieldValue(env.term)).toBe('termId01 --- gloss01_fr --- notes01_fr');
-    expect(env.getTextFieldValue(env.renderings)).toBe('rendering01');
-    expect(env.getTextFieldValue(env.description)).toBe('description01');
+    expect(env.term.value).toBe('termId01 --- gloss01_fr --- notes01_fr');
+    expect(env.renderings.value).toBe('rendering01');
+    expect(env.description.value).toBe('description01');
     env.closeDialog();
   }));
 
@@ -70,9 +70,9 @@ describe('BiblicalTermDialogComponent', () => {
 
     env.openDialog('id01');
     expect(I18nService.defaultLocale.canonicalTag).toBe('en');
-    expect(env.getTextFieldValue(env.term)).toBe('termId01 --- gloss01_en --- notes01_en');
-    expect(env.getTextFieldValue(env.renderings)).toBe('rendering01');
-    expect(env.getTextFieldValue(env.description)).toBe('description01');
+    expect(env.term.value).toBe('termId01 --- gloss01_en --- notes01_en');
+    expect(env.renderings.value).toBe('rendering01');
+    expect(env.description.value).toBe('description01');
     env.closeDialog();
   }));
 
@@ -83,9 +83,9 @@ describe('BiblicalTermDialogComponent', () => {
 
     env.openDialog('id02');
     expect(I18nService.defaultLocale.canonicalTag).toBe('en');
-    expect(env.getTextFieldValue(env.term)).toBe('termId02');
-    expect(env.getTextFieldValue(env.renderings)).toBe('');
-    expect(env.getTextFieldValue(env.description)).toBe('description02');
+    expect(env.term.value).toBe('termId02');
+    expect(env.renderings.value).toBe('');
+    expect(env.description.value).toBe('description02');
     env.closeDialog();
   }));
 
@@ -96,9 +96,9 @@ describe('BiblicalTermDialogComponent', () => {
     env.wait();
 
     env.openDialog('id01');
-    expect(env.getTextFieldValue(env.term)).toBe('transliteration01 --- gloss01_en --- notes01_en');
-    expect(env.getTextFieldValue(env.renderings)).toBe('rendering01');
-    expect(env.getTextFieldValue(env.description)).toBe('description01');
+    expect(env.term.value).toBe('transliteration01 --- gloss01_en --- notes01_en');
+    expect(env.renderings.value).toBe('rendering01');
+    expect(env.description.value).toBe('description01');
     env.closeDialog();
   }));
 
@@ -124,8 +124,8 @@ describe('BiblicalTermDialogComponent', () => {
     env.wait();
 
     env.openDialog('id01', 'user02');
-    expect((env.renderings.querySelector('textarea') as HTMLTextAreaElement).readOnly).toBe(true);
-    expect((env.description.querySelector('textarea') as HTMLTextAreaElement).readOnly).toBe(true);
+    expect(env.renderings.readOnly).toBe(true);
+    expect(env.description.readOnly).toBe(true);
     expect(env.submitButton).toBeNull();
     env.closeDialog();
   }));
@@ -160,12 +160,12 @@ class TestEnvironment {
     return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
-  get term(): HTMLElement {
-    return this.overlayContainerElement.querySelector('#term') as HTMLElement;
+  get term(): HTMLTextAreaElement {
+    return this.overlayContainerElement.querySelector('#term') as HTMLTextAreaElement;
   }
 
-  get renderings(): HTMLElement {
-    return this.overlayContainerElement.querySelector('#renderings') as HTMLElement;
+  get renderings(): HTMLTextAreaElement {
+    return this.overlayContainerElement.querySelector('#renderings') as HTMLTextAreaElement;
   }
 
   get description(): HTMLTextAreaElement {
@@ -191,11 +191,6 @@ class TestEnvironment {
 
   getProjectDoc(id: string): SFProjectProfileDoc {
     return this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, id);
-  }
-
-  getTextFieldValue(element: HTMLElement): string {
-    const inputElem = element.querySelector('textarea') as HTMLTextAreaElement;
-    return inputElem.value;
   }
 
   openDialog(biblicalTermId: string, userId: string = 'user01'): void {
@@ -228,11 +223,10 @@ class TestEnvironment {
     });
   }
 
-  setTextFieldValue(textField: HTMLElement, value: string): void {
-    const inputElem = textField.querySelector('textarea') as HTMLTextAreaElement;
-    inputElem.value = value;
-    inputElem.dispatchEvent(new Event('input'));
-    inputElem.dispatchEvent(new Event('change'));
+  setTextFieldValue(textField: HTMLTextAreaElement, value: string): void {
+    textField.value = value;
+    textField.dispatchEvent(new Event('input'));
+    textField.dispatchEvent(new Event('change'));
     this.wait();
   }
 

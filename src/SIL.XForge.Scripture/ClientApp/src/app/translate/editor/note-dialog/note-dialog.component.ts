@@ -50,7 +50,7 @@ interface NoteDisplayInfo {
 
 // TODO: Implement a diff - there is an accepted solution here that might be a good starting point:
 // https://codereview.stackexchange.com/questions/133586/a-string-prototype-diff-implementation-text-diff
-
+// TODO: Refactor to have a Biblical Term Note Dialog subclass (will require spec.ts refactoring too)
 @Component({
   templateUrl: './note-dialog.component.html',
   styleUrls: ['./note-dialog.component.scss']

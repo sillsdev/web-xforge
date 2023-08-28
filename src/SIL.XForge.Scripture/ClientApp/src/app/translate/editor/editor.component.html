@@ -92,7 +92,7 @@
           <mat-icon>info</mat-icon> {{ t("no_permission_edit_chapter", { userRole: userRoleStr }) }}
         </div>
         <as-split direction="vertical" [style.height]="textHeight">
-          <as-split-area [size]="mediaObserver.isActive('xs') ? 100 : 75">
+          <as-split-area [size]="75">
             <div #targetContainer class="text-container" [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'">
               <app-text
                 #target
@@ -160,7 +160,7 @@
               </div>
             </div>
           </as-split-area>
-          <as-split-area [size]="mediaObserver.isActive('xs') ? 0 : 25" *ngIf="biblicalTermsEnabledForTarget">
+          <as-split-area [size]="25" *ngIf="biblicalTermsEnabledForTarget">
             <app-biblical-terms
               id="target-biblical-terms"
               [bookNum]="bookNum"

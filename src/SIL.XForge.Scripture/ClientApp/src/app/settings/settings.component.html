@@ -87,10 +87,16 @@
                 class="helper-text checkbox-helper-text"
                 [innerHTML]="i18n.translateAndInsertTags('settings.biblical_terms_will_be_enabled')"
               ></mat-hint>
+              <mat-error *ngIf="biblicalTermsMessage">
+                <app-info
+                  *ngIf="biblicalTermsMessage"
+                  icon="error"
+                  type="error"
+                  [text]="biblicalTermsMessage"
+                ></app-info>
+                <span>{{ biblicalTermsMessage }}</span>
+              </mat-error>
             </div>
-            <mat-error *ngIf="biblicalTermsMessage">
-              {{ biblicalTermsMessage }}
-            </mat-error>
           </mat-card-content>
           <mat-divider></mat-divider>
           <mat-card-content>

@@ -219,7 +219,7 @@ describe('BiblicalTermsComponent', () => {
     expect(biblicalTermId.toString()).toEqual('dataId02');
 
     const biblicalTerm = env.getBiblicalTermDoc(projectId, biblicalTermId);
-    const verseData: VerseRefData = fromVerseRef(env.component.getVerseRef(biblicalTerm.data!.references[0]));
+    const verseData: VerseRefData = fromVerseRef(new VerseRef(biblicalTerm.data!.references[0]));
     verify(mockedProjectService.createNoteThread(projectId, anything())).once();
     const [, noteThread] = capture(mockedProjectService.createNoteThread).last();
     expect(noteThread.verseRef).toEqual(verseData);
@@ -252,7 +252,7 @@ describe('BiblicalTermsComponent', () => {
     expect(biblicalTermId.toString()).toEqual(noteDataId);
 
     const biblicalTerm = env.getBiblicalTermDoc(projectId, biblicalTermId);
-    const verseData: VerseRefData = fromVerseRef(env.component.getVerseRef(biblicalTerm.data!.references[0]));
+    const verseData: VerseRefData = fromVerseRef(new VerseRef(biblicalTerm.data!.references[0]));
     const noteThread = env.getNoteThreadDoc(projectId, 'threadId01').data!;
     expect(noteThread.verseRef).toEqual(verseData);
     expect(noteThread.originalSelectedText).toEqual('');
