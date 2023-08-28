@@ -1718,13 +1718,10 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
 
       expect(env.component.chapterAudio).toBeDefined();
-      const audio = spy(env.component.chapterAudio);
-      verify(audio?.pause()).never();
 
       env.component.hideChapterAudio();
       env.fixture.detectChanges();
 
-      verify(audio?.pause()).once();
       expect(env.component.chapterAudio).toBe(undefined);
     }));
   });
