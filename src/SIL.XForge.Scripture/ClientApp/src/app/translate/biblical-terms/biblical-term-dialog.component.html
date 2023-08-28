@@ -1,42 +1,33 @@
 <ng-container *transloco="let t; read: 'biblical_term_dialog'">
   <h1 mat-dialog-title>{{ t(canEdit() ? "edit_renderings" : "view_renderings") }}</h1>
   <mat-dialog-content>
-    <mdc-form-field [formGroup]="form">
-      <mdc-textarea
+    <mat-form-field [formGroup]="form" appearance="outline">
+      <mat-label>{{ t("term") }}</mat-label>
+      <textarea appAutofocus matInput cdkTextareaAutosize id="term" formControlName="term" readonly="true"></textarea>
+    </mat-form-field>
+    <mat-form-field [formGroup]="form" appearance="outline">
+      <mat-label>{{ t("renderings") }}</mat-label>
+      <textarea
         appAutofocus
-        label="{{ t('term') }}"
-        type="text"
-        id="term"
-        formControlName="term"
-        [outlined]="true"
-        [fullwidth]="true"
-        [readonly]="true"
-      ></mdc-textarea>
-    </mdc-form-field>
-    <mdc-form-field [formGroup]="form">
-      <mdc-textarea
-        appAutofocus
-        label="{{ t('renderings') }}"
-        type="text"
+        matInput
+        cdkTextareaAutosize
         id="renderings"
         formControlName="renderings"
-        [outlined]="true"
-        [fullwidth]="true"
         [readonly]="!canEdit()"
-      ></mdc-textarea>
-    </mdc-form-field>
-    <mdc-form-field [formGroup]="form">
-      <mdc-textarea
+      ></textarea>
+      <mat-hint>{{ t("renderings_hint") }}</mat-hint>
+    </mat-form-field>
+    <mat-form-field [formGroup]="form" appearance="outline">
+      <mat-label>{{ t("description") }}</mat-label>
+      <textarea
         appAutofocus
-        label="{{ t('description') }}"
-        type="text"
+        matInput
+        cdkTextareaAutosize
         id="description"
         formControlName="description"
-        [outlined]="true"
-        [fullwidth]="true"
         [readonly]="!canEdit()"
-      ></mdc-textarea>
-    </mdc-form-field>
+      ></textarea>
+    </mat-form-field>
   </mat-dialog-content>
   <mat-dialog-actions>
     <button mat-button mat-dialog-close>{{ t(canEdit() ? "cancel" : "close") }}</button>

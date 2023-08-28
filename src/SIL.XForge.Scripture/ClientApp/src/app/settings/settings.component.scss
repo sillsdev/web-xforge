@@ -47,6 +47,11 @@
   .mat-error {
     margin-top: 10px;
     font-size: 14px;
+    display: flex;
+
+    app-info + span {
+      margin-left: 6px;
+    }
   }
 }
 

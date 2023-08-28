@@ -58,6 +58,34 @@ export function getBaseVerse(segmentRef: string): string | undefined {
   return matchArray == null ? undefined : matchArray[0];
 }
 
+/**
+ * Get the verses numbers from a verse reference.
+ * @returns The verse numbers in the VerseRef as integers.
+ * */
+export function getVerseNumbers(verseRef: VerseRef): number[] {
+  const verseList: number[] = [];
+  if (verseRef.verse == null) {
+    verseList.push(verseRef.verseNum); // no bridge or segment info included in verse
+    return verseList;
+  }
+
+  let verseStr = '';
+  for (let i = 0; i < verseRef.verse.length; i++) {
+    if (verseRef.verse[i].match(/[0-9]/i)) {
+      verseStr += verseRef.verse[i];
+    } else if (verseStr.length > 0) {
+      verseList.push(parseInt(verseStr));
+      verseStr = '';
+    }
+  }
+
+  if (verseStr.length > 0) {
+    verseList.push(parseInt(verseStr)); // add any accumulated digits
+  }
+
+  return verseList;
+}
+
 export function getVerseRefFromSegmentRef(bookNum: number, segmentRef: string): VerseRef | undefined {
   const baseRef: string | undefined = getBaseVerse(segmentRef);
   if (baseRef == null) {
