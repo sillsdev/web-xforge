@@ -75,6 +75,27 @@ describe('ScriptureAudioComponent', () => {
     expect(env.isPlaying).toBe(false);
     expect(env.component.finished).toBe(2);
   });
+
+  it('emits finished when skipped to the end', async () => {
+    const template = `<app-checking-scripture-audio-player source="${shortAudioFile}" (finished)="finished = finished + 1"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer();
+
+    env.component.audioPlayer.timing = timingData;
+    await env.waitForPlayer(500);
+    env.playButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.isPlaying).toBe(true);
+    env.nextRefButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.isPlaying).toBe(true);
+    // skip to the end
+    env.nextRefButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.isPlaying).toBe(false);
+    expect(env.component.finished).toBe(1);
+  });
 });
 
 @Component({ selector: 'app-host', template: '' })
