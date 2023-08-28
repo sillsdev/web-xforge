@@ -1131,6 +1131,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         if (!hasNotesInThread)
         {
             await threadDoc.DeleteAsync();
+            _syncMetrics.NoteThreads.Deleted++;
             return;
         }
 
