@@ -2082,6 +2082,12 @@ public class ParatextSyncRunnerTests
 
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
 
+        // Verify the sync metrics
+        SyncMetrics syncMetrics = env.GetSyncMetrics("project01");
+        Assert.That(syncMetrics.Status, Is.EqualTo(SyncStatus.Successful));
+        Assert.That(syncMetrics.NoteThreads, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 1, updated: 0)));
+
+        // Verify that the note thread does not exist
         Assert.Throws<KeyNotFoundException>(() => env.GetNoteThread("project01", "thread01"));
     }
 
