@@ -149,6 +149,8 @@ header {
 
     .panel-content {
       height: 100%;
+      display: flex;
+      flex-direction: column-reverse;
     }
 
     .panel-nav {
@@ -293,11 +295,7 @@ header {
 }
 
 .scripture-audio-player-wrapper {
-  position: absolute;
-  bottom: 0;
   background: #e8eae6;
-  width: 100%;
-  z-index: 1;
   padding: 0.25rem;
 }
 
