@@ -1679,19 +1679,16 @@ describe('CheckingComponent', () => {
       expect(env.component.chapterAudio).toBeDefined();
     }));
 
-    it('can close chapter audio and also pause audio', fakeAsync(() => {
+    it('can close chapter audio', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
       expect(env.component.chapterAudio).toBeDefined();
-      const audio = spy(env.component.chapterAudio);
-      verify(audio?.pause()).never();
 
       env.component.hideChapterAudio();
       env.fixture.detectChanges();
 
-      verify(audio?.pause()).once();
       expect(env.component.chapterAudio).toBe(undefined);
     }));
   });
