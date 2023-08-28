@@ -1,4 +1,6 @@
 @use 'variables';
+
+// This creates css variables for common breakpoints (needed when using MediaBreakpointService with BreakpointObserver)
 @use 'src/xforge-common/media-breakpoints/css-vars';
 
 @use '@material/theme' with (
