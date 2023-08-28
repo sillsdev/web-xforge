@@ -1686,7 +1686,7 @@ describe('CheckingComponent', () => {
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
-      expect(env.component.chapterAudio).not.toBe(undefined);
+      expect(env.component.chapterAudio).toBeDefined();
     }));
 
     it('can close chapter audio and also pause audio', fakeAsync(() => {
@@ -1694,7 +1694,7 @@ describe('CheckingComponent', () => {
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
-      expect(env.component.chapterAudio).not.toBe(undefined);
+      expect(env.component.chapterAudio).toBeDefined();
       const audio = spy(env.component.chapterAudio);
       verify(audio?.pause()).never();
 

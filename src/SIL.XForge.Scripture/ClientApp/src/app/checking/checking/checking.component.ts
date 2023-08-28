@@ -1193,7 +1193,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   }
 
   hideChapterAudio(): void {
-    this.chapterAudio?.pause();
     this.showScriptureAudioPlayer = false;
   }
 

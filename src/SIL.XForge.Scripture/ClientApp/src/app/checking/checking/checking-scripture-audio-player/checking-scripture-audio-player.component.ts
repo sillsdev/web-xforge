@@ -115,6 +115,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   }
 
   close(): void {
+    this.pause();
     this.closed.emit();
   }
 
