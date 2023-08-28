@@ -164,10 +164,12 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return url;
   }
 
-  queryNoteThreads(sfProjectId: string): Promise<RealtimeQuery<NoteThreadDoc>> {
+  queryNoteThreads(sfProjectId: string, bookNum: number, chapterNum: number): Promise<RealtimeQuery<NoteThreadDoc>> {
     const queryParams: QueryParameters = {
       [obj<NoteThread>().pathStr(t => t.projectRef)]: sfProjectId,
-      [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo
+      [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
+      [obj<NoteThread>().pathStr(t => t.verseRef.bookNum)]: bookNum,
+      [obj<NoteThread>().pathStr(t => t.verseRef.chapterNum)]: chapterNum
     };
     return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, queryParams);
   }

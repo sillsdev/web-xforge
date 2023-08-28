@@ -3493,11 +3493,14 @@ class TestEnvironment {
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
     when(mockedSFProjectService.isProjectAdmin('project01', 'user04')).thenResolve(true);
-    when(mockedSFProjectService.queryNoteThreads(anything())).thenCall((id, _) =>
-      this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
-        [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
-        [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo
-      })
+    when(mockedSFProjectService.queryNoteThreads(anything(), anything(), anything())).thenCall(
+      (id, bookNum, chapterNum, _) =>
+        this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
+          [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
+          [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
+          [obj<NoteThread>().pathStr(t => t.verseRef.bookNum)]: bookNum,
+          [obj<NoteThread>().pathStr(t => t.verseRef.chapterNum)]: chapterNum
+        })
     );
     when(mockedSFProjectService.createNoteThread(anything(), anything())).thenCall(
       (projectId: string, noteThread: NoteThread) => {
@@ -3670,12 +3673,15 @@ class TestEnvironment {
   }
   setCommenterUser(userId: 'user02' | 'user05' = 'user05'): void {
     this.setCurrentUser(userId);
-    when(mockedSFProjectService.queryNoteThreads('project01')).thenCall((id, _) =>
-      this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
-        [obj<NoteThread>().pathStr(t => t.publishedToSF)]: userId === 'user05',
-        [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
-        [obj<NoteThread>().pathStr(t => t.projectRef)]: id
-      })
+    when(mockedSFProjectService.queryNoteThreads('project01', anything(), anything())).thenCall(
+      (id, bookNum, chapterNum, _) =>
+        this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
+          [obj<NoteThread>().pathStr(t => t.publishedToSF)]: userId === 'user05',
+          [obj<NoteThread>().pathStr(t => t.status)]: NoteStatus.Todo,
+          [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
+          [obj<NoteThread>().pathStr(t => t.verseRef.bookNum)]: bookNum,
+          [obj<NoteThread>().pathStr(t => t.verseRef.chapterNum)]: chapterNum
+        })
     );
   }
 

@@ -568,7 +568,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           return;
         }
         this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
-        await this.loadNoteThreadDocs(this.projectDoc.id);
         if (this.sourceProjectDoc?.data != null) {
           this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
         }
@@ -1228,6 +1227,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.router.navigateByUrl('/projects/' + this.projectDoc!.id + '/translate', { replaceUrl: true });
       });
     });
+    await this.loadNoteThreadDocs(this.projectDoc.id, this.text.bookNum, this._chapter);
     setTimeout(() => this.setTextHeight());
   }
 
@@ -1453,10 +1453,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private async loadNoteThreadDocs(sfProjectId: string): Promise<void> {
+  private async loadNoteThreadDocs(sfProjectId: string, bookNum: number, chapterNum: number): Promise<void> {
     this.noteThreadQuery?.dispose();
-
-    this.noteThreadQuery = await this.projectService.queryNoteThreads(sfProjectId);
+    this.noteThreadQuery = await this.projectService.queryNoteThreads(sfProjectId, bookNum, chapterNum);
     this.toggleNoteThreadSub?.unsubscribe();
     this.toggleNoteThreadSub = this.subscribe(
       merge(
@@ -1889,8 +1888,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.noteThreadQuery.docs.filter(
       nt =>
         nt.data != null &&
-        nt.data.verseRef.bookNum === this.bookNum &&
-        nt.data.verseRef.chapterNum === this.chapter &&
         nt.data.notes.filter(n => !n.deleted).length > 0 &&
         nt.data.notes[0].type !== NoteType.Conflict
     );
