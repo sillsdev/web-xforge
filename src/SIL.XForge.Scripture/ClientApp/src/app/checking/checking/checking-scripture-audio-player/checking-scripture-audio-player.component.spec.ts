@@ -55,24 +55,32 @@ describe('ScriptureAudioComponent', () => {
   });
 
   it('emits when chapter audio finishes', async () => {
-    const template = `<app-checking-scripture-audio-player source="${shortAudioFile}" (finished)="finished = true"></app-checking-scripture-audio-player>`;
+    const template = `<app-checking-scripture-audio-player source="${shortAudioFile}" (finished)="finished = finished + 1"></app-checking-scripture-audio-player>`;
     const env = new TestEnvironment(template);
     env.fixture.detectChanges();
     await env.waitForPlayer(500);
     env.playButton.nativeElement.click();
     await env.waitForPlayer();
     expect(env.isPlaying).toBe(true);
-    expect(env.component.finished).toBe(false);
+    expect(env.component.finished).toBe(0);
     await env.waitForPlayer(2000);
     expect(env.isPlaying).toBe(false);
-    expect(env.component.finished).toBe(true);
+    expect(env.component.finished).toBe(1);
+
+    // play and finish a second time
+    env.playButton.nativeElement.click();
+    await env.waitForPlayer();
+    expect(env.isPlaying).toBe(true);
+    await env.waitForPlayer(2000);
+    expect(env.isPlaying).toBe(false);
+    expect(env.component.finished).toBe(2);
   });
 });
 
 @Component({ selector: 'app-host', template: '' })
 class HostComponent {
   @ViewChild(CheckingScriptureAudioPlayerComponent) audioPlayer!: CheckingScriptureAudioPlayerComponent;
-  finished: boolean = false;
+  finished: number = 0;
 }
 
 class TestEnvironment {

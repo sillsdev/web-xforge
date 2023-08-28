@@ -1,7 +1,6 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
-import { Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../../../core/models/text-doc';
@@ -14,7 +13,7 @@ import { getVerseStrFromSegmentRef } from '../../../shared/utils';
   templateUrl: './checking-scripture-audio-player.component.html',
   styleUrls: ['./checking-scripture-audio-player.component.scss']
 })
-export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposable {
+export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposable implements AfterViewInit {
   @Input() source?: string;
   @Input() timing?: AudioTiming[];
   @Input() textDocId?: TextDocId;
@@ -46,13 +45,17 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     return !!this.audioPlayer?.audio?.isPlaying;
   }
 
+  ngAfterViewInit(): void {
+    if (this.audioPlayer == null) return;
+    this.subscribe(this.audioPlayer.isAudioAvailable$, isAvailable => {
+      if (isAvailable) {
+        this.subscribe(this.audioPlayer!.audio!.finishedPlaying$, () => this.finished.emit());
+      }
+    });
+  }
+
   play(): void {
     this.audioPlayer?.audio?.play();
-    if (this.audioPlayer?.audio == null) return;
-    const finishedSubscription: Subscription = this.subscribe(this.audioPlayer.audio.finishedPlaying$, () => {
-      this.finished.emit();
-      finishedSubscription.unsubscribe();
-    });
   }
 
   pause(): void {
