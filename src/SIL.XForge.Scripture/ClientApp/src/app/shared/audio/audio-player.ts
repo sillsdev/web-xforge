@@ -26,10 +26,18 @@ export class AudioPlayer extends SubscriptionDisposable {
 
   constructor(source: string, private readonly pwaService: PwaService) {
     super();
+    // Loaded metadata works best for blobs
+    this.audio.addEventListener('loadedmetadata', () => {
+      if (isLocalBlobUrl(this.audio.src)) {
+        this.audioIsReady();
+      }
+    });
+
+    // Loaded data works best for real files
     this.audio.addEventListener('loadeddata', () => {
-      this.currentTime = 0;
-      this.audioDataLoaded = true;
-      this.status$.next(AudioStatus.Available);
+      if (!isLocalBlobUrl(this.audio.src)) {
+        this.audioIsReady();
+      }
     });
 
     // Listening to update events causes the UI to rerender as the audio plays
@@ -94,7 +102,7 @@ export class AudioPlayer extends SubscriptionDisposable {
   }
 
   play(): void {
-    if (AudioPlayer.lastPlayedAudio) {
+    if (AudioPlayer.lastPlayedAudio != null) {
       AudioPlayer.lastPlayedAudio.pause();
     }
 
@@ -141,5 +149,11 @@ export class AudioPlayer extends SubscriptionDisposable {
 
   get isPlaying(): boolean {
     return !this.audio.paused && !this.audio.ended && this.audio.readyState > 2;
+  }
+
+  private audioIsReady(): void {
+    this.currentTime = 0;
+    this.audioDataLoaded = true;
+    this.status$.next(AudioStatus.Available);
   }
 }

@@ -114,12 +114,8 @@ export class CheckingAudioRecorderComponent implements OnInit, OnDestroy {
       disableLogs: true,
       type: 'audio',
       mimeType: 'audio/webm',
-      recorderType: RecordRTC.MediaStreamRecorder
+      recorderType: RecordRTC.StereoAudioRecorder
     };
-    // Fallback for devices not supporting the native Media Recording API i.e. Safari/iOS
-    if (!window.hasOwnProperty('MediaRecorder')) {
-      options.recorderType = RecordRTC.StereoAudioRecorder;
-    }
     this.stream = stream;
     this.recordRTC = RecordRTC(stream, options);
     this.recordRTC.startRecording();

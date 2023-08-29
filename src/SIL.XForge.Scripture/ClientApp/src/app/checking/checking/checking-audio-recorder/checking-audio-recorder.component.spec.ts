@@ -2,7 +2,7 @@ import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -17,6 +17,8 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
+import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
+import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { CheckingAudioRecorderComponent } from './checking-audio-recorder.component';
 
 const mockedNoticeService = mock(NoticeService);
@@ -27,7 +29,7 @@ const mockedI18nService = mock(I18nService);
 
 describe('CheckingAudioRecorderComponent', () => {
   configureTestingModule(() => ({
-    declarations: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent, AudioTimePipe],
+    declarations: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe],
     imports: [UICommonModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: NoticeService, useMock: mockedNoticeService },
@@ -48,11 +50,16 @@ describe('CheckingAudioRecorderComponent', () => {
     expect(env.recordButton).toBeTruthy();
     expect(env.stopRecordingButton).toBeFalsy();
     env.clickButton(env.recordButton);
-    await env.waitForRecorder(1000);
+    // Record for more than 2 seconds in order to test the duration of blob files
+    // which can fail with certain recording types i.e. RecordRTC.MediaStreamRecorder
+    await env.waitForRecorder(2400);
     expect(env.recordButton).toBeFalsy();
     expect(env.stopRecordingButton).toBeTruthy();
     env.clickButton(env.stopRecordingButton);
     await env.waitForRecorder(100);
+    // The actual duration is slightly less than the length recorded so rounding is sufficient
+    // If the duration fails it will return zero
+    expect(Math.floor(await env.getAudioDuration())).toEqual(2);
     expect(env.component.hasAudioAttachment).toBe(true);
   });
 
@@ -116,6 +123,12 @@ class TestEnvironment {
     when(mockedPwaService.isOnline).thenReturn(true);
     when(mockedPwaService.onlineStatus$).thenReturn(of(true));
     this.fixture.detectChanges();
+  }
+
+  async getAudioDuration(): Promise<number> {
+    const audio = new AudioPlayer(this.component.audioUrl, instance(mockedPwaService));
+    await this.waitForRecorder(100);
+    return audio.duration;
   }
 
   get recordButton(): DebugElement {
