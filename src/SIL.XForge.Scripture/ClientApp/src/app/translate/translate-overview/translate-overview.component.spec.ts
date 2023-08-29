@@ -83,7 +83,7 @@ describe('TranslateOverviewComponent', () => {
   describe('Engine Card', () => {
     it('should be hidden when translation suggestions disabled', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setupProjectData(false);
+      env.setupProjectData({ translationSuggestionsEnabled: false });
       env.wait();
 
       expect(env.engineCard).toBeNull();
@@ -92,7 +92,7 @@ describe('TranslateOverviewComponent', () => {
     it('should be hidden when user cannot edit texts', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setCurrentUser('user02');
-      env.setupProjectData(false);
+      env.setupProjectData({ translationSuggestionsEnabled: false });
       env.wait();
 
       expect(env.engineCard).toBeNull();
@@ -107,13 +107,14 @@ describe('TranslateOverviewComponent', () => {
     }));
 
     it('should start training engine if not initially enabled', fakeAsync(() => {
-      const env = new TestEnvironment(false);
+      const env = new TestEnvironment({ translationSuggestionsEnabled: false });
       env.wait();
 
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).never();
+      expect(env.retrainButton).toBeNull();
       env.simulateTranslateSuggestionsEnabled();
       verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).twice();
-      expect().nothing();
+      expect(env.retrainButton).toBeTruthy();
     }));
 
     it('training progress status', fakeAsync(() => {
@@ -171,7 +172,7 @@ describe('TranslateOverviewComponent', () => {
     }));
 
     it('should not create engine if no source text docs', fakeAsync(() => {
-      const env = new TestEnvironment(false);
+      const env = new TestEnvironment({ translationSuggestionsEnabled: false });
       when(mockedTranslationEngineService.checkHasSourceBooks(anything())).thenReturn(false);
       verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
       expect(env.translationSuggestionsInfoMessage).toBeFalsy();
@@ -182,8 +183,43 @@ describe('TranslateOverviewComponent', () => {
       verify(mockedTranslationEngineService.createTranslationEngine(anything())).never();
       expect(env.translationSuggestionsInfoMessage).toBeTruthy();
     }));
+
+    it('can train suggestions', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProjectData({
+        projectId: 'project01',
+        sourceProjectId: 'project02',
+        translationSuggestionsEnabled: true,
+        allSegmentsBlank: false
+      });
+      env.setupProjectData({ projectId: 'project02', translationSuggestionsEnabled: true, allSegmentsBlank: false });
+      env.wait();
+
+      expect(env.component.canTrainSuggestions).toBeTruthy();
+    }));
+
+    it('cannot train suggestions', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProjectData({
+        projectId: 'project01',
+        sourceProjectId: 'project02',
+        translationSuggestionsEnabled: true,
+        allSegmentsBlank: true
+      });
+      env.setupProjectData({ projectId: 'project02', translationSuggestionsEnabled: true, allSegmentsBlank: true });
+      env.wait();
+
+      expect(env.component.canTrainSuggestions).toBeFalsy();
+    }));
   });
 });
+
+interface TestProjectConfiguration {
+  projectId?: string;
+  sourceProjectId?: string;
+  translationSuggestionsEnabled?: boolean;
+  allSegmentsBlank?: boolean;
+}
 
 class TestEnvironment {
   readonly component: TranslateOverviewComponent;
@@ -194,7 +230,7 @@ class TestEnvironment {
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private trainingProgress$ = new Subject<ProgressStatus>();
 
-  constructor(translationSuggestionsEnabled: boolean = true) {
+  constructor(projectConfig: TestProjectConfiguration = {}) {
     const params = { ['projectId']: 'project01' } as Params;
     when(mockedActivatedRoute.params).thenReturn(of(params));
     when(mockedActivatedRoute.snapshot).thenReturn({} as any); // just needs to not be null/undefined
@@ -214,7 +250,7 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(TranslateOverviewComponent);
     this.component = this.fixture.componentInstance;
-    this.setupProjectData(translationSuggestionsEnabled);
+    this.setupProjectData(projectConfig);
   }
 
   get progressTextList(): HTMLElement {
@@ -285,12 +321,20 @@ class TestEnvironment {
     expect(secondaryElem!.textContent).toBe(secondary);
   }
 
-  setupProjectData(translationSuggestionsEnabled: boolean = true): void {
+  setupProjectData(projectConfig: TestProjectConfiguration = {}): void {
+    // Set default configuration values
+    const projectId: string = projectConfig.projectId ?? 'project01';
+    const translationSuggestionsEnabled = projectConfig.translationSuggestionsEnabled ?? true;
+
+    // Setup the project data
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
-      id: 'project01',
+      id: projectId,
       data: createTestProjectProfile({
         translateConfig: {
-          translationSuggestionsEnabled
+          translationSuggestionsEnabled,
+          source: {
+            projectRef: projectConfig.sourceProjectId
+          }
         },
         userRoles: {
           user01: SFProjectRole.ParatextTranslator,
@@ -337,14 +381,14 @@ class TestEnvironment {
       })
     });
 
-    this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 40, 2, 'target'));
-    this.addTextDoc(new TextDocId('project01', 41, 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 41, 2, 'target'));
-    this.addTextDoc(new TextDocId('project01', 42, 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 42, 2, 'target'));
-    this.addTextDoc(new TextDocId('project01', 43, 1, 'target'));
-    this.addTextDoc(new TextDocId('project01', 43, 2, 'target'));
+    this.addTextDoc(new TextDocId(projectId, 40, 1, 'target'), projectConfig.allSegmentsBlank);
+    this.addTextDoc(new TextDocId(projectId, 40, 2, 'target'), projectConfig.allSegmentsBlank);
+    this.addTextDoc(new TextDocId(projectId, 41, 1, 'target'), projectConfig.allSegmentsBlank);
+    this.addTextDoc(new TextDocId(projectId, 41, 2, 'target'), projectConfig.allSegmentsBlank);
+    this.addTextDoc(new TextDocId(projectId, 42, 1, 'target'), projectConfig.allSegmentsBlank);
+    this.addTextDoc(new TextDocId(projectId, 42, 2, 'target'), projectConfig.allSegmentsBlank);
+    this.addTextDoc(new TextDocId(projectId, 43, 1, 'target'), projectConfig.allSegmentsBlank);
+    this.addTextDoc(new TextDocId(projectId, 43, 2, 'target'), projectConfig.allSegmentsBlank);
   }
 
   updateTrainingProgress(percentCompleted: number): void {
@@ -391,28 +435,48 @@ class TestEnvironment {
     this.waitForProjectDocChanges();
   }
 
-  private addTextDoc(id: TextDocId): void {
+  private addTextDoc(id: TextDocId, allSegmentsBlank?: boolean): void {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
     delta.insert({ blank: true }, { segment: 'p_1' });
     delta.insert({ verse: { number: '1', style: 'v' } });
-    delta.insert(`chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
+    if (allSegmentsBlank) {
+      delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_1` });
+    } else {
+      delta.insert(`chapter ${id.chapterNum}, verse 1.`, { segment: `verse_${id.chapterNum}_1` });
+    }
     delta.insert({ verse: { number: '2', style: 'v' } });
     delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_2` });
     delta.insert({ verse: { number: '3', style: 'v' } });
-    delta.insert(`chapter ${id.chapterNum}, verse 3.`, { segment: `verse_${id.chapterNum}_3` });
+    if (allSegmentsBlank) {
+      delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_3` });
+    } else {
+      delta.insert(`chapter ${id.chapterNum}, verse 3.`, { segment: `verse_${id.chapterNum}_3` });
+    }
     delta.insert({ verse: { number: '4', style: 'v' } });
     delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_4` });
     delta.insert({ verse: { number: '5', style: 'v' } });
-    delta.insert(`chapter ${id.chapterNum}, verse 5.`, { segment: `verse_${id.chapterNum}_5` });
+    if (allSegmentsBlank) {
+      delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_5` });
+    } else {
+      delta.insert(`chapter ${id.chapterNum}, verse 5.`, { segment: `verse_${id.chapterNum}_5` });
+    }
     delta.insert({ verse: { number: '6', style: 'v' } });
     delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_6` });
     delta.insert({ verse: { number: '7', style: 'v' } });
-    delta.insert(`chapter ${id.chapterNum}, verse 7.`, { segment: `verse_${id.chapterNum}_7` });
+    if (allSegmentsBlank) {
+      delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_7` });
+    } else {
+      delta.insert(`chapter ${id.chapterNum}, verse 7.`, { segment: `verse_${id.chapterNum}_7` });
+    }
     delta.insert({ verse: { number: '8', style: 'v' } });
     delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_8` });
     delta.insert({ verse: { number: '9', style: 'v' } });
-    delta.insert(`chapter ${id.chapterNum}, verse 9.`, { segment: `verse_${id.chapterNum}_9` });
+    if (allSegmentsBlank) {
+      delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_9` });
+    } else {
+      delta.insert(`chapter ${id.chapterNum}, verse 9.`, { segment: `verse_${id.chapterNum}_9` });
+    }
     delta.insert({ verse: { number: '10', style: 'v' } });
     delta.insert({ blank: true }, { segment: `verse_${id.chapterNum}_10` });
     delta.insert('\n', { para: { style: 'p' } });

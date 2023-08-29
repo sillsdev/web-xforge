@@ -68,6 +68,26 @@ export class TextDoc extends RealtimeDoc<TextData, TextData, RangeStatic> {
     return { translated, blank };
   }
 
+  getTranslatedVerses(): string[] {
+    let verses: string[] = [];
+    if (this.data != null && this.data.ops != null) {
+      for (let i = 0; i < this.data.ops.length; i++) {
+        const op = this.data.ops[i];
+        if (op.attributes != null && op.attributes.segment != null && op.insert.blank == null) {
+          const segRef = op.attributes.segment;
+          if (segRef.startsWith('verse_')) {
+            const verse: string | undefined = getVerseStrFromSegmentRef(segRef);
+            if (verse != null && !verses.includes(verse)) {
+              verses.push(verse);
+            }
+          }
+        }
+      }
+    }
+
+    return verses;
+  }
+
   getSegmentText(ref: string): string {
     if (this.data == null || this.data.ops == null) {
       return '';
