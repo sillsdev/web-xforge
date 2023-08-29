@@ -106,6 +106,11 @@ export class AudioPlayer extends SubscriptionDisposable {
     );
   }
 
+  override dispose(): void {
+    this.pause();
+    super.dispose();
+  }
+
   get seek(): number {
     if (this.duration > 0) {
       if (this.currentTime === this.duration) {
