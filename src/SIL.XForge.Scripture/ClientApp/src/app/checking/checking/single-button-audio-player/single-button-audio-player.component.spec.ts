@@ -119,6 +119,14 @@ describe('SingleButtonAudioPlayerComponent', () => {
 
     expect(count).toBe(2);
   }));
+
+  it('pauses audio when disposed', fakeAsync(() => {
+    env.component.player.setAudio(instance(audioMock));
+
+    env.component.player.audio!.dispose();
+
+    verify(audioMock.pause()).once();
+  }));
 });
 
 class TestEnvironment {
