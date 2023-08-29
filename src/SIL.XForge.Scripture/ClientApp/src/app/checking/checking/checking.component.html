@@ -133,8 +133,9 @@
                 [disabled]="!questionsPanel.activeQuestionDoc"
                 (dragEnd)="checkSliderPosition($event)"
                 [useTransition]="true"
+                unit="pixel"
               >
-                <as-split-area [size]="100">
+                <as-split-area [size]="hideChapterText ? 109 : $any('*')" [maxSize]="hideChapterText ? 109 : null">
                   <div class="panel-content" #scripturePanelContainer>
                     <!-- TODO (scripture audio) Instead of covering scripture panel, move the audio player below it -->
                     <div class="scripture-audio-player-wrapper" *ngIf="showScriptureAudioPlayer">
@@ -157,7 +158,7 @@
                     ></app-checking-text>
                   </div>
                 </as-split-area>
-                <as-split-area [size]="0">
+                <as-split-area [size]="hideChapterText ? $any('*') : 170">
                   <div *ngIf="questionsPanel.activeQuestionDoc" id="answer-panel" #answerPanelContainer>
                     <app-checking-answers
                       #answersPanel
