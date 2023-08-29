@@ -5,7 +5,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { PwaService } from 'xforge-common/pwa.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
@@ -144,6 +144,21 @@ describe('SingleButtonAudioPlayerComponent', () => {
     await env.wait();
 
     expect(count).toBe(2);
+  });
+
+  it('pauses audio when disposed', async () => {
+    const env = new TestEnvironment();
+    await env.wait();
+    await env.wait();
+    env.component.player.play();
+    await env.wait();
+
+    expect(env.component.player.playing).toEqual(true);
+
+    env.component.player.audio!.dispose();
+    await env.wait();
+
+    expect(env.component.player.playing).toEqual(false);
   });
 });
 

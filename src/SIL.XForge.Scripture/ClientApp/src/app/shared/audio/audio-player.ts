@@ -103,6 +103,11 @@ export class AudioPlayer extends SubscriptionDisposable {
     return (isLocalBlobUrl(this.audio.src) || this.pwaService.isOnline || this.audioDataLoaded) && !this.hasErrorState;
   }
 
+  override dispose(): void {
+    this.pause();
+    super.dispose();
+  }
+
   get seek(): number {
     if (this.duration > 0) {
       if (this.currentTime === this.duration) {
