@@ -170,7 +170,7 @@ describe('CheckingComponent', () => {
 
   describe('Interface', () => {
     it('can navigate using next button', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.selectQuestion(1);
       env.clickButton(env.nextButton);
       tick(env.questionReadTimer);
@@ -179,7 +179,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can navigate using previous button', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.selectQuestion(2);
       env.clickButton(env.previousButton);
       tick(env.questionReadTimer);
@@ -188,7 +188,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('check navigate buttons disable at the end of the question list', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.selectQuestion(1);
       const prev = env.previousButton;
       const next = env.nextButton;
@@ -201,19 +201,19 @@ describe('CheckingComponent', () => {
     }));
 
     it('should open question dialog', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.clickButton(env.addQuestionButton);
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
     }));
 
     it('hides add question button for community checker', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       expect(env.addQuestionButton).toBeNull();
     }));
 
     it('responds to remote removed from project', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(1);
       expect(env.component.questionDocs.length).toEqual(15);
       env.component.projectDoc!.submitJson0Op(op => op.unset<string>(p => p.userRoles[CHECKER_USER.id]), false);
@@ -224,7 +224,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('responds to remote community checking disabled when checker', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(1);
       const projectUserConfig = env.component.projectUserConfigDoc!.data!;
       expect(projectUserConfig.selectedTask).toEqual('checking');
@@ -238,7 +238,7 @@ describe('CheckingComponent', () => {
 
     it('responds to remote community checking disabled when observer', fakeAsync(() => {
       // User with access to translate app should get redirected there
-      const env = new TestEnvironment(OBSERVER_USER, 'ALL');
+      const env = new TestEnvironment({ user: OBSERVER_USER, projectBookRoute: 'ALL' });
       env.selectQuestion(1);
       env.setCheckingEnabled(false);
       expect(env.location.path()).toEqual('/projects/project01/translate/JHN');
@@ -250,7 +250,7 @@ describe('CheckingComponent', () => {
 
   describe('Questions', () => {
     it('questions are displaying and audio is cached', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       verify(mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), anything())).times(
         31
       );
@@ -264,7 +264,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('questions are displaying for all books', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER, 'ALL');
+      const env = new TestEnvironment({ user: CHECKER_USER, projectBookRoute: 'ALL' });
       // Question 5 has been stored as the question to start at
       expect(env.component.questionsPanel!.activeQuestionDoc!.data!.dataId).toBe('q5Id');
       // A sixteenth question is archived
@@ -278,13 +278,13 @@ describe('CheckingComponent', () => {
     }));
 
     it('can select a question', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       const question = env.selectQuestion(1);
       expect(question.classes['mdc-list-item--activated']).toBe(true);
     }));
 
     it('question status change to read', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       let question = env.selectQuestion(2, false);
       expect(question.classes['question-read']).toBeUndefined();
       question = env.selectQuestion(3);
@@ -292,14 +292,14 @@ describe('CheckingComponent', () => {
     }));
 
     it('question status change to answered', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       const question = env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(question.classes['question-answered']).toBe(true);
     }));
 
     it('question shows answers icon and total', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const question = env.selectQuestion(6, false);
       expect(env.getUnread(question)).toEqual(1);
       tick(env.questionReadTimer);
@@ -309,7 +309,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('allows admin to archive a question', fakeAsync(async () => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.selectQuestion(1);
       const question = env.component.answersPanel!.questionDoc!.data!;
       expect(question.isArchived).toBe(false);
@@ -325,7 +325,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('opens a dialog when edit question is clicked', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.selectQuestion(15);
       when(mockedQuestionDialogService.questionDialog(anything())).thenResolve(
         env.component.questionsPanel!.activeQuestionDoc
@@ -345,7 +345,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('removes audio player when question audio deleted', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const questionId = 'q15Id';
       const questionDoc = cloneDeep(env.getQuestionDoc(questionId));
       questionDoc.submitJson0Op(op => {
@@ -366,7 +366,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('uploads audio then updates audio url', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER, 'JHN', false);
+      const env = new TestEnvironment({ user: ADMIN_USER, projectBookRoute: 'JHN', hasConnection: false });
       env.selectQuestion(14);
       const questionId = 'q14Id';
       const questionDoc = cloneDeep(env.getQuestionDoc(questionId));
@@ -388,7 +388,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('user must confirm question answered dialog before question dialog appears', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       when(mockedDialogService.confirm(anything(), anything())).thenResolve(false);
       // Edit a question with answers
       env.selectQuestion(6);
@@ -402,7 +402,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('should move highlight and question icon when question is edited to move verses', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.selectQuestion(1);
       env.waitForSliderUpdate();
       expect(env.segmentHasQuestion(1, 1)).toBe(true);
@@ -428,14 +428,14 @@ describe('CheckingComponent', () => {
     }));
 
     it('unread answers badge is only visible when the setting is ON to see other answers', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       expect(env.getUnread(env.questions[5])).toEqual(1);
       env.setSeeOtherUserResponses(false);
       expect(env.getUnread(env.questions[5])).toEqual(0);
     }));
 
     it('unread answers badge always hidden from community checkers', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       // One unread answer and three comments are hidden
       expect(env.getUnread(env.questions[6])).toEqual(0);
       env.setSeeOtherUserResponses(false);
@@ -443,7 +443,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('responds to remote question added', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       let question = env.selectQuestion(1);
       const questionId = env.component.questionsPanel!.activeQuestionDoc!.id;
       expect(env.questions.length).toEqual(15);
@@ -492,7 +492,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('respond to remote question audio added or removed', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(1);
       expect(env.audioPlayerOnQuestion).toBeNull();
       env.simulateRemoteEditQuestionAudio('filename.mp3');
@@ -513,7 +513,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('question added to another book changes the route to that book and activates the question', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const dateNow = new Date();
       const newQuestion: Question = {
         dataId: objectId(),
@@ -534,7 +534,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('admin can see appropriate filter options', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       expect(env.component.questionFilters.has(QuestionFilter.None)).withContext('All').toEqual(true);
       expect(env.component.questionFilters.has(QuestionFilter.HasAnswers)).withContext('HasAnswers').toEqual(true);
       expect(env.component.questionFilters.has(QuestionFilter.NoAnswers)).withContext('NoAnswers').toEqual(true);
@@ -552,7 +552,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('non-admin can see appropriate filter options', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       expect(env.component.questionFilters.has(QuestionFilter.None)).withContext('All').toEqual(true);
       expect(env.component.questionFilters.has(QuestionFilter.HasAnswers)).withContext('HasAnswers').toEqual(false);
       expect(env.component.questionFilters.has(QuestionFilter.NoAnswers)).withContext('NoAnswers').toEqual(false);
@@ -570,7 +570,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can filter questions', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const totalQuestions = env.questions.length;
       const expectedQuestionCounts: { filter: QuestionFilter; total: number }[] = [
         { filter: QuestionFilter.None, total: 15 },
@@ -596,14 +596,14 @@ describe('CheckingComponent', () => {
     }));
 
     it('show applied filter label', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       expect(env.questionFilterLabel).toBeUndefined();
       env.setQuestionFilter(QuestionFilter.HasAnswers);
       expect(env.questionFilterLabel).toEqual('Filter: Has answers');
     }));
 
     it('show no questions message for filter', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER, 'MAT');
+      const env = new TestEnvironment({ user: ADMIN_USER, projectBookRoute: 'MAT' });
       expect(env.questions.length).toEqual(1);
       env.setQuestionFilter(QuestionFilter.StatusExport);
       expect(env.questions.length).toEqual(0);
@@ -611,7 +611,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('should update question summary when filtered', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       expect(env.questions.length).toEqual(15);
       // Admin has already read 2 questions and the 3rd is read on load
       expect(env.component.summary.unread).toEqual(12);
@@ -622,7 +622,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('should reset filtering after a new question is added', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       expect(env.questions.length).toEqual(15);
       env.setQuestionFilter(QuestionFilter.StatusResolved);
       expect(env.questions.length).toEqual(1);
@@ -638,7 +638,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('should reset filtering when changing books', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER, 'ALL');
+      const env = new TestEnvironment({ user: ADMIN_USER, projectBookRoute: 'ALL' });
       env.setQuestionFilter(QuestionFilter.StatusResolved);
       expect(env.component.bookName).toEqual('John');
       expect(env.component.questionFilterSelected).toEqual(QuestionFilter.StatusResolved);
@@ -652,12 +652,12 @@ describe('CheckingComponent', () => {
 
   describe('Answers', () => {
     it('answer panel is initiated and shows the first question', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       expect(env.answerPanel).not.toBeNull();
     }));
 
     it('can answer a question', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(2);
       // Checker user already has an answer on question 6 and 9
       expect(env.component.summary.answered).toEqual(2);
@@ -668,7 +668,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('opens edit display name dialog if answering a question for the first time', fakeAsync(() => {
-      const env = new TestEnvironment(CLEAN_CHECKER_USER);
+      const env = new TestEnvironment({ user: CLEAN_CHECKER_USER });
       env.selectQuestion(2);
       env.answerQuestion('Answering question 2 should pop up a dialog');
       verify(mockedUserService.editDisplayName(true)).once();
@@ -677,7 +677,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('does not open edit display name dialog if offline', fakeAsync(() => {
-      const env = new TestEnvironment(CLEAN_CHECKER_USER, 'JHN', false);
+      const env = new TestEnvironment({ user: CLEAN_CHECKER_USER, projectBookRoute: 'JHN', hasConnection: false });
       env.selectQuestion(2);
       env.answerQuestion('Answering question 2 offline');
       verify(mockedUserService.editDisplayName(anything())).never();
@@ -686,7 +686,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('inserts newer answer above older answers', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
       env.answerQuestion('Just added answer');
       expect(env.answers.length).toEqual(2);
@@ -695,7 +695,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('saves the location of the last visited question', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
       verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
@@ -711,7 +711,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('saves the last visited question in all question context', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER, 'ALL');
+      const env = new TestEnvironment({ user: CHECKER_USER, projectBookRoute: 'ALL' });
       const projectUserConfigDoc = env.component.projectUserConfigDoc!.data!;
       verify(mockedTranslationEngineService.trainSelectedSegment(anything(), anything())).once();
       expect(projectUserConfigDoc.selectedQuestionRef).toBe('project01:q5Id');
@@ -723,7 +723,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can cancel answering a question', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.waitForSliderUpdate();
@@ -735,7 +735,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('does not save the answer when storage quota exceeded', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       when(
         mockedFileService.uploadFile(
           FileType.Audio,
@@ -771,7 +771,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can change answering tabs', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.waitForSliderUpdate();
@@ -781,7 +781,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('check answering validation', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(2);
       env.clickButton(env.addAnswerButton);
       env.clickButton(env.saveAnswerButton);
@@ -790,7 +790,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can edit a new answer', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
       env.answerQuestion('Answer question 7');
       const myAnswerIndex = 0;
@@ -807,7 +807,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can edit an existing answer', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       // Open up question where user already has an answer
       env.selectQuestion(9);
       expect(env.answers.length).withContext('setup problem').toBeGreaterThan(1);
@@ -844,7 +844,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('highlights remotely edited answer', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(9);
       const otherAnswerIndex = 1;
       expect(env.getAnswer(otherAnswerIndex).classes['attention']).toBeUndefined();
@@ -856,7 +856,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('does not highlight upon sync', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(9);
       const answerIndex = 1;
       expect(env.getAnswer(answerIndex).classes['attention']).toBeUndefined();
@@ -868,7 +868,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('still shows answers as read after canceling an edit', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
       env.answerQuestion('Answer question 7');
       const myAnswerIndex = 0;
@@ -885,7 +885,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('only my answer is highlighted after I add an answer', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
       env.answerQuestion('My answer');
       expect(env.answers.length).withContext('setup problem').toBeGreaterThan(1);
@@ -896,7 +896,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can remove audio from answer', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       const data: FileOfflineData = { id: 'a6Id', dataCollection: 'questions', blob: getAudioBlob() };
       when(mockedFileService.findOrUpdateCache(FileType.Audio, 'questions', 'a6Id', '/audio.mp3')).thenResolve(data);
       env.selectQuestion(6);
@@ -914,7 +914,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('saves audio answer offline and plays from cache', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER, 'JHN', false);
+      const env = new TestEnvironment({ user: CHECKER_USER, projectBookRoute: 'JHN', hasConnection: false });
       const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('blob://audio');
       env.answerQuestion('An offline answer', 'audioFile.mp3');
       resolveUpload$.next();
@@ -939,7 +939,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('saves the answer to the correct question when active question changed', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       const resolveUpload$: Subject<void> = env.resolveFileUploadSubject('uploadedFile.mp3');
       env.selectQuestion(1);
       env.answerQuestion('Answer with audio', 'audioFile.mp3');
@@ -954,7 +954,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can delete an answer', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(6);
       expect(env.answers.length).toEqual(1);
       env.clickButton(env.answerDeleteButton(0));
@@ -966,7 +966,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can delete correct answer after changing chapters', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       env.component.chapter!++;
@@ -976,7 +976,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('answers reset when changing questions', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
       expect(env.answers.length).toEqual(1);
@@ -985,7 +985,7 @@ describe('CheckingComponent', () => {
     }));
 
     it("checker user can like and unlike another's answer", fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
       env.answerQuestion('Answer question 7');
       expect(env.getAnswerText(1)).toBe('Answer 7 on question');
@@ -1001,7 +1001,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('cannot like your own answer', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(1);
       env.answerQuestion('Answer question to be liked');
       expect(env.getLikeTotal(0)).toBe(0);
@@ -1012,7 +1012,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('observer cannot like an answer', fakeAsync(() => {
-      const env = new TestEnvironment(OBSERVER_USER);
+      const env = new TestEnvironment({ user: OBSERVER_USER });
       env.selectQuestion(7);
       expect(env.getAnswerText(0)).toBe('Answer 7 on question');
       expect(env.getLikeTotal(0)).toBe(0);
@@ -1023,7 +1023,7 @@ describe('CheckingComponent', () => {
     }));
 
     it("admin user can like and unlike another's answer", fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.selectQuestion(9);
       expect(env.getAnswerText(0)).toBe('Answer 0 on question');
       expect(env.getAnswerText(1)).toBe('Answer 1 on question');
@@ -1044,7 +1044,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('hides the like icon if see other users responses is disabled', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(6);
       expect(env.answers.length).toEqual(1);
       expect(env.likeButtons.length).toEqual(1);
@@ -1055,7 +1055,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('do not show answers until current user has submitted an answer', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       expect(env.getUnread(env.questions[6])).toEqual(0);
       env.selectQuestion(7);
       expect(env.answers.length).toBe(0);
@@ -1064,7 +1064,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('checker can only see their answers when the setting is OFF to see other answers', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.setSeeOtherUserResponses(false);
       env.selectQuestion(6);
       expect(env.answers.length).toBe(1);
@@ -1075,7 +1075,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can add scripture to an answer', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       const selection: TextSelection = {
         verses: { bookNum: 43, chapterNum: 2, verseNum: 2, verse: '2-5' },
         text: 'The selected text',
@@ -1096,7 +1096,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can remove scripture from an answer', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(6);
       expect(env.getAnswerScriptureText(0)).toBe('Quoted scripture(John 1:1)');
       env.clickButton(env.getAnswerEditButton(0));
@@ -1108,13 +1108,13 @@ describe('CheckingComponent', () => {
     }));
 
     it('observer cannot answer a question', fakeAsync(() => {
-      const env = new TestEnvironment(OBSERVER_USER);
+      const env = new TestEnvironment({ user: OBSERVER_USER });
       env.selectQuestion(2);
       expect(env.addAnswerButton).toBeNull();
     }));
 
     it('project admins can only edit own answers', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.selectQuestion(6);
       expect(env.answers.length).toEqual(1);
       expect(env.getAnswerEditButton(0)).toBeNull();
@@ -1123,7 +1123,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('error about "answer or recording required" goes away after add recording', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(1);
       env.clickButton(env.addAnswerButton);
       env.clickButton(env.saveAnswerButton);
@@ -1143,7 +1143,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('new remote answers from other users are not displayed until requested', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
 
       env.selectQuestion(7);
       expect(env.totalAnswersMessageCount).withContext('setup').toBeNull();
@@ -1181,7 +1181,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('new remote answers from other users are not displayed to proj admin until requested', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       // Select a question with at least one answer, but with no answers
       // authored by the project admin since that was hindering this test.
       env.selectQuestion(6);
@@ -1216,7 +1216,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('proj admin sees total answer count if >0 answers', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       // Select a question with at least one answer, but with no answers
       // authored by the project admin, in case that hinders this test.
       env.selectQuestion(6);
@@ -1238,7 +1238,7 @@ describe('CheckingComponent', () => {
     }));
 
     it("new remote answers and banner don't show, if user has not yet answered the question", fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
       expect(env.answers.length).withContext('setup (no answers in DOM yet)').toEqual(0);
       expect(env.component.answersPanel!.answers.length).withContext('setup').toEqual(1);
@@ -1262,7 +1262,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('show-remote-answer banner disappears if user deletes their answer', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
       // User answers a question
       env.answerQuestion('New answer from current user');
@@ -1309,7 +1309,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('show-remote-answer banner disappears if the un-shown remote answer is deleted', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
       // User answers a question
       env.answerQuestion('New answer from current user');
@@ -1330,7 +1330,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('show-remote-answer banner not shown if user is editing their answer', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(7);
       // User answers a question
       env.answerQuestion('New answer from current user');
@@ -1356,7 +1356,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('show-remote-answer banner not shown to user if see-others-answers is disabled', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.setSeeOtherUserResponses(false);
       expect(env.component.projectDoc!.data!.checkingConfig.usersSeeEachOthersResponses)
         .withContext('setup')
@@ -1374,7 +1374,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('show-remote-answer banner still shown to proj admin if see-others-answers is disabled', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.setSeeOtherUserResponses(false);
       expect(env.component.projectDoc!.data!.checkingConfig.usersSeeEachOthersResponses)
         .withContext('setup')
@@ -1392,7 +1392,7 @@ describe('CheckingComponent', () => {
 
     describe('Comments', () => {
       it('can comment on an answer', fakeAsync(() => {
-        const env = new TestEnvironment(CHECKER_USER);
+        const env = new TestEnvironment({ user: CHECKER_USER });
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
@@ -1400,7 +1400,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('can edit comment on an answer', fakeAsync(() => {
-        const env = new TestEnvironment(CHECKER_USER);
+        const env = new TestEnvironment({ user: CHECKER_USER });
         // Answer a question in a chapter where chapters previous also have comments
         env.selectQuestion(15);
         env.answerQuestion('Answer question to be commented on');
@@ -1417,7 +1417,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('can delete comment on an answer', fakeAsync(() => {
-        const env = new TestEnvironment(CHECKER_USER);
+        const env = new TestEnvironment({ user: CHECKER_USER });
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'Response to answer');
@@ -1428,7 +1428,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('comments only appear on the relevant answer', fakeAsync(() => {
-        const env = new TestEnvironment(CHECKER_USER);
+        const env = new TestEnvironment({ user: CHECKER_USER });
         env.selectQuestion(1);
         env.answerQuestion('Answer question to be commented on');
         env.commentOnAnswer(0, 'First comment');
@@ -1444,7 +1444,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('comments display show more button', fakeAsync(() => {
-        const env = new TestEnvironment(ADMIN_USER);
+        const env = new TestEnvironment({ user: ADMIN_USER });
         // Show maximum of 3 comments before displaying 'show all' button
         env.selectQuestion(7);
         expect(env.getAnswerComments(0).length).toBe(3);
@@ -1464,7 +1464,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('comments unread only mark as read when the show more button is clicked', fakeAsync(() => {
-        const env = new TestEnvironment(ADMIN_USER);
+        const env = new TestEnvironment({ user: ADMIN_USER });
         const question = env.selectQuestion(8, false);
         expect(env.getUnread(question)).toEqual(4);
         tick(env.questionReadTimer);
@@ -1476,7 +1476,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('displays comments in real-time', fakeAsync(() => {
-        const env = new TestEnvironment(CHECKER_USER);
+        const env = new TestEnvironment({ user: CHECKER_USER });
         env.selectQuestion(1);
         env.answerQuestion('Admin will add a comment to this');
         expect(env.getAnswerComments(0).length).toEqual(0);
@@ -1492,7 +1492,7 @@ describe('CheckingComponent', () => {
       }));
 
       it('does not mark third comment read if fourth comment also added', fakeAsync(() => {
-        const env = new TestEnvironment(CHECKER_USER);
+        const env = new TestEnvironment({ user: CHECKER_USER });
         env.selectQuestion(1);
         env.answerQuestion('Admin will add four comments');
         env.commentOnAnswer(0, 'First comment');
@@ -1513,14 +1513,14 @@ describe('CheckingComponent', () => {
       }));
 
       it('observer cannot comment on an answer', fakeAsync(() => {
-        const env = new TestEnvironment(OBSERVER_USER);
+        const env = new TestEnvironment({ user: OBSERVER_USER });
         env.selectQuestion(6);
         expect(env.getAddCommentButton(0)).toBeNull();
         env.waitForAudioPlayer();
       }));
 
       it('project admins can only edit own comments', fakeAsync(() => {
-        const env = new TestEnvironment(ADMIN_USER);
+        const env = new TestEnvironment({ user: ADMIN_USER });
         env.selectQuestion(7);
         expect(env.getEditCommentButton(0, 0)).not.toBeNull();
         env.selectQuestion(8);
@@ -1530,7 +1530,7 @@ describe('CheckingComponent', () => {
     });
 
     it('update answer audio cache when activating a question', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       const questionDoc = spy(env.getQuestionDoc('q5Id'));
       verify(questionDoc!.updateAnswerFileCache()).never();
       env.selectQuestion(5);
@@ -1539,7 +1539,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('update answer audio cache after save', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       const questionDoc = spy(env.getQuestionDoc('q6Id'));
       env.selectQuestion(6);
       env.clickButton(env.getAnswerEditButton(0));
@@ -1551,7 +1551,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('update answer audio cache on remote update to question', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       const questionDoc = spy(env.getQuestionDoc('q6Id'));
       env.selectQuestion(6);
       env.simulateRemoteEditAnswer(0, 'Question 6 edited answer');
@@ -1560,7 +1560,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('update answer audio cache on remote removal of an answer', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const questionDoc = spy(env.getQuestionDoc('q6Id'));
       env.selectQuestion(6);
       env.simulateRemoteDeleteAnswer('q6Id', 0);
@@ -1570,7 +1570,7 @@ describe('CheckingComponent', () => {
 
     it('only admins can change answer export status', fakeAsync(() => {
       [OBSERVER_USER, CHECKER_USER, ADMIN_USER].forEach(USER => {
-        const env = new TestEnvironment(USER);
+        const env = new TestEnvironment({ user: USER });
 
         env.selectQuestion(6);
         if (USER === ADMIN_USER) {
@@ -1585,7 +1585,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can mark answer ready for export', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.selectQuestion(6);
       const buttonIndex = 0;
 
@@ -1597,7 +1597,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can mark answer as resolved', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.selectQuestion(6);
       const buttonIndex = 0;
 
@@ -1609,7 +1609,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can change between different answer statuses', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.selectQuestion(6);
       const buttonIndex = 0;
 
@@ -1638,7 +1638,7 @@ describe('CheckingComponent', () => {
 
   describe('Text', () => {
     it('can increase and decrease font size', fakeAsync(async () => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const editor = env.quillEditor;
       expect(editor.style.fontSize).toBe('1rem');
       await (await env.getIncreaseFontSizeButton()).click();
@@ -1649,7 +1649,7 @@ describe('CheckingComponent', () => {
     }));
 
     it('can select a question from the text', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       env.getVerse(1, 3).dispatchEvent(new Event('click'));
       env.waitForSliderUpdate();
       tick(env.questionReadTimer);
@@ -1658,21 +1658,21 @@ describe('CheckingComponent', () => {
     }));
 
     it('quill editor element lang attribute is set from project language', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.waitForAudioPlayer();
       const quillElementLang = env.quillEditorElement.getAttribute('lang');
       expect(quillElementLang).toEqual(env.project01WritingSystemTag);
     }));
 
     it('adds question count attribute to element', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
+      const env = new TestEnvironment({ user: ADMIN_USER });
       const segment = env.quillEditor.querySelector('usx-segment[data-segment=verse_1_1]')!;
       expect(segment.hasAttribute('data-question-count')).toBe(true);
       expect(segment.getAttribute('data-question-count')).toBe('13');
     }));
 
     it('updates question highlight when verse ref changes', fakeAsync(() => {
-      const env = new TestEnvironment(CHECKER_USER);
+      const env = new TestEnvironment({ user: CHECKER_USER });
       env.selectQuestion(4);
       expect(env.getVerse(1, 3)).not.toBeNull();
       let segment = env.getVerse(1, 3);
@@ -1820,7 +1820,15 @@ class TestEnvironment {
     ]
   });
 
-  constructor(user: UserInfo, projectBookRoute: string = 'JHN', hasConnection: boolean = true) {
+  constructor({
+    user,
+    projectBookRoute = 'JHN',
+    hasConnection = true
+  }: {
+    user: UserInfo;
+    projectBookRoute?: string;
+    hasConnection?: boolean;
+  }) {
     reset(mockedFileService);
     this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: projectBookRoute });
     this.setBookId(projectBookRoute);
