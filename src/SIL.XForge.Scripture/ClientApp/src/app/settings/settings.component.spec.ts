@@ -417,26 +417,7 @@ describe('SettingsComponent', () => {
         expect(env.statusDone(env.checkingHideCommunityCheckingTextStatus)).not.toBeNull();
       }));
 
-      it('reports if project has no Scripture audio', fakeAsync(async () => {
-        const env = new TestEnvironment();
-        env.setupProject();
-        env.wait();
-
-        // SUT
-        expect(env.component.hasTextAudioDocs).toEqual(false);
-      }));
-
-      it('reports if project has Scripture audio', fakeAsync(async () => {
-        const env = new TestEnvironment();
-        env.makeProjectHaveTextAudio();
-        env.setupProject();
-        env.wait();
-
-        // SUT
-        expect(env.component.hasTextAudioDocs).toEqual(true);
-      }));
-
-      it('has no audio option when project has no Scripture audio', fakeAsync(async () => {
+      it('has hide-text option', fakeAsync(async () => {
         const env = new TestEnvironment();
         env.setupProject();
         env.wait();
@@ -444,23 +425,7 @@ describe('SettingsComponent', () => {
         expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
 
         // SUT
-        expect(env.checkingHideCommunityCheckingTextCheckbox)
-          .withContext('checkbox relating to audio is not shown since project has no audio')
-          .toBeNull();
-      }));
-
-      it('has audio option when project has Scripture audio', fakeAsync(async () => {
-        const env = new TestEnvironment();
-        env.makeProjectHaveTextAudio();
-        env.setupProject();
-        env.wait();
-        env.clickElement(env.inputElement(env.checkingCheckbox));
-        expect(env.inputElement(env.checkingCheckbox).checked).toBe(true);
-
-        // SUT
-        expect(env.checkingHideCommunityCheckingTextCheckbox)
-          .withContext('checkbox relating to audio is shown since project has audio')
-          .not.toBeNull();
+        expect(env.checkingHideCommunityCheckingTextCheckbox).withContext('checkbox should be shown').not.toBeNull();
       }));
     });
   });

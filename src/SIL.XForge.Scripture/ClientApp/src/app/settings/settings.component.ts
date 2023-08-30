@@ -4,8 +4,8 @@ import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatDialogConfig } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { combineLatest, from } from 'rxjs';
-import { map, mergeMap, tap } from 'rxjs/operators';
+import { combineLatest } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
@@ -14,13 +14,11 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SFProjectSettings } from '../core/models/sf-project-settings';
 import { ParatextService, SelectableProject } from '../core/paratext.service';
 import { SFProjectService } from '../core/sf-project.service';
-import { TextAudioDoc } from '../core/models/text-audio-doc';
 import { DeleteProjectDialogComponent } from './delete-project-dialog/delete-project-dialog.component';
 
 /** Allows user to configure high-level settings of how SF will use their Paratext project. */
@@ -59,7 +57,6 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   projectLoadingFailed = false;
   resourceLoadingFailed = false;
   mainSettingsLoaded = false;
-  hasTextAudioDocs: boolean = false;
 
   private static readonly projectSettingValueUnset = 'unset';
   private projectDoc?: SFProjectDoc;
