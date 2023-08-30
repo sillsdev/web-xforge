@@ -135,6 +135,11 @@ describe('CheckingTextComponent', () => {
     env.wait();
     expect(env.isSegmentHighlighted('verse_1_1')).toBe(false);
     expect(env.isSegmentHighlighted('verse_1_2-3')).toBe(true);
+    env.component.setAudioTextRef('verse_1_6');
+    env.wait();
+    expect(env.isSegmentHighlighted('verse_1_6a')).toBe(true);
+    // highlight both segments of verse 6
+    expect(env.isSegmentHighlighted('verse_1_6b')).toBe(true);
   }));
 
   it('can set text direction explicitly', fakeAsync(() => {
