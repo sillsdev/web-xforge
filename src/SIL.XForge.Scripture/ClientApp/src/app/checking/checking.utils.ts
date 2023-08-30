@@ -8,6 +8,15 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 
+/** Detects if a string is in a format that can be used to parse audio timing for a verse of Scripture. */
+const AUDIO_TEXT_REF_REGEX = /^v?([0-9]+-?[0-9]?)([a-z]?)_?([0-9]*)/i;
+
+export interface AudioTextRef {
+  verseStr?: string;
+  phrase?: string;
+  word?: string;
+}
+
 export interface CheckingAccessInfo {
   userId: string;
   projectId: string;
@@ -47,5 +56,13 @@ export class CheckingUtils {
     } else {
       router.navigateByUrl(route, { replaceUrl: true });
     }
+  }
+
+  static parseAudioRef(segmentRef: string): AudioTextRef | undefined {
+    const match: RegExpExecArray | null = AUDIO_TEXT_REF_REGEX.exec(segmentRef);
+    if (match == null) {
+      return;
+    }
+    return { verseStr: match[1], phrase: match[2], word: match[3] };
   }
 }

@@ -1,5 +1,5 @@
 import { EventEmitter } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, interval, Subscription } from 'rxjs';
 import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { PwaService } from 'xforge-common/pwa.service';
@@ -16,6 +16,7 @@ export enum AudioStatus {
 export class AudioPlayer extends SubscriptionDisposable {
   private static lastPlayedAudio: HTMLAudioElement;
   private audioDataLoaded: boolean = false;
+  private readonly POLL_INTERVAL = 500;
 
   protected audio: HTMLAudioElement = new Audio();
   // See explanatory comment where this number is used
@@ -23,6 +24,7 @@ export class AudioPlayer extends SubscriptionDisposable {
 
   readonly status$: BehaviorSubject<AudioStatus> = new BehaviorSubject<AudioStatus>(AudioStatus.Init);
   readonly finishedPlaying$: EventEmitter<void> = new EventEmitter<void>();
+  readonly playing$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
 
   constructor(source: string, private readonly pwaService: PwaService) {
     super();
@@ -52,6 +54,13 @@ export class AudioPlayer extends SubscriptionDisposable {
       if (this.currentTime >= this.duration) {
         this.setSeek(0);
       }
+      const playSubscription: Subscription = this.subscribe(interval(this.POLL_INTERVAL), () => {
+        if (this.isPlaying) {
+          this.playing$.next();
+          return;
+        }
+        playSubscription.unsubscribe();
+      });
     });
 
     this.audio.addEventListener('error', () => {
@@ -101,23 +110,6 @@ export class AudioPlayer extends SubscriptionDisposable {
     return (isLocalBlobUrl(this.audio.src) || this.pwaService.isOnline || this.audioDataLoaded) && !this.hasErrorState;
   }
 
-  play(): void {
-    if (AudioPlayer.lastPlayedAudio != null) {
-      AudioPlayer.lastPlayedAudio.pause();
-    }
-
-    if (!this.audioDataLoaded) {
-      this.audio.load();
-    }
-
-    this.audio.play();
-    AudioPlayer.lastPlayedAudio = this.audio;
-  }
-
-  pause(): void {
-    this.audio.pause();
-  }
-
   get seek(): number {
     if (this.duration > 0) {
       if (this.currentTime === this.duration) {
@@ -127,10 +119,6 @@ export class AudioPlayer extends SubscriptionDisposable {
       }
     }
     return 0;
-  }
-
-  setSeek(value: number): void {
-    this.currentTime = value > 0 ? this.duration * (value / 100) : 0;
   }
 
   get duration(): number {
@@ -149,6 +137,27 @@ export class AudioPlayer extends SubscriptionDisposable {
 
   get isPlaying(): boolean {
     return !this.audio.paused && !this.audio.ended && this.audio.readyState > 2;
+  }
+
+  play(): void {
+    if (AudioPlayer.lastPlayedAudio != null) {
+      AudioPlayer.lastPlayedAudio.pause();
+    }
+
+    if (!this.audioDataLoaded) {
+      this.audio.load();
+    }
+
+    this.audio.play();
+    AudioPlayer.lastPlayedAudio = this.audio;
+  }
+
+  pause(): void {
+    this.audio.pause();
+  }
+
+  setSeek(value: number): void {
+    this.currentTime = value > 0 ? this.duration * (value / 100) : 0;
   }
 
   private audioIsReady(): void {

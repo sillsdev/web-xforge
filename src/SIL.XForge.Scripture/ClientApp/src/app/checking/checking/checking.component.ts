@@ -49,6 +49,7 @@ import { QuestionDialogService } from '../question-dialog/question-dialog.servic
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
+import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
 
 interface Summary {
@@ -86,6 +87,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   @ViewChild(SplitComponent) splitComponent?: SplitComponent;
   @ViewChild('splitContainer') splitContainerElement?: ElementRef;
   @ViewChild('scripturePanelContainer') scripturePanelContainerElement?: ElementRef;
+  @ViewChild(CheckingScriptureAudioPlayerComponent) scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
   @ViewChild('chapterMenuList') chapterMenuList?: MdcList;
 
   chapters: number[] = [];
@@ -178,6 +180,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.projectDoc != null && this.text != null && this.chapter != null
           ? new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target')
           : undefined;
+      this.scriptureAudioPlayer?.pause();
     }
   }
 
@@ -250,14 +253,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return this.text?.chapters.find(c => c.number === this.chapter)?.hasAudio === true;
   }
 
-  get chapterTextAudioTiming(): AudioTiming[] | undefined {
-    if (this.textDocId == null) return;
+  get chapterTextAudioTiming(): AudioTiming[] {
+    if (this.textDocId == null) return [];
     const textAudioId: string = getTextAudioId(
       this.textDocId.projectId,
       this.textDocId.bookNum,
       this.textDocId.chapterNum
     );
-    return this.textAudioQuery?.docs.find(t => t.id === textAudioId)?.data?.timings;
+    return this.textAudioQuery?.docs.find(t => t.id === textAudioId)?.data?.timings ?? [];
   }
 
   get chapterAudioSource(): string {
@@ -621,6 +624,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       case 'status':
         this.saveAnswer(answerAction.answer!, answerAction.questionDoc);
         break;
+      case 'play-audio':
+        this.scripturePanel!.activeVerse = this.activeQuestionVerseRef;
     }
     this.calculateScriptureSliderPosition(true);
   }
@@ -826,6 +831,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       currentChapter: this.questionsPanel.activeQuestionChapter
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
+  }
+
+  handleAudioTextRefChanged(ref: string): void {
+    this.scripturePanel!.setAudioTextRef(ref);
   }
 
   private triggerUpdate(): void {

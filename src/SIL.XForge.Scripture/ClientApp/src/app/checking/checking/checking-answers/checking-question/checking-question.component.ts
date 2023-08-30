@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { translate } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import { TextAudio, getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
@@ -23,6 +23,7 @@ import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-play
 })
 export class CheckingQuestionComponent extends SubscriptionDisposable implements OnChanges, OnDestroy {
   @Input() questionDoc?: QuestionDoc;
+  @Output() audioPlayed: EventEmitter<void> = new EventEmitter<void>();
   @ViewChild('questionAudio') questionAudio?: SingleButtonAudioPlayerComponent;
   @ViewChild('scriptureAudio') set scriptureAudio(comp: SingleButtonAudioPlayerComponent) {
     if (this._scriptureAudio === comp) return;
@@ -109,7 +110,12 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   playScripture(): void {
-    this._scriptureAudio?.audio?.isPlaying ? this._scriptureAudio?.stop() : this._scriptureAudio?.play();
+    if (this._scriptureAudio?.audio?.isPlaying) {
+      this._scriptureAudio?.stop();
+    } else {
+      this._scriptureAudio?.play();
+      this.audioPlayed.emit();
+    }
   }
 
   playQuestion(): void {
