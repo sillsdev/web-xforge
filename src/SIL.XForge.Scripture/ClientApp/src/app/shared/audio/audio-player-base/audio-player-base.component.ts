@@ -51,6 +51,8 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
       });
     } else {
       this._audio = undefined;
+      // We don't have audio to play, but we are finish initializing and the component can now say audio is unavailable.
+      this._isAudioInitComplete = true;
     }
   }
 
