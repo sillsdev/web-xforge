@@ -2700,6 +2700,174 @@ public class SFProjectServiceTests
         Assert.AreEqual(languageTag02, env.GetProject(Project04).TranslateConfig.Source.WritingSystem.Tag);
     }
 
+    [Test]
+    public async Task CreateAudioTimingData_CreatesTextAudioDoc()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        var timingData = new List<AudioTiming>();
+        const string audioUrl = "http://example.com/audio.mp3";
+        string id = TextAudio.GetDocId(Project01, book, chapter);
+
+        // Verify that the audio document does not exist in the project
+        var project = env.GetProject(Project01);
+        Assert.IsNull(project.Texts.Single(t => t.BookNum == book).Chapters.Single(c => c.Number == chapter).HasAudio);
+        Assert.IsFalse(env.RealtimeService.GetRepository<TextAudio>().Contains(id));
+
+        // SUT
+        await env.Service.CreateAudioTimingData(User01, Project01, book, chapter, timingData, audioUrl);
+
+        // Verify TextAudio document
+        TextAudio textAudio = env.RealtimeService.GetRepository<TextAudio>().Get(id);
+        Assert.AreEqual(User01, textAudio.OwnerRef);
+        Assert.AreEqual(Project01, textAudio.ProjectRef);
+        Assert.AreEqual(id, textAudio.DataId);
+        Assert.AreEqual("audio/mp3", textAudio.MimeType);
+        Assert.AreEqual(audioUrl, textAudio.AudioUrl);
+        Assert.AreEqual(timingData, textAudio.Timings);
+
+        // Verify project document
+        project = env.GetProject(Project01);
+        Assert.IsTrue(project.Texts.Single(t => t.BookNum == book).Chapters.Single(c => c.Number == chapter).HasAudio);
+    }
+
+    [Test]
+    public void CreateAudioTimingData_ProjectMustExist()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        var timingData = new List<AudioTiming>();
+        const string audioUrl = "http://example.com/audio.mp3";
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.CreateAudioTimingData(User01, "invalid_project", book, chapter, timingData, audioUrl)
+        );
+    }
+
+    [Test]
+    public void CreateAudioTimingData_TranslatorsCannotUpload()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        var timingData = new List<AudioTiming>();
+        const string audioUrl = "http://example.com/audio.mp3";
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.CreateAudioTimingData(User05, Project01, book, chapter, timingData, audioUrl)
+        );
+    }
+
+    [Test]
+    public async Task CreateAudioTimingData_UpdatesTextAudioDoc()
+    {
+        var env = new TestEnvironment();
+        const int book = 41;
+        const int chapter = 1;
+        var timingData = new List<AudioTiming>
+        {
+            new AudioTiming
+            {
+                From = 0.1,
+                TextRef = "MRK 1:1",
+                To = 1.1,
+            },
+            new AudioTiming
+            {
+                From = 1.1,
+                TextRef = "MRK 1:2",
+                To = 2.2,
+            },
+        };
+        const string audioUrl = "http://example.com/audio.mp3";
+        string id = TextAudio.GetDocId(Project01, book, chapter);
+
+        // Verify that the audio document exists in the project
+        var project = env.GetProject(Project01);
+        Assert.IsTrue(project.Texts.Single(t => t.BookNum == book).Chapters.Single(c => c.Number == chapter).HasAudio);
+        Assert.IsTrue(env.RealtimeService.GetRepository<TextAudio>().Contains(id));
+
+        // SUT
+        await env.Service.CreateAudioTimingData(User01, Project01, book, chapter, timingData, audioUrl);
+
+        // Verify updated TextAudio document
+        TextAudio textAudio = env.RealtimeService.GetRepository<TextAudio>().Get(id);
+        Assert.AreEqual("audio/mp3", textAudio.MimeType);
+        Assert.AreEqual(audioUrl, textAudio.AudioUrl);
+        Assert.AreEqual(timingData.Count, textAudio.Timings.Count);
+
+        // Verify project document
+        project = env.GetProject(Project01);
+        Assert.IsTrue(project.Texts.Single(t => t.BookNum == book).Chapters.Single(c => c.Number == chapter).HasAudio);
+    }
+
+    [Test]
+    public async Task DeleteAudioTimingData_DeletesTextAudioDoc()
+    {
+        var env = new TestEnvironment();
+        const int book = 41;
+        const int chapter = 1;
+        string id = TextAudio.GetDocId(Project01, book, chapter);
+
+        // Verify that the audio document exists in the project
+        var project = env.GetProject(Project01);
+        Assert.IsTrue(project.Texts.Single(t => t.BookNum == book).Chapters.Single(c => c.Number == chapter).HasAudio);
+        Assert.IsTrue(env.RealtimeService.GetRepository<TextAudio>().Contains(id));
+
+        // SUT
+        await env.Service.DeleteAudioTimingData(User01, Project01, book, chapter);
+
+        // Verify deletion of TextAudio document
+        Assert.IsFalse(env.RealtimeService.GetRepository<TextAudio>().Contains(id));
+
+        // Verify project document
+        project = env.GetProject(Project01);
+        Assert.IsFalse(project.Texts.Single(t => t.BookNum == book).Chapters.Single(c => c.Number == chapter).HasAudio);
+    }
+
+    [Test]
+    public void DeleteAudioTimingData_ProjectMustExist()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.DeleteAudioTimingData(User01, "invalid_project", book, chapter)
+        );
+    }
+
+    [Test]
+    public void DeleteAudioTimingData_TextAudioDocMustExist()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.DeleteAudioTimingData(User01, Project01, book, chapter)
+        );
+    }
+
+    [Test]
+    public void DeleteAudioTimingData_TranslatorsCannotDelete()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.DeleteAudioTimingData(User05, Project01, book, chapter)
+        );
+    }
+
     private class TestEnvironment
     {
         public TestEnvironment()
@@ -2863,7 +3031,8 @@ public class SFProjectServiceTests
                                             Number = 1,
                                             LastVerse = 3,
                                             IsValid = true,
-                                            Permissions = { }
+                                            Permissions = { },
+                                            HasAudio = true,
                                         },
                                         new Chapter
                                         {
@@ -3085,7 +3254,33 @@ public class SFProjectServiceTests
                     }
                 )
             );
-
+            RealtimeService.AddRepository(
+                "text_audio",
+                OTType.Json0,
+                new MemoryRepository<TextAudio>(
+                    new[]
+                    {
+                        new TextAudio
+                        {
+                            Id = TextAudio.GetDocId(Project01, 41, 1),
+                            OwnerRef = User01,
+                            ProjectRef = Project01,
+                            DataId = TextAudio.GetDocId(Project01, 41, 1),
+                            AudioUrl = "http://example.com/41_1.mp3",
+                            MimeType = "audio/mp3",
+                            Timings = new List<AudioTiming>
+                            {
+                                new AudioTiming
+                                {
+                                    From = 0.0,
+                                    TextRef = "MARK 1:1",
+                                    To = 1.1,
+                                },
+                            },
+                        },
+                    }
+                )
+            );
             RealtimeService.AddRepository(
                 "paratext_note_threads",
                 OTType.Json0,
