@@ -49,7 +49,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   }
 
   @Input() set timing(value: AudioTiming[]) {
-    this._timing = value.sort((a, b) => a.from - b.from);
+    this._timing = Object.values(value).sort((a, b) => a.from - b.from);
   }
 
   get currentVerseLabel(): string {
