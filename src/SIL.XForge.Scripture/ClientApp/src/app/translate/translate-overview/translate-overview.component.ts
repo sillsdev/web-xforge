@@ -13,7 +13,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { TextDocId } from '../../core/models/text-doc';
+import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
 import { RemoteTranslationEngine } from '../../machine-api/remote-translation-engine';
@@ -59,6 +59,8 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
   private translationEngine?: RemoteTranslationEngine;
   private projectDoc?: SFProjectProfileDoc;
   private projectDataChangesSub?: Subscription;
+  // NOTE: This will stop being incremented when the minimum required number of pairs for training is reached
+  private segmentPairs: number = 0;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -81,6 +83,12 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
       this.projectDoc.data != null &&
       this.projectDoc.data.translateConfig.translationSuggestionsEnabled
     );
+  }
+
+  // Whether or not we have the minimum number of segment pairs
+  get canTrainSuggestions(): boolean {
+    // 9 is the minimum number found in testing, but we will use 10 to be safe
+    return this.segmentPairs >= 10;
   }
 
   get canEditTexts(): boolean {
@@ -180,20 +188,42 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
     this.overallProgress = new Progress();
     const updateTextProgressPromises: Promise<void>[] = [];
     for (const textProgress of this.texts) {
-      updateTextProgressPromises.push(this.updateTextProgress(this.projectDoc.id, textProgress));
+      updateTextProgressPromises.push(this.updateTextProgress(this.projectDoc, textProgress));
     }
     await Promise.all(updateTextProgressPromises);
   }
 
-  private async updateTextProgress(projectId: string, textProgress: TextProgress): Promise<void> {
+  private async updateTextProgress(project: SFProjectProfileDoc, textProgress: TextProgress): Promise<void> {
     for (const chapter of textProgress.text.chapters) {
-      const textDocId = new TextDocId(projectId, textProgress.text.bookNum, chapter.number, 'target');
-      const chapterText = await this.projectService.getText(textDocId);
+      const textDocId = new TextDocId(project.id, textProgress.text.bookNum, chapter.number, 'target');
+      const chapterText: TextDoc = await this.projectService.getText(textDocId);
+
+      // Calculate Segment Count
       const { translated, blank } = chapterText.getSegmentCount();
       textProgress.translated += translated;
       textProgress.blank += blank;
       this.overallProgress.translated += translated;
       this.overallProgress.blank += blank;
+
+      // If translation suggestions are enabled, collect the number of segment pairs up to the minimum required
+      // We don't go any further so we don't load all of the source texts while this is running
+      if (
+        project.data?.translateConfig.translationSuggestionsEnabled &&
+        project.data.translateConfig.source != null &&
+        textProgress.text.hasSource &&
+        !this.canTrainSuggestions
+      ) {
+        // Get the source text
+        const sourceId: string = project.data.translateConfig.source.projectRef;
+        const sourceTextDocId = new TextDocId(sourceId, textProgress.text.bookNum, chapter.number, 'target');
+        const sourceChapterText: TextDoc = await this.projectService.getText(sourceTextDocId);
+
+        // Get the intersect of the source and target arrays of non-empty verses
+        // i.e. The verses with data that both texts have in common
+        const targetNonEmptyVerses: string[] = chapterText.getNonEmptyVerses();
+        const sourceNonEmptyVerses: string[] = sourceChapterText.getNonEmptyVerses();
+        this.segmentPairs += targetNonEmptyVerses.filter(item => sourceNonEmptyVerses.includes(item)).length;
+      }
     }
   }
 

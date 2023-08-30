@@ -64,8 +64,8 @@
           <span class="engine-card-segments-count">{{ trainedSegmentCount }}</span
           ><span>{{ t("trained_segments") }}</span>
         </div>
-        <div *ngIf="showCannotTrainEngineMessage" class="translation-suggestions-info">
-          {{ t("cannot_train_suggestion_engine") }}
+        <div *ngIf="showCannotTrainEngineMessage || !canTrainSuggestions" class="translation-suggestions-info">
+          {{ showCannotTrainEngineMessage ? t("cannot_train_suggestion_engine") : t("not_enough_verses_translated") }}
         </div>
       </mat-card-content>
       <mat-divider></mat-divider>
