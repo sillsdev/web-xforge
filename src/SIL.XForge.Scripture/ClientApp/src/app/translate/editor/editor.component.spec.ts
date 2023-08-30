@@ -3667,6 +3667,12 @@ class TestEnvironment {
           [obj<NoteThread>().pathStr(t => t.verseRef.chapterNum)]: chapterNum
         })
     );
+    when(mockedSFProjectService.queryBiblicalTermNoteThreads(anything())).thenCall(id =>
+      this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, {
+        [obj<NoteThread>().pathStr(t => t.projectRef)]: id,
+        [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }
+      })
+    );
     when(mockedSFProjectService.createNoteThread(anything(), anything())).thenCall(
       (projectId: string, noteThread: NoteThread) => {
         this.realtimeService.create(

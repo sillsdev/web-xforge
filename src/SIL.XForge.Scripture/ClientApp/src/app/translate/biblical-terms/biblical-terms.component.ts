@@ -414,7 +414,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     // Load the Note Threads
     this.noteThreadQuery?.dispose();
 
-    this.noteThreadQuery = await this.projectService.queryNoteThreads(sfProjectId);
+    this.noteThreadQuery = await this.projectService.queryBiblicalTermNoteThreads(sfProjectId);
     this.noteThreadSub?.unsubscribe();
     this.noteThreadSub = this.subscribe(
       merge(this.noteThreadQuery.ready$, this.noteThreadQuery.remoteChanges$, this.noteThreadQuery.remoteDocChanges$),

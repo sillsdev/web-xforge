@@ -287,9 +287,10 @@ class TestEnvironment {
       };
       return this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, parameters);
     });
-    when(mockedProjectService.queryNoteThreads(anything())).thenCall(sfProjectId => {
+    when(mockedProjectService.queryBiblicalTermNoteThreads(anything())).thenCall(sfProjectId => {
       const parameters: QueryParameters = {
-        [obj<NoteThread>().pathStr(t => t.projectRef)]: sfProjectId
+        [obj<NoteThread>().pathStr(t => t.projectRef)]: sfProjectId,
+        [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }
       };
       return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, parameters);
     });

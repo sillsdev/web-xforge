@@ -194,6 +194,14 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
     return this.realtimeService.subscribeQuery(BiblicalTermDoc.COLLECTION, queryParams);
   }
 
+  queryBiblicalTermNoteThreads(sfProjectId: string): Promise<RealtimeQuery<NoteThreadDoc>> {
+    const parameters: QueryParameters = {
+      [obj<NoteThread>().pathStr(t => t.projectRef)]: sfProjectId,
+      [obj<NoteThread>().pathStr(t => t.biblicalTermId)]: { $ne: null }
+    };
+    return this.realtimeService.subscribeQuery(NoteThreadDoc.COLLECTION, parameters);
+  }
+
   onlineSync(id: string): Promise<void> {
     return this.onlineInvoke('sync', { projectId: id });
   }
