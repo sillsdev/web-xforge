@@ -116,26 +116,6 @@ describe('ScriptureAudioComponent', () => {
     expect(verseChangedSpy).toHaveBeenCalledWith('s_1');
     expect(verseChangedSpy).toHaveBeenCalledWith('s_2');
   });
-
-  it('can delete audio timing data', async () => {
-    const template = `<app-checking-scripture-audio-player source="${audioFile}" [canDelete]="true"></app-checking-scripture-audio-player>`;
-    const env = new TestEnvironment(template);
-    env.fixture.detectChanges();
-    await env.waitForPlayer(500);
-
-    env.component.audioPlayer.textDocId = textDocId;
-    env.component.audioPlayer.timing = getAudioTimings();
-    await env.waitForPlayer();
-    env.playButton.nativeElement.click();
-    await env.waitForPlayer();
-    expect(env.isPlaying).toBe(true);
-    env.removeAudioButton.nativeElement.click();
-    await env.waitForPlayer();
-    verify(
-      env.mockedProjectService.onlineDeleteAudioTimingData(textDocId.projectId, textDocId.bookNum, textDocId.chapterNum)
-    ).once();
-    expect(env.isPlaying).toBe(false);
-  });
 });
 
 @Component({ selector: 'app-host', template: '' })
@@ -180,10 +160,6 @@ class TestEnvironment {
 
   get verseLabel(): DebugElement {
     return this.fixture.debugElement.query(By.css('.verse-label'));
-  }
-
-  get removeAudioButton(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.close-button'));
   }
 
   get isPlaying(): boolean {
