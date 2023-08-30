@@ -34,8 +34,6 @@ import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import * as RichText from 'rich-text';
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
-import { AudioPlayerComponent } from 'src/app/shared/audio/audio-player/audio-player.component';
 import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -58,10 +56,12 @@ import { TestTranslocoModule, configureTestingModule, getAudioBlob } from 'xforg
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
+import { AudioPlayerComponent } from '../../../app/shared/audio/audio-player/audio-player.component';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
+import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
