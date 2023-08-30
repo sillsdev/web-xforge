@@ -11,7 +11,7 @@ import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
-import { getAudioTimings, getAudioTimingWithHeadings } from '../../../shared/test-utils';
+import { getAudioTimingWithHeadings, getAudioTimings } from '../../../shared/test-utils';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
 
 const audioFile = 'test-audio-player.webm';
@@ -113,24 +113,6 @@ describe('ScriptureAudioComponent', () => {
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
     expect(verseChangedSpy).toHaveBeenCalledWith('s_1');
     expect(verseChangedSpy).toHaveBeenCalledWith('s_2');
-  });
-
-  it('pauses and emits on close', async () => {
-    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
-    const env = new TestEnvironment(template);
-    env.fixture.detectChanges();
-    await env.waitForPlayer(500);
-
-    let count = 0;
-    env.component.audioPlayer.closed.subscribe(() => count++);
-
-    const audio = spy(env.component.audioPlayer);
-    verify(audio?.pause()).never();
-
-    env.component.audioPlayer.close();
-
-    verify(audio?.pause()).once();
-    expect(count).toEqual(1);
   });
 
   it('pauses and emits on close', async () => {
