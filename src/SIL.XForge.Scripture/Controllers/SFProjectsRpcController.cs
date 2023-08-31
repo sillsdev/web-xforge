@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using EdjCase.JsonRpc.Router.Abstractions;
+using Microsoft.FeatureManagement;
 using SIL.XForge.Controllers;
 using SIL.XForge.Models;
 using SIL.XForge.Scripture.Models;
@@ -22,16 +23,19 @@ public class SFProjectsRpcController : RpcControllerBase
     internal const string AlreadyProjectMemberResponse = "alreadyProjectMember";
 
     private readonly IExceptionHandler _exceptionHandler;
+    private readonly IFeatureManager _featureManager;
     private readonly ISFProjectService _projectService;
 
     public SFProjectsRpcController(
         IUserAccessor userAccessor,
         ISFProjectService projectService,
+        IFeatureManager featureManager,
         IExceptionHandler exceptionHandler
     )
         : base(userAccessor, exceptionHandler)
     {
         _exceptionHandler = exceptionHandler;
+        _featureManager = featureManager;
         _projectService = projectService;
     }
 
@@ -685,5 +689,16 @@ public class SFProjectsRpcController : RpcControllerBase
             );
             throw;
         }
+    }
+
+    public async Task<IRpcMethodResult> FeatureFlags()
+    {
+        Dictionary<string, bool> features = new Dictionary<string, bool>();
+        await foreach (string feature in _featureManager.GetFeatureNamesAsync())
+        {
+            features.Add(feature, await _featureManager.IsEnabledAsync(feature));
+        }
+
+        return Ok(features);
     }
 }
