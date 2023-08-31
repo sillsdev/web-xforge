@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
-import { EMPTY, Observable, of, throwError, timer } from 'rxjs';
+import { Observable, of, throwError, timer } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
 import { BuildStates } from 'src/app/machine-api/build-states';
 import { HttpClient } from 'src/app/machine-api/http-client';
@@ -48,13 +48,7 @@ export class DraftGenerationService {
    */
   getBuildProgress(projectId: string): Observable<BuildDto | undefined> {
     return this.httpClient.get<BuildDto>(`translation/builds/id:${projectId}?pretranslate=true`).pipe(
-      map(res => {
-        if (res.data?.state === BuildStates.Faulted) {
-          throw new Error('Error occurred during build: ' + res.data.message);
-        }
-
-        return res.data;
-      }),
+      map(res => res.data),
       catchError(err => {
         // If no build has ever been started, return undefined
         if (err.status === 404) {
@@ -110,19 +104,14 @@ export class DraftGenerationService {
 
   /**
    * Cancels any pretranslation builds for the specified project.
+   * Build can be canceled if its state is `Active` or `Pending`.
+   * A `Queued` build is uploading to serval and cannot yet be canceled (attempt will result in 404).
    * @param projectId The SF project id for the target translation.
    */
   cancelBuild(projectId: string): Observable<void> {
-    return this.httpClient.post<void>(`translation/pretranslations/cancel`, JSON.stringify(projectId)).pipe(
-      map(res => res.data),
-      catchError(err => {
-        // Handle gracefully if no build is currently running
-        if (err.status === 404) {
-          return EMPTY;
-        }
-        return throwError(err);
-      })
-    );
+    return this.httpClient
+      .post<void>(`translation/pretranslations/cancel`, JSON.stringify(projectId))
+      .pipe(map(res => res.data));
   }
 
   /**

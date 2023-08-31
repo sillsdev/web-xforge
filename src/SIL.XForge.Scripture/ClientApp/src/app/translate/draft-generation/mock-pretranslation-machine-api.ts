@@ -53,6 +53,9 @@ export class MockPreTranslationHttpClient {
     message: ''
   };
 
+  // When true, build will fault when 3/4 finished
+  testFaultedState = false;
+
   // Restore most recent job state from browser session if available
   private mostRecentJobState?: BuildDto = this.getFromBrowserSessionStorage<BuildDto>('mostRecentJobState');
 
@@ -133,6 +136,7 @@ export class MockPreTranslationHttpClient {
     const duration: number = 12000; // 12 seconds until completion. This can be adjusted as desired.
     const pendingAfter: number = duration / 4;
     const activeAfter: number = (duration / 4) * 2;
+    const faultedAfter: number = (duration / 4) * 3;
 
     // If continuing a build, start at the last known percent completed
     const stepOffset: number =
@@ -165,6 +169,15 @@ export class MockPreTranslationHttpClient {
 
       if (elapsed >= activeAfter) {
         this.mostRecentJobState.state = BuildStates.Active;
+      }
+
+      // Test 'Faulted' state
+      if (this.testFaultedState && elapsed >= faultedAfter) {
+        this.mostRecentJobState.state = BuildStates.Faulted;
+        this.mostRecentJobState.message = 'Error occurred during build';
+        this.timerSub?.unsubscribe();
+        this.storeBrowserSessionStorage<BuildDto>('mostRecentJobState', this.mostRecentJobState);
+        return;
       }
 
       if (elapsed >= duration) {
