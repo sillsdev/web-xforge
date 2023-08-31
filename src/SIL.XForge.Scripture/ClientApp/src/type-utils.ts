@@ -5,6 +5,17 @@ export function isObj(value: unknown): value is object {
   return typeof value === 'object' && value !== null;
 }
 
+/**
+ * Checks if `value` is classified as a string primitive.  This function differs from lodash `isString()`
+ * in that this function will return false for string objects, e.g. `new String('hi')`.
+ *
+ * @param value The value to check.
+ * @return Returns true if value is a string primitive.
+ */
+export function isString(value: unknown): value is string {
+  return typeof value === 'string';
+}
+
 export function hasProp<X, Y extends PropertyKey>(value: X, property: Y): value is X & Record<Y, unknown> {
   return isObj(value) && property in value;
 }

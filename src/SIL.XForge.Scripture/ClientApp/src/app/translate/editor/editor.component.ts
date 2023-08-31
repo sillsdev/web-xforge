@@ -1,3 +1,4 @@
+import { ComponentType } from '@angular/cdk/portal';
 import {
   AfterViewInit,
   ChangeDetectorRef,
@@ -9,6 +10,9 @@ import {
   ViewChild
 } from '@angular/core';
 import { MediaObserver } from '@angular/flex-layout';
+import { UntypedFormControl, Validators } from '@angular/forms';
+import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
+import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import {
@@ -21,48 +25,50 @@ import {
   RangeTokenizer,
   TranslationSuggester
 } from '@sillsdev/machine';
-import isEqual from 'lodash-es/isEqual';
+import { Canon, VerseRef } from '@sillsdev/scripture';
+import { isEqual } from 'lodash-es';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import {
+  getNoteThreadDocId,
+  NoteConflictType,
+  NoteStatus,
+  NoteThread,
+  NoteType
+} from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
-import { Canon, VerseRef } from '@sillsdev/scripture';
+import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DeltaOperation } from 'rich-text';
 import { BehaviorSubject, fromEvent, merge, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, first, repeat, retryWhen, tap } from 'rxjs/operators';
+import { isString } from 'src/type-utils';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DialogService } from 'xforge-common/dialog.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
 import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
-import { DialogService } from 'xforge-common/dialog.service';
-import { I18nService } from 'xforge-common/i18n.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
-import { NoteType } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
-import { UntypedFormControl, Validators } from '@angular/forms';
 import { XFValidators } from 'xforge-common/xfvalidators';
-import { NoteConflictType, NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { getNoteThreadDocId } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { ComponentType } from '@angular/cdk/portal';
-import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { environment } from '../../../environments/environment';
 import { NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { Delta, TextDocId } from '../../core/models/text-doc';
@@ -82,9 +88,12 @@ import {
   formatFontSizeToRems,
   getVerseRefFromSegmentRef,
   threadIdFromMouseEvent,
-  VERSE_REGEX,
-  verseRefFromMouseEvent
+  verseRefFromMouseEvent,
+  VERSE_REGEX
 } from '../../shared/utils';
+import { DraftSegmentMap } from '../draft-generation/draft-generation';
+import { DraftGenerationService } from '../draft-generation/draft-generation.service';
+import { DraftViewerService } from '../draft-generation/draft-viewer/draft-viewer.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import {
@@ -134,6 +143,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   textHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
+  hasDraft = false;
 
   @ViewChild('targetContainer') targetContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
@@ -191,8 +201,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly pwaService: PwaService,
     private readonly translationEngineService: TranslationEngineService,
     private readonly i18n: I18nService,
-    private readonly featureFlags: FeatureFlagService,
+    public readonly featureFlags: FeatureFlagService,
     private readonly reportingService: ErrorReportingService,
+    private readonly activatedProjectService: ActivatedProjectService,
+    private readonly draftGenerationService: DraftGenerationService,
+    private readonly draftViewerService: DraftViewerService,
     @Inject(CONSOLE) private readonly console: ConsoleInterface,
     private readonly router: Router,
     private bottomSheet: MatBottomSheet
@@ -277,12 +290,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   set chapter(value: number | undefined) {
     if (this._chapter !== value) {
-      this.showSuggestions = false;
-      this.toggleNoteThreadVerses(false);
-      this._chapter = value;
-      this.changeText();
-      this.toggleNoteThreadVerses(true);
-      this.bottomSheet.dismiss();
+      // Update url to reflect current chapter, triggering ActivatedRoute
+      this.router.navigateByUrl(
+        `/projects/${this.projectId}/translate/${Canon.bookNumberToId(this.bookNum!)}/${value}`
+      );
     }
   }
 
@@ -528,6 +539,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.loadingStarted();
         const projectId = params['projectId'] as string;
         const bookId = params['bookId'] as string;
+        const chapterNum = params['chapter'] as string | null;
         const bookNum = bookId != null ? Canon.bookIdToNumber(bookId) : 0;
 
         if (this.currentUserDoc === undefined) {
@@ -573,7 +585,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
         this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
 
-        this.loadProjectUserConfig();
+        // Set chapter from route if provided
+        this.loadProjectUserConfig(Number(chapterNum) || undefined);
 
         if (this.projectDoc.id !== prevProjectId) {
           this.setupTranslationEngine();
@@ -779,9 +792,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (this.target?.editor != null) {
           this.positionInsertNoteFab();
           this.subscribeScroll(this.target.editor);
+
+          if (this.featureFlags.showNmtDrafting.enabled) {
+            this.checkForPreTranslations();
+          }
         }
         break;
     }
+
     if ((!this.hasSource || this.sourceLoaded) && this.targetLoaded) {
       this.loadingFinished();
       // Toggle the segment the cursor is focused in - the timeout allows for Quill to get its focus set
@@ -1474,14 +1492,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
-  private loadProjectUserConfig(): void {
-    let chapter = this.chapters.length > 0 ? this.chapters[0] : 1;
+  private loadProjectUserConfig(chapterFromUrl?: number): void {
+    let chapter = chapterFromUrl ?? (this.chapters.length > 0 ? this.chapters[0] : 1);
+
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
       const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
       this.translationSuggester.confidenceThreshold = pcnt / 100;
+
       if (this.text != null && this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum) {
         if (this.projectUserConfigDoc.data.selectedChapterNum != null) {
-          chapter = this.projectUserConfigDoc.data.selectedChapterNum;
+          // Use chapter from url if specified
+          chapter = chapterFromUrl ?? this.projectUserConfigDoc.data.selectedChapterNum;
         }
       }
     }
@@ -1990,5 +2011,45 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   onViewerClicked(viewer: MultiCursorViewer): void {
     this.target!.scrollToViewer(viewer);
+  }
+
+  private checkForPreTranslations(): void {
+    const targetOps: DeltaOperation[] = this.target?.editor?.getContents().ops!;
+    const isChapterComplete: boolean = targetOps.every(op => {
+      // If segment is a verse, check if it has a translation
+      if (VERSE_REGEX.test(op.attributes?.segment)) {
+        // Check if insert is non-blank string
+        if (isString(op.insert)) {
+          return op.insert.trim().length > 0;
+        }
+
+        // Check if insert is object that doesn't have 'blank: true' property (e.g. 'note-thread-embed')
+        return op.insert?.blank !== true;
+      }
+
+      return true;
+    });
+
+    // Set false until service can check actual draft status for chapter
+    this.hasDraft = false;
+
+    // Don't fetch draft if all editor verse segments have existing translations
+    if (isChapterComplete) {
+      return;
+    }
+
+    // If build progress is 'completed', get pretranslations for current chapter
+    this.draftGenerationService
+      .getGeneratedDraft(this.activatedProjectService.projectId!, this.bookNum!, this.chapter!)
+      .subscribe((draft: DraftSegmentMap) => {
+        this.hasDraft = this.draftViewerService.hasDraftOps(draft, targetOps);
+      });
+  }
+
+  goToDraftPreview(): void {
+    const book = Canon.bookNumberToId(this.bookNum!);
+    this.router.navigateByUrl(
+      `/projects/${this.activatedProjectService.projectId}/draft-preview/${book}/${this.chapter}`
+    );
   }
 }
