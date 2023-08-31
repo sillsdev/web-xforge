@@ -104,24 +104,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       )
     );
 
-    this.jobSubscription = this.subscribe(
-      this.activatedProject.projectId$.pipe(
-        filterNullish(),
-        switchMap(projectId =>
-          this.draftGenerationService
-            .getBuildProgress(projectId)
-            .pipe(
-              switchMap((job?: BuildDto) =>
-                this.isDraftInProgress(job) ? this.draftGenerationService.pollBuildProgress(projectId) : of(job)
-              )
-            )
-        )
-      ),
-      (job?: BuildDto) => {
-        this.draftJob = job;
-        this.isDraftJobFetched = true;
-      }
-    );
+    this.pollBuild();
   }
 
   // TODO: update i18n
@@ -141,20 +124,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       }
     }
 
-    this.jobSubscription?.unsubscribe();
-    this.jobSubscription = this.subscribe(
-      this.draftGenerationService.startBuildOrGetActiveBuild(this.activatedProject.projectId!).pipe(
-        tap((job?: BuildDto) => {
-          // Handle automatic closing of dialog if job finishes while cancel dialog is open
-          if (!this.canCancel(job)) {
-            if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
-              this.cancelDialogRef.close();
-            }
-          }
-        })
-      ),
-      (job?: BuildDto) => (this.draftJob = job)
-    );
+    this.startBuild();
   }
 
   // TODO: update i18n
@@ -179,7 +149,53 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       }
     }
 
-    this.draftGenerationService.cancelBuild(this.activatedProject.projectId!).subscribe();
+    this.cancelBuild();
+  }
+
+  startBuild(): void {
+    this.jobSubscription?.unsubscribe();
+    this.jobSubscription = this.subscribe(
+      this.draftGenerationService.startBuildOrGetActiveBuild(this.activatedProject.projectId!).pipe(
+        tap((job?: BuildDto) => {
+          // Handle automatic closing of dialog if job finishes while cancel dialog is open
+          if (!this.canCancel(job)) {
+            if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
+              this.cancelDialogRef.close();
+            }
+          }
+        })
+      ),
+      (job?: BuildDto) => (this.draftJob = job)
+    );
+  }
+
+  pollBuild(): void {
+    this.jobSubscription?.unsubscribe();
+    this.jobSubscription = this.subscribe(
+      this.activatedProject.projectId$.pipe(
+        filterNullish(),
+        switchMap(projectId =>
+          this.draftGenerationService
+            .getBuildProgress(projectId)
+            .pipe(
+              switchMap((job?: BuildDto) =>
+                this.isDraftInProgress(job) ? this.draftGenerationService.pollBuildProgress(projectId) : of(job)
+              )
+            )
+        )
+      ),
+      (job?: BuildDto) => {
+        this.draftJob = job;
+        this.isDraftJobFetched = true;
+      }
+    );
+  }
+
+  cancelBuild(): void {
+    this.draftGenerationService.cancelBuild(this.activatedProject.projectId!).subscribe(() => {
+      // If build is canceled, update job immediately instead of waiting for next poll cycle
+      this.pollBuild();
+    });
   }
 
   getTargetLanguageDisplayName(): string | undefined {
@@ -227,7 +243,12 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     return (job?.state as BuildStates) === BuildStates.Completed;
   }
 
+  isDraftFaulted(job?: BuildDto): boolean {
+    return (job?.state as BuildStates) === BuildStates.Faulted;
+  }
+
   canCancel(job?: BuildDto): boolean {
-    return !job || this.isDraftInProgress(job);
+    // Cannot cancel 'Queued' build, as it is not yet uploaded to the server (cancel will result in 404)
+    return !job || [BuildStates.Active, BuildStates.Pending].includes(job?.state as BuildStates);
   }
 }
