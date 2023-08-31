@@ -1,4 +1,4 @@
-import { hasFunctionProp, hasProp, hasStringProp, isObj } from './type-utils';
+import { hasFunctionProp, hasProp, hasStringProp, isObj, isString } from './type-utils';
 
 const miscValues = [undefined, null, NaN, true, false, Infinity, -1, 0, Symbol(), '', '\0', () => {}, BigInt(3)];
 
@@ -8,6 +8,29 @@ describe('type utils', () => {
   it('checks whether a value is an object', () => {
     for (const value of miscValues) expect(isObj(value)).toBeFalse();
     for (const obj of objValues) expect(isObj(obj)).toBeTrue();
+  });
+
+  describe('isString()', () => {
+    it('returns false for string objects', () => {
+      expect(isString(new String())).toBeFalse();
+    });
+    it('returns false for nullish values', () => {
+      expect(isString(undefined)).toBeFalse();
+      expect(isString(null)).toBeFalse();
+    });
+    it('returns false for non-string types', () => {
+      expect(isString(true)).toBeFalse();
+      expect(isString(false)).toBeFalse();
+      expect(isString(0)).toBeFalse();
+      expect(isString(NaN)).toBeFalse();
+      expect(isString(() => {})).toBeFalse();
+      expect(isString({})).toBeFalse();
+      expect(isString([])).toBeFalse();
+    });
+    it('returns true for string primitive values', () => {
+      expect(isString('')).toBeTrue();
+      expect(isString('hello')).toBeTrue();
+    });
   });
 
   it('checks whether a value has a property', () => {
