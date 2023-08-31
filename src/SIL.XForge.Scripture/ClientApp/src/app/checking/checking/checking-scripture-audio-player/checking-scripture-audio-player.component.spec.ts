@@ -53,7 +53,7 @@ describe('ScriptureAudioComponent', () => {
     expect(env.component.audioPlayer.currentVerseLabel).toEqual('Genesis 1:1');
   });
 
-  it('can skip through section headings', async () => {
+  it('can skip forward and back through section headings', async () => {
     const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
     const env = new TestEnvironment(template);
     env.fixture.detectChanges();
@@ -68,13 +68,15 @@ describe('ScriptureAudioComponent', () => {
     expect(env.component.audioPlayer.currentVerseLabel).toEqual('Genesis 1:1');
     env.nextRefButton.nativeElement.click();
     await env.waitForPlayer();
+    // verse 2
     expect(env.component.audioPlayer.currentVerseLabel).toEqual('Genesis 1:2');
     env.previousRefButton.nativeElement.click();
     await env.waitForPlayer();
-    // section heading before verse 2
+    // move back to the section heading before verse 2
     expect(env.component.audioPlayer.currentVerseLabel).toEqual('Genesis 1:1');
     env.previousRefButton.nativeElement.click();
     await env.waitForPlayer();
+    // verse 1
     expect(env.component.audioPlayer.currentVerseLabel).toEqual('Genesis 1:1');
   });
 
