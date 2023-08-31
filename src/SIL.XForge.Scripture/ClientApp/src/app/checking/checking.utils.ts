@@ -65,18 +65,24 @@ export class CheckingUtils {
     }
   }
 
+  /**
+   * Finds the current audio text reference based on the current time.
+   * @returns The audio text reference with the verse string, phrase, and word if available.
+   * Undefined if the current text reference is for a heading.
+   */
   static parseAudioRef(timingData: AudioTiming[], currentTime: number): AudioTextRef | undefined {
-    const index: number = timingData.filter(t => t.from <= currentTime).length - 1;
-    let i: number = index;
-    for (i; i >= 0; i--) {
-      if (timingData[i].textRef !== '') {
+    let indexInTimings: number = timingData.filter(t => t.from <= currentTime).length - 1;
+    for (indexInTimings; indexInTimings >= 0; indexInTimings--) {
+      // find the first non-empty textRef because phrase level timings can have entries with empty textRefs
+      if (timingData[indexInTimings].textRef !== '') {
         break;
       }
     }
 
-    if (i < 0) return;
-    let audioTimingMatch: RegExpExecArray | null = AUDIO_TEXT_REF_REGEX.exec(timingData[i].textRef);
+    if (indexInTimings < 0) return;
+    let audioTimingMatch: RegExpExecArray | null = AUDIO_TEXT_REF_REGEX.exec(timingData[indexInTimings].textRef);
 
+    // return if the text ref is for a heading and not a verse
     if (audioTimingMatch == null) return;
     const audioTextRef: AudioTextRef = { verseStr: audioTimingMatch[1] };
     if (audioTimingMatch[2] !== '') audioTextRef.phrase = audioTimingMatch[2];
@@ -84,9 +90,14 @@ export class CheckingUtils {
     return audioTextRef;
   }
 
+  /**
+   * Finds the current audio heading reference based on the current time.
+   * @returns The audio heading reference with the label and iteration if available.
+   * Undefined if the current audio timing entry is not a heading.
+   */
   static parseAudioHeadingRef(timingData: AudioTiming[], currentTime: number): AudioHeadingRef | undefined {
-    const index: number = timingData.filter(t => t.from <= currentTime).length - 1;
-    const currentAudioTiming: AudioTiming | undefined = timingData[index];
+    const indexInTimings: number = timingData.filter(t => t.from <= currentTime).length - 1;
+    const currentAudioTiming: AudioTiming | undefined = timingData[indexInTimings];
     const match: RegExpExecArray | null = AUDIO_HEADING_REF_REGEX.exec(currentAudioTiming.textRef);
     if (match == null) return;
     const ref: string = match[0];
