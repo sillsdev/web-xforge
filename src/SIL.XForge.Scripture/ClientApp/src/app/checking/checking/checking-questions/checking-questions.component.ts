@@ -59,6 +59,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
   @Output() update = new EventEmitter<QuestionDoc>();
   @Output() changed = new EventEmitter<QuestionChangedEvent>();
   @Input() isAllBooksShown: boolean = false;
+  @Input() isFiltered: boolean = false;
 
   @Input()
   set projectProfileDoc(projectProfileDoc: SFProjectProfileDoc | undefined) {

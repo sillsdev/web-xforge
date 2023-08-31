@@ -166,7 +166,7 @@
         flex: 1;
         align-items: flex-end;
 
-        @include media-breakpoint-down(xs) {
+        @include media-breakpoint-down(sm) {
           align-items: flex-start;
           flex-direction: column;
           row-gap: 5px;
@@ -194,7 +194,7 @@
         }
         button + .delete-divider {
           display: inline;
-          @include media-breakpoint-down(xs) {
+          @include media-breakpoint-down(sm) {
             transform: rotate(90deg);
           }
         }

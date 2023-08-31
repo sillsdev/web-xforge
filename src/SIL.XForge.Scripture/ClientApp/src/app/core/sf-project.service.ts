@@ -103,13 +103,16 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   queryQuestions(
     id: string,
-    options: { bookNum?: number; activeOnly?: boolean; sort?: boolean } = {}
+    options: { bookNum?: number; chapterNum?: number; activeOnly?: boolean; sort?: boolean } = {}
   ): Promise<RealtimeQuery<QuestionDoc>> {
     const queryParams: QueryParameters = {
       [obj<Question>().pathStr(q => q.projectRef)]: id
     };
     if (options.bookNum != null) {
       queryParams[obj<Question>().pathStr(q => q.verseRef.bookNum)] = options.bookNum;
+    }
+    if (options.chapterNum != null) {
+      queryParams[obj<Question>().pathStr(q => q.verseRef.chapterNum)] = options.chapterNum;
     }
     if (options.activeOnly != null && options.activeOnly) {
       queryParams[obj<Question>().pathStr(q => q.isArchived)] = false;

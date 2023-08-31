@@ -242,7 +242,7 @@
     "questions": "Questions"
   },
   "checking_questions": {
-    "no_questions_found": "Aucune question trouvée correspondant à votre filtre"
+    "no_questions_found_filtered": "Aucune question trouvée correspondant à votre filtre"
   },
   "edit_name_dialog": {
     "cancel": "Annuler",
