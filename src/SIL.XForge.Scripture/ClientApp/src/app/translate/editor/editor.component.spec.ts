@@ -55,6 +55,7 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Observable, of, Subject } from 'rxjs';
+import { HttpClient } from 'src/app/machine-api/http-client';
 import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
@@ -81,6 +82,7 @@ import { RemoteTranslationEngine } from '../../machine-api/remote-translation-en
 import { SharedModule } from '../../shared/shared.module';
 import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/test-utils';
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
+import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
@@ -99,10 +101,16 @@ const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedMediaObserver = mock(MediaObserver);
+const mockedHttpClient = mock(HttpClient);
+const mockedDraftGenerationService = mock(DraftGenerationService);
 
 class MockComponent {}
 
-const ROUTES: Route[] = [{ path: 'projects/:projectId/translate', component: MockComponent }];
+const ROUTES: Route[] = [
+  { path: 'projects/:projectId/translate/:bookId/:chapter', component: MockComponent },
+  { path: 'projects/:projectId/translate/:bookId', component: MockComponent },
+  { path: 'projects/:projectId/translate', component: MockComponent }
+];
 
 class MockConsole {
   log(val: any): void {
@@ -140,7 +148,9 @@ describe('EditorComponent', () => {
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
-      { provide: MediaObserver, useMock: mockedMediaObserver }
+      { provide: MediaObserver, useMock: mockedMediaObserver },
+      { provide: HttpClient, useMock: mockedHttpClient },
+      { provide: DraftGenerationService, useMock: mockedDraftGenerationService }
     ]
   }));
 
@@ -761,6 +771,7 @@ describe('EditorComponent', () => {
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.component.chapter = 2;
+      env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
       env.wait();
       const verseText = env.component.target!.getSegmentText('verse_2_1');
       expect(verseText).toBe('target: chapter 2, verse 1.');
@@ -769,6 +780,7 @@ describe('EditorComponent', () => {
 
       resetCalls(env.mockedRemoteTranslationEngine);
       env.component.chapter = 1;
+      env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
       env.wait();
       expect(env.component.target!.segmentRef).toBe('verse_1_1');
       verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
@@ -2942,6 +2954,7 @@ describe('EditorComponent', () => {
       env.setSelectionAndInsertNote(segmentRef);
       expect(env.mobileNoteTextArea).toBeTruthy();
       env.component.chapter = 2;
+      env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
       env.wait();
       env.clickSegmentRef('verse_2_2');
       env.wait();
@@ -3300,6 +3313,102 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
   });
+
+  describe('Back translation draft', () => {
+    it('detects available back translation draft', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const targetDelta = new Delta([{ insert: '', attributes: { segment: 'verse_1_1' } }]);
+
+      // Stop text loading from triggering
+      spyOn(env.component, 'onTextLoaded');
+
+      env.setProjectUserConfig();
+      env.wait();
+
+      when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
+        of({
+          verse_3_16: 'For God so loved the world',
+          verse_1_1: 'In the beginning was the Word'
+        })
+      );
+
+      env.targetEditor.getContents = jasmine.createSpy().and.returnValue(targetDelta);
+      env.component['checkForPreTranslations']();
+      expect(env.component.hasDraft).toBe(true);
+      verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).once();
+      env.dispose();
+    }));
+
+    it('detects when back translation draft is not available', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const targetDelta = new Delta([
+        { insert: 'verse 1 already exists', attributes: { segment: 'verse_1_1' } },
+        { insert: { blank: true }, attributes: { segment: 'verse_1_2' } }
+      ]);
+
+      // Stop text loading from triggering
+      spyOn(env.component, 'onTextLoaded');
+
+      env.setProjectUserConfig();
+      env.wait();
+
+      when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
+        of({
+          verse_3_16: 'For God so loved the world',
+          verse_1_1: 'In the beginning was the Word'
+        })
+      );
+
+      env.targetEditor.getContents = jasmine.createSpy().and.returnValue(targetDelta);
+      env.component['checkForPreTranslations']();
+      expect(env.component.hasDraft).toBe(false);
+      verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).once();
+      env.dispose();
+    }));
+
+    it('does not fetch draft if all segments are translated', fakeAsync(() => {
+      const env = new TestEnvironment();
+      const targetDelta = new Delta([
+        { insert: 'verse 1 already exists', attributes: { segment: 'verse_1_1' } },
+        { insert: 'verse 2 already exists', attributes: { segment: 'verse_1_2' } },
+        { insert: { 'note-thread-embed': {} }, attributes: { segment: 'verse_1_3' } }
+      ]);
+
+      // Stop text loading from triggering
+      spyOn(env.component, 'onTextLoaded');
+
+      env.setProjectUserConfig();
+      env.wait();
+
+      when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(
+        of({
+          verse_3_16: 'For God so loved the world',
+          verse_1_1: 'In the beginning was the Word',
+          verse_1_3: 'All things came into being through Him'
+        })
+      );
+
+      env.targetEditor.getContents = jasmine.createSpy().and.returnValue(targetDelta);
+      env.component['checkForPreTranslations']();
+      expect(env.component.hasDraft).toBe(false);
+      verify(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).never();
+      env.dispose();
+    }));
+
+    it('sets book and chapter according to route', fakeAsync(() => {
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK', chapter: '2' };
+      const env = new TestEnvironment();
+
+      env.setProjectUserConfig();
+      env.updateParams(navigationParams);
+      env.wait();
+
+      expect(env.bookName).toEqual('Mark');
+      expect(env.component.chapter).toBe(2);
+
+      env.dispose();
+    }));
+  });
 });
 
 const defaultTranslateConfig = {
@@ -3573,6 +3682,7 @@ class TestEnvironment {
       this.openNoteDialogs = [];
     });
     when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
+    when(mockedFeatureFlagService.showNmtDrafting).thenReturn({ enabled: true } as FeatureFlag);
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
     when(mockedMediaObserver.isActive(anything())).thenReturn(false);
@@ -3580,6 +3690,7 @@ class TestEnvironment {
       const [projectId, threadId] = id.split(':');
       return this.getNoteThreadDoc(projectId, threadId);
     });
+    when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of({}));
 
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);
