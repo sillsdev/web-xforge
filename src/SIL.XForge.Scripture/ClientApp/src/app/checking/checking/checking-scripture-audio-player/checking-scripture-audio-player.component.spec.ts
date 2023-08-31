@@ -11,7 +11,7 @@ import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
-import { getAudioTimings, getAudioTimingWithHeadings } from '../../checking.utils.spec';
+import { getAudioTimings, getAudioTimingWithHeadings } from '../../checking-test.utils';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
 
 const audioFile = 'test-audio-player.webm';
