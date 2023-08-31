@@ -106,6 +106,14 @@
       </section>
 
       <ng-template #jobExists>
+        <ng-container *ngIf="isDraftFaulted(draftJob)">
+          <section>
+            <h3><mat-icon color="warn">warning</mat-icon>Last generation attempt failed</h3>
+            <p>Click <em>"Generate draft"</em> below to try again.</p>
+          </section>
+          <mat-divider inset></mat-divider>
+        </ng-container>
+
         <section *ngIf="isDraftComplete(draftJob) || !isDraftInProgress(draftJob)" class="view-or-create-options">
           <ng-container *ngIf="isDraftComplete(draftJob)">
             <div>
