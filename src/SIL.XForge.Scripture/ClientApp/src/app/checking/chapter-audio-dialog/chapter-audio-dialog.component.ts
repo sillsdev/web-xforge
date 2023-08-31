@@ -41,6 +41,7 @@ export interface ChapterAudioDialogResult {
 })
 export class ChapterAudioDialogComponent implements AfterViewInit {
   @ViewChild('dropzone') dropzone?: ElementRef<HTMLDivElement>;
+  @ViewChild('fileDropzone') fileDropzone?: ElementRef<HTMLInputElement>;
   @ViewChild('chapterAudio') chapterAudio?: SingleButtonAudioPlayerComponent;
   private audio?: AudioAttachment;
   private _book: number = this.books[0];
@@ -158,11 +159,13 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
 
   deleteAudioData(): void {
     this.audio = undefined;
+    this.fileDropzone!.nativeElement.value = '';
   }
 
   deleteTimingData(): void {
     this.timing = [];
     this._timingErrorText = undefined;
+    this.fileDropzone!.nativeElement.value = '';
   }
 
   ngAfterViewInit(): void {

@@ -17,7 +17,7 @@
         <mat-icon class="mirror-rtl">post_add</mat-icon> <span fxHide.xs>{{ t("add_question") }}</span>
       </button>
       <button
-        *ngIf="!isLoading && featureFlags.scriptureAudio.enabled"
+        *ngIf="!isLoading && canCreateScriptureAudio"
         mat-flat-button
         type="button"
         color="primary"
@@ -118,8 +118,9 @@
                           <mat-icon>archive</mat-icon>
                           <span>{{ t("archive_multiple", { location: getBookName(text) }) }}</span>
                         </button>
-                        <ng-container *ngIf="featureFlagsService.scriptureAudio.enabled && chapter.hasAudio">
+                        <ng-container *ngIf="chapter.hasAudio">
                           <button
+                            *ngIf="canCreateScriptureAudio"
                             mat-menu-item
                             disabled
                             (click)="editChapterAudio(text, chapter)"
@@ -128,7 +129,12 @@
                             <mat-icon>edit</mat-icon>
                             <span>{{ t("edit_chapter_audio") }}</span>
                           </button>
-                          <button mat-menu-item (click)="deleteChapterAudio(text, chapter)" class="delete-audio-btn">
+                          <button
+                            *ngIf="canDeleteScriptureAudio"
+                            mat-menu-item
+                            (click)="deleteChapterAudio(text, chapter)"
+                            class="delete-audio-btn"
+                          >
                             <mat-icon>delete</mat-icon>
                             <span>{{ t("delete_chapter_audio") }}</span>
                           </button>

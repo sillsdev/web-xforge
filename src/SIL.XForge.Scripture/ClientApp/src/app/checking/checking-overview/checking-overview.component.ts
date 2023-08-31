@@ -157,6 +157,24 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Create);
   }
 
+  get canCreateScriptureAudio(): boolean {
+    if (!this.featureFlags.scriptureAudio.enabled) {
+      return false;
+    }
+    const project = this.projectDoc?.data;
+    const userId = this.userService.currentUserId;
+    return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Create);
+  }
+
+  get canDeleteScriptureAudio(): boolean {
+    if (!this.featureFlags.scriptureAudio.enabled) {
+      return false;
+    }
+    const project = this.projectDoc?.data;
+    const userId = this.userService.currentUserId;
+    return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Delete);
+  }
+
   get canEditQuestion(): boolean {
     const project = this.projectDoc?.data;
     const userId = this.userService.currentUserId;
