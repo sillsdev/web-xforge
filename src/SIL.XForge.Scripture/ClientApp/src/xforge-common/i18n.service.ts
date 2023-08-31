@@ -5,7 +5,7 @@ import { TranslocoConfig, TranslocoService } from '@ngneat/transloco';
 import merge from 'lodash-es/merge';
 import { CookieService } from 'ngx-cookie-service';
 import { Canon, VerseRef } from '@sillsdev/scripture';
-import { Observable, of, zip } from 'rxjs';
+import { Observable, of, zip, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { ObjectPaths } from '../type-utils';
@@ -95,7 +95,7 @@ export class I18nService {
     );
   }
 
-  private currentLocale: Locale = I18nService.defaultLocale;
+  private currentLocale$ = new BehaviorSubject<Locale>(I18nService.defaultLocale);
 
   private interpolationCache: { [key: string]: { text: string; id?: number }[] } = {};
 
@@ -122,28 +122,32 @@ export class I18nService {
     }
   }
 
+  get locale$(): Observable<Locale> {
+    return this.currentLocale$;
+  }
+
   get locale(): Locale {
-    return this.currentLocale;
+    return this.currentLocale$.value;
   }
 
   get localeCode(): string {
-    return this.currentLocale.canonicalTag;
+    return this.currentLocale$.value.canonicalTag;
   }
 
   get direction(): 'ltr' | 'rtl' {
-    return this.currentLocale.direction;
+    return this.currentLocale$.value.direction;
   }
 
   get isRtl(): boolean {
-    return this.currentLocale.direction === 'rtl';
+    return this.currentLocale$.value.direction === 'rtl';
   }
 
   get forwardDirectionWord(): 'right' | 'left' {
-    return this.currentLocale.direction === 'ltr' ? 'right' : 'left';
+    return this.currentLocale$.value.direction === 'ltr' ? 'right' : 'left';
   }
 
   get backwardDirectionWord(): 'right' | 'left' {
-    return this.currentLocale.direction === 'ltr' ? 'left' : 'right';
+    return this.currentLocale$.value.direction === 'ltr' ? 'left' : 'right';
   }
 
   get locales(): Locale[] {
@@ -177,7 +181,7 @@ export class I18nService {
       return;
     }
 
-    this.currentLocale = locale;
+    this.currentLocale$.next(locale);
     this.transloco.setActiveLang(locale.canonicalTag);
     const date = new Date();
     date.setFullYear(date.getFullYear() + 1);
@@ -323,5 +327,19 @@ export class I18nService {
 
     this.interpolationCache[hashKey] = sections.filter(section => !(section.text === '' && section.id == null));
     return this.interpolationCache[hashKey];
+  }
+
+  /**
+   * Uses browser `Intl` to get the language name for the specified language code rendered in the current locale.
+   * @param languageCode The language code for the language name to be displayed.
+   * @returns The display name or undefined if language code is not set.
+   */
+  getLanguageDisplayName(languageCode: string | undefined): string | undefined {
+    if (!languageCode) {
+      return undefined;
+    }
+
+    const languageNames: Intl.DisplayNames = new Intl.DisplayNames([this.localeCode], { type: 'language' });
+    return languageNames.of(languageCode);
   }
 }

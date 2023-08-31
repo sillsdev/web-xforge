@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
-import { CookieService } from 'ngx-cookie-service';
 import { VerseRef } from '@sillsdev/scripture';
+import { CookieService } from 'ngx-cookie-service';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -141,6 +141,26 @@ describe('I18nService', () => {
     service.setLocale('ar', mockedAuthService);
     // Expect right to left mark before : and - characters
     expect(service.localizeReference(new VerseRef('GEN 1:2-3'))).toBe('Genesis 1\u200F:2\u200F-3');
+  });
+
+  describe('getLanguageDisplayName', () => {
+    it('should return the display name for a valid language code', () => {
+      const service = getI18nService();
+      service.setLocale('en', instance(mockedAuthService));
+      expect(service.getLanguageDisplayName('en')).toBe('English');
+    });
+
+    it('should return undefined for an undefined language code', () => {
+      const service = getI18nService();
+      service.setLocale('en', instance(mockedAuthService));
+      expect(service.getLanguageDisplayName(undefined)).toBeUndefined();
+    });
+
+    it('should return language code for an unknown language code', () => {
+      const service = getI18nService();
+      service.setLocale('en', instance(mockedAuthService));
+      expect(service.getLanguageDisplayName('xyz')).toBe('xyz');
+    });
   });
 });
 

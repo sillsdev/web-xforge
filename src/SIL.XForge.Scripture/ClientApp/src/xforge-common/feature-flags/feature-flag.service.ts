@@ -66,6 +66,8 @@ export class FeatureFlagService {
     'Allow adding notes'
   );
 
+  showNmtDrafting: FeatureFlag = new FeatureFlag(new LocalStorageFlagStore('SHOW_NMT_DRAFTING'), 'Show NMT drafting');
+
   scriptureAudio: FeatureFlag = new FeatureFlag(new LocalStorageFlagStore('SCRIPTURE_AUDIO'), 'Scripture audio');
 
   preventOpSubmission: FeatureFlag = new FeatureFlag(
