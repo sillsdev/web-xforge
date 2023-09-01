@@ -2,13 +2,13 @@ import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angu
 import { MediaObserver } from '@angular/flex-layout';
 import { AbstractControl, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
+import { VerseRef } from '@sillsdev/scripture';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { VerseRef } from '@sillsdev/scripture';
 import { Subscription } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -16,7 +16,7 @@ import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../../core/models/question-doc';
@@ -123,7 +123,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     private readonly questionDialogService: QuestionDialogService,
     private readonly i18n: I18nService,
     private readonly fileService: FileService,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     public featureFlags: FeatureFlagService,
     public media: MediaObserver
@@ -518,7 +518,7 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
     this.saveAnswerDisabled = true;
     const userDoc = await this.userService.getCurrentUser();
-    if (this.pwaService.isOnline && userDoc.data?.isDisplayNameConfirmed !== true) {
+    if (this.onlineStatusService.isOnline && userDoc.data?.isDisplayNameConfirmed !== true) {
       await this.userService.editDisplayName(true);
     }
     this.emitAnswerToSave();

@@ -4,21 +4,21 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ShareButtonComponent } from './share-button.component';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedUserService = mock(UserService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 
 describe('ShareButtonComponent', () => {
   configureTestingModule(() => ({
@@ -28,7 +28,7 @@ describe('ShareButtonComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: UserService, useMock: mockedUserService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
     ]
   }));
 
@@ -55,7 +55,7 @@ class TestEnvironment {
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
-    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)

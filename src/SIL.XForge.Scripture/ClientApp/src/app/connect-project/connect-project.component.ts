@@ -5,7 +5,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { hasStringProp } from '../../type-utils';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectCreateSettings } from '../core/models/sf-project-create-settings';
@@ -56,7 +56,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
     private readonly router: Router,
     readonly i18n: I18nService,
     noticeService: NoticeService,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly errorHandler: ErrorHandler,
     private readonly translocoService: TranslocoService
   ) {
@@ -145,7 +145,7 @@ export class ConnectProjectComponent extends DataLoadingComponent implements OnI
       }
     });
 
-    this.subscribe(this.pwaService.onlineStatus$, async isOnline => {
+    this.subscribe(this.onlineStatusService.onlineStatus$, async isOnline => {
       this.isAppOnline = isOnline;
       if (isOnline) {
         if (this._projects == null) {

@@ -10,33 +10,33 @@ import {
   ViewChild
 } from '@angular/core';
 import { TranslocoService } from '@ngneat/transloco';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import isEqual from 'lodash-es/isEqual';
 import merge from 'lodash-es/merge';
 import Quill, { DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { AuthType, getAuthType } from 'realtime-server/lib/esm/common/models/user';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
-import { Canon, VerseRef } from '@sillsdev/scripture';
 import { fromEvent, Subject, Subscription, timer } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { LocalPresence, Presence } from 'sharedb/lib/sharedb';
-import { PwaService } from 'xforge-common/pwa.service';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import tinyColor from 'tinycolor2';
+import { DialogService } from 'xforge-common/dialog.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { getBrowserEngine, objectId } from 'xforge-common/utils';
-import { DialogService } from 'xforge-common/dialog.service';
-import tinyColor from 'tinycolor2';
-import { takeUntil } from 'rxjs/operators';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { NoteThreadIcon } from '../../core/models/note-thread-doc';
-import { attributeFromMouseEvent, getBaseVerse, getVerseStrFromSegmentRef, VERSE_REGEX } from '../utils';
 import { MultiCursorViewer } from '../../translate/editor/multi-viewer/multi-viewer.component';
+import { attributeFromMouseEvent, getBaseVerse, getVerseStrFromSegmentRef, VERSE_REGEX } from '../utils';
 import { getAttributesAtPosition, registerScripture } from './quill-scripture';
 import { Segment } from './segment';
-import { EditorRange, TextViewModel } from './text-view-model';
 import { NoteDialogData, TextNoteDialogComponent } from './text-note-dialog/text-note-dialog.component';
+import { EditorRange, TextViewModel } from './text-view-model';
 
 // When a user is active in the editor a timer starts to mark them as inactive for remote presences
 export const PRESENCE_EDITOR_ACTIVE_TIMEOUT = 3500;
@@ -238,7 +238,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     private readonly changeDetector: ChangeDetectorRef,
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly transloco: TranslocoService,
     private readonly userService: UserService
   ) {
@@ -429,7 +429,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
    * Is presence enabled and currently available to use
    */
   private get isPresenceActive(): boolean {
-    return this.isPresenceEnabled && this.pwaService.isOnline;
+    return this.isPresenceEnabled && this.onlineStatusService.isOnline;
   }
 
   /**
@@ -440,7 +440,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   }
 
   ngAfterViewInit(): void {
-    this.subscribe(this.pwaService.onlineStatus$, isOnline => {
+    this.subscribe(this.onlineStatusService.onlineStatus$, isOnline => {
       this.updatePlaceholderText(isOnline);
       this.changeDetector.detectChanges();
       if (!isOnline && this._editor != null) {
@@ -915,7 +915,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
     if (this._id == null) {
       return;
     }
-    if (this.pwaService.isOnline) {
+    if (this.onlineStatusService.isOnline) {
       this.displayMessage = this.transloco.translate('text.loading');
     } else {
       this.displayMessage = this.transloco.translate('text.not_available_offline');
@@ -1564,7 +1564,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
 
   private updatePlaceholderText(forceAndConnected?: boolean): void {
     if (!this.viewModel.isLoaded) {
-      this.displayMessage = this.pwaService.isOnline
+      this.displayMessage = this.onlineStatusService.isOnline
         ? this.transloco.translate('text.book_does_not_exist')
         : this.transloco.translate('text.not_available_offline');
     } else if (this.viewModel.isEmpty) {

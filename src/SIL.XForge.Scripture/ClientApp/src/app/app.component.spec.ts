@@ -27,6 +27,7 @@ import { FileService } from 'xforge-common/file.service';
 import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -55,6 +56,7 @@ const mockedCookieService = mock(CookieService);
 const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedFileService = mock(FileService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedMdcDialog = mock(MdcDialog);
@@ -102,6 +104,7 @@ describe('AppComponent', () => {
       { provide: LocationService, useMock: mockedLocationService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: FileService, useMock: mockedFileService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: MdcDialog, useMock: mockedMdcDialog },
@@ -677,11 +680,13 @@ class TestEnvironment {
       this.comesOnline$.subscribe(() => resolve());
     });
 
-    when(mockedPwaService.isOnline).thenReturn(this.browserOnline$.getValue() && this.webSocketOnline$.getValue());
-    when(mockedPwaService.isBrowserOnline).thenReturn(this.browserOnline$.getValue());
-    when(mockedPwaService.online).thenReturn(comesOnline);
-    when(mockedPwaService.onlineStatus$).thenReturn(this.webSocketOnline$);
-    when(mockedPwaService.onlineBrowserStatus$).thenReturn(this.browserOnline$);
+    when(mockedOnlineStatusService.isOnline).thenReturn(
+      this.browserOnline$.getValue() && this.webSocketOnline$.getValue()
+    );
+    when(mockedOnlineStatusService.isBrowserOnline).thenReturn(this.browserOnline$.getValue());
+    when(mockedOnlineStatusService.online).thenReturn(comesOnline);
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.webSocketOnline$);
+    when(mockedOnlineStatusService.onlineBrowserStatus$).thenReturn(this.browserOnline$);
     if (initialConnectionStatus === 'offline') {
       this.goFullyOffline();
     } else {

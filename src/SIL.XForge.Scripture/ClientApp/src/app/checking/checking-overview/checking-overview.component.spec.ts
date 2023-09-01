@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { By } from '@angular/platform-browser';
@@ -13,32 +13,32 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import {
-  QUESTIONS_COLLECTION,
+  getQuestionDocId,
   Question,
-  getQuestionDocId
+  QUESTIONS_COLLECTION
 } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
-  SFProjectUserConfig,
-  getSFProjectUserConfigDocId
+  getSFProjectUserConfigDocId,
+  SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -59,7 +59,7 @@ const mockedAuthService = mock(AuthService);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 
 class MockComponent {}
@@ -82,7 +82,7 @@ describe('CheckingOverviewComponent', () => {
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ]
   }));
@@ -954,8 +954,8 @@ class TestEnvironment {
     );
     this.setCurrentUser(this.adminUser);
 
-    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
-    when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline.asObservable());
+    when(mockedOnlineStatusService.isOnline).thenReturn(this.isOnline.getValue());
     when(mockedFeatureFlagService.scriptureAudio).thenReturn({ enabled: true } as FeatureFlag);
 
     this.fixture = TestBed.createComponent(CheckingOverviewComponent);

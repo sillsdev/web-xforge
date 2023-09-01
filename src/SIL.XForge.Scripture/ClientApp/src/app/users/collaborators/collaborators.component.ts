@@ -11,7 +11,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -62,7 +62,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
     readonly i18n: I18nService,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly changeDetector: ChangeDetectorRef,
     private readonly dialogService: DialogService,
     readonly urls: ExternalUrlService
@@ -156,7 +156,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         this.loadingFinished();
       }
     );
-    this.subscribe(this.pwaService.onlineStatus$, isOnline => {
+    this.subscribe(this.onlineStatusService.onlineStatus$, isOnline => {
       this.isAppOnline = isOnline;
       if (isOnline && this._userRows == null) {
         this.loadingStarted();
@@ -167,7 +167,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   ngAfterViewInit(): void {
-    this.subscribe(this.pwaService.onlineStatus$, isOnline => {
+    this.subscribe(this.onlineStatusService.onlineStatus$, isOnline => {
       if (isOnline) {
         this.filterForm.enable();
       } else {

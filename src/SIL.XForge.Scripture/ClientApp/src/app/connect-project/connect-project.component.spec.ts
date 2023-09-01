@@ -14,7 +14,7 @@ import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito'
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -38,7 +38,7 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedI18nService = mock(I18nService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedErrorHandler = mock(ErrorHandler);
 
 describe('ConnectProjectComponent', () => {
@@ -59,7 +59,7 @@ describe('ConnectProjectComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: ErrorHandler, useMock: mockedErrorHandler },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
     ]
   }));
 
@@ -411,7 +411,7 @@ class TestEnvironment {
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedI18nService.translateAndInsertTags(anything())).thenReturn('A translated string.');
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
-    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline.asObservable());
     this.fixture = TestBed.createComponent(ConnectProjectComponent);
     this.component = this.fixture.componentInstance;
   }

@@ -3,43 +3,42 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
+import { VerseRef } from '@sillsdev/scripture';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import QuillCursors from 'quill-cursors';
+import { User } from 'realtime-server/common/models/user';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { VerseRef } from '@sillsdev/scripture';
 import * as RichText from 'rich-text';
 import { BehaviorSubject } from 'rxjs';
+import { LocalPresence } from 'sharedb/lib/sharedb';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
-import { PwaService } from 'xforge-common/pwa.service';
-import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
-import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
-import { TestTranslocoModule } from 'xforge-common/test-utils';
-import { UICommonModule } from 'xforge-common/ui-common.module';
+import { DialogService } from 'xforge-common/dialog.service';
 import { MockConsole } from 'xforge-common/mock-console';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { DialogService } from 'xforge-common/dialog.service';
-import { LocalPresence } from 'sharedb/lib/sharedb';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { User } from 'realtime-server/common/models/user';
-import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../shared.module';
 import { getCombinedVerseTextDoc, getEmptyChapterDoc, getPoetryVerseTextDoc, getTextDoc } from '../test-utils';
-import { PresenceData, PRESENCE_EDITOR_ACTIVE_TIMEOUT, RemotePresences, TextComponent } from './text.component';
 import { TextNoteDialogComponent, TextNoteType } from './text-note-dialog/text-note-dialog.component';
+import { PresenceData, PRESENCE_EDITOR_ACTIVE_TIMEOUT, RemotePresences, TextComponent } from './text.component';
 
 const mockedBugsnagService = mock(BugsnagService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedProjectService = mock(SFProjectService);
 const mockedTranslocoService = mock(TranslocoService);
 const mockedUserService = mock(UserService);
@@ -60,7 +59,7 @@ describe('TextComponent', () => {
     ],
     providers: [
       { provide: BugsnagService, useMock: mockedBugsnagService },
-      { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: TranslocoService, useMock: mockedTranslocoService },
       { provide: UserService, useMock: mockedUserService },
       { provide: DialogService, useMock: mockedDialogService }
@@ -1187,8 +1186,8 @@ class TestEnvironment {
   private isOnline: boolean = true;
 
   constructor({ textDoc, chapterNum, presenceEnabled = true, callback }: TestEnvCtorArgs = {}) {
-    when(mockedPwaService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
-    when(mockedPwaService.isOnline).thenCall(() => this.isOnline);
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
+    when(mockedOnlineStatusService.isOnline).thenCall(() => this.isOnline);
     when(mockedTranslocoService.translate<string>(anything())).thenCall(
       (translationStringKey: string) => translationStringKey
     );

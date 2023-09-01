@@ -12,13 +12,13 @@ import { DialogService } from './dialog.service';
 import { FileService, formatFileSource } from './file.service';
 import { createDeletionFileData, createStorageFileData, FileOfflineData, FileType } from './models/file-offline-data';
 import { ProjectDataDoc } from './models/project-data-doc';
-import { PwaService } from './pwa.service';
+import { OnlineStatusService } from './online-status.service';
 import { TestRealtimeModule } from './test-realtime.module';
 import { TestRealtimeService } from './test-realtime.service';
 import { TypeRegistry } from './type-registry';
 import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
 
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedAuthService = mock(AuthService);
 const mockedCommandService = mock(CommandService);
 const mockedDialogService = mock(DialogService);
@@ -32,7 +32,7 @@ describe('FileService', () => {
     ],
     providers: [
       FileService,
-      { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: AuthService, useMock: mockedAuthService },
       { provide: CommandService, useMock: mockedCommandService },
       { provide: DialogService, useMock: mockedDialogService }
@@ -287,8 +287,8 @@ class TestEnvironment {
 
   constructor(isOnline: boolean = true) {
     this.isOnline = new BehaviorSubject<boolean>(isOnline);
-    when(mockedPwaService.isOnline).thenReturn(isOnline);
-    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline);
+    when(mockedOnlineStatusService.isOnline).thenReturn(isOnline);
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline);
     when(mockedAuthService.isLoggedIn).thenResolve(true);
 
     this.realtimeService = TestBed.inject(TestRealtimeService);
@@ -308,7 +308,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(hasConnection: boolean) {
-    when(mockedPwaService.isOnline).thenReturn(hasConnection);
+    when(mockedOnlineStatusService.isOnline).thenReturn(hasConnection);
     this.isOnline.next(hasConnection);
     tick();
   }

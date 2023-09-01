@@ -5,7 +5,6 @@ import { environment } from '../environments/environment';
 import { AuthService } from './auth.service';
 import { CommandService } from './command.service';
 import { DialogService } from './dialog.service';
-import { I18nService } from './i18n.service';
 import {
   createDeletionFileData,
   createStorageFileData,
@@ -15,7 +14,7 @@ import {
 } from './models/file-offline-data';
 import { ProjectDataDoc } from './models/project-data-doc';
 import { OfflineStore } from './offline-store';
-import { PwaService } from './pwa.service';
+import { OnlineStatusService } from './online-status.service';
 import { RealtimeService } from './realtime.service';
 import { SubscriptionDisposable } from './subscription-disposable';
 import { TypeRegistry } from './type-registry';
@@ -52,11 +51,10 @@ export class FileService extends SubscriptionDisposable {
   constructor(
     private readonly typeRegistry: TypeRegistry,
     private readonly offlineStore: OfflineStore,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly http: HttpClient,
     private readonly authService: AuthService,
     private readonly commandService: CommandService,
-    private readonly i18n: I18nService,
     private readonly dialogService: DialogService
   ) {
     super();
@@ -68,7 +66,7 @@ export class FileService extends SubscriptionDisposable {
 
   init(realtimeService: RealtimeService): void {
     this.realtimeService = realtimeService;
-    this.subscribe(this.pwaService.onlineStatus$, isOnline => {
+    this.subscribe(this.onlineStatusService.onlineStatus$, isOnline => {
       if (isOnline) {
         this.syncFiles();
       }
@@ -98,7 +96,7 @@ export class FileService extends SubscriptionDisposable {
     filename: string,
     alwaysKeepFileOffline: boolean
   ): Promise<string | undefined> {
-    if (this.pwaService.isOnline) {
+    if (this.onlineStatusService.isOnline) {
       // Try and upload it online and, failing that, do so in offline mode
       try {
         const onlineUrl = await this.onlineUploadFile(fileType, projectId, dataId, new File([blob], filename));
@@ -132,7 +130,7 @@ export class FileService extends SubscriptionDisposable {
     dataId: string,
     ownerId: string
   ): Promise<void> {
-    if (this.pwaService.isOnline) {
+    if (this.onlineStatusService.isOnline) {
       await this.findOrUpdateCache(fileType, dataCollection, dataId);
       // Try and delete it online and, failing that, do so in offline mode
       try {
@@ -169,7 +167,7 @@ export class FileService extends SubscriptionDisposable {
     } else {
       // The cache needs to be updated if no file exists or the onlineUrl does not match a valid request url.
       const notYetUploaded = isLocalBlobUrl(url);
-      if (!this.pwaService.isOnline || notYetUploaded) {
+      if (!this.onlineStatusService.isOnline || notYetUploaded) {
         return fileData;
       }
       const cacheDataIsStale = fileData == null || fileData.onlineUrl !== url;

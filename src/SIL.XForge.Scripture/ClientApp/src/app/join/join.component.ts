@@ -1,23 +1,22 @@
-import { Component } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { PwaService } from 'xforge-common/pwa.service';
-import { combineLatest } from 'rxjs';
-import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { NoticeService } from 'xforge-common/notice.service';
-import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
-import { DialogService } from 'xforge-common/dialog.service';
-import { en, I18nService } from 'xforge-common/i18n.service';
-import { AuthService } from 'xforge-common/auth.service';
-import { AnonymousService } from 'xforge-common/anonymous.service';
-import { LocationService } from 'xforge-common/location.service';
-import { FormControl, Validators } from '@angular/forms';
-import { XFValidators } from 'xforge-common/xfvalidators';
-import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslocoService } from '@ngneat/transloco';
-import { SFProjectService } from '../core/sf-project.service';
+import { Component } from '@angular/core';
+import { FormControl, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { combineLatest } from 'rxjs';
+import { distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { AnonymousService } from 'xforge-common/anonymous.service';
+import { AuthService } from 'xforge-common/auth.service';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
+import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DialogService } from 'xforge-common/dialog.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { en, I18nService } from 'xforge-common/i18n.service';
+import { LocationService } from 'xforge-common/location.service';
+import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { XFValidators } from 'xforge-common/xfvalidators';
 import { ObjectPaths } from '../../type-utils';
+import { SFProjectService } from '../core/sf-project.service';
 
 export interface AnonymousShareKeyDetails {
   projectName: string;
@@ -44,11 +43,10 @@ export class JoinComponent extends DataLoadingComponent {
     readonly i18nService: I18nService,
     private readonly locationService: LocationService,
     private readonly projectService: SFProjectService,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly reportingService: ErrorReportingService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly transloco: TranslocoService,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -59,7 +57,7 @@ export class JoinComponent extends DataLoadingComponent {
       })),
       filter(key => typeof key.shareKey === 'string')
     );
-    const checkLinkSharing$ = combineLatest([joining$, this.pwaService.onlineStatus$]).pipe(
+    const checkLinkSharing$ = combineLatest([joining$, this.onlineStatusService.onlineStatus$]).pipe(
       filter(([_, isOnline]) => isOnline),
       map(([joining, _]) => joining),
       distinctUntilChanged()
@@ -71,7 +69,7 @@ export class JoinComponent extends DataLoadingComponent {
       }
       this.checkShareKey(joining.shareKey);
     });
-    this.subscribe(this.pwaService.onlineStatus$, () => this.updateOfflineJoiningStatus());
+    this.subscribe(this.onlineStatusService.onlineStatus$, () => this.updateOfflineJoiningStatus());
   }
 
   get isFormEnabled(): boolean {
@@ -92,7 +90,7 @@ export class JoinComponent extends DataLoadingComponent {
   }
 
   get isOnline(): boolean {
-    return this.pwaService.isOnline;
+    return this.onlineStatusService.isOnline;
   }
 
   async joinProject(): Promise<void> {
@@ -167,10 +165,10 @@ export class JoinComponent extends DataLoadingComponent {
   }
 
   private async updateOfflineJoiningStatus(): Promise<void> {
-    if (this.pwaService.isOnline && this.status === 'unavailable') {
+    if (this.onlineStatusService.isOnline && this.status === 'unavailable') {
       this.name.enable();
       this.status = 'input';
-    } else if (!this.pwaService.isOnline && (await this.authService.isLoggedIn)) {
+    } else if (!this.onlineStatusService.isOnline && (await this.authService.isLoggedIn)) {
       await this.dialogService.message('join.please_connect_to_use_link');
       this.router.navigateByUrl('/projects', { replaceUrl: true });
     } else {

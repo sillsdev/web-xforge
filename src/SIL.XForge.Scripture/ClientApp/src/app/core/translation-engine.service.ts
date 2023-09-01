@@ -5,16 +5,16 @@ import {
   LatinWordTokenizer,
   MAX_SEGMENT_LENGTH
 } from '@sillsdev/machine';
+import { Canon } from '@sillsdev/scripture';
 import * as crc from 'crc-32';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { Canon } from '@sillsdev/scripture';
 import { Observable } from 'rxjs';
 import { filter, share } from 'rxjs/operators';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OfflineData, OfflineStore } from 'xforge-common/offline-store';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { HttpClient } from '../machine-api/http-client';
 import { RemoteTranslationEngine } from '../machine-api/remote-translation-engine';
@@ -38,13 +38,13 @@ export class TranslationEngineService extends SubscriptionDisposable {
 
   constructor(
     private readonly offlineStore: OfflineStore,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     private readonly machineHttp: HttpClient,
     private readonly noticeService: NoticeService
   ) {
     super();
-    this.onlineStatus$ = this.pwaService.onlineStatus$.pipe(
+    this.onlineStatus$ = this.onlineStatusService.onlineStatus$.pipe(
       filter(online => online),
       share()
     );

@@ -1,16 +1,16 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { VerseRef } from '@sillsdev/scripture';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { VerseRef } from '@sillsdev/scripture';
 import * as RichText from 'rich-text';
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -24,7 +24,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { getCombinedVerseTextDoc, getTextDoc } from '../../../shared/test-utils';
 import { CheckingTextComponent } from './checking-text.component';
 
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedDialogService = mock(DialogService);
@@ -40,7 +40,7 @@ describe('CheckingTextComponent', () => {
       TestTranslocoModule
     ],
     providers: [
-      { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: DialogService, useMock: mockedDialogService }
@@ -176,7 +176,7 @@ class TestEnvironment {
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
-    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline.asObservable());
 
     this.fixture = TestBed.createComponent(CheckingTextComponent);
     this.component = this.fixture.componentInstance;
