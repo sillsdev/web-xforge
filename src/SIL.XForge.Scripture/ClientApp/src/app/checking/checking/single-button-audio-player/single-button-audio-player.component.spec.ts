@@ -4,14 +4,14 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
 import { SingleButtonAudioPlayerComponent } from './single-button-audio-player.component';
 
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 
 @Component({
   template: `<app-single-button-audio-player #player [source]="source" [start]="start" [end]="end">
@@ -35,7 +35,7 @@ xdescribe('SingleButtonAudioPlayerComponent', () => {
   configureTestingModule(() => ({
     imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
     declarations: [SingleButtonAudioPlayerComponent, MockComponent],
-    providers: [{ provide: PwaService, useMock: mockedPwaService }]
+    providers: [{ provide: OnlineStatusService, useMock: mockedOnlineStatusService }]
   }));
 
   it('shows content when audio is available', async () => {
@@ -154,7 +154,7 @@ class TestEnvironment {
   readonly ngZone: NgZone;
 
   constructor() {
-    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
 
     this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(MockComponent);

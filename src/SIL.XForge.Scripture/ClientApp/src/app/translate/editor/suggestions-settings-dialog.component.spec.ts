@@ -14,7 +14,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { BehaviorSubject } from 'rxjs';
 import { mock, when } from 'ts-mockito';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
@@ -32,12 +32,12 @@ import {
   SuggestionsSettingsDialogData
 } from './suggestions-settings-dialog.component';
 
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 
 describe('SuggestionsSettingsDialogComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    providers: [{ provide: PwaService, useMock: mockedPwaService }]
+    providers: [{ provide: OnlineStatusService, useMock: mockedOnlineStatusService }]
   }));
 
   it('update confidence threshold', fakeAsync(() => {
@@ -135,8 +135,8 @@ class TestEnvironment {
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
 
-    when(mockedPwaService.isOnline).thenCall(() => this.onlineStatus.getValue());
-    when(mockedPwaService.onlineStatus$).thenReturn(this.onlineStatus.asObservable());
+    when(mockedOnlineStatusService.isOnline).thenCall(() => this.onlineStatus.getValue());
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.onlineStatus.asObservable());
   }
 
   get overlayContainerElement(): HTMLElement {

@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { MatSliderChange } from '@angular/material/slider';
 import { I18nService } from 'xforge-common/i18n.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { AudioPlayerBaseComponent } from '../audio-player-base/audio-player-base.component';
 
 @Component({
@@ -10,8 +10,8 @@ import { AudioPlayerBaseComponent } from '../audio-player-base/audio-player-base
   styleUrls: ['./audio-player.component.scss']
 })
 export class AudioPlayerComponent extends AudioPlayerBaseComponent {
-  constructor(pwaService: PwaService, readonly i18n: I18nService) {
-    super(pwaService);
+  constructor(onlineStatusService: OnlineStatusService, readonly i18n: I18nService) {
+    super(onlineStatusService);
   }
 
   get duration(): number {

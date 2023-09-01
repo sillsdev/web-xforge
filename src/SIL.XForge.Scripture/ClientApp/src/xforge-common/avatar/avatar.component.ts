@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 
 @Component({
   selector: 'app-avatar',
@@ -14,7 +14,7 @@ export class AvatarComponent {
   @Input() borderColor?: string;
   @Input() showOnlineStatus: boolean = false;
 
-  constructor(readonly pwaService: PwaService) {}
+  constructor(readonly onlineStatusService: OnlineStatusService) {}
 
   get avatarUrl(): string {
     return this.user != null ? this.user.avatarUrl : '';

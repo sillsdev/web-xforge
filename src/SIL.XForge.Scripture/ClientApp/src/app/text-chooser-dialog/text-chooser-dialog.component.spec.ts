@@ -3,28 +3,28 @@ import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { VerseRef } from '@sillsdev/scripture';
 import { CookieService } from 'ngx-cookie-service';
 import { DeltaStatic } from 'quill';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { VerseRef } from '@sillsdev/scripture';
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { anything, instance, mock, spy, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { DOCUMENT } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { UserDoc } from 'xforge-common/models/user-doc';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { User } from 'realtime-server/lib/esm/common/models/user';
-import { UserDoc } from 'xforge-common/models/user-doc';
-import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { CheckingModule } from '../checking/checking.module';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
@@ -34,7 +34,7 @@ import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from
 
 const mockedDocument = mock(Document);
 const mockedBugsnagService = mock(BugsnagService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 
@@ -46,7 +46,7 @@ describe('TextChooserDialogComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: DOCUMENT, useMock: mockedDocument },
       { provide: CookieService, useMock: mock(CookieService) },
-      { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService }
     ]
@@ -464,8 +464,8 @@ class TestEnvironment {
     when(dialogSpy.openMatDialog(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
-    when(mockedPwaService.isOnline).thenReturn(true);
-    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
+    when(mockedOnlineStatusService.isOnline).thenReturn(true);
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
 
     this.fixture.detectChanges();
     flush();

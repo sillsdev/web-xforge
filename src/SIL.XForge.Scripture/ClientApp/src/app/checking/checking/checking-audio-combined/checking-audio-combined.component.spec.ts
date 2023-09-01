@@ -7,22 +7,22 @@ import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
+import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
 import { CheckingAudioRecorderComponent } from '../checking-audio-recorder/checking-audio-recorder.component';
-import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { CheckingAudioCombinedComponent } from './checking-audio-combined.component';
 
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedI18nService = mock(I18nService);
 
 describe('CheckingAudioCombinedComponent', () => {
@@ -38,7 +38,7 @@ describe('CheckingAudioCombinedComponent', () => {
     providers: [
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: I18nService, useMock: mockedI18nService }
     ]
   }));
@@ -109,8 +109,8 @@ class TestEnvironment {
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
-    when(mockedPwaService.isOnline).thenReturn(true);
-    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
+    when(mockedOnlineStatusService.isOnline).thenReturn(true);
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     this.fixture.detectChanges();
   }
 

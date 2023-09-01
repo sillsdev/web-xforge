@@ -3,13 +3,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
-import { TextAudio, getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Subject, of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { PwaService } from 'xforge-common/pwa.service';
-import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
@@ -18,7 +18,7 @@ import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-play
 import { CheckingQuestionComponent } from './checking-question.component';
 
 const mockedSFProjectService = mock(SFProjectService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedQuestionDoc = mock(QuestionDoc);
 const mockedQuestion = mock<Question>();
 
@@ -53,7 +53,7 @@ describe('CheckingQuestionComponent', () => {
     declarations: [CheckingQuestionComponent, SingleButtonAudioPlayerComponent, MockComponent],
     providers: [
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: QuestionDoc, useMock: mockedQuestionDoc }
     ]
   }));
@@ -227,7 +227,7 @@ class TestEnvironment {
     when(this.query.remoteChanges$).thenReturn(this.queryChanged$);
     when(this.query.docs).thenReturn([instance(audio1), instance(audio2)]);
 
-    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     when(mockedSFProjectService.onlineIsSourceProject('project01')).thenResolve(false);
     when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();

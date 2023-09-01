@@ -7,4 +7,4 @@
   [borderColor]="borderColor"
   [bgColor]="borderColor"
 ></ngx-avatar>
-<mat-icon *ngIf="showOnlineStatus && (pwaService.onlineStatus$ | async) === false">cloud_off</mat-icon>
+<mat-icon *ngIf="showOnlineStatus && (onlineStatusService.onlineStatus$ | async) === false">cloud_off</mat-icon>

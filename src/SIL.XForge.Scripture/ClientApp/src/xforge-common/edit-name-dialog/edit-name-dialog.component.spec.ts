@@ -7,20 +7,20 @@ import { BehaviorSubject } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog.component';
 
 const mockedI18nService = mock(I18nService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 
 describe('EditNameDialogComponent', () => {
   configureTestingModule(() => ({
     providers: [
       DialogService,
       { provide: I18nService, useMock: mockedI18nService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
     ]
   }));
 
@@ -118,7 +118,7 @@ class TestEnvironment {
       declarations: [DialogOpenerComponent],
       imports: [DialogTestModule, UICommonModule]
     });
-    when(mockedPwaService.onlineStatus$).thenReturn(this.onlineStatus$.asObservable());
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.onlineStatus$.asObservable());
     this.fixture = TestBed.createComponent(DialogOpenerComponent);
     this.component = this.fixture.componentInstance;
   }

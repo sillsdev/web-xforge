@@ -1,7 +1,8 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Location } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { MediaObserver } from '@angular/flex-layout';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -18,21 +19,32 @@ import {
   WordGraph,
   WordGraphArc
 } from '@sillsdev/machine';
+import { Canon, VerseRef } from '@sillsdev/scripture';
+import { merge } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { CookieService } from 'ngx-cookie-service';
 import Quill, { DeltaOperation, DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   AssignedUsers,
+  getNoteThreadDocId,
   NoteConflictType,
   NoteStatus,
   NoteThread,
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import {
+  createTestProject,
+  createTestProjectProfile
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
@@ -41,37 +53,25 @@ import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-a
 import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Canon, VerseRef } from '@sillsdev/scripture';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Observable, of, Subject } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
-import { NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
-import { MediaObserver } from '@angular/flex-layout';
-import { getNoteThreadDocId } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import {
-  createTestProject,
-  createTestProjectProfile
-} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
-import { merge } from 'lodash-es';
-import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
@@ -83,10 +83,9 @@ import { getCombinedVerseTextDoc, paratextUsersFromRoles } from '../../shared/te
 import { PRESENCE_EDITOR_ACTIVE_TIMEOUT } from '../../shared/text/text.component';
 import { TrainingProgressComponent } from '../training-progress/training-progress.component';
 import { EditorComponent, UPDATE_SUGGESTIONS_TIMEOUT } from './editor.component';
-import { NoteDialogComponent, NoteDialogResult } from './note-dialog/note-dialog.component';
+import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import { SuggestionsComponent } from './suggestions.component';
 import { ACTIVE_EDIT_TIMEOUT } from './translate-metrics-session';
-import { NoteDialogData } from './note-dialog/note-dialog.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedSFProjectService = mock(SFProjectService);
@@ -95,7 +94,7 @@ const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
 const mockedFeatureFlagService = mock(FeatureFlagService);
@@ -137,7 +136,7 @@ describe('EditorComponent', () => {
       { provide: CONSOLE, useValue: new MockConsole() },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
@@ -581,7 +580,7 @@ describe('EditorComponent', () => {
       const text = 'target: chapter 1, verse 5';
       expect(env.component.target!.segmentText).toBe(text);
       env.onlineStatus = false;
-      when(mockedPwaService.isOnline).thenReturn(false);
+      when(mockedOnlineStatusService.isOnline).thenReturn(false);
       const range = env.component.target!.getSegmentRange('verse_1_1');
       env.targetEditor.setSelection(range!.index, 0, 'user');
       env.wait();
@@ -3513,8 +3512,8 @@ class TestEnvironment {
       }
     );
 
-    when(mockedPwaService.isOnline).thenReturn(true);
-    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
+    when(mockedOnlineStatusService.isOnline).thenReturn(true);
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
 
     this.fixture = TestBed.createComponent(EditorComponent);
     when(mockedMatDialog.openDialogs).thenCall(() => this.openNoteDialogs);
@@ -3644,8 +3643,8 @@ class TestEnvironment {
   }
 
   set onlineStatus(value: boolean) {
-    when(mockedPwaService.isOnline).thenReturn(value);
-    when(mockedPwaService.onlineStatus$).thenReturn(of(value));
+    when(mockedOnlineStatusService.isOnline).thenReturn(value);
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(value));
   }
 
   clickSegmentRef(segmentRef: string): void {

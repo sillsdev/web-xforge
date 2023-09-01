@@ -2,15 +2,14 @@ import { ChangeDetectorRef, Component, ElementRef, EventEmitter, Input, Output, 
 import { UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { LocationService } from 'xforge-common/location.service';
 import { ProjectRoleInfo } from 'xforge-common/models/project-role-info';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
@@ -57,14 +56,13 @@ export class ShareControlComponent extends SubscriptionDisposable {
     readonly i18n: I18nService,
     private readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
-    private readonly locationService: LocationService,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly changeDetector: ChangeDetectorRef,
     private readonly userService: UserService,
     private readonly featureFlags: FeatureFlagService
   ) {
     super();
-    this.subscribe(combineLatest([this.projectId$, this.pwaService.onlineStatus$]), async ([projectId]) => {
+    this.subscribe(combineLatest([this.projectId$, this.onlineStatusService.onlineStatus$]), async ([projectId]) => {
       if (projectId === '') {
         return;
       }
@@ -77,7 +75,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
       }
       this.subscribe(this.projectDoc.remoteChanges$, () => this.updateFormEnabledStateAndLinkSharingKey());
     });
-    this.subscribe(combineLatest([this.pwaService.onlineStatus$, this.roleControl.valueChanges]), () =>
+    this.subscribe(combineLatest([this.onlineStatusService.onlineStatus$, this.roleControl.valueChanges]), () =>
       this.updateFormEnabledStateAndLinkSharingKey()
     );
   }
@@ -103,7 +101,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
   }
 
   get isAppOnline(): boolean {
-    return this.pwaService.isOnline;
+    return this.onlineStatusService.isOnline;
   }
 
   get isLinkSharingEnabled(): boolean {
@@ -202,7 +200,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
   }
 
   private async updateFormEnabledStateAndLinkSharingKey(): Promise<void> {
-    if (this.pwaService.isOnline) {
+    if (this.onlineStatusService.isOnline) {
       if (this._projectId != null && this.shareRole != null) {
         this.linkSharingKey = await this.projectService.onlineGetLinkSharingKey(
           this._projectId,

@@ -12,7 +12,7 @@ import { SharedModule } from 'src/app/shared/shared.module';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -30,7 +30,7 @@ import { DraftViewerComponent } from './draft-viewer.component';
 describe('DraftViewerComponent', () => {
   const mockDraftGenerationService = mock(DraftGenerationService);
   const mockProjectService = mock(SFProjectService);
-  const mockPwaService = mock(PwaService);
+  const mockOnlineStatusService = mock(OnlineStatusService);
   const mockUserService = mock(UserService);
   const mockActivatedProjectService = mock(ActivatedProjectService);
   const mockActivatedRoute = mock(ActivatedRoute);
@@ -71,8 +71,8 @@ describe('DraftViewerComponent', () => {
       );
       when(mockProjectService.getProfile(anything())).thenResolve(cloneDeep(projectProfileDoc));
       when(mockProjectService.getProfile(anything())).thenResolve(cloneDeep(projectProfileDoc));
-      when(mockPwaService.isOnline).thenReturn(true);
-      when(mockPwaService.onlineStatus$).thenReturn(of(true));
+      when(mockOnlineStatusService.isOnline).thenReturn(true);
+      when(mockOnlineStatusService.onlineStatus$).thenReturn(of(true));
       when(mockUserService.getCurrentUser()).thenCall(() =>
         this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
       );
@@ -121,7 +121,7 @@ describe('DraftViewerComponent', () => {
       { provide: SFProjectService, useMock: mockProjectService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: UserService, useMock: mockUserService },
-      { provide: PwaService, useMock: mockPwaService },
+      { provide: OnlineStatusService, useMock: mockOnlineStatusService },
       { provide: Router, useMock: mockRouter }
     ]
   }));

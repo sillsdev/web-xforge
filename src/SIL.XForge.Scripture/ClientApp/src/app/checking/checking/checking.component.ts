@@ -27,7 +27,7 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -159,7 +159,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     private readonly questionDialogService: QuestionDialogService,
     readonly i18n: I18nService,
     readonly featureFlags: FeatureFlagService,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly chapterAudioDialogService: ChapterAudioDialogService
   ) {
     super(noticeService);
@@ -451,7 +451,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           if (isActiveQuestionDoc) {
             this.updateActiveQuestionVerseRef(qd);
           }
-          if (this.pwaService.isOnline) {
+          if (this.onlineStatusService.isOnline) {
             qd.updateFileCache();
             if (isActiveQuestionDoc) {
               qd.updateAnswerFileCache();
@@ -765,7 +765,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       this.setQuestionsOverlayVisibility(false);
     }
 
-    if (this.pwaService.isOnline) {
+    if (this.onlineStatusService.isOnline) {
       questionDoc.updateAnswerFileCache();
     }
   }
@@ -869,7 +869,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     if (
       this.projectDoc == null ||
       this.questionsQuery == null ||
-      (this.pwaService.isOnline && !this.questionsQuery.ready)
+      (this.onlineStatusService.isOnline && !this.questionsQuery.ready)
     ) {
       return;
     }

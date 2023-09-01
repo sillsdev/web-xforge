@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioStatus } from '../../../shared/audio/audio-player';
@@ -158,7 +158,7 @@ class HostComponent {
 }
 
 class TestEnvironment {
-  readonly mockedPwaService = mock(PwaService);
+  readonly mockedOnlineStatusService = mock(OnlineStatusService);
   readonly mockedI18nService = mock(I18nService);
   readonly ngZone: NgZone;
 
@@ -169,13 +169,13 @@ class TestEnvironment {
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe, InfoComponent],
       providers: [
-        { provide: PwaService, useFactory: () => instance(this.mockedPwaService) },
+        { provide: OnlineStatusService, useFactory: () => instance(this.mockedOnlineStatusService) },
         { provide: I18nService, useFactory: () => instance(this.mockedI18nService) }
       ],
       imports: [UICommonModule, TestTranslocoModule]
     });
-    when(this.mockedPwaService.isOnline).thenCall(() => isOnline);
-    when(this.mockedPwaService.onlineStatus$).thenReturn(of(isOnline));
+    when(this.mockedOnlineStatusService.isOnline).thenCall(() => isOnline);
+    when(this.mockedOnlineStatusService.onlineStatus$).thenReturn(of(isOnline));
 
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
     this.ngZone = TestBed.inject(NgZone);

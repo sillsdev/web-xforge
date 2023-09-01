@@ -4,20 +4,20 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router } from '@angular/router';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, of } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
+import { AnonymousService } from 'xforge-common/anonymous.service';
+import { AuthService } from 'xforge-common/auth.service';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { I18nService } from 'xforge-common/i18n.service';
+import { LocationService } from 'xforge-common/location.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
-import { AuthService } from 'xforge-common/auth.service';
-import { I18nService } from 'xforge-common/i18n.service';
-import { LocationService } from 'xforge-common/location.service';
-import { AnonymousService } from 'xforge-common/anonymous.service';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { SFProjectService } from '../core/sf-project.service';
 import { NoticeComponent } from '../shared/notice/notice.component';
@@ -29,7 +29,7 @@ const mockedAuthService = mock(AuthService);
 const mockedDialogService = mock(DialogService);
 const mockedI18nService = mock(I18nService);
 const mockedLocationService = mock(LocationService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
 
@@ -50,7 +50,7 @@ describe('JoinComponent', () => {
       { provide: DialogService, useMock: mockedDialogService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: LocationService, useMock: mockedLocationService },
-      { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService }
     ]
@@ -251,8 +251,8 @@ class TestEnvironment {
     when(mockedDialogService.message(anything())).thenResolve();
 
     this.isOnline$ = new BehaviorSubject<boolean>(isOnline);
-    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline$.asObservable());
-    when(mockedPwaService.isOnline).thenCall(() => this.isOnline$.getValue());
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline$.asObservable());
+    when(mockedOnlineStatusService.isOnline).thenCall(() => this.isOnline$.getValue());
     when(mockedLocationService.origin).thenReturn('/');
     when(mockedAnonymousService.checkShareKey(anything())).thenResolve({
       shareKey,

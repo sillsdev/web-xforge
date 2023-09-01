@@ -11,7 +11,7 @@ import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { ParatextProject } from '../core/models/paratext-project';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
@@ -71,7 +71,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     private readonly userService: UserService,
     private readonly dialogService: DialogService,
     private readonly router: Router,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     readonly i18n: I18nService
   ) {
     super(noticeService);
@@ -127,56 +127,59 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.form.disable();
     this.form.valueChanges.subscribe(value => this.onFormValueChanges(value));
     this.setAllControlsToInSync();
-    this.isAppOnline = this.pwaService.isOnline;
+    this.isAppOnline = this.onlineStatusService.isOnline;
     const projectId$ = this.route.params.pipe(
       tap(() => (this.loading = this.isAppOnline)),
       map(params => params['projectId'] as string)
     );
-    this.subscribe(combineLatest([this.pwaService.onlineStatus$, projectId$]), async ([isOnline, projectId]) => {
-      this.isAppOnline = isOnline;
-      if (isOnline && this.projects == null) {
-        this.loading = true;
+    this.subscribe(
+      combineLatest([this.onlineStatusService.onlineStatus$, projectId$]),
+      async ([isOnline, projectId]) => {
+        this.isAppOnline = isOnline;
+        if (isOnline && this.projects == null) {
+          this.loading = true;
 
-        const mainSettingsPromise = Promise.all([
-          this.projectService
-            .onlineIsSourceProject(projectId)
-            .then(isActiveSourceProject => (this.isActiveSourceProject = isActiveSourceProject)),
-          this.projectService.get(projectId).then(projectDoc => (this.projectDoc = projectDoc))
-        ]).then(() => {
-          if (this.projectDoc != null) {
-            this.updateSettingsInfo();
-            this.updateNonSelectableProjects();
-            this.subscribe(this.projectDoc.remoteChanges$, () => this.updateNonSelectableProjects());
-            this.mainSettingsLoaded = true;
-            this.updateFormEnabled();
-          }
-        });
-
-        const projectsAndResourcesPromise = Promise.all([
-          this.paratextService
-            .getProjects()
-            .then(projects => {
-              this.projectLoadingFailed = false;
-              this.projects = projects;
+          const mainSettingsPromise = Promise.all([
+            this.projectService
+              .onlineIsSourceProject(projectId)
+              .then(isActiveSourceProject => (this.isActiveSourceProject = isActiveSourceProject)),
+            this.projectService.get(projectId).then(projectDoc => (this.projectDoc = projectDoc))
+          ]).then(() => {
+            if (this.projectDoc != null) {
+              this.updateSettingsInfo();
               this.updateNonSelectableProjects();
-            })
-            .catch(() => (this.projectLoadingFailed = true)),
-          this.paratextService
-            .getResources()
-            .then(resources => {
-              this.resourceLoadingFailed = false;
-              this.resources = resources;
-              this.updateNonSelectableProjects();
-            })
-            .catch(() => (this.resourceLoadingFailed = true))
-        ]);
+              this.subscribe(this.projectDoc.remoteChanges$, () => this.updateNonSelectableProjects());
+              this.mainSettingsLoaded = true;
+              this.updateFormEnabled();
+            }
+          });
 
-        await Promise.all([mainSettingsPromise, projectsAndResourcesPromise]);
-        this.loading = false;
+          const projectsAndResourcesPromise = Promise.all([
+            this.paratextService
+              .getProjects()
+              .then(projects => {
+                this.projectLoadingFailed = false;
+                this.projects = projects;
+                this.updateNonSelectableProjects();
+              })
+              .catch(() => (this.projectLoadingFailed = true)),
+            this.paratextService
+              .getResources()
+              .then(resources => {
+                this.resourceLoadingFailed = false;
+                this.resources = resources;
+                this.updateNonSelectableProjects();
+              })
+              .catch(() => (this.resourceLoadingFailed = true))
+          ]);
 
-        this.updateFormEnabled();
+          await Promise.all([mainSettingsPromise, projectsAndResourcesPromise]);
+          this.loading = false;
+
+          this.updateFormEnabled();
+        }
       }
-    });
+    );
   }
 
   logInWithParatext(): void {

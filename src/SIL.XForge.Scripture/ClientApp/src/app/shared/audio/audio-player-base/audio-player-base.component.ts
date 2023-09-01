@@ -1,6 +1,6 @@
 import { Component, Input, OnDestroy } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { AudioPlayer, AudioStatus } from '../audio-player';
 
@@ -12,7 +12,7 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
   private _isAudioInitComplete: boolean = false;
   private _audio: AudioPlayer | undefined;
 
-  constructor(protected readonly pwaService: PwaService) {
+  constructor(protected readonly onlineStatusService: OnlineStatusService) {
     super();
 
     this.subscribe(this.isAudioAvailable$, () => {
@@ -29,7 +29,9 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
   }
 
   get audioStatus(): AudioStatus {
-    return this.audio?.status$.value ?? (this.pwaService.isOnline ? AudioStatus.Unavailable : AudioStatus.Offline);
+    return (
+      this.audio?.status$.value ?? (this.onlineStatusService.isOnline ? AudioStatus.Unavailable : AudioStatus.Offline)
+    );
   }
 
   get isAudioInitComplete(): boolean {
@@ -40,7 +42,7 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
     this.isAudioAvailable$.next(false);
     this.audio?.dispose();
     if (source != null && source !== '') {
-      this._audio = new AudioPlayer(source, this.pwaService);
+      this._audio = new AudioPlayer(source, this.onlineStatusService);
       this.subscribe(this._audio.status$, newVal => {
         if (newVal === AudioStatus.Available) {
           this.isAudioAvailable$.next(true);

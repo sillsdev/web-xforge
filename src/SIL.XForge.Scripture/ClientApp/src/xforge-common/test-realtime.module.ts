@@ -3,7 +3,6 @@ import { FileService } from './file.service';
 import { MemoryOfflineStore } from './memory-offline-store';
 import { MemoryRealtimeRemoteStore } from './memory-realtime-remote-store';
 import { OfflineStore } from './offline-store';
-import { PwaService } from './pwa.service';
 import { RealtimeRemoteStore } from './realtime-remote-store';
 import { RealtimeService } from './realtime.service';
 import { TestRealtimeService } from './test-realtime.service';
@@ -20,8 +19,7 @@ export class TestRealtimeModule {
         { provide: OfflineStore, useClass: MemoryOfflineStore },
         { provide: TestRealtimeService, useClass: TestRealtimeService },
         { provide: RealtimeService, useExisting: TestRealtimeService },
-        { provide: FileService, useValue: undefined },
-        { provide: PwaService, useValue: undefined }
+        { provide: FileService, useValue: undefined }
       ]
     };
   }

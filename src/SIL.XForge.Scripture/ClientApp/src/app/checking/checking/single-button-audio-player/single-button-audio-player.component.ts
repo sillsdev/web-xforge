@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { AudioPlayer, AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioPlayerBaseComponent } from '../../../shared/audio/audio-player-base/audio-player-base.component';
 import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
@@ -21,8 +21,8 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
     this._source = source;
   }
 
-  constructor(pwaService: PwaService) {
-    super(pwaService);
+  constructor(onlineStatusService: OnlineStatusService) {
+    super(onlineStatusService);
   }
 
   get progressInDegrees(): string {
@@ -48,9 +48,9 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
     this.audio?.dispose();
     if (this._source != null && this._source !== '') {
       if (this.start != null && this.end != null) {
-        this.audio = new AudioSegmentPlayer(this._source, this.start, this.end, this.pwaService);
+        this.audio = new AudioSegmentPlayer(this._source, this.start, this.end, this.onlineStatusService);
       } else {
-        this.audio = new AudioPlayer(this._source, this.pwaService);
+        this.audio = new AudioPlayer(this._source, this.onlineStatusService);
       }
 
       this.subscribe(this.audio.status$, newVal => {

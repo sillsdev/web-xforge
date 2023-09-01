@@ -6,7 +6,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { environment } from '../../environments/environment';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { ParatextService } from '../core/paratext.service';
@@ -34,7 +34,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
     private readonly paratextService: ParatextService,
     private readonly projectService: SFProjectService,
     readonly i18n: I18nService,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly dialogService: DialogService
   ) {
     super(noticeService);
@@ -117,7 +117,7 @@ export class SyncComponent extends DataLoadingComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.subscribe(this.pwaService.onlineStatus$, async isOnline => {
+    this.subscribe(this.onlineStatusService.onlineStatus$, async isOnline => {
       this.isAppOnline = isOnline;
       if (this.isAppOnline && this.paratextUsername == null) {
         const username = await this.paratextService.getParatextUsername().toPromise();

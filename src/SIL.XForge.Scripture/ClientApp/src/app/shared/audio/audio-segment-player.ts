@@ -1,9 +1,14 @@
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { AudioPlayer } from './audio-player';
 
 export class AudioSegmentPlayer extends AudioPlayer {
-  constructor(source: string, private readonly _start: number, private readonly _end: number, pwaService: PwaService) {
-    super(source, pwaService);
+  constructor(
+    source: string,
+    private readonly _start: number,
+    private readonly _end: number,
+    onlineStatusService: OnlineStatusService
+  ) {
+    super(source, onlineStatusService);
   }
 
   override get duration(): number {
