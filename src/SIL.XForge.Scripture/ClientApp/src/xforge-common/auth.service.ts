@@ -1,12 +1,5 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import jwtDecode from 'jwt-decode';
-import { clone } from 'lodash-es';
-import { CookieService } from 'ngx-cookie-service';
-import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { BehaviorSubject, Observable, of, Subscription, timer } from 'rxjs';
-import { filter, mergeMap, take } from 'rxjs/operators';
-import { PwaService } from 'xforge-common/pwa.service';
 import {
   Auth0Client,
   AuthorizationParams,
@@ -19,8 +12,14 @@ import {
   RedirectLoginResult,
   WrappedCacheEntry
 } from '@auth0/auth0-spa-js';
-import { hasPropWithValue } from '../type-utils';
+import jwtDecode from 'jwt-decode';
+import { clone } from 'lodash-es';
+import { CookieService } from 'ngx-cookie-service';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
+import { BehaviorSubject, Observable, of, Subscription, timer } from 'rxjs';
+import { filter, mergeMap, take } from 'rxjs/operators';
 import { environment } from '../environments/environment';
+import { hasPropWithValue } from '../type-utils';
 import { Auth0Service, TransparentAuthenticationCookie } from './auth0.service';
 import { BugsnagService } from './bugsnag.service';
 import { CommandError, CommandService } from './command.service';
@@ -30,6 +29,7 @@ import { I18nService } from './i18n.service';
 import { LocalSettingsService } from './local-settings.service';
 import { LocationService } from './location.service';
 import { OfflineStore } from './offline-store';
+import { OnlineStatusService } from './online-status.service';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
 import { USERS_URL } from './url-constants';
 import { ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage } from './utils';
@@ -108,7 +108,7 @@ export class AuthService {
     private readonly cookieService: CookieService,
     private readonly router: Router,
     private readonly localSettings: LocalSettingsService,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly dialogService: DialogService,
     private readonly reportingService: ErrorReportingService,
     private readonly i18n: I18nService
@@ -235,7 +235,7 @@ export class AuthService {
    * Ensure renewal timer is initiated so tokens can be refreshed when expired
    */
   async checkOnlineAuth(): Promise<void> {
-    if ((await this.isLoggedIn) && this.pwaService.isBrowserOnline) {
+    if ((await this.isLoggedIn) && this.onlineStatusService.isBrowserOnline) {
       this.scheduleRenewal();
     }
   }
@@ -245,7 +245,7 @@ export class AuthService {
   }
 
   async getAccessToken(): Promise<string | undefined> {
-    if (!this.pwaService.isBrowserOnline) {
+    if (!this.onlineStatusService.isBrowserOnline) {
       return undefined;
     }
     try {
@@ -256,7 +256,7 @@ export class AuthService {
   }
 
   async isAuthenticated(): Promise<boolean> {
-    if ((await this.hasExpired()) && this.pwaService.isBrowserOnline) {
+    if ((await this.hasExpired()) && this.onlineStatusService.isBrowserOnline) {
       await this.renewTokens();
       // If still expired then the user is logging in, and we need to degrade nicely while that happens
       if (await this.hasExpired()) {
@@ -362,7 +362,7 @@ export class AuthService {
 
   async updateInterfaceLanguage(language: string): Promise<void> {
     if (await this.isLoggedIn) {
-      await this.pwaService.online;
+      await this.onlineStatusService.online;
       await this.commandService.onlineInvoke(USERS_URL, 'updateInterfaceLanguage', { language });
     }
   }
@@ -407,7 +407,7 @@ export class AuthService {
       if (
         this.idToken == null ||
         this.expiresAt == null ||
-        (this.pwaService.isBrowserOnline && (await this.hasExpired())) ||
+        (this.onlineStatusService.isBrowserOnline && (await this.hasExpired())) ||
         this.isCallbackUrl()
       ) {
         return await this.tryOnlineLogIn();
@@ -415,7 +415,7 @@ export class AuthService {
       // When offline, avoid fetching a token from the Auth0 script as it will not return an expired access token
       // and will instead try to fetch a new one
       let accessToken: string | undefined;
-      if (this.pwaService.isBrowserOnline) {
+      if (this.onlineStatusService.isBrowserOnline) {
         // We don't want to check for an access token unless we know it is likely to be there
         // - When not logged in there can be a delay waiting on auth0
         accessToken = await this.getAccessToken();
@@ -437,7 +437,7 @@ export class AuthService {
 
   private async tryOnlineLogIn(): Promise<LoginResult> {
     try {
-      if (await this.pwaService.checkOnline()) {
+      if (await this.onlineStatusService.checkOnline()) {
         // Try and login transparently if a share key is available
         if (this.isJoining) {
           if (await this.tryTransparentAuthentication()) {
@@ -582,7 +582,7 @@ export class AuthService {
         const now = Date.now();
         return timer(Math.max(1, expAt - now));
       }),
-      filter(() => this.pwaService.isBrowserOnline)
+      filter(() => this.onlineStatusService.isBrowserOnline)
     );
 
     this.refreshSubscription = expiresIn$.subscribe(async () => {

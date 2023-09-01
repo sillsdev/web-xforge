@@ -1,26 +1,26 @@
 import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { translate } from '@ngneat/transloco';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { NAVIGATOR } from 'xforge-common/browser-globals';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
-import { UserService } from 'xforge-common/user.service';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { PwaService } from 'xforge-common/pwa.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { NoticeService } from 'xforge-common/notice.service';
-import { translate } from '@ngneat/transloco';
-import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { SFProjectService } from '../../core/sf-project.service';
+import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { UserService } from 'xforge-common/user.service';
+import { environment } from '../../../environments/environment';
+import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import {
   SF_DEFAULT_SHARE_ROLE,
   SF_DEFAULT_TRANSLATE_SHARE_ROLE,
   SF_PROJECT_ROLES
 } from '../../core/models/sf-project-role-info';
-import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { environment } from '../../../environments/environment';
+import { SFProjectService } from '../../core/sf-project.service';
 
 export interface ShareDialogData {
   projectId: string;
@@ -55,7 +55,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
     private readonly noticeService: NoticeService,
     private readonly projectService: SFProjectService,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly userService: UserService
   ) {
     super();
@@ -79,7 +79,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
       if (this.isProjectAdmin) {
         this.shareLinkType = ShareLinkType.Recipient;
       }
-      this.subscribe(this.pwaService.onlineStatus$, () => this.updateSharingKey());
+      this.subscribe(this.onlineStatusService.onlineStatus$, () => this.updateSharingKey());
     });
     this.shareLocaleCode = this.i18n.locale;
   }
@@ -134,7 +134,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   }
 
   get showLinkSharingUnavailable(): boolean {
-    return !this.pwaService.isOnline;
+    return !this.onlineStatusService.isOnline;
   }
 
   get supportsShareAPI(): boolean {
@@ -224,7 +224,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
    */
   private updateSharingKey(): void {
     this.linkSharingReady = false;
-    if (!this.pwaService.isOnline || this.projectId == null || this.shareRole == null) {
+    if (!this.onlineStatusService.isOnline || this.projectId == null || this.shareRole == null) {
       return;
     }
     this.projectService

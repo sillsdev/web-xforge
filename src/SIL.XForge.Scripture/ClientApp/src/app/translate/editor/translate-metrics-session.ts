@@ -5,7 +5,7 @@ import { fromEvent, interval, merge, Subject } from 'rxjs';
 import { buffer, debounceTime, filter, map, tap } from 'rxjs/operators';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { objectId } from 'xforge-common/utils';
 import { EditEndEvent, TranslateMetrics, TranslateMetricsType } from '../../core/models/translate-metrics';
@@ -92,7 +92,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
     private readonly target: TextComponent,
     private readonly sourceWordTokenizer: RangeTokenizer,
     private readonly targetWordTokenizer: RangeTokenizer,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly reportingService: ErrorReportingService
   ) {
     super();
@@ -202,7 +202,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
   }
 
   private async sendMetrics(segment: Segment | undefined): Promise<void> {
-    if (this.metrics == null || !this.pwaService.isOnline) {
+    if (this.metrics == null || !this.onlineStatusService.isOnline) {
       return;
     }
 
@@ -222,7 +222,7 @@ export class TranslateMetricsSession extends SubscriptionDisposable {
       } catch (err) {
         // Ignore "not found" and "forbidden" command errors, or errors caused by being offline.
 
-        if (!this.pwaService.isOnline) {
+        if (!this.onlineStatusService.isOnline) {
           return;
         }
         if (!(err instanceof CommandError)) {

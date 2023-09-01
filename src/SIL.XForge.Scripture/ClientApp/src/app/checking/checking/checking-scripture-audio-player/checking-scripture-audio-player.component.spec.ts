@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { AudioTiming } from 'realtime-server/scriptureforge/models/audio-timing';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextDocId } from '../../../core/models/text-doc';
@@ -124,7 +124,7 @@ class HostComponent {
 }
 
 class TestEnvironment {
-  readonly mockPwaService = mock(PwaService);
+  readonly mockOnlineStatusService = mock(OnlineStatusService);
   readonly mockedProjectService = mock(SFProjectService);
   fixture: ComponentFixture<HostComponent>;
   component: HostComponent;
@@ -134,12 +134,12 @@ class TestEnvironment {
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingScriptureAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe],
       providers: [
-        { provide: PwaService, useFactory: () => instance(this.mockPwaService) },
+        { provide: OnlineStatusService, useFactory: () => instance(this.mockOnlineStatusService) },
         { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
       ],
       imports: [UICommonModule, TestTranslocoModule]
     });
-    when(this.mockPwaService.onlineStatus$).thenReturn(of(true));
+    when(this.mockOnlineStatusService.onlineStatus$).thenReturn(of(true));
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
     this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(HostComponent);

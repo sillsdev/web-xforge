@@ -2,7 +2,7 @@ import { EventEmitter } from '@angular/core';
 import { BehaviorSubject, interval, Subscription } from 'rxjs';
 import { formatFileSource, isLocalBlobUrl } from 'xforge-common/file.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 
 export enum AudioStatus {
@@ -26,7 +26,7 @@ export class AudioPlayer extends SubscriptionDisposable {
   readonly finishedPlaying$: EventEmitter<void> = new EventEmitter<void>();
   readonly playing$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
 
-  constructor(source: string, private readonly pwaService: PwaService) {
+  constructor(source: string, private readonly onlineStatusService: OnlineStatusService) {
     super();
     // Loaded metadata works best for blobs
     this.audio.addEventListener('loadedmetadata', () => {
@@ -67,11 +67,11 @@ export class AudioPlayer extends SubscriptionDisposable {
       if (isLocalBlobUrl(this.audio.src)) {
         this.status$.next(AudioStatus.LocalNotAvailable);
       } else {
-        this.status$.next(this.pwaService.isOnline ? AudioStatus.Unavailable : AudioStatus.Offline);
+        this.status$.next(this.onlineStatusService.isOnline ? AudioStatus.Unavailable : AudioStatus.Offline);
       }
     });
 
-    this.subscribe(this.pwaService.onlineStatus$, isOnline => {
+    this.subscribe(this.onlineStatusService.onlineStatus$, isOnline => {
       if (isOnline && this.status$.value !== AudioStatus.Available) {
         // force the audio element to try loading again, now that the user is online again
         if (this.audio.src === '') {
@@ -107,7 +107,10 @@ export class AudioPlayer extends SubscriptionDisposable {
    * loaded already (and therefore cached in memory).
    */
   get isAudioAvailable(): boolean {
-    return (isLocalBlobUrl(this.audio.src) || this.pwaService.isOnline || this.audioDataLoaded) && !this.hasErrorState;
+    return (
+      (isLocalBlobUrl(this.audio.src) || this.onlineStatusService.isOnline || this.audioDataLoaded) &&
+      !this.hasErrorState
+    );
   }
 
   get seek(): number {

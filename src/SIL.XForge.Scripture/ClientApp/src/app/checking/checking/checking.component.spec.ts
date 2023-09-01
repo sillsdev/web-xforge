@@ -2,7 +2,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
 import { DebugElement, NgZone } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatMenuHarness } from '@angular/material/menu/testing';
@@ -21,18 +21,18 @@ import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
-import { Question, getQuestionDocId } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
-  SFProjectUserConfig,
-  getSFProjectUserConfigDocId
+  getSFProjectUserConfigDocId,
+  SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { TextData, getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { getTextDocId, TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
-import { BehaviorSubject, Subject, of } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
 import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
 import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
@@ -41,18 +41,18 @@ import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module'
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
-import { FileOfflineData, FileType, createStorageFileData } from 'xforge-common/models/file-offline-data';
+import { createStorageFileData, FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
-import { PwaService } from 'xforge-common/pwa.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { TestTranslocoModule, configureTestingModule, getAudioBlob } from 'xforge-common/test-utils';
+import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
@@ -63,12 +63,12 @@ import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { AudioPlayerComponent } from '../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../shared/audio/audio-time-pipe';
 import { SharedModule } from '../../shared/shared.module';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { AudioPlayerComponent } from '../../shared/audio/audio-player/audio-player.component';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
@@ -94,7 +94,7 @@ const mockedTextChooserDialogComponent = mock(TextChooserDialogComponent);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedFileService = mock(FileService);
 
 function createUser(idSuffix: number, role: string, nameConfirmed: boolean = true): UserInfo {
@@ -164,7 +164,7 @@ describe('CheckingComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
     ]
   }));
 
@@ -1804,9 +1804,9 @@ class TestEnvironment {
     this.setupDefaultProjectData(user);
     when(mockedUserService.editDisplayName(true)).thenResolve();
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
-    when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
-    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
-    when(mockedPwaService.isOnline).thenReturn(hasConnection);
+    when(mockedOnlineStatusService.isOnline).thenReturn(this.isOnline.getValue());
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline.asObservable());
+    when(mockedOnlineStatusService.isOnline).thenReturn(hasConnection);
     when(
       mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), anyString())
     ).thenResolve(createStorageFileData(QuestionDoc.COLLECTION, 'anyId', 'filename.mp3', getAudioBlob()));
@@ -1920,7 +1920,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(hasConnection: boolean) {
-    when(mockedPwaService.isOnline).thenReturn(hasConnection);
+    when(mockedOnlineStatusService.isOnline).thenReturn(hasConnection);
     this.isOnline.next(hasConnection);
     tick();
     this.fixture.detectChanges();

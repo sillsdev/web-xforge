@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'suggestions_settings_dialog'">
   <h1 mat-dialog-title>{{ t("translation_suggestions_settings") }}</h1>
-  <div class="offline-text" *ngIf="!pwaService.isOnline">
+  <div class="offline-text" *ngIf="!onlineStatusService.isOnline">
     {{ t("settings_not_available_offline") }}
   </div>
   <mat-dialog-content>

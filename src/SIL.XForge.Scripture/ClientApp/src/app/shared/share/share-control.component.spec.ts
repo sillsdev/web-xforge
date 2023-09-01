@@ -1,20 +1,18 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule, ViewChild } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
-import { flush } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { BrowserModule, By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-import { CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { CheckingAnswerExport, CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { BehaviorSubject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -29,7 +27,7 @@ import { ShareControlComponent } from './share-control.component';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedI18nService = mock(I18nService);
 const mockedLocationService = mock(LocationService);
 const mockedUserService = mock(UserService);
@@ -42,7 +40,7 @@ describe('ShareControlComponent', () => {
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: LocationService, useMock: mockedLocationService },
       { provide: UserService, useMock: mockedUserService },
@@ -337,8 +335,8 @@ class TestEnvironment {
     when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
-    when(mockedPwaService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
-    when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
+    when(mockedOnlineStatusService.isOnline).thenCall(() => this._onlineStatus.getValue());
     when(mockedUserService.currentUserId).thenReturn(args.userId!);
     when(mockedProjectService.onlineGetLinkSharingKey(args.projectId!, anything(), anything())).thenResolve(
       args.isLinkSharingEnabled ? 'linkSharing01' : ''

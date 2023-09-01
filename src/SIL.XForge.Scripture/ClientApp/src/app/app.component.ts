@@ -7,12 +7,12 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { DefaultFocusState } from '@material/menu/constants';
 import { translate } from '@ngneat/transloco';
+import { Canon } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { Canon } from '@sillsdev/scripture';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
@@ -28,6 +28,7 @@ import { LocationService } from 'xforge-common/location.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import {
   BrowserIssue,
@@ -104,6 +105,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
+    onlineStatusService: OnlineStatusService,
     iconRegistry: MdcIconRegistry,
     sanitizer: DomSanitizer
   ) {
@@ -119,8 +121,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     );
 
     // Check full online status changes
-    this.isAppOnline = pwaService.isOnline;
-    this.subscribe(pwaService.onlineStatus$, status => {
+    this.isAppOnline = onlineStatusService.isOnline;
+    this.subscribe(onlineStatusService.onlineStatus$, status => {
       if (status !== this.isAppOnline) {
         this.isAppOnline = status;
         this.checkDeviceStorage();
@@ -128,7 +130,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     });
 
     // Check browser online status to allow checks with Auth0
-    this.subscribe(pwaService.onlineBrowserStatus$, status => {
+    this.subscribe(onlineStatusService.onlineBrowserStatus$, status => {
       // Check authentication when coming back online
       // This is also run on first load when the websocket connects for the first time
       if (status && !this.isAppLoading) {

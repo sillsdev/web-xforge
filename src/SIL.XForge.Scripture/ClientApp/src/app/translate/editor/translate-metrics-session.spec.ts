@@ -10,7 +10,7 @@ import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -29,7 +29,7 @@ import {
   TranslateMetricsSession
 } from './translate-metrics-session';
 
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedDialogService = mock(DialogService);
@@ -40,7 +40,7 @@ describe('TranslateMetricsSession', () => {
     declarations: [TextComponent],
     imports: [QuillModule.forRoot(), TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
-      { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: DialogService, useMock: mockedDialogService },
@@ -400,8 +400,8 @@ describe('TranslateMetricsSession', () => {
 
     // CommandError is ignored when offline
     resetCalls(mockedSFProjectService);
-    when(mockedPwaService.isOnline).thenReturn(false);
-    when(mockedPwaService.onlineStatus$).thenReturn(of(false));
+    when(mockedOnlineStatusService.isOnline).thenReturn(false);
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(false));
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(commandError);
     env.keyPress('a');
     tick(SEND_METRICS_INTERVAL);
@@ -444,8 +444,8 @@ class TestEnvironment {
     );
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
     when(mockedSFProjectService.getProfile(anything())).thenResolve({} as SFProjectProfileDoc);
-    when(mockedPwaService.isOnline).thenReturn(true);
-    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
+    when(mockedOnlineStatusService.isOnline).thenReturn(true);
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
@@ -465,7 +465,7 @@ class TestEnvironment {
       this.target,
       this.tokenizer,
       this.tokenizer,
-      instance(mockedPwaService),
+      instance(mockedOnlineStatusService),
       instance(mockedReportingService)
     );
 

@@ -4,7 +4,6 @@ import { FileService } from './file.service';
 import { RealtimeDoc } from './models/realtime-doc';
 import { RealtimeQuery } from './models/realtime-query';
 import { OfflineStore } from './offline-store';
-import { PwaService } from './pwa.service';
 import { QueryParameters } from './query-parameters';
 import { RealtimeRemoteStore } from './realtime-remote-store';
 import { TypeRegistry } from './type-registry';
@@ -29,8 +28,7 @@ export class RealtimeService {
     private readonly typeRegistry: TypeRegistry,
     public readonly remoteStore: RealtimeRemoteStore,
     public readonly offlineStore: OfflineStore,
-    @Optional() public readonly fileService?: FileService,
-    @Optional() public readonly pwaService?: PwaService
+    @Optional() public readonly fileService?: FileService
   ) {
     if (this.fileService != null) {
       this.fileService.init(this);
