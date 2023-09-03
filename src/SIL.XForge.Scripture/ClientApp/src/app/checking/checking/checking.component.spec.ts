@@ -485,8 +485,10 @@ describe('CheckingComponent', () => {
       };
       env.insertQuestion(newQuestion);
       env.waitForSliderUpdate();
+      env.waitForAudioPlayer();
       const question = env.selectQuestion(16);
       expect(env.getQuestionText(question)).toBe('John 1:10');
+      env.waitForAudioPlayer();
     }));
 
     it('respond to remote question audio added or removed', fakeAsync(() => {
