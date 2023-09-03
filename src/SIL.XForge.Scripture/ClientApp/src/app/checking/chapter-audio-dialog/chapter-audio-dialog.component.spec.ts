@@ -125,6 +125,37 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.component.selectionHasAudioAlready).toBeTruthy();
   }));
 
+  it('detects if first chapter has audio already', fakeAsync(async () => {
+    // Get the first chapter with audio
+    const firstChapterWithAudio: Chapter = Object.entries(TestEnvironment.textsByBookId)
+      .map(([, value]) => value.chapters)
+      .flat(1)
+      .find(c => c.hasAudio)!;
+    const containingBook: TextInfo = Object.entries(TestEnvironment.textsByBookId).find(([, value]) =>
+      value.chapters.includes(firstChapterWithAudio!)
+    )?.[1]!;
+
+    // Configure the dialog to show that chapter
+    const config: MatDialogConfig<ChapterAudioDialogData> = {
+      data: {
+        projectId: 'project01',
+        textsByBookId: TestEnvironment.textsByBookId,
+        questionsSorted: env.questions,
+        currentBook: containingBook.bookNum,
+        currentChapter: firstChapterWithAudio.number
+      }
+    };
+
+    env = new TestEnvironment(config);
+
+    // Ensure that the UI shows that hte chapter has audio
+    expect(env.component.book).toEqual(containingBook.bookNum);
+    expect(env.component.chapter).toEqual(firstChapterWithAudio.number);
+    expect(env.component.selectionHasAudioAlready).toBeTruthy();
+
+    flush();
+  }));
+
   it('populates books and chapters', fakeAsync(async () => {
     expect(env.component.books.length).toEqual(2);
 

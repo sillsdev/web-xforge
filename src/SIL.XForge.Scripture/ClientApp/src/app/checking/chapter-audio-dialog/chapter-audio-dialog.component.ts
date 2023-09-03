@@ -56,6 +56,7 @@ export class ChapterAudioDialogComponent {
     private readonly dialogService: DialogService
   ) {
     this.getStartingLocation();
+    this.checkForPreexistingAudio();
   }
 
   private getStartingLocation(): void {
