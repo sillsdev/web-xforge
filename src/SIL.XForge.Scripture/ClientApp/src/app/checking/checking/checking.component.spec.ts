@@ -468,6 +468,29 @@ describe('CheckingComponent', () => {
       expect(env.getQuestionText(question)).toBe('Admin just added a question.');
     }));
 
+    it('question with audio and no text should display book/chapter as a reference', fakeAsync(() => {
+      const env = new TestEnvironment(CHECKER_USER);
+      const dateNow = new Date();
+      const newQuestion: Question = {
+        dataId: objectId(),
+        ownerRef: ADMIN_USER.id,
+        projectRef: 'project01',
+        text: '',
+        audioUrl: 'audioFile.mp3',
+        answers: [],
+        verseRef: { bookNum: 43, chapterNum: 1, verseNum: 10 },
+        isArchived: false,
+        dateCreated: dateNow.toJSON(),
+        dateModified: dateNow.toJSON()
+      };
+      env.insertQuestion(newQuestion);
+      env.waitForSliderUpdate();
+      env.waitForAudioPlayer();
+      const question = env.selectQuestion(16);
+      expect(env.getQuestionText(question)).toBe('John 1:10');
+      env.waitForAudioPlayer();
+    }));
+
     it('respond to remote question audio added or removed', fakeAsync(() => {
       const env = new TestEnvironment(CHECKER_USER);
       env.selectQuestion(1);
@@ -2177,7 +2200,8 @@ class TestEnvironment {
   }
 
   getUnread(question: DebugElement): number {
-    return parseInt(question.query(By.css('.view-answers span')).nativeElement.textContent, 10);
+    const questionAnswers = question.query(By.css('.view-answers span'));
+    return questionAnswers != null ? parseInt(questionAnswers.nativeElement.textContent, 10) : 0;
   }
 
   getYourCommentField(answerIndex: number): DebugElement {
