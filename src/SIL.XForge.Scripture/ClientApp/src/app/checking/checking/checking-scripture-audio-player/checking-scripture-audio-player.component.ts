@@ -96,7 +96,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
 
     const currentTimingIndex: number = this.getRefIndexInTimings(currentRef);
     if (currentTimingIndex < 0) {
-      this.audioPlayer.audio.stop();
+      this.stop();
     } else if (this.audioPlayer.audio.currentTime < this._timing[currentTimingIndex].from) {
       // The first timing index doesn't always start at zero so this allows skipping to the start of the first reference
       this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex].from;
