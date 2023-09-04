@@ -32,6 +32,7 @@ public class MachineProjectService : IMachineProjectService
 {
     private readonly IDataFilesClient _dataFilesClient;
     private readonly IEngineService _engineService;
+    private readonly IExceptionHandler _exceptionHandler;
     private readonly IFeatureManager _featureManager;
     private readonly ILogger<MachineProjectService> _logger;
     private readonly IParatextService _paratextService;
@@ -44,6 +45,7 @@ public class MachineProjectService : IMachineProjectService
     public MachineProjectService(
         IDataFilesClient dataFilesClient,
         IEngineService engineService,
+        IExceptionHandler exceptionHandler,
         IFeatureManager featureManager,
         ILogger<MachineProjectService> logger,
         IParatextService paratextService,
@@ -56,6 +58,7 @@ public class MachineProjectService : IMachineProjectService
     {
         _dataFilesClient = dataFilesClient;
         _engineService = engineService;
+        _exceptionHandler = exceptionHandler;
         _featureManager = featureManager;
         _logger = logger;
         _paratextService = paratextService;
@@ -256,6 +259,36 @@ public class MachineProjectService : IMachineProjectService
 
         // No build started
         return null;
+    }
+
+    public async Task BuildProjectForBackgroundJobAsync(
+        string curUserId,
+        string sfProjectId,
+        bool preTranslate,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            await BuildProjectAsync(curUserId, sfProjectId, preTranslate, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            // Log the error and report to bugsnag
+            string message = $"Build exception occurred for project ${sfProjectId} running in background job.";
+            _logger.LogError(e, message);
+            _exceptionHandler.ReportException(e);
+
+            // Update the project secret with the error message
+            await _projectSecrets.UpdateAsync(
+                sfProjectId,
+                u =>
+                {
+                    u.Set(p => p.ServalData.PreTranslationErrorMessage, e.Message);
+                    u.Unset(p => p.ServalData.PreTranslationQueuedAt);
+                }
+            );
+        }
     }
 
     public async Task RemoveProjectAsync(

@@ -13,6 +13,12 @@ public interface IMachineProjectService
         bool preTranslate,
         CancellationToken cancellationToken
     );
+    Task BuildProjectForBackgroundJobAsync(
+        string curUserId,
+        string sfProjectId,
+        bool preTranslate,
+        CancellationToken cancellationToken
+    );
     Task RemoveProjectAsync(
         string curUserId,
         string sfProjectId,

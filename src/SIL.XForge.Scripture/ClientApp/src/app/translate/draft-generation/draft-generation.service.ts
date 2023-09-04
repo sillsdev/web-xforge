@@ -48,13 +48,7 @@ export class DraftGenerationService {
    */
   getBuildProgress(projectId: string): Observable<BuildDto | undefined> {
     return this.httpClient.get<BuildDto>(`translation/builds/id:${projectId}?pretranslate=true`).pipe(
-      map(res => {
-        if (res.data?.state === BuildStates.Faulted) {
-          throw new Error('Error occurred during build: ' + res.data.message);
-        }
-
-        return res.data;
-      }),
+      map(res => res.data),
       catchError(err => {
         // If no build has ever been started, return undefined
         if (err.status === 404) {

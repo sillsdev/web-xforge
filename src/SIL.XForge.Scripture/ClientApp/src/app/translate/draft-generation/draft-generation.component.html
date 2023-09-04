@@ -135,7 +135,7 @@
             <mat-divider inset vertical data-text="or"></mat-divider>
           </ng-container>
 
-          <div *ngIf="!isDraftInProgress(draftJob)">
+          <div *ngIf="!isDraftInProgress(draftJob) && !isDraftFaulted(draftJob)">
             <h3>Generate new draft</h3>
             <!-- TODO: Update i18n -->
             <p>
@@ -150,6 +150,19 @@
             <button mat-flat-button color="primary" (click)="generateDraft({ withConfirm: true })">
               Generate draft
             </button>
+          </div>
+
+          <div *ngIf="isDraftFaulted(draftJob)">
+            <h3>Error creating draft</h3>
+            <p>An error occurred creating the back translation draft.</p>
+            <p>Please generate the draft again or contact <span [innerHTML]="issueEmailLink"></span> for assistance.</p>
+
+            <button mat-flat-button color="primary" (click)="generateDraft({ withConfirm: true })">
+              Generate draft
+            </button>
+
+            <h4>Technical Error Details</h4>
+            <pre>{{ draftJob?.message }}</pre>
           </div>
         </section>
 
