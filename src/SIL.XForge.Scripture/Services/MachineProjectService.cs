@@ -482,6 +482,11 @@ public class MachineProjectService : IMachineProjectService
         // If the corpus should be updated
         if (corpusUpdated)
         {
+            // Echo requires the target and source language to be the same
+            bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
+            string targetLanguage = project.WritingSystem.Tag;
+            string sourceLanguage = project.TranslateConfig.Source!.WritingSystem.Tag;
+
             // Create or update the corpus
             TranslationCorpus corpus;
             TranslationCorpusConfig corpusConfig = new TranslationCorpusConfig
@@ -490,11 +495,11 @@ public class MachineProjectService : IMachineProjectService
                 SourceFiles = newSourceCorpusFiles
                     .Select(f => new TranslationCorpusFileConfig { FileId = f.FileId, TextId = f.TextId })
                     .ToList(),
-                SourceLanguage = project.TranslateConfig.Source.WritingSystem.Tag,
+                SourceLanguage = sourceLanguage,
                 TargetFiles = newTargetCorpusFiles
                     .Select(f => new TranslationCorpusFileConfig { FileId = f.FileId, TextId = f.TextId })
                     .ToList(),
-                TargetLanguage = project.WritingSystem.Tag,
+                TargetLanguage = useEcho ? sourceLanguage : targetLanguage,
             };
             if (string.IsNullOrEmpty(corpusId))
             {
@@ -634,11 +639,13 @@ public class MachineProjectService : IMachineProjectService
                 true => "Nmt",
                 false => "SmtTransfer",
             };
+            string targetLanguage = sfProject.WritingSystem.Tag;
+            string sourceLanguage = sfProject.TranslateConfig.Source!.WritingSystem.Tag;
             TranslationEngineConfig engineConfig = new TranslationEngineConfig
             {
                 Name = sfProject.Id,
-                SourceLanguage = sfProject.TranslateConfig.Source.WritingSystem.Tag,
-                TargetLanguage = sfProject.WritingSystem.Tag,
+                SourceLanguage = sourceLanguage,
+                TargetLanguage = useEcho ? sourceLanguage : targetLanguage,
                 Type = type,
             };
             // Add the project to Serval
