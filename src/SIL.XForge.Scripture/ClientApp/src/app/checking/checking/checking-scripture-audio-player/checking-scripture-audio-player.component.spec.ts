@@ -108,22 +108,70 @@ describe('ScriptureAudioComponent', () => {
     env.component.audioPlayer.currentVerseChanged.subscribe(verseChangedSpy);
     env.playButton.nativeElement.click();
     await env.waitForPlayer(1400);
-    expect(env.component.audioPlayer.audioPlayer!.audio!.currentTime).toBeGreaterThan(timings[1].from);
+    expect(env.currentTime).toBeGreaterThan(timings[1].from);
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
     await env.waitForPlayer(1400);
-    expect(env.component.audioPlayer.audioPlayer!.audio!.currentTime).toBeGreaterThan(timings[3].from);
+    expect(env.currentTime).toBeGreaterThan(timings[3].from);
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
     expect(verseChangedSpy).toHaveBeenCalledWith('s_1');
     expect(verseChangedSpy).toHaveBeenCalledWith('s_2');
   });
 
-  it('can skip to previous verse', async () => {});
+  it('can skip to previous verse', async () => {
+    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
 
-  it('skipping to previous verse remains on the current verse if within grace period', async () => {});
+    env.component.audioPlayer.textDocId = textDocId;
+    env.component.audioPlayer.timing = getAudioTimings();
+    await env.waitForPlayer();
 
-  it('skipping to the next verse will skip to the start of the current timing data if it has not started yet', async () => {});
+    env.currentTime = 2;
+    expect(env.currentTime).toEqual(2);
+    env.clickPreviousRef();
+    expect(env.currentTime).toEqual(1);
+  });
 
-  it('skipping beyond the last timing data will stop the player ', async () => {});
+  it('skipping to previous verse remains on the current verse if within grace period', async () => {
+    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
+
+    env.component.audioPlayer.textDocId = textDocId;
+    env.component.audioPlayer.timing = [
+      { textRef: '1', from: 0.0, to: 1.0 },
+      { textRef: '2', from: 1.0, to: 4.5 },
+      { textRef: '3', from: 4.5, to: 5.0 }
+    ];
+    await env.waitForPlayer();
+
+    env.currentTime = 4.1;
+    expect(env.currentTime).toBeGreaterThan(4);
+    env.clickPreviousRef();
+    expect(env.currentTime).toEqual(1);
+    env.clickPreviousRef();
+    expect(env.currentTime).toEqual(0);
+  });
+
+  it('skipping to the next verse will skip to the start of the current timing data if it has not started yet', async () => {
+    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
+
+    env.component.audioPlayer.textDocId = textDocId;
+    env.component.audioPlayer.timing = [
+      { textRef: '1', from: 3.0, to: 4.0 },
+      { textRef: '2', from: 4.0, to: 5.0 }
+    ];
+    await env.waitForPlayer();
+
+    expect(env.currentTime).toEqual(0);
+    env.clickNextRef();
+    expect(env.currentTime).toEqual(3);
+  });
 });
 
 @Component({ selector: 'app-host', template: '' })
@@ -154,6 +202,16 @@ class TestEnvironment {
     this.component = this.fixture.componentInstance;
   }
 
+  get currentTime(): number {
+    return this.component.audioPlayer.audioPlayer!.audio!.currentTime;
+  }
+
+  set currentTime(value: number) {
+    if (this.component.audioPlayer?.audioPlayer?.audio?.currentTime != null) {
+      this.component.audioPlayer.audioPlayer.audio.currentTime = value;
+    }
+  }
+
   get playButton(): DebugElement {
     return this.fixture.debugElement.query(By.css('.play-pause-button'));
   }
@@ -172,6 +230,14 @@ class TestEnvironment {
 
   get isPlaying(): boolean {
     return this.component.audioPlayer.isPlaying;
+  }
+
+  clickNextRef(): void {
+    this.nextRefButton.nativeElement.click();
+  }
+
+  clickPreviousRef(): void {
+    this.previousRefButton.nativeElement.click();
   }
 
   async waitForPlayer(ms: number = 50): Promise<void> {
