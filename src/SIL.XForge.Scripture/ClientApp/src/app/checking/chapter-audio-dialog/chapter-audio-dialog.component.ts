@@ -116,7 +116,7 @@ export class ChapterAudioDialogComponent {
   }
 
   get chapters(): number[] {
-    if (this.book === 0) {
+    if (this.book === 0 || this.book === undefined) {
       return [];
     }
     const bookAbbr: string = Canon.bookNumberToId(this.book);
