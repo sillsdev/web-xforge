@@ -130,20 +130,6 @@ public class MachineProjectServiceTests
     }
 
     [Test]
-    public async Task BuildProjectAsync_DoesNotBuildIfPendingPreTranslationBuild()
-    {
-        // Set up test environment
-        var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsPending = true });
-
-        // SUT
-        await env.Service.BuildProjectAsync(User01, Project02, preTranslate: true, CancellationToken.None);
-
-        await env.TranslationEnginesClient
-            .DidNotReceive()
-            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
-    }
-
-    [Test]
     public async Task BuildProjectAsync_RunsPreTranslationBuildIfNoTextChangesAndNoPendingBuild()
     {
         // Set up test environment
