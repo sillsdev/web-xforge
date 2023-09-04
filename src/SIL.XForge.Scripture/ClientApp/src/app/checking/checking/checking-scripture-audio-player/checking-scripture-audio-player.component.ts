@@ -90,15 +90,18 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   }
 
   nextRef(): void {
-    if (this.audioPlayer?.audio == null || this.timing == null) return;
-    const currentTimingIndex: number = this.timing.findIndex(t => t.textRef === this.currentRef);
+    if (this.audioPlayer?.audio == null || this._timing.length < 1) return;
+    const currentRef = this.currentRef;
+    if (currentRef == null) return;
+
+    const currentTimingIndex: number = this.getRefIndexInTimings(currentRef);
     if (currentTimingIndex < 0) {
       this.audioPlayer.audio.stop();
-    } else if (this.audioPlayer.audio.currentTime < this.timing[currentTimingIndex].from) {
+    } else if (this.audioPlayer.audio.currentTime < this._timing[currentTimingIndex].from) {
       // The first timing index doesn't always start at zero so this allows skipping to the start of the first reference
-      this.audioPlayer.audio.currentTime = this.timing[currentTimingIndex].from;
+      this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex].from;
     } else {
-      this.audioPlayer.audio.currentTime = this.timing[currentTimingIndex].to;
+      this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex].to;
     }
     this.verseLabel = this.currentVerseLabel;
   }
@@ -114,20 +117,23 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   }
 
   previousRef(): void {
-    if (this.audioPlayer?.audio == null || this.timing == null) return;
+    if (this.audioPlayer?.audio == null || this._timing.length < 1) return;
     const skipBackGracePeriod = 3;
-    const currentTimingIndex: number = this.timing.findIndex(t => t.textRef === this.currentRef);
+    const currentRef = this.currentRef;
+    if (currentRef == null) return;
+
+    const currentTimingIndex: number = this.getRefIndexInTimings(currentRef);
     if (currentTimingIndex < 0) {
       this.audioPlayer.audio.currentTime = 0;
-    } else if (this.audioPlayer.audio.currentTime > this.timing[currentTimingIndex].from + skipBackGracePeriod) {
+    } else if (this.audioPlayer.audio.currentTime > this._timing[currentTimingIndex].from + skipBackGracePeriod) {
       // Move to the start of the reference that had already been playing
       // rather than the start of the previous reference - this mimics Spotify previous track logic
-      this.audioPlayer.audio.currentTime = this.timing[currentTimingIndex].from;
+      this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex].from;
     } else if (currentTimingIndex === 0) {
       // The first timing index doesn't always start at zero so this forces it to the beginning of the audio
       this.audioPlayer.audio.currentTime = 0;
     } else {
-      this.audioPlayer.audio.currentTime = this.timing[currentTimingIndex - 1].from;
+      this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex - 1].from;
     }
     this.verseLabel = this.currentVerseLabel;
   }
