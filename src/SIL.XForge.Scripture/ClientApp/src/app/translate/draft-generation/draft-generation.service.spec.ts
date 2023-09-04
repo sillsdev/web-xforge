@@ -89,6 +89,15 @@ describe('DraftGenerationService', () => {
         done();
       });
     });
+
+    it('should return a faulted build state', done => {
+      httpClient.get = jasmine.createSpy().and.returnValue(of({ data: { ...buildDto, state: BuildStates.Faulted } }));
+      service.getBuildProgress(projectId).subscribe(result => {
+        expect(result?.state).toEqual(BuildStates.Faulted);
+        expect(httpClient.get).toHaveBeenCalledWith(`translation/builds/id:${projectId}?pretranslate=true`);
+        done();
+      });
+    });
   });
 
   describe('startBuild', () => {

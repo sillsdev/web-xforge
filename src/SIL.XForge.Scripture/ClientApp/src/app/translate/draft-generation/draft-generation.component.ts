@@ -4,12 +4,14 @@ import { isEmpty } from 'lodash-es';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { Observable, of, Subscription } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
-import { BuildDto } from 'src/app/machine-api/build-dto';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { getLinkHTML, issuesEmailTemplate } from 'xforge-common/utils';
+import { environment } from '../../../environments/environment';
+import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates } from './draft-generation';
@@ -69,6 +71,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       this.isSourceProjectSet &&
       this.isSourceAndTargetDifferent
     );
+  }
+
+  get issueEmailLink(): string {
+    return getLinkHTML(environment.issueEmail, issuesEmailTemplate());
   }
 
   constructor(
@@ -225,6 +231,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   isDraftComplete(job?: BuildDto): boolean {
     return (job?.state as BuildStates) === BuildStates.Completed;
+  }
+
+  isDraftFaulted(job?: BuildDto): boolean {
+    return (job?.state as BuildStates) === BuildStates.Faulted;
   }
 
   canCancel(job?: BuildDto): boolean {

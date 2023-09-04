@@ -246,6 +246,7 @@ describe('DraftGenerationComponent', () => {
       env.component.generateDraft();
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
     });
 
     it('should attempt "cancel dialog" close for cancelled build', () => {
@@ -315,6 +316,22 @@ describe('DraftGenerationComponent', () => {
       expect(mockDraftGenerationService.getLastCompletedBuild).toHaveBeenCalledWith(
         mockActivatedProjectService.projectId!
       );
+    });
+  });
+
+  describe('isDraftFaulted', () => {
+    it('should return true if the draft build has faulted', () => {
+      let env = new TestEnvironment();
+      expect(env.component.isDraftFaulted({ state: BuildStates.Faulted } as BuildDto)).toBe(true);
+    });
+
+    it('should return false if the draft build has not faulted', () => {
+      let env = new TestEnvironment();
+      expect(env.component.isDraftFaulted({ state: BuildStates.Active } as BuildDto)).toBe(false);
+      expect(env.component.isDraftFaulted({ state: BuildStates.Canceled } as BuildDto)).toBe(false);
+      expect(env.component.isDraftFaulted({ state: BuildStates.Completed } as BuildDto)).toBe(false);
+      expect(env.component.isDraftActive({ state: BuildStates.Pending } as BuildDto)).toBe(false);
+      expect(env.component.isDraftActive({ state: BuildStates.Queued } as BuildDto)).toBe(false);
     });
   });
 
