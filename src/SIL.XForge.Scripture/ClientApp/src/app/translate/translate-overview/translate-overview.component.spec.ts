@@ -7,15 +7,19 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ProgressStatus } from '@sillsdev/machine';
 import { CookieService } from 'ngx-cookie-service';
+import { User } from 'realtime-server/lib/esm/common/models/user';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { getTextDocId } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import * as RichText from 'rich-text';
 import { defer, of, Subject } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
@@ -192,7 +196,8 @@ describe('TranslateOverviewComponent', () => {
         translationSuggestionsEnabled: true,
         allSegmentsBlank: false
       });
-      env.setupProjectData({ projectId: 'project02', translationSuggestionsEnabled: true, allSegmentsBlank: false });
+      env.setupProjectData({ projectId: 'project02', translationSuggestionsEnabled: false, allSegmentsBlank: false });
+      env.setupUserData('user01', ['project01', 'project02']);
       env.wait();
 
       expect(env.component.canTrainSuggestions).toBeTruthy();
@@ -207,6 +212,28 @@ describe('TranslateOverviewComponent', () => {
         allSegmentsBlank: true
       });
       env.setupProjectData({ projectId: 'project02', translationSuggestionsEnabled: true, allSegmentsBlank: true });
+      env.setupUserData('user01', ['project01', 'project02']);
+      env.wait();
+
+      expect(env.component.canTrainSuggestions).toBeFalsy();
+    }));
+
+    it('cannot train suggestions if no source permission', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProjectData({
+        projectId: 'project01',
+        sourceProjectId: 'project02',
+        translationSuggestionsEnabled: true,
+        allSegmentsBlank: false,
+        textPermission: TextInfoPermission.Write
+      });
+      env.setupProjectData({
+        projectId: 'project02',
+        translationSuggestionsEnabled: true,
+        allSegmentsBlank: false,
+        textPermission: TextInfoPermission.None
+      });
+      env.setupUserData('user01', ['project01']);
       env.wait();
 
       expect(env.component.canTrainSuggestions).toBeFalsy();
@@ -219,6 +246,7 @@ interface TestProjectConfiguration {
   sourceProjectId?: string;
   translationSuggestionsEnabled?: boolean;
   allSegmentsBlank?: boolean;
+  textPermission?: TextInfoPermission;
 }
 
 class TestEnvironment {
@@ -243,14 +271,15 @@ class TestEnvironment {
     when(mockedSFProjectService.getText(anything())).thenCall(id =>
       this.realtimeService.subscribe(TextDoc.COLLECTION, id.toString())
     );
-    when(mockedSFProjectService.getProfile('project01')).thenCall(() =>
-      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, 'project01')
+    when(mockedSFProjectService.getProfile(anything())).thenCall(id =>
+      this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
     );
     this.setCurrentUser();
 
     this.fixture = TestBed.createComponent(TranslateOverviewComponent);
     this.component = this.fixture.componentInstance;
     this.setupProjectData(projectConfig);
+    this.setupUserData();
   }
 
   get progressTextList(): HTMLElement {
@@ -298,6 +327,7 @@ class TestEnvironment {
 
   setCurrentUser(userId: string = 'user01'): void {
     when(mockedUserService.currentUserId).thenReturn(userId);
+    when(mockedUserService.getCurrentUser()).thenCall(() => this.realtimeService.subscribe(UserDoc.COLLECTION, userId));
   }
 
   wait(): void {
@@ -325,6 +355,7 @@ class TestEnvironment {
     // Set default configuration values
     const projectId: string = projectConfig.projectId ?? 'project01';
     const translationSuggestionsEnabled = projectConfig.translationSuggestionsEnabled ?? true;
+    const textPermission: TextInfoPermission = projectConfig?.textPermission ?? TextInfoPermission.Write;
 
     // Setup the project data
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
@@ -344,38 +375,114 @@ class TestEnvironment {
           {
             bookNum: 41,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
-              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+              {
+                number: 1,
+                lastVerse: 3,
+                isValid: true,
+                permissions: {
+                  user01: textPermission,
+                  user02: textPermission
+                }
+              },
+              {
+                number: 2,
+                lastVerse: 3,
+                isValid: true,
+                permissions: {
+                  user01: textPermission,
+                  user02: textPermission
+                }
+              }
             ],
             hasSource: true,
-            permissions: {}
+            permissions: {
+              user01: textPermission,
+              user02: textPermission
+            }
           },
           {
             bookNum: 42,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
-              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+              {
+                number: 1,
+                lastVerse: 3,
+                isValid: true,
+                permissions: {
+                  user01: textPermission,
+                  user02: textPermission
+                }
+              },
+              {
+                number: 2,
+                lastVerse: 3,
+                isValid: true,
+                permissions: {
+                  user01: textPermission,
+                  user02: textPermission
+                }
+              }
             ],
             hasSource: true,
-            permissions: {}
+            permissions: {
+              user01: textPermission,
+              user02: textPermission
+            }
           },
           {
             bookNum: 43,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
-              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+              {
+                number: 1,
+                lastVerse: 3,
+                isValid: true,
+                permissions: {
+                  user01: textPermission,
+                  user02: textPermission
+                }
+              },
+              {
+                number: 2,
+                lastVerse: 3,
+                isValid: true,
+                permissions: {
+                  user01: textPermission,
+                  user02: textPermission
+                }
+              }
             ],
             hasSource: false,
-            permissions: {}
+            permissions: {
+              user01: textPermission,
+              user02: textPermission
+            }
           },
           {
             bookNum: 40,
             chapters: [
-              { number: 1, lastVerse: 3, isValid: true, permissions: {} },
-              { number: 2, lastVerse: 3, isValid: true, permissions: {} }
+              {
+                number: 1,
+                lastVerse: 3,
+                isValid: true,
+                permissions: {
+                  user01: textPermission,
+                  user02: textPermission
+                }
+              },
+              {
+                number: 2,
+                lastVerse: 3,
+                isValid: true,
+                permissions: {
+                  user01: textPermission,
+                  user02: textPermission
+                }
+              }
             ],
             hasSource: true,
-            permissions: {}
+            permissions: {
+              user01: textPermission,
+              user02: textPermission
+            }
           }
         ]
       })
@@ -389,6 +496,19 @@ class TestEnvironment {
     this.addTextDoc(new TextDocId(projectId, 42, 2, 'target'), projectConfig.allSegmentsBlank);
     this.addTextDoc(new TextDocId(projectId, 43, 1, 'target'), projectConfig.allSegmentsBlank);
     this.addTextDoc(new TextDocId(projectId, 43, 2, 'target'), projectConfig.allSegmentsBlank);
+  }
+
+  setupUserData(userId: string = 'user01', projects: string[] = ['project01']): void {
+    this.realtimeService.addSnapshot<User>(UserDoc.COLLECTION, {
+      id: userId,
+      data: createTestUser({
+        sites: {
+          sf: {
+            projects
+          }
+        }
+      })
+    });
   }
 
   updateTrainingProgress(percentCompleted: number): void {

@@ -4,7 +4,8 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { ANY_INDEX, obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
+import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { Canon } from '@sillsdev/scripture';
 import { asyncScheduler, Subscription, timer } from 'rxjs';
 import { delayWhen, filter, map, repeat, retryWhen, tap, throttleTime } from 'rxjs/operators';
@@ -12,6 +13,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
+import { environment } from '../../../environments/environment';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -213,15 +215,19 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
         textProgress.text.hasSource &&
         !this.canTrainSuggestions
       ) {
-        // Get the source text
         const sourceId: string = project.data.translateConfig.source.projectRef;
         const sourceTextDocId = new TextDocId(sourceId, textProgress.text.bookNum, chapter.number, 'target');
-        const sourceChapterText: TextDoc = await this.projectService.getText(sourceTextDocId);
+
+        // Only retrieve the source text if the user has permission
+        let sourceNonEmptyVerses: string[] = [];
+        if (await this.userCanAccessText(sourceTextDocId)) {
+          const sourceChapterText: TextDoc = await this.projectService.getText(sourceTextDocId);
+          sourceNonEmptyVerses = sourceChapterText.getNonEmptyVerses();
+        }
 
         // Get the intersect of the source and target arrays of non-empty verses
         // i.e. The verses with data that both texts have in common
         const targetNonEmptyVerses: string[] = chapterText.getNonEmptyVerses();
-        const sourceNonEmptyVerses: string[] = sourceChapterText.getNonEmptyVerses();
         this.segmentPairs += targetNonEmptyVerses.filter(item => sourceNonEmptyVerses.includes(item)).length;
       }
     }
@@ -264,6 +270,34 @@ export class TranslateOverviewComponent extends DataLoadingComponent implements 
         this.trainingPercentage = Math.round(progress.percentCompleted * 100);
         this.isTraining = true;
       });
+  }
+
+  private async userCanAccessText(textDocId: TextDocId): Promise<boolean> {
+    // Get the project doc, if the user is on that project
+    let projectDoc: SFProjectProfileDoc | undefined;
+    if (textDocId.projectId != null) {
+      const currentUserDoc = await this.userService.getCurrentUser();
+      const userOnProject: boolean =
+        currentUserDoc?.data?.sites[environment.siteId].projects.includes(textDocId.projectId) ?? false;
+      projectDoc = userOnProject ? await this.projectService.getProfile(textDocId.projectId) : undefined;
+    }
+
+    // Ensure the user has project level permission to view the text
+    if (
+      projectDoc?.data != null &&
+      SF_PROJECT_RIGHTS.hasRight(projectDoc.data, this.userService.currentUserId, SFProjectDomain.Texts, Operation.View)
+    ) {
+      // Check chapter permissions
+      const chapter: Chapter | undefined = projectDoc.data.texts
+        .find(t => t.bookNum === textDocId.bookNum)
+        ?.chapters.find(c => c.number === textDocId.chapterNum);
+      if (chapter != null && chapter.permissions != null) {
+        const chapterPermission: string = chapter.permissions[this.userService.currentUserId];
+        return chapterPermission === TextInfoPermission.Write || chapterPermission === TextInfoPermission.Read;
+      }
+    }
+
+    return false;
   }
 
   private async updateEngineStats(): Promise<void> {
