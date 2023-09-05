@@ -28,6 +28,11 @@ public class ServalData
     public string? PreTranslationEngineId { get; set; }
 
     /// <summary>
+    /// Gets or sets the Hangfire Job Id for the Pre-Translation job.
+    /// </summary>
+    public string? PreTranslationJobId { get; set; }
+
+    /// <summary>
     /// Gets or sets the date and time that the pre-translation build was queued.
     /// </summary>
     /// <value>

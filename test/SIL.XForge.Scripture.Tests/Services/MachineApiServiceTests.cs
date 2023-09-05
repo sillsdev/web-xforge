@@ -48,6 +48,7 @@ public class MachineApiServiceTests
     private const string User01 = "user01";
     private const string Segment = "segment";
     private const string TargetSegment = "targetSegment";
+    private const string JobId = "jobId";
 
     [Test]
     public void CancelPreTranslationBuildAsync_NoFeatureFlagEnabled()
@@ -136,6 +137,7 @@ public class MachineApiServiceTests
         await env.Service.CancelPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
 
         await env.TranslationEnginesClient.Received(1).CancelBuildAsync(TranslationEngine01, CancellationToken.None);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
     }
 
@@ -1799,6 +1801,8 @@ public class MachineApiServiceTests
         await env.Service.StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
 
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
     }
 
     [Test]
@@ -2409,6 +2413,7 @@ public class MachineApiServiceTests
         public TestEnvironment()
         {
             BackgroundJobClient = Substitute.For<IBackgroundJobClient>();
+            BackgroundJobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns(JobId);
             Builds = Substitute.For<IBuildRepository>();
             Engines = Substitute.For<IEngineRepository>();
             Engines
@@ -2505,7 +2510,11 @@ public class MachineApiServiceTests
         public async Task QueuePreTranslationBuildAsync(DateTime? dateTime = null) =>
             await ProjectSecrets.UpdateAsync(
                 Project01,
-                u => u.Set(p => p.ServalData.PreTranslationQueuedAt, dateTime ?? DateTime.UtcNow)
+                u =>
+                {
+                    u.Set(p => p.ServalData.PreTranslationJobId, JobId);
+                    u.Set(p => p.ServalData.PreTranslationQueuedAt, dateTime ?? DateTime.UtcNow);
+                }
             );
     }
 }
