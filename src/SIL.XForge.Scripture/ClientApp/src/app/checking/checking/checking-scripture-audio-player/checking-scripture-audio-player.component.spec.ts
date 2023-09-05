@@ -44,13 +44,13 @@ describe('ScriptureAudioComponent', () => {
     env.component.audioPlayer.textDocId = textDocId;
     env.component.audioPlayer.timing = getAudioTimings();
     await env.waitForPlayer();
-    env.nextRefButton.nativeElement.click();
+    env.clickNextRef();
     await env.waitForPlayer();
     expect(env.component.audioPlayer.currentRef).toEqual('2');
-    env.previousRefButton.nativeElement.click();
+    env.clickPreviousRef();
     await env.waitForPlayer();
     expect(env.component.audioPlayer.currentRef).toEqual('1');
-    env.previousRefButton.nativeElement.click();
+    env.clickPreviousRef();
     await env.waitForPlayer();
     expect(env.component.audioPlayer.currentRef).toEqual('1');
   });
@@ -64,16 +64,16 @@ describe('ScriptureAudioComponent', () => {
     env.component.audioPlayer.textDocId = textDocId;
     env.component.audioPlayer.timing = getAudioTimingWithHeadings();
     await env.waitForPlayer();
-    env.nextRefButton.nativeElement.click();
+    env.clickNextRef();
     await env.waitForPlayer();
     expect(env.component.audioPlayer.currentRef).toEqual('s_1');
-    env.nextRefButton.nativeElement.click();
+    env.clickNextRef();
     await env.waitForPlayer();
     expect(env.component.audioPlayer.currentRef).toEqual('2');
-    env.previousRefButton.nativeElement.click();
+    env.clickPreviousRef();
     await env.waitForPlayer();
     expect(env.component.audioPlayer.currentRef).toEqual('s_1');
-    env.previousRefButton.nativeElement.click();
+    env.clickPreviousRef();
     await env.waitForPlayer();
     expect(env.component.audioPlayer.currentRef).toEqual('1');
   });
@@ -115,22 +115,6 @@ describe('ScriptureAudioComponent', () => {
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
     expect(verseChangedSpy).toHaveBeenCalledWith('s_1');
     expect(verseChangedSpy).toHaveBeenCalledWith('s_2');
-  });
-
-  it('can skip to previous verse', async () => {
-    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
-    const env = new TestEnvironment(template);
-    env.fixture.detectChanges();
-    await env.waitForPlayer(500);
-
-    env.component.audioPlayer.textDocId = textDocId;
-    env.component.audioPlayer.timing = getAudioTimings();
-    await env.waitForPlayer();
-
-    env.currentTime = 2;
-    expect(env.currentTime).toEqual(2);
-    env.clickPreviousRef();
-    expect(env.currentTime).toEqual(1);
   });
 
   it('skipping to previous verse remains on the current verse if within grace period', async () => {
