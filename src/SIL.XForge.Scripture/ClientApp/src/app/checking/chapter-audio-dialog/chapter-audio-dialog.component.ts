@@ -198,7 +198,13 @@ export class ChapterAudioDialogComponent {
   }
 
   async save(): Promise<void> {
-    if (this.audio?.blob == null || this.audio?.fileName == null || this.timing.length === 0) {
+    if (
+      this.audio?.blob == null ||
+      this.audio?.fileName == null ||
+      this.timing.length === 0 ||
+      this.book == null ||
+      this.chapter == null
+    ) {
       return;
     }
     this._loadingAudio = true;
