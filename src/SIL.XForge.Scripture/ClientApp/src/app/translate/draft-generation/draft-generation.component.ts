@@ -179,7 +179,17 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       }
     }
 
-    this.draftGenerationService.cancelBuild(this.activatedProject.projectId!).subscribe();
+    // Cancel then get the build progress to update the UI
+    this.draftGenerationService
+      .cancelBuild(this.activatedProject.projectId!)
+      .pipe(
+        switchMap(() => this.draftGenerationService.getBuildProgress(this.activatedProject.projectId!)),
+        tap((job?: BuildDto) => {
+          this.draftJob = job;
+          this.isDraftJobFetched = true;
+        })
+      )
+      .subscribe();
   }
 
   getTargetLanguageDisplayName(): string | undefined {
