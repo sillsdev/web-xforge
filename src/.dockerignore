@@ -24,5 +24,6 @@
 **/RealtimeServer/lib/
 **/secrets.dev.yaml
 **/values.dev.yaml
+ClientApp
 LICENSE
 README.md
