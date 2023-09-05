@@ -803,7 +803,18 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await EnsureWritingSystemTagIsSetAsync(curUserId, projectDoc, null);
     }
 
-    /// TODO (scripture audio) Document this method and add tests
+    /// <summary>
+    /// Creates or updates audio timing data.
+    /// </summary>
+    /// <param name="userId">The user identifier</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="book">The book number.</param>
+    /// <param name="chapter">The chapter number.</param>
+    /// <param name="timingData">A collection of timing data for the audio file.</param>
+    /// <param name="audioUrl">The uploaded audio file URL.</param>
+    /// <returns>The asynchronous task.</returns>
+    /// <exception cref="DataNotFoundException">The project does not exist.</exception>
+    /// <exception cref="ForbiddenException">The user is not an administrator.</exception>
     public async Task CreateAudioTimingData(
         string userId,
         string projectId,
@@ -825,19 +836,25 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         }
 
         string textAudioId = TextAudio.GetDocId(projectDoc.Id, book, chapter);
-        var textAudio = new TextAudio
-        {
-            OwnerRef = userId,
-            ProjectRef = projectId,
-            // TODO (scripture audio) Should the ID be set here? How does the DataId differ from the document ID?
-            DataId = textAudioId,
-            Timings = timingData,
-            // TODO get mimetype from client and make sure it is an acceptable value
-            MimeType = "audio/mp3",
-            AudioUrl = audioUrl
-        };
+        IDocument<TextAudio> textAudioDoc = await conn.FetchOrCreateAsync(
+            textAudioId,
+            () =>
+                new TextAudio
+                {
+                    OwnerRef = userId,
+                    ProjectRef = projectId,
+                    // TODO (scripture audio) Should the ID be set here? How does the DataId differ from the document ID?
+                    DataId = textAudioId,
+                }
+        );
 
-        await conn.CreateAsync<TextAudio>(textAudioId, textAudio);
+        await textAudioDoc.SubmitJson0OpAsync(op =>
+        {
+            // TODO (scripture audio) get mimetype from client and make sure it is an acceptable value
+            op.Set(ta => ta.MimeType, "audio/mp3");
+            op.Set(ta => ta.AudioUrl, audioUrl);
+            op.Set(ta => ta.Timings, timingData);
+        });
 
         int textIndex = projectDoc.Data.Texts.FindIndex(t => t.BookNum == book);
         int chapterIndex = projectDoc.Data.Texts[textIndex].Chapters.FindIndex(c => c.Number == chapter);
@@ -846,7 +863,18 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         );
     }
 
-    /// TODO (scripture audio) Document this method and add tests
+    /// <summary>
+    /// Deletes the audio timing data.
+    /// </summary>
+    /// <param name="userId">The user identifier</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="book">The book number.</param>
+    /// <param name="chapter">The chapter number.</param>
+    /// <returns>The asynchronous task.</returns>
+    /// <exception cref="DataNotFoundException">
+    /// The project does not exist or the audio timing data does not exist.
+    /// </exception>
+    /// <exception cref="ForbiddenException">The user is not an administrator.</exception>
     public async Task DeleteAudioTimingData(string userId, string projectId, int book, int chapter)
     {
         await using IConnection conn = await RealtimeService.ConnectAsync(userId);
