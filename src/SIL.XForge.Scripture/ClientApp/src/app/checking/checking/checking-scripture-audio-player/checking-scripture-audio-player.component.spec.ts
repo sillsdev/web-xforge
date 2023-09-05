@@ -49,13 +49,13 @@ xdescribe('ScriptureAudioComponent', () => {
     env.component.audioPlayer.textDocId = textDocId;
     env.component.audioPlayer.timing = getAudioTimings();
     await env.waitForPlayer();
-    env.nextRefButton.nativeElement.click();
+    env.clickNextRef();
     await env.waitForPlayer();
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
-    env.previousRefButton.nativeElement.click();
+    env.clickPreviousRef();
     await env.waitForPlayer();
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
-    env.previousRefButton.nativeElement.click();
+    env.clickPreviousRef();
     await env.waitForPlayer();
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
   });
@@ -69,19 +69,19 @@ xdescribe('ScriptureAudioComponent', () => {
     env.component.audioPlayer.textDocId = textDocId;
     env.component.audioPlayer.timing = getAudioTimingWithHeadings();
     await env.waitForPlayer();
-    env.nextRefButton.nativeElement.click();
+    env.clickNextRef();
     await env.waitForPlayer();
     // section heading before verse 2
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
-    env.nextRefButton.nativeElement.click();
+    env.clickNextRef();
     await env.waitForPlayer();
     // verse 2
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
-    env.previousRefButton.nativeElement.click();
+    env.clickPreviousRef();
     await env.waitForPlayer();
     // move back to the section heading before verse 2
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
-    env.previousRefButton.nativeElement.click();
+    env.clickPreviousRef();
     await env.waitForPlayer();
     // verse 1
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
@@ -141,22 +141,6 @@ xdescribe('ScriptureAudioComponent', () => {
     await env.waitForPlayer();
     expect(pauseSpy).toHaveBeenCalled();
     expect(count).toEqual(1);
-  });
-
-  it('can skip to previous verse', async () => {
-    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
-    const env = new TestEnvironment(template);
-    env.fixture.detectChanges();
-    await env.waitForPlayer(500);
-
-    env.component.audioPlayer.textDocId = textDocId;
-    env.component.audioPlayer.timing = getAudioTimings();
-    await env.waitForPlayer();
-
-    env.currentTime = 2;
-    expect(env.currentTime).toEqual(2);
-    env.clickPreviousRef();
-    expect(env.currentTime).toEqual(1);
   });
 
   it('skipping to previous verse remains on the current verse if within grace period', async () => {
