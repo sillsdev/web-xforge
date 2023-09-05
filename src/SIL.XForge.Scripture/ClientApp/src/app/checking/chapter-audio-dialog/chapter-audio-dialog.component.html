@@ -1,48 +1,52 @@
 <ng-container *transloco="let t">
   <h2 mat-dialog-title>Chapter Audio</h2>
   <mat-dialog-content class="mat-typography">
-    <div class="row">
-      <app-book-chapter-chooser
-        [books]="books"
-        [(book)]="book"
-        [(chapter)]="chapter"
-        [chapters]="chapters"
-      ></app-book-chapter-chooser>
-      <app-info
-        *ngIf="selectionHasAudioAlready"
-        [text]="t('checking_audio_dialog.audio_already_exists')"
-        icon="warning"
-        type="warning"
-      ></app-info>
+    <div class="dropzone" #dropzone>
+      <input type="file" multiple #fileDropzone accept=".csv,.tsv,.txt,audio/*" (change)="uploadedFiles($event)" />
+      <label
+        >Drag and drop audio and timing files here<br />
+        - OR -
+      </label>
+      <button mat-flat-button color="primary" type="submit">Browse Files</button>
     </div>
-    <div>
-      <div class="wrapper">
-        <span>{{ t("checking_audio_dialog.audio") }}</span>
-        <app-checking-audio-combined
-          [enableRecorder]="false"
-          (update)="audioUpdate($event)"
-        ></app-checking-audio-combined>
+    <div class="data-blocks">
+      <div class="wrapper valid">
+        <mat-select [(value)]="book" class="book-select-menu">
+          <mat-option *ngFor="let b of books" [value]="b">{{ bookName(b) }}</mat-option>
+        </mat-select>
+        <div class="divider"></div>
+        <mat-select [(value)]="chapter" class="chapter-select-menu">
+          <mat-option *ngFor="let c of chapters" [value]="c">{{ c }}</mat-option>
+        </mat-select>
       </div>
-      <hr />
-      <div class="wrapper">
-        <span>{{ t("checking_audio_dialog.timing") }}</span>
-        <app-info class="warning" *ngIf="errorMessage !== ''" [text]="t(errorMessage)" icon="warning" type="warning">
-        </app-info>
-        <div class="row">
-          <button
-            mat-button
-            ngfSelect
-            type="button"
-            (fileChange)="prepareTimingFileUpload($event)"
-            accept=".csv,.tsv,.txt"
+      <app-notice class="" *ngIf="selectionHasAudioAlready" icon="warning" type="warning"
+        >{{ t("checking_audio_dialog.audio_already_exists") }}
+      </app-notice>
+      <div class="wrapper" [ngClass]="{ valid: hasAudioBeenUploaded }">
+        <ng-container *ngIf="hasAudioBeenUploaded">
+          <app-single-button-audio-player
+            #chapterAudio
+            id="chapterAudio"
+            [source]="audioBlob"
+            (click)="chapterAudio.playing ? chapterAudio.stop() : chapterAudio.play()"
           >
-            <mat-icon>cloud_upload</mat-icon>
-            <span fxShow fxHide.lt-sm>{{ t("checking_audio_dialog.upload_timing_file") }}</span>
-            <span fxHide fxShow.xs>{{ t("checking_audio_dialog.upload") }}</span>
-          </button>
-          <span *ngIf="hasTimingBeenUploaded">{{ numberOfTimingSegments }} segments found</span>
-        </div>
+            <mat-icon>{{ chapterAudio.playing ? "stop" : "play_arrow" }}</mat-icon>
+          </app-single-button-audio-player>
+          <span *ngIf="hasAudioBeenUploaded">{{ audioFilename }}</span>
+          <mat-icon *ngIf="hasAudioBeenUploaded" (click)="deleteAudioData()" class="delete">delete</mat-icon>
+        </ng-container>
+        <ng-container *ngIf="!hasAudioBeenUploaded">
+          <mat-icon>play_disabled</mat-icon>
+          <span>No audio file uploaded</span>
+        </ng-container>
       </div>
+      <div class="wrapper" [ngClass]="{ valid: hasTimingBeenUploaded }">
+        <mat-icon class="material-icons-outlined">timer</mat-icon>
+        <span *ngIf="hasTimingBeenUploaded">{{ numberOfTimingSegments }} segments found</span>
+        <span *ngIf="!hasTimingBeenUploaded">No timing data uploaded</span>
+        <mat-icon *ngIf="hasTimingBeenUploaded" (click)="deleteTimingData()" class="delete">delete</mat-icon>
+      </div>
+      <app-notice class="" *ngIf="errorMessage !== ''" icon="error" type="error">{{ t(errorMessage) }} </app-notice>
     </div>
   </mat-dialog-content>
   <mat-dialog-actions>

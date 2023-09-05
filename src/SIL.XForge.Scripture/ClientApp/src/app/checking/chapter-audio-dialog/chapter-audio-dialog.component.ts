@@ -1,4 +1,4 @@
-import { Component, Inject } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Canon } from '@sillsdev/scripture';
 import { reject } from 'lodash-es';
@@ -36,14 +36,15 @@ export interface ChapterAudioDialogResult {
   templateUrl: './chapter-audio-dialog.component.html',
   styleUrls: ['./chapter-audio-dialog.component.scss']
 })
-export class ChapterAudioDialogComponent {
+export class ChapterAudioDialogComponent implements AfterViewInit {
+  @ViewChild('dropzone') dropzone?: ElementRef<HTMLDivElement>;
   private audio?: AudioAttachment;
   private _book: number = this.books[0];
   private _chapter: number = 1;
   private timing: AudioTiming[] = [];
   private _selectionHasAudioAlready: boolean = false;
-  private _hasTimingBeenUploaded: boolean = false;
   private _audioLength: number = 0;
+  private _audioBlob?: string;
   private _timingErrorText?: I18nKey;
   private _loadingAudio: boolean = false;
 
@@ -59,28 +60,12 @@ export class ChapterAudioDialogComponent {
     this.checkForPreexistingAudio();
   }
 
-  private getStartingLocation(): void {
-    if (this.data.currentBook !== undefined && this.data.currentChapter !== undefined) {
-      this._book = this.data.currentBook;
-      this._chapter = this.data.currentChapter;
-      return;
-    }
+  get audioFilename(): string {
+    return this.audio?.fileName || '';
+  }
 
-    const publishedQuestions = this.data.questionsSorted.filter(q => !q.data?.isArchived);
-    for (const question of publishedQuestions) {
-      const bookNum = question.data?.verseRef.bookNum;
-      const chapterNum = question.data?.verseRef.chapterNum;
-
-      if (bookNum === undefined || chapterNum === undefined) continue;
-
-      const text: TextInfo = this.data.textsByBookId[Canon.bookNumberToId(bookNum)];
-      const textChapter = text?.chapters.find(c => c.number === chapterNum);
-      if (textChapter !== undefined && !textChapter?.hasAudio) {
-        this._book = bookNum;
-        this._chapter = textChapter.number!;
-        return;
-      }
-    }
+  get audioBlob(): string | undefined {
+    return this._audioBlob;
   }
 
   get selectionHasAudioAlready(): boolean {
@@ -103,6 +88,10 @@ export class ChapterAudioDialogComponent {
     this.checkForPreexistingAudio();
   }
 
+  get books(): number[] {
+    return Object.values(this.data.textsByBookId).map(t => t.bookNum);
+  }
+
   get chapter(): number {
     return this._chapter;
   }
@@ -110,10 +99,6 @@ export class ChapterAudioDialogComponent {
   set chapter(chapter: number) {
     this._chapter = chapter;
     this.checkForPreexistingAudio();
-  }
-
-  get books(): number[] {
-    return Object.values(this.data.textsByBookId).map(t => t.bookNum);
   }
 
   get chapters(): number[] {
@@ -125,12 +110,16 @@ export class ChapterAudioDialogComponent {
     return text.chapters.map(c => c.number);
   }
 
-  get numberOfTimingSegments(): number {
-    return this.timing.length;
+  get hasTimingBeenUploaded(): boolean {
+    return this.timing.length > 0;
   }
 
-  get hasTimingBeenUploaded(): boolean {
-    return this._hasTimingBeenUploaded;
+  get hasAudioBeenUploaded(): boolean {
+    return this.audio?.blob != null && this.audio?.fileName != null;
+  }
+
+  get numberOfTimingSegments(): number {
+    return this.timing.length;
   }
 
   get errorMessage(): string {
@@ -143,14 +132,46 @@ export class ChapterAudioDialogComponent {
 
   async audioUpdate(audio: AudioAttachment): Promise<void> {
     this.audio = audio;
-    if (audio.url) {
+    if (audio.url != null) {
+      if (audio.blob != null) {
+        this._audioBlob = URL.createObjectURL(audio.blob);
+      }
       await this.getDuration(audio.url).then(l => {
         this._audioLength = l;
-        if (this._hasTimingBeenUploaded) {
+        if (this.hasTimingBeenUploaded) {
           this.validateTimingEntries(this.timing, this._audioLength);
         }
       });
     }
+  }
+
+  bookName(book: number): string {
+    return this.i18n.localizeBook(book);
+  }
+
+  deleteAudioData(): void {
+    this.audio = undefined;
+  }
+
+  deleteTimingData(): void {
+    this.timing = [];
+    this._timingErrorText = undefined;
+  }
+
+  ngAfterViewInit(): void {
+    this.dropzone?.nativeElement.addEventListener('dragover', _ => {
+      this.dropzone?.nativeElement.classList.add('dragover');
+    });
+    this.dropzone?.nativeElement.addEventListener('dragleave', _ => {
+      this.dropzone?.nativeElement.classList.remove('dragover');
+    });
+    this.dropzone?.nativeElement.addEventListener('drop', (e: DragEvent) => {
+      this.dropzone?.nativeElement.classList.remove('dragover');
+      if (e?.dataTransfer?.files == null) {
+        return;
+      }
+      this.processUploadedFiles(e.dataTransfer.files);
+    });
   }
 
   async prepareTimingFileUpload(file: File): Promise<void> {
@@ -170,8 +191,48 @@ export class ChapterAudioDialogComponent {
     }
     timing.sort((a, b) => a.from - b.from);
     this.timing = timing;
-    this._hasTimingBeenUploaded = true;
     this.validateTimingEntries(this.timing, this._audioLength);
+  }
+
+  async save(): Promise<void> {
+    if (
+      !this.hasAudioBeenUploaded || !this.hasTimingBeenUploaded ||
+      this.book == null ||
+      this.chapter == null
+    ) {
+      return;
+    }
+    this._loadingAudio = true;
+    const audioUrl: string | undefined = await this.fileService.uploadFile(
+      FileType.Audio,
+      this.data.projectId,
+      TextAudioDoc.COLLECTION,
+      objectId(),
+      getTextDocId(this.data.projectId, this.book, this.chapter),
+      this.audio!.blob!,
+      this.audio!.fileName!,
+      true
+    );
+    this._loadingAudio = false;
+    if (audioUrl == null) {
+      this.dialogService.message('checking_audio_dialog.upload_failed');
+      return;
+    }
+
+    this.dialogRef.close({
+      timingData: this.timing,
+      book: this.book,
+      chapter: this.chapter,
+      audioUrl
+    });
+  }
+
+  uploadedFiles(e: Event): void {
+    const el = e.target as HTMLInputElement;
+    if (el.files == null) {
+      return;
+    }
+    this.processUploadedFiles(el.files);
   }
 
   private validateTimingEntries(timing: AudioTiming[], audioLength: number): void {
@@ -198,39 +259,57 @@ export class ChapterAudioDialogComponent {
     }
   }
 
-  async save(): Promise<void> {
-    if (
-      this.audio?.blob == null ||
-      this.audio?.fileName == null ||
-      this.timing.length === 0 ||
-      this.book == null ||
-      this.chapter == null
-    ) {
-      return;
-    }
-    this._loadingAudio = true;
-    const audioUrl: string | undefined = await this.fileService.uploadFile(
-      FileType.Audio,
-      this.data.projectId,
-      TextAudioDoc.COLLECTION,
-      objectId(),
-      getTextDocId(this.data.projectId, this.book, this.chapter),
-      this.audio.blob,
-      this.audio.fileName,
-      true
-    );
-    this._loadingAudio = false;
-    if (audioUrl == null) {
-      this.dialogService.message('checking_audio_dialog.upload_failed');
+  private getDuration(url: string): Promise<number> {
+    return new Promise(function (resolve) {
+      const audio = new Audio();
+      audio.addEventListener('loadedmetadata', function () {
+        resolve(audio.duration);
+      });
+      audio.addEventListener('error', () => {
+        reject(new Error(`Audio Load Failed Code ${audio.error?.code ?? 'Unknown'}: ${audio.error?.message}`));
+      });
+      audio.src = url;
+    });
+  }
+
+  private getStartingLocation(): void {
+    if (this.data.currentBook !== undefined && this.data.currentChapter !== undefined) {
+      this._book = this.data.currentBook;
+      this._chapter = this.data.currentChapter;
       return;
     }
 
-    this.dialogRef.close({
-      timingData: this.timing,
-      book: this.book,
-      chapter: this.chapter,
-      audioUrl
-    });
+    const publishedQuestions = this.data.questionsSorted.filter(q => !q.data?.isArchived);
+    for (const question of publishedQuestions) {
+      const bookNum = question.data?.verseRef.bookNum;
+      const chapterNum = question.data?.verseRef.chapterNum;
+
+      if (bookNum === undefined || chapterNum === undefined) continue;
+
+      const text: TextInfo = this.data.textsByBookId[Canon.bookNumberToId(bookNum)];
+      const textChapter = text?.chapters.find(c => c.number === chapterNum);
+      if (textChapter !== undefined && !textChapter?.hasAudio) {
+        this._book = bookNum;
+        this._chapter = textChapter.number!;
+        return;
+      }
+    }
+  }
+
+  /**
+   * It supports multiple time formats: ss, mm:ss, hh:mm:ss
+   */
+  private parseTimeToSeconds(time: string): number {
+    const a: string[] = time?.split(':');
+    if (a?.length === 1) {
+      return parseFloat(time);
+    } else if (a?.length === 2) {
+      return +a[0] * 60 + +a[1];
+    } else if (a?.length === 3) {
+      return +a[0] * 60 * 60 + +a[1] * 60 + +a[2];
+    }
+
+    return NaN;
   }
 
   private populateToField(index: number, rows: AudioTiming[]): number {
@@ -245,34 +324,24 @@ export class ChapterAudioDialogComponent {
     }
   }
 
-  private getDuration(url: string): Promise<number> {
-    return new Promise(function (resolve) {
-      const audio = new Audio();
-      audio.addEventListener('loadedmetadata', function () {
-        resolve(audio.duration);
-      });
-      audio.addEventListener('error', () => {
-        reject(new Error(`Audio Load Failed Code ${audio.error?.code ?? 'Unknown'}: ${audio.error?.message}`));
-      });
-      audio.src = url;
-    });
-  }
-
-  /**
-   * It supports multiple time formats: ss, mm:ss, hh:mm:ss
-   */
-  private parseTimeToSeconds(time: string): number {
-    const a: string[] = time?.split(':');
-    if (a?.length === 1) {
-      return parseFloat(time);
-    } else if (a?.length === 2) {
-      const seconds = +a[0] * 60 + +a[1];
-      return seconds;
-    } else if (a?.length === 3) {
-      const seconds = +a[0] * 60 * 60 + +a[1] * 60 + +a[2];
-      return seconds;
+  private processUploadedFiles(files: FileList): void {
+    for (let index = 0; index < files.length; index++) {
+      const file: File | null = files.item(index);
+      if (file == null) {
+        continue;
+      }
+      const isTimingFile: boolean = /.(tsv|csv|txt)$/i.test(file.name);
+      if (isTimingFile) {
+        this.prepareTimingFileUpload(file);
+      } else {
+        const audioAttachment: AudioAttachment = {
+          url: URL.createObjectURL(file),
+          blob: file,
+          fileName: file.name,
+          status: 'uploaded'
+        };
+        this.audioUpdate(audioAttachment);
+      }
     }
-
-    return NaN;
   }
 }

@@ -17,7 +17,7 @@ export class ChapterAudioDialogService {
   async openDialog(config: ChapterAudioDialogData): Promise<void> {
     const dialogConfig: MatDialogConfig<ChapterAudioDialogData> = {
       data: config,
-      width: '500px'
+      width: '320px'
     };
     const dialogRef = this.dialogService.openMatDialog(ChapterAudioDialogComponent, dialogConfig);
     const result: ChapterAudioDialogResult | 'close' | undefined = await dialogRef.afterClosed().toPromise();
