@@ -117,7 +117,7 @@ export class ChapterAudioDialogComponent {
   }
 
   get chapters(): number[] {
-    if (this.book === 0) {
+    if (this.book === 0 || this.book === undefined) {
       return [];
     }
     const bookAbbr: string = Canon.bookNumberToId(this.book);
@@ -199,7 +199,13 @@ export class ChapterAudioDialogComponent {
   }
 
   async save(): Promise<void> {
-    if (this.audio?.blob == null || this.audio?.fileName == null || this.timing.length === 0) {
+    if (
+      this.audio?.blob == null ||
+      this.audio?.fileName == null ||
+      this.timing.length === 0 ||
+      this.book == null ||
+      this.chapter == null
+    ) {
       return;
     }
     this._loadingAudio = true;
