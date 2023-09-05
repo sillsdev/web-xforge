@@ -99,7 +99,7 @@ as-split.is-disabled > .as-split-gutter .as-split-gutter-icon {
 }
 
 .snackbar-error {
-  background-color: var(--mdc-theme-error) !important;
+  background-color: variables.$errorColor !important;
 }
 
 .mdc-select__selected-text {
@@ -138,7 +138,7 @@ button.mdc-icon-button {
 }
 
 .offline-text {
-  color: var(--mdc-theme-error);
+  color: variables.$errorColor;
 }
 
 .locale-fonts mat-option {

@@ -1,4 +1,4 @@
-@import 'src/variables';
+@use 'src/variables';
 
 div {
   display: flex;
@@ -7,13 +7,13 @@ div {
   border-radius: 4px;
   column-gap: 16px;
   &.normal {
-    --notice-color: #{$purpleLight};
+    --notice-color: #{variables.$purpleLight};
   }
   &.error {
-    --notice-color: var(--mdc-theme-error);
+    --notice-color: #{variables.$errorColor};
   }
   &.warning {
-    --notice-color: #{$orange};
+    --notice-color: #{variables.$orange};
   }
   &.outline {
     border: 1px solid var(--notice-color);
