@@ -26,7 +26,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   private _timing: AudioTiming[] = [];
   private currentVerseStr: string = '0';
 
-  constructor(private readonly i18n: I18nService, private readonly projectService: SFProjectService) {
+  constructor(readonly i18n: I18nService, private readonly projectService: SFProjectService) {
     super();
   }
 
