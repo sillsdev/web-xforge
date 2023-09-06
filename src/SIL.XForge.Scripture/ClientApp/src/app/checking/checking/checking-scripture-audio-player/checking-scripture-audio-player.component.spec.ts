@@ -11,7 +11,7 @@ import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
-import { getAudioTimings, getAudioTimingWithHeadings } from '../../../shared/test-utils';
+import { getAudioTimings, getAudioTimingWithHeadings } from '../../checking-test.utils';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
 
 const audioFile = 'test-audio-player.webm';
@@ -30,7 +30,7 @@ describe('ScriptureAudioComponent', () => {
     env.playButton.nativeElement.click();
     await env.waitForPlayer();
     env.fixture.detectChanges();
-    expect(env.verseLabel).toEqual('Genesis 1:1');
+    expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
     expect(env.isPlaying).toBe(true);
 
     env.playButton.nativeElement.click();
@@ -50,13 +50,13 @@ describe('ScriptureAudioComponent', () => {
     await env.waitForPlayer();
     env.nextRefButton.nativeElement.click();
     await env.waitForPlayer();
-    expect(env.component.audioPlayer.verseLabel).toEqual('Genesis 1:2');
+    expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
     env.previousRefButton.nativeElement.click();
     await env.waitForPlayer();
-    expect(env.component.audioPlayer.verseLabel).toEqual('Genesis 1:1');
+    expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
     env.previousRefButton.nativeElement.click();
     await env.waitForPlayer();
-    expect(env.component.audioPlayer.verseLabel).toEqual('Genesis 1:1');
+    expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
   });
 
   it('can skip forward and back through section headings', async () => {
@@ -71,19 +71,19 @@ describe('ScriptureAudioComponent', () => {
     env.nextRefButton.nativeElement.click();
     await env.waitForPlayer();
     // section heading before verse 2
-    expect(env.component.audioPlayer.verseLabel).toEqual('Genesis 1:1');
+    expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
     env.nextRefButton.nativeElement.click();
     await env.waitForPlayer();
     // verse 2
-    expect(env.component.audioPlayer.verseLabel).toEqual('Genesis 1:2');
+    expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
     env.previousRefButton.nativeElement.click();
     await env.waitForPlayer();
     // move back to the section heading before verse 2
-    expect(env.component.audioPlayer.verseLabel).toEqual('Genesis 1:1');
+    expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
     env.previousRefButton.nativeElement.click();
     await env.waitForPlayer();
     // verse 1
-    expect(env.component.audioPlayer.verseLabel).toEqual('Genesis 1:1');
+    expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
   });
 
   it('emits verse changed event', async () => {
@@ -131,15 +131,14 @@ describe('ScriptureAudioComponent', () => {
     env.fixture.detectChanges();
     await env.waitForPlayer(500);
 
+    const pauseSpy = spyOn(env.component.audioPlayer, 'pause').and.callThrough();
     let count = 0;
     env.component.audioPlayer.closed.subscribe(() => count++);
-
-    const audio = spy(env.component.audioPlayer);
-    verify(audio?.pause()).never();
+    expect(pauseSpy).not.toHaveBeenCalled();
 
     env.component.audioPlayer.close();
-
-    verify(audio?.pause()).once();
+    await env.waitForPlayer();
+    expect(pauseSpy).toHaveBeenCalled();
     expect(count).toEqual(1);
   });
 });

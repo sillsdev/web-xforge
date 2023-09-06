@@ -22,7 +22,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   @Output() closed: EventEmitter<void> = new EventEmitter<void>();
   @ViewChild('audioPlayer') audioPlayer?: AudioPlayerComponent;
 
-  @Input() set textDocId(value: TextDocId) {
+  @Input() set textDocId(value: TextDocId | undefined) {
     this._textDocId = value;
     // set the verse label
     this.verseLabel = this.currentVerseLabel;
@@ -47,7 +47,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
 
   private get currentVerseLabel(): string {
     if (this._textDocId == null) return '';
-    const currentTime: number = this.audioPlayer?.audio?.currentTime || 0;
+    const currentTime: number = this.audioPlayer?.audio?.currentTime ?? 0;
     const currentVerseStr: string = this.getCurrentVerseStr(currentTime);
     const verseRef = new VerseRef(
       Canon.bookNumberToId(this._textDocId.bookNum),
