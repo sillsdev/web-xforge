@@ -7,6 +7,10 @@
 // https://m3.material.io/components/navigation-drawer/guidelines#56b3fea0-ecc6-4ff0-bb0a-80ff48c74a58
 $questionsPanelBreakpoint: 600px;
 
+@mixin snapBack($direction) {
+  transition: $direction 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55); // Snap back effect
+}
+
 .panel-content {
   display: flex;
   position: relative;
@@ -74,7 +78,6 @@ $questionsPanelBreakpoint: 600px;
 
   // Override 'sm' breakpoint for this element (also adjusts BreakPointObserver 'SM' for this element)
   @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
-    display: flex;
     position: absolute;
     top: 0;
     left: -100%;
@@ -83,13 +86,28 @@ $questionsPanelBreakpoint: 600px;
     margin: 0;
     z-index: 7;
     background: #fff;
-    transition: left 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55); // Snap back effect
+    @include snapBack(left);
 
     &.overlay-visible {
       left: 0;
 
       .questions-overlay-close {
         display: block;
+      }
+    }
+  }
+}
+
+// Handle questions overlay in rtl environments
+:host-context([dir='rtl']) {
+  #questions-panel {
+    @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
+      left: unset;
+      right: -100%;
+      @include snapBack(right);
+
+      &.overlay-visible {
+        right: 0;
       }
     }
   }
