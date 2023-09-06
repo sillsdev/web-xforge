@@ -152,52 +152,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     this.cancelBuild();
   }
 
-  private startBuild(): void {
-    this.jobSubscription?.unsubscribe();
-    this.jobSubscription = this.subscribe(
-      this.draftGenerationService.startBuildOrGetActiveBuild(this.activatedProject.projectId!).pipe(
-        tap((job?: BuildDto) => {
-          // Handle automatic closing of dialog if job finishes while cancel dialog is open
-          if (!this.canCancel(job)) {
-            if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
-              this.cancelDialogRef.close();
-            }
-          }
-        })
-      ),
-      (job?: BuildDto) => (this.draftJob = job)
-    );
-  }
-
-  private pollBuild(): void {
-    this.jobSubscription?.unsubscribe();
-    this.jobSubscription = this.subscribe(
-      this.activatedProject.projectId$.pipe(
-        filterNullish(),
-        switchMap(projectId =>
-          this.draftGenerationService
-            .getBuildProgress(projectId)
-            .pipe(
-              switchMap((job?: BuildDto) =>
-                this.isDraftInProgress(job) ? this.draftGenerationService.pollBuildProgress(projectId) : of(job)
-              )
-            )
-        )
-      ),
-      (job?: BuildDto) => {
-        this.draftJob = job;
-        this.isDraftJobFetched = true;
-      }
-    );
-  }
-
-  private cancelBuild(): void {
-    this.draftGenerationService.cancelBuild(this.activatedProject.projectId!).subscribe(() => {
-      // If build is canceled, update job immediately instead of waiting for next poll cycle
-      this.pollBuild();
-    });
-  }
-
   getTargetLanguageDisplayName(): string | undefined {
     return this.i18n.getLanguageDisplayName(this.targetLanguage);
   }
@@ -248,6 +202,52 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   canCancel(job?: BuildDto): boolean {
-    return !job || this.isDraftInProgress(job);
+    return job == null || this.isDraftInProgress(job);
+  }
+
+  private startBuild(): void {
+    this.jobSubscription?.unsubscribe();
+    this.jobSubscription = this.subscribe(
+      this.draftGenerationService.startBuildOrGetActiveBuild(this.activatedProject.projectId!).pipe(
+        tap((job?: BuildDto) => {
+          // Handle automatic closing of dialog if job finishes while cancel dialog is open
+          if (!this.canCancel(job)) {
+            if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
+              this.cancelDialogRef.close();
+            }
+          }
+        })
+      ),
+      (job?: BuildDto) => (this.draftJob = job)
+    );
+  }
+
+  private pollBuild(): void {
+    this.jobSubscription?.unsubscribe();
+    this.jobSubscription = this.subscribe(
+      this.activatedProject.projectId$.pipe(
+        filterNullish(),
+        switchMap(projectId =>
+          this.draftGenerationService
+            .getBuildProgress(projectId)
+            .pipe(
+              switchMap((job?: BuildDto) =>
+                this.isDraftInProgress(job) ? this.draftGenerationService.pollBuildProgress(projectId) : of(job)
+              )
+            )
+        )
+      ),
+      (job?: BuildDto) => {
+        this.draftJob = job;
+        this.isDraftJobFetched = true;
+      }
+    );
+  }
+
+  private cancelBuild(): void {
+    this.draftGenerationService.cancelBuild(this.activatedProject.projectId!).subscribe(() => {
+      // If build is canceled, update job immediately instead of waiting for next poll cycle
+      this.pollBuild();
+    });
   }
 }
