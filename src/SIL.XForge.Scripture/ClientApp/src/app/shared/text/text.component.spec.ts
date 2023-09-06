@@ -6,7 +6,7 @@ import { TranslocoService } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import QuillCursors from 'quill-cursors';
-import { User } from 'realtime-server/common/models/user';
+import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
