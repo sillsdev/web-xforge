@@ -16,9 +16,13 @@ import { AudioHeadingRef, AudioTextRef, CheckingUtils } from '../../checking.uti
   styleUrls: ['./checking-scripture-audio-player.component.scss']
 })
 export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposable implements AfterViewInit {
+  @Input() canClose: boolean = true;
   @Output() currentVerseChanged = new EventEmitter<string>();
   @Output() closed: EventEmitter<void> = new EventEmitter<void>();
   @ViewChild('audioPlayer') audioPlayer?: AudioPlayerComponent;
+  /** Having some text in the verse label (rather than empty string or a space) helps containing components predict the
+   * likely height. */
+  private readonly emptyVerseLabel: string = ':';
 
   @Input() set textDocId(value: TextDocId | undefined) {
     this._textDocId = value;
@@ -35,7 +39,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     this.doAudioSubscriptions();
   }
 
-  verseLabel: string = '';
+  verseLabel: string = this.emptyVerseLabel;
   audioSource?: string;
 
   private _timing: AudioTiming[] = [];
@@ -57,7 +61,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   }
 
   private get currentVerseLabel(): string {
-    if (this._textDocId == null) return '';
+    if (this._textDocId == null) return this.emptyVerseLabel;
     const currentTime: number = this.audioPlayer?.audio?.currentTime ?? 0;
     const currentVerseStr: string = this.getCurrentVerseStr(currentTime);
     const verseRef = new VerseRef(
@@ -182,7 +186,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   private subscribeToAudioFinished(audio: AudioPlayer): void {
     this.finishedSubscription?.unsubscribe();
     this.finishedSubscription = this.subscribe(audio.finishedPlaying$.pipe(first()), () => {
-      this.close();
+      if (this.canClose) this.close();
     });
   }
 
