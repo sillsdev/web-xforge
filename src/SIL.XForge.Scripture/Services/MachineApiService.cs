@@ -453,9 +453,22 @@ public class MachineApiService : IMachineApiService
         // If there is a pre-translation queued, return a build dto with a status showing it is queued
         if (
             (await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret)
-            && projectSecret.ServalData?.PreTranslationQueuedAt is not null
+            && (
+                projectSecret.ServalData?.PreTranslationQueuedAt is not null
+                || !string.IsNullOrWhiteSpace(projectSecret.ServalData?.PreTranslationErrorMessage)
+            )
         )
         {
+            // If we have an error message, report that to the user
+            if (!string.IsNullOrWhiteSpace(projectSecret.ServalData?.PreTranslationErrorMessage))
+            {
+                return new BuildDto
+                {
+                    State = BuildStateFaulted,
+                    Message = projectSecret.ServalData.PreTranslationErrorMessage,
+                };
+            }
+
             // If the build was queued 6 hours or more ago, it will have failed to upload
             if (projectSecret.ServalData?.PreTranslationQueuedAt <= DateTime.UtcNow.AddHours(-6))
             {
@@ -467,7 +480,7 @@ public class MachineApiService : IMachineApiService
             }
 
             // The build is queued and uploading is occurring in the background
-            return new BuildDto { State = BuildStateQueued, Message = "The build is being uploaded to the server.", };
+            return new BuildDto { State = BuildStateQueued, Message = "The build is being uploaded to the server." };
         }
 
         return null;
@@ -611,8 +624,8 @@ public class MachineApiService : IMachineApiService
         }
 
         // This will take a while, so we run it in the background
-        string jobId = _backgroundJobClient.Enqueue<MachineProjectService>(
-            r => r.BuildProjectAsync(curUserId, sfProjectId, true, CancellationToken.None)
+        string jobId = _backgroundJobClient.Enqueue<IMachineProjectService>(
+            r => r.BuildProjectForBackgroundJobAsync(curUserId, sfProjectId, true, CancellationToken.None)
         );
 
         // Set the pre-translation queued date and time, and hang fire job id
@@ -622,6 +635,7 @@ public class MachineApiService : IMachineApiService
             {
                 u.Set(p => p.ServalData.PreTranslationJobId, jobId);
                 u.Set(p => p.ServalData.PreTranslationQueuedAt, DateTime.UtcNow);
+                u.Unset(p => p.ServalData.PreTranslationErrorMessage);
             }
         );
     }
