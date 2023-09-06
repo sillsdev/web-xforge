@@ -4,12 +4,12 @@ import { isEmpty } from 'lodash-es';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { Observable, of, Subscription } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
-import { BuildDto } from 'src/app/machine-api/build-dto';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates } from './draft-generation';
@@ -152,7 +152,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     this.cancelBuild();
   }
 
-  startBuild(): void {
+  private startBuild(): void {
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.subscribe(
       this.draftGenerationService.startBuildOrGetActiveBuild(this.activatedProject.projectId!).pipe(
@@ -169,7 +169,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     );
   }
 
-  pollBuild(): void {
+  private pollBuild(): void {
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.subscribe(
       this.activatedProject.projectId$.pipe(
@@ -191,7 +191,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     );
   }
 
-  cancelBuild(): void {
+  private cancelBuild(): void {
     this.draftGenerationService.cancelBuild(this.activatedProject.projectId!).subscribe(() => {
       // If build is canceled, update job immediately instead of waiting for next poll cycle
       this.pollBuild();
@@ -248,7 +248,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   canCancel(job?: BuildDto): boolean {
-    // Cannot cancel 'Queued' build, as it is not yet uploaded to the server (cancel will result in 404)
-    return !job || [BuildStates.Active, BuildStates.Pending].includes(job?.state as BuildStates);
+    return !job || this.isDraftInProgress(job);
   }
 }

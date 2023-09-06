@@ -235,7 +235,7 @@ describe('DraftGenerationComponent', () => {
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
     });
 
-    it('should attempt "cancel dialog" close for queued build', () => {
+    it('should not attempt "cancel dialog" close for queued build', () => {
       let env = new TestEnvironment(() => {
         mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(
           of({ ...buildDto, state: BuildStates.Queued })
@@ -243,11 +243,11 @@ describe('DraftGenerationComponent', () => {
       });
 
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
-      when(mockDialogRef.getState()).thenReturn(MatDialogState.OPEN);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.generateDraft();
-      verify(mockDialogRef.close()).once();
+      verify(mockDialogRef.getState()).never();
+      verify(mockDialogRef.close()).never();
     });
 
     it('should not attempt "cancel dialog" close for pending build', () => {
