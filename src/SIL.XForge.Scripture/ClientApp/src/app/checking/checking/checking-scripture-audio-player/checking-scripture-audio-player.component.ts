@@ -132,7 +132,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
 
   private subscribePlayerVerseChange(audio: AudioPlayer): void {
     this.subscribe(
-      audio.playing$.pipe(
+      audio.timeUpdated$.pipe(
         map(() => this.currentRef),
         distinctUntilChanged()
       ),
