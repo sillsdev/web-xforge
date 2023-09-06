@@ -42,16 +42,16 @@ describe('AudioPlayerBaseComponent', () => {
     env.component.baseComponent.fireStatusChange(AudioStatus.Available);
 
     expect(spy.calls.allArgs()).toEqual([[false], [true]]);
-    expect(env.component.baseComponent.isAudioInitComplete).toBe(true);
+    expect(env.component.baseComponent.hasProblem).toBe(false);
   }));
 
   it('sets isAudioInitComplete when status changes from Init', fakeAsync(() => {
     env.component.baseComponent.setAudio(new AudioPlayerStub(audioFile, instance(env.mockOnlineStatusService)));
-    expect(env.component.baseComponent.isAudioInitComplete).toBe(false);
+    expect(env.component.baseComponent.hasProblem).toBe(false);
 
     env.component.baseComponent.fireStatusChange(AudioStatus.Unavailable);
 
-    expect(env.component.baseComponent.isAudioInitComplete).toBe(true);
+    expect(env.component.baseComponent.hasProblem).toBe(true);
   }));
 
   it('resets seek when audio becomes available', fakeAsync(() => {
