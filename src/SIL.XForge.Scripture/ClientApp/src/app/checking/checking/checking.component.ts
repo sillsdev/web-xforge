@@ -1,6 +1,6 @@
 import { MdcList } from '@angular-mdc/web/list';
 import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
-import { AfterViewChecked, Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -74,7 +74,7 @@ export enum QuestionFilter {
   templateUrl: './checking.component.html',
   styleUrls: ['./checking.component.scss']
 })
-export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class CheckingComponent extends DataLoadingComponent implements OnInit, OnDestroy {
   @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {
     // Need to trigger the calculation for the slider after DOM has been updated
     this.answersPanelContainerElement = answersPanelContainerElement;
@@ -84,11 +84,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   @ViewChild(CheckingAnswersComponent) answersPanel?: CheckingAnswersComponent;
   @ViewChild(CheckingTextComponent) scripturePanel?: CheckingTextComponent;
   @ViewChild(CheckingQuestionsComponent) questionsPanel?: CheckingQuestionsComponent;
-  @ViewChild(CheckingScriptureAudioPlayerComponent) chapterAudio?: CheckingScriptureAudioPlayerComponent;
   @ViewChild(SplitComponent) splitComponent?: SplitComponent;
   @ViewChild('splitContainer') splitContainerElement?: ElementRef;
   @ViewChild('scripturePanelContainer') scripturePanelContainerElement?: ElementRef;
-  @ViewChild(CheckingScriptureAudioPlayerComponent) scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
+  @ViewChild(CheckingScriptureAudioPlayerComponent) set scriptureAudioPlayer(
+    newValue: CheckingScriptureAudioPlayerComponent
+  ) {
+    this._scriptureAudioPlayer = newValue;
+    if (newValue !== undefined) {
+      Promise.resolve(null).then(() => this._scriptureAudioPlayer?.play());
+    }
+  }
   @ViewChild('chapterMenuList') chapterMenuList?: MdcList;
 
   chapters: number[] = [];
@@ -137,7 +143,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private questionsRemoteChangesSub?: Subscription;
   private text?: TextInfo;
   private isProjectAdmin: boolean = false;
-  private currentChapterAudio?: object;
+  private _scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -182,7 +188,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.projectDoc != null && this.text != null && this.chapter != null
           ? new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target')
           : undefined;
-      this.scriptureAudioPlayer?.pause();
+      this._scriptureAudioPlayer?.pause();
     }
   }
 
@@ -1183,13 +1189,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     }
   }
 
-  ngAfterViewChecked(): void {
-    if (this.currentChapterAudio !== this.chapterAudio) {
-      if (this.chapterAudio !== undefined) {
-        this.chapterAudio.play();
-      }
-      this.currentChapterAudio = this.chapterAudio;
-    }
+  isAudioPlaying(): boolean {
+    return this._scriptureAudioPlayer?.isPlaying ?? false;
   }
 
   hideChapterAudio(): void {
@@ -1198,6 +1199,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
 
   toggleAudio(): void {
     this.showScriptureAudioPlayer = true;
-    this.chapterAudio?.isPlaying ? this.chapterAudio?.pause() : this.chapterAudio?.play();
+    this._scriptureAudioPlayer?.isPlaying ? this._scriptureAudioPlayer?.pause() : this._scriptureAudioPlayer?.play();
   }
 }
