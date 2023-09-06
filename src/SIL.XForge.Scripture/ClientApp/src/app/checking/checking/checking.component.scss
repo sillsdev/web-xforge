@@ -7,10 +7,6 @@
 // https://m3.material.io/components/navigation-drawer/guidelines#56b3fea0-ecc6-4ff0-bb0a-80ff48c74a58
 $questionsPanelBreakpoint: 600px;
 
-@mixin snapBack($direction) {
-  transition: $direction 0.35s cubic-bezier(0.68, -0.55, 0.265, 1.55); // Snap back effect
-}
-
 .panel-content {
   display: flex;
   position: relative;
@@ -86,10 +82,10 @@ $questionsPanelBreakpoint: 600px;
     margin: 0;
     z-index: 7;
     background: #fff;
-    @include snapBack(left);
+    transition: transform 0.4s cubic-bezier(0.68, -0.6, 0.265, 1.6); // Snap back effect
 
     &.overlay-visible {
-      left: 0;
+      transform: translateX(100%);
 
       .questions-overlay-close {
         display: block;
@@ -102,12 +98,10 @@ $questionsPanelBreakpoint: 600px;
 :host-context([dir='rtl']) {
   #questions-panel {
     @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
-      left: unset;
-      right: -100%;
-      @include snapBack(right);
+      left: 100%;
 
       &.overlay-visible {
-        right: 0;
+        transform: translateX(-100%);
       }
     }
   }
