@@ -1,28 +1,26 @@
 @import 'src/variables';
 
-.question-wrapper {
-  display: flex;
-  flex-direction: column;
-}
-
 :host {
-  display: flex;
-  flex-direction: row;
-  column-gap: 8px;
   padding-inline: 12px;
 }
 
 .scripture-audio,
 .question-text {
-  font-size: small;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 8px;
   color: $greyLight;
+  min-height: 30px;
   p {
     margin: 0px;
     transition: color 0.3s;
-    display: inline-block;
-    min-height: 18px;
-    vertical-align: sub;
   }
+}
+
+#scriptureAudio,
+#questionAudio {
+  align-self: start;
 }
 
 #scriptureAudio.question-audio-label,
@@ -30,31 +28,22 @@
   display: none;
 }
 
-#scriptureAudio {
-  align-self: start;
+.spacer {
+  min-width: 30px; //width of the audio player button
 }
 
-#questionAudio {
-  align-self: end;
-}
-
-.scripture-audio > .scripture-audio-label,
-.question-text > .question-audio-label {
+.scripture-audio.scripture-audio-label,
+.question-text.question-audio-label {
   font-weight: bold;
-  font-size: large;
   color: black;
+  span {
+    display: none;
+  }
 }
 
-.clickable {
-  cursor: pointer;
-}
-
-.question-wrapper {
-  mat-icon {
-    font-size: large;
-    vertical-align: bottom;
-    height: unset;
-    width: unset;
+.scripture-audio.question-audio-label,
+.question-text.scripture-audio-label {
+  p {
     cursor: pointer;
   }
 }
