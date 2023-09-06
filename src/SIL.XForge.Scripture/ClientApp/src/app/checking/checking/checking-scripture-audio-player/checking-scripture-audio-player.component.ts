@@ -18,9 +18,13 @@ import { AudioTextRef, AudioHeadingRef, CheckingUtils } from '../../checking.uti
 export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposable {
   @Input() source?: string;
   @Input() canDelete: boolean = false;
+  @Input() canClose: boolean = true;
   @Output() currentVerseChanged = new EventEmitter<string>();
   @Output() closed: EventEmitter<void> = new EventEmitter<void>();
   @ViewChild('audioPlayer') audioPlayer?: AudioPlayerComponent;
+  /** Having some text in the verse label (rather than empty string or a space) helps containing components predict the
+   * likely height. */
+  private readonly emptyVerseLabel: string = ':';
 
   @Input() set textDocId(value: TextDocId | undefined) {
     this._textDocId = value;
@@ -32,7 +36,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     this._timing = Object.values(value).sort((a, b) => a.from - b.from);
   }
 
-  verseLabel: string = '';
+  verseLabel: string = this.emptyVerseLabel;
 
   private _timing: AudioTiming[] = [];
   private _textDocId?: TextDocId;
@@ -46,7 +50,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   }
 
   private get currentVerseLabel(): string {
-    if (this._textDocId == null) return '';
+    if (this._textDocId == null) return this.emptyVerseLabel;
     const currentTime: number = this.audioPlayer?.audio?.currentTime ?? 0;
     const currentVerseStr: string = this.getCurrentVerseStr(currentTime);
     const verseRef = new VerseRef(
