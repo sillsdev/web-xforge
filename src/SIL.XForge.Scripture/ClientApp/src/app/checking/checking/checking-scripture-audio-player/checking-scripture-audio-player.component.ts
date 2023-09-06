@@ -17,12 +17,24 @@ import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-p
 })
 export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposable {
   @Input() source?: string;
-  @Input() textDocId?: TextDocId;
   @Input() canDelete: boolean = false;
   @Output() currentVerseChanged = new EventEmitter<string>();
   @ViewChild('audioPlayer') audioPlayer?: AudioPlayerComponent;
 
+  @Input() set textDocId(value: TextDocId) {
+    this._textDocId = value;
+    // set the verse label
+    this.verseLabel = this.currentVerseLabel;
+  }
+
+  @Input() set timing(value: AudioTiming[]) {
+    this._timing = value.sort((a, b) => a.from - b.from);
+  }
+
+  verseLabel: string = '';
+
   private _timing: AudioTiming[] = [];
+  private _textDocId?: TextDocId;
 
   constructor(private readonly i18n: I18nService, private readonly projectService: SFProjectService) {
     super();
@@ -32,16 +44,13 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     return !!this.audioPlayer?.audio?.isPlaying;
   }
 
-  @Input() set timing(value: AudioTiming[]) {
-    this._timing = value.sort((a, b) => a.from - b.from);
-  }
-
-  get currentVerseLabel(): string {
-    if (this.textDocId == null || this.audioPlayer?.audio?.currentTime == null) return '';
-    const currentVerseStr: string = this.getCurrentVerseStr(this.audioPlayer.audio.currentTime);
+  private get currentVerseLabel(): string {
+    if (this._textDocId == null) return '';
+    const currentTime: number = this.audioPlayer?.audio?.currentTime || 0;
+    const currentVerseStr: string = this.getCurrentVerseStr(currentTime);
     const verseRef = new VerseRef(
-      Canon.bookNumberToId(this.textDocId.bookNum),
-      this.textDocId.chapterNum.toString(),
+      Canon.bookNumberToId(this._textDocId.bookNum),
+      this._textDocId.chapterNum.toString(),
       currentVerseStr
     );
     return this.i18n.localizeReference(verseRef);
@@ -66,6 +75,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
       return;
     }
     this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex - 1].from;
+    this.verseLabel = this.currentVerseLabel;
   }
 
   nextRef(): void {
@@ -78,18 +88,19 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
       return;
     }
     this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex].to;
+    this.verseLabel = this.currentVerseLabel;
   }
 
   deleteAudioTimingData(): void {
-    if (this.textDocId?.projectId == null || this.textDocId?.bookNum == null || this.textDocId?.chapterNum == null) {
+    if (this._textDocId?.projectId == null || this._textDocId.bookNum == null || this._textDocId.chapterNum == null) {
       return;
     }
     this.audioPlayer?.audio?.pause();
     this.audioPlayer?.audio?.dispose();
     this.projectService.onlineDeleteAudioTimingData(
-      this.textDocId.projectId,
-      this.textDocId.bookNum,
-      this.textDocId.chapterNum
+      this._textDocId.projectId,
+      this._textDocId.bookNum,
+      this._textDocId.chapterNum
     );
   }
 
@@ -104,8 +115,8 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
         distinctUntilChanged()
       ),
       () => {
-        if (this.textDocId == null || this.audioPlayer?.audio == null) return;
-
+        if (this._textDocId == null || this.audioPlayer?.audio == null) return;
+        this.verseLabel = this.currentVerseLabel;
         const audioTextRef: AudioTextRef | undefined = CheckingUtils.parseAudioRef(
           this._timing,
           this.audioPlayer.audio.currentTime
@@ -121,7 +132,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
           this.currentVerseChanged.emit(segmentRef);
           return;
         }
-        const segmentRef: string = `verse_${this.textDocId.chapterNum}_${audioTextRef.verseStr}`;
+        const segmentRef: string = `verse_${this._textDocId.chapterNum}_${audioTextRef.verseStr}`;
         this.currentVerseChanged.emit(segmentRef);
       }
     );
@@ -133,6 +144,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
       const audioRef: AudioTextRef | undefined = CheckingUtils.parseAudioRef(this._timing, this._timing[i].from);
       if (audioRef != null) return audioRef.verseStr;
     }
+    // default to verse 0 if no verse is found
     return '0';
   }
 }

@@ -14,9 +14,10 @@ describe('CheckingUtils', () => {
     expect(CheckingUtils.parseAudioRef(env.audioTimingBasic, 2.9)).toEqual({ verseStr: '3-4' });
   });
 
-  it('can parse audio description ref', () => {
+  it('can parse audio heading ref', () => {
+    expect(CheckingUtils.parseAudioHeadingRef(env.audioTimingHearThis, 0.0)).toBeUndefined();
     // audio timing files should only ever have 1 chapter
-    expect(CheckingUtils.parseAudioHeadingRef(env.audioTimingHearThis, 0.0)).toEqual({
+    expect(CheckingUtils.parseAudioHeadingRef(env.audioTimingHearThis, 0.1)).toEqual({
       label: 'c',
       iteration: 1
     });
@@ -34,7 +35,7 @@ describe('CheckingUtils', () => {
     });
   });
 
-  it('can parse audio description ref no iteration values', () => {
+  it('can parse audio heading ref no iteration values', () => {
     expect(CheckingUtils.parseAudioHeadingRef(env.audioTimingHeadings, 0.75)).toEqual({
       label: 's',
       iteration: 1
@@ -50,7 +51,7 @@ class TestEnvironment {
   audioTimingBasic: AudioTiming[] = getAudioTimings();
   audioTimingHeadings: AudioTiming[] = getAudioTimingWithHeadings();
   audioTimingHearThis: AudioTiming[] = [
-    { textRef: 'c', from: 0.0, to: 0.5 },
+    { textRef: 'c', from: 0.1, to: 0.5 },
     { textRef: 'ms1', from: 0.5, to: 1.0 },
     { textRef: 's1', from: 1.0, to: 1.5 },
     { textRef: '1', from: 1.5, to: 2.0 },
