@@ -97,6 +97,7 @@ export class CheckingUtils {
    */
   static parseAudioHeadingRef(timingData: AudioTiming[], currentTime: number): AudioHeadingRef | undefined {
     const indexInTimings: number = timingData.filter(t => t.from <= currentTime).length - 1;
+    if (indexInTimings < 0) return;
     const currentAudioTiming: AudioTiming | undefined = timingData[indexInTimings];
     const match: RegExpExecArray | null = AUDIO_HEADING_REF_REGEX.exec(currentAudioTiming.textRef);
     if (match == null) return;
