@@ -93,6 +93,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   ) {
     this._scriptureAudioPlayer = newValue;
     if (newValue !== undefined) {
+      // If we are automatically showing the Scripture audio player because hide-text is enabled, don't auto-play.
+      if (this.hideChapterText) return;
       Promise.resolve(null).then(() => this._scriptureAudioPlayer?.play());
     }
   }
@@ -418,6 +420,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     return this.splitContainerElement && this.splitComponent
       ? this.splitContainerElement.nativeElement.offsetHeight - this.splitComponent.gutterSize!
       : 0;
+  }
+
+  private get scriptureAudioPlayerAreaHeight(): number {
+    const scriptureAudioPlayerArea: Element | null = document.querySelector('.scripture-audio-player-wrapper');
+    return scriptureAudioPlayerArea == null ? 0 : scriptureAudioPlayerArea.getBoundingClientRect().height;
+  }
+
+  /** Percentage of the vertical space of the as-splitter, needed by just the Scripture audio player. */
+  private get scriptureAudioPlayerHeightPercent(): number {
+    return (this.scriptureAudioPlayerAreaHeight / this.splitContainerElementHeight) * 100;
   }
 
   ngOnInit(): void {
@@ -849,6 +861,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       currentChapter: this._chapter
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
+    this.calculateScriptureSliderPosition();
   }
 
   handleAudioTextRefChanged(ref: string): void {
@@ -1091,25 +1104,32 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this._activeQuestionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
   }
 
+  /** Adjust the position of the splitter between Scripture text and answers. */
   private calculateScriptureSliderPosition(maximizeAnswerPanel: boolean = false): void {
-    const waitMs: number = 100;
-    // Wait while Angular updates visible DOM elements before we can calculate the height correctly
-    setTimeout(() => {
+    // Wait while Angular updates visible DOM elements before we can calculate the height correctly.
+    // 100 ms is a speculative value for waiting for elements to be loaded and updated in the DOM.
+    const changeUpdateDelayMs: number = 100;
+    setTimeout(async () => {
       if (this.splitComponent == null) {
         return;
       }
-
-      let answerPanelHeight: number;
-      if (maximizeAnswerPanel) {
-        answerPanelHeight = this.fullyExpandedAnswerPanelPercent;
+      if (this.hideChapterText) {
+        const answerPanelHeight = 100 - this.scriptureAudioPlayerHeightPercent;
+        this.splitComponent?.setVisibleAreaSizes([this.scriptureAudioPlayerHeightPercent, answerPanelHeight]);
       } else {
-        answerPanelHeight = this.minAnswerPanelPercent;
-      }
+        let answerPanelHeight: number;
+        if (maximizeAnswerPanel) {
+          answerPanelHeight = this.fullyExpandedAnswerPanelPercent;
+        } else {
+          answerPanelHeight = this.minAnswerPanelPercent;
+        }
 
-      answerPanelHeight = Math.min(75, answerPanelHeight);
-      const scripturePanelHeight = 100 - answerPanelHeight;
-      this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
-    }, waitMs);
+        answerPanelHeight = Math.min(75, answerPanelHeight);
+        const scripturePanelHeight = 100 - answerPanelHeight;
+
+        this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
+      }
+    }, changeUpdateDelayMs);
   }
 
   // Unbind this component from the data when a user is removed from the project, otherwise console
@@ -1204,8 +1224,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   private showOrHideScriptureText(): void {
-    this.hideChapterText = this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText ?? false;
+    const oldValue = this.hideChapterText;
+    const newVal = this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText ?? false;
+    this.hideChapterText = newVal;
     if (this.hideChapterText) this.showScriptureAudioPlayer = true;
+    // (Don't needlessly have setTimeout get called if the value hasn't changed.)
+    if (oldValue !== newVal) {
+      this.calculateScriptureSliderPosition();
+    }
   }
 
   hideChapterAudio(): void {
