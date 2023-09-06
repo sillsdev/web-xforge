@@ -17,7 +17,7 @@ import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/te
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subscription, merge, of } from 'rxjs';
-import { filter, map, take } from 'rxjs/operators';
+import { delay, filter, map, take } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -182,6 +182,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
           ? new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target')
           : undefined;
       this.scriptureAudioPlayer?.pause();
+      // The Scripture audio player can be different heights depending on whether audio is missing for
+      // the chapter. So adjust its height.
+      if (this.hideChapterText) this.calculateScriptureSliderPosition();
     }
   }
 
@@ -407,6 +410,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     return this.splitContainerElement && this.splitComponent
       ? this.splitContainerElement.nativeElement.offsetHeight - this.splitComponent.gutterSize!
       : 0;
+  }
+
+  private get scriptureAudioPlayerAreaHeight(): number {
+    const scriptureAudioPlayerArea: Element | null = document.querySelector('.scripture-audio-player-wrapper');
+    return scriptureAudioPlayerArea == null ? 0 : scriptureAudioPlayerArea.getBoundingClientRect().height;
+  }
+
+  /** Percentage of the vertical space of the as-splitter, needed by just the Scripture audio player. */
+  private get scriptureAudioPlayerHeightPercent(): number {
+    return Math.ceil((this.scriptureAudioPlayerAreaHeight / this.splitContainerElementHeight) * 100);
   }
 
   ngOnInit(): void {
@@ -834,6 +847,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       currentChapter: this.questionsPanel.activeQuestionChapter
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
+    this.calculateScriptureSliderPosition();
   }
 
   handleAudioTextRefChanged(ref: string): void {
@@ -1076,25 +1090,47 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
     this._activeQuestionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
   }
 
+  /** Adjust the position of the splitter between Scripture text and answers. */
   private calculateScriptureSliderPosition(maximizeAnswerPanel: boolean = false): void {
-    const waitMs: number = 100;
-    // Wait while Angular updates visible DOM elements before we can calculate the height correctly
-    setTimeout(() => {
+    // Wait while Angular updates visible DOM elements before we can calculate the height correctly.
+    // 100 ms is a speculative value for waiting for elements to be loaded and updated in the DOM.
+    const changeUpdateDelayMs: number = 100;
+    setTimeout(async () => {
       if (this.splitComponent == null) {
         return;
       }
 
-      let answerPanelHeight: number;
-      if (maximizeAnswerPanel) {
-        answerPanelHeight = this.fullyExpandedAnswerPanelPercent;
+      if (this.hideChapterText) {
+        // Wait for the audio player to finish trying to load the audio and show the audio slider. Once it loads or
+        // gives up, then calculate it's height.
+        // Greater than 100 ms seemed to be needed sometimes.
+        const audioPlayerChangeUpdateDelayMs: number = 150;
+        const audioInitCompleteSubscription: Subscription | undefined =
+          this.scriptureAudioPlayer?.audioPlayer?.isAudioInitComplete$
+            .pipe(
+              filter(complete => complete === true),
+              take(1),
+              delay(audioPlayerChangeUpdateDelayMs)
+            )
+            .subscribe(() => {
+              const answerPanelHeight = 100 - this.scriptureAudioPlayerHeightPercent;
+              this.splitComponent?.setVisibleAreaSizes([this.scriptureAudioPlayerHeightPercent, answerPanelHeight]);
+              audioInitCompleteSubscription?.unsubscribe();
+            });
       } else {
-        answerPanelHeight = this.minAnswerPanelPercent;
-      }
+        let answerPanelHeight: number;
+        if (maximizeAnswerPanel) {
+          answerPanelHeight = this.fullyExpandedAnswerPanelPercent;
+        } else {
+          answerPanelHeight = this.minAnswerPanelPercent;
+        }
 
-      answerPanelHeight = Math.min(75, answerPanelHeight);
-      const scripturePanelHeight = 100 - answerPanelHeight;
-      this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
-    }, waitMs);
+        answerPanelHeight = Math.min(75, answerPanelHeight);
+        const scripturePanelHeight = 100 - answerPanelHeight;
+
+        this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
+      }
+    }, changeUpdateDelayMs);
   }
 
   // Unbind this component from the data when a user is removed from the project, otherwise console
@@ -1187,5 +1223,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private showOrHideScriptureText(): void {
     this.hideChapterText = this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText ?? false;
     if (this.hideChapterText) this.showScriptureAudioPlayer = true;
+    this.calculateScriptureSliderPosition();
   }
 }

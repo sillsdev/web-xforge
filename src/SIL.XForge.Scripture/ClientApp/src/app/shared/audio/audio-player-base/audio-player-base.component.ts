@@ -9,7 +9,7 @@ import { AudioPlayer, AudioStatus } from '../audio-player';
 })
 export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable implements OnDestroy {
   readonly isAudioAvailable$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  private _isAudioInitComplete: boolean = false;
+  readonly isAudioInitComplete$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   private _audio: AudioPlayer | undefined;
 
   constructor(protected readonly pwaService: PwaService) {
@@ -32,11 +32,8 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
     return this.audio?.status$.value ?? (this.pwaService.isOnline ? AudioStatus.Unavailable : AudioStatus.Offline);
   }
 
-  get isAudioInitComplete(): boolean {
-    return this._isAudioInitComplete;
-  }
-
   @Input() set source(source: string | undefined) {
+    this.isAudioInitComplete$.next(false);
     this.isAudioAvailable$.next(false);
     this.audio?.dispose();
     if (source != null && source !== '') {
@@ -45,12 +42,23 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
         if (newVal === AudioStatus.Available) {
           this.isAudioAvailable$.next(true);
         }
-        if (newVal !== AudioStatus.Init) {
-          this._isAudioInitComplete = true;
+        if (newVal !== AudioStatus.Initializing) {
+          this.isAudioInitComplete$.next(true);
         }
       });
     } else {
       this._audio = undefined;
+      // We get here if the audio player was brought into the DOM before CheckingComponent was ready to specify the
+      //  source (like at the very beginning). The source will probably be specified in a moment, so wait before setting
+      //  audio init complete. If we just set it without waiting, and the source is then validly set, then we will flash
+      //  an "unavailable" message on screen before changing to show the timer slider.
+      // 200 ms is a speculative value.
+      const timeoutMs = 200;
+      setTimeout(() => {
+        // If we still haven't initialized after a timeout passes, then there may really be something wrong and we can
+        // show unavailability and possibly error messages.
+        this.isAudioInitComplete$.next(true);
+      }, timeoutMs);
     }
   }
 

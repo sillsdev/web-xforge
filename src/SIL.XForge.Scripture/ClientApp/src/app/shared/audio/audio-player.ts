@@ -6,7 +6,7 @@ import { PwaService } from 'xforge-common/pwa.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 
 export enum AudioStatus {
-  Init = 'audio_initialized',
+  Initializing = 'audio_initializing',
   Available = 'audio_available',
   Unavailable = 'audio_cannot_be_accessed',
   LocalNotAvailable = 'audio_cannot_be_previewed',
@@ -22,7 +22,7 @@ export class AudioPlayer extends SubscriptionDisposable {
   // See explanatory comment where this number is used
   protected static readonly ARBITRARILY_LARGE_NUMBER = 1e10;
 
-  readonly status$: BehaviorSubject<AudioStatus> = new BehaviorSubject<AudioStatus>(AudioStatus.Init);
+  readonly status$: BehaviorSubject<AudioStatus> = new BehaviorSubject<AudioStatus>(AudioStatus.Initializing);
   readonly finishedPlaying$: EventEmitter<void> = new EventEmitter<void>();
   readonly playing$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
 
@@ -95,11 +95,11 @@ export class AudioPlayer extends SubscriptionDisposable {
     // know the duration once metadata has loaded.
     this.audio.currentTime = AudioPlayer.ARBITRARILY_LARGE_NUMBER;
     this.audio.src = formatFileSource(FileType.Audio, source);
-    this.status$.next(AudioStatus.Init);
+    this.status$.next(AudioStatus.Initializing);
   }
 
   get hasErrorState(): boolean {
-    return !(this.status$.value === AudioStatus.Init || this.status$.value === AudioStatus.Available);
+    return !(this.status$.value === AudioStatus.Initializing || this.status$.value === AudioStatus.Available);
   }
 
   /**

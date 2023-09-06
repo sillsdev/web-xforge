@@ -12,7 +12,8 @@ import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
 })
 export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent implements OnChanges {
   private _source?: string;
-
+  // Expose enum to template.
+  readonly AudioStatus = AudioStatus;
   readonly hasFinishedPlayingOnce$: BehaviorSubject<boolean> = new BehaviorSubject(false);
 
   @Input() start?: number;
