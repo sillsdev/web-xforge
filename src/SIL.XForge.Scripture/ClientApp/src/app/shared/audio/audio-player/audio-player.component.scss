@@ -16,6 +16,9 @@
     ::ng-deep .mat-slider-thumb {
       background-color: #000;
     }
+    &[dir='rtl'] {
+      transform: rotateY(180deg);
+    }
   }
 }
 
