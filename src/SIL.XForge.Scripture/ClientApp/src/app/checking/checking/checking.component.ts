@@ -2,6 +2,7 @@ import { MdcList } from '@angular-mdc/web/list';
 import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { AfterViewInit, Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
@@ -85,7 +86,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   @ViewChild(CheckingAnswersComponent) answersPanel?: CheckingAnswersComponent;
   @ViewChild(CheckingTextComponent) scripturePanel?: CheckingTextComponent;
   @ViewChild(CheckingQuestionsComponent) questionsList?: CheckingQuestionsComponent;
-  @ViewChild(CheckingScriptureAudioPlayerComponent) chapterAudio?: CheckingScriptureAudioPlayerComponent;
   @ViewChild(SplitComponent) splitComponent?: SplitComponent;
   @ViewChild('splitContainer') splitContainerElement?: ElementRef;
   @ViewChild('scripturePanelContainer') scripturePanelContainerElement?: ElementRef;
@@ -192,7 +192,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         this.projectDoc != null && this.text != null && this.chapter != null
           ? new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target')
           : undefined;
-      
+
       this._scriptureAudioPlayer?.pause();
       if (!this.chapterHasAudio) {
         this.hideChapterAudio();

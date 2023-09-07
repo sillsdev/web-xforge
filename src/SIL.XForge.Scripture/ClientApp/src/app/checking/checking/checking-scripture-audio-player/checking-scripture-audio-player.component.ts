@@ -15,7 +15,7 @@ import { AudioTextRef, AudioHeadingRef, CheckingUtils } from '../../checking.uti
   templateUrl: './checking-scripture-audio-player.component.html',
   styleUrls: ['./checking-scripture-audio-player.component.scss']
 })
-export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposable implements AfterViewInit {
+export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposable {
   @Input() source?: string;
   @Input() canDelete: boolean = false;
   @Output() currentVerseChanged = new EventEmitter<string>();
@@ -39,10 +39,6 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
 
   constructor(readonly i18n: I18nService, private readonly projectService: SFProjectService) {
     super();
-  }
-
-  ngAfterViewInit(): void {
-    this.play();
   }
 
   get isPlaying(): boolean {
