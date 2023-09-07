@@ -1,5 +1,6 @@
 import { Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
+import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
@@ -10,11 +11,17 @@ import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-do
 
 /** Detects if a string is in a format that can be used to parse audio timing for a verse of Scripture. */
 const AUDIO_TEXT_REF_REGEX = /^v?([0-9]+-?[0-9]?)([a-z]?)_?([0-9]*)/i;
+const AUDIO_HEADING_REF_REGEX = /^([a-z]+)([0-9]*)$/i;
 
 export interface AudioTextRef {
-  verseStr?: string;
+  verseStr: string;
   phrase?: string;
   word?: string;
+}
+
+export interface AudioHeadingRef {
+  label: string;
+  iteration: number;
 }
 
 export interface CheckingAccessInfo {
@@ -58,11 +65,48 @@ export class CheckingUtils {
     }
   }
 
-  static parseAudioRef(segmentRef: string): AudioTextRef | undefined {
-    const match: RegExpExecArray | null = AUDIO_TEXT_REF_REGEX.exec(segmentRef);
-    if (match == null) {
-      return;
+  /**
+   * Finds the current audio text reference based on the current time.
+   * @returns The audio text reference with the verse string, phrase, and word if available.
+   * Undefined if the current text reference is for a heading.
+   */
+  static parseAudioRef(timingData: AudioTiming[], currentTime: number): AudioTextRef | undefined {
+    let indexInTimings: number = timingData.filter(t => t.from <= currentTime).length - 1;
+    for (indexInTimings; indexInTimings >= 0; indexInTimings--) {
+      // find the first non-empty textRef because phrase level timings can have entries with empty textRefs
+      if (timingData[indexInTimings].textRef !== '') {
+        break;
+      }
     }
-    return { verseStr: match[1], phrase: match[2], word: match[3] };
+
+    if (indexInTimings < 0) return;
+    let audioTimingMatch: RegExpExecArray | null = AUDIO_TEXT_REF_REGEX.exec(timingData[indexInTimings].textRef);
+
+    // return if the text ref is for a heading and not a verse
+    if (audioTimingMatch == null) return;
+    const audioTextRef: AudioTextRef = { verseStr: audioTimingMatch[1] };
+    if (audioTimingMatch[2] !== '') audioTextRef.phrase = audioTimingMatch[2];
+    if (audioTimingMatch[3] !== '') audioTextRef.word = audioTimingMatch[3];
+    return audioTextRef;
+  }
+
+  /**
+   * Finds the current audio heading reference based on the current time.
+   * @returns The audio heading reference with the label and iteration if available.
+   * Undefined if the current audio timing entry is not a heading.
+   */
+  static parseAudioHeadingRef(timingData: AudioTiming[], currentTime: number): AudioHeadingRef | undefined {
+    const indexInTimings: number = timingData.filter(t => t.from <= currentTime).length - 1;
+    if (indexInTimings < 0) return;
+    const currentAudioTiming: AudioTiming | undefined = timingData[indexInTimings];
+    const match: RegExpExecArray | null = AUDIO_HEADING_REF_REGEX.exec(currentAudioTiming.textRef);
+    if (match == null) return;
+    const ref: string = match[0];
+    const label: string = match[1];
+    let iterationStr: string = match[2];
+    if (iterationStr !== '') return { label, iteration: +iterationStr };
+
+    let iteration: number = timingData.filter(t => t.from <= currentTime && t.textRef === ref).length;
+    return { label: match[1], iteration };
   }
 }
