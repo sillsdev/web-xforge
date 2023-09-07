@@ -45,6 +45,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
   private _selectionHasAudioAlready: boolean = false;
   private _audioLength: number = 0;
   private _audioBlob?: string;
+  private _audioErrorText?: I18nKey;
   private _timingErrorText?: I18nKey;
   private _loadingAudio: boolean = false;
 
@@ -60,6 +61,10 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
     this.checkForPreexistingAudio();
   }
 
+  get audioErrorMessage(): string {
+    return this._audioErrorText ?? '';
+  }
+
   get audioFilename(): string {
     return this.audio?.fileName || '';
   }
@@ -70,12 +75,6 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
 
   get selectionHasAudioAlready(): boolean {
     return this._selectionHasAudioAlready;
-  }
-
-  private checkForPreexistingAudio(): void {
-    const text: TextInfo = this.data.textsByBookId[Canon.bookNumberToId(this.book)];
-    const textChapter: Chapter | undefined = text?.chapters.find(c => c.number === this.chapter);
-    this._selectionHasAudioAlready = textChapter?.hasAudio ?? false;
   }
 
   get book(): number {
@@ -122,15 +121,16 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
     return this.timing.length;
   }
 
-  get errorMessage(): string {
-    return this._timingErrorText ?? '';
-  }
-
   get isLoadingAudio(): boolean {
     return this._loadingAudio;
   }
 
+  get timingErrorMessage(): string {
+    return this._timingErrorText ?? '';
+  }
+
   async audioUpdate(audio: AudioAttachment): Promise<void> {
+    this._audioErrorText = undefined;
     this.audio = audio;
     if (audio.url != null) {
       if (audio.blob != null) {
@@ -195,11 +195,14 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
   }
 
   async save(): Promise<void> {
-    if (
-      !this.hasAudioBeenUploaded || !this.hasTimingBeenUploaded ||
-      this.book == null ||
-      this.chapter == null
-    ) {
+    const canSave: boolean = this.hasAudioBeenUploaded && this.hasTimingBeenUploaded && this.book != null &&      this.chapter != null;
+    if (!this.hasTimingBeenUploaded) {
+      this._timingErrorText = 'checking_audio_dialog.no_timing_data_uploaded';
+    }
+    if (!this.hasAudioBeenUploaded) {
+      this._audioErrorText = 'checking_audio_dialog.no_audio_file_uploaded';
+    }
+    if (!canSave) {
       return;
     }
     this._loadingAudio = true;
@@ -235,28 +238,10 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
     this.processUploadedFiles(el.files);
   }
 
-  private validateTimingEntries(timing: AudioTiming[], audioLength: number): void {
-    this._timingErrorText = undefined;
-
-    if (timing.length === 0) {
-      this._timingErrorText = 'checking_audio_dialog.zero_segments';
-    }
-
-    if (audioLength === 0) return;
-
-    for (const timing of this.timing) {
-      timing.to = this.populateToField(this.timing.indexOf(timing), this.timing);
-    }
-
-    const firstValidation = timing.filter(t => t.from < t.to);
-    if (firstValidation.length !== timing.length) {
-      this._timingErrorText = 'checking_audio_dialog.from_timing_past_to_timing';
-    }
-
-    const validated = firstValidation.filter(t => t.from < audioLength && t.to <= audioLength);
-    if (validated.length !== firstValidation.length) {
-      this._timingErrorText = 'checking_audio_dialog.timing_past_audio_length';
-    }
+  private checkForPreexistingAudio(): void {
+    const text: TextInfo = this.data.textsByBookId[Canon.bookNumberToId(this.book)];
+    const textChapter: Chapter | undefined = text?.chapters.find(c => c.number === this.chapter);
+    this._selectionHasAudioAlready = textChapter?.hasAudio ?? false;
   }
 
   private getDuration(url: string): Promise<number> {
@@ -342,6 +327,30 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
         };
         this.audioUpdate(audioAttachment);
       }
+    }
+  }
+
+  private validateTimingEntries(timing: AudioTiming[], audioLength: number): void {
+    this._timingErrorText = undefined;
+
+    if (timing.length === 0) {
+      this._timingErrorText = 'checking_audio_dialog.zero_segments';
+    }
+
+    if (audioLength === 0) return;
+
+    for (const timing of this.timing) {
+      timing.to = this.populateToField(this.timing.indexOf(timing), this.timing);
+    }
+
+    const firstValidation = timing.filter(t => t.from < t.to);
+    if (firstValidation.length !== timing.length) {
+      this._timingErrorText = 'checking_audio_dialog.from_timing_past_to_timing';
+    }
+
+    const validated = firstValidation.filter(t => t.from < audioLength && t.to <= audioLength);
+    if (validated.length !== firstValidation.length) {
+      this._timingErrorText = 'checking_audio_dialog.timing_past_audio_length';
     }
   }
 }
