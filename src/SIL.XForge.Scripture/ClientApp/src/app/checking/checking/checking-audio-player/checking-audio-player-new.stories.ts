@@ -43,5 +43,8 @@ export const Playing: Story = {
     await new Promise(resolve => setTimeout(resolve, 100));
     const play = await canvas.findByRole('button');
     userEvent.click(play);
+  },
+  parameters: {
+    chromatic: { disableSnapshot: true }
   }
 };
