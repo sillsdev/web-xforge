@@ -100,16 +100,26 @@
 
     mat-icon {
       color: variables.$border-color;
-      flex-basis: 30px;
+    }
+
+    app-info,
+    mat-icon {
+      flex: 0 0 30px;
+      text-align: center;
+      justify-content: center;
     }
 
     span {
       flex: 1;
       line-height: 1em;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
     }
 
     .chapter-select-menu {
       flex-basis: 60px;
+      margin-inline-start: 5px;
     }
 
     .divider {

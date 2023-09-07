@@ -73,7 +73,7 @@ describe('ChapterAudioDialogComponent', () => {
     for (let row of result.timingData) {
       expect(row.to).not.toEqual(0);
     }
-    expect(env.component.errorMessage).toEqual('');
+    expect(env.component.timingErrorMessage).toEqual('');
   }));
 
   it('should default selection to first chapter with question and no audio', fakeAsync(async () => {
@@ -178,7 +178,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.audioUpdate(env.audioFile);
     await env.component.prepareTimingFileUpload(anything());
 
-    expect(env.component.errorMessage).toContain('zero_segments');
+    expect(env.component.timingErrorMessage).toContain('zero_segments');
   }));
 
   it('shows warning if From field goes beyond audio length', fakeAsync(async () => {
@@ -192,7 +192,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.wait();
 
-    expect(env.component.errorMessage).toContain('timing_past_audio_length');
+    expect(env.component.timingErrorMessage).toContain('timing_past_audio_length');
   }));
 
   it('can also parse mm:ss', fakeAsync(async () => {
@@ -204,7 +204,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.audioUpdate(env.audioFile);
     await env.component.prepareTimingFileUpload(anything());
 
-    expect(env.component.errorMessage).toEqual('');
+    expect(env.component.timingErrorMessage).toEqual('');
   }));
 
   it('can also parse hh:mm:ss', fakeAsync(async () => {
@@ -216,7 +216,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.audioUpdate(env.audioFile);
     await env.component.prepareTimingFileUpload(anything());
 
-    expect(env.component.errorMessage).toEqual('');
+    expect(env.component.timingErrorMessage).toEqual('');
   }));
 
   it('will not save or upload if there is no audio', fakeAsync(async () => {

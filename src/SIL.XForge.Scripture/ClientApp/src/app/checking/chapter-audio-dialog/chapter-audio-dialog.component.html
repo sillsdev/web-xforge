@@ -1,16 +1,23 @@
 <ng-container *transloco="let t">
-  <h2 mat-dialog-title>Chapter Audio</h2>
+  <h2 mat-dialog-title>{{ t("checking_audio_dialog.chapter_audio") }}</h2>
   <mat-dialog-content class="mat-typography">
     <div class="dropzone" #dropzone>
       <input type="file" multiple #fileDropzone accept=".csv,.tsv,.txt,audio/*" (change)="uploadedFiles($event)" />
       <label
-        >Drag and drop audio and timing files here<br />
-        - OR -
-      </label>
-      <button mat-flat-button color="primary" type="submit">Browse Files</button>
+        >{{ t("checking_audio_dialog.drag_and_drop_files") }}<br />-
+        {{ t("checking_audio_dialog.drag_and_drop_or_browse") }} -</label
+      >
+      <button mat-flat-button color="primary" type="submit">{{ t("checking_audio_dialog.browse_files") }}</button>
     </div>
     <div class="data-blocks">
       <div class="wrapper valid">
+        <mat-icon *ngIf="!selectionHasAudioAlready">book</mat-icon>
+        <app-info
+          *ngIf="selectionHasAudioAlready"
+          [text]="t('checking_audio_dialog.audio_already_exists')"
+          icon="warning"
+          type="warning"
+        ></app-info>
         <mat-select [(value)]="book" class="book-select-menu">
           <mat-option *ngFor="let b of books" [value]="b">{{ bookName(b) }}</mat-option>
         </mat-select>
@@ -19,10 +26,7 @@
           <mat-option *ngFor="let c of chapters" [value]="c">{{ c }}</mat-option>
         </mat-select>
       </div>
-      <app-notice class="" *ngIf="selectionHasAudioAlready" icon="warning" type="warning"
-        >{{ t("checking_audio_dialog.audio_already_exists") }}
-      </app-notice>
-      <div class="wrapper" [ngClass]="{ valid: hasAudioBeenUploaded }">
+      <div class="wrapper" [ngClass]="{ valid: hasAudioBeenUploaded, invalid: audioErrorMessage !== '' }">
         <ng-container *ngIf="hasAudioBeenUploaded">
           <app-single-button-audio-player
             #chapterAudio
@@ -37,16 +41,25 @@
         </ng-container>
         <ng-container *ngIf="!hasAudioBeenUploaded">
           <mat-icon>play_disabled</mat-icon>
-          <span>No audio file uploaded</span>
+          <span *ngIf="!hasAudioBeenUploaded && audioErrorMessage === ''">{{
+            t("checking_audio_dialog.no_audio_file_uploaded")
+          }}</span>
+          <span *ngIf="!hasAudioBeenUploaded && audioErrorMessage !== ''">{{
+            t("checking_audio_dialog.no_audio_file_uploaded")
+          }}</span>
         </ng-container>
       </div>
-      <div class="wrapper" [ngClass]="{ valid: hasTimingBeenUploaded }">
+      <div class="wrapper" [ngClass]="{ valid: hasTimingBeenUploaded, invalid: timingErrorMessage !== '' }">
         <mat-icon class="material-icons-outlined">timer</mat-icon>
-        <span *ngIf="hasTimingBeenUploaded">{{ numberOfTimingSegments }} segments found</span>
-        <span *ngIf="!hasTimingBeenUploaded">No timing data uploaded</span>
+        <span *ngIf="hasTimingBeenUploaded">{{
+          t("checking_audio_dialog.segments_found", { segments: numberOfTimingSegments })
+        }}</span>
+        <span *ngIf="!hasTimingBeenUploaded && timingErrorMessage === ''">{{
+          t("checking_audio_dialog.no_timing_data_uploaded")
+        }}</span>
+        <span *ngIf="!hasTimingBeenUploaded && timingErrorMessage !== ''">{{ t(timingErrorMessage) }}</span>
         <mat-icon *ngIf="hasTimingBeenUploaded" (click)="deleteTimingData()" class="delete">delete</mat-icon>
       </div>
-      <app-notice class="" *ngIf="errorMessage !== ''" icon="error" type="error">{{ t(errorMessage) }} </app-notice>
     </div>
   </mat-dialog-content>
   <mat-dialog-actions>
