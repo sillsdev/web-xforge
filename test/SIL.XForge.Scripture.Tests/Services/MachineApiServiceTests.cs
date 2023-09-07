@@ -1504,6 +1504,24 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetPreTranslationQueuedStateAsync_BuildCrashed()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const string errorMessage = "This is an error message from Serval";
+        await env.QueuePreTranslationBuildAsync(DateTime.UtcNow.AddHours(-6), errorMessage);
+
+        // SUT
+        BuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+            User01,
+            Project01,
+            CancellationToken.None
+        );
+        Assert.AreEqual(MachineApiService.BuildStateFaulted, build?.State);
+        Assert.AreEqual(errorMessage, build.Message);
+    }
+
+    [Test]
     public async Task GetPreTranslationQueuedStateAsync_BuildRunTooLong()
     {
         // Set up test environment
@@ -1802,7 +1820,8 @@ public class MachineApiServiceTests
 
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
-        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationQueuedAt);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
     }
 
     [Test]
@@ -2507,13 +2526,21 @@ public class MachineApiServiceTests
         public MachineApiService Service { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
 
-        public async Task QueuePreTranslationBuildAsync(DateTime? dateTime = null) =>
+        public async Task QueuePreTranslationBuildAsync(DateTime? dateTime = null, string? errorMessage = null) =>
             await ProjectSecrets.UpdateAsync(
                 Project01,
                 u =>
                 {
                     u.Set(p => p.ServalData.PreTranslationJobId, JobId);
                     u.Set(p => p.ServalData.PreTranslationQueuedAt, dateTime ?? DateTime.UtcNow);
+                    if (string.IsNullOrWhiteSpace(errorMessage))
+                    {
+                        u.Unset(p => p.ServalData.PreTranslationErrorMessage);
+                    }
+                    else
+                    {
+                        u.Set(p => p.ServalData.PreTranslationErrorMessage, errorMessage);
+                    }
                 }
             );
     }

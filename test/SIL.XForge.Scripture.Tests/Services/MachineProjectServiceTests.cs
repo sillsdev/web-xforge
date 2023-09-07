@@ -244,6 +244,69 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task BuildProjectForBackgroundJobAsync_BuildsPreTranslationProjects()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsPending = false });
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            Project02,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.TranslationEnginesClient
+            .Received()
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_RecordsErrors()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsPending = false });
+        ServalApiException ex = ServalApiExceptions.Forbidden;
+        env.TranslationEnginesClient.CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None).Throws(ex);
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            Project02,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        env.MockLogger.AssertHasEvent(logEvent => logEvent.Exception == ex);
+        env.ExceptionHandler.Received().ReportException(ex);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationQueuedAt);
+        Assert.AreEqual(ex.Message, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationErrorMessage);
+    }
+
+    [Test]
+    public async Task BuildProjectForBackgroundJobAsync_DoesNotRecordTaskCancellation()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsPending = false });
+        env.TranslationEnginesClient
+            .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None)
+            .Throws(new TaskCanceledException());
+
+        // SUT
+        await env.Service.BuildProjectForBackgroundJobAsync(
+            User01,
+            Project02,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        env.ExceptionHandler.DidNotReceive().ReportException(Arg.Any<Exception>());
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationErrorMessage);
+    }
+
+    [Test]
     public void RemoveProjectAsync_ThrowsExceptionWhenProjectSecretMissing()
     {
         // Set up test environment
@@ -647,6 +710,7 @@ public class MachineProjectServiceTests
         {
             options ??= new TestEnvironmentOptions();
             EngineService = Substitute.For<IEngineService>();
+            ExceptionHandler = Substitute.For<IExceptionHandler>();
             MockLogger = new MockLogger<MachineProjectService>();
             DataFilesClient = Substitute.For<IDataFilesClient>();
             DataFilesClient
@@ -826,6 +890,7 @@ public class MachineProjectServiceTests
             Service = new MachineProjectService(
                 DataFilesClient,
                 EngineService,
+                ExceptionHandler,
                 featureManager,
                 MockLogger,
                 paratextService,
@@ -871,6 +936,7 @@ public class MachineProjectServiceTests
         public ITranslationEnginesClient TranslationEnginesClient { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MockLogger<MachineProjectService> MockLogger { get; }
+        public IExceptionHandler ExceptionHandler { get; }
 
         public async Task SetDataInSync(string projectId, bool preTranslate = false) =>
             await ProjectSecrets.UpdateAsync(
