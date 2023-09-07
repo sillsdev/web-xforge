@@ -1739,18 +1739,17 @@ describe('CheckingComponent', () => {
       expect(env.component).toBeDefined();
     }));
 
-    it('hides chapter audio if chapter audio is absent', fakeAsync(() => {
+    it('can close chapter audio', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
-      expect(env.component.chapterAudio).toBeDefined();
+      expect(env.component.showScriptureAudioPlayer).toBe(true);
 
-      env.component.chapter = 99;
+      env.component.hideChapterAudio();
       env.fixture.detectChanges();
-      flush();
 
-      expect(env.component.chapterAudio).toBe(undefined);
+      expect(env.component.showScriptureAudioPlayer).toBe(false);
     }));
 
     it('keeps chapter audio if chapter audio is present', fakeAsync(() => {

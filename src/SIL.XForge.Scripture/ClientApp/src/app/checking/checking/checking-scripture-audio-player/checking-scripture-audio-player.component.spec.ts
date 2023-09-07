@@ -132,24 +132,6 @@ describe('ScriptureAudioComponent', () => {
     verify(audio?.pause()).once();
     expect(count).toEqual(1);
   });
-
-  it('pauses and emits on close', async () => {
-    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
-    const env = new TestEnvironment(template);
-    env.fixture.detectChanges();
-    await env.waitForPlayer(500);
-
-    let count = 0;
-    env.component.audioPlayer.closed.subscribe(() => count++);
-
-    const audio = spy(env.component.audioPlayer);
-    verify(audio?.pause()).never();
-
-    env.component.audioPlayer.close();
-
-    verify(audio?.pause()).once();
-    expect(count).toEqual(1);
-  });
 });
 
 @Component({ selector: 'app-host', template: '' })
