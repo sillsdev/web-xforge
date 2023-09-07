@@ -1712,33 +1712,6 @@ describe('CheckingComponent', () => {
       expect(env.component.showScriptureAudioPlayer).toBe(true);
     }));
 
-    it('can close chapter audio and also pause audio', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER);
-      env.component.toggleAudio();
-      env.fixture.detectChanges();
-
-      expect(env.component.chapterAudio).toBeDefined();
-
-      env.component.hideChapterAudio();
-      env.fixture.detectChanges();
-
-      expect(env.component.chapterAudio).toBe(undefined);
-    }));
-
-    it('pauses audio when changing chapter', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
-      env.component.toggleAudio();
-      env.fixture.detectChanges();
-
-      const audio = spy(env.component.chapterAudio!);
-
-      env.component.chapter = 99;
-      env.component.chapter = 99;
-
-      verify(audio.pause()).once();
-      expect(env.component).toBeDefined();
-    }));
-
     it('can close chapter audio', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
       env.component.toggleAudio();
@@ -1752,18 +1725,46 @@ describe('CheckingComponent', () => {
       expect(env.component.showScriptureAudioPlayer).toBe(false);
     }));
 
+    it('pauses audio when changing chapter', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      const audio = spy(env.component.scriptureAudioPlayer);
+
+      env.component.chapter = 99;
+      env.component.chapter = 99;
+
+      verify(audio.pause()).once();
+      expect(env.component).toBeDefined();
+    }));
+
+    it('hides chapter audio if chapter audio is absent', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      expect(env.component.scriptureAudioPlayer).toBeDefined();
+
+      env.component.chapter = 99;
+      env.fixture.detectChanges();
+      flush();
+
+      expect(env.component.scriptureAudioPlayer).toBe(undefined);
+    }));
+
     it('keeps chapter audio if chapter audio is present', fakeAsync(() => {
       const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
-      expect(env.component.chapterAudio).toBeDefined();
+      expect(env.component.scriptureAudioPlayer).toBeDefined();
 
       env.component.chapter = 2;
       env.fixture.detectChanges();
       flush();
 
-      expect(env.component.chapterAudio).toBeDefined();
+      expect(env.component.scriptureAudioPlayer).toBeDefined();
     }));
   });
 });
