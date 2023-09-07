@@ -1731,7 +1731,7 @@ describe('CheckingComponent', () => {
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
-      const audio = spy(env.component.scriptureAudioPlayer);
+      const audio = spy(env.chapterAudio.componentInstance as CheckingScriptureAudioPlayerComponent);
 
       env.component.chapter = 99;
       env.component.chapter = 99;
@@ -1745,13 +1745,13 @@ describe('CheckingComponent', () => {
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
-      expect(env.component.scriptureAudioPlayer).toBeDefined();
+      expect(env.component.showScriptureAudioPlayer).toBe(true);
 
       env.component.chapter = 99;
       env.fixture.detectChanges();
       flush();
 
-      expect(env.component.scriptureAudioPlayer).toBe(undefined);
+      expect(env.component.showScriptureAudioPlayer).toBe(false);
     }));
 
     it('keeps chapter audio if chapter audio is present', fakeAsync(() => {
@@ -1759,13 +1759,13 @@ describe('CheckingComponent', () => {
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
-      expect(env.component.scriptureAudioPlayer).toBeDefined();
+      expect(env.component.showScriptureAudioPlayer).toBe(true);
 
       env.component.chapter = 2;
       env.fixture.detectChanges();
       flush();
 
-      expect(env.component.scriptureAudioPlayer).toBeDefined();
+      expect(env.component.showScriptureAudioPlayer).toBe(true);
     }));
   });
 });
@@ -1974,6 +1974,10 @@ class TestEnvironment {
 
   get audioPlayerOnQuestion(): DebugElement {
     return this.answerPanel.query(By.css('.question-audio'));
+  }
+
+  get chapterAudio(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.scripture-audio-player-wrapper'))?.children[0];
   }
 
   get cancelAnswerButton(): DebugElement {
