@@ -14,9 +14,14 @@
   font-size: 0.9em;
 }
 
-.close-button {
+div[dir='ltr'] .close-button {
   position: absolute;
   right: 8px;
+}
+
+div[dir='rtl'] .close-button {
+  position: absolute;
+  left: 8px;
 }
 
 .previous-ref-button,

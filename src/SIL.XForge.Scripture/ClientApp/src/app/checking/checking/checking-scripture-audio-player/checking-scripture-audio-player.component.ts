@@ -4,11 +4,11 @@ import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio
 import { distinctUntilChanged, map } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { AudioTextRef, CheckingUtils } from '../../checking.utils';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
+import { AudioTextRef, CheckingUtils } from '../../checking.utils';
 
 @Component({
   selector: 'app-checking-scripture-audio-player',
@@ -20,12 +20,13 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   @Input() textDocId?: TextDocId;
   @Input() canDelete: boolean = false;
   @Output() currentVerseChanged = new EventEmitter<string>();
+  @Output() closed: EventEmitter<void> = new EventEmitter<void>();
   @ViewChild('audioPlayer') audioPlayer?: AudioPlayerComponent;
 
   private _timing: AudioTiming[] = [];
   private currentVerseStr: string = '0';
 
-  constructor(private readonly i18n: I18nService, private readonly projectService: SFProjectService) {
+  constructor(readonly i18n: I18nService, private readonly projectService: SFProjectService) {
     super();
   }
 
@@ -48,7 +49,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   }
 
   @Input() set timing(value: AudioTiming[]) {
-    this._timing = value.sort((a, b) => a.from - b.from);
+    this._timing = Object.values(value).sort((a, b) => a.from - b.from);
   }
 
   get currentVerseLabel(): string {
@@ -111,6 +112,11 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
       this.textDocId.bookNum,
       this.textDocId.chapterNum
     );
+  }
+
+  close(): void {
+    this.pause();
+    this.closed.emit();
   }
 
   private getRefIndexInTimings(ref: string): number {

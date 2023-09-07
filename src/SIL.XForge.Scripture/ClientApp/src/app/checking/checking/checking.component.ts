@@ -87,7 +87,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   @ViewChild(SplitComponent) splitComponent?: SplitComponent;
   @ViewChild('splitContainer') splitContainerElement?: ElementRef;
   @ViewChild('scripturePanelContainer') scripturePanelContainerElement?: ElementRef;
-  @ViewChild(CheckingScriptureAudioPlayerComponent) scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
+  @ViewChild(CheckingScriptureAudioPlayerComponent) set scriptureAudioPlayer(
+    newValue: CheckingScriptureAudioPlayerComponent
+  ) {
+    this._scriptureAudioPlayer = newValue;
+    if (newValue !== undefined) {
+      Promise.resolve(null).then(() => this._scriptureAudioPlayer?.play());
+    }
+  }
   @ViewChild('chapterMenuList') chapterMenuList?: MdcList;
 
   chapters: number[] = [];
@@ -136,6 +143,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
   private questionsRemoteChangesSub?: Subscription;
   private text?: TextInfo;
   private isProjectAdmin: boolean = false;
+  private _scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -180,7 +188,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         this.projectDoc != null && this.text != null && this.chapter != null
           ? new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target')
           : undefined;
-      this.scriptureAudioPlayer?.pause();
+      this._scriptureAudioPlayer?.pause();
     }
   }
 
@@ -827,8 +835,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
       projectId: this.projectDoc.id,
       textsByBookId: this.textsByBookId,
       questionsSorted: this.questionDocs,
-      currentBook: this.questionsPanel.activeQuestionBook,
-      currentChapter: this.questionsPanel.activeQuestionChapter
+      currentBook: this._book,
+      currentChapter: this._chapter
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
   }
@@ -1179,5 +1187,18 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, O
         .set(QuestionFilter.CurrentUserHasAnswered, 'question_filter_answered')
         .set(QuestionFilter.CurrentUserHasNotAnswered, 'question_filter_not_answered');
     }
+  }
+
+  isAudioPlaying(): boolean {
+    return this._scriptureAudioPlayer?.isPlaying ?? false;
+  }
+
+  hideChapterAudio(): void {
+    this.showScriptureAudioPlayer = false;
+  }
+
+  toggleAudio(): void {
+    this.showScriptureAudioPlayer = true;
+    this._scriptureAudioPlayer?.isPlaying ? this._scriptureAudioPlayer?.pause() : this._scriptureAudioPlayer?.play();
   }
 }

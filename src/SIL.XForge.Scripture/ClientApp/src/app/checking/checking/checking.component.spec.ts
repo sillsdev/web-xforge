@@ -34,12 +34,12 @@ import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import * as RichText from 'rich-text';
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { first } from 'rxjs/operators';
-import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
 import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
 import { FileOfflineData, FileType, createStorageFileData } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
@@ -60,15 +60,16 @@ import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
+import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { Delta, TextDoc } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { TranslationEngineService } from '../../core/translation-engine.service';
+import { AudioPlayerComponent } from '../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../shared/audio/audio-time-pipe';
 import { SharedModule } from '../../shared/shared.module';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { AudioPlayerComponent } from '../../shared/audio/audio-player/audio-player.component';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
@@ -79,6 +80,7 @@ import {
   CheckingAudioRecorderComponent
 } from './checking-audio-recorder/checking-audio-recorder.component';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
+import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
 import { CheckingComponent, QuestionFilter } from './checking.component';
 import { FontSizeComponent } from './font-size/font-size.component';
@@ -96,6 +98,7 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedPwaService = mock(PwaService);
 const mockedFileService = mock(FileService);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 
 function createUser(idSuffix: number, role: string, nameConfirmed: boolean = true): UserInfo {
   return {
@@ -135,6 +138,7 @@ describe('CheckingComponent', () => {
       CheckingCommentFormComponent,
       CheckingCommentsComponent,
       CheckingComponent,
+      CheckingScriptureAudioPlayerComponent,
       OwnerComponent,
       CheckingQuestionsComponent,
       CheckingTextComponent,
@@ -164,7 +168,8 @@ describe('CheckingComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: PwaService, useMock: mockedPwaService },
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ]
   }));
 
@@ -1693,6 +1698,33 @@ describe('CheckingComponent', () => {
       expect(segment.classList.contains('highlight-segment')).toBe(true);
     }));
   });
+
+  describe('Chapter Audio', () => {
+    it('can open chapter audio', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
+      env.fixture.detectChanges();
+
+      expect(env.component.showScriptureAudioPlayer).toBe(false);
+
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      expect(env.component.showScriptureAudioPlayer).toBe(true);
+    }));
+
+    it('can close chapter audio', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      expect(env.component.showScriptureAudioPlayer).toBe(true);
+
+      env.component.hideChapterAudio();
+      env.fixture.detectChanges();
+
+      expect(env.component.showScriptureAudioPlayer).toBe(false);
+    }));
+  });
 });
 
 interface UserInfo {
@@ -1820,7 +1852,12 @@ class TestEnvironment {
     ]
   });
 
-  constructor(user: UserInfo, projectBookRoute: string = 'JHN', hasConnection: boolean = true) {
+  constructor(
+    user: UserInfo,
+    projectBookRoute: string = 'JHN',
+    hasConnection: boolean = true,
+    scriptureAudio: boolean = false
+  ) {
     reset(mockedFileService);
     this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: projectBookRoute });
     this.setBookId(projectBookRoute);
@@ -1837,6 +1874,7 @@ class TestEnvironment {
       mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), undefined)
     ).thenResolve(undefined);
     when(mockedFileService.fileSyncComplete$).thenReturn(this.fileSyncComplete);
+    when(mockedFeatureFlagService.scriptureAudio).thenReturn({ enabled: scriptureAudio } as FeatureFlag);
 
     const query = mock(RealtimeQuery<TextAudioDoc>) as RealtimeQuery<TextAudioDoc>;
     when(query.remoteChanges$).thenReturn(new BehaviorSubject<void>(undefined));

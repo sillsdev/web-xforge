@@ -1,4 +1,4 @@
-<div class="scripture-audio-player">
+<div class="scripture-audio-player" [dir]="i18n.direction">
   <div class="audio-action-buttons">
     <button mat-icon-button class="previous-ref-button" (click)="previousRef()">
       <mat-icon class="mirror-rtl">skip_previous</mat-icon>
@@ -10,8 +10,8 @@
       <mat-icon class="mirror-rtl">skip_next</mat-icon>
     </button>
   </div>
-  <button *ngIf="canDelete" mat-icon-button class="close-button" (click)="deleteAudioTimingData()">
-    <mat-icon>delete</mat-icon>
+  <button mat-icon-button class="close-button" (click)="close()">
+    <mat-icon>close</mat-icon>
   </button>
   <app-audio-player #audioPlayer [source]="source"></app-audio-player>
   <span class="verse-label">{{ currentVerseLabel }}</span>
