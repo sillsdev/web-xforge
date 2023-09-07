@@ -22,6 +22,10 @@ export class AudioPlayerComponent extends AudioPlayerBaseComponent {
     return this.audio?.seek ?? 0;
   }
 
+  get direction(): 'ltr' | 'rtl' {
+    return this.i18n.direction;
+  }
+
   onSeek(event: MatSliderChange): void {
     if (event?.value !== null) {
       this.audio?.setSeek(event.value);
