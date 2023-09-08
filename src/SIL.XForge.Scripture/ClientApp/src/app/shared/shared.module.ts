@@ -7,7 +7,6 @@ import { CheckingQuestionComponent } from '../checking/checking/checking-answers
 import { SingleButtonAudioPlayerComponent } from '../checking/checking/single-button-audio-player/single-button-audio-player.component';
 import { BookChapterChooserComponent } from './book-chapter-chooser/book-chapter-chooser.component';
 import { BookMultiSelectComponent } from './book-multi-select/book-multi-select.component';
-import { ChapterNavComponent } from './chapter-nav/chapter-nav.component';
 import { InfoComponent } from './info/info.component';
 import { NoticeComponent } from './notice/notice.component';
 import { ShareButtonComponent } from './share/share-button.component';
@@ -18,7 +17,6 @@ import { WorkingAnimatedIndicatorComponent } from './working-animated-indicator/
 
 const componentExports = [
   BookChapterChooserComponent,
-  ChapterNavComponent,
   InfoComponent,
   NoticeComponent,
   ShareButtonComponent,

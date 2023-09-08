@@ -35,10 +35,12 @@ import { TextNoteDialogComponent } from './shared/text/text-note-dialog/text-not
 import { JoinComponent } from './join/join.component';
 import { SharedModule } from './shared/shared.module';
 import { NavigationProjectSelectorComponent } from './navigation-project-selector/navigation-project-selector.component';
+import { NavigationComponent } from './navigation/navigation.component';
 
 @NgModule({
   declarations: [
     AppComponent,
+    NavigationComponent,
     ConnectProjectComponent,
     DeleteProjectDialogComponent,
     ProjectComponent,

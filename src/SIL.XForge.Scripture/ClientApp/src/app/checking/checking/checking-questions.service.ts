@@ -8,12 +8,7 @@ import { Subject } from 'rxjs';
 import { FileService } from '../../../xforge-common/file.service';
 import { FileType } from '../../../xforge-common/models/file-offline-data';
 import { RealtimeQuery } from '../../../xforge-common/models/realtime-query';
-import {
-  ComparisonOperator,
-  PropertyFilter,
-  QueryParameters,
-  SortDirection
-} from '../../../xforge-common/query-parameters';
+import { ComparisonOperator, PropertyFilter, QueryParameters, Sort } from '../../../xforge-common/query-parameters';
 import { RealtimeService } from '../../../xforge-common/realtime.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 
@@ -73,12 +68,7 @@ export class CheckingQuestionsService {
     }
 
     if (options.sort != null) {
-      queryParams.$sort = {
-        [obj<Question>().pathStr(q => q.verseRef.bookNum)]: 1,
-        [obj<Question>().pathStr(q => q.verseRef.chapterNum)]: 1,
-        [obj<Question>().pathStr(q => q.verseRef.verseNum)]: 1,
-        [obj<Question>().pathStr(q => q.dateCreated)]: 1
-      };
+      queryParams.$sort = this.getQuestionSortParams('ascending');
     }
 
     return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
@@ -100,7 +90,6 @@ export class CheckingQuestionsService {
     const verseRef: VerseRefData = this.isVerseRefData(relativeTo) ? relativeTo : relativeTo.verseRef;
     const currentQuestion: Question | undefined = this.isVerseRefData(relativeTo) ? undefined : relativeTo;
     const comparisonOperator: ComparisonOperator = prevOrNext === 'prev' ? '$lt' : '$gt';
-    const sortOrder: SortDirection = prevOrNext === 'prev' ? -1 : 1;
 
     const queryParams: QueryParameters = {
       [obj<Question>().pathStr(q => q.projectRef)]: projectId,
@@ -149,12 +138,7 @@ export class CheckingQuestionsService {
         }
       ],
 
-      $sort: {
-        [obj<Question>().pathStr(q => q.verseRef.bookNum)]: sortOrder,
-        [obj<Question>().pathStr(q => q.verseRef.chapterNum)]: sortOrder,
-        [obj<Question>().pathStr(q => q.verseRef.verseNum)]: sortOrder,
-        [obj<Question>().pathStr(q => q.dateCreated)]: sortOrder
-      },
+      $sort: this.getQuestionSortParams(prevOrNext === 'next' ? 'ascending' : 'descending'),
       $limit: 1
     };
 
@@ -162,6 +146,24 @@ export class CheckingQuestionsService {
       QuestionDoc.COLLECTION,
       merge(queryParams, this.getFilterForQuestionFilter(questionFilter))
     );
+  }
+
+  async queryFirstUnansweredQuestion(projectId: string, userId: string): Promise<RealtimeQuery<QuestionDoc>> {
+    const queryParams: QueryParameters = {
+      [obj<Question>().pathStr(q => q.projectRef)]: projectId,
+      [obj<Question>().pathStr(q => q.isArchived)]: false,
+      [obj<Question>().pathStr(q => q.answers)]: {
+        $not: {
+          $elemMatch: {
+            [obj<Answer>().pathStr(a => a.ownerRef)]: userId,
+            deleted: false
+          }
+        }
+      },
+      $sort: this.getQuestionSortParams('ascending'),
+      $limit: 1
+    };
+    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
   }
 
   async createQuestion(
@@ -237,5 +239,15 @@ export class CheckingQuestionsService {
   private isVerseRefData(item: Question | VerseRefData): item is VerseRefData {
     const verseRef: VerseRefData = item as VerseRefData;
     return verseRef.bookNum != null && verseRef.chapterNum != null && verseRef.verseNum != null;
+  }
+
+  private getQuestionSortParams(direction: 'ascending' | 'descending'): Sort {
+    const sortOrder = direction === 'ascending' ? 1 : -1;
+    return {
+      [obj<Question>().pathStr(q => q.verseRef.bookNum)]: sortOrder,
+      [obj<Question>().pathStr(q => q.verseRef.chapterNum)]: sortOrder,
+      [obj<Question>().pathStr(q => q.verseRef.verseNum)]: sortOrder,
+      [obj<Question>().pathStr(q => q.dateCreated)]: sortOrder
+    };
   }
 }

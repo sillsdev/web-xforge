@@ -1,10 +1,7 @@
-import { MdcIconRegistry } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
-import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { Canon } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/models/user';
@@ -58,8 +55,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   isAppOnline: boolean = false;
   isExpanded: boolean = false;
   versionNumberClickCount = 0;
-  translateVisible: boolean = false;
-  checkingVisible: boolean = false;
 
   projectDocs?: SFProjectProfileDoc[];
   canSeeSettings$?: Observable<boolean>;
@@ -101,9 +96,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
-    onlineStatusService: OnlineStatusService,
-    iconRegistry: MdcIconRegistry,
-    sanitizer: DomSanitizer
+    onlineStatusService: OnlineStatusService
   ) {
     super(noticeService);
     this.subscribe(
@@ -149,7 +142,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
       });
     }
-    iconRegistry.addSvgIcon('translate', sanitizer.bypassSecurityTrustResourceUrl('/assets/icons/translate.svg'));
   }
 
   get showCheckingDisabled(): boolean {
@@ -209,11 +201,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this.selectedProjectRole != null && canAccessCommunityCheckingApp(this.selectedProjectRole);
   }
 
-  get hasSingleAppEnabled(): boolean {
-    const appStatus: boolean[] = [this.isTranslateEnabled, this.isCheckingEnabled];
-    return appStatus.filter(enabled => enabled).length === 1;
-  }
-
   get currentUser(): User | undefined {
     return this.currentUserDoc == null ? undefined : this.currentUserDoc.data;
   }
@@ -245,19 +232,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   get texts(): TextInfo[] {
     return this._selectedProjectDoc?.data?.texts.slice().sort((a, b) => a.bookNum - b.bookNum) || [];
-  }
-
-  get showAllQuestions(): boolean {
-    let count = 0;
-    for (const text of this.texts) {
-      if (this.hasQuestions(text)) {
-        count++;
-      }
-      if (count > 1) {
-        return true;
-      }
-    }
-    return false;
   }
 
   async ngOnInit(): Promise<void> {
@@ -303,18 +277,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         return route;
       }),
       filter(r => r.outlet === 'primary'),
-      tap(r => {
-        // ensure that the task of the current view has been expanded
-        for (const segment of r.url) {
-          if (segment.path === 'translate') {
-            this.translateVisible = true;
-            break;
-          } else if (segment.path === 'checking') {
-            this.checkingVisible = true;
-            break;
-          }
-        }
-      }),
       map(r => r.params['projectId'] as string | undefined),
       distinctUntilChanged(),
       tap(projectId => {
@@ -378,13 +340,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
           this.projectService.localDelete(this._selectedProjectDoc.id);
         }
       });
-
-      if (!this.isTranslateEnabled) {
-        this.translateVisible = false;
-      }
-      if (!this.isCheckingEnabled) {
-        this.checkingVisible = false;
-      }
 
       this.checkDeviceStorage();
     });
@@ -477,43 +432,12 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.isExpanded = false;
   }
 
-  getBookName(text: TextInfo): string {
-    return this.i18n.localizeBook(text.bookNum);
-  }
-
-  getBookId(text: TextInfo): string {
-    return Canon.bookNumberToId(text.bookNum);
-  }
-
-  getRouterLink(tool: string, extension?: string): string[] {
-    if (this.selectedProjectId == null) {
-      return [];
-    }
-    const link = ['/projects', this.selectedProjectId, tool];
-    if (extension != null && extension !== '') {
-      link.push(extension);
-    }
-    return link;
-  }
-
-  hasQuestions(text: TextInfo): boolean {
-    return this.communityCheckingBooks.includes(text.bookNum);
-  }
-
   reloadWithUpdates(): void {
     this.pwaService.activateUpdates();
   }
 
   openFeatureFlagDialog(): void {
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
-  }
-
-  get lastSyncFailed(): boolean {
-    return this._selectedProjectDoc?.data?.sync.lastSyncSuccessful === false && !this.syncInProgress;
-  }
-
-  get syncInProgress(): boolean {
-    return this._selectedProjectDoc?.data != null && this._selectedProjectDoc.data.sync.queuedCount > 0;
   }
 
   get appName(): string {

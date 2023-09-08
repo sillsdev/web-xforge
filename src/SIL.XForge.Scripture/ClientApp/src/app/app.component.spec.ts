@@ -11,7 +11,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -37,7 +37,6 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { environment } from '../environments/environment';
 import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
 import { CheckingQuestionsService } from './checking/checking/checking-questions.service';
 import { QuestionDoc } from './core/models/question-doc';
@@ -47,6 +46,7 @@ import { SFProjectService } from './core/sf-project.service';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 import { paratextUsersFromRoles } from './shared/test-utils';
 import { NavigationProjectSelectorComponent } from './navigation-project-selector/navigation-project-selector.component';
+import { NavigationComponent } from './navigation/navigation.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
@@ -88,7 +88,7 @@ const ROUTES: Route[] = [
 
 describe('AppComponent', () => {
   configureTestingModule(() => ({
-    declarations: [AppComponent, NavigationProjectSelectorComponent, MockComponent],
+    declarations: [AppComponent, NavigationProjectSelectorComponent, NavigationComponent, MockComponent],
     imports: [
       AvatarTestingModule,
       DialogTestModule,
@@ -133,7 +133,9 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project01');
-    expect(env.menuLength).toEqual(5);
+    // Translate | Overview | Draft & review | Community Checking | Manage questions | Questions & answers |
+    // Synchronize | Users | Settings
+    expect(env.menuLength).toEqual(9);
     verify(mockedUserService.setCurrentProjectId(anything(), 'project01')).once();
   }));
 
@@ -144,8 +146,8 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project02');
-    // Expect: Community Checking | Overview | Sync | Settings | Users
-    expect(env.menuLength).toEqual(5);
+    // Expect: Community Checking | Manage Questions | Overview | Sync | Settings | Users
+    expect(env.menuLength).toEqual(6);
     expect(env.component.isCheckingEnabled).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(false);
     verify(mockedUserService.setCurrentProjectId(anything(), 'project02')).once();
@@ -158,16 +160,11 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.selectedProjectId).toEqual('project03');
-    // Expect: Community Checking | Overview | Synchronize | Settings | Users
-    expect(env.menuLength).toEqual(5);
+    // Expect: Community Checking | Manage Questions | Overview | Synchronize | Settings | Users
+    expect(env.menuLength).toEqual(6);
     expect(env.component.isCheckingEnabled).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(false);
     verify(mockedUserService.setCurrentProjectId(anything(), 'project03')).once();
-
-    // Does not collapse Community Checking item when translate is disabled
-    env.selectItem(0);
-    // Expect: Community Checking | Overview | Synchronize | Settings | Users
-    expect(env.menuLength).toEqual(5);
   }));
 
   it('hides generate draft when user does not have access', fakeAsync(() => {
@@ -199,35 +196,6 @@ describe('AppComponent', () => {
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(true);
     expect(env.component.isCheckingEnabled).toEqual(false);
-  }));
-
-  it('expand/collapse tool', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
-    env.init();
-
-    expect(env.isDrawerVisible).toEqual(true);
-    expect(env.selectedProjectId).toEqual('project01');
-    env.selectItem(0);
-    expect(env.menuLength).toEqual(8);
-    env.selectItem(0);
-    expect(env.menuLength).toEqual(5);
-  }));
-
-  it('Translate item is never collapsed when Community Checking is disabled', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
-    env.init();
-    // Expect: Translate | Community Checking | Synchronize | Settings | Users
-    expect(env.menuLength).toEqual(5);
-    const projectDoc = env.component.projectDocs![0];
-    projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, false));
-    env.wait();
-    // Expect: Translate | Overview | Matthew | Mark | Synchronize | Settings | Users
-    expect(env.menuLength).toEqual(7);
-    // No affect when clicking Translate
-    env.selectItem(0);
-    expect(env.menuLength).toEqual(7);
   }));
 
   it('change project', fakeAsync(() => {
@@ -423,49 +391,6 @@ describe('AppComponent', () => {
     expect().nothing();
   }));
 
-  it('isLive is available (for template)', fakeAsync(() => {
-    environment.releaseStage = 'dev';
-    const env = new TestEnvironment();
-    env.init();
-    expect(env.component.isLive).toEqual(false);
-
-    environment.releaseStage = 'qa';
-    expect(env.component.isLive).toEqual(false);
-
-    environment.releaseStage = 'live';
-    expect(env.component.isLive).toEqual(true);
-    environment.releaseStage = 'dev';
-  }));
-
-  it('indicates when the last sync failed', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
-    env.init();
-
-    env.setLastSyncSuccessful('project01', true);
-    // SUT 1
-    expect(env.lastSyncFailedBadgeIsPresent).toBeFalse();
-
-    env.setLastSyncSuccessful('project01', false);
-    // SUT 2
-    expect(env.lastSyncFailedBadgeIsPresent).toBeTrue();
-  }));
-
-  it('add spin class to sync icon when in progress', fakeAsync(() => {
-    const env = new TestEnvironment();
-    env.navigate(['/projects', 'project01']);
-    env.init();
-
-    expect(env.syncInProgressClassIsPresent).toBeFalse();
-    env.setFakeSyncInProgress('project01', true);
-    // SUT 1
-    expect(env.syncInProgressClassIsPresent).toBeTrue();
-
-    env.setFakeSyncInProgress('project01', false);
-    // SUT 2
-    expect(env.syncInProgressClassIsPresent).toBeFalse();
-  }));
-
   it('checks online auth status when browser comes online but app is not fully online', fakeAsync(() => {
     const env = new TestEnvironment('offline');
     env.init();
@@ -496,94 +421,6 @@ describe('AppComponent', () => {
   }));
 
   describe('Community Checking', () => {
-    it('no books showing in the menu', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.navigate(['/projects', 'project02']);
-      env.init();
-
-      expect(env.isDrawerVisible).toEqual(true);
-      expect(env.selectedProjectId).toEqual('project02');
-      expect(env.component.isCheckingEnabled).toEqual(true);
-      env.selectItem(0);
-      // Expect: Community Checking | Overview | Synchronize | Settings | Users
-      expect(env.menuLength).toEqual(5);
-    }));
-
-    it('only show one book in the menu', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.navigate(['/projects', 'project02']);
-      env.init();
-
-      expect(env.isDrawerVisible).toEqual(true);
-      expect(env.selectedProjectId).toEqual('project02');
-      expect(env.component.isCheckingEnabled).toEqual(true);
-      env.selectItem(0);
-      // Expect: Community Checking | Overview | Synchronize | Settings | Users
-      expect(env.menuLength).toEqual(5);
-      env.remoteAddQuestion(env.questions[0]);
-      // Expect: Community Checking | Overview | John | Synchronize | Settings | Users
-      expect(env.menuLength).toEqual(6);
-    }));
-
-    it('All Questions displays in the menu', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.navigate(['/projects', 'project02']);
-      env.init();
-
-      expect(env.isDrawerVisible).toEqual(true);
-      expect(env.selectedProjectId).toEqual('project02');
-      expect(env.component.isCheckingEnabled).toEqual(true);
-      env.selectItem(0);
-      // Expect: Community Checking | Overview | Synchronize | Settings | Users
-      expect(env.menuLength).toEqual(5);
-      env.remoteAddQuestion(env.questions[0]);
-      env.remoteAddQuestion(env.questions[1]);
-      // Expect: Community Checking | Overview | All Questions | Luke | John | Synchronize | Settings | Users
-      expect(env.menuLength).toEqual(8);
-      expect(env.menuListItems[2].nativeElement.textContent).toContain('All Questions');
-    }));
-
-    it('books displayed in canonical order', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.navigate(['/projects', 'project02']);
-      env.init();
-
-      expect(env.component.isCheckingEnabled).toBe(true);
-      env.selectItem(0);
-      env.remoteAddQuestion(env.questions[0]);
-      env.remoteAddQuestion(env.questions[1]);
-      // Expect: Community Checking | Overview | All Questions | Luke | John | Synchronize | Settings | Users
-      expect(env.menuLength).toEqual(8);
-      // Books should be sorted in canonical order
-      expect(env.getMenuItemText(3)).toContain('Luke');
-      expect(env.getMenuItemText(4)).toContain('John');
-    }));
-
-    it('update books when question added/archived/unarchived locally', fakeAsync(() => {
-      const env = new TestEnvironment();
-      env.navigate(['/projects', 'project02']);
-      env.init();
-
-      expect(env.isDrawerVisible).toEqual(true);
-      expect(env.selectedProjectId).toEqual('project02');
-      expect(env.component.isCheckingEnabled).toEqual(true);
-      env.selectItem(0);
-      // Expect: Community Checking | Overview | Synchronize | Settings | Users
-      expect(env.menuLength).toEqual(5);
-
-      env.localAddQuestion(env.questions[0]);
-      // Expect: Community Checking | Overview | John | Synchronize | Settings | Users
-      expect(env.menuLength).toEqual(6);
-
-      env.localSetIsArchived(env.questions[0], true);
-      // Expect: Community Checking | Overview | Synchronize | Settings | Users
-      expect(env.menuLength).toEqual(5);
-
-      env.localSetIsArchived(env.questions[0], false);
-      // Expect: Community Checking | Overview | John | Synchronize | Settings | Users
-      expect(env.menuLength).toEqual(6);
-    }));
-
     it('ensure local storage is cleared when removed from project', fakeAsync(() => {
       const env = new TestEnvironment();
       env.navigate(['/projects', 'project01']);
@@ -813,20 +650,6 @@ class TestEnvironment {
     return this.realtimeService.get(UserDoc.COLLECTION, 'user01');
   }
 
-  get syncInProgressClassIsPresent(): boolean {
-    const iconIfClassSet = this.menuDrawer.query(By.css('#sync-icon.sync-in-progress'));
-    return iconIfClassSet != null;
-  }
-
-  get lastSyncFailedBadgeIsPresent(): boolean {
-    const iconIfBadgeHidden = this.menuDrawer.query(By.css('#sync-icon.mat-badge-hidden'));
-    return iconIfBadgeHidden == null;
-  }
-
-  getMenuItemText(index: number): string {
-    return this.menuListItems[index].nativeElement.textContent;
-  }
-
   getMenuItemContaining(substring: string): DebugElement | undefined {
     return this.menuListItems.find((item: DebugElement) => item.nativeElement.innerText.includes(substring));
   }
@@ -840,33 +663,8 @@ class TestEnvironment {
     return this.getMenuItemContaining(substring) !== undefined;
   }
 
-  remoteAddQuestion(newQuestion: Question): void {
-    const docId = getQuestionDocId(newQuestion.projectRef, newQuestion.dataId);
-    this.realtimeService.addSnapshot(QuestionDoc.COLLECTION, {
-      id: docId,
-      data: newQuestion
-    });
-    this.realtimeService.updateAllSubscribeQueries();
-    this.wait();
-  }
-
   triggerLogin(): void {
     this.loggedInState$.next({ loggedIn: true, newlyLoggedIn: false, anonymousUser: false });
-    this.wait();
-  }
-
-  localAddQuestion(newQuestion: Question): void {
-    const docId = getQuestionDocId(newQuestion.projectRef, newQuestion.dataId);
-    this.realtimeService.create(QuestionDoc.COLLECTION, docId, newQuestion);
-    this.wait();
-  }
-
-  localSetIsArchived(question: Question, isArchived: boolean): void {
-    const questionDoc = this.realtimeService.get<QuestionDoc>(
-      QuestionDoc.COLLECTION,
-      getQuestionDocId(question.projectRef, question.dataId)
-    );
-    questionDoc.submitJson0Op(ops => ops.set(q => q.isArchived, isArchived));
     this.wait();
   }
 
@@ -961,18 +759,6 @@ class TestEnvironment {
   removeUserFromProject(projectId: string): void {
     const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
     projectDoc.submitJson0Op(op => op.unset<string>(p => p.userRoles['user01']), false);
-    this.wait();
-  }
-
-  setFakeSyncInProgress(projectId: string, inProgress: boolean): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
-    projectDoc.submitJson0Op(op => op.set<number>(p => p.sync.queuedCount!, inProgress ? 1 : 0));
-    this.wait();
-  }
-
-  setLastSyncSuccessful(projectId: string, lastSyncSuccessful: boolean): void {
-    const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, projectId);
-    projectDoc.submitJson0Op(op => op.set<boolean>(p => p.sync.lastSyncSuccessful!, lastSyncSuccessful));
     this.wait();
   }
 
