@@ -37,7 +37,7 @@ export interface QuestionChangeActionSource {
   isQuestionListChange?: boolean;
 }
 export interface QuestionChangedEvent {
-  questionDoc: QuestionDoc;
+  questionDoc: QuestionDoc | undefined;
   actionSource: QuestionChangeActionSource | undefined;
 }
 
@@ -62,6 +62,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
   @Output() update = new EventEmitter<QuestionDoc>();
   @Output() changed = new EventEmitter<QuestionChangedEvent>();
   @Input() isAllBooksShown: boolean = false;
+  @Input() isFiltered: boolean = false;
 
   @Input()
   set projectProfileDoc(projectProfileDoc: SFProjectProfileDoc | undefined) {
@@ -89,17 +90,21 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
   }
 
   @Input()
-  set questionDocs(questionDocs: Readonly<QuestionDoc[]> | undefined) {
+  set questionDocs(questionDocs: Readonly<QuestionDoc[]>) {
     if (questionDocs == null) {
       return;
     }
+
+    this._questionDocs = questionDocs;
+
     if (questionDocs.length > 0) {
-      this.activateStoredQuestion(questionDocs, { isQuestionListChange: true });
+      this.activateStoredQuestion({ isQuestionListChange: true });
     } else {
       this.activeQuestionDoc = undefined;
     }
-    this._questionDocs = questionDocs;
+
     this.haveQuestionsLoaded = true;
+    this.changed.emit({ questionDoc: this.activeQuestionDoc, actionSource: { isQuestionListChange: true } });
     this.changeDetector.markForCheck();
   }
 
@@ -225,28 +230,30 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
   /**
    * Activates the question that a user has most recently viewed if available
    */
-  activateStoredQuestion(
-    questionDocs: Readonly<QuestionDoc[]>,
-    actionSource?: QuestionChangeActionSource
-  ): QuestionDoc {
+  activateStoredQuestion(actionSource?: QuestionChangeActionSource): QuestionDoc {
     let questionToActivate: QuestionDoc | undefined;
     let activeQuestionDocId: string | undefined;
+
     if (this.activeQuestionDoc != null) {
       activeQuestionDocId = this.activeQuestionDoc.id;
     }
-    if (activeQuestionDocId == null || !questionDocs.some(question => question.id === activeQuestionDocId)) {
+
+    if (activeQuestionDocId == null || !this.questionDocs.some(question => question.id === activeQuestionDocId)) {
       if (this._projectUserConfigDoc?.data != null) {
         const lastQuestionDocId = this._projectUserConfigDoc.data.selectedQuestionRef;
+
         if (lastQuestionDocId != null) {
-          questionToActivate = questionDocs.find(qd => qd.id === lastQuestionDocId);
+          questionToActivate = this.questionDocs.find(qd => qd.id === lastQuestionDocId);
         }
       }
     } else {
-      return this.activeQuestionDoc!;
+      questionToActivate = this.activeQuestionDoc;
     }
+
     if (questionToActivate == null) {
-      questionToActivate = questionDocs[0];
+      questionToActivate = this.questionDocs[0];
     }
+
     this.activateQuestion(questionToActivate, actionSource);
     return questionToActivate;
   }
@@ -294,8 +301,8 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
       });
   }
 
-  checkCanChangeQuestion(newIndex: number): boolean {
-    return !!this.questionDocs[this.activeQuestionIndex + newIndex];
+  checkCanChangeQuestion(relativeIndex: number): boolean {
+    return !!this.questionDocs[this.activeQuestionIndex + relativeIndex];
   }
 
   hasUserAnswered(questionDoc: QuestionDoc): boolean {
@@ -331,15 +338,22 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
     if (this.activeQuestionDoc != null && this.activeQuestionDoc.id === questionDoc.id) {
       questionChanged = false;
     }
+
     this.activeQuestionDoc = questionDoc;
+
     if (questionDoc.data != null) {
       this.storeMostRecentQuestion(questionDoc.data.verseRef.bookNum).then(() => {
-        this.changed.emit({ questionDoc, actionSource });
+        // Only emit if not a filter to avoid duplicate emission, as an emit from filter is called elsewhere
+        if (!actionSource?.isQuestionListChange) {
+          this.changed.emit({ questionDoc, actionSource });
+        }
+
         if (questionChanged) {
           this.activeQuestionDoc$.next(questionDoc);
         }
       });
     }
+
     setTimeout(() => this.scrollToActiveQuestion());
   }
 

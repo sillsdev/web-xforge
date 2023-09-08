@@ -1,0 +1,210 @@
+import { Injectable } from '@angular/core';
+import { merge } from 'lodash-es';
+import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
+import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { QuestionDoc } from 'src/app/core/models/question-doc';
+import { FileService } from './file.service';
+import { FileType } from './models/file-offline-data';
+import { RealtimeQuery } from './models/realtime-query';
+import { ComparisonOperator, PropertyFilter, QueryParameters, SortDirection } from './query-parameters';
+import { RealtimeService } from './realtime.service';
+
+export enum QuestionFilter {
+  None,
+  CurrentUserHasAnswered,
+  CurrentUserHasNotAnswered,
+  HasAnswers,
+  NoAnswers,
+  StatusNone,
+  StatusExport,
+  StatusResolved
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CheckingQuestionsService {
+  constructor(private readonly realtimeService: RealtimeService, private readonly fileService: FileService) {}
+
+  /**
+   * Query project questions that match the supplied criteria.
+   */
+  queryQuestions(
+    projectId: string,
+    options: { bookNum?: number; chapterNum?: number; activeOnly?: boolean; sort?: boolean } = {}
+  ): Promise<RealtimeQuery<QuestionDoc>> {
+    const queryParams: QueryParameters = {
+      [obj<Question>().pathStr(q => q.projectRef)]: projectId
+    };
+
+    if (options.bookNum != null) {
+      queryParams[obj<Question>().pathStr(q => q.verseRef.bookNum)] = options.bookNum;
+    }
+
+    if (options.chapterNum != null) {
+      queryParams[obj<Question>().pathStr(q => q.verseRef.chapterNum)] = options.chapterNum;
+    }
+
+    if (options.activeOnly != null && options.activeOnly) {
+      queryParams[obj<Question>().pathStr(q => q.isArchived)] = false;
+    }
+
+    if (options.sort != null) {
+      queryParams.$sort = {
+        [obj<Question>().pathStr(q => q.verseRef.bookNum)]: 1,
+        [obj<Question>().pathStr(q => q.verseRef.chapterNum)]: 1,
+        [obj<Question>().pathStr(q => q.verseRef.verseNum)]: 1,
+        [obj<Question>().pathStr(q => q.dateCreated)]: 1
+      };
+    }
+
+    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
+  }
+
+  /**
+   * Query the question that is adjacent to the supplied question.
+   * @param projectId The ID of the project to query
+   * @param relativeTo The question or verse to use as a reference point
+   * @param questionFilter The filter to apply to the results
+   * @param prevOrNext Whether to query the question before or after the reference point
+   */
+  queryAdjacentQuestion(
+    projectId: string,
+    relativeTo: Question | VerseRefData,
+    questionFilter: QuestionFilter,
+    prevOrNext: 'prev' | 'next'
+  ): Promise<RealtimeQuery<QuestionDoc>> {
+    const verseRef: VerseRefData = this.isVerseRefData(relativeTo) ? relativeTo : relativeTo.verseRef;
+    const currentQuestion: Question | undefined = this.isVerseRefData(relativeTo) ? undefined : relativeTo;
+    const comparisonOperator: ComparisonOperator = prevOrNext === 'prev' ? '$lt' : '$gt';
+    const sortOrder: SortDirection = prevOrNext === 'prev' ? -1 : 1;
+
+    const queryParams: QueryParameters = {
+      [obj<Question>().pathStr(q => q.projectRef)]: projectId,
+      [obj<Question>().pathStr(q => q.isArchived)]: false,
+
+      $and: [
+        // Exclude the current question if supplied
+        currentQuestion != null ? { [obj<Question>().pathStr(q => q.dataId)]: { $ne: currentQuestion.dataId } } : {},
+        {
+          $or: [
+            // If same book/chapter/verse, compare using date created
+            {
+              $and: [
+                { [obj<Question>().pathStr(q => q.verseRef.bookNum)]: verseRef.bookNum },
+                { [obj<Question>().pathStr(q => q.verseRef.chapterNum)]: verseRef.chapterNum },
+                { [obj<Question>().pathStr(q => q.verseRef.verseNum)]: verseRef.verseNum },
+
+                // If current question supplied, compare using date created
+                currentQuestion != null
+                  ? {
+                      [obj<Question>().pathStr(q => q.dateCreated)]: {
+                        [comparisonOperator]: currentQuestion.dateCreated
+                      }
+                    }
+                  : {}
+              ]
+            },
+            {
+              // If same book/chapter, compare using verse
+              $and: [
+                { [obj<Question>().pathStr(q => q.verseRef.bookNum)]: verseRef.bookNum },
+                { [obj<Question>().pathStr(q => q.verseRef.chapterNum)]: verseRef.chapterNum },
+                { [obj<Question>().pathStr(q => q.verseRef.verseNum)]: { [comparisonOperator]: verseRef.verseNum } }
+              ]
+            },
+            {
+              // If same book, compare using chapter
+              $and: [
+                { [obj<Question>().pathStr(q => q.verseRef.bookNum)]: verseRef.bookNum },
+                { [obj<Question>().pathStr(q => q.verseRef.chapterNum)]: { [comparisonOperator]: verseRef.chapterNum } }
+              ]
+            },
+            // Otherwise, compare using closest book
+            { [obj<Question>().pathStr(q => q.verseRef.bookNum)]: { [comparisonOperator]: verseRef.bookNum } }
+          ]
+        }
+      ],
+
+      $sort: {
+        [obj<Question>().pathStr(q => q.verseRef.bookNum)]: sortOrder,
+        [obj<Question>().pathStr(q => q.verseRef.chapterNum)]: sortOrder,
+        [obj<Question>().pathStr(q => q.verseRef.verseNum)]: sortOrder,
+        [obj<Question>().pathStr(q => q.dateCreated)]: sortOrder
+      },
+      $limit: 1
+    };
+
+    return this.realtimeService.subscribeQuery(
+      QuestionDoc.COLLECTION,
+      merge(queryParams, this.getFilterForQuestionFilter(questionFilter))
+    );
+  }
+
+  async createQuestion(
+    id: string,
+    question: Question,
+    audioFileName?: string,
+    audioBlob?: Blob
+  ): Promise<QuestionDoc | undefined> {
+    const docId = getQuestionDocId(id, question.dataId);
+
+    if (audioFileName != null && audioBlob != null) {
+      const audioUrl = await this.fileService.uploadFile(
+        FileType.Audio,
+        id,
+        QuestionDoc.COLLECTION,
+        question.dataId,
+        docId,
+        audioBlob,
+        audioFileName,
+        true
+      );
+
+      if (audioUrl == null) {
+        return;
+      }
+
+      question.audioUrl = audioUrl;
+    }
+
+    return this.realtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question);
+  }
+
+  private getFilterForQuestionFilter(filter: QuestionFilter): PropertyFilter {
+    switch (filter) {
+      case QuestionFilter.HasAnswers:
+        return { [obj<Question>().pathStr(q => q.answers)]: { $ne: [] } };
+      case QuestionFilter.NoAnswers:
+        return { [obj<Question>().pathStr(q => q.answers)]: { $size: 0 } };
+      case QuestionFilter.StatusNone:
+        return {
+          [obj<Question>().pathStr(q => q.answers)]: {
+            $elemMatch: { [obj<Answer>().pathStr(a => a.status)]: { $in: [null, AnswerStatus.None] } }
+          }
+        };
+      case QuestionFilter.StatusExport:
+        return {
+          [obj<Question>().pathStr(q => q.answers)]: {
+            $elemMatch: { [obj<Answer>().pathStr(a => a.status)]: AnswerStatus.Exportable }
+          }
+        };
+      case QuestionFilter.StatusResolved:
+        return {
+          [obj<Question>().pathStr(q => q.answers)]: {
+            $elemMatch: { [obj<Answer>().pathStr(a => a.status)]: AnswerStatus.Resolved }
+          }
+        };
+      case QuestionFilter.None:
+      default:
+        return {};
+    }
+  }
+
+  private isVerseRefData(item: Question | VerseRefData): item is VerseRefData {
+    const verseRef: VerseRefData = item as VerseRefData;
+    return verseRef.bookNum != null && verseRef.chapterNum != null && verseRef.verseNum != null;
+  }
+}

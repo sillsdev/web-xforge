@@ -261,7 +261,7 @@
     "questions": "ຄຳຖາມ"
   },
   "checking_questions": {
-    "no_questions_found": "No questions found to match your filter",
+    "no_questions_found_filtered": "No questions found to match your filter",
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
     "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
     "view_answers": "View answers"

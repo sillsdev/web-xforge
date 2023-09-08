@@ -3,7 +3,12 @@ import { Cursor } from 'mingo/cursor';
 import { Snapshot } from './models/snapshot';
 import { nameof } from './utils';
 
-export type PrimitiveType = number | string | boolean;
+export type PrimitiveType = number | string | boolean | null | undefined;
+
+/**
+ * A string that doesn't start with '$'
+ */
+export type PropertyName = Exclude<string, `$${string}`>;
 
 export interface RegexFilter {
   $regex: string;
@@ -14,33 +19,53 @@ export interface InFilter {
   $in: PrimitiveType[];
 }
 
-export interface EqFilter {
-  $eq: PrimitiveType;
+export interface ArrayFilter {
+  $elemMatch?: PropertyFilter;
+  $size?: number;
 }
 
-export type Filter = PrimitiveType | RegexFilter | InFilter | EqFilter;
-
-export interface Filters {
-  [path: string]: Filter | Filters[] | undefined;
-  $and?: Filters[];
-  $or?: Filters[];
-  $nor?: Filters[];
+export interface ComparisonFilter {
+  $eq?: any;
+  $ne?: any;
+  $gt?: PrimitiveType;
+  $gte?: PrimitiveType;
+  $lt?: PrimitiveType;
+  $lte?: PrimitiveType;
 }
+
+export type ComparisonOperator = Extract<keyof ComparisonFilter, string>;
+
+export type ObjectFilter = RegexFilter | InFilter | ArrayFilter | ComparisonFilter;
+
+export interface ConjunctionFilter {
+  $and?: QueryFilter[];
+  $or?: QueryFilter[];
+  $nor?: QueryFilter[];
+}
+
+export interface PropertyFilter {
+  [path: PropertyName]: PrimitiveType | ObjectFilter;
+}
+
+export type QueryFilter = PropertyFilter | ConjunctionFilter;
+
+export type SortDirection = 1 | -1;
 
 export interface Sort {
-  [path: string]: 1 | -1;
+  [path: PropertyName]: SortDirection;
 }
 
-/**
- * This interface represents the parameters for a real-time query. It includes options for filter, sorting, and paging.
- */
-export interface QueryParameters {
-  [path: string]: Filter | Sort | undefined;
+export interface PipelineOperators {
   $sort?: Sort;
   $skip?: number;
   $limit?: number;
   $count?: true;
 }
+
+/**
+ * This type represents the parameters for a real-time query. It includes options for filter, sorting, and paging.
+ */
+export type QueryParameters = QueryFilter & PipelineOperators;
 
 export interface QueryResults<T> {
   results: T[] | number;
@@ -73,14 +98,14 @@ export function performQuery<T>(parameters: QueryParameters, snapshots: T[]): Qu
   return { results: cursor.all() as T[], unpagedCount: unpagedCursor.count() };
 }
 
-function toMingoCriteria(filters: QueryParameters | Filters): any {
+function toMingoCriteria(filters: QueryParameters): any {
   const criteria: any = {};
   for (const key of Object.keys(filters)) {
     switch (key) {
       case '$and':
       case '$or':
       case '$nor':
-        const subFiltersArray = filters[key] as Filters[];
+        const subFiltersArray = filters[key] as PropertyFilter[];
         criteria[key] = subFiltersArray.map(f => toMingoCriteria(f));
         break;
 

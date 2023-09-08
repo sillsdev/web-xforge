@@ -15,6 +15,7 @@ export class BookChapterChooserComponent {
   @Input() book?: number;
   @Input() chapters: number[] = [];
   @Input() chapter?: number;
+  @Input() prevNextEnabled?: boolean = true;
 
   @Output() chapterChange = new EventEmitter<number>();
   @Output() bookChange = new EventEmitter<number>();

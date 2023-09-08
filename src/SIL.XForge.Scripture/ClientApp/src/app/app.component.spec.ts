@@ -2,7 +2,7 @@ import { MdcDialog } from '@angular-mdc/web';
 import { CommonModule, Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Route, Router } from '@angular/router';
@@ -21,6 +21,7 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService, LoginResult } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { CheckingQuestionsService } from 'xforge-common/checking-questions.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FileService } from 'xforge-common/file.service';
@@ -51,6 +52,7 @@ const mockedSettingsAuthGuard = mock(SettingsAuthGuard);
 const mockedSyncAuthGuard = mock(SyncAuthGuard);
 const mockedUsersAuthGuard = mock(UsersAuthGuard);
 const mockedSFProjectService = mock(SFProjectService);
+const mockedQuestionsService = mock(CheckingQuestionsService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedLocationService = mock(LocationService);
@@ -99,6 +101,7 @@ describe('AppComponent', () => {
       { provide: SyncAuthGuard, useMock: mockedSyncAuthGuard },
       { provide: UsersAuthGuard, useMock: mockedUsersAuthGuard },
       { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: CheckingQuestionsService, useMock: mockedQuestionsService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: LocationService, useMock: mockedLocationService },
@@ -110,6 +113,10 @@ describe('AppComponent', () => {
       { provide: MdcDialog, useMock: mockedMdcDialog },
       { provide: DialogService, useMock: mockedDialogService }
     ]
+  }));
+
+  afterEach(fakeAsync(() => {
+    discardPeriodicTasks();
   }));
 
   it('navigate to last project', fakeAsync(() => {
@@ -631,7 +638,7 @@ class TestEnvironment {
     this.addUser('user04', 'User 04', 'sms|user04');
 
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, []);
-    when(mockedSFProjectService.queryQuestions(anything(), anything())).thenCall((_projectId, options) => {
+    when(mockedQuestionsService.queryQuestions(anything(), anything())).thenCall((_projectId, options) => {
       const parameters: QueryParameters = {};
       if (options.bookNum != null) parameters[obj<Question>().pathStr(q => q.verseRef.bookNum)] = options.bookNum;
       if (options.activeOnly) parameters[obj<Question>().pathStr(q => q.isArchived)] = false;

@@ -261,7 +261,7 @@
     "questions": "Questions"
   },
   "checking_questions": {
-    "no_questions_found": "Aucune question trouvée correspondant à votre filtre",
+    "no_questions_found_filtered": "Aucune question trouvée correspondant à votre filtre",
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
     "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
     "view_answers": "View answers"
