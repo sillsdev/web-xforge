@@ -80,7 +80,7 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.component.timingErrorMessage).toEqual('');
   }));
 
-  it('should default selection to first chapter with question and no audio', fakeAsync(async () => {
+  it('should default selection to first chapter with question and no audio', fakeAsync(() => {
     const chapterOfFirstQuestion: Chapter = TestEnvironment.textsByBookId[
       Canon.bookNumberToId(env.question1.data?.verseRef.bookNum!)
     ].chapters.find(c => c.number === env.question1.data?.verseRef.chapterNum)!;
@@ -90,7 +90,7 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.component.chapter).toEqual(env.question1.data?.verseRef.chapterNum!);
   }));
 
-  it('defaults selection to provided book and chapter', fakeAsync(async () => {
+  it('defaults selection to provided book and chapter', fakeAsync(() => {
     const config: MatDialogConfig<ChapterAudioDialogData> = {
       data: {
         projectId: 'project01',
@@ -109,7 +109,7 @@ describe('ChapterAudioDialogComponent', () => {
     flush();
   }));
 
-  it('detects if selection has audio already', fakeAsync(async () => {
+  it('detects if selection has audio already', fakeAsync(() => {
     const firstChapterWithAudio: Chapter = Object.entries(TestEnvironment.textsByBookId)
       .map(([, value]) => value.chapters)
       .flat(1)
@@ -129,7 +129,7 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.component.selectionHasAudioAlready).toBeTruthy();
   }));
 
-  it('detects if first chapter has audio already', fakeAsync(async () => {
+  it('detects if first chapter has audio already', fakeAsync(() => {
     // Get the first chapter with audio
     const firstChapterWithAudio: Chapter = Object.entries(TestEnvironment.textsByBookId)
       .map(([, value]) => value.chapters)
@@ -160,7 +160,7 @@ describe('ChapterAudioDialogComponent', () => {
     flush();
   }));
 
-  it('populates books and chapters', fakeAsync(async () => {
+  it('populates books and chapters', fakeAsync(() => {
     expect(env.component.books.length).toEqual(2);
 
     for (let i of Object.entries(TestEnvironment.textsByBookId)) {
@@ -202,42 +202,42 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
-  it('can also parse mm:ss', fakeAsync(async () => {
+  it('can also parse mm:ss', fakeAsync(() => {
     when(mockedCsvService.parse(anything())).thenResolve([
       ['00:00', '0', 'v1'],
       ['00:01', '0', 'v2']
     ]);
 
-    await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    env.component.audioUpdate(env.audioFile);
+    env.component.prepareTimingFileUpload(anything());
 
     expect(env.component.timingErrorMessage).toEqual('');
   }));
 
-  it('can also parse hh:mm:ss', fakeAsync(async () => {
+  it('can also parse hh:mm:ss', fakeAsync(() => {
     when(mockedCsvService.parse(anything())).thenResolve([
       ['00:00:00', '0', 'v1'],
       ['00:00:01', '0', 'v2']
     ]);
 
-    await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    env.component.audioUpdate(env.audioFile);
+    env.component.prepareTimingFileUpload(anything());
 
     expect(env.component.timingErrorMessage).toEqual('');
   }));
 
-  it('will not save or upload if there is no audio', fakeAsync(async () => {
-    await env.component.prepareTimingFileUpload(anything());
-    await env.component.save();
+  it('will not save or upload if there is no audio', fakeAsync(() => {
+    env.component.prepareTimingFileUpload(anything());
+    env.component.save();
     env.fixture.detectChanges();
 
     expect(env.numberOfTimesDialogClosed).toEqual(0);
     expect(env.wrapperAudio.classList.contains('invalid')).toBe(true);
   }));
 
-  it('will not save or upload if there is no timing data', fakeAsync(async () => {
-    await env.component.audioUpdate(env.audioFile);
-    await env.component.save();
+  it('will not save or upload if there is no timing data', fakeAsync(() => {
+    env.component.audioUpdate(env.audioFile);
+    env.component.save();
     env.fixture.detectChanges();
 
     expect(env.numberOfTimesDialogClosed).toEqual(0);
