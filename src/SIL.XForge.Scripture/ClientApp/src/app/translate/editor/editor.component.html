@@ -2,9 +2,15 @@
   <div class="content" fxLayout="column">
     <div class="toolbar" fxLayout="row" fxLayoutAlign="start center">
       <div fxFlex fxLayout="row wrap">
-        <app-chapter-nav [bookNum]="bookNum" [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
+        <app-book-chapter-chooser
+          [book]="bookNum"
+          (bookChange)="setBook($event)"
+          [books]="books"
+          [(chapter)]="chapter"
+          [chapters]="chapters"
+        ></app-book-chapter-chooser>
         <ng-container *ngIf="showSource">
-          <div class="toolbar-separator" [fxHide.xs]="!translationSuggestionsProjectEnabled">&nbsp;</div>
+          <div class="toolbar-separator" fxHide.xs>&nbsp;</div>
           <button
             mat-icon-button
             appBlurOnClick
