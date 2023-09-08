@@ -45,28 +45,14 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     return !!this.audioPlayer?.audio?.isPlaying;
   }
 
-  /**
-   * Gets the corresponding reference for the timing entry based on the current audio player time.
-   * This supports timing data where text refs can be in the form 'v1', '1', '1-2', '1a', and 's' for section headings.
-   * TODO (scripture audio): support phrase and verse level timing data
-   */
-  get currentRef(): string | undefined {
+  private get currentVerseLabel(): string {
+    if (this._textDocId == null) return '';
     const currentTime: number = this.audioPlayer?.audio?.currentTime ?? 0;
-    const audioTiming: AudioTiming | undefined = this._timing.find(t => t.to > currentTime);
-    if (audioTiming?.textRef === 's') {
-      return 's_' + this._timing.filter(t => t.textRef === 's' && t.to <= audioTiming.to).length;
-    }
-    return audioTiming?.textRef;
-  }
-
-  get currentVerseLabel(): string {
-    if (this.currentRef == null || this.textDocId == null) return '';
-    const audioTextRef: AudioTextRef | undefined = CheckingUtils.parseAudioRef(this.currentRef);
-    // return the current verse if the ref is not associated with a verse
+    const currentVerseStr: string = this.getCurrentVerseStr(currentTime);
     const verseRef = new VerseRef(
-      Canon.bookNumberToId(this.textDocId.bookNum),
-      this.textDocId.chapterNum.toString(),
-      audioTextRef?.verseStr ?? this.currentVerseStr
+      Canon.bookNumberToId(this._textDocId.bookNum),
+      this._textDocId.chapterNum.toString(),
+      currentVerseStr
     );
     return this.i18n.localizeReference(verseRef);
   }
@@ -91,12 +77,11 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
 
   nextRef(): void {
     if (this.audioPlayer?.audio == null || this._timing.length < 1) return;
-    const currentRef = this.currentRef;
-    if (currentRef == null) return;
 
-    const currentTimingIndex: number = this.getRefIndexInTimings(currentRef);
+    const currentTimingIndex: number = this.getRefIndexInTimings(this.audioPlayer.audio.currentTime);
     if (currentTimingIndex < 0) {
       this.stop();
+      return;
     } else if (this.audioPlayer.audio.currentTime < this._timing[currentTimingIndex].from) {
       // The first timing index doesn't always start at zero so this allows skipping to the start of the first reference
       this.audioPlayer.audio.currentTime = this._timing[currentTimingIndex].from;
@@ -119,12 +104,11 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   previousRef(): void {
     if (this.audioPlayer?.audio == null || this._timing.length < 1) return;
     const skipBackGracePeriod = 3;
-    const currentRef = this.currentRef;
-    if (currentRef == null) return;
 
-    const currentTimingIndex: number = this.getRefIndexInTimings(currentRef);
+    const currentTimingIndex: number = this.getRefIndexInTimings(this.audioPlayer.audio.currentTime);
     if (currentTimingIndex < 0) {
       this.audioPlayer.audio.currentTime = 0;
+      return;
     } else if (this.audioPlayer.audio.currentTime > this._timing[currentTimingIndex].from + skipBackGracePeriod) {
       // Move to the start of the reference that had already been playing
       // rather than the start of the previous reference - this mimics Spotify previous track logic
@@ -142,21 +126,8 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     this.audioPlayer?.audio?.stop();
   }
 
-  private getRefIndexInTimings(ref: string): number {
-    if (CheckingUtils.parseAudioRef(ref)?.verseStr != null) {
-      return this._timing.findIndex(t => t.textRef === ref)!;
-    }
-    // ref is a section heading
-    let headingNumber: number = +ref.split('_')[1];
-    for (let i = 0; i < this._timing.length; i++) {
-      if (this._timing[i].textRef === 's') {
-        headingNumber--;
-        if (headingNumber === 0) {
-          return i;
-        }
-      }
-    }
-    return -1;
+  private getRefIndexInTimings(currentTime: number): number {
+    return this._timing.findIndex(t => t.to > currentTime);
   }
 
   private subscribePlayerVerseChange(audio: AudioPlayer): void {
