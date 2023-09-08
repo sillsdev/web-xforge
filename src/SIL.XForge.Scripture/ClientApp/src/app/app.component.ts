@@ -1,13 +1,9 @@
-import { MdcIconRegistry } from '@angular-mdc/web';
 import { MdcSelect } from '@angular-mdc/web/select';
 import { MdcTopAppBar } from '@angular-mdc/web/top-app-bar';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
-import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { DefaultFocusState } from '@material/menu/constants';
 import { translate } from '@ngneat/transloco';
-import { Canon } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/models/user';
@@ -61,8 +57,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   isAppOnline: boolean = false;
   isExpanded: boolean = false;
   versionNumberClickCount = 0;
-  translateVisible: boolean = false;
-  checkingVisible: boolean = false;
 
   projectDocs?: SFProjectProfileDoc[];
   canSeeSettings$?: Observable<boolean>;
@@ -78,7 +72,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private isLoggedInUserAnonymous: boolean = false;
   private _projectSelect?: MdcSelect;
   private _topAppBar?: MdcTopAppBar;
-  private selectedProjectDoc?: SFProjectProfileDoc;
+  selectedProjectDoc?: SFProjectProfileDoc;
   private selectedProjectDeleteSub?: Subscription;
   private removedFromProjectSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
@@ -105,9 +99,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
-    onlineStatusService: OnlineStatusService,
-    iconRegistry: MdcIconRegistry,
-    sanitizer: DomSanitizer
+    onlineStatusService: OnlineStatusService
   ) {
     super(noticeService);
     this.subscribe(
@@ -153,7 +145,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
       });
     }
-    iconRegistry.addSvgIcon('translate', sanitizer.bypassSecurityTrustResourceUrl('/assets/icons/translate.svg'));
   }
 
   get showCheckingDisabled(): boolean {
@@ -167,17 +158,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   get issueMailTo(): string {
     return issuesEmailTemplate();
-  }
-
-  /** If is production server. */
-  get isLive(): boolean {
-    return environment.releaseStage === 'live';
-  }
-
-  @ViewChild('topAppBar', { static: true })
-  set topAppBar(value: MdcTopAppBar) {
-    this._topAppBar = value;
-    this.setTopAppBarVariant();
   }
 
   get projectSelect(): MdcSelect | undefined {
@@ -236,11 +216,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this.selectedProjectRole != null && canAccessCommunityCheckingApp(this.selectedProjectRole);
   }
 
-  get hasSingleAppEnabled(): boolean {
-    const appStatus: boolean[] = [this.isTranslateEnabled, this.isCheckingEnabled];
-    return appStatus.filter(enabled => enabled).length === 1;
-  }
-
   get currentUser(): User | undefined {
     return this.currentUserDoc == null ? undefined : this.currentUserDoc.data;
   }
@@ -268,23 +243,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   get texts(): TextInfo[] {
     return this.selectedProjectDoc?.data?.texts.slice().sort((a, b) => a.bookNum - b.bookNum) || [];
-  }
-
-  get showAllQuestions(): boolean {
-    let count = 0;
-    for (const text of this.texts) {
-      if (this.hasQuestions(text)) {
-        count++;
-      }
-      if (count > 1) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  get defaultFocusState(): DefaultFocusState {
-    return !this.isAppOnline ? DefaultFocusState.NONE : DefaultFocusState.LIST_ROOT;
   }
 
   async ngOnInit(): Promise<void> {
@@ -328,18 +286,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         return route;
       }),
       filter(r => r.outlet === 'primary'),
-      tap(r => {
-        // ensure that the task of the current view has been expanded
-        for (const segment of r.url) {
-          if (segment.path === 'translate') {
-            this.translateVisible = true;
-            break;
-          } else if (segment.path === 'checking') {
-            this.checkingVisible = true;
-            break;
-          }
-        }
-      }),
       map(r => r.params['projectId'] as string | undefined),
       distinctUntilChanged(),
       tap(projectId => {
@@ -404,12 +350,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
       });
 
-      if (!this.isTranslateEnabled) {
-        this.translateVisible = false;
-      }
-      if (!this.isCheckingEnabled) {
-        this.checkingVisible = false;
-      }
       if (this._projectSelect != null) {
         this._projectSelect.value = this.selectedProjectDoc.id;
       }
@@ -505,43 +445,12 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.isExpanded = false;
   }
 
-  getBookName(text: TextInfo): string {
-    return this.i18n.localizeBook(text.bookNum);
-  }
-
-  getBookId(text: TextInfo): string {
-    return Canon.bookNumberToId(text.bookNum);
-  }
-
-  getRouterLink(tool: string, extension?: string): string[] {
-    if (this.selectedProjectId == null) {
-      return [];
-    }
-    const link = ['/projects', this.selectedProjectId, tool];
-    if (extension != null && extension !== '') {
-      link.push(extension);
-    }
-    return link;
-  }
-
-  hasQuestions(text: TextInfo): boolean {
-    return this.communityCheckingBooks.includes(text.bookNum);
-  }
-
   reloadWithUpdates(): void {
     this.pwaService.activateUpdates();
   }
 
   openFeatureFlagDialog(): void {
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
-  }
-
-  get lastSyncFailed(): boolean {
-    return this.selectedProjectDoc?.data?.sync.lastSyncSuccessful === false && !this.syncInProgress;
-  }
-
-  get syncInProgress(): boolean {
-    return this.selectedProjectDoc?.data != null && this.selectedProjectDoc.data.sync.queuedCount > 0;
   }
 
   get appName(): string {
