@@ -22,6 +22,8 @@ import {
   getAudioBlob
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { PwaService } from 'xforge-common/pwa.service';
+import { of } from 'rxjs';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
@@ -34,6 +36,7 @@ import {
 const mockedDialogService = mock(DialogService);
 const mockedCsvService = mock(CsvService);
 const mockedFileService = mock(FileService);
+const mockedPwaService = mock(PwaService);
 
 describe('ChapterAudioDialogComponent', () => {
   configureTestingModule(() => ({
@@ -41,7 +44,8 @@ describe('ChapterAudioDialogComponent', () => {
     providers: [
       { provide: DialogService, useMock: mockedDialogService },
       { provide: CsvService, useMock: mockedCsvService },
-      { provide: FileService, useMock: mockedFileService }
+      { provide: FileService, useMock: mockedFileService },
+      { provide: PwaService, useMock: mockedPwaService }
     ]
   }));
 
@@ -289,6 +293,7 @@ class TestEnvironment {
       };
     }
 
+    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
     when(mockedCsvService.parse(anything())).thenResolve([
       ['0.1', '0', 'v1'],
