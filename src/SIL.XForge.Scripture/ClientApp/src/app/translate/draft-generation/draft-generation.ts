@@ -26,7 +26,7 @@ export const DRAFT_GENERATION_SERVICE_OPTIONS = new InjectionToken<DraftGenerati
   {
     providedIn: 'root',
     factory: () => ({
-      pollRate: 1000 * 60 * 5 // Default to 5 minutes
+      pollRate: 10_000 // Default to 10 seconds
     })
   }
 );

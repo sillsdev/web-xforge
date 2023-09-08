@@ -237,10 +237,42 @@ describe('DraftGenerationComponent', () => {
 
     it('should not attempt "cancel dialog" close for queued build', () => {
       let env = new TestEnvironment(() => {
-        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(of(buildDto));
+        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(
+          of({ ...buildDto, state: BuildStates.Queued })
+        );
       });
 
-      const mockDialogRef = mock(MatDialogRef);
+      const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
+      env.component.cancelDialogRef = instance(mockDialogRef);
+
+      env.component.generateDraft();
+      verify(mockDialogRef.getState()).never();
+      verify(mockDialogRef.close()).never();
+    });
+
+    it('should not attempt "cancel dialog" close for pending build', () => {
+      let env = new TestEnvironment(() => {
+        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(
+          of({ ...buildDto, state: BuildStates.Pending })
+        );
+      });
+
+      const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
+      env.component.cancelDialogRef = instance(mockDialogRef);
+
+      env.component.generateDraft();
+      verify(mockDialogRef.getState()).never();
+      verify(mockDialogRef.close()).never();
+    });
+
+    it('should not attempt "cancel dialog" close for active build', () => {
+      let env = new TestEnvironment(() => {
+        mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(
+          of({ ...buildDto, state: BuildStates.Active })
+        );
+      });
+
+      const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.generateDraft();

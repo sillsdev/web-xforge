@@ -4,12 +4,12 @@ import { isEmpty } from 'lodash-es';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { Observable, of, Subscription } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
-import { BuildDto } from 'src/app/machine-api/build-dto';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
+import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates } from './draft-generation';
@@ -104,24 +104,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       )
     );
 
-    this.jobSubscription = this.subscribe(
-      this.activatedProject.projectId$.pipe(
-        filterNullish(),
-        switchMap(projectId =>
-          this.draftGenerationService
-            .getBuildProgress(projectId)
-            .pipe(
-              switchMap((job?: BuildDto) =>
-                this.isDraftInProgress(job) ? this.draftGenerationService.pollBuildProgress(projectId) : of(job)
-              )
-            )
-        )
-      ),
-      (job?: BuildDto) => {
-        this.draftJob = job;
-        this.isDraftJobFetched = true;
-      }
-    );
+    this.pollBuild();
   }
 
   // TODO: update i18n
@@ -141,20 +124,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       }
     }
 
-    this.jobSubscription?.unsubscribe();
-    this.jobSubscription = this.subscribe(
-      this.draftGenerationService.startBuildOrGetActiveBuild(this.activatedProject.projectId!).pipe(
-        tap((job?: BuildDto) => {
-          // Handle automatic closing of dialog if job finishes while cancel dialog is open
-          if (!this.canCancel(job)) {
-            if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
-              this.cancelDialogRef.close();
-            }
-          }
-        })
-      ),
-      (job?: BuildDto) => (this.draftJob = job)
-    );
+    this.startBuild();
   }
 
   // TODO: update i18n
@@ -179,7 +149,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       }
     }
 
-    this.draftGenerationService.cancelBuild(this.activatedProject.projectId!).subscribe();
+    this.cancelBuild();
   }
 
   getTargetLanguageDisplayName(): string | undefined {
@@ -227,7 +197,57 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     return (job?.state as BuildStates) === BuildStates.Completed;
   }
 
+  isDraftFaulted(job?: BuildDto): boolean {
+    return (job?.state as BuildStates) === BuildStates.Faulted;
+  }
+
   canCancel(job?: BuildDto): boolean {
-    return !job || this.isDraftInProgress(job);
+    return job == null || this.isDraftInProgress(job);
+  }
+
+  private startBuild(): void {
+    this.jobSubscription?.unsubscribe();
+    this.jobSubscription = this.subscribe(
+      this.draftGenerationService.startBuildOrGetActiveBuild(this.activatedProject.projectId!).pipe(
+        tap((job?: BuildDto) => {
+          // Handle automatic closing of dialog if job finishes while cancel dialog is open
+          if (!this.canCancel(job)) {
+            if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
+              this.cancelDialogRef.close();
+            }
+          }
+        })
+      ),
+      (job?: BuildDto) => (this.draftJob = job)
+    );
+  }
+
+  private pollBuild(): void {
+    this.jobSubscription?.unsubscribe();
+    this.jobSubscription = this.subscribe(
+      this.activatedProject.projectId$.pipe(
+        filterNullish(),
+        switchMap(projectId =>
+          this.draftGenerationService
+            .getBuildProgress(projectId)
+            .pipe(
+              switchMap((job?: BuildDto) =>
+                this.isDraftInProgress(job) ? this.draftGenerationService.pollBuildProgress(projectId) : of(job)
+              )
+            )
+        )
+      ),
+      (job?: BuildDto) => {
+        this.draftJob = job;
+        this.isDraftJobFetched = true;
+      }
+    );
+  }
+
+  private cancelBuild(): void {
+    this.draftGenerationService.cancelBuild(this.activatedProject.projectId!).subscribe(() => {
+      // If build is canceled, update job immediately instead of waiting for next poll cycle
+      this.pollBuild();
+    });
   }
 }
