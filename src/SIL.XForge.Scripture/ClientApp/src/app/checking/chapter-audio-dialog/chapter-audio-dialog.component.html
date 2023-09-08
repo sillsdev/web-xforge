@@ -10,7 +10,7 @@
       <button mat-flat-button color="primary" type="submit">{{ t("checking_audio_dialog.browse_files") }}</button>
     </div>
     <div class="data-blocks">
-      <div class="wrapper valid">
+      <div class="wrapper wrapper-book-chapter valid">
         <mat-icon *ngIf="!selectionHasAudioAlready">book</mat-icon>
         <app-info
           *ngIf="selectionHasAudioAlready"
@@ -26,7 +26,7 @@
           <mat-option *ngFor="let c of chapters" [value]="c">{{ c }}</mat-option>
         </mat-select>
       </div>
-      <div class="wrapper" [ngClass]="{ valid: hasAudioBeenUploaded, invalid: audioErrorMessage !== '' }">
+      <div class="wrapper wrapper-audio" [ngClass]="{ valid: hasAudioBeenUploaded, invalid: audioErrorMessage !== '' }">
         <ng-container *ngIf="hasAudioBeenUploaded">
           <app-single-button-audio-player
             #chapterAudio
@@ -49,7 +49,10 @@
           }}</span>
         </ng-container>
       </div>
-      <div class="wrapper" [ngClass]="{ valid: hasTimingBeenUploaded, invalid: timingErrorMessage !== '' }">
+      <div
+        class="wrapper wrapper-timing"
+        [ngClass]="{ valid: hasTimingBeenUploaded, invalid: timingErrorMessage !== '' }"
+      >
         <mat-icon class="material-icons-outlined">timer</mat-icon>
         <span *ngIf="hasTimingBeenUploaded">{{
           t("checking_audio_dialog.segments_found", { segments: numberOfTimingSegments })
