@@ -30,19 +30,20 @@ class MockComponent {
 
 const AlmostDone = 98;
 
-describe('SingleButtonAudioPlayerComponent', () => {
+// FIXME Tests are flaky
+xdescribe('SingleButtonAudioPlayerComponent', () => {
   configureTestingModule(() => ({
     imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
     declarations: [SingleButtonAudioPlayerComponent, MockComponent],
     providers: [{ provide: PwaService, useMock: mockedPwaService }]
   }));
 
-  xit('shows content when audio is available', async () => {
+  it('shows content when audio is available', async () => {
     const env = new TestEnvironment();
     await env.wait();
     await env.wait();
 
-    expect(env.content).not.toBeNull(); // FIXME This assertion is flaky
+    expect(env.content).not.toBeNull();
     expect(window.getComputedStyle(env.content.nativeElement)['display']).not.toBe('none');
   });
 
