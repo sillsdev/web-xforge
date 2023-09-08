@@ -1,6 +1,6 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Canon } from '@sillsdev/scripture';
@@ -181,8 +181,10 @@ describe('ChapterAudioDialogComponent', () => {
 
     await env.component.audioUpdate(env.audioFile);
     await env.component.prepareTimingFileUpload(anything());
+    await env.wait();
 
     expect(env.component.timingErrorMessage).toContain('zero_segments');
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
   it('shows warning if From field goes beyond audio length', fakeAsync(async () => {
@@ -197,6 +199,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.wait();
 
     expect(env.component.timingErrorMessage).toContain('timing_past_audio_length');
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
   it('can also parse mm:ss', fakeAsync(async () => {
@@ -226,15 +229,50 @@ describe('ChapterAudioDialogComponent', () => {
   it('will not save or upload if there is no audio', fakeAsync(async () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.component.save();
+    env.fixture.detectChanges();
 
     expect(env.numberOfTimesDialogClosed).toEqual(0);
+    expect(env.wrapperAudio.classList.contains('invalid')).toBe(true);
   }));
 
   it('will not save or upload if there is no timing data', fakeAsync(async () => {
     await env.component.audioUpdate(env.audioFile);
     await env.component.save();
+    env.fixture.detectChanges();
 
     expect(env.numberOfTimesDialogClosed).toEqual(0);
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
+  }));
+
+  it('can drag and drop to initiate an upload', fakeAsync(() => {
+    env.component.prepareTimingFileUpload(anything());
+    env.fixture.detectChanges();
+    const dataTransfer = new DataTransfer();
+    for (const file of TestEnvironment.uploadFiles) {
+      dataTransfer.items.add(file);
+    }
+    const dropEvent = new DragEvent('drop', { dataTransfer });
+    env.dropzoneElement.dispatchEvent(dropEvent);
+    tick();
+
+    expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
+    expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
+  }));
+
+  it('can browse to upload files', fakeAsync(() => {
+    env.component.prepareTimingFileUpload(anything());
+    env.fixture.detectChanges();
+    const dataTransfer = new DataTransfer();
+    for (const file of TestEnvironment.uploadFiles) {
+      dataTransfer.items.add(file);
+    }
+    const event = new Event('change');
+    env.fileUploadElement.files = dataTransfer.files;
+    env.fileUploadElement.dispatchEvent(event);
+    tick();
+
+    expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
+    expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
   }));
 });
 
@@ -266,6 +304,7 @@ class TestEnvironment {
     [Canon.bookNumberToId(1)]: TestEnvironment.genesisText,
     [Canon.bookNumberToId(40)]: TestEnvironment.matthewText
   };
+  static uploadFiles: File[] = [new File([], 'audio.mp3'), new File([], 'timing.csv')];
 
   readonly question1: QuestionDoc = {
     data: { text: 'Genesis 3:1 question', verseRef: { bookNum: 1, chapterNum: 3, verseNum: 1 } }
@@ -338,8 +377,28 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  get fileUploadElement(): HTMLInputElement {
+    return this.dropzoneElement.querySelector('input[type=file]') as HTMLInputElement;
+  }
+
+  get dropzoneElement(): HTMLElement {
+    return this.overlayContainerElement.querySelector('.dropzone') as HTMLElement;
+  }
+
   get numberOfTimesDialogClosed(): number {
     return this.numTimesClosedFired;
+  }
+
+  get wrapperAudio(): HTMLElement {
+    return this.overlayContainerElement.querySelector('.wrapper-audio') as HTMLElement;
+  }
+
+  get wrapperTiming(): HTMLElement {
+    return this.overlayContainerElement.querySelector('.wrapper-timing') as HTMLElement;
+  }
+
+  private get overlayContainerElement(): HTMLElement {
+    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
   async wait(ms: number = 200): Promise<void> {
