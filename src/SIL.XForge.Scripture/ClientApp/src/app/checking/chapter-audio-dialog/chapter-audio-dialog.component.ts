@@ -195,7 +195,8 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
   }
 
   async save(): Promise<void> {
-    const canSave: boolean = this.hasAudioBeenUploaded && this.hasTimingBeenUploaded && this.book != null &&      this.chapter != null;
+    const canSave: boolean =
+      this.hasAudioBeenUploaded && this.hasTimingBeenUploaded && this.book != null && this.chapter != null;
     if (!this.hasTimingBeenUploaded) {
       this._timingErrorText = 'checking_audio_dialog.no_timing_data_uploaded';
     }
