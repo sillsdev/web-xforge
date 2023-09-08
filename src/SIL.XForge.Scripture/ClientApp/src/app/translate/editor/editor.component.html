@@ -2,7 +2,13 @@
   <div class="content" fxLayout="column">
     <div class="toolbar" fxLayout="row" fxLayoutAlign="start center">
       <div fxFlex fxLayout="row wrap">
-        <app-chapter-nav [bookNum]="bookNum" [(chapter)]="chapter" [chapters]="chapters"></app-chapter-nav>
+        <app-book-chapter-chooser
+          [book]="bookNum"
+          (bookChange)="setBook($event)"
+          [books]="books"
+          [(chapter)]="chapter"
+          [chapters]="chapters"
+        ></app-book-chapter-chooser>
         <ng-container *ngIf="showSource || suggestionsSettingsEnabled">
           <div class="toolbar-separator" [fxHide.xs]="!suggestionsSettingsEnabled">&nbsp;</div>
           <button
