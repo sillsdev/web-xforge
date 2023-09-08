@@ -15,22 +15,19 @@ export default meta;
 
 type Story = StoryObj<CheckingCommentFormComponent>;
 
-// The outlined form field has inconsistencies in how it renders the outline when focused.
-// Using Chromatic's diff tool at
-// https://6262c53f521620003ac2ff49-ukmsdlppcb.chromatic.com/?path=/story/stories-diff-threshold-check--test-yours-out
-// it appears a diff threshold of about 0.66 is needed to ignore the differences. For good measure it's rounded up to
-// 0.7. It may be possible to remove this after updating @angular/material.
-
 export const NewForm: Story = {
   parameters: {
-    chromatic: { diffThreshold: 0.7 }
+    // Disabled due to inconsistent rendering of Material outlined form field (the outline sometimes comes closer to the
+    // label than at other times)
+    chromatic: { disableSnapshot: true }
   }
 };
 
 export const EditForm: Story = {
   args: { text: 'This is a comment' },
   parameters: {
-    chromatic: { diffThreshold: 0.7 }
+    // Disabled for the same reason the story above
+    chromatic: { disableSnapshot: true }
   }
 };
 
