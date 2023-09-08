@@ -1,4 +1,4 @@
-@import '../checking-global-vars';
+@use '../checking-global-vars' as vars;
 
 :host {
   position: absolute;
@@ -9,21 +9,40 @@
   flex-direction: column;
 }
 
-.mdc-list {
+mat-icon {
+  flex-shrink: 0; // Text should shrink, not icons
+}
+
+.mat-list {
   width: 100%;
+  display: flex;
+  flex-direction: column;
   padding: 0;
 
-  .mdc-list-item {
+  .mat-list-item {
     cursor: pointer;
+    font-size: 14px;
+    height: 40px;
+    overflow: hidden;
+
+    // Separator between questions.
+    // Use inset box-shadow instead of border to avoid border showing under the 'answered question' marker.
+    // This color flattened would be #eceff1, but using alpha channel allows the background color to show through,
+    // which improves the separator look for 'selected' and 'read' backgrounds.
+    box-shadow: inset 0 -1px 0 0 #64798f1f;
+
+    ::ng-deep {
+      .mat-list-item-content {
+        justify-content: space-between; // Between question text and 'has answers' icon
+        gap: 5px;
+      }
+    }
 
     .question-title {
       display: flex;
       align-items: center;
       overflow: hidden;
-
-      .material-icons {
-        margin-right: 5px;
-      }
+      gap: 5px;
 
       &:before {
         position: absolute;
@@ -43,18 +62,15 @@
     }
 
     &.question-read {
+      background-color: vars.$questionReadBGColor;
+      color: vars.$questionReadTextColor;
+
       .question-text {
         font-weight: normal;
       }
     }
 
     &.question-unread {
-      .question-title {
-        &:before {
-          background-color: $questionUnread;
-        }
-      }
-
       .question-text {
         font-weight: bold;
       }
@@ -63,29 +79,30 @@
     &.question-answered {
       .question-title {
         &:before {
-          background-color: $questionAnswered;
+          background-color: vars.$questionAnswered;
+        }
+      }
+    }
+
+    &.selected {
+      background-color: vars.$questionSelectedColor;
+      color: #fff;
+
+      .view-answers {
+        mat-icon {
+          color: #fff;
         }
       }
     }
 
     .view-answers {
+      display: flex;
+      align-items: center;
       transform: scale(0);
       transition: 0.25s;
       position: relative;
-
-      span {
-        position: absolute;
-        top: -5px;
-        left: -7px;
-        background-color: $questionAnswerBubbleBackgroundColor;
-        color: $questionAnswerBubbleColor;
-        border-radius: 50%;
-        width: 16px;
-        height: 16px;
-        line-height: 18px;
-        text-align: center;
-        font-size: 10px;
-      }
+      top: 4px; // Give some space for answer count badge
+      color: var(--mdc-theme-text-hint-on-background);
     }
 
     &.question-has-answers {
@@ -93,8 +110,17 @@
         transform: scale(1);
       }
     }
+
+    &:hover {
+      background-color: #f5f5f5;
+
+      &.selected {
+        background-color: lighten(vars.$questionSelectedColor, 10%);
+      }
+    }
   }
 }
+
 .no-questions-found {
   font-size: 14px;
   padding: 0 16px;

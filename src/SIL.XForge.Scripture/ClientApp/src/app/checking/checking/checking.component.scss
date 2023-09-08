@@ -1,156 +1,249 @@
 @use '@material/icon-button/mixins' as icon-button;
-
+@use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 @import 'checking-global-vars';
-
 @import 'bootstrap/scss/mixins/breakpoints';
 
-#projects-app {
-  #checking-app-container {
-    height: 100%;
-  }
-  #question-drawer {
-    min-width: 300px;
-    border: 0;
-    @include media-breakpoint-up(md) {
-      z-index: 1;
-    }
-    &.mdc-drawer--modal {
-      top: 0;
-    }
-    .collapse-question-menu {
-      @include media-breakpoint-up(md) {
-        display: none;
-      }
-    }
-  }
-  #questions-panel {
-    .panel-heading {
-      flex-wrap: wrap;
-      &.filter-applied {
-        height: 66px;
-        margin-bottom: 6px;
-      }
-      h2 {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        span {
-          font-size: 14px;
-          opacity: 0.5;
-        }
-      }
-    }
-    .active-question-filter {
-      flex: 1 0 100%;
-      font-size: 0.7em;
-      opacity: 0.5;
-      margin-top: -5px;
-    }
-  }
-  #text-panel {
+// Width chosen based on material design suggestion for when main content area should span entire width of screen:
+// https://m3.material.io/components/navigation-drawer/guidelines#56b3fea0-ecc6-4ff0-bb0a-80ff48c74a58
+$questionsPanelBreakpoint: 600px;
+
+.panel-content {
+  display: flex;
+  position: relative;
+  flex: 1;
+}
+
+#checking-app-container {
+  height: 100%;
+}
+
+#questions-panel {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+
+  header {
     display: flex;
     flex-direction: column;
+    align-items: stretch;
+    padding-top: 8px;
+    padding-inline-start: 8px;
+    padding-inline-end: 4px;
+    padding-bottom: 8px;
+
+    &.filter-applied {
+      height: auto;
+    }
+  }
+
+  .header-main {
+    display: flex;
+  }
+
+  h2 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 0;
+    flex: 1;
+
+    span {
+      font-size: 14px;
+      opacity: 0.5;
+    }
+  }
+
+  .active-question-filter {
+    font-size: 0.7em;
+    opacity: 0.5;
+    margin-top: -5px;
+    margin-inline-start: 2px;
+  }
+
+  .questions-overlay-close {
+    display: none;
+  }
+
+  // Expand the side and bottom to fill space
+  @include media-breakpoint('<', md) {
+    margin-inline-start: -20px;
+    margin-bottom: -14px;
+  }
+
+  // Override 'sm' breakpoint for this element (also adjusts BreakPointObserver 'SM' for this element)
+  @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
     height: 100%;
-    flex-grow: 1;
-    // setting min width prevents the element from overflowing the flex parent
-    min-width: 0;
-    .chapter-select {
-      cursor: pointer;
+    margin: 0;
+    z-index: 7;
+    background: #fff;
+    transition: transform 0.4s cubic-bezier(0.68, -0.6, 0.265, 1.6); // Snap back effect
+
+    &.overlay-visible {
+      transform: translateX(100%);
+
+      .questions-overlay-close {
+        display: block;
+      }
     }
-    #split-container {
+  }
+}
+
+// Handle questions overlay in rtl environments
+:host-context([dir='rtl']) {
+  #questions-panel {
+    @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
+      left: 100%;
+
+      &.overlay-visible {
+        transform: translateX(-100%);
+      }
+    }
+  }
+}
+
+#text-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex-grow: 1;
+  // setting min width prevents the element from overflowing the flex parent
+  min-width: 0;
+
+  .chapter-select {
+    cursor: pointer;
+  }
+
+  #split-container {
+    display: flex;
+    flex: 1;
+    max-height: calc(100vh - 200px);
+
+    @include media-breakpoint-down(sm) {
+      max-height: calc(100vh - 180px);
+    }
+
+    > as-split {
+      height: auto; /* fix for SF-754 */
+    }
+  }
+
+  #scripture-panel {
+    > .panel {
       display: flex;
+      flex-direction: column;
       flex: 1;
-      max-height: calc(100vh - 200px);
-      @include media-breakpoint-down(sm) {
-        max-height: calc(100vh - 180px);
-      }
-      > as-split {
-        height: auto; /* fix for SF-754 */
+
+      .panel-heading {
+        display: flex;
+        align-items: center;
+        padding: 8px 0;
       }
     }
-    #scripture-panel {
-      > .panel {
-        .panel-heading {
-          padding-left: 0;
-          padding-right: 0;
-        }
-      }
-      .panel-content {
-        height: 100%;
-      }
-      .panel-nav {
+    .panel-content {
+      height: 100%;
+    }
+
+    .panel-nav {
+      display: flex;
+      justify-content: space-between;
+      flex: 1;
+
+      > div {
         display: flex;
-        justify-content: space-between;
-        flex: 1;
-        > div {
+        align-items: center;
+        justify-content: flex-start;
+
+        h2 {
           display: flex;
           align-items: center;
-          justify-content: flex-start;
-          h2 {
-            flex: 0;
+          margin: 0;
+          flex: 0;
+
+          span {
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            margin-right: 5px;
+          }
+
+          .chapter-dropdown {
+            display: flex;
+          }
+
+          > div {
             display: flex;
             align-items: center;
-            span {
-              white-space: nowrap;
-              text-overflow: ellipsis;
-              overflow: hidden;
-              margin-right: 5px;
-            }
-            .chapter-dropdown {
-              display: flex;
-            }
-            > div {
-              display: flex;
-              align-items: center;
-            }
           }
-          .chapter-menu-list mdc-list-item {
-            white-space: nowrap;
+        }
+
+        .chapter-menu-list mdc-list-item {
+          white-space: nowrap;
+        }
+
+        &.action-icons {
+          justify-content: flex-end;
+
+          .add-question-button[mdc-icon-button] {
+            @include icon-button.icon-size(24px, 24px, 8px);
           }
-          &.action-icons {
-            justify-content: flex-end;
-            .add-question-button[mdc-icon-button] {
-              @include icon-button.icon-size(24px, 24px, 8px);
-            }
-            .add-question-button mdc-icon {
-              font-size: 24px;
-              height: 24px;
-            }
+
+          .add-question-button mdc-icon {
+            font-size: 24px;
+            height: 24px;
           }
         }
       }
     }
-    #answer-panel {
-      height: 100%;
-      padding-top: 12px;
-      padding-bottom: 12px;
-      padding-inline-start: 15px;
-      @include media-breakpoint-down(sm) {
-        padding-left: 0;
-        padding-right: 0;
-      }
+  }
+
+  #answer-panel {
+    height: 100%;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    padding-inline-start: 15px;
+
+    @include media-breakpoint-down(sm) {
+      padding-left: 0;
+      padding-right: 0;
     }
-    #project-navigation {
-      background-color: lighten($sf_grey, 70%);
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding: 9px;
-      @include media-breakpoint-down(sm) {
-        margin: 0 -20px -14px;
-        justify-content: space-between;
-      }
-      .next-question {
-        margin-inline-end: 8px;
-      }
-      @include media-breakpoint-down(xs) {
-        margin: -10px;
-      }
+  }
+
+  #project-navigation {
+    background-color: lighten($sf_grey, 70%);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 9px;
+
+    @include media-breakpoint-down(sm) {
+      margin-bottom: -14px;
+      margin-inline: 0 -20px;
+      justify-content: space-between;
     }
-    #project-summary {
-      width: 36px;
-      height: 36px;
+
+    // Widen once the questions panel is hidden
+    @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
+      margin-inline-start: -20px;
     }
+
+    .next-question {
+      margin-inline-end: 8px;
+    }
+
+    @include media-breakpoint-down(xs) {
+      margin: -10px;
+    }
+  }
+
+  #project-summary {
+    width: 36px;
+    height: 36px;
   }
 }
 
@@ -158,6 +251,7 @@
   display: flex;
   column-gap: 10px;
 }
+
 #question-filter-list {
   h2 {
     color: #000;
