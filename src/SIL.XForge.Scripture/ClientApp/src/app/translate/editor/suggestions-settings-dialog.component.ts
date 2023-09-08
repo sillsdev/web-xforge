@@ -3,7 +3,7 @@ import { UntypedFormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { BehaviorSubject } from 'rxjs';
 import { debounceTime, map, skip } from 'rxjs/operators';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 
@@ -18,12 +18,15 @@ export interface SuggestionsSettingsDialogData {
   styleUrls: ['./suggestions-settings-dialog.component.scss']
 })
 export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
-  suggestionsEnabledSwitch = new UntypedFormControl({ disabled: !this.pwaService.isOnline });
+  suggestionsEnabledSwitch = new UntypedFormControl({ disabled: !this.onlineStatusService.isOnline });
 
   private readonly projectUserConfigDoc: SFProjectUserConfigDoc;
   private confidenceThreshold$ = new BehaviorSubject<number>(20);
 
-  constructor(@Inject(MAT_DIALOG_DATA) data: SuggestionsSettingsDialogData, readonly pwaService: PwaService) {
+  constructor(
+    @Inject(MAT_DIALOG_DATA) data: SuggestionsSettingsDialogData,
+    readonly onlineStatusService: OnlineStatusService
+  ) {
     super();
     this.projectUserConfigDoc = data.projectUserConfigDoc;
 
@@ -33,8 +36,8 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
     }
 
     this.suggestionsEnabledSwitch.setValue(this.translationSuggestionsUserEnabled);
-    pwaService.onlineStatus$.subscribe(() => {
-      if (pwaService.isOnline) {
+    onlineStatusService.onlineStatus$.subscribe(() => {
+      if (onlineStatusService.isOnline) {
         this.suggestionsEnabledSwitch.enable();
       } else {
         this.suggestionsEnabledSwitch.disable();
@@ -56,7 +59,7 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
   }
 
   get settingsDisabled(): boolean {
-    return !this.translationSuggestionsUserEnabled || !this.pwaService.isOnline;
+    return !this.translationSuggestionsUserEnabled || !this.onlineStatusService.isOnline;
   }
 
   get translationSuggestionsUserEnabled(): boolean {

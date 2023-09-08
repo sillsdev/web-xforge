@@ -1,24 +1,24 @@
+import { CommonModule } from '@angular/common';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
+import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
+import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { LocationService } from 'xforge-common/location.service';
+import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { CommonModule } from '@angular/common';
-import { NAVIGATOR } from 'xforge-common/browser-globals';
-import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
-import { UserDoc } from 'xforge-common/models/user-doc';
-import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE, SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
@@ -28,7 +28,7 @@ import { ShareDialogComponent, ShareDialogData, ShareLinkType } from './share-di
 const mockedProjectService = mock(SFProjectService);
 const mockedNavigator = mock(Navigator);
 const mockedNoticeService = mock(NoticeService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedLocationService = mock(LocationService);
 const mockedUserService = mock(UserService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
@@ -46,7 +46,7 @@ describe('ShareDialogComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: NAVIGATOR, useMock: mockedNavigator },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: LocationService, useMock: mockedLocationService },
       { provide: UserService, useMock: mockedUserService },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
@@ -354,8 +354,8 @@ class TestEnvironment {
     when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
-    when(mockedPwaService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
-    when(mockedPwaService.isOnline).thenCall(() => this._onlineStatus.getValue());
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
+    when(mockedOnlineStatusService.isOnline).thenCall(() => this._onlineStatus.getValue());
     when(mockedUserService.currentUserId).thenReturn(userId);
     when(mockedUserService.getCurrentUser()).thenResolve({ data: createTestUser() } as UserDoc);
     when(mockedProjectService.onlineGetLinkSharingKey(projectId, anything(), anything())).thenResolve(

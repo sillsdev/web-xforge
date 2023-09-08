@@ -5,18 +5,18 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { BehaviorSubject, of } from 'rxjs';
 import { anyString, anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { ParatextService } from '../core/paratext.service';
@@ -34,7 +34,7 @@ const mockedProjectService = mock(SFProjectService);
 const mockedProjectNotificationService = mock(ProjectNotificationService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 
 describe('SyncComponent', () => {
   configureTestingModule(() => ({
@@ -50,7 +50,7 @@ describe('SyncComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
     ]
   }));
 
@@ -250,7 +250,7 @@ class TestEnvironment {
     when(mockedNoticeService.loadingFinished()).thenCall(() => (this.isLoading = false));
     when(mockedNoticeService.isAppLoading).thenCall(() => this.isLoading);
     this.isOnline = new BehaviorSubject(isOnline);
-    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline.asObservable());
 
     const date = new Date();
     date.setMonth(date.getMonth() - 2);

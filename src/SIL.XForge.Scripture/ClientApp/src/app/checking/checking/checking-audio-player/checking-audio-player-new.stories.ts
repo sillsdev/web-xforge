@@ -4,15 +4,15 @@ import { userEvent, within } from '@storybook/testing-library';
 import { of } from 'rxjs';
 import { instance, mock, when } from 'ts-mockito';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { CheckingAudioPlayerComponent } from './checking-audio-player.component';
 
-const mockedPwaService = mock(PwaService);
-when(mockedPwaService.isOnline).thenReturn(true);
-when(mockedPwaService.onlineStatus$).thenReturn(of(true));
+const mockedOnlineStatusService = mock(OnlineStatusService);
+when(mockedOnlineStatusService.isOnline).thenReturn(true);
+when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
 
 const meta: Meta<CheckingAudioPlayerComponent> = {
   title: 'Components/Checking Audio',
@@ -21,7 +21,7 @@ const meta: Meta<CheckingAudioPlayerComponent> = {
     moduleMetadata({
       imports: [UICommonModule, CommonModule, I18nStoryModule],
       declarations: [CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe],
-      providers: [{ provide: PwaService, useValue: instance(mockedPwaService) }]
+      providers: [{ provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }]
     })
   ],
   args: { source: './test-audio-player.webm' }

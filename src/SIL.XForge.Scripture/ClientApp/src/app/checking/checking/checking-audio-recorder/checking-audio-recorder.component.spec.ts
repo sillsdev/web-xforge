@@ -8,22 +8,22 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
+import { AudioPlayer } from '../../../shared/audio/audio-player';
+import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { CheckingAudioPlayerComponent } from '../checking-audio-player/checking-audio-player.component';
-import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
-import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { CheckingAudioRecorderComponent } from './checking-audio-recorder.component';
 
 const mockedNoticeService = mock(NoticeService);
 const mockedNavigator = mock(Navigator);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedDialog = mock(DialogService);
 const mockedI18nService = mock(I18nService);
 
@@ -34,7 +34,7 @@ describe('CheckingAudioRecorderComponent', () => {
     providers: [
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: NAVIGATOR, useMock: mockedNavigator },
-      { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: DialogService, useMock: mockedDialog },
       { provide: I18nService, useMock: mockedI18nService }
     ]
@@ -120,13 +120,13 @@ class TestEnvironment {
       getUserMedia: (mediaConstraints: MediaStreamConstraints) =>
         this.rejectUserMedia ? Promise.reject() : navigator.mediaDevices.getUserMedia(mediaConstraints)
     } as MediaDevices);
-    when(mockedPwaService.isOnline).thenReturn(true);
-    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
+    when(mockedOnlineStatusService.isOnline).thenReturn(true);
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     this.fixture.detectChanges();
   }
 
   async getAudioDuration(): Promise<number> {
-    const audio = new AudioPlayer(this.component.audioUrl, instance(mockedPwaService));
+    const audio = new AudioPlayer(this.component.audioUrl, instance(mockedOnlineStatusService));
     await this.waitForRecorder(100);
     return audio.duration;
   }

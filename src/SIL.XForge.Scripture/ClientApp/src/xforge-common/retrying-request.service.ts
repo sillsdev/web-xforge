@@ -3,7 +3,7 @@ import { Observable, Subject } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { CONSOLE, ConsoleInterface } from './browser-globals';
 import { CommandErrorCode, CommandService } from './command.service';
-import { PwaService } from './pwa.service';
+import { OnlineStatusService } from './online-status.service';
 
 export interface JsonRpcInvocable {
   onlineInvoke<T>(url: string, method: string, params: any): Promise<T | undefined>;
@@ -20,7 +20,7 @@ export interface FetchOptions {
 })
 export class RetryingRequestService {
   constructor(
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly commandService: CommandService,
     @Inject(CONSOLE) private readonly console: ConsoleInterface
   ) {}
@@ -34,7 +34,7 @@ export class RetryingRequestService {
   invoke<T>(fetchOptions: FetchOptions, cancel$: Subject<void>): RetryingRequest<T> {
     return new RetryingRequest<T>(
       this.commandService,
-      this.pwaService.onlineStatus$,
+      this.onlineStatusService.onlineStatus$,
       cancel$,
       fetchOptions,
       this.console

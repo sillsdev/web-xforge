@@ -7,14 +7,14 @@ import { fromEvent, Observable, Subject } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { Connection, Doc, OTType, Query, Snapshot, types } from 'sharedb/lib/client';
 import { Presence } from 'sharedb/lib/sharedb';
-import { PwaService } from 'xforge-common/pwa.service';
 import { Snapshot as DataSnapshot } from 'xforge-common/models/snapshot';
-import { hasPropWithValue, hasStringProp } from 'src/type-utils';
 import { environment } from '../environments/environment';
+import { hasPropWithValue, hasStringProp } from '../type-utils';
+import { FeatureFlagService } from './feature-flags/feature-flag.service';
 import { LocationService } from './location.service';
+import { OnlineStatusService } from './online-status.service';
 import { QueryParameters } from './query-parameters';
 import { RealtimeDocAdapter, RealtimeQueryAdapter, RealtimeRemoteStore } from './realtime-remote-store';
-import { FeatureFlagService } from './feature-flags/feature-flag.service';
 import { tryParseJSON } from './utils';
 
 types.register(RichText.type);
@@ -154,7 +154,7 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
 
   constructor(
     private readonly locationService: LocationService,
-    private readonly pwaService: PwaService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly featureFlags: FeatureFlagService
   ) {
     super();
@@ -170,12 +170,12 @@ export class SharedbRealtimeRemoteStore extends RealtimeRemoteStore {
       this.ws = new ReconnectingWebSocket(async () => await this.getUrl(), undefined, { maxEnqueuedMessages: 0 });
       // When the web socket is open we have a valid connection
       this.ws.addEventListener('open', () => {
-        this.pwaService.webSocketResponse = true;
+        this.onlineStatusService.webSocketResponse = true;
         resolve();
       });
       // When the web socket errors a connection is not valid so the app needs to operate offline
       this.ws.addEventListener('error', () => {
-        this.pwaService.webSocketResponse = false;
+        this.onlineStatusService.webSocketResponse = false;
         resolve();
       });
     });

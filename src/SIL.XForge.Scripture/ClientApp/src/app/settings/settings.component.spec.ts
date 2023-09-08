@@ -17,7 +17,7 @@ import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-m
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -41,7 +41,7 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedDialog = mock(MatDialog);
 
 @Component({
@@ -71,7 +71,7 @@ describe('SettingsComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: PwaService, useMock: mockedPwaService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: MatDialog, useMock: mockedDialog }
     ]
   }));
@@ -489,8 +489,8 @@ class TestEnvironment {
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
     this.isOnline = new BehaviorSubject<boolean>(hasConnection);
-    when(mockedPwaService.onlineStatus$).thenReturn(this.isOnline.asObservable());
-    when(mockedPwaService.isOnline).thenReturn(this.isOnline.getValue());
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline.asObservable());
+    when(mockedOnlineStatusService.isOnline).thenReturn(this.isOnline.getValue());
 
     when(mockedParatextService.getProjects()).thenResolve([
       {

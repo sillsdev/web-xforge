@@ -4,18 +4,18 @@ import { MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Meta, moduleMetadata, StoryObj } from '@storybook/angular';
 import { userEvent, within } from '@storybook/testing-library';
-import { UICommonModule } from 'xforge-common/ui-common.module';
-import { PwaService } from 'xforge-common/pwa.service';
-import { AuthService } from 'xforge-common/auth.service';
-import { DialogService } from 'xforge-common/dialog.service';
-import { NoticeService } from 'xforge-common/notice.service';
-import { LocationService } from 'xforge-common/location.service';
-import { I18nStoryModule } from 'xforge-common/i18n-story.module';
-import { AnonymousService } from 'xforge-common/anonymous.service';
-import { GenericDialogComponent } from 'xforge-common/generic-dialog/generic-dialog.component';
-import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { of } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
+import { AnonymousService } from 'xforge-common/anonymous.service';
+import { AuthService } from 'xforge-common/auth.service';
+import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
+import { DialogService } from 'xforge-common/dialog.service';
+import { GenericDialogComponent } from 'xforge-common/generic-dialog/generic-dialog.component';
+import { I18nStoryModule } from 'xforge-common/i18n-story.module';
+import { LocationService } from 'xforge-common/location.service';
+import { NoticeService } from 'xforge-common/notice.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectService } from '../core/sf-project.service';
 import { NoticeComponent } from '../shared/notice/notice.component';
 import { JoinComponent } from './join.component';
@@ -25,7 +25,7 @@ const mockedAnonymousService = mock(AnonymousService);
 const mockedAuthService = mock(AuthService);
 const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
 
@@ -80,15 +80,15 @@ const meta: Meta = {
         { provide: DialogService },
         { provide: LocationService, useValue: instance(mockedLocationService) },
         { provide: NoticeService, useValue: instance(mockedNoticeService) },
-        { provide: PwaService, useValue: instance(mockedPwaService) },
+        { provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) },
         { provide: Router, useValue: instance(mockedRouter) },
         { provide: MatDialogRef, useValue: {} },
         { provide: SFProjectService, useValue: instance(mockedSFProjectService) }
       ]
     }),
     (story, context) => {
-      when(mockedPwaService.onlineStatus$).thenReturn(of(context.args.online));
-      when(mockedPwaService.isOnline).thenReturn(context.args.online);
+      when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(context.args.online));
+      when(mockedOnlineStatusService.isOnline).thenReturn(context.args.online);
       when(mockedAuthService.isLoggedIn).thenResolve(context.args.loggedIn);
       when(mockedActivatedRoute.params).thenReturn(of({ shareKey: context.args.shareKey, locale: 'en' }));
       when(mockedAnonymousService.checkShareKey(context.args.shareKey)).thenResolve({

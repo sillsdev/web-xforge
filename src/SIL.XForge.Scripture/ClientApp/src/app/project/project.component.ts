@@ -1,15 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Canon } from '@sillsdev/scripture';
+import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { Observable } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { DialogService } from 'xforge-common/dialog.service';
-import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PwaService } from 'xforge-common/pwa.service';
 import { UserService } from 'xforge-common/user.service';
-import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
@@ -25,9 +22,6 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     private readonly projectService: SFProjectService,
     private readonly router: Router,
     private readonly userService: UserService,
-    private readonly i18n: I18nService,
-    private readonly pwaService: PwaService,
-    private readonly dialogService: DialogService,
     noticeService: NoticeService
   ) {
     super(noticeService);
