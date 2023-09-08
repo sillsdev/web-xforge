@@ -1,9 +1,11 @@
 {
   "app": {
+    "manage_questions": "Manage questions",
     "settings": "Settings",
     "synchronize": "Synchronize",
     "system_administration": "System Administration",
     "translate": "Translate",
+    "draft_review": "Draft & review",
     "users": "Users"
   },
   "biblical_term_dialog": {
