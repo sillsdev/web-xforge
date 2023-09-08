@@ -27,8 +27,12 @@ export class AudioPlayerComponent extends AudioPlayerBaseComponent {
   }
 
   onSeek(event: MatSliderChange): void {
-    if (event?.value !== null) {
-      this.audio?.setSeek(event.value);
+    let seek: number | null = event.value;
+    if (seek == null) return;
+    if (this.direction === 'rtl') {
+      // The slider is reversed for RTL languages so the seek is the inverse of the value that is emitted
+      seek = 100 - seek;
     }
+    this.audio?.setSeek(seek);
   }
 }
