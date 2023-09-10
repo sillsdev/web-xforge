@@ -1,0 +1,110 @@
+use("xforge");
+
+const minAnswers = 25;
+
+const projectsWithSignificantAnswers = db.questions
+  .aggregate([
+    {
+      $match: {
+        answers: { $exists: true }
+      }
+    },
+    {
+      $project: {
+        answers: { $size: "$answers" },
+        projectRef: 1
+      }
+    },
+    {
+      $group: {
+        _id: "$projectRef",
+        answers: { $sum: "$answers" }
+      }
+    },
+    {
+      $match: {
+        answers: { $gte: minAnswers }
+      }
+    },
+    {
+      $sort: {
+        answers: -1
+      }
+    },
+    {
+      $lookup: {
+        from: "sf_projects",
+        localField: "_id",
+        foreignField: "_id",
+        as: "project"
+      }
+    },
+    {
+      $unwind: {
+        path: "$project"
+      }
+    },
+    {
+      $project: {
+        shortName: "$project.shortName",
+        name: "$project.name",
+        answers: 1
+      }
+    }
+  ])
+  .toArray();
+
+const idsOfProjectsWithSignificantAnswers = projectsWithSignificantAnswers.map(x => x._id);
+
+const answersByProjectAndMonth = db.questions
+  .aggregate([
+    {
+      $match: {
+        answers: { $exists: true },
+        projectRef: { $in: idsOfProjectsWithSignificantAnswers }
+      }
+    },
+    {
+      $project: {
+        answers: 1,
+        projectRef: 1
+      }
+    },
+    { $unwind: "$answers" },
+    {
+      $project: {
+        projectRef: 1,
+        dateString: {
+          $dateToString: { format: "%Y-%m", date: { $dateFromString: { dateString: "$answers.dateCreated" } } }
+        }
+      }
+    },
+    {
+      $group: {
+        _id: { date: "$dateString", projectRef: "$projectRef" },
+        count: { $sum: 1 }
+      }
+    },
+    { $sort: { _id: 1 } }
+  ])
+  .toArray();
+
+const months = Array.from(new Set(answersByProjectAndMonth.map(x => x._id.date))).sort();
+
+const firstMonth = months[0];
+const lastMonth = months[months.length - 1];
+
+// chart answers by month
+const header = [""].concat(projectsWithSignificantAnswers.map(x => x.shortName));
+const table = [header];
+for (const month of months) {
+  const row = [month];
+  for (const project of projectsWithSignificantAnswers) {
+    const count =
+      answersByProjectAndMonth.find(x => x._id.date === month && x._id.projectRef === project._id)?.count ?? 0;
+    row.push(count);
+  }
+  table.push(row);
+}
+
+console.log(table.map(x => x.join("\t")).join("\n"));
