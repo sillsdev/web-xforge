@@ -58,7 +58,10 @@ export class BiblicalTermDialogComponent extends SubscriptionDisposable {
   }
 
   submit(): void {
-    const renderings: string[] = this.renderings.value.split(/\r?\n/).map((rendering: string) => rendering.trim());
+    const renderings: string[] = this.renderings.value
+      .split(/\r?\n/)
+      .map((rendering: string) => rendering.trim())
+      .filter((rendering: string) => rendering !== '');
     const renderingsChanged: boolean = renderings.join('\n') !== this.biblicalTermDoc?.data?.renderings.join('\n');
     const description: string = this.description.value;
     this.biblicalTermDoc?.submitJson0Op(op => {

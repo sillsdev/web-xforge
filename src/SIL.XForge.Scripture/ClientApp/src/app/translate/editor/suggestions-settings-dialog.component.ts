@@ -98,7 +98,11 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
   }
 
   get translationSuggestionsDisabled(): boolean {
-    return !this.translationSuggestionsUserEnabled || !this.canUseTranslationSuggestions || !this.pwaService.isOnline;
+    return (
+      !this.translationSuggestionsUserEnabled ||
+      !this.canUseTranslationSuggestions ||
+      !this.onlineStatusService.isOnline
+    );
   }
 
   get translationSuggestionsUserEnabled(): boolean {
@@ -122,7 +126,7 @@ export class SuggestionsSettingsDialogComponent extends SubscriptionDisposable {
   }
 
   get biblicalTermsDisabled(): boolean {
-    return !this.biblicalTermsUserEnabled || !this.canUseBiblicalTerms || !this.pwaService.isOnline;
+    return !this.biblicalTermsUserEnabled || !this.canUseBiblicalTerms || !this.onlineStatusService.isOnline;
   }
 
   get biblicalTermsUserEnabled(): boolean {

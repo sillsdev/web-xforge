@@ -108,13 +108,28 @@ describe('BiblicalTermDialogComponent', () => {
     env.wait();
 
     env.openDialog('id01');
-    env.setTextFieldValue(env.renderings, 'updatedRendering \r\nsecondRendering');
+    env.setTextFieldValue(env.renderings, 'updatedRendering \r\nsecondRendering\r\n\r\n\tthirdRendering\r\n');
     env.setTextFieldValue(env.description, 'updatedDescription');
     env.click(env.submitButton);
     env.wait();
     let biblicalTerm = env.getBiblicalTermDoc('id01');
-    expect(biblicalTerm.data?.renderings).toEqual(['updatedRendering', 'secondRendering']);
+    expect(biblicalTerm.data?.renderings).toEqual(['updatedRendering', 'secondRendering', 'thirdRendering']);
     expect(biblicalTerm.data?.description).toBe('updatedDescription');
+  }));
+
+  it('should remove empty lines from renderings', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData('en');
+    env.wait();
+
+    env.openDialog('id01');
+    env.setTextFieldValue(env.renderings, '\r\n\r\n\r\n');
+    env.setTextFieldValue(env.description, '');
+    env.click(env.submitButton);
+    env.wait();
+    let biblicalTerm = env.getBiblicalTermDoc('id01');
+    expect(biblicalTerm.data?.renderings).toEqual([]);
+    expect(biblicalTerm.data?.description).toBe('');
   }));
 
   it('should be read only for users without write access', fakeAsync(() => {

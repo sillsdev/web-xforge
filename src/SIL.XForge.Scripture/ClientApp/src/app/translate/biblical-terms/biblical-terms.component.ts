@@ -39,6 +39,7 @@ export enum BiblicalTermNoteIcon {
   AddNotesIcon = 'add_comment',
   NoNotesIcon = 'comment',
   ReadNotesIcon = 'chat',
+  ResolvedNotesIcon = 'mark_chat_read',
   UnreadNotesIcon = 'mark_unread_chat_alt'
 }
 
@@ -54,9 +55,9 @@ const defaultLocaleCode = I18nService.defaultLocale.canonicalTag;
 class Row {
   constructor(
     private readonly biblicalTermDoc: BiblicalTermDoc,
-    private readonly canEdit: boolean,
     private readonly featureFlags: FeatureFlagService,
     private readonly i18n: I18nService,
+    private readonly projectDoc?: SFProjectProfileDoc,
     private readonly projectUserConfigDoc?: SFProjectUserConfigDoc,
     private readonly noteThreadDoc?: NoteThreadDoc
   ) {}
@@ -92,11 +93,11 @@ class Row {
   }
 
   get disableNotesIcon(): boolean {
-    return !this.hasNoteThread && !this.isAddNotesEnabled;
+    return !this.hasNoteThread && !this.canAddNotes;
   }
 
-  get flipNotesIcon(): boolean {
-    return !this.hasNoteThread;
+  get transformNotesIcon(): string {
+    return this.hasNoteThread ? '' : 'scaleX(-1)';
   }
 
   get editIcon(): string {
@@ -105,16 +106,39 @@ class Row {
 
   get notesIcon(): string {
     if (!this.hasNoteThread) {
-      if (this.isAddNotesEnabled) {
+      if (this.canAddNotes) {
         return BiblicalTermNoteIcon.AddNotesIcon;
       } else {
         return BiblicalTermNoteIcon.NoNotesIcon;
       }
+    } else if (this.hasNoteThreadResolved) {
+      return BiblicalTermNoteIcon.ResolvedNotesIcon;
     } else if (this.hasUnreadNotes) {
       return BiblicalTermNoteIcon.UnreadNotesIcon;
     } else {
       return BiblicalTermNoteIcon.ReadNotesIcon;
     }
+  }
+
+  private get canAddNotes(): boolean {
+    const userRole: string | undefined =
+      this.projectUserConfigDoc?.data?.ownerRef != null
+        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data.ownerRef]
+        : undefined;
+    console.log(userRole);
+    const hasNotePermission: boolean =
+      userRole == null ? false : SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.Notes, Operation.Create);
+    return hasNotePermission && this.featureFlags.allowAddingNotes.enabled;
+  }
+
+  private get canEdit(): boolean {
+    const userRole: string | undefined =
+      this.projectUserConfigDoc?.data?.ownerRef != null
+        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data.ownerRef]
+        : undefined;
+    return userRole == null
+      ? false
+      : SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.Edit);
   }
 
   private get hasUnreadNotes(): boolean {
@@ -130,8 +154,14 @@ class Row {
     return this.noteThreadDoc?.data != null && this.noteThreadDoc.data.notes.filter(n => !n.deleted).length > 0;
   }
 
-  private get isAddNotesEnabled(): boolean {
-    return this.featureFlags.allowAddingNotes.enabled;
+  private get hasNoteThreadResolved(): boolean {
+    // Get the non-deleted notes in date order descending
+    let notes =
+      this.noteThreadDoc?.data?.notes
+        .filter(n => !n.deleted)
+        .sort((a, b) => Date.parse(a.dateCreated) - Date.parse(b.dateCreated)) ?? [];
+    // Return true if the last note is resolved
+    return notes.length > 0 && notes[notes.length - 1].status === NoteStatus.Resolved;
   }
 }
 
@@ -256,32 +286,22 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         configProjectId,
         this.userService.currentUserId
       );
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse, true);
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
     });
     this.subscribe(this.projectId$, async projectId => {
       this.projectDoc = await this.projectService.getProfile(projectId);
       this.loadBiblicalTerms(projectId);
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse, true);
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
     });
     this.subscribe(this.bookNum$, bookNum => {
-      this.filterBiblicalTerms(bookNum, this._chapter ?? 0, this._verse, true);
+      this.filterBiblicalTerms(bookNum, this._chapter ?? 0, this._verse);
     });
     this.subscribe(this.chapter$, chapter => {
-      this.filterBiblicalTerms(this._bookNum ?? 0, chapter, this._verse, true);
+      this.filterBiblicalTerms(this._bookNum ?? 0, chapter, this._verse);
     });
     this.subscribe(this.verse$, verse => {
-      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, verse, true);
+      this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, verse);
     });
-  }
-
-  canEdit(): boolean {
-    const userRole: string | undefined =
-      this.projectUserConfigDoc?.data?.ownerRef != null
-        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data.ownerRef]
-        : undefined;
-    return userRole == null
-      ? false
-      : SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.Edit);
   }
 
   async editNoteThread(row: Row): Promise<void> {
@@ -334,14 +354,11 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     }
   }
 
-  private filterBiblicalTerms(bookNum: number, chapter: number, verse: string | undefined, scrollToTop: boolean): void {
+  private filterBiblicalTerms(bookNum: number, chapter: number, verse: string | undefined): void {
     if (bookNum === 0 || chapter === 0 || verse == null) {
       return;
     }
     this.loadingStarted();
-
-    // Scroll biblical terms to the top
-    if (scrollToTop) this.biblicalTerms?.nativeElement.scrollIntoView();
 
     const rows: Row[] = [];
     let verses: number[] = getVerseNumbers(new VerseRef(Canon.bookNumberToId(bookNum), chapter.toString(), verse));
@@ -379,9 +396,9 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         rows.push(
           new Row(
             biblicalTermDoc,
-            this.canEdit(),
             this.featureFlags,
             this.i18n,
+            this.projectDoc,
             this.projectUserConfigDoc,
             noteThreadDoc
           )
@@ -407,7 +424,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
         this.biblicalTermQuery.remoteDocChanges$
       ),
       () => {
-        this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse, false);
+        this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
       }
     );
 
@@ -419,7 +436,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.noteThreadSub = this.subscribe(
       merge(this.noteThreadQuery.ready$, this.noteThreadQuery.remoteChanges$, this.noteThreadQuery.remoteDocChanges$),
       () => {
-        this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse, false);
+        this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
       }
     );
   }

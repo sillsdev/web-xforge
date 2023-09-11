@@ -4,7 +4,12 @@ import { translate } from '@ngneat/transloco';
 import { sortBy } from 'lodash-es';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { BIBLICAL_TERM_TAG_ICON, NoteTag, SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import {
+  BIBLICAL_TERM_TAG_ICON,
+  BIBLICAL_TERM_TAG_ID,
+  NoteTag,
+  SF_TAG_ICON
+} from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import { AssignedUsers, NoteStatus } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { VerseRef } from '@sillsdev/scripture';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
@@ -182,7 +187,10 @@ export class NoteDialogComponent implements OnInit {
   }
 
   private get noteTags(): NoteTag[] {
-    return this.projectProfileDoc?.data?.noteTags ?? [];
+    // Return the project's note tags and the biblical terms note tag
+    return (this.projectProfileDoc?.data?.noteTags ?? []).concat([
+      { tagId: BIBLICAL_TERM_TAG_ID, icon: BIBLICAL_TERM_TAG_ICON, name: 'Biblical Term', creatorResolve: false }
+    ]);
   }
 
   private get biblicalTermId(): string | undefined {

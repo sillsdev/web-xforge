@@ -38,8 +38,7 @@ import {
   NoteConflictType,
   NoteStatus,
   NoteThread,
-  NoteType,
-  getNoteThreadDocId
+  NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -72,18 +71,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
-import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
-import {
-  createTestProject,
-  createTestProjectProfile
-} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { RecursivePartial } from 'realtime-server/lib/esm/common/utils/type-utils';
-import { merge } from 'lodash-es';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
-import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';

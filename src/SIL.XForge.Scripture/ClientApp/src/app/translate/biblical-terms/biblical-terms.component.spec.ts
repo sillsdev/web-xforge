@@ -183,6 +183,15 @@ describe('BiblicalTermsComponent', () => {
     expect(env.biblicalTermsNotesIcon.innerText).toBe(BiblicalTermNoteIcon.UnreadNotesIcon);
   }));
 
+  it('should not allow observers to add notes', fakeAsync(async () => {
+    const env = new TestEnvironment('project02', 3, 3);
+    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
+    env.setupProjectData('en', false);
+    env.wait();
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect(env.biblicalTermsNotesIcon.innerText).toBe(BiblicalTermNoteIcon.NoNotesIcon);
+  }));
+
   it('should show the edit button if the user has edit permission', fakeAsync(() => {
     const env = new TestEnvironment('project01', 1, 1, '1');
     env.setupProjectData('en');
@@ -359,7 +368,7 @@ class TestEnvironment {
     return this.realtimeService.get<SFProjectUserConfigDoc>(SFProjectUserConfigDoc.COLLECTION, id);
   }
 
-  setupProjectData(language: string): void {
+  setupProjectData(language: string, noteThreads: boolean = true): void {
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedI18nService.localeCode).thenReturn(language);
     this.realtimeService.addSnapshot<BiblicalTerm>(BiblicalTermDoc.COLLECTION, {
@@ -472,44 +481,46 @@ class TestEnvironment {
         noteRefsRead: []
       }
     });
-    this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
-      id: 'project01:threadId01',
-      data: {
-        projectRef: 'project01',
-        dataId: 'threadId01',
-        threadId: 'BT_termId01',
-        verseRef: fromVerseRef(new VerseRef(1, 1, 1)),
-        ownerRef: 'user01',
-        originalContextBefore: '',
-        originalContextAfter: '',
-        originalSelectedText: '',
-        notes: [this.getNewBiblicalTermNote('BT_termId01', 'note01', 'user01')],
-        position: { start: 0, length: 0 },
-        status: NoteStatus.Todo,
-        assignment: '',
-        publishedToSF: true,
-        biblicalTermId: 'termId01'
-      }
-    });
-    this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
-      id: 'project02:threadId02',
-      data: {
-        projectRef: 'project02',
-        dataId: 'threadId02',
-        threadId: 'BT_termId03',
-        verseRef: fromVerseRef(new VerseRef(1, 1, 1)),
-        ownerRef: 'user02',
-        originalContextBefore: '',
-        originalContextAfter: '',
-        originalSelectedText: '',
-        notes: [this.getNewBiblicalTermNote('BT_termId03', 'note02', 'user02')],
-        position: { start: 0, length: 0 },
-        status: NoteStatus.Todo,
-        assignment: '',
-        publishedToSF: true,
-        biblicalTermId: 'termId03'
-      }
-    });
+    if (noteThreads) {
+      this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
+        id: 'project01:threadId01',
+        data: {
+          projectRef: 'project01',
+          dataId: 'threadId01',
+          threadId: 'BT_termId01',
+          verseRef: fromVerseRef(new VerseRef(1, 1, 1)),
+          ownerRef: 'user01',
+          originalContextBefore: '',
+          originalContextAfter: '',
+          originalSelectedText: '',
+          notes: [this.getNewBiblicalTermNote('BT_termId01', 'note01', 'user01')],
+          position: { start: 0, length: 0 },
+          status: NoteStatus.Todo,
+          assignment: '',
+          publishedToSF: true,
+          biblicalTermId: 'termId01'
+        }
+      });
+      this.realtimeService.addSnapshot<NoteThread>(NoteThreadDoc.COLLECTION, {
+        id: 'project02:threadId02',
+        data: {
+          projectRef: 'project02',
+          dataId: 'threadId02',
+          threadId: 'BT_termId03',
+          verseRef: fromVerseRef(new VerseRef(1, 1, 1)),
+          ownerRef: 'user02',
+          originalContextBefore: '',
+          originalContextAfter: '',
+          originalSelectedText: '',
+          notes: [this.getNewBiblicalTermNote('BT_termId03', 'note02', 'user02')],
+          position: { start: 0, length: 0 },
+          status: NoteStatus.Todo,
+          assignment: '',
+          publishedToSF: true,
+          biblicalTermId: 'termId03'
+        }
+      });
+    }
     this.realtimeService.addSnapshot<SFProjectProfile>(SFProjectProfileDoc.COLLECTION, {
       id: 'project01',
       data: createTestProjectProfile({

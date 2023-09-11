@@ -237,7 +237,7 @@ class SFProjectMigration11 implements Migration {
     if (doc.data.biblicalTermsConfig == null || doc.data.biblicalTermsConfig.hasRenderings === undefined) {
       ops.push({ p: ['biblicalTermsConfig', 'hasRenderings'], oi: false });
     }
-    await submitMigrationOp(SFProjectMigration10.VERSION, doc, ops);
+    await submitMigrationOp(SFProjectMigration11.VERSION, doc, ops);
   }
 
   migrateOp(_op: RawOp): void {

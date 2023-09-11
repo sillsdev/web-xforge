@@ -31,7 +31,7 @@ import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { BIBLICAL_TERM_TAG_ICON, NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   getNoteThreadDocId,
   NoteConflictType,
@@ -62,13 +62,6 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
-import { DialogService } from 'xforge-common/dialog.service';
-import { I18nService } from 'xforge-common/i18n.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { BIBLICAL_TERM_TAG_ICON, NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
-import { NoteType } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { MatBottomSheet, MatBottomSheetRef } from '@angular/material/bottom-sheet';
-import { UntypedFormControl, Validators } from '@angular/forms';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
 import { defaultNoteThreadIcon, NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
@@ -143,10 +136,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
-  textHeight: string = '';
+  sourceSplitHeight: string = '';
+  targetSplitHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
 
+  @ViewChild('sourceSplitContainer') sourceSplitContainer?: ElementRef;
+  @ViewChild('targetSplitContainer') targetSplitContainer?: ElementRef;
   @ViewChild('targetContainer') targetContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
   @ViewChild('target') target?: TextComponent;
@@ -278,7 +274,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         : undefined;
     return (
       (this.showSource && this.translationSuggestionsProjectEnabled) ||
-      (this.projectDoc?.data?.biblicalTermsConfig.biblicalTermsEnabled === true &&
+      (this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
         userRole != null &&
         SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.View))
     );
@@ -288,15 +284,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // Return true if the source project has biblical terms enabled, or if the target has it enabled and the source has
     // renderings for Biblical Terms.
     return (
-      (this.sourceProjectDoc?.data?.biblicalTermsConfig.biblicalTermsEnabled === true &&
+      (this.sourceProjectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
         this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true) ||
-      (this.biblicalTermsEnabledForTarget && this.sourceProjectDoc?.data?.biblicalTermsConfig.hasRenderings === true)
+      (this.biblicalTermsEnabledForTarget && this.sourceProjectDoc?.data?.biblicalTermsConfig?.hasRenderings === true)
     );
   }
 
   get biblicalTermsEnabledForTarget(): boolean {
     return (
-      this.projectDoc?.data?.biblicalTermsConfig.biblicalTermsEnabled === true &&
+      this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
       this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true
     );
   }
@@ -327,6 +323,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.changeText();
       this.toggleNoteThreadVerses(true);
       this.bottomSheet.dismiss();
+      this.updateVerseNumber();
     }
   }
 
@@ -623,6 +620,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
         }
         this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
+
+        this.updateVerseNumber();
 
         this.loadProjectUserConfig();
 
@@ -1254,16 +1253,25 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private setTextHeight(): void {
-    if (this.target == null || this.targetContainer == null) {
+    if (this.target == null || this.targetSplitContainer == null) {
       return;
     }
     // this is a horrible hack to set the height of the text components
     // we don't want to use flexbox because it makes editing very slow
-    const elem: HTMLElement = this.targetContainer.nativeElement;
-    const bounds = elem.getBoundingClientRect();
+    let elem: HTMLElement = this.targetSplitContainer.nativeElement;
+    let bounds = elem.getBoundingClientRect();
     // add bottom padding
-    const top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
-    this.textHeight = `calc(100vh - ${top}px)`;
+    let top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
+    this.targetSplitHeight = `calc(100vh - ${top}px)`;
+
+    // Do the same for the source, as it will not have warnings like the target
+    if (this.source == null || this.sourceSplitContainer == null) {
+      return;
+    }
+    elem = this.sourceSplitContainer.nativeElement;
+    bounds = elem.getBoundingClientRect();
+    top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
+    this.sourceSplitHeight = `calc(100vh - ${top}px)`;
   }
 
   private async changeText(): Promise<void> {
@@ -1730,13 +1738,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private positionInsertNoteFab(): void {
-    if (this.insertNoteFab == null || this.target?.editor == null) return;
+    if (this.insertNoteFab == null || this.target?.editor == null || this.addingMobileNote) return;
+    // getSelection can steal the focus, so we should not call this if the add mobile note bottom sheet is open
     const selection: RangeStatic | null | undefined = this.target.editor.getSelection();
     if (selection != null) {
       this.insertNoteFab.nativeElement.style.top = `${this.target.selectionBoundsTop}px`;
       this.insertNoteFab.nativeElement.style.marginTop = `-${this.target.scrollPosition}px`;
     } else {
       // hide the insert note FAB when the user clicks outside of the editor
+      // and move to the top left so scrollbars are note affected
+      this.insertNoteFab.nativeElement.style.top = '0px';
+      this.insertNoteFab.nativeElement.style.marginTop = '0px';
       this.showAddCommentButton = false;
     }
   }
@@ -1780,6 +1792,26 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
     }
     this.commenterSelectedVerseRef = verseRef;
+  }
+
+  /**
+   * Updates the verse number, either setting it to the selected segment, or 0 if the segment is in another chapter.
+   */
+  private updateVerseNumber(): void {
+    if (
+      this.target?.segment != null &&
+      this.target.segment.bookNum === this.bookNum &&
+      this.target.segment.chapter === this.chapter
+    ) {
+      const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, this.target.segment.ref);
+      if (verseRef != null) {
+        this._verse = verseRef.verse;
+        return;
+      }
+    }
+
+    // Default to no verse selected
+    this._verse = '0';
   }
 
   /** Determine the number of embeds that are within an anchoring.
