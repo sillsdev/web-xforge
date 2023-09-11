@@ -175,14 +175,13 @@ describe('AppComponent', () => {
 
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.component.isTranslateEnabled).toBe(true);
-    // Expect: Translate | Community Checking | Synchronize | Settings | Users
-    expect(env.menuLength).toEqual(5);
-    env.selectItem(0);
-    // Expect: Translate | Overview | Generate | Matthew | Mark | Community Checking | Synchronize | Settings | Users
-    expect(env.menuLength).toEqual(9);
+    // Expect: Translate | Overview | Draft & Review | Generate Draft | Community Checking | My progress |
+    // Question & answers | Synchronize | Settings | Users
+    expect(env.menuLength).toEqual(10);
     env.allowUserToSeeGenerateDraft(false);
-    // Expect: Translate | Overview | Matthew | Mark | Community Checking | Synchronize | Settings | Users
-    expect(env.menuLength).toEqual(8);
+    // Expect: Translate | Overview | Draft & Review | Community Checking | My progress |
+    // Question & answers | Synchronize | Settings | Users
+    expect(env.menuLength).toEqual(9);
   }));
 
   it('hides community checking tool from commenters', fakeAsync(() => {

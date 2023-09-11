@@ -14,7 +14,7 @@ import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { canAccessCommunityCheckingApp, canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../core/sf-project.service';
-import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
+import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
 import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 
 @Component({
@@ -27,6 +27,7 @@ export class NavigationComponent {
   canSeeSettings$?: Observable<boolean>;
   canSeeUsers$?: Observable<boolean>;
   canSync$?: Observable<boolean>;
+  canSeeNmtDrafts$?: Observable<boolean>;
   /** Whether the user can see at least one of settings, users, or sync page */
   canSeeAdminPages$?: Observable<boolean>;
 
@@ -40,6 +41,7 @@ export class NavigationComponent {
     this.canSeeSettings$ = projectId == null ? of(false) : this.settingsAuthGuard.allowTransition(projectId);
     this.canSeeUsers$ = projectId == null ? of(false) : this.usersAuthGuard.allowTransition(projectId);
     this.canSync$ = projectId == null ? of(false) : this.syncAuthGuard.allowTransition(projectId);
+    this.canSeeNmtDrafts$ = projectId == null ? of(false) : this.nmtDraftAuthGuard.allowTransition(projectId);
     this.canSeeAdminPages$ = combineLatest([this.canSeeSettings$, this.canSeeUsers$, this.canSync$]).pipe(
       map(([settings, users, sync]) => settings || users || sync)
     );
@@ -60,6 +62,7 @@ export class NavigationComponent {
     private readonly settingsAuthGuard: SettingsAuthGuard,
     private readonly syncAuthGuard: SyncAuthGuard,
     private readonly usersAuthGuard: UsersAuthGuard,
+    private readonly nmtDraftAuthGuard: NmtDraftAuthGuard,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,

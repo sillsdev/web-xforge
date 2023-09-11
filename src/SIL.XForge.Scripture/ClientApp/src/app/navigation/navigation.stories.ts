@@ -12,11 +12,11 @@ import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { expect } from '@storybook/jest';
-import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { ObservableFeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../core/sf-project.service';
-import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
+import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
 import { NavigationComponent } from './navigation.component';
 
 const onlineStatusService = mock(OnlineStatusService);
@@ -72,8 +72,8 @@ function setUpMocksAndGetProjectDoc(_args: any, context: any): SFProjectProfileD
   when(onlineStatusService.isOnline).thenReturn(context.args.online);
   when(mockedSFProjectService.getUserConfig(anything(), anything())).thenResolve({} as any);
   when(mockedSFProjectService.getProfile(anything())).thenResolve(projectDoc);
-  when(mockedFeatureFlagService.showNmtDrafting).thenReturn({ enabled: true } as FeatureFlag);
-  when(mockedFeatureFlagService.stillness).thenReturn({ enabled: false } as FeatureFlag);
+  when(mockedFeatureFlagService.showNmtDrafting).thenReturn({ enabled: true } as ObservableFeatureFlag);
+  when(mockedFeatureFlagService.stillness).thenReturn({ enabled: false } as ObservableFeatureFlag);
   when(mockedRouter.url).thenReturn(`/projects/${projectId}/${context.args.path}`);
   when(mockedRouter.createUrlTree(anything(), anything())).thenCall((portions: any[]) => portions.join('/'));
 
@@ -121,6 +121,7 @@ const Template: StoryFn = (args, context) => ({
       { provide: SettingsAuthGuard, useClass: SettingsAuthGuard },
       { provide: SyncAuthGuard, useClass: SyncAuthGuard },
       { provide: UsersAuthGuard, useClass: UsersAuthGuard },
+      { provide: NmtDraftAuthGuard, useClass: NmtDraftAuthGuard },
 
       { provide: AuthService, useValue: instance(mockedAuthService) },
       { provide: OnlineStatusService, useValue: instance(onlineStatusService) },
