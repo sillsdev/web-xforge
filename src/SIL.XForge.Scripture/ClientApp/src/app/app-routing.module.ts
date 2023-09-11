@@ -7,10 +7,11 @@ import { ConnectProjectComponent } from './connect-project/connect-project.compo
 import { ProjectComponent } from './project/project.component';
 import { SettingsComponent } from './settings/settings.component';
 import { PageNotFoundComponent } from './shared/page-not-found/page-not-found.component';
-import { SettingsAuthGuard, SyncAuthGuard } from './shared/project-router.guard';
+import { GenerateDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard } from './shared/project-router.guard';
 import { StartComponent } from './start/start.component';
 import { SyncComponent } from './sync/sync.component';
 import { JoinComponent } from './join/join.component';
+import { DraftGenerationComponent } from './translate/draft-generation/draft-generation.component';
 
 const routes: Routes = [
   { path: 'callback/auth0', component: StartComponent, canActivate: [AuthGuard] },
@@ -20,6 +21,11 @@ const routes: Routes = [
   { path: 'join/:shareKey/:locale', component: JoinComponent },
   { path: 'projects/:projectId/settings', component: SettingsComponent, canActivate: [SettingsAuthGuard] },
   { path: 'projects/:projectId/sync', component: SyncComponent, canActivate: [SyncAuthGuard] },
+  {
+    path: 'projects/:projectId/draft-generation',
+    component: DraftGenerationComponent,
+    canActivate: [GenerateDraftAuthGuard]
+  },
   { path: 'projects/:projectId', component: ProjectComponent, canActivate: [AuthGuard] },
   { path: 'projects', component: StartComponent, canActivate: [AuthGuard] },
   { path: 'system-administration', component: SystemAdministrationComponent, canActivate: [SystemAdminAuthGuard] },

@@ -13,7 +13,7 @@ import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { combineLatest, Observable, of, Subscription } from 'rxjs';
+import { BehaviorSubject, combineLatest, Observable, of, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -43,7 +43,12 @@ import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { canAccessCommunityCheckingApp, canAccessTranslateApp } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
-import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
+import {
+  GenerateDraftAuthGuard,
+  SettingsAuthGuard,
+  SyncAuthGuard,
+  UsersAuthGuard
+} from './shared/project-router.guard';
 import { projectLabel } from './shared/utils';
 
 declare function gtag(...args: any): void;
@@ -70,6 +75,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   canSync$?: Observable<boolean>;
   /** Whether the user can see at least one of settings, users, or sync page */
   canSeeAdminPages$?: Observable<boolean>;
+  canSeeGenerateDraft$?: Observable<boolean> = new BehaviorSubject<boolean>(true);
   hasUpdate: boolean = false;
 
   projectLabel = projectLabel;
@@ -94,6 +100,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly route: ActivatedRoute,
     private readonly settingsAuthGuard: SettingsAuthGuard,
     private readonly syncAuthGuard: SyncAuthGuard,
+    private readonly generateDraftGuard: GenerateDraftAuthGuard,
     private readonly usersAuthGuard: UsersAuthGuard,
     private readonly dialogService: DialogService,
     private readonly fileService: FileService,
@@ -349,6 +356,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.canSeeAdminPages$ = combineLatest([this.canSeeSettings$, this.canSeeUsers$, this.canSync$]).pipe(
           map(([settings, users, sync]) => settings || users || sync)
         );
+        this.canSeeGenerateDraft$ = projectId == null ? of(false) : this.generateDraftGuard.allowTransition(projectId);
       })
     );
 

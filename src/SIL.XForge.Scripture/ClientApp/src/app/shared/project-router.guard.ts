@@ -83,6 +83,23 @@ export class SyncAuthGuard extends RouterGuard {
 @Injectable({
   providedIn: 'root'
 })
+export class GenerateDraftAuthGuard extends RouterGuard {
+  constructor(authGuard: AuthGuard, projectService: SFProjectService, private userService: UserService) {
+    super(authGuard, projectService);
+  }
+
+  check(projectDoc: SFProjectProfileDoc): boolean {
+    return (
+      projectDoc.data != null &&
+      (projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator ||
+        projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextTranslator)
+    );
+  }
+}
+
+@Injectable({
+  providedIn: 'root'
+})
 export class CheckingAuthGuard extends RouterGuard {
   constructor(authGuard: AuthGuard, projectService: SFProjectService, private router: Router) {
     super(authGuard, projectService);
