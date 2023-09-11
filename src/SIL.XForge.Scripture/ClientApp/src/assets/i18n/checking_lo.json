@@ -12,13 +12,18 @@
     "language": "ພາສາ",
     "log_out": "Log out",
     "logged_in_as": "Logged in as",
+    "manual": "Manual",
+    "my_progress": "My progress",
     "offline": "Offline",
     "online": "Online",
+    "open_source_licenses": "Open source licenses",
     "overview": "Overview",
     "page_not_found": "Page not found",
     "password_reset_email_sent": "We've just sent you an email to reset your password.",
     "product_version": "Product version: v{{ version }}",
+    "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "project_home": "Project home",
+    "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirecting in a few moments...",
     "refresh": "Refresh",
     "report_issue_email": "ອີເມວ {{ ອີເມວ }}",
@@ -199,6 +204,19 @@
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "ຄໍາ​ຕອບ​ຂອງ​ເຈົ້າ"
   },
+  "checking_audio_dialog": {
+    "audio": "Audio",
+    "audio_already_exists": "Audio already exists for this selection.",
+    "cancel": "ຍົກເລີກ",
+    "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
+    "save": "ວັກທີ່ມີຄຳຖາມ",
+    "timing": "Timing",
+    "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
+    "upload": "Upload",
+    "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
+    "upload_timing_file": "Upload Timing File",
+    "zero_segments": "Zero segments found."
+  },
   "checking_audio_combined": {
     "remove_audio_file": "Remove Audio File",
     "upload_audio_file": "Upload Audio File",
@@ -226,6 +244,7 @@
   "checking_comments": {
     "add_a_comment": "ເພີ່ມຂໍ້ຄວາມ",
     "delete": "ລຶບ",
+    "confirm_delete": "Are you sure you want to delete this comment?",
     "edit": "ດັດແກ້",
     "show_more_comments_and_unread": "Show {{ count }} more comments - {{ unread }} unread",
     "show_more_comments": "Show {{ count }} more comments"
@@ -242,7 +261,10 @@
     "questions": "ຄຳຖາມ"
   },
   "checking_questions": {
-    "no_questions_found": "No questions found to match your filter"
+    "no_questions_found": "No questions found to match your filter",
+    "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
+    "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
+    "view_answers": "View answers"
   },
   "edit_name_dialog": {
     "cancel": "ຍົກເລີກ",
@@ -270,6 +292,7 @@
   "error_messages": {
     "error_occurred_login": "An error occurred during login.",
     "failed_to_update_avatar": "Your avatar image could not be updated.",
+    "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
     "try_again": "ລອງ​ອີກ​ຄັ້ງ"
   },
   "exception_handling_service": {
@@ -289,18 +312,23 @@
     "subject": "{{ siteName }} issue",
     "unknown": "unknown"
   },
+  "join": {
+    "error_occurred_login": "An error occurred trying to join the project",
+    "invited_to_join": "You've been invited to join {{ boldStart }}{{ projectName }}{{ boldEnd }} project",
+    "join": "Join",
+    "join_a_project": "Join a project",
+    "key_already_used": "The project link has already been used by another user. Please contact the person who sent you the link and ask for a new one.",
+    "key_expired": "The project link expired. Please contact the person who sent you the link and ask for a new one.",
+    "login_existing_account": "or {{ underlineStart }}Log in{{ underlineEnd }} to an existing account",
+    "max_users_reached": "The maximum amount of users allowed to join using this share key has been reached. Please contact the person who sent you the link and ask for a new one.",
+    "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
+    "project_link_is_invalid": "The project link is invalid. Please contact the person who sent you the link and ask for a new one.",
+    "role_not_found": "The role you were assigned on this project is no longer available. Please contact the person who sent you the link and ask for a new one.",
+    "your_name": "Enter your name"
+  },
   "dialog": {
     "cancel": "ຍົກເລີກ",
     "close": "ປິດ"
-  },
-  "project": {
-    "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
-    "project_link_is_invalid": "The project link is invalid.",
-    "problem_finding_project": "There was a problem finding a project ({{ projectID }}) or user specific information for the project. There may be a typo in the URL you specified. You may have tried to access a project that is no longer available."
-  },
-  "project_deleted_dialog": {
-    "ok": "OK",
-    "project_has_been_deleted": "The project has been deleted or is no longer accessible."
   },
   "scripture_chooser_dialog": {
     "choose_book": "ເລືອກປື້ມ",
@@ -314,23 +342,43 @@
   "share_control": {
     "copy_link": "Copy link",
     "email_invalid": "ອີເມວບໍ່ຖືກຕ້ອງ",
+    "email_sharing": "Send an email invite below or share a link using your preferred communication platform.",
     "email": "ອີເມວ",
     "invitation_language": "Invitation language",
     "invitation_role": "Role",
     "invitation_sent": "An invitation email has been sent to {{ email }}",
     "invite_people": "ເຊີນຄົນ",
+    "invite_people_intro": "You can invite people outside of Paratext to help contribute to your project.",
     "link_copied": "Link copied to clipboard",
-    "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
-    "link_sharing": "Link sharing",
+    "link_sharing": "Links can also be shared to users without an email address via social media platforms or SMS messages.",
     "not_inviting_already_member": "Not inviting: User is already a member of this project",
     "resend": "ສົ່ງອີກເທື່ອໜຶ່ງ",
+    "send_a_link": "Send a link",
     "select_invitation_language": "Select a language for the invitation email",
     "select_invitation_role": "Select a role for the invited user",
+    "share_text_anyone": "You've been invited to join the {{ projectName }} project on {{ siteName }}.\nJust click the link below, choose how to log in, and you will be ready to start.",
+    "share_text_single": "Hello, I want to invite you to join the {{ projectName }} project on {{ siteName }}.\nJust click the link below, choose how to log in, and you will be ready to start.",
+    "share_a_link": "Share a link",
+    "share_title": "You've been invited to the project {{ projectName }} on {{ siteName }}",
     "send": "ສົ່ງ",
-    "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
+    "share_not_available_offline": "Inviting is unavailable while offline."
   },
   "share_dialog": {
-    "done": "ສຳເລັດ",
+    "anyone": "Anyone with the link",
+    "anyone_can": "Anyone with the link can",
+    "change": "change",
+    "copy_link": "Copy link",
+    "invitation_language": "Change invitation language",
+    "invitation_link_type": "Change how the link can be used",
+    "invitation_role": "Change invitation role",
+    "invitation_shared_in_language": "Invitation will be shared in",
+    "link_can_be_used_by": "Link can be used by",
+    "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
+    "recipient": "Only the recipient",
+    "recipient_can": "Only the recipient can",
+    "recipient_only_notice": "Each link can only be used once and will expire after 14 days. Click the button again to generate and share a new link.",
+    "share": "Share",
+    "share_project": "Share {{ project }}",
     "share_with_others": "Share with others"
   },
   "start": {

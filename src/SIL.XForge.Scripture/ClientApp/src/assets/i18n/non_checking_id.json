@@ -14,18 +14,26 @@
     "add_question": "Tambah pertanyaan"
   },
   "checking_answers": {
-    "archive": "Arsip"
+    "archive": "Arsip",
+    "no_permission_to_like": "You don't have permission to like answers."
   },
   "checking_overview": {
+    "add_chapter_audio": "Add chapter audio",
     "add_question": "Tambah Pertanyaan",
     "answer_count_label": "{{ count }} jawaban",
     "archive_multiple": "Archive all questions in {{ location }}",
     "archive": "Arsip",
     "archived_questions": "Arsipkan Pertanyaan",
+    "chapter_audio_attached": "Chapter audio and timing data attached",
     "click_add_question": "Klik {{ boldStart }}Tambah pertanyaan{{ boldEnd }}, diatas.",
     "confirm_bulk_archive": "Are you sure you want to archive all the questions in {{ scope }}?",
     "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
+    "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} {{ chapter }}?",
+    "delete": "Hapus",
+    "delete_chapter_audio": "Delete chapter audio",
+    "edit_chapter_audio": "Edit chapter audio",
     "import_questions": "Bulk import",
+    "manage_audio_timing": "Manage chapter audio and timing data",
     "no_archived_questions": "Tidak ada pertanyaan yang diarsipkan.",
     "no_questions": "Tidak ada pertanyaan yang dipublikasikan. ",
     "question_count_label": "{{ count }} pertanyaan",
@@ -34,20 +42,27 @@
     "time_archived_stamp": "Diarsipkan pada{{ timeStamp }}"
   },
   "collaborators": {
+    "all": "All",
     "allow_add_edit_questions": "Can add & edit questions",
     "awaiting_response_from": "Menunggu respon dari{{ newLine }}{{ email }}",
     "cancel_invite": "Batal mengundang",
     "change_roles_and_permissions": "Peran dan izin pengguna {{ boldStart }}hanya dapat{{ boldEnd }} diubah di {{ boldStart }}Paratext{{ boldEnd }}. Buka proyek di {{ boldStart }}Paratext{{ boldEnd }}, pada jendela proyek klik {{ templateTagBoundary }}{{ templateTagBoundary }}, kemudian {{ boldStart }} Pengaturan proyek{{ boldEnd }}, kemudian {{ boldStart }}Izin pengguna{{ boldEnd }}. Setelah melakukan {{ italicsStart }}Kirim/Terima{{ italicsEnd }} di {{ boldStart }}Paratext{{ boldEnd }} dan kemudian melakukan {{ italicsStart }}Sinkronisasi{{ italicsEnd }} di {{ boldStart }}Scripture Forge{{ boldEnd }}, peran mereka akan mulai berlaku di sini, begitu pengguna masuk dengan akun {{ boldStart }}Paratext{{ boldEnd }} mereka.",
     "confirm_remove_user": "Are you sure you want to remove \"{{ user }}\" from the project?",
     "connect_network_to_manage_users": "User management is disabled while offline. Please connect to the internet to manage users.",
+    "disable_add_edit_questions": "Disable add and edit questions",
+    "enable_add_edit_questions": "Enable add and edit questions",
     "filter_users": "Saringan pengguna...",
     "invitation_expired": "Invitation has expired for{{ newLine }}{{ email }}",
+    "learn_more": "Learn More",
     "me": "saya",
     "no_users_found": "Tidak ada pengguna ditemukan",
+    "paratext_members": "Paratext Members",
     "problem_loading_invited_users": "Terjadi masalah ketika memuat daftar pengguna yang diundang.",
+    "project_guests": "Project Guests",
     "remove_from_project": "Hapus dari proyek",
     "remove_user": "Remove User",
-    "share_with_others": "Bagikan dengan orang lain"
+    "share_with_others": "Bagikan dengan orang lain",
+    "uses_roles_to_access_project": "Scripture Forge uses roles and permissions to access your project"
   },
   "connect_project": {
     "already_connected": "(Sudah terhubung)",
@@ -83,19 +98,24 @@
     "project_name": "Nama Proyek"
   },
   "editor": {
+    "add_comment": "Add Comment",
     "anonymous": "Anonymous",
+    "cancel": "Batal",
     "cannot_edit_chapter_formatting_invalid": "Pasal ini tidak dapat disunting karena pemformatan tidak valid. Harap perbaiki pemformatan di Paratext.",
+    "cannot_edit_note_paratext": "You cannot edit this note as it has been edited in Paratext.",
     "configure_translation_suggestions": "Konfigurasikan saran terjemahan",
-    "insert_note": "Insert note",
     "more_notes": "--- {{ count }} more note(s) ---",
+    "navigate_to_a_valid_text": "Navigate to a valid text to insert a note",
     "no_permission_edit_chapter": "You don't have permission to edit this chapter, even though you have the {{ userRole }} role. Permissions can only be changed in Paratext.",
     "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "project_text_not_editable": "Text in this project is not editable. This setting can be changed in Paratext.",
+    "save": "Simpan",
     "swap_source_and_target": "Tukar sumber dan target",
     "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "Untuk melaporkan sebuah masalah, kirim surel {{ issueEmailLink }}.",
-    "verse_too_long_for_suggestions": "Ayat ini terlalu panjang untuk membuat saran terjemahan."
+    "verse_too_long_for_suggestions": "Ayat ini terlalu panjang untuk membuat saran terjemahan.",
+    "your_comment": "Komentar Anda"
   },
   "import_questions_confirmation_dialog": {
     "done": "Selesai",
@@ -148,22 +168,20 @@
     "other_viewers": "{{ count }} other viewers"
   },
   "note_dialog": {
-    "acceptance_change_heading": "Changes Paratext Accepted (current text):",
     "close": "Tutup",
-    "declare_conflict": "There is a conflict. Colors correspond to older (red) and newer (green) text.",
     "delete": "Hapus",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
     "paratext_user": "Assigned to a Paratext user",
     "permanently_delete_note": "Permanently delete this comment?",
     "reattached": "(Re-attached)",
-    "rejection_change_heading": "Changes Paratext Rejected:",
     "save": "Simpan",
     "show_changes": "Show changes",
     "status_resolved": "Resolved",
     "status_to_do": "To do",
     "team": "(Team)",
-    "unassigned": "(Unassigned)"
+    "unassigned": "(Unassigned)",
+    "your_comment": "Komentar Anda"
   },
   "paginator": {
     "items_per_page": "Item per halaman",
@@ -178,7 +196,6 @@
   },
   "question_answered_dialog": {
     "cancel": "Batal",
-    "consider_creating_new_question": "Pertimbangkan untuk membuat pertanyaan baru daripada menyunting pertanyaan ini.",
     "edit_anyway": "Tetap sunting",
     "question_has_answer": "Pertanyaan sudah mempunyai jawaban"
   },
@@ -206,17 +223,17 @@
     "pt_observer": "Pengamat",
     "pt_translator": "Penerjemah",
     "sf_community_checker": "Pemeriksa Komunitas",
-    "sf_reviewer": "Pengulas",
-    "sf_observer": "Pengamat"
+    "sf_commenter": "Commenter",
+    "sf_observer": "Viewer"
   },
   "role_descriptions": {
     "sf_community_checker": "Answer questions, Comment on answers",
-    "sf_reviewer": "View translation, Add notes",
+    "sf_commenter": "View translation, Add comments",
     "sf_observer": "View translation"
   },
   "settings": {
     "anyone_with_a_link": "Siapapun yang punya tautan",
-    "community_checking_settings": "Community Checking Settings",
+    "community_checking_settings": "Pemeriksaan Komunitas",
     "connect_network_to_change_settings": "Project settings cannot be changed while offline. Please connect to the internet to make changes.",
     "danger_zone": "Zona Bahaya",
     "delete_project_cannot_be_undone": "Setelah Anda menghapus proyek, tidak bisa dikembalikan. Harap pastikan.",
@@ -233,20 +250,21 @@
     "export_marked_for_export": "Answers marked for export",
     "export_none": "No answers",
     "exporting_answers": "Exporting Answers",
+    "invite_others": "Administrators can always invite people from the {{ templateTagBoundary }}Users{{ templateTagBoundary }} page.",
     "log_in_with_paratext": "Masuk ke Paratext",
-    "see_others_answers_and_comments": "Allow checkers to see each other's answers",
+    "see_others_answers_and_comments": "Allow checkers to see each other's answers and comments",
     "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
     "settings": "Pengaturan",
-    "share": "Allow users to invite others to the project",
-    "sharing": "Sharing",
+    "shareTranslate": "Allow users of Translate to invite others",
+    "shareChecking": "Allow users of Community Checking to invite others",
+    "sharing": "User Invites",
     "source_projects_cannot_be_deleted": "Another project is based on this project and so it cannot be deleted.",
     "source_text_placeholder": "Source text (optional)",
-    "translate": "Translation Settings",
+    "translate": "Menerjemahkan",
     "translation_suggestions_require_source_text": "Note: Translation suggestions are only available if a source text is selected.",
     "translation_suggestions": "Enable Translation Suggestions",
     "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture based on the project or resource selected above.",
-    "users_can_interact_with_each_other": "Pengguna dapat melihat jawaban dan komentar masing-masing untuk berinteraksi satu sama lain.",
-    "users_can_share_the_project": "Pengguna dapat berbagi dengan mengundang teman untuk bergabung dengan proyek.{{ newLine }}{{ italicsStart }}Administrator{{ italicsEnd }} selalu dapat mengundang orang lain terlibat di {{ templateTagBoundary }}Pengguna{{ templateTagBoundary }}.",
+    "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
     "will_not_delete_paratext_project": "Ini akan {{ boldStart }}tidak{{ boldEnd }} menghapus proyek Paratext anda, tetapi itu akan menghapus semua data yang tidak disinkronkan yang disimpan di dalam Scripture Forge. Disarankan untuk {{ templateTagBoundary }}Sinkronisasi{{ templateTagBoundary }} dahulu sebelum menghapus."
   },
   "suggestions_settings_dialog": {
@@ -285,12 +303,13 @@
     "footnote": "Footnote"
   },
   "training_progress": {
-    "completed_successfully": "Berhasil diselesaikan",
-    "training_completed_successfully": "Pelatihan berhasil diselesaikan",
-    "training": "Pelatihan"
+    "completed_successfully": "Completed successfully",
+    "training_completed_successfully": "Training completed successfully",
+    "training": "Training"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",
+    "not_enough_verses_translated": "Translation suggestions are unavailable. Please ensure that there are at least 10 matching verses translated in the source and target projects.",
     "progress": "Kemajuan",
     "quality": "Kualitas",
     "retrain": "Melatih kembali",
@@ -303,5 +322,10 @@
   "users": {
     "collaborators": "Kolaborator",
     "users": "Pengguna"
+  },
+  "warnings": {
+    "cancel": "Batal",
+    "login_cookie_deletion": "Logging out will remove your ability to log back into this account. Are you sure you want to logout?",
+    "logout": "Yes, logout"
   }
 }

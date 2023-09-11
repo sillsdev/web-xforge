@@ -14,18 +14,26 @@
     "add_question": "Add question"
   },
   "checking_answers": {
-    "archive": "Archive"
+    "archive": "Archive",
+    "no_permission_to_like": "You don't have permission to like answers."
   },
   "checking_overview": {
+    "add_chapter_audio": "Add chapter audio",
     "add_question": "Add Question",
     "answer_count_label": "{{ count }} answers",
     "archive_multiple": "Archive all questions in {{ location }}",
     "archive": "Archive",
     "archived_questions": "Archived Questions",
+    "chapter_audio_attached": "Chapter audio and timing data attached",
     "click_add_question": "Click {{ boldStart }}Add question{{ boldEnd }}, above.",
     "confirm_bulk_archive": "Are you sure you want to archive all the questions in {{ scope }}?",
     "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
+    "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} {{ chapter }}?",
+    "delete": "ລຶບ",
+    "delete_chapter_audio": "Delete chapter audio",
+    "edit_chapter_audio": "Edit chapter audio",
     "import_questions": "Bulk import",
+    "manage_audio_timing": "Manage chapter audio and timing data",
     "no_archived_questions": "There are no archived questions.",
     "no_questions": "There are no published questions. ",
     "question_count_label": "{{ count }} questions",
@@ -34,20 +42,27 @@
     "time_archived_stamp": "Archived on {{ timeStamp }}"
   },
   "collaborators": {
+    "all": "All",
     "allow_add_edit_questions": "Can add & edit questions",
     "awaiting_response_from": "Awaiting response from{{ newLine }}{{ email }}",
     "cancel_invite": "Cancel invite",
     "change_roles_and_permissions": "Users' roles and permissions can {{ boldStart }}only{{ boldEnd }} be changed in {{ boldStart }}Paratext{{ boldEnd }}. Open the project in {{ boldStart }}Paratext{{ boldEnd }}, on the project window click {{ templateTagBoundary }}{{ templateTagBoundary }}, then {{ boldStart }}Project settings{{ boldEnd }}, then {{ boldStart }}User permissions{{ boldEnd }}. After a {{ italicsStart }}Send/Receive{{ italicsEnd }} in {{ boldStart }}Paratext{{ boldEnd }} and then a {{ italicsStart }}Synchronize{{ italicsEnd }} in {{ boldStart }}Scripture Forge{{ boldEnd }}, their role will come into effect here, once that user logs in with their {{ boldStart }}Paratext{{ boldEnd }} account.",
     "confirm_remove_user": "Are you sure you want to remove \"{{ user }}\" from the project?",
     "connect_network_to_manage_users": "User management is disabled while offline. Please connect to the internet to manage users.",
+    "disable_add_edit_questions": "Disable add and edit questions",
+    "enable_add_edit_questions": "Enable add and edit questions",
     "filter_users": "Filter users...",
     "invitation_expired": "Invitation has expired for{{ newLine }}{{ email }}",
+    "learn_more": "Learn More",
     "me": "me",
     "no_users_found": "No users found",
+    "paratext_members": "Paratext Members",
     "problem_loading_invited_users": "There was a problem loading the list of invited users.",
+    "project_guests": "Project Guests",
     "remove_from_project": "Remove from project",
     "remove_user": "Remove User",
-    "share_with_others": "Share with others"
+    "share_with_others": "Share with others",
+    "uses_roles_to_access_project": "Scripture Forge uses roles and permissions to access your project"
   },
   "connect_project": {
     "already_connected": "(already connected)",
@@ -83,19 +98,24 @@
     "project_name": "Project Name"
   },
   "editor": {
+    "add_comment": "Add Comment",
     "anonymous": "Anonymous",
+    "cancel": "ຍົກເລີກ",
     "cannot_edit_chapter_formatting_invalid": "This chapter cannot be edited because the formatting is invalid. Please fix the formatting in Paratext.",
+    "cannot_edit_note_paratext": "You cannot edit this note as it has been edited in Paratext.",
     "configure_translation_suggestions": "Configure translation suggestions",
-    "insert_note": "Insert note",
     "more_notes": "--- {{ count }} more note(s) ---",
+    "navigate_to_a_valid_text": "Navigate to a valid text to insert a note",
     "no_permission_edit_chapter": "You don't have permission to edit this chapter, even though you have the {{ userRole }} role. Permissions can only be changed in Paratext.",
     "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "project_text_not_editable": "Text in this project is not editable. This setting can be changed in Paratext.",
+    "save": "ວັກທີ່ມີຄຳຖາມ",
     "swap_source_and_target": "Swap source and target",
     "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "To report an issue, email {{ issueEmailLink }}.",
-    "verse_too_long_for_suggestions": "This verse is too long to generate suggestions."
+    "verse_too_long_for_suggestions": "This verse is too long to generate suggestions.",
+    "your_comment": "ຂໍ້ຄວາມເຈົ້າ"
   },
   "import_questions_confirmation_dialog": {
     "done": "ສຳເລັດ",
@@ -148,22 +168,20 @@
     "other_viewers": "{{ count }} other viewers"
   },
   "note_dialog": {
-    "acceptance_change_heading": "Changes Paratext Accepted (current text):",
     "close": "ປິດ",
-    "declare_conflict": "There is a conflict. Colors correspond to older (red) and newer (green) text.",
     "delete": "ລຶບ",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
     "paratext_user": "Assigned to a Paratext user",
     "permanently_delete_note": "Permanently delete this comment?",
     "reattached": "(Re-attached)",
-    "rejection_change_heading": "Changes Paratext Rejected:",
     "save": "ວັກທີ່ມີຄຳຖາມ",
     "show_changes": "Show changes",
     "status_resolved": "Resolved",
     "status_to_do": "To do",
     "team": "(Team)",
-    "unassigned": "(Unassigned)"
+    "unassigned": "(Unassigned)",
+    "your_comment": "ຂໍ້ຄວາມເຈົ້າ"
   },
   "paginator": {
     "items_per_page": "Items per page",
@@ -178,9 +196,8 @@
   },
   "question_answered_dialog": {
     "cancel": "ຍົກເລີກ",
-    "consider_creating_new_question": "Consider creating a new question instead of editing this question.",
     "edit_anyway": "Edit anyway",
-    "question_has_answer": "Question already has an answer"
+    "question_has_answer": "This question has an answer. Consider creating a new question instead."
   },
   "question_dialog": {
     "add_question_denied": "You don't have permission to add or edit questions.",
@@ -206,17 +223,17 @@
     "pt_observer": "Observer",
     "pt_translator": "Translator",
     "sf_community_checker": "Community Checker",
-    "sf_reviewer": "Reviewer",
-    "sf_observer": "Observer"
+    "sf_commenter": "Commenter",
+    "sf_observer": "Viewer"
   },
   "role_descriptions": {
     "sf_community_checker": "Answer questions, Comment on answers",
-    "sf_reviewer": "View translation, Add notes",
+    "sf_commenter": "View translation, Add comments",
     "sf_observer": "View translation"
   },
   "settings": {
     "anyone_with_a_link": "Anyone with a link",
-    "community_checking_settings": "Community Checking Settings",
+    "community_checking_settings": "ກວດກັບຊຸມຊົນ",
     "connect_network_to_change_settings": "Project settings cannot be changed while offline. Please connect to the internet to make changes.",
     "danger_zone": "Danger Zone",
     "delete_project_cannot_be_undone": "Once you delete a project, there is no going back. Please be certain.",
@@ -224,7 +241,7 @@
     "email_invitations_only": "Email invitations only",
     "enable_community_checking": "Enable Community Checking",
     "enable_translation_suggestions": "to enable {{ boldStart }}Translate Suggestions{{ boldEnd }} and see more options",
-    "engage_the_wider_community": "Engage the wider community to ensure that the translation is clear, accurate, and natural. Select verses, ask targeted questions, allow discussion of answers.",
+    "engage_the_wider_community": "Engage the wider community to ensure that the translation is clear, accurate, and natural. Select verses, ask questions, and discuss answers.",
     "error_fetching_projects_resources": "There was an error fetching projects and resources. You can't change what the project is based on.",
     "error_fetching_projects": "There was an error fetching projects. You will only be able to select resources from Digital Bible Library.",
     "error_fetching_resources": "There was an error fetching the Digital Bible Library resources. You will only be able to select projects.",
@@ -233,20 +250,21 @@
     "export_marked_for_export": "Answers marked for export",
     "export_none": "No answers",
     "exporting_answers": "Exporting Answers",
+    "invite_others": "Administrators can always invite people from the {{ templateTagBoundary }}Users{{ templateTagBoundary }} page.",
     "log_in_with_paratext": "Log in to Paratext",
-    "see_others_answers_and_comments": "Allow checkers to see each other's answers",
+    "see_others_answers_and_comments": "Allow checkers to see each other's answers and comments",
     "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
     "settings": "Settings",
-    "share": "Allow users to invite others to the project",
-    "sharing": "Sharing",
+    "shareTranslate": "Allow users of Translate to invite others",
+    "shareChecking": "Allow users of Community Checking to invite others",
+    "sharing": "User Invites",
     "source_projects_cannot_be_deleted": "Another project is based on this project and so it cannot be deleted.",
     "source_text_placeholder": "Source text (optional)",
-    "translate": "Translation Settings",
+    "translate": "Translate",
     "translation_suggestions_require_source_text": "Note: Translation suggestions are only available if a source text is selected.",
     "translation_suggestions": "Enable Translation Suggestions",
     "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture based on the project or resource selected above.",
-    "users_can_interact_with_each_other": "Users can see each other's answers and comments to interact with each other.",
-    "users_can_share_the_project": "Users can share by inviting a friend to join the project.{{ newLine }}{{ italicsStart }}Administrators{{ italicsEnd }} can always invite others to the project in {{ templateTagBoundary }}Users{{ templateTagBoundary }}.",
+    "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
     "will_not_delete_paratext_project": "This will {{ boldStart }}not{{ boldEnd }} delete your Paratext project, but it will delete any unsynchronized data stored in Scripture Forge. It is recommended to {{ templateTagBoundary }}Synchronize{{ templateTagBoundary }} first before deleting."
   },
   "suggestions_settings_dialog": {
@@ -291,6 +309,7 @@
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",
+    "not_enough_verses_translated": "Translation suggestions are unavailable. Please ensure that there are at least 10 matching verses translated in the source and target projects.",
     "progress": "Progress",
     "quality": "Quality",
     "retrain": "Retrain",
@@ -303,5 +322,10 @@
   "users": {
     "collaborators": "Collaborators",
     "users": "Users"
+  },
+  "warnings": {
+    "cancel": "ຍົກເລີກ",
+    "login_cookie_deletion": "Logging out will remove your ability to log back into this account. Are you sure you want to logout?",
+    "logout": "Yes, logout"
   }
 }

@@ -14,18 +14,26 @@
     "add_question": "Adaugă o întrebare"
   },
   "checking_answers": {
-    "archive": "Arhivare"
+    "archive": "Arhivare",
+    "no_permission_to_like": "You don't have permission to like answers."
   },
   "checking_overview": {
+    "add_chapter_audio": "Add chapter audio",
     "add_question": "Adaugă o întrebare",
     "answer_count_label": "{{ count }} răspunsuri",
     "archive_multiple": "Archive all questions in {{ location }}",
     "archive": "Arhivare",
     "archived_questions": "Întrebări arhivate",
+    "chapter_audio_attached": "Chapter audio and timing data attached",
     "click_add_question": "Faceți clic pe butonul {{ boldStart }}Adaugă o întrebare{{ boldEnd }}, mai sus.",
     "confirm_bulk_archive": "Are you sure you want to archive all the questions in {{ scope }}?",
     "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
+    "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} {{ chapter }}?",
+    "delete": "Șterge",
+    "delete_chapter_audio": "Delete chapter audio",
+    "edit_chapter_audio": "Edit chapter audio",
     "import_questions": "Importare",
+    "manage_audio_timing": "Manage chapter audio and timing data",
     "no_archived_questions": "Nu sunt întrebări arhivate.",
     "no_questions": "Nu sunt întrebări publicate. ",
     "question_count_label": "{{ count }} întrebări",
@@ -34,20 +42,27 @@
     "time_archived_stamp": "Arhivat pe {{ timeStamp }}"
   },
   "collaborators": {
+    "all": "All",
     "allow_add_edit_questions": "Poate adăuga și edita întrebări",
     "awaiting_response_from": "Se așteaptă răspunsul de la{{ newLine }}{{ email }}",
     "cancel_invite": "Anulează invitația",
     "change_roles_and_permissions": "Rolurile și permisiunile utilizatorilor pot fi modificate {{ boldStart }}doar{{ boldEnd }} în {{ boldStart }}Paratext{{ boldEnd }}. Deschideți proiectul în {{ boldStart }}Paratext{{ boldEnd }}; În fereastra proiectului faceți clic pe {{ templateTagBoundary }}{{ templateTagBoundary }}, apoi pe {{ boldStart }}Setări proiect{{ boldEnd }}, apoi pe {{ boldStart }}Permisiuni utilizator{{ boldEnd }}. După o {{ italicsStart }}Trimitere/Primire{{ italicsEnd }} în {{ boldStart }}Paratext{{ boldEnd }} și apoi o {{ italicsStart }}Sincronizare{{ italicsEnd }} în {{ boldStart }}Scripture Forge{{ boldEnd }}, rolul lor va intra în vigoare aici, odată ce acel utilizator se conectează la contul său {{ boldStart }}Paratext{{ boldEnd }} .",
     "confirm_remove_user": "Are you sure you want to remove \"{{ user }}\" from the project?",
     "connect_network_to_manage_users": "Administrarea utilizatorilor este dezactivată în timp ce vă aflați offline. Vă rugăm să vă conectați la internet pentru a gestiona utilizatorii.",
+    "disable_add_edit_questions": "Disable add and edit questions",
+    "enable_add_edit_questions": "Enable add and edit questions",
     "filter_users": "Filtrare utilizatori...",
     "invitation_expired": "Invitația a expirat pentru{{ newLine }}{{ email }}",
+    "learn_more": "Aflați mai multe",
     "me": "eu",
     "no_users_found": "Niciun utilizator găsit",
+    "paratext_members": "Paratext Members",
     "problem_loading_invited_users": "A apărut o eroare la încărcarea listei de utilizatori invitați.",
+    "project_guests": "Project Guests",
     "remove_from_project": "Elimină din proiect",
     "remove_user": "Remove User",
-    "share_with_others": "Distribuiți altora"
+    "share_with_others": "Distribuiți altora",
+    "uses_roles_to_access_project": "Scripture Forge uses roles and permissions to access your project"
   },
   "connect_project": {
     "already_connected": "(deja conectat)",
@@ -83,19 +98,24 @@
     "project_name": "Numele proiectului"
   },
   "editor": {
+    "add_comment": "Add Comment",
     "anonymous": "Anonymous",
+    "cancel": "Renunță",
     "cannot_edit_chapter_formatting_invalid": "Acest capitol nu poate fi editat deoarece formatarea nu este validă. Vă rugăm să remediați formatarea în Paratext.",
+    "cannot_edit_note_paratext": "You cannot edit this note as it has been edited in Paratext.",
     "configure_translation_suggestions": "Configurarea sugestiilor de traducere",
-    "insert_note": "Insert note",
     "more_notes": "--- {{ count }} more note(s) ---",
+    "navigate_to_a_valid_text": "Navigate to a valid text to insert a note",
     "no_permission_edit_chapter": "You don't have permission to edit this chapter, even though you have the {{ userRole }} role. Permissions can only be changed in Paratext.",
     "project_data_out_of_sync": "Datele proiectului nu sunt sincronizate. Vă rugăm să sincronizați proiectul pentru a edita acest text.",
     "project_text_not_editable": "Text in this project is not editable. This setting can be changed in Paratext.",
+    "save": "Salvează",
     "swap_source_and_target": "Interchimbă sursa cu destinația",
     "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "Pentru a raporta o problemă, trimiteți un e-mail la {{ issueEmailLink }}.",
-    "verse_too_long_for_suggestions": "Acest verset este prea lung pentru a se genera sugestii."
+    "verse_too_long_for_suggestions": "Acest verset este prea lung pentru a se genera sugestii.",
+    "your_comment": "Comentariul dvs"
   },
   "import_questions_confirmation_dialog": {
     "done": "Gata",
@@ -148,22 +168,20 @@
     "other_viewers": "{{ count }} other viewers"
   },
   "note_dialog": {
-    "acceptance_change_heading": "Changes Paratext Accepted (current text):",
     "close": "Închide",
-    "declare_conflict": "There is a conflict. Colors correspond to older (red) and newer (green) text.",
     "delete": "Șterge",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
     "paratext_user": "Assigned to a Paratext user",
     "permanently_delete_note": "Permanently delete this comment?",
     "reattached": "(Re-attached)",
-    "rejection_change_heading": "Changes Paratext Rejected:",
     "save": "Salvează",
     "show_changes": "Show changes",
     "status_resolved": "Resolved",
     "status_to_do": "To do",
     "team": "(Team)",
-    "unassigned": "(Unassigned)"
+    "unassigned": "(Unassigned)",
+    "your_comment": "Comentariul dvs"
   },
   "paginator": {
     "items_per_page": "Elemente pe pagină",
@@ -178,7 +196,6 @@
   },
   "question_answered_dialog": {
     "cancel": "Renunță",
-    "consider_creating_new_question": "Nu ar fi mai bine să creați o întrebare nouă, în loc să editați această întrebare?",
     "edit_anyway": "Editează oricum",
     "question_has_answer": "Întrebarea are deja un răspuns"
   },
@@ -206,17 +223,17 @@
     "pt_observer": "Observator",
     "pt_translator": "Traducător",
     "sf_community_checker": "Verificator din comunitate",
-    "sf_reviewer": "Corector",
-    "sf_observer": "Observator"
+    "sf_commenter": "Commenter",
+    "sf_observer": "Viewer"
   },
   "role_descriptions": {
     "sf_community_checker": "Answer questions, Comment on answers",
-    "sf_reviewer": "View translation, Add notes",
+    "sf_commenter": "View translation, Add comments",
     "sf_observer": "View translation"
   },
   "settings": {
     "anyone_with_a_link": "Oricine cu un link",
-    "community_checking_settings": "Community Checking Settings",
+    "community_checking_settings": "Verificare în comunitate",
     "connect_network_to_change_settings": "Setările proiectului nu pot fi modificate în timp vă aflați offline. Vă rugăm să vă conectați la internet pentru a face modificări.",
     "danger_zone": "Zonă periculoasă",
     "delete_project_cannot_be_undone": "Odată ce ați șters un proiect, nu mai există cale de întoarcere. Sunteți sigur că doriți să ștergeți?",
@@ -233,20 +250,21 @@
     "export_marked_for_export": "Answers marked for export",
     "export_none": "No answers",
     "exporting_answers": "Exporting Answers",
+    "invite_others": "Administrators can always invite people from the {{ templateTagBoundary }}Users{{ templateTagBoundary }} page.",
     "log_in_with_paratext": "Autentificare în Paratext",
-    "see_others_answers_and_comments": "Allow checkers to see each other's answers",
+    "see_others_answers_and_comments": "Allow checkers to see each other's answers and comments",
     "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
     "settings": "Setări",
-    "share": "Allow users to invite others to the project",
-    "sharing": "Sharing",
+    "shareTranslate": "Allow users of Translate to invite others",
+    "shareChecking": "Allow users of Community Checking to invite others",
+    "sharing": "User Invites",
     "source_projects_cannot_be_deleted": "Un alt proiect se bazează pe acest proiect, și prin urmare, nu poate fi șters.",
     "source_text_placeholder": "Source text (optional)",
-    "translate": "Translation Settings",
+    "translate": "Traducere",
     "translation_suggestions_require_source_text": "Note: Translation suggestions are only available if a source text is selected.",
     "translation_suggestions": "Enable Translation Suggestions",
     "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture based on the project or resource selected above.",
-    "users_can_interact_with_each_other": "Utilizatorii pot vedea răspunsurile și comentariile celorlalți pentru a interacționa între ei.",
-    "users_can_share_the_project": "Utilizatorii pot partaja proiectul, prin invitarea unor prieteni pentru a se alătura la proiect.{{ newLine }}{{ italicsStart }}Administratorii{{ italicsEnd }} pot întotdeauna să invite alte persoane la proiect, în secțiunea {{ templateTagBoundary }}Utilizatori{{ templateTagBoundary }}.",
+    "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
     "will_not_delete_paratext_project": "Această operație {{ boldStart }}nu{{ boldEnd }} va șterge proiectul Paratext, dar va șterge orice date nesincronizate stocate în Scripture Forge. Vă recomandăm să {{ templateTagBoundary }}sincronizați{{ templateTagBoundary }} înainte de ștergere."
   },
   "suggestions_settings_dialog": {
@@ -285,12 +303,13 @@
     "footnote": "Footnote"
   },
   "training_progress": {
-    "completed_successfully": "Finalizat cu succes",
-    "training_completed_successfully": "Instruirea finalizată cu succes",
-    "training": "Instruire"
+    "completed_successfully": "Completed successfully",
+    "training_completed_successfully": "Training completed successfully",
+    "training": "Training"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",
+    "not_enough_verses_translated": "Translation suggestions are unavailable. Please ensure that there are at least 10 matching verses translated in the source and target projects.",
     "progress": "Progresul",
     "quality": "Calitatea",
     "retrain": "Recalibrare",
@@ -303,5 +322,10 @@
   "users": {
     "collaborators": "Colaboratori",
     "users": "Utilizatori"
+  },
+  "warnings": {
+    "cancel": "Renunță",
+    "login_cookie_deletion": "Logging out will remove your ability to log back into this account. Are you sure you want to logout?",
+    "logout": "Yes, logout"
   }
 }

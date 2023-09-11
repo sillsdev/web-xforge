@@ -14,18 +14,26 @@
     "add_question": "Sual əlavə etmək"
   },
   "checking_answers": {
-    "archive": "Arxiv"
+    "archive": "Arxiv",
+    "no_permission_to_like": "You don't have permission to like answers."
   },
   "checking_overview": {
+    "add_chapter_audio": "Add chapter audio",
     "add_question": "Sual əlavə etmək",
     "answer_count_label": "{{ count }} cavablar",
     "archive_multiple": "Archive all questions in {{ location }}",
     "archive": "Arxiv",
     "archived_questions": "Arxivdə saxlanmış suallar",
+    "chapter_audio_attached": "Chapter audio and timing data attached",
     "click_add_question": "Yuxarıdakı {{ boldStart }}Sual əlavə etmək{{ boldEnd }} tıklayın.",
     "confirm_bulk_archive": "Are you sure you want to archive all the questions in {{ scope }}?",
     "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
+    "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} {{ chapter }}?",
+    "delete": "Silmək",
+    "delete_chapter_audio": "Delete chapter audio",
+    "edit_chapter_audio": "Edit chapter audio",
     "import_questions": "İdxal",
+    "manage_audio_timing": "Manage chapter audio and timing data",
     "no_archived_questions": "Arxivləşdirilmiş suallar yoxdur.",
     "no_questions": "Nəşr edilmiş suallar yoxdur. ",
     "question_count_label": "{{ count }} suallar",
@@ -34,20 +42,27 @@
     "time_archived_stamp": "{{ timeStamp }}-da arxivləşdirilib"
   },
   "collaborators": {
+    "all": "All",
     "allow_add_edit_questions": "Can add & edit questions",
     "awaiting_response_from": "{{ newLine }}{{ email }}-dan cavab gözlənilir",
     "cancel_invite": "Dəvəti ləğv etmək",
     "change_roles_and_permissions": "İstifadəçilərin rolları və icazələri {{ boldStart }}yalnız{{ boldEnd }} {{ boldStart }}Paratextdə{{ boldEnd }} dəyişilə bilər. Layihəni {{ boldStart }}Paratextdə{{ boldEnd }} açın, layihənin pəncərəsində {{ templateTagBoundary }}{{ templateTagBoundary }}, sonra {{ boldStart }}Layihə parametrləri{{ boldEnd }}, sonra{{ boldStart }}İstifadəçinin izacələri{{ boldEnd }} tıklayın. {{ boldStart }}Paratextdə{{ boldEnd }} {{ italicsStart }}Göndərmək/Qəbul etmək{{ italicsEnd }}-dən sonra {{ boldStart }} Kəlamın Kürəsində {{ boldEnd }}{{ italicsStart }}Sinxronlaşdırmaq{{ italicsEnd }} edildikdə həmin istifadəçi öz {{ boldStart }}Paratext{{ boldEnd }} hesabı ilə daxil olduqda onların rolu aktivləşəcək.",
     "confirm_remove_user": "Are you sure you want to remove \"{{ user }}\" from the project?",
     "connect_network_to_manage_users": "Şəbəkədə olmayanda istifadəçi idarəetməsi aktiv deyil. Xahiş edirik, istifadəçiləri idarə etmək üçün internetə qoşulun.",
+    "disable_add_edit_questions": "Disable add and edit questions",
+    "enable_add_edit_questions": "Enable add and edit questions",
     "filter_users": "İstifadəçiləri seçmək...",
     "invitation_expired": "Invitation has expired for{{ newLine }}{{ email }}",
+    "learn_more": "Daha çox öyrənin",
     "me": "mən",
     "no_users_found": "Heç bir istifadəçi tapılmadı",
+    "paratext_members": "Paratext Members",
     "problem_loading_invited_users": "Dəvət olunmuş istifadəçilərin siyahısını yükləyərkən bir problem yaranıb.",
+    "project_guests": "Project Guests",
     "remove_from_project": "Layihədən çıxar",
     "remove_user": "Remove User",
-    "share_with_others": "Başqaları ilə paylaşın. "
+    "share_with_others": "Başqaları ilə paylaşın. ",
+    "uses_roles_to_access_project": "Scripture Forge uses roles and permissions to access your project"
   },
   "connect_project": {
     "already_connected": "(artıq qoşulub)",
@@ -83,19 +98,24 @@
     "project_name": "Layihənin Adı"
   },
   "editor": {
+    "add_comment": "Add Comment",
     "anonymous": "Anonymous",
+    "cancel": "Ləğv etmək",
     "cannot_edit_chapter_formatting_invalid": "Bu fəsil redaktə oluna bilməz, çünki formatlaşdırma yanlışdır. Zəhmət olmazsa, formatlaşdırmanı Paratextdə düzəldin.",
+    "cannot_edit_note_paratext": "You cannot edit this note as it has been edited in Paratext.",
     "configure_translation_suggestions": "Tərcümə təkliflərini irəli sürün",
-    "insert_note": "Insert note",
     "more_notes": "--- {{ count }} more note(s) ---",
+    "navigate_to_a_valid_text": "Navigate to a valid text to insert a note",
     "no_permission_edit_chapter": "You don't have permission to edit this chapter, even though you have the {{ userRole }} role. Permissions can only be changed in Paratext.",
     "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "project_text_not_editable": "Text in this project is not editable. This setting can be changed in Paratext.",
+    "save": "Yadda saxlamaq",
     "swap_source_and_target": "Mənbə və hədəfi dəyişdirmək",
     "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "Problemi bildirmək üçün {{ issueEmailLink }}-a e-poçt göndərin.",
-    "verse_too_long_for_suggestions": "Bu ayə təkliflər irəli sürmək üçün çox uzundur."
+    "verse_too_long_for_suggestions": "Bu ayə təkliflər irəli sürmək üçün çox uzundur.",
+    "your_comment": "Sizin rəyiniz"
   },
   "import_questions_confirmation_dialog": {
     "done": "Yerinə yetirildi",
@@ -148,22 +168,20 @@
     "other_viewers": "{{ count }} other viewers"
   },
   "note_dialog": {
-    "acceptance_change_heading": "Changes Paratext Accepted (current text):",
     "close": "Bağla",
-    "declare_conflict": "There is a conflict. Colors correspond to older (red) and newer (green) text.",
     "delete": "Silmək",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
     "paratext_user": "Assigned to a Paratext user",
     "permanently_delete_note": "Permanently delete this comment?",
     "reattached": "(Re-attached)",
-    "rejection_change_heading": "Changes Paratext Rejected:",
     "save": "Yadda saxlamaq",
     "show_changes": "Show changes",
     "status_resolved": "Resolved",
     "status_to_do": "To do",
     "team": "(Team)",
-    "unassigned": "(Unassigned)"
+    "unassigned": "(Unassigned)",
+    "your_comment": "Sizin rəyiniz"
   },
   "paginator": {
     "items_per_page": "Hər səhifə üçün bəndlər",
@@ -178,7 +196,6 @@
   },
   "question_answered_dialog": {
     "cancel": "Ləğv etmək",
-    "consider_creating_new_question": "Bu sualı redaktə etmək əvəzinə yeni bir sual yaratmağı düşünün.",
     "edit_anyway": "İstənilən halda redaktə etmək",
     "question_has_answer": "Sual üçün artıq cavab var"
   },
@@ -206,17 +223,17 @@
     "pt_observer": "Müşahidəçi",
     "pt_translator": "Tərcüməçi",
     "sf_community_checker": "Dil daşıyıcıları ilə yoxlayan şəxs",
-    "sf_reviewer": "Rəyçi",
-    "sf_observer": "Müşahidəçi"
+    "sf_commenter": "Commenter",
+    "sf_observer": "Viewer"
   },
   "role_descriptions": {
     "sf_community_checker": "Answer questions, Comment on answers",
-    "sf_reviewer": "View translation, Add notes",
+    "sf_commenter": "View translation, Add comments",
     "sf_observer": "View translation"
   },
   "settings": {
     "anyone_with_a_link": "Keçid ilə hər bir kəs",
-    "community_checking_settings": "Community Checking Settings",
+    "community_checking_settings": "Dil daşıyıcıları tərəfindən yoxlanma",
     "connect_network_to_change_settings": "Şəbəkədə olmayan zaman layihə parametrləri deyişdirmək mümkün deyil. Xahiş edirik, deyişliklər etmək üçün internetə qoşulun.",
     "danger_zone": "Təhlükə Zonası",
     "delete_project_cannot_be_undone": "Siz layihəni sildikdən sonra geriyə qaytarmaq mümkün deyil. Xahiş edirik, buna əmin olun.",
@@ -233,20 +250,21 @@
     "export_marked_for_export": "Answers marked for export",
     "export_none": "No answers",
     "exporting_answers": "Exporting Answers",
+    "invite_others": "Administrators can always invite people from the {{ templateTagBoundary }}Users{{ templateTagBoundary }} page.",
     "log_in_with_paratext": "Paratextə daxil olun",
-    "see_others_answers_and_comments": "Allow checkers to see each other's answers",
+    "see_others_answers_and_comments": "Allow checkers to see each other's answers and comments",
     "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
     "settings": "Parametrlər",
-    "share": "Allow users to invite others to the project",
-    "sharing": "Sharing",
+    "shareTranslate": "Allow users of Translate to invite others",
+    "shareChecking": "Allow users of Community Checking to invite others",
+    "sharing": "User Invites",
     "source_projects_cannot_be_deleted": "Başqa bir layihə bu layihəyə əsaslanır və buna görə silinə bilməz.",
     "source_text_placeholder": "Source text (optional)",
-    "translate": "Translation Settings",
+    "translate": "Tərcümə etmək",
     "translation_suggestions_require_source_text": "Note: Translation suggestions are only available if a source text is selected.",
     "translation_suggestions": "Enable Translation Suggestions",
     "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture based on the project or resource selected above.",
-    "users_can_interact_with_each_other": "İstifadəçilər öz aralarında əlaqə saxlamaq üçün bir-birilərinin cavablarını və şərhlərini görə bilər.",
-    "users_can_share_the_project": "İstifadəçilər dostu layihəyə qoşulmağa dəvət etməklə paylaşa bilərlər.{ newLine }}{{ italicsStart }}-da menecerlər{{ italicsEnd }} həmişə {{ templateTagBoundary }}-da layihəyə başqalarını{{ templateTagBoundary }}-da İstifadəçiləri dəvət edə bilərlər. ",
+    "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
     "will_not_delete_paratext_project": "Bu sizin {{ boldStart }} Paratext layihənizi {{ boldEnd }} silməyəcək, amma Kəlamın Kürəsində saxlanılmış sinxronlaşdırılmamış hər bir məlumatı siləcək. Məsləhət görülür ki, {{ templateTagBoundary }} silməzdən qabaq əvvəlcə {{ templateTagBoundary }} sinxronlaşdırasınız."
   },
   "suggestions_settings_dialog": {
@@ -285,12 +303,13 @@
     "footnote": "Footnote"
   },
   "training_progress": {
-    "completed_successfully": "Uğurla tamamlandı",
-    "training_completed_successfully": "Təlim uğurla başa çatdı",
-    "training": "Təlim"
+    "completed_successfully": "Completed successfully",
+    "training_completed_successfully": "Training completed successfully",
+    "training": "Training"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",
+    "not_enough_verses_translated": "Translation suggestions are unavailable. Please ensure that there are at least 10 matching verses translated in the source and target projects.",
     "progress": "Tərəqqi",
     "quality": "Keyfiyyət",
     "retrain": "Təkmilləşdirmək",
@@ -303,5 +322,10 @@
   "users": {
     "collaborators": "Əməkdaşlar",
     "users": "İstifadəçilər"
+  },
+  "warnings": {
+    "cancel": "Ləğv etmək",
+    "login_cookie_deletion": "Logging out will remove your ability to log back into this account. Are you sure you want to logout?",
+    "logout": "Yes, logout"
   }
 }
