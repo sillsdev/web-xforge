@@ -50,6 +50,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslocoService } from '@ngneat/transloco';
 import { NgCircleProgressModule } from 'ng-circle-progress';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { AutofocusDirective } from './autofocus.directive';
 import { BlurOnClickDirective } from './blur-on-click.directive';
 import { DonutChartModule } from './donut-chart/donut-chart.module';
@@ -81,6 +82,7 @@ const modules = [
   MatProgressSpinnerModule,
   MatRadioModule,
   MatSelectModule,
+  MatSidenavModule,
   MatSliderModule,
   MatSlideToggleModule,
   MatSnackBarModule,
