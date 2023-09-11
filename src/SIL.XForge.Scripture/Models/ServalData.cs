@@ -28,6 +28,18 @@ public class ServalData
     public string? PreTranslationEngineId { get; set; }
 
     /// <summary>
+    /// Gets or sets the Pre-Translation error message.
+    /// </summary>
+    /// <value>
+    /// The NMT Pre-Translation error message.
+    /// </value>
+    /// <remarks>
+    /// <para>If this is null, no error has been yet reported.</para>
+    /// <para>This property should be set to null if a build starts.</para>
+    /// </remarks>
+    public string? PreTranslationErrorMessage { get; set; }
+
+    /// <summary>
     /// Gets or sets the Hangfire Job Id for the Pre-Translation job.
     /// </summary>
     public string? PreTranslationJobId { get; set; }

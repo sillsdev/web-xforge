@@ -2,16 +2,17 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { EMPTY, of } from 'rxjs';
-import { BuildDto } from 'src/app/machine-api/build-dto';
-import { BuildStates } from 'src/app/machine-api/build-states';
-import { SharedModule } from 'src/app/shared/shared.module';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
+import { BuildDto } from '../../machine-api/build-dto';
+import { BuildStates } from '../../machine-api/build-states';
+import { SharedModule } from '../../shared/shared.module';
 import { DraftGenerationComponent, InfoAlert } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 
@@ -20,6 +21,7 @@ describe('DraftGenerationComponent', () => {
   let mockDraftGenerationService: jasmine.SpyObj<DraftGenerationService>;
   let mockActivatedProjectService: jasmine.SpyObj<ActivatedProjectService>;
   let mockI18nService: jasmine.SpyObj<I18nService>;
+  let mockOnlineStatusService: jasmine.SpyObj<OnlineStatusService>;
 
   const buildDto: BuildDto = {
     id: 'testId',
@@ -61,6 +63,7 @@ describe('DraftGenerationComponent', () => {
     setup(): void {
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
       mockI18nService = jasmine.createSpyObj<I18nService>(['getLanguageDisplayName'], { locale$: of(locale) });
+      mockOnlineStatusService = jasmine.createSpyObj<OnlineStatusService>([], { isOnline: true });
       mockDraftGenerationService = jasmine.createSpyObj<DraftGenerationService>([
         'startBuildOrGetActiveBuild',
         'cancelBuild',
@@ -104,7 +107,8 @@ describe('DraftGenerationComponent', () => {
           { provide: DraftGenerationService, useValue: mockDraftGenerationService },
           { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
           { provide: DialogService, useValue: mockDialogService },
-          { provide: I18nService, useValue: mockI18nService }
+          { provide: I18nService, useValue: mockI18nService },
+          { provide: OnlineStatusService, useValue: mockOnlineStatusService }
         ]
       });
 
