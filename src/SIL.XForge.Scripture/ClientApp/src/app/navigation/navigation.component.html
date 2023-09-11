@@ -12,7 +12,7 @@
         <mat-icon mat-list-icon class="material-icons-outlined">article</mat-icon>
         {{ t("draft_review") }}
       </a>
-      <a *ngIf="canGenerateDraft" mat-list-item [appRouterLink]="draftGenerationLink">
+      <a *ngIf="canGenerateDraft && (canSeeNmtDrafts$ | async)" mat-list-item [appRouterLink]="draftGenerationLink">
         <mat-icon mat-list-icon>edit_note</mat-icon>
         Generate draft <span class="nav-label">beta</span>
       </a>

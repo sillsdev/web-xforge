@@ -16,7 +16,7 @@ import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/fea
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../core/sf-project.service';
-import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
+import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
 import { NavigationComponent } from './navigation.component';
 
 const onlineStatusService = mock(OnlineStatusService);
@@ -117,6 +117,7 @@ const Template: StoryFn = (args, context) => ({
       { provide: SettingsAuthGuard, useClass: SettingsAuthGuard },
       { provide: SyncAuthGuard, useClass: SyncAuthGuard },
       { provide: UsersAuthGuard, useClass: UsersAuthGuard },
+      { provide: NmtDraftAuthGuard, useClass: NmtDraftAuthGuard },
 
       { provide: AuthService, useValue: instance(mockedAuthService) },
       { provide: OnlineStatusService, useValue: instance(onlineStatusService) },

@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { from, Observable, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
@@ -72,10 +74,31 @@ export class SyncAuthGuard extends RouterGuard {
   }
 
   check(projectDoc: SFProjectProfileDoc): boolean {
-    return (
-      projectDoc.data != null &&
-      (projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextAdministrator ||
-        projectDoc.data.userRoles[this.userService.currentUserId] === SFProjectRole.ParatextTranslator)
+    if (projectDoc.data == null) return false;
+    return SF_PROJECT_RIGHTS.hasRight(
+      projectDoc.data!,
+      this.userService.currentUserId,
+      SFProjectDomain.Texts,
+      Operation.Edit
+    );
+  }
+}
+
+@Injectable({
+  providedIn: 'root'
+})
+export class NmtDraftAuthGuard extends RouterGuard {
+  constructor(authGuard: AuthGuard, projectService: SFProjectService, private userService: UserService) {
+    super(authGuard, projectService);
+  }
+
+  check(projectDoc: SFProjectProfileDoc): boolean {
+    if (projectDoc.data == null) return false;
+    return SF_PROJECT_RIGHTS.hasRight(
+      projectDoc.data!,
+      this.userService.currentUserId,
+      SFProjectDomain.Texts,
+      Operation.Edit
     );
   }
 }
