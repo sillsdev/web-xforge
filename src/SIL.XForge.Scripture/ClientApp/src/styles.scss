@@ -137,6 +137,9 @@ button.mdc-icon-button {
 
 body[dir='rtl'] .mirror-rtl {
   transform: scaleX(-1);
+  .mat-badge-content {
+    transform: scaleX(-1);
+  }
 }
 
 app-root {
