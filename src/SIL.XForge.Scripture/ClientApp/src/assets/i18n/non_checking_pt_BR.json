@@ -14,18 +14,26 @@
     "add_question": "Adicionar pergunta"
   },
   "checking_answers": {
-    "archive": "Arquivo"
+    "archive": "Arquivo",
+    "no_permission_to_like": "You don't have permission to like answers."
   },
   "checking_overview": {
+    "add_chapter_audio": "Add chapter audio",
     "add_question": "Adicionar Pergunta",
     "answer_count_label": "{{ count }} respostas",
     "archive_multiple": "Archive all questions in {{ location }}",
     "archive": "Arquivo",
     "archived_questions": "Perguntas Arquivadas",
+    "chapter_audio_attached": "Chapter audio and timing data attached",
     "click_add_question": "Clique em {{ boldStart }}Adicionar pergunta{{ boldEnd }}, acima.",
     "confirm_bulk_archive": "Are you sure you want to archive all the questions in {{ scope }}?",
     "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
+    "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} {{ chapter }}?",
+    "delete": "Excluir",
+    "delete_chapter_audio": "Delete chapter audio",
+    "edit_chapter_audio": "Edit chapter audio",
     "import_questions": "Importar",
+    "manage_audio_timing": "Manage chapter audio and timing data",
     "no_archived_questions": "Não há perguntas arquivadas.",
     "no_questions": "Não há perguntas publicadas. ",
     "question_count_label": "{{ count }} perguntas",
@@ -34,20 +42,27 @@
     "time_archived_stamp": "Arquivado em {{ timeStamp }}"
   },
   "collaborators": {
+    "all": "All",
     "allow_add_edit_questions": "Pode adicionar e editar perguntas",
     "awaiting_response_from": "Aguardando resposta de{{ newLine }}{{ email }}",
     "cancel_invite": "Cancelar convite",
     "change_roles_and_permissions": "Usuários, Funções e Permissões pode {{ boldStart }}apenas{{ boldEnd }} ser alterado no{{ boldStart }}Paratext{{ boldEnd }}. Abra o projeto no {{ boldStart }}Paratext{{ boldEnd }}, na janela do projeto, clique em {{ templateTagBoundary }}{{ templateTagBoundary }}, depois{{ boldStart }}Propriedades e Configurações do Projeto{{ boldEnd }}, em seguida {{ boldStart }}Usuários, Funções e Permissões{{ boldEnd }}. Depois de um {{ italicsStart }}Enviar/Receber{{ italicsEnd }} no {{ boldStart }}Paratext{{ boldEnd }} e em seguida uma {{ italicsStart }}Sincronização{{ italicsEnd }} no {{ boldStart }}Scripture Forge{{ boldEnd }}, a função do usuário entrará em vigor aqui, assim que fizer o login com sua {{ boldStart }}Paratext{{ boldEnd }} conta.",
     "confirm_remove_user": "Are you sure you want to remove \"{{ user }}\" from the project?",
     "connect_network_to_manage_users": "O gerenciamento de usuários é desativado no modo offline. Conecte-se à Internet para gerenciar usuários.",
+    "disable_add_edit_questions": "Disable add and edit questions",
+    "enable_add_edit_questions": "Enable add and edit questions",
     "filter_users": "Filtrar usuários...",
     "invitation_expired": "O convite expirou para{{ newLine }}{{ email }}",
+    "learn_more": "Saiba mais",
     "me": "eu",
     "no_users_found": "Nenhum usuário encontrado",
+    "paratext_members": "Paratext Members",
     "problem_loading_invited_users": "Houve um problema ao carregar a lista de usuários convidados.",
+    "project_guests": "Project Guests",
     "remove_from_project": "Remover do projeto",
     "remove_user": "Remove User",
-    "share_with_others": "Compartilhar com outros"
+    "share_with_others": "Compartilhar com outros",
+    "uses_roles_to_access_project": "Scripture Forge uses roles and permissions to access your project"
   },
   "connect_project": {
     "already_connected": "(já conectado)",
@@ -83,19 +98,24 @@
     "project_name": "Nome do Projeto"
   },
   "editor": {
+    "add_comment": "Add Comment",
     "anonymous": "Anônimo",
+    "cancel": "Cancelar",
     "cannot_edit_chapter_formatting_invalid": "Este capítulo não pode ser editado porque a formatação é inválida. Por favor, corrija a formatação no Paratext.",
+    "cannot_edit_note_paratext": "You cannot edit this note as it has been edited in Paratext.",
     "configure_translation_suggestions": "Configurar sugestões de tradução",
-    "insert_note": "Insert note",
     "more_notes": "--- {{ count }} mais nota(s) ---",
+    "navigate_to_a_valid_text": "Navigate to a valid text to insert a note",
     "no_permission_edit_chapter": "You don't have permission to edit this chapter, even though you have the {{ userRole }} role. Permissions can only be changed in Paratext.",
     "project_data_out_of_sync": "Os dados do seu projeto não estão sincronizados. Por favor, sincronize seu projeto para editar este texto.",
     "project_text_not_editable": "O texto deste projeto não é editável. Esta configuração pode ser alterada no Paratext.",
+    "save": "Salvar",
     "swap_source_and_target": "Trocar origem e destino",
     "text_doc_corrupted": "Este capítulo não pode ser editado porque os dados foram corrompidos.",
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
     "to_report_issue_email": "Para relatar um problema, envie um e-mail {{ issueEmailLink }}.",
-    "verse_too_long_for_suggestions": "Este versículo é muito longo para gerar sugestões."
+    "verse_too_long_for_suggestions": "Este versículo é muito longo para gerar sugestões.",
+    "your_comment": "Seu comentário"
   },
   "import_questions_confirmation_dialog": {
     "done": "Concluído",
@@ -148,22 +168,20 @@
     "other_viewers": "{{ count }} outros observadores"
   },
   "note_dialog": {
-    "acceptance_change_heading": "Alterações aceitas pelo Paratext (texto atual):",
     "close": "Fechar",
-    "declare_conflict": "Há um conflito. As cores correspondem ao texto mais antigo (vermelho) e mais recente (verde).",
     "delete": "Excluir",
     "hide_changes": "Ocultar alterações",
     "note_reattached": "Nota reanexada",
     "paratext_user": "Atribuído a um usuário do Paratext",
     "permanently_delete_note": "Permanently delete this comment?",
     "reattached": "(Reanexado)",
-    "rejection_change_heading": "Alterações rejeitadas pelo Paratext:",
     "save": "Salvar",
     "show_changes": "Exibir alterações",
     "status_resolved": "Resolvido",
     "status_to_do": "Pendente",
     "team": "(Equipe)",
-    "unassigned": "(Não Atribuído)"
+    "unassigned": "(Não Atribuído)",
+    "your_comment": "Seu comentário"
   },
   "paginator": {
     "items_per_page": "Itens por página",
@@ -178,7 +196,6 @@
   },
   "question_answered_dialog": {
     "cancel": "Cancelar",
-    "consider_creating_new_question": "Considere criar uma nova pergunta em vez de editar esta.",
     "edit_anyway": "Editar mesmo assim",
     "question_has_answer": "A pergunta já tem uma resposta"
   },
@@ -206,12 +223,12 @@
     "pt_observer": "Observador",
     "pt_translator": "Membro da Equipe",
     "sf_community_checker": "Verificador da Comunidade",
-    "sf_reviewer": "Revisor",
-    "sf_observer": "Observador"
+    "sf_commenter": "Commenter",
+    "sf_observer": "Visualizador"
   },
   "role_descriptions": {
     "sf_community_checker": "Answer questions, Comment on answers",
-    "sf_reviewer": "View translation, Add notes",
+    "sf_commenter": "View translation, Add comments",
     "sf_observer": "View translation"
   },
   "settings": {
@@ -233,20 +250,21 @@
     "export_marked_for_export": "Answers marked for export",
     "export_none": "No answers",
     "exporting_answers": "Exporting Answers",
+    "invite_others": "Administrators can always invite people from the {{ templateTagBoundary }}Users{{ templateTagBoundary }} page.",
     "log_in_with_paratext": "Entrar no Paratext",
     "see_others_answers_and_comments": "Permitir que os verificadores vejam as respostas uns dos outros",
     "select_project_or_resource": "Selecione o projeto do Paratext ou o recurso da Digital Bible Library no qual seu projeto se baseia. Se o seu projeto se baseia num projeto do Paratext, é melhor configurá-lo como um projeto derivado no Paratext.",
     "settings": "Configurações",
-    "share": "Permitir que os usuários convidem outros usuários para o projeto",
-    "sharing": "Compartilhamento",
+    "shareTranslate": "Allow users of Translate to invite others",
+    "shareChecking": "Allow users of Community Checking to invite others",
+    "sharing": "User Invites",
     "source_projects_cannot_be_deleted": "Outro projeto é baseado neste projeto e, por isso, não pode ser excluído.",
     "source_text_placeholder": "Texto de origem (opcional)",
-    "translate": "Configurações de Tradução",
+    "translate": "Traduzir",
     "translation_suggestions_require_source_text": "Nota: As sugestões de tradução só estarão disponíveis se um texto de origem for selecionado.",
     "translation_suggestions": "Ativar Sugestões de Tradução",
     "translations_will_be_suggested": "As traduções de palavras e frases serão sugeridas à medida que você edita o texto bíblico com base no projeto ou recurso selecionado acima.",
-    "users_can_interact_with_each_other": "Os usuários podem ver as respostas e comentários uns dos outros para interagirem entre si.",
-    "users_can_share_the_project": "Os usuários podem compartilhar, convidando um amigo a participar do projeto.{{ newLine }}{{ italicsStart }}Administradores{{ italicsEnd }} podem sempre convidar outros para o projecto em {{ templateTagBoundary }}Usuários{{ templateTagBoundary }}.",
+    "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
     "will_not_delete_paratext_project": "Isso {{ boldStart }}não{{ boldEnd }} excluirá seu projeto do Paratext, mas excluirá todos os dados não sincronizados armazenados no Scripture Forge. É recomendável {{ templateTagBoundary }}Sincronizar{{ templateTagBoundary }} primeiro antes de excluir."
   },
   "suggestions_settings_dialog": {
@@ -285,12 +303,13 @@
     "footnote": "Nota de rodapé"
   },
   "training_progress": {
-    "completed_successfully": "Concluído com sucesso",
-    "training_completed_successfully": "Treinamento concluído com sucesso",
-    "training": "Treinamento"
+    "completed_successfully": "Completed successfully",
+    "training_completed_successfully": "Training completed successfully",
+    "training": "Training"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "As sugestões de tradução não estão disponíveis. Por favor, selecione um projeto de origem que compartilhe livros em comum com este projeto para obter sugestões de tradução.",
+    "not_enough_verses_translated": "Translation suggestions are unavailable. Please ensure that there are at least 10 matching verses translated in the source and target projects.",
     "progress": "Progresso",
     "quality": "Qualidade",
     "retrain": "Treinar novamente",
@@ -303,5 +322,10 @@
   "users": {
     "collaborators": "Colaboradores",
     "users": "Usuários"
+  },
+  "warnings": {
+    "cancel": "Cancelar",
+    "login_cookie_deletion": "Logging out will remove your ability to log back into this account. Are you sure you want to logout?",
+    "logout": "Yes, logout"
   }
 }

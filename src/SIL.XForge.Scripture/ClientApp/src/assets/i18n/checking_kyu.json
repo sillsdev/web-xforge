@@ -12,13 +12,18 @@
     "language": "ꤍꤟꤥ",
     "log_out": "ꤓꤢꤩ꤬ꤊꤛꤢ꤭",
     "logged_in_as": "ꤔꤟꤌꤣ꤭ ꤔꤢ",
+    "manual": "Manual",
+    "my_progress": "My progress",
     "offline": "Offline",
     "online": "Online",
+    "open_source_licenses": "Open source licenses",
     "overview": "ꤗꤛꤢꤜꤟꤢꤪ꤭",
     "page_not_found": "ꤗꤛꤢꤓꤛꤢꤩ꤬ page ꤛꤢꤩ꤭ꤒꤥ꤬",
     "password_reset_email_sent": "ꤜꤟꤢꤩ ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭ ꤔꤟꤢꤧ꤬ password ꤢ꤬ꤑꤢꤩ꤭ ꤕꤟꤢꤧ꤬ ꤞꤢꤨ꤭ꤟꤛꤢ꤭ ꤓꤌꤣ꤭ꤟꤢꤪ ꤔꤟꤢꤧ꤬ email ꤟꤢꤪ꤯",
     "product_version": "ꤒꤟꤢ꤭ꤤ꤭ꤒꤟꤢꤧ꤬ version: v {{version}}",
+    "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "project_home": "Project ꤟꤤ꤬",
+    "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirecting in a few moments...",
     "refresh": "Refresh",
     "report_issue_email": "email {{email}}",
@@ -199,6 +204,19 @@
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "ꤔꤟꤢꤧ꤬ꤒꤟꤢꤧ꤬ꤟꤢꤩꤏꤢꤦ꤬ "
   },
+  "checking_audio_dialog": {
+    "audio": "Audio",
+    "audio_already_exists": "Audio already exists for this selection.",
+    "cancel": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭",
+    "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
+    "save": "ꤙꤢꤩ꤬ꤘꤝꤥ",
+    "timing": "Timing",
+    "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
+    "upload": "ꤙꤢꤩ꤬ꤓꤛꤢ꤬",
+    "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
+    "upload_timing_file": "Upload Timing File",
+    "zero_segments": "Zero segments found."
+  },
   "checking_audio_combined": {
     "remove_audio_file": "ꤖꤛꤢꤩꤓꤢꤩ꤬ꤊꤛꤢ꤭ ꤍꤟꤥ file",
     "upload_audio_file": "ꤙꤢꤩ꤬ꤓꤛꤢ꤬ ꤍꤟꤥ file",
@@ -226,6 +244,7 @@
   "checking_comments": {
     "add_a_comment": "ꤙꤢꤩ꤬ꤔꤟꤌꤣ꤭ ꤒꤟꤢꤧ꤬ꤒꤢ꤬ꤔꤟꤢꤩ꤬",
     "delete": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭",
+    "confirm_delete": "Are you sure you want to delete this comment?",
     "edit": "ꤗꤟꤢꤩ꤬ꤚꤛꤢꤕꤟꤥ",
     "show_more_comments_and_unread": "ꤙꤢꤩ꤬ꤜꤟꤌꤣ꤭ {{ count }} ꤕꤟꤥ ꤒꤟꤢꤧ꤬ꤒꤢ꤬ꤔꤟꤢꤩ꤬ ꤒꤢ꤬ꤟꤢꤩ꤬ - {{ unread }} ꤟꤣꤟꤤꤒꤥ꤬",
     "show_more_comments": "ꤙꤢꤩ꤬ꤜꤟꤌꤣ꤭ {{ count }} ꤕꤟꤥ ꤒꤟꤢꤧ꤬ꤒꤢ꤬ꤔꤟꤢꤩ꤬ ꤒꤢ꤬ꤟꤢꤩ꤬"
@@ -242,7 +261,10 @@
     "questions": "ꤒꤟꤢꤧ꤬ꤏꤢꤨ꤬ꤘꤛꤢ꤭ ꤒꤢ꤬ꤟꤢꤩ꤬"
   },
   "checking_questions": {
-    "no_questions_found": "No questions found to match your filter"
+    "no_questions_found": "No questions found to match your filter",
+    "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
+    "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
+    "view_answers": "View answers"
   },
   "edit_name_dialog": {
     "cancel": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭",
@@ -270,6 +292,7 @@
   "error_messages": {
     "error_occurred_login": "An error occurred during login.",
     "failed_to_update_avatar": "Your avatar image could not be updated.",
+    "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
     "try_again": "ꤗꤟꤢꤩ꤬ꤋꤛꤢꤩ꤭ ꤒꤣ꤬ꤟꤢꤦ꤬ "
   },
   "exception_handling_service": {
@@ -289,18 +312,23 @@
     "subject": "{{ siteName }} ꤒꤟꤢꤧ꤬ꤚꤤ꤬ꤒꤟꤢꤧ꤬ꤊꤛꤢ꤭",
     "unknown": "ꤞꤢꤧꤑꤢꤩ꤭ꤒꤥ꤬"
   },
+  "join": {
+    "error_occurred_login": "An error occurred trying to join the project",
+    "invited_to_join": "You've been invited to join {{ boldStart }}{{ projectName }}{{ boldEnd }} project",
+    "join": "Join",
+    "join_a_project": "Join a project",
+    "key_already_used": "The project link has already been used by another user. Please contact the person who sent you the link and ask for a new one.",
+    "key_expired": "The project link expired. Please contact the person who sent you the link and ask for a new one.",
+    "login_existing_account": "or {{ underlineStart }}Log in{{ underlineEnd }} to an existing account",
+    "max_users_reached": "The maximum amount of users allowed to join using this share key has been reached. Please contact the person who sent you the link and ask for a new one.",
+    "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
+    "project_link_is_invalid": "The project link is invalid. Please contact the person who sent you the link and ask for a new one.",
+    "role_not_found": "The role you were assigned on this project is no longer available. Please contact the person who sent you the link and ask for a new one.",
+    "your_name": "ꤙꤢꤩ꤬ꤔꤟꤌꤣ꤭ ꤔꤟꤢꤧ꤬ꤗꤝꤟꤤ꤬"
+  },
   "dialog": {
     "cancel": "ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭",
     "close": "ꤗꤟꤢꤩ꤬ꤙꤤ"
-  },
-  "project": {
-    "please_connect_to_use_link": "Please connect to the internet to join a project using a link.",
-    "project_link_is_invalid": "Project link ꤛꤢꤩ꤭ ꤢ꤬ ꤒꤥ꤭ꤒꤥ꤬꤯ ",
-    "problem_finding_project": "There was a problem finding a project ({{ projectID }}) or user specific information for the project. There may be a typo in the URL you specified. You may have tried to access a project that is no longer available."
-  },
-  "project_deleted_dialog": {
-    "ok": "ꤢ꤬ꤚꤛꤢ",
-    "project_has_been_deleted": "Project ꤛꤢꤩ꤭ ꤢꤨ꤭ ꤗꤟꤢꤩ꤬ꤕꤜꤤ꤭ꤊꤛꤢ꤭ ꤟꤢꤪ ꤜꤢꤨ꤭ ꤟꤢꤪ, ꤗꤟꤢꤒꤥ꤬ꤚꤢꤪ ꤔꤟꤢꤧ꤬ ꤙꤢꤗꤥ꤭ ꤜꤢꤨ꤭ ꤗꤢ꤬ ꤢ꤬ꤔꤟꤤ ꤕꤢ꤭ ꤒꤥ꤬ ꤟꤢꤪ꤯ "
   },
   "scripture_chooser_dialog": {
     "choose_book": "ꤔꤝꤥꤖꤛꤢꤩ ꤜꤤ꤬ꤢꤨ",
@@ -314,23 +342,43 @@
   "share_control": {
     "copy_link": "ꤖꤛꤢꤩ ꤊꤟꤌꤣ꤭ Link",
     "email_invalid": "Email ꤛꤢꤩ꤭ ꤔꤟꤌꤣ꤭ꤔꤟꤤ ꤒꤥ꤬꤯ ",
+    "email_sharing": "Send an email invite below or share a link using your preferred communication platform.",
     "email": "Email",
     "invitation_language": "Invitation language",
     "invitation_role": "Role",
     "invitation_sent": "ꤞꤢꤨ꤭ꤡꤛꤣ ꤓꤌꤣ꤭ꤟꤢꤪ ꤒꤟꤢꤧ꤬ꤢꤧꤗꤟꤥ꤬ꤏꤢꤦ꤬ Email ꤒꤣ꤬ꤊꤟꤌꤣ꤬ ꤘꤣ {{ email }}",
     "invite_people": "ꤢꤧꤗꤟꤥ꤬ ꤊꤢ꤬ꤛꤢ꤭",
+    "invite_people_intro": "You can invite people outside of Paratext to help contribute to your project.",
     "link_copied": "ꤖꤛꤢꤩꤡꤛꤣ ꤙꤢꤩ꤬ Link ꤘꤣ clipboard",
-    "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
-    "link_sharing": "ꤘꤛꤢꤩ ꤕꤢꤩ ꤢꤨ꤭ Link",
+    "link_sharing": "Links can also be shared to users without an email address via social media platforms or SMS messages.",
     "not_inviting_already_member": "ꤢꤧꤗꤟꤥ꤬ ꤒꤥ꤬: ꤕꤚꤟꤢꤧ꤬ꤔꤢꤪ꤭ꤢꤩ꤬ ꤛꤢꤩ꤭ꤗꤢ꤬ ꤢ꤬ ꤕꤢ꤬ ꤓꤌꤣ꤭ꤟꤢꤪ ꤘꤣ project ꤢ꤬ꤊꤢꤨ꤭ ꤟꤢꤪ",
     "resend": "ꤞꤢꤨ꤭ ꤒꤢ꤬ꤕꤜꤢꤩ꤬ ꤋꤛꤢꤩ꤭",
+    "send_a_link": "Send a link",
     "select_invitation_language": "Select a language for the invitation email",
     "select_invitation_role": "Select a role for the invited user",
+    "share_text_anyone": "You've been invited to join the {{ projectName }} project on {{ siteName }}.\nJust click the link below, choose how to log in, and you will be ready to start.",
+    "share_text_single": "Hello, I want to invite you to join the {{ projectName }} project on {{ siteName }}.\nJust click the link below, choose how to log in, and you will be ready to start.",
+    "share_a_link": "Share a link",
+    "share_title": "You've been invited to the project {{ projectName }} on {{ siteName }}",
     "send": "ꤞꤢꤨ꤭",
-    "share_by_email_not_available_offline": "Inviting users by email is unavailable while offline."
+    "share_not_available_offline": "Inviting is unavailable while offline."
   },
   "share_dialog": {
-    "done": "ꤢ꤬ꤓꤌꤣ꤭ꤟꤢꤪ",
+    "anyone": "Anyone with the link",
+    "anyone_can": "Anyone with the link can",
+    "change": "change",
+    "copy_link": "ꤖꤛꤢꤩ ꤊꤟꤌꤣ꤭ Link",
+    "invitation_language": "Change invitation language",
+    "invitation_link_type": "Change how the link can be used",
+    "invitation_role": "Change invitation role",
+    "invitation_shared_in_language": "Invitation will be shared in",
+    "link_can_be_used_by": "Link can be used by",
+    "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
+    "recipient": "Only the recipient",
+    "recipient_can": "Only the recipient can",
+    "recipient_only_notice": "Each link can only be used once and will expire after 14 days. Click the button again to generate and share a new link.",
+    "share": "ꤘꤛꤢꤩ ꤕꤢꤩ ꤢꤨ꤭",
+    "share_project": "Share {{ project }}",
     "share_with_others": "ꤘꤛꤢꤩ ꤕꤢꤩ ꤢꤨ꤭ꤚꤟꤌꤣ꤬"
   },
   "start": {

@@ -14,18 +14,26 @@
     "add_question": "أضِف سؤالاً"
   },
   "checking_answers": {
-    "archive": "أرشيف"
+    "archive": "أرشيف",
+    "no_permission_to_like": "You don't have permission to like answers."
   },
   "checking_overview": {
+    "add_chapter_audio": "Add chapter audio",
     "add_question": "أضِف سؤالاً",
     "answer_count_label": "{{ count }} إجابات",
     "archive_multiple": "حفظ جميع الأسئلة في الأرشيف {{ location }}",
     "archive": "أرشيف",
     "archived_questions": "أسئلة محفوظة في الأرشيف",
+    "chapter_audio_attached": "Chapter audio and timing data attached",
     "click_add_question": "انقر على {{ boldStart }} أضِف السؤال {{ boldEnd }} أعلاه.",
     "confirm_bulk_archive": "هل أنت متأكد من أنك تريد حفظ جميع الأسئلة في الأرشيف {{ scope }}؟",
     "confirm_bulk_republish": "هل أنت متأكد من أنك تريد إعادة نشر جميع الأسئلة في {{ scope }}؟",
+    "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} {{ chapter }}?",
+    "delete": "حذف",
+    "delete_chapter_audio": "Delete chapter audio",
+    "edit_chapter_audio": "Edit chapter audio",
     "import_questions": "تحميل أسئلة مجمعة",
+    "manage_audio_timing": "Manage chapter audio and timing data",
     "no_archived_questions": "لا توجد أسئلة محفوظة في الأرشيف.",
     "no_questions": "لا توجد أسئلة منشورة. ",
     "question_count_label": "{{ count }} أسئلة",
@@ -34,20 +42,27 @@
     "time_archived_stamp": "تم حفظه في الأرشيف في {{ timeStamp }}"
   },
   "collaborators": {
+    "all": "All",
     "allow_add_edit_questions": "يمكن إضافة وتحرير الأسئلة",
     "awaiting_response_from": "في انتظار الرد من{{ newLine }}{{ email }}",
     "cancel_invite": "إلغاء الدعوة",
     "change_roles_and_permissions": "يمكن تغيير أدوار المستخدمين والأذونات {{ boldStart }}فقط{{ boldEnd }} في {{ boldStart }}Paratext{{ boldEnd }}. افتح المشروع في {{ boldStart }}Paratext{{ boldEnd }}، فى نافذة المشروع انقر على {{ templateTagBoundary }}{{ templateTagBoundary }}، ثم {{ boldStart }}إعدادات المشروع{{ boldEnd }}ثم {{ boldStart }}أذونات المستخدم{{ boldEnd }}. بعد {{ italicsStart }}إرسال/ استقبال {{ italicsEnd }} في {{ boldStart }}Paratext{{ boldEnd }} ثم {{ italicsStart }}مزامنة{{ italicsEnd }} في {{ boldStart }}Scripture Forge {{ boldEnd }}، سيصبح دورهم ساري المفعول هنا، بمجرد أن يسجل هذا المستخدم تسجيل الدخول بحسابه {{ boldStart }}Paratext{{ boldEnd }}.",
     "confirm_remove_user": "Are you sure you want to remove \"{{ user }}\" from the project?",
     "connect_network_to_manage_users": "إدارة المستخدم معطلة أثناء عدم الاتصال بالإنترنت. يُرجى الاتصال بالإنترنت لإدارة المستخدمين.",
+    "disable_add_edit_questions": "Disable add and edit questions",
+    "enable_add_edit_questions": "Enable add and edit questions",
     "filter_users": "تصفية المستخدمين...",
     "invitation_expired": "انتهت صلاحية الدعوة لـ{{ newLine }}{{ email }}",
+    "learn_more": "اعرف المزيد",
     "me": "أنا",
     "no_users_found": "لم يتم العثور على مستخدمين",
+    "paratext_members": "Paratext Members",
     "problem_loading_invited_users": "حدثت مشكلة في تحميل قائمة المستخدمين المدعوين.",
+    "project_guests": "Project Guests",
     "remove_from_project": "أزِل من المشروع",
     "remove_user": "Remove User",
-    "share_with_others": "مشاركة مع الآخرين"
+    "share_with_others": "مشاركة مع الآخرين",
+    "uses_roles_to_access_project": "Scripture Forge uses roles and permissions to access your project"
   },
   "connect_project": {
     "already_connected": "(متّصل أصلاً)",
@@ -83,19 +98,24 @@
     "project_name": "اسم المشروع"
   },
   "editor": {
+    "add_comment": "Add Comment",
     "anonymous": "مجهول الهوية",
+    "cancel": "إلغاء",
     "cannot_edit_chapter_formatting_invalid": "لا يمكن تعديل هذا الفصل لأن تنسيقه غير صالح. يُرجى إصلاح التنسيق في Paratext.",
+    "cannot_edit_note_paratext": "You cannot edit this note as it has been edited in Paratext.",
     "configure_translation_suggestions": "إعداد اقتراحات للترجمة",
-    "insert_note": "Insert note",
     "more_notes": "{{ count }} ملاحظات أخرى",
+    "navigate_to_a_valid_text": "Navigate to a valid text to insert a note",
     "no_permission_edit_chapter": "You don't have permission to edit this chapter, even though you have the {{ userRole }} role. Permissions can only be changed in Paratext.",
     "project_data_out_of_sync": "بيانات المشروع الخاص بك غير متزامنة. الرجاء مزامنة مشروعك لتحرير هذا النص.",
     "project_text_not_editable": "النص في هذا المشروع غير قابل للتحرير. يمكن تغيير هذا الإعداد في Paratext.",
+    "save": "حفظ",
     "swap_source_and_target": "تبديل المصدر والهدف",
     "text_doc_corrupted": "لا يمكن تعديل أو تحرير هذا الفصل لأن البيانات أصبحت تالفة.",
     "text_has_been_deleted": "تمّ حذف الكتاب أو لم يعد الوصول إليه ممكناً.",
     "to_report_issue_email": "للإبلاغ عن مشكلة، أرسِل رسالة إلكترونية إلى {{ issueEmailLink }}.",
-    "verse_too_long_for_suggestions": "هذه الآية أطول مما ينبغي ولذا يصعب استحداث اقتراحات."
+    "verse_too_long_for_suggestions": "هذه الآية أطول مما ينبغي ولذا يصعب استحداث اقتراحات.",
+    "your_comment": "تعليقك"
   },
   "import_questions_confirmation_dialog": {
     "done": "تمّ",
@@ -148,22 +168,20 @@
     "other_viewers": "{{ count }} مشاهدين آخرين"
   },
   "note_dialog": {
-    "acceptance_change_heading": "تغييرات قبلها Paratext (النص الحالي):",
     "close": "إغلاق",
-    "declare_conflict": "ثمة صراع. تقابل الألوان النص (الأحمر) القديم والنص (الأخضر) الجديد.",
     "delete": "حذف",
     "hide_changes": "إخفاء التغييرات",
     "note_reattached": "تمّت إعادة إرفاق الملاحظة",
     "paratext_user": "تعيين لمستخدم Paratext",
     "permanently_delete_note": "Permanently delete this comment?",
     "reattached": "(أعيد إرفاقها)",
-    "rejection_change_heading": "تغييرات رفضها Paratext:",
     "save": "حفظ",
     "show_changes": "عرض التغييرات",
     "status_resolved": "تم الحل",
     "status_to_do": "مهام",
     "team": "(الفريق)",
-    "unassigned": "غير محدَّد"
+    "unassigned": "غير محدَّد",
+    "your_comment": "تعليقك"
   },
   "paginator": {
     "items_per_page": "عدد العناصر في الصفحة",
@@ -178,7 +196,6 @@
   },
   "question_answered_dialog": {
     "cancel": "إلغاء",
-    "consider_creating_new_question": "فكّر في إنشاء سؤال جديد بدلاً من تحرير هذا السؤال.",
     "edit_anyway": "حرِّر على أي حال",
     "question_has_answer": "لهذا السؤال إجابة مُسبَقة"
   },
@@ -206,12 +223,12 @@
     "pt_observer": "المراقب",
     "pt_translator": "المترجم",
     "sf_community_checker": "تحقُّق المجتمع",
-    "sf_reviewer": "المراجِع",
-    "sf_observer": "المراقب"
+    "sf_commenter": "Commenter",
+    "sf_observer": "Viewer"
   },
   "role_descriptions": {
     "sf_community_checker": "Answer questions, Comment on answers",
-    "sf_reviewer": "View translation, Add notes",
+    "sf_commenter": "View translation, Add comments",
     "sf_observer": "View translation"
   },
   "settings": {
@@ -233,20 +250,21 @@
     "export_marked_for_export": "Answers marked for export",
     "export_none": "No answers",
     "exporting_answers": "Exporting Answers",
+    "invite_others": "Administrators can always invite people from the {{ templateTagBoundary }}Users{{ templateTagBoundary }} page.",
     "log_in_with_paratext": "سجل الدخول في Paratext",
     "see_others_answers_and_comments": "السماح للمراجعين برؤية إجابات بعضهم البعض",
     "select_project_or_resource": "حدد مشروع Paratext أو مصدر من مكتبة الكتاب المُقدَّس الرقمية يعتمد عليه مشروعك. إذا كان مشروعك مبني على مشروع Paratext ، فالأفضل إعداده كمشروع تابع في Paratext.",
     "settings": "الإعدادات",
-    "share": "السماح للمستخدمين بدعوة الآخرين إلى المشروع",
-    "sharing": "المشاركة",
+    "shareTranslate": "Allow users of Translate to invite others",
+    "shareChecking": "Allow users of Community Checking to invite others",
+    "sharing": "User Invites",
     "source_projects_cannot_be_deleted": "ثمّة مشروع آخر مبني على هذا المشروع، ولذا لا يمكن حذفه.",
     "source_text_placeholder": "نص المصدر (اختياري)",
-    "translate": "إعدادات الترجمة",
+    "translate": "الترجمة",
     "translation_suggestions_require_source_text": "ملاحظة: اقتراحات التَّرْجَمَة متاحة فقط إذا تم اختيار نص مصدر.",
     "translation_suggestions": "فعِّل اقتراحات الترجمة",
     "translations_will_be_suggested": "سيتم اقتراح ترجمات للكلمات والعبارات عند تحرير النص الكتابي استناداً إلى المشروع أو المصدر الذي تمّ اختياره أعلاه.",
-    "users_can_interact_with_each_other": "يمكن للمستخدمين رؤية إجابات وتعليقات بعضهم البعض للتفاعل فيما بينهم.",
-    "users_can_share_the_project": "يمكن للمستخدمين المشاركة بدعوة صديق للانضمام إلى المشروع.{{ newLine }}{{ italicsStart }} المديرون {{ italicsEnd }} يمكنهم دائما دعوة الآخرين إلى المشروع في {{ templateTagBoundary }} مستخدمين {{ templateTagBoundary }}.",
+    "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
     "will_not_delete_paratext_project": "هذا {{ boldStart }} لن {{ boldEnd }} يحذِف مشروع الـ Paratext الخاص بك، ولكنّه سيلغي كل البيانات غير المتزامنة المُخزنة في \"سكريبتشر فورج\" (Scripture Forge). يُوصى بـ {{ templateTagBoundary }} مزامنة {{ templateTagBoundary }} أولاً قبل الحذف."
   },
   "suggestions_settings_dialog": {
@@ -285,12 +303,13 @@
     "footnote": "Footnote"
   },
   "training_progress": {
-    "completed_successfully": "تم إكماله بنجاح",
-    "training_completed_successfully": "أكتمل التدريب بنجاح",
-    "training": "التدريب"
+    "completed_successfully": "Completed successfully",
+    "training_completed_successfully": "Training completed successfully",
+    "training": "Training"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Translation suggestions are unavailable. Please select a source project that shares books in common with this project to get translation suggestions.",
+    "not_enough_verses_translated": "Translation suggestions are unavailable. Please ensure that there are at least 10 matching verses translated in the source and target projects.",
     "progress": "مستوى التقدُّم",
     "quality": "الجودة",
     "retrain": "إعادة التدريب",
@@ -303,5 +322,10 @@
   "users": {
     "collaborators": "المتعاونون",
     "users": "المُستخدمون"
+  },
+  "warnings": {
+    "cancel": "إلغاء",
+    "login_cookie_deletion": "Logging out will remove your ability to log back into this account. Are you sure you want to logout?",
+    "logout": "Yes, logout"
   }
 }

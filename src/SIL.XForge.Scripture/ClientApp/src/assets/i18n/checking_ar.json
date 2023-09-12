@@ -12,13 +12,18 @@
     "language": "اللغة",
     "log_out": "تسجيل الخروج",
     "logged_in_as": "تسجيل الدخول بحساب",
+    "manual": "Manual",
+    "my_progress": "مستوى التقدُّم",
     "offline": "غير متصل بالانترنت",
     "online": "متّصل بالإنترنت",
+    "open_source_licenses": "Open source licenses",
     "overview": "نظرة عامة",
     "page_not_found": "لم يتمّ العثور على الصفحة",
     "password_reset_email_sent": "أرسلنا لك بريداً إلكترونياً لإعادة تعيين كلمة المرور خاصتك.",
     "product_version": "نسخة المنتج: v{{ version }}",
+    "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "project_home": "الصفحة الرئيسية للمشروع",
+    "questions_answers": "Questions & answers",
     "redirecting_in_moments": "إعادة التوجيه في لحظات قليلة...",
     "refresh": "تحديث",
     "report_issue_email": "البريد الإلكتروني {{ email }}",
@@ -199,6 +204,19 @@
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "إجابتك"
   },
+  "checking_audio_dialog": {
+    "audio": "Audio",
+    "audio_already_exists": "Audio already exists for this selection.",
+    "cancel": "إلغاء",
+    "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
+    "save": "حفظ",
+    "timing": "Timing",
+    "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
+    "upload": "تحميل",
+    "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
+    "upload_timing_file": "Upload Timing File",
+    "zero_segments": "Zero segments found."
+  },
   "checking_audio_combined": {
     "remove_audio_file": "إزالة الملف الصوتي",
     "upload_audio_file": "تحميل الملف الصوتي",
@@ -226,6 +244,7 @@
   "checking_comments": {
     "add_a_comment": "أضِف تعليقاً",
     "delete": "حذف",
+    "confirm_delete": "Are you sure you want to delete this comment?",
     "edit": "تعديل",
     "show_more_comments_and_unread": "إظهار {{ count }} تعليقات أخرى - {{ unread }} غير مقروءة",
     "show_more_comments": "إظهار {{ count }} تعليقات أخرى"
@@ -242,7 +261,10 @@
     "questions": "أسئلة"
   },
   "checking_questions": {
-    "no_questions_found": "No questions found to match your filter"
+    "no_questions_found": "No questions found to match your filter",
+    "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
+    "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
+    "view_answers": "View answers"
   },
   "edit_name_dialog": {
     "cancel": "إلغاء",
@@ -270,6 +292,7 @@
   "error_messages": {
     "error_occurred_login": "حدث خطأ أثناء تسجيل الدخول.",
     "failed_to_update_avatar": "Your avatar image could not be updated.",
+    "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
     "try_again": "حاول ثانيةً"
   },
   "exception_handling_service": {
@@ -289,18 +312,23 @@
     "subject": "مشكلة {{ siteName }}",
     "unknown": "غير معروف"
   },
+  "join": {
+    "error_occurred_login": "An error occurred trying to join the project",
+    "invited_to_join": "You've been invited to join {{ boldStart }}{{ projectName }}{{ boldEnd }} project",
+    "join": "Join",
+    "join_a_project": "Join a project",
+    "key_already_used": "The project link has already been used by another user. Please contact the person who sent you the link and ask for a new one.",
+    "key_expired": "The project link expired. Please contact the person who sent you the link and ask for a new one.",
+    "login_existing_account": "or {{ underlineStart }}Log in{{ underlineEnd }} to an existing account",
+    "max_users_reached": "The maximum amount of users allowed to join using this share key has been reached. Please contact the person who sent you the link and ask for a new one.",
+    "please_connect_to_use_link": "الرجاء الاتصال بالإنترنت للانضمام إلى مشروع باستخدام رابط.",
+    "project_link_is_invalid": "The project link is invalid. Please contact the person who sent you the link and ask for a new one.",
+    "role_not_found": "The role you were assigned on this project is no longer available. Please contact the person who sent you the link and ask for a new one.",
+    "your_name": "أدخِل اسمك"
+  },
   "dialog": {
     "cancel": "إلغاء",
     "close": "إغلاق"
-  },
-  "project": {
-    "please_connect_to_use_link": "الرجاء الاتصال بالإنترنت للانضمام إلى مشروع باستخدام رابط.",
-    "project_link_is_invalid": "رابط المشروع غير صحيح.",
-    "problem_finding_project": "ثمة صعوبة في إيجاد هوية المشروع {{ projectID }} أو معلومات المُستخدَم الخاصّة بالمشروع. ربما يحتوي الـ URL الذي حدَّدته على خطأ مطبعي. ربما حاولت الوصول إلى مشروع لم يعُد متوفِّراً."
-  },
-  "project_deleted_dialog": {
-    "ok": "موافق",
-    "project_has_been_deleted": "تمّ حذف المشروع أو لم يعد الوصول إليه ممكناً."
   },
   "scripture_chooser_dialog": {
     "choose_book": "اختيار سفر/ كتاب",
@@ -314,23 +342,43 @@
   "share_control": {
     "copy_link": "نسخ الرابط",
     "email_invalid": "عنوان البريد الإلكتروني غير صحيح",
+    "email_sharing": "Send an email invite below or share a link using your preferred communication platform.",
     "email": "عنوان البريد الإلكتروني",
     "invitation_language": "لغة الدعوة",
     "invitation_role": "الدور",
     "invitation_sent": "أُرسِلت دعوة بالبريد الإلكتروني إلى {{ email }}",
     "invite_people": "دعوة أشخاص",
+    "invite_people_intro": "You can invite people outside of Paratext to help contribute to your project.",
     "link_copied": "تم نسخ الرابط إلى الحافظة",
-    "link_sharing_not_available_offline": "دعوة المُستخدِمين بالمشاركة بالرابط غير متوفرة من دون الاتصال بالإنترنت.",
-    "link_sharing": "مشاركة الرابط",
+    "link_sharing": "Links can also be shared to users without an email address via social media platforms or SMS messages.",
     "not_inviting_already_member": "لا تدعو، فالمُستخدِم عضو في المشروع",
     "resend": "إعادة إرسال",
+    "send_a_link": "Send a link",
     "select_invitation_language": "حدِّد لغة الرسالة الإلكترونية للدعوة",
     "select_invitation_role": "تحديد دور للمستخدم المدعو",
+    "share_text_anyone": "You've been invited to join the {{ projectName }} project on {{ siteName }}.\nJust click the link below, choose how to log in, and you will be ready to start.",
+    "share_text_single": "Hello, I want to invite you to join the {{ projectName }} project on {{ siteName }}.\nJust click the link below, choose how to log in, and you will be ready to start.",
+    "share_a_link": "Share a link",
+    "share_title": "You've been invited to the project {{ projectName }} on {{ siteName }}",
     "send": "إرسال",
-    "share_by_email_not_available_offline": "دعوة المُستخدِمين برسالة إلكترونية غير متوفّرة من دون الاتصال بالأنترنت."
+    "share_not_available_offline": "Inviting is unavailable while offline."
   },
   "share_dialog": {
-    "done": "تمّ",
+    "anyone": "Anyone with the link",
+    "anyone_can": "Anyone with the link can",
+    "change": "change",
+    "copy_link": "نسخ الرابط",
+    "invitation_language": "Change invitation language",
+    "invitation_link_type": "Change how the link can be used",
+    "invitation_role": "Change invitation role",
+    "invitation_shared_in_language": "Invitation will be shared in",
+    "link_can_be_used_by": "Link can be used by",
+    "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
+    "recipient": "Only the recipient",
+    "recipient_can": "Only the recipient can",
+    "recipient_only_notice": "Each link can only be used once and will expire after 14 days. Click the button again to generate and share a new link.",
+    "share": "شارك",
+    "share_project": "Share {{ project }}",
     "share_with_others": "مشاركة مع الآخرين"
   },
   "start": {

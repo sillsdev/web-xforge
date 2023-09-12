@@ -12,13 +12,18 @@
     "language": "Idioma",
     "log_out": "Cerrar sesión",
     "logged_in_as": "Conectado como",
+    "manual": "Manual",
+    "my_progress": "Mi progreso",
     "offline": "Fuera de línea",
     "online": "Conectado",
+    "open_source_licenses": "Open source licenses",
     "overview": "Panorama general",
     "page_not_found": "No se encontró la página",
     "password_reset_email_sent": "Acabamos de enviarle un correo electrónico para restablecer su contraseña.",
     "product_version": "Versión del producto: v{{ version }}",
+    "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "project_home": "Página de inicio del proyecto",
+    "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirigiendo en unos momentos...",
     "refresh": "Actualizar",
     "report_issue_email": "correo electrónico {{ email }}",
@@ -199,6 +204,19 @@
     "tooltip_status_resolve": "Marcar la respuesta como resuelta",
     "your_answer": "Su respuesta"
   },
+  "checking_audio_dialog": {
+    "audio": "Audio",
+    "audio_already_exists": "Audio already exists for this selection.",
+    "cancel": "Cancelar",
+    "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
+    "save": "Guardar",
+    "timing": "Timing",
+    "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
+    "upload": "Cargar",
+    "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
+    "upload_timing_file": "Upload Timing File",
+    "zero_segments": "Zero segments found."
+  },
   "checking_audio_combined": {
     "remove_audio_file": "Quitar archivo de audio",
     "upload_audio_file": "Cargar archivo de audio",
@@ -226,6 +244,7 @@
   "checking_comments": {
     "add_a_comment": "Añadir un comentario",
     "delete": "Eliminar",
+    "confirm_delete": "¿Está seguro que desea eliminar este comentario?",
     "edit": "Editar",
     "show_more_comments_and_unread": "Mostrar {{ count }} más comentarios - {{ unread }} no leído",
     "show_more_comments": "Mostrar {{ count }} más comentarios"
@@ -242,7 +261,10 @@
     "questions": "Preguntas"
   },
   "checking_questions": {
-    "no_questions_found": "No se encontraron preguntas que coincidan con su filtro"
+    "no_questions_found": "No se encontraron preguntas que coincidan con su filtro",
+    "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
+    "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
+    "view_answers": "View answers"
   },
   "edit_name_dialog": {
     "cancel": "Cancelar",
@@ -270,6 +292,7 @@
   "error_messages": {
     "error_occurred_login": "Se produjo un error durante el inicio de sesión.",
     "failed_to_update_avatar": "No se ha podido actualizar la imagen de su avatar.",
+    "failed_to_retrieve_suggestions": "Couldn't get translation suggestions.",
     "try_again": "Inténtelo de nuevo"
   },
   "exception_handling_service": {
@@ -289,18 +312,23 @@
     "subject": "caso {{ siteName }}",
     "unknown": "desconocido"
   },
+  "join": {
+    "error_occurred_login": "An error occurred trying to join the project",
+    "invited_to_join": "You've been invited to join {{ boldStart }}{{ projectName }}{{ boldEnd }} project",
+    "join": "Join",
+    "join_a_project": "Join a project",
+    "key_already_used": "The project link has already been used by another user. Please contact the person who sent you the link and ask for a new one.",
+    "key_expired": "The project link expired. Please contact the person who sent you the link and ask for a new one.",
+    "login_existing_account": "or {{ underlineStart }}Log in{{ underlineEnd }} to an existing account",
+    "max_users_reached": "The maximum amount of users allowed to join using this share key has been reached. Please contact the person who sent you the link and ask for a new one.",
+    "please_connect_to_use_link": "Conéctese a Internet para unirse a un proyecto mediante un enlace.",
+    "project_link_is_invalid": "The project link is invalid. Please contact the person who sent you the link and ask for a new one.",
+    "role_not_found": "The role you were assigned on this project is no longer available. Please contact the person who sent you the link and ask for a new one.",
+    "your_name": "Ingrese su nombre"
+  },
   "dialog": {
     "cancel": "Cancelar",
     "close": "Cerrar"
-  },
-  "project": {
-    "please_connect_to_use_link": "Conéctese a Internet para unirse a un proyecto mediante un enlace.",
-    "project_link_is_invalid": "El enlace del proyecto no es válido.",
-    "problem_finding_project": "Hubo un problema al encontrar un proyecto ({{ projectID }}) o información específica del usuario para el proyecto. Es posible que haya un error tipográfico en la URL que ha especificado. Es posible que haya intentado acceder a un proyecto que ya no está disponible."
-  },
-  "project_deleted_dialog": {
-    "ok": "OK",
-    "project_has_been_deleted": "El proyecto ha sido borrado o ya no es accesible."
   },
   "scripture_chooser_dialog": {
     "choose_book": "Elegir libro",
@@ -314,23 +342,43 @@
   "share_control": {
     "copy_link": "Copiar enlace",
     "email_invalid": "La dirección de correo electrónico no es válida",
+    "email_sharing": "Send an email invite below or share a link using your preferred communication platform.",
     "email": "Correo electrónico",
     "invitation_language": "Idioma de la invitación",
     "invitation_role": "Rol",
     "invitation_sent": "Se ha enviado un correo electrónico de invitación a {{ email }}",
     "invite_people": "Invitar a otras personas",
+    "invite_people_intro": "You can invite people outside of Paratext to help contribute to your project.",
     "link_copied": "Enlace copiado al portapapeles",
-    "link_sharing_not_available_offline": "Invitar a los usuarios mediante enlaces compartidos no está disponible mientras se está fuera de línea.",
-    "link_sharing": "Compartir enlaces",
+    "link_sharing": "Links can also be shared to users without an email address via social media platforms or SMS messages.",
     "not_inviting_already_member": "No se invitó: El usuario ya es miembro de este proyecto",
     "resend": "Reenviar",
+    "send_a_link": "Send a link",
     "select_invitation_language": "Seleccione un idioma para el correo electrónico de invitación",
     "select_invitation_role": "Seleccione un rol para el usuario invitado",
+    "share_text_anyone": "You've been invited to join the {{ projectName }} project on {{ siteName }}.\nJust click the link below, choose how to log in, and you will be ready to start.",
+    "share_text_single": "Hello, I want to invite you to join the {{ projectName }} project on {{ siteName }}.\nJust click the link below, choose how to log in, and you will be ready to start.",
+    "share_a_link": "Share a link",
+    "share_title": "You've been invited to the project {{ projectName }} on {{ siteName }}",
     "send": "Enviar",
-    "share_by_email_not_available_offline": "Invitar usuarios por correo electrónico no está disponible cuando está fuera de línea."
+    "share_not_available_offline": "Inviting is unavailable while offline."
   },
   "share_dialog": {
-    "done": "Terminado",
+    "anyone": "Anyone with the link",
+    "anyone_can": "Anyone with the link can",
+    "change": "change",
+    "copy_link": "Copiar enlace",
+    "invitation_language": "Change invitation language",
+    "invitation_link_type": "Change how the link can be used",
+    "invitation_role": "Change invitation role",
+    "invitation_shared_in_language": "Invitation will be shared in",
+    "link_can_be_used_by": "Link can be used by",
+    "link_sharing_not_available_offline": "Inviting users by link sharing is unavailable while offline.",
+    "recipient": "Only the recipient",
+    "recipient_can": "Only the recipient can",
+    "recipient_only_notice": "Each link can only be used once and will expire after 14 days. Click the button again to generate and share a new link.",
+    "share": "Compartir",
+    "share_project": "Share {{ project }}",
     "share_with_others": "Compartir con otros"
   },
   "start": {
