@@ -8,7 +8,6 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextDocId } from '../../../core/models/text-doc';
-import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
 import { AudioPlayerStub, getAudioTimingWithHeadings, getAudioTimings } from '../../checking-test.utils';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
@@ -214,7 +213,6 @@ class AudioPlayerStubComponent {
 
 class TestEnvironment {
   readonly mockOnlineStatusService = mock(OnlineStatusService);
-  readonly mockedProjectService = mock(SFProjectService);
   fixture: ComponentFixture<HostComponent>;
   component: HostComponent;
   ngZone: NgZone;
@@ -222,10 +220,7 @@ class TestEnvironment {
   constructor(template: string) {
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingScriptureAudioPlayerComponent, AudioPlayerStubComponent, AudioTimePipe],
-      providers: [
-        { provide: OnlineStatusService, useFactory: () => instance(this.mockOnlineStatusService) },
-        { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
-      ],
+      providers: [{ provide: OnlineStatusService, useFactory: () => instance(this.mockOnlineStatusService) }],
       imports: [UICommonModule, TestTranslocoModule]
     });
     when(this.mockOnlineStatusService.onlineStatus$).thenReturn(of(true));
