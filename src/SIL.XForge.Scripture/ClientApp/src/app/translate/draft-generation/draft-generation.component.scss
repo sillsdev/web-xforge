@@ -1,3 +1,5 @@
+@use 'src/variables';
+
 app-working-animated-indicator {
   display: block;
   margin: 10px 0;
@@ -40,7 +42,7 @@ em {
       color: green;
     }
     &.criteria-not-met {
-      color: var(--mdc-theme-error);
+      color: variables.$errorColor;
     }
   }
 }

@@ -1,3 +1,5 @@
+@use 'src/variables';
+
 h3 {
   font-weight: 500;
 }
@@ -23,7 +25,7 @@ h3 {
 }
 
 .helper-text {
-  color: var(--mdc-theme-text-hint-on-background);
+  color: variables.$text-hint-on-background;
   line-height: 1.4em;
   mat-icon {
     font-size: inherit;
@@ -70,7 +72,7 @@ td.mat-cell:last-of-type {
 }
 
 .current-user-label {
-  color: var(--mdc-theme-secondary);
+  color: variables.$theme-secondary;
 }
 
 .no-users-label {
