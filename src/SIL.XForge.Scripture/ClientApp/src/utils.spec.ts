@@ -14,10 +14,12 @@ describe('type utils', () => {
     it('returns false for string objects', () => {
       expect(isString(new String())).toBeFalse();
     });
+
     it('returns false for nullish values', () => {
       expect(isString(undefined)).toBeFalse();
       expect(isString(null)).toBeFalse();
     });
+
     it('returns false for non-string types', () => {
       expect(isString(true)).toBeFalse();
       expect(isString(false)).toBeFalse();
@@ -27,6 +29,7 @@ describe('type utils', () => {
       expect(isString({})).toBeFalse();
       expect(isString([])).toBeFalse();
     });
+
     it('returns true for string primitive values', () => {
       expect(isString('')).toBeTrue();
       expect(isString('hello')).toBeTrue();
