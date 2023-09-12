@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { DeltaOperation } from 'quill';
-import { isString } from 'src/type-utils';
+import { isString } from '../../../../type-utils';
 import { DraftSegmentMap } from '../draft-generation';
 
 @Injectable({
