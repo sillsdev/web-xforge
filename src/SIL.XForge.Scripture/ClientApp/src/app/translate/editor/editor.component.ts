@@ -1273,7 +1273,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return;
     } else if (sourceSegment.length > MAX_SEGMENT_LENGTH) {
       this.translator = undefined;
-      this.noticeService.show(translate('editor.verse_too_long_for_suggestions'));
+      if (this.translationSuggestionsEnabled) {
+        this.noticeService.show(translate('editor.verse_too_long_for_suggestions'));
+      }
       return;
     }
 
