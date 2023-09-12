@@ -1,4 +1,3 @@
-import { ErrorStateMatcher } from '@angular-mdc/web/form-field';
 import {
   AbstractControl,
   UntypedFormControl,
@@ -9,6 +8,7 @@ import {
   ValidatorFn
 } from '@angular/forms';
 import { VerseRef } from '@sillsdev/scripture';
+import { ErrorStateMatcher } from '@angular/material/core';
 import { TextsByBookId } from '../core/models/texts-by-book-id';
 import { SelectableProject } from '../core/paratext.service';
 
