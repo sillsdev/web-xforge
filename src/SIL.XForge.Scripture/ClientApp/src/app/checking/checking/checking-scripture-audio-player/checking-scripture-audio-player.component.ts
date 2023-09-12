@@ -1,11 +1,11 @@
 import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
+import { Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
 import { I18nService } from 'xforge-common/i18n.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { TextDocId } from '../../../core/models/text-doc';
-import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTextRef, AudioHeadingRef, CheckingUtils } from '../../checking.utils';
@@ -16,7 +16,6 @@ import { AudioTextRef, AudioHeadingRef, CheckingUtils } from '../../checking.uti
   styleUrls: ['./checking-scripture-audio-player.component.scss']
 })
 export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposable implements AfterViewInit {
-  @Input() source?: string;
   @Input() canDelete: boolean = false;
   @Output() currentVerseChanged = new EventEmitter<string>();
   @Output() closed: EventEmitter<void> = new EventEmitter<void>();
@@ -32,12 +31,23 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     this._timing = Object.values(value).sort((a, b) => a.from - b.from);
   }
 
+  @Input() set source(value: string | undefined) {
+    this.audioSource = value;
+    this.finishedSubscription?.unsubscribe();
+    this.finishedSubscription = undefined;
+    if (value != null) {
+      this.subscribeToAudioFinished();
+    }
+  }
+
   verseLabel: string = '';
+  audioSource?: string;
 
   private _timing: AudioTiming[] = [];
   private _textDocId?: TextDocId;
+  private finishedSubscription?: Subscription;
 
-  constructor(readonly i18n: I18nService, private readonly projectService: SFProjectService) {
+  constructor(readonly i18n: I18nService) {
     super();
   }
 
@@ -58,21 +68,13 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   }
 
   ngAfterViewInit(): void {
-    if (this.audioPlayer == null) return;
-    this.subscribe(
-      this.audioPlayer.isAudioAvailable$.pipe(
-        filter(a => a),
-        first()
-      ),
-      () => {
-        this.subscribe(this.audioPlayer!.audio!.finishedPlaying$.pipe(first()), () => this.close());
-      }
-    );
+    this.subscribeToAudioFinished();
   }
 
   close(): void {
     this.pause();
     this.closed.emit();
+    this.finishedSubscription?.unsubscribe();
   }
 
   nextRef(): void {
@@ -158,6 +160,24 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
         this.currentVerseChanged.emit(segmentRef);
       }
     );
+  }
+
+  private subscribeToAudioFinished(): void {
+    if (this.audioPlayer == null || this.finishedSubscription != null) return;
+    // wait until the next microtask cycle to get the audio player with the updated source
+    Promise.resolve(this.audioPlayer).then(audioPlayer => {
+      this.subscribe(
+        audioPlayer.isAudioAvailable$.pipe(
+          filter(a => a),
+          first()
+        ),
+        () => {
+          this.finishedSubscription = this.subscribe(audioPlayer.audio!.finishedPlaying$.pipe(first()), () => {
+            this.close();
+          });
+        }
+      );
+    });
   }
 
   private getCurrentVerseStr(currentTime: number): string {
