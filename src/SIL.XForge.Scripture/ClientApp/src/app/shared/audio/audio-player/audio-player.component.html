@@ -2,7 +2,15 @@
   <div *ngIf="isAudioInitComplete">
     <div *ngIf="audio !== undefined && (isAudioAvailable$ | async)" class="content" dir="ltr">
       <div class="current-time">{{ audio.currentTime | audioTime }}</div>
-      <mat-slider class="slider" [min]="0" [max]="100" [step]="1" [value]="seek" (input)="onSeek($event)"></mat-slider>
+      <mat-slider
+        class="slider"
+        [min]="0"
+        [max]="100"
+        [step]="1"
+        [value]="seek"
+        (input)="onSeek($event)"
+        [dir]="i18n.direction"
+      ></mat-slider>
       <div class="duration">{{ duration | audioTime }}</div>
     </div>
     <div *ngIf="(isAudioAvailable$ | async) !== true" class="audio-not-available">
