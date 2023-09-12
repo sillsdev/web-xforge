@@ -2,9 +2,10 @@ import { Inject, Injectable } from '@angular/core';
 import { VerseRef } from '@sillsdev/scripture';
 import { Observable, of, throwError, timer, EMPTY } from 'rxjs';
 import { catchError, distinct, map, shareReplay, switchMap, takeWhile } from 'rxjs/operators';
-import { BuildStates } from 'src/app/machine-api/build-states';
-import { HttpClient } from 'src/app/machine-api/http-client';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { BuildDto } from '../../machine-api/build-dto';
+import { BuildStates } from '../../machine-api/build-states';
+import { HttpClient } from '../../machine-api/http-client';
 import {
   activeBuildStates,
   DraftGenerationServiceOptions,
@@ -20,6 +21,7 @@ import {
 export class DraftGenerationService {
   constructor(
     private readonly httpClient: HttpClient,
+    private readonly onlineStatusService: OnlineStatusService,
     @Inject(DRAFT_GENERATION_SERVICE_OPTIONS) private readonly options: DraftGenerationServiceOptions
   ) {}
 
@@ -47,6 +49,9 @@ export class DraftGenerationService {
    * been started.
    */
   getBuildProgress(projectId: string): Observable<BuildDto | undefined> {
+    if (!this.onlineStatusService.isOnline) {
+      return of(undefined);
+    }
     return this.httpClient.get<BuildDto>(`translation/builds/id:${projectId}?pretranslate=true`).pipe(
       map(res => res.data),
       catchError(err => {
