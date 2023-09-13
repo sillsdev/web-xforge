@@ -20,7 +20,7 @@ import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog-service';
+import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
 import {

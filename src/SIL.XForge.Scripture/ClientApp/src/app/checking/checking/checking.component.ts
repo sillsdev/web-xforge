@@ -42,7 +42,7 @@ import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
-import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog-service';
+import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
