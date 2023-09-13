@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { distinctUntilChanged, map } from 'rxjs/operators';
@@ -8,14 +8,14 @@ import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
-import { AudioTextRef, AudioHeadingRef, CheckingUtils } from '../../checking.utils';
+import { AudioHeadingRef, AudioTextRef, CheckingUtils } from '../../checking.utils';
 
 @Component({
   selector: 'app-checking-scripture-audio-player',
   templateUrl: './checking-scripture-audio-player.component.html',
   styleUrls: ['./checking-scripture-audio-player.component.scss']
 })
-export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposable {
+export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposable implements AfterViewInit {
   @Input() source?: string;
   @Input() canDelete: boolean = false;
   @Output() currentVerseChanged = new EventEmitter<string>();
@@ -39,6 +39,10 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
 
   constructor(readonly i18n: I18nService, private readonly projectService: SFProjectService) {
     super();
+  }
+
+  ngAfterViewInit(): void {
+    this.subscribePlayerVerseChange(this.audioPlayer!.audio!);
   }
 
   get isPlaying(): boolean {
@@ -98,7 +102,6 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   play(): void {
     if (this.audioPlayer?.audio == null) return;
     this.audioPlayer.audio.play();
-    this.subscribePlayerVerseChange(this.audioPlayer.audio);
   }
 
   previousRef(): void {
