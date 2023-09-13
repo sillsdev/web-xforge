@@ -1,4 +1,4 @@
-<div class="scripture-audio-player" [dir]="i18n.direction">
+<div class="scripture-audio-player" [dir]="i18n.direction" *transloco="let t; read: 'checking_audio_player'">
   <div class="audio-action-buttons">
     <button mat-icon-button class="previous-ref-button" (click)="previousRef()">
       <mat-icon class="mirror-rtl">skip_previous</mat-icon>
