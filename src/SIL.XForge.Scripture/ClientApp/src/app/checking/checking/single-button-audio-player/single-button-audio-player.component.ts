@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { AudioPlayer, AudioStatus } from '../../../shared/audio/audio-player';
+import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerBaseComponent } from '../../../shared/audio/audio-player-base/audio-player-base.component';
 import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
 
@@ -53,11 +53,6 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
         this.audio = new AudioPlayer(this._source, this.onlineStatusService);
       }
 
-      this.subscribe(this.audio.status$, newVal => {
-        if (newVal === AudioStatus.Available) {
-          this.isAudioAvailable$.next(true);
-        }
-      });
       this.subscribe(this.audio.finishedPlaying$, () => {
         if (!this.hasFinishedPlayingOnce$.value) {
           this.hasFinishedPlayingOnce$.next(true);

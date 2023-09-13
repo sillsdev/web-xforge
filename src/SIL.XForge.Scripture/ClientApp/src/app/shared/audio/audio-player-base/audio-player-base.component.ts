@@ -26,6 +26,16 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
 
   protected set audio(value: AudioPlayer | undefined) {
     this._audio = value;
+    if (this.audio !== undefined) {
+      this.subscribe(this.audio.status$, newVal => {
+        if (newVal === AudioStatus.Available) {
+          this.isAudioAvailable$.next(true);
+        }
+        if (newVal !== AudioStatus.Init) {
+          this._isAudioInitComplete = true;
+        }
+      });
+    }
   }
 
   get audioStatus(): AudioStatus {
@@ -42,17 +52,9 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
     this.isAudioAvailable$.next(false);
     this.audio?.dispose();
     if (source != null && source !== '') {
-      this._audio = new AudioPlayer(source, this.onlineStatusService);
-      this.subscribe(this._audio.status$, newVal => {
-        if (newVal === AudioStatus.Available) {
-          this.isAudioAvailable$.next(true);
-        }
-        if (newVal !== AudioStatus.Init) {
-          this._isAudioInitComplete = true;
-        }
-      });
+      this.audio = new AudioPlayer(source, this.onlineStatusService);
     } else {
-      this._audio = undefined;
+      this.audio = undefined;
     }
   }
 

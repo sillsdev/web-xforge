@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { AudioTiming } from 'realtime-server/scriptureforge/models/audio-timing';
 import { BehaviorSubject, of } from 'rxjs';
-import { AudioPlayer } from 'src/app/shared/audio/audio-player';
 import { instance, mock, when } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
@@ -11,7 +10,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
-import { getAudioTimingWithHeadings, getAudioTimings } from '../../checking-test.utils';
+import { AudioPlayerStub, getAudioTimingWithHeadings, getAudioTimings } from '../../checking-test.utils';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player.component';
 
 const audioFile = 'test-audio-player.webm';
@@ -172,43 +171,10 @@ class AudioPlayerStubComponent {
 
   constructor() {
     when(AudioPlayerStubComponent.onlineStatusService.onlineStatus$).thenReturn(new BehaviorSubject(false));
-    this.audio = new AudioPlayerStub(instance(AudioPlayerStubComponent.onlineStatusService));
+    this.audio = new AudioPlayerStub(audioFile, instance(AudioPlayerStubComponent.onlineStatusService));
   }
 
   @Input() set source(source: string | undefined) {}
-}
-
-class AudioPlayerStub extends AudioPlayer {
-  htmlAudioMock: HTMLAudioElement = mock(HTMLAudioElement);
-  protected override audio: HTMLAudioElement = instance(this.htmlAudioMock);
-
-  private _isPlaying = false;
-
-  constructor(onlineService: OnlineStatusService) {
-    super(audioFile, onlineService);
-    when(this.htmlAudioMock.src).thenReturn(audioFile);
-    when(this.htmlAudioMock.currentTime).thenReturn(0);
-  }
-
-  override get isPlaying(): boolean {
-    return this._isPlaying;
-  }
-
-  override play(): void {
-    this._isPlaying = true;
-  }
-
-  override pause(): void {
-    this._isPlaying = false;
-  }
-
-  override get currentTime(): number {
-    return this.audio.currentTime;
-  }
-
-  override set currentTime(time: number) {
-    when(this.htmlAudioMock.currentTime).thenReturn(time);
-  }
 }
 
 class TestEnvironment {
