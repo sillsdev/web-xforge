@@ -27,6 +27,7 @@ describe('ScriptureAudioComponent', () => {
     env.component.audioPlayer.textDocId = textDocId;
     env.component.audioPlayer.timing = getAudioTimings();
     await env.waitForPlayer();
+    env.fixture.detectChanges();
     await env.waitForPlayer();
   });
 
