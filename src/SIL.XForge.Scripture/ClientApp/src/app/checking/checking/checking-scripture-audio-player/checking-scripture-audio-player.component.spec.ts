@@ -1,5 +1,5 @@
 import { Component, DebugElement, Input, NgZone, ViewChild } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AudioTiming } from 'realtime-server/scriptureforge/models/audio-timing';
 import { BehaviorSubject, of } from 'rxjs';
@@ -19,75 +19,73 @@ const textDocId: TextDocId = new TextDocId('project01', 1, 1);
 
 describe('ScriptureAudioComponent', () => {
   let env: TestEnvironment;
-  beforeEach(async () => {
+  beforeEach(fakeAsync(() => {
     const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
     env = new TestEnvironment(template);
     env.fixture.detectChanges();
 
-    env.component.audioPlayer.textDocId = textDocId;
     env.component.audioPlayer.timing = getAudioTimings();
-    await env.waitForPlayer();
-    env.fixture.detectChanges();
-    await env.waitForPlayer();
-  });
+    env.component.audioPlayer.textDocId = textDocId;
+    env.wait();
+  }));
 
-  it('can play and pause audio', async () => {
+  it('can play and pause audio', fakeAsync(() => {
     const play = spyOn(env.audioPlayer.audio, 'play').and.callThrough();
     const pause = spyOn(env.audioPlayer.audio, 'pause').and.callThrough();
 
     env.playButton.nativeElement.click();
-    await env.waitForPlayer();
+    env.wait();
 
     expect(env.isPlaying).toBe(true);
     expect(play).toHaveBeenCalledTimes(1);
     expect(pause).toHaveBeenCalledTimes(0);
 
     env.playButton.nativeElement.click();
-    await env.waitForPlayer();
+    env.wait();
 
     expect(play).toHaveBeenCalledTimes(1);
     expect(pause).toHaveBeenCalledTimes(1);
-  });
+  }));
 
-  it('can skip to next and previous verse', async () => {
+  it('can skip to next and previous verse', fakeAsync(() => {
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
 
     env.clickNextRef();
-    await env.waitForPlayer();
+    env.wait();
     expect(env.audioPlayer.audio.currentTime).toBe(1);
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
     env.clickPreviousRef();
-    await env.waitForPlayer();
+    env.wait();
     expect(env.audioPlayer.audio.currentTime).toBe(0);
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
     env.clickPreviousRef();
-    await env.waitForPlayer();
+    env.wait();
     expect(env.audioPlayer.audio.currentTime).toBe(0);
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
-  });
+  }));
 
-  it('can skip forward and back through section headings', async () => {
+  it('can skip forward and back through section headings', fakeAsync(() => {
     env.component.audioPlayer.timing = getAudioTimingWithHeadings();
 
     env.clickNextRef();
-    await env.waitForPlayer();
+    env.wait();
     // section heading before verse 2
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
     env.clickNextRef();
-    await env.waitForPlayer();
+    env.wait();
     // verse 2
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
     env.clickPreviousRef();
-    await env.waitForPlayer();
+    env.wait();
     // move back to the section heading before verse 2
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
     env.clickPreviousRef();
-    await env.waitForPlayer();
+    env.wait();
     // verse 1
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
-  });
+  }));
 
-  it('emits verse changed event', async () => {
+  it('emits verse changed event', fakeAsync(() => {
     const verseChangedSpy = jasmine.createSpy('verseChanged');
     env.component.audioPlayer.currentVerseChanged.subscribe(verseChangedSpy);
     expect(verseChangedSpy).toHaveBeenCalledTimes(0);
@@ -96,9 +94,9 @@ describe('ScriptureAudioComponent', () => {
     env.audioPlayer.audio.timeUpdated$.next();
     expect(verseChangedSpy).toHaveBeenCalledTimes(1);
     expect(verseChangedSpy).toHaveBeenCalledWith('verse_1_2');
-  });
+  }));
 
-  it('emits verse changed event for section headings', async () => {
+  it('emits verse changed event for section headings', fakeAsync(() => {
     const timings: AudioTiming[] = getAudioTimingWithHeadings();
     env.component.audioPlayer.timing = timings;
 
@@ -107,32 +105,32 @@ describe('ScriptureAudioComponent', () => {
 
     env.audioPlayer.audio.currentTime = 1;
     env.audioPlayer.audio.timeUpdated$.next();
-    await env.waitForPlayer();
+    env.wait();
     expect(env.currentTime).toBeGreaterThan(timings[1].from);
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
     expect(verseChangedSpy).toHaveBeenCalledWith('s_1');
 
     env.audioPlayer.audio.currentTime = 2.5;
     env.audioPlayer.audio.timeUpdated$.next();
-    await env.waitForPlayer();
+    env.wait();
     expect(env.currentTime).toBeGreaterThan(timings[3].from);
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
     expect(verseChangedSpy).toHaveBeenCalledWith('s_2');
-  });
+  }));
 
-  it('pauses and emits on close', async () => {
+  it('pauses and emits on close', fakeAsync(() => {
     const pauseSpy = spyOn(env.component.audioPlayer, 'pause').and.callThrough();
     let count = 0;
     env.component.audioPlayer.closed.subscribe(() => count++);
     expect(pauseSpy).not.toHaveBeenCalled();
 
     env.component.audioPlayer.close();
-    await env.waitForPlayer();
+    env.wait();
     expect(pauseSpy).toHaveBeenCalled();
     expect(count).toEqual(1);
-  });
+  }));
 
-  it('skipping to previous verse remains on the current verse if within grace period', async () => {
+  it('skipping to previous verse remains on the current verse if within grace period', fakeAsync(() => {
     env.component.audioPlayer.timing = [
       { textRef: '1', from: 0.0, to: 1.0 },
       { textRef: '2', from: 1.0, to: 4.5 },
@@ -145,9 +143,9 @@ describe('ScriptureAudioComponent', () => {
     expect(env.currentTime).toEqual(1);
     env.clickPreviousRef();
     expect(env.currentTime).toEqual(0);
-  });
+  }));
 
-  it('skipping to the next verse will skip to the start of the current timing data if it has not started yet', async () => {
+  it('skipping to the next verse will skip to the start of the current timing data if it has not started yet', fakeAsync(() => {
     env.component.audioPlayer.timing = [
       { textRef: '1', from: 3.0, to: 4.0 },
       { textRef: '2', from: 4.0, to: 5.0 }
@@ -156,7 +154,7 @@ describe('ScriptureAudioComponent', () => {
     expect(env.currentTime).toEqual(0);
     env.clickNextRef();
     expect(env.currentTime).toEqual(3);
-  });
+  }));
 });
 
 @Component({ selector: 'app-host', template: '' })
@@ -278,8 +276,9 @@ class TestEnvironment {
     this.previousRefButton.nativeElement.click();
   }
 
-  async waitForPlayer(ms: number = 1000): Promise<void> {
-    await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
+  wait(): void {
+    this.fixture.detectChanges();
+    tick();
     this.fixture.detectChanges();
   }
 }
