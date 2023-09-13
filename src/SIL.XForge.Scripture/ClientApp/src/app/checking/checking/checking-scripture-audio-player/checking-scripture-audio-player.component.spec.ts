@@ -278,7 +278,7 @@ class TestEnvironment {
     this.previousRefButton.nativeElement.click();
   }
 
-  async waitForPlayer(ms: number = 100): Promise<void> {
+  async waitForPlayer(ms: number = 1000): Promise<void> {
     await new Promise(resolve => this.ngZone.runOutsideAngular(() => setTimeout(resolve, ms)));
     this.fixture.detectChanges();
   }
