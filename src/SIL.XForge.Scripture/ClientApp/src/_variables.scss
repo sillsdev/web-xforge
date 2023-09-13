@@ -23,12 +23,14 @@ $border-color: rgba(0, 0, 0, 0.12);
  * how mat-hint looks on a white background.
  */
 $lighterTextColor: #666666;
+// Not recommended to use; copied from --mdc-theme-text-hint-on-background
+$text-hint-on-background: rgba(0, 0, 0, 0.38);
 
 $pt-button-green: $greenDark;
 
 /* Overwrite Material */
-$mdc-theme-primary: $sf_grey;
-$mdc-theme-secondary: $greenLight;
+$theme-primary: $sf_grey;
+$theme-secondary: $greenLight;
 
 $info-color: #547ec8;
 $draft-color: #6495ed;

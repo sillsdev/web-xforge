@@ -1,6 +1,6 @@
 @use 'src/variables';
 @use '../checking-global-vars' as checking-vars;
-@import 'bootstrap/scss/mixins/breakpoints';
+@use 'bootstrap/scss/mixins/breakpoints';
 
 .answers-component {
   display: flex;
@@ -66,7 +66,7 @@
       }
     }
     &.answer-select-text {
-      color: var(--mdc-theme-primary);
+      color: variables.$theme-primary;
       justify-content: center;
       column-gap: 12px;
       min-height: 75px;
@@ -147,11 +147,11 @@
       flex-direction: column;
       align-items: center;
       flex: 0 0 70px;
-      @include media-breakpoint-down(sm, checking-vars.$grid-breakpoints) {
+      @include breakpoints.media-breakpoint-down(sm, checking-vars.$grid-breakpoints) {
         flex: 0 0 35px;
       }
       mat-icon {
-        @include media-breakpoint-down(sm, checking-vars.$grid-breakpoints) {
+        @include breakpoints.media-breakpoint-down(sm, checking-vars.$grid-breakpoints) {
           font-size: 18px;
         }
       }
@@ -167,7 +167,7 @@
         flex: 1;
         align-items: flex-end;
 
-        @include media-breakpoint-down(xs, checking-vars.$grid-breakpoints) {
+        @include breakpoints.media-breakpoint-down(xs, checking-vars.$grid-breakpoints) {
           align-items: flex-start;
           flex-direction: column;
           row-gap: 5px;
@@ -195,7 +195,7 @@
         }
         button + .delete-divider {
           display: inline;
-          @include media-breakpoint-down(xs, checking-vars.$grid-breakpoints) {
+          @include breakpoints.media-breakpoint-down(xs, checking-vars.$grid-breakpoints) {
             transform: rotate(90deg);
           }
         }

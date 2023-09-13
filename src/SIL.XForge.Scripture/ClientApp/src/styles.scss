@@ -4,8 +4,8 @@
 @use 'src/xforge-common/media-breakpoints/css-vars';
 
 @use '@material/theme' with (
-  $primary: variables.$mdc-theme-primary,
-  $secondary: variables.$mdc-theme-secondary
+  $primary: variables.$theme-primary,
+  $secondary: variables.$theme-secondary
 );
 
 @use '@material/theme/variables' as theme-variables;

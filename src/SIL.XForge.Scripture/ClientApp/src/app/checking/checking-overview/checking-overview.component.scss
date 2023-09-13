@@ -1,5 +1,5 @@
-@import 'src/variables';
-@import 'bootstrap/scss/mixins/breakpoints';
+@use 'src/variables';
+@use 'bootstrap/scss/mixins/breakpoints';
 
 .header {
   display: flex;
@@ -14,7 +14,7 @@
 
 #add-question-button,
 #add-chapter-audio-button {
-  @include media-breakpoint-only(xs) {
+  @include breakpoints.media-breakpoint-only(xs, variables.$grid-breakpoints) {
     min-width: 48px;
   }
   mat-icon {
@@ -76,7 +76,7 @@ app-donut-chart {
 #loading-questions-message,
 #loading-archived-questions-message {
   text-align: center;
-  color: var(--mdc-theme-text-hint-on-background);
+  color: variables.$text-hint-on-background;
 }
 
 .reviewer-panels {
@@ -103,27 +103,27 @@ app-donut-chart {
 .card-content-question {
   .stat-total,
   mat-icon {
-    color: $questions;
+    color: variables.$questions;
   }
 }
 
 .card-content-answer {
   .stat-total,
   mat-icon {
-    color: $answers;
+    color: variables.$answers;
   }
 }
 
 .card-content-comment {
   .stat-total,
   mat-icon {
-    color: $comments;
+    color: variables.$comments;
   }
 }
 
 .card-content-like {
   .stat-total,
   mat-icon {
-    color: $likes;
+    color: variables.$likes;
   }
 }

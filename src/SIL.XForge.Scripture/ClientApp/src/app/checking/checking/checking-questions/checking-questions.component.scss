@@ -102,7 +102,7 @@ mat-icon {
       transition: 0.25s;
       position: relative;
       top: 4px; // Give some space for answer count badge
-      color: var(--mdc-theme-text-hint-on-background);
+      color: vars.$text-hint-on-background;
     }
 
     &.question-has-answers {

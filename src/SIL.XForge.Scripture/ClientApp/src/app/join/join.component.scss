@@ -1,5 +1,5 @@
-@import 'src/variables';
-@import 'bootstrap/scss/mixins/breakpoints';
+@use 'src/variables';
+@use 'bootstrap/scss/mixins/breakpoints';
 
 :host {
   display: flex;
@@ -14,7 +14,7 @@ form {
   display: flex;
   align-items: center;
   column-gap: 20px;
-  @include media-breakpoint-only(xs) {
+  @include breakpoints.media-breakpoint-only(xs, variables.$grid-breakpoints) {
     flex-direction: column;
     align-items: normal;
   }
@@ -33,7 +33,7 @@ a {
   ::ng-deep u {
     cursor: pointer;
     &:hover {
-      color: var(--mdc-theme-secondary);
+      color: variables.$theme-secondary;
     }
   }
 }
