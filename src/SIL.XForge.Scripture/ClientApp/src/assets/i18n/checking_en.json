@@ -202,7 +202,7 @@
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Your answer"
   },
-  "checking_audio_dialog": {
+  "chapter_audio_dialog": {
     "audio": "Audio",
     "audio_already_exists": "Audio already exists for this selection.",
     "browse_files": "Browse Files",

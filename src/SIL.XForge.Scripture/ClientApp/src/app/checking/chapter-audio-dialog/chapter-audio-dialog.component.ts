@@ -16,6 +16,8 @@ import { objectId } from 'xforge-common/utils';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
 
+const TIMING_FILE_EXTENSION_REGEX = /.(tsv|csv|txt)$/i;
+
 export interface ChapterAudioDialogData {
   projectId: string;
   textsByBookId: TextsByBookId;
@@ -66,7 +68,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
   }
 
   get audioFilename(): string {
-    return this.audio?.fileName || '';
+    return this.audio?.fileName ?? '';
   }
 
   get audioBlob(): string | undefined {
@@ -198,10 +200,10 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
     const canSave: boolean =
       this.hasAudioBeenUploaded && this.hasTimingBeenUploaded && this.book != null && this.chapter != null;
     if (!this.hasTimingBeenUploaded) {
-      this._timingErrorText = 'checking_audio_dialog.no_timing_data_uploaded';
+      this._timingErrorText = 'chapter_audio_dialog.no_timing_data_uploaded';
     }
     if (!this.hasAudioBeenUploaded) {
-      this._audioErrorText = 'checking_audio_dialog.no_audio_file_uploaded';
+      this._audioErrorText = 'chapter_audio_dialog.no_audio_file_uploaded';
     }
     if (!canSave) {
       return;
@@ -219,7 +221,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
     );
     this._loadingAudio = false;
     if (audioUrl == null) {
-      this.dialogService.message('checking_audio_dialog.upload_failed');
+      this.dialogService.message('chapter_audio_dialog.upload_failed');
       return;
     }
 
@@ -259,21 +261,21 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
   }
 
   private getStartingLocation(): void {
-    if (this.data.currentBook !== undefined && this.data.currentChapter !== undefined) {
+    if (this.data.currentBook != null && this.data.currentChapter != null) {
       this._book = this.data.currentBook;
       this._chapter = this.data.currentChapter;
       return;
     }
 
-    const publishedQuestions = this.data.questionsSorted.filter(q => !q.data?.isArchived);
+    const publishedQuestions: QuestionDoc[] = this.data.questionsSorted.filter(q => !q.data?.isArchived);
     for (const question of publishedQuestions) {
-      const bookNum = question.data?.verseRef.bookNum;
-      const chapterNum = question.data?.verseRef.chapterNum;
+      const bookNum: number | undefined = question.data?.verseRef.bookNum;
+      const chapterNum: number | undefined = question.data?.verseRef.chapterNum;
 
-      if (bookNum === undefined || chapterNum === undefined) continue;
+      if (bookNum == null || chapterNum == null) continue;
 
       const text: TextInfo = this.data.textsByBookId[Canon.bookNumberToId(bookNum)];
-      const textChapter = text?.chapters.find(c => c.number === chapterNum);
+      const textChapter: Chapter | undefined = text?.chapters.find(c => c.number === chapterNum);
       if (textChapter !== undefined && !textChapter?.hasAudio) {
         this._book = bookNum;
         this._chapter = textChapter.number!;
@@ -298,6 +300,10 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
     return NaN;
   }
 
+  /**
+   * The TO field may contain data, it may be zero, or it needs to be determined
+   * based on the length of the audio file
+   */
   private populateToField(index: number, rows: AudioTiming[]): number {
     const row: AudioTiming = rows[index];
     if (row.to > 0) return row.to;
@@ -316,7 +322,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
       if (file == null) {
         continue;
       }
-      const isTimingFile: boolean = /.(tsv|csv|txt)$/i.test(file.name);
+      const isTimingFile: boolean = TIMING_FILE_EXTENSION_REGEX.test(file.name);
       if (isTimingFile) {
         this.prepareTimingFileUpload(file);
       } else {
@@ -335,7 +341,7 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
     this._timingErrorText = undefined;
 
     if (timing.length === 0) {
-      this._timingErrorText = 'checking_audio_dialog.zero_segments';
+      this._timingErrorText = 'chapter_audio_dialog.zero_segments';
     }
 
     if (audioLength === 0) return;
@@ -344,14 +350,16 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
       timing.to = this.populateToField(this.timing.indexOf(timing), this.timing);
     }
 
-    const firstValidation = timing.filter(t => t.from < t.to);
+    // Check if one or more ending values end before their beginning values
+    const firstValidation: AudioTiming[] = timing.filter(t => t.from < t.to);
     if (firstValidation.length !== timing.length) {
-      this._timingErrorText = 'checking_audio_dialog.from_timing_past_to_timing';
+      this._timingErrorText = 'chapter_audio_dialog.from_timing_past_to_timing';
     }
 
-    const validated = firstValidation.filter(t => t.from < audioLength && t.to <= audioLength);
+    // Check if one or more timing values extend past the end of the audio file
+    const validated: AudioTiming[] = firstValidation.filter(t => t.from < audioLength && t.to <= audioLength);
     if (validated.length !== firstValidation.length) {
-      this._timingErrorText = 'checking_audio_dialog.timing_past_audio_length';
+      this._timingErrorText = 'chapter_audio_dialog.timing_past_audio_length';
     }
   }
 }
