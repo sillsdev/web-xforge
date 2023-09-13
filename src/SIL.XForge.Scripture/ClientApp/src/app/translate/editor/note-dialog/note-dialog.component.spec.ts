@@ -5,9 +5,11 @@ import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { VerseRef } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import { CookieService } from 'ngx-cookie-service';
 import { Note, REATTACH_SEPARATOR } from 'realtime-server/lib/esm/scriptureforge/models/note';
+import { SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   AssignedUsers,
   getNoteThreadDocId,
@@ -16,21 +18,24 @@ import {
   NoteThread,
   NoteType
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
+import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { isParatextRole, SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import {
+  createTestProject,
+  createTestProjectProfile
+} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
   getSFProjectUserConfigDocId,
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/models/paratext-user-profile';
-import { VerseRef } from '@sillsdev/scripture';
+
 import * as RichText from 'rich-text';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
@@ -41,11 +46,6 @@ import {
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { SF_TAG_ICON } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
-import {
-  createTestProject,
-  createTestProjectProfile
-} from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { NoteThreadDoc } from '../../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
@@ -62,7 +62,6 @@ const mockedCookieService = mock(CookieService);
 const mockedHttpClient = mock(HttpClient);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
-const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedDialogService = mock(DialogService);
 
 describe('NoteDialogComponent', () => {
@@ -74,7 +73,6 @@ describe('NoteDialogComponent', () => {
       { provide: HttpClient, useMock: mockedHttpClient },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
@@ -806,8 +804,6 @@ class TestEnvironment {
       .afterClosed()
       .toPromise()
       .then(result => (this.dialogResult = result));
-
-    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
 
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
 

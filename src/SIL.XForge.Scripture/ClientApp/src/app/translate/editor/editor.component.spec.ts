@@ -3526,7 +3526,6 @@ class TestEnvironment {
       this.openNoteDialogs.forEach(dialog => dialog.close());
       this.openNoteDialogs = [];
     });
-    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
     when(mockedMediaObserver.isActive(anything())).thenReturn(false);

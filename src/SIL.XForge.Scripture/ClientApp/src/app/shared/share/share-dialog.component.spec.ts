@@ -369,7 +369,6 @@ class TestEnvironment {
         }`
     );
     when(mockedProjectService.isProjectAdmin(projectId, TestUsers.Admin)).thenResolve(true);
-    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
     when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn({ enabled: true } as FeatureFlag);
 
     const config: MatDialogConfig<ShareDialogData> = {
