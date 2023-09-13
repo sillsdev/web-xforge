@@ -422,7 +422,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get canInsertNote(): boolean {
     if (this.projectDoc?.data == null) return false;
-    return this.isAddNotesEnabled && canInsertNote(this.projectDoc.data, this.userService.currentUserId);
+    return canInsertNote(this.projectDoc.data, this.userService.currentUserId);
   }
 
   get canShare(): boolean {
@@ -493,7 +493,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
    * This will be true any time the user has the right to add notes
    */
   get showAddCommentUI(): boolean {
-    if (!this.isAddNotesEnabled || this.projectDoc?.data == null) return false;
+    if (this.projectDoc?.data == null) return false;
 
     return SF_PROJECT_RIGHTS.hasRight(
       this.projectDoc.data,
@@ -524,12 +524,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
   }
 
-  private get isAddNotesEnabled(): boolean {
-    return this.featureFlags.allowAddingNotes.enabled;
-  }
-
   private get isInsertNoteFabEnabled(): boolean {
-    return this.isAddNotesEnabled && this.canShowInsertNoteFab && !this.isCommenterOnMobileDevice;
+    return this.canShowInsertNoteFab && !this.isCommenterOnMobileDevice;
   }
 
   private get isCommenterOnMobileDevice(): boolean {
@@ -1580,7 +1576,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       () => {
         this.toggleNoteThreadVerses(false);
         this.toggleNoteThreadVerses(true);
-        if (this.userRole != null && this.showAddCommentUI && this.isAddNotesEnabled) {
+        if (this.userRole != null && this.showAddCommentUI) {
           this.subscribeCommentingSelectionEvents();
         }
       }

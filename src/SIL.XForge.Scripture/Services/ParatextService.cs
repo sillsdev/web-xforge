@@ -1391,8 +1391,8 @@ public class ParatextService : DisposableBase, IParatextService
             ptProjectUsers
         );
 
-        // TODO: Remove these warning logs once the feature is tested and implemented
-        string sfCommentWarning = "SF Comment Warning:";
+        // TODO: Remove these logs once the feature public and stable
+        string sfCommentLog = "SF Comment:";
         ScrText scrText =
             ScrTextCollection.FindById(username, paratextId)
             ?? throw new DataNotFoundException("Can't get access to cloned project.");
@@ -1404,22 +1404,16 @@ public class ParatextService : DisposableBase, IParatextService
             {
                 var existingComment = existingThread?.Comments.FirstOrDefault(c => c.Id == comment.Id);
                 if (existingComment == null)
-                    _logger.LogWarning(
-                        $"{sfCommentWarning} Adding sf comment before feature enabled. ID: {comment.Thread}"
-                    );
+                    _logger.LogWarning($"{sfCommentLog} Adding sf comment on thread with ID {comment.Thread}");
                 else if (comment.Deleted)
-                    _logger.LogWarning(
-                        $"{sfCommentWarning} Deleting sf comment before feature enabled. ID: {comment.Thread}"
-                    );
+                    _logger.LogWarning($"{sfCommentLog} Deleting sf comment on thread with ID {comment.Thread}");
                 else
                 {
                     if (existingComment.Contents?.OuterXml != comment.Contents?.OuterXml)
                         _logger.LogWarning(
-                            $"{sfCommentWarning} Comment contents differ\n{existingComment.Contents?.OuterXml}\n{comment.Contents?.OuterXml}"
+                            $"{sfCommentLog} Comment contents differ\n{existingComment.Contents?.OuterXml}\n{comment.Contents?.OuterXml}"
                         );
-                    _logger.LogWarning(
-                        $"{sfCommentWarning} Updating SF comment before feature enabled. ID: " + comment.Thread
-                    );
+                    _logger.LogWarning($"{sfCommentLog} Updating SF comment on thread with ID {comment.Thread}");
                 }
             }
         }

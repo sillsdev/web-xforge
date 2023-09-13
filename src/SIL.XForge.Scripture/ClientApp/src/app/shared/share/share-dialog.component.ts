@@ -5,7 +5,6 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -50,7 +49,6 @@ export class ShareDialogComponent extends SubscriptionDisposable {
   constructor(
     readonly dialogRef: MatDialogRef<ShareDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public readonly data: ShareDialogData,
-    private readonly featureFlags: FeatureFlagService,
     readonly i18n: I18nService,
     @Inject(NAVIGATOR) private readonly navigator: Navigator,
     private readonly noticeService: NoticeService,
@@ -259,7 +257,7 @@ export class ShareDialogComponent extends SubscriptionDisposable {
       },
       {
         role: SFProjectRole.Commenter,
-        available: this.featureFlags.allowAddingNotes.enabled,
+        available: true,
         permission: this.isProjectAdmin
       }
     ]
