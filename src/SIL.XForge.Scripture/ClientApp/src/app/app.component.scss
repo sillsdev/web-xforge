@@ -36,6 +36,9 @@
       // KHSV05 is one example that will cause overflow, which looks particularly bad in RTL mode because it
       // overflows to the left in a menu that is layed out in LTR.
       overflow-wrap: anywhere;
+
+      height: unset;
+      min-height: 48px;
     }
   }
 
