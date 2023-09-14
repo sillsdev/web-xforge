@@ -9,8 +9,11 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 
-/** Detects if a string is in a format that can be used to parse audio timing for a verse of Scripture. */
-const AUDIO_TEXT_REF_REGEX = /^v?([0-9]+-?[0-9]?)([a-z]?)_?([0-9]*)/i;
+/**
+ * Detects if a string is in a format that can be used to parse audio timing for a verse of Scripture.
+ * The audio ref can be formatted as v1, 1, 1-2, 1,3, 1a, and 1ab.
+ */
+const AUDIO_TEXT_REF_REGEX = /^v?([0-9]+[0-9a-z,\-]*?)([a-z]?$)/i;
 const AUDIO_HEADING_REF_REGEX = /^([a-z]+)([0-9]*)$/i;
 
 export interface AudioTextRef {
@@ -80,13 +83,14 @@ export class CheckingUtils {
     }
 
     if (indexInTimings < 0) return;
-    let audioTimingMatch: RegExpExecArray | null = AUDIO_TEXT_REF_REGEX.exec(timingData[indexInTimings].textRef);
+    const textRefParts: string[] = timingData[indexInTimings].textRef.split('_');
+    let audioTimingMatch: RegExpExecArray | null = AUDIO_TEXT_REF_REGEX.exec(textRefParts[0]);
 
     // return if the text ref is for a heading and not a verse
     if (audioTimingMatch == null) return;
     const audioTextRef: AudioTextRef = { verseStr: audioTimingMatch[1] };
     if (audioTimingMatch[2] !== '') audioTextRef.phrase = audioTimingMatch[2];
-    if (audioTimingMatch[3] !== '') audioTextRef.word = audioTimingMatch[3];
+    if (textRefParts.length > 1) audioTextRef.word = textRefParts[1];
     return audioTextRef;
   }
 
