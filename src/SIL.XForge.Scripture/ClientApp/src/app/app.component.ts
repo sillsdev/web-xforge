@@ -1,6 +1,5 @@
 import { MdcIconRegistry } from '@angular-mdc/web';
 import { MdcSelect } from '@angular-mdc/web/select';
-import { MdcTopAppBar } from '@angular-mdc/web/top-app-bar';
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -77,7 +76,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private currentUserDoc?: UserDoc;
   private isLoggedInUserAnonymous: boolean = false;
   private _projectSelect?: MdcSelect;
-  private _topAppBar?: MdcTopAppBar;
   private selectedProjectDoc?: SFProjectProfileDoc;
   private selectedProjectDeleteSub?: Subscription;
   private removedFromProjectSub?: Subscription;
@@ -174,12 +172,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return environment.releaseStage === 'live';
   }
 
-  @ViewChild('topAppBar', { static: true })
-  set topAppBar(value: MdcTopAppBar) {
-    this._topAppBar = value;
-    this.setTopAppBarVariant();
-  }
-
   get projectSelect(): MdcSelect | undefined {
     return this._projectSelect;
   }
@@ -206,7 +198,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       if (!this._isDrawerPermanent) {
         this.collapseDrawer();
       }
-      this.setTopAppBarVariant();
     }
   }
 
@@ -375,7 +366,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       }
 
       this.selectedProjectDoc = selectedProjectDoc;
-      this.setTopAppBarVariant();
       if (this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded) {
         return;
       }
@@ -577,17 +567,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   private navigateToStart(): void {
     setTimeout(() => this.router.navigateByUrl('/projects', { replaceUrl: true }));
-  }
-
-  private setTopAppBarVariant(): void {
-    if (this._topAppBar == null) {
-      return;
-    }
-
-    const isShort = this._isDrawerPermanent && this.selectedProjectDoc != null;
-    if (isShort !== this._topAppBar.short) {
-      this._topAppBar.setShort(isShort, true);
-    }
   }
 
   private checkDeviceStorage(): void {
