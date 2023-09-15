@@ -446,6 +446,52 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('should display the verse too long error', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('verse_1_5');
+      expect(env.component.showSuggestions).toBe(true);
+
+      // Change to the long verse
+      const range = env.component.target!.getSegmentRange('verse_1_6');
+      env.targetEditor.setSelection(range!.index + range!.length, 0, 'user');
+      env.wait();
+
+      // Verify an error displayed
+      expect(env.component.target!.segmentRef).toBe('verse_1_6');
+      expect(env.component.showSuggestions).toBe(false);
+      verify(mockedNoticeService.show(anything())).once();
+
+      env.dispose();
+    }));
+
+    it('should not display the verse too long error if user has suggestions disabled', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setProjectUserConfig({
+        selectedBookNum: 40,
+        selectedChapterNum: 1,
+        selectedSegment: 'verse_1_5',
+        translationSuggestionsEnabled: false
+      });
+      env.wait();
+      expect(env.component.target!.segmentRef).toBe('verse_1_5');
+      // showSuggestions being true doesn't mean suggestions are shown, only that they could be if visible
+      expect(env.component.showSuggestions).toBe(true);
+
+      // Change to the long verse
+      const range = env.component.target!.getSegmentRange('verse_1_6');
+      env.targetEditor.setSelection(range!.index + range!.length, 0, 'user');
+      env.wait();
+
+      // Verify an error did not display
+      expect(env.component.target!.segmentRef).toBe('verse_1_6');
+      expect(env.component.showSuggestions).toBe(false);
+      verify(mockedNoticeService.show(anything())).never();
+
+      env.dispose();
+    }));
+
     it('insert suggestion in non-blank segment', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_5' });
@@ -3430,8 +3476,8 @@ class TestEnvironment {
 
   constructor() {
     this.params$ = new BehaviorSubject<Params>({ projectId: 'project01', bookId: 'MAT' });
-    this.addTextDoc(new TextDocId('project02', 40, 1, 'target'), 'source');
-    this.addTextDoc(new TextDocId('project01', 40, 1, 'target'));
+    this.addTextDoc(new TextDocId('project02', 40, 1, 'target'), 'source', false, true);
+    this.addTextDoc(new TextDocId('project01', 40, 1, 'target'), 'target', false, true);
     this.addTextDoc(new TextDocId('project02', 40, 2, 'target'), 'source');
     this.addTextDoc(new TextDocId('project01', 40, 2, 'target'));
     this.addTextDoc(new TextDocId('project02', 41, 1, 'target'), 'source');
@@ -3980,7 +4026,7 @@ class TestEnvironment {
     this.waitForPresenceTimer();
   }
 
-  addTextDoc(id: TextDocId, textType: TextType = 'target', corrupt = false): void {
+  addTextDoc(id: TextDocId, textType: TextType = 'target', corrupt: boolean = false, tooLong: boolean = false): void {
     const delta = new Delta();
     delta.insert({ chapter: { number: id.chapterNum.toString(), style: 'c' } });
     delta.insert({ blank: true }, { segment: 'p_1' });
@@ -4016,6 +4062,17 @@ class TestEnvironment {
       delta.insert('this doc is corrupt');
       delta.delete(100);
       delta.retain(1);
+    }
+    if (tooLong) {
+      delta.insert({ verse: { number: '6', style: 'v' } });
+      switch (textType) {
+        case 'source':
+          delta.insert('this verse is long '.repeat(100), { segment: `verse_${id.chapterNum}_6` });
+          break;
+        case 'target':
+          delta.insert(`${id.textType}: chapter ${id.chapterNum}, verse 6`, { segment: `verse_${id.chapterNum}_6` });
+          break;
+      }
     }
     this.realtimeService.addSnapshot(TextDoc.COLLECTION, {
       id: id.toString(),
