@@ -127,6 +127,10 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     this.audioPlayer?.audio?.stop();
   }
 
+  private getCurrentIndexInTimings(currentTime: number): number {
+    return this._timing.findIndex(t => t.from <= currentTime && t.to > currentTime);
+  }
+
   private getRefIndexInTimings(currentTime: number): number {
     return this._timing.findIndex(t => t.to > currentTime);
   }
@@ -134,19 +138,19 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   private subscribePlayerVerseChange(audio: AudioPlayer): void {
     this.subscribe(
       audio.timeUpdated$.pipe(
-        map(() => this.getRefIndexInTimings(audio.currentTime)),
+        map(() => this.getCurrentIndexInTimings(audio.currentTime)),
         distinctUntilChanged()
       ),
       () => {
         if (this._textDocId == null || this.audioPlayer?.audio == null) return;
         this.verseLabel = this.currentVerseLabel;
-        const audioTextRef: AudioTextRef | undefined = CheckingUtils.parseAudioRef(
+        const audioTextRef: AudioTextRef | undefined = CheckingUtils.parseAudioRefByTime(
           this._timing,
           this.audioPlayer.audio.currentTime
         );
         if (audioTextRef?.verseStr == null) {
           // emit the current ref that is a section heading
-          const audioHeadingRef: AudioHeadingRef | undefined = CheckingUtils.parseAudioHeadingRef(
+          const audioHeadingRef: AudioHeadingRef | undefined = CheckingUtils.parseAudioHeadingRefByTime(
             this._timing,
             audio.currentTime
           );
@@ -180,9 +184,9 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   }
 
   private getCurrentVerseStr(currentTime: number): string {
-    const index: number = this.getRefIndexInTimings(currentTime);
+    const index: number = this.getCurrentIndexInTimings(currentTime);
     for (let i = index; i >= 0; i--) {
-      const audioRef: AudioTextRef | undefined = CheckingUtils.parseAudioRef(this._timing, this._timing[i].from);
+      const audioRef: AudioTextRef | undefined = CheckingUtils.parseAudioRefByTime(this._timing, this._timing[i].from);
       if (audioRef != null) return audioRef.verseStr;
     }
     // default to verse 0 if no verse is found
