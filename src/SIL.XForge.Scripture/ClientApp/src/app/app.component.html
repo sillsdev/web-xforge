@@ -46,7 +46,7 @@
           </a>
           <a mat-menu-item target="_blank" href="/3rdpartylicenses.txt">{{ t("open_source_licenses") }}</a>
           <button
-            *ngIf="versionNumberClickCount >= 10 || featureFlags.showFeatureFlags.enabled"
+            *ngIf="versionNumberClickCount >= 7 || featureFlags.showFeatureFlags.enabled"
             mat-menu-item
             (click)="openFeatureFlagDialog()"
           >
