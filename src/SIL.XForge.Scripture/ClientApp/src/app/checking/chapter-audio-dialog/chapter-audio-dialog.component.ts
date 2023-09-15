@@ -15,6 +15,7 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { objectId } from 'xforge-common/utils';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
+import { SingleButtonAudioPlayerComponent } from '../checking/single-button-audio-player/single-button-audio-player.component';
 
 const TIMING_FILE_EXTENSION_REGEX = /.(tsv|csv|txt)$/i;
 
@@ -40,6 +41,7 @@ export interface ChapterAudioDialogResult {
 })
 export class ChapterAudioDialogComponent implements AfterViewInit {
   @ViewChild('dropzone') dropzone?: ElementRef<HTMLDivElement>;
+  @ViewChild('chapterAudio') chapterAudio?: SingleButtonAudioPlayerComponent;
   private audio?: AudioAttachment;
   private _book: number = this.books[0];
   private _chapter: number = 1;
@@ -133,6 +135,9 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
 
   async audioUpdate(audio: AudioAttachment): Promise<void> {
     this._audioErrorText = undefined;
+    if (this.chapterAudio != null && this.chapterAudio.playing) {
+      this.chapterAudio.stop();
+    }
     this.audio = audio;
     if (audio.url != null) {
       if (audio.blob != null) {

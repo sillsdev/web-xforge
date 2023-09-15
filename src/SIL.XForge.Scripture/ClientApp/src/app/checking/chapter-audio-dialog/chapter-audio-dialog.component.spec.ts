@@ -22,8 +22,8 @@ import {
   getAudioBlob
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { PwaService } from 'xforge-common/pwa.service';
 import { of } from 'rxjs';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
@@ -36,7 +36,7 @@ import {
 const mockedDialogService = mock(DialogService);
 const mockedCsvService = mock(CsvService);
 const mockedFileService = mock(FileService);
-const mockedPwaService = mock(PwaService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 
 describe('ChapterAudioDialogComponent', () => {
   configureTestingModule(() => ({
@@ -45,7 +45,7 @@ describe('ChapterAudioDialogComponent', () => {
       { provide: DialogService, useMock: mockedDialogService },
       { provide: CsvService, useMock: mockedCsvService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: PwaService, useMock: mockedPwaService }
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
     ]
   }));
 
@@ -274,6 +274,31 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
     expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
   }));
+
+  // TODO: Enable once we have audio stub merged in
+  xit('stop playing audio if a new audio file is uploaded', fakeAsync(() => {
+    env.component.prepareTimingFileUpload(anything());
+    env.fixture.detectChanges();
+    const dataTransfer = new DataTransfer();
+    for (const file of TestEnvironment.uploadFiles) {
+      dataTransfer.items.add(file);
+    }
+    const event = new Event('change');
+    env.fileUploadElement.files = dataTransfer.files;
+    env.fileUploadElement.dispatchEvent(event);
+    tick();
+
+    expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
+    env.playAudio();
+    expect(env.component.chapterAudio!.playing).toBe(true);
+
+    // Trigger another upload event
+    env.fileUploadElement.dispatchEvent(event);
+    tick();
+
+    expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
+    expect(env.component.chapterAudio!.playing).toBe(false);
+  }));
 });
 
 @NgModule({
@@ -332,7 +357,7 @@ class TestEnvironment {
       };
     }
 
-    when(mockedPwaService.onlineStatus$).thenReturn(of(true));
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
     when(mockedCsvService.parse(anything())).thenResolve([
       ['0.1', '0', 'v1'],
@@ -399,6 +424,11 @@ class TestEnvironment {
 
   private get overlayContainerElement(): HTMLElement {
     return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
+  }
+
+  playAudio(): void {
+    this.component.chapterAudio?.play();
+    this.fixture.detectChanges();
   }
 
   async wait(ms: number = 200): Promise<void> {
