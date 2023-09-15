@@ -24,4 +24,5 @@ export interface SFProjectUserConfig extends ProjectData {
   questionRefsRead: string[];
   answerRefsRead: string[];
   commentRefsRead: string[];
+  audioRefsPlayed: string[];
 }
