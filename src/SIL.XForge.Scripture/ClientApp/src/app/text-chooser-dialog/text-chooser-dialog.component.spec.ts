@@ -381,7 +381,7 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
-  readonly mockedScriptureChooserMdcDialogRef = mock(MatDialogRef);
+  readonly mockedScriptureChooserMatDialogRef = mock(MatDialogRef);
 
   readonly resultPromise: Promise<TextSelection | 'close'>;
   selectionChangeHandler!: () => any;
@@ -461,9 +461,9 @@ class TestEnvironment {
 
     // Set up DialogService mocking after it's already used above in creating the component.
     const dialogSpy = spy(this.component.dialogService);
-    when(dialogSpy.openMatDialog(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMdcDialogRef));
+    when(dialogSpy.openMatDialog(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMatDialogRef));
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
-    when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
+    when(this.mockedScriptureChooserMatDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
     when(mockedOnlineStatusService.isOnline).thenReturn(true);
     when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
 
