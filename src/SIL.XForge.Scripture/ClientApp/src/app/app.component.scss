@@ -1,9 +1,10 @@
 @use 'src/variables';
 
 @use '@material/icon-button/mixins' as icon-button;
-@use '@material/top-app-bar/variables' as top-app-bar;
 
 @import 'bootstrap/scss/mixins/breakpoints';
+
+$toolbar-height: 56px;
 
 // Set height of the app to 100% so that the app will fill the entire screen.
 // Don't use 100vh because that will cause the app to be too tall on mobile devices when the browser's address bar is
@@ -50,11 +51,11 @@
   }
 
   .top-app-bar-adjust {
-    margin-top: top-app-bar.$mobile-row-height;
+    margin-top: $toolbar-height;
   }
 
   .top-app-bar-adjust-double {
-    margin-top: top-app-bar.$mobile-row-height * 2;
+    margin-top: $toolbar-height * 2;
   }
 
   .app-content {
