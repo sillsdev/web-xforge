@@ -258,11 +258,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get translationSuggestionsProjectEnabled(): boolean {
-    return (
-      this.projectDoc != null &&
-      this.projectDoc.data != null &&
-      this.projectDoc.data.translateConfig.translationSuggestionsEnabled
-    );
+    return this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled === true;
+  }
+
+  get showSuggestionsSettings(): boolean {
+    return this.translationSuggestionsProjectEnabled && this.userHasGeneralEditRight;
   }
 
   get numSuggestions(): number {
