@@ -99,12 +99,7 @@
     </mat-toolbar>
   </header>
 
-  <mat-drawer-container
-    class="top-app-bar-adjust"
-    [class.top-app-bar-adjust-double]="hasUpdate"
-    [dir]="i18n.direction"
-    autosize
-  >
+  <mat-drawer-container class="top-app-bar-adjust" [class.top-app-bar-adjust-double]="hasUpdate" [dir]="i18n.direction">
     <mat-drawer
       #drawer
       id="menu-drawer"
