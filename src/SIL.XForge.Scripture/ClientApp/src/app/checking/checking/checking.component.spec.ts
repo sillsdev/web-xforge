@@ -2268,12 +2268,7 @@ class TestEnvironment {
   }
 
   setTextFieldValue(textField: DebugElement, value: string): void {
-    // The text field may be either an input/textarea, or a component with an input/textarea within it.
-    // This differs between MDC and Material
-    const input = ['input', 'textarea'].includes(textField.name)
-      ? textField
-      : textField.query(By.css('input, textarea'));
-    const inputElem = input.nativeElement as HTMLInputElement;
+    const inputElem = textField.nativeElement as HTMLInputElement;
     inputElem.value = value;
     inputElem.dispatchEvent(new Event('input'));
     inputElem.dispatchEvent(new Event('change'));
