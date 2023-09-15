@@ -48,6 +48,7 @@ import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-di
 import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
+import { getVerseRefFromSegmentRef } from '../../shared/utils';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsComponent, QuestionChangedEvent } from './checking-questions/checking-questions.component';
@@ -889,8 +890,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.calculateScriptureSliderPosition();
   }
 
-  handleAudioTextRefChanged(ref: string): void {
-    this.scripturePanel!.setAudioTextRef(ref);
+  handleAudioTextRefChanged(segmentRef: string): void {
+    if (this.book == null) {
+      return;
+    }
+    this.scripturePanel!.setAudioTextRef(segmentRef);
+    const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.book, segmentRef);
+    this.projectUserConfigDoc?.updateAudioRefsListened(verseRef);
   }
 
   private triggerUpdate(): void {

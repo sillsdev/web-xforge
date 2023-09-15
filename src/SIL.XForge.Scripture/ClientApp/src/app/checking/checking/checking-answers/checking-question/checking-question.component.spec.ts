@@ -11,27 +11,33 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-player/single-button-audio-player.component';
+import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { CheckingQuestionComponent } from './checking-question.component';
 
 const mockedSFProjectService = mock(SFProjectService);
 const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedQuestionDoc = mock(QuestionDoc);
 const mockedQuestion = mock<Question>();
+const mockedSFProjectUserConfig = mock<SFProjectUserConfig>();
+const mockedSFProjectUserConfigDoc = mock(SFProjectUserConfigDoc);
 
 @Component({
   template: `<app-checking-question
     #question
     [questionDoc]="questionDoc"
+    [projectUserConfigDoc]="projectUserConfigDoc"
     (audioPlayed)="played = true"
   ></app-checking-question>`
 })
 class MockComponent {
   @ViewChild('question') question!: CheckingQuestionComponent;
   questionDoc: QuestionDoc = instance(mockedQuestionDoc);
+  projectUserConfigDoc: SFProjectUserConfigDoc = instance(mockedSFProjectUserConfigDoc);
   played: boolean = false;
   constructor() {
     when(mockedQuestion.projectRef).thenReturn('project01');
@@ -44,6 +50,8 @@ class MockComponent {
     };
     when(mockedQuestion.verseRef).thenReturn(verseRef);
     when(mockedQuestionDoc.data).thenReturn(instance(mockedQuestion));
+    when(mockedSFProjectUserConfig.audioRefsPlayed).thenReturn([]);
+    when(mockedSFProjectUserConfigDoc.data).thenReturn(instance(mockedSFProjectUserConfig));
   }
 }
 
@@ -54,7 +62,8 @@ describe('CheckingQuestionComponent', () => {
     providers: [
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
-      { provide: QuestionDoc, useMock: mockedQuestionDoc }
+      { provide: QuestionDoc, useMock: mockedQuestionDoc },
+      { provide: SFProjectUserConfigDoc, useMock: mockedSFProjectUserConfigDoc }
     ]
   }));
 
@@ -77,6 +86,17 @@ describe('CheckingQuestionComponent', () => {
 
     expect(env.component.question.focusedText).toBe('question-audio-label');
     expect(env.scriptureAudio).toBeNull();
+    expect(window.getComputedStyle(env.questionAudio.nativeElement)['display']).not.toBe('none');
+  });
+
+  it('selects question when scripture audio has already been played', async () => {
+    const env = new TestEnvironment();
+    when(mockedSFProjectUserConfig.audioRefsPlayed).thenReturn(['RUT 22:17']);
+    await env.wait();
+    await env.wait();
+
+    expect(env.component.question.focusedText).toBe('question-audio-label');
+    expect(window.getComputedStyle(env.scriptureAudio.nativeElement)['display']).toBe('none');
     expect(window.getComputedStyle(env.questionAudio.nativeElement)['display']).not.toBe('none');
   });
 

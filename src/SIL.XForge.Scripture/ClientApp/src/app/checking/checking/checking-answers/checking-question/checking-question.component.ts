@@ -15,6 +15,8 @@ import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-player/single-button-audio-player.component';
+import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
+import { CheckingUtils } from '../../../checking.utils';
 
 @Component({
   selector: 'app-checking-question',
@@ -22,7 +24,6 @@ import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-play
   styleUrls: ['./checking-question.component.scss']
 })
 export class CheckingQuestionComponent extends SubscriptionDisposable implements OnChanges, OnDestroy {
-  @Input() questionDoc?: QuestionDoc;
   @Output() audioPlayed: EventEmitter<void> = new EventEmitter<void>();
   @ViewChild('questionAudio') questionAudio?: SingleButtonAudioPlayerComponent;
   @ViewChild('scriptureAudio') set scriptureAudio(comp: SingleButtonAudioPlayerComponent) {
@@ -32,6 +33,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
       this.subscribe(comp.hasFinishedPlayingOnce$, newVal => {
         if (newVal) {
           this.selectQuestion();
+          this.updateUserRefsPlayed();
         }
       });
     }
@@ -39,8 +41,10 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
 
   private _scriptureAudio?: SingleButtonAudioPlayerComponent;
   private _scriptureTextAudioData?: TextAudio;
-  private _focusedText: string = 'scripture-audio-label';
+  private _focusedText: 'question-audio-label' | 'scripture-audio-label' = 'scripture-audio-label';
   private _audioChangeSub?: Subscription;
+  private _questionDoc?: QuestionDoc;
+  private _projectUserConfigDoc?: SFProjectUserConfigDoc;
   private audioQuery?: RealtimeQuery<TextAudioDoc>;
   private projectId?: string;
 
@@ -52,8 +56,22 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     return this._focusedText;
   }
 
+  @Input() set questionDoc(doc: QuestionDoc | undefined) {
+    if (doc?.data == null) {
+      return;
+    }
+    this._questionDoc = doc;
+  }
+
+  @Input() set projectUserConfigDoc(doc: SFProjectUserConfigDoc | undefined) {
+    if (doc?.data == null) {
+      return;
+    }
+    this._projectUserConfigDoc = doc;
+  }
+
   get referenceForDisplay(): string {
-    const verseRefData: VerseRefData | undefined = this.questionDoc?.data?.verseRef;
+    const verseRefData: VerseRefData | undefined = this._questionDoc?.data?.verseRef;
     return verseRefData ? this.i18n.localizeReference(toVerseRef(verseRefData)) : '';
   }
 
@@ -62,18 +80,22 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   get scriptureAudioStart(): number | undefined {
-    return this._scriptureTextAudioData?.timings.find(t => t.textRef === this.startVerse.toString())?.from;
+    return this._scriptureTextAudioData?.timings.find(
+      t => CheckingUtils.parseAudioRef(t.textRef)?.verseStr === this.startVerse.toString()
+    )?.from;
   }
 
   get scriptureAudioEnd(): number | undefined {
-    return this._scriptureTextAudioData?.timings.find(t => t.textRef === this.endVerse.toString())?.to;
+    return this._scriptureTextAudioData?.timings.find(
+      t => CheckingUtils.parseAudioRef(t.textRef)?.verseStr === this.endVerse.toString()
+    )?.to;
   }
 
   get questionText(): string {
-    if (this.questionDoc?.data == null) return '';
-    return this.questionDoc.data.text
-      ? this.questionDoc.data.text
-      : this.questionDoc.data.audioUrl != null
+    if (this._questionDoc?.data == null) return '';
+    return this._questionDoc.data.text
+      ? this._questionDoc.data.text
+      : this._questionDoc.data.audioUrl != null
       ? translate('checking_questions.listen_to_question', {
           referenceForDisplay: this.referenceForDisplay
         })
@@ -81,7 +103,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   get questionAudioUrl(): string | undefined {
-    return this.questionDoc?.data?.audioUrl;
+    return this._questionDoc?.data?.audioUrl;
   }
 
   private get audioId(): string {
@@ -90,18 +112,18 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     }
     return getTextAudioId(
       this.projectId,
-      this.questionDoc!.data!.verseRef!.bookNum,
-      this.questionDoc!.data!.verseRef!.chapterNum
+      this._questionDoc!.data!.verseRef!.bookNum,
+      this._questionDoc!.data!.verseRef!.chapterNum
     );
   }
 
   private get startVerse(): number {
-    const verseRefData: VerseRefData | undefined = this.questionDoc?.data?.verseRef;
+    const verseRefData: VerseRefData | undefined = this._questionDoc?.data?.verseRef;
     return verseRefData ? toVerseRef(verseRefData).verseNum : 0;
   }
 
   private get endVerse(): number {
-    const verseRefData: VerseRefData | undefined = this.questionDoc?.data?.verseRef;
+    const verseRefData: VerseRefData | undefined = this._questionDoc?.data?.verseRef;
     const end: VerseRef | undefined = verseRefData && toStartAndEndVerseRefs(verseRefData).endVerseRef;
     return end ? end.verseNum : this.startVerse;
   }
@@ -131,8 +153,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     if (changes['questionDoc']) {
       this.dispose();
 
-      this._focusedText = 'scripture-audio-label';
-      const projectId: string = this.questionDoc!.data!.projectRef;
+      const projectId: string = this._questionDoc!.data!.projectRef;
       if (projectId === this.projectId) {
         this.updateScriptureAudio();
         return;
@@ -158,12 +179,35 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
     }
   }
 
-  private updateScriptureAudio(): void {
-    this._scriptureTextAudioData = this.audioQuery?.docs?.find(t => t.id === this.audioId)?.data;
-    if (this._scriptureTextAudioData == null || this.scriptureAudioUrl == null) {
+  private setDefaultFocus(): void {
+    if (this._projectUserConfigDoc?.data == null || this._questionDoc?.data == null) {
+      this.selectQuestion();
+      return;
+    }
+
+    const verseRef: VerseRef = toVerseRef(this._questionDoc.data.verseRef);
+
+    if (
+      this._scriptureTextAudioData == null ||
+      this.scriptureAudioUrl == null ||
+      this._projectUserConfigDoc.data.audioRefsPlayed.includes(verseRef.toString())
+    ) {
       this.selectQuestion();
     } else {
       this.selectScripture();
     }
+  }
+
+  private updateScriptureAudio(): void {
+    this._scriptureTextAudioData = this.audioQuery?.docs?.find(t => t.id === this.audioId)?.data;
+    this.setDefaultFocus();
+  }
+
+  private updateUserRefsPlayed(): void {
+    if (this._questionDoc?.data?.verseRef == null || this._projectUserConfigDoc == null) {
+      return;
+    }
+
+    this._projectUserConfigDoc.updateAudioRefsListened(toVerseRef(this._questionDoc.data.verseRef));
   }
 }

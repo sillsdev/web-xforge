@@ -9,28 +9,40 @@ describe('CheckingUtils', () => {
   });
 
   it('can parse audio text ref', () => {
-    expect(CheckingUtils.parseAudioRef(env.audioTimingBasic, 0.9)).toEqual({ verseStr: '1' });
-    expect(CheckingUtils.parseAudioRef(env.audioTimingBasic, 1.9)).toEqual({ verseStr: '2' });
-    expect(CheckingUtils.parseAudioRef(env.audioTimingBasic, 2.9)).toEqual({ verseStr: '3-4' });
+    expect(CheckingUtils.parseAudioRefByTime(env.audioTimingBasic, 0.9)).toEqual({ verseStr: '1' });
+    expect(CheckingUtils.parseAudioRefByTime(env.audioTimingBasic, 1.9)).toEqual({ verseStr: '2' });
+    expect(CheckingUtils.parseAudioRefByTime(env.audioTimingBasic, 2.9)).toEqual({ verseStr: '3-4' });
   });
 
   it('can parse phrase level audio timing files', () => {
-    expect(CheckingUtils.parseAudioRef(env.audioTimingPhraseLevel, 0.4)).toEqual({ verseStr: '1' });
-    expect(CheckingUtils.parseAudioRef(env.audioTimingPhraseLevel, 0.9)).toEqual({ verseStr: '1' });
-    expect(CheckingUtils.parseAudioRef(env.audioTimingPhraseLevel, 1.4)).toEqual({ verseStr: '2' });
-    expect(CheckingUtils.parseAudioRef(env.audioTimingPhraseLevel, 1.9)).toEqual({ verseStr: '2' });
+    expect(CheckingUtils.parseAudioRefByTime(env.audioTimingPhraseLevel, 0.4)).toEqual({ verseStr: '1' });
+    expect(CheckingUtils.parseAudioRefByTime(env.audioTimingPhraseLevel, 0.9)).toEqual({ verseStr: '1' });
+    expect(CheckingUtils.parseAudioRefByTime(env.audioTimingPhraseLevel, 1.4)).toEqual({ verseStr: '2' });
+    expect(CheckingUtils.parseAudioRefByTime(env.audioTimingPhraseLevel, 1.9)).toEqual({ verseStr: '2' });
   });
 
   it('can parse phrase level audio timing files with letters', () => {
-    expect(CheckingUtils.parseAudioRef(env.audioTimingPhraseLevelLetters, 0.4)).toEqual({ verseStr: '1', phrase: 'a' });
-    expect(CheckingUtils.parseAudioRef(env.audioTimingPhraseLevelLetters, 0.9)).toEqual({ verseStr: '1', phrase: 'b' });
-    expect(CheckingUtils.parseAudioRef(env.audioTimingPhraseLevelLetters, 1.4)).toEqual({ verseStr: '2', phrase: 'a' });
-    expect(CheckingUtils.parseAudioRef(env.audioTimingPhraseLevelLetters, 1.9)).toEqual({ verseStr: '2', phrase: 'b' });
-    expect(CheckingUtils.parseAudioRef(env.audioTimingPhraseLevelLetters, 2.4)).toEqual({
+    expect(CheckingUtils.parseAudioRefByTime(env.audioTimingPhraseLevelLetters, 0.4)).toEqual({
+      verseStr: '1',
+      phrase: 'a'
+    });
+    expect(CheckingUtils.parseAudioRefByTime(env.audioTimingPhraseLevelLetters, 0.9)).toEqual({
+      verseStr: '1',
+      phrase: 'b'
+    });
+    expect(CheckingUtils.parseAudioRefByTime(env.audioTimingPhraseLevelLetters, 1.4)).toEqual({
+      verseStr: '2',
+      phrase: 'a'
+    });
+    expect(CheckingUtils.parseAudioRefByTime(env.audioTimingPhraseLevelLetters, 1.9)).toEqual({
+      verseStr: '2',
+      phrase: 'b'
+    });
+    expect(CheckingUtils.parseAudioRefByTime(env.audioTimingPhraseLevelLetters, 2.4)).toEqual({
       verseStr: '3a',
       phrase: 'a'
     });
-    expect(CheckingUtils.parseAudioRef(env.audioTimingPhraseLevelLetters, 2.9)).toEqual({
+    expect(CheckingUtils.parseAudioRefByTime(env.audioTimingPhraseLevelLetters, 2.9)).toEqual({
       verseStr: '3a',
       phrase: 'b'
     });
@@ -42,30 +54,30 @@ describe('CheckingUtils', () => {
       label: 'c',
       iteration: 1
     });
-    expect(CheckingUtils.parseAudioHeadingRef(env.audioTimingHearThis, 0.1)).toEqual({
+    expect(CheckingUtils.parseAudioHeadingRefByTime(env.audioTimingHearThis, 0.1)).toEqual({
       label: 'c',
       iteration: 1
     });
-    expect(CheckingUtils.parseAudioHeadingRef(env.audioTimingHearThis, 0.5)).toEqual({
+    expect(CheckingUtils.parseAudioHeadingRefByTime(env.audioTimingHearThis, 0.5)).toEqual({
       label: 'ms',
       iteration: 1
     });
-    expect(CheckingUtils.parseAudioHeadingRef(env.audioTimingHearThis, 1.0)).toEqual({
+    expect(CheckingUtils.parseAudioHeadingRefByTime(env.audioTimingHearThis, 1.0)).toEqual({
       label: 's',
       iteration: 1
     });
-    expect(CheckingUtils.parseAudioHeadingRef(env.audioTimingHearThis, 2.0)).toEqual({
+    expect(CheckingUtils.parseAudioHeadingRefByTime(env.audioTimingHearThis, 2.0)).toEqual({
       label: 's',
       iteration: 2
     });
   });
 
   it('can parse audio heading ref no iteration values', () => {
-    expect(CheckingUtils.parseAudioHeadingRef(env.audioTimingHeadings, 0.75)).toEqual({
+    expect(CheckingUtils.parseAudioHeadingRefByTime(env.audioTimingHeadings, 0.75)).toEqual({
       label: 's',
       iteration: 1
     });
-    expect(CheckingUtils.parseAudioHeadingRef(env.audioTimingHeadings, 2.25)).toEqual({
+    expect(CheckingUtils.parseAudioHeadingRefByTime(env.audioTimingHeadings, 2.25)).toEqual({
       label: 's',
       iteration: 2
     });
