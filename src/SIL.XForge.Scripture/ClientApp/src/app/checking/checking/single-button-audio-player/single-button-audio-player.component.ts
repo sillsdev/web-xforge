@@ -38,8 +38,7 @@ export class SingleButtonAudioPlayerComponent extends AudioPlayerBaseComponent i
   }
 
   stop(): void {
-    this.audio?.pause();
-    this.audio?.setSeek(0);
+    this.audio?.stop();
   }
 
   ngOnChanges(): void {
