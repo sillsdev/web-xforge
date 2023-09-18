@@ -132,24 +132,6 @@ xdescribe('ScriptureAudioComponent', () => {
     env.fixture.detectChanges();
     await env.waitForPlayer(500);
 
-    let count = 0;
-    env.component.audioPlayer.closed.subscribe(() => count++);
-
-    const audio = spy(env.component.audioPlayer);
-    verify(audio?.pause()).never();
-
-    env.component.audioPlayer.close();
-
-    verify(audio?.pause()).once();
-    expect(count).toEqual(1);
-  });
-
-  it('pauses and emits on close', async () => {
-    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
-    const env = new TestEnvironment(template);
-    env.fixture.detectChanges();
-    await env.waitForPlayer(500);
-
     const pauseSpy = spyOn(env.component.audioPlayer, 'pause').and.callThrough();
     let count = 0;
     env.component.audioPlayer.closed.subscribe(() => count++);
@@ -159,6 +141,46 @@ xdescribe('ScriptureAudioComponent', () => {
     await env.waitForPlayer();
     expect(pauseSpy).toHaveBeenCalled();
     expect(count).toEqual(1);
+  });
+
+  it('skipping to previous verse remains on the current verse if within grace period', async () => {
+    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
+
+    env.component.audioPlayer.textDocId = textDocId;
+    env.component.audioPlayer.timing = [
+      { textRef: '1', from: 0.0, to: 1.0 },
+      { textRef: '2', from: 1.0, to: 4.5 },
+      { textRef: '3', from: 4.5, to: 5.0 }
+    ];
+    await env.waitForPlayer();
+
+    env.currentTime = 4.1;
+    expect(env.currentTime).toBeGreaterThan(4);
+    env.clickPreviousRef();
+    expect(env.currentTime).toEqual(1);
+    env.clickPreviousRef();
+    expect(env.currentTime).toEqual(0);
+  });
+
+  it('skipping to the next verse will skip to the start of the current timing data if it has not started yet', async () => {
+    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.waitForPlayer(500);
+
+    env.component.audioPlayer.textDocId = textDocId;
+    env.component.audioPlayer.timing = [
+      { textRef: '1', from: 3.0, to: 4.0 },
+      { textRef: '2', from: 4.0, to: 5.0 }
+    ];
+    await env.waitForPlayer();
+
+    expect(env.currentTime).toEqual(0);
+    env.clickNextRef();
+    expect(env.currentTime).toEqual(3);
   });
 });
 
