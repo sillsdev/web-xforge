@@ -7,6 +7,7 @@ import { PROJECTS_URL } from 'xforge-common/url-constants';
 export interface FeatureFlag {
   readonly key: string;
   readonly description: string;
+  readonly position: number;
   readonly readonly: boolean;
   get enabled(): boolean;
   set enabled(value: boolean);
@@ -123,6 +124,7 @@ class FeatureFlagFromStorage implements FeatureFlag {
   constructor(
     readonly key: string,
     readonly description: string,
+    readonly position: number,
     private readonly featureFlagStore: FeatureFlagStore
   ) {}
 
@@ -143,6 +145,7 @@ class ServerOnlyFeatureFlag implements FeatureFlag {
   constructor(
     readonly key: string,
     readonly description: string,
+    readonly position: number,
     private readonly featureFlagStore: FeatureFlagStore
   ) {}
 
@@ -163,75 +166,94 @@ class ServerOnlyFeatureFlag implements FeatureFlag {
 export class FeatureFlagService {
   constructor(private readonly featureFlagStore: FeatureFlagStore) {}
 
+  // Before you add a new feature flag:
+  //
+  // NOTE: Be sure when adding new feature flags that you update /src/db_tools/parse-version.ts
+  //
+  // Also, the position is important - this is the bit wise position of the feature flag in the version.
+  // The position in the dialog is determined by the order in this class.
+
   readonly showFeatureFlags: FeatureFlag = new FeatureFlagFromStorage(
     'SHOW_FEATURE_FLAGS',
     'Show feature flags',
+    0,
     this.featureFlagStore
   );
 
   readonly showNonPublishedLocalizations: FeatureFlag = new FeatureFlagFromStorage(
     'SHOW_NON_PUBLISHED_LOCALIZATIONS',
     'Show non-published localizations',
+    1,
     this.featureFlagStore
   );
 
   readonly showNmtDrafting: FeatureFlag = new FeatureFlagFromStorage(
     'SHOW_NMT_DRAFTING',
     'Show NMT drafting',
+    2,
     this.featureFlagStore
   );
 
   readonly allowForwardTranslationNmtDrafting: FeatureFlag = new FeatureFlagFromStorage(
     'ALLOW_FORWARD_TRANSLATION_NMT_DRAFTING',
     'Allow Forward Translation NMT drafting',
+    3,
     this.featureFlagStore
   );
 
   readonly scriptureAudio: FeatureFlag = new FeatureFlagFromStorage(
     'SCRIPTURE_AUDIO',
     'Scripture audio',
+    4,
     this.featureFlagStore
   );
 
   readonly preventOpSubmission: FeatureFlag = new FeatureFlagFromStorage(
     'PREVENT_OP_SUBMISSION',
     'Prevent op submission (intentionally breaks things)',
+    5,
     this.featureFlagStore
   );
 
   readonly preventOpAcknowledgement: FeatureFlag = new FeatureFlagFromStorage(
     'PREVENT_OP_ACKNOWLEDGEMENT',
     'Prevent op acknowledgement (intentionally breaks things)',
+    6,
     this.featureFlagStore
   );
 
   readonly stillness: FeatureFlag = new FeatureFlagFromStorage(
     'STILLNESS',
     'Stillness (non-distracting progress indicators)',
+    7,
     this.featureFlagStore
   );
 
   private readonly machineInProcess: FeatureFlag = new ServerOnlyFeatureFlag(
     'MachineInProcess',
     'Use In-Process Machine for Suggestions',
+    8,
     this.featureFlagStore
   );
 
   private readonly serval: FeatureFlag = new ServerOnlyFeatureFlag(
     'Serval',
     'Use Serval for Suggestions',
+    9,
     this.featureFlagStore
   );
 
   private readonly useEchoForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
     'UseEchoForPreTranslation',
     'Use Echo for Pre-Translation Drafting',
+    10,
     this.featureFlagStore
   );
 
   private readonly writeNotesToParatext: FeatureFlag = new ServerOnlyFeatureFlag(
     'WriteNotesToParatext',
     'Write Notes to Paratext',
+    11,
     this.featureFlagStore
   );
 
@@ -244,7 +266,7 @@ export class FeatureFlagService {
     let featureFlags: FeatureFlag[] = Object.values(this).filter(
       value => value instanceof FeatureFlagFromStorage || value instanceof ServerOnlyFeatureFlag
     );
-    featureFlags.sort((a, b) => (a.key < b.key ? -1 : 1));
+    featureFlags.sort((a, b) => (a.position < b.position ? -1 : 1));
     const versionNumber = this.getFeatureFlagVersion(featureFlags);
     if (versionNumber === 0) {
       return '';
@@ -254,18 +276,13 @@ export class FeatureFlagService {
   }
 
   getFeatureFlagVersion(featureFlags: FeatureFlag[]): number {
-    var i: number = 0;
     var versionNumber: number = 0;
 
     // Get the feature flags as a 32-bit number
     for (let featureFlag of featureFlags) {
-      if (i >= 32) {
-        break;
-      }
       if (featureFlag.enabled) {
-        versionNumber += Math.pow(2, i);
+        versionNumber += Math.pow(2, featureFlag.position);
       }
-      i++;
     }
 
     return versionNumber;

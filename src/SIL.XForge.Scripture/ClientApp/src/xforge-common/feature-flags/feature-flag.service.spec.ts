@@ -81,14 +81,14 @@ describe('FeatureFlagService', () => {
     const env = new TestEnvironment();
     expect(
       env.service.getFeatureFlagVersion([
-        { key: 'key_a', description: 'Key a', readonly: true, enabled: true },
-        { key: 'key_b', description: 'Key b', readonly: true, enabled: false },
-        { key: 'key_c', description: 'Key c', readonly: true, enabled: false },
-        { key: 'key_d', description: 'Key d', readonly: true, enabled: false },
-        { key: 'key_e', description: 'Key e', readonly: true, enabled: true },
-        { key: 'key_f', description: 'Key f', readonly: true, enabled: true },
-        { key: 'key_g', description: 'Key g', readonly: true, enabled: false },
-        { key: 'key_h', description: 'Key h', readonly: true, enabled: false }
+        { key: 'key_a', description: 'Key a', readonly: true, position: 0, enabled: true },
+        { key: 'key_b', description: 'Key b', readonly: true, position: 1, enabled: false },
+        { key: 'key_c', description: 'Key c', readonly: true, position: 2, enabled: false },
+        { key: 'key_d', description: 'Key d', readonly: true, position: 3, enabled: false },
+        { key: 'key_e', description: 'Key e', readonly: true, position: 4, enabled: true },
+        { key: 'key_f', description: 'Key f', readonly: true, position: 5, enabled: true },
+        { key: 'key_g', description: 'Key g', readonly: true, position: 6, enabled: false },
+        { key: 'key_h', description: 'Key h', readonly: true, position: 7, enabled: false }
       ])
     ).toEqual(1 + 16 + 32);
   }));
@@ -97,22 +97,22 @@ describe('FeatureFlagService', () => {
     const env = new TestEnvironment();
     expect(
       env.service.getFeatureFlagVersion([
-        { key: 'key_a', description: 'Key a', readonly: true, enabled: true },
-        { key: 'key_b', description: 'Key b', readonly: true, enabled: false },
-        { key: 'key_c', description: 'Key c', readonly: true, enabled: true },
-        { key: 'key_d', description: 'Key d', readonly: true, enabled: false },
-        { key: 'key_e', description: 'Key e', readonly: true, enabled: true },
-        { key: 'key_f', description: 'Key f', readonly: true, enabled: false },
-        { key: 'key_g', description: 'Key g', readonly: true, enabled: true },
-        { key: 'key_h', description: 'Key h', readonly: true, enabled: false },
-        { key: 'key_i', description: 'Key i', readonly: true, enabled: true },
-        { key: 'key_j', description: 'Key j', readonly: true, enabled: false },
-        { key: 'key_k', description: 'Key k', readonly: true, enabled: true },
-        { key: 'key_l', description: 'Key l', readonly: true, enabled: false },
-        { key: 'key_m', description: 'Key m', readonly: true, enabled: true },
-        { key: 'key_n', description: 'Key n', readonly: true, enabled: false },
-        { key: 'key_o', description: 'Key o', readonly: true, enabled: true },
-        { key: 'key_p', description: 'Key p', readonly: true, enabled: false }
+        { key: 'key_a', description: 'Key a', readonly: true, position: 0, enabled: true },
+        { key: 'key_b', description: 'Key b', readonly: true, position: 1, enabled: false },
+        { key: 'key_c', description: 'Key c', readonly: true, position: 2, enabled: true },
+        { key: 'key_d', description: 'Key d', readonly: true, position: 3, enabled: false },
+        { key: 'key_e', description: 'Key e', readonly: true, position: 4, enabled: true },
+        { key: 'key_f', description: 'Key f', readonly: true, position: 5, enabled: false },
+        { key: 'key_g', description: 'Key g', readonly: true, position: 6, enabled: true },
+        { key: 'key_h', description: 'Key h', readonly: true, position: 7, enabled: false },
+        { key: 'key_i', description: 'Key i', readonly: true, position: 8, enabled: true },
+        { key: 'key_j', description: 'Key j', readonly: true, position: 9, enabled: false },
+        { key: 'key_k', description: 'Key k', readonly: true, position: 10, enabled: true },
+        { key: 'key_l', description: 'Key l', readonly: true, position: 11, enabled: false },
+        { key: 'key_m', description: 'Key m', readonly: true, position: 12, enabled: true },
+        { key: 'key_n', description: 'Key n', readonly: true, position: 13, enabled: false },
+        { key: 'key_o', description: 'Key o', readonly: true, position: 14, enabled: true },
+        { key: 'key_p', description: 'Key p', readonly: true, position: 15, enabled: false }
       ])
     ).toEqual(1 + 4 + 16 + 64 + 256 + 1024 + 4096 + 16384);
   }));
@@ -121,38 +121,38 @@ describe('FeatureFlagService', () => {
     const env = new TestEnvironment();
     expect(
       env.service.getFeatureFlagVersion([
-        { key: 'key_a', description: 'Key a', readonly: true, enabled: true },
-        { key: 'key_b', description: 'Key b', readonly: true, enabled: false },
-        { key: 'key_c', description: 'Key c', readonly: true, enabled: false },
-        { key: 'key_d', description: 'Key d', readonly: true, enabled: false },
-        { key: 'key_e', description: 'Key e', readonly: true, enabled: false },
-        { key: 'key_f', description: 'Key f', readonly: true, enabled: false },
-        { key: 'key_g', description: 'Key g', readonly: true, enabled: false },
-        { key: 'key_h', description: 'Key h', readonly: true, enabled: false },
-        { key: 'key_i', description: 'Key i', readonly: true, enabled: false },
-        { key: 'key_j', description: 'Key j', readonly: true, enabled: false },
-        { key: 'key_k', description: 'Key k', readonly: true, enabled: false },
-        { key: 'key_l', description: 'Key l', readonly: true, enabled: false },
-        { key: 'key_m', description: 'Key m', readonly: true, enabled: false },
-        { key: 'key_n', description: 'Key n', readonly: true, enabled: false },
-        { key: 'key_o', description: 'Key o', readonly: true, enabled: false },
-        { key: 'key_p', description: 'Key p', readonly: true, enabled: false },
-        { key: 'key_q', description: 'Key q', readonly: true, enabled: false },
-        { key: 'key_r', description: 'Key r', readonly: true, enabled: false },
-        { key: 'key_s', description: 'Key s', readonly: true, enabled: false },
-        { key: 'key_t', description: 'Key t', readonly: true, enabled: false },
-        { key: 'key_u', description: 'Key u', readonly: true, enabled: false },
-        { key: 'key_v', description: 'Key f', readonly: true, enabled: false },
-        { key: 'key_w', description: 'Key w', readonly: true, enabled: false },
-        { key: 'key_x', description: 'Key x', readonly: true, enabled: false },
-        { key: 'key_y', description: 'Key y', readonly: true, enabled: false },
-        { key: 'key_z', description: 'Key z', readonly: true, enabled: false },
-        { key: 'key_0', description: 'Key 0', readonly: true, enabled: false },
-        { key: 'key_1', description: 'Key 1', readonly: true, enabled: false },
-        { key: 'key_2', description: 'Key 2', readonly: true, enabled: false },
-        { key: 'key_3', description: 'Key 3', readonly: true, enabled: false },
-        { key: 'key_4', description: 'Key 4', readonly: true, enabled: false },
-        { key: 'key_5', description: 'Key 5', readonly: true, enabled: true }
+        { key: 'key_a', description: 'Key a', readonly: true, position: 0, enabled: true },
+        { key: 'key_b', description: 'Key b', readonly: true, position: 1, enabled: false },
+        { key: 'key_c', description: 'Key c', readonly: true, position: 2, enabled: false },
+        { key: 'key_d', description: 'Key d', readonly: true, position: 3, enabled: false },
+        { key: 'key_e', description: 'Key e', readonly: true, position: 4, enabled: false },
+        { key: 'key_f', description: 'Key f', readonly: true, position: 5, enabled: false },
+        { key: 'key_g', description: 'Key g', readonly: true, position: 6, enabled: false },
+        { key: 'key_h', description: 'Key h', readonly: true, position: 7, enabled: false },
+        { key: 'key_i', description: 'Key i', readonly: true, position: 8, enabled: false },
+        { key: 'key_j', description: 'Key j', readonly: true, position: 9, enabled: false },
+        { key: 'key_k', description: 'Key k', readonly: true, position: 10, enabled: false },
+        { key: 'key_l', description: 'Key l', readonly: true, position: 11, enabled: false },
+        { key: 'key_m', description: 'Key m', readonly: true, position: 12, enabled: false },
+        { key: 'key_n', description: 'Key n', readonly: true, position: 13, enabled: false },
+        { key: 'key_o', description: 'Key o', readonly: true, position: 14, enabled: false },
+        { key: 'key_p', description: 'Key p', readonly: true, position: 15, enabled: false },
+        { key: 'key_q', description: 'Key q', readonly: true, position: 16, enabled: false },
+        { key: 'key_r', description: 'Key r', readonly: true, position: 17, enabled: false },
+        { key: 'key_s', description: 'Key s', readonly: true, position: 18, enabled: false },
+        { key: 'key_t', description: 'Key t', readonly: true, position: 19, enabled: false },
+        { key: 'key_u', description: 'Key u', readonly: true, position: 20, enabled: false },
+        { key: 'key_v', description: 'Key f', readonly: true, position: 21, enabled: false },
+        { key: 'key_w', description: 'Key w', readonly: true, position: 22, enabled: false },
+        { key: 'key_x', description: 'Key x', readonly: true, position: 23, enabled: false },
+        { key: 'key_y', description: 'Key y', readonly: true, position: 24, enabled: false },
+        { key: 'key_z', description: 'Key z', readonly: true, position: 25, enabled: false },
+        { key: 'key_0', description: 'Key 0', readonly: true, position: 26, enabled: false },
+        { key: 'key_1', description: 'Key 1', readonly: true, position: 27, enabled: false },
+        { key: 'key_2', description: 'Key 2', readonly: true, position: 28, enabled: false },
+        { key: 'key_3', description: 'Key 3', readonly: true, position: 29, enabled: false },
+        { key: 'key_4', description: 'Key 4', readonly: true, position: 30, enabled: false },
+        { key: 'key_5', description: 'Key 5', readonly: true, position: 31, enabled: true }
       ])
     ).toEqual(2147483648 + 1); // First and last bits
   }));

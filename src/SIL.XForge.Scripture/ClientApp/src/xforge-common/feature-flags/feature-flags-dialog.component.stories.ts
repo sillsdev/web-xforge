@@ -6,9 +6,9 @@ import { FeatureFlagsDialogComponent } from './feature-flags-dialog.component';
 
 const mockedFeatureFlagService = mock(FeatureFlagService);
 when(mockedFeatureFlagService.featureFlags).thenReturn([
-  { key: 'enabled_flag', description: 'enabled flag', enabled: true, readonly: false },
-  { key: 'disabled_flag', description: 'disabled flag', enabled: false, readonly: false },
-  { key: 'readonly_flag', description: 'readonly flag', enabled: true, readonly: true }
+  { key: 'enabled_flag', description: 'enabled flag', enabled: true, position: 0, readonly: false },
+  { key: 'disabled_flag', description: 'disabled flag', enabled: false, position: 1, readonly: false },
+  { key: 'readonly_flag', description: 'readonly flag', enabled: true, position: 2, readonly: true }
 ]);
 
 export default {
