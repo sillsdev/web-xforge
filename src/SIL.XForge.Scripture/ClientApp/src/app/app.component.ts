@@ -15,6 +15,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
+import { CheckingQuestionsService } from 'xforge-common/checking-questions.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
@@ -62,6 +63,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   versionNumberClickCount = 0;
   translateVisible: boolean = false;
   checkingVisible: boolean = false;
+  checkingSelectedBookId?: string;
 
   projectDocs?: SFProjectProfileDoc[];
   canSeeSettings$?: Observable<boolean>;
@@ -89,6 +91,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly locationService: LocationService,
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
+    private readonly checkingQuestionsService: CheckingQuestionsService,
     private readonly route: ActivatedRoute,
     private readonly settingsAuthGuard: SettingsAuthGuard,
     private readonly syncAuthGuard: SyncAuthGuard,
@@ -308,6 +311,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     // retrieve the projectId from the current route. Since the nav menu is outside of the router outlet, it cannot
     // use ActivatedRoute to get the params. Instead the nav menu, listens to router events and traverses the route
     // tree to find the currently activated route
+    // TODO: Consider making AppComponent template into an empty router-outlet
+    // TODO: ... and moving corresponding component logic into a different component?
     const projectId$: Observable<string | undefined> = this.router.events.pipe(
       filter(e => e instanceof NavigationEnd),
       startWith(null),
@@ -321,13 +326,22 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       filter(r => r.outlet === 'primary'),
       tap(r => {
         // ensure that the task of the current view has been expanded
-        for (const segment of r.url) {
-          if (segment.path === 'translate') {
-            this.translateVisible = true;
-            break;
-          } else if (segment.path === 'checking') {
-            this.checkingVisible = true;
-            break;
+        for (let i = 0; i < r.url.length; i++) {
+          switch (r.url[i].path) {
+            case 'translate':
+              this.translateVisible = true;
+              return;
+            case 'checking':
+              this.checkingVisible = true;
+
+              // The next url segment, if it exists, is the book id or 'ALL' for all questions
+              if (r.url[i + 1] != null) {
+                this.checkingSelectedBookId = r.url[i + 1].path;
+              } else {
+                this.checkingSelectedBookId = undefined;
+              }
+
+              return;
           }
         }
       }),
@@ -542,7 +556,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.questionsQuery?.dispose();
     if (!this.hasCommunityCheckingPermission) return;
 
-    this.questionsQuery = await this.projectService.queryQuestions(projectId, { activeOnly: true });
+    this.questionsQuery = await this.checkingQuestionsService.queryQuestions(projectId, { activeOnly: true });
     this.questionsQuery.docs$.subscribe(docs => {
       const books = new Set<number>();
       for (const question of docs) {

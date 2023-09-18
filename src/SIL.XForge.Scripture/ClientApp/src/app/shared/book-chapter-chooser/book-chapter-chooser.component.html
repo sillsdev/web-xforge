@@ -9,22 +9,24 @@
       <mat-option *ngFor="let c of chapters" [value]="c">{{ c }}</mat-option>
     </mat-select>
   </mat-form-field>
-  <button
-    mat-icon-button
-    (click)="prevChapter()"
-    [disabled]="isPrevChapterDisabled()"
-    title="{{ t('previous_chapter') }}"
-    fxHide.xs
-  >
-    <mat-icon>keyboard_arrow_{{ i18n.backwardDirectionWord }}</mat-icon>
-  </button>
-  <button
-    mat-icon-button
-    (click)="nextChapter()"
-    [disabled]="isNextChapterDisabled()"
-    title="{{ t('next_chapter') }}"
-    fxHide.xs
-  >
-    <mat-icon>keyboard_arrow_{{ i18n.forwardDirectionWord }}</mat-icon>
-  </button>
+  <ng-container *ngIf="prevNextEnabled">
+    <button
+      mat-icon-button
+      (click)="prevChapter()"
+      [disabled]="isPrevChapterDisabled()"
+      title="{{ t('previous_chapter') }}"
+      fxHide.xs
+    >
+      <mat-icon>keyboard_arrow_{{ i18n.backwardDirectionWord }}</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      (click)="nextChapter()"
+      [disabled]="isNextChapterDisabled()"
+      title="{{ t('next_chapter') }}"
+      fxHide.xs
+    >
+      <mat-icon>keyboard_arrow_{{ i18n.forwardDirectionWord }}</mat-icon>
+    </button>
+  </ng-container>
 </ng-container>

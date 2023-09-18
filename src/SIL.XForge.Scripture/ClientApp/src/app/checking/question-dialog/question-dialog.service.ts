@@ -5,6 +5,7 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { CheckingQuestionsService } from 'xforge-common/checking-questions.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -21,6 +22,7 @@ export class QuestionDialogService {
   constructor(
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
+    private readonly checkingQuestionsService: CheckingQuestionsService,
     private readonly userService: UserService,
     private readonly noticeService: NoticeService,
     private readonly transloco: TranslocoService
@@ -92,7 +94,7 @@ export class QuestionDialogService {
       dateCreated: currentDate,
       dateModified: currentDate
     };
-    return await this.projectService.createQuestion(
+    return await this.checkingQuestionsService.createQuestion(
       config.projectId,
       newQuestion,
       result.audio.fileName,

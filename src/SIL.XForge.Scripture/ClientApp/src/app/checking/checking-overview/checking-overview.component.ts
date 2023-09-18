@@ -3,10 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
-import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
+import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { Subscription, asyncScheduler, merge } from 'rxjs';
+import { asyncScheduler, merge, Subscription } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
+import { CheckingQuestionsService } from 'xforge-common/checking-questions.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -54,6 +55,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     noticeService: NoticeService,
     readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
+    private readonly checkingQuestionsService: CheckingQuestionsService,
     private readonly userService: UserService,
     private readonly questionDialogService: QuestionDialogService,
     private readonly router: Router,
@@ -207,7 +209,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         if (this.questionsQuery != null) {
           this.questionsQuery.dispose();
         }
-        this.questionsQuery = await this.projectService.queryQuestions(projectId, { sort: true });
+        this.questionsQuery = await this.checkingQuestionsService.queryQuestions(projectId, { sort: true });
         this.initTexts();
       } finally {
         this.loadingFinished();
