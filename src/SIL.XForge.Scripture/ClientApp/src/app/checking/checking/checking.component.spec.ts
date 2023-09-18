@@ -2,7 +2,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
 import { DebugElement, NgZone } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatMenuHarness } from '@angular/material/menu/testing';
@@ -1731,7 +1731,8 @@ describe('CheckingComponent', () => {
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
-      const audio = spy(env.chapterAudio.componentInstance as CheckingScriptureAudioPlayerComponent);
+      const audio = mock(CheckingScriptureAudioPlayerComponent);
+      env.component.scriptureAudioPlayer = instance(audio);
 
       env.component.chapter = 99;
       env.component.chapter = 99;
