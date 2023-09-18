@@ -31,7 +31,7 @@ class MockComponent {
 const AlmostDone = 98;
 
 // FIXME Tests are flaky
-xdescribe('SingleButtonAudioPlayerComponent', () => {
+describe('SingleButtonAudioPlayerComponent', () => {
   configureTestingModule(() => ({
     imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
     declarations: [SingleButtonAudioPlayerComponent, MockComponent],
