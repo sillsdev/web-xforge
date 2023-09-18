@@ -63,7 +63,7 @@ describe('DraftGenerationComponent', () => {
     setup(): void {
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
       mockI18nService = jasmine.createSpyObj<I18nService>(['getLanguageDisplayName'], { locale$: of(locale) });
-      mockOnlineStatusService = jasmine.createSpyObj<OnlineStatusService>([], { isOnline: true });
+      mockOnlineStatusService = jasmine.createSpyObj<OnlineStatusService>([], { onlineStatus$: of(true) });
       mockDraftGenerationService = jasmine.createSpyObj<DraftGenerationService>([
         'startBuildOrGetActiveBuild',
         'cancelBuild',
@@ -194,7 +194,7 @@ describe('DraftGenerationComponent', () => {
   describe('Online status', () => {
     it('should display offline message when offline', () => {
       let env = new TestEnvironment(() => {
-        mockOnlineStatusService = jasmine.createSpyObj('OnlineStatusService', [''], { isOnline: false });
+        mockOnlineStatusService = jasmine.createSpyObj('OnlineStatusService', [''], { onlineStatus$: of(false) });
       });
 
       expect(env.offlineTextElement).toBeDefined();

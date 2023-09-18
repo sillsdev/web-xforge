@@ -46,7 +46,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   infoAlert?: InfoAlert;
 
   jobSubscription?: Subscription;
-  isOnline$ = this.onlineStatusService.onlineStatus$;
+  isOnline: boolean = true;
 
   /**
    * Once true, UI can proceed with display according to status of fetched job.
@@ -107,7 +107,14 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       )
     );
 
-    this.pollBuild();
+    this.subscribe(this.onlineStatusService.onlineStatus$, (isOnline: boolean) => {
+      this.isOnline = isOnline;
+
+      // Start polling when app goes online
+      if (isOnline) {
+        this.pollBuild();
+      }
+    });
   }
 
   // TODO: update i18n
