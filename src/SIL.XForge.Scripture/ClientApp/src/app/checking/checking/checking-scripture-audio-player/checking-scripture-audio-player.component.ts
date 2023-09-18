@@ -17,6 +17,7 @@ import { AudioTextRef, AudioHeadingRef, CheckingUtils } from '../../checking.uti
 })
 export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposable {
   @Input() source?: string;
+  @Input() sourceUnavailable: boolean = false;
   @Input() canDelete: boolean = false;
   @Input() canClose: boolean = true;
   @Output() currentVerseChanged = new EventEmitter<string>();
