@@ -12,7 +12,7 @@ import { ExceptionHandlingService } from 'xforge-common/exception-handling-servi
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
-import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature-flags.component';
+import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature-flags-dialog.component';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { InAppRootOverlayContainer } from 'xforge-common/overlay-container';
 import { environment } from '../environments/environment';
