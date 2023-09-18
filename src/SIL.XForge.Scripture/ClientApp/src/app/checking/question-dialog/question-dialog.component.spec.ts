@@ -544,7 +544,7 @@ class TestEnvironment {
   readonly afterCloseCallback: jasmine.Spy;
   readonly dialogServiceSpy: DialogService;
 
-  readonly mockedScriptureChooserMdcDialogRef = mock(MatDialogRef);
+  readonly mockedScriptureChooserMatDialogRef = mock(MatDialogRef);
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -603,13 +603,13 @@ class TestEnvironment {
     this.dialogRef.afterClosed().subscribe(this.afterCloseCallback);
     this.component = this.dialogRef.componentInstance;
 
-    // Set up MdcDialog mocking after it's already used above in creating the component.
+    // Set up dialog mocking after it's already used above (without mocking) in creating the component.
     this.dialogServiceSpy = spy(this.component.dialogService);
     when(this.dialogServiceSpy.openMatDialog(anything(), anything())).thenReturn(
-      instance(this.mockedScriptureChooserMdcDialogRef)
+      instance(this.mockedScriptureChooserMatDialogRef)
     );
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
-    when(this.mockedScriptureChooserMdcDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
+    when(this.mockedScriptureChooserMatDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
     this.addTextDoc(new TextDocId('project01', 40, 1));
     this.addTextDoc(new TextDocId('project01', 42, 1));
     this.addEmptyTextDoc(43);
