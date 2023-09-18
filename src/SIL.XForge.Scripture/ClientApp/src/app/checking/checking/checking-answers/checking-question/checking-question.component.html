@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'checking_questions'">
   <div>
-    <div class="scripture-audio" [class]="focusedText" *ngIf="scriptureAudioUrl">
+    <div class="scripture-audio" [class]="focusedText" *ngIf="scriptureAudioUrl != null">
       <span class="spacer" *ngIf="questionAudioUrl"></span>
       <app-single-button-audio-player
         #scriptureAudio
