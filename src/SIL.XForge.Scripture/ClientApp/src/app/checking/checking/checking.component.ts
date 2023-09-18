@@ -123,6 +123,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   visibleQuestions?: QuestionDoc[];
   showScriptureAudioPlayer: boolean = false;
   hideChapterText: boolean = false;
+  chapterAudioSourceUnavailable: boolean = false;
 
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
@@ -294,6 +295,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     const audioId: string = getTextAudioId(this.projectDoc.id, this.book, this.chapter);
     const audioData = this.textAudioQuery.docs.find(t => t.id === audioId)?.data;
+    this.chapterAudioSourceUnavailable = audioData == null || audioData.audioUrl === '';
     return audioData?.audioUrl ?? '';
   }
 

@@ -23,6 +23,14 @@ describe('ScriptureAudioComponent', () => {
     env = new TestEnvironment(template);
     env.fixture.detectChanges();
 
+    expect(env.component.audioPlayer.audioPlayer?.audio)
+      .withContext('the audio player should exist now')
+      .not.toBe(undefined);
+    expect(env.component.audioPlayer.audioPlayer?.isAudioAvailable$.value)
+      .withContext('the audio should be available')
+      .toBe(true);
+    expect(env.component.audioPlayer.audioPlayer?.hasProblem).withContext('there should not be a problem').toBe(false);
+
     env.component.audioPlayer.timing = getAudioTimings();
     env.component.audioPlayer.textDocId = textDocId;
     env.wait();
@@ -154,6 +162,24 @@ describe('ScriptureAudioComponent', () => {
     env.clickNextRef();
     expect(env.currentTime).toEqual(3);
   }));
+
+  it('unsetting source goes to a getting-ready state', async () => {
+    // (Notice that `source` is not set in the template.)
+    const template = `<app-checking-scripture-audio-player></app-checking-scripture-audio-player>`;
+    const env = new TestEnvironment(template);
+    env.fixture.detectChanges();
+    await env.wait();
+
+    expect(env.component.audioPlayer.audioPlayer?.audio)
+      .withContext('no source means the audio player will be in an uncreated state')
+      .toBe(undefined);
+    expect(env.component.audioPlayer.audioPlayer?.isAudioAvailable$.value)
+      .withContext('source not being set yet means the audio is not yet available')
+      .toBe(false);
+    expect(env.component.audioPlayer.audioPlayer?.hasProblem)
+      .withContext('source not being set yet is not a problem')
+      .toBe(false);
+  });
 });
 
 @Component({ selector: 'app-host', template: '' })
