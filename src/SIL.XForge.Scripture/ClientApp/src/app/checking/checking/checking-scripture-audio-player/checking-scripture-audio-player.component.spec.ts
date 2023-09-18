@@ -18,7 +18,7 @@ const audioFile = 'test-audio-player.webm';
 const textDocId: TextDocId = new TextDocId('project01', 1, 1);
 
 // FIXME Tests are flaky
-xdescribe('ScriptureAudioComponent', () => {
+describe('ScriptureAudioComponent', () => {
   it('can play and pause audio', async () => {
     const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
     const env = new TestEnvironment(template);
