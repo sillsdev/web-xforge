@@ -53,6 +53,15 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
     });
   }
 
+  /** External declaration regarding whether the audio source is available for use or not. */
+  @Input() set isSourceUnavailable(sourceUnavailable: boolean) {
+    // Obviously setting isSourceUnavailable to false after a problem has already been discovered would not be a
+    // reasonable time to set hasProblem to false. But this Input should be being set by a parent component in
+    // conjunction with changes to source.
+    this.hasProblem = sourceUnavailable;
+    if (sourceUnavailable) this.isAudioAvailable$.next(false);
+  }
+
   override ngOnDestroy(): void {
     super.ngOnDestroy();
     this.audio?.pause();
