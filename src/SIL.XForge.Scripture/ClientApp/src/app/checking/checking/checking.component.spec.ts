@@ -1735,7 +1735,6 @@ describe('CheckingComponent', () => {
       env.component.scriptureAudioPlayer = instance(audio);
 
       env.component.chapter = 99;
-      env.component.chapter = 99;
 
       verify(audio.pause()).once();
       expect(env.component).toBeDefined();
