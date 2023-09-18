@@ -62,7 +62,7 @@ describe('SingleButtonAudioPlayerComponent', () => {
 
   it('does not reset when playing finishes', fakeAsync(() => {
     env.component.player.setAudio(instance(audioMock));
-    resetCalls();
+    resetCalls(audioMock);
 
     env.component.player.hasFinishedPlayingOnce$.next(true);
 
