@@ -81,6 +81,7 @@ export class AudioPlayer extends SubscriptionDisposable {
       }
     };
 
+    this.status$.next(AudioStatus.Initializing);
     // In Chromium the duration of blobs isn't known even after metadata is loaded
     // By making it skip to the end the duration becomes available. To do this we have to skip to some point that we
     // assume is past the end. This number should be large, but numbers as small as 1e16 have been observed to cause
@@ -88,7 +89,6 @@ export class AudioPlayer extends SubscriptionDisposable {
     // know the duration once metadata has loaded.
     this.audio.currentTime = AudioPlayer.ARBITRARILY_LARGE_NUMBER;
     this.audio.src = formatFileSource(FileType.Audio, source);
-    this.status$.next(AudioStatus.Initializing);
   }
 
   get hasErrorState(): boolean {
@@ -122,6 +122,8 @@ export class AudioPlayer extends SubscriptionDisposable {
   }
 
   get currentTime(): number {
+    // Don't believe the HTMLAudioElement's inflated currentTime value until we are done initializing.
+    if (this.status$.value === AudioStatus.Initializing) return 0;
     return isNaN(this.audio.currentTime) || this.audio.currentTime === AudioPlayer.ARBITRARILY_LARGE_NUMBER
       ? 0
       : this.audio.currentTime;
