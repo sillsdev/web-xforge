@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { distinctUntilChanged, map } from 'rxjs/operators';
@@ -8,7 +8,7 @@ import { TextDocId } from '../../../core/models/text-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { AudioPlayer } from '../../../shared/audio/audio-player';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
-import { AudioTextRef, AudioHeadingRef, CheckingUtils } from '../../checking.utils';
+import { AudioHeadingRef, AudioTextRef, CheckingUtils } from '../../checking.utils';
 
 @Component({
   selector: 'app-checking-scripture-audio-player',
