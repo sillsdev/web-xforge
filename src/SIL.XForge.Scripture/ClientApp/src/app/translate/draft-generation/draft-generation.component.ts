@@ -7,6 +7,7 @@ import { map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { BuildDto } from '../../machine-api/build-dto';
@@ -45,6 +46,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   infoAlert?: InfoAlert;
 
   jobSubscription?: Subscription;
+  isOnline$ = this.onlineStatusService.onlineStatus$;
 
   /**
    * Once true, UI can proceed with display according to status of fetched job.
@@ -76,7 +78,8 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     public readonly activatedProject: ActivatedProjectService,
     private readonly draftGenerationService: DraftGenerationService,
     private readonly nllbService: NllbLanguageService,
-    private readonly i18n: I18nService
+    private readonly i18n: I18nService,
+    private readonly onlineStatusService: OnlineStatusService
   ) {
     super();
   }
