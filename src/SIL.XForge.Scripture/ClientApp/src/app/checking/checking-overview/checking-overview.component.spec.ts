@@ -30,6 +30,7 @@ import { BehaviorSubject, of } from 'rxjs';
 import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
+import { CheckingQuestionsService } from 'xforge-common/checking-questions.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -54,6 +55,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedDialogService = mock(DialogService);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
+const mockedQuestionsService = mock(CheckingQuestionsService);
 const mockedUserService = mock(UserService);
 const mockedAuthService = mock(AuthService);
 const mockedQuestionDialogService = mock(QuestionDialogService);
@@ -77,6 +79,7 @@ describe('CheckingOverviewComponent', () => {
       { provide: DialogService, useMock: mockedDialogService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: CheckingQuestionsService, useMock: mockedQuestionsService },
       { provide: UserService, useMock: mockedUserService },
       { provide: AuthService, useMock: mockedAuthService },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
@@ -278,7 +281,7 @@ describe('CheckingOverviewComponent', () => {
     it('should not show import questions button until list of texts have loaded', fakeAsync(() => {
       const env = new TestEnvironment();
       const delayPromise = new Promise<void>(resolve => setTimeout(resolve, 10 * 1000));
-      when(mockedProjectService.queryQuestions(anything(), anything())).thenReturn(
+      when(mockedQuestionsService.queryQuestions(anything(), anything())).thenReturn(
         delayPromise.then(() => env.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {}))
       );
 
@@ -941,7 +944,7 @@ class TestEnvironment {
     when(mockedProjectService.getUserConfig(anything(), anything())).thenCall((id, userId) =>
       this.realtimeService.subscribe(SFProjectUserConfigDoc.COLLECTION, getSFProjectUserConfigDocId(id, userId))
     );
-    when(mockedProjectService.queryQuestions('project01', anything())).thenCall(() =>
+    when(mockedQuestionsService.queryQuestions('project01', anything())).thenCall(() =>
       this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, {})
     );
     when(mockedProjectService.onlineDeleteAudioTimingData(anything(), anything(), anything())).thenCall(

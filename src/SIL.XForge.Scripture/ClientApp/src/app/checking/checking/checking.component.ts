@@ -1,25 +1,25 @@
 import { MdcList } from '@angular-mdc/web/list';
-import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { AfterViewInit, Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
-import { ActivatedRoute, Router } from '@angular/router';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, NavigationBehaviorOptions, Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
 import { SplitComponent } from 'angular-split';
+import { debounce } from 'lodash-es';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { Comment } from 'realtime-server/lib/esm/scriptureforge/models/comment';
+import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { merge, of, Subscription } from 'rxjs';
-import { filter, take } from 'rxjs/operators';
+import { filter, take, throttleTime } from 'rxjs/operators';
+import { CheckingQuestionsService, QuestionFilter } from 'xforge-common/checking-questions.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
@@ -38,10 +38,6 @@ import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
-import {
-  ScriptureChooserDialogComponent,
-  ScriptureChooserDialogData
-} from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog-service';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
@@ -59,17 +55,6 @@ interface Summary {
   answered: number;
 }
 
-export enum QuestionFilter {
-  None,
-  CurrentUserHasAnswered,
-  CurrentUserHasNotAnswered,
-  HasAnswers,
-  NoAnswers,
-  StatusNone,
-  StatusExport,
-  StatusResolved
-}
-
 @Component({
   selector: 'app-checking',
   templateUrl: './checking.component.html',
@@ -81,7 +66,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.answersPanelContainerElement = answersPanelContainerElement;
     this.calculateScriptureSliderPosition(true);
   }
-  @HostBinding('class') classes = 'flex-max';
   @ViewChild(CheckingAnswersComponent) answersPanel?: CheckingAnswersComponent;
   @ViewChild(CheckingTextComponent) scripturePanel?: CheckingTextComponent;
   @ViewChild(CheckingQuestionsComponent) questionsList?: CheckingQuestionsComponent;
@@ -99,6 +83,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   @ViewChild('chapterMenuList') chapterMenuList?: MdcList;
   @ViewChild('questionsPanel') questionsPanel?: ElementRef;
 
+  books: number[] = [];
   chapters: number[] = [];
   isQuestionsOverlayVisible: boolean = false;
   scriptureFontSize: string = '';
@@ -109,9 +94,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     answered: 0
   };
   questionFilters: Map<QuestionFilter, string> = new Map<QuestionFilter, string>();
-  questionFilterSelected: QuestionFilter = QuestionFilter.None;
+  activeQuestionFilter: QuestionFilter = QuestionFilter.None;
   questionVerseRefs: VerseRef[] = [];
   answersPanelContainerElement?: ElementRef;
+  projectId?: string;
   projectDoc?: SFProjectProfileDoc;
   projectUserConfigDoc?: SFProjectUserConfigDoc;
   textDocId?: TextDocId;
@@ -119,6 +105,23 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   userDoc?: UserDoc;
   visibleQuestions?: QuestionDoc[];
   showScriptureAudioPlayer: boolean = false;
+
+  /**
+   * Question that will be selected in the questions list after navigating to new book/chapter.
+   */
+  questionToActivate?: QuestionDoc;
+
+  /**
+   * The question before the active question according to the active question filter.
+   * This question may be in a different book/chapter.
+   */
+  prevQuestion?: QuestionDoc;
+
+  /**
+   * The question after the active question according to the active question filter.
+   * This question may be in a different book/chapter.
+   */
+  nextQuestion?: QuestionDoc;
 
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
@@ -150,10 +153,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   constructor(
     private readonly activatedRoute: ActivatedRoute,
     private readonly projectService: SFProjectService,
+    private readonly checkingQuestionsService: CheckingQuestionsService,
     private readonly userService: UserService,
     private readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
-    private readonly dialogService: DialogService,
     noticeService: NoticeService,
     private readonly router: Router,
     private readonly questionDialogService: QuestionDialogService,
@@ -173,7 +176,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   get appliedQuestionFilterKey(): string {
-    return this.questionFilters.get(this.questionFilterSelected)!;
+    return this.questionFilters.get(this.activeQuestionFilter)!;
   }
 
   get bookName(): string {
@@ -192,6 +195,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           ? new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target')
           : undefined;
       this._scriptureAudioPlayer?.pause();
+      this.triggerUpdate();
     }
   }
 
@@ -213,7 +217,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   get isQuestionFilterApplied(): boolean {
-    return this.questionFilterSelected !== QuestionFilter.None;
+    return this.activeQuestionFilter !== QuestionFilter.None;
   }
 
   get canCreateQuestions(): boolean {
@@ -284,7 +288,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     return audioData?.audioUrl ?? '';
   }
 
-  private get book(): number | undefined {
+  get book(): number | undefined {
     return this._book;
   }
 
@@ -300,7 +304,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.text = this.projectDoc.data.texts.find(t => t.bookNum === book);
     this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
     this._chapter = undefined;
-    this.triggerUpdate();
   }
 
   /** Height in px needed to show all elements in the bottom
@@ -422,113 +425,175 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   ngOnInit(): void {
     this.subscribe(this.activatedRoute.params, async params => {
       this.loadingStarted();
-      const projectId = params['projectId'] as string;
-      const bookId = params['bookId'] as string;
-      const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
-      this.projectDoc = await this.projectService.getProfile(projectId);
-      if (!this.projectDoc.isLoaded) {
-        return;
-      }
-      const bookNum = bookId == null ? 0 : Canon.bookIdToNumber(bookId);
-      this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
-      if (prevProjectId !== this.projectDoc.id || this.book !== bookNum || (bookId !== 'ALL' && this.showAllBooks)) {
-        this.setBookSub?.unsubscribe();
-        this.questionsSub?.unsubscribe();
-        this.questionsRemoteChangesSub?.unsubscribe();
-        this.questionsQuery?.dispose();
-        this.textAudioQuery?.dispose();
-        this.resetFilter();
-        const prevShowAllBooks = this.showAllBooks;
-        this.showAllBooks = bookId === 'ALL';
-        this.questionsQuery = await this.projectService.queryQuestions(projectId, {
-          bookNum: this.showAllBooks ? undefined : bookNum,
-          sort: true,
-          activeOnly: true
-        });
-        // TODO: check for remote changes to file data more generically
-        this.questionsRemoteChangesSub = this.subscribe(this.questionsQuery.remoteDocChanges$, (qd: QuestionDoc) => {
-          const isActiveQuestionDoc = qd.id === this.questionsList!.activeQuestionDoc?.id;
-          if (isActiveQuestionDoc) {
-            this.updateActiveQuestionVerseRef(qd);
+
+      // Wrap with try/finally to ensure loadingFinished() is called
+      try {
+        const projectId = params['projectId'] as string;
+        const bookId = params['bookId'] as string;
+        const chapter = params['chapter'] as string;
+        const prevProjectId = this.projectDoc == null ? '' : this.projectDoc.id;
+
+        // Reroute to first book in chapter if not specified and not showing all books
+        if (chapter == null && bookId !== 'ALL') {
+          this.navigateBookChapter(projectId, Canon.bookIdToNumber(bookId), 1, { replaceUrl: true });
+          return;
+        }
+
+        this.projectDoc = await this.projectService.getProfile(projectId);
+
+        if (!this.projectDoc.isLoaded) {
+          return;
+        }
+
+        if (this.projectDoc.data == null) {
+          throw new Error('Project data is null');
+        }
+
+        const bookNum = bookId == null ? 0 : Canon.bookIdToNumber(bookId);
+        const chapterNum = Number(chapter);
+
+        this.projectId = projectId;
+        this.books = this.projectDoc.data.texts.map(t => t.bookNum) ?? [];
+        this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
+
+        if (
+          prevProjectId !== this.projectDoc.id ||
+          this.book !== bookNum ||
+          this.chapter !== chapterNum ||
+          (bookId !== 'ALL' && this.showAllBooks)
+        ) {
+          this.setBookSub?.unsubscribe();
+          this.questionsSub?.unsubscribe();
+          this.questionsRemoteChangesSub?.unsubscribe();
+          this.questionsQuery?.dispose();
+          this.textAudioQuery?.dispose();
+
+          const prevShowAllBooks = this.showAllBooks;
+
+          this.showAllBooks = bookId === 'ALL';
+          this.questionsQuery = await this.checkingQuestionsService.queryQuestions(projectId, {
+            bookNum: this.showAllBooks ? undefined : bookNum,
+            chapterNum: this.showAllBooks ? undefined : chapterNum,
+            sort: true,
+            activeOnly: true
+          });
+
+          // Select newly created question if any
+          if (this.questionToActivate) {
+            this.questionsList?.activateQuestion(this.questionToActivate);
+            this.questionToActivate = undefined;
           }
-          if (this.onlineStatusService.isOnline) {
-            qd.updateFileCache();
+
+          // TODO: check for remote changes to file data more generically
+          this.questionsRemoteChangesSub = this.subscribe(this.questionsQuery.remoteDocChanges$, (qd: QuestionDoc) => {
+            const isActiveQuestionDoc = qd.id === this.questionsList!.activeQuestionDoc?.id;
+
             if (isActiveQuestionDoc) {
-              qd.updateAnswerFileCache();
+              this.updateActiveQuestionVerseRef(qd);
             }
-          }
-        });
-        // TODO (scripture audio) Only fetch the timing data for the currently active chapter
-        this.textAudioQuery = await this.projectService.queryAudioText(projectId);
-        this.textAudioQuery.remoteChanges$.subscribe(() => {
-          if (this.chapterAudioSource === '') {
-            this.showScriptureAudioPlayer = false;
-          }
-        });
-        const prevBook = this.book;
-        // There may be some race conditions which means the questions query is ready before we subscribe to ready$
-        // The merge does an additional subscribe on the state of the ready boolean for when it is true
-        this.setBookSub = merge([this.questionsQuery.ready$, of(this.questionsQuery.ready).pipe(filter(r => r))])
-          .pipe(take(1))
-          .subscribe(() => {
-            // Get the book from the first question if showing all the questions
-            if (this.showAllBooks) {
-              if (this.questionsList != null && this.questionDocs.length > 0) {
-                const question = this.questionsList.activateStoredQuestion(this.questionDocs);
-                if (question.data != null) {
-                  this.book = question.data.verseRef.bookNum;
-                }
+
+            if (this.onlineStatusService.isOnline) {
+              qd.updateFileCache();
+              if (isActiveQuestionDoc) {
+                qd.updateAnswerFileCache();
               }
-            } else {
-              this.book = bookNum;
+            }
+
+            this.updateAdjacentQuestions(this.questionsList!.activeQuestionDoc!);
+          });
+
+          // TODO (scripture audio) Only fetch the timing data for the currently active chapter
+          this.textAudioQuery = await this.projectService.queryAudioText(projectId);
+          this.textAudioQuery.remoteChanges$.subscribe(() => {
+            if (this.chapterAudioSource === '') {
+              this.showScriptureAudioPlayer = false;
             }
           });
 
-        this.questionsSub = this.subscribe(
-          merge(
-            this.questionsQuery.ready$,
-            this.questionsQuery.remoteChanges$,
-            this.questionsQuery.localChanges$,
-            this.questionsQuery.remoteDocChanges$
-          ),
-          () => this.updateQuestionRefsOrRedirect()
-        );
-        this.userDoc = await this.userService.getCurrentUser();
-        // refresh the summary when switching between all questions and the current book
-        if (this.showAllBooks !== prevShowAllBooks && this.book === prevBook) {
-          this.refreshSummary();
-        }
-        this.loadingFinished();
-      }
-      // Subscribe to the projectDoc now that it is defined
-      this.projectRemoteChangesSub?.unsubscribe();
-      this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, () => {
-        if (this.projectDoc != null && this.projectDoc.data != null) {
-          if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
-            this.onRemovedFromProject();
-          } else if (!this.projectDoc.data.checkingConfig.checkingEnabled) {
-            const currentBookId =
-              this.questionsList == null || this.questionsList.activeQuestionBook == null
-                ? undefined
-                : Canon.bookNumberToId(this.questionsList.activeQuestionBook);
-            if (this.projectUserConfigDoc != null) {
-              const checkingAccessInfo: CheckingAccessInfo = {
-                userId: this.userService.currentUserId,
-                projectId: this.projectDoc.id,
-                project: this.projectDoc.data,
-                bookId: currentBookId,
-                projectUserConfigDoc: this.projectUserConfigDoc!
-              };
-              CheckingUtils.onAppAccessRemoved(checkingAccessInfo, this.router, this.noticeService);
-              this.onRemovedFromProject();
+          const prevBook = this.book;
+
+          // There may be some race conditions which means the questions query is ready before we subscribe to ready$
+          // The merge does an additional subscribe on the state of the ready boolean for when it is true
+          this.setBookSub = merge([this.questionsQuery.ready$, of(this.questionsQuery.ready).pipe(filter(r => r))])
+            .pipe(take(1))
+            .subscribe(() => {
+              // Get the book from the first question if showing all the questions
+              if (this.showAllBooks) {
+                let bookFromQuestion: number | undefined;
+
+                if (this.questionDocs.length > 0) {
+                  const question: QuestionDoc = this.questionDocs[0];
+
+                  if (question.data != null) {
+                    bookFromQuestion = question.data.verseRef.bookNum;
+                  }
+                }
+
+                // Use first book from the project if no questions
+                this.book = bookFromQuestion ?? this.books[0];
+                this.triggerUpdate();
+              } else {
+                this.book = bookNum;
+                this.chapter = chapterNum;
+              }
+            });
+
+          this.questionsSub = this.subscribe(
+            merge(
+              this.questionsQuery.ready$,
+              this.questionsQuery.remoteChanges$,
+              this.questionsQuery.localChanges$,
+              this.questionsQuery.remoteDocChanges$
+            ).pipe(throttleTime(200)),
+            () => {
+              if (this.projectDoc == null || (this.onlineStatusService.isOnline && !this.questionsQuery!.ready)) {
+                return;
+              }
+              this.updateVisibleQuestions();
             }
+          );
+
+          this.userDoc = await this.userService.getCurrentUser();
+          // refresh the summary when switching between all questions and the current book
+          if (this.showAllBooks !== prevShowAllBooks && this.book === prevBook) {
+            this.refreshSummary();
           }
         }
-      });
-      this.projectDeleteSub?.unsubscribe();
-      this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
-      this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
-      this.initQuestionFilters();
+
+        // Subscribe to the projectDoc now that it is defined
+        this.projectRemoteChangesSub?.unsubscribe();
+        this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, () => {
+          if (this.projectDoc != null && this.projectDoc.data != null) {
+            if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
+              this.onRemovedFromProject();
+            } else if (!this.projectDoc.data.checkingConfig.checkingEnabled) {
+              const currentBookId =
+                this.questionsList == null || this.questionsList.activeQuestionBook == null
+                  ? undefined
+                  : Canon.bookNumberToId(this.questionsList.activeQuestionBook);
+              if (this.projectUserConfigDoc != null) {
+                const checkingAccessInfo: CheckingAccessInfo = {
+                  userId: this.userService.currentUserId,
+                  projectId: this.projectDoc.id,
+                  project: this.projectDoc.data,
+                  bookId: currentBookId,
+                  projectUserConfigDoc: this.projectUserConfigDoc!
+                };
+                CheckingUtils.onAppAccessRemoved(checkingAccessInfo, this.router, this.noticeService);
+                this.onRemovedFromProject();
+              }
+            }
+          }
+        });
+
+        this.projectDeleteSub?.unsubscribe();
+        this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
+
+        this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
+        this.initQuestionFilters();
+      } finally {
+        this.loadingFinished();
+      }
     });
   }
 
@@ -652,16 +717,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.isQuestionsOverlayVisible = visible;
   }
 
-  chapterMenuOpened(): void {
-    // Focus is lost when the menu closes so need to set it again
-    // Need to wait for DOM to update as we can't set the focus until it is visible and no built in method
-    setTimeout(() => {
-      if (this.chapterMenuList != null && this._chapter != null) {
-        this.chapterMenuList.focusItemAtIndex(this._chapter - 1);
-      }
-    }, 10);
-  }
-
   commentAction(commentAction: CommentAction): void {
     if (this.questionsList == null) {
       return;
@@ -721,28 +776,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     }
   }
 
-  onChapterSelect(event: MdcMenuSelectedEvent): void {
-    const chapter = parseInt(event.source.value, 10);
-    if (this.chapter !== chapter) {
-      this.chapter = chapter;
-    }
+  onBookSelect(book: number): void {
+    this.navigateBookChapter(this.projectId!, book, 1);
   }
 
-  openScriptureChooser(): void {
-    const dialogConfig: MatDialogConfig<ScriptureChooserDialogData> = {
-      data: { booksAndChaptersToShow: this.textsByBookId, includeVerseSelection: false }
-    };
-
-    const dialogRef = this.dialogService.openMatDialog(ScriptureChooserDialogComponent, dialogConfig) as MatDialogRef<
-      ScriptureChooserDialogComponent,
-      VerseRef | 'close'
-    >;
-    dialogRef.afterClosed().subscribe(result => {
-      if (result != null && result !== 'close') {
-        this.book = result.bookNum;
-        this.chapter = result.chapterNum;
-      }
-    });
+  onChapterSelect(chapter: number): void {
+    this.navigateBookChapter(this.projectId!, this.book!, chapter);
   }
 
   questionUpdated(_questionDoc: QuestionDoc): void {
@@ -754,19 +793,23 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       return;
     }
 
-    this.book = questionDoc.data?.verseRef.bookNum;
-    this.chapter = this.questionsList.activeQuestionChapter;
+    if (questionDoc != null) {
+      this.book = questionDoc.data?.verseRef.bookNum;
+      this.chapter = this.questionsList.activeQuestionChapter;
+
+      if (this.onlineStatusService.isOnline) {
+        questionDoc.updateAnswerFileCache();
+      }
+    }
+
     this.updateActiveQuestionVerseRef(questionDoc);
+    this.updateAdjacentQuestions(questionDoc);
     this.calculateScriptureSliderPosition(true);
     this.refreshSummary();
 
     // Hide the mobile question overlay unless question changed is due to a filter action (list change)
     if (!actionSource?.isQuestionListChange) {
       this.setQuestionsOverlayVisibility(false);
-    }
-
-    if (this.onlineStatusService.isOnline) {
-      questionDoc.updateAnswerFileCache();
     }
   }
 
@@ -783,14 +826,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       isRightToLeft: this.projectDoc.data?.isRightToLeft
     };
     const newQuestion = await this.questionDialogService.questionDialog(data);
+
     if (newQuestion != null) {
-      this.resetFilter();
-      this.questionsList.activateQuestion(newQuestion);
+      this.activateQuestion(newQuestion, { withFilterReset: true });
     }
   }
 
   setQuestionFilter(filter: QuestionFilter): void {
-    this.questionFilterSelected = filter;
+    this.activeQuestionFilter = filter;
     this.updateVisibleQuestions();
   }
 
@@ -852,62 +895,92 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.scripturePanel!.setAudioTextRef(ref);
   }
 
-  private triggerUpdate(): void {
-    if (this.questionsQuery != null) {
-      this.questionsQuery.localUpdate();
-    }
+  isAudioPlaying(): boolean {
+    return this._scriptureAudioPlayer?.isPlaying ?? false;
+  }
+
+  hideChapterAudio(): void {
+    this.showScriptureAudioPlayer = false;
+  }
+
+  toggleAudio(): void {
+    this.showScriptureAudioPlayer = true;
+    this._scriptureAudioPlayer?.isPlaying ? this._scriptureAudioPlayer?.pause() : this._scriptureAudioPlayer?.play();
   }
 
   /**
-   * Checks whether the user should be redirected to another page and does so if necessary. For example, redirect if the
-   * only question was deleted, or the book is invalid, or the user added a question to a book other than the currently
-   * active book.
-   * If no redirect is necessary, updates the list of verse refs to show in the text doc.
-   * This method assumes any local data in IndexedDB has already been loaded into this.questionQuery
+   * Navigate to book/chapter of specified question if necessary and select question.
    */
-  private updateQuestionRefsOrRedirect(): void {
-    if (
-      this.projectDoc == null ||
-      this.questionsQuery == null ||
-      (this.onlineStatusService.isOnline && !this.questionsQuery.ready)
-    ) {
+  activateQuestion(questionDoc: QuestionDoc | undefined, { withFilterReset = false } = {}): void {
+    if (questionDoc?.data == null) {
       return;
     }
-    this.updateVisibleQuestions();
-    if (this.totalQuestions() === 0) {
-      this.router.navigate(['/projects', this.projectDoc.id, 'checking'], {
-        replaceUrl: true
-      });
-      return;
-    } else if (this.showAllBooks) {
-      const availableBooks = new Set<string>();
-      for (const questionDoc of this.visibleQuestions ?? []) {
-        const questionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
-        if (questionVerseRef != null && !availableBooks.has(questionVerseRef.book)) {
-          availableBooks.add(questionVerseRef.book);
-        }
+
+    const nextVerseRef = questionDoc.data.verseRef;
+
+    if (nextVerseRef.chapterNum === this.chapter && nextVerseRef.bookNum === this.book) {
+      if (withFilterReset) {
+        this.resetFilter();
       }
-      if (availableBooks.size === 1 && !this.isQuestionFilterApplied) {
-        this.router.navigate(['/projects', this.projectDoc.id, 'checking', availableBooks.values().next().value], {
-          replaceUrl: true
-        });
-        return;
-      }
+
+      this.questionsList?.activateQuestion(questionDoc);
+    } else {
+      // Store in dedicated variable in order to set active question after navigation
+      // instead of setting 'questionsList.activeQuestionDoc', as the latter will be reset
+      // when navigating to a different book/chapter.
+      this.questionToActivate = questionDoc;
+      this.navigateBookChapter(this.projectId!, nextVerseRef.bookNum ?? 0, nextVerseRef.chapterNum ?? 1);
     }
-    if (
-      !this.showAllBooks &&
-      this.book != null &&
-      this.questionsList != null &&
-      this.questionsList.activeQuestionBook != null &&
-      Canon.bookNumberToId(this.book) !== this.activatedRoute.snapshot.params['bookId']
-    ) {
-      this._book = undefined;
-      this.router.navigate([
-        '/projects',
-        this.projectDoc.id,
-        'checking',
-        Canon.bookNumberToId(this.questionsList.activeQuestionBook)
-      ]);
+  }
+
+  private async getAdjacentQuestion(
+    activeQuestion: QuestionDoc | undefined,
+    prevOrNext: 'prev' | 'next'
+  ): Promise<QuestionDoc | undefined> {
+    if (this.visibleQuestions == null) {
+      return undefined;
+    }
+
+    let adjacentQuestionInsideChapter: QuestionDoc | undefined;
+    let relativeTo: Question | VerseRefData | undefined;
+
+    if (activeQuestion?.data != null) {
+      relativeTo = activeQuestion.data;
+
+      const activeQuestionIndex: number = this.visibleQuestions.findIndex(q => q.id === activeQuestion.id);
+
+      // Check for adjacent question in current chapter for the current filter (use visible questions)
+      if (activeQuestionIndex >= 0) {
+        adjacentQuestionInsideChapter = this.visibleQuestions[activeQuestionIndex + (prevOrNext === 'prev' ? -1 : 1)];
+      }
+    } else {
+      // Get prev/next relative to current chapter if no active question.
+      // This can happen if chapter has no visible questions (taking question filter into account).
+      relativeTo = {
+        bookNum: this.book!,
+        chapterNum: this.chapter!,
+        verseNum: 1 // Can be anything since 'relativeTo' is only a verseRef if there are no questions in the chapter
+      };
+    }
+
+    // If no adjacent question in current chapter, get the adjacent question outside this chapter.
+    // The adjacent question may not be in the adjacent chapter or book.
+    return (
+      adjacentQuestionInsideChapter ??
+      (
+        await this.checkingQuestionsService.queryAdjacentQuestion(
+          this.projectId!,
+          relativeTo,
+          this.activeQuestionFilter,
+          prevOrNext
+        )
+      ).docs[0]
+    );
+  }
+
+  private triggerUpdate(): void {
+    if (this.questionsQuery != null) {
+      this.questionsQuery.localUpdate();
     }
   }
 
@@ -925,21 +998,29 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
   private updateVisibleQuestions(): void {
     if (!this.totalQuestions()) {
+      this.visibleQuestions = [];
+      this.totalVisibleQuestionsString = '0';
       return;
     }
+
     let matchingQuestions: QuestionDoc[];
+
     // If there is no filter applied, clone the questions to trigger change detection in the questions component
-    if (this.questionFilterSelected === QuestionFilter.None) matchingQuestions = this.questionDocs.slice();
-    else {
-      const filterFunction = this.questionFilterFunctions[this.questionFilterSelected];
+    if (this.activeQuestionFilter === QuestionFilter.None) {
+      matchingQuestions = this.questionDocs.slice();
+    } else {
+      const filterFunction = this.questionFilterFunctions[this.activeQuestionFilter];
       matchingQuestions = this.questionDocs.filter(q => (q.data == null ? false : filterFunction(q.getAnswers())));
     }
+
     this.visibleQuestions = matchingQuestions;
+
     if (this.totalQuestions() === this.totalVisibleQuestions()) {
       this.totalVisibleQuestionsString = this.totalQuestions().toString();
     } else {
       this.totalVisibleQuestionsString = `${this.totalVisibleQuestions()}/${this.totalQuestions()}`;
     }
+
     this.updateQuestionRefs();
     this.refreshSummary();
   }
@@ -1084,11 +1165,21 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     }
   }
 
-  private updateActiveQuestionVerseRef(questionDoc: QuestionDoc): void {
-    this._activeQuestionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
+  private async updateAdjacentQuestions(activeQuestion: QuestionDoc | undefined): Promise<void> {
+    this.prevQuestion = await this.getAdjacentQuestion(activeQuestion, 'prev');
+    this.nextQuestion = await this.getAdjacentQuestion(activeQuestion, 'next');
   }
 
-  private calculateScriptureSliderPosition(maximizeAnswerPanel: boolean = false): void {
+  private updateActiveQuestionVerseRef(questionDoc: QuestionDoc | undefined): void {
+    this._activeQuestionVerseRef = questionDoc?.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
+  }
+
+  // Group rapid-fire batches of these calls as one call
+  private calculateScriptureSliderPosition = debounce(this._calculateScriptureSliderPosition, 50, {
+    leading: true,
+    trailing: false
+  });
+  private _calculateScriptureSliderPosition(maximizeAnswerPanel: boolean = false): void {
     const waitMs: number = 100;
     // Wait while Angular updates visible DOM elements before we can calculate the height correctly
     setTimeout(() => {
@@ -1127,6 +1218,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.summary.answered = 0;
     this.summary.read = 0;
     this.summary.unread = 0;
+
     for (const questionDoc of this.visibleQuestions ?? []) {
       if (CheckingUtils.hasUserAnswered(questionDoc.data, this.userService.currentUserId)) {
         this.summary.answered++;
@@ -1196,16 +1288,13 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     }
   }
 
-  isAudioPlaying(): boolean {
-    return this._scriptureAudioPlayer?.isPlaying ?? false;
-  }
-
-  hideChapterAudio(): void {
-    this.showScriptureAudioPlayer = false;
-  }
-
-  toggleAudio(): void {
-    this.showScriptureAudioPlayer = true;
-    this._scriptureAudioPlayer?.isPlaying ? this._scriptureAudioPlayer?.pause() : this._scriptureAudioPlayer?.play();
+  private navigateBookChapter(
+    projectId: string,
+    book: number,
+    chapter: number,
+    navigationExtras?: NavigationBehaviorOptions | undefined
+  ): void {
+    const bookId = Canon.bookNumberToId(book);
+    this.router.navigateByUrl(`/projects/${projectId}/checking/${bookId}/${chapter}`, navigationExtras);
   }
 }

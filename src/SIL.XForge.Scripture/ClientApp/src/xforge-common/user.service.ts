@@ -17,7 +17,7 @@ import { RealtimeQuery } from './models/realtime-query';
 import { UserDoc } from './models/user-doc';
 import { UserProfileDoc } from './models/user-profile-doc';
 import { NoticeService } from './notice.service';
-import { Filters, QueryParameters } from './query-parameters';
+import { QueryFilter, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
 import { USERS_URL } from './url-constants';
 
@@ -91,7 +91,7 @@ export class UserService {
     return combineLatest([debouncedTerm$, queryParameters$, reload$]).pipe(
       switchMap(([term, queryParameters]) => {
         term = escapeRegExp(term.trim());
-        let filters: Filters = {};
+        let filters: QueryFilter = {};
         if (term.length > 0) {
           filters = {
             $or: [

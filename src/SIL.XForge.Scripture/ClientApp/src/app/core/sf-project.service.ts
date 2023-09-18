@@ -1,38 +1,35 @@
 import { Injectable } from '@angular/core';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { NoteThread, NoteStatus, getNoteThreadDocId } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
-import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { getNoteThreadDocId, NoteStatus, NoteThread } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProject, SF_PROJECTS_COLLECTION } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { AudioTiming } from 'realtime-server/scriptureforge/models/audio-timing';
 import { Subject } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
 import { FileService } from 'xforge-common/file.service';
-import { FileType } from 'xforge-common/models/file-offline-data';
+import { LocationService } from 'xforge-common/location.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { ProjectService } from 'xforge-common/project.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { RealtimeService } from 'xforge-common/realtime.service';
 import { RetryingRequest, RetryingRequestService } from 'xforge-common/retrying-request.service';
-import { LocationService } from 'xforge-common/location.service';
-import { AudioTiming } from 'realtime-server/scriptureforge/models/audio-timing';
 import { TransceleratorQuestion } from '../checking/import-questions-dialog/import-questions-dialog.component';
-import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { ShareLinkType } from '../shared/share/share-dialog.component';
+import { InviteeStatus } from '../users/collaborators/collaborators.component';
 import { NoteThreadDoc } from './models/note-thread-doc';
-import { QuestionDoc } from './models/question-doc';
 import { SFProjectCreateSettings } from './models/sf-project-create-settings';
 import { SFProjectDoc } from './models/sf-project-doc';
+import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import { SF_PROJECT_ROLES } from './models/sf-project-role-info';
 import { SFProjectSettings } from './models/sf-project-settings';
 import { SFProjectUserConfigDoc } from './models/sf-project-user-config-doc';
-import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
+import { TextAudioDoc } from './models/text-audio-doc';
 import { TextDoc, TextDocId } from './models/text-doc';
 import { TranslateMetrics } from './models/translate-metrics';
-import { TextAudioDoc } from './models/text-audio-doc';
 
 @Injectable({
   providedIn: 'root'
@@ -82,6 +79,7 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
       projectDoc.data.userRoles[userId] === SFProjectRole.ParatextAdministrator
     );
   }
+
   /**
    * Remove project from local storage which is useful when a project is no longer accessible by a user
    */
@@ -99,56 +97,6 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
 
   getNoteThread(threadDataId: string): Promise<NoteThreadDoc> {
     return this.realtimeService.subscribe(NoteThreadDoc.COLLECTION, threadDataId);
-  }
-
-  queryQuestions(
-    id: string,
-    options: { bookNum?: number; activeOnly?: boolean; sort?: boolean } = {}
-  ): Promise<RealtimeQuery<QuestionDoc>> {
-    const queryParams: QueryParameters = {
-      [obj<Question>().pathStr(q => q.projectRef)]: id
-    };
-    if (options.bookNum != null) {
-      queryParams[obj<Question>().pathStr(q => q.verseRef.bookNum)] = options.bookNum;
-    }
-    if (options.activeOnly != null && options.activeOnly) {
-      queryParams[obj<Question>().pathStr(q => q.isArchived)] = false;
-    }
-    if (options.sort != null) {
-      queryParams.$sort = {
-        [obj<Question>().pathStr(q => q.verseRef.bookNum)]: 1,
-        [obj<Question>().pathStr(q => q.verseRef.chapterNum)]: 1,
-        [obj<Question>().pathStr(q => q.verseRef.verseNum)]: 1,
-        [obj<Question>().pathStr(q => q.dateCreated)]: 1
-      };
-    }
-    return this.realtimeService.subscribeQuery(QuestionDoc.COLLECTION, queryParams);
-  }
-
-  async createQuestion(
-    id: string,
-    question: Question,
-    audioFileName?: string,
-    audioBlob?: Blob
-  ): Promise<QuestionDoc | undefined> {
-    const docId = getQuestionDocId(id, question.dataId);
-    if (audioFileName != null && audioBlob != null) {
-      const audioUrl = await this.fileService.uploadFile(
-        FileType.Audio,
-        id,
-        QuestionDoc.COLLECTION,
-        question.dataId,
-        docId,
-        audioBlob,
-        audioFileName,
-        true
-      );
-      if (audioUrl == null) {
-        return;
-      }
-      question.audioUrl = audioUrl;
-    }
-    return this.realtimeService.create<QuestionDoc>(QuestionDoc.COLLECTION, docId, question);
   }
 
   async createNoteThread(projectId: string, noteThread: NoteThread): Promise<void> {
