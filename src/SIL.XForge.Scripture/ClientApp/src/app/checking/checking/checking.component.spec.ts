@@ -1733,7 +1733,7 @@ describe('CheckingComponent', () => {
       const audio = mock(CheckingScriptureAudioPlayerComponent);
       env.component.scriptureAudioPlayer = instance(audio);
 
-      env.component.chapter = 99;
+      env.component.chapter = 2;
 
       verify(audio.pause()).once();
       expect(env.component).toBeDefined();
