@@ -36,15 +36,15 @@ describe('FeatureFlagsComponent', () => {
   it('Shows feature flags', fakeAsync(() => {
     const env = new TestEnvironment();
 
-    expect(env.getCheckboxLabel(0)).toBe('enabled_flag');
+    expect(env.getCheckboxLabel(0)).toBe('enabled flag');
     expect(env.getMatCheckbox(0).disabled).toBeFalsy();
     expect(env.getMatCheckbox(0).checked).toBeTruthy();
 
-    expect(env.getCheckboxLabel(1)).toBe('disabled_flag');
+    expect(env.getCheckboxLabel(1)).toBe('disabled flag');
     expect(env.getMatCheckbox(1).disabled).toBeFalsy();
     expect(env.getMatCheckbox(1).checked).toBeFalsy();
 
-    expect(env.getCheckboxLabel(2)).toBe('readonly_flag');
+    expect(env.getCheckboxLabel(2)).toBe('readonly flag');
     expect(env.getMatCheckbox(2).disabled).toBeTruthy();
     expect(env.getMatCheckbox(2).checked).toBeTruthy();
   }));
@@ -71,9 +71,9 @@ class TestEnvironment {
   constructor() {
     // Setup the data
     when(mockedFeatureFlagService.featureFlags).thenReturn([
-      { description: 'enabled_flag', enabled: true, readonly: false },
-      { description: 'disabled_flag', enabled: false, readonly: false },
-      { description: 'readonly_flag', enabled: true, readonly: true }
+      { key: 'enabled_flag', description: 'enabled flag', enabled: true, readonly: false },
+      { key: 'disabled_flag', description: 'disabled flag', enabled: false, readonly: false },
+      { key: 'readonly_flag', description: 'readonly flag', enabled: true, readonly: true }
     ]);
 
     // Setup the dialog

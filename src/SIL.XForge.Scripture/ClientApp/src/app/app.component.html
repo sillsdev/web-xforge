@@ -59,7 +59,7 @@
             (click)="versionNumberClickCount = versionNumberClickCount + 1"
             id="version-number"
           >
-            {{ t("product_version", { version: version }) }}
+            {{ t("product_version", { version: version + this.featureFlags.versionSuffix }) }}
           </div>
         </mat-menu>
 

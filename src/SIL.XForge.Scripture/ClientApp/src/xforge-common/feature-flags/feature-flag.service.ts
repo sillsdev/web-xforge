@@ -5,6 +5,7 @@ import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { PROJECTS_URL } from 'xforge-common/url-constants';
 
 export interface FeatureFlag {
+  readonly key: string;
   readonly description: string;
   readonly readonly: boolean;
   get enabled(): boolean;
@@ -38,26 +39,6 @@ export class FeatureFlagStore extends SubscriptionDisposable {
     return this.isRemoteEnabled(key) || this.isLocalEnabled(key);
   }
 
-  isLocalEnabled(key: string): boolean {
-    if (this.localFlags[key] === undefined) {
-      this.localFlags[key] = this.getFromLocalStorage(key);
-    }
-    return this.localFlags[key];
-  }
-
-  isRemoteEnabled(key: string): boolean {
-    this.retrieveFeatureFlagsIfMissing();
-    if (Object.entries(this.remoteFlags).length === 0) {
-      return false;
-    }
-    return this.remoteFlags[key] ?? false;
-  }
-
-  isRemotePresent(key: string): boolean {
-    this.retrieveFeatureFlagsIfMissing();
-    return key in this.remoteFlags;
-  }
-
   isReadOnly(key: string): boolean {
     // Keys are only readonly if they are set on the server
     return this.isRemotePresent(key);
@@ -80,6 +61,33 @@ export class FeatureFlagStore extends SubscriptionDisposable {
     return FeatureFlagStore.keyPrefix + key;
   }
 
+  private isLocalEnabled(key: string): boolean {
+    if (this.localFlags[key] === undefined) {
+      this.localFlags[key] = this.getFromLocalStorage(key);
+    }
+    return this.localFlags[key];
+  }
+
+  private isLocalPresent(key: string): boolean {
+    const itemFromStore: string | null = localStorage.getItem(this.getLocalStorageKey(key));
+    const valueFromStore: string | undefined =
+      typeof itemFromStore === 'string' ? JSON.parse(itemFromStore) : undefined;
+    return typeof valueFromStore === 'boolean' ? true : false;
+  }
+
+  private isRemoteEnabled(key: string): boolean {
+    this.retrieveFeatureFlagsIfMissing();
+    if (Object.entries(this.remoteFlags).length === 0) {
+      return false;
+    }
+    return this.remoteFlags[key] ?? false;
+  }
+
+  private isRemotePresent(key: string): boolean {
+    this.retrieveFeatureFlagsIfMissing();
+    return key in this.remoteFlags;
+  }
+
   private retrieveFeatureFlagsIfMissing(): void {
     if (this.remoteFlagCacheExpiry <= new Date() && this.onlineStatusService.isOnline) {
       // Set to the next remote flag cache expiry timestamp for 1 hour so that the null check above returns false
@@ -89,7 +97,11 @@ export class FeatureFlagStore extends SubscriptionDisposable {
         .then(flags => {
           this.remoteFlags = flags ?? {};
           // Set any feature flag values to local storage
-          Object.entries(this.remoteFlags).forEach(([key, value]) => this.setEnabled(key, value));
+          Object.entries(this.remoteFlags).forEach(([key, value]) => {
+            if (this.isLocalPresent(key)) {
+              this.setEnabled(key, value);
+            }
+          });
         })
         .catch(e => {
           let recheckInMinutes: number;
@@ -107,9 +119,9 @@ export class FeatureFlagStore extends SubscriptionDisposable {
   }
 }
 
-export class FeatureFlagFromStorage implements FeatureFlag {
+class FeatureFlagFromStorage implements FeatureFlag {
   constructor(
-    private readonly key: string,
+    readonly key: string,
     readonly description: string,
     private readonly featureFlagStore: FeatureFlagStore
   ) {}
@@ -125,6 +137,24 @@ export class FeatureFlagFromStorage implements FeatureFlag {
   set enabled(value: boolean) {
     this.featureFlagStore.setEnabled(this.key, value);
   }
+}
+
+class ServerOnlyFeatureFlag implements FeatureFlag {
+  constructor(
+    readonly key: string,
+    readonly description: string,
+    private readonly featureFlagStore: FeatureFlagStore
+  ) {}
+
+  get readonly(): boolean {
+    return true;
+  }
+
+  get enabled(): boolean {
+    return this.featureFlagStore.isEnabled(this.key);
+  }
+
+  set enabled(value: boolean) {}
 }
 
 @Injectable({
@@ -181,7 +211,63 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
+  private readonly machineInProcess: FeatureFlag = new ServerOnlyFeatureFlag(
+    'MachineInProcess',
+    'Use In-Process Machine for Suggestions',
+    this.featureFlagStore
+  );
+
+  private readonly serval: FeatureFlag = new ServerOnlyFeatureFlag(
+    'Serval',
+    'Use Serval for Suggestions',
+    this.featureFlagStore
+  );
+
+  private readonly useEchoForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
+    'UseEchoForPreTranslation',
+    'Use Echo for Pre-Translation Drafting',
+    this.featureFlagStore
+  );
+
+  private readonly writeNotesToParatext: FeatureFlag = new ServerOnlyFeatureFlag(
+    'WriteNotesToParatext',
+    'Write Notes to Paratext',
+    this.featureFlagStore
+  );
+
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
+  }
+
+  get versionSuffix(): string {
+    // Get the feature flags, sorted alphabetically
+    let featureFlags: FeatureFlag[] = Object.values(this).filter(
+      value => value instanceof FeatureFlagFromStorage || value instanceof ServerOnlyFeatureFlag
+    );
+    featureFlags.sort((a, b) => (a.key < b.key ? -1 : 1));
+    const versionNumber = this.getFeatureFlagVersion(featureFlags);
+    if (versionNumber === 0) {
+      return '';
+    } else {
+      return '-' + versionNumber;
+    }
+  }
+
+  getFeatureFlagVersion(featureFlags: FeatureFlag[]): number {
+    var i: number = 0;
+    var versionNumber: number = 0;
+
+    // Get the feature flags as a 32-bit number
+    for (let featureFlag of featureFlags) {
+      if (i >= 32) {
+        break;
+      }
+      if (featureFlag.enabled) {
+        versionNumber += Math.pow(2, i);
+      }
+      i++;
+    }
+
+    return versionNumber;
   }
 }
