@@ -1,7 +1,16 @@
 import { MdcList } from '@angular-mdc/web/list';
 import { MdcMenuSelectedEvent } from '@angular-mdc/web/menu';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { AfterViewInit, Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+  AfterViewChecked,
+  AfterViewInit,
+  Component,
+  ElementRef,
+  HostBinding,
+  OnDestroy,
+  OnInit,
+  ViewChild
+} from '@angular/core';
 import { MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Canon, VerseRef } from '@sillsdev/scripture';
@@ -16,8 +25,9 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { merge, of, Subscription } from 'rxjs';
+import { Subscription, merge, of } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
+import { AudioStatus } from 'src/app/shared/audio/audio-player';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -75,7 +85,10 @@ export enum QuestionFilter {
   templateUrl: './checking.component.html',
   styleUrls: ['./checking.component.scss']
 })
-export class CheckingComponent extends DataLoadingComponent implements OnInit, AfterViewInit, OnDestroy {
+export class CheckingComponent
+  extends DataLoadingComponent
+  implements OnInit, AfterViewInit, OnDestroy, AfterViewChecked
+{
   @ViewChild('answerPanelContainer') set answersPanelElement(answersPanelContainerElement: ElementRef) {
     // Need to trigger the calculation for the slider after DOM has been updated
     this.answersPanelContainerElement = answersPanelContainerElement;
@@ -122,7 +135,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   visibleQuestions?: QuestionDoc[];
   showScriptureAudioPlayer: boolean = false;
   hideChapterText: boolean = false;
-  chapterAudioSourceUnavailable: boolean = false;
 
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
@@ -150,6 +162,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private text?: TextInfo;
   private isProjectAdmin: boolean = false;
   private _scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
+  private _lastAudioPlayerSize: number = 0;
+  private _isAudioPlayerHeightChanging: boolean = false;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -190,12 +204,19 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
   set chapter(value: number | undefined) {
     if (this._chapter !== value) {
+      const previousChapterHadAudio = this.chapterAudioSource !== '';
       this._chapter = value;
       this.textDocId =
         this.projectDoc != null && this.text != null && this.chapter != null
           ? new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target')
           : undefined;
       this._scriptureAudioPlayer?.pause();
+
+      const currentChapterHasAudio = this.chapterAudioSource !== '';
+      if (this.showScriptureAudioPlayer && previousChapterHadAudio !== currentChapterHasAudio) {
+        this._lastAudioPlayerSize = this.scriptureAudioPlayerAreaHeight;
+        this._isAudioPlayerHeightChanging = true;
+      }
     }
   }
 
@@ -218,6 +239,25 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
   get isQuestionFilterApplied(): boolean {
     return this.questionFilterSelected !== QuestionFilter.None;
+  }
+
+  ngAfterViewChecked(): void {
+    if (
+      this._scriptureAudioPlayer !== undefined &&
+      this._isAudioPlayerHeightChanging &&
+      !this.audioInitializing() &&
+      this._lastAudioPlayerSize !== this.scriptureAudioPlayerAreaHeight
+    ) {
+      this._lastAudioPlayerSize = this.scriptureAudioPlayerAreaHeight;
+      this._isAudioPlayerHeightChanging = false;
+      this.calculateScriptureSliderPosition(true);
+    }
+  }
+
+  private audioInitializing(): boolean {
+    if (this.chapterHasAudio && this._scriptureAudioPlayer?.audioPlayer?.audioStatus === AudioStatus.Initializing) {
+      return true;
+    } else return false;
   }
 
   get canCreateQuestions(): boolean {
@@ -285,7 +325,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     const audioId: string = getTextAudioId(this.projectDoc.id, this.book, this.chapter);
     const audioData = this.textAudioQuery.docs.find(t => t.id === audioId)?.data;
-    this.chapterAudioSourceUnavailable = audioData == null || audioData.audioUrl === '';
     return audioData?.audioUrl ?? '';
   }
 
@@ -546,6 +585,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
       this.isProjectAdmin = await this.projectService.isProjectAdmin(projectId, this.userService.currentUserId);
       this.initQuestionFilters();
+      this._lastAudioPlayerSize = 0;
+      this._isAudioPlayerHeightChanging = true;
     });
   }
 
@@ -767,6 +808,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   questionChanged({ questionDoc, actionSource }: QuestionChangedEvent): void {
+    const previousChapterHadAudio = this.chapterAudioSource !== '';
     if (this.questionsList == null) {
       return;
     }
@@ -784,6 +826,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     if (this.onlineStatusService.isOnline) {
       questionDoc.updateAnswerFileCache();
+    }
+
+    const currentChapterHasAudio = this.chapterAudioSource !== '';
+    if (this.showScriptureAudioPlayer && previousChapterHadAudio !== currentChapterHasAudio) {
+      this._lastAudioPlayerSize = this.scriptureAudioPlayerAreaHeight;
+      this._isAudioPlayerHeightChanging = true;
     }
   }
 

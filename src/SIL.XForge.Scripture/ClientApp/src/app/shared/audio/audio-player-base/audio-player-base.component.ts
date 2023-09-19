@@ -9,11 +9,15 @@ import { AudioPlayer, AudioStatus } from '../audio-player';
 })
 export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable implements OnDestroy {
   readonly isAudioAvailable$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-  hasProblem: boolean = false;
+  private _isAudioInitComplete: boolean = false;
   private _audio: AudioPlayer | undefined;
 
   constructor(protected readonly onlineStatusService: OnlineStatusService) {
     super();
+
+    this.subscribe(this.isAudioAvailable$, () => {
+      this.audio?.setSeek(0);
+    });
   }
 
   get audio(): AudioPlayer | undefined {
@@ -30,36 +34,28 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
     );
   }
 
-  @Input() set source(source: string | undefined) {
-    this.isAudioAvailable$.next(false);
-    this.audio?.dispose();
-    if (source == null || source === '') {
-      this._audio = undefined;
-      return;
-    }
-
-    this._audio = new AudioPlayer(source, this.onlineStatusService);
-    this.subscribe(this._audio.status$, newVal => {
-      if (newVal === AudioStatus.Available) {
-        this.audio?.setSeek(0);
-        this.hasProblem = false;
-        this.isAudioAvailable$.next(true);
-      }
-
-      if (this._audio?.hasErrorState) {
-        this.hasProblem = true;
-        this.isAudioAvailable$.next(false);
-      }
-    });
+  get isAudioInitComplete(): boolean {
+    return this._isAudioInitComplete;
   }
 
-  /** External declaration regarding whether the audio source is available for use or not. */
-  @Input() set isSourceUnavailable(sourceUnavailable: boolean) {
-    // Obviously setting isSourceUnavailable to false after a problem has already been discovered would not be a
-    // reasonable time to set hasProblem to false. But this Input should be being set by a parent component in
-    // conjunction with changes to source.
-    this.hasProblem = sourceUnavailable;
-    if (sourceUnavailable) this.isAudioAvailable$.next(false);
+  @Input() set source(source: string | undefined) {
+    this.isAudioAvailable$.next(false);
+    this._isAudioInitComplete = false;
+    this.audio?.dispose();
+    if (source != null && source !== '') {
+      this._audio = new AudioPlayer(source, this.onlineStatusService);
+      this.subscribe(this._audio.status$, newVal => {
+        if (newVal === AudioStatus.Available) {
+          this.isAudioAvailable$.next(true);
+        }
+        if (newVal !== AudioStatus.Initializing) {
+          this._isAudioInitComplete = true;
+        }
+      });
+    } else {
+      this._audio = undefined;
+      this._isAudioInitComplete = true;
+    }
   }
 
   override ngOnDestroy(): void {
