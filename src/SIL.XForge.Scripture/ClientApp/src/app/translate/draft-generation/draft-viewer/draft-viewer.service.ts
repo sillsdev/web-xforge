@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { DeltaOperation } from 'quill';
+import { isString } from '../../../../type-utils';
 import { DraftSegmentMap } from '../draft-generation';
 
 @Injectable({
@@ -27,8 +28,7 @@ export class DraftViewerService {
 
       // Can populate draft if insert is a blank string OR insert is object that has 'blank: true' property.
       // Other objects are not draftable (e.g. 'note-thread-embed').
-      const isInsertBlank =
-        (typeof op.insert === 'string' && op.insert.trim().length === 0) || op.insert.blank === true;
+      const isInsertBlank = (isString(op.insert) && op.insert.trim().length === 0) || op.insert.blank === true;
 
       return isSegmentDraftAvailable && isInsertBlank;
     });
@@ -55,7 +55,7 @@ export class DraftViewerService {
         return op;
       }
 
-      if (typeof op.insert === 'string') {
+      if (isString(op.insert)) {
         if (op.insert.trim().length > 0) {
           // 'insert' is non-blank string; use existing translation
           return op;

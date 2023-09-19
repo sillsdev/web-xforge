@@ -26,7 +26,7 @@ import {
   TranslationSuggester
 } from '@sillsdev/machine';
 import { Canon, VerseRef } from '@sillsdev/scripture';
-import isEqual from 'lodash-es/isEqual';
+import { isEqual } from 'lodash-es';
 import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
@@ -50,6 +50,7 @@ import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import { DeltaOperation } from 'rich-text';
 import { BehaviorSubject, fromEvent, merge, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, first, repeat, retryWhen, tap } from 'rxjs/operators';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -64,6 +65,7 @@ import { UserService } from 'xforge-common/user.service';
 import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
+import { isString } from '../../../type-utils';
 import { NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -89,6 +91,9 @@ import {
   verseRefFromMouseEvent,
   VERSE_REGEX
 } from '../../shared/utils';
+import { DraftSegmentMap } from '../draft-generation/draft-generation';
+import { DraftGenerationService } from '../draft-generation/draft-generation.service';
+import { DraftViewerService } from '../draft-generation/draft-viewer/draft-viewer.service';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import {
@@ -138,6 +143,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   textHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
+  hasDraft = false;
 
   @ViewChild('targetContainer') targetContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
@@ -195,8 +201,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     private readonly onlineStatusService: OnlineStatusService,
     private readonly translationEngineService: TranslationEngineService,
     private readonly i18n: I18nService,
-    private readonly featureFlags: FeatureFlagService,
+    readonly featureFlags: FeatureFlagService,
     private readonly reportingService: ErrorReportingService,
+    private readonly activatedProjectService: ActivatedProjectService,
+    private readonly draftGenerationService: DraftGenerationService,
+    private readonly draftViewerService: DraftViewerService,
     @Inject(CONSOLE) private readonly console: ConsoleInterface,
     private readonly router: Router,
     private bottomSheet: MatBottomSheet
@@ -280,13 +289,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   set chapter(value: number | undefined) {
-    if (this._chapter !== value) {
-      this.showSuggestions = false;
-      this.toggleNoteThreadVerses(false);
-      this._chapter = value;
-      this.changeText();
-      this.toggleNoteThreadVerses(true);
-      this.bottomSheet.dismiss();
+    if (this._chapter !== value && value != null) {
+      // Update url to reflect current chapter, triggering ActivatedRoute
+      this.router.navigateByUrl(
+        `/projects/${this.projectId}/translate/${Canon.bookNumberToId(this.bookNum!)}/${value}`
+      );
     }
   }
 
@@ -532,6 +539,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.loadingStarted();
         const projectId = params['projectId'] as string;
         const bookId = params['bookId'] as string;
+        const chapterNum = params['chapter'] as string | null;
         const bookNum = bookId != null ? Canon.bookIdToNumber(bookId) : 0;
 
         if (this.currentUserDoc === undefined) {
@@ -577,7 +585,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
         this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
 
-        this.loadProjectUserConfig();
+        // Set chapter from route if provided
+        this.loadProjectUserConfig(chapterNum != null ? Number.parseInt(chapterNum) : undefined);
 
         if (this.projectDoc.id !== prevProjectId) {
           this.setupTranslationEngine();
@@ -783,9 +792,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         if (this.target?.editor != null) {
           this.positionInsertNoteFab();
           this.subscribeScroll(this.target.editor);
+
+          if (this.featureFlags.showNmtDrafting.enabled) {
+            this.checkForPreTranslations();
+          }
         }
         break;
     }
+
     if ((!this.hasSource || this.sourceLoaded) && this.targetLoaded) {
       this.loadingFinished();
       // Toggle the segment the cursor is focused in - the timeout allows for Quill to get its focus set
@@ -952,6 +966,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.addingMobileNote = false;
     this.bottomSheetRef?.dismiss();
     this.toggleNoteThreadVerseRefs$.next();
+  }
+
+  onViewerClicked(viewer: MultiCursorViewer): void {
+    this.target!.scrollToViewer(viewer);
+  }
+
+  goToDraftPreview(): void {
+    const book = Canon.bookNumberToId(this.bookNum!);
+    this.router.navigateByUrl(
+      `/projects/${this.activatedProjectService.projectId}/draft-preview/${book}/${this.chapter}`
+    );
   }
 
   private async saveNote(params: SaveNoteParameters): Promise<void> {
@@ -1210,27 +1235,34 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
     // reset the verse selection before changing text
     this.resetInsertNoteFab(true);
+
     if (this.source != null) {
       this.source.id = this.hasSource
         ? new TextDocId(this.projectDoc.data!.translateConfig.source!.projectRef, this.text.bookNum, this._chapter)
         : undefined;
     }
+
     const targetId = new TextDocId(this.projectDoc.id, this.text.bookNum, this._chapter, 'target');
+
     if (!isEqual(targetId, this.target.id)) {
       // blur the target before switching so that scrolling is reset to the top
       this.target.blur();
     }
+
     this.target.id = targetId;
     this.setSegment();
     const textDoc = await this.projectService.getText(targetId);
+
     if (this.onTargetDeleteSub != null) {
       this.onTargetDeleteSub.unsubscribe();
     }
+
     this.onTargetDeleteSub = textDoc.delete$.subscribe(() => {
       this.dialogService.message(this.i18n.translate('editor.text_has_been_deleted')).then(() => {
         this.router.navigateByUrl('/projects/' + this.projectDoc!.id + '/translate', { replaceUrl: true });
       });
     });
+
     await this.loadNoteThreadDocs(this.projectDoc.id, this.text.bookNum, this._chapter);
     setTimeout(() => this.setTextHeight());
   }
@@ -1480,14 +1512,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
-  private loadProjectUserConfig(): void {
-    let chapter = this.chapters.length > 0 ? this.chapters[0] : 1;
+  private loadProjectUserConfig(chapterFromUrl?: number): void {
+    let chapter: number = chapterFromUrl ?? (this.chapters.length > 0 ? this.chapters[0] : 1);
+
     if (this.projectUserConfigDoc != null && this.projectUserConfigDoc.data != null) {
       const pcnt = Math.round(this.projectUserConfigDoc.data.confidenceThreshold * 100);
       this.translationSuggester.confidenceThreshold = pcnt / 100;
+
       if (this.text != null && this.projectUserConfigDoc.data.selectedBookNum === this.text.bookNum) {
         if (this.projectUserConfigDoc.data.selectedChapterNum != null) {
-          chapter = this.projectUserConfigDoc.data.selectedChapterNum;
+          // Use chapter from url if specified
+          chapter = chapterFromUrl ?? this.projectUserConfigDoc.data.selectedChapterNum;
         }
       }
     }
@@ -1994,7 +2029,36 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     });
   }
 
-  onViewerClicked(viewer: MultiCursorViewer): void {
-    this.target!.scrollToViewer(viewer);
+  private checkForPreTranslations(): void {
+    const targetOps: DeltaOperation[] = this.target!.editor!.getContents().ops!;
+    const isChapterComplete: boolean = targetOps.every(op => {
+      // If segment is a verse, check if it has a translation
+      if (VERSE_REGEX.test(op.attributes?.segment)) {
+        // Check if insert is non-blank string
+        if (isString(op.insert)) {
+          return op.insert.trim().length > 0;
+        }
+
+        // Check if insert is object that doesn't have 'blank: true' property (e.g. 'note-thread-embed')
+        return op.insert?.blank !== true;
+      }
+
+      return true;
+    });
+
+    // Set false until service can check actual draft status for chapter
+    this.hasDraft = false;
+
+    // Don't fetch draft if all editor verse segments have existing translations
+    if (isChapterComplete) {
+      return;
+    }
+
+    // If build progress is 'completed', get pretranslations for current chapter
+    this.draftGenerationService
+      .getGeneratedDraft(this.activatedProjectService.projectId!, this.bookNum!, this.chapter!)
+      .subscribe((draft: DraftSegmentMap) => {
+        this.hasDraft = this.draftViewerService.hasDraftOps(draft, targetOps);
+      });
   }
 }
