@@ -55,7 +55,15 @@
     </ul>
   </section>
 
-  <ng-container *ngIf="isDraftJobFetched">
+  <ng-container *ngIf="!isOnline">
+    <mat-divider inset></mat-divider>
+    <section>
+      <!-- TODO: Update i18n -->
+      <p class="offline-text">Draft generation is not available when offline.</p>
+    </section>
+  </ng-container>
+
+  <ng-container *ngIf="isOnline && isDraftJobFetched">
     <mat-divider inset></mat-divider>
 
     <section *ngIf="infoAlert === InfoAlert.NotBackTranslation">

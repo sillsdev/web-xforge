@@ -63,7 +63,7 @@ describe('DraftGenerationComponent', () => {
     setup(): void {
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
       mockI18nService = jasmine.createSpyObj<I18nService>(['getLanguageDisplayName'], { locale$: of(locale) });
-      mockOnlineStatusService = jasmine.createSpyObj<OnlineStatusService>([], { isOnline: true });
+      mockOnlineStatusService = jasmine.createSpyObj<OnlineStatusService>([], { onlineStatus$: of(true) });
       mockDraftGenerationService = jasmine.createSpyObj<DraftGenerationService>([
         'startBuildOrGetActiveBuild',
         'cancelBuild',
@@ -115,6 +115,10 @@ describe('DraftGenerationComponent', () => {
       this.fixture = TestBed.createComponent(DraftGenerationComponent);
       this.component = this.fixture.componentInstance;
       this.fixture.detectChanges();
+    }
+
+    get offlineTextElement(): HTMLElement | null {
+      return (this.fixture.nativeElement as HTMLElement).querySelector('.offline-text');
     }
   }
 
@@ -184,6 +188,22 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isTargetLanguageSupported).toBe(false);
       expect(env.component.isSourceProjectSet).toBe(true);
       expect(env.component.isSourceAndTargetDifferent).toBe(false);
+    });
+  });
+
+  describe('Online status', () => {
+    it('should display offline message when offline', () => {
+      let env = new TestEnvironment(() => {
+        mockOnlineStatusService = jasmine.createSpyObj('OnlineStatusService', [''], { onlineStatus$: of(false) });
+      });
+
+      expect(env.offlineTextElement).toBeDefined();
+    });
+
+    it('should not display offline message when online', () => {
+      let env = new TestEnvironment();
+
+      expect(env.offlineTextElement).toBeNull();
     });
   });
 
@@ -317,9 +337,7 @@ describe('DraftGenerationComponent', () => {
       env.fixture.detectChanges();
       expect(mockDialogService.openGenericDialog).toHaveBeenCalledTimes(1);
       expect(mockDraftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
-      expect(mockDraftGenerationService.getLastCompletedBuild).toHaveBeenCalledWith(
-        mockActivatedProjectService.projectId!
-      );
+      expect(mockDraftGenerationService.getBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
     });
 
     it('should not cancel the draft build if user exits "cancel" dialog', async () => {
@@ -348,9 +366,7 @@ describe('DraftGenerationComponent', () => {
       env.fixture.detectChanges();
       expect(mockDialogService.openGenericDialog).not.toHaveBeenCalled();
       expect(mockDraftGenerationService.cancelBuild).toHaveBeenCalledWith('testProjectId');
-      expect(mockDraftGenerationService.getLastCompletedBuild).toHaveBeenCalledWith(
-        mockActivatedProjectService.projectId!
-      );
+      expect(mockDraftGenerationService.getBuildProgress).toHaveBeenCalledWith(mockActivatedProjectService.projectId!);
     });
   });
 
