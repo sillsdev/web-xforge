@@ -128,7 +128,10 @@
                 <as-split-area [size]="100" [maxSize]="scriptureAreaMaxSize">
                   <div class="panel-content" #scripturePanelContainer>
                     <!-- TODO (scripture audio) Instead of covering scripture panel, move the audio player below it -->
-                    <div class="scripture-audio-player-wrapper" *ngIf="showScriptureAudioPlayer">
+                    <div
+                      class="scripture-audio-player-wrapper"
+                      *ngIf="showScriptureAudioPlayer && !chapterAudioSourceUnavailable"
+                    >
                       <app-checking-scripture-audio-player
                         [source]="chapterAudioSource"
                         [timing]="chapterTextAudioTiming"
@@ -137,6 +140,13 @@
                         (currentVerseChanged)="handleAudioTextRefChanged($event)"
                         (closed)="hideChapterAudio()"
                       ></app-checking-scripture-audio-player>
+                    </div>
+                    <div
+                      class="scripture-audio-player-wrapper"
+                      *ngIf="chapterAudioSourceUnavailable"
+                      style="height: 109px"
+                    >
+                      Audio unavailable
                     </div>
                     <app-checking-text
                       #textPanel

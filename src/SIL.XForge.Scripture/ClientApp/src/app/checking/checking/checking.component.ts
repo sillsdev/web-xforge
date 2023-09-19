@@ -124,6 +124,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   showScriptureAudioPlayer: boolean = false;
   hideChapterText: boolean = false;
 
+  public get chapterAudioSourceUnavailable(): boolean {
+    if (this.book == null || this.chapter == null || this.projectDoc?.id == null || this.textAudioQuery == null) {
+      return true;
+    }
+
+    const audioId: string = getTextAudioId(this.projectDoc.id, this.book, this.chapter);
+    const audioData = this.textAudioQuery.docs.find(t => t.id === audioId)?.data;
+    return audioData == null || audioData.audioUrl === '';
+  }
+
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
   private _chapter?: number;
