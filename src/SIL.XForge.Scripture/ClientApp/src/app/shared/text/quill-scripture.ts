@@ -752,8 +752,15 @@ export function registerScripture(): string[] {
       for (const op of delta.ops) {
         const modelOp: DeltaOperation = cloneDeep(op);
         const attrs = modelOp.attributes;
-        if (attrs != null && attrs['segment'] != null && attrs['highlight-segment'] == null) {
-          attrs['highlight-segment'] = false;
+        if (attrs != null && attrs['segment'] != null) {
+          if (attrs['highlight-segment'] == null) {
+            attrs['highlight-segment'] = false;
+          }
+          if (attrs['commenter-selection'] != null) {
+            // if this delta is applied to a verse that is not the current selection, this attribute
+            // should be null so when the selection changes, the verse will be correctly selected
+            attrs['commenter-selection'] = null;
+          }
         }
         if (typeof modelOp.insert === 'object') {
           // clear the formatting attributes on embeds to prevent dom elements from being corrupted,

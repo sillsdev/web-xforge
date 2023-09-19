@@ -4,7 +4,7 @@ import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
-import Quill, { DeltaStatic, RangeStatic } from 'quill';
+import Quill, { DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
@@ -34,6 +34,7 @@ import { Delta, TextDoc, TextDocId } from '../../core/models/text-doc';
 import { SFProjectService } from '../../core/sf-project.service';
 import { SharedModule } from '../shared.module';
 import { getCombinedVerseTextDoc, getEmptyChapterDoc, getPoetryVerseTextDoc, getTextDoc } from '../test-utils';
+import { getAttributesAtPosition } from './quill-scripture';
 import { TextNoteDialogComponent, TextNoteType } from './text-note-dialog/text-note-dialog.component';
 import { PresenceData, PRESENCE_EDITOR_ACTIVE_TIMEOUT, RemotePresences, TextComponent } from './text.component';
 
@@ -210,6 +211,46 @@ describe('TextComponent', () => {
     env.triggerUndo();
     const rangePostUndo: RangeStatic | undefined = env.component.getSegmentRange('s_3');
     expect(rangePostUndo).toBeTruthy();
+
+    TestEnvironment.waitForPresenceTimer();
+  }));
+
+  it('keeps verse selection after user undoes edits', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.id = new TextDocId('project01', 43, 1);
+    tick();
+    env.fixture.detectChanges();
+
+    const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+    env.component.toggleVerseSelection(new VerseRef('JHN 1:1'));
+    env.component.editor!.setSelection(range.index + 1, 'user');
+    tick();
+    env.fixture.detectChanges();
+    let contents: DeltaStatic = env.component.getSegmentContents('verse_1_1')!;
+    expect(contents.ops![0].attributes!['commenter-selection']).toBe(true);
+    expect(contents.ops![0].insert.blank).toBe(true);
+    const formats = getAttributesAtPosition(env.component.editor!, range.index);
+    // use apply delta to control the formatting
+    env.applyDelta(new Delta().retain(range.index).insert('text', formats).delete(1), 'user');
+    contents = env.component.getSegmentContents('verse_1_1')!;
+    expect(contents.ops![0].attributes!['commenter-selection']).toBe(true);
+    const verse2Range: RangeStatic = env.component.getSegmentRange('verse_1_2')!;
+    env.component.editor!.setSelection(verse2Range.index + 1, 'user');
+    env.component.toggleVerseSelection(new VerseRef('JHN 1:2'));
+    env.component.toggleVerseSelection(new VerseRef('JHN 1:1'));
+    tick();
+    env.fixture.detectChanges();
+    contents = env.component.getSegmentContents('verse_1_1')!;
+    expect(contents.ops![0].attributes!['commenter-selection']).toBeUndefined();
+
+    // SUT
+    env.triggerUndo();
+    env.component.toggleVerseSelection(new VerseRef('JHN 1:2'));
+    env.component.toggleVerseSelection(new VerseRef('JHN 1:1'));
+    contents = env.component.getSegmentContents('verse_1_1')!;
+    expect(contents.ops![0].attributes!['commenter-selection']).toBe(true);
+    expect(contents.ops![0].insert.blank).toBe(true);
 
     TestEnvironment.waitForPresenceTimer();
   }));
@@ -1329,6 +1370,12 @@ class TestEnvironment {
 
   insertText(index: number, text: string): void {
     this.component.editor!.insertText(index, text, 'user');
+    tick();
+    this.fixture.detectChanges();
+  }
+
+  applyDelta(delta: DeltaStatic, source: Sources): void {
+    this.component.editor!.updateContents(delta, source);
     tick();
     this.fixture.detectChanges();
   }
