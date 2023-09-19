@@ -30,6 +30,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE } from '../../core/models/sf-project-role-info';
@@ -228,8 +229,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     if (!this.featureFlags.scriptureAudio.enabled) {
       return false;
     }
-    const project = this.projectDoc?.data;
-    const userId = this.userService.currentUserId;
+    const project: Readonly<SFProjectProfile | undefined> = this.projectDoc?.data;
+    const userId: string = this.userService.currentUserId;
     return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Create);
   }
 
