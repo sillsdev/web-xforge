@@ -1,6 +1,6 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Canon } from '@sillsdev/scripture';
@@ -22,6 +22,8 @@ import {
   getAudioBlob
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { of } from 'rxjs';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
@@ -34,6 +36,7 @@ import {
 const mockedDialogService = mock(DialogService);
 const mockedCsvService = mock(CsvService);
 const mockedFileService = mock(FileService);
+const mockedOnlineStatusService = mock(OnlineStatusService);
 
 describe('ChapterAudioDialogComponent', () => {
   configureTestingModule(() => ({
@@ -41,7 +44,8 @@ describe('ChapterAudioDialogComponent', () => {
     providers: [
       { provide: DialogService, useMock: mockedDialogService },
       { provide: CsvService, useMock: mockedCsvService },
-      { provide: FileService, useMock: mockedFileService }
+      { provide: FileService, useMock: mockedFileService },
+      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
     ]
   }));
 
@@ -73,10 +77,10 @@ describe('ChapterAudioDialogComponent', () => {
     for (let row of result.timingData) {
       expect(row.to).not.toEqual(0);
     }
-    expect(env.component.errorMessage).toEqual('');
+    expect(env.component.timingErrorMessage).toEqual('');
   }));
 
-  it('should default selection to first chapter with question and no audio', fakeAsync(async () => {
+  it('should default selection to first chapter with question and no audio', fakeAsync(() => {
     const chapterOfFirstQuestion: Chapter = TestEnvironment.textsByBookId[
       Canon.bookNumberToId(env.question1.data?.verseRef.bookNum!)
     ].chapters.find(c => c.number === env.question1.data?.verseRef.chapterNum)!;
@@ -86,7 +90,7 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.component.chapter).toEqual(env.question1.data?.verseRef.chapterNum!);
   }));
 
-  it('defaults selection to provided book and chapter', fakeAsync(async () => {
+  it('defaults selection to provided book and chapter', fakeAsync(() => {
     const config: MatDialogConfig<ChapterAudioDialogData> = {
       data: {
         projectId: 'project01',
@@ -105,7 +109,7 @@ describe('ChapterAudioDialogComponent', () => {
     flush();
   }));
 
-  it('detects if selection has audio already', fakeAsync(async () => {
+  it('detects if selection has audio already', fakeAsync(() => {
     const firstChapterWithAudio: Chapter = Object.entries(TestEnvironment.textsByBookId)
       .map(([, value]) => value.chapters)
       .flat(1)
@@ -125,7 +129,7 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.component.selectionHasAudioAlready).toBeTruthy();
   }));
 
-  it('detects if first chapter has audio already', fakeAsync(async () => {
+  it('detects if first chapter has audio already', fakeAsync(() => {
     // Get the first chapter with audio
     const firstChapterWithAudio: Chapter = Object.entries(TestEnvironment.textsByBookId)
       .map(([, value]) => value.chapters)
@@ -156,7 +160,7 @@ describe('ChapterAudioDialogComponent', () => {
     flush();
   }));
 
-  it('populates books and chapters', fakeAsync(async () => {
+  it('populates books and chapters', fakeAsync(() => {
     expect(env.component.books.length).toEqual(2);
 
     for (let i of Object.entries(TestEnvironment.textsByBookId)) {
@@ -177,8 +181,10 @@ describe('ChapterAudioDialogComponent', () => {
 
     await env.component.audioUpdate(env.audioFile);
     await env.component.prepareTimingFileUpload(anything());
+    await env.wait();
 
-    expect(env.component.errorMessage).toContain('zero_segments');
+    expect(env.component.timingErrorMessage).toContain('zero_segments');
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
   it('shows warning if From field goes beyond audio length', fakeAsync(async () => {
@@ -192,45 +198,106 @@ describe('ChapterAudioDialogComponent', () => {
     await env.component.prepareTimingFileUpload(anything());
     await env.wait();
 
-    expect(env.component.errorMessage).toContain('timing_past_audio_length');
+    expect(env.component.timingErrorMessage).toContain('timing_past_audio_length');
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
-  it('can also parse mm:ss', fakeAsync(async () => {
+  it('can also parse mm:ss', fakeAsync(() => {
     when(mockedCsvService.parse(anything())).thenResolve([
       ['00:00', '0', 'v1'],
       ['00:01', '0', 'v2']
     ]);
 
-    await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    env.component.audioUpdate(env.audioFile);
+    env.component.prepareTimingFileUpload(anything());
 
-    expect(env.component.errorMessage).toEqual('');
+    expect(env.component.timingErrorMessage).toEqual('');
   }));
 
-  it('can also parse hh:mm:ss', fakeAsync(async () => {
+  it('can also parse hh:mm:ss', fakeAsync(() => {
     when(mockedCsvService.parse(anything())).thenResolve([
       ['00:00:00', '0', 'v1'],
       ['00:00:01', '0', 'v2']
     ]);
 
-    await env.component.audioUpdate(env.audioFile);
-    await env.component.prepareTimingFileUpload(anything());
+    env.component.audioUpdate(env.audioFile);
+    env.component.prepareTimingFileUpload(anything());
 
-    expect(env.component.errorMessage).toEqual('');
+    expect(env.component.timingErrorMessage).toEqual('');
   }));
 
-  it('will not save or upload if there is no audio', fakeAsync(async () => {
-    await env.component.prepareTimingFileUpload(anything());
-    await env.component.save();
+  it('will not save or upload if there is no audio', fakeAsync(() => {
+    env.component.prepareTimingFileUpload(anything());
+    env.component.save();
+    env.fixture.detectChanges();
 
     expect(env.numberOfTimesDialogClosed).toEqual(0);
+    expect(env.wrapperAudio.classList.contains('invalid')).toBe(true);
   }));
 
-  it('will not save or upload if there is no timing data', fakeAsync(async () => {
-    await env.component.audioUpdate(env.audioFile);
-    await env.component.save();
+  it('will not save or upload if there is no timing data', fakeAsync(() => {
+    env.component.audioUpdate(env.audioFile);
+    env.component.save();
+    env.fixture.detectChanges();
 
     expect(env.numberOfTimesDialogClosed).toEqual(0);
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
+  }));
+
+  it('can drag and drop to initiate an upload', fakeAsync(() => {
+    env.component.prepareTimingFileUpload(anything());
+    env.fixture.detectChanges();
+    const dataTransfer = new DataTransfer();
+    for (const file of TestEnvironment.uploadFiles) {
+      dataTransfer.items.add(file);
+    }
+    const dropEvent = new DragEvent('drop', { dataTransfer });
+    env.dropzoneElement.dispatchEvent(dropEvent);
+    tick();
+
+    expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
+    expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
+  }));
+
+  it('can browse to upload files', fakeAsync(() => {
+    env.component.prepareTimingFileUpload(anything());
+    env.fixture.detectChanges();
+    const dataTransfer = new DataTransfer();
+    for (const file of TestEnvironment.uploadFiles) {
+      dataTransfer.items.add(file);
+    }
+    const event = new Event('change');
+    env.fileUploadElement.files = dataTransfer.files;
+    env.fileUploadElement.dispatchEvent(event);
+    tick();
+
+    expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
+    expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
+  }));
+
+  // TODO: Enable once we have audio stub merged in
+  xit('stop playing audio if a new audio file is uploaded', fakeAsync(() => {
+    env.component.prepareTimingFileUpload(anything());
+    env.fixture.detectChanges();
+    const dataTransfer = new DataTransfer();
+    for (const file of TestEnvironment.uploadFiles) {
+      dataTransfer.items.add(file);
+    }
+    const event = new Event('change');
+    env.fileUploadElement.files = dataTransfer.files;
+    env.fileUploadElement.dispatchEvent(event);
+    tick();
+
+    expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
+    env.playAudio();
+    expect(env.component.chapterAudio!.playing).toBe(true);
+
+    // Trigger another upload event
+    env.fileUploadElement.dispatchEvent(event);
+    tick();
+
+    expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
+    expect(env.component.chapterAudio!.playing).toBe(false);
   }));
 });
 
@@ -262,6 +329,7 @@ class TestEnvironment {
     [Canon.bookNumberToId(1)]: TestEnvironment.genesisText,
     [Canon.bookNumberToId(40)]: TestEnvironment.matthewText
   };
+  static uploadFiles: File[] = [new File([], 'audio.mp3'), new File([], 'timing.csv')];
 
   readonly question1: QuestionDoc = {
     data: { text: 'Genesis 3:1 question', verseRef: { bookNum: 1, chapterNum: 3, verseNum: 1 } }
@@ -289,6 +357,7 @@ class TestEnvironment {
       };
     }
 
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
     when(mockedCsvService.parse(anything())).thenResolve([
       ['0.1', '0', 'v1'],
@@ -333,8 +402,33 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  get fileUploadElement(): HTMLInputElement {
+    return this.dropzoneElement.querySelector('input[type=file]') as HTMLInputElement;
+  }
+
+  get dropzoneElement(): HTMLElement {
+    return this.overlayContainerElement.querySelector('.dropzone') as HTMLElement;
+  }
+
   get numberOfTimesDialogClosed(): number {
     return this.numTimesClosedFired;
+  }
+
+  get wrapperAudio(): HTMLElement {
+    return this.overlayContainerElement.querySelector('.wrapper-audio') as HTMLElement;
+  }
+
+  get wrapperTiming(): HTMLElement {
+    return this.overlayContainerElement.querySelector('.wrapper-timing') as HTMLElement;
+  }
+
+  private get overlayContainerElement(): HTMLElement {
+    return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
+  }
+
+  playAudio(): void {
+    this.component.chapterAudio?.play();
+    this.fixture.detectChanges();
   }
 
   async wait(ms: number = 200): Promise<void> {

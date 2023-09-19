@@ -14,13 +14,14 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
-import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog-service';
+import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
 import {
@@ -155,6 +156,24 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     const project = this.projectDoc?.data;
     const userId = this.userService.currentUserId;
     return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Create);
+  }
+
+  get canCreateScriptureAudio(): boolean {
+    if (!this.featureFlags.scriptureAudio.enabled) {
+      return false;
+    }
+    const project: Readonly<SFProjectProfile | undefined> = this.projectDoc?.data;
+    const userId: string = this.userService.currentUserId;
+    return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Create);
+  }
+
+  get canDeleteScriptureAudio(): boolean {
+    if (!this.featureFlags.scriptureAudio.enabled) {
+      return false;
+    }
+    const project = this.projectDoc?.data;
+    const userId = this.userService.currentUserId;
+    return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Delete);
   }
 
   get canEditQuestion(): boolean {

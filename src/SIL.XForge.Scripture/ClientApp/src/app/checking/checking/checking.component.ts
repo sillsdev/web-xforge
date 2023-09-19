@@ -30,6 +30,7 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
+import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_SHARE_ROLE } from '../../core/models/sf-project-role-info';
@@ -42,7 +43,7 @@ import {
   ScriptureChooserDialogComponent,
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
-import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog-service';
+import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
@@ -222,6 +223,15 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       project != null &&
       SF_PROJECT_RIGHTS.hasRight(project, this.userService.currentUserId, SFProjectDomain.Questions, Operation.Create)
     );
+  }
+
+  get canCreateScriptureAudio(): boolean {
+    if (!this.featureFlags.scriptureAudio.enabled) {
+      return false;
+    }
+    const project: Readonly<SFProjectProfile | undefined> = this.projectDoc?.data;
+    const userId: string = this.userService.currentUserId;
+    return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Create);
   }
 
   get isRightToLeft(): boolean {

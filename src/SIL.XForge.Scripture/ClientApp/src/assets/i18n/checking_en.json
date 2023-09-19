@@ -202,12 +202,19 @@
     "tooltip_status_resolve": "Mark answer as resolved",
     "your_answer": "Your answer"
   },
-  "checking_audio_dialog": {
+  "chapter_audio_dialog": {
     "audio": "Audio",
     "audio_already_exists": "Audio already exists for this selection.",
+    "browse_files": "Browse Files",
     "cancel": "Cancel",
+    "chapter_audio": "Chapter Audio",
+    "drag_and_drop_files": "Drag and drop audio and timing files here",
+    "drag_and_drop_or_browse": "OR",
     "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
+    "no_audio_file_uploaded": "No audio file uploaded",
+    "no_timing_data_uploaded": "No timing data uploaded",
     "save": "Save",
+    "segments_found": "{{ segments }} segments found",
     "timing": "Timing",
     "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
     "upload": "Upload",

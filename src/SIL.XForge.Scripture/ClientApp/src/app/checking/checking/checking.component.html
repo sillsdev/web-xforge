@@ -96,7 +96,7 @@
                       <span>{{ t("add_question") }}</span>
                     </button>
                     <button
-                      *ngIf="featureFlags.scriptureAudio.enabled && !chapterHasAudio"
+                      *ngIf="canCreateScriptureAudio && !chapterHasAudio"
                       type="button"
                       mat-icon-button
                       (click)="addAudioTimingData()"

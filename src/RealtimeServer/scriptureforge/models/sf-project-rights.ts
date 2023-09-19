@@ -97,7 +97,7 @@ const rightsByRole: Record<SFProjectRole, { [domain in `${SFProjectDomain}`]?: `
     pt_note_threads: ['view', 'create', 'edit', 'delete'],
     sf_note_threads: ['view', 'create', 'edit', 'delete'],
     notes: ['view', 'create', 'edit_own', 'delete'],
-    text_audio: ['view', 'edit', 'create']
+    text_audio: ['view', 'edit', 'create', 'delete']
   },
   none: {}
 };
