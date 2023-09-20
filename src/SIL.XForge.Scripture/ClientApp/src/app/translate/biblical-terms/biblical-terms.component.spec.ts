@@ -42,7 +42,6 @@ import { NoteDialogComponent } from '../editor/note-dialog/note-dialog.component
 import { MockNoteDialogRef } from '../editor/editor.component.spec';
 import { BiblicalTermsComponent, BiblicalTermNoteIcon, BiblicalTermDialogIcon } from './biblical-terms.component';
 
-const mockedFeatureFlagService = mock(FeatureFlagService);
 const mockedI18nService = mock(I18nService);
 const mockedMatDialog = mock(MatDialog);
 const mockedProjectService = mock(SFProjectService);
@@ -53,7 +52,6 @@ describe('BiblicalTermsComponent', () => {
     imports: [NoopAnimationsModule, TestTranslocoModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     declarations: [BiblicalTermsComponent],
     providers: [
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: SFProjectService, useMock: mockedProjectService },
@@ -152,7 +150,6 @@ describe('BiblicalTermsComponent', () => {
 
   it('should show add if no biblical terms notes', fakeAsync(() => {
     const env = new TestEnvironment('project01', 2, 2, '2');
-    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
     env.setupProjectData('en');
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
@@ -167,14 +164,6 @@ describe('BiblicalTermsComponent', () => {
     expect(env.biblicalTermsNotesIcon.innerText).toBe(BiblicalTermNoteIcon.ReadNotesIcon);
   }));
 
-  it('should show none if no biblical terms notes and add disabled', fakeAsync(() => {
-    const env = new TestEnvironment('project01', 2, 2, '2');
-    env.setupProjectData('en');
-    env.wait();
-    expect(env.biblicalTermsTerm.length).toBe(1);
-    expect(env.biblicalTermsNotesIcon.innerText).toBe(BiblicalTermNoteIcon.NoNotesIcon);
-  }));
-
   it('should show unread biblical terms notes', fakeAsync(() => {
     const env = new TestEnvironment('project02', 3, 3);
     env.setupProjectData('en');
@@ -185,7 +174,6 @@ describe('BiblicalTermsComponent', () => {
 
   it('should not allow observers to add notes', fakeAsync(async () => {
     const env = new TestEnvironment('project02', 3, 3);
-    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
     env.setupProjectData('en', false);
     env.wait();
     expect(env.biblicalTermsTerm.length).toBe(1);
@@ -211,7 +199,6 @@ describe('BiblicalTermsComponent', () => {
   it('can save a new note thread for a biblical term', fakeAsync(() => {
     const projectId = 'project01';
     const env = new TestEnvironment(projectId, 2, 2, '2');
-    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
     env.setupProjectData('en');
     env.wait();
 
@@ -315,7 +302,6 @@ class TestEnvironment {
     when(mockedProjectService.getProfile(anything())).thenCall(sfProjectId =>
       this.realtimeService.get(SFProjectProfileDoc.COLLECTION, sfProjectId)
     );
-    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: false } as FeatureFlag);
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
     when(mockedMatDialog.openDialogs).thenCall(() => this.openNoteDialogs);
