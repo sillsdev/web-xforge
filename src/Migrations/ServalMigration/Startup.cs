@@ -119,13 +119,6 @@ public class Startup
     public void Configure(IApplicationBuilder app, IHostApplicationLifetime appLifetime)
     {
         Program.Log(@"Configuring app");
-        // Set a custom realtime port using the Realtime__Port environment variable
-        string realtimePort = Configuration["Realtime:Port"];
-        Program.Log(@$"Realtime:Port : {realtimePort}");
-        app.UseRealtimeServer();
-        app.UseSFDataAccess();
         app.UseSFServices();
-        app.UseMachine();
-        appLifetime.ApplicationStopped.Register(() => ApplicationContainer?.Dispose());
     }
 }

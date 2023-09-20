@@ -23,6 +23,10 @@ cat <<EOF > "$BUILD_OUTPUT/app/secrets.json"
     "ResourcePasswordHash": "${PARATEXT_RESOURCE_PASSWORD_HASH}",
     "ResourcePasswordBase64": "${PARATEXT_RESOURCE_PASSWORD_BASE64}"
   },
+  "Serval": {
+    "ClientId": "${SERVAL_CLIENT_ID}",
+    "ClientSecret": "${SERVAL_CLIENT_SECRET}"
+  },
   "Auth": {
     "BackendClientSecret": "${AUTH_BACKEND_SECRET}",
     "WebhookPassword": "${AUTH_WEBHOOK_PASSWORD}"
