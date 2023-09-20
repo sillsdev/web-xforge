@@ -188,7 +188,9 @@ class AudioPlayerStubComponent {
     this.audio = new AudioPlayerStub(audioFile, instance(AudioPlayerStubComponent.onlineStatusService));
   }
 
-  @Input() set source(source: string | undefined) {}
+  @Input() set source(source: string | undefined) {
+    if (source != null) this.isAudioAvailable$.next(true);
+  }
 }
 
 class TestEnvironment {
