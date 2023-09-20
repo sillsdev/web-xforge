@@ -205,6 +205,8 @@ class TestEnvironment {
           selectedBookNum: args.selectedTask == null ? undefined : args.selectedBooknum,
           isTargetTextRight: true,
           confidenceThreshold: 0.2,
+          biblicalTermsEnabled: false,
+          transliterateBiblicalTerms: false,
           translationSuggestionsEnabled: true,
           numSuggestions: 1,
           selectedSegment: '',

@@ -9,7 +9,7 @@ namespace SIL.XForge.Scripture.Services;
 
 public class SFBiblicalTermsText : IText
 {
-    private IEnumerable<TextSegment> _segments;
+    private readonly IEnumerable<TextSegment> _segments;
 
     public SFBiblicalTermsText(
         ITokenizer<string, int, string> wordTokenizer,
@@ -26,13 +26,18 @@ public class SFBiblicalTermsText : IText
 
     public string SortKey => Id;
 
-    public IEnumerable<TextSegment> GetSegments(bool includeText = true, IText basedOn = null) => _segments;
+    public IEnumerable<TextSegment> GetSegments(bool includeText = true, IText? basedOn = null) => _segments;
 
     private IEnumerable<TextSegment> GetSegments(
         ITokenizer<string, int, string> wordTokenizer,
         XDocument termRenderingsDoc
     )
     {
+        if (termRenderingsDoc.Root is null)
+        {
+            yield break;
+        }
+
         foreach (
             XElement termRenderingElem in termRenderingsDoc.Root
                 .Elements("TermRendering")
@@ -40,8 +45,9 @@ public class SFBiblicalTermsText : IText
         )
         {
             var id = (string)termRenderingElem.Attribute("Id");
-            var renderingsStr = (string)termRenderingElem.Element("Renderings");
-            string[] renderings = renderingsStr.Trim().Split("||", StringSplitOptions.RemoveEmptyEntries);
+            var renderingsStr = (string?)termRenderingElem.Element("Renderings");
+            string[] renderings =
+                renderingsStr?.Trim().Split("||", StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
 
             foreach (string rendering in renderings)
             {

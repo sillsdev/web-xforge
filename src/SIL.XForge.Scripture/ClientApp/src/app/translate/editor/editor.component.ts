@@ -31,7 +31,7 @@ import Quill, { DeltaStatic, RangeStatic } from 'quill';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
-import { NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
+import { BIBLICAL_TERM_TAG_ICON, NoteTag } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
 import {
   getNoteThreadDocId,
   NoteConflictType,
@@ -66,7 +66,7 @@ import { getLinkHTML, issuesEmailTemplate, objectId } from 'xforge-common/utils'
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { environment } from '../../../environments/environment';
 import { isString } from '../../../type-utils';
-import { NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
+import { defaultNoteThreadIcon, NoteThreadDoc, NoteThreadIcon } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SF_DEFAULT_TRANSLATE_SHARE_ROLE } from '../../core/models/sf-project-role-info';
@@ -110,6 +110,7 @@ export interface SaveNoteParameters {
   dataId?: string;
   threadDataId?: string;
   verseRef?: VerseRef;
+  biblicalTermId?: string;
 }
 
 const PUNCT_SPACE_REGEX = /^(?:\p{P}|\p{S}|\p{Cc}|\p{Z})+$/u;
@@ -140,11 +141,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
-  textHeight: string = '';
+  sourceSplitHeight: string = '';
+  targetSplitHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
   hasDraft = false;
 
+  @ViewChild('sourceSplitContainer') sourceSplitContainer?: ElementRef;
+  @ViewChild('targetSplitContainer') targetSplitContainer?: ElementRef;
   @ViewChild('targetContainer') targetContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
   @ViewChild('target') target?: TextComponent;
@@ -174,6 +178,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private targetLoaded: boolean = false;
   private _targetFocused: boolean = false;
   private _chapter?: number;
+  private _verse: string = '0';
   private lastShownSuggestions: Suggestion[] = [];
   private readonly segmentUpdated$: Subject<void>;
   private onTargetDeleteSub?: Subscription;
@@ -186,6 +191,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private toggleNoteThreadSub?: Subscription;
   private shouldNoteThreadsRespondToEdits: boolean = false;
   private commenterSelectedVerseRef?: VerseRef;
+  private resizeObserver?: ResizeObserver;
   private scrollSubscription?: Subscription;
   private readonly fabDiameter = 40;
   private readonly fabHorizMargin = 20;
@@ -267,10 +273,36 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get translationSuggestionsProjectEnabled(): boolean {
+    return this.projectDoc?.data?.translateConfig.translationSuggestionsEnabled === true;
+  }
+
+  get suggestionsSettingsEnabled(): boolean {
+    const userRole: string | undefined =
+      this.projectUserConfigDoc?.data?.ownerRef != null
+        ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc?.data?.ownerRef]
+        : undefined;
     return (
-      this.projectDoc != null &&
-      this.projectDoc.data != null &&
-      this.projectDoc.data.translateConfig.translationSuggestionsEnabled
+      (this.showSource && this.translationSuggestionsProjectEnabled) ||
+      (this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
+        userRole != null &&
+        SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.View))
+    );
+  }
+
+  get biblicalTermsEnabledForSource(): boolean {
+    // Return true if the source project has biblical terms enabled, or if the target has it enabled and the source has
+    // renderings for Biblical Terms.
+    return (
+      (this.sourceProjectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
+        this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true) ||
+      (this.biblicalTermsEnabledForTarget && this.sourceProjectDoc?.data?.biblicalTermsConfig?.hasRenderings === true)
+    );
+  }
+
+  get biblicalTermsEnabledForTarget(): boolean {
+    return (
+      this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
+      this.projectUserConfigDoc?.data?.biblicalTermsEnabled === true
     );
   }
 
@@ -282,6 +314,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   get noteTags(): NoteTag[] {
     return this.projectDoc?.data?.noteTags ?? [];
+  }
+
+  get verse(): string {
+    return this._verse;
   }
 
   get chapter(): number | undefined {
@@ -471,17 +507,20 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.projectDoc?.id;
   }
 
+  get sourceProjectId(): string | undefined {
+    return this.projectDoc?.data?.translateConfig.source?.projectRef;
+  }
+
   private get userRole(): string | undefined {
     return this.projectDoc?.data?.userRoles[this.userService.currentUserId];
   }
 
   private get hasSource(): boolean {
-    const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
-    if (this.text == null || this.currentUser === undefined || sourceId === undefined) {
+    if (this.text == null || this.currentUser === undefined || this.sourceProjectId === undefined) {
       return false;
     } else {
       const projects = this.currentUser.sites[environment.siteId].projects;
-      return this.text.hasSource && projects.includes(sourceId);
+      return this.text.hasSource && projects.includes(this.sourceProjectId);
     }
   }
 
@@ -528,6 +567,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.subscribe(fromEvent(window, 'resize'), () => {
       this.setTextHeight();
       this.resetInsertNoteFab(false);
+      this.positionInsertNoteFab();
     });
     this.subscribe(
       this.activatedRoute.params.pipe(filter(params => params['projectId'] != null && params['bookId'] != null)),
@@ -562,11 +602,14 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.userService.currentUserId
           );
 
-          const sourceId = this.projectDoc?.data?.translateConfig.source?.projectRef;
-          if (sourceId != null) {
-            const userOnProject: boolean = !!this.currentUser?.sites[environment.siteId].projects.includes(sourceId);
+          if (this.sourceProjectId != null) {
+            const userOnProject: boolean = !!this.currentUser?.sites[environment.siteId].projects.includes(
+              this.sourceProjectId
+            );
             // Only get the project doc if the user is on the project to avoid an error.
-            this.sourceProjectDoc = userOnProject ? await this.projectService.getProfile(sourceId) : undefined;
+            this.sourceProjectDoc = userOnProject
+              ? await this.projectService.getProfile(this.sourceProjectId)
+              : undefined;
           }
 
           if (this.projectUserConfigChangesSub != null) {
@@ -584,6 +627,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
         }
         this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
+
+        this.updateVerseNumber();
 
         // Set chapter from route if provided
         this.loadProjectUserConfig(chapterNum != null ? Number.parseInt(chapterNum) : undefined);
@@ -687,11 +732,13 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.projectUserConfigDoc.data.selectedChapterNum !== this._chapter ||
             this.projectUserConfigDoc.data.selectedSegment !== this.target.segmentRef)
         ) {
-          const sourceProjectRef = this.projectDoc?.data?.translateConfig.source?.projectRef;
-          if ((prevSegment == null || this.translator == null) && sourceProjectRef !== undefined) {
-            await this.translationEngineService.trainSelectedSegment(this.projectUserConfigDoc.data, sourceProjectRef);
+          if ((prevSegment == null || this.translator == null) && this.sourceProjectId !== undefined) {
+            await this.translationEngineService.trainSelectedSegment(
+              this.projectUserConfigDoc.data,
+              this.sourceProjectId
+            );
           } else {
-            await this.trainSegment(prevSegment, sourceProjectRef);
+            await this.trainSegment(prevSegment, this.sourceProjectId);
           }
           await this.projectUserConfigDoc.submitJson0Op(op => {
             op.set<string>(puc => puc.selectedTask!, 'translate');
@@ -791,6 +838,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         this.shouldNoteThreadsRespondToEdits = true;
         if (this.target?.editor != null) {
           this.positionInsertNoteFab();
+          this.observeResize(this.target.editor);
           this.subscribeScroll(this.target.editor);
 
           if (this.featureFlags.showNmtDrafting.enabled) {
@@ -831,6 +879,24 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       }
       this.multiCursorViewers = multiCursorViewers;
     }
+  }
+
+  onSegmentRefChange(segmentRef: string): void {
+    // If the segment is empty or not in a valid verse, set the verse to zero
+    // so that it can propagate correctly to the biblical terms component
+    if (segmentRef == null || this.bookNum == null) {
+      this._verse = '0';
+      return;
+    }
+
+    const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, segmentRef);
+    if (verseRef == null) {
+      this._verse = '0';
+      return;
+    }
+
+    // We use a string to account for partial (e.g. 12a) and compound (e.g. 3-4) verses
+    this._verse = verseRef.verse;
   }
 
   insertSuggestion(suggestionIndex: number, wordIndex: number, event: Event): void {
@@ -894,7 +960,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       SuggestionsSettingsDialogComponent,
       {
         autoFocus: false,
-        data: { projectUserConfigDoc: this.projectUserConfigDoc }
+        data: { projectDoc: this.projectDoc, projectUserConfigDoc: this.projectUserConfigDoc }
       }
     );
     dialogRef
@@ -1211,16 +1277,25 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private setTextHeight(): void {
-    if (this.target == null || this.targetContainer == null) {
+    if (this.target == null || this.targetSplitContainer == null) {
       return;
     }
     // this is a horrible hack to set the height of the text components
     // we don't want to use flexbox because it makes editing very slow
-    const elem: HTMLElement = this.targetContainer.nativeElement;
-    const bounds = elem.getBoundingClientRect();
-    // // add bottom padding
-    const top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
-    this.textHeight = `calc(100vh - ${top}px)`;
+    let elem: HTMLElement = this.targetSplitContainer.nativeElement;
+    let bounds = elem.getBoundingClientRect();
+    // add bottom padding
+    let top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
+    this.targetSplitHeight = `calc(100vh - ${top}px)`;
+
+    // Do the same for the source, as it will not have warnings like the target
+    if (this.source == null || this.sourceSplitContainer == null) {
+      return;
+    }
+    elem = this.sourceSplitContainer.nativeElement;
+    bounds = elem.getBoundingClientRect();
+    top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
+    this.sourceSplitHeight = `calc(100vh - ${top}px)`;
   }
 
   private async changeText(): Promise<void> {
@@ -1589,9 +1664,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     const hasNewContent: boolean = this.hasNewContent(threadDoc);
     const otherAssigned: boolean = threadDoc.isAssignedToOtherUser(this.userService.currentUserId, this.paratextUsers);
-    const icon: NoteThreadIcon = otherAssigned
-      ? threadDoc.getIconGrayed(this.noteTags)
-      : threadDoc.getIcon(this.noteTags);
+    const icon: NoteThreadIcon =
+      threadDoc.data.biblicalTermId != null
+        ? defaultNoteThreadIcon(BIBLICAL_TERM_TAG_ICON)
+        : otherAssigned
+        ? threadDoc.getIconGrayed(this.noteTags)
+        : threadDoc.getIcon(this.noteTags);
 
     return {
       verseRef,
@@ -1694,13 +1772,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private positionInsertNoteFab(): void {
-    if (this.insertNoteFab == null || this.target?.editor == null) return;
+    if (this.insertNoteFab == null || this.target?.editor == null || this.addingMobileNote) return;
+    // getSelection can steal the focus, so we should not call this if the add mobile note bottom sheet is open
     const selection: RangeStatic | null | undefined = this.target.editor.getSelection();
     if (selection != null) {
       this.insertNoteFab.nativeElement.style.top = `${this.target.selectionBoundsTop}px`;
       this.insertNoteFab.nativeElement.style.marginTop = `-${this.target.scrollPosition}px`;
     } else {
       // hide the insert note FAB when the user clicks outside of the editor
+      // and move to the top left so scrollbars are note affected
+      this.insertNoteFab.nativeElement.style.top = '0px';
+      this.insertNoteFab.nativeElement.style.marginTop = '0px';
       this.showAddCommentButton = false;
     }
   }
@@ -1744,6 +1826,26 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       this.target.toggleVerseSelection(this.commenterSelectedVerseRef);
     }
     this.commenterSelectedVerseRef = verseRef;
+  }
+
+  /**
+   * Updates the verse number, either setting it to the selected segment, or 0 if the segment is in another chapter.
+   */
+  private updateVerseNumber(): void {
+    if (
+      this.target?.segment != null &&
+      this.target.segment.bookNum === this.bookNum &&
+      this.target.segment.chapter === this.chapter
+    ) {
+      const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.bookNum, this.target.segment.ref);
+      if (verseRef != null) {
+        this._verse = verseRef.verse;
+        return;
+      }
+    }
+
+    // Default to no verse selected
+    this._verse = '0';
   }
 
   /** Determine the number of embeds that are within an anchoring.
@@ -1925,11 +2027,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     ) {
       return [];
     }
-    // only show notes that are from this chapter and is not a conflict note
+    // only show notes that are from this chapter, are notes for biblical terms, and is not a conflict note
     return this.noteThreadQuery.docs.filter(
       nt =>
         nt.data != null &&
         nt.data.notes.filter(n => !n.deleted).length > 0 &&
+        nt.data.biblicalTermId == null &&
         nt.data.notes[0].type !== NoteType.Conflict
     );
   }
@@ -1966,7 +2069,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // look for any note that has not been read and was authored by another user
     const noteRefsRead: string[] = this.projectUserConfigDoc.data.noteRefsRead;
     return thread.data.notes.some(
-      n => n.ownerRef !== this.userService.currentUserId && !noteRefsRead.includes(n.dataId)
+      n => n.ownerRef !== this.userService.currentUserId && !noteRefsRead.includes(n.dataId) && !n.deleted
     );
   }
 
@@ -2009,24 +2112,39 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.source.editor.scrollingContainer.scrollTop = newScrollTop;
   }
 
+  private observeResize(editor: Quill): void {
+    this.resizeObserver?.unobserve(editor.root);
+    this.resizeObserver = new ResizeObserver(entries => {
+      entries.forEach(_ => {
+        this.keepInsertNoteFabInView();
+      });
+    });
+    this.resizeObserver.observe(editor.root);
+  }
+
   private subscribeScroll(editor: Quill): void {
     this.scrollSubscription?.unsubscribe();
     this.scrollSubscription = this.subscribe(fromEvent(editor.root, 'scroll'), () => {
-      if (this.insertNoteFab == null || this.target == null || this.targetContainer == null) return;
-      const bounds: DOMRect = this.targetContainer.nativeElement.getBoundingClientRect();
-      const editorMargin = 5;
-
-      // bound the FAB to the top of the editor
-      let scrollTop: number = Math.min(this.target.selectionBoundsTop - editorMargin, editor.root.scrollTop);
-      // bound the FAB to the bottom of the editor
-      const targetContainerBottom: number = bounds.bottom - bounds.top - this.fabDiameter - editorMargin;
-      const minScroll: number = Math.max(this.target.selectionBoundsTop - targetContainerBottom, 0);
-      if (scrollTop < minScroll) {
-        scrollTop = minScroll;
-      }
-
-      this.insertNoteFab.nativeElement.style.marginTop = `-${scrollTop}px`;
+      this.keepInsertNoteFabInView();
     });
+  }
+
+  private keepInsertNoteFabInView(): void {
+    if (this.insertNoteFab == null || this.target == null || this.target.editor == null || this.targetContainer == null)
+      return;
+    const bounds: DOMRect = this.targetContainer.nativeElement.getBoundingClientRect();
+    const editorMargin = 5;
+
+    // bound the FAB to the top of the editor
+    let scrollTop: number = Math.min(this.target.selectionBoundsTop - editorMargin, this.target.editor.root.scrollTop);
+    // bound the FAB to the bottom of the editor
+    const targetContainerBottom: number = bounds.bottom - bounds.top - this.fabDiameter - editorMargin;
+    const minScroll: number = Math.max(this.target.selectionBoundsTop - targetContainerBottom, 0);
+    if (scrollTop < minScroll) {
+      scrollTop = minScroll;
+    }
+
+    this.insertNoteFab.nativeElement.style.marginTop = `-${scrollTop}px`;
   }
 
   private checkForPreTranslations(): void {

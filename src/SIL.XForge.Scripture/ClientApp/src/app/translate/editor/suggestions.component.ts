@@ -33,11 +33,11 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
 
   private _text?: TextComponent;
   private _suggestions: Suggestion[] = [];
+  private resizeObserver?: ResizeObserver;
   private top: number = 0;
 
   constructor(private readonly elemRef: ElementRef) {
     super();
-    this.subscribe(fromEvent(window, 'resize'), () => this.setPosition());
     this.show = false;
     this.root.style.left = '0px';
     this.root.style.top = '0px';
@@ -144,6 +144,7 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
       return;
     }
 
+    this.observeResize(this.editor);
     this.subscribe(fromEvent(this.editor.root, 'scroll'), () => this.setPosition());
     this.subscribe(
       fromEvent<KeyboardEvent>(this.editor.root, 'keydown').pipe(filter(event => this.isSuggestionEvent(event))),
@@ -194,12 +195,25 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
     );
   }
 
+  private observeResize(editor: Quill): void {
+    this.resizeObserver?.unobserve(editor.root);
+    this.resizeObserver = new ResizeObserver(entries => {
+      entries.forEach(_ => {
+        this.setPosition();
+      });
+    });
+    this.resizeObserver.observe(editor.root);
+  }
+
   private setPosition(): void {
     if (this.editor == null) {
       return;
     }
     const selection = this.editor.getSelection();
     if (selection == null) {
+      // Reset to the top left, as the suggestions are hidden
+      this.root.style.left = '0px';
+      this.root.style.top = '0px';
       return;
     }
     // If the segment is blank, then the selection is after the blank. We want to align the suggestion to the beginning
