@@ -8,12 +8,12 @@
   <mat-dialog-content class="content-padding" [ngClass]="{ rtl: isRtl, ltr: !isRtl }">
     <div class="text-row">
       <div class="text">
-        <div *ngIf="!isNewNote" class="note-text" [innerHTML]="getNoteContextText()"></div>
-        <div *ngIf="isNewNote" class="note-text" [innerHTML]="segmentText"></div>
+        <div *ngIf="!isNewNote || isBiblicalTermNote" class="note-text" [innerHTML]="getNoteContextText()"></div>
+        <div *ngIf="isNewNote && !isBiblicalTermNote" class="note-text" [innerHTML]="segmentText"></div>
         <div *ngIf="showSegmentText" class="segment-text" [innerHTML]="segmentText"></div>
       </div>
       <button
-        *ngIf="!isNewNote && isSegmentDifferentFromContext"
+        *ngIf="!isNewNote && !isBiblicalTermNote && isSegmentDifferentFromContext"
         id="text-menu-button"
         mat-icon-button
         [matMenuTriggerFor]="menu"

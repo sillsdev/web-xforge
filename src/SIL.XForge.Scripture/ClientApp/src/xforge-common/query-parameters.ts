@@ -18,7 +18,11 @@ export interface EqFilter {
   $eq: PrimitiveType;
 }
 
-export type Filter = PrimitiveType | RegexFilter | InFilter | EqFilter;
+export interface NeFilter {
+  $ne: PrimitiveType | null;
+}
+
+export type Filter = PrimitiveType | RegexFilter | InFilter | EqFilter | NeFilter;
 
 export interface Filters {
   [path: string]: Filter | Filters[] | undefined;

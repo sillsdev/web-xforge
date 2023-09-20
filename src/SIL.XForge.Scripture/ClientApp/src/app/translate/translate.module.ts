@@ -1,9 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { TranslocoModule } from '@ngneat/transloco';
+import { AngularSplitModule } from 'angular-split';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SharedModule } from '../shared/shared.module';
+import { BiblicalTermDialogComponent } from './biblical-terms/biblical-term-dialog.component';
+import { BiblicalTermsComponent } from './biblical-terms/biblical-terms.component';
 import { DraftGenerationComponent } from './draft-generation/draft-generation.component';
 import { DraftViewerComponent } from './draft-generation/draft-viewer/draft-viewer.component';
 import { EditorComponent } from './editor/editor.component';
@@ -17,6 +20,8 @@ import { TranslateRoutingModule } from './translate-routing.module';
 
 @NgModule({
   declarations: [
+    BiblicalTermDialogComponent,
+    BiblicalTermsComponent,
     EditorComponent,
     MultiViewerComponent,
     NoteDialogComponent,
@@ -27,6 +32,14 @@ import { TranslateRoutingModule } from './translate-routing.module';
     DraftGenerationComponent,
     DraftViewerComponent
   ],
-  imports: [TranslateRoutingModule, CommonModule, SharedModule, UICommonModule, XForgeCommonModule, TranslocoModule]
+  imports: [
+    AngularSplitModule,
+    TranslateRoutingModule,
+    CommonModule,
+    SharedModule,
+    UICommonModule,
+    XForgeCommonModule,
+    TranslocoModule
+  ]
 })
 export class TranslateModule {}

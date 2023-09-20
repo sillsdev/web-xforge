@@ -1,42 +1,70 @@
 <ng-container *transloco="let t; read: 'suggestions_settings_dialog'">
-  <h1 mat-dialog-title>{{ t("translation_suggestions_settings") }}</h1>
+  <h1 mat-dialog-title>{{ t("translator_settings") }}</h1>
   <div class="offline-text" *ngIf="!onlineStatusService.isOnline">
     {{ t("settings_not_available_offline") }}
   </div>
   <mat-dialog-content>
-    <mat-slide-toggle
-      id="suggestions-enabled-switch"
-      [formControl]="suggestionsEnabledSwitch"
-      (change)="setTranslationSettingsEnabled($event.checked)"
-    >
-      {{ t("translation_suggestions") }}
-    </mat-slide-toggle>
-    <mat-form-field appearance="outline">
-      <mat-label>{{ t("number_of_suggestions") }}</mat-label>
-      <mat-select id="num-suggestions-select" [disabled]="settingsDisabled" [(ngModel)]="numSuggestions">
-        <mat-option *ngFor="let value of ['1', '2', '3', '4', '5']" [value]="value">
-          {{ value }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-    <div class="suggestions-confidence-field">
-      <span class="minor-header">{{ t("suggestion_confidence") }}</span>
-      <div class="slider-labels">
-        <span>{{ t("more") }}</span>
-        <span>{{ confidenceThreshold }}%</span>
-        <span>{{ t("better") }}</span>
+    <div class="row">
+      <div class="col">
+        <mat-slide-toggle
+          id="suggestions-enabled-switch"
+          [formControl]="suggestionsEnabledSwitch"
+          (change)="setTranslationSettingsEnabled($event.checked)"
+        >
+          {{ t("translation_suggestions") }}
+        </mat-slide-toggle>
+        <mat-form-field appearance="outline">
+          <mat-label>{{ t("number_of_suggestions") }}</mat-label>
+          <mat-select
+            id="num-suggestions-select"
+            [disabled]="translationSuggestionsDisabled"
+            [(ngModel)]="numSuggestions"
+          >
+            <mat-option *ngFor="let value of ['1', '2', '3', '4', '5']" [value]="value">
+              {{ value }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
       </div>
-      <mat-slider
-        id="confidence-threshold-slider"
-        [disabled]="settingsDisabled"
-        [min]="0"
-        [max]="100"
-        [(ngModel)]="confidenceThreshold"
-        (input)="confidenceThreshold = $event.value ?? 0"
-      ></mat-slider>
+      <div class="suggestions-confidence-field col">
+        <span class="minor-header">{{ t("suggestion_confidence") }}</span>
+        <div class="slider-labels">
+          <span>{{ t("more") }}</span>
+          <span>{{ confidenceThreshold }}%</span>
+          <span>{{ t("better") }}</span>
+        </div>
+        <mat-slider
+          id="confidence-threshold-slider"
+          [disabled]="translationSuggestionsDisabled"
+          [min]="0"
+          [max]="100"
+          [(ngModel)]="confidenceThreshold"
+          (input)="confidenceThreshold = $event.value ?? 0"
+        ></mat-slider>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <mat-slide-toggle
+          id="biblical-terms-enabled-switch"
+          [formControl]="biblicalTermsEnabledSwitch"
+          (change)="setBiblicalTermsEnabled($event.checked)"
+        >
+          {{ t("biblical_terms") }}
+        </mat-slide-toggle>
+      </div>
+      <div class="col">
+        <mat-slide-toggle
+          id="transliterate-biblical-terms-switch"
+          [formControl]="transliterateBiblicalTermsSwitch"
+          (change)="setTransliterateBiblicalTerms($event.checked)"
+        >
+          {{ t("transliterate_biblical_terms") }}
+        </mat-slide-toggle>
+      </div>
     </div>
   </mat-dialog-content>
-  <mat-dialog-actions fxLayoutAlign="end">
+  <mat-dialog-actions>
     <button mat-button mat-dialog-close>{{ t("close") }}</button>
   </mat-dialog-actions>
 </ng-container>

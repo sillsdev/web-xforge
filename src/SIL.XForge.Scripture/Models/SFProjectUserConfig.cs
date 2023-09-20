@@ -7,7 +7,7 @@ public class SFProjectUserConfig : ProjectData
 {
     public static string GetDocId(string projectId, string userId) => $"{projectId}:{userId}";
 
-    public string SelectedTask { get; set; }
+    public string? SelectedTask { get; set; }
     public int? SelectedBookNum { get; set; }
     public int? SelectedChapterNum { get; set; }
 
@@ -26,5 +26,6 @@ public class SFProjectUserConfig : ProjectData
     public List<string> QuestionRefsRead { get; set; } = new List<string>();
     public List<string> AnswerRefsRead { get; set; } = new List<string>();
     public List<string> CommentRefsRead { get; set; } = new List<string>();
-    public string SelectedQuestionRef { get; set; }
+    public string? SelectedQuestionRef { get; set; }
+    public bool BiblicalTermsEnabled { get; set; }
 }

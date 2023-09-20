@@ -24,6 +24,7 @@ const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   shortName: true,
   writingSystem: true,
   isRightToLeft: true,
+  biblicalTermsConfig: true,
   editable: true,
   defaultFontSize: true,
   defaultFont: true,
@@ -293,6 +294,21 @@ export class SFProjectService extends ProjectService<SFProject> {
       },
       maxGeneratedUsersPerShareKey: {
         bsonType: 'int'
+      },
+      biblicalTermsConfig: {
+        bsonType: 'object',
+        properties: {
+          biblicalTermsEnabled: {
+            bsonType: 'bool'
+          },
+          errorMessage: {
+            bsonType: 'string'
+          },
+          hasRenderings: {
+            bsonType: 'bool'
+          }
+        },
+        additionalProperties: false
       },
       paratextUsers: {
         bsonType: 'array',

@@ -37,6 +37,7 @@ public static class SFRealtimeServiceCollectionExtensions
                         new DocConfig("questions", typeof(Question)),
                         new DocConfig("note_threads", typeof(NoteThread)),
                         new DocConfig("text_audio", typeof(TextAudio)),
+                        new DocConfig("biblical_terms", typeof(BiblicalTerm)),
                     }
                 );
                 o.UserDataDocs.AddRange(

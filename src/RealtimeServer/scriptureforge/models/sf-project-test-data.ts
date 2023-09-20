@@ -32,6 +32,10 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
       dateLastSuccessfulSync: new Date('2020-01-01').toISOString(),
       dataInSync: true
     },
+    biblicalTermsConfig: {
+      biblicalTermsEnabled: false,
+      hasRenderings: false
+    },
     editable: true,
     defaultFontSize: 12,
     defaultFont: 'Charis SIL',

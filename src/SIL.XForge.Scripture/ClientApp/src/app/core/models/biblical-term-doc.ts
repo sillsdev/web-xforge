@@ -1,0 +1,31 @@
+import {
+  BiblicalTerm,
+  BIBLICAL_TERM_COLLECTION,
+  BIBLICAL_TERM_INDEX_PATHS
+} from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
+import { ProjectDataDoc } from 'xforge-common/models/project-data-doc';
+
+export class BiblicalTermDoc extends ProjectDataDoc<BiblicalTerm> {
+  static readonly COLLECTION = BIBLICAL_TERM_COLLECTION;
+  static readonly INDEX_PATHS = BIBLICAL_TERM_INDEX_PATHS;
+
+  getBiblicalTermCategory(userLocaleCode: string, defaultLocaleCode: string): string {
+    if (this.data?.definitions.hasOwnProperty(userLocaleCode)) {
+      return this.data.definitions[userLocaleCode].categories.join(', ');
+    } else if (this.data?.definitions.hasOwnProperty(defaultLocaleCode)) {
+      return this.data.definitions[defaultLocaleCode].categories.join(', ');
+    } else {
+      return '';
+    }
+  }
+
+  getBiblicalTermGloss(userLocaleCode: string, defaultLocaleCode: string): string {
+    if (this.data?.definitions.hasOwnProperty(userLocaleCode)) {
+      return this.data.definitions[userLocaleCode].gloss;
+    } else if (this.data?.definitions.hasOwnProperty(defaultLocaleCode)) {
+      return this.data.definitions[defaultLocaleCode].gloss;
+    } else {
+      return '';
+    }
+  }
+}

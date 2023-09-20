@@ -1,4 +1,5 @@
 import { ProjectData, PROJECT_DATA_INDEX_PATHS } from '../../common/models/project-data';
+import { BiblicalTermNoteHeadingInfo } from './biblical-term-note-heading-info';
 import { Note } from './note';
 import { TextAnchor } from './text-anchor';
 import { VerseRefData } from './verse-ref-data';
@@ -65,4 +66,6 @@ export interface NoteThread extends ProjectData {
   status: NoteStatus;
   publishedToSF?: boolean;
   assignment?: string;
+  biblicalTermId?: string;
+  extraHeadingInfo?: BiblicalTermNoteHeadingInfo;
 }
