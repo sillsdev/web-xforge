@@ -45,7 +45,7 @@ describe('BiblicalTermDialogComponent', () => {
     env.wait();
 
     env.openDialog('id01');
-    expect(env.term.value).toBe('termId01 --- gloss01_en --- notes01_en');
+    expect(env.definition).toBe('termId01 --- gloss01_en --- notes01_en');
     expect(env.renderings.value).toBe('rendering01');
     expect(env.description.value).toBe('description01');
     env.closeDialog();
@@ -57,7 +57,7 @@ describe('BiblicalTermDialogComponent', () => {
     env.wait();
 
     env.openDialog('id01');
-    expect(env.term.value).toBe('termId01 --- gloss01_fr --- notes01_fr');
+    expect(env.definition).toBe('termId01 --- gloss01_fr --- notes01_fr');
     expect(env.renderings.value).toBe('rendering01');
     expect(env.description.value).toBe('description01');
     env.closeDialog();
@@ -70,7 +70,7 @@ describe('BiblicalTermDialogComponent', () => {
 
     env.openDialog('id01');
     expect(I18nService.defaultLocale.canonicalTag).toBe('en');
-    expect(env.term.value).toBe('termId01 --- gloss01_en --- notes01_en');
+    expect(env.definition).toBe('termId01 --- gloss01_en --- notes01_en');
     expect(env.renderings.value).toBe('rendering01');
     expect(env.description.value).toBe('description01');
     env.closeDialog();
@@ -83,7 +83,7 @@ describe('BiblicalTermDialogComponent', () => {
 
     env.openDialog('id02');
     expect(I18nService.defaultLocale.canonicalTag).toBe('en');
-    expect(env.term.value).toBe('termId02');
+    expect(env.definition).toBe('termId02');
     expect(env.renderings.value).toBe('');
     expect(env.description.value).toBe('description02');
     env.closeDialog();
@@ -96,7 +96,7 @@ describe('BiblicalTermDialogComponent', () => {
     env.wait();
 
     env.openDialog('id01');
-    expect(env.term.value).toBe('transliteration01 --- gloss01_en --- notes01_en');
+    expect(env.definition).toBe('transliteration01 --- gloss01_en --- notes01_en');
     expect(env.renderings.value).toBe('rendering01');
     expect(env.description.value).toBe('description01');
     env.closeDialog();
@@ -175,8 +175,8 @@ class TestEnvironment {
     return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
-  get term(): HTMLTextAreaElement {
-    return this.overlayContainerElement.querySelector('#term') as HTMLTextAreaElement;
+  get definition(): string | null {
+    return this.overlayContainerElement.querySelector('#definition')?.textContent ?? null;
   }
 
   get renderings(): HTMLTextAreaElement {
