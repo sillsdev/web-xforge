@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using System.Reflection;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
@@ -56,6 +57,19 @@ public class Program
         IWebHostBuilder builder = CreateWebHostBuilder(args);
         IWebHost webHost = builder.Build();
 
+        try
+        {
+            await webHost.StartAsync();
+        }
+        catch (HttpRequestException)
+        {
+            Log(
+                "There was an error starting the program before getting to the migration"
+                    + " part. Maybe the SF server is running and needs shut down? Rethrowing."
+            );
+            throw;
+        }
+
         // Get the project IDs and admin IDs, if they were set in the environment variables
         string[] sfProjectIdsToMigrate = sfProjectIdsSubset?.Split(' ') ?? Array.Empty<string>();
         Dictionary<string, string> sfAdminsToUse = new Dictionary<string, string>();
@@ -103,6 +117,9 @@ public class Program
             .SetBasePath(Directory.GetCurrentDirectory())
             .Build();
 
+        // Random, big number.
+        int migratorDotnetPort = 39570;
+
         return builder
             .ConfigureAppConfiguration(
                 (context, config) =>
@@ -127,6 +144,13 @@ public class Program
                 }
             )
             .UseConfiguration(configuration)
+            .ConfigureKestrel(
+                options =>
+                    // Listen to a different port than the default. Then it won't have a
+                    // conflict if SF is running. And specific, rather than just available, to
+                    // make sure we really won't be handling user requests.
+                    options.Listen(IPAddress.Loopback, migratorDotnetPort)
+            )
             .UseStartup<Startup>();
     }
 }

@@ -1,0 +1,31 @@
+#!/bin/bash
+# Build for running on another computer.
+# This is turning into a bit of a kludge, in order for the product filename to contain the date,
+# the contents to be contained within a top-level folder, and not leave old intermediate production
+# files laying around. But it works.
+#
+# Usage: ./build-production
+#
+# May require adding <RuntimeIdentifier>linux-x64</RuntimeIdentifier> to SIL.XForge.Scripture.csproj.
+#
+# To run product on another computer:
+# Set ASPNETCORE_ENVIRONMENT to Development on a workstation, Staging for QA, or omit it for Live.
+# Set SYNC_SET to "<project_1_ID> <project_2_ID> ... <project_N_ID>" to limit projects
+# Extract program:
+#   tar xf serval-migration-*.tar.xz
+# Run:
+#   ASPNETCORE_ENVIRONMENT=Development SF_APP_DIR="/path/to/sf/app" \
+#   Serval__TokenUrl=???? Serval__ClientSecret=???? Serval__ClientId=??? Serval__ApiServer=??? \
+#   serval-migration-*/ServalMigration
+
+set -ue -o pipefail
+
+outputProductName="serval-migration-$(date '+%Y%m%d%H%M%S')"
+outputDir="bin/${outputProductName}"
+dotnet publish --runtime "linux-x64" --self-contained -o "${outputDir}"
+package="$(mktemp -d)/${outputProductName}.tar.xz"
+cd "${outputDir}/.."
+tar cfJ "${package}" ${outputProductName}
+cd -
+rm -rf "${outputDir}"
+echo Product: ${package}
