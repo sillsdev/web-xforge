@@ -125,7 +125,6 @@ class Row {
       this.projectUserConfigDoc?.data?.ownerRef != null
         ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc.data.ownerRef]
         : undefined;
-    console.log(userRole);
     const hasNotePermission: boolean =
       userRole == null ? false : SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.Notes, Operation.Create);
     return hasNotePermission && this.featureFlags.allowAddingNotes.enabled;
