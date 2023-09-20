@@ -1,10 +1,7 @@
 <ng-container *transloco="let t; read: 'biblical_term_dialog'">
   <h1 mat-dialog-title>{{ t(canEdit() ? "edit_renderings" : "view_renderings") }}</h1>
   <mat-dialog-content>
-    <mat-form-field [formGroup]="form" appearance="outline">
-      <mat-label>{{ t("term") }}</mat-label>
-      <textarea appAutofocus matInput cdkTextareaAutosize id="term" formControlName="term" readonly="true"></textarea>
-    </mat-form-field>
+    <div id="term">{{ definition }}</div>
     <mat-form-field [formGroup]="form" appearance="outline">
       <mat-label>{{ t("renderings") }}</mat-label>
       <textarea
