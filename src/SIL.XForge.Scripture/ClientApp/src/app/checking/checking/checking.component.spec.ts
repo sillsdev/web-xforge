@@ -2,7 +2,7 @@ import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { Location } from '@angular/common';
 import { DebugElement, NgZone } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatButtonHarness } from '@angular/material/button/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { MatMenuHarness } from '@angular/material/menu/testing';
@@ -1766,6 +1766,20 @@ describe('CheckingComponent', () => {
       flush();
 
       expect(env.component.showScriptureAudioPlayer).toBe(true);
+    }));
+
+    it('pauses audio on reload (changing book)', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER, 'ALL', undefined, true);
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      const chapterAudio = mock(CheckingScriptureAudioPlayerComponent);
+      env.component.scriptureAudioPlayer = instance(chapterAudio);
+
+      env.setBookId('MAT');
+      env.waitForQuestionTimersToComplete();
+
+      verify(chapterAudio.pause()).once();
     }));
   });
 });

@@ -162,7 +162,7 @@ export class AudioPlayer extends SubscriptionDisposable {
   }
 
   stop(): void {
-    this.audio.pause();
+    this.pause();
     this.currentTime = 0;
   }
 

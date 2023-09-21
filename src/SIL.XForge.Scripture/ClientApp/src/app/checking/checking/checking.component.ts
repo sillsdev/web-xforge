@@ -314,6 +314,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.text = this.projectDoc.data.texts.find(t => t.bookNum === book);
     this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
     this._chapter = undefined;
+    this._scriptureAudioPlayer?.pause();
     this.triggerUpdate();
   }
 
@@ -476,7 +477,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         this.textAudioQuery = await this.projectService.queryAudioText(projectId);
         this.textAudioQuery.remoteChanges$.subscribe(() => {
           if (this.chapterAudioSource === '') {
-            this.showScriptureAudioPlayer = false;
+            this.hideChapterAudio();
           }
         });
         const prevBook = this.book;
