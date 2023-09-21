@@ -17,14 +17,14 @@ export interface BiblicalTermDialogData {
 
 @Component({
   templateUrl: './biblical-term-dialog.component.html',
-  styleUrls: ['./biblical-term-dialog.component.css']
+  styleUrls: ['./biblical-term-dialog.component.scss']
 })
 export class BiblicalTermDialogComponent extends SubscriptionDisposable {
-  term = new UntypedFormControl();
+  definition: string = '';
+
   renderings = new UntypedFormControl();
   description = new UntypedFormControl();
   form = new UntypedFormGroup({
-    term: this.term,
     renderings: this.renderings,
     description: this.description
   });
@@ -42,7 +42,7 @@ export class BiblicalTermDialogComponent extends SubscriptionDisposable {
     this.biblicalTermDoc = data.biblicalTermDoc;
     this.projectDoc = data.projectDoc;
     this.projectUserConfigDoc = data.projectUserConfigDoc;
-    this.term.setValue(this.getTermDefinition());
+    this.definition = this.getTermDefinition();
     this.renderings.setValue(this.biblicalTermDoc.data?.renderings.join('\n'));
     this.description.setValue(this.biblicalTermDoc.data?.description);
   }
