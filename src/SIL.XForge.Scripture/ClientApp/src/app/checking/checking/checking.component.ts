@@ -150,6 +150,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private text?: TextInfo;
   private isProjectAdmin: boolean = false;
   private _scriptureAudioPlayer?: CheckingScriptureAudioPlayerComponent;
+  private _scriptureAreaMaxSize: number | null = null;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -443,8 +444,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   /** Percentage of the vertical space of the as-splitter, needed by just the Scripture audio player. */
-  private get scriptureAudioPlayerHeightPercent(): number {
+  get scriptureAudioPlayerHeightPercent(): number {
     return (this.scriptureAudioPlayerAreaHeight / this.splitContainerElementHeight) * 100;
+  }
+
+  /** maxSize for as-split-area for the Scripture+audio area. */
+  public get scriptureAreaMaxSize(): number | null {
+    return this._scriptureAreaMaxSize;
+  }
+
+  set scriptureAreaMaxSize(value: number | null) {
+    this._scriptureAreaMaxSize = value;
   }
 
   ngOnInit(): void {
@@ -1131,6 +1141,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       if (this.hideChapterText) {
         const answerPanelHeight = 100 - this.scriptureAudioPlayerHeightPercent;
         this.splitComponent?.setVisibleAreaSizes([this.scriptureAudioPlayerHeightPercent, answerPanelHeight]);
+        this.scriptureAreaMaxSize = this.scriptureAudioPlayerHeightPercent;
       } else {
         let answerPanelHeight: number;
         if (maximizeAnswerPanel) {
@@ -1143,6 +1154,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         const scripturePanelHeight = 100 - answerPanelHeight;
 
         this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
+        this.scriptureAreaMaxSize = null;
       }
     }, changeUpdateDelayMs);
   }
