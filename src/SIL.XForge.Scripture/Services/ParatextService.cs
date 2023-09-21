@@ -2530,8 +2530,11 @@ public class ParatextService : DisposableBase, IParatextService
                 {
                     var comment = (Paratext.Data.ProjectComments.Comment)matchedComment.Clone();
 
-                    // We can only update a note if the comment and note have the same version number
-                    if (note.VersionNumber == comment.VersionNumber)
+                    // We can only update a note if the comment and note have the same version number.
+                    // Or if the note is authored by a commenter, set the comment content to be the SF note content
+                    bool isCommenterNote =
+                        ptProjectUsers.Values.SingleOrDefault(p => p.SFUserId == note.OwnerRef) == null;
+                    if (note.VersionNumber == comment.VersionNumber || isCommenterNote)
                     {
                         bool commentUpdated = false;
                         if (note.Editable == true && note.Deleted && !comment.Deleted)
@@ -2548,6 +2551,7 @@ public class ParatextService : DisposableBase, IParatextService
                                 if (comment.Contents == null)
                                     comment.AddTextToContent(string.Empty, false);
                                 comment.Contents!.InnerXml = xml;
+                                comment.VersionNumber++;
                                 commentUpdated = true;
                             }
                             catch (XmlException)
@@ -2819,6 +2823,7 @@ public class ParatextService : DisposableBase, IParatextService
                     ? new[] { sfNoteTagId.ToString() }
                     : null
                 : new[] { note.TagId.ToString() };
+        comment.VersionNumber = note.VersionNumber ?? 1;
     }
 
     private Note CreateNoteFromComment(
