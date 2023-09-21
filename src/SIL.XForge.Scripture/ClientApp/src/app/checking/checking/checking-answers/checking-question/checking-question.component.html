@@ -1,48 +1,36 @@
 <ng-container *transloco="let t; read: 'checking_questions'">
-  <app-single-button-audio-player
-    #scriptureAudio
-    *ngIf="scriptureAudioUrl"
-    id="scriptureAudio"
-    [class]="focusedText"
-    [source]="scriptureAudioUrl"
-    [start]="scriptureAudioStart"
-    [end]="scriptureAudioEnd"
-    (click)="playScripture()"
-  >
-    <mat-icon>{{ scriptureAudio.playing ? "stop" : "play_arrow" }}</mat-icon>
-  </app-single-button-audio-player>
-  <app-single-button-audio-player
-    #questionAudio
-    *ngIf="questionAudioUrl"
-    id="questionAudio"
-    [class]="focusedText"
-    [source]="questionAudioUrl"
-    (click)="playQuestion()"
-  >
-    <mat-icon>{{ questionAudio.playing ? "stop" : "play_arrow" }}</mat-icon>
-  </app-single-button-audio-player>
-  <div class="question-wrapper">
-    <div class="scripture-audio" *ngIf="scriptureAudioUrl">
-      <p [class]="focusedText">
+  <div>
+    <div class="scripture-audio" [class]="focusedText" *ngIf="scriptureAudioUrl != null">
+      <span class="spacer" *ngIf="questionAudioUrl"></span>
+      <app-single-button-audio-player
+        #scriptureAudio
+        id="scriptureAudio"
+        [class]="focusedText"
+        [source]="scriptureAudioUrl"
+        [start]="scriptureAudioStart"
+        [end]="scriptureAudioEnd"
+        (click)="playScripture()"
+      >
+        <mat-icon>{{ scriptureAudio.playing ? "stop" : "play_arrow" }}</mat-icon>
+      </app-single-button-audio-player>
+      <p (click)="selectScripture()">
         {{ t("scripture_audio_label", { referenceForDisplay: referenceForDisplay }) }}
-        <mat-icon *ngIf="focusedText === 'question-audio-label'" (click)="selectScripture()">
-          play_circle_outline
-        </mat-icon>
       </p>
     </div>
-    <div class="question-text">
-      <p [class]="focusedText" *ngIf="questionAudioUrl || !scriptureAudioUrl">
-        {{ questionText }}
-        <mat-icon *ngIf="focusedText === 'scripture-audio-label'" (click)="selectQuestion()">
-          play_circle_outline
-        </mat-icon>
-      </p>
-      <p
+
+    <div class="question-text" [class]="focusedText">
+      <span class="spacer"></span>
+      <app-single-button-audio-player
+        #questionAudio
+        *ngIf="questionAudioUrl"
+        id="questionAudio"
         [class]="focusedText"
-        *ngIf="!(questionAudioUrl || !scriptureAudioUrl)"
-        (click)="selectQuestion()"
-        class="clickable"
+        [source]="questionAudioUrl"
+        (click)="playQuestion()"
       >
+        <mat-icon>{{ questionAudio.playing ? "stop" : "play_arrow" }}</mat-icon>
+      </app-single-button-audio-player>
+      <p (click)="selectQuestion()">
         {{ questionText }}
       </p>
     </div>
