@@ -14,7 +14,11 @@ public class MemoryExceptionHandler : IExceptionHandler
     {
         if (!response.IsSuccessStatusCode)
         {
-            throw new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+            throw new HttpRequestException(
+                await ExceptionHandler.CreateHttpRequestErrorMessage(response),
+                null,
+                response.StatusCode
+            );
         }
     }
 

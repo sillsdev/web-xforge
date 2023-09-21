@@ -536,17 +536,28 @@ public class ParatextService : DisposableBase, IParatextService
             // Default to no permissions for projects used as sources
             return TextInfoPermission.None;
         }
-        using ParatextAccessLock accessLock = await GetParatextAccessLock(sfUserId, token);
-        bool canRead = SFInstallableDblResource.CheckResourcePermission(
-            paratextId,
-            accessLock.UserSecret,
-            _paratextOptions.Value,
-            _restClientFactory,
-            _fileSystemService,
-            _jwtTokenHelper,
-            _exceptionHandler,
-            _dblServerUri
-        );
+
+        bool canRead;
+        try
+        {
+            using ParatextAccessLock accessLock = await GetParatextAccessLock(sfUserId, token);
+            canRead = SFInstallableDblResource.CheckResourcePermission(
+                paratextId,
+                accessLock.UserSecret,
+                _paratextOptions.Value,
+                _restClientFactory,
+                _fileSystemService,
+                _jwtTokenHelper,
+                _exceptionHandler,
+                _dblServerUri
+            );
+        }
+        catch (HttpRequestException e) when (e.StatusCode == HttpStatusCode.BadRequest)
+        {
+            // We only trap 400 bad requests, as other exceptions will be connection related
+            canRead = false;
+        }
+
         return canRead ? TextInfoPermission.Read : TextInfoPermission.None;
     }
 

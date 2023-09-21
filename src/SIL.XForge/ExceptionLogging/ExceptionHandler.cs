@@ -39,7 +39,11 @@ public class ExceptionHandler : IExceptionHandler
     {
         if (!response.IsSuccessStatusCode)
         {
-            var exception = new HttpRequestException(await ExceptionHandler.CreateHttpRequestErrorMessage(response));
+            var exception = new HttpRequestException(
+                await CreateHttpRequestErrorMessage(response),
+                null,
+                response.StatusCode
+            );
             ReportException(exception);
             throw exception;
         }

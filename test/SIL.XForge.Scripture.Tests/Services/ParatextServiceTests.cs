@@ -382,6 +382,35 @@ public class ParatextServiceTests
     }
 
     [Test]
+    public async Task GetResourcePermissionAsync_UserNoResourcePermissionOn400BadRequest()
+    {
+        // Set up environment
+        var env = new TestEnvironment();
+        env.MockJwtTokenHelper
+            .RefreshAccessTokenAsync(
+                Arg.Any<ParatextOptions>(),
+                Arg.Any<Tokens>(),
+                Arg.Any<HttpClient>(),
+                CancellationToken.None
+            )
+            .Throws(new HttpRequestException("Bad Request", null, HttpStatusCode.BadRequest));
+
+        // SUT
+        var paratextId = env.Resource2Id;
+        var permission = await env.Service.GetResourcePermissionAsync(paratextId, env.User01, CancellationToken.None);
+
+        Assert.That(permission, Is.EqualTo(TextInfoPermission.None));
+        await env.MockJwtTokenHelper
+            .Received()
+            .RefreshAccessTokenAsync(
+                Arg.Any<ParatextOptions>(),
+                Arg.Any<Tokens>(),
+                Arg.Any<HttpClient>(),
+                CancellationToken.None
+            );
+    }
+
+    [Test]
     public async Task GetResourcePermissionAsync_UserResourcePermission()
     {
         // Set up environment
