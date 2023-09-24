@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -531,7 +532,14 @@ describe('QuestionDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule, NoopAnimationsModule],
+  imports: [
+    CommonModule,
+    UICommonModule,
+    CheckingModule,
+    TestTranslocoModule,
+    NoopAnimationsModule,
+    HttpClientTestingModule
+  ],
   declarations: [ScriptureChooserDialogComponent],
   exports: [ScriptureChooserDialogComponent]
 })

@@ -1,3 +1,4 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -55,7 +56,7 @@ const mockedConsole: MockConsole = MockConsole.install();
 
 describe('AuthService', () => {
   configureTestingModule(() => ({
-    imports: [RouterTestingModule, TestTranslocoModule],
+    imports: [RouterTestingModule, TestTranslocoModule, HttpClientTestingModule],
     providers: [
       AuthService,
       { provide: Auth0Service, useMock: mockedAuth0Service },

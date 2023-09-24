@@ -1,3 +1,4 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -172,7 +173,7 @@ class TestEnvironment {
         { provide: OnlineStatusService, useFactory: () => instance(this.mockedOnlineStatusService) },
         { provide: I18nService, useFactory: () => instance(this.mockedI18nService) }
       ],
-      imports: [UICommonModule, TestTranslocoModule]
+      imports: [UICommonModule, TestTranslocoModule, HttpClientTestingModule]
     });
     when(this.mockedOnlineStatusService.isOnline).thenCall(() => isOnline);
     when(this.mockedOnlineStatusService.onlineStatus$).thenReturn(of(isOnline));

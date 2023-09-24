@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatProgressBar } from '@angular/material/progress-bar';
@@ -45,7 +46,13 @@ const mockedUserService = mock(UserService);
 describe('TranslateOverviewComponent', () => {
   configureTestingModule(() => ({
     declarations: [TranslateOverviewComponent, TrainingProgressComponent],
-    imports: [RouterTestingModule, UICommonModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      RouterTestingModule,
+      UICommonModule,
+      TestTranslocoModule,
+      HttpClientTestingModule,
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+    ],
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },

@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
@@ -449,7 +450,14 @@ describe('ImportQuestionsDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, TestTranslocoModule, NoopAnimationsModule, ngfModule],
+  imports: [
+    CommonModule,
+    UICommonModule,
+    TestTranslocoModule,
+    NoopAnimationsModule,
+    ngfModule,
+    HttpClientTestingModule
+  ],
   declarations: [ScriptureChooserDialogComponent, ImportQuestionsDialogComponent],
   exports: [ScriptureChooserDialogComponent, ImportQuestionsDialogComponent]
 })
