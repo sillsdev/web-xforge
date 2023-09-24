@@ -1,3 +1,4 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { MatDialog, MatDialogConfig, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgModule } from '@angular/core';
@@ -112,7 +113,7 @@ describe('DeleteProjectDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [UICommonModule, TestTranslocoModule],
+  imports: [UICommonModule, TestTranslocoModule, HttpClientTestingModule],
   declarations: [DeleteProjectDialogComponent],
   exports: [DeleteProjectDialogComponent]
 })

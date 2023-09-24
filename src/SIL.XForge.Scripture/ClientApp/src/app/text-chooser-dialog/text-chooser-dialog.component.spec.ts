@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -342,7 +343,7 @@ describe('TextChooserDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule]
+  imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule, HttpClientTestingModule]
 })
 class DialogTestModule {}
 

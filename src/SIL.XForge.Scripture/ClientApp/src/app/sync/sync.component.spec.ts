@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -39,7 +40,13 @@ const mockedOnlineStatusService = mock(OnlineStatusService);
 describe('SyncComponent', () => {
   configureTestingModule(() => ({
     declarations: [SyncComponent, SyncProgressComponent],
-    imports: [CommonModule, UICommonModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      CommonModule,
+      UICommonModule,
+      TestTranslocoModule,
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      HttpClientTestingModule
+    ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
