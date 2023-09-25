@@ -1298,8 +1298,7 @@ describe('EditorComponent', () => {
         .toEqual({
           'para-contents': true,
           segment: 'verse_1_2',
-          'highlight-segment': true,
-          'commenter-selection': true
+          'highlight-segment': true
         });
       // check to make sure that data after the affected segment hasn't gotten corrupted
       expect(contents.ops![verse3EmbedIndex].insert).toEqual({ verse: { number: '3', style: 'v' } });
