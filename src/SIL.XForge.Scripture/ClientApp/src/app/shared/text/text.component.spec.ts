@@ -4,7 +4,7 @@ import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { TranslocoService } from '@ngneat/transloco';
 import { VerseRef } from '@sillsdev/scripture';
-import Quill, { DeltaStatic, RangeStatic, Sources, StringMap } from 'quill';
+import Quill, { DeltaStatic, RangeStatic, Sources } from 'quill';
 import QuillCursors from 'quill-cursors';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
