@@ -1,11 +1,9 @@
 import {
   createRange,
-  MAX_SEGMENT_LENGTH,
   InteractiveTranslationEngine,
   Phrase,
   ProgressStatus,
   TranslationResult,
-  TranslationResultBuilder,
   WordAlignmentMatrix,
   WordGraph,
   WordGraphArc,
@@ -37,10 +35,6 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   ) {}
 
   async translate(segment: string): Promise<TranslationResult> {
-    if (segment.length > MAX_SEGMENT_LENGTH) {
-      const builder = new TranslationResultBuilder([]);
-      return builder.toResult(segment);
-    }
     const response = await this.httpClient
       .post<TranslationResultDto>(
         `translation/engines/project:${this.projectId}/actions/translate`,
@@ -51,9 +45,6 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   }
 
   async translateN(n: number, segment: string): Promise<TranslationResult[]> {
-    if (segment.length > MAX_SEGMENT_LENGTH) {
-      return [];
-    }
     const response = await this.httpClient
       .post<TranslationResultDto[]>(
         `translation/engines/project:${this.projectId}/actions/translate/${n}`,
@@ -65,10 +56,6 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   }
 
   async getWordGraph(segment: string): Promise<WordGraph> {
-    if (segment.length > MAX_SEGMENT_LENGTH) {
-      return new WordGraph([]);
-    }
-
     try {
       const response = await this.httpClient
         .post<WordGraphDto>(

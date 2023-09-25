@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgModule, NgZone } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { MAX_SEGMENT_LENGTH, TranslationSources, WordGraph } from '@sillsdev/machine';
+import { TranslationSources, WordGraph } from '@sillsdev/machine';
 import { of, throwError } from 'rxjs';
 import { anything, instance, mock, when } from 'ts-mockito';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -110,17 +110,6 @@ describe('RemoteTranslationEngine', () => {
     expect(arc.alignment.get(1, 1)).toBe(true);
     arc = wordGraph.arcs[2];
     expect(arc.sources).toEqual([TranslationSources.None]);
-  });
-
-  it('get word graph with a too long segment', async () => {
-    const env = new TestEnvironment();
-    const segment = 'x'.repeat(MAX_SEGMENT_LENGTH + 1);
-
-    const wordGraph = await env.client.getWordGraph(segment);
-    expect(wordGraph.initialStateScore).toEqual(0);
-    expect(wordGraph.sourceTokens).toEqual([]);
-    expect(Array.from(wordGraph.finalStates)).toEqual([]);
-    expect(wordGraph.arcs.length).toEqual(0);
   });
 
   it('train with no errors', () => {
@@ -280,21 +269,6 @@ describe('RemoteTranslationEngine', () => {
     expect(translationResult.translation).toEqual(translation);
   });
 
-  it('translate with a too long segment', async () => {
-    const env = new TestEnvironment();
-    const segment = 'x'.repeat(MAX_SEGMENT_LENGTH + 1);
-
-    const translationResult = await env.client.translate(segment);
-    expect(translationResult.alignment.columnCount).toEqual(0);
-    expect(translationResult.alignment.rowCount).toEqual(0);
-    expect(translationResult.confidences).toEqual([]);
-    expect(translationResult.phrases).toEqual([]);
-    expect(translationResult.sourceTokens).toEqual([]);
-    expect(translationResult.sources).toEqual([]);
-    expect(translationResult.targetTokens).toEqual([]);
-    expect(translationResult.translation).toEqual(segment);
-  });
-
   it('translate n executes successfully', async () => {
     const env = new TestEnvironment();
     const n = 1;
@@ -365,14 +339,6 @@ describe('RemoteTranslationEngine', () => {
     );
     expect(translationResults[0].targetTokens).toEqual(targetTokens);
     expect(translationResults[0].translation).toEqual(translation);
-  });
-
-  it('translate n with a too long segment', async () => {
-    const env = new TestEnvironment();
-    const segment = 'x'.repeat(MAX_SEGMENT_LENGTH + 1);
-
-    const translationResults = await env.client.translateN(1, segment);
-    expect(translationResults).toEqual([]);
   });
 
   it('listen for training status with 404 error', () => {
