@@ -215,17 +215,20 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should return NotBackTranslation when isBackTranslation is false', () => {
+      env.component.isForwardTranslationEnabled = false;
       env.component.isBackTranslation = false;
       expect(env.component.getInfoAlert()).toBe(InfoAlert.NotBackTranslation);
     });
 
     it('should return NotSupportedLanguage when isTargetLanguageSupported is false', () => {
+      env.component.isForwardTranslationEnabled = false;
       env.component.isBackTranslation = true;
       env.component.isTargetLanguageSupported = false;
       expect(env.component.getInfoAlert()).toBe(InfoAlert.NotSupportedLanguage);
     });
 
     it('should return NoSourceProjectSet when isSourceProjectSet is false', () => {
+      env.component.isForwardTranslationEnabled = false;
       env.component.isBackTranslation = true;
       env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = false;
@@ -233,6 +236,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should return SourceAndTargetLanguageIdentical when isSourceAndTargetDifferent is false', () => {
+      env.component.isForwardTranslationEnabled = false;
       env.component.isBackTranslation = true;
       env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = true;
@@ -240,9 +244,19 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.getInfoAlert()).toBe(InfoAlert.SourceAndTargetLanguageIdentical);
     });
 
-    it('should return None when all requirements are met', () => {
+    it('should return None when all back translation requirements are met', () => {
+      env.component.isForwardTranslationEnabled = false;
       env.component.isBackTranslation = true;
       env.component.isTargetLanguageSupported = true;
+      env.component.isSourceProjectSet = true;
+      env.component.isSourceAndTargetDifferent = true;
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.None);
+    });
+
+    it('should allow forward translation to override isBackTranslation and isTargetLanguageSupported', () => {
+      env.component.isForwardTranslationEnabled = true;
+      env.component.isBackTranslation = false;
+      env.component.isTargetLanguageSupported = false;
       env.component.isSourceProjectSet = true;
       env.component.isSourceAndTargetDifferent = true;
       expect(env.component.getInfoAlert()).toBe(InfoAlert.None);

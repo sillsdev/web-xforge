@@ -6,6 +6,7 @@ import { Observable, of, Subscription } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
@@ -41,6 +42,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   isBackTranslation = true;
   isSourceProjectSet = true;
   isSourceAndTargetDifferent = true;
+  isForwardTranslationEnabled = false;
 
   InfoAlert = InfoAlert;
   infoAlert?: InfoAlert;
@@ -66,8 +68,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   get isGenerationSupported(): boolean {
     return (
-      this.isBackTranslation &&
-      this.isTargetLanguageSupported &&
+      ((this.isBackTranslation && this.isTargetLanguageSupported) || this.isForwardTranslationEnabled) &&
       this.isSourceProjectSet &&
       this.isSourceAndTargetDifferent
     );
@@ -77,6 +78,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     private readonly dialogService: DialogService,
     public readonly activatedProject: ActivatedProjectService,
     private readonly draftGenerationService: DraftGenerationService,
+    private readonly featureFlags: FeatureFlagService,
     private readonly nllbService: NllbLanguageService,
     private readonly i18n: I18nService,
     private readonly onlineStatusService: OnlineStatusService
@@ -93,6 +95,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       this.targetLanguage = projectDoc.data?.writingSystem.tag;
       this.isTargetLanguageSupported = this.nllbService.isNllbLanguage(this.targetLanguage);
       this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
+      this.isForwardTranslationEnabled = this.featureFlags.allowForwardTranslationNmtDrafting.enabled;
 
       this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
       this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
@@ -172,11 +175,11 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   getInfoAlert(): InfoAlert {
     // In order of priority...
 
-    if (!this.isBackTranslation) {
+    if (!this.isBackTranslation && !this.isForwardTranslationEnabled) {
       return InfoAlert.NotBackTranslation;
     }
 
-    if (!this.isTargetLanguageSupported) {
+    if (!this.isTargetLanguageSupported && !this.isForwardTranslationEnabled) {
       return InfoAlert.NotSupportedLanguage;
     }
 
