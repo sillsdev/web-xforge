@@ -76,6 +76,19 @@ describe('BiblicalTermDialogComponent', () => {
     env.closeDialog();
   }));
 
+  it('should display the biblical term in the default language if the specified language has blank values', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData('es');
+    env.wait();
+
+    env.openDialog('id01');
+    expect(I18nService.defaultLocale.canonicalTag).toBe('en');
+    expect(env.definition).toBe('termId01 --- gloss01_en --- notes01_en');
+    expect(env.renderings.value).toBe('rendering01');
+    expect(env.description.value).toBe('description01');
+    env.closeDialog();
+  }));
+
   it('should display a biblical term with missing data', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData('en');
@@ -270,8 +283,8 @@ class TestEnvironment {
           es: {
             categories: [],
             domains: [],
-            gloss: 'gloss01_es',
-            notes: 'notes01_es'
+            gloss: '',
+            notes: ''
           },
           fr: {
             categories: ['category01_fr'],
