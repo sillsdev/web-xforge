@@ -1557,6 +1557,22 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public void GetWordGraph_EngineNotBuilt()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .GetWordGraphAsync(TranslationEngine01, Segment)
+            .Throws(ServalApiExceptions.EngineNotBuilt);
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None)
+        );
+    }
+
+    [Test]
     public async Task GetPreTranslationQueuedStateAsync_BuildCrashed()
     {
         // Set up test environment
