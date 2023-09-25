@@ -100,7 +100,16 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
 
   async startTraining(): Promise<void> {
     await this.getEngine(this.projectId)
-      .pipe(mergeMap(e => this.createBuild(e.id)))
+      .pipe(
+        mergeMap(e => this.createBuild(e.id)),
+        catchError(err => {
+          if (err.status === 404) {
+            return of(undefined);
+          } else {
+            return throwError(err);
+          }
+        })
+      )
       .toPromise();
   }
 
@@ -115,7 +124,17 @@ export class RemoteTranslationEngine implements InteractiveTranslationEngine {
   }
 
   async getStats(): Promise<TranslationEngineStats> {
-    const engineDto = await this.getEngine(this.projectId).toPromise();
+    const engineDto = await this.getEngine(this.projectId)
+      .pipe(
+        catchError(err => {
+          if (err.status === 404) {
+            return of({ confidence: 0.0, trainedSegmentCount: 0 });
+          } else {
+            return throwError(err);
+          }
+        })
+      )
+      .toPromise();
     return { confidence: engineDto.confidence, trainedSegmentCount: engineDto.trainedSegmentCount };
   }
 

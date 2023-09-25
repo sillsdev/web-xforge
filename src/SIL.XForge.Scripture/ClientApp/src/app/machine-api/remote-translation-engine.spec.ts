@@ -123,6 +123,46 @@ describe('RemoteTranslationEngine', () => {
     expect(wordGraph.arcs.length).toEqual(0);
   });
 
+  it('get stats is successful when engine exists', async () => {
+    const env = new TestEnvironment();
+
+    const stats = await env.client.getStats();
+    expect(stats.confidence).toEqual(0.2);
+    expect(stats.trainedSegmentCount).toEqual(100);
+  });
+
+  it('get stats is successful when engine is not found', async () => {
+    const env = new TestEnvironment();
+
+    when(env.mockedHttpClient.get<EngineDto>('translation/engines/project:project01')).thenReturn(
+      throwError(new HttpErrorResponse({ status: 404 }))
+    );
+
+    const stats = await env.client.getStats();
+    expect(stats.confidence).toEqual(0);
+    expect(stats.trainedSegmentCount).toEqual(0);
+  });
+
+  it('start training is successful when engine exists', async () => {
+    const env = new TestEnvironment();
+    env.addCreateBuild();
+
+    await env.client.startTraining();
+    expect().nothing();
+  });
+
+  it('start training is successful when engine is not found', async () => {
+    const env = new TestEnvironment();
+    env.addCreateBuild();
+
+    when(env.mockedHttpClient.get<EngineDto>('translation/engines/project:project01')).thenReturn(
+      throwError(new HttpErrorResponse({ status: 404 }))
+    );
+
+    await env.client.startTraining();
+    expect().nothing();
+  });
+
   it('train with no errors', () => {
     const env = new TestEnvironment();
     env.addCreateBuild();
