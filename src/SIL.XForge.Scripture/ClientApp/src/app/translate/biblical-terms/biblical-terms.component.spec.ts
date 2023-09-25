@@ -89,6 +89,16 @@ describe('BiblicalTermsComponent', () => {
     expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
   }));
 
+  it('should display biblical terms in the default language if the specified language has blank values', fakeAsync(() => {
+    const env = new TestEnvironment('project01', 1, 1);
+    env.setupProjectData('es');
+    env.wait();
+    expect(I18nService.defaultLocale.canonicalTag).toBe('en');
+    expect(env.biblicalTermsTerm.length).toBe(1);
+    expect((env.biblicalTermsTerm[0] as HTMLElement).innerText).toBe('termId01');
+    expect((env.biblicalTermsCategory[0] as HTMLElement).innerText).toBe('category01_en');
+  }));
+
   it('should display biblical terms with missing data', fakeAsync(() => {
     const env = new TestEnvironment('project01', 2, 2);
     env.setupProjectData('en');
@@ -394,8 +404,8 @@ class TestEnvironment {
           es: {
             categories: [],
             domains: [],
-            gloss: 'gloss01_es',
-            notes: 'notes01_es'
+            gloss: '',
+            notes: ''
           },
           fr: {
             categories: ['category01_fr'],

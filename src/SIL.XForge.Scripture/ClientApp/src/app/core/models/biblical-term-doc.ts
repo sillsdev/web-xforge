@@ -11,7 +11,11 @@ export class BiblicalTermDoc extends ProjectDataDoc<BiblicalTerm> {
 
   getBiblicalTermCategory(userLocaleCode: string, defaultLocaleCode: string): string {
     if (this.data?.definitions.hasOwnProperty(userLocaleCode)) {
-      return this.data.definitions[userLocaleCode].categories.join(', ');
+      let category = this.data.definitions[userLocaleCode].categories.join(', ');
+      if (category.trim() === '' && this.data?.definitions.hasOwnProperty(defaultLocaleCode)) {
+        category = this.data.definitions[defaultLocaleCode].categories.join(', ');
+      }
+      return category;
     } else if (this.data?.definitions.hasOwnProperty(defaultLocaleCode)) {
       return this.data.definitions[defaultLocaleCode].categories.join(', ');
     } else {
@@ -20,7 +24,7 @@ export class BiblicalTermDoc extends ProjectDataDoc<BiblicalTerm> {
   }
 
   getBiblicalTermGloss(userLocaleCode: string, defaultLocaleCode: string): string {
-    if (this.data?.definitions.hasOwnProperty(userLocaleCode)) {
+    if (this.data?.definitions.hasOwnProperty(userLocaleCode) && this.data.definitions[userLocaleCode].gloss !== '') {
       return this.data.definitions[userLocaleCode].gloss;
     } else if (this.data?.definitions.hasOwnProperty(defaultLocaleCode)) {
       return this.data.definitions[defaultLocaleCode].gloss;
