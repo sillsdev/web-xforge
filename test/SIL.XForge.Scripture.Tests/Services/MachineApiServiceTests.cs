@@ -418,6 +418,33 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetBuildAsync_DoesNotExecuteInProcessIfBothEnabledForPreTranslations()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .GetBuildAsync(TranslationEngine01, Build01, minRevision: null, CancellationToken.None)
+            .Returns(Task.FromResult(new TranslationBuild()));
+
+        // SUT
+        _ = await env.Service.GetBuildAsync(
+            User01,
+            Project01,
+            Build01,
+            minRevision: null,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.Builds
+            .DidNotReceiveWithAnyArgs()
+            .GetByLocatorAsync(BuildLocatorType.Id, Build01, CancellationToken.None);
+        await env.TranslationEnginesClient
+            .Received(1)
+            .GetBuildAsync(TranslationEngine01, Build01, minRevision: null, CancellationToken.None);
+    }
+
+    [Test]
     public async Task GetBuildAsync_ExecutesOnlyInProcessIfBothEnabled()
     {
         // Set up test environment
@@ -807,6 +834,32 @@ public class MachineApiServiceTests
                     CancellationToken.None
                 )
         );
+    }
+
+    [Test]
+    public async Task GetCurrentBuildAsync_DoesNotExecuteInProcessIfBothEnabledForPreTranslations()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None)
+            .Returns(Task.FromResult(new TranslationBuild()));
+
+        // SUT
+        _ = await env.Service.GetCurrentBuildAsync(
+            User01,
+            Project01,
+            minRevision: null,
+            preTranslate: true,
+            CancellationToken.None
+        );
+
+        await env.Builds
+            .DidNotReceiveWithAnyArgs()
+            .GetByLocatorAsync(BuildLocatorType.Engine, TranslationEngine01, CancellationToken.None);
+        await env.TranslationEnginesClient
+            .Received(1)
+            .GetCurrentBuildAsync(TranslationEngine01, minRevision: null, CancellationToken.None);
     }
 
     [Test]

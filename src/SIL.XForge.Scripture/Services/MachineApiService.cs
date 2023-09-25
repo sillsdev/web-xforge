@@ -179,9 +179,9 @@ public class MachineApiService : IMachineApiService
         // Ensure that the user has permission
         await EnsurePermissionAsync(curUserId, sfProjectId);
 
-        // Execute the In Process Machine instance, if it is enabled
+        // Execute the In Process Machine instance, if it is enabled and this is not a pre-translation build
         // We can only use In Process or the API - not both or unnecessary delays will result
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess) && !preTranslate)
         {
             buildDto = await GetInProcessBuildAsync(BuildLocatorType.Id, buildId, minRevision, cancellationToken);
         }
@@ -289,9 +289,9 @@ public class MachineApiService : IMachineApiService
         await EnsurePermissionAsync(curUserId, sfProjectId);
 
         // We can only use In Process or the API - not both or unnecessary delays will result
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
+        if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess) && !preTranslate)
         {
-            // Execute the In Process Machine instance, if it is enabled
+            // Execute the In Process Machine instance, if it is enabled and this is not a pre-translation build
             Engine engine = await GetInProcessEngineAsync(sfProjectId, cancellationToken);
             buildDto = await GetInProcessBuildAsync(BuildLocatorType.Engine, engine.Id, minRevision, cancellationToken);
         }
