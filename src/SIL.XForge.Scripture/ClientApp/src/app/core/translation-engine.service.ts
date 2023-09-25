@@ -1,10 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  InteractiveTranslator,
-  InteractiveTranslatorFactory,
-  LatinWordTokenizer,
-  MAX_SEGMENT_LENGTH
-} from '@sillsdev/machine';
+import { InteractiveTranslator, InteractiveTranslatorFactory, LatinWordTokenizer } from '@sillsdev/machine';
 import { Canon } from '@sillsdev/scripture';
 import * as crc from 'crc-32';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -159,12 +154,11 @@ export class TranslationEngineService extends SubscriptionDisposable {
       return;
     }
 
-    if (sourceText.length > MAX_SEGMENT_LENGTH) {
-      return;
-    }
-
     const factory: InteractiveTranslatorFactory = this.createInteractiveTranslatorFactory(projectRef);
     const translator: InteractiveTranslator = await factory.create(sourceText);
+    if (!translator.isSegmentValid) {
+      return;
+    }
     translator.setPrefix(targetText);
     await translator.approve(true);
     console.log('Segment ' + segment + ' of document ' + Canon.bookNumberToId(bookNum) + ' was trained successfully.');
