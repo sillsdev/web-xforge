@@ -119,6 +119,14 @@ describe('SingleButtonAudioPlayerComponent', () => {
 
     expect(count).toBe(2);
   }));
+
+  it('pauses audio when disposed', fakeAsync(() => {
+    const spy = spyOn<any>(env.component.player.audio!, 'pause').and.callThrough();
+
+    env.component.player.audio!.dispose();
+
+    expect(spy).toHaveBeenCalledTimes(1);
+  }));
 });
 
 class TestEnvironment {

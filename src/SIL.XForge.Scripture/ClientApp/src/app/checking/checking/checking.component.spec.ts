@@ -1725,6 +1725,62 @@ describe('CheckingComponent', () => {
 
       expect(env.component.showScriptureAudioPlayer).toBe(false);
     }));
+
+    it('pauses audio when changing chapter', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      const audio = mock(CheckingScriptureAudioPlayerComponent);
+      env.component.scriptureAudioPlayer = instance(audio);
+
+      env.component.chapter = 2;
+
+      verify(audio.pause()).once();
+      expect(env.component).toBeDefined();
+    }));
+
+    it('hides chapter audio if chapter audio is absent', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      expect(env.component.showScriptureAudioPlayer).toBe(true);
+
+      env.component.chapter = 99;
+      env.fixture.detectChanges();
+      flush();
+
+      expect(env.component.showScriptureAudioPlayer).toBe(false);
+    }));
+
+    it('keeps chapter audio if chapter audio is present', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER, undefined, undefined, true);
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      expect(env.component.showScriptureAudioPlayer).toBe(true);
+
+      env.component.chapter = 2;
+      env.fixture.detectChanges();
+      flush();
+
+      expect(env.component.showScriptureAudioPlayer).toBe(true);
+    }));
+
+    it('pauses audio on reload (changing book)', fakeAsync(() => {
+      const env = new TestEnvironment(ADMIN_USER, 'ALL', undefined, true);
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      const chapterAudio = mock(CheckingScriptureAudioPlayerComponent);
+      env.component.scriptureAudioPlayer = instance(chapterAudio);
+
+      env.setBookId('MAT');
+      env.waitForQuestionTimersToComplete();
+
+      verify(chapterAudio.pause()).once();
+    }));
   });
 });
 
@@ -1837,8 +1893,8 @@ class TestEnvironment {
         bookNum: 43,
         hasSource: false,
         chapters: [
-          { number: 1, lastVerse: 18, isValid: true, permissions: {} },
-          { number: 2, lastVerse: 25, isValid: true, permissions: {} }
+          { number: 1, lastVerse: 18, isValid: true, permissions: {}, hasAudio: true },
+          { number: 2, lastVerse: 25, isValid: true, permissions: {}, hasAudio: true }
         ],
         permissions: {}
       },
@@ -1932,6 +1988,10 @@ class TestEnvironment {
 
   get audioPlayerOnQuestion(): DebugElement {
     return this.answerPanel.query(By.css('.question-audio'));
+  }
+
+  get chapterAudio(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.scripture-audio-player-wrapper'))?.children[0];
   }
 
   get cancelAnswerButton(): DebugElement {

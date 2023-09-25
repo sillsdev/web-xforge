@@ -60,7 +60,6 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
 
   override ngOnDestroy(): void {
     super.ngOnDestroy();
-    this.audio?.pause();
     this.audio?.dispose();
   }
 }

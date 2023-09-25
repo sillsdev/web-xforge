@@ -16,7 +16,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { merge, of, Subscription } from 'rxjs';
+import { Subscription, merge, of } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -192,7 +192,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         this.projectDoc != null && this.text != null && this.chapter != null
           ? new TextDocId(this.projectDoc.id, this.text.bookNum, this.chapter, 'target')
           : undefined;
+
       this._scriptureAudioPlayer?.pause();
+      if (!this.chapterHasAudio) {
+        this.hideChapterAudio();
+      }
     }
   }
 
@@ -310,6 +314,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.text = this.projectDoc.data.texts.find(t => t.bookNum === book);
     this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
     this._chapter = undefined;
+    this._scriptureAudioPlayer?.pause();
     this.triggerUpdate();
   }
 
@@ -472,7 +477,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         this.textAudioQuery = await this.projectService.queryAudioText(projectId);
         this.textAudioQuery.remoteChanges$.subscribe(() => {
           if (this.chapterAudioSource === '') {
-            this.showScriptureAudioPlayer = false;
+            this.hideChapterAudio();
           }
         });
         const prevBook = this.book;
