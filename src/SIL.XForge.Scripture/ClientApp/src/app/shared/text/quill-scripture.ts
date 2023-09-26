@@ -699,6 +699,8 @@ export function registerScripture(): string[] {
       let text = e.clipboardData.getData('text/plain');
       // do not allow pasting new lines
       text = text.replace(/(?:\r?\n)+/, ' ');
+      // do not allow pasting backslashes
+      text = text.replace(/\\/g, '');
       setTimeout(() => {
         this.container.innerHTML = text;
         const pasteDelta: DeltaStatic = this.convert();
