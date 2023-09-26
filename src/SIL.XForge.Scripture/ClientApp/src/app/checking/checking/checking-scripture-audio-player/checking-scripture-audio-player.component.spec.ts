@@ -116,6 +116,23 @@ describe('ScriptureAudioComponent', () => {
     expect(verseChangedSpy).toHaveBeenCalledWith('s_2');
   }));
 
+  it('emits section heading when timing starts at greater than 0 seconds', fakeAsync(() => {
+    const timings: AudioTiming[] = [
+      { textRef: 's', from: 1.0, to: 2.0 },
+      { textRef: '1', from: 2.0, to: 3.0 }
+    ];
+    env.component.audioPlayer.timing = timings;
+
+    const verseChangedSpy = jasmine.createSpy('verseChanged');
+    env.component.audioPlayer.currentVerseChanged.subscribe(verseChangedSpy);
+
+    env.playButton.nativeElement.click();
+    env.audioPlayer.audio.timeUpdated$.next();
+    env.wait();
+
+    expect(verseChangedSpy).toHaveBeenCalledWith('s_1');
+  }));
+
   it('pauses and emits on close', fakeAsync(() => {
     const pauseSpy = spyOn(env.component.audioPlayer, 'pause').and.callThrough();
     let count = 0;
