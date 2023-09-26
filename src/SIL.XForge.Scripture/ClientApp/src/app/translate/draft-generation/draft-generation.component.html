@@ -52,6 +52,10 @@
         <p *ngIf="isSourceProjectSet">Your project has source text selected.</p>
         <p *ngIf="!isSourceProjectSet">Your project has no source text selected.</p>
       </li>
+      <li *ngIf="isForwardTranslationEnabled">
+        <mat-icon class="criteria-met">check</mat-icon>
+        <p>Forward translation drafting is enabled.</p>
+      </li>
     </ul>
   </section>
 
