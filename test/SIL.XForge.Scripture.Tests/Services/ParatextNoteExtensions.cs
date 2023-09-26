@@ -45,6 +45,7 @@ public static class ParatextNoteTestExtensions
             result += "-deleted";
         if (comment.TagsAdded != null)
             result += $"-Tag:{comment.TagsAdded[0]}";
+        result += $"-Version:{comment.VersionNumber}";
         return result;
     }
 }

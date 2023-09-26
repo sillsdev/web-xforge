@@ -1,4 +1,3 @@
-#nullable enable annotations
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -2418,7 +2417,6 @@ public class ParatextServiceTests
     }
 
     [Test]
-    [Ignore("Not ready to push SF comments to PT")]
     public async Task UpdateParatextComments_AddsComment()
     {
         var env = new TestEnvironment();
@@ -2474,7 +2472,8 @@ public class ParatextServiceTests
                 {
                     threadNum = 3,
                     noteCount = 2,
-                    deletedNotes = new[] { false, true }
+                    deletedNotes = new[] { false, true },
+                    versionNumber = 1
                 }
             }
         );
@@ -2486,7 +2485,8 @@ public class ParatextServiceTests
                     threadNum = 3,
                     noteCount = 1,
                     username = env.Username01,
-                    deletedNotes = new[] { false }
+                    deletedNotes = new[] { false },
+                    versionNumber = 1
                 }
             }
         );
@@ -2527,7 +2527,8 @@ public class ParatextServiceTests
             + "MAT 1:1-"
             + "thread1 note 1.-"
             + "Start:0-"
-            + "Tag:1";
+            + "Tag:1-"
+            + "Version:1";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected));
 
         thread = env.ProjectCommentManager.FindThread(thread2);
@@ -2540,7 +2541,8 @@ public class ParatextServiceTests
             + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread2 note 1.</p>-"
             + "Start:0-"
             + "user05-"
-            + "Tag:1";
+            + "Tag:1-"
+            + "Version:1";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected));
         // should not create second comment if the note is marked deleted
         CommentThread noteThread3 = env.ProjectCommentManager.FindThread(thread3);
@@ -2614,8 +2616,13 @@ public class ParatextServiceTests
         string dataId = "dataId1";
         var threadNoteComponents = new[]
         {
-            new ThreadNoteComponents { ownerRef = env.User01, tagsAdded = new[] { "2" } },
-            new ThreadNoteComponents { ownerRef = env.User05 }
+            new ThreadNoteComponents
+            {
+                ownerRef = env.User01,
+                tagsAdded = new[] { "2" },
+                versionNumber = 1
+            },
+            new ThreadNoteComponents { ownerRef = env.User05, versionNumber = 1 }
         };
         env.AddNoteThreadData(
             new[]
@@ -2639,7 +2646,7 @@ public class ParatextServiceTests
                     threadNum = 1,
                     noteCount = 2,
                     username = env.Username01,
-                    notes = threadNoteComponents
+                    notes = threadNoteComponents,
                 }
             }
         );
@@ -2673,7 +2680,8 @@ public class ParatextServiceTests
             + "MAT 1:1-"
             + "thread1 note 1: EDITED.-"
             + "Start:15-"
-            + "Tag:2";
+            + "Tag:2-"
+            + "Version:2";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected1));
 
         comment = thread.Comments[1];
@@ -2682,7 +2690,8 @@ public class ParatextServiceTests
             + "MAT 1:1-"
             + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread1 note 2: EDITED.</p>-"
             + "Start:15-"
-            + "user05";
+            + "user05-"
+            + "Version:2";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected2));
         Assert.That(ptProjectUsers.Count, Is.EqualTo(1));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 2)));
@@ -2704,8 +2713,13 @@ public class ParatextServiceTests
         const string dataId = "dataId1";
         var threadNoteComponents = new[]
         {
-            new ThreadNoteComponents { ownerRef = env.User01, tagsAdded = new[] { "2" } },
-            new ThreadNoteComponents { ownerRef = env.User05 },
+            new ThreadNoteComponents
+            {
+                ownerRef = env.User01,
+                tagsAdded = new[] { "2" },
+                versionNumber = 1
+            },
+            new ThreadNoteComponents { ownerRef = env.User05, versionNumber = 1 },
         };
         env.AddNoteThreadData(
             new[]
@@ -2771,7 +2785,8 @@ public class ParatextServiceTests
             + "MAT 1:1-"
             + "thread1 note 1.-"
             + "Start:15-"
-            + "Tag:2";
+            + "Tag:2-"
+            + "Version:1";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected1));
 
         comment = thread.Comments[1];
@@ -2780,7 +2795,8 @@ public class ParatextServiceTests
             + "MAT 1:1-"
             + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread1 note 2.</p>-"
             + "Start:15-"
-            + "user05";
+            + "user05-"
+            + "Version:1";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected2));
         Assert.That(ptProjectUsers.Count, Is.EqualTo(1));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
@@ -2803,7 +2819,6 @@ public class ParatextServiceTests
         var threadNoteComponents = new[]
         {
             new ThreadNoteComponents { ownerRef = env.User01, tagsAdded = new[] { "2" } },
-            new ThreadNoteComponents { ownerRef = env.User05 },
         };
         env.AddNoteThreadData(
             new[]
@@ -2811,7 +2826,7 @@ public class ParatextServiceTests
                 new ThreadComponents
                 {
                     threadNum = 1,
-                    noteCount = 2,
+                    noteCount = 1,
                     username = env.Username01,
                     notes = threadNoteComponents,
                     isEdited = true,
@@ -2826,7 +2841,7 @@ public class ParatextServiceTests
                 new ThreadComponents
                 {
                     threadNum = 1,
-                    noteCount = 2,
+                    noteCount = 1,
                     username = env.Username01,
                     notes = threadNoteComponents,
                     versionNumber = 2,
@@ -2856,26 +2871,88 @@ public class ParatextServiceTests
         );
 
         CommentThread thread = env.ProjectCommentManager.FindThread(threadId);
-        Assert.That(thread.Comments.Count, Is.EqualTo(2));
+        Assert.That(thread.Comments.Count, Is.EqualTo(1));
         Paratext.Data.ProjectComments.Comment comment = thread.Comments.First();
         const string expected1 =
             "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-"
             + "MAT 1:1-"
             + "thread1 note 1.-"
             + "Start:15-"
-            + "Tag:2";
+            + "Tag:2-"
+            + "Version:2";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected1));
-
-        comment = thread.Comments[1];
-        const string expected2 =
-            "thread1/User 01/2019-01-02T08:00:00.0000000+00:00-"
-            + "MAT 1:1-"
-            + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread1 note 2.</p>-"
-            + "Start:15-"
-            + "user05";
-        Assert.That(comment.CommentToString(), Is.EqualTo(expected2));
         Assert.That(ptProjectUsers.Count, Is.EqualTo(1));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
+
+        // PT username is not written to server logs
+        env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
+    }
+
+    [Test]
+    public async Task UpdateParatextComments_RevertsPTChangesOnCommentsAuthoredByCommenters()
+    {
+        var env = new TestEnvironment();
+        var associatedPTUser = new SFParatextUser(env.Username01);
+        string paratextId = env.SetupProject(env.Project01, associatedPTUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
+
+        ThreadComponents threadComp = new ThreadComponents
+        {
+            threadNum = 1,
+            noteCount = 1,
+            versionNumber = 1,
+            editable = true
+        };
+        env.AddNoteThreadData(new[] { threadComp });
+
+        ThreadComponents threadCompPt = new ThreadComponents
+        {
+            threadNum = 1,
+            noteCount = 1,
+            username = env.Username01,
+            versionNumber = 2,
+            isEdited = true
+        };
+        env.AddParatextComments(new[] { threadCompPt });
+
+        await using IConnection conn = await env.RealtimeService.ConnectAsync();
+        string dataId = "dataId1";
+        IDocument<NoteThread> noteThreadDoc = await TestEnvironment.GetNoteThreadDocAsync(conn, dataId);
+        Dictionary<string, ParatextUserProfile> ptProjectUsers = new Dictionary<string, ParatextUserProfile>
+        {
+            {
+                env.Username01,
+                new ParatextUserProfile
+                {
+                    OpaqueUserId = "syncuser01",
+                    Username = env.Username01,
+                    SFUserId = env.User01
+                }
+            }
+        };
+
+        SyncMetricInfo syncMetricInfo = await env.Service.UpdateParatextCommentsAsync(
+            userSecret,
+            paratextId,
+            40,
+            new[] { noteThreadDoc },
+            env.usernames,
+            ptProjectUsers,
+            env.TagCount
+        );
+
+        CommentThread thread = env.ProjectCommentManager.FindThread("thread1");
+        string expected =
+            "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-"
+            + "MAT 1:1-"
+            + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread1 note 1.</p>-"
+            + "Start:15-"
+            + "user05-"
+            + "Tag:1-"
+            + "Version:3";
+        Assert.That(thread.Comments.First().CommentToString(), Is.EqualTo(expected));
+        Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 1)));
 
         // PT username is not written to server logs
         env.MockLogger.AssertNoEvent((LogEvent logEvent) => logEvent.Message.Contains(env.Username01));
@@ -2924,7 +3001,8 @@ public class ParatextServiceTests
             threadNum = 1,
             noteCount = 7,
             username = env.Username01,
-            notes = notesSF
+            notes = notesSF,
+            versionNumber = 1
         };
         env.AddNoteThreadData(new[] { threadCompSF });
         ThreadNoteComponents[] notesPT = new[]
@@ -2942,7 +3020,8 @@ public class ParatextServiceTests
             threadNum = 1,
             noteCount = 7,
             username = env.Username01,
-            notes = notesPT
+            notes = notesPT,
+            versionNumber = 1
         };
         env.AddParatextComments(new[] { threadCompPT });
 
@@ -2971,19 +3050,28 @@ public class ParatextServiceTests
         Assert.That(thread.Comments.Count, Is.EqualTo(7));
         Paratext.Data.ProjectComments.Comment comment = thread.Comments.First();
         string expected1 =
-            "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-" + "MAT 1:1-" + content1b + "-Start:15-" + "user05";
-        string expected2 = "thread1/User 01/2019-01-02T08:00:00.0000000+00:00-" + "MAT 1:1-" + content2 + "-Start:15";
+            "thread1/User 01/2019-01-01T08:00:00.0000000+00:00-"
+            + "MAT 1:1-"
+            + content1b
+            + "-Start:15-"
+            + "user05-"
+            + "Version:1";
+        string expected2 =
+            "thread1/User 01/2019-01-02T08:00:00.0000000+00:00-" + "MAT 1:1-" + content2 + "-Start:15-" + "Version:1";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected1));
         comment = thread.Comments[1];
         Assert.That(comment.CommentToString(), Is.EqualTo(expected2));
         comment = thread.Comments[2];
-        string expected3 = "thread1/User 01/2019-01-03T08:00:00.0000000+00:00-" + "MAT 1:1-" + content3 + "-Start:15";
+        string expected3 =
+            "thread1/User 01/2019-01-03T08:00:00.0000000+00:00-" + "MAT 1:1-" + content3 + "-Start:15-" + "Version:1";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected3));
         comment = thread.Comments[3];
-        string expected4 = "thread1/User 01/2019-01-04T08:00:00.0000000+00:00-" + "MAT 1:1-" + content4 + "-Start:15";
+        string expected4 =
+            "thread1/User 01/2019-01-04T08:00:00.0000000+00:00-" + "MAT 1:1-" + content4 + "-Start:15-" + "Version:1";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected4));
         comment = thread.Comments[4];
-        string expected5 = "thread1/User 01/2019-01-05T08:00:00.0000000+00:00-" + "MAT 1:1-" + content5b + "-Start:15";
+        string expected5 =
+            "thread1/User 01/2019-01-05T08:00:00.0000000+00:00-" + "MAT 1:1-" + content5b + "-Start:15-" + "Version:1";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected5));
         Assert.That(ptProjectUsers.Count, Is.EqualTo(1));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
@@ -3056,7 +3144,8 @@ public class ParatextServiceTests
                     threadNum = 1,
                     noteCount = 1,
                     username = env.Username01,
-                    deletedNotes = new[] { true }
+                    deletedNotes = new[] { true },
+                    versionNumber = 1,
                 }
             }
         );
@@ -3068,7 +3157,8 @@ public class ParatextServiceTests
                     threadNum = 1,
                     noteCount = 2,
                     username = env.Username01,
-                    deletedNotes = new[] { true, false }
+                    deletedNotes = new[] { true, false },
+                    versionNumber = 1
                 }
             }
         );
@@ -3101,7 +3191,8 @@ public class ParatextServiceTests
             + "Start:15-"
             + "user05-"
             + "deleted-"
-            + "Tag:1";
+            + "Tag:1-"
+            + "Version:1";
         // comment already marked deleted is unchanged
         Assert.That(comment.CommentToString(), Is.EqualTo(expected));
         var comment2 = thread.Comments[1];
@@ -3111,7 +3202,8 @@ public class ParatextServiceTests
             + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread1 note 2.</p>-"
             + "Start:15-"
             + "user05-"
-            + "Tag:1";
+            + "Tag:1-"
+            + "Version:1";
         // comment without a corresponding note is unchanged
         Assert.That(comment2.CommentToString(), Is.EqualTo(expected2));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
