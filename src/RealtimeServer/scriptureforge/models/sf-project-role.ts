@@ -28,8 +28,8 @@ export enum SFProjectRole {
   ParatextTranslator = 'pt_translator',
   ParatextConsultant = 'pt_consultant',
   ParatextObserver = 'pt_observer',
-  Commenter = 'sf_commenter',
   CommunityChecker = 'sf_community_checker',
+  Commenter = 'sf_commenter',
   Viewer = 'sf_observer',
   None = 'none'
 }
