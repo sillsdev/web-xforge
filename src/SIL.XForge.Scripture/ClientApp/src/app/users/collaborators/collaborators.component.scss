@@ -24,18 +24,6 @@ h3 {
   height: 24px;
 }
 
-.helper-text {
-  color: variables.$text-hint-on-background;
-  line-height: 1.4em;
-  mat-icon {
-    font-size: inherit;
-    position: relative;
-    height: 1em;
-    width: unset;
-    top: 2px;
-  }
-}
-
 td.mat-cell:last-of-type {
   padding: 0;
 }

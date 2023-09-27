@@ -1,5 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { MatDialogConfig } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -9,13 +10,14 @@ import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
-import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { RolesAndPermissionsComponent, UserData } from '../roles-and-permissions/roles-and-permissions.component';
 
 interface UserInfo {
   displayName?: string;
@@ -68,10 +70,6 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     readonly urls: ExternalUrlService
   ) {
     super(noticeService);
-  }
-
-  get rolesText(): TextAroundTemplate | undefined {
-    return this.i18n.translateTextAroundTemplateTags('collaborators.change_roles_and_permissions');
   }
 
   get hasEmailError(): boolean {
@@ -212,18 +210,19 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     this.loadUsers();
   }
 
-  async toggleQuestionPermission(row: Row): Promise<void> {
-    if (!this.isAppOnline || !row.canHaveQuestionPermissionRevoked) {
-      return;
-    }
-    const permissions = new Set((this.projectDoc?.data?.userPermissions || {})[row.id] || []);
-    [
-      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
-      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit)
-    ].forEach(right => (row.allowCreatingQuestions ? permissions.delete(right) : permissions.add(right)));
-
-    await this.projectService.onlineSetUserProjectPermissions(this.projectId, row.id, Array.from(permissions));
-    this.loadUsers();
+  async openRolesDialog(row: Row): Promise<void> {
+    const dialogConfig: MatDialogConfig<UserData> = {
+      data: {
+        projectId: this.projectId,
+        userId: row.id,
+        userProfile: { avatarUrl: row.user.avatarUrl!, displayName: row.user.displayName! }
+      },
+      minWidth: '360px',
+      maxWidth: '560px',
+      width: '90%',
+      autoFocus: false
+    };
+    this.dialogService.openMatDialog(RolesAndPermissionsComponent, dialogConfig);
   }
 
   private async loadUsers(): Promise<void> {
