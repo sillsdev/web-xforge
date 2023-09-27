@@ -5,7 +5,6 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject, combineLatest } from 'rxjs';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { ProjectRoleInfo } from 'xforge-common/models/project-role-info';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -58,8 +57,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
     private readonly projectService: SFProjectService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly changeDetector: ChangeDetectorRef,
-    private readonly userService: UserService,
-    private readonly featureFlags: FeatureFlagService
+    private readonly userService: UserService
   ) {
     super();
     this.subscribe(combineLatest([this.projectId$, this.onlineStatusService.onlineStatus$]), async ([projectId]) => {
@@ -147,7 +145,7 @@ export class ShareControlComponent extends SubscriptionDisposable {
       },
       {
         role: SFProjectRole.Commenter,
-        available: this.featureFlags.allowAddingNotes.enabled,
+        available: true,
         permission: this.isProjectAdmin
       }
     ]

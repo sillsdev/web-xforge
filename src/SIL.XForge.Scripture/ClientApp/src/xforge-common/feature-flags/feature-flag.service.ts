@@ -61,11 +61,6 @@ export class FeatureFlagService {
     'Show non-published localizations'
   );
 
-  allowAddingNotes: FeatureFlag = new FeatureFlag(
-    new LocalStorageFlagStore('ALLOW_ADDING_NOTES'),
-    'Allow adding notes'
-  );
-
   showNmtDrafting: FeatureFlag = new FeatureFlag(new LocalStorageFlagStore('SHOW_NMT_DRAFTING'), 'Show NMT drafting');
 
   scriptureAudio: FeatureFlag = new FeatureFlag(new LocalStorageFlagStore('SCRIPTURE_AUDIO'), 'Scripture audio');

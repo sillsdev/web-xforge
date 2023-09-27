@@ -16,7 +16,6 @@ import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/vers
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { BehaviorSubject, merge, Subscription } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -55,7 +54,6 @@ const defaultLocaleCode = I18nService.defaultLocale.canonicalTag;
 class Row {
   constructor(
     private readonly biblicalTermDoc: BiblicalTermDoc,
-    private readonly featureFlags: FeatureFlagService,
     private readonly i18n: I18nService,
     private readonly projectDoc?: SFProjectProfileDoc,
     private readonly projectUserConfigDoc?: SFProjectUserConfigDoc,
@@ -127,7 +125,7 @@ class Row {
         : undefined;
     const hasNotePermission: boolean =
       userRole == null ? false : SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.Notes, Operation.Create);
-    return hasNotePermission && this.featureFlags.allowAddingNotes.enabled;
+    return hasNotePermission;
   }
 
   private get canEdit(): boolean {
@@ -195,7 +193,6 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     noticeService: NoticeService,
     readonly i18n: I18nService,
     private readonly dialogService: DialogService,
-    private readonly featureFlags: FeatureFlagService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService
   ) {
@@ -392,16 +389,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
           }
         }
 
-        rows.push(
-          new Row(
-            biblicalTermDoc,
-            this.featureFlags,
-            this.i18n,
-            this.projectDoc,
-            this.projectUserConfigDoc,
-            noteThreadDoc
-          )
-        );
+        rows.push(new Row(biblicalTermDoc, this.i18n, this.projectDoc, this.projectUserConfigDoc, noteThreadDoc));
       }
     }
     this.rows = rows;

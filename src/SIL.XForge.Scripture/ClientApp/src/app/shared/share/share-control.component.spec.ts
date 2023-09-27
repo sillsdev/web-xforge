@@ -8,9 +8,7 @@ import { CheckingAnswerExport, CheckingConfig } from 'realtime-server/lib/esm/sc
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BehaviorSubject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
-import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
-import { LocationService } from 'xforge-common/location.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -29,9 +27,7 @@ const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
 const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedI18nService = mock(I18nService);
-const mockedLocationService = mock(LocationService);
 const mockedUserService = mock(UserService);
-const mockedFeatureFlagService = mock(FeatureFlagService);
 
 describe('ShareControlComponent', () => {
   configureTestingModule(() => ({
@@ -42,9 +38,7 @@ describe('ShareControlComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: I18nService, useMock: mockedI18nService },
-      { provide: LocationService, useMock: mockedLocationService },
-      { provide: UserService, useMock: mockedUserService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
+      { provide: UserService, useMock: mockedUserService }
     ]
   }));
 
@@ -361,8 +355,6 @@ class TestEnvironment {
     ).thenResolve(this.component.alreadyProjectMemberResponse);
     when(mockedProjectService.onlineIsAlreadyInvited(anything(), 'unknown-address@example.com')).thenResolve(false);
     when(mockedProjectService.onlineIsAlreadyInvited(anything(), 'already@example.com')).thenResolve(true);
-    when(mockedLocationService.origin).thenReturn('https://scriptureforge.org');
-    when(mockedFeatureFlagService.allowAddingNotes).thenReturn({ enabled: true } as FeatureFlag);
 
     this.fixture.detectChanges();
   }

@@ -18,7 +18,6 @@ import { SF_PROJECT_RIGHTS, SFProjectDomain } from 'realtime-server/lib/esm/scri
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserService } from 'xforge-common/user.service';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { BiblicalTermDoc } from '../../../core/models/biblical-term-doc';
 import { defaultNoteThreadIcon, NoteThreadDoc } from '../../../core/models/note-thread-doc';
@@ -80,8 +79,7 @@ export class NoteDialogComponent implements OnInit {
     private readonly i18n: I18nService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
-    private readonly dialogService: DialogService,
-    private readonly featureFlags: FeatureFlagService
+    private readonly dialogService: DialogService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -179,7 +177,7 @@ export class NoteDialogComponent implements OnInit {
 
   get canInsertNote(): boolean {
     if (this.projectProfileDoc?.data == null) return false;
-    return this.isAddNotesEnabled && canInsertNote(this.projectProfileDoc.data, this.userService.currentUserId);
+    return canInsertNote(this.projectProfileDoc.data, this.userService.currentUserId);
   }
 
   private get defaultNoteTagId(): number | undefined {
@@ -214,10 +212,6 @@ export class NoteDialogComponent implements OnInit {
       return this.data.verseRef == null ? undefined : this.data.verseRef;
     }
     return toVerseRef(this.threadDoc.data.verseRef);
-  }
-
-  private get isAddNotesEnabled(): boolean {
-    return this.featureFlags.allowAddingNotes.enabled;
   }
 
   editNote(note: Note): void {
@@ -377,7 +371,6 @@ export class NoteDialogComponent implements OnInit {
   private isNoteEditable(note: Note): boolean {
     if (this.projectProfileDoc?.data == null) return false;
     return (
-      this.isAddNotesEnabled &&
       note.editable === true &&
       this.noteIdBeingEdited == null &&
       SF_PROJECT_RIGHTS.hasRight(
