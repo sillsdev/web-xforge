@@ -4,6 +4,7 @@ using System.Xml.Linq;
 using NUnit.Framework;
 using SIL.Machine.Corpora;
 using SIL.Machine.Tokenization;
+using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -76,7 +77,7 @@ public class SFBiblicalTermsTextTests
             new XElement(
                 "TermRenderingsList",
                 TermRendering("term2", guess: false, "Term2-1", "Term2-2"),
-                TermRendering("term1", guess: false, "Term1", "\n")
+                TermRendering("term1", guess: false, "Term1", "\n", " ")
             )
         );
         var text = new SFBiblicalTermsText(tokenizer, "project01", doc);
@@ -135,6 +136,25 @@ public class SFBiblicalTermsTextTests
             Assert.That(segments[i].SegmentRef.ToString(), Is.EqualTo("Term" + (i + 1).ToString("D2")));
             Assert.That(string.Join(" ", segments[i].Segment), Is.EqualTo(renderings[i].expected));
         }
+    }
+
+    [Test]
+    public void Segments_BiblicalTermsFromMongo()
+    {
+        var tokenizer = new LatinWordTokenizer();
+        List<BiblicalTerm> biblicalTerms = new List<BiblicalTerm>
+        {
+            new BiblicalTerm { TermId = "term2", Renderings = { "Term2-1", "Term2-2", }, },
+            new BiblicalTerm { TermId = "term1", Renderings = { "Term1", "\n", }, },
+        };
+        var text = new SFBiblicalTermsText(tokenizer, "project01", biblicalTerms);
+        TextSegment[] segments = text.GetSegments().ToArray();
+        Assert.That(segments.Length, Is.EqualTo(3));
+        Assert.That(string.Join(" ", segments[0].Segment), Is.EqualTo("Term1"));
+        Assert.That(segments[1].SegmentRef.ToString(), Is.EqualTo("term2"));
+        Assert.That(string.Join(" ", segments[1].Segment), Is.EqualTo("Term2-1"));
+        Assert.That(segments[2].SegmentRef.ToString(), Is.EqualTo("term2"));
+        Assert.That(string.Join(" ", segments[2].Segment), Is.EqualTo("Term2-2"));
     }
 
     private static XElement TermRendering(string id, bool guess, params string[] renderings) =>

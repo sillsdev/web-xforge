@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using SIL.Machine.Corpora;
 using SIL.Machine.Tokenization;
+using SIL.XForge.Scripture.Models;
 
 namespace SIL.XForge.Scripture.Services;
 
@@ -13,6 +14,17 @@ public class SFBiblicalTermsText : IText
     private static readonly Regex BracketedTextRegex = new Regex(@"\([^)]*\)", RegexOptions.Compiled);
     private static readonly Regex WhitespaceRegex = new Regex(@"\s+", RegexOptions.Compiled);
     private readonly IEnumerable<TextSegment> _segments;
+
+    public SFBiblicalTermsText(
+        ITokenizer<string, int, string> wordTokenizer,
+        string projectId,
+        IList<BiblicalTerm> biblicalTerms
+    )
+    {
+        Id = $"{projectId}_biblical_terms";
+
+        _segments = GetSegments(wordTokenizer, biblicalTerms).OrderBy(s => s.SegmentRef).ToArray();
+    }
 
     public SFBiblicalTermsText(
         ITokenizer<string, int, string> wordTokenizer,
@@ -31,6 +43,55 @@ public class SFBiblicalTermsText : IText
 
     public IEnumerable<TextSegment> GetSegments(bool includeText = true, IText? basedOn = null) => _segments;
 
+    private static string CleanUpRendering(string rendering)
+    {
+        rendering = rendering.Replace("*", string.Empty);
+        rendering = BracketedTextRegex.Replace(rendering, string.Empty);
+        rendering = rendering.Replace("/", " ");
+        rendering = WhitespaceRegex.Replace(rendering, " ");
+        return rendering.Trim();
+    }
+
+    private IEnumerable<TextSegment> GetSegments(
+        ITokenizer<string, int, string> wordTokenizer,
+        IList<BiblicalTerm> biblicalTerms
+    )
+    {
+        if (!biblicalTerms.Any())
+        {
+            yield break;
+        }
+
+        foreach (BiblicalTerm biblicalTerm in biblicalTerms.OrderBy(t => t.TermId))
+        {
+            foreach (string rendering in biblicalTerm.Renderings)
+            {
+                // Clean up characters used for biblical term matching that we do not need
+                string cleanedRendering = CleanUpRendering(rendering);
+
+                // Do not add blank renderings
+                if (string.IsNullOrWhiteSpace(cleanedRendering))
+                {
+                    continue;
+                }
+
+                // Get the words in the rendering
+                string[] segment = wordTokenizer.Tokenize(cleanedRendering).ToArray();
+
+                // Sentence placement is not essential for biblical terms. Set all to false
+                yield return new TextSegment(
+                    Id,
+                    new TextSegmentRef(biblicalTerm.TermId),
+                    segment,
+                    false,
+                    false,
+                    false,
+                    segment.Length == 0
+                );
+            }
+        }
+    }
+
     private IEnumerable<TextSegment> GetSegments(
         ITokenizer<string, int, string> wordTokenizer,
         XDocument termRenderingsDoc
@@ -44,10 +105,16 @@ public class SFBiblicalTermsText : IText
         foreach (
             XElement termRenderingElem in termRenderingsDoc.Root
                 .Elements("TermRendering")
-                .Where(tre => !(bool)tre.Attribute("Guess"))
+                .Where(t => !(bool)t.Attribute("Guess"))
+                .OrderBy(t => t.Attribute("Id")?.Value)
         )
         {
-            var id = (string)termRenderingElem.Attribute("Id");
+            string id = termRenderingElem.Attribute("Id")?.Value;
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                continue;
+            }
+
             var renderingsStr = (string?)termRenderingElem.Element("Renderings");
             string[] renderings =
                 renderingsStr?.Trim().Split("||", StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
@@ -55,14 +122,16 @@ public class SFBiblicalTermsText : IText
             foreach (string rendering in renderings)
             {
                 // Clean up characters used for biblical term matching that we do not need
-                string data = rendering.Replace("*", string.Empty);
-                data = BracketedTextRegex.Replace(data, string.Empty);
-                data = data.Replace("/", " ");
-                data = WhitespaceRegex.Replace(data, " ");
-                data = data.Trim();
+                string cleanedRendering = CleanUpRendering(rendering);
+
+                // Do not add blank renderings
+                if (string.IsNullOrWhiteSpace(cleanedRendering))
+                {
+                    continue;
+                }
 
                 // Get the words in the rendering
-                string[] segment = wordTokenizer.Tokenize(data).ToArray();
+                string[] segment = wordTokenizer.Tokenize(cleanedRendering).ToArray();
 
                 // Sentence placement is not essential for biblical terms. Set all to false
                 yield return new TextSegment(
