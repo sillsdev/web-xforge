@@ -35,6 +35,7 @@ public class MachineProjectServiceTests
     private const string File02 = "file02";
     private const string TranslationEngine01 = "translationEngine01";
     private const string TranslationEngine02 = "translationEngine02";
+    private const string TranslationEngine03 = "translationEngine03";
 
     [Test]
     public void AddProjectAsync_ThrowsExceptionWhenProjectSecretMissing()
@@ -102,6 +103,19 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task BuildProjectAsync_ThrowsExceptionWhenProjectMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.DeleteAllAsync(_ => true);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.BuildProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None)
+        );
+    }
+
+    [Test]
     public async Task BuildProjectAsync_CallsServalIfTranslationEngineIdPresent()
     {
         // Set up test environment
@@ -122,7 +136,7 @@ public class MachineProjectServiceTests
         var env = new TestEnvironment(new TestEnvironmentOptions { BuildIsPending = false });
 
         // SUT
-        await env.Service.BuildProjectAsync(User01, Project02, preTranslate: true, CancellationToken.None);
+        await env.Service.BuildProjectAsync(User01, Project01, preTranslate: true, CancellationToken.None);
 
         await env.TranslationEnginesClient
             .Received()
@@ -276,6 +290,55 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task BuildProjectAsync_CreatesTranslationEngineOnServalIfMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+        );
+
+        // Make the Serval API return the error code for a missing translation engine
+        env.TranslationEnginesClient
+            .GetAsync(TranslationEngine02, CancellationToken.None)
+            .Throws(ServalApiExceptions.NotFound);
+
+        // SUT
+        await env.Service.BuildProjectAsync(User01, Project02, preTranslate: false, CancellationToken.None);
+
+        await env.TranslationEnginesClient
+            .Received()
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+        await env.TranslationEnginesClient
+            .Received()
+            .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_CreatesDataFilesOnServalIfMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+        );
+        await env.SetDataInSync(Project02, preTranslate: true, requiresUpdate: true);
+
+        // Make the Serval API return the error code for a missing translation engine
+        env.DataFilesClient
+            .UpdateAsync(Arg.Any<string>(), Arg.Any<FileParameter>(), CancellationToken.None)
+            .Throws(ServalApiExceptions.NotFound);
+
+        // SUT
+        await env.Service.BuildProjectAsync(User01, Project02, preTranslate: true, CancellationToken.None);
+
+        await env.TranslationEnginesClient
+            .Received()
+            .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+        await env.DataFilesClient
+            .Received()
+            .CreateAsync(Arg.Any<FileParameter>(), FileFormat.Text, Arg.Any<string>(), CancellationToken.None);
+    }
+
+    [Test]
     public async Task BuildProjectAsync_ExecutesInProcessMachine()
     {
         // Set up test environment
@@ -288,6 +351,62 @@ public class MachineProjectServiceTests
     }
 
     [Test]
+    public async Task BuildProjectAsync_GetsTheSourceAndTargetLanguageIfMissing()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+        );
+        SFProject project = env.Projects.Get(Project03);
+        Assert.IsNull(project.WritingSystem?.Tag);
+        Assert.IsNull(project.TranslateConfig?.Source?.WritingSystem.Tag);
+
+        // SUT
+        await env.Service.BuildProjectAsync(User01, Project03, preTranslate: false, CancellationToken.None);
+
+        await env.TranslationEnginesClient
+            .Received()
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+        project = env.Projects.Get(Project03);
+        Assert.IsNotNull(project.WritingSystem.Tag);
+        Assert.IsNotNull(project.TranslateConfig.Source?.WritingSystem.Tag);
+    }
+
+    [Test]
+    public async Task BuildProjectAsync_RecreatesTheProjectOnServalIfTheSourceAndTargetLanguageChange()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true }
+        );
+
+        // Make the Serval API return the error code for a missing translation engine
+        env.TranslationEnginesClient
+            .GetAsync(TranslationEngine02, CancellationToken.None)
+            .Returns(
+                Task.FromResult(
+                    new TranslationEngine
+                    {
+                        Id = TranslationEngine02,
+                        SourceLanguage = "old_source_language",
+                        TargetLanguage = "old_target_language",
+                    }
+                )
+            );
+
+        // SUT
+        await env.Service.BuildProjectAsync(User01, Project02, preTranslate: false, CancellationToken.None);
+
+        await env.TranslationEnginesClient
+            .Received()
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+        await env.TranslationEnginesClient.Received().DeleteAsync(TranslationEngine02, CancellationToken.None);
+        await env.TranslationEnginesClient
+            .Received()
+            .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
+    }
+
+    [Test]
     public async Task BuildProjectForBackgroundJobAsync_BuildsPreTranslationProjects()
     {
         // Set up test environment
@@ -296,7 +415,7 @@ public class MachineProjectServiceTests
         // SUT
         await env.Service.BuildProjectForBackgroundJobAsync(
             User01,
-            Project02,
+            Project01,
             preTranslate: true,
             CancellationToken.None
         );
@@ -820,6 +939,42 @@ public class MachineProjectServiceTests
                 .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None)
                 .Returns(Task.FromResult(new TranslationEngine { Id = TranslationEngine01 }));
             TranslationEnginesClient
+                .GetAsync(TranslationEngine01, CancellationToken.None)
+                .Returns(
+                    Task.FromResult(
+                        new TranslationEngine
+                        {
+                            Id = TranslationEngine01,
+                            TargetLanguage = "en_GB",
+                            SourceLanguage = "en_US",
+                        }
+                    )
+                );
+            TranslationEnginesClient
+                .GetAsync(TranslationEngine02, CancellationToken.None)
+                .Returns(
+                    Task.FromResult(
+                        new TranslationEngine
+                        {
+                            Id = TranslationEngine02,
+                            TargetLanguage = "en_US",
+                            SourceLanguage = "en",
+                        }
+                    )
+                );
+            TranslationEnginesClient
+                .GetAsync(TranslationEngine03, CancellationToken.None)
+                .Returns(
+                    Task.FromResult(
+                        new TranslationEngine
+                        {
+                            Id = TranslationEngine03,
+                            TargetLanguage = "en",
+                            SourceLanguage = "en",
+                        }
+                    )
+                );
+            TranslationEnginesClient
                 .UpdateCorpusAsync(
                     Arg.Any<string>(),
                     Arg.Any<string>(),
@@ -848,6 +1003,7 @@ public class MachineProjectServiceTests
             }
 
             var paratextService = Substitute.For<IParatextService>();
+            paratextService.GetLanguageId(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns("en");
             var textCorpusFactory = Substitute.For<ISFTextCorpusFactory>();
             if (options.LocalSourceTextHasData && options.LocalTargetTextHasData)
             {
@@ -976,6 +1132,11 @@ public class MachineProjectServiceTests
                         ShortName = "P03",
                         CheckingConfig = new CheckingConfig { ShareEnabled = false },
                         UserRoles = new Dictionary<string, string>(),
+                        TranslateConfig = new TranslateConfig
+                        {
+                            TranslationSuggestionsEnabled = true,
+                            Source = new TranslateSource { ProjectRef = Project01 },
+                        },
                     },
                 }
             );
@@ -1035,7 +1196,7 @@ public class MachineProjectServiceTests
         public MockLogger<MachineProjectService> MockLogger { get; }
         public IExceptionHandler ExceptionHandler { get; }
 
-        public async Task SetDataInSync(string projectId, bool preTranslate = false) =>
+        public async Task SetDataInSync(string projectId, bool preTranslate = false, bool requiresUpdate = false) =>
             await ProjectSecrets.UpdateAsync(
                 projectId,
                 u =>
@@ -1048,7 +1209,7 @@ public class MachineProjectServiceTests
                             {
                                 new ServalCorpusFile
                                 {
-                                    FileChecksum = MockTextCorpusChecksum,
+                                    FileChecksum = requiresUpdate ? "old_checksum" : MockTextCorpusChecksum,
                                     FileId = File01,
                                     TextId = "textId",
                                 },
@@ -1057,7 +1218,7 @@ public class MachineProjectServiceTests
                             {
                                 new ServalCorpusFile
                                 {
-                                    FileChecksum = MockTextCorpusChecksum,
+                                    FileChecksum = requiresUpdate ? "old_checksum" : MockTextCorpusChecksum,
                                     FileId = File02,
                                     TextId = "textId",
                                 },
