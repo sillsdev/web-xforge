@@ -63,6 +63,11 @@ export class FeatureFlagService {
 
   showNmtDrafting: FeatureFlag = new FeatureFlag(new LocalStorageFlagStore('SHOW_NMT_DRAFTING'), 'Show NMT drafting');
 
+  allowForwardTranslationNmtDrafting: FeatureFlag = new FeatureFlag(
+    new LocalStorageFlagStore('ALLOW_FORWARD_TRANSLATION_NMT_DRAFTING'),
+    'Allow Forward Translation NMT drafting'
+  );
+
   scriptureAudio: FeatureFlag = new FeatureFlag(new LocalStorageFlagStore('SCRIPTURE_AUDIO'), 'Scripture audio');
 
   preventOpSubmission: FeatureFlag = new FeatureFlag(
