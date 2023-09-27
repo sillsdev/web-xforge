@@ -894,6 +894,7 @@ describe('TextComponent', () => {
     env.fixture.detectChanges();
 
     const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+    const initialContents: string = env.component.getSegmentText('verse_1_1');
     env.component.editor!.setSelection(range.index, 'user');
     tick();
     env.fixture.detectChanges();
@@ -907,6 +908,8 @@ describe('TextComponent', () => {
     // the selection should not have changed
     const currentSelection: RangeStatic = env.component.editor!.getSelection()!;
     expect(currentSelection.index).toEqual(range.index);
+    const currentContents: string = env.component.getSegmentText('verse_1_1');
+    expect(currentContents).withContext('document text should not have changed').toEqual(initialContents);
   }));
 
   it('removes backslashes when pasting text', fakeAsync(() => {
