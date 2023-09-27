@@ -12,6 +12,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
 import { I18nKey, I18nService } from 'xforge-common/i18n.service';
 import { FileType } from 'xforge-common/models/file-offline-data';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { objectId } from 'xforge-common/utils';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
@@ -60,10 +61,15 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
     private readonly csvService: CsvService,
     private readonly dialogRef: MatDialogRef<ChapterAudioDialogComponent, ChapterAudioDialogResult | undefined>,
     private readonly fileService: FileService,
-    private readonly dialogService: DialogService
+    private readonly dialogService: DialogService,
+    private readonly onlineStatusService: OnlineStatusService
   ) {
     this.getStartingLocation();
     this.checkForPreexistingAudio();
+  }
+
+  get isOnline(): boolean {
+    return this.onlineStatusService.isOnline;
   }
 
   get audioErrorMessage(): string {
@@ -218,6 +224,12 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
     if (!canSave) {
       return;
     }
+
+    // Adding chapter audio offline needs a bit more help to work; see SF-2213. Returning may seem unnecessary if we
+    // also disable the Save button when offline, but returning could prevent a problem from the unlikely situation of
+    // going offline just after clicking Save.
+    if (!this.onlineStatusService.isOnline) return;
+
     this._loadingAudio = true;
     const audioUrl: string | undefined = await this.fileService.uploadFile(
       FileType.Audio,
