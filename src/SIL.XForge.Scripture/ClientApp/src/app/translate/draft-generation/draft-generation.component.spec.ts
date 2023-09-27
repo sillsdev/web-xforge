@@ -68,7 +68,7 @@ describe('DraftGenerationComponent', () => {
         'FeatureFlagService',
         {},
         {
-          allowForwardTranslationNmtDrafting: new FeatureFlag({ enabled: false }, '')
+          allowForwardTranslationNmtDrafting: { enabled: false } as FeatureFlag
         }
       );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
@@ -264,7 +264,7 @@ describe('DraftGenerationComponent', () => {
           'FeatureFlagService',
           {},
           {
-            allowForwardTranslationNmtDrafting: new FeatureFlag({ enabled: true }, '')
+            allowForwardTranslationNmtDrafting: { enabled: true } as FeatureFlag
           }
         );
       });
