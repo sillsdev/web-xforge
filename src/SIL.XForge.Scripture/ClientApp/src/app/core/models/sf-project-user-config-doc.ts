@@ -10,7 +10,7 @@ export class SFProjectUserConfigDoc extends ProjectDataDoc<SFProjectUserConfig> 
   static readonly COLLECTION = SF_PROJECT_USER_CONFIGS_COLLECTION;
   static readonly INDEX_PATHS = SF_PROJECT_USER_CONFIG_INDEX_PATHS;
 
-  updateAudioRefsListened(verseRef?: VerseRef): void {
+  updateAudioRefsPlayed(verseRef?: VerseRef): void {
     if (this.data == null || verseRef == null) {
       return;
     }

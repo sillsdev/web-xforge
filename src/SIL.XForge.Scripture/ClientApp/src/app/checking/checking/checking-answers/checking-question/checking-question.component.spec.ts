@@ -6,12 +6,13 @@ import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question
 import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { of, Subject } from 'rxjs';
-import { anything, instance, mock, when } from 'ts-mockito';
+import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
@@ -100,6 +101,24 @@ describe('CheckingQuestionComponent', () => {
     expect(window.getComputedStyle(env.questionAudio.nativeElement)['display']).not.toBe('none');
   });
 
+  it('selects scripture if not all scripture audio has already been played for question', async () => {
+    const env = new TestEnvironment();
+    when(mockedSFProjectUserConfig.audioRefsPlayed).thenReturn(['RUT 22:17']);
+    const verseRef: VerseRefData = {
+      bookNum: 8,
+      chapterNum: 22,
+      verseNum: 17,
+      verse: '17-18'
+    };
+    when(mockedQuestion.verseRef).thenReturn(verseRef);
+    await env.wait();
+    await env.wait();
+
+    expect(env.component.question.focusedText).toBe('scripture-audio-label');
+    expect(window.getComputedStyle(env.scriptureAudio.nativeElement)['display']).not.toBe('none');
+    expect(window.getComputedStyle(env.questionAudio.nativeElement)['display']).toBe('none');
+  });
+
   it('hides audio player when question w/o audio is selected', async () => {
     const env = new TestEnvironment();
     when(mockedQuestion.audioUrl).thenReturn('');
@@ -127,6 +146,11 @@ describe('CheckingQuestionComponent', () => {
 
     await env.wait(1000); //wait for the audio to finish playing
     expect(env.component.question.focusedText).toBe('question-audio-label');
+    verify(
+      mockedSFProjectUserConfigDoc.updateAudioRefsPlayed(
+        deepEqual(toVerseRef(env.component.questionDoc.data!.verseRef))
+      )
+    ).once();
 
     env.component.question.selectScripture();
     env.scriptureAudio.componentInstance.audio.setSeek(98);
