@@ -82,6 +82,16 @@ export class BiblicalTermDialogComponent extends SubscriptionDisposable {
     if (this.biblicalTermDoc?.data?.definitions.hasOwnProperty(this.i18n.localeCode)) {
       gloss = this.biblicalTermDoc?.data.definitions[this.i18n.localeCode].gloss;
       notes = this.biblicalTermDoc?.data.definitions[this.i18n.localeCode].notes;
+
+      // If the locale does not have the gloss or notes, get these from the default language, if we can
+      if (this.biblicalTermDoc?.data?.definitions.hasOwnProperty(I18nService.defaultLocale.canonicalTag)) {
+        if (gloss === '') {
+          gloss = this.biblicalTermDoc?.data.definitions[I18nService.defaultLocale.canonicalTag].gloss;
+        }
+        if (notes === '') {
+          notes = this.biblicalTermDoc?.data.definitions[I18nService.defaultLocale.canonicalTag].notes;
+        }
+      }
     } else if (this.biblicalTermDoc?.data?.definitions.hasOwnProperty(I18nService.defaultLocale.canonicalTag)) {
       gloss = this.biblicalTermDoc?.data.definitions[I18nService.defaultLocale.canonicalTag].gloss;
       notes = this.biblicalTermDoc?.data.definitions[I18nService.defaultLocale.canonicalTag].notes;
