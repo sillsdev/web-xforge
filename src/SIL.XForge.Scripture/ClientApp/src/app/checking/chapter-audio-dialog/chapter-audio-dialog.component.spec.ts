@@ -358,6 +358,7 @@ class TestEnvironment {
     }
 
     when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
+    when(mockedOnlineStatusService.isOnline).thenReturn(true);
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
     when(mockedCsvService.parse(anything())).thenResolve([
       ['0.1', '0', 'v1'],

@@ -262,6 +262,7 @@
     "manage_questions": "Manage questions",
     "my_contributions": "My contributions",
     "my_progress": "My progress",
+    "not_deleted_chapter_audio_offline": "Could not delete chapter audio while offline",
     "project_stats": "Project stats",
     "questions": "Questions"
   },

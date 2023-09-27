@@ -27,7 +27,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
 import { BehaviorSubject, of } from 'rxjs';
-import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anything, mock, reset, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -580,6 +580,71 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toBe(2);
     }));
 
+    it('disable delete chapter audio when offline and show explanation ', fakeAsync(() => {
+      const env = new TestEnvironment(true, true);
+      env.waitForQuestions();
+      const johnIndex = 2;
+      const johnChapter1Index = 3;
+      env.clickExpanderAtRow(johnIndex);
+
+      env.onlineStatus = true;
+      env.clickElement(env.questionButtonsMenu[johnChapter1Index]);
+      // SUT 1
+      expect(env.audioDeleteButtons[johnChapter1Index].nativeElement.disabled)
+        .withContext('delete button should be enabled when online')
+        .toBeFalse();
+      // SUT 2
+      expect(env.errorNoDeleteChapterAudioOffline).withContext('should not show error when online').toBeNull();
+      // Click again to close the overlay menu.
+      env.clickElement(env.questionButtonsMenu[johnChapter1Index]);
+      env.waitForProjectDocChanges();
+
+      env.onlineStatus = false;
+      env.clickElement(env.questionButtonsMenu[johnChapter1Index]);
+      // SUT 3
+      expect(env.audioDeleteButtons[johnChapter1Index].nativeElement.disabled)
+        .withContext('delete button should be disabled when offline')
+        .toBeTrue();
+      // SUT 4
+      expect(env.errorNoDeleteChapterAudioOffline).withContext('should show error when offline').not.toBeNull();
+      // Click again to close the overlay menu.
+      env.clickElement(env.questionButtonsMenu[johnChapter1Index]);
+      env.waitForProjectDocChanges();
+    }));
+
+    it('does not try to delete chapter audio if offline', fakeAsync(() => {
+      const env = new TestEnvironment(true, true);
+      env.waitForQuestions();
+      const johnIndex = 2;
+      const johnChapter1Index = 3;
+      const johnChapter2Index = 4;
+      env.clickExpanderAtRow(johnIndex);
+
+      env.clickElement(env.questionButtonsMenu[johnChapter2Index]);
+      when(mockedDialogService.confirm(anything(), anything())).thenCall(() => {
+        env.onlineStatus = true;
+        return of(true);
+      });
+      // SUT 1
+      env.clickElement(env.audioDeleteButtons[johnChapter2Index]);
+      verify(mockedProjectService.onlineDeleteAudioTimingData(anything(), anything(), anything())).once();
+      verify(mockedNoticeService.showError(anything())).never();
+      reset(mockedProjectService);
+      env.clickElement(env.questionButtonsMenu[johnChapter1Index]);
+      when(mockedDialogService.confirm(anything(), anything())).thenCall(() => {
+        // When the user clicks the button to delete chapter audio, they are presented with a confirmation dialog.
+        // Suppose the user goes offline after the dialog loads, but before they confirm.
+        env.onlineStatus = false;
+        return of(true);
+      });
+      // SUT 2
+      // When this happens, don't let the delete proceed, and show an error.
+      env.clickElement(env.audioDeleteButtons[johnChapter1Index]);
+      verify(mockedProjectService.onlineDeleteAudioTimingData(anything(), anything(), anything())).never();
+      verify(mockedNoticeService.showError(anything())).once();
+      env.waitForProjectDocChanges();
+    }));
+
     xit('can open chapter audio ', fakeAsync(() => {
       // TODO: Write this test when the dialog service is merged in
     }));
@@ -961,7 +1026,7 @@ class TestEnvironment {
     this.setCurrentUser(this.adminUser);
 
     when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline.asObservable());
-    when(mockedOnlineStatusService.isOnline).thenReturn(this.isOnline.getValue());
+    when(mockedOnlineStatusService.isOnline).thenCall(() => this.isOnline.getValue());
     when(mockedFeatureFlagService.scriptureAudio).thenReturn({ enabled: true } as FeatureFlag);
 
     this.fixture = TestBed.createComponent(CheckingOverviewComponent);
@@ -1078,6 +1143,14 @@ class TestEnvironment {
     this.isOnline.next(isOnline);
     tick();
     this.fixture.detectChanges();
+  }
+
+  get errorNoDeleteChapterAudioOffline(): DebugElement {
+    return this.fetchElement('#error-no-delete-chapter-audio-offline');
+  }
+
+  fetchElement(query: string): DebugElement {
+    return this.fixture.debugElement.query(By.css(query));
   }
 
   checkChapterHasAudio(row: number): boolean {

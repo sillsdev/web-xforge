@@ -134,10 +134,18 @@
                             mat-menu-item
                             (click)="deleteChapterAudio(text, chapter)"
                             class="delete-audio-btn"
+                            [disabled]="disableChapterAudioDeletion"
                           >
                             <mat-icon>delete</mat-icon>
                             <span>{{ t("delete_chapter_audio") }}</span>
                           </button>
+                          <div
+                            id="error-no-delete-chapter-audio-offline"
+                            *ngIf="canDeleteScriptureAudio && disableChapterAudioDeletion"
+                            class="offline-text offline-menu-item-explanation"
+                          >
+                            You must connect to the internet to delete chapter audio.
+                          </div>
                         </ng-container>
                       </mat-menu>
                     </span>
