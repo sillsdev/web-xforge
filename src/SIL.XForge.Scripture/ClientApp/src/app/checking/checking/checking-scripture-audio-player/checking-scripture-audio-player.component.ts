@@ -34,13 +34,15 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     this._timing = Object.values(value).sort((a, b) => a.from - b.from);
   }
 
-  @Input() set source(value: string | undefined) {
+  set source(value: string | undefined) {
     this.audioSource = value;
     this.doAudioSubscriptions();
+    if (this.audioPlayer == null) return;
+    this.audioPlayer.source = value;
   }
 
   verseLabel: string = this.emptyVerseLabel;
-  audioSource?: string;
+  private audioSource?: string;
 
   private _timing: AudioTiming[] = [];
   private _textDocId?: TextDocId;

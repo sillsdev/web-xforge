@@ -200,6 +200,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       this._scriptureAudioPlayer?.pause();
       if (!this.chapterHasAudio && !this.hideChapterText) {
         this.hideChapterAudio();
+      } else if (this._scriptureAudioPlayer != null) {
+        this._scriptureAudioPlayer.source = this.chapterAudioSource;
       }
     }
   }

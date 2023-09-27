@@ -53,13 +53,14 @@ export abstract class AudioPlayerBaseComponent extends SubscriptionDisposable im
     );
   }
 
-  @Input() set source(source: string | undefined) {
+  set source(source: string | undefined) {
     this.isAudioAvailable$.next(false);
     this.audio?.dispose();
     if (source != null && source !== '') {
       this.audio = new AudioPlayer(source, this.onlineStatusService);
     } else {
       this.audio = undefined;
+      this.hasProblem = true;
     }
   }
 
