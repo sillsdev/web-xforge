@@ -185,12 +185,12 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
       return;
     }
 
-    const verseRef: VerseRef = toVerseRef(this._questionDoc.data.verseRef);
+    const verseRefs: VerseRef[] = toVerseRef(this._questionDoc.data.verseRef).allVerses();
 
     if (
       this._scriptureTextAudioData == null ||
       this.scriptureAudioUrl == null ||
-      this._projectUserConfigDoc.data.audioRefsPlayed.includes(verseRef.toString())
+      verseRefs.every(r => this._projectUserConfigDoc!.data!.audioRefsPlayed.includes(r.toString()))
     ) {
       this.selectQuestion();
     } else {
@@ -208,6 +208,6 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
       return;
     }
 
-    this._projectUserConfigDoc.updateAudioRefsListened(toVerseRef(this._questionDoc.data.verseRef));
+    this._projectUserConfigDoc.updateAudioRefsPlayed(toVerseRef(this._questionDoc.data.verseRef));
   }
 }
