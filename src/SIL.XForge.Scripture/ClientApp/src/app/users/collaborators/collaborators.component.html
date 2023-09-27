@@ -1,11 +1,5 @@
 <ng-container *transloco="let t; read: 'collaborators'">
   <div class="invite-user">
-    <div fxLayout="row" fxLayoutAlign="start center">
-      <p class="helper-text">
-        <span [innerHtml]="rolesText?.before"></span><strong><mat-icon>menu</mat-icon></strong
-        ><span [innerHtml]="rolesText?.after"></span>
-      </p>
-    </div>
     <span *ngIf="!isAppOnline" id="collaborators-offline-message" class="offline-text">{{
       t("connect_network_to_manage_users")
     }}</span>
@@ -107,13 +101,11 @@
                   {{ t("cancel_invite") }}
                 </button>
                 <button
-                  *ngIf="userRow.userEligibleForQuestionPermission"
                   mat-menu-item
-                  (click)="toggleQuestionPermission(userRow)"
-                  class="question-permission"
+                  (click)="openRolesDialog(userRow)"
                   [disabled]="!isAppOnline || !userRow.canHaveQuestionPermissionRevoked"
                 >
-                  {{ t(userRow.allowCreatingQuestions ? "disable_add_edit_questions" : "enable_add_edit_questions") }}
+                  {{ t("edit_roles_and_permissions") }}
                 </button>
               </mat-menu>
             </td>
