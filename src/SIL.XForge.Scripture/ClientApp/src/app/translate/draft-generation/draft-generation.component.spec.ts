@@ -5,6 +5,7 @@ import { EMPTY, of } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -17,6 +18,7 @@ import { DraftGenerationComponent, InfoAlert } from './draft-generation.componen
 import { DraftGenerationService } from './draft-generation.service';
 
 describe('DraftGenerationComponent', () => {
+  let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
   let mockDialogService: jasmine.SpyObj<DialogService>;
   let mockDraftGenerationService: jasmine.SpyObj<DraftGenerationService>;
   let mockActivatedProjectService: jasmine.SpyObj<ActivatedProjectService>;
@@ -61,6 +63,13 @@ describe('DraftGenerationComponent', () => {
 
     // Default setup
     setup(): void {
+      mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
+        'FeatureFlagService',
+        {},
+        {
+          allowForwardTranslationNmtDrafting: new FeatureFlag({ enabled: false }, '')
+        }
+      );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
       mockI18nService = jasmine.createSpyObj<I18nService>(['getLanguageDisplayName'], { locale$: of(locale) });
       mockOnlineStatusService = jasmine.createSpyObj<OnlineStatusService>([], { onlineStatus$: of(true) });
@@ -104,6 +113,7 @@ describe('DraftGenerationComponent', () => {
         declarations: [DraftGenerationComponent],
         imports: [UICommonModule, SharedModule],
         providers: [
+          { provide: FeatureFlagService, useValue: mockFeatureFlagService },
           { provide: DraftGenerationService, useValue: mockDraftGenerationService },
           { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
           { provide: DialogService, useValue: mockDialogService },
@@ -208,24 +218,21 @@ describe('DraftGenerationComponent', () => {
   });
 
   describe('getInfoAlert', () => {
-    let env: TestEnvironment;
-
-    beforeAll(() => {
-      env = new TestEnvironment();
-    });
-
     it('should return NotBackTranslation when isBackTranslation is false', () => {
+      let env = new TestEnvironment();
       env.component.isBackTranslation = false;
       expect(env.component.getInfoAlert()).toBe(InfoAlert.NotBackTranslation);
     });
 
     it('should return NotSupportedLanguage when isTargetLanguageSupported is false', () => {
+      let env = new TestEnvironment();
       env.component.isBackTranslation = true;
       env.component.isTargetLanguageSupported = false;
       expect(env.component.getInfoAlert()).toBe(InfoAlert.NotSupportedLanguage);
     });
 
     it('should return NoSourceProjectSet when isSourceProjectSet is false', () => {
+      let env = new TestEnvironment();
       env.component.isBackTranslation = true;
       env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = false;
@@ -233,6 +240,7 @@ describe('DraftGenerationComponent', () => {
     });
 
     it('should return SourceAndTargetLanguageIdentical when isSourceAndTargetDifferent is false', () => {
+      let env = new TestEnvironment();
       env.component.isBackTranslation = true;
       env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = true;
@@ -240,11 +248,30 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.getInfoAlert()).toBe(InfoAlert.SourceAndTargetLanguageIdentical);
     });
 
-    it('should return None when all requirements are met', () => {
+    it('should return None when all back translation requirements are met', () => {
+      let env = new TestEnvironment();
       env.component.isBackTranslation = true;
       env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = true;
       env.component.isSourceAndTargetDifferent = true;
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.None);
+    });
+
+    it('should allow forward translation to override isBackTranslation and isTargetLanguageSupported', () => {
+      let env = new TestEnvironment(() => {
+        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
+          'FeatureFlagService',
+          {},
+          {
+            allowForwardTranslationNmtDrafting: new FeatureFlag({ enabled: true }, '')
+          }
+        );
+      });
+      env.component.isBackTranslation = false;
+      env.component.isTargetLanguageSupported = false;
+      env.component.isSourceProjectSet = true;
+      env.component.isSourceAndTargetDifferent = true;
+      expect(env.component.isForwardTranslationEnabled).toBe(true);
       expect(env.component.getInfoAlert()).toBe(InfoAlert.None);
     });
   });

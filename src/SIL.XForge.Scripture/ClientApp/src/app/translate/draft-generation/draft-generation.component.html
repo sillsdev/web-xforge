@@ -23,12 +23,12 @@
     <!-- TODO Find better link to languages or include in-app table with link to "learn more" -->
     <h3 class="requirements-header">Requirements</h3>
     <ul class="requirements">
-      <li>
+      <li *ngIf="!isForwardTranslationEnabled || isBackTranslation">
         <mat-icon *ngIf="isBackTranslation" class="criteria-met">check</mat-icon>
         <mat-icon *ngIf="!isBackTranslation" class="criteria-not-met">clear</mat-icon>
         <p>Your project type is <span *ngIf="!isBackTranslation">not</span> a back translation project.</p>
       </li>
-      <li>
+      <li *ngIf="!isForwardTranslationEnabled || isTargetLanguageSupported">
         <mat-icon *ngIf="isTargetLanguageSupported" class="criteria-met">check</mat-icon>
         <mat-icon *ngIf="!isTargetLanguageSupported" class="criteria-not-met">clear</mat-icon>
         <p>
@@ -51,6 +51,10 @@
         <mat-icon *ngIf="!isSourceProjectSet" class="criteria-not-met">clear</mat-icon>
         <p *ngIf="isSourceProjectSet">Your project has source text selected.</p>
         <p *ngIf="!isSourceProjectSet">Your project has no source text selected.</p>
+      </li>
+      <li *ngIf="isForwardTranslationEnabled">
+        <mat-icon class="criteria-met">check</mat-icon>
+        <p>Forward translation drafting is enabled.</p>
       </li>
     </ul>
   </section>
