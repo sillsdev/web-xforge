@@ -1004,7 +1004,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     }
     this.scripturePanel!.setAudioTextRef(segmentRef);
     const verseRef: VerseRef | undefined = getVerseRefFromSegmentRef(this.book, segmentRef);
-    this.projectUserConfigDoc?.updateAudioRefsListened(verseRef);
+    this.projectUserConfigDoc?.updateAudioRefsPlayed(verseRef);
   }
 
   isAudioPlaying(): boolean {
