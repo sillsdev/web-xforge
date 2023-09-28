@@ -31,8 +31,9 @@ interface Row {
   readonly role: string;
   readonly inviteeStatus?: InviteeStatus;
   readonly allowCreatingQuestions: boolean;
+  readonly canManageAudio: boolean;
   readonly userEligibleForQuestionPermission: boolean;
-  readonly canHaveQuestionPermissionRevoked: boolean;
+  readonly roleCannotAddEditQuestions: boolean;
 }
 
 export interface InviteeStatus {
@@ -125,10 +126,10 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   get tableColumns(): string[] {
-    const columns: string[] = ['avatar', 'name', 'info', 'questions_permission', 'role', 'more'];
+    const columns: string[] = ['avatar', 'name', 'info', 'questions_permission', 'audio_permission', 'role', 'more'];
     return this.projectDoc?.data?.checkingConfig.checkingEnabled
       ? columns
-      : columns.filter(s => s !== 'questions_permission');
+      : columns.filter(s => s !== 'questions_permission' && s !== 'audio_permission');
   }
 
   ngOnInit(): void {
@@ -242,7 +243,13 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Create) &&
         SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Edit);
 
-      const canHaveQuestionPermissionRevoked = !(
+      const canManageAudio =
+        SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Create) &&
+        SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Edit) &&
+        SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Delete);
+
+      //todo come back to this
+      const roleCannotAddEditQuestions = !(
         SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.Questions, Operation.Create) &&
         SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.Questions, Operation.Edit)
       );
@@ -252,7 +259,8 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         user: userProfile.data || {},
         role,
         allowCreatingQuestions,
-        canHaveQuestionPermissionRevoked,
+        canManageAudio,
+        roleCannotAddEditQuestions,
         userEligibleForQuestionPermission: isParatextRole(role)
       });
     }
