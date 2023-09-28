@@ -8,6 +8,7 @@ import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
+import { InfoComponent } from '../../../shared/info/info.component';
 import { CheckingAudioPlayerComponent } from './checking-audio-player.component';
 
 const mockedOnlineStatusService = mock(OnlineStatusService);
@@ -20,7 +21,7 @@ const meta: Meta<CheckingAudioPlayerComponent> = {
   decorators: [
     moduleMetadata({
       imports: [UICommonModule, CommonModule, I18nStoryModule],
-      declarations: [CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe],
+      declarations: [CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe, InfoComponent],
       providers: [{ provide: OnlineStatusService, useValue: instance(mockedOnlineStatusService) }]
     })
   ],

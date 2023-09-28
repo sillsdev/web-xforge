@@ -20,7 +20,6 @@ import {
   InteractiveTranslatorFactory,
   LatinWordDetokenizer,
   LatinWordTokenizer,
-  MAX_SEGMENT_LENGTH,
   PhraseTranslationSuggester,
   RangeTokenizer,
   TranslationSuggester
@@ -1374,22 +1373,26 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     const sourceSegment = this.source.segmentText;
     if (sourceSegment.length === 0) {
       return;
-    } else if (sourceSegment.length > MAX_SEGMENT_LENGTH) {
-      this.translator = undefined;
-      if (this.translationSuggestionsEnabled) {
-        this.noticeService.show(translate('editor.verse_too_long_for_suggestions'));
-      }
-      return;
     }
 
     const start: number = performance.now();
     const translator: InteractiveTranslator | undefined = await this.interactiveTranslatorFactory?.create(
       sourceSegment
     );
+    if (translator == null) {
+      this.translator = undefined;
+      return;
+    } else if (!translator.isSegmentValid) {
+      this.translator = undefined;
+      if (this.translationSuggestionsEnabled) {
+        this.noticeService.show(translate('editor.verse_too_long_for_suggestions'));
+      }
+      return;
+    }
     if (sourceSegment === this.source.segmentText) {
       this.translator = translator;
       const finish = performance.now();
-      this.console.log(`Translated segment, length: ${sourceSegment.length}, time: ${finish - start}ms`);
+      this.console.log(`Translated segment, length: ${translator.segmentWordRanges.length}, time: ${finish - start}ms`);
     }
   }
 

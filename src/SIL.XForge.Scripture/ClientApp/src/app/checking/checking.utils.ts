@@ -74,7 +74,7 @@ export class CheckingUtils {
    * Undefined if the current text reference is for a heading.
    */
   static parseAudioRef(timingData: AudioTiming[], currentTime: number): AudioTextRef | undefined {
-    let indexInTimings: number = timingData.filter(t => t.from <= currentTime).length - 1;
+    let indexInTimings: number = timingData.findIndex(t => t.to > currentTime);
     for (indexInTimings; indexInTimings >= 0; indexInTimings--) {
       // find the first non-empty textRef because phrase level timings can have entries with empty textRefs
       if (timingData[indexInTimings].textRef !== '') {
@@ -100,7 +100,7 @@ export class CheckingUtils {
    * Undefined if the current audio timing entry is not a heading.
    */
   static parseAudioHeadingRef(timingData: AudioTiming[], currentTime: number): AudioHeadingRef | undefined {
-    const indexInTimings: number = timingData.filter(t => t.from <= currentTime).length - 1;
+    const indexInTimings: number = timingData.findIndex(t => t.to > currentTime);
     if (indexInTimings < 0) return;
     const currentAudioTiming: AudioTiming | undefined = timingData[indexInTimings];
     const match: RegExpExecArray | null = AUDIO_HEADING_REF_REGEX.exec(currentAudioTiming.textRef);
@@ -110,7 +110,7 @@ export class CheckingUtils {
     let iterationStr: string = match[2];
     if (iterationStr !== '') return { label, iteration: +iterationStr };
 
-    let iteration: number = timingData.filter(t => t.from <= currentTime && t.textRef === ref).length;
+    let iteration: number = timingData.filter(t => t.to <= currentAudioTiming.to && t.textRef === ref).length;
     return { label: match[1], iteration };
   }
 }
