@@ -24,10 +24,12 @@ export interface UserData {
 export class RolesAndPermissionsComponent implements OnInit {
   roles = new UntypedFormControl(undefined);
   canAddEditQuestions = new UntypedFormControl(false);
+  canManageAudio = new UntypedFormControl(false);
 
   form = new UntypedFormGroup({
     roles: this.roles,
-    canAddEditQuestions: this.canAddEditQuestions
+    canAddEditQuestions: this.canAddEditQuestions,
+    canManageAudio: this.canManageAudio
   });
 
   private projectDoc?: SFProjectDoc;
@@ -54,10 +56,16 @@ export class RolesAndPermissionsComponent implements OnInit {
 
     this.roles.setValue(project.userRoles[this.data.userId]);
 
-    const allowCreatingQuestions =
+    const canAddEditQuestions =
       SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.Questions, Operation.Create) &&
       SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.Questions, Operation.Edit);
-    this.canAddEditQuestions.setValue(allowCreatingQuestions);
+    this.canAddEditQuestions.setValue(canAddEditQuestions);
+
+    const canManageAudio =
+      SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.TextAudio, Operation.Create) &&
+      SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.TextAudio, Operation.Edit) &&
+      SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.TextAudio, Operation.Delete);
+    this.canManageAudio.setValue(canManageAudio);
   }
 
   isParatextUser(): boolean {
@@ -70,10 +78,16 @@ export class RolesAndPermissionsComponent implements OnInit {
     if (this.form.disabled) return;
 
     const permissions = new Set((this.projectDoc?.data?.userPermissions || {})[this.data.userId] || []);
+
     [
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit)
     ].forEach(right => (this.canAddEditQuestions.value ? permissions.add(right) : permissions.delete(right)));
+    [
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Create),
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Edit),
+      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.TextAudio, Operation.Delete)
+    ].forEach(right => (this.canManageAudio.value ? permissions.add(right) : permissions.delete(right)));
 
     await this.projectService.onlineSetUserProjectPermissions(
       this.data.projectId,
