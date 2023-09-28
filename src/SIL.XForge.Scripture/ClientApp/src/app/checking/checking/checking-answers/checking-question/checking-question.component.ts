@@ -8,10 +8,10 @@ import {
   toVerseRef
 } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subscription } from 'rxjs';
-import { TextAudioDoc } from 'src/app/core/models/text-audio-doc';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-player/single-button-audio-player.component';
