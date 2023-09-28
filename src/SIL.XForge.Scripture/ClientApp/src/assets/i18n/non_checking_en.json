@@ -65,6 +65,7 @@
   "collaborators": {
     "all": "All",
     "allow_add_edit_questions": "Can add & edit questions",
+    "allow_manage_audio": "Can manage scripture audio",
     "awaiting_response_from": "Awaiting response from{{ newLine }}{{ email }}",
     "cancel_invite": "Cancel invite",
     "confirm_remove_user": "Are you sure you want to remove \"{{ user }}\" from the project?",
