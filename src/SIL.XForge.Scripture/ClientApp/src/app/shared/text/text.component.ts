@@ -146,6 +146,11 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
           shiftKey: null,
           handler: () => false
         },
+        'disable backslash': {
+          key: 220,
+          shiftKey: null,
+          handler: () => false
+        },
         'move next, tab': {
           key: 'tab',
           shiftKey: false,

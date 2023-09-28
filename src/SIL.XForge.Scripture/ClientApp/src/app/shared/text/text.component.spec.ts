@@ -886,6 +886,59 @@ describe('TextComponent', () => {
     TestEnvironment.waitForPresenceTimer();
   }));
 
+  it('disallows typing a backslash', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.component.id = new TextDocId('project01', 40, 1);
+    tick();
+    env.fixture.detectChanges();
+
+    const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+    const initialContents: string = env.component.getSegmentText('verse_1_1');
+    env.component.editor!.setSelection(range.index, 'user');
+    tick();
+    env.fixture.detectChanges();
+    const backslashKeyCode = 220;
+    const backslashBindings = env.component.editor!.keyboard['bindings'][backslashKeyCode];
+    expect(backslashBindings.length).withContext('should have a backslash key handler').toEqual(1);
+    backslashBindings[0].handler();
+    tick();
+    env.fixture.detectChanges();
+
+    // the selection should not have changed
+    const currentSelection: RangeStatic = env.component.editor!.getSelection()!;
+    expect(currentSelection.index).toEqual(range.index);
+    const currentContents: string = env.component.getSegmentText('verse_1_1');
+    expect(currentContents).withContext('document text should not have changed').toEqual(initialContents);
+  }));
+
+  it('removes backslashes when pasting text', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.component.id = new TextDocId('project01', 40, 1);
+    tick();
+    env.fixture.detectChanges();
+
+    const range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+    env.component.editor!.setSelection(range.index, 0, 'user');
+    tick();
+    env.fixture.detectChanges();
+    const pasteText = '\\back\\slash';
+    let contents: DeltaStatic = env.component.getSegmentContents('verse_1_1')!;
+    expect(contents.ops![0].insert).toEqual('target: chapter 1, verse 1.');
+    const dataTransfer = new DataTransfer();
+    dataTransfer.setData('text/plain', pasteText);
+    const pasteEvent = new ClipboardEvent('paste', { clipboardData: dataTransfer });
+    env.component.editor!.root.dispatchEvent(pasteEvent);
+    tick(10);
+    env.fixture.detectChanges();
+
+    // the text is pasted with the backslashes removed
+    contents = env.component.getSegmentContents('verse_1_1')!;
+    expect(contents.ops![0].insert).toEqual('backslashtarget: chapter 1, verse 1.');
+    TestEnvironment.waitForPresenceTimer();
+  }));
+
   it('does not cancel paste when valid selection', fakeAsync(() => {
     const { env }: { env: TestEnvironment; segmentRange: RangeStatic } = basicSimpleText();
 
