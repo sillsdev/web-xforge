@@ -10,6 +10,6 @@ module.exports = {
   },
   staticDirs: [
     { from: '../src/assets', to: '/assets' },
-    { from: '../src/app/checking/checking/checking-audio-player', to: '/assets/audio/' }
+    { from: '../src/app/checking/checking/test-audio', to: '/assets/audio/' }
   ]
 };
