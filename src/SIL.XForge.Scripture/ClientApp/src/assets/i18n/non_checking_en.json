@@ -319,6 +319,7 @@
   },
   "roles": {
     "allow_add_edit_questions": "Can add & edit questions",
+    "allow_manage_audio": "Can manage scripture audio",
     "cancel": "Cancel",
     "learn_more": "Read More",
     "none": "None",

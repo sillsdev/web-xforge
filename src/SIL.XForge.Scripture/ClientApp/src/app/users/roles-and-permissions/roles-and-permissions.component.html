@@ -31,6 +31,7 @@
     <div *ngIf="isParatextUser()">
       <h3>{{ t("permissions") }}</h3>
       <mat-checkbox formControlName="canAddEditQuestions">{{ t("allow_add_edit_questions") }}</mat-checkbox>
+      <mat-checkbox formControlName="canManageAudio">{{ t("allow_manage_audio") }}</mat-checkbox>
     </div>
   </mat-dialog-content>
   <mat-dialog-actions [align]="'end'">
