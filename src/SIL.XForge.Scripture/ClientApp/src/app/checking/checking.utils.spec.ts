@@ -37,8 +37,11 @@ describe('CheckingUtils', () => {
   });
 
   it('can parse audio heading ref', () => {
-    expect(CheckingUtils.parseAudioHeadingRef(env.audioTimingHearThis, 0.0)).toBeUndefined();
     // audio timing files should only ever have 1 chapter
+    expect(CheckingUtils.parseAudioHeadingRef(env.audioTimingHearThis, 0.0)).toEqual({
+      label: 'c',
+      iteration: 1
+    });
     expect(CheckingUtils.parseAudioHeadingRef(env.audioTimingHearThis, 0.1)).toEqual({
       label: 'c',
       iteration: 1
