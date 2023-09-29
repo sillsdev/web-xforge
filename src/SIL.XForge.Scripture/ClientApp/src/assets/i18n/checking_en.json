@@ -7,7 +7,6 @@
     "change_password": "Change password",
     "community_checking": "Community Checking",
     "community_support": "Community Support",
-    "connect_project": "Connect project",
     "help": "Help",
     "language": "Language",
     "log_out": "Log out",
@@ -334,6 +333,9 @@
   "dialog": {
     "cancel": "Cancel",
     "close": "Close"
+  },
+  "navigation-project_selector": {
+    "connect_project": "Connect project"
   },
   "scripture_chooser_dialog": {
     "choose_book": "Choose book",
