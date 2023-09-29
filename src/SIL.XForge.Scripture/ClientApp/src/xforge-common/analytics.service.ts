@@ -4,16 +4,39 @@ import { OnlineStatusService } from './online-status.service';
 
 declare function gtag(...args: any): void;
 
-// Using a type rather than interface because I intend to turn in into a union type later for each type of event that
-// can be reported.
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-type EventParams = {
-  page_path: string;
-};
+interface CommandParams {}
+
+enum GoogleCommands {
+  Config = 'config',
+  Event = 'event',
+  JavaScript = 'js'
+}
+
+interface ConfigParams extends CommandParams {
+  send_page_view?: boolean;
+}
+
+interface PageViewParams extends CommandParams {
+  page_location?: string;
+  page_title?: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
-  constructor(private readonly onlineStatus: OnlineStatusService) {}
+  private initiated?: Promise<void>;
+  constructor(private readonly onlineStatus: OnlineStatusService) {
+    if (typeof environment.googleTagId !== 'string') {
+      return;
+    }
+
+    this.initiated = new Promise(resolve => {
+      this.onlineStatus.online.then(() => {
+        this.send(GoogleCommands.JavaScript, new Date());
+        this.send(GoogleCommands.Config, environment.googleTagId, { send_page_view: false } as ConfigParams);
+        resolve();
+      });
+    });
+  }
 
   /**
    * Logs the page navigation event to the analytics service. This method is responsible for sanitizing the URL before
@@ -22,13 +45,11 @@ export class AnalyticsService {
    */
   logNavigation(url: string): void {
     const sanitizedUrl = sanitizeUrl(url);
-    this.logEvent('page_view', { page_path: sanitizedUrl });
+    this.send(GoogleCommands.Event, 'page_view', { page_location: sanitizedUrl } as PageViewParams);
   }
 
-  private logEvent(eventName: string, eventParams: EventParams): void {
-    if (this.onlineStatus.isOnline && typeof environment.googleTagId === 'string') {
-      gtag(eventName, environment.googleTagId, eventParams);
-    }
+  private send(command: GoogleCommands, name: any, params?: CommandParams): void {
+    Promise.all([this.initiated, this.onlineStatus.online]).then(() => gtag(command, name, params));
   }
 }
 

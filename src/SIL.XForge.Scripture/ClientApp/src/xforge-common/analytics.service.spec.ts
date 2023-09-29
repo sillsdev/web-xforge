@@ -7,7 +7,8 @@ describe('AnalyticsService', () => {
   });
 
   it('should redact the join key from URL', () => {
-    const url = 'https://example.com/join/123';
-    expect(sanitizeUrl(url)).toEqual('https://example.com/join/redacted');
+    ['https://example.com/join/123', 'https://example.com/join/123/en'].forEach(url => {
+      expect(sanitizeUrl(url)).toContain('https://example.com/join/redacted');
+    });
   });
 });
