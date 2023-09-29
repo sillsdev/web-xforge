@@ -45,6 +45,7 @@ import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
 import { SFProjectService } from './core/sf-project.service';
 import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 import { paratextUsersFromRoles } from './shared/test-utils';
+import { NavigationProjectSelectorComponent } from './navigation-project-selector/navigation-project-selector.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
@@ -83,7 +84,7 @@ const ROUTES: Route[] = [
 
 describe('AppComponent', () => {
   configureTestingModule(() => ({
-    declarations: [AppComponent, MockComponent],
+    declarations: [AppComponent, NavigationProjectSelectorComponent, MockComponent],
     imports: [
       AvatarTestingModule,
       DialogTestModule,
@@ -765,7 +766,7 @@ class TestEnvironment {
   }
 
   get selectedProjectId(): string {
-    return this.component.projectSelect!.value;
+    return this.component.selectedProjectId!;
   }
 
   get menuLength(): number {
@@ -890,7 +891,7 @@ class TestEnvironment {
 
   selectProject(projectId: string): void {
     this.ngZone.run(() => {
-      this.component.projectSelect!.setSelectionByValue(projectId);
+      this.component.projectChanged(projectId);
     });
     this.wait();
   }
