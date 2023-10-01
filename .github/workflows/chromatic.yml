@@ -54,7 +54,8 @@ jobs:
 
       - name: Build Storybook
         run: cd src/SIL.XForge.Scripture/ClientApp && npm run build-storybook -- --webpack-stats-json
-      - name: Publish to Chromatic
+      - id: publish
+        name: Publish to Chromatic
         uses: chromaui/action@v1
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
@@ -68,3 +69,7 @@ jobs:
           onlyChanged: true
           externals: |
             - '*.scss'
+      - name: Run Storybook tests
+        run: cd src/SIL.XForge.Scripture/ClientApp && npm run test-storybook -- --no-index-json
+        env:
+          TARGET_URL: "${{steps.publish.outputs.storybookUrl}}"
