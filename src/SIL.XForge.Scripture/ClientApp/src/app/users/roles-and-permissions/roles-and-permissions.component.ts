@@ -8,6 +8,7 @@ import { SFProjectRole, isParatextRole } from 'realtime-server/lib/esm/scripture
 import { SFProjectDoc } from 'src/app/core/models/sf-project-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 
 export interface UserData {
@@ -37,6 +38,7 @@ export class RolesAndPermissionsComponent implements OnInit {
   constructor(
     @Inject(MAT_DIALOG_DATA) public readonly data: UserData,
     public readonly urls: ExternalUrlService,
+    public readonly i18n: I18nService,
     private readonly onlineService: OnlineStatusService,
     private readonly projectService: SFProjectService
   ) {}
