@@ -28,7 +28,7 @@
         <span class="roleDescription">{{ t(role + "_description") }}</span>
       </mat-radio-button>
     </mat-radio-group>
-    <div *ngIf="isParatextUser()">
+    <div *ngIf="isParatextUser()" class="permissions">
       <h3>{{ t("permissions") }}</h3>
       <mat-checkbox formControlName="canAddEditQuestions">{{ t("allow_add_edit_questions") }}</mat-checkbox>
       <mat-checkbox formControlName="canManageAudio">{{ t("allow_manage_audio") }}</mat-checkbox>
