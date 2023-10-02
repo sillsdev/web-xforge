@@ -110,7 +110,7 @@
                 <button
                   mat-menu-item
                   (click)="openRolesDialog(userRow)"
-                  [disabled]="!isAppOnline || !userRow.roleCannotAddEditQuestions"
+                  [disabled]="!isAppOnline || isAdmin(userRow.role)"
                 >
                   {{ t("edit_roles_and_permissions") }}
                 </button>
