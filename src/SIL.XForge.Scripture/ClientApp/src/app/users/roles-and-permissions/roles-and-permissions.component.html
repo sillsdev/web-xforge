@@ -22,8 +22,8 @@
     <h3>{{ t("roles") }}</h3>
     <mat-radio-group class="roleOptions" formControlName="roles">
       <mat-radio-button class="roleButton" *ngFor="let role of roleOptions" [value]="role" disabled="true">
-        <span class="roleName">{{ t(role) }}</span>
-        <span class="roleDescription">{{ t(role + "_description") }}</span>
+        <span class="roleName">{{ i18n.localizeRole(role) }}</span>
+        <span class="roleDescription">{{ i18n.localizeRoleDescription(role) }}</span>
       </mat-radio-button>
     </mat-radio-group>
     <div *ngIf="isParatextUser()" class="permissions">
