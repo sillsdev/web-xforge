@@ -10,20 +10,18 @@
     </div>
   </div>
   <mat-dialog-content [formGroup]="form">
-    <app-notice *ngIf="isParatextUser()" icon="live_help" [outline]="true">
-      <div class="help-message">
+    <app-notice icon="live_help" [outline]="true">
+      <div class="help-message" *ngIf="isParatextUser()">
         {{ t("roles_from_pt_cannot_be_changed") }}
         <a mat-flat-button class="learn-more-btn" [href]="urls.rolesHelpPage" target="_blank">{{ t("learn_more") }}</a>
+      </div>
+      <div class="help-message" *ngIf="!isParatextUser()">
+        {{ t("roles_changing_not_supported") }}
       </div>
     </app-notice>
     <h3>{{ t("roles") }}</h3>
     <mat-radio-group class="roleOptions" formControlName="roles">
-      <mat-radio-button
-        class="roleButton"
-        *ngFor="let role of roleOptions"
-        [value]="role"
-        disabled="{{ isParatextUser() }}"
-      >
+      <mat-radio-button class="roleButton" *ngFor="let role of roleOptions" [value]="role" disabled="true">
         <span class="roleName">{{ t(role) }}</span>
         <span class="roleDescription">{{ t(role + "_description") }}</span>
       </mat-radio-button>
