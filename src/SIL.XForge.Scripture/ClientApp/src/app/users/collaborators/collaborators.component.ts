@@ -5,7 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SFProjectRole, isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -33,7 +33,6 @@ interface Row {
   readonly allowCreatingQuestions: boolean;
   readonly canManageAudio: boolean;
   readonly userEligibleForQuestionPermission: boolean;
-  readonly roleCannotAddEditQuestions: boolean;
 }
 
 export interface InviteeStatus {
@@ -226,6 +225,10 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     this.dialogService.openMatDialog(RolesAndPermissionsComponent, dialogConfig);
   }
 
+  isAdmin(role: string): boolean {
+    return role === SFProjectRole.ParatextAdministrator;
+  }
+
   private async loadUsers(): Promise<void> {
     const project = this.projectDoc?.data;
     if (project == null || project.userRoles == null || !this.isAppOnline) {
@@ -248,19 +251,12 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Edit) &&
         SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Delete);
 
-      //todo come back to this
-      const roleCannotAddEditQuestions = !(
-        SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.Questions, Operation.Create) &&
-        SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.Questions, Operation.Edit)
-      );
-
       userRows.push({
         id: userProfile.id,
         user: userProfile.data || {},
         role,
         allowCreatingQuestions,
         canManageAudio,
-        roleCannotAddEditQuestions,
         userEligibleForQuestionPermission: isParatextRole(role)
       });
     }
