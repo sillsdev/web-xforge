@@ -364,6 +364,32 @@ describe('CollaboratorsComponent', () => {
     expect(env.cancelInviteItemOnRow(inviteeRow).attributes['disabled']).toBe('true');
     env.cleanup();
   }));
+
+  it('should enable editing roles and permissions for non-admins', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    env.clickElement(env.userRowMoreMenuElement(1));
+    expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(false);
+
+    env.cleanup();
+  }));
+
+  it('should disable editing roles and permissions for admins', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    env.clickElement(env.userRowMoreMenuElement(0));
+    expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(true);
+
+    env.cleanup();
+  }));
 });
 
 class TestEnvironment {
@@ -502,8 +528,9 @@ class TestEnvironment {
     return this.userRows[row].query(By.css('.user-options button.cancel-invite'));
   }
 
-  questionPermissionItemOnRow(row: number): DebugElement {
-    return this.userRows[row].query(By.css('.user-options button.question-permission'));
+  rolesAndPermissionsItem(): DebugElement {
+    const buttons = this.fixture.debugElement.queryAll(By.css('button.mat-menu-item'));
+    return buttons.find(b => b.nativeElement.textContent.includes('roles and permissions'))!;
   }
 
   userPermissionIcon(row: number): HTMLElement {
