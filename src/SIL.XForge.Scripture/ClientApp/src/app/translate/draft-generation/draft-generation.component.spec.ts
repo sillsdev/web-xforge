@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
+import { RouterTestingModule } from '@angular/router/testing';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { EMPTY, of } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
@@ -111,7 +112,7 @@ describe('DraftGenerationComponent', () => {
     init(): void {
       TestBed.configureTestingModule({
         declarations: [DraftGenerationComponent],
-        imports: [UICommonModule, SharedModule],
+        imports: [UICommonModule, SharedModule, RouterTestingModule],
         providers: [
           { provide: FeatureFlagService, useValue: mockFeatureFlagService },
           { provide: DraftGenerationService, useValue: mockDraftGenerationService },
@@ -297,6 +298,7 @@ describe('DraftGenerationComponent', () => {
       env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.generateDraft();
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
     });
@@ -312,6 +314,7 @@ describe('DraftGenerationComponent', () => {
       env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.generateDraft();
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
     });
@@ -327,6 +330,7 @@ describe('DraftGenerationComponent', () => {
       env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.generateDraft();
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
     });

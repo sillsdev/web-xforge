@@ -355,6 +355,7 @@ describe('TranslateMetricsSession', () => {
     // No error, no throw.
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
     env.keyPress('a');
+    expect(env.session.metrics.type).toBe('edit');
     tick(SEND_METRICS_INTERVAL);
     verify(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).once();
 

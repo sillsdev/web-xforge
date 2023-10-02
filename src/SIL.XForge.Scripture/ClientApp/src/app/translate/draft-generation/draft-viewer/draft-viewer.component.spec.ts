@@ -15,7 +15,7 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -113,6 +113,7 @@ describe('DraftViewerComponent', () => {
       SharedModule,
       RouterTestingModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      TestTranslocoModule,
       NoopAnimationsModule
     ],
     providers: [
@@ -203,6 +204,7 @@ describe('DraftViewerComponent', () => {
     env.component.targetProjectId = '123';
     env.component.editChapter();
     verify(mockRouter.navigateByUrl('/projects/123/translate/GEN/2')).once();
+    expect(mockRouter.navigateByUrl('/projects/123/translate/GEN/2')).toBeTruthy();
   }));
 
   it('should navigate to the correct URL for the given book and chapter', fakeAsync(() => {
@@ -214,6 +216,7 @@ describe('DraftViewerComponent', () => {
     env.component.targetProjectId = '123';
     env.component.navigateBookChapter(book, chapter);
     verify(mockRouter.navigateByUrl('/projects/123/draft-preview/GEN/2')).once();
+    expect(mockRouter.navigateByUrl('/projects/123/draft-preview/GEN/2')).toBeTruthy();
   }));
 
   it('should navigate to the given chapter of the given book if chapter is in range', fakeAsync(() => {
@@ -243,6 +246,7 @@ describe('DraftViewerComponent', () => {
     });
 
     verify(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1')).once();
+    expect(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1')).toBeTruthy();
   }));
 
   it('should navigate to the first chapter of the new book when user changes book', fakeAsync(() => {
@@ -251,6 +255,7 @@ describe('DraftViewerComponent', () => {
     env.component.currentChapter = 2;
     env.component.onBookChange(1);
     verify(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1')).once();
+    expect(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1')).toBeTruthy();
   }));
 
   const projectProfileDoc = {

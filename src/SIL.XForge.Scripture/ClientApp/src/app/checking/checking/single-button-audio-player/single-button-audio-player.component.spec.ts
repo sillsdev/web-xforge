@@ -58,6 +58,7 @@ describe('SingleButtonAudioPlayerComponent', () => {
 
     env.component.player.stop();
     verify(audioMock.stop()).once();
+    expect(env.component.player.audio).not.toBeNull();
   }));
 
   it('does not reset when playing finishes', fakeAsync(() => {
@@ -67,6 +68,7 @@ describe('SingleButtonAudioPlayerComponent', () => {
     env.component.player.hasFinishedPlayingOnce$.next(true);
 
     verify(audioMock.stop()).never();
+    expect(env.component.player.hasFinishedPlayingOnce$.value).toBe(true);
   }));
 
   it('reflects audio.isPlaying', fakeAsync(() => {

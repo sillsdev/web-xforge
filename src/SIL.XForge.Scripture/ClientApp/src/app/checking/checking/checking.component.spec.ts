@@ -1780,6 +1780,7 @@ describe('CheckingComponent', () => {
       env.waitForQuestionTimersToComplete();
 
       verify(chapterAudio.pause()).once();
+      expect(env.component.showScriptureAudioPlayer).toBe(true);
     }));
   });
 });
