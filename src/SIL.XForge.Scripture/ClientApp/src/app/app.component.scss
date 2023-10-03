@@ -1,7 +1,5 @@
 @use 'src/variables';
 
-@use '@material/icon-button/mixins' as icon-button;
-
 @import 'bootstrap/scss/mixins/breakpoints';
 
 $toolbar-height: 56px;
@@ -104,10 +102,6 @@ header {
     line-height: initial;
     font-size: 1rem;
   }
-}
-
-.avatar-icon {
-  @include icon-button.icon-size(32px, 32px, 8px);
 }
 
 ::ng-deep .mat-menu-panel {
