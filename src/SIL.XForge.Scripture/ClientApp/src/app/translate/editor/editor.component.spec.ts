@@ -769,28 +769,29 @@ describe('EditorComponent', () => {
 
     it('change chapters', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
-      env.wait();
-      expect(env.component.chapter).toBe(1);
-      expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
+      env.ngZone.run(() => {
+        env.setProjectUserConfig({ selectedBookNum: 40, selectedChapterNum: 1, selectedSegment: 'verse_1_1' });
+        env.wait();
+        expect(env.component.chapter).toBe(1);
+        expect(env.component.target!.segmentRef).toBe('verse_1_1');
+        verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
 
-      resetCalls(env.mockedRemoteTranslationEngine);
-      env.component.chapter = 2;
-      env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
-      env.wait();
-      const verseText = env.component.target!.getSegmentText('verse_2_1');
-      expect(verseText).toBe('target: chapter 2, verse 1.');
-      expect(env.component.target!.segmentRef).toEqual('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
+        resetCalls(env.mockedRemoteTranslationEngine);
+        env.component.chapter = 2;
+        env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
+        env.wait();
+        const verseText = env.component.target!.getSegmentText('verse_2_1');
+        expect(verseText).toBe('target: chapter 2, verse 1.');
+        expect(env.component.target!.segmentRef).toEqual('verse_1_1');
+        verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).never();
 
-      resetCalls(env.mockedRemoteTranslationEngine);
-      env.component.chapter = 1;
-      env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
-      env.wait();
-      expect(env.component.target!.segmentRef).toBe('verse_1_1');
-      verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
-
+        resetCalls(env.mockedRemoteTranslationEngine);
+        env.component.chapter = 1;
+        env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '1' });
+        env.wait();
+        expect(env.component.target!.segmentRef).toBe('verse_1_1');
+        verify(env.mockedRemoteTranslationEngine.getWordGraph(anything())).once();
+      });
       env.dispose();
     }));
 
@@ -2951,22 +2952,24 @@ describe('EditorComponent', () => {
 
     it('deselects a verse when bottom sheet is open and chapter changed', fakeAsync(() => {
       const env = new TestEnvironment();
-      env.setProjectUserConfig();
-      when(mockedMediaObserver.isActive(anything())).thenReturn(true);
-      env.wait();
+      env.ngZone.run(() => {
+        env.setProjectUserConfig();
+        when(mockedMediaObserver.isActive(anything())).thenReturn(true);
+        env.wait();
 
-      const segmentRef = 'verse_1_1';
-      env.setSelectionAndInsertNote(segmentRef);
-      expect(env.mobileNoteTextArea).toBeTruthy();
-      env.component.chapter = 2;
-      env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
-      env.wait();
-      env.clickSegmentRef('verse_2_2');
-      env.wait();
-      const verse1Elem: HTMLElement = env.getSegmentElement('verse_2_1')!;
-      expect(verse1Elem.classList).not.toContain('commenter-selection');
-      const verse2Elem: HTMLElement = env.getSegmentElement('verse_2_2')!;
-      expect(verse2Elem.classList).toContain('commenter-selection');
+        const segmentRef = 'verse_1_1';
+        env.setSelectionAndInsertNote(segmentRef);
+        expect(env.mobileNoteTextArea).toBeTruthy();
+        env.component.chapter = 2;
+        env.updateParams({ projectId: 'project01', bookId: 'MAT', chapter: '2' });
+        env.wait();
+        env.clickSegmentRef('verse_2_2');
+        env.wait();
+        const verse1Elem: HTMLElement = env.getSegmentElement('verse_2_1')!;
+        expect(verse1Elem.classList).not.toContain('commenter-selection');
+        const verse2Elem: HTMLElement = env.getSegmentElement('verse_2_2')!;
+        expect(verse2Elem.classList).toContain('commenter-selection');
+      });
       env.dispose();
     }));
 

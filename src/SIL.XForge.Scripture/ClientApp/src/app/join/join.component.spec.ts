@@ -11,6 +11,7 @@ import { AnonymousService } from 'xforge-common/anonymous.service';
 import { AuthService } from 'xforge-common/auth.service';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
+import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -31,6 +32,7 @@ const mockedI18nService = mock(I18nService);
 const mockedLocationService = mock(LocationService);
 const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedRouter = mock(Router);
+const mockErrorReportingService = mock(ErrorReportingService);
 const mockedSFProjectService = mock(SFProjectService);
 
 describe('JoinComponent', () => {
@@ -52,6 +54,7 @@ describe('JoinComponent', () => {
       { provide: LocationService, useMock: mockedLocationService },
       { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: Router, useMock: mockedRouter },
+      { provide: ErrorReportingService, useMock: mockErrorReportingService },
       { provide: SFProjectService, useMock: mockedSFProjectService }
     ]
   }));

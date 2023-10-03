@@ -49,6 +49,7 @@ describe('TrainingProgressComponent', () => {
     env.wait();
 
     verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).once();
+    expect(env.trainingProgress).toBeNull();
   }));
 
   it('should not setup the translation engine if no edit permission', fakeAsync(() => {
@@ -58,6 +59,7 @@ describe('TrainingProgressComponent', () => {
     env.wait();
 
     verify(env.mockedRemoteTranslationEngine.listenForTrainingStatus()).never();
+    expect(env.trainingProgress).toBeNull();
   }));
 
   it('should display', fakeAsync(() => {
