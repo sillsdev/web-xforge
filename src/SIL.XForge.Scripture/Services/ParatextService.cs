@@ -2808,6 +2808,23 @@ public class ParatextService : DisposableBase, IParatextService
                     : null
                 : new[] { note.TagId.ToString() };
         comment.VersionNumber = note.VersionNumber ?? 1;
+
+        if (note.Status == NoteStatus.Todo.InternalValue)
+        {
+            comment.Status = NoteStatus.Todo;
+        }
+        else if (note.Status == NoteStatus.Resolved.InternalValue)
+        {
+            comment.Status = NoteStatus.Resolved;
+        }
+        else if (note.Status == NoteStatus.Done.InternalValue)
+        {
+            comment.Status = NoteStatus.Done;
+        }
+        else
+        {
+            comment.Status = NoteStatus.Unspecified;
+        }
     }
 
     private Note CreateNoteFromComment(

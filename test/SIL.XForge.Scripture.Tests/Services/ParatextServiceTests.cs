@@ -2437,6 +2437,7 @@ public class ParatextServiceTests
                 tagsAdded = new[] { "1" },
                 editable = true,
                 versionNumber = 1,
+                status = NoteStatus.Todo,
             }
         };
         var thread2Notes = new[]
@@ -2526,7 +2527,8 @@ public class ParatextServiceTests
             + "thread1 note 1.-"
             + "Start:0-"
             + "Tag:1-"
-            + "Version:1";
+            + "Version:1-"
+            + "Status:todo";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected));
 
         thread = env.ProjectCommentManager.FindThread(thread2);
@@ -2540,7 +2542,8 @@ public class ParatextServiceTests
             + "Start:0-"
             + "user05-"
             + "Tag:1-"
-            + "Version:1";
+            + "Version:1-"
+            + "Status:";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected));
         // should not create second comment if the note is marked deleted
         CommentThread noteThread3 = env.ProjectCommentManager.FindThread(thread3);
@@ -2677,7 +2680,8 @@ public class ParatextServiceTests
             + "thread1 note 1: EDITED.-"
             + "Start:15-"
             + "Tag:2-"
-            + "Version:2";
+            + "Version:2-"
+            + "Status:";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected1));
 
         comment = thread.Comments[1];
@@ -2687,7 +2691,8 @@ public class ParatextServiceTests
             + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread1 note 2: EDITED.</p>-"
             + "Start:15-"
             + "user05-"
-            + "Version:2";
+            + "Version:2-"
+            + "Status:";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected2));
         Assert.That(ptProjectUsers.Count, Is.EqualTo(1));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 2)));
@@ -2781,7 +2786,8 @@ public class ParatextServiceTests
             + "thread1 note 1.-"
             + "Start:15-"
             + "Tag:2-"
-            + "Version:1";
+            + "Version:1-"
+            + "Status:";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected1));
 
         comment = thread.Comments[1];
@@ -2791,7 +2797,8 @@ public class ParatextServiceTests
             + "<p sf-user-label=\"true\">[User 05 - xForge]</p><p>thread1 note 2.</p>-"
             + "Start:15-"
             + "user05-"
-            + "Version:1";
+            + "Version:1-"
+            + "Status:";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected2));
         Assert.That(ptProjectUsers.Count, Is.EqualTo(1));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
@@ -2873,7 +2880,8 @@ public class ParatextServiceTests
             + "thread1 note 1.-"
             + "Start:15-"
             + "Tag:2-"
-            + "Version:2";
+            + "Version:2-"
+            + "Status:";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected1));
         Assert.That(ptProjectUsers.Count, Is.EqualTo(1));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
@@ -2943,7 +2951,8 @@ public class ParatextServiceTests
             + "Start:15-"
             + "user05-"
             + "Tag:1-"
-            + "Version:3";
+            + "Version:3-"
+            + "Status:todo";
         Assert.That(thread.Comments.First().CommentToString(), Is.EqualTo(expected));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 1)));
 
@@ -3048,23 +3057,44 @@ public class ParatextServiceTests
             + content1b
             + "-Start:15-"
             + "user05-"
-            + "Version:1";
+            + "Version:1-"
+            + "Status:";
         string expected2 =
-            "thread1/User 01/2019-01-02T08:00:00.0000000+00:00-" + "MAT 1:1-" + content2 + "-Start:15-" + "Version:1";
+            "thread1/User 01/2019-01-02T08:00:00.0000000+00:00-"
+            + "MAT 1:1-"
+            + content2
+            + "-Start:15-"
+            + "Version:1-"
+            + "Status:";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected1));
         comment = thread.Comments[1];
         Assert.That(comment.CommentToString(), Is.EqualTo(expected2));
         comment = thread.Comments[2];
         string expected3 =
-            "thread1/User 01/2019-01-03T08:00:00.0000000+00:00-" + "MAT 1:1-" + content3 + "-Start:15-" + "Version:1";
+            "thread1/User 01/2019-01-03T08:00:00.0000000+00:00-"
+            + "MAT 1:1-"
+            + content3
+            + "-Start:15-"
+            + "Version:1-"
+            + "Status:";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected3));
         comment = thread.Comments[3];
         string expected4 =
-            "thread1/User 01/2019-01-04T08:00:00.0000000+00:00-" + "MAT 1:1-" + content4 + "-Start:15-" + "Version:1";
+            "thread1/User 01/2019-01-04T08:00:00.0000000+00:00-"
+            + "MAT 1:1-"
+            + content4
+            + "-Start:15-"
+            + "Version:1-"
+            + "Status:";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected4));
         comment = thread.Comments[4];
         string expected5 =
-            "thread1/User 01/2019-01-05T08:00:00.0000000+00:00-" + "MAT 1:1-" + content5b + "-Start:15-" + "Version:1";
+            "thread1/User 01/2019-01-05T08:00:00.0000000+00:00-"
+            + "MAT 1:1-"
+            + content5b
+            + "-Start:15-"
+            + "Version:1-"
+            + "Status:";
         Assert.That(comment.CommentToString(), Is.EqualTo(expected5));
         Assert.That(ptProjectUsers.Count, Is.EqualTo(1));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
@@ -3184,7 +3214,8 @@ public class ParatextServiceTests
             + "user05-"
             + "deleted-"
             + "Tag:1-"
-            + "Version:1";
+            + "Version:1-"
+            + "Status:todo";
         // comment already marked deleted is unchanged
         Assert.That(comment.CommentToString(), Is.EqualTo(expected));
         var comment2 = thread.Comments[1];
@@ -3195,7 +3226,8 @@ public class ParatextServiceTests
             + "Start:15-"
             + "user05-"
             + "Tag:1-"
-            + "Version:1";
+            + "Version:1-"
+            + "Status:todo";
         // comment without a corresponding note is unchanged
         Assert.That(comment2.CommentToString(), Is.EqualTo(expected2));
         Assert.That(syncMetricInfo, Is.EqualTo(new SyncMetricInfo(added: 0, deleted: 0, updated: 0)));
