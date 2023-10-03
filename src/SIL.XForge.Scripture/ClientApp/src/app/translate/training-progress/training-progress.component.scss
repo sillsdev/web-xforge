@@ -1,5 +1,3 @@
-@use '@material/button/mixins' as button;
-
 @import 'src/variables';
 
 .training-progress {
@@ -22,9 +20,6 @@
     > div {
       color: white;
     }
-    > button {
-      @include button.ink-color(white);
-    }
     background-color: $sf_grey;
   }
 
@@ -37,4 +32,7 @@
 #training-progress-spinner {
   width: 24px;
   height: 24px;
+}
+#training-close-button mat-icon {
+  color: white;
 }
