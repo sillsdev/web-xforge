@@ -22,7 +22,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.FeatureManagement;
 using Newtonsoft.Json.Linq;
 using Paratext.Data;
 using Paratext.Data.Languages;
@@ -58,7 +57,6 @@ public class ParatextService : DisposableBase, IParatextService
     private readonly IRepository<UserSecret> _userSecretRepository;
     private readonly IRealtimeService _realtimeService;
     private readonly IOptions<SiteOptions> _siteOptions;
-    private readonly IFeatureManager _featureManager;
     private readonly IFileSystemService _fileSystemService;
     private readonly HttpClientHandler _httpClientHandler;
     private readonly IExceptionHandler _exceptionHandler;
@@ -86,7 +84,6 @@ public class ParatextService : DisposableBase, IParatextService
         IRealtimeService realtimeService,
         IExceptionHandler exceptionHandler,
         IOptions<SiteOptions> siteOptions,
-        IFeatureManager featureManager,
         IFileSystemService fileSystemService,
         ILogger<ParatextService> logger,
         IJwtTokenHelper jwtTokenHelper,
@@ -102,7 +99,6 @@ public class ParatextService : DisposableBase, IParatextService
         _realtimeService = realtimeService;
         _exceptionHandler = exceptionHandler;
         _siteOptions = siteOptions;
-        _featureManager = featureManager;
         _fileSystemService = fileSystemService;
         _logger = logger;
         _jwtTokenHelper = jwtTokenHelper;
@@ -1418,13 +1414,7 @@ public class ParatextService : DisposableBase, IParatextService
             }
         }
 
-        // Only update PT comments if the feature flag is enabled in the backend
-        if (await _featureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext))
-        {
-            return PutCommentThreads(userSecret, paratextId, noteThreadChangeList);
-        }
-
-        return new SyncMetricInfo();
+        return PutCommentThreads(userSecret, paratextId, noteThreadChangeList);
     }
 
     /// <summary> Adds the comment tag to the list of comment tags if that tag does not already exist. </summary>
