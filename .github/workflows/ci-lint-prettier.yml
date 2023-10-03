@@ -17,15 +17,16 @@ jobs:
     strategy:
       matrix:
         node_version: [16.x]
+        npm_version: ["8.10.0"]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Use Node.js ${{ matrix.node_version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node_version }}
       - name: Upgrade npm
-        run: npm install -g npm@7
+        run: npm install -g npm@${{matrix.npm_version}}
       - name: Realtime Server Lint check
         run: cd src/RealtimeServer && npm ci && npm run lint
       - name: Realtime Server Prettier format check
