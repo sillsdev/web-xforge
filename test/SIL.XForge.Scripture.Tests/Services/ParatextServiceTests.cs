@@ -12,7 +12,6 @@ using System.Xml.Linq;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.FeatureManagement;
 using Newtonsoft.Json.Linq;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -2420,7 +2419,6 @@ public class ParatextServiceTests
     public async Task UpdateParatextComments_AddsComment()
     {
         var env = new TestEnvironment();
-        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
         var associatedPtUser = new SFParatextUser(env.Username01);
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -2562,7 +2560,6 @@ public class ParatextServiceTests
     public async Task UpdateParatextComments_AddsCommentTagIdNotSet()
     {
         var env = new TestEnvironment();
-        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
         var associatedPtUser = new SFParatextUser(env.Username01);
         string paratextId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -2607,7 +2604,6 @@ public class ParatextServiceTests
     public async Task UpdateParatextComments_EditsComment()
     {
         var env = new TestEnvironment();
-        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
         var associatedPtUser = new SFParatextUser(env.Username01);
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -2704,7 +2700,6 @@ public class ParatextServiceTests
     public async Task UpdateParatextComments_DoesNotEditNonEditableComment()
     {
         var env = new TestEnvironment();
-        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
         var associatedPtUser = new SFParatextUser(env.Username01);
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -2809,7 +2804,6 @@ public class ParatextServiceTests
     public async Task UpdateParatextComments_DoesNotEditCommentWithDifferentVersionNumber()
     {
         var env = new TestEnvironment();
-        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
         var associatedPtUser = new SFParatextUser(env.Username01);
         string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -2895,7 +2889,6 @@ public class ParatextServiceTests
         var associatedPTUser = new SFParatextUser(env.Username01);
         string paratextId = env.SetupProject(env.Project01, associatedPTUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
-        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
 
         ThreadComponents threadComp = new ThreadComponents
         {
@@ -3084,7 +3077,6 @@ public class ParatextServiceTests
     public async Task UpdateParatextComments_DeleteComment()
     {
         var env = new TestEnvironment();
-        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
         var associatedPtUser = new SFParatextUser(env.Username01);
         string paratextId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -3216,7 +3208,6 @@ public class ParatextServiceTests
     public async Task UpdateParatextComments_DoesNotDeleteNonEditableComment()
     {
         var env = new TestEnvironment();
-        env.MockFeatureManager.IsEnabledAsync(FeatureFlags.WriteNotesToParatext).Returns(Task.FromResult(true));
         var associatedPtUser = new SFParatextUser(env.Username01);
         string paratextId = env.SetupProject(env.Project01, associatedPtUser);
         UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
@@ -4631,7 +4622,6 @@ public class ParatextServiceTests
         public readonly SFMemoryRealtimeService RealtimeService;
         public readonly IExceptionHandler MockExceptionHandler;
         public readonly IOptions<SiteOptions> MockSiteOptions;
-        public readonly IFeatureManager MockFeatureManager;
         public readonly IFileSystemService MockFileSystemService;
         public readonly IScrTextCollection MockScrTextCollection;
         public readonly ISharingLogicWrapper MockSharingLogicWrapper;
@@ -4653,7 +4643,6 @@ public class ParatextServiceTests
             MockParatextOptions = Substitute.For<IOptions<ParatextOptions>>();
             MockExceptionHandler = Substitute.For<IExceptionHandler>();
             MockSiteOptions = Substitute.For<IOptions<SiteOptions>>();
-            MockFeatureManager = Substitute.For<IFeatureManager>();
             MockFileSystemService = Substitute.For<IFileSystemService>();
             MockLogger = new MockLogger<ParatextService>();
             MockScrTextCollection = Substitute.For<IScrTextCollection>();
@@ -4726,7 +4715,6 @@ public class ParatextServiceTests
                 RealtimeService,
                 MockExceptionHandler,
                 MockSiteOptions,
-                MockFeatureManager,
                 MockFileSystemService,
                 MockLogger,
                 MockJwtTokenHelper,
