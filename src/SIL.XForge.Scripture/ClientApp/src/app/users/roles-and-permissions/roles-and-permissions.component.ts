@@ -68,6 +68,10 @@ export class RolesAndPermissionsComponent implements OnInit {
       SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.TextAudio, Operation.Edit) &&
       SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.TextAudio, Operation.Delete);
     this.canManageAudio.setValue(canManageAudio);
+
+    if (this.isParatextUser()) {
+      this.roles.disable();
+    }
   }
 
   isParatextUser(): boolean {
