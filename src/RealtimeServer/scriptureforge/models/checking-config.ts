@@ -10,4 +10,5 @@ export interface CheckingConfig {
   shareEnabled: boolean;
   answerExportMethod: CheckingAnswerExport;
   noteTagId?: number;
+  hideCommunityCheckingText?: boolean;
 }

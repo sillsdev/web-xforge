@@ -16,36 +16,26 @@ const audioFile = 'test-audio-player.webm';
 const textDocId: TextDocId = new TextDocId('project01', 1, 1);
 
 describe('ScriptureAudioComponent', () => {
-  let env: TestEnvironment;
-  beforeEach(fakeAsync(() => {
-    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
-    env = new TestEnvironment(template);
-    env.fixture.detectChanges();
-
-    env.component.audioPlayer.timing = getAudioTimings();
-    env.component.audioPlayer.textDocId = textDocId;
-    env.wait();
-  }));
-
   it('can play and pause audio', fakeAsync(() => {
-    const play = spyOn(env.audioPlayer.audio, 'play').and.callThrough();
-    const pause = spyOn(env.audioPlayer.audio, 'pause').and.callThrough();
+    const env = new TestEnvironment();
 
     env.playButton.nativeElement.click();
     env.wait();
 
     expect(env.isPlaying).toBe(true);
-    expect(play).toHaveBeenCalledTimes(1);
-    expect(pause).toHaveBeenCalledTimes(0);
+    expect(env.audioPlaySpy).toHaveBeenCalledTimes(1);
+    expect(env.audioPauseSpy).toHaveBeenCalledTimes(0);
 
     env.playButton.nativeElement.click();
     env.wait();
 
-    expect(play).toHaveBeenCalledTimes(1);
-    expect(pause).toHaveBeenCalledTimes(1);
+    expect(env.audioPlaySpy).toHaveBeenCalledTimes(1);
+    expect(env.audioPauseSpy).toHaveBeenCalledTimes(1);
   }));
 
   it('can skip to next and previous verse', fakeAsync(() => {
+    const env = new TestEnvironment();
+
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
 
     env.clickNextRef();
@@ -63,7 +53,7 @@ describe('ScriptureAudioComponent', () => {
   }));
 
   it('can skip forward and back through section headings', fakeAsync(() => {
-    env.component.audioPlayer.timing = getAudioTimingWithHeadings();
+    const env = new TestEnvironment({ timings: getAudioTimingWithHeadings() });
 
     env.clickNextRef();
     env.wait();
@@ -84,73 +74,64 @@ describe('ScriptureAudioComponent', () => {
   }));
 
   it('emits verse changed event', fakeAsync(() => {
-    const verseChangedSpy = jasmine.createSpy('verseChanged');
-    env.component.audioPlayer.currentVerseChanged.subscribe(verseChangedSpy);
-    expect(verseChangedSpy).toHaveBeenCalledTimes(0);
+    const env = new TestEnvironment();
+
+    expect(env.verseChangedSpy).withContext('it already announced where we started').toHaveBeenCalledTimes(1);
 
     env.audioPlayer.audio.currentTime = 1.5;
     env.audioPlayer.audio.timeUpdated$.next();
-    expect(verseChangedSpy).toHaveBeenCalledTimes(1);
-    expect(verseChangedSpy).toHaveBeenCalledWith('verse_1_2');
+    expect(env.verseChangedSpy).toHaveBeenCalledTimes(2);
+    expect(env.verseChangedSpy).toHaveBeenCalledWith('verse_1_2');
   }));
 
   it('emits verse changed event for section headings', fakeAsync(() => {
     const timings: AudioTiming[] = getAudioTimingWithHeadings();
-    env.component.audioPlayer.timing = timings;
-
-    const verseChangedSpy = jasmine.createSpy('verseChanged');
-    env.component.audioPlayer.currentVerseChanged.subscribe(verseChangedSpy);
+    const env = new TestEnvironment({ timings });
 
     env.audioPlayer.audio.currentTime = 1;
     env.audioPlayer.audio.timeUpdated$.next();
     env.wait();
     expect(env.currentTime).toBeGreaterThan(timings[1].from);
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
-    expect(verseChangedSpy).toHaveBeenCalledWith('s_1');
+    expect(env.verseChangedSpy).toHaveBeenCalledWith('s_1');
 
     env.audioPlayer.audio.currentTime = 2.5;
     env.audioPlayer.audio.timeUpdated$.next();
     env.wait();
     expect(env.currentTime).toBeGreaterThan(timings[3].from);
     expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:2');
-    expect(verseChangedSpy).toHaveBeenCalledWith('s_2');
+    expect(env.verseChangedSpy).toHaveBeenCalledWith('s_2');
   }));
 
   it('emits section heading when timing starts at greater than 0 seconds', fakeAsync(() => {
-    const timings: AudioTiming[] = [
-      { textRef: 's', from: 1.0, to: 2.0 },
-      { textRef: '1', from: 2.0, to: 3.0 }
-    ];
-    env.component.audioPlayer.timing = timings;
-
-    const verseChangedSpy = jasmine.createSpy('verseChanged');
-    env.component.audioPlayer.currentVerseChanged.subscribe(verseChangedSpy);
-
-    env.playButton.nativeElement.click();
-    env.audioPlayer.audio.timeUpdated$.next();
-    env.wait();
-
-    expect(verseChangedSpy).toHaveBeenCalledWith('s_1');
+    const env = new TestEnvironment({
+      timings: [
+        { textRef: 's', from: 1.0, to: 2.0 },
+        { textRef: '1', from: 2.0, to: 3.0 }
+      ]
+    });
+    expect(env.verseChangedSpy).toHaveBeenCalledWith('s_1');
   }));
 
   it('pauses and emits on close', fakeAsync(() => {
-    const pauseSpy = spyOn(env.component.audioPlayer, 'pause').and.callThrough();
-    let count = 0;
-    env.component.audioPlayer.closed.subscribe(() => count++);
-    expect(pauseSpy).not.toHaveBeenCalled();
+    const env = new TestEnvironment();
+
+    expect(env.audioPauseSpy).not.toHaveBeenCalled();
 
     env.component.audioPlayer.close();
     env.wait();
-    expect(pauseSpy).toHaveBeenCalled();
-    expect(count).toEqual(1);
+    expect(env.audioPauseSpy).toHaveBeenCalled();
+    expect(env.closedEventCount).toEqual(1);
   }));
 
   it('skipping to previous verse remains on the current verse if within grace period', fakeAsync(() => {
-    env.component.audioPlayer.timing = [
-      { textRef: '1', from: 0.0, to: 1.0 },
-      { textRef: '2', from: 1.0, to: 4.5 },
-      { textRef: '3', from: 4.5, to: 5.0 }
-    ];
+    const env = new TestEnvironment({
+      timings: [
+        { textRef: '1', from: 0.0, to: 1.0 },
+        { textRef: '2', from: 1.0, to: 4.5 },
+        { textRef: '3', from: 4.5, to: 5.0 }
+      ]
+    });
 
     env.currentTime = 4.1;
     expect(env.currentTime).toBeGreaterThan(4);
@@ -161,10 +142,12 @@ describe('ScriptureAudioComponent', () => {
   }));
 
   it('skipping to the next verse will skip to the start of the current timing data if it has not started yet', fakeAsync(() => {
-    env.component.audioPlayer.timing = [
-      { textRef: '1', from: 3.0, to: 4.0 },
-      { textRef: '2', from: 4.0, to: 5.0 }
-    ];
+    const env = new TestEnvironment({
+      timings: [
+        { textRef: '1', from: 3.0, to: 4.0 },
+        { textRef: '2', from: 4.0, to: 5.0 }
+      ]
+    });
 
     expect(env.currentTime).toEqual(0);
     env.clickNextRef();
@@ -172,17 +155,15 @@ describe('ScriptureAudioComponent', () => {
   }));
 
   it('emits once when chapter audio finishes', fakeAsync(() => {
-    const pause = spyOn(env.component.audioPlayer, 'pause').and.callThrough();
-    let eventCount = 0;
-    env.component.audioPlayer.closed.subscribe(() => eventCount++);
+    const env = new TestEnvironment();
 
     env.component.audioPlayer.audioPlayer?.isAudioAvailable$.next(false);
     env.component.audioPlayer.audioPlayer?.isAudioAvailable$.next(true);
     env.component.audioPlayer.audioPlayer?.audio?.finishedPlaying$.emit();
     env.component.audioPlayer.audioPlayer?.audio?.finishedPlaying$.emit();
 
-    expect(eventCount).toBe(1);
-    expect(pause).toHaveBeenCalledTimes(1);
+    expect(env.closedEventCount).toBe(1);
+    expect(env.audioPauseSpy).toHaveBeenCalledTimes(1);
   }));
 });
 
@@ -205,7 +186,9 @@ class AudioPlayerStubComponent {
     this.audio = new AudioPlayerStub(audioFile, instance(AudioPlayerStubComponent.onlineStatusService));
   }
 
-  @Input() set source(source: string | undefined) {}
+  @Input() set source(source: string | undefined) {
+    if (source != null) this.isAudioAvailable$.next(true);
+  }
 }
 
 class TestEnvironment {
@@ -213,8 +196,14 @@ class TestEnvironment {
   fixture: ComponentFixture<HostComponent>;
   component: HostComponent;
   ngZone: NgZone;
+  verseChangedSpy: jasmine.Spy<jasmine.Func> = jasmine.createSpy('verseChanged');
+  audioPlaySpy?: jasmine.Spy<jasmine.Func>;
+  audioPauseSpy?: jasmine.Spy<jasmine.Func>;
+  closedEventCount: number = 0;
 
-  constructor(template: string) {
+  constructor({ timings }: Partial<{ timings: AudioTiming[] }> = {}) {
+    const template = `<app-checking-scripture-audio-player source="${audioFile}"></app-checking-scripture-audio-player>`;
+
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingScriptureAudioPlayerComponent, AudioPlayerStubComponent, AudioTimePipe],
       providers: [{ provide: OnlineStatusService, useFactory: () => instance(this.mockOnlineStatusService) }],
@@ -225,6 +214,17 @@ class TestEnvironment {
     this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(HostComponent);
     this.component = this.fixture.componentInstance;
+
+    this.fixture.detectChanges();
+
+    this.component.audioPlayer.timing = timings ?? getAudioTimings();
+    this.component.audioPlayer.textDocId = textDocId;
+    this.component.audioPlayer.currentVerseChanged.subscribe(this.verseChangedSpy);
+    this.audioPlaySpy = spyOn(this.audioPlayer.audio, 'play').and.callThrough();
+    this.audioPauseSpy = spyOn(this.audioPlayer.audio, 'pause').and.callThrough();
+    this.component.audioPlayer.closed.subscribe(() => this.closedEventCount++);
+
+    this.wait();
   }
 
   get audioPlayer(): AudioPlayerStubComponent {

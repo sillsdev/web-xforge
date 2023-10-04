@@ -16,9 +16,13 @@ import { AudioHeadingRef, AudioTextRef, CheckingUtils } from '../../checking.uti
   styleUrls: ['./checking-scripture-audio-player.component.scss']
 })
 export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposable implements AfterViewInit {
+  @Input() canClose: boolean = true;
   @Output() currentVerseChanged = new EventEmitter<string>();
   @Output() closed: EventEmitter<void> = new EventEmitter<void>();
   @ViewChild('audioPlayer') audioPlayer?: AudioPlayerComponent;
+  /** Having some text in the verse label (rather than empty string or a space) helps containing components predict the
+   * likely height. */
+  private readonly emptyVerseLabel: string = ':';
 
   @Input() set textDocId(value: TextDocId | undefined) {
     this._textDocId = value;
@@ -32,27 +36,24 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
 
   @Input() set source(value: string | undefined) {
     this.audioSource = value;
-    this.finishedSubscription?.unsubscribe();
-    this.finishedSubscription = undefined;
-    if (value != null) {
-      this.subscribeToAudioFinished();
-    }
+    this.doAudioSubscriptions();
   }
 
-  verseLabel: string = '';
+  verseLabel: string = this.emptyVerseLabel;
   audioSource?: string;
 
   private _timing: AudioTiming[] = [];
   private _textDocId?: TextDocId;
   private finishedSubscription?: Subscription;
+  private verseChangeSubscription?: Subscription;
+  private audioSubscription?: Subscription;
 
   constructor(readonly i18n: I18nService) {
     super();
   }
 
   ngAfterViewInit(): void {
-    this.subscribeToAudioFinished();
-    this.subscribePlayerVerseChange(this.audioPlayer!.audio!);
+    this.doAudioSubscriptions();
   }
 
   get isPlaying(): boolean {
@@ -60,7 +61,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   }
 
   private get currentVerseLabel(): string {
-    if (this._textDocId == null) return '';
+    if (this._textDocId == null) return this.emptyVerseLabel;
     const currentTime: number = this.audioPlayer?.audio?.currentTime ?? 0;
     const currentVerseStr: string = this.getCurrentVerseStr(currentTime);
     const verseRef = new VerseRef(
@@ -131,19 +132,40 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     return this._timing.findIndex(t => t.to > currentTime);
   }
 
-  private subscribePlayerVerseChange(audio: AudioPlayer): void {
-    this.subscribe(
+  private doAudioSubscriptions(): void {
+    if (this.audioPlayer == null) return;
+    // wait until the next microtask cycle to get the audio player with the updated source
+    Promise.resolve(this.audioPlayer).then(audioPlayer => {
+      this.audioSubscription?.unsubscribe();
+      this.audioSubscription = this.subscribe(
+        audioPlayer.isAudioAvailable$.pipe(
+          filter(a => a),
+          first()
+        ),
+        () => {
+          if (audioPlayer.audio == null) {
+            console.log(`warning: audio player unexpectedly null.`);
+            return;
+          }
+          const audio: AudioPlayer = audioPlayer.audio;
+          this.subscribeToAudioFinished(audio);
+          this.subscribeToVerseChange(audio);
+        }
+      );
+    });
+  }
+
+  private subscribeToVerseChange(audio: AudioPlayer): void {
+    this.verseChangeSubscription?.unsubscribe();
+    this.verseChangeSubscription = this.subscribe(
       audio.timeUpdated$.pipe(
         map(() => this.getRefIndexInTimings(audio.currentTime)),
         distinctUntilChanged()
       ),
       () => {
-        if (this._textDocId == null || this.audioPlayer?.audio == null) return;
+        if (this._textDocId == null) return;
         this.verseLabel = this.currentVerseLabel;
-        const audioTextRef: AudioTextRef | undefined = CheckingUtils.parseAudioRef(
-          this._timing,
-          this.audioPlayer.audio.currentTime
-        );
+        const audioTextRef: AudioTextRef | undefined = CheckingUtils.parseAudioRef(this._timing, audio.currentTime);
         if (audioTextRef?.verseStr == null) {
           // emit the current ref that is a section heading
           const audioHeadingRef: AudioHeadingRef | undefined = CheckingUtils.parseAudioHeadingRef(
@@ -161,21 +183,10 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
     );
   }
 
-  private subscribeToAudioFinished(): void {
-    if (this.audioPlayer == null || this.finishedSubscription != null) return;
-    // wait until the next microtask cycle to get the audio player with the updated source
-    Promise.resolve(this.audioPlayer).then(audioPlayer => {
-      this.subscribe(
-        audioPlayer.isAudioAvailable$.pipe(
-          filter(a => a),
-          first()
-        ),
-        () => {
-          this.finishedSubscription = this.subscribe(audioPlayer.audio!.finishedPlaying$.pipe(first()), () => {
-            this.close();
-          });
-        }
-      );
+  private subscribeToAudioFinished(audio: AudioPlayer): void {
+    this.finishedSubscription?.unsubscribe();
+    this.finishedSubscription = this.subscribe(audio.finishedPlaying$.pipe(first()), () => {
+      if (this.canClose) this.close();
     });
   }
 

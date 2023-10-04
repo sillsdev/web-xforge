@@ -124,6 +124,7 @@
                 (dragEnd)="checkSliderPosition($event)"
                 [useTransition]="true"
               >
+                <!-- Splitter area sizes are controlled programmatically. -->
                 <as-split-area [size]="100">
                   <div class="panel-content" #scripturePanelContainer>
                     <!-- TODO (scripture audio) Instead of covering scripture panel, move the audio player below it -->
@@ -132,6 +133,7 @@
                         [source]="chapterAudioSource"
                         [timing]="chapterTextAudioTiming"
                         [textDocId]="textDocId"
+                        [canClose]="!hideChapterText"
                         (currentVerseChanged)="handleAudioTextRefChanged($event)"
                         (closed)="hideChapterAudio()"
                       ></app-checking-scripture-audio-player>
@@ -144,6 +146,7 @@
                       [questionVerses]="questionVerseRefs"
                       (questionVerseSelected)="verseRefClicked($event)"
                       [isRightToLeft]="isRightToLeft"
+                      [class.hidden]="hideChapterText"
                     ></app-checking-text>
                   </div>
                 </as-split-area>

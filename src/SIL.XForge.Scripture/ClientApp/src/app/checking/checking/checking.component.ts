@@ -94,6 +94,8 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   ) {
     this._scriptureAudioPlayer = newValue;
     if (newValue !== undefined) {
+      // If we are automatically showing the Scripture audio player because hide-text is enabled, don't auto-play.
+      if (this.hideChapterText) return;
       Promise.resolve(null).then(() => this._scriptureAudioPlayer?.play());
     }
   }
@@ -120,6 +122,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   userDoc?: UserDoc;
   visibleQuestions?: QuestionDoc[];
   showScriptureAudioPlayer: boolean = false;
+  hideChapterText: boolean = false;
 
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
@@ -194,7 +197,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
           : undefined;
 
       this._scriptureAudioPlayer?.pause();
-      if (!this.chapterHasAudio) {
+      if (!this.chapterHasAudio && !this.hideChapterText) {
         this.hideChapterAudio();
       }
     }
@@ -434,6 +437,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       : 0;
   }
 
+  private get scriptureAudioPlayerAreaHeight(): number {
+    const scriptureAudioPlayerArea: Element | null = document.querySelector('.scripture-audio-player-wrapper');
+    return scriptureAudioPlayerArea == null ? 0 : scriptureAudioPlayerArea.getBoundingClientRect().height;
+  }
+
+  /** Percentage of the vertical space of the as-splitter, needed by just the Scripture audio player. */
+  private get scriptureAudioPlayerHeightPercent(): number {
+    return (this.scriptureAudioPlayerAreaHeight / this.splitContainerElementHeight) * 100;
+  }
+
   ngOnInit(): void {
     this.subscribe(this.activatedRoute.params, async params => {
       this.loadingStarted();
@@ -444,6 +457,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       if (!this.projectDoc.isLoaded) {
         return;
       }
+      this.showOrHideScriptureText();
       const bookNum = bookId == null ? 0 : Canon.bookIdToNumber(bookId);
       this.projectUserConfigDoc = await this.projectService.getUserConfig(projectId, this.userService.currentUserId);
       if (prevProjectId !== this.projectDoc.id || this.book !== bookNum || (bookId !== 'ALL' && this.showAllBooks)) {
@@ -538,6 +552,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               this.onRemovedFromProject();
             }
           }
+          this.showOrHideScriptureText();
         }
       });
       this.projectDeleteSub?.unsubscribe();
@@ -861,6 +876,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       currentChapter: this._chapter
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
+    this.calculateScriptureSliderPosition();
   }
 
   handleAudioTextRefChanged(ref: string): void {
@@ -1103,25 +1119,32 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this._activeQuestionVerseRef = questionDoc.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
   }
 
+  /** Adjust the position of the splitter between Scripture text and answers. */
   private calculateScriptureSliderPosition(maximizeAnswerPanel: boolean = false): void {
-    const waitMs: number = 100;
-    // Wait while Angular updates visible DOM elements before we can calculate the height correctly
-    setTimeout(() => {
+    // Wait while Angular updates visible DOM elements before we can calculate the height correctly.
+    // 100 ms is a speculative value for waiting for elements to be loaded and updated in the DOM.
+    const changeUpdateDelayMs: number = 100;
+    setTimeout(async () => {
       if (this.splitComponent == null) {
         return;
       }
-
-      let answerPanelHeight: number;
-      if (maximizeAnswerPanel) {
-        answerPanelHeight = this.fullyExpandedAnswerPanelPercent;
+      if (this.hideChapterText) {
+        const answerPanelHeight = 100 - this.scriptureAudioPlayerHeightPercent;
+        this.splitComponent?.setVisibleAreaSizes([this.scriptureAudioPlayerHeightPercent, answerPanelHeight]);
       } else {
-        answerPanelHeight = this.minAnswerPanelPercent;
-      }
+        let answerPanelHeight: number;
+        if (maximizeAnswerPanel) {
+          answerPanelHeight = this.fullyExpandedAnswerPanelPercent;
+        } else {
+          answerPanelHeight = this.minAnswerPanelPercent;
+        }
 
-      answerPanelHeight = Math.min(75, answerPanelHeight);
-      const scripturePanelHeight = 100 - answerPanelHeight;
-      this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
-    }, waitMs);
+        answerPanelHeight = Math.min(75, answerPanelHeight);
+        const scripturePanelHeight = 100 - answerPanelHeight;
+
+        this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
+      }
+    }, changeUpdateDelayMs);
   }
 
   // Unbind this component from the data when a user is removed from the project, otherwise console
@@ -1213,6 +1236,17 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
   isAudioPlaying(): boolean {
     return this._scriptureAudioPlayer?.isPlaying ?? false;
+  }
+
+  private showOrHideScriptureText(): void {
+    const oldValue = this.hideChapterText;
+    const newVal = this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText ?? false;
+    this.hideChapterText = newVal;
+    if (this.hideChapterText) this.showScriptureAudioPlayer = true;
+    // (Don't needlessly have setTimeout get called if the value hasn't changed.)
+    if (oldValue !== newVal) {
+      this.calculateScriptureSliderPosition();
+    }
   }
 
   hideChapterAudio(): void {

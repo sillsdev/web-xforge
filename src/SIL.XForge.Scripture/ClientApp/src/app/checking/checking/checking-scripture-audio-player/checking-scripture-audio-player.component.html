@@ -10,7 +10,7 @@
       <mat-icon class="mirror-rtl">skip_next</mat-icon>
     </button>
   </div>
-  <button mat-icon-button class="close-button" (click)="close()">
+  <button *ngIf="canClose" mat-icon-button class="close-button" (click)="close()">
     <mat-icon>close</mat-icon>
   </button>
   <app-audio-player #audioPlayer [source]="audioSource"></app-audio-player>
