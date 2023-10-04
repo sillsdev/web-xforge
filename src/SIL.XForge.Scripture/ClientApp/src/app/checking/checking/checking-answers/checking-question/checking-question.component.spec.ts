@@ -66,6 +66,7 @@ describe('CheckingQuestionComponent', () => {
     expect(env.component.question.focusedText).toBe('scripture-audio-label');
     expect(window.getComputedStyle(env.scriptureAudio.nativeElement)['display']).not.toBe('none');
     expect(window.getComputedStyle(env.questionAudio.nativeElement)['display']).toBe('none');
+    expect(env.noQuestionAudioIcon).toBeNull();
   });
 
   it('selects question when scripture audio absent', async () => {
@@ -84,6 +85,7 @@ describe('CheckingQuestionComponent', () => {
     when(mockedQuestion.audioUrl).thenReturn('');
     await env.wait();
     await env.wait();
+    expect(window.getComputedStyle(env.noQuestionAudioIcon.nativeElement)['display']).toBe('none');
 
     env.component.question.selectQuestion();
     await env.wait();
@@ -91,6 +93,7 @@ describe('CheckingQuestionComponent', () => {
     expect(env.component.question.focusedText).toBe('question-audio-label');
     expect(window.getComputedStyle(env.scriptureAudio.nativeElement)['display']).toBe('none');
     expect(env.questionAudio).toBeNull();
+    expect(env.noQuestionAudioIcon).not.toBeNull();
   });
 
   it('selects question the first time scripture audio plays', async () => {
@@ -255,6 +258,10 @@ class TestEnvironment {
 
   get questionAudio(): DebugElement {
     return this.fixture.debugElement.query(By.css('#questionAudio'));
+  }
+
+  get noQuestionAudioIcon(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#noQuestionAudio'));
   }
 
   async wait(ms: number = 200): Promise<void> {

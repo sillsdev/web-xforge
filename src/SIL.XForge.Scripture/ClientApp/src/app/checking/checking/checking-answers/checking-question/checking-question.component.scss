@@ -24,7 +24,8 @@
 }
 
 #scriptureAudio.question-audio-label,
-#questionAudio.scripture-audio-label {
+#questionAudio.scripture-audio-label,
+#noQuestionAudio.scripture-audio-label {
   display: none;
 }
 
@@ -46,4 +47,13 @@
   p {
     cursor: pointer;
   }
+}
+
+#noQuestionAudio {
+  min-height: 30px;
+  min-width: 30px;
+  padding: 3px 0;
+  display: flex;
+  align-self: start;
+  justify-content: center;
 }
