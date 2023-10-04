@@ -21,7 +21,7 @@
     </app-notice>
     <h3>{{ t("roles") }}</h3>
     <mat-radio-group class="roleOptions" formControlName="roles">
-      <mat-radio-button class="roleButton" *ngFor="let role of roleOptions" [value]="role" disabled="true">
+      <mat-radio-button class="roleButton" *ngFor="let role of roleOptions" [value]="role">
         <span class="roleName">{{ i18n.localizeRole(role) }}</span>
         <span class="roleDescription">{{ i18n.localizeRoleDescription(role) }}</span>
       </mat-radio-button>
