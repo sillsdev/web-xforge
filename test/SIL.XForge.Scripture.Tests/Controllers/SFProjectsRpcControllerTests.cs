@@ -43,7 +43,7 @@ public class SFProjectsRpcControllerTests
         Dictionary<string, bool> featureFlags = result.ToRpcResponse(new RpcId()).Result as Dictionary<string, bool>;
         Assert.IsNotNull(featureFlags);
         Assert.IsTrue(featureFlags[FeatureFlags.Serval]);
-        Assert.IsFalse(featureFlags[FeatureFlags.WriteNotesToParatext]);
+        Assert.IsFalse(featureFlags[FeatureFlags.UseEchoForPreTranslation]);
     }
 
     private class TestEnvironment
@@ -67,7 +67,7 @@ public class SFProjectsRpcControllerTests
         private static async IAsyncEnumerable<string> GetFeatureFlags()
         {
             yield return FeatureFlags.Serval;
-            yield return FeatureFlags.WriteNotesToParatext;
+            yield return FeatureFlags.UseEchoForPreTranslation;
             await Task.CompletedTask;
         }
     }
