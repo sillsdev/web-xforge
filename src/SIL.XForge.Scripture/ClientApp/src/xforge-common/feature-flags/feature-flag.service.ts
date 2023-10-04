@@ -250,13 +250,6 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  private readonly writeNotesToParatext: FeatureFlag = new ServerOnlyFeatureFlag(
-    'WriteNotesToParatext',
-    'Write Notes to Paratext',
-    11,
-    this.featureFlagStore
-  );
-
   get featureFlags(): FeatureFlag[] {
     return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
   }
