@@ -47,7 +47,7 @@ const roles = {
   ptTranslator: SFProjectRole.ParatextTranslator
 };
 
-fdescribe('RolesAndPermissionsComponent', () => {
+describe('RolesAndPermissionsComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
