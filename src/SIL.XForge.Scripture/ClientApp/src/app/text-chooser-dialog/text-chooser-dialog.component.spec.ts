@@ -20,6 +20,8 @@ import { DOCUMENT } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -34,19 +36,23 @@ import { TextChooserDialogComponent, TextChooserDialogData, TextSelection } from
 
 const mockedDocument = mock(Document);
 const mockedBugsnagService = mock(BugsnagService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 
 describe('TextChooserDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      DialogTestModule,
+      NoopAnimationsModule,
+      TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+    ],
     providers: [
       { provide: AuthService, useMock: mock(AuthService) },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: DOCUMENT, useMock: mockedDocument },
       { provide: CookieService, useMock: mock(CookieService) },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService }
     ]
@@ -464,8 +470,6 @@ class TestEnvironment {
     when(dialogSpy.openMatDialog(anything(), anything())).thenReturn(instance(this.mockedScriptureChooserMatDialogRef));
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMatDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
-    when(mockedOnlineStatusService.isOnline).thenReturn(true);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
 
     this.fixture.detectChanges();
     flush();

@@ -2,9 +2,10 @@ import { Component, DebugElement, Input, NgZone, ViewChild } from '@angular/core
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AudioTiming } from 'realtime-server/scriptureforge/models/audio-timing';
-import { BehaviorSubject, of } from 'rxjs';
-import { instance, mock, when } from 'ts-mockito';
+import { BehaviorSubject } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { TextDocId } from '../../../core/models/text-doc';
@@ -177,13 +178,14 @@ class HostComponent {
   template: '<p>Mock Audio Player</p>'
 })
 class AudioPlayerStubComponent {
-  static onlineStatusService = mock(OnlineStatusService);
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
   audio: AudioPlayerStub;
   isAudioAvailable$ = new BehaviorSubject(false);
 
   constructor() {
-    when(AudioPlayerStubComponent.onlineStatusService.onlineStatus$).thenReturn(new BehaviorSubject(false));
-    this.audio = new AudioPlayerStub(audioFile, instance(AudioPlayerStubComponent.onlineStatusService));
+    this.audio = new AudioPlayerStub(audioFile, this.testOnlineStatusService);
   }
 
   @Input() set source(source: string | undefined) {
@@ -192,7 +194,6 @@ class AudioPlayerStubComponent {
 }
 
 class TestEnvironment {
-  readonly mockOnlineStatusService = mock(OnlineStatusService);
   fixture: ComponentFixture<HostComponent>;
   component: HostComponent;
   ngZone: NgZone;
@@ -206,10 +207,9 @@ class TestEnvironment {
 
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingScriptureAudioPlayerComponent, AudioPlayerStubComponent, AudioTimePipe],
-      providers: [{ provide: OnlineStatusService, useFactory: () => instance(this.mockOnlineStatusService) }],
-      imports: [UICommonModule, TestTranslocoModule]
+      providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }],
+      imports: [UICommonModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule]
     });
-    when(this.mockOnlineStatusService.onlineStatus$).thenReturn(of(true));
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
     this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(HostComponent);

@@ -15,7 +15,7 @@ import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models
 import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-test-data';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
@@ -29,6 +29,8 @@ import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { TextAudioDoc } from '../core/models/text-audio-doc';
@@ -47,7 +49,6 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedDialog = mock(MatDialog);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 
@@ -66,6 +67,7 @@ describe('SettingsComponent', () => {
       UICommonModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      TestOnlineStatusModule.forRoot(),
       NoopAnimationsModule
     ],
     declarations: [SettingsComponent, WriteStatusComponent, MockComponent, ProjectSelectComponent, InfoComponent],
@@ -78,7 +80,7 @@ describe('SettingsComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: FeatureFlagService, useValue: instance(mockedFeatureFlagService) },
       { provide: MatDialog, useMock: mockedDialog }
     ]
@@ -514,8 +516,10 @@ class TestEnvironment {
   readonly component: SettingsComponent;
   readonly fixture: ComponentFixture<SettingsComponent>;
   readonly location: Location;
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
-  private isOnline: BehaviorSubject<boolean>;
   private mockedDialogRef = mock<MatDialogRef<DeleteProjectDialogComponent>>(MatDialogRef);
 
   constructor(hasConnection: boolean = true, isSource: boolean = false) {
@@ -526,9 +530,7 @@ class TestEnvironment {
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
-    this.isOnline = new BehaviorSubject<boolean>(hasConnection);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline.asObservable());
-    when(mockedOnlineStatusService.isOnline).thenReturn(this.isOnline.getValue());
+    this.testOnlineStatusService.setIsOnline(hasConnection);
 
     when(mockedParatextService.getProjects()).thenResolve([
       {
@@ -668,7 +670,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(hasConnection: boolean) {
-    this.isOnline.next(hasConnection);
+    this.testOnlineStatusService.setIsOnline(hasConnection);
     tick();
     this.fixture.detectChanges();
   }

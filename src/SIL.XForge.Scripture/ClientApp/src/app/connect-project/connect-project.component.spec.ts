@@ -9,12 +9,13 @@ import { Router } from '@angular/router';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { BehaviorSubject } from 'rxjs';
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -38,7 +39,6 @@ const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedI18nService = mock(I18nService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedErrorHandler = mock(ErrorHandler);
 
 describe('ConnectProjectComponent', () => {
@@ -48,6 +48,7 @@ describe('ConnectProjectComponent', () => {
       NoopAnimationsModule,
       UICommonModule,
       TestTranslocoModule,
+      TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     declarations: [ConnectProjectComponent, ProjectSelectComponent, SyncProgressComponent],
@@ -59,7 +60,7 @@ describe('ConnectProjectComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: ErrorHandler, useMock: mockedErrorHandler },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
@@ -371,9 +372,11 @@ describe('ConnectProjectComponent', () => {
 class TestEnvironment {
   readonly component: ConnectProjectComponent;
   readonly fixture: ComponentFixture<ConnectProjectComponent>;
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
-  private isOnline: BehaviorSubject<boolean>;
 
   constructor(hasConnection: boolean = true) {
     when(mockedSFProjectService.onlineCreate(anything())).thenCall((settings: SFProjectCreateSettings) => {
@@ -410,8 +413,7 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineAddCurrentUser('project01')).thenResolve();
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedI18nService.translateAndInsertTags(anything())).thenReturn('A translated string.');
-    this.isOnline = new BehaviorSubject<boolean>(hasConnection);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline.asObservable());
+    this.testOnlineStatusService.setIsOnline(hasConnection);
     this.fixture = TestBed.createComponent(ConnectProjectComponent);
     this.component = this.fixture.componentInstance;
   }
@@ -469,7 +471,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(hasConnection: boolean) {
-    this.isOnline.next(hasConnection);
+    this.testOnlineStatusService.setIsOnline(hasConnection);
     tick();
     this.fixture.detectChanges();
   }

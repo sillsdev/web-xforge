@@ -66,6 +66,8 @@ import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/gene
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -100,7 +102,6 @@ const mockedNoticeService = mock(NoticeService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedTranslationEngineService = mock(TranslationEngineService);
 const mockedMatDialog = mock(MatDialog);
 const mockedFeatureFlagService = mock(FeatureFlagService);
@@ -138,6 +139,7 @@ describe('EditorComponent', () => {
       SharedModule,
       UICommonModule,
       TestTranslocoModule,
+      TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [
@@ -149,7 +151,7 @@ describe('EditorComponent', () => {
       { provide: CONSOLE, useValue: new MockConsole() },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: TranslationEngineService, useMock: mockedTranslationEngineService },
       { provide: MatDialog, useMock: mockedMatDialog },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
@@ -642,7 +644,6 @@ describe('EditorComponent', () => {
       const text = 'target: chapter 1, verse 5';
       expect(env.component.target!.segmentText).toBe(text);
       env.onlineStatus = false;
-      when(mockedOnlineStatusService.isOnline).thenReturn(false);
       const range = env.component.target!.getSegmentRange('verse_1_1');
       env.targetEditor.setSelection(range!.index, 0, 'user');
       env.wait();
@@ -3535,6 +3536,9 @@ class TestEnvironment {
   readonly mockNoteDialogRef;
   readonly mockedDialogRef = mock<MatDialogRef<GenericDialogComponent<any>, GenericDialogOptions<any>>>(MatDialogRef);
   readonly ngZone: NgZone;
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   private userRolesOnProject = {
     user01: SFProjectRole.ParatextTranslator,
@@ -3788,9 +3792,6 @@ class TestEnvironment {
       })
     );
 
-    when(mockedOnlineStatusService.isOnline).thenReturn(true);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
-
     this.fixture = TestBed.createComponent(EditorComponent);
     when(mockedMatDialog.openDialogs).thenCall(() => this.openNoteDialogs);
     this.mockNoteDialogRef = new MockNoteDialogRef(this.fixture.nativeElement);
@@ -3928,8 +3929,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(value: boolean) {
-    when(mockedOnlineStatusService.isOnline).thenReturn(value);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(value));
+    this.testOnlineStatusService.setIsOnline(value);
   }
 
   clickSegmentRef(segmentRef: string): void {

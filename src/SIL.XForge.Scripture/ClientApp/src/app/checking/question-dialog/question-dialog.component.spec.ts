@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -23,6 +22,8 @@ import { createStorageFileData, FileType } from 'xforge-common/models/file-offli
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
@@ -48,25 +49,28 @@ const mockedAuthService = mock(AuthService);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
-const mockedHttpClient = mock(HttpClient);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedFileService = mock(FileService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 
 describe('QuestionDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [ReactiveFormsModule, FormsModule, DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      ReactiveFormsModule,
+      FormsModule,
+      DialogTestModule,
+      TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+    ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: HttpClient, useMock: mockedHttpClient },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
@@ -620,7 +624,6 @@ class TestEnvironment {
     when(mockedFileService.findOrUpdateCache(FileType.Audio, anything(), 'question01', anything())).thenResolve(
       createStorageFileData(QuestionDoc.COLLECTION, 'question01', '/path/to/audio.mp3', getAudioBlob())
     );
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );

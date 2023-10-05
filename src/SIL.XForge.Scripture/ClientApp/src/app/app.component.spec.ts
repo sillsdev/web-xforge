@@ -1,6 +1,5 @@
 import { MdcDialog } from '@angular-mdc/web';
 import { CommonModule, Location } from '@angular/common';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -30,6 +29,8 @@ import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
@@ -56,7 +57,6 @@ const mockedCookieService = mock(CookieService);
 const mockedLocationService = mock(LocationService);
 const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedFileService = mock(FileService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedMdcDialog = mock(MdcDialog);
@@ -85,11 +85,11 @@ describe('AppComponent', () => {
     imports: [
       AvatarTestingModule,
       DialogTestModule,
-      HttpClientTestingModule,
       UICommonModule,
       NoopAnimationsModule,
       RouterTestingModule.withRoutes(ROUTES),
       TestTranslocoModule,
+      TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [
@@ -104,7 +104,7 @@ describe('AppComponent', () => {
       { provide: LocationService, useMock: mockedLocationService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: PwaService, useMock: mockedPwaService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: FileService, useMock: mockedFileService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: MdcDialog, useMock: mockedMdcDialog },
@@ -615,6 +615,9 @@ class TestEnvironment {
     newlyLoggedIn: false,
     anonymousUser: false
   });
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
   readonly comesOnline$: Subject<void> = new Subject<void>();
   private browserOnline$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   private webSocketOnline$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
@@ -680,17 +683,10 @@ class TestEnvironment {
     when(mockedSyncAuthGuard.allowTransition(anything())).thenReturn(this.canSync$);
     when(mockedUsersAuthGuard.allowTransition(anything())).thenReturn(this.canSeeUsers$);
     when(mockedCookieService.get(anything())).thenReturn('en');
-    const comesOnline = new Promise<void>(resolve => {
+    new Promise<void>(resolve => {
       this.comesOnline$.subscribe(() => resolve());
     });
 
-    when(mockedOnlineStatusService.isOnline).thenReturn(
-      this.browserOnline$.getValue() && this.webSocketOnline$.getValue()
-    );
-    when(mockedOnlineStatusService.isBrowserOnline).thenReturn(this.browserOnline$.getValue());
-    when(mockedOnlineStatusService.online).thenReturn(comesOnline);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.webSocketOnline$);
-    when(mockedOnlineStatusService.onlineBrowserStatus$).thenReturn(this.browserOnline$);
     if (initialConnectionStatus === 'offline') {
       this.goFullyOffline();
     } else {
@@ -845,11 +841,11 @@ class TestEnvironment {
   }
 
   setBrowserOnlineStatus(status: boolean): void {
-    this.browserOnline$.next(status);
+    this.testOnlineStatusService.setIsOnline(status);
   }
 
   setWebSocketOnlineStatus(status: boolean): void {
-    this.webSocketOnline$.next(status);
+    this.testOnlineStatusService.setRealtimeServerSocketIsOnline(status);
   }
 
   init(): void {

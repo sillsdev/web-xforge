@@ -15,7 +15,7 @@ import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-proj
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -27,6 +27,8 @@ import { NONE_ROLE, ProjectRoleInfo } from 'xforge-common/models/project-role-in
 import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -49,7 +51,6 @@ const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedDialogService = mock(DialogService);
 
 describe('CollaboratorsComponent', () => {
@@ -61,6 +62,7 @@ describe('CollaboratorsComponent', () => {
       UICommonModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      TestOnlineStatusModule.forRoot(),
       SharedModule
     ],
     providers: [
@@ -72,7 +74,7 @@ describe('CollaboratorsComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: DialogService, useMock: mockedDialogService },
       emptyHammerLoader
     ]
@@ -428,7 +430,9 @@ class TestEnvironment {
   readonly component: CollaboratorsComponent;
   readonly loader: HarnessLoader;
   readonly project01Id: string = 'project01';
-  private isOnline: BehaviorSubject<boolean>;
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -478,9 +482,7 @@ class TestEnvironment {
       }
     ]);
 
-    this.isOnline = new BehaviorSubject<boolean>(hasConnection);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline.asObservable());
-    when(mockedOnlineStatusService.isOnline).thenReturn(this.isOnline.value);
+    this.testOnlineStatusService.setIsOnline(hasConnection);
     when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
     this.fixture = TestBed.createComponent(CollaboratorsComponent);
     this.component = this.fixture.componentInstance;
@@ -534,7 +536,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(hasConnection: boolean) {
-    this.isOnline.next(hasConnection);
+    this.testOnlineStatusService.setIsOnline(hasConnection);
     tick();
     this.fixture.detectChanges();
   }

@@ -4,13 +4,14 @@ import { QuillModule } from 'ngx-quill';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import * as RichText from 'rich-text';
-import { of } from 'rxjs';
 import { anything, deepEqual, instance, mock, objectContaining, resetCalls, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode } from 'xforge-common/command.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -29,7 +30,6 @@ import {
   TranslateMetricsSession
 } from './translate-metrics-session';
 
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 const mockedDialogService = mock(DialogService);
@@ -38,9 +38,14 @@ const mockedReportingService = mock(ErrorReportingService);
 describe('TranslateMetricsSession', () => {
   configureTestingModule(() => ({
     declarations: [TextComponent],
-    imports: [QuillModule.forRoot(), TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      QuillModule.forRoot(),
+      TestTranslocoModule,
+      TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+    ],
     providers: [
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: UserService, useMock: mockedUserService },
       { provide: DialogService, useMock: mockedDialogService },
@@ -401,8 +406,7 @@ describe('TranslateMetricsSession', () => {
 
     // CommandError is ignored when offline
     resetCalls(mockedSFProjectService);
-    when(mockedOnlineStatusService.isOnline).thenReturn(false);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(false));
+    env.testOnlineStatusService.setIsOnline(false);
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenReject(commandError);
     env.keyPress('a');
     tick(SEND_METRICS_INTERVAL);
@@ -428,6 +432,9 @@ class TestEnvironment {
   readonly target: TextComponent;
   readonly targetFixture: ComponentFixture<TextComponent>;
   readonly session: TranslateMetricsSession;
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private readonly tokenizer = new LatinWordTokenizer();
@@ -445,8 +452,6 @@ class TestEnvironment {
     );
     when(mockedSFProjectService.onlineAddTranslateMetrics('project01', anything())).thenResolve();
     when(mockedSFProjectService.getProfile(anything())).thenResolve({} as SFProjectProfileDoc);
-    when(mockedOnlineStatusService.isOnline).thenReturn(true);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
@@ -466,7 +471,7 @@ class TestEnvironment {
       this.target,
       this.tokenizer,
       this.tokenizer,
-      instance(mockedOnlineStatusService),
+      this.testOnlineStatusService,
       instance(mockedReportingService)
     );
 

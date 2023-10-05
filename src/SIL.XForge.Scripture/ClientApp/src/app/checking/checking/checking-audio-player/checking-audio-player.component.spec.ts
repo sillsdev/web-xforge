@@ -1,10 +1,11 @@
 import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { of } from 'rxjs';
-import { instance, mock, when } from 'ts-mockito';
+import { instance, mock } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioStatus } from '../../../shared/audio/audio-player';
@@ -158,7 +159,7 @@ class HostComponent {
 }
 
 class TestEnvironment {
-  readonly mockedOnlineStatusService = mock(OnlineStatusService);
+  readonly testOnlineStatusService: TestOnlineStatusService;
   readonly mockedI18nService = mock(I18nService);
   readonly ngZone: NgZone;
 
@@ -169,16 +170,16 @@ class TestEnvironment {
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe, InfoComponent],
       providers: [
-        { provide: OnlineStatusService, useFactory: () => instance(this.mockedOnlineStatusService) },
+        { provide: OnlineStatusService, useClass: TestOnlineStatusService },
         { provide: I18nService, useFactory: () => instance(this.mockedI18nService) }
       ],
-      imports: [UICommonModule, TestTranslocoModule]
+      imports: [UICommonModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule]
     });
-    when(this.mockedOnlineStatusService.isOnline).thenCall(() => isOnline);
-    when(this.mockedOnlineStatusService.onlineStatus$).thenReturn(of(isOnline));
 
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
     this.ngZone = TestBed.inject(NgZone);
+    this.testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
+    this.testOnlineStatusService.setIsOnline(isOnline);
     this.fixture = TestBed.createComponent(HostComponent);
     this.component = this.fixture.componentInstance;
     this.fixture.detectChanges();

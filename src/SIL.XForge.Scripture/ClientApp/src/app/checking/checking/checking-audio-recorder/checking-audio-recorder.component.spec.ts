@@ -1,8 +1,7 @@
 import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { of } from 'rxjs';
-import { anything, instance, mock, verify, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -10,6 +9,8 @@ import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SupportedBrowsersDialogComponent } from 'xforge-common/supported-browsers-dialog/supported-browsers-dialog.component';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -23,18 +24,22 @@ import { CheckingAudioRecorderComponent } from './checking-audio-recorder.compon
 
 const mockedNoticeService = mock(NoticeService);
 const mockedNavigator = mock(Navigator);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedDialog = mock(DialogService);
 const mockedI18nService = mock(I18nService);
 
 describe('CheckingAudioRecorderComponent', () => {
   configureTestingModule(() => ({
     declarations: [CheckingAudioRecorderComponent, CheckingAudioPlayerComponent, AudioPlayerComponent, AudioTimePipe],
-    imports: [UICommonModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      UICommonModule,
+      TestTranslocoModule,
+      TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+    ],
     providers: [
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: NAVIGATOR, useMock: mockedNavigator },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useclass: TestOnlineStatusService },
       { provide: DialogService, useMock: mockedDialog },
       { provide: I18nService, useMock: mockedI18nService }
     ]
@@ -105,6 +110,9 @@ class TestEnvironment {
   readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly component: CheckingAudioRecorderComponent;
   readonly fixture: ComponentFixture<CheckingAudioRecorderComponent>;
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -120,13 +128,11 @@ class TestEnvironment {
       getUserMedia: (mediaConstraints: MediaStreamConstraints) =>
         this.rejectUserMedia ? Promise.reject() : navigator.mediaDevices.getUserMedia(mediaConstraints)
     } as MediaDevices);
-    when(mockedOnlineStatusService.isOnline).thenReturn(true);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     this.fixture.detectChanges();
   }
 
   async getAudioDuration(): Promise<number> {
-    const audio = new AudioPlayer(this.component.audioUrl, instance(mockedOnlineStatusService));
+    const audio = new AudioPlayer(this.component.audioUrl, this.testOnlineStatusService);
     await this.waitForRecorder(100);
     return audio.duration;
   }
