@@ -331,7 +331,6 @@
     "pt_translator": "Translator",
     "roles": "Roles",
     "roles_from_pt_cannot_be_changed": "Roles can only be changed in Paratext",
-    "roles_changing_not_supported": "Changing roles is not supported at this time",
     "save": "Save",
     "sf_community_checker": "Community Checker",
     "sf_commenter": "Commenter",

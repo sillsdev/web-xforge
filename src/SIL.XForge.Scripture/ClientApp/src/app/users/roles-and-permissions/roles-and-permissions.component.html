@@ -10,13 +10,10 @@
     </div>
   </div>
   <mat-dialog-content [formGroup]="form">
-    <app-notice icon="live_help" [outline]="true">
-      <div class="help-message" *ngIf="isParatextUser()">
+    <app-notice *ngIf="isParatextUser()" icon="live_help" [outline]="true">
+      <div class="help-message">
         {{ t("roles_from_pt_cannot_be_changed") }}
         <a mat-flat-button class="learn-more-btn" [href]="urls.rolesHelpPage" target="_blank">{{ t("learn_more") }}</a>
-      </div>
-      <div class="help-message" *ngIf="!isParatextUser()">
-        {{ t("roles_changing_not_supported") }}
       </div>
     </app-notice>
     <h3>{{ t("roles") }}</h3>
