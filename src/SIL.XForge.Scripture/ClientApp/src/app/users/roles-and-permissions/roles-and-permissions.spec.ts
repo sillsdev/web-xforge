@@ -1,9 +1,11 @@
-import { DebugElement, NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, DebugElement, Input, NgModule } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { By } from '@angular/platform-browser';
+import { BrowserModule, By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { forEach } from 'lodash-es';
+import { UserProfile } from 'realtime-server/common/models/user';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProject, SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
@@ -19,6 +21,7 @@ import {
 import { BehaviorSubject } from 'rxjs';
 import { SFProjectDoc } from 'src/app/core/models/sf-project-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
+import { NoticeComponent } from 'src/app/shared/notice/notice.component';
 import { paratextUsersFromRoles } from 'src/app/shared/test-utils';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
@@ -43,6 +46,7 @@ const mockedProjectService = mock(SFProjectService);
 
 const roles = {
   communityChecker: SFProjectRole.CommunityChecker,
+  observer: SFProjectRole.Viewer,
   ptAdmin: SFProjectRole.ParatextAdministrator,
   ptTranslator: SFProjectRole.ParatextTranslator
 };
@@ -81,8 +85,6 @@ describe('RolesAndPermissionsComponent', () => {
 
   it('initializes values from the project', fakeAsync(() => {
     env.setupProjectData(roles, {
-      communityChecker: [],
-      ptAdmin: [],
       ptTranslator: [
         SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
         SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit),
@@ -139,21 +141,37 @@ describe('RolesAndPermissionsComponent', () => {
     verify(mockedProjectService.onlineSetUserProjectPermissions(anything(), anything(), anything())).never();
   }));
 
-  it('saves the selected permissions without changing unrelated ones', fakeAsync(() => {
+  it('saves correct permissions without changing unrelated ones', fakeAsync(() => {
     let permissions = [
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.View),
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Delete)
     ];
     env.setupProjectData(roles, {
-      communityChecker: [],
-      ptAdmin: [],
-      ptTranslator: permissions
+      communityChecker: [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Delete)],
+      observer: permissions
     });
-    env.openDialog();
+    env.openDialog('communityChecker');
+
+    //prep for role change
+    when(mockedProjectService.onlineUpdateUserRole(anything(), anything(), anything())).thenCall((p, u, r) => {
+      roles[u] = r;
+      const projectDoc: SFProjectDoc = env.realtimeService.get(SFProjectDoc.COLLECTION, p);
+      projectDoc.submitJson0Op(op => {
+        op.set(p => p.userRoles, roles);
+        op.set(p => p.userPermissions, {
+          communityChecker: permissions,
+          observer: permissions
+        });
+      });
+    });
 
     env.component?.canAddEditQuestions.setValue(true);
     env.component?.canManageAudio.setValue(true);
+    env.component?.roles.setValue(SFProjectRole.Viewer);
     env.component?.save();
+    tick();
+
+    verify(mockedProjectService.onlineUpdateUserRole('project01', 'communityChecker', SFProjectRole.Viewer)).once();
 
     permissions = permissions.concat([
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
@@ -164,23 +182,30 @@ describe('RolesAndPermissionsComponent', () => {
     ]);
 
     verify(
-      mockedProjectService.onlineSetUserProjectPermissions('project01', 'ptTranslator', deepEqual(permissions))
+      mockedProjectService.onlineSetUserProjectPermissions('project01', 'communityChecker', deepEqual(permissions))
     ).once();
   }));
 });
 
+@Component({ selector: 'app-avatar' })
+class FakeAvatarComponent {
+  @Input() user?: UserProfile;
+  @Input() size?: number;
+  @Input() round?: boolean;
+}
+
 @NgModule({
-  imports: [UICommonModule, TestTranslocoModule],
-  declarations: [RolesAndPermissionsComponent]
+  imports: [CommonModule, BrowserModule, UICommonModule, TestTranslocoModule],
+  declarations: [RolesAndPermissionsComponent, FakeAvatarComponent, NoticeComponent]
 })
 class DialogTestModule {}
 
 class TestEnvironment {
   component?: RolesAndPermissionsComponent;
   readonly isOnline$: BehaviorSubject<boolean> = new BehaviorSubject(true);
+  readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   private readonly fixture: ComponentFixture<ChildViewContainerComponent>;
-  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
     when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline$.asObservable());

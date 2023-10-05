@@ -142,15 +142,22 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         return attempt.Result;
     }
 
-    public async Task UpdateRoleAsync(string curUserId, string systemRole, string projectId, string projectRole)
+    public async Task UpdateRoleAsync(
+        string curUserId,
+        string systemRole,
+        string projectId,
+        string userId,
+        string projectRole
+    )
     {
-        if (systemRole != SystemRole.SystemAdmin)
+        TModel project = await GetProjectAsync(projectId);
+        if (systemRole != SystemRole.SystemAdmin && !IsProjectAdmin(project, curUserId))
             throw new ForbiddenException();
 
-        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        await using IConnection conn = await RealtimeService.ConnectAsync(userId);
         IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
 
-        await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[curUserId], projectRole));
+        await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[userId], projectRole));
     }
 
     public async Task<Uri> SaveAudioAsync(string curUserId, string projectId, string dataId, string path)
