@@ -23,11 +23,11 @@ export interface UserData {
   styleUrls: ['./roles-and-permissions.component.scss']
 })
 export class RolesAndPermissionsComponent implements OnInit {
-  roles = new UntypedFormControl(undefined);
-  canAddEditQuestions = new UntypedFormControl(false);
-  canManageAudio = new UntypedFormControl(false);
+  readonly roles = new UntypedFormControl(undefined);
+  readonly canAddEditQuestions = new UntypedFormControl(false);
+  readonly canManageAudio = new UntypedFormControl(false);
 
-  form = new UntypedFormGroup({
+  readonly form = new UntypedFormGroup({
     roles: this.roles,
     canAddEditQuestions: this.canAddEditQuestions,
     canManageAudio: this.canManageAudio
@@ -111,7 +111,7 @@ export class RolesAndPermissionsComponent implements OnInit {
       return Object.values(SFProjectRole).filter(r => isParatextRole(r));
     } else {
       const scriptureForgeRoles = Object.values(SFProjectRole).filter(r => !isParatextRole(r));
-      return scriptureForgeRoles.filter(r => r !== SFProjectRole.None);
+      return scriptureForgeRoles.filter(r => r !== SFProjectRole.None && r !== SFProjectRole.Commenter);
     }
   }
 }
