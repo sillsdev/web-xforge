@@ -19,11 +19,6 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { combineLatest, merge, Subscription } from 'rxjs';
 import { filter, map, throttleTime } from 'rxjs/operators';
-import {
-  CheckingQuestionsService,
-  PreCreationQuestionData,
-  QuestionFilter
-} from 'src/app/checking/checking/checking-questions.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -44,12 +39,12 @@ import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
-import { CheckingAccessInfo, CheckingUtils } from '../checking.utils';
+import { BookChapter, CheckingAccessInfo, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { BookChapter, isQuestionScope, QuestionScope } from './checking';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
+import { CheckingQuestionsService, PreCreationQuestionData, QuestionFilter } from './checking-questions.service';
 import { CheckingQuestionsComponent, QuestionChangedEvent } from './checking-questions/checking-questions.component';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
@@ -644,9 +639,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             this.questionsSub = this.subscribe(
               merge(
                 this.questionsQuery.ready$.pipe(filter(isReady => isReady)),
-                this.questionsQuery!.remoteChanges$.pipe(map(() => 'remote')),
-                this.questionsQuery!.localChanges$.pipe(map(() => 'local')),
-                this.questionsQuery!.remoteDocChanges$
+                this.questionsQuery.remoteChanges$.pipe(map(() => 'remote')),
+                this.questionsQuery.localChanges$.pipe(map(() => 'local')),
+                this.questionsQuery.remoteDocChanges$
               ).pipe(throttleTime(3000)), // Prevent double-fire of 'ready' + 'xChanges'
               (source?: string) => {
                 if (this.projectDoc == null || (this.onlineStatusService.isOnline && !this.questionsQuery!.ready)) {

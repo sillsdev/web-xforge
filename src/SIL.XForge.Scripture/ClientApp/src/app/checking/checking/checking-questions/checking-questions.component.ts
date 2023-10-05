@@ -32,8 +32,7 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TranslationEngineService } from '../../../core/translation-engine.service';
-import { CheckingUtils } from '../../checking.utils';
-import { BookChapter, bookChapterMatchesVerseRef } from '../checking';
+import { BookChapter, bookChapterMatchesVerseRef, CheckingUtils } from '../../checking.utils';
 
 export interface QuestionChangeActionSource {
   /** True during events due to a questions doc change such as with a filter. */

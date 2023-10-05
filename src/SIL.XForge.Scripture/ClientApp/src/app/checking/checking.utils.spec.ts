@@ -1,6 +1,13 @@
 import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
+import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { getAudioTimings, getAudioTimingWithHeadings } from './checking-test.utils';
-import { CheckingUtils } from './checking.utils';
+import {
+  BookChapter,
+  bookChapterMatchesVerseRef,
+  CheckingUtils,
+  isQuestionScope,
+  QuestionScope
+} from './checking.utils';
 
 describe('CheckingUtils', () => {
   let env: TestEnvironment;
@@ -68,6 +75,61 @@ describe('CheckingUtils', () => {
     expect(CheckingUtils.parseAudioHeadingRef(env.audioTimingHeadings, 2.25)).toEqual({
       label: 's',
       iteration: 2
+    });
+  });
+});
+
+describe('Misc checking functions', () => {
+  describe('isQuestionScope', () => {
+    it('should return true for valid question scopes', () => {
+      expect(isQuestionScope('all')).toBe(true);
+      expect(isQuestionScope('book')).toBe(true);
+      expect(isQuestionScope('chapter')).toBe(true);
+    });
+
+    it('should return false for invalid question scopes', () => {
+      expect(isQuestionScope('books')).toBe(false);
+      expect(isQuestionScope('')).toBe(false);
+      expect(isQuestionScope(0)).toBe(false);
+      expect(isQuestionScope(null)).toBe(false);
+      expect(isQuestionScope(undefined)).toBe(false);
+    });
+
+    it('should correctly identify the type', () => {
+      const scope: unknown = 'book';
+
+      if (isQuestionScope(scope)) {
+        const questionScope: QuestionScope = scope;
+        expect(questionScope).toBe('book');
+      } else {
+        fail('Expected to be a valid question scope');
+      }
+    });
+  });
+
+  describe('bookChapterMatchesVerseRef', () => {
+    it('should return true when book and chapter match', () => {
+      const bookChapter: BookChapter = { bookNum: 1, chapterNum: 2 };
+      const verseRef: VerseRefData = { bookNum: 1, chapterNum: 2, verseNum: 3 };
+      expect(bookChapterMatchesVerseRef(bookChapter, verseRef)).toBe(true);
+    });
+
+    it('should return false when book or chapter do not match', () => {
+      let bookChapter: BookChapter = { bookNum: 1, chapterNum: 2 };
+      let verseRef: VerseRefData = { bookNum: 1, chapterNum: 3, verseNum: 2 };
+      expect(bookChapterMatchesVerseRef(bookChapter, verseRef)).toBe(false);
+
+      bookChapter = { bookNum: 2, chapterNum: 3 };
+      verseRef = { bookNum: 1, chapterNum: 3, verseNum: 2 };
+      expect(bookChapterMatchesVerseRef(bookChapter, verseRef)).toBe(false);
+
+      bookChapter = { bookNum: undefined, chapterNum: 3 };
+      verseRef = { bookNum: 0, chapterNum: 3, verseNum: 2 };
+      expect(bookChapterMatchesVerseRef(bookChapter, verseRef)).toBe(false);
+
+      bookChapter = { bookNum: 1, chapterNum: undefined };
+      verseRef = { bookNum: 1, chapterNum: 0, verseNum: 2 };
+      expect(bookChapterMatchesVerseRef(bookChapter, verseRef)).toBe(false);
     });
   });
 });
