@@ -83,6 +83,10 @@ export class RolesAndPermissionsComponent implements OnInit {
   async save(): Promise<void> {
     if (this.form.disabled) return;
 
+    const selectedRole = this.roles.value;
+    await this.projectService.onlineUpdateUserRole(this.data.projectId, this.data.userId, selectedRole);
+    this.projectDoc = await this.projectService.get(this.data.projectId);
+
     const permissions = new Set((this.projectDoc?.data?.userPermissions || {})[this.data.userId] || []);
 
     [

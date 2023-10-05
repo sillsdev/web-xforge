@@ -1,7 +1,7 @@
 import { escapeRegExp, merge } from 'lodash-es';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { ProjectRole } from 'realtime-server/lib/esm/common/models/project-role';
-import { combineLatest, Observable, Subject } from 'rxjs';
+import { Observable, Subject, combineLatest } from 'rxjs';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
 import { CommandService } from './command.service';
 import { ProjectDoc } from './models/project-doc';
@@ -80,8 +80,8 @@ export abstract class ProjectService<
     return (await this.onlineInvoke<string>('getProjectRole', { projectId: id })) || ProjectRole.None;
   }
 
-  onlineUpdateCurrentUserRole(id: string, projectRole: string): Promise<void> {
-    return this.onlineInvoke('updateRole', { projectId: id, projectRole });
+  onlineUpdateUserRole(projectId: string, userId: string, projectRole: string): Promise<void> {
+    return this.onlineInvoke('updateRole', { projectId, userId, projectRole });
   }
 
   onlineDelete(id: string): Promise<void> {
