@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { VerseRef } from '@sillsdev/scripture';
 import {
   getQuestionDocId,
   Question,
@@ -8,9 +9,9 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { VerseRef } from '@sillsdev/scripture';
 import { of } from 'rxjs';
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -22,17 +23,18 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
-import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
+import { CheckingQuestionsService } from '../checking/checking-questions.service';
 import { QuestionDialogComponent, QuestionDialogData, QuestionDialogResult } from './question-dialog.component';
 import { QuestionDialogService } from './question-dialog.service';
 
 const mockedDialogService = mock(DialogService);
 const mockedProjectService = mock(SFProjectService);
+const mockedQuestionsService = mock(CheckingQuestionsService);
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
 const mockedFileService = mock(FileService);
@@ -44,6 +46,7 @@ describe('QuestionDialogService', () => {
       QuestionDialogService,
       { provide: DialogService, useMock: mockedDialogService },
       { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: CheckingQuestionsService, useMock: mockedQuestionsService },
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: FileService, useMock: mockedFileService }
@@ -59,7 +62,7 @@ describe('QuestionDialogService', () => {
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
     await env.service.questionDialog(env.getQuestionDialogData());
-    verify(mockedProjectService.createQuestion(env.PROJECT01, anything(), undefined, undefined)).once();
+    verify(mockedQuestionsService.createQuestion(env.PROJECT01, anything(), undefined, undefined)).once();
     expect().nothing();
   });
 
@@ -67,7 +70,7 @@ describe('QuestionDialogService', () => {
     const env = new TestEnvironment();
     when(env.mockedDialogRef.afterClosed()).thenReturn(of('close'));
     await env.service.questionDialog(env.getQuestionDialogData());
-    verify(mockedProjectService.createQuestion(env.PROJECT01, anything())).never();
+    verify(mockedQuestionsService.createQuestion(env.PROJECT01, anything())).never();
     expect().nothing();
   });
 
@@ -81,7 +84,7 @@ describe('QuestionDialogService', () => {
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
     env.updateUserRole(SFProjectRole.CommunityChecker);
     await env.service.questionDialog(env.getQuestionDialogData());
-    verify(mockedProjectService.createQuestion(env.PROJECT01, anything())).never();
+    verify(mockedQuestionsService.createQuestion(env.PROJECT01, anything())).never();
     verify(mockedNoticeService.show('question_dialog.add_question_denied')).once();
     expect().nothing();
   });
@@ -95,7 +98,7 @@ describe('QuestionDialogService', () => {
     };
     when(env.mockedDialogRef.afterClosed()).thenReturn(of(result));
     await env.service.questionDialog(env.getQuestionDialogData());
-    verify(mockedProjectService.createQuestion(env.PROJECT01, anything(), 'someFileName.mp3', anything())).once();
+    verify(mockedQuestionsService.createQuestion(env.PROJECT01, anything(), 'someFileName.mp3', anything())).once();
     expect().nothing();
   });
 

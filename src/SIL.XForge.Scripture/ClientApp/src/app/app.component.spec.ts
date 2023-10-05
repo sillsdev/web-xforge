@@ -2,7 +2,7 @@ import { MdcDialog } from '@angular-mdc/web';
 import { CommonModule, Location } from '@angular/common';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Route, Router } from '@angular/router';
@@ -11,7 +11,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { Question, getQuestionDocId } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -32,12 +32,13 @@ import { PwaService } from 'xforge-common/pwa.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { environment } from '../environments/environment';
 import { AppComponent, CONNECT_PROJECT_OPTION } from './app.component';
+import { CheckingQuestionsService } from './checking/checking/checking-questions.service';
 import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
@@ -51,6 +52,7 @@ const mockedSettingsAuthGuard = mock(SettingsAuthGuard);
 const mockedSyncAuthGuard = mock(SyncAuthGuard);
 const mockedUsersAuthGuard = mock(UsersAuthGuard);
 const mockedSFProjectService = mock(SFProjectService);
+const mockedQuestionsService = mock(CheckingQuestionsService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedLocationService = mock(LocationService);
@@ -99,6 +101,7 @@ describe('AppComponent', () => {
       { provide: SyncAuthGuard, useMock: mockedSyncAuthGuard },
       { provide: UsersAuthGuard, useMock: mockedUsersAuthGuard },
       { provide: SFProjectService, useMock: mockedSFProjectService },
+      { provide: CheckingQuestionsService, useMock: mockedQuestionsService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: LocationService, useMock: mockedLocationService },
@@ -635,7 +638,7 @@ class TestEnvironment {
     this.addUser('user04', 'User 04', 'sms|user04');
 
     this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, []);
-    when(mockedSFProjectService.queryQuestions(anything(), anything())).thenCall((_projectId, options) => {
+    when(mockedQuestionsService.queryQuestions(anything(), anything())).thenCall((_projectId, options) => {
       const parameters: QueryParameters = {};
       if (options.bookNum != null) parameters[obj<Question>().pathStr(q => q.verseRef.bookNum)] = options.bookNum;
       if (options.activeOnly) parameters[obj<Question>().pathStr(q => q.isArchived)] = false;
