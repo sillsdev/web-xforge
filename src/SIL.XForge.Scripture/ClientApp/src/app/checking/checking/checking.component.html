@@ -125,7 +125,7 @@
                 [useTransition]="true"
               >
                 <!-- Splitter area sizes are controlled programmatically. -->
-                <as-split-area [size]="100">
+                <as-split-area [size]="100" [maxSize]="scriptureAreaMaxSize">
                   <div class="panel-content" #scripturePanelContainer>
                     <!-- TODO (scripture audio) Instead of covering scripture panel, move the audio player below it -->
                     <div class="scripture-audio-player-wrapper" *ngIf="showScriptureAudioPlayer">
