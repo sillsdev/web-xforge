@@ -144,11 +144,27 @@ public class ProjectServiceTests
     }
 
     [Test]
-    public async Task UpdateRoleAsync_SystemAdmin_RoleUpdated()
+    public async Task UpdateRoleAsync_SystemAdmin_OwnRoleUpdated()
     {
         var env = new TestEnvironment();
 
-        await env.Service.UpdateRoleAsync(User02, SystemRole.SystemAdmin, Project01, TestProjectRole.Administrator);
+        await env.Service.UpdateRoleAsync(
+            User02,
+            SystemRole.SystemAdmin,
+            Project01,
+            User02,
+            TestProjectRole.Administrator
+        );
+        TestProject project = env.GetProject(Project01);
+        Assert.That(project.UserRoles[User02], Is.EqualTo(TestProjectRole.Administrator));
+    }
+
+    [Test]
+    public async Task UpdateRoleAsync_ProjectAdmin_OtherRoleUpdated()
+    {
+        var env = new TestEnvironment();
+
+        await env.Service.UpdateRoleAsync(User01, SystemRole.User, Project01, User02, TestProjectRole.Administrator);
         TestProject project = env.GetProject(Project01);
         Assert.That(project.UserRoles[User02], Is.EqualTo(TestProjectRole.Administrator));
     }
@@ -159,7 +175,7 @@ public class ProjectServiceTests
         var env = new TestEnvironment();
 
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.UpdateRoleAsync(User02, SystemRole.User, Project01, TestProjectRole.Administrator)
+            () => env.Service.UpdateRoleAsync(User02, SystemRole.User, Project01, User02, TestProjectRole.Administrator)
         );
     }
 
