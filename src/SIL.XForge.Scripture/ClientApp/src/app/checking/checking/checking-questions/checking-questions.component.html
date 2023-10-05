@@ -28,6 +28,10 @@
     </mat-list-item>
   </mat-list>
   <div *ngIf="!hasQuestions && haveQuestionsLoaded" class="no-questions-found">
-    {{ t("no_questions_found") }}
+    <ng-container *ngIf="isFiltered">{{ t("no_questions_found_filtered") }}</ng-container>
+    <ng-container *ngIf="!isFiltered">{{ t("no_questions_found_unfiltered") }}</ng-container>
+  </div>
+  <div *ngIf="!haveQuestionsLoaded" class="loading-text">
+    {{ t("loading") }}
   </div>
 </ng-container>

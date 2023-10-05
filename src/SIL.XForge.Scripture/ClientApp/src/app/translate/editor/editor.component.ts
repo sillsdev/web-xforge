@@ -1572,7 +1572,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.toggleNoteThreadSub = this.subscribe(
       merge(
         this.toggleNoteThreadVerseRefs$,
-        this.noteThreadQuery.ready$,
+        this.noteThreadQuery.ready$.pipe(filter(isReady => isReady)),
         this.noteThreadQuery.remoteChanges$,
         this.noteThreadQuery.remoteDocChanges$
       ),
