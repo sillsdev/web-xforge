@@ -39,7 +39,6 @@ import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, wh
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
-import { QuestionFilter } from 'src/app/checking/checking/checking-questions.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
@@ -69,9 +68,9 @@ import { AudioPlayerComponent } from '../../shared/audio/audio-player/audio-play
 import { AudioTimePipe } from '../../shared/audio/audio-time-pipe';
 import { SharedModule } from '../../shared/shared.module';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
+import { QuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { QuestionScope } from './checking';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
@@ -81,6 +80,7 @@ import {
   AudioAttachment,
   CheckingAudioRecorderComponent
 } from './checking-audio-recorder/checking-audio-recorder.component';
+import { QuestionFilter } from './checking-questions.service';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
