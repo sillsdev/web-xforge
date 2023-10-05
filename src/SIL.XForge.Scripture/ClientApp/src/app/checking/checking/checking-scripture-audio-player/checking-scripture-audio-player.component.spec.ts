@@ -111,6 +111,7 @@ describe('ScriptureAudioComponent', () => {
       ]
     });
     expect(env.verseChangedSpy).toHaveBeenCalledWith('s_1');
+    expect(env.verseLabel.nativeElement.textContent).toEqual('Genesis 1:1');
   }));
 
   it('pauses and emits on close', fakeAsync(() => {
