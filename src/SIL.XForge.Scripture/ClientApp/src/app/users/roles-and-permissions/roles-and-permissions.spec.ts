@@ -44,7 +44,7 @@ import { RolesAndPermissionsComponent, UserData } from './roles-and-permissions.
 const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedProjectService = mock(SFProjectService);
 
-const roles = {
+const rolesByUser = {
   communityChecker: SFProjectRole.CommunityChecker,
   observer: SFProjectRole.Viewer,
   ptAdmin: SFProjectRole.ParatextAdministrator,
@@ -84,7 +84,7 @@ describe('RolesAndPermissionsComponent', () => {
   }));
 
   it('initializes values from the project', fakeAsync(() => {
-    env.setupProjectData(roles, {
+    env.setupProjectData(rolesByUser, {
       ptTranslator: [
         SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
         SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit),
@@ -102,7 +102,7 @@ describe('RolesAndPermissionsComponent', () => {
   }));
 
   it('reflects whether or not the user is from Paratext', fakeAsync(() => {
-    env.setupProjectData(roles);
+    env.setupProjectData(rolesByUser);
     env.openDialog();
 
     expect(env.component?.isParatextUser()).toBe(true);
@@ -114,7 +114,7 @@ describe('RolesAndPermissionsComponent', () => {
   }));
 
   it('reflects Paratext roles for Paratext users', fakeAsync(async () => {
-    env.setupProjectData(roles);
+    env.setupProjectData(rolesByUser);
     env.openDialog();
 
     expect(env.component?.roleOptions.length).toBeGreaterThan(0);
@@ -123,11 +123,12 @@ describe('RolesAndPermissionsComponent', () => {
   }));
 
   it('reflects Scripture Forge roles for Scripture Forge users', fakeAsync(() => {
-    env.setupProjectData(roles);
+    env.setupProjectData(rolesByUser);
     env.openDialog('communityChecker');
 
     expect(env.component?.roleOptions.length).toBeGreaterThan(0);
     forEach(env.component?.roleOptions, r => expect(!isParatextRole(r)));
+    expect(env.component?.roles.disabled).toBe(false);
   }));
 
   it('doesnt save if the form is disabled', fakeAsync(() => {
@@ -146,7 +147,7 @@ describe('RolesAndPermissionsComponent', () => {
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.View),
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Delete)
     ];
-    env.setupProjectData(roles, {
+    env.setupProjectData(rolesByUser, {
       communityChecker: [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Delete)],
       observer: permissions
     });
@@ -154,10 +155,10 @@ describe('RolesAndPermissionsComponent', () => {
 
     //prep for role change
     when(mockedProjectService.onlineUpdateUserRole(anything(), anything(), anything())).thenCall((p, u, r) => {
-      roles[u] = r;
+      rolesByUser[u] = r;
       const projectDoc: SFProjectDoc = env.realtimeService.get(SFProjectDoc.COLLECTION, p);
       projectDoc.submitJson0Op(op => {
-        op.set(p => p.userRoles, roles);
+        op.set(p => p.userRoles, rolesByUser);
         op.set(p => p.userPermissions, {
           communityChecker: permissions,
           observer: permissions
