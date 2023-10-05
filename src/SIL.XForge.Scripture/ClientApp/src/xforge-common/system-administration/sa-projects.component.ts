@@ -126,7 +126,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
       await this.projectService.onlineRemoveUser(row.id, this.userService.currentUserId);
     } else {
       // update role in project
-      await this.projectService.onlineUpdateCurrentUserRole(row.id, projectRole.role);
+      await this.projectService.onlineUpdateUserRole(row.id, this.userService.currentUserId, projectRole.role);
     }
     row.projectRole = projectRole;
     row.isUpdatingRole = false;

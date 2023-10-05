@@ -212,11 +212,11 @@ public class SFProjectsRpcController : RpcControllerBase
         }
     }
 
-    public async Task<IRpcMethodResult> UpdateRole(string projectId, string projectRole)
+    public async Task<IRpcMethodResult> UpdateRole(string projectId, string userId, string projectRole)
     {
         try
         {
-            await _projectService.UpdateRoleAsync(UserId, SystemRole, projectId, projectRole);
+            await _projectService.UpdateRoleAsync(UserId, SystemRole, projectId, userId, projectRole);
             return Ok();
         }
         catch (ForbiddenException)
@@ -234,6 +234,7 @@ public class SFProjectsRpcController : RpcControllerBase
                 {
                     { "method", "UpdateRole" },
                     { "projectId", projectId },
+                    { "userId", userId },
                     { "projectRole", projectRole },
                 }
             );
