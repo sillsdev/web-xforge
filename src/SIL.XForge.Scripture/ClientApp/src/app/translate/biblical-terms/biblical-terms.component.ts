@@ -1,6 +1,7 @@
 import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Sort } from '@angular/material/sort';
 import { Canon, VerseRef } from '@sillsdev/scripture';
+import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { getBiblicalTermDocId } from 'realtime-server/lib/esm/scriptureforge/models/biblical-term';
 import { Note } from 'realtime-server/lib/esm/scriptureforge/models/note';
 import { BIBLICAL_TERM_TAG_ID } from 'realtime-server/lib/esm/scriptureforge/models/note-tag';
@@ -13,24 +14,24 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/note-thread';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { BehaviorSubject, merge, Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
-import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { SFProjectService } from '../../core/sf-project.service';
-import { TextDocId } from '../../core/models/text-doc';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
+import { TextDocId } from '../../core/models/text-doc';
+import { SFProjectService } from '../../core/sf-project.service';
 import { getVerseNumbers } from '../../shared/utils';
-import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from '../editor/note-dialog/note-dialog.component';
 import { SaveNoteParameters } from '../editor/editor.component';
+import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from '../editor/note-dialog/note-dialog.component';
 import { BiblicalTermDialogComponent, BiblicalTermDialogData } from './biblical-term-dialog.component';
 
 // Material icons matching the biblical term's notes status
@@ -406,7 +407,7 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.biblicalTermSub?.unsubscribe();
     this.biblicalTermSub = this.subscribe(
       merge(
-        this.biblicalTermQuery.ready$,
+        this.biblicalTermQuery.ready$.pipe(filter(isReady => isReady)),
         this.biblicalTermQuery.remoteChanges$,
         this.biblicalTermQuery.remoteDocChanges$
       ),

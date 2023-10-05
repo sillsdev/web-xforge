@@ -17,7 +17,7 @@ import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { NoticeService } from '../notice.service';
 import { ProjectService } from '../project.service';
-import { Filters, QueryParameters } from '../query-parameters';
+import { QueryFilter, QueryParameters } from '../query-parameters';
 import { TestRealtimeService } from '../test-realtime.service';
 import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from '../test-utils';
 import { TypeRegistry } from '../type-registry';
@@ -211,7 +211,7 @@ class TestEnvironment {
       (term$: Observable<string>, parameters$: Observable<QueryParameters>) =>
         combineLatest([term$, parameters$]).pipe(
           switchMap(([term, queryParameters]) => {
-            const filters: Filters = {
+            const filters: QueryFilter = {
               [obj<Project>().pathStr(p => p.name)]: { $regex: `.*${escapeRegExp(term)}.*`, $options: 'i' }
             };
             return from(

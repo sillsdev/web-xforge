@@ -125,3 +125,8 @@ mat-icon {
   font-size: 14px;
   padding: 0 16px;
 }
+
+.loading-text {
+  font-style: italic;
+  color: vars.$questionsLoadingTextColor;
+}

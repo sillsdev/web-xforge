@@ -5,13 +5,13 @@ import { FormsModule, ReactiveFormsModule, UntypedFormControl } from '@angular/f
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { ngfModule } from 'angular-file';
 import { CookieService } from 'ngx-cookie-service';
 import { Answer } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Canon, VerseRef } from '@sillsdev/scripture';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { anything, capture, instance, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
@@ -25,6 +25,7 @@ import { QuestionDoc } from '../../core/models/question-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ScriptureChooserDialogComponent } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
+import { CheckingQuestionsService } from '../checking/checking-questions.service';
 import { ImportQuestionsConfirmationDialogComponent } from './import-questions-confirmation-dialog/import-question-confirmation-dialog.component';
 import {
   ImportQuestionsDialogComponent,
@@ -33,6 +34,7 @@ import {
 } from './import-questions-dialog.component';
 
 const mockedProjectService = mock(SFProjectService);
+const mockedQuestionsService = mock(CheckingQuestionsService);
 const mockedAuthService = mock(AuthService);
 const mockedCookieService = mock(CookieService);
 const mockedDialogService = mock(DialogService);
@@ -45,6 +47,7 @@ describe('ImportQuestionsDialogComponent', () => {
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: SFProjectService, useMock: mockedProjectService },
+      { provide: CheckingQuestionsService, useMock: mockedQuestionsService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: CsvService, useMock: mockedCsvService }
@@ -222,8 +225,8 @@ describe('ImportQuestionsDialogComponent', () => {
     env.click(env.importFromTransceleratorButton);
     env.selectQuestion(env.tableRows[0]);
     env.click(env.importSelectedQuestionsButton);
-    verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
-    const question = capture(mockedProjectService.createQuestion).last()[1];
+    verify(mockedQuestionsService.createQuestion('project01', anything(), undefined, undefined)).once();
+    const question = capture(mockedQuestionsService.createQuestion).last()[1];
     expect(question.projectRef).toBe('project01');
     expect(question.text).toBe('Transcelerator question 1:1');
     expect(question.verseRef).toEqual({
@@ -240,8 +243,8 @@ describe('ImportQuestionsDialogComponent', () => {
     env.click(env.importFromTransceleratorButton);
     env.selectQuestion(env.tableRows[1]);
     env.click(env.importSelectedQuestionsButton);
-    verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
-    const question = capture(mockedProjectService.createQuestion).last()[1];
+    verify(mockedQuestionsService.createQuestion('project01', anything(), undefined, undefined)).once();
+    const question = capture(mockedQuestionsService.createQuestion).last()[1];
     expect(question.verseRef).toEqual({
       bookNum: 40,
       chapterNum: 1,
@@ -280,13 +283,13 @@ describe('ImportQuestionsDialogComponent', () => {
     expect(env.importSelectedQuestionsButton.textContent).toContain('1');
 
     env.click(env.importSelectedQuestionsButton);
-    verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
+    verify(mockedQuestionsService.createQuestion('project01', anything(), undefined, undefined)).once();
   }));
 
   it('allows canceling the import of questions', fakeAsync(() => {
     const env = new TestEnvironment();
     env.click(env.importFromTransceleratorButton);
-    when(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).thenCall(
+    when(mockedQuestionsService.createQuestion('project01', anything(), undefined, undefined)).thenCall(
       () => new Promise(resolve => setTimeout(resolve, 5000))
     );
     expect(env.tableRows.length).toBe(2);
@@ -298,12 +301,12 @@ describe('ImportQuestionsDialogComponent', () => {
     env.importSelectedQuestionsButton.click();
 
     tick(4000);
-    verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
+    verify(mockedQuestionsService.createQuestion('project01', anything(), undefined, undefined)).once();
 
     // cancel while the first question is still being imported
     env.cancelButton.click();
     tick(12000);
-    verify(mockedProjectService.createQuestion('project01', anything(), undefined, undefined)).once();
+    verify(mockedQuestionsService.createQuestion('project01', anything(), undefined, undefined)).once();
   }));
 
   it('can import from a CSV file', fakeAsync(() => {
@@ -561,7 +564,7 @@ class TestEnvironment {
         this.mockedImportQuestionsConfirmationDialogRef
       )
     );
-    when(mockedProjectService.createQuestion(anything(), anything(), anything(), anything())).thenResolve();
+    when(mockedQuestionsService.createQuestion(anything(), anything(), anything(), anything())).thenResolve();
     this.fixture.detectChanges();
     tick();
   }
@@ -727,6 +730,6 @@ class TestEnvironment {
       );
     }
     when(mockedRealtimeQuery.docs).thenReturn(this.existingQuestions);
-    when(mockedProjectService.queryQuestions('project01')).thenResolve(instance(mockedRealtimeQuery));
+    when(mockedQuestionsService.queryQuestions('project01')).thenResolve(instance(mockedRealtimeQuery));
   }
 }

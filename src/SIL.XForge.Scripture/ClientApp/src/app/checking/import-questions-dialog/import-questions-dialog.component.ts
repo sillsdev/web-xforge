@@ -3,9 +3,9 @@ import { AbstractControl, UntypedFormControl, UntypedFormGroup } from '@angular/
 import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialogConfig, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { TranslocoService } from '@ngneat/transloco';
+import { Canon, VerseRef } from '@sillsdev/scripture';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Canon, VerseRef } from '@sillsdev/scripture';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
@@ -23,6 +23,7 @@ import {
   ScriptureChooserDialogData
 } from '../../scripture-chooser-dialog/scripture-chooser-dialog.component';
 import { SFValidators } from '../../shared/sfvalidators';
+import { CheckingQuestionsService } from '../checking/checking-questions.service';
 import {
   EditedQuestion,
   ImportQuestionsConfirmationDialogComponent,
@@ -101,7 +102,8 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public readonly data: ImportQuestionsDialogData,
-    private readonly projectService: SFProjectService,
+    projectService: SFProjectService,
+    private readonly checkingQuestionsService: CheckingQuestionsService,
     private readonly dialogRef: MatDialogRef<ImportQuestionsDialogComponent>,
     private readonly transloco: TranslocoService,
     private readonly dialogService: DialogService,
@@ -140,7 +142,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
       }
     });
 
-    this.promiseForQuestionDocQuery = projectService.queryQuestions(this.data.projectId);
+    this.promiseForQuestionDocQuery = checkingQuestionsService.queryQuestions(this.data.projectId);
   }
 
   get status(): DialogStatus {
@@ -333,7 +335,7 @@ export class ImportQuestionsDialogComponent extends SubscriptionDisposable imple
           transceleratorQuestionId: listItem.question.id
         };
         await this.zone.runOutsideAngular(() =>
-          this.projectService.createQuestion(this.data.projectId, newQuestion, undefined, undefined)
+          this.checkingQuestionsService.createQuestion(this.data.projectId, newQuestion, undefined, undefined)
         );
       } else if (this.questionsDiffer(listItem)) {
         await listItem.sfVersionOfQuestion.submitJson0Op(op =>

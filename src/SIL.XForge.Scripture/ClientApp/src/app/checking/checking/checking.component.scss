@@ -1,4 +1,3 @@
-@use '@material/icon-button/mixins' as icon-button;
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 @import 'checking-global-vars';
 @import 'bootstrap/scss/mixins/breakpoints';
@@ -7,6 +6,18 @@
 // https://m3.material.io/components/navigation-drawer/guidelines#56b3fea0-ecc6-4ff0-bb0a-80ff48c74a58
 $questionsPanelBreakpoint: 600px;
 
+$questionsHeaderInlineStartPadding: 8px;
+
+:host {
+  flex: 1;
+  display: flex;
+}
+
+header {
+  display: flex;
+  padding: 8px 0;
+}
+
 .panel-content {
   display: flex;
   position: relative;
@@ -14,6 +25,9 @@ $questionsPanelBreakpoint: 600px;
 }
 
 #checking-app-container {
+  display: flex;
+  flex-wrap: nowrap;
+  flex: 1;
   height: 100%;
 }
 
@@ -25,13 +39,11 @@ $questionsPanelBreakpoint: 600px;
   flex-shrink: 0;
 
   header {
-    display: flex;
     flex-direction: column;
     align-items: stretch;
-    padding-top: 8px;
-    padding-inline-start: 8px;
+    padding-inline-start: $questionsHeaderInlineStartPadding;
     padding-inline-end: 4px;
-    padding-bottom: 8px;
+    padding-bottom: 4px;
 
     &.filter-applied {
       height: auto;
@@ -124,7 +136,7 @@ $questionsPanelBreakpoint: 600px;
     flex: 1;
     max-height: calc(100vh - 200px);
 
-    @include media-breakpoint-down(sm) {
+    @include media-breakpoint('<', md) {
       max-height: calc(100vh - 180px);
     }
 
@@ -134,17 +146,14 @@ $questionsPanelBreakpoint: 600px;
   }
 
   #scripture-panel {
-    > .panel {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 
-      .panel-heading {
-        display: flex;
-        align-items: center;
-        padding: 8px 0;
-      }
+    header {
+      align-items: center;
     }
+
     .panel-content {
       height: 100%;
     }
@@ -189,13 +198,18 @@ $questionsPanelBreakpoint: 600px;
         &.action-icons {
           justify-content: flex-end;
 
-          .add-question-button[mdc-icon-button] {
-            @include icon-button.icon-size(24px, 24px, 8px);
+          .add-question-button.mat-icon-button {
+            display: none;
           }
 
-          .add-question-button mdc-icon {
-            font-size: 24px;
-            height: 24px;
+          @include media-breakpoint('<', xl) {
+            .add-question-button.mat-button {
+              display: none;
+            }
+
+            .add-question-button.mat-icon-button {
+              display: block;
+            }
           }
         }
       }
@@ -207,35 +221,62 @@ $questionsPanelBreakpoint: 600px;
     padding-bottom: 12px;
     padding-inline-start: 15px;
 
-    @include media-breakpoint-down(sm) {
+    @include media-breakpoint('<', md) {
       padding-left: 0;
       padding-right: 0;
     }
   }
 
-  #project-navigation {
+  #question-nav {
     background-color: lighten($sf_grey, 70%);
     display: flex;
     align-items: center;
     justify-content: flex-end;
     padding: 9px;
 
-    @include media-breakpoint-down(sm) {
-      margin-bottom: -14px;
-      margin-inline: 0 -20px;
-      justify-content: space-between;
+    .question-nav-wrapper {
+      display: flex;
+
+      // Align icon with text
+      .mat-button::ng-deep {
+        .mat-button-wrapper {
+          display: flex;
+          align-items: center;
+        }
+      }
+
+      .mat-icon-button {
+        display: none;
+      }
+
+      // Switch to icon-only prev/next buttons on small screens
+      @include media-breakpoint('<=', sm) {
+        .mat-button {
+          display: none;
+        }
+
+        .mat-icon-button {
+          display: block;
+        }
+      }
     }
 
-    // Widen once the questions panel is hidden
+    @include media-breakpoint('<', md) {
+      margin-bottom: -14px;
+      margin-inline: 0 -20px;
+    }
+
     @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
+      // Widen once the questions panel is hidden
       margin-inline-start: -20px;
+      justify-content: space-between;
     }
 
     .next-question {
       margin-inline-end: 8px;
     }
 
-    @include media-breakpoint-down(xs) {
+    @include media-breakpoint('<', sm) {
       margin: -10px;
     }
   }
@@ -251,10 +292,14 @@ $questionsPanelBreakpoint: 600px;
   column-gap: 10px;
 }
 
-#question-filter-list {
+.menu-list {
   h2 {
     color: #000;
     font-weight: bold;
+  }
+
+  :not(.selected) mat-icon {
+    visibility: hidden;
   }
 }
 
@@ -269,4 +314,22 @@ $questionsPanelBreakpoint: 600px;
 
 .hidden {
   display: none;
+}
+
+.active-question-scope-button {
+  font-size: 0.7em;
+  opacity: 0.5;
+  font-weight: 400;
+  align-self: flex-start;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  margin-top: -5px;
+  margin-inline-start: -($questionsHeaderInlineStartPadding - 2px);
+  padding: 0 10px; // Reduce padding from mat-button defaults
+
+  .divider {
+    font-size: 18px;
+    margin: 0 8px;
+  }
 }
