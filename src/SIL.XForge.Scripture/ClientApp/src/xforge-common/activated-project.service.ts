@@ -4,6 +4,8 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 import { SubscriptionDisposable } from './subscription-disposable';
+import { objectId } from './utils';
+import ObjectID from 'bson-objectid';
 
 /**
  * Provides a copy of the project document for the currently activated project.
@@ -27,6 +29,14 @@ export class ActivatedProjectService extends SubscriptionDisposable {
 
   constructor(private readonly router: Router, private readonly projectService: SFProjectService) {
     super();
+
+    // Initialize with project ID already in URL
+    // Extracting it by parsing the URL is not a very clean solution, but another option was not apparent
+    const url = this.router.routerState.snapshot.url;
+    const urlPortions = url.split('/').filter(portion => portion !== '');
+    if (urlPortions.length >= 2 && urlPortions[0] === 'projects' && ObjectID.isValid(urlPortions[1])) {
+      this.selectProject(urlPortions[1]);
+    }
 
     this.subscribe(this.router.events.pipe(), event => {
       if (event instanceof ActivationEnd) {

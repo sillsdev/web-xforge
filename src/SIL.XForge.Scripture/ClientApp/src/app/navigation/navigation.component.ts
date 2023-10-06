@@ -15,6 +15,7 @@ import { canAccessCommunityCheckingApp, canAccessTranslateApp } from '../core/mo
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../core/sf-project.service';
 import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from '../shared/project-router.guard';
+import { ResumeCheckingService } from '../checking/checking/resume-checking.service';
 
 @Component({
   selector: 'app-navigation',
@@ -62,6 +63,7 @@ export class NavigationComponent {
     private readonly onlineStatusService: OnlineStatusService,
     private readonly projectService: SFProjectService,
     private readonly userService: UserService,
+    private readonly resumeCheckingService: ResumeCheckingService,
     private readonly router: Router,
     readonly featureFlags: FeatureFlagService
   ) {}
@@ -129,9 +131,9 @@ export class NavigationComponent {
   }
 
   get defaultBookId(): string {
-    // TODO get latest book and chapter the user has viewed
-    const bookNum: number | undefined = this.selectedProjectDoc?.data?.texts[0]?.bookNum;
-    return bookNum == null ? 'GEN' : Canon.bookNumberToId(bookNum);
+    return Canon.bookNumberToId(
+      this.projectUserConfigDoc?.data?.selectedBookNum ?? this.selectedProjectDoc?.data?.texts[0]?.bookNum ?? 0
+    );
   }
 
   getProjectLink(
@@ -153,7 +155,8 @@ export class NavigationComponent {
   }
 
   get answerQuestionsLink(): string[] {
-    return this.getProjectLink('checking', 'ALL');
+    // FIXME using .split() here is a hideous workaround to the fact that we're expecting an array
+    return this.resumeCheckingService.getLink().split('/');
   }
 
   // draftReviewActive and answerQuestionsActive are needed because appRouterLink only highlights the link if the url
