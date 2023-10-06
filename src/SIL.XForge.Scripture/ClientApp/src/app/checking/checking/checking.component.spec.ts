@@ -2421,10 +2421,6 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#question-nav .prev-question'));
   }
 
-  get questionFilterLabel(): string | undefined {
-    return this.fixture.debugElement.query(By.css('.active-question-filter'))?.nativeElement.textContent.trim();
-  }
-
   get questionFilterTotal(): string {
     return this.fixture.debugElement.query(By.css('#questions-panel header h2 span')).nativeElement.textContent.trim();
   }
