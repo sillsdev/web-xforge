@@ -110,6 +110,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   totalVisibleQuestionsString: string = '0';
   visibleQuestions?: QuestionDoc[];
   showScriptureAudioPlayer: boolean = false;
+  hasQuestionWithoutAudio: boolean = false;
   isCreatingNewQuestion: boolean = false;
   questionToBeCreated: PreCreationQuestionData | undefined;
   isScreenSmall = false;
@@ -692,6 +693,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 throttleTime(100, asyncScheduler, { leading: false, trailing: true })
               ),
               () => {
+                this.updateAudioOnlyWarning();
                 this.updateVisibleQuestions();
               }
             );
@@ -1195,6 +1197,22 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     this.updateQuestionRefs();
     this.refreshSummary();
+  }
+
+  private updateAudioOnlyWarning(): void {
+    const texts: TextInfo[] | undefined = this.projectDoc?.data?.texts;
+    if (this.questionDocs.length === 0 || texts == null) {
+      return;
+    }
+    this.hasQuestionWithoutAudio = this.questionDocs.some(
+      q =>
+        q.data != null &&
+        texts.find(
+          t =>
+            t.bookNum === q.data!.verseRef.bookNum &&
+            t.chapters.find(c => c.number === q.data!.verseRef.chapterNum && c.hasAudio !== true) != null
+        ) != null
+    );
   }
 
   private getAnswerIndex(answer: Answer): number {
