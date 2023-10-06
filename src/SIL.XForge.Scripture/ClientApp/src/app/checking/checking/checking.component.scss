@@ -1,5 +1,6 @@
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 @use 'src/variables' as vars;
+@use './checking-global-vars' as checkingVars;
 
 // Width chosen based on material design suggestion for when main content area should span entire width of screen:
 // https://m3.material.io/components/navigation-drawer/guidelines#56b3fea0-ecc6-4ff0-bb0a-80ff48c74a58
@@ -36,6 +37,11 @@ header {
   width: 300px;
   box-sizing: border-box;
   flex-shrink: 0;
+
+  .audio-checking-warning {
+    padding: 8px;
+    color: checkingVars.$notifyUser;
+  }
 
   header {
     flex-direction: column;
@@ -147,6 +153,11 @@ header {
       align-items: center;
     }
 
+    .no-audio-message {
+      color: checkingVars.$notifyUser;
+      padding: 8px;
+    }
+
     .panel-content {
       height: 100%;
       display: flex;
@@ -157,6 +168,7 @@ header {
       display: flex;
       justify-content: space-between;
       flex: 1;
+      width: 100%;
 
       > div {
         display: flex;
