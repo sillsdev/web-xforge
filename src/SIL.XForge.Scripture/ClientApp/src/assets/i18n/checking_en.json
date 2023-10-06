@@ -157,7 +157,6 @@
     }
   },
   "checking": {
-    "filter": "Filter",
     "filter_questions": "Filter questions",
     "me": "Me",
     "next": "Next",
