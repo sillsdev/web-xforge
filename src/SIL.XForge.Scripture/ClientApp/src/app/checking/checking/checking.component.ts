@@ -109,6 +109,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   totalVisibleQuestionsString: string = '0';
   visibleQuestions?: QuestionDoc[];
   showScriptureAudioPlayer: boolean = false;
+  hasQuestionWithoutAudio: boolean = false;
   isCreatingNewQuestion: boolean = false;
   questionToBeCreated: PreCreationQuestionData | undefined;
 
@@ -668,6 +669,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 if (this.projectDoc == null || (this.onlineStatusService.isOnline && !this.questionsQuery!.ready)) {
                   return;
                 }
+                this.updateAudioOnlyWarning();
 
                 // If newly created local question is out of scope, don't refresh questions list yet,
                 // as it will be done once the nav changes the book/chapter to match the new question verse ref.
@@ -1178,6 +1180,22 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     this.updateQuestionRefs();
     this.refreshSummary();
+  }
+
+  private updateAudioOnlyWarning(): void {
+    const texts: TextInfo[] | undefined = this.projectDoc?.data?.texts;
+    if (this.questionDocs.length === 0 || texts == null) {
+      return;
+    }
+    this.hasQuestionWithoutAudio = this.questionDocs.some(
+      q =>
+        q.data != null &&
+        texts.find(
+          t =>
+            t.bookNum === q.data!.verseRef.bookNum &&
+            t.chapters.find(c => c.number === q.data!.verseRef.chapterNum && c.hasAudio !== true) != null
+        ) != null
+    );
   }
 
   private getAnswerIndex(answer: Answer): number {

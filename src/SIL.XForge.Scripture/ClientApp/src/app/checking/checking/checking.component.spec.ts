@@ -35,6 +35,7 @@ import { fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -2091,6 +2092,8 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
 
       expect(env.component.showScriptureAudioPlayer).toBe(true);
+      expect(env.audioCheckingWarning).toBeNull();
+      expect(env.questionNoAudioWarning).toBeNull();
       discardPeriodicTasks();
     }));
 
@@ -2174,6 +2177,39 @@ describe('CheckingComponent', () => {
 
       expect(env.component.showScriptureAudioPlayer).toBe(true);
       discardPeriodicTasks();
+    }));
+
+    it('notifies admin if chapter audio is absent and hide scripture text is enabled', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: ADMIN_USER,
+        scriptureAudio: true,
+        projectBookRoute: 'MAT',
+        questionScope: 'book'
+      });
+      env.setHideScriptureText(true);
+      expect(env.component.hideChapterText).toBe(true);
+      env.waitForQuestionTimersToComplete();
+      env.fixture.detectChanges();
+
+      expect(env.audioCheckingWarning).not.toBeNull();
+      expect(env.questionNoAudioWarning).not.toBeNull();
+    }));
+
+    it('notifies community checker if chapter audio is absent and hide scripture text is enabled', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        scriptureAudio: true,
+        projectBookRoute: 'MAT',
+        questionScope: 'book'
+      });
+      env.setHideScriptureText(true);
+      expect(env.component.hideChapterText).toBe(true);
+      env.waitForQuestionTimersToComplete();
+      env.fixture.detectChanges();
+
+      // do not show the project level warning to users without permission to upload audio
+      expect(env.audioCheckingWarning).toBeNull();
+      expect(env.questionNoAudioWarning).not.toBeNull();
     }));
 
     // TODO: Get this test working
@@ -2644,6 +2680,14 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('app-checking-text'));
   }
 
+  get audioCheckingWarning(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.audio-checking-warning'));
+  }
+
+  get questionNoAudioWarning(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.no-audio-message'));
+  }
+
   static generateTestProject(): SFProject {
     return createTestProject({
       writingSystem: {
@@ -3064,6 +3108,13 @@ class TestEnvironment {
     tick(this.questionReadTimer);
     this.fixture.detectChanges();
     tick();
+  }
+
+  setHideScriptureText(hideScriptureText: boolean): void {
+    const projectDoc: SFProjectProfileDoc = this.component.projectDoc!;
+    projectDoc.submitJson0Op(op => op.set(p => p.checkingConfig.hideCommunityCheckingText, hideScriptureText));
+    tick();
+    this.fixture.detectChanges();
   }
 
   private setRouteSnapshot(bookId: string, chapter: string, scope: QuestionScope): void {
