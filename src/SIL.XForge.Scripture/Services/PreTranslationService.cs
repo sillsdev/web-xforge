@@ -56,7 +56,7 @@ public class PreTranslationService : IPreTranslationService
         // Get the pre-translation data from Serval
         string textId = GetTextId(bookNum, chapterNum);
         foreach (
-            Pretranslation preTranslation in await _translationEnginesClient.GetAllPretranslations2Async(
+            Pretranslation preTranslation in await _translationEnginesClient.GetAllPretranslationsAsync(
                 translationEngineId,
                 corpusId,
                 textId,
