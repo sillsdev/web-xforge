@@ -97,28 +97,29 @@ describe('FeatureFlagService', () => {
     const env = new TestEnvironment();
     expect(
       env.service.getFeatureFlagVersion([
-        { key: 'key_a', description: 'Key a', readonly: true, position: 0, enabled: true },
-        { key: 'key_b', description: 'Key b', readonly: true, position: 1, enabled: false },
-        { key: 'key_c', description: 'Key c', readonly: true, position: 2, enabled: true },
-        { key: 'key_d', description: 'Key d', readonly: true, position: 3, enabled: false },
-        { key: 'key_e', description: 'Key e', readonly: true, position: 4, enabled: true },
-        { key: 'key_f', description: 'Key f', readonly: true, position: 5, enabled: false },
-        { key: 'key_g', description: 'Key g', readonly: true, position: 6, enabled: true },
-        { key: 'key_h', description: 'Key h', readonly: true, position: 7, enabled: false },
-        { key: 'key_i', description: 'Key i', readonly: true, position: 8, enabled: true },
-        { key: 'key_j', description: 'Key j', readonly: true, position: 9, enabled: false },
-        { key: 'key_k', description: 'Key k', readonly: true, position: 10, enabled: true },
-        { key: 'key_l', description: 'Key l', readonly: true, position: 11, enabled: false },
-        { key: 'key_m', description: 'Key m', readonly: true, position: 12, enabled: true },
-        { key: 'key_n', description: 'Key n', readonly: true, position: 13, enabled: false },
-        { key: 'key_o', description: 'Key o', readonly: true, position: 14, enabled: true },
-        { key: 'key_p', description: 'Key p', readonly: true, position: 15, enabled: false }
+        { key: 'key_a', description: 'Key a', readonly: true, position: 0, enabled: true }, //       1
+        { key: 'key_b', description: 'Key b', readonly: true, position: 1, enabled: false }, //      2
+        { key: 'key_c', description: 'Key c', readonly: true, position: 2, enabled: true }, //       4
+        { key: 'key_d', description: 'Key d', readonly: true, position: 3, enabled: false }, //      8
+        { key: 'key_e', description: 'Key e', readonly: true, position: 4, enabled: true }, //      16
+        { key: 'key_f', description: 'Key f', readonly: true, position: 5, enabled: false }, //     32
+        { key: 'key_g', description: 'Key g', readonly: true, position: 6, enabled: true }, //      64
+        { key: 'key_h', description: 'Key h', readonly: true, position: 7, enabled: false }, //    128
+        { key: 'key_i', description: 'Key i', readonly: true, position: 8, enabled: true }, //     256
+        { key: 'key_j', description: 'Key j', readonly: true, position: 9, enabled: false }, //    512
+        { key: 'key_k', description: 'Key k', readonly: true, position: 10, enabled: true }, //   1024
+        { key: 'key_l', description: 'Key l', readonly: true, position: 11, enabled: false }, //  2048
+        { key: 'key_m', description: 'Key m', readonly: true, position: 12, enabled: true }, //   4096
+        { key: 'key_n', description: 'Key n', readonly: true, position: 13, enabled: false }, //  8192
+        { key: 'key_o', description: 'Key o', readonly: true, position: 14, enabled: true }, //  16384
+        { key: 'key_p', description: 'Key p', readonly: true, position: 15, enabled: false } //  32768
       ])
     ).toEqual(1 + 4 + 16 + 64 + 256 + 1024 + 4096 + 16384);
   }));
 
   it('getFeatureFlagVersion scales to up to 32 feature flags', fakeAsync(() => {
     const env = new TestEnvironment();
+    const twoPower31: number = Math.pow(2, 31); // 2147483648
     expect(
       env.service.getFeatureFlagVersion([
         { key: 'key_a', description: 'Key a', readonly: true, position: 0, enabled: true },
@@ -154,7 +155,7 @@ describe('FeatureFlagService', () => {
         { key: 'key_4', description: 'Key 4', readonly: true, position: 30, enabled: false },
         { key: 'key_5', description: 'Key 5', readonly: true, position: 31, enabled: true }
       ])
-    ).toEqual(2147483648 + 1); // First and last bits
+    ).toEqual(twoPower31 + 1); // First and last bits
   }));
 });
 

@@ -11,7 +11,7 @@ import {
 } from '@auth0/auth0-spa-js';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { anyString, anything, capture, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { MockConsole } from 'xforge-common/mock-console';
@@ -843,6 +843,7 @@ class TestEnvironment {
   setOnline(isOnline: boolean = true): void {
     when(mockedOnlineStatusService.checkOnline()).thenResolve(isOnline);
     when(mockedOnlineStatusService.isBrowserOnline).thenReturn(isOnline);
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(isOnline));
     this.onlineStatus$.next(isOnline);
   }
 

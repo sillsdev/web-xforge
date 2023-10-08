@@ -29,11 +29,9 @@ export class FeatureFlagStore extends SubscriptionDisposable {
   ) {
     super();
     // Cause the flags to be reloaded when coming online
-    if (onlineStatusService.onlineStatus$ != null) {
-      this.subscribe(onlineStatusService.onlineStatus$, status => {
-        if (status) this.remoteFlagCacheExpiry = new Date();
-      });
-    }
+    this.subscribe(onlineStatusService.onlineStatus$, status => {
+      if (status) this.remoteFlagCacheExpiry = new Date();
+    });
   }
 
   isEnabled(key: string): boolean {
@@ -92,7 +90,7 @@ export class FeatureFlagStore extends SubscriptionDisposable {
   private retrieveFeatureFlagsIfMissing(): void {
     if (this.remoteFlagCacheExpiry <= new Date() && this.onlineStatusService.isOnline) {
       // Set to the next remote flag cache expiry timestamp for 1 hour so that the null check above returns false
-      this.remoteFlagCacheExpiry = new Date(new Date().getTime() + 360_000);
+      this.remoteFlagCacheExpiry = new Date(new Date().getTime() + 3_600_000);
       this.commandService
         .onlineInvoke<{ [key: string]: boolean }>(PROJECTS_URL, 'featureFlags')
         .then(flags => {
@@ -259,7 +257,7 @@ export class FeatureFlagService {
     let featureFlags: FeatureFlag[] = Object.values(this).filter(
       value => value instanceof FeatureFlagFromStorage || value instanceof ServerOnlyFeatureFlag
     );
-    featureFlags.sort((a, b) => (a.position < b.position ? -1 : 1));
+    featureFlags.sort((a, b) => a.position - b.position);
     const versionNumber = this.getFeatureFlagVersion(featureFlags);
     if (versionNumber === 0) {
       return '';
@@ -269,7 +267,7 @@ export class FeatureFlagService {
   }
 
   getFeatureFlagVersion(featureFlags: FeatureFlag[]): number {
-    var versionNumber: number = 0;
+    let versionNumber: number = 0;
 
     // Get the feature flags as a 32-bit number
     for (let featureFlag of featureFlags) {

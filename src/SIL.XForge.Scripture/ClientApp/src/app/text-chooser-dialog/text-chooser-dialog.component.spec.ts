@@ -456,6 +456,8 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
 
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
+
     const dialogRef = TestBed.inject(MatDialog).open(TextChooserDialogComponent, { data: config });
     this.component = dialogRef.componentInstance;
     this.resultPromise = dialogRef.afterClosed().toPromise();
@@ -466,7 +468,6 @@ class TestEnvironment {
     const chooserDialogResult = new VerseRef('LUK', '1', '2');
     when(this.mockedScriptureChooserMatDialogRef.afterClosed()).thenReturn(of(chooserDialogResult));
     when(mockedOnlineStatusService.isOnline).thenReturn(true);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
 
     this.fixture.detectChanges();
     flush();

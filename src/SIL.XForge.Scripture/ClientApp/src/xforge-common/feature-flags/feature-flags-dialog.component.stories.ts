@@ -8,7 +8,8 @@ const mockedFeatureFlagService = mock(FeatureFlagService);
 when(mockedFeatureFlagService.featureFlags).thenReturn([
   { key: 'enabled_flag', description: 'enabled flag', enabled: true, position: 0, readonly: false },
   { key: 'disabled_flag', description: 'disabled flag', enabled: false, position: 1, readonly: false },
-  { key: 'readonly_flag', description: 'readonly flag', enabled: true, position: 2, readonly: true }
+  { key: 'enabled_readonly', description: 'enabled readonly', enabled: true, position: 2, readonly: true },
+  { key: 'disabled_readonly', description: 'disabled readonly', enabled: false, position: 3, readonly: true }
 ]);
 
 export default {
