@@ -114,7 +114,10 @@
           least a few hours.
         </p>
 
-        <button mat-flat-button color="primary" (click)="generateDraft()">Generate draft</button>
+        <button mat-flat-button color="primary" (click)="generateDraft()">
+          <mat-icon class="material-icons-outlined">padding</mat-icon>
+          Generate draft
+        </button>
       </section>
 
       <ng-template #jobExists>
@@ -126,30 +129,33 @@
           <mat-divider inset></mat-divider>
         </ng-container>
 
-        <section *ngIf="isDraftComplete(draftJob) || !isDraftInProgress(draftJob)" class="view-or-create-options">
-          <ng-container *ngIf="isDraftComplete(draftJob)">
+        <section *ngIf="!isDraftInProgress(draftJob)" class="view-or-create-options">
+          <ng-container *ngIf="isDraftComplete(draftJob) || hasAnyCompletedBuild">
             <div>
-              <h3>Draft generation complete</h3>
-              <p>
-                Go to <a [routerLink]="draftViewerUrl">draft viewer</a> to preview and apply the generated draft to
-                chapters of your choice.
-              </p>
-              <a mat-flat-button color="primary" [routerLink]="draftViewerUrl"> Preview draft </a>
-            </div>
+              <ng-container *ngIf="isDraftComplete(draftJob)">
+                <h3>Draft generation complete</h3>
+                <p>
+                  Go to <a [routerLink]="draftViewerUrl">draft viewer</a> to preview and apply the generated draft to
+                  chapters of your choice.
+                </p>
+                <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
+                  <mat-icon>manage_search</mat-icon>
+                  Preview draft
+                </a>
+              </ng-container>
 
-            <mat-divider inset vertical data-text="or"></mat-divider>
-          </ng-container>
-
-          <!-- No draft in progress and latest build did not complete (maybe canceled) but a past completed build exists  -->
-          <ng-container *ngIf="!isDraftComplete(draftJob) && (hasAnyCompletedBuild$ | async)">
-            <div>
-              <h3>Preview last draft</h3>
-              <p>
-                No builds are in currently in progress, but you can go to
-                <a [routerLink]="draftViewerUrl">draft viewer</a> to preview and apply the last generated draft to
-                chapters of your choice.
-              </p>
-              <a mat-flat-button color="primary" [routerLink]="draftViewerUrl"> Preview draft </a>
+              <ng-container *ngIf="!isDraftComplete(draftJob)">
+                <h3>Preview last draft</h3>
+                <p>
+                  The last draft build did not complete, but you can go to
+                  <a [routerLink]="draftViewerUrl">draft viewer</a> to preview and apply the last generated draft to
+                  chapters of your choice.
+                </p>
+                <a mat-flat-button color="primary" [routerLink]="draftViewerUrl">
+                  <mat-icon>manage_search</mat-icon>
+                  Preview last draft
+                </a>
+              </ng-container>
             </div>
 
             <mat-divider inset vertical data-text="or"></mat-divider>
@@ -168,27 +174,55 @@
             <p>A suggested workflow is to complete at least a chapter before regenerating a draft.</p>
 
             <button mat-flat-button color="primary" (click)="generateDraft({ withConfirm: true })">
-              Generate draft
+              <mat-icon class="material-icons-outlined">padding</mat-icon>
+              Generate new draft
             </button>
           </div>
         </section>
 
         <section *ngIf="isDraftQueued(draftJob)">
           <h3>Draft queued</h3>
+
           <p>The back translation draft has been queued. Please check back later.</p>
+          <p *ngIf="hasAnyCompletedBuild">
+            While the new draft generation is in progress, you can continue working with the previously generated draft.
+          </p>
           <app-working-animated-indicator></app-working-animated-indicator>
-          <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
-            Cancel generation
-          </button>
+
+          <div class="button-strip">
+            <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
+              <mat-icon>highlight_off</mat-icon>
+              Cancel generation
+            </button>
+            <a *ngIf="hasAnyCompletedBuild" mat-flat-button color="primary" [routerLink]="draftViewerUrl">
+              <mat-icon>manage_search</mat-icon>
+              Preview last draft
+            </a>
+          </div>
         </section>
 
         <section *ngIf="isDraftActive(draftJob)" class="progress-active">
           <h3>Draft in progress</h3>
-          <p>Generating draft; this can take a few hours.</p>
+
+          <div class="progress-text">
+            <p>Generating draft; this can take a few hours.</p>
+            <p *ngIf="hasAnyCompletedBuild">
+              While the new draft generation is in progress, you can continue working with the previously generated
+              draft.
+            </p>
+          </div>
           <circle-progress [percent]="draftJob!.percentCompleted"></circle-progress>
-          <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
-            Cancel generation
-          </button>
+
+          <div class="button-strip">
+            <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
+              <mat-icon>highlight_off</mat-icon>
+              Cancel generation
+            </button>
+            <a *ngIf="hasAnyCompletedBuild" mat-flat-button color="primary" [routerLink]="draftViewerUrl">
+              <mat-icon>manage_search</mat-icon>
+              Preview last draft
+            </a>
+          </div>
         </section>
       </ng-template>
     </ng-container>

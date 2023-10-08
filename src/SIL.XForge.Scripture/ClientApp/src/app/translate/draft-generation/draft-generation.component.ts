@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
 import { isEmpty } from 'lodash-es';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { Observable, of, Subscription } from 'rxjs';
+import { of, Subscription } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -61,7 +61,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
    * in which case a 'Preview draft' button can still be shown, as the pre-translations
    * from that build can still be retrieved.
    */
-  hasAnyCompletedBuild$!: Observable<boolean>;
+  hasAnyCompletedBuild!: boolean;
 
   cancelDialogRef?: MatDialogRef<any>;
 
@@ -101,11 +101,16 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       this.infoAlert = this.getInfoAlert();
     });
 
-    this.hasAnyCompletedBuild$ = this.activatedProject.projectId$.pipe(
-      filterNullish(),
-      switchMap(projectId =>
-        this.draftGenerationService.getLastCompletedBuild(projectId).pipe(map(build => !isEmpty(build)))
-      )
+    this.subscribe(
+      this.activatedProject.projectId$.pipe(
+        filterNullish(),
+        switchMap(projectId =>
+          this.draftGenerationService.getLastCompletedBuild(projectId).pipe(map(build => !isEmpty(build)))
+        )
+      ),
+      (hasAnyCompletedBuild: boolean) => {
+        this.hasAnyCompletedBuild = hasAnyCompletedBuild;
+      }
     );
 
     this.subscribe(this.onlineStatusService.onlineStatus$, (isOnline: boolean) => {
