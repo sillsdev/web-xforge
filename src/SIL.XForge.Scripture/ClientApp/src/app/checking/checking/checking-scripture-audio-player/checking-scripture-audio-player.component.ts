@@ -169,7 +169,10 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
       () => {
         if (this._textDocId == null) return;
         this.verseLabel = this.currentVerseLabel;
-        const audioTextRef: AudioTextRef | undefined = CheckingUtils.parseAudioRefByTime(this._timing, audio.currentTime);
+        const audioTextRef: AudioTextRef | undefined = CheckingUtils.parseAudioRefByTime(
+          this._timing,
+          audio.currentTime
+        );
         if (audioTextRef?.verseStr == null) {
           // emit the current ref that is a section heading
           const audioHeadingRef: AudioHeadingRef | undefined = CheckingUtils.parseAudioHeadingRefByTime(
