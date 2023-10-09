@@ -49,11 +49,11 @@
     <h2>
       {{ targetProject?.shortName }}
       <!-- TODO: Update i18n -->
-      <span *ngIf="hasDraft" class="draft-indicator" [ngClass]="{ applied: isDraftApplied }">
+      <span *ngIf="showDraft" class="draft-indicator" [ngClass]="{ applied: isDraftApplied }">
         DRAFT {{ isDraftApplied ? " APPLIED" : "" }}
         <mat-icon *ngIf="isDraftApplied" class="check-icon">check</mat-icon>
       </span>
-      <div *ngIf="!isDraftApplied && hasDraft" class="apply-draft-button-container">
+      <div *ngIf="!isDraftApplied && showDraft" class="apply-draft-button-container">
         <button mat-flat-button color="primary" (click)="applyDraft()">
           <mat-icon>auto_awesome</mat-icon>
           Apply to project

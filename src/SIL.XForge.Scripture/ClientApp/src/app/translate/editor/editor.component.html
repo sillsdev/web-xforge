@@ -32,7 +32,7 @@
           <div class="toolbar-separator">&nbsp;</div>
           <app-share-button [defaultRole]="defaultShareRole"></app-share-button>
         </ng-container>
-        <ng-container *ngIf="featureFlags.showNmtDrafting.enabled && hasDraft">
+        <ng-container *ngIf="showPreviewDraft">
           <div class="toolbar-separator"></div>
           <button mat-stroked-button title="Preview draft" class="preview-draft-button" (click)="goToDraftPreview()">
             <mat-icon>edit_note</mat-icon>
@@ -107,7 +107,7 @@
                 #targetContainer
                 class="text-container"
                 [dir]="isTargetRightToLeft ? 'rtl' : 'ltr'"
-                [ngClass]="{ 'has-draft': featureFlags.showNmtDrafting.enabled && hasDraft }"
+                [ngClass]="{ 'has-draft': showPreviewDraft }"
               >
                 <app-text
                   #target
