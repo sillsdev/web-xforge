@@ -12,6 +12,7 @@ using SIL.Machine.Corpora;
 using SIL.Machine.Tokenization;
 using SIL.Machine.WebApi.Services;
 using SIL.XForge.Configuration;
+using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
@@ -113,22 +114,34 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
                 }
             }
 
-            string termRenderingsFileName = Path.Combine(
-                _siteOptions.Value.SiteDir,
-                "sync",
-                paratextId,
-                "target",
-                "TermRenderings.xml"
-            );
-            if (_fileSystemService.FileExists(termRenderingsFileName))
+            List<BiblicalTerm> biblicalTerms = await _realtimeService
+                .QuerySnapshots<BiblicalTerm>()
+                .Where(b => b.ProjectRef == textCorpusProjectId)
+                .ToListAsync();
+            if (biblicalTerms.Any())
             {
-                await using Stream stream = _fileSystemService.OpenFile(termRenderingsFileName, FileMode.Open);
-                XDocument termRenderingsDoc = await XDocument.LoadAsync(
-                    stream,
-                    LoadOptions.None,
-                    CancellationToken.None
+                texts.Add(new SFBiblicalTermsText(wordTokenizer, projectId, biblicalTerms));
+            }
+            else
+            {
+                // Use the legacy upload method for projects which do not yet have their biblical terms populated in Mongo
+                string termRenderingsFileName = Path.Combine(
+                    _siteOptions.Value.SiteDir,
+                    "sync",
+                    paratextId,
+                    "target",
+                    "TermRenderings.xml"
                 );
-                texts.Add(new SFBiblicalTermsText(wordTokenizer, projectId, termRenderingsDoc));
+                if (_fileSystemService.FileExists(termRenderingsFileName))
+                {
+                    await using Stream stream = _fileSystemService.OpenFile(termRenderingsFileName, FileMode.Open);
+                    XDocument termRenderingsDoc = await XDocument.LoadAsync(
+                        stream,
+                        LoadOptions.None,
+                        CancellationToken.None
+                    );
+                    texts.Add(new SFBiblicalTermsText(wordTokenizer, projectId, termRenderingsDoc));
+                }
             }
         }
 
