@@ -16,7 +16,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   private _unpagedCount: number = 0;
   private readonly _localChanges$ = new Subject<void>();
   private readonly _remoteChanges$ = new Subject<void>();
-  private readonly _ready$ = new Subject<void>();
+  private readonly _ready$ = new BehaviorSubject<boolean>(false);
   private readonly docSubscriptions = new Map<string, Subscription>();
   private readonly _remoteDocChanges$ = new Subject<any>();
   private readonly _docs$ = new BehaviorSubject<T[]>([]);
@@ -64,7 +64,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
     return this._remoteChanges$;
   }
 
-  get ready$(): Observable<void> {
+  get ready$(): Observable<boolean> {
     return this._ready$;
   }
 
@@ -131,7 +131,7 @@ export class RealtimeQuery<T extends RealtimeDoc = RealtimeDoc> {
   private async onReady(): Promise<void> {
     if (this.subscribed) {
       await this.onChange(true, this.adapter.docIds, this.adapter.count, this.adapter.unpagedCount);
-      this._ready$.next();
+      this._ready$.next(true);
     } else {
       this._docs = this.adapter.docIds.map(id => this.realtimeService.get<T>(this.collection, id));
       this._count = this.adapter.count;

@@ -5,6 +5,7 @@ import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { NoticeService } from 'xforge-common/notice.service';
 import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
@@ -33,6 +34,28 @@ export interface CheckingAccessInfo {
   project: SFProjectProfile;
   bookId?: string;
   projectUserConfigDoc: SFProjectUserConfigDoc;
+}
+
+export interface BookChapter {
+  bookNum?: number;
+  chapterNum?: number;
+}
+
+const scopes = ['all', 'book', 'chapter'] as const;
+export type QuestionScope = (typeof scopes)[number];
+
+/**
+ * Type guard for `QuestionScope`.
+ */
+export function isQuestionScope(scope: any): scope is QuestionScope {
+  return scopes.includes(scope);
+}
+
+/**
+ * Whether the `VerseRefData` book and chapter is the same as in the `BookChapter` obj.
+ */
+export function bookChapterMatchesVerseRef(bookChapter: BookChapter, verseRef: VerseRefData): boolean {
+  return verseRef.bookNum === bookChapter.bookNum && verseRef.chapterNum === bookChapter.chapterNum;
 }
 
 export class CheckingUtils {

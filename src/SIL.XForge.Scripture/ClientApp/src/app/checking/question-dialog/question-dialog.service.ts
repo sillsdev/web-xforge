@@ -12,6 +12,7 @@ import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { CheckingQuestionsService } from '../checking/checking-questions.service';
 import { QuestionDialogComponent, QuestionDialogData, QuestionDialogResult } from './question-dialog.component';
 
 @Injectable({
@@ -21,6 +22,7 @@ export class QuestionDialogService {
   constructor(
     private readonly dialogService: DialogService,
     private readonly projectService: SFProjectService,
+    private readonly checkingQuestionsService: CheckingQuestionsService,
     private readonly userService: UserService,
     private readonly noticeService: NoticeService,
     private readonly transloco: TranslocoService
@@ -92,7 +94,7 @@ export class QuestionDialogService {
       dateCreated: currentDate,
       dateModified: currentDate
     };
-    return await this.projectService.createQuestion(
+    return await this.checkingQuestionsService.createQuestion(
       config.projectId,
       newQuestion,
       result.audio.fileName,

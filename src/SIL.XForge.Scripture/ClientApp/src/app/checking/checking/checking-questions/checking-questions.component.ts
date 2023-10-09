@@ -5,9 +5,11 @@ import {
   ElementRef,
   EventEmitter,
   Input,
+  OnChanges,
   OnInit,
   Output,
   QueryList,
+  SimpleChanges,
   ViewChildren
 } from '@angular/core';
 import { MatListItem } from '@angular/material/list';
@@ -30,14 +32,14 @@ import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc
 import { SFProjectUserConfigDoc } from '../../../core/models/sf-project-user-config-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { TranslationEngineService } from '../../../core/translation-engine.service';
-import { CheckingUtils } from '../../checking.utils';
+import { BookChapter, bookChapterMatchesVerseRef, CheckingUtils } from '../../checking.utils';
 
 export interface QuestionChangeActionSource {
   /** True during events due to a questions doc change such as with a filter. */
   isQuestionListChange?: boolean;
 }
 export interface QuestionChangedEvent {
-  questionDoc: QuestionDoc;
+  questionDoc: QuestionDoc | undefined;
   actionSource: QuestionChangeActionSource | undefined;
 }
 
@@ -58,10 +60,13 @@ export interface QuestionChangedEvent {
   styleUrls: ['./checking-questions.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class CheckingQuestionsComponent extends SubscriptionDisposable implements OnInit {
+export class CheckingQuestionsComponent extends SubscriptionDisposable implements OnInit, OnChanges {
   @Output() update = new EventEmitter<QuestionDoc>();
   @Output() changed = new EventEmitter<QuestionChangedEvent>();
-  @Input() isAllBooksShown: boolean = false;
+  @Input() isFiltered: boolean = false;
+
+  /** The book/chapter from the route.  Stored question activation is constrained to this book/chapter. */
+  @Input() routeBookChapter?: BookChapter;
 
   @Input()
   set projectProfileDoc(projectProfileDoc: SFProjectProfileDoc | undefined) {
@@ -89,18 +94,12 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
   }
 
   @Input()
-  set questionDocs(questionDocs: Readonly<QuestionDoc[]> | undefined) {
+  set questionDocs(questionDocs: Readonly<QuestionDoc[] | undefined>) {
     if (questionDocs == null) {
       return;
     }
-    if (questionDocs.length > 0) {
-      this.activateStoredQuestion(questionDocs, { isQuestionListChange: true });
-    } else {
-      this.activeQuestionDoc = undefined;
-    }
+
     this._questionDocs = questionDocs;
-    this.haveQuestionsLoaded = true;
-    this.changeDetector.markForCheck();
   }
 
   // When the list of questions is hidden it has display: none applied, which prevents scrolling to the active question
@@ -142,16 +141,29 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
     });
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    // Handle changes to questionDocs in ngOnChanges instead of setter to ensure other @Inputs are set
+    // when 'activateStoredQuestion' is called, such as 'routeBookChapter'.
+    const questionDocs: Readonly<QuestionDoc[] | undefined> = changes.questionDocs?.currentValue;
+    if (questionDocs != null) {
+      if (questionDocs.length > 0) {
+        this.activateStoredQuestion({ isQuestionListChange: true });
+      } else {
+        this.activeQuestionDoc = undefined;
+      }
+
+      this.haveQuestionsLoaded = true;
+      this.changed.emit({ questionDoc: this.activeQuestionDoc, actionSource: { isQuestionListChange: true } });
+      this.changeDetector.markForCheck();
+    }
+  }
+
   get activeQuestionBook(): number | undefined {
-    return this.activeQuestionDoc == null || this.activeQuestionDoc.data == null
-      ? undefined
-      : this.activeQuestionDoc.data.verseRef.bookNum;
+    return this.activeQuestionDoc?.data == null ? undefined : this.activeQuestionDoc.data.verseRef.bookNum;
   }
 
   get activeQuestionChapter(): number | undefined {
-    return this.activeQuestionDoc == null || this.activeQuestionDoc.data == null
-      ? undefined
-      : this.activeQuestionDoc.data.verseRef.chapterNum;
+    return this.activeQuestionDoc?.data == null ? undefined : this.activeQuestionDoc.data.verseRef.chapterNum;
   }
 
   get activeQuestionIndex(): number {
@@ -225,28 +237,44 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
   /**
    * Activates the question that a user has most recently viewed if available
    */
-  activateStoredQuestion(
-    questionDocs: Readonly<QuestionDoc[]>,
-    actionSource?: QuestionChangeActionSource
-  ): QuestionDoc {
+  activateStoredQuestion(actionSource?: QuestionChangeActionSource): QuestionDoc {
     let questionToActivate: QuestionDoc | undefined;
     let activeQuestionDocId: string | undefined;
+
     if (this.activeQuestionDoc != null) {
       activeQuestionDocId = this.activeQuestionDoc.id;
     }
-    if (activeQuestionDocId == null || !questionDocs.some(question => question.id === activeQuestionDocId)) {
+
+    if (activeQuestionDocId == null || !this.questionDocs.some(question => question.id === activeQuestionDocId)) {
       if (this._projectUserConfigDoc?.data != null) {
-        const lastQuestionDocId = this._projectUserConfigDoc.data.selectedQuestionRef;
+        const lastQuestionDocId: string | undefined = this._projectUserConfigDoc.data.selectedQuestionRef;
+
         if (lastQuestionDocId != null) {
-          questionToActivate = questionDocs.find(qd => qd.id === lastQuestionDocId);
+          const lastQuestionDoc: QuestionDoc | undefined = this.questionDocs.find(qd => qd.id === lastQuestionDocId);
+
+          if (lastQuestionDoc?.data != null) {
+            const verseRef: VerseRefData = lastQuestionDoc.data.verseRef;
+
+            // Constrain activation of stored question to route book/chapter
+            if (this.routeBookChapter == null || bookChapterMatchesVerseRef(this.routeBookChapter, verseRef)) {
+              questionToActivate = lastQuestionDoc;
+            }
+          }
         }
       }
     } else {
-      return this.activeQuestionDoc!;
+      questionToActivate = this.activeQuestionDoc;
     }
+
+    // No stored question, so use first question within route book/chapter if available.
+    // Otherwise use first question.
     if (questionToActivate == null) {
-      questionToActivate = questionDocs[0];
+      questionToActivate =
+        this.questionDocs.find(
+          qd => this.routeBookChapter == null || bookChapterMatchesVerseRef(this.routeBookChapter, qd.data!.verseRef)
+        ) ?? this.questionDocs[0];
     }
+
     this.activateQuestion(questionToActivate, actionSource);
     return questionToActivate;
   }
@@ -294,8 +322,8 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
       });
   }
 
-  checkCanChangeQuestion(newIndex: number): boolean {
-    return !!this.questionDocs[this.activeQuestionIndex + newIndex];
+  checkCanChangeQuestion(relativeIndex: number): boolean {
+    return !!this.questionDocs[this.activeQuestionIndex + relativeIndex];
   }
 
   hasUserAnswered(questionDoc: QuestionDoc): boolean {
@@ -325,21 +353,30 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
   }
 
   activateQuestion(questionDoc: QuestionDoc, actionSource?: QuestionChangeActionSource): void {
+    const verseRef: VerseRefData | undefined = questionDoc.data?.verseRef;
+
     // The reason for the convoluted questionChanged logic is because the change needs to be emitted even if it's the
     // same question, but calling activeQuestionDoc$.next when the question is unchanged causes complicated test errors
     let questionChanged = true;
     if (this.activeQuestionDoc != null && this.activeQuestionDoc.id === questionDoc.id) {
       questionChanged = false;
     }
+
     this.activeQuestionDoc = questionDoc;
-    if (questionDoc.data != null) {
-      this.storeMostRecentQuestion(questionDoc.data.verseRef.bookNum).then(() => {
-        this.changed.emit({ questionDoc, actionSource });
+
+    if (verseRef != null) {
+      this.storeMostRecentQuestion(verseRef.bookNum, verseRef.chapterNum).then(() => {
+        // Only emit if not a filter to avoid duplicate emission, as an emit from filter is called elsewhere
+        if (!actionSource?.isQuestionListChange) {
+          this.changed.emit({ questionDoc, actionSource });
+        }
+
         if (questionChanged) {
           this.activeQuestionDoc$.next(questionDoc);
         }
       });
     }
+
     setTimeout(() => this.scrollToActiveQuestion());
   }
 
@@ -387,7 +424,7 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
     });
   }
 
-  private async storeMostRecentQuestion(bookNum: number): Promise<void> {
+  private async storeMostRecentQuestion(bookNum: number, chapterNum: number): Promise<void> {
     if (this._projectUserConfigDoc != null && this._projectUserConfigDoc.data != null) {
       const activeQuestionDoc = this.activeQuestionDoc;
       if (activeQuestionDoc != null && activeQuestionDoc.data != null) {
@@ -404,8 +441,8 @@ export class CheckingQuestionsComponent extends SubscriptionDisposable implement
         await this._projectUserConfigDoc.submitJson0Op(op => {
           op.set<string>(puc => puc.selectedTask!, 'checking');
           op.set(puc => puc.selectedQuestionRef!, activeQuestionDoc.id);
-          this.isAllBooksShown ? op.unset(puc => puc.selectedBookNum!) : op.set(puc => puc.selectedBookNum!, bookNum);
-          op.unset(puc => puc.selectedChapterNum!);
+          op.set(puc => puc.selectedBookNum!, bookNum);
+          op.set(puc => puc.selectedChapterNum!, chapterNum);
           op.unset(puc => puc.selectedSegment);
           op.unset(puc => puc.selectedSegmentChecksum!);
         });

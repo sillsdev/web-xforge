@@ -38,6 +38,7 @@ import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
+import { CheckingQuestionsService } from './checking/checking/checking-questions.service';
 import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { canAccessCommunityCheckingApp, canAccessTranslateApp } from './core/models/sf-project-role-info';
@@ -89,6 +90,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly locationService: LocationService,
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
+    private readonly checkingQuestionsService: CheckingQuestionsService,
     private readonly route: ActivatedRoute,
     private readonly settingsAuthGuard: SettingsAuthGuard,
     private readonly syncAuthGuard: SyncAuthGuard,
@@ -308,6 +310,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     // retrieve the projectId from the current route. Since the nav menu is outside of the router outlet, it cannot
     // use ActivatedRoute to get the params. Instead the nav menu, listens to router events and traverses the route
     // tree to find the currently activated route
+    // TODO: Consider making AppComponent template into an empty router-outlet
+    // TODO: ... and moving corresponding component logic into a different component?
     const projectId$: Observable<string | undefined> = this.router.events.pipe(
       filter(e => e instanceof NavigationEnd),
       startWith(null),
@@ -542,7 +546,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.questionsQuery?.dispose();
     if (!this.hasCommunityCheckingPermission) return;
 
-    this.questionsQuery = await this.projectService.queryQuestions(projectId, { activeOnly: true });
+    this.questionsQuery = await this.checkingQuestionsService.queryQuestions(projectId, { activeOnly: true });
     this.questionsQuery.docs$.subscribe(docs => {
       const books = new Set<number>();
       for (const question of docs) {

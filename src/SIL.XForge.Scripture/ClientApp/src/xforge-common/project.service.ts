@@ -7,7 +7,7 @@ import { CommandService } from './command.service';
 import { ProjectDoc } from './models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from './models/project-role-info';
 import { RealtimeQuery } from './models/realtime-query';
-import { Filters, QueryParameters } from './query-parameters';
+import { QueryFilter, QueryParameters } from './query-parameters';
 import { RealtimeService } from './realtime.service';
 import { RetryingRequest, RetryingRequestService } from './retrying-request.service';
 import { SubscriptionDisposable } from './subscription-disposable';
@@ -49,7 +49,7 @@ export abstract class ProjectService<
     return combineLatest([debouncedTerm$, queryParameters$]).pipe(
       switchMap(([term, queryParameters]) => {
         term = escapeRegExp(term.trim());
-        let filters: Filters = {};
+        let filters: QueryFilter = {};
         if (term.length > 0) {
           filters = {
             $or: termMatchProperties.map(prop => ({ [prop]: { $regex: term, $options: 'i' } }))
