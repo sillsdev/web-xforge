@@ -55,6 +55,21 @@ describe('SFProjectUserConfigMigrations', () => {
       expect(userConfigDoc.data.transliterateBiblicalTerms).toEqual(false);
     });
   });
+
+  describe('version 4', () => {
+    it('adds audioRefsPlayed property', async () => {
+      const env = new TestEnvironment(3);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01', {});
+      let userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.audioRefsPlayed).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      userConfigDoc = await fetchDoc(conn, SF_PROJECT_USER_CONFIGS_COLLECTION, 'project01:user01');
+      expect(userConfigDoc.data.audioRefsPlayed).toEqual([]);
+    });
+  });
 });
 
 class TestEnvironment {

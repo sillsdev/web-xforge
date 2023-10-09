@@ -999,7 +999,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   handleAudioTextRefChanged(segmentRef: string): void {
-    if (this.book == null) {
+    if (this.book == null || !this.isAudioPlaying()) {
       return;
     }
     this.scripturePanel!.setAudioTextRef(segmentRef);

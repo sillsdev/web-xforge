@@ -14,13 +14,13 @@ export class SFProjectUserConfigDoc extends ProjectDataDoc<SFProjectUserConfig> 
     if (this.data == null || verseRef == null) {
       return;
     }
-    for (let ref of verseRef.allVerses()) {
-      if (this.data.audioRefsPlayed?.includes(ref.toString())) {
-        return;
-      }
-      this.submitJson0Op(op => {
+    this.submitJson0Op(op => {
+      for (let ref of verseRef.allVerses()) {
+        if (this.data!.audioRefsPlayed?.includes(ref.toString())) {
+          continue;
+        }
         op.add(puc => puc.audioRefsPlayed, ref.toString());
-      });
-    }
+      }
+    });
   }
 }

@@ -187,6 +187,7 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
 
     const verseRefs: VerseRef[] = toVerseRef(this._questionDoc.data.verseRef).allVerses();
 
+    // Select a question if there is no audio or if any of the verse refs haven't been played yet
     if (
       this._scriptureTextAudioData == null ||
       this.scriptureAudioUrl == null ||
