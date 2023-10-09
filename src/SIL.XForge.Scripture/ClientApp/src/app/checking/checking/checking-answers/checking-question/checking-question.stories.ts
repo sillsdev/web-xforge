@@ -9,15 +9,35 @@ import { I18nStoryModule } from 'xforge-common/i18n-story.module';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
+import { getSFProjectUserConfigDocId } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { SF_TYPE_REGISTRY } from '../../../../core/models/sf-type-registry';
 import { SFProjectService } from '../../../../core/sf-project.service';
 import { SingleButtonAudioPlayerComponent } from '../../single-button-audio-player/single-button-audio-player.component';
+import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-config-doc';
 import { CheckingQuestionComponent } from './checking-question.component';
 
 const mockedProjectService = mock(SFProjectService);
 const query: RealtimeQuery<TextAudioDoc> = mock(RealtimeQuery<TextAudioDoc>);
+const projectUserConfigDoc: SFProjectUserConfigDoc = mock(SFProjectUserConfigDoc);
+const projectUserConfig: SFProjectUserConfig = {
+  biblicalTermsEnabled: false,
+  confidenceThreshold: 0,
+  isTargetTextRight: false,
+  numSuggestions: 0,
+  ownerRef: 'user01',
+  projectRef: 'project01',
+  selectedSegment: '',
+  translationSuggestionsEnabled: false,
+  transliterateBiblicalTerms: false,
+  commentRefsRead: [],
+  noteRefsRead: [],
+  questionRefsRead: [],
+  answerRefsRead: [],
+  audioRefsPlayed: []
+};
 const textAudioDoc: TextAudioDoc = mock(TextAudioDoc);
 const textAudio: TextAudio = {
   dataId: 'id123',
@@ -29,6 +49,8 @@ const textAudio: TextAudio = {
 };
 when(textAudioDoc.id).thenReturn(getTextAudioId('project01', 1, 1));
 when(textAudioDoc.data).thenReturn(textAudio);
+when(projectUserConfigDoc.id).thenReturn(getSFProjectUserConfigDocId('project01', 'user01'));
+when(projectUserConfigDoc.data).thenReturn(projectUserConfig);
 when(query.docs).thenReturn([instance(textAudioDoc)]);
 when(mockedProjectService.queryAudioText(anything())).thenResolve(instance(query));
 const questionDoc: QuestionDoc = mock(QuestionDoc);
@@ -59,7 +81,7 @@ const meta: Meta<CheckingQuestionComponent> = {
       declarations: [SingleButtonAudioPlayerComponent]
     })
   ],
-  args: { questionDoc: instance(questionDoc) }
+  args: { questionDoc: instance(questionDoc), projectUserConfigDoc: instance(projectUserConfigDoc) }
 };
 
 export default meta;
@@ -80,5 +102,5 @@ export const Default: Story = {
 };
 
 export const WithQuestionAudio: Story = {
-  args: { questionDoc: instance(questionDocAudio) }
+  args: { questionDoc: instance(questionDocAudio), projectUserConfigDoc: instance(projectUserConfigDoc) }
 };
