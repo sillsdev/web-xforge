@@ -1861,9 +1861,36 @@ describe('CheckingComponent', () => {
     }));
 
     it('updates user played refs while audio is playing ', fakeAsync(() => {
-      const env = new TestEnvironment(ADMIN_USER, 'ALL', undefined, true);
+      const env = new TestEnvironment({ user: ADMIN_USER, projectBookRoute: 'ALL', scriptureAudio: true });
       env.component.toggleAudio();
       env.fixture.detectChanges();
+
+      const chapterAudio = mock(CheckingScriptureAudioPlayerComponent);
+      when(chapterAudio.isPlaying).thenReturn(false);
+      env.component.scriptureAudioPlayer = instance(chapterAudio);
+
+      const updateAudioRefsPlayed = spyOn(
+        env.component.projectUserConfigDoc!,
+        'updateAudioRefsPlayed'
+      ).and.callThrough();
+
+      const verseRef: VerseRef = toVerseRef({
+        bookNum: 43,
+        chapterNum: 1,
+        verseNum: 1
+      });
+      env.component.handleAudioTextRefChanged(verseSlug(verseRef));
+      expect(updateAudioRefsPlayed).toHaveBeenCalledTimes(0);
+    }));
+
+    it('should not update user played refs while audio is not playing ', fakeAsync(() => {
+      const env = new TestEnvironment({ user: ADMIN_USER, projectBookRoute: 'ALL', scriptureAudio: true });
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      const chapterAudio = mock(CheckingScriptureAudioPlayerComponent);
+      when(chapterAudio.isPlaying).thenReturn(true);
+      env.component.scriptureAudioPlayer = instance(chapterAudio);
 
       const updateAudioRefsPlayed = spyOn(
         env.component.projectUserConfigDoc!,
