@@ -53,7 +53,7 @@ public class PreTranslationServiceTests
         const int chapterNum = 1;
         string textId = PreTranslationService.GetTextId(bookNum, chapterNum);
         env.TranslationEnginesClient
-            .GetAllPretranslations2Async(TranslationEngine01, Corpus01, textId, CancellationToken.None)
+            .GetAllPretranslationsAsync(TranslationEngine01, Corpus01, textId, CancellationToken.None)
             .Returns(Task.FromResult<IList<Pretranslation>>(new List<Pretranslation>()));
 
         // SUT
@@ -76,7 +76,7 @@ public class PreTranslationServiceTests
         const int chapterNum = 1;
         string textId = PreTranslationService.GetTextId(bookNum, chapterNum);
         env.TranslationEnginesClient
-            .GetAllPretranslations2Async(TranslationEngine01, Corpus01, textId, CancellationToken.None)
+            .GetAllPretranslationsAsync(TranslationEngine01, Corpus01, textId, CancellationToken.None)
             .Returns(
                 Task.FromResult<IList<Pretranslation>>(
                     new List<Pretranslation>
