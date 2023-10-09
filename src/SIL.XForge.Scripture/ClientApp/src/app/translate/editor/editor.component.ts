@@ -187,6 +187,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private selectionClickSubs: Subscription[] = [];
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
+  private checkForPreTranslation$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
   private toggleNoteThreadSub?: Subscription;
   private shouldNoteThreadsRespondToEdits: boolean = false;
   private commenterSelectedVerseRef?: VerseRef;
@@ -675,6 +676,9 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       }
     );
+    this.subscribe(merge(this.checkForPreTranslation$, this.onlineStatusService.onlineStatus$), _ => {
+      this.checkForPreTranslations();
+    });
 
     setTimeout(() => this.setTextHeight());
   }
@@ -839,10 +843,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.positionInsertNoteFab();
           this.observeResize(this.target.editor);
           this.subscribeScroll(this.target.editor);
-
-          if (this.featureFlags.showNmtDrafting.enabled) {
-            this.checkForPreTranslations();
-          }
+          this.checkForPreTranslation$.next();
         }
         break;
     }
@@ -2151,7 +2152,19 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private checkForPreTranslations(): void {
-    const targetOps: DeltaOperation[] = this.target!.editor!.getContents().ops!;
+    // Check for the feature flag
+    if (!this.featureFlags.showNmtDrafting.enabled) return;
+
+    // Set false until service can check actual draft status for chapter
+    this.hasDraft = false;
+
+    // Ensure we are online
+    if (!this.onlineStatusService.isOnline) return;
+
+    // Ensure we have the target editor
+    if (this.target?.editor == null) return;
+
+    const targetOps: DeltaOperation[] = this.target.editor.getContents().ops!;
     const isChapterComplete: boolean = targetOps.every(op => {
       // If segment is a verse, check if it has a translation
       if (VERSE_REGEX.test(op.attributes?.segment)) {
@@ -2167,15 +2180,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return true;
     });
 
-    // Set false until service can check actual draft status for chapter
-    this.hasDraft = false;
-
     // Don't fetch draft if all editor verse segments have existing translations
     if (isChapterComplete) {
       return;
     }
 
-    // If build progress is 'completed', get pretranslations for current chapter
+    // If build progress is 'completed', get pre-translations for current chapter
     this.draftGenerationService
       .getGeneratedDraft(this.activatedProjectService.projectId!, this.bookNum!, this.chapter!)
       .subscribe((draft: DraftSegmentMap) => {

@@ -1,73 +1,83 @@
 <h1>Draft preview and apply</h1>
-<p>Select <em>"Apply to project"</em> for each chapter that you want to overwrite with the draft text.</p>
-<p>Select <em>"Edit"</em> to go to the editor page for this chapter.</p>
 
-<div class="draft-viewer-body">
-  <div class="controls">
-    <mat-card>
-      <app-book-chapter-chooser
-        [books]="books"
-        [book]="currentBook"
-        (bookChange)="onBookChange($event)"
-        [chapters]="chapters"
-        [chapter]="currentChapter"
-        (chapterChange)="onChapterChange($event)"
-      ></app-book-chapter-chooser>
+<ng-container *ngIf="!isOnline">
+  <section>
+    <!-- TODO: Update i18n -->
+    <p class="offline-text">Draft preview is not available while offline.</p>
+  </section>
+</ng-container>
 
-      <div class="draft-buttons">
-        <button mat-button (click)="editChapter()">
-          <mat-icon>edit</mat-icon>
-          Edit
-        </button>
+<ng-container *ngIf="isOnline">
+  <p>Select <em>"Apply to project"</em> for each chapter that you want to overwrite with the draft text.</p>
+  <p>Select <em>"Edit"</em> to go to the editor page for this chapter.</p>
+
+  <div class="draft-viewer-body">
+    <div class="controls">
+      <mat-card>
+        <app-book-chapter-chooser
+          [books]="books"
+          [book]="currentBook"
+          (bookChange)="onBookChange($event)"
+          [chapters]="chapters"
+          [chapter]="currentChapter"
+          (chapterChange)="onChapterChange($event)"
+        ></app-book-chapter-chooser>
+
+        <div class="draft-buttons">
+          <button mat-button (click)="editChapter()">
+            <mat-icon>edit</mat-icon>
+            Edit
+          </button>
+        </div>
+      </mat-card>
+    </div>
+
+    <div class="source">
+      <h2>{{ sourceProject?.shortName }}</h2>
+      <app-text
+        #sourceText
+        [isReadOnly]="true"
+        [subscribeToUpdates]="false"
+        [placeholder]="'Loading..'"
+        [isRightToLeft]="!!sourceProject?.isRightToLeft"
+        [id]="sourceTextDocId"
+      ></app-text>
+    </div>
+
+    <div *ngIf="!sourceProjectId" class="source missing">
+      <h2>Source not set</h2>
+      <div>
+        <mat-icon>info</mat-icon>
+        <p>
+          A source text has not been selected for this project. You can select a source text in
+          <a [routerLink]="projectSettingsUrl">project settings</a>.
+        </p>
       </div>
-    </mat-card>
-  </div>
-
-  <div class="source">
-    <h2>{{ sourceProject?.shortName }}</h2>
-    <app-text
-      #sourceText
-      [isReadOnly]="true"
-      [subscribeToUpdates]="false"
-      [placeholder]="'Loading..'"
-      [isRightToLeft]="!!sourceProject?.isRightToLeft"
-      [id]="sourceTextDocId"
-    ></app-text>
-  </div>
-
-  <div *ngIf="!sourceProjectId" class="source missing">
-    <h2>Source not set</h2>
-    <div>
-      <mat-icon>info</mat-icon>
-      <p>
-        A source text has not been selected for this project. You can select a source text in
-        <a [routerLink]="projectSettingsUrl">project settings</a>.
-      </p>
+    </div>
+    <div class="draft">
+      <h2>
+        {{ targetProject?.shortName }}
+        <!-- TODO: Update i18n -->
+        <span *ngIf="showDraft" class="draft-indicator" [ngClass]="{ applied: isDraftApplied }">
+          DRAFT {{ isDraftApplied ? " APPLIED" : "" }}
+          <mat-icon *ngIf="isDraftApplied" class="check-icon">check</mat-icon>
+        </span>
+        <div *ngIf="!isDraftApplied && showDraft" class="apply-draft-button-container">
+          <button mat-flat-button color="primary" (click)="applyDraft()">
+            <mat-icon>auto_awesome</mat-icon>
+            Apply to project
+          </button>
+        </div>
+      </h2>
+      <app-text
+        [ngClass]="{ applied: isDraftApplied }"
+        #targetText
+        [isReadOnly]="true"
+        [subscribeToUpdates]="false"
+        [placeholder]="'Loading..'"
+        [isRightToLeft]="!!targetProject?.isRightToLeft"
+        [id]="targetTextDocId"
+      ></app-text>
     </div>
   </div>
-  <div class="draft">
-    <h2>
-      {{ targetProject?.shortName }}
-      <!-- TODO: Update i18n -->
-      <span *ngIf="showDraft" class="draft-indicator" [ngClass]="{ applied: isDraftApplied }">
-        DRAFT {{ isDraftApplied ? " APPLIED" : "" }}
-        <mat-icon *ngIf="isDraftApplied" class="check-icon">check</mat-icon>
-      </span>
-      <div *ngIf="!isDraftApplied && showDraft" class="apply-draft-button-container">
-        <button mat-flat-button color="primary" (click)="applyDraft()">
-          <mat-icon>auto_awesome</mat-icon>
-          Apply to project
-        </button>
-      </div>
-    </h2>
-    <app-text
-      [ngClass]="{ applied: isDraftApplied }"
-      #targetText
-      [isReadOnly]="true"
-      [subscribeToUpdates]="false"
-      [placeholder]="'Loading..'"
-      [isRightToLeft]="!!targetProject?.isRightToLeft"
-      [id]="targetTextDocId"
-    ></app-text>
-  </div>
-</div>
+</ng-container>

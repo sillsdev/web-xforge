@@ -40,6 +40,7 @@ export class DraftViewerComponent implements OnInit {
 
   isDraftApplied = false;
   hasDraft = false;
+  draftPopulated = false;
 
   projectSettingsUrl?: string;
   preDraftTargetDelta?: DeltaStatic;
@@ -58,6 +59,10 @@ export class DraftViewerComponent implements OnInit {
     return this.onlineStatusService.isOnline && this.hasDraft;
   }
 
+  get isOnline(): boolean {
+    return this.onlineStatusService.isOnline;
+  }
+
   async ngOnInit(): Promise<void> {
     this.targetProjectId = this.activatedProjectService.projectId!;
     this.targetProject = this.activatedProjectService.projectDoc?.data;
@@ -72,10 +77,17 @@ export class DraftViewerComponent implements OnInit {
     // Wait to populate draft until both editors are loaded with current chapter
     zip(this.sourceEditor?.loaded ?? of(null), this.targetEditor.loaded).subscribe(() => {
       // Both editors are now loaded (or just target is loaded if no source text set in project settings)
-      this.hasDraft = false;
-      this.isDraftApplied = false;
-      this.preDraftTargetDelta = this.targetEditor.editor?.getContents();
-      this.populateDraftText();
+      this.draftPopulated = false;
+      if (this.isOnline) {
+        this.populateDraftText();
+      }
+    });
+
+    // If the user comes online and has no draft, populate the draft text
+    this.onlineStatusService.onlineStatus$.subscribe(online => {
+      if (online && !this.draftPopulated) {
+        this.populateDraftText();
+      }
     });
 
     // Set book/chapter from route, or first book/chapter if not provided
@@ -116,12 +128,13 @@ export class DraftViewerComponent implements OnInit {
   }
 
   populateDraftText(): void {
-    if (this.currentBook == null || this.currentChapter == null) {
-      throw new Error(`'populateDraftText()' called when 'currentBook' or 'currentChapter' is not set`);
-    }
+    this.draftPopulated = true;
+    this.hasDraft = false;
+    this.isDraftApplied = false;
+    this.preDraftTargetDelta = this.targetEditor.editor?.getContents();
 
-    if (!this.preDraftTargetDelta?.ops) {
-      throw new Error(`'populateDraftText()' called when 'preDraftTargetDelta' is not set`);
+    if (this.currentBook == null || this.currentChapter == null || !this.preDraftTargetDelta?.ops) {
+      return;
     }
 
     this.draftGenerationService
