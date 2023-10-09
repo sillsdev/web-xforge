@@ -248,6 +248,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Create);
   }
 
+  get hideChapterText(): boolean {
+    return this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText ?? false;
+  }
+
   get isRightToLeft(): boolean {
     if (this.projectDoc?.data?.isRightToLeft != null) {
       return this.projectDoc.data.isRightToLeft;
