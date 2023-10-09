@@ -487,6 +487,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     return this.onlineStatusService.isOnline && this.multiCursorViewers.length > 0;
   }
 
+  get showPreviewDraft(): boolean {
+    return this.onlineStatusService.isOnline && this.featureFlags.showNmtDrafting.enabled && this.hasDraft;
+  }
+
   /**
    * Determines whether the comment adding UI should be shown
    * This will be true any time the user has the right to add notes
