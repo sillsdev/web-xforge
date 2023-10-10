@@ -16,8 +16,8 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { combineLatest, merge, Subscription } from 'rxjs';
+import { VerseRefData, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { Subscription, combineLatest, merge } from 'rxjs';
 import { filter, map, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -39,7 +39,7 @@ import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
-import { BookChapter, CheckingAccessInfo, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
+import { BookChapter, CheckingAccessInfo, CheckingUtils, QuestionScope, isQuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { getVerseRefFromSegmentRef } from '../../shared/utils';
@@ -111,7 +111,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   totalVisibleQuestionsString: string = '0';
   visibleQuestions?: QuestionDoc[];
   showScriptureAudioPlayer: boolean = false;
-  hideChapterText: boolean = false;
   isCreatingNewQuestion: boolean = false;
   questionToBeCreated: PreCreationQuestionData | undefined;
 
@@ -516,8 +515,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               throw new Error('Project has no texts');
             }
 
-            this.showOrHideScriptureText();
-            this.books = this.projectDoc.data.texts.map(t => t.bookNum).sort((a, b) => a - b);
+            if (this.hideChapterText) this.showScriptureAudioPlayer = true;
+            this.calculateScriptureSliderPosition();
+
+            this.books = this.projectDoc.data.texts.map(t => t.bookNum) ?? [];
             this.initQuestionFilters();
 
             this.projectUserConfigDoc = await this.projectService.getUserConfig(
@@ -527,7 +528,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
             // Subscribe to the projectDoc now that it is defined
             this.projectRemoteChangesSub?.unsubscribe();
-            this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, () => {
+            this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, ops => {
               if (this.projectDoc != null && this.projectDoc.data != null) {
                 if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
                   this.onRemovedFromProject();
@@ -551,7 +552,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                   }
                 }
 
-                this.showOrHideScriptureText();
+                for (const op of ops) {
+                  if (op.p.length > 1 && op.p[0] === 'checkingConfig' && op.p[1] === 'hideCommunityCheckingText') {
+                    if (this.hideChapterText) this.showScriptureAudioPlayer = true;
+                    this.calculateScriptureSliderPosition();
+                  }
+                }
               }
             });
 
@@ -1588,18 +1594,5 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.questionsRemoteChangesSub?.unsubscribe();
     this.questionsQuery?.dispose();
     this.textAudioQuery?.dispose();
-  }
-
-  private showOrHideScriptureText(): void {
-    const oldValue = this.hideChapterText;
-    const newVal = this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText ?? false;
-    this.hideChapterText = newVal;
-    if (this.hideChapterText) {
-      this.showScriptureAudioPlayer = true;
-    }
-    // (Don't needlessly have setTimeout get called if the value hasn't changed.)
-    if (oldValue !== newVal) {
-      this.calculateScriptureSliderPosition();
-    }
   }
 }
