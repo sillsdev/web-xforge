@@ -47,7 +47,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   infoAlert?: InfoAlert;
 
   jobSubscription?: Subscription;
-  isOnline: boolean = true;
+  isOnline = true;
 
   /**
    * Once true, UI can proceed with display according to status of fetched job.
@@ -61,7 +61,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
    * in which case a 'Preview draft' button can still be shown, as the pre-translations
    * from that build can still be retrieved.
    */
-  hasAnyCompletedBuild!: boolean;
+  hasAnyCompletedBuild = false;
 
   cancelDialogRef?: MatDialogRef<any>;
 
