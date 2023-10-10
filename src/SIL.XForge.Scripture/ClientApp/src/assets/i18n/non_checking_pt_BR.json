@@ -12,11 +12,13 @@
     "description": "Descrição",
     "edit_renderings": "Editar renderizações",
     "renderings": "Renderizações",
+    "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
     "save": "Salvar",
-    "term": "Termo/Definição"
+    "term": "Termo/Definição",
+    "view_renderings": "Exibir Renderizações"
   },
   "biblical_terms": {
-    "actions": "Actions",
+    "actions": "Ações",
     "category": "Categoria",
     "gloss": "Glosa",
     "renderings": "Renderizações",
@@ -185,6 +187,7 @@
     "other_viewers": "{{ count }} outros observadores"
   },
   "note_dialog": {
+    "biblical_term": "Biblical Term",
     "close": "Fechar",
     "delete": "Excluir",
     "hide_changes": "Ocultar alterações",
@@ -284,6 +287,8 @@
     "translation_suggestions": "Ativar Sugestões de Tradução",
     "translations_will_be_suggested": "As traduções de palavras e frases serão sugeridas à medida que você edita o texto bíblico com base no projeto ou recurso selecionado acima.",
     "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
+    "hide_community_checking_text": "Hide Scripture text",
+    "checkers_listen_to_scripture_audio": "Checkers will need to listen to Scripture audio.",
     "will_not_delete_paratext_project": "Isso {{ boldStart }}não{{ boldEnd }} excluirá seu projeto do Paratext, mas excluirá todos os dados não sincronizados armazenados no Scripture Forge. É recomendável {{ templateTagBoundary }}Sincronizar{{ templateTagBoundary }} primeiro antes de excluir."
   },
   "suggestions_settings_dialog": {
