@@ -28,6 +28,10 @@ em {
   }
 }
 
+.offline {
+  display: none;
+}
+
 .draft-buttons {
   display: flex;
   margin-inline-start: 8px;

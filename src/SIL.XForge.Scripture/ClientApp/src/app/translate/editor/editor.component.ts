@@ -47,8 +47,8 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DeltaOperation } from 'rich-text';
-import { BehaviorSubject, fromEvent, merge, Subject, Subscription, timer } from 'rxjs';
-import { debounceTime, delayWhen, filter, first, repeat, retryWhen, tap } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, fromEvent, merge, Subject, Subscription, timer } from 'rxjs';
+import { debounceTime, delayWhen, filter, first, repeat, retryWhen, switchMap, take, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -187,6 +187,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private selectionClickSubs: Subscription[] = [];
   private noteThreadQuery?: RealtimeQuery<NoteThreadDoc>;
   private toggleNoteThreadVerseRefs$: BehaviorSubject<void> = new BehaviorSubject<void>(undefined);
+  private targetEditorLoaded$: Subject<void> = new Subject<void>();
   private toggleNoteThreadSub?: Subscription;
   private shouldNoteThreadsRespondToEdits: boolean = false;
   private commenterSelectedVerseRef?: VerseRef;
@@ -675,6 +676,21 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         }
       }
     );
+    // On every target editor load, check for pre-translations the first time both
+    // online status and nmt drafting are emitted as enabled.
+    this.subscribe(
+      this.targetEditorLoaded$.pipe(
+        switchMap(() =>
+          combineLatest([this.onlineStatusService.onlineStatus$, this.featureFlags.showNmtDrafting.enabled$]).pipe(
+            filter(([online, nmtDraftingEnabled]) => online && nmtDraftingEnabled),
+            take(1)
+          )
+        )
+      ),
+      () => {
+        this.checkForPreTranslations();
+      }
+    );
 
     setTimeout(() => this.setTextHeight());
   }
@@ -839,10 +855,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.positionInsertNoteFab();
           this.observeResize(this.target.editor);
           this.subscribeScroll(this.target.editor);
-
-          if (this.featureFlags.showNmtDrafting.enabled) {
-            this.checkForPreTranslations();
-          }
+          this.targetEditorLoaded$.next();
         }
         break;
     }
@@ -2151,7 +2164,19 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   private checkForPreTranslations(): void {
-    const targetOps: DeltaOperation[] = this.target!.editor!.getContents().ops!;
+    // Check for the feature flag
+    if (!this.featureFlags.showNmtDrafting.enabled) return;
+
+    // Set false until service can check actual draft status for chapter
+    this.hasDraft = false;
+
+    // Ensure we are online
+    if (!this.onlineStatusService.isOnline) return;
+
+    // Ensure we have the target editor
+    if (this.target?.editor == null) return;
+
+    const targetOps: DeltaOperation[] = this.target.editor.getContents().ops!;
     const isChapterComplete: boolean = targetOps.every(op => {
       // If segment is a verse, check if it has a translation
       if (VERSE_REGEX.test(op.attributes?.segment)) {
@@ -2167,15 +2192,12 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       return true;
     });
 
-    // Set false until service can check actual draft status for chapter
-    this.hasDraft = false;
-
     // Don't fetch draft if all editor verse segments have existing translations
     if (isChapterComplete) {
       return;
     }
 
-    // If build progress is 'completed', get pretranslations for current chapter
+    // If build progress is 'completed', get pre-translations for current chapter
     this.draftGenerationService
       .getGeneratedDraft(this.activatedProjectService.projectId!, this.bookNum!, this.chapter!)
       .subscribe((draft: DraftSegmentMap) => {
