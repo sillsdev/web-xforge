@@ -12,11 +12,13 @@
     "description": "Penjelasan",
     "edit_renderings": "Sunting Padanan",
     "renderings": "Padanan",
+    "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
     "save": "Simpan",
-    "term": "Istilah/Definisi"
+    "term": "Istilah/Definisi",
+    "view_renderings": "Tampilkan Padanan"
   },
   "biblical_terms": {
-    "actions": "Actions",
+    "actions": "Aksi",
     "category": "Kategori",
     "gloss": "Petunjuk Arti",
     "renderings": "Padanan",
@@ -185,6 +187,7 @@
     "other_viewers": "{{ count }} other viewers"
   },
   "note_dialog": {
+    "biblical_term": "Biblical Term",
     "close": "Tutup",
     "delete": "Hapus",
     "hide_changes": "Hide changes",
@@ -284,6 +287,8 @@
     "translation_suggestions": "Enable Translation Suggestions",
     "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture based on the project or resource selected above.",
     "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
+    "hide_community_checking_text": "Hide Scripture text",
+    "checkers_listen_to_scripture_audio": "Checkers will need to listen to Scripture audio.",
     "will_not_delete_paratext_project": "Ini akan {{ boldStart }}tidak{{ boldEnd }} menghapus proyek Paratext anda, tetapi itu akan menghapus semua data yang tidak disinkronkan yang disimpan di dalam Scripture Forge. Disarankan untuk {{ templateTagBoundary }}Sinkronisasi{{ templateTagBoundary }} dahulu sebelum menghapus."
   },
   "suggestions_settings_dialog": {

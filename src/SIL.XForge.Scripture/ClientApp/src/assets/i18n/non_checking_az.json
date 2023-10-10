@@ -12,11 +12,13 @@
     "description": "Təsvir",
     "edit_renderings": "Tərcümələri redaktə et",
     "renderings": "Tərcümələr",
+    "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
     "save": "Yadda saxlamaq",
-    "term": "Termin/Tərif"
+    "term": "Termin/Tərif",
+    "view_renderings": "Tərcümələrə bax"
   },
   "biblical_terms": {
-    "actions": "Actions",
+    "actions": "Əməliyyatlar",
     "category": "Kateqoriya",
     "gloss": "Şərh",
     "renderings": "Tərcümələr",
@@ -185,6 +187,7 @@
     "other_viewers": "{{ count }} other viewers"
   },
   "note_dialog": {
+    "biblical_term": "Biblical Term",
     "close": "Bağla",
     "delete": "Silmək",
     "hide_changes": "Hide changes",
@@ -284,6 +287,8 @@
     "translation_suggestions": "Enable Translation Suggestions",
     "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture based on the project or resource selected above.",
     "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
+    "hide_community_checking_text": "Hide Scripture text",
+    "checkers_listen_to_scripture_audio": "Checkers will need to listen to Scripture audio.",
     "will_not_delete_paratext_project": "Bu sizin {{ boldStart }} Paratext layihənizi {{ boldEnd }} silməyəcək, amma Kəlamın Kürəsində saxlanılmış sinxronlaşdırılmamış hər bir məlumatı siləcək. Məsləhət görülür ki, {{ templateTagBoundary }} silməzdən qabaq əvvəlcə {{ templateTagBoundary }} sinxronlaşdırasınız."
   },
   "suggestions_settings_dialog": {

@@ -12,12 +12,14 @@
     "description": "Descriere",
     "edit_renderings": "Editare traduceri",
     "renderings": "Traducerile",
+    "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
     "save": "Salvează",
-    "term": "Cuvânt/Definiție"
+    "term": "Cuvânt/Definiție",
+    "view_renderings": "Vizualizare traduceri"
   },
   "biblical_terms": {
-    "actions": "Actions",
     "category": "Categoria",
+    "actions": "Acțiuni",
     "gloss": "Traducere cuvânt cu cuvânt",
     "renderings": "Traducerile",
     "term": "Cuvânt",
@@ -185,6 +187,7 @@
     "other_viewers": "{{ count }} other viewers"
   },
   "note_dialog": {
+    "biblical_term": "Biblical Term",
     "close": "Închide",
     "delete": "Șterge",
     "hide_changes": "Hide changes",
@@ -284,6 +287,8 @@
     "translation_suggestions": "Enable Translation Suggestions",
     "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture based on the project or resource selected above.",
     "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
+    "hide_community_checking_text": "Hide Scripture text",
+    "checkers_listen_to_scripture_audio": "Checkers will need to listen to Scripture audio.",
     "will_not_delete_paratext_project": "Această operație {{ boldStart }}nu{{ boldEnd }} va șterge proiectul Paratext, dar va șterge orice date nesincronizate stocate în Scripture Forge. Vă recomandăm să {{ templateTagBoundary }}sincronizați{{ templateTagBoundary }} înainte de ștergere."
   },
   "suggestions_settings_dialog": {

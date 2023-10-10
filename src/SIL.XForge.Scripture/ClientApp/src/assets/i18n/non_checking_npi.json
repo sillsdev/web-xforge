@@ -7,13 +7,13 @@
     "users": "Users"
   },
   "biblical_term_dialog": {
-    "cancel": "取消",
-    "close": "关闭",
+    "cancel": "Cancel",
+    "close": "Close",
     "description": "Description",
     "edit_renderings": "Edit Renderings",
     "renderings": "Renderings",
     "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
-    "save": "保存",
+    "save": "Save",
     "term": "Term/Definition",
     "view_renderings": "View Renderings"
   },
@@ -33,7 +33,7 @@
     "add_question": "Add question"
   },
   "checking_answers": {
-    "archive": "存档",
+    "archive": "Archive",
     "no_permission_to_like": "You don't have permission to like answers."
   },
   "checking_overview": {
@@ -41,14 +41,14 @@
     "add_question": "Add Question",
     "answer_count_label": "{{ count }} answers",
     "archive_multiple": "Archive all questions in {{ location }}",
-    "archive": "存档",
+    "archive": "Archive",
     "archived_questions": "Archived Questions",
     "chapter_audio_attached": "Chapter audio and timing data attached",
     "click_add_question": "Click {{ boldStart }}Add question{{ boldEnd }}, above.",
     "confirm_bulk_archive": "Are you sure you want to archive all the questions in {{ scope }}?",
     "confirm_bulk_republish": "Are you sure you want to republish all the questions in {{ scope }}?",
     "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} {{ chapter }}?",
-    "delete": "删除",
+    "delete": "Delete",
     "delete_chapter_audio": "Delete chapter audio",
     "edit_chapter_audio": "Edit chapter audio",
     "import_questions": "Bulk import",
@@ -80,7 +80,7 @@
     "project_guests": "Project Guests",
     "remove_from_project": "Remove from project",
     "remove_user": "Remove User",
-    "share_with_others": "与他人分享",
+    "share_with_others": "Share with others",
     "uses_roles_to_access_project": "Scripture Forge uses roles and permissions to access your project"
   },
   "connect_project": {
@@ -109,7 +109,7 @@
   },
   "delete_project_dialog": {
     "are_you_sure_you_want_to_delete": "Are you sure you want to delete this project?",
-    "cancel": "取消",
+    "cancel": "Cancel",
     "delete_cannot_be_undone": "This action {{ boldStart }}cannot{{ boldEnd }} be undone. This will permanently delete the {{ boldStart }}{{ projectName }}{{ boldEnd }} project, translation data, questions, answers, and comments.",
     "delete_this_project": "Delete this project",
     "i_understand_the_consequences": "I understand the consequences, delete this project",
@@ -119,7 +119,7 @@
   "editor": {
     "add_comment": "Add Comment",
     "anonymous": "Anonymous",
-    "cancel": "取消",
+    "cancel": "Cancel",
     "cannot_edit_chapter_formatting_invalid": "This chapter cannot be edited because the formatting is invalid. Please fix the formatting in Paratext.",
     "cannot_edit_note_paratext": "You cannot edit this note as it has been edited in Paratext.",
     "configure_translation_suggestions": "Configure translation suggestions",
@@ -128,16 +128,16 @@
     "no_permission_edit_chapter": "You don't have permission to edit this chapter, even though you have the {{ userRole }} role. Permissions can only be changed in Paratext.",
     "project_data_out_of_sync": "Your project data is out of sync. Please synchronize your project to edit this text.",
     "project_text_not_editable": "Text in this project is not editable. This setting can be changed in Paratext.",
-    "save": "保存",
+    "save": "Save",
     "swap_source_and_target": "Swap source and target",
     "text_doc_corrupted": "This chapter cannot be edited because the data has become corrupted.",
     "text_has_been_deleted": "The book has been deleted or is no longer accessible.",
-    "to_report_issue_email": "以便报告问题, 发电子邮件给{{ issueEmailLink }}",
+    "to_report_issue_email": "To report an issue, email {{ issueEmailLink }}.",
     "verse_too_long_for_suggestions": "This verse is too long to generate suggestions.",
-    "your_comment": "你的评论"
+    "your_comment": "Your comment"
   },
   "import_questions_confirmation_dialog": {
-    "done": "完成",
+    "done": "Done",
     "edited_questions_explanation": "Some of the questions you have selected have been edited. Are you sure you want to update the questions? Select the questions you want to update.",
     "number_answers": "Number of Answers",
     "scripture_forge": "Scripture Forge",
@@ -145,10 +145,10 @@
     "transcelerator": "Transcelerator"
   },
   "import_questions_dialog": {
-    "cancel": "取消",
+    "cancel": "Cancel",
     "canceling_import_not_remove_questions": "Note: Cancelling will not delete questions that are already imported.",
     "canceling_import": "Canceling import...",
-    "close": "关闭",
+    "close": "Close",
     "continue_import": "Continue import",
     "csv_instructions": "Create a spreadsheet with a column for the reference and a column for the question, as shown below:\nExport or save the spreadsheet as a CSV or TSV file.\nClick {{ boldStart }}{{ importFromCsvFile }}{{ boldEnd }} below and select the file.",
     "csv_questions_duplicates": "Note: Some of the selected questions are exact duplicates of questions that are already part of your project. They will not be re-imported.",
@@ -188,20 +188,20 @@
   },
   "note_dialog": {
     "biblical_term": "Biblical Term",
-    "close": "关闭",
-    "delete": "删除",
+    "close": "Close",
+    "delete": "Delete",
     "hide_changes": "Hide changes",
     "note_reattached": "Note reattached",
     "paratext_user": "Assigned to a Paratext user",
     "permanently_delete_note": "Permanently delete this comment?",
     "reattached": "(Re-attached)",
-    "save": "保存",
+    "save": "Save",
     "show_changes": "Show changes",
     "status_resolved": "Resolved",
     "status_to_do": "To do",
     "team": "(Team)",
     "unassigned": "(Unassigned)",
-    "your_comment": "你的评论"
+    "your_comment": "Your comment"
   },
   "paginator": {
     "items_per_page": "Items per page",
@@ -215,33 +215,33 @@
     "resources": "Resources"
   },
   "question_answered_dialog": {
-    "cancel": "取消",
+    "cancel": "Cancel",
     "edit_anyway": "Edit anyway",
     "question_has_answer": "This question has an answer. Consider creating a new question instead."
   },
   "question_dialog": {
     "add_question_denied": "You don't have permission to add or edit questions.",
-    "cancel": "取消",
+    "cancel": "Cancel",
     "edit_question": "Edit Question",
     "end_reference": "End reference",
     "enter_a_reference_to_load_text": "Enter a reference to load text",
     "example_verse": "e.g. JHN 3:16",
-    "must_be_after_scripture_reference": "必须在{{ boldStart }}圣经参照{{ boldEnd }}之后",
+    "must_be_after_scripture_reference": "Must be after {{ boldStart }}Scripture reference{{ boldEnd }}",
     "must_be_inside_verse_range": "Must be inside verse range",
     "must_be_same_book_and_chapter": "Must be the same book and chapter",
     "new_question": "New Question",
     "question": "Question",
     "recording_stopped": "The recording for your question was automatically stopped.",
     "required_with_asterisk": "*Required",
-    "save": "保存",
+    "save": "Save",
     "scripture_reference": "Scripture reference"
   },
   "roles": {
     "none": "None",
-    "pt_administrator": "管理员",
-    "pt_consultant": "顾问／审阅员／档案保管员／排字人员",
-    "pt_observer": "观察者",
-    "pt_translator": "翻译人员",
+    "pt_administrator": "Administrator",
+    "pt_consultant": "Consultant/Reviewer/Archivist/Typesetter",
+    "pt_observer": "Observer",
+    "pt_translator": "Translator",
     "sf_community_checker": "Community Checker",
     "sf_commenter": "Commenter",
     "sf_observer": "Viewer"
@@ -255,7 +255,7 @@
     "anyone_with_a_link": "Anyone with a link",
     "biblical_terms_will_be_enabled": "Biblical Terms will be displayed and can be updated in Scripture Forge",
     "biblical_terms": "Enable Biblical Terms",
-    "community_checking_settings": "语言社区中的查看",
+    "community_checking_settings": "Community Checking",
     "connect_network_to_change_settings": "Project settings cannot be changed while offline. Please connect to the internet to make changes.",
     "danger_zone": "Danger Zone",
     "delete_project_cannot_be_undone": "Once you delete a project, there is no going back. Please be certain.",
@@ -294,7 +294,7 @@
   "suggestions_settings_dialog": {
     "better": "Better",
     "biblical_terms": "Show Biblical Terms",
-    "close": "关闭",
+    "close": "Close",
     "more": "More",
     "number_of_suggestions": "Number of suggestions",
     "settings_not_available_offline": "These settings are not available while you are offline.",
@@ -304,7 +304,7 @@
     "transliterate_biblical_terms": "Transliterate Biblical Terms"
   },
   "sync": {
-    "cancel": "取消",
+    "cancel": "Cancel",
     "connect_network_to_synchronize": "Please connect to the internet to synchronize this project",
     "last_synced_time_stamp": "Last synced on {{ timeStamp }}",
     "log_in_to_paratext": "Log in to Paratext",
@@ -350,7 +350,7 @@
     "users": "Users"
   },
   "warnings": {
-    "cancel": "取消",
+    "cancel": "Cancel",
     "login_cookie_deletion": "Logging out will remove your ability to log back into this account. Are you sure you want to logout?",
     "logout": "Yes, logout"
   }

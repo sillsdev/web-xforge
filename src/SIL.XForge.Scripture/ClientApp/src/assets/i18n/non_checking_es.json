@@ -12,11 +12,13 @@
     "description": "Descripción",
     "edit_renderings": "Editar traducciones",
     "renderings": "Traducciones",
+    "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
     "save": "Guardar",
-    "term": "Término/Definición"
+    "term": "Término/Definición",
+    "view_renderings": "Ver traducciones"
   },
   "biblical_terms": {
-    "actions": "Actions",
+    "actions": "Acciones",
     "category": "Categoría",
     "gloss": "Glosa",
     "renderings": "Traducciones",
@@ -185,6 +187,7 @@
     "other_viewers": "{{ count }} otros observadores"
   },
   "note_dialog": {
+    "biblical_term": "Biblical Term",
     "close": "Cerrar",
     "delete": "Eliminar",
     "hide_changes": "Ocultar los cambios",
@@ -284,6 +287,8 @@
     "translation_suggestions": "Habilitar las sugerencias de traducción",
     "translations_will_be_suggested": "Las traducciones de las palabras y frases se sugerirán a medida que edite las Escrituras basadas en el proyecto o recurso seleccionado anteriormente.",
     "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
+    "hide_community_checking_text": "Hide Scripture text",
+    "checkers_listen_to_scripture_audio": "Checkers will need to listen to Scripture audio.",
     "will_not_delete_paratext_project": "Esto {{ boldStart }}no{{ boldEnd }} borrará su proyecto de Paratext, pero borrará cualquier dato no sincronizado almacenado en Scripture Forge. Se recomienda {{ templateTagBoundary }}Sincronizar{{ templateTagBoundary }} primero antes de borrar."
   },
   "suggestions_settings_dialog": {
