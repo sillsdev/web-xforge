@@ -1,9 +1,9 @@
 @use 'src/variables';
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 
+// Manually center over cancel button
 app-working-animated-indicator {
-  display: block;
-  margin: 10px 0;
+  margin-inline-start: 24px;
 }
 
 h3 {
@@ -105,11 +105,10 @@ em {
 
 .button-strip {
   display: flex;
-  gap: 10px;
+  gap: 20px;
 }
 
-a[mat-flat-button],
-button {
+.mat-button-base {
   margin-top: 8px;
 
   ::ng-deep .mat-button-wrapper {
@@ -117,12 +116,17 @@ button {
     align-items: center;
     gap: 6px;
   }
+}
 
+@include media-breakpoint('<', sm) {
   // Hide the button icons to save space on mobile
-  @include media-breakpoint('<', sm) {
-    mat-icon {
-      display: none;
-    }
+  .mat-button-base mat-icon {
+    display: none;
+  }
+
+  // Manually center over cancel button
+  app-working-animated-indicator {
+    margin-inline-start: 10px;
   }
 }
 
