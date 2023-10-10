@@ -196,7 +196,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
       const audioRef: AudioTextRef | undefined = CheckingUtils.parseAudioRef(this._timing, this._timing[i].from);
       if (audioRef != null) return audioRef.verseStr;
     }
-    // default to verse 0 if no verse is found
-    return '0';
+    // default to verse 1 if no verse is found
+    return '1';
   }
 }
