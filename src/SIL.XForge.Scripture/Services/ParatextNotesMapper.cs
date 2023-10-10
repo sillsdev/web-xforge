@@ -148,7 +148,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
                     if (!string.IsNullOrEmpty(username))
                         answerPrefixContents.Add($"[{username} - {_siteOptions.Value.Name}]");
 
-                    string answerSyncUserId = await UpdateThreadElem(
+                    string answerSyncUserId = await UpdateThreadElemAsync(
                         oldCommentElems,
                         commentsToDelete,
                         threadElem,
@@ -174,7 +174,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
                         if (!string.IsNullOrEmpty(commentUsername))
                             commentPrefixContents.Add($"[{commentUsername} - {_siteOptions.Value.Name}]");
 
-                        string commentSyncUserId = await UpdateThreadElem(
+                        string commentSyncUserId = await UpdateThreadElemAsync(
                             oldCommentElems,
                             commentsToDelete,
                             threadElem,
@@ -234,7 +234,7 @@ public class ParatextNotesMapper : IParatextNotesMapper
         return oldCommentElems;
     }
 
-    private async Task<string> UpdateThreadElem(
+    private async Task<string> UpdateThreadElemAsync(
         Dictionary<string, XElement> oldCommentElems,
         ICollection<XElement> commentsToDelete,
         XElement threadElem,
@@ -251,80 +251,44 @@ public class ParatextNotesMapper : IParatextNotesMapper
             comment.OwnerRef,
             ptProjectUsers
         );
+        XElement commentElem = ExtractCommentElem(comment, prefixContent, user, canWritePtNotes, tagId);
+        var threadId = (string)threadElem.Attribute("id");
+        if (threadId == null)
+            return syncUserId;
+
+        string key = GetCommentKey(threadId, commentElem, ptProjectUsers);
         // if the answer was deleted, then all comments must be deleted
         if (isDeleted)
-            AddDeletedComment(
-                oldCommentElems,
-                commentsToDelete,
-                threadElem,
-                comment,
-                user,
-                canWritePtNotes,
-                ptProjectUsers,
-                prefixContent,
-                tagId
-            );
+            AddDeletedComment(oldCommentElems, key, commentsToDelete);
         else
-            AddCommentIfChangedAsync(
-                oldCommentElems,
-                threadElem,
-                comment,
-                user,
-                canWritePtNotes,
-                ptProjectUsers,
-                prefixContent,
-                tagId,
-                setCheckingTag
-            );
+            AddCommentIfChanged(oldCommentElems, key, commentElem, threadElem, setCheckingTag);
         return syncUserId;
     }
 
-    private void AddCommentIfChangedAsync(
+    private static void AddCommentIfChanged(
         Dictionary<string, XElement> oldCommentElems,
+        string commentKey,
+        XElement commentElem,
         XElement threadElem,
-        Comment comment,
-        string paratextUser,
-        bool useExtUser,
-        Dictionary<string, ParatextUserProfile> ptProjectUsers,
-        IReadOnlyCollection<object> prefixContent,
-        int tagId,
         bool setCheckingTag
     )
     {
-        XElement commentElem = ExtractCommentElem(comment, prefixContent, paratextUser, useExtUser, tagId);
-        var threadId = (string)threadElem.Attribute("id");
-        if (threadId == null)
-            return;
-
-        string key = GetCommentKey(threadId, commentElem, ptProjectUsers);
-        if (IsCommentNewOrChanged(oldCommentElems, key, commentElem, setCheckingTag))
+        if (IsCommentNewOrChanged(oldCommentElems, commentKey, commentElem, setCheckingTag))
             threadElem.Add(commentElem);
 
-        oldCommentElems.Remove(key);
+        oldCommentElems.Remove(commentKey);
     }
 
-    private void AddDeletedComment(
+    private static void AddDeletedComment(
         Dictionary<string, XElement> oldCommentElems,
-        ICollection<XElement> commentsToDelete,
-        XElement threadElem,
-        Comment comment,
-        string paratextUser,
-        bool useExtUser,
-        Dictionary<string, ParatextUserProfile> ptProjectUsers,
-        IReadOnlyCollection<object> prefixContent,
-        int tagId
+        string commentKey,
+        ICollection<XElement> commentsToDelete
     )
     {
-        XElement commentElem = ExtractCommentElem(comment, prefixContent, paratextUser, useExtUser, tagId);
-        var threadId = (string)threadElem.Attribute("id");
-        if (threadId == null)
-            return;
-
-        string key = GetCommentKey(threadId, commentElem, ptProjectUsers);
-        if (oldCommentElems.TryGetValue(key, out XElement oldCommentElem))
+        if (oldCommentElems.TryGetValue(commentKey, out XElement oldCommentElem))
         {
             commentsToDelete.Add(oldCommentElem);
-            oldCommentElems.Remove(key);
+            oldCommentElems.Remove(commentKey);
         }
     }
 
@@ -332,14 +296,14 @@ public class ParatextNotesMapper : IParatextNotesMapper
         Comment comment,
         IReadOnlyCollection<object> prefixContent,
         string user,
-        bool useExtUser,
+        bool canWritePtNotes,
         int tagId
     )
     {
         var commentElem = new XElement("comment");
         commentElem.Add(new XAttribute("user", user));
         // if the user is not a Paratext user on the project, then set external user id
-        if (!useExtUser)
+        if (!canWritePtNotes)
             commentElem.Add(new XAttribute("extUser", comment.OwnerRef));
         commentElem.Add(new XAttribute("date", FormatCommentDate(comment.DateCreated)));
         var contentElem = new XElement("content");
