@@ -614,6 +614,11 @@ public class ParatextNotesMapperTests
                                 </content>
                                 <tagAdded>3</tagAdded>
                             </comment>
+                            <comment user=""PT User 3"" date=""2019-01-03T09:00:00.0000000+00:00"">
+                                <content>
+                                    <p>Test comment 4.</p>
+                                </content>
+                            </comment>
                         </thread>
                     </notes>";
         Dictionary<string, ParatextUserProfile> ptProjectUsers = env.PtProjectUsers.ToDictionary(u => u.Username);
@@ -672,6 +677,11 @@ public class ParatextNotesMapperTests
                                     <p>Test answer 3.</p>
                                 </content>
                                 <tagAdded>3</tagAdded>
+                            </comment>
+                            <comment user=""PT User 3"" date=""2019-01-03T09:00:00.0000000+00:00"" deleted=""true"">
+                                <content>
+                                    <p>Test comment 4.</p>
+                                </content>
                             </comment>
                         </thread>
                     </notes>";
@@ -1074,6 +1084,17 @@ public class ParatextNotesMapperTests
                                     VerseRef = new VerseRefData(40, 1, "2-3"),
                                     Status = AnswerStatus.Exportable,
                                     Deleted = true,
+                                    Comments =
+                                    {
+                                        new Comment
+                                        {
+                                            DataId = "comment04",
+                                            OwnerRef = "user03",
+                                            SyncUserRef = commentSyncUserId1,
+                                            DateCreated = new DateTime(2019, 1, 3, 9, 0, 0, DateTimeKind.Utc),
+                                            Text = "Test comment 4."
+                                        }
+                                    }
                                 },
                                 new Answer
                                 {
