@@ -313,12 +313,12 @@ header {
   color: vars.$blueMedium;
   font-weight: 400;
   align-self: flex-start;
-  line-height: 1.5;
+  line-height: 1;
   display: flex;
   align-items: center;
-  margin-top: -5px;
   margin-inline-start: -($questionsHeaderInlineStartPadding - 2px);
   padding-inline: 5px 8px; // Reduce padding from mat-button defaults
+  white-space: pre-wrap;
 
   ::ng-deep .mat-button-wrapper {
     display: flex;
