@@ -1,4 +1,5 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -302,7 +303,15 @@ describe('ChapterAudioDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [MatDialogModule, NoopAnimationsModule, UICommonModule, ngfModule, CheckingModule, TestTranslocoModule]
+  imports: [
+    MatDialogModule,
+    NoopAnimationsModule,
+    UICommonModule,
+    ngfModule,
+    CheckingModule,
+    TestTranslocoModule,
+    HttpClientTestingModule
+  ]
 })
 class DialogTestModule {}
 

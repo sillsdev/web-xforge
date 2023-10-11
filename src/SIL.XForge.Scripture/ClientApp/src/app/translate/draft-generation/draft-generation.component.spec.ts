@@ -6,7 +6,7 @@ import { EMPTY, of } from 'rxjs';
 import { instance, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -68,7 +68,7 @@ describe('DraftGenerationComponent', () => {
         'FeatureFlagService',
         {},
         {
-          allowForwardTranslationNmtDrafting: new FeatureFlag({ enabled: false }, '')
+          allowForwardTranslationNmtDrafting: { enabled: false } as ObservableFeatureFlag
         }
       );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
@@ -264,7 +264,7 @@ describe('DraftGenerationComponent', () => {
           'FeatureFlagService',
           {},
           {
-            allowForwardTranslationNmtDrafting: new FeatureFlag({ enabled: true }, '')
+            allowForwardTranslationNmtDrafting: { enabled: true } as ObservableFeatureFlag
           }
         );
       });

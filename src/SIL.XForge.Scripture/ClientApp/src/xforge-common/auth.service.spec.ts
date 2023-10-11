@@ -1,3 +1,4 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -10,7 +11,7 @@ import {
 } from '@auth0/auth0-spa-js';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, of, Subject } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { anyString, anything, capture, instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { MockConsole } from 'xforge-common/mock-console';
@@ -55,7 +56,7 @@ const mockedConsole: MockConsole = MockConsole.install();
 
 describe('AuthService', () => {
   configureTestingModule(() => ({
-    imports: [RouterTestingModule, TestTranslocoModule],
+    imports: [RouterTestingModule, TestTranslocoModule, HttpClientTestingModule],
     providers: [
       AuthService,
       { provide: Auth0Service, useMock: mockedAuth0Service },
@@ -842,6 +843,7 @@ class TestEnvironment {
   setOnline(isOnline: boolean = true): void {
     when(mockedOnlineStatusService.checkOnline()).thenResolve(isOnline);
     when(mockedOnlineStatusService.isBrowserOnline).thenReturn(isOnline);
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(isOnline));
     this.onlineStatus$.next(isOnline);
   }
 

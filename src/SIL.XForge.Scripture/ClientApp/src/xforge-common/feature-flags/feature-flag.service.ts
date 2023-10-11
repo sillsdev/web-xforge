@@ -1,96 +1,289 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { CommandService } from 'xforge-common/command.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { PROJECTS_URL } from 'xforge-common/url-constants';
 
-interface FeatureFlagStore {
-  enabled: boolean;
+export interface FeatureFlag {
+  readonly key: string;
+  readonly description: string;
+  readonly position: number;
+  readonly readonly: boolean;
+  get enabled(): boolean;
+  set enabled(value: boolean);
 }
 
-// This would be the simplest possible feature flag store, which only keeps the property in memory:
-// class MemoryFlagStore implements FeatureFlagStore {
-//   constructor(public enabled: boolean = false) {}
-// }
+export interface ObservableFeatureFlag extends FeatureFlag {
+  enabled$: Observable<boolean>;
+}
 
-class LocalStorageFlagStore implements FeatureFlagStore {
+@Injectable({
+  providedIn: 'root'
+})
+export class FeatureFlagStore extends SubscriptionDisposable {
   static readonly keyPrefix = 'SF_FEATURE_FLAG_';
 
-  private readonly featureFlagKey: string;
-  private _enabled: boolean;
+  private localFlags: { [key: string]: boolean } = {};
+  private remoteFlags: { [key: string]: boolean } = {};
+  private remoteFlagCacheExpiry: Date = new Date();
 
-  constructor(key: string, defaultValue: boolean = false) {
-    this.featureFlagKey = LocalStorageFlagStore.keyPrefix + key;
-    const itemFromStore: string | null = localStorage.getItem(this.featureFlagKey);
+  constructor(
+    private readonly commandService: CommandService,
+    private readonly onlineStatusService: OnlineStatusService
+  ) {
+    super();
+    // Cause the flags to be reloaded when coming online
+    this.subscribe(onlineStatusService.onlineStatus$, status => {
+      if (status) this.remoteFlagCacheExpiry = new Date();
+    });
+  }
+
+  isEnabled(key: string): boolean {
+    return this.isRemoteEnabled(key) || this.isLocalEnabled(key);
+  }
+
+  isReadOnly(key: string): boolean {
+    // Keys are only readonly if they are set on the server
+    return this.isRemotePresent(key);
+  }
+
+  setEnabled(key: string, value: boolean): void {
+    // Keys are only set locally
+    this.localFlags[key] = value;
+    localStorage.setItem(this.getLocalStorageKey(key), JSON.stringify(value));
+  }
+
+  private getFromLocalStorage(key: string): boolean {
+    const itemFromStore: string | null = localStorage.getItem(this.getLocalStorageKey(key));
     const valueFromStore: string | undefined =
       typeof itemFromStore === 'string' ? JSON.parse(itemFromStore) : undefined;
-    this._enabled = typeof valueFromStore === 'boolean' ? valueFromStore : defaultValue;
+    return typeof valueFromStore === 'boolean' ? valueFromStore : false;
   }
 
-  get enabled(): boolean {
-    return this._enabled;
+  private getLocalStorageKey(key: string): string {
+    return FeatureFlagStore.keyPrefix + key;
   }
 
-  set enabled(value: boolean) {
-    this._enabled = value;
-    localStorage.setItem(this.featureFlagKey, JSON.stringify(value));
+  private isLocalEnabled(key: string): boolean {
+    if (this.localFlags[key] === undefined) {
+      this.localFlags[key] = this.getFromLocalStorage(key);
+    }
+    return this.localFlags[key];
+  }
+
+  private isLocalPresent(key: string): boolean {
+    const itemFromStore: string | null = localStorage.getItem(this.getLocalStorageKey(key));
+    const valueFromStore: string | undefined =
+      typeof itemFromStore === 'string' ? JSON.parse(itemFromStore) : undefined;
+    return typeof valueFromStore === 'boolean' ? true : false;
+  }
+
+  private isRemoteEnabled(key: string): boolean {
+    this.retrieveFeatureFlagsIfMissing();
+    if (Object.entries(this.remoteFlags).length === 0) {
+      return false;
+    }
+    return this.remoteFlags[key] ?? false;
+  }
+
+  private isRemotePresent(key: string): boolean {
+    this.retrieveFeatureFlagsIfMissing();
+    return key in this.remoteFlags;
+  }
+
+  private retrieveFeatureFlagsIfMissing(): void {
+    if (this.remoteFlagCacheExpiry <= new Date() && this.onlineStatusService.isOnline) {
+      // Set to the next remote flag cache expiry timestamp for 1 hour so that the null check above returns false
+      this.remoteFlagCacheExpiry = new Date(new Date().getTime() + 3_600_000);
+      this.commandService
+        .onlineInvoke<{ [key: string]: boolean }>(PROJECTS_URL, 'featureFlags')
+        .then(flags => {
+          this.remoteFlags = flags ?? {};
+          // Set any feature flag values to local storage
+          Object.entries(this.remoteFlags).forEach(([key, value]) => {
+            if (this.isLocalPresent(key)) {
+              this.setEnabled(key, value);
+            }
+          });
+        })
+        .catch(e => {
+          let recheckInMinutes: number;
+
+          // If the error is from the RPC server, recheck in 5 minutes
+          if (e.code < -32000) {
+            recheckInMinutes = 5;
+          } else {
+            // On other errors (server, connection, etc), recheck in 1 minute
+            recheckInMinutes = 1;
+          }
+          this.remoteFlagCacheExpiry = new Date(new Date().getTime() + recheckInMinutes * 60_000);
+        });
+    }
   }
 }
 
-export class FeatureFlag {
-  private enabledSource$ = new BehaviorSubject<boolean>(this.storage.enabled);
+class FeatureFlagFromStorage implements ObservableFeatureFlag {
+  private enabledSource$ = new BehaviorSubject<boolean>(this.featureFlagStore.isEnabled(this.key));
   enabled$ = this.enabledSource$.asObservable(); // This ensures 'next()' is only called here
+  constructor(
+    readonly key: string,
+    readonly description: string,
+    readonly position: number,
+    private readonly featureFlagStore: FeatureFlagStore
+  ) {}
 
-  constructor(private readonly storage: FeatureFlagStore, readonly description: string) {}
+  get readonly(): boolean {
+    return this.featureFlagStore.isReadOnly(this.key);
+  }
 
   get enabled(): boolean {
-    return this.storage.enabled;
+    return this.featureFlagStore.isEnabled(this.key);
   }
 
   set enabled(value: boolean) {
-    this.storage.enabled = value;
+    this.featureFlagStore.setEnabled(this.key, value);
     this.enabledSource$.next(value);
   }
+}
+
+class ServerOnlyFeatureFlag implements FeatureFlag {
+  constructor(
+    readonly key: string,
+    readonly description: string,
+    readonly position: number,
+    private readonly featureFlagStore: FeatureFlagStore
+  ) {}
+
+  get readonly(): boolean {
+    return true;
+  }
+
+  get enabled(): boolean {
+    return this.featureFlagStore.isEnabled(this.key);
+  }
+
+  set enabled(_: boolean) {}
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class FeatureFlagService {
-  constructor() {}
+  constructor(private readonly featureFlagStore: FeatureFlagStore) {}
 
-  showFeatureFlags: FeatureFlag = new FeatureFlag(
-    new LocalStorageFlagStore('SHOW_FEATURE_FLAGS'),
-    'Show feature flags'
+  // Before you add a new feature flag:
+  //
+  // NOTE: Be sure when adding new feature flags that you update /src/db_tools/parse-version.ts
+  //
+  // Also, the position is important - this is the bit wise position of the feature flag in the version.
+  // The position in the dialog is determined by the order in this class.
+
+  readonly showFeatureFlags: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'SHOW_FEATURE_FLAGS',
+    'Show feature flags',
+    0,
+    this.featureFlagStore
   );
 
-  showNonPublishedLocalizations: FeatureFlag = new FeatureFlag(
-    new LocalStorageFlagStore('SHOW_NON_PUBLISHED_LOCALIZATIONS'),
-    'Show non-published localizations'
+  readonly showNonPublishedLocalizations: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'SHOW_NON_PUBLISHED_LOCALIZATIONS',
+    'Show non-published localizations',
+    1,
+    this.featureFlagStore
   );
 
-  showNmtDrafting: FeatureFlag = new FeatureFlag(new LocalStorageFlagStore('SHOW_NMT_DRAFTING'), 'Show NMT drafting');
-
-  allowForwardTranslationNmtDrafting: FeatureFlag = new FeatureFlag(
-    new LocalStorageFlagStore('ALLOW_FORWARD_TRANSLATION_NMT_DRAFTING'),
-    'Allow Forward Translation NMT drafting'
+  readonly showNmtDrafting: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'SHOW_NMT_DRAFTING',
+    'Show NMT drafting',
+    2,
+    this.featureFlagStore
   );
 
-  scriptureAudio: FeatureFlag = new FeatureFlag(new LocalStorageFlagStore('SCRIPTURE_AUDIO'), 'Scripture audio');
-
-  preventOpSubmission: FeatureFlag = new FeatureFlag(
-    new LocalStorageFlagStore('PREVENT_OP_SUBMISSION'),
-    'Prevent op submission (intentionally breaks things)'
+  readonly allowForwardTranslationNmtDrafting: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'ALLOW_FORWARD_TRANSLATION_NMT_DRAFTING',
+    'Allow Forward Translation NMT drafting',
+    3,
+    this.featureFlagStore
   );
 
-  preventOpAcknowledgement: FeatureFlag = new FeatureFlag(
-    new LocalStorageFlagStore('PREVENT_OP_ACKNOWLEDGEMENT'),
-    'Prevent op acknowledgement (intentionally breaks things)'
+  readonly scriptureAudio: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'SCRIPTURE_AUDIO',
+    'Scripture audio',
+    4,
+    this.featureFlagStore
   );
 
-  stillness: FeatureFlag = new FeatureFlag(
-    new LocalStorageFlagStore('STILLNESS'),
-    'Stillness (non-distracting progress indicators)'
+  readonly preventOpSubmission: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'PREVENT_OP_SUBMISSION',
+    'Prevent op submission (intentionally breaks things)',
+    5,
+    this.featureFlagStore
+  );
+
+  readonly preventOpAcknowledgement: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'PREVENT_OP_ACKNOWLEDGEMENT',
+    'Prevent op acknowledgement (intentionally breaks things)',
+    6,
+    this.featureFlagStore
+  );
+
+  readonly stillness: ObservableFeatureFlag = new FeatureFlagFromStorage(
+    'STILLNESS',
+    'Stillness (non-distracting progress indicators)',
+    7,
+    this.featureFlagStore
+  );
+
+  private readonly machineInProcess: FeatureFlag = new ServerOnlyFeatureFlag(
+    'MachineInProcess',
+    'Use In-Process Machine for Suggestions',
+    8,
+    this.featureFlagStore
+  );
+
+  private readonly serval: FeatureFlag = new ServerOnlyFeatureFlag(
+    'Serval',
+    'Use Serval for Suggestions',
+    9,
+    this.featureFlagStore
+  );
+
+  private readonly useEchoForPreTranslation: FeatureFlag = new ServerOnlyFeatureFlag(
+    'UseEchoForPreTranslation',
+    'Use Echo for Pre-Translation Drafting',
+    10,
+    this.featureFlagStore
   );
 
   get featureFlags(): FeatureFlag[] {
-    return Object.values(this).filter(value => value instanceof FeatureFlag);
+    return Object.values(this).filter(value => value instanceof FeatureFlagFromStorage);
+  }
+
+  get versionSuffix(): string {
+    // Get the feature flags, sorted alphabetically
+    let featureFlags: FeatureFlag[] = Object.values(this).filter(
+      value => value instanceof FeatureFlagFromStorage || value instanceof ServerOnlyFeatureFlag
+    );
+    featureFlags.sort((a, b) => a.position - b.position);
+    const versionNumber = this.getFeatureFlagVersion(featureFlags);
+    if (versionNumber === 0) {
+      return '';
+    } else {
+      return '-' + versionNumber;
+    }
+  }
+
+  getFeatureFlagVersion(featureFlags: FeatureFlag[]): number {
+    let versionNumber: number = 0;
+
+    // Get the feature flags as a 32-bit number
+    for (let featureFlag of featureFlags) {
+      if (featureFlag.enabled) {
+        versionNumber += Math.pow(2, featureFlag.position);
+      }
+    }
+
+    return versionNumber;
   }
 }

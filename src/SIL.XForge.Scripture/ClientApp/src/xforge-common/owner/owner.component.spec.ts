@@ -1,3 +1,4 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -97,7 +98,12 @@ class TestEnvironment {
   constructor(template: string) {
     TestBed.configureTestingModule({
       declarations: [HostComponent, OwnerComponent],
-      imports: [AvatarTestingModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+      imports: [
+        AvatarTestingModule,
+        UICommonModule,
+        TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+        HttpClientTestingModule
+      ],
       providers: [
         { provide: AuthService, useFactory: () => instance(this.mockedAuthService) },
         { provide: AvatarService, useFactory: () => instance(this.mockedAvatarService) },

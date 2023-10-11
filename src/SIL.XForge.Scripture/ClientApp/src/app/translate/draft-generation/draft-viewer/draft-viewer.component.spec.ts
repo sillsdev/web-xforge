@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, ActivationEnd, ParamMap, Router } from '@angular/router';
@@ -114,7 +115,8 @@ describe('DraftViewerComponent', () => {
       RouterTestingModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestTranslocoModule,
-      NoopAnimationsModule
+      NoopAnimationsModule,
+      HttpClientTestingModule
     ],
     providers: [
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },

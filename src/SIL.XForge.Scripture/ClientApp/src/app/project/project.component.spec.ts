@@ -1,3 +1,4 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslocoService } from '@ngneat/transloco';
@@ -33,7 +34,7 @@ const mockedTranslocoService = mock(TranslocoService);
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
     declarations: [ProjectComponent],
-    imports: [UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), HttpClientTestingModule],
     providers: [
       { provide: UserService, useMock: mockedUserService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },

@@ -1,3 +1,4 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, Input, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -208,7 +209,7 @@ class TestEnvironment {
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingScriptureAudioPlayerComponent, AudioPlayerStubComponent, AudioTimePipe],
       providers: [{ provide: OnlineStatusService, useFactory: () => instance(this.mockOnlineStatusService) }],
-      imports: [UICommonModule, TestTranslocoModule]
+      imports: [UICommonModule, TestTranslocoModule, HttpClientTestingModule]
     });
     when(this.mockOnlineStatusService.onlineStatus$).thenReturn(of(true));
     TestBed.overrideComponent(HostComponent, { set: { template: template } });

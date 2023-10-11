@@ -61,7 +61,7 @@ import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when 
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
-import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { GenericDialogComponent, GenericDialogOptions } from 'xforge-common/generic-dialog/generic-dialog.component';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -3802,7 +3802,10 @@ class TestEnvironment {
       this.openNoteDialogs.forEach(dialog => dialog.close());
       this.openNoteDialogs = [];
     });
-    when(mockedFeatureFlagService.showNmtDrafting).thenReturn({ enabled: true } as FeatureFlag);
+    when(mockedFeatureFlagService.showNmtDrafting).thenReturn({
+      enabled: true,
+      enabled$: of(true)
+    } as ObservableFeatureFlag);
     when(mockedMatDialog.open(GenericDialogComponent, anything())).thenReturn(instance(this.mockedDialogRef));
     when(this.mockedDialogRef.afterClosed()).thenReturn(of());
     when(mockedMediaObserver.isActive(anything())).thenReturn(false);

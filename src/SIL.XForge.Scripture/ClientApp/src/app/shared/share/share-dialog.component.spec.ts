@@ -9,7 +9,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { BehaviorSubject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
-import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
@@ -369,7 +369,7 @@ class TestEnvironment {
         }`
     );
     when(mockedProjectService.isProjectAdmin(projectId, TestUsers.Admin)).thenResolve(true);
-    when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn({ enabled: true } as FeatureFlag);
+    when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn({ enabled: true } as ObservableFeatureFlag);
 
     const config: MatDialogConfig<ShareDialogData> = {
       data: {

@@ -31,7 +31,7 @@ import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
-import { FeatureFlag, FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -968,7 +968,7 @@ class TestEnvironment {
 
     when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline.asObservable());
     when(mockedOnlineStatusService.isOnline).thenReturn(this.isOnline.getValue());
-    when(mockedFeatureFlagService.scriptureAudio).thenReturn({ enabled: true } as FeatureFlag);
+    when(mockedFeatureFlagService.scriptureAudio).thenReturn({ enabled: true } as ObservableFeatureFlag);
 
     this.fixture = TestBed.createComponent(CheckingOverviewComponent);
     this.component = this.fixture.componentInstance;

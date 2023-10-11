@@ -1,3 +1,4 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, ViewChild } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -23,7 +24,12 @@ const mockedProjectNotificationService = mock(ProjectNotificationService);
 describe('SyncProgressComponent', () => {
   configureTestingModule(() => ({
     declarations: [HostComponent, SyncProgressComponent],
-    imports: [UICommonModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      UICommonModule,
+      TestTranslocoModule,
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      HttpClientTestingModule
+    ],
     providers: [
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: ProjectNotificationService, useMock: mockedProjectNotificationService },
