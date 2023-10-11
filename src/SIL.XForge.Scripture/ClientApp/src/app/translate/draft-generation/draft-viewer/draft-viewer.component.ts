@@ -3,12 +3,13 @@ import { ActivatedRoute, ParamMap, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { DeltaOperation, DeltaStatic } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { of, zip } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { Delta, TextDocId } from 'src/app/core/models/text-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
 import { TextComponent } from 'src/app/shared/text/text.component';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
 import { DraftSegmentMap } from '../draft-generation';
 import { DraftGenerationService } from '../draft-generation.service';
 import { DraftViewerService } from './draft-viewer.service';
@@ -18,8 +19,7 @@ import { DraftViewerService } from './draft-viewer.service';
   templateUrl: './draft-viewer.component.html',
   styleUrls: ['./draft-viewer.component.scss']
 })
-export class DraftViewerComponent implements OnInit {
-  @ViewChild('sourceText') sourceEditor?: TextComponent; // Vernacular (source might not be set in project settings)
+export class DraftViewerComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild('targetText') targetEditor!: TextComponent; // Already translated interleaved with draft
 
   books: number[] = [];
@@ -39,6 +39,8 @@ export class DraftViewerComponent implements OnInit {
 
   isDraftApplied = false;
   hasDraft = false;
+  draftPopulated = false;
+  isOnline = this.onlineStatusService.isOnline;
 
   projectSettingsUrl?: string;
   preDraftTargetDelta?: DeltaStatic;
@@ -48,9 +50,12 @@ export class DraftViewerComponent implements OnInit {
     private readonly draftViewerService: DraftViewerService,
     private readonly activatedProjectService: ActivatedProjectService,
     private readonly projectService: SFProjectService,
+    private readonly onlineStatusService: OnlineStatusService,
     private readonly activatedRoute: ActivatedRoute,
     private readonly router: Router
-  ) {}
+  ) {
+    super();
+  }
 
   async ngOnInit(): Promise<void> {
     this.targetProjectId = this.activatedProjectService.projectId!;
@@ -63,16 +68,27 @@ export class DraftViewerComponent implements OnInit {
       this.sourceProject = (await this.projectService.getProfile(this.sourceProjectId)).data;
     }
 
-    // Wait to populate draft until both editors are loaded with current chapter
-    zip(this.sourceEditor?.loaded ?? of(null), this.targetEditor.loaded).subscribe(() => {
-      // Both editors are now loaded (or just target is loaded if no source text set in project settings)
-      this.isDraftApplied = false;
-      this.preDraftTargetDelta = this.targetEditor.editor?.getContents();
-      this.populateDraftText();
-    });
+    // Wait to populate draft until target editor is loaded with current chapter
+    this.subscribe(
+      this.targetEditor.loaded.pipe(
+        tap(() => {
+          this.draftPopulated = false;
+        }),
+        // Listen for online status changes once the editor loads
+        switchMap(() => this.onlineStatusService.onlineStatus$)
+      ),
+      (online: boolean) => {
+        this.isOnline = online;
+
+        // Populate just once per editor load
+        if (online && !this.draftPopulated) {
+          this.populateDraftText();
+        }
+      }
+    );
 
     // Set book/chapter from route, or first book/chapter if not provided
-    this.activatedRoute.paramMap.subscribe((params: ParamMap) => {
+    this.subscribe(this.activatedRoute.paramMap, (params: ParamMap) => {
       const bookId: string | null = params.get('bookId');
       const book: number = bookId ? Canon.bookIdToNumber(bookId) : this.books[0];
 
@@ -109,12 +125,13 @@ export class DraftViewerComponent implements OnInit {
   }
 
   populateDraftText(): void {
-    if (this.currentBook == null || this.currentChapter == null) {
-      throw new Error(`'populateDraftText()' called when 'currentBook' or 'currentChapter' is not set`);
-    }
+    this.draftPopulated = true;
+    this.hasDraft = false;
+    this.isDraftApplied = false;
+    this.preDraftTargetDelta = this.targetEditor.editor?.getContents();
 
-    if (!this.preDraftTargetDelta?.ops) {
-      throw new Error(`'populateDraftText()' called when 'preDraftTargetDelta' is not set`);
+    if (this.currentBook == null || this.currentChapter == null || !this.preDraftTargetDelta?.ops) {
+      return;
     }
 
     this.draftGenerationService
