@@ -87,6 +87,6 @@
     "localName": "नेपाली",
     "englishName": "Nepali",
     "tags": ["npi", "ne-NP"],
-    "production": true
+    "production": false
   }
 ]
