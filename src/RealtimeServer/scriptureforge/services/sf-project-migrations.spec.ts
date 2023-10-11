@@ -238,6 +238,21 @@ describe('version 11', () => {
   });
 });
 
+describe('version 12', () => {
+  it('adds draftConfig to translateConfig', async () => {
+    const env = new TestEnvironment(11);
+    const conn = env.server.connect();
+    await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', { translateConfig: {} });
+    let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+    expect(projectDoc.data.translateConfig.draftConfig).not.toBeDefined();
+
+    await env.server.migrateIfNecessary();
+
+    projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+    expect(projectDoc.data.translateConfig.draftConfig).toBeDefined();
+  });
+});
+
 class TestEnvironment {
   readonly db: ShareDBMingo;
   readonly mockedSchemaVersionRepository = mock(SchemaVersionRepository);

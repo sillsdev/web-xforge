@@ -245,6 +245,22 @@ class SFProjectMigration11 implements Migration {
   }
 }
 
+class SFProjectMigration12 implements Migration {
+  static readonly VERSION = 12;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    if (doc.data.translateConfig.draftConfig == null) {
+      ops.push({ p: ['translateConfig', 'draftConfig'], oi: {} });
+    }
+    await submitMigrationOp(SFProjectMigration12.VERSION, doc, ops);
+  }
+
+  migrateOp(_op: RawOp): void {
+    //do nothing
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
@@ -256,5 +272,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration8,
   SFProjectMigration9,
   SFProjectMigration10,
-  SFProjectMigration11
+  SFProjectMigration11,
+  SFProjectMigration12
 ];
