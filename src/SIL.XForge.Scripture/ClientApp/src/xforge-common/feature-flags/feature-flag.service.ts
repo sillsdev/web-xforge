@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 
 interface FeatureFlagStore {
   enabled: boolean;
@@ -34,6 +35,9 @@ class LocalStorageFlagStore implements FeatureFlagStore {
 }
 
 export class FeatureFlag {
+  private enabledSource$ = new BehaviorSubject<boolean>(this.storage.enabled);
+  enabled$ = this.enabledSource$.asObservable(); // This ensures 'next()' is only called here
+
   constructor(private readonly storage: FeatureFlagStore, readonly description: string) {}
 
   get enabled(): boolean {
@@ -42,6 +46,7 @@ export class FeatureFlag {
 
   set enabled(value: boolean) {
     this.storage.enabled = value;
+    this.enabledSource$.next(value);
   }
 }
 
