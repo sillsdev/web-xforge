@@ -98,6 +98,31 @@
               </mat-error>
             </div>
           </mat-card-content>
+          <mat-divider *ngIf="featureFlags.showNmtDrafting.enabled"></mat-divider>
+          <mat-card-content *ngIf="featureFlags.showNmtDrafting.enabled">
+            <mat-card-title>{{ t("pre_translation_drafting") }}</mat-card-title>
+            <div class="tool-setting">
+              <ng-container *ngIf="mainSettingsLoaded">
+                <p class="helper-text">{{ t("pre_translation_drafting_description") }}</p>
+                <div class="tool-setting-field">
+                  <app-project-select
+                    formControlName="alternateSourceParatextId"
+                    [placeholder]="t('pre_translation_source_text_placeholder')"
+                    [projects]="projects"
+                    [resources]="resources"
+                    [nonSelectableProjects]="nonSelectableProjects"
+                    [hideProjectId]="projectParatextId"
+                    [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
+                  ></app-project-select>
+                  <app-write-status
+                    [state]="getControlState('alternateSourceParatextId')"
+                    [formGroup]="form"
+                    id="based-on-status"
+                  ></app-write-status>
+                </div>
+              </ng-container>
+            </div>
+          </mat-card-content>
           <mat-divider></mat-divider>
           <mat-card-content>
             <mat-card-title>{{ t("community_checking_settings") }}</mat-card-title>

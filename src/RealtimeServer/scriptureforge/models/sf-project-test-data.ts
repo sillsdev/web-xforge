@@ -18,7 +18,7 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
       shareEnabled: false,
       preTranslate: false,
       defaultNoteTagId: 1,
-      draftingConfig: {}
+      draftConfig: {}
     },
     checkingConfig: {
       checkingEnabled: true,
