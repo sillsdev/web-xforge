@@ -1,8 +1,9 @@
 @use 'src/variables';
+@use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 
+// Manually center over cancel button
 app-working-animated-indicator {
-  display: block;
-  margin: 10px 0;
+  margin-inline-start: 24px;
 }
 
 h3 {
@@ -56,6 +57,7 @@ em {
     position: relative;
     margin: 0;
 
+    // 'OR' text
     &::after {
       content: attr(data-text);
       position: absolute;
@@ -69,11 +71,63 @@ em {
       text-transform: uppercase;
     }
   }
+
+  // Stack the actions vertically with a horizontal divider on mobile
+  @include media-breakpoint('<', sm) {
+    display: block;
+
+    mat-divider {
+      margin: 20px 0;
+      border: 0;
+      text-align: center;
+
+      // Horizontal line
+      &::before {
+        content: '';
+        position: absolute;
+        background-color: #e0e0e0;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+      }
+
+      // 'OR' text
+      &::after {
+        top: 0;
+        left: 0;
+        position: relative;
+        z-index: 1;
+      }
+    }
+  }
 }
 
-a[mat-flat-button],
-button {
+.button-strip {
+  display: flex;
+  gap: 20px;
+}
+
+.mat-button-base {
   margin-top: 8px;
+
+  ::ng-deep .mat-button-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+@include media-breakpoint('<', sm) {
+  // Hide the button icons to save space on mobile
+  .mat-button-base mat-icon {
+    display: none;
+  }
+
+  // Manually center over cancel button
+  app-working-animated-indicator {
+    margin-inline-start: 10px;
+  }
 }
 
 section {
@@ -86,22 +140,22 @@ section {
     'header progress'
     'text progress'
     'button progress';
-  grid-template-columns: minmax(220px, 320px) minmax(100px, 150px);
+  grid-template-columns: minmax(220px, 380px) minmax(100px, 150px);
   place-items: center start;
 
   h3 {
     grid-area: header;
-
-    + p {
-      margin-top: 0;
-    }
   }
 
-  p {
+  .progress-text {
     grid-area: text;
   }
 
-  button {
+  p:first-child {
+    margin-top: 0;
+  }
+
+  .button-strip {
     grid-area: button;
   }
 
