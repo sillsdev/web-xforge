@@ -12,11 +12,13 @@
     "description": "وصف",
     "edit_renderings": "تحرير المرادفات",
     "renderings": "مرادفات",
+    "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
     "save": "حفظ",
-    "term": "مصطلح/تعريف"
+    "term": "مصطلح/تعريف",
+    "view_renderings": "عرض المرادفات"
   },
   "biblical_terms": {
-    "actions": "Actions",
+    "actions": "الإجراءات",
     "category": "فئة",
     "gloss": "توضيح",
     "renderings": "مرادفات",
@@ -185,6 +187,7 @@
     "other_viewers": "{{ count }} مشاهدين آخرين"
   },
   "note_dialog": {
+    "biblical_term": "Biblical Term",
     "close": "إغلاق",
     "delete": "حذف",
     "hide_changes": "إخفاء التغييرات",
@@ -284,6 +287,8 @@
     "translation_suggestions": "فعِّل اقتراحات الترجمة",
     "translations_will_be_suggested": "سيتم اقتراح ترجمات للكلمات والعبارات عند تحرير النص الكتابي استناداً إلى المشروع أو المصدر الذي تمّ اختياره أعلاه.",
     "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
+    "hide_community_checking_text": "Hide Scripture text",
+    "checkers_listen_to_scripture_audio": "Checkers will need to listen to Scripture audio.",
     "will_not_delete_paratext_project": "هذا {{ boldStart }} لن {{ boldEnd }} يحذِف مشروع الـ Paratext الخاص بك، ولكنّه سيلغي كل البيانات غير المتزامنة المُخزنة في \"سكريبتشر فورج\" (Scripture Forge). يُوصى بـ {{ templateTagBoundary }} مزامنة {{ templateTagBoundary }} أولاً قبل الحذف."
   },
   "suggestions_settings_dialog": {

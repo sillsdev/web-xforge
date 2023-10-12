@@ -82,5 +82,11 @@
     "englishName": "Western Kayah Li",
     "tags": ["kyu", "kyu-Kali"],
     "production": true
+  },
+  {
+    "localName": "नेपाली",
+    "englishName": "Nepali",
+    "tags": ["npi", "ne-NP"],
+    "production": false
   }
 ]

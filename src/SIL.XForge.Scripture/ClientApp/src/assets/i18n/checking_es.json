@@ -13,7 +13,6 @@
     "log_out": "Cerrar sesión",
     "logged_in_as": "Conectado como",
     "manual": "Manual",
-    "my_progress": "Mi progreso",
     "offline": "Fuera de línea",
     "online": "Conectado",
     "open_source_licenses": "Open source licenses",
@@ -23,7 +22,6 @@
     "product_version": "Versión del producto: v{{ version }}",
     "project_has_been_deleted": "The project has been deleted or is no longer accessible.",
     "project_home": "Página de inicio del proyecto",
-    "questions_answers": "Questions & answers",
     "redirecting_in_moments": "Redirigiendo en unos momentos...",
     "refresh": "Actualizar",
     "report_issue_email": "correo electrónico {{ email }}",
@@ -159,7 +157,6 @@
     }
   },
   "checking": {
-    "filter": "Filtro",
     "filter_questions": "Filtrar las preguntas",
     "me": "Yo",
     "next": "Siguiente",
@@ -173,6 +170,10 @@
     "question_filter_not_answered": "No contestado",
     "question_filter_not_reviewed": "Respuestas no revisadas",
     "question_filter_resolved": "Respuestas marcadas como resueltas",
+    "question_scope_all": "All books",
+    "question_scope_book": "Current book",
+    "question_scope_chapter": "Current chapter",
+    "questions_range": "Questions range",
     "tooltip_questions_filter": "Filtrar las preguntas",
     "unknown_author": "Autor desconocido",
     "view_questions": "Ver preguntas"
@@ -204,12 +205,19 @@
     "tooltip_status_resolve": "Marcar la respuesta como resuelta",
     "your_answer": "Su respuesta"
   },
-  "checking_audio_dialog": {
+  "chapter_audio_dialog": {
     "audio": "Audio",
     "audio_already_exists": "Audio already exists for this selection.",
+    "browse_files": "Browse Files",
     "cancel": "Cancelar",
+    "chapter_audio": "Chapter Audio",
+    "drag_and_drop_files": "Drag and drop audio and timing files here",
+    "drag_and_drop_or_browse": "OR",
     "from_timing_past_to_timing": "One or more ending values end before their beginning values.",
+    "no_audio_file_uploaded": "No audio file uploaded",
+    "no_timing_data_uploaded": "No timing data uploaded",
     "save": "Guardar",
+    "segments_found": "{{ segments }} segments found",
     "timing": "Timing",
     "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
     "upload": "Cargar",
@@ -261,8 +269,10 @@
     "questions": "Preguntas"
   },
   "checking_questions": {
-    "no_questions_found": "No se encontraron preguntas que coincidan con su filtro",
     "listen_to_question": "Listen to the question for {{ referenceForDisplay }}",
+    "loading": "Cargando...",
+    "no_questions_found_filtered": "No questions found to match your filter",
+    "no_questions_found_unfiltered": "No questions found",
     "scripture_audio_label": "Listen to {{ referenceForDisplay }} to answer the question that follows.",
     "view_answers": "View answers"
   },

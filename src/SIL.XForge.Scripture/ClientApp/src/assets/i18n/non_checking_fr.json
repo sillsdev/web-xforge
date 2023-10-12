@@ -12,8 +12,10 @@
     "description": "Description",
     "edit_renderings": "Modifier les équivalents",
     "renderings": "Équivalents",
+    "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
     "save": "Enregistrer",
-    "term": "Terme/Définition"
+    "term": "Terme/Définition",
+    "view_renderings": "Afficher les équivalents"
   },
   "biblical_terms": {
     "actions": "Actions",
@@ -185,6 +187,7 @@
     "other_viewers": "{{ count }} autres observateurs"
   },
   "note_dialog": {
+    "biblical_term": "Biblical Term",
     "close": "Fermer",
     "delete": "Supprimer",
     "hide_changes": "Masquer les modifications",
@@ -284,6 +287,8 @@
     "translation_suggestions": "Activer les suggestions de traduction",
     "translations_will_be_suggested": "Les traductions des mots et des phrases seront suggérées alors que vous modifiez le texte des Écritures, en fonction du projet ou de la ressource sélectionnés ci-dessus.",
     "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
+    "hide_community_checking_text": "Hide Scripture text",
+    "checkers_listen_to_scripture_audio": "Checkers will need to listen to Scripture audio.",
     "will_not_delete_paratext_project": "Cela {{ boldStart }}ne va pas{{ boldEnd }} supprimer votre projet Paratext, mais cela supprimera toutes les données non synchronisées stockées dans Scripture Forge. Il est recommandé de {{ templateTagBoundary }}Synchroniser{{ templateTagBoundary }} d'abord, avant de supprimer."
   },
   "suggestions_settings_dialog": {

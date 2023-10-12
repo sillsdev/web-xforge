@@ -12,11 +12,13 @@
     "description": "描述",
     "edit_renderings": "编辑译法",
     "renderings": "译法",
+    "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
     "save": "保存",
-    "term": "词汇／定义"
+    "term": "词汇／定义",
+    "view_renderings": "查看译法"
   },
   "biblical_terms": {
-    "actions": "Actions",
+    "actions": "操作",
     "category": "类别",
     "gloss": "译词",
     "renderings": "译法",
@@ -185,6 +187,7 @@
     "other_viewers": "{{ count }} other viewers"
   },
   "note_dialog": {
+    "biblical_term": "Biblical Term",
     "close": "关闭",
     "delete": "删除",
     "hide_changes": "Hide changes",
@@ -284,6 +287,8 @@
     "translation_suggestions": "Enable Translation Suggestions",
     "translations_will_be_suggested": "Translations for words and phrases will be suggested as you edit Scripture based on the project or resource selected above.",
     "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
+    "hide_community_checking_text": "Hide Scripture text",
+    "checkers_listen_to_scripture_audio": "Checkers will need to listen to Scripture audio.",
     "will_not_delete_paratext_project": "This will {{ boldStart }}not{{ boldEnd }} delete your Paratext project, but it will delete any unsynchronized data stored in Scripture Forge. It is recommended to {{ templateTagBoundary }}Synchronize{{ templateTagBoundary }} first before deleting."
   },
   "suggestions_settings_dialog": {
