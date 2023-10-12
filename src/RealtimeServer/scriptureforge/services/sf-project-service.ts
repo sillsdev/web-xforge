@@ -162,6 +162,9 @@ export class SFProjectService extends ProjectService<SFProject> {
           },
           noteTagId: {
             bsonType: 'int'
+          },
+          hideCommunityCheckingText: {
+            bsonType: 'bool'
           }
         },
         additionalProperties: false
