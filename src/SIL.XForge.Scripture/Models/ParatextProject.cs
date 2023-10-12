@@ -10,6 +10,7 @@ public class ParatextProject
     public string Name { get; set; }
     public string ShortName { get; set; }
     public string LanguageTag { get; set; }
+    public bool? IsRightToLeft { get; set; }
 
     /// <summary> Id of corresponding SF project. </summary>
     public string? ProjectId { get; set; }
