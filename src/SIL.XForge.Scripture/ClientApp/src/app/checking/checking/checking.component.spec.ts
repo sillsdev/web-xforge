@@ -2147,7 +2147,13 @@ describe('CheckingComponent', () => {
     }));
 
     it('updates user played refs while audio is playing ', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, projectBookRoute: 'ALL', scriptureAudio: true });
+      const env = new TestEnvironment({
+        user: ADMIN_USER,
+        projectBookRoute: 'JHN',
+        projectChapterRoute: 1,
+        questionScope: 'all',
+        scriptureAudio: true
+      });
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
@@ -2167,10 +2173,17 @@ describe('CheckingComponent', () => {
       });
       env.component.handleAudioTextRefChanged(verseSlug(verseRef));
       expect(updateAudioRefsPlayed).toHaveBeenCalledTimes(0);
+      discardPeriodicTasks();
     }));
 
     it('should not update user played refs while audio is not playing ', fakeAsync(() => {
-      const env = new TestEnvironment({ user: ADMIN_USER, projectBookRoute: 'ALL', scriptureAudio: true });
+      const env = new TestEnvironment({
+        user: ADMIN_USER,
+        projectBookRoute: 'JHN',
+        projectChapterRoute: 1,
+        questionScope: 'all',
+        scriptureAudio: true
+      });
       env.component.toggleAudio();
       env.fixture.detectChanges();
 
@@ -2192,6 +2205,7 @@ describe('CheckingComponent', () => {
       expect(updateAudioRefsPlayed).toHaveBeenCalledTimes(1);
       // Should equal JHN 1:1
       expect(updateAudioRefsPlayed.calls.mostRecent().args[0]!.toString()).toBe(verseRef.toString());
+      discardPeriodicTasks();
     }));
   });
 });
