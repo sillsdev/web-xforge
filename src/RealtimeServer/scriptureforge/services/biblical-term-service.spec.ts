@@ -94,7 +94,8 @@ class TestEnvironment {
         questionRefsRead: ['question01'],
         answerRefsRead: ['answer01'],
         commentRefsRead: ['comment01'],
-        noteRefsRead: []
+        noteRefsRead: [],
+        audioRefsPlayed: []
       }
     );
 

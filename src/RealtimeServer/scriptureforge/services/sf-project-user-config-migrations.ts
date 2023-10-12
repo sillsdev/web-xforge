@@ -53,8 +53,24 @@ class SFProjectUserConfigMigration3 implements Migration {
   }
 }
 
+class SFProjectUserConfigMigration4 implements Migration {
+  static readonly VERSION = 4;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    if (doc.data.audioRefsPlayed === undefined) {
+      const op: ObjectInsertOp = { p: ['audioRefsPlayed'], oi: [] };
+      await submitMigrationOp(SFProjectUserConfigMigration4.VERSION, doc, [op]);
+    }
+  }
+
+  migrateOp(_op: RawOp): void {
+    // do nothing
+  }
+}
+
 export const SF_PROJECT_USER_CONFIG_MIGRATIONS: MigrationConstructor[] = [
   SFProjectUserConfigMigration1,
   SFProjectUserConfigMigration2,
-  SFProjectUserConfigMigration3
+  SFProjectUserConfigMigration3,
+  SFProjectUserConfigMigration4
 ];
