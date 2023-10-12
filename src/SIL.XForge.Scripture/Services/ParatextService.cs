@@ -34,6 +34,7 @@ using Paratext.Data.Users;
 using PtxUtils;
 using SIL.ObjectModel;
 using SIL.Scripture;
+using SIL.WritingSystems;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -2008,6 +2009,12 @@ public class ParatextService : DisposableBase, IParatextService
             // If this happens, default to using the project's short name
             var projectMD = projectsMetadata.SingleOrDefault(pmd => pmd.ProjectGuid == remotePtProject.SendReceiveId);
             string fullOrShortName = projectMD == null ? remotePtProject.ScrTextName : projectMD.FullName;
+            string languageTag = correspondingSfProject?.WritingSystem.Tag ?? projectMD?.LanguageId.Code;
+            bool? isRightToLeft = null;
+            if (!string.IsNullOrWhiteSpace(languageTag))
+            {
+                isRightToLeft = new WritingSystemDefinition(languageTag).RightToLeftScript;
+            }
 
             paratextProjects.Add(
                 new ParatextProject
@@ -2015,7 +2022,8 @@ public class ParatextService : DisposableBase, IParatextService
                     ParatextId = remotePtProject.SendReceiveId.Id,
                     Name = fullOrShortName,
                     ShortName = remotePtProject.ScrTextName,
-                    LanguageTag = correspondingSfProject?.WritingSystem.Tag ?? projectMD?.LanguageId.Code,
+                    LanguageTag = languageTag,
+                    IsRightToLeft = isRightToLeft,
                     ProjectId = correspondingSfProject?.Id,
                     IsConnectable = ptProjectIsConnectable,
                     IsConnected = sfProjectExists && sfUserIsOnSfProject
