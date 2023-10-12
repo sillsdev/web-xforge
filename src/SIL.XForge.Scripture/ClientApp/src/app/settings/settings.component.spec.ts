@@ -560,6 +560,7 @@ class TestEnvironment {
       { paratextId: '9bb76cd3e5a7f9b4', name: 'Revised Version with Apocrypha 1885, 1895', shortName: 'RVA' }
     ]);
     when(mockedFeatureFlagService.scriptureAudio).thenReturn({ enabled: true } as ObservableFeatureFlag);
+    when(mockedFeatureFlagService.showNmtDrafting).thenReturn({ enabled: true } as ObservableFeatureFlag);
 
     when(mockedSFProjectService.queryAudioText(anything())).thenCall(sfProjectId => {
       const queryParams: QueryParameters = {

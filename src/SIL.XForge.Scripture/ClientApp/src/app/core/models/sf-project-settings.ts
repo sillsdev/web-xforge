@@ -9,6 +9,8 @@ export interface SFProjectSettings {
   biblicalTermsEnabled?: boolean;
   translateShareEnabled?: boolean;
 
+  alternateSourceParatextId?: string;
+
   checkingEnabled?: boolean;
   usersSeeEachOthersResponses?: boolean;
   checkingShareEnabled?: boolean;
