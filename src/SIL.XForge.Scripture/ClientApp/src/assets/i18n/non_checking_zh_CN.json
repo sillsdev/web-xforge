@@ -9,21 +9,21 @@
   "biblical_term_dialog": {
     "cancel": "取消",
     "close": "关闭",
-    "description": "Description",
-    "edit_renderings": "Edit Renderings",
-    "renderings": "Renderings",
+    "description": "描述",
+    "edit_renderings": "编辑译法",
+    "renderings": "译法",
     "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
     "save": "保存",
-    "term": "Term/Definition",
-    "view_renderings": "View Renderings"
+    "term": "词汇／定义",
+    "view_renderings": "查看译法"
   },
   "biblical_terms": {
-    "actions": "Actions",
-    "category": "Category",
-    "gloss": "Gloss",
-    "renderings": "Renderings",
-    "term": "Term",
-    "biblical_terms_renderings": "Biblical Terms Renderings"
+    "actions": "操作",
+    "category": "类别",
+    "gloss": "译词",
+    "renderings": "译法",
+    "term": "词条",
+    "biblical_terms_renderings": "圣经专门用词译法"
   },
   "chapter_nav": {
     "previous_chapter": "Previous chapter",
