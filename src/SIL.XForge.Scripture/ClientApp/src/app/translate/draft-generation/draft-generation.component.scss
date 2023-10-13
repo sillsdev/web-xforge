@@ -48,6 +48,13 @@ em {
   }
 }
 
+// Hide the tab headers
+mat-tab-group {
+  ::ng-deep .mat-tab-header {
+    display: none;
+  }
+}
+
 .view-or-create-options {
   display: grid;
   grid-template-columns: minmax(0, 500px) 1px minmax(0, 500px);

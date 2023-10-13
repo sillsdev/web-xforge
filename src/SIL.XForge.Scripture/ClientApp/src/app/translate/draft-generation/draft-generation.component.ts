@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
+import { MatTabGroup } from '@angular/material/tabs';
 import { isEmpty } from 'lodash-es';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of, Subscription } from 'rxjs';
@@ -15,6 +16,7 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates } from './draft-generation';
+import { DraftGenerationStepsResult } from './draft-generation-steps/draft-generation-steps.component';
 import { DraftGenerationService } from './draft-generation.service';
 
 export enum InfoAlert {
@@ -31,6 +33,7 @@ export enum InfoAlert {
   styleUrls: ['./draft-generation.component.scss']
 })
 export class DraftGenerationComponent extends SubscriptionDisposable implements OnInit {
+  @ViewChild(MatTabGroup) tabGroup?: MatTabGroup;
   draftJob?: BuildDto;
 
   draftViewerUrl?: string;
@@ -144,7 +147,8 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       }
     }
 
-    this.startBuild();
+    // Display pre-generation steps
+    this.navigateToTab('pre-generate-steps');
   }
 
   // TODO: update i18n
@@ -170,6 +174,28 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     }
 
     this.cancelBuild();
+  }
+
+  navigateToTab(tab: 'initial' | 'pre-generate-steps'): void {
+    if (this.tabGroup == null) {
+      return;
+    }
+
+    switch (tab) {
+      case 'initial':
+        this.tabGroup.selectedIndex = 0;
+        break;
+      case 'pre-generate-steps':
+        this.tabGroup.selectedIndex = 1;
+        break;
+    }
+  }
+
+  onPreGenerationStepsComplete(_result: DraftGenerationStepsResult): void {
+    this.navigateToTab('initial');
+
+    // TODO: Send selected books to the back-end
+    this.startBuild();
   }
 
   getTargetLanguageDisplayName(): string | undefined {
