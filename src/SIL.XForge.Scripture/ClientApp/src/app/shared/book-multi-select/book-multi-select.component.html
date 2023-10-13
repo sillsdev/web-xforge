@@ -1,0 +1,5 @@
+<mat-chip-list [multiple]="true" class="book-multi-select">
+  <mat-chip *ngFor="let book of bookOptions" [selected]="book.selected" (click)="!readonly && toggleSelection(book)">
+    {{ book.name }}
+  </mat-chip>
+</mat-chip-list>

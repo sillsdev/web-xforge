@@ -1,5 +1,7 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { EMPTY, of } from 'rxjs';
@@ -112,7 +114,7 @@ describe('DraftGenerationComponent', () => {
     init(): void {
       TestBed.configureTestingModule({
         declarations: [DraftGenerationComponent],
-        imports: [UICommonModule, SharedModule, RouterTestingModule],
+        imports: [UICommonModule, SharedModule, RouterTestingModule, NoopAnimationsModule],
         providers: [
           { provide: FeatureFlagService, useValue: mockFeatureFlagService },
           { provide: DraftGenerationService, useValue: mockDraftGenerationService },
@@ -120,7 +122,8 @@ describe('DraftGenerationComponent', () => {
           { provide: DialogService, useValue: mockDialogService },
           { provide: I18nService, useValue: mockI18nService },
           { provide: OnlineStatusService, useValue: mockOnlineStatusService }
-        ]
+        ],
+        schemas: [NO_ERRORS_SCHEMA] // Ignore errors from unknown child components
       });
 
       this.fixture = TestBed.createComponent(DraftGenerationComponent);
@@ -130,6 +133,10 @@ describe('DraftGenerationComponent', () => {
 
     get offlineTextElement(): HTMLElement | null {
       return (this.fixture.nativeElement as HTMLElement).querySelector('.offline-text');
+    }
+
+    get preGenerationStepper(): HTMLElement | null {
+      return (this.fixture.nativeElement as HTMLElement).querySelector('app-draft-generation-steps');
     }
   }
 
@@ -277,13 +284,24 @@ describe('DraftGenerationComponent', () => {
     });
   });
 
-  describe('generateDraft', () => {
+  describe('navigateToTab', () => {
+    it('should navigate to pre-generate steps', fakeAsync(() => {
+      let env = new TestEnvironment();
+
+      env.component.navigateToTab('pre-generate-steps');
+      env.fixture.detectChanges();
+      tick();
+      expect(env.preGenerationStepper).not.toBeNull();
+    }));
+  });
+
+  describe('startBuild', () => {
     it('should start the draft build', () => {
       let env = new TestEnvironment(() => {
         mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(of(buildDto));
       });
 
-      env.component.generateDraft();
+      env.component['startBuild']();
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
     });
 
@@ -297,7 +315,7 @@ describe('DraftGenerationComponent', () => {
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.generateDraft();
+      env.component['startBuild']();
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -313,7 +331,7 @@ describe('DraftGenerationComponent', () => {
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.generateDraft();
+      env.component['startBuild']();
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -329,7 +347,7 @@ describe('DraftGenerationComponent', () => {
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.generateDraft();
+      env.component['startBuild']();
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -346,7 +364,7 @@ describe('DraftGenerationComponent', () => {
       when(mockDialogRef.getState()).thenReturn(MatDialogState.OPEN);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.generateDraft();
+      env.component['startBuild']();
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
       verify(mockDialogRef.close()).once();
     });
