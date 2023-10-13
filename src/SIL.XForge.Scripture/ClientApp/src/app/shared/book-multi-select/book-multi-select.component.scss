@@ -1,0 +1,7 @@
+@use 'src/variables' as vars;
+
+.mat-chip.mat-standard-chip {
+  &.mat-chip-selected {
+    background-color: #4a79c9;
+  }
+}
