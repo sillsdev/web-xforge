@@ -65,6 +65,7 @@ public class MachineApiService : IMachineApiService
     private readonly IPreTranslationService _preTranslationService;
     private readonly DataAccess.IRepository<SFProjectSecret> _projectSecrets;
     private readonly IRealtimeService _realtimeService;
+    private readonly ISyncService _syncService;
     private readonly ITranslationEnginesClient _translationEnginesClient;
     private readonly StringTokenizer _wordTokenizer = new LatinWordTokenizer();
 
@@ -80,6 +81,7 @@ public class MachineApiService : IMachineApiService
         IPreTranslationService preTranslationService,
         DataAccess.IRepository<SFProjectSecret> projectSecrets,
         IRealtimeService realtimeService,
+        ISyncService syncService,
         ITranslationEnginesClient translationEnginesClient
     )
     {
@@ -99,6 +101,7 @@ public class MachineApiService : IMachineApiService
         _preTranslationService = preTranslationService;
         _projectSecrets = projectSecrets;
         _realtimeService = realtimeService;
+        _syncService = syncService;
         _translationEnginesClient = translationEnginesClient;
     }
 
@@ -109,7 +112,7 @@ public class MachineApiService : IMachineApiService
     )
     {
         // Ensure that the user has permission
-        await EnsurePermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
         // We only support Serval for canceling the current build
         if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
@@ -177,7 +180,7 @@ public class MachineApiService : IMachineApiService
         BuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        await EnsurePermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
         // Execute the In Process Machine instance, if it is enabled and this is not a pre-translation build
         // We can only use In Process or the API - not both or unnecessary delays will result
@@ -233,7 +236,7 @@ public class MachineApiService : IMachineApiService
         BuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        await EnsurePermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
         // We only support Serval for this feature
         if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
@@ -286,7 +289,7 @@ public class MachineApiService : IMachineApiService
         BuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        await EnsurePermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
         // We can only use In Process or the API - not both or unnecessary delays will result
         if (await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess) && !preTranslate)
@@ -356,7 +359,7 @@ public class MachineApiService : IMachineApiService
         EngineDto? engineDto = null;
 
         // Ensure that the user has permission
-        await EnsurePermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
         // Execute on Serval, if it is enabled
         if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
@@ -415,7 +418,7 @@ public class MachineApiService : IMachineApiService
         PreTranslationDto preTranslation = new PreTranslationDto();
 
         // Ensure that the user has permission
-        await EnsurePermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
         // We only support Serval for pre-translations
         if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
@@ -448,7 +451,7 @@ public class MachineApiService : IMachineApiService
     )
     {
         // Ensure that the user has permission
-        await EnsurePermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
         // If there is a pre-translation queued, return a build dto with a status showing it is queued
         if ((await _projectSecrets.TryGetAsync(sfProjectId)).TryResult(out SFProjectSecret projectSecret))
@@ -496,7 +499,7 @@ public class MachineApiService : IMachineApiService
         WordGraph? wordGraph = null;
 
         // Ensure that the user has permission
-        await EnsurePermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
         // Execute on Serval, if it is enabled
         if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
@@ -553,7 +556,7 @@ public class MachineApiService : IMachineApiService
         BuildDto? buildDto = null;
 
         // Ensure that the user has permission
-        await EnsurePermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
         // Execute on Serval, if it is enabled
         if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
@@ -614,8 +617,8 @@ public class MachineApiService : IMachineApiService
         CancellationToken cancellationToken
     )
     {
-        // Ensure that the user has permission
-        await EnsurePermissionAsync(curUserId, sfProjectId);
+        // Ensure that the user has permission on the project
+        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
         // Execute on Serval, if it is enabled
         if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
@@ -623,10 +626,26 @@ public class MachineApiService : IMachineApiService
             throw new DataNotFoundException("The translation engine does not support pre-translations");
         }
 
-        // This will take a while, so we run it in the background
-        string jobId = _backgroundJobClient.Enqueue<IMachineProjectService>(
-            r => r.BuildProjectForBackgroundJobAsync(curUserId, sfProjectId, true, CancellationToken.None)
-        );
+        // If we have an alternate source, sync that first
+        string jobId;
+        string alternateSourceProjectId = project.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef;
+        if (!string.IsNullOrWhiteSpace(alternateSourceProjectId))
+        {
+            string sourceJobId = await _syncService.SyncAsync(curUserId, alternateSourceProjectId, trainEngine: false);
+
+            // Run the training after the sync has completed
+            jobId = _backgroundJobClient.ContinueJobWith<IMachineProjectService>(
+                sourceJobId,
+                r => r.BuildProjectForBackgroundJobAsync(curUserId, sfProjectId, true, CancellationToken.None)
+            );
+        }
+        else
+        {
+            // This will take a while, so we run it in the background
+            jobId = _backgroundJobClient.Enqueue<IMachineProjectService>(
+                r => r.BuildProjectForBackgroundJobAsync(curUserId, sfProjectId, true, CancellationToken.None)
+            );
+        }
 
         // Set the pre-translation queued date and time, and hang fire job id
         await _projectSecrets.UpdateAsync(
@@ -648,7 +667,7 @@ public class MachineApiService : IMachineApiService
     )
     {
         // Ensure that the user has permission
-        await EnsurePermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
         // Execute on Serval, if it is enabled
         if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
@@ -697,7 +716,7 @@ public class MachineApiService : IMachineApiService
         TranslationResult? translationResult = null;
 
         // Ensure that the user has permission
-        await EnsurePermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
         // Execute on Serval, if it is enabled
         if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
@@ -759,7 +778,7 @@ public class MachineApiService : IMachineApiService
         IEnumerable<TranslationResult> translationResults = Array.Empty<TranslationResult>();
 
         // Ensure that the user has permission
-        await EnsurePermissionAsync(curUserId, sfProjectId);
+        await EnsureProjectPermissionAsync(curUserId, sfProjectId);
 
         // Execute on Serval, if it is enabled
         if (await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
@@ -975,7 +994,7 @@ public class MachineApiService : IMachineApiService
         return engineDto;
     }
 
-    private async Task EnsurePermissionAsync(string curUserId, string sfProjectId)
+    private async Task<SFProject> EnsureProjectPermissionAsync(string curUserId, string sfProjectId)
     {
         // Load the project from the realtime service
         Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
@@ -994,6 +1013,8 @@ public class MachineApiService : IMachineApiService
         {
             throw new ForbiddenException();
         }
+
+        return project;
     }
 
     /// <summary>
