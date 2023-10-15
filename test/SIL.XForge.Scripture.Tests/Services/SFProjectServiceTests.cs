@@ -3475,7 +3475,9 @@ public class SFProjectServiceTests
             );
             MachineProjectService = Substitute.For<IMachineProjectService>();
             SyncService = Substitute.For<ISyncService>();
-            SyncService.SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(Task.CompletedTask);
+            SyncService
+                .SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+                .Returns(Task.FromResult("jobId"));
             ParatextService = Substitute.For<IParatextService>();
             IReadOnlyList<ParatextProject> ptProjects = new[]
             {
