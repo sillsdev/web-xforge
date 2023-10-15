@@ -316,7 +316,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     ) {
       this.updateSetting(newValue, 'checkingAnswerExport');
     }
-    if (newValue.hideCommunityCheckingText !== this.previousFormValues.hideCommunityCheckingText) {
+    if ((newValue.hideCommunityCheckingText ?? null) !== (this.previousFormValues.hideCommunityCheckingText ?? null)) {
       this.updateSetting(newValue, 'hideCommunityCheckingText');
     }
   }
