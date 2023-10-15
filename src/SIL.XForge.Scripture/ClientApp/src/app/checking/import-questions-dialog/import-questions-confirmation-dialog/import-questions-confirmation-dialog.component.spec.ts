@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -70,7 +71,7 @@ describe('ImportQuestionsConfirmationDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, TestTranslocoModule],
+  imports: [CommonModule, UICommonModule, TestTranslocoModule, HttpClientTestingModule],
   declarations: [ImportQuestionsConfirmationDialogComponent],
   exports: [ImportQuestionsConfirmationDialogComponent]
 })

@@ -1,3 +1,4 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, getDebugNode, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -44,7 +45,8 @@ describe('SaUsersComponent', () => {
       UICommonModule,
       DialogTestModule,
       TestTranslocoModule,
-      TestRealtimeModule.forRoot(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio], []))
+      TestRealtimeModule.forRoot(new TypeRegistry([UserDoc, TestProjectDoc], [FileType.Audio], [])),
+      HttpClientTestingModule
     ],
     declarations: [SaUsersComponent],
     providers: [

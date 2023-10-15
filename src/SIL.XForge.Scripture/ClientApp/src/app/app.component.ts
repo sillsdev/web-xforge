@@ -20,7 +20,7 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
-import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature-flags.component';
+import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature-flags-dialog.component';
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';

@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -531,7 +532,14 @@ describe('QuestionDialogComponent', () => {
 });
 
 @NgModule({
-  imports: [CommonModule, UICommonModule, CheckingModule, TestTranslocoModule, NoopAnimationsModule],
+  imports: [
+    CommonModule,
+    UICommonModule,
+    CheckingModule,
+    TestTranslocoModule,
+    NoopAnimationsModule,
+    HttpClientTestingModule
+  ],
   declarations: [ScriptureChooserDialogComponent],
   exports: [ScriptureChooserDialogComponent]
 })
@@ -598,6 +606,8 @@ class TestEnvironment {
       data: createTestUser()
     });
 
+    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
+
     this.dialogRef = TestBed.inject(MatDialog).open(QuestionDialogComponent, config);
     this.afterCloseCallback = jasmine.createSpy('afterClose callback');
     this.dialogRef.afterClosed().subscribe(this.afterCloseCallback);
@@ -620,7 +630,6 @@ class TestEnvironment {
     when(mockedFileService.findOrUpdateCache(FileType.Audio, anything(), 'question01', anything())).thenResolve(
       createStorageFileData(QuestionDoc.COLLECTION, 'question01', '/path/to/audio.mp3', getAudioBlob())
     );
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );

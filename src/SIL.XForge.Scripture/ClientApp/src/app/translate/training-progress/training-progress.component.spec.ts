@@ -1,3 +1,4 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { ProgressStatus } from '@sillsdev/machine';
 import * as RichText from 'rich-text';
@@ -25,7 +26,12 @@ const mockedUserService = mock(UserService);
 
 describe('TrainingProgressComponent', () => {
   configureTestingModule(() => ({
-    imports: [TestTranslocoModule, UICommonModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      TestTranslocoModule,
+      UICommonModule,
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      HttpClientTestingModule
+    ],
     declarations: [TrainingProgressComponent],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },

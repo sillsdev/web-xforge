@@ -1,3 +1,4 @@
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -58,7 +59,7 @@ class MockComponent {
 
 describe('CheckingQuestionComponent', () => {
   configureTestingModule(() => ({
-    imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
+    imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule, HttpClientTestingModule],
     declarations: [CheckingQuestionComponent, SingleButtonAudioPlayerComponent, MockComponent],
     providers: [
       { provide: SFProjectService, useMock: mockedSFProjectService },
