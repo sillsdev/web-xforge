@@ -322,11 +322,11 @@
     "allow_add_edit_questions": "Can add & edit questions",
     "allow_manage_audio": "Can manage scripture audio",
     "cancel": "Cancel",
-    "learn_more": "Read More",
+    "learn_more": "Learn More",
     "none": "None",
     "permissions": "Additional Permissions",
     "pt_administrator": "Administrator",
-    "pt_consultant": "Consultant",
+    "pt_consultant": "Consultant/Reviewer/Archivist/Typesetter",
     "pt_observer": "Observer",
     "pt_translator": "Translator",
     "roles": "Roles",
@@ -339,7 +339,7 @@
     "user_sf": "Scripture Forge User"
   },
   "role_descriptions": {
-    "pt_administrator": "Edit translations - add notes - add & edit community checking questions - export answers - manage users - project settings - sync with Paratext",
+    "pt_administrator": "Edit translations - manage notes and questions - manage users and settings - sync with Paratext",
     "pt_consultant": "View translation - view questions & answers - add notes",
     "pt_observer": "View translation - view questions & answers - view notes",
     "pt_translator": "Edit translations - view questions - add answers - add notes - sync with Paratext",
