@@ -4,10 +4,11 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
-import { mock, when } from 'ts-mockito';
+import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
+import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './draft-generation-steps.component';
 
 describe('DraftGenerationStepsComponent', () => {
@@ -15,16 +16,32 @@ describe('DraftGenerationStepsComponent', () => {
   let fixture: ComponentFixture<DraftGenerationStepsComponent>;
 
   const mockActivatedProjectService = mock(ActivatedProjectService);
-  const mockProjectDoc = { data: { texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }] } } as SFProjectProfileDoc;
+  const mockProjectService = mock(SFProjectService);
+  const mockTargetProjectDoc = {
+    data: {
+      translateConfig: {
+        source: { projectRef: 'test' }
+      }
+    }
+  } as SFProjectProfileDoc;
+  const mockSourceProjectDoc = {
+    data: {
+      texts: [{ bookNum: 1 }, { bookNum: 2 }, { bookNum: 3 }]
+    }
+  } as SFProjectProfileDoc;
 
   configureTestingModule(() => ({
     imports: [MatStepperModule, MatMenuModule, NoopAnimationsModule],
     declarations: [DraftGenerationStepsComponent],
-    providers: [{ provide: ActivatedProjectService, useMock: mockActivatedProjectService }]
+    providers: [
+      { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
+      { provide: SFProjectService, useMock: mockProjectService }
+    ]
   }));
 
   beforeEach(() => {
-    when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockProjectDoc));
+    when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
+    when(mockProjectService.getProfile(anything())).thenResolve(mockSourceProjectDoc);
 
     fixture = TestBed.createComponent(DraftGenerationStepsComponent);
     component = fixture.componentInstance;

@@ -251,7 +251,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     return job == null || this.isDraftInProgress(job);
   }
 
-  private startBuild(): void {
+  startBuild(): void {
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.subscribe(
       this.draftGenerationService.startBuildOrGetActiveBuild(this.activatedProject.projectId!).pipe(
