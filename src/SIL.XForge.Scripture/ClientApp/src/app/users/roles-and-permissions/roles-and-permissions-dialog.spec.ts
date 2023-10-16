@@ -19,8 +19,6 @@ import {
   getSFProjectUserConfigDocId
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { BehaviorSubject } from 'rxjs';
-import { SFProjectDoc } from 'src/app/core/models/sf-project-doc';
-import { SFProjectService } from 'src/app/core/sf-project.service';
 import { NoticeComponent } from 'src/app/shared/notice/notice.component';
 import { paratextUsersFromRoles } from 'src/app/shared/test-utils';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
@@ -36,10 +34,12 @@ import {
   matDialogCloseDelay
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
-import { RolesAndPermissionsComponent, UserData } from './roles-and-permissions.component';
+import { SFProjectService } from '../../core/sf-project.service';
+import { RolesAndPermissionsDialogComponent, UserData } from './roles-and-permissions-dialog.component';
 
 const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedProjectService = mock(SFProjectService);
@@ -118,7 +118,7 @@ describe('RolesAndPermissionsComponent', () => {
     env.openDialog();
 
     expect(env.component?.roleOptions.length).toBeGreaterThan(0);
-    forEach(env.component?.roleOptions, r => expect(isParatextRole(r)));
+    forEach(env.component?.roleOptions, r => expect(isParatextRole(r)).toBe(true));
     expect(env.component?.roles.disabled).toBe(true);
   }));
 
@@ -160,8 +160,7 @@ describe('RolesAndPermissionsComponent', () => {
       projectDoc.submitJson0Op(op => {
         op.set(p => p.userRoles, rolesByUser);
         op.set(p => p.userPermissions, {
-          communityChecker: permissions,
-          observer: permissions
+          communityChecker: permissions
         });
       });
     });
@@ -197,12 +196,12 @@ class FakeAvatarComponent {
 
 @NgModule({
   imports: [CommonModule, BrowserModule, UICommonModule, TestTranslocoModule],
-  declarations: [RolesAndPermissionsComponent, FakeAvatarComponent, NoticeComponent]
+  declarations: [RolesAndPermissionsDialogComponent, FakeAvatarComponent, NoticeComponent]
 })
 class DialogTestModule {}
 
 class TestEnvironment {
-  component?: RolesAndPermissionsComponent;
+  component?: RolesAndPermissionsDialogComponent;
   readonly isOnline$: BehaviorSubject<boolean> = new BehaviorSubject(true);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -251,7 +250,7 @@ class TestEnvironment {
             }
           }
         };
-        const dialogRef = TestBed.inject(MatDialog).open(RolesAndPermissionsComponent, config);
+        const dialogRef = TestBed.inject(MatDialog).open(RolesAndPermissionsDialogComponent, config);
         this.component = dialogRef.componentInstance;
       });
     this.wait();
