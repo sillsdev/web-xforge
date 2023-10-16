@@ -17,7 +17,10 @@ import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import { RolesAndPermissionsComponent, UserData } from '../roles-and-permissions/roles-and-permissions.component';
+import {
+  RolesAndPermissionsDialogComponent,
+  UserData
+} from '../roles-and-permissions/roles-and-permissions-dialog.component';
 
 interface UserInfo {
   displayName?: string;
@@ -222,7 +225,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       width: '90%',
       autoFocus: false
     };
-    this.dialogService.openMatDialog(RolesAndPermissionsComponent, dialogConfig);
+    this.dialogService.openMatDialog(RolesAndPermissionsDialogComponent, dialogConfig);
   }
 
   isAdmin(role: string): boolean {
