@@ -46,18 +46,15 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
     }
 
     public async Task<ITextCorpus> CreateAsync(IEnumerable<string> projects, TextCorpusType type) =>
-        new DictionaryTextCorpus(await CreateTextsAsync(projects, type, false));
+        new DictionaryTextCorpus(await CreateTextsAsync(projects, type, preTranslate: false));
 
-    public async Task<ITextCorpus> CreateAsync(
-        IEnumerable<string> projects,
-        TextCorpusType type,
-        bool includeBlankSegments
-    ) => new DictionaryTextCorpus(await CreateTextsAsync(projects, type, includeBlankSegments));
+    public async Task<ITextCorpus> CreateAsync(IEnumerable<string> projects, TextCorpusType type, bool preTranslate) =>
+        new DictionaryTextCorpus(await CreateTextsAsync(projects, type, preTranslate));
 
     private async Task<IReadOnlyList<IText>> CreateTextsAsync(
         IEnumerable<string> projects,
         TextCorpusType type,
-        bool includeBlankSegments
+        bool preTranslate
     )
     {
         StringTokenizer wordTokenizer = new LatinWordTokenizer();
@@ -68,20 +65,35 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
         var texts = new List<IText>();
         foreach (string projectId in projects)
         {
-            var project = await _realtimeService.GetSnapshotAsync<SFProject>(projectId);
-            if (string.IsNullOrWhiteSpace(project.TranslateConfig.Source?.ProjectRef))
-            {
-                throw new DataNotFoundException("The source project reference is missing");
-            }
-
+            SFProject project = await _realtimeService.GetSnapshotAsync<SFProject>(projectId);
+            List<TextInfo> projectTexts = project.Texts.Where(t => t.HasSource).ToList();
             string textCorpusProjectId;
             string paratextId;
-            List<TextInfo> projectTexts = project.Texts.Where(t => t.HasSource).ToList();
             switch (type)
             {
                 case TextCorpusType.Source:
-                    textCorpusProjectId = project.TranslateConfig.Source.ProjectRef;
-                    paratextId = project.TranslateConfig.Source.ParatextId;
+                    if (preTranslate && project.TranslateConfig.DraftConfig.AlternateSource is not null)
+                    {
+                        textCorpusProjectId = project.TranslateConfig.DraftConfig.AlternateSource.ProjectRef;
+                        paratextId = project.TranslateConfig.DraftConfig.AlternateSource.ParatextId;
+                    }
+                    else if (project.TranslateConfig.Source is not null)
+                    {
+                        textCorpusProjectId = project.TranslateConfig.Source.ProjectRef;
+                        paratextId = project.TranslateConfig.Source.ParatextId;
+                    }
+                    else
+                    {
+                        throw new DataNotFoundException("The source project reference is missing");
+                    }
+
+                    // If we are pre-translating, get all source texts to generate all needed pre-translations
+                    if (preTranslate)
+                    {
+                        var sourceProject = await _realtimeService.GetSnapshotAsync<SFProject>(textCorpusProjectId);
+                        projectTexts = sourceProject.Texts;
+                    }
+
                     break;
 
                 case TextCorpusType.Target:
@@ -107,7 +119,7 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
                                 projectId,
                                 text.BookNum,
                                 chapter.Number,
-                                includeBlankSegments,
+                                includeBlankSegments: preTranslate,
                                 doc
                             )
                         );
