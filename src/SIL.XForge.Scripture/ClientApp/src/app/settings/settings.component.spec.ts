@@ -191,6 +191,70 @@ describe('SettingsComponent', () => {
       expect(env.inputElement(env.translationSuggestionsCheckbox).disabled).toBe(false);
     }));
 
+    describe('Alternate Source Dropdown', () => {
+      it('should change alternate source select value', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        env.wait();
+        expect(env.alternateSourceSelect).not.toBeNull();
+        expect(env.alternateSourceSelectValue).toBe('');
+        expect(env.statusDone(env.alternateSourceStatus)).toBeNull();
+
+        env.setAlternateSourceValue('paratextId02');
+
+        expect(env.alternateSourceSelectValue).toContain('ParatextP2');
+        expect(env.statusDone(env.alternateSourceStatus)).not.toBeNull();
+      }));
+
+      it('should display alternate source project even if user is not a member', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            alternateSource: {
+              paratextId: 'paratextId01',
+              projectRef: 'paratext01',
+              name: 'ParatextP1',
+              shortName: 'PT1',
+              writingSystem: {
+                tag: 'qaa'
+              }
+            }
+          }
+        });
+        when(mockedParatextService.getProjects()).thenResolve([
+          {
+            paratextId: 'paratextId02',
+            name: 'ParatextP2',
+            shortName: 'PT2',
+            languageTag: 'qaa',
+            isConnectable: true,
+            isConnected: false
+          }
+        ]);
+        when(mockedParatextService.getResources()).thenResolve([]);
+
+        env.wait();
+        env.wait();
+        expect(env.alternateSourceSelect).not.toBeNull();
+        expect(env.alternateSourceSelectValue).toBe('ParatextP1');
+        expect(env.alternateSourceSelectProjectsResources.length).toEqual(1);
+        expect(env.alternateSourceSelectProjectsResources[0].name).toBe('ParatextP2');
+      }));
+
+      it('should display projects then resources', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        env.wait();
+        expect(env.inputElement(env.translationSuggestionsCheckbox).checked).toBe(true);
+        expect(env.alternateSourceSelect).not.toBeNull();
+        expect(env.alternateSourceSelectProjectsResources.length).toEqual(5);
+        expect(env.alternateSourceSelectProjectsResources[1].name).toBe('ParatextP2');
+        expect(env.alternateSourceSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
+      }));
+    });
+
     describe('Translation Suggestions options', () => {
       it('should see login button when Paratext account not connected', fakeAsync(() => {
         const env = new TestEnvironment();
@@ -582,12 +646,20 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#checkbox-translation-suggestions'));
   }
 
+  get alternateSourceSelect(): DebugElement {
+    return this.fixture.debugElement.query(By.css('app-project-select#alternateSourceParatextId'));
+  }
+
+  get alternateSourceStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#alternate-source-status'));
+  }
+
   get translationSuggestionsStatus(): DebugElement {
     return this.fixture.debugElement.query(By.css('#translation-suggestions-status'));
   }
 
   get basedOnSelect(): DebugElement {
-    return this.fixture.debugElement.query(By.css('app-project-select'));
+    return this.fixture.debugElement.query(By.css('app-project-select#sourceParatextId'));
   }
 
   get basedOnStatus(): DebugElement {
@@ -676,6 +748,20 @@ class TestEnvironment {
     this.fixture.detectChanges();
   }
 
+  get alternateSourceSelectValue(): string {
+    return this.alternateSourceSelectComponent.paratextIdControl.value?.name || '';
+  }
+
+  get alternateSourceSelectComponent(): ProjectSelectComponent {
+    return this.alternateSourceSelect.componentInstance as ProjectSelectComponent;
+  }
+
+  get alternateSourceSelectProjectsResources(): SelectableProject[] {
+    return (this.alternateSourceSelectComponent.projects || []).concat(
+      this.alternateSourceSelectComponent.resources || []
+    );
+  }
+
   get basedOnSelectValue(): string {
     return this.basedOnSelectComponent.paratextIdControl.value?.name || '';
   }
@@ -730,6 +816,11 @@ class TestEnvironment {
     return element.nativeElement.querySelector('.error-icon') as HTMLElement;
   }
 
+  setAlternateSourceValue(value: string): void {
+    this.alternateSourceSelectComponent.value = value;
+    this.wait();
+  }
+
   setBasedOnValue(value: string): void {
     this.basedOnSelectComponent.value = value;
     this.wait();
@@ -753,7 +844,8 @@ class TestEnvironment {
         writingSystem: {
           tag: 'qaa'
         }
-      }
+      },
+      draftConfig: {}
     },
     checkingConfig: Partial<CheckingConfig> = {
       checkingEnabled: false,
