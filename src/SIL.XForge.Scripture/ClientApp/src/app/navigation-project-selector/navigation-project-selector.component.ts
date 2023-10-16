@@ -24,15 +24,15 @@ export class NavigationProjectSelectorComponent {
     return this.onlineStatusService.isOnline;
   }
 
+  get selectedProjectId(): string | undefined {
+    return this.selected?.id;
+  }
+
   projectLabel(doc: SFProjectProfileDoc): string {
     return projectLabel({
       name: doc.data?.name,
       shortName: doc.data?.shortName,
       paratextId: doc.data?.paratextId
     } as SelectableProject);
-  }
-
-  get selectedProjectId(): string | undefined {
-    return this.selected?.id;
   }
 }

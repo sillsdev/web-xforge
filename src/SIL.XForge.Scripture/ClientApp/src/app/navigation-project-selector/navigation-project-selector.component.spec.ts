@@ -7,15 +7,20 @@ import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge
 import { By } from '@angular/platform-browser';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { mock, when } from 'ts-mockito';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { NavigationProjectSelectorComponent } from './navigation-project-selector.component';
 
 const mockOnlineStatusService = mock(OnlineStatusService);
+const mockFeatureFlagService = mock(FeatureFlagService);
 
 describe('NavigationProjectSelectorComponent', () => {
   configureTestingModule(() => ({
     declarations: [NavigationProjectSelectorComponent],
-    providers: [{ provide: OnlineStatusService, useMock: mockOnlineStatusService }],
+    providers: [
+      { provide: OnlineStatusService, useMock: mockOnlineStatusService },
+      { provide: FeatureFlagService, useMock: mockFeatureFlagService }
+    ],
     imports: [UICommonModule, NoopAnimationsModule, TestTranslocoModule]
   }));
 
@@ -26,6 +31,8 @@ describe('NavigationProjectSelectorComponent', () => {
     env.click(env.select);
     const options = env.options;
     expect(options.length).toEqual(3);
+    env.click(options[0]);
+    expect(env.component.changed).toEqual('project01');
     env.click(options[2]);
     expect(env.component.changed).toEqual('*connect-project*');
     env.wait();
