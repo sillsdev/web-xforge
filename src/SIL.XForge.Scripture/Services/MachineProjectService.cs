@@ -30,6 +30,11 @@ namespace SIL.XForge.Scripture.Services;
 /// </summary>
 public class MachineProjectService : IMachineProjectService
 {
+    // Supported translation engines
+    private const string Echo = "Echo";
+    private const string Nmt = "Nmt";
+    internal const string SmtTransfer = "SmtTransfer";
+
     private readonly IDataFilesClient _dataFilesClient;
     private readonly IEngineService _engineService;
     private readonly IExceptionHandler _exceptionHandler;
@@ -162,6 +167,7 @@ public class MachineProjectService : IMachineProjectService
             // which is not present until after the first sync (not from the Registry).
 
             // If the source or target writing system tag is missing, get them from the ScrText
+            // We do not need to do this for the alternate source as this would have been populated correctly
             if (
                 string.IsNullOrWhiteSpace(projectDoc.Data.WritingSystem.Tag)
                 || string.IsNullOrWhiteSpace(projectDoc.Data.TranslateConfig.Source?.WritingSystem.Tag)
@@ -218,25 +224,21 @@ public class MachineProjectService : IMachineProjectService
             bool recreateTranslationEngine = false;
 
             // See if the target language has changed
-            if (translationEngine.TargetLanguage != projectDoc.Data.WritingSystem.Tag)
+            string projectTargetLanguage = GetTargetLanguage(projectDoc.Data, translationEngine.Type == Echo);
+            if (translationEngine.TargetLanguage != projectTargetLanguage)
             {
                 string message =
-                    $"Target language has changed from {translationEngine.TargetLanguage} to {projectDoc.Data.WritingSystem.Tag}.";
+                    $"Target language has changed from {translationEngine.TargetLanguage} to {projectTargetLanguage}.";
                 _logger.LogInformation(message);
                 recreateTranslationEngine = true;
             }
 
-            // The source language for echo must be the same as the target language
-            string projectSourceLanguage =
-                translationEngine.Type == "Echo"
-                    ? projectDoc.Data.WritingSystem.Tag
-                    : projectDoc.Data.TranslateConfig.Source!.WritingSystem.Tag;
-
             // See if the source language has changed
+            string projectSourceLanguage = GetSourceLanguage(projectDoc.Data);
             if (translationEngine.SourceLanguage != projectSourceLanguage)
             {
                 string message =
-                    $"Source language has changed from {translationEngine.TargetLanguage} to {projectDoc.Data.WritingSystem.Tag}.";
+                    $"Source language has changed from {translationEngine.SourceLanguage} to {projectSourceLanguage}.";
                 _logger.LogInformation(message);
                 recreateTranslationEngine = true;
             }
@@ -593,8 +595,6 @@ public class MachineProjectService : IMachineProjectService
         {
             // Echo requires the target and source language to be the same, as it outputs your source texts
             bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
-            string targetLanguage = project.WritingSystem.Tag;
-            string sourceLanguage = project.TranslateConfig.Source!.WritingSystem.Tag;
 
             // Create or update the corpus
             TranslationCorpus corpus;
@@ -604,11 +604,11 @@ public class MachineProjectService : IMachineProjectService
                 SourceFiles = newSourceCorpusFiles
                     .Select(f => new TranslationCorpusFileConfig { FileId = f.FileId, TextId = f.TextId })
                     .ToList(),
-                SourceLanguage = sourceLanguage,
+                SourceLanguage = GetSourceLanguage(project),
                 TargetFiles = newTargetCorpusFiles
                     .Select(f => new TranslationCorpusFileConfig { FileId = f.FileId, TextId = f.TextId })
                     .ToList(),
-                TargetLanguage = useEcho ? sourceLanguage : targetLanguage,
+                TargetLanguage = GetTargetLanguage(project, useEcho),
             };
             if (string.IsNullOrEmpty(corpusId))
             {
@@ -651,6 +651,27 @@ public class MachineProjectService : IMachineProjectService
 
         return corpusUpdated;
     }
+
+    /// <summary>
+    /// Gets the source language for the project.
+    /// </summary>
+    /// <param name="project">The project.</param>
+    /// <returns>The source language.</returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    private static string GetSourceLanguage(SFProject project) =>
+        project.TranslateConfig.DraftConfig.AlternateSource?.WritingSystem.Tag
+        ?? project.TranslateConfig.Source?.WritingSystem.Tag
+        ?? throw new ArgumentNullException(nameof(project));
+
+    /// <summary>
+    /// Gets the target language for the project
+    /// </summary>
+    /// <param name="project">The project.</param>
+    /// <param name="useEcho">If <c>true</c>, the echo translation engine is in use.</param>
+    /// <returns>The target language.</returns>
+    /// <exception cref="ArgumentNullException"></exception>
+    private static string GetTargetLanguage(SFProject project, bool useEcho) =>
+        useEcho ? GetSourceLanguage(project) : project.WritingSystem.Tag;
 
     /// <summary>
     /// Gets the segments from the text with Unix/Linux line endings.
@@ -744,17 +765,15 @@ public class MachineProjectService : IMachineProjectService
             bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
             string type = preTranslate switch
             {
-                true when useEcho => "Echo",
-                true => "Nmt",
-                false => "SmtTransfer",
+                true when useEcho => Echo,
+                true => Nmt,
+                false => SmtTransfer,
             };
-            string targetLanguage = sfProject.WritingSystem.Tag;
-            string sourceLanguage = sfProject.TranslateConfig.Source!.WritingSystem.Tag;
             TranslationEngineConfig engineConfig = new TranslationEngineConfig
             {
                 Name = sfProject.Id,
-                SourceLanguage = sourceLanguage,
-                TargetLanguage = useEcho ? sourceLanguage : targetLanguage,
+                SourceLanguage = GetSourceLanguage(sfProject),
+                TargetLanguage = GetTargetLanguage(sfProject, useEcho),
                 Type = type,
             };
 

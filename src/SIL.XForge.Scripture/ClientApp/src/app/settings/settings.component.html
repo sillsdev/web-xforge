@@ -30,6 +30,7 @@
                 <mat-hint>{{ t("translation_suggestions_require_source_text") }}</mat-hint>
                 <div class="tool-setting-field">
                   <app-project-select
+                    id="sourceParatextId"
                     formControlName="sourceParatextId"
                     [placeholder]="t('source_text_placeholder')"
                     [projects]="projects"
@@ -106,6 +107,7 @@
                 <p class="helper-text">{{ t("pre_translation_drafting_description") }}</p>
                 <div class="tool-setting-field">
                   <app-project-select
+                    id="alternateSourceParatextId"
                     formControlName="alternateSourceParatextId"
                     [placeholder]="t('pre_translation_source_text_placeholder')"
                     [projects]="projects"
@@ -117,7 +119,7 @@
                   <app-write-status
                     [state]="getControlState('alternateSourceParatextId')"
                     [formGroup]="form"
-                    id="based-on-status"
+                    id="alternate-source-status"
                   ></app-write-status>
                 </div>
               </ng-container>
