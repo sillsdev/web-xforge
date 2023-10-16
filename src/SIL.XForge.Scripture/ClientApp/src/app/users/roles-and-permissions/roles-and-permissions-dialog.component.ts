@@ -1,8 +1,9 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { FormControl, FormGroup } from '@angular/forms';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { UserProfile } from 'realtime-server/common/models/user';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole, isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { SFProjectDoc } from 'src/app/core/models/sf-project-doc';
@@ -19,15 +20,15 @@ export interface UserData {
 
 @Component({
   selector: 'app-roles-and-permissions',
-  templateUrl: './roles-and-permissions.component.html',
-  styleUrls: ['./roles-and-permissions.component.scss']
+  templateUrl: './roles-and-permissions-dialog.component.html',
+  styleUrls: ['./roles-and-permissions-dialog.component.scss']
 })
-export class RolesAndPermissionsComponent implements OnInit {
-  readonly roles = new UntypedFormControl(undefined);
-  readonly canAddEditQuestions = new UntypedFormControl(false);
-  readonly canManageAudio = new UntypedFormControl(false);
+export class RolesAndPermissionsDialogComponent implements OnInit {
+  readonly roles: FormControl<any> = new FormControl<string>('');
+  readonly canAddEditQuestions = new FormControl(false);
+  readonly canManageAudio = new FormControl(false);
 
-  readonly form = new UntypedFormGroup({
+  readonly form = new FormGroup({
     roles: this.roles,
     canAddEditQuestions: this.canAddEditQuestions,
     canManageAudio: this.canManageAudio
@@ -49,7 +50,7 @@ export class RolesAndPermissionsComponent implements OnInit {
     });
 
     this.projectDoc = await this.projectService.get(this.data.projectId);
-    const project = this.projectDoc.data;
+    const project: Readonly<SFProject | undefined> = this.projectDoc.data;
 
     if (project === undefined) {
       this.form.disable();
@@ -58,12 +59,12 @@ export class RolesAndPermissionsComponent implements OnInit {
 
     this.roles.setValue(project.userRoles[this.data.userId]);
 
-    const canAddEditQuestions =
+    const canAddEditQuestions: boolean =
       SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.Questions, Operation.Create) &&
       SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.Questions, Operation.Edit);
     this.canAddEditQuestions.setValue(canAddEditQuestions);
 
-    const canManageAudio =
+    const canManageAudio: boolean =
       SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.TextAudio, Operation.Create) &&
       SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.TextAudio, Operation.Edit) &&
       SF_PROJECT_RIGHTS.hasRight(project, this.data.userId, SFProjectDomain.TextAudio, Operation.Delete);
@@ -87,7 +88,7 @@ export class RolesAndPermissionsComponent implements OnInit {
     await this.projectService.onlineUpdateUserRole(this.data.projectId, this.data.userId, selectedRole);
     this.projectDoc = await this.projectService.get(this.data.projectId);
 
-    const permissions = new Set((this.projectDoc?.data?.userPermissions || {})[this.data.userId] || []);
+    const permissions = new Set((this.projectDoc?.data?.userPermissions ?? {})[this.data.userId] || []);
 
     [
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
@@ -111,7 +112,7 @@ export class RolesAndPermissionsComponent implements OnInit {
       return Object.values(SFProjectRole).filter(r => isParatextRole(r));
     } else {
       const scriptureForgeRoles = Object.values(SFProjectRole).filter(r => !isParatextRole(r));
-      return scriptureForgeRoles.filter(r => r !== SFProjectRole.None && r !== SFProjectRole.Commenter);
+      return scriptureForgeRoles.filter(r => r !== SFProjectRole.None);
     }
   }
 }

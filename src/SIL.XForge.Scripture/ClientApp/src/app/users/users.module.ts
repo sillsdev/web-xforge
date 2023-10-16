@@ -5,12 +5,12 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SharedModule } from '../shared/shared.module';
 import { CollaboratorsComponent } from './collaborators/collaborators.component';
-import { RolesAndPermissionsComponent } from './roles-and-permissions/roles-and-permissions.component';
+import { RolesAndPermissionsDialogComponent } from './roles-and-permissions/roles-and-permissions-dialog.component';
 import { UsersRoutingModule } from './users-routing.module';
 import { UsersComponent } from './users.component';
 
 @NgModule({
-  declarations: [CollaboratorsComponent, UsersComponent, RolesAndPermissionsComponent],
+  declarations: [CollaboratorsComponent, UsersComponent, RolesAndPermissionsDialogComponent],
   imports: [UsersRoutingModule, CommonModule, SharedModule, UICommonModule, XForgeCommonModule, TranslocoModule]
 })
 export class UsersModule {}
