@@ -1085,7 +1085,7 @@ public class MachineApiServiceTests
                         Name = "my_translation_engine",
                         SourceLanguage = sourceLanguageTag,
                         TargetLanguage = targetLanguageTag,
-                        Type = "SmtTransfer",
+                        Type = MachineProjectService.SmtTransfer,
                     }
                 )
             );

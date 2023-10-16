@@ -2107,6 +2107,64 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task UpdateSettingsAsync_ChangeAlternateSource_CannotUseTargetProject()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext_" + Project01;
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { AlternateSourceParatextId = paratextId }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.ParatextId, Is.EqualTo(paratextId));
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef, Is.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ParatextId, Is.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.Name, Is.Null);
+
+        await env.MachineProjectService
+            .DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService
+            .DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_ChangeAlternateSource_CreatesProject()
+    {
+        var env = new TestEnvironment();
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { AlternateSourceParatextId = "changedId" }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef, Is.Not.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ParatextId, Is.EqualTo("changedId"));
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.Name, Is.EqualTo("NewSource"));
+
+        SFProject alternateSourceProject = env.GetProject(
+            project.TranslateConfig.DraftConfig.AlternateSource!.ProjectRef
+        );
+        Assert.That(alternateSourceProject.ParatextId, Is.EqualTo("changedId"));
+        Assert.That(alternateSourceProject.Name, Is.EqualTo("NewSource"));
+
+        await env.MachineProjectService
+            .DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService
+            .DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+    }
+
+    [Test]
     public async Task UpdateSettingsAsync_ChangeSourceProject_RecreateMachineProjectAndSync()
     {
         var env = new TestEnvironment();
