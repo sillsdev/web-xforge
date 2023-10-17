@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpClient, HttpHandler } from '@angular/common/http';
 import { Component, DebugElement, Input, NgModule } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
@@ -56,6 +57,8 @@ describe('RolesAndPermissionsComponent', () => {
     imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: ExternalUrlService },
+      { provide: HttpClient },
+      { provide: HttpHandler },
       { provide: I18nService },
       { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
       { provide: SFProjectService, useMock: mockedProjectService }
