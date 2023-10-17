@@ -28,3 +28,10 @@ mat-icon {
     }
   }
 }
+
+// .material-icons class has 'direction: ltr' even when ancestor is rtl
+:host-context([dir='rtl']) {
+  mat-icon {
+    direction: rtl;
+  }
+}

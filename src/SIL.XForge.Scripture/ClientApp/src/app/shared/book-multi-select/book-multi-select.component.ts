@@ -1,17 +1,16 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
-import { I18nService } from 'xforge-common/i18n.service';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Canon } from '@sillsdev/scripture';
 
 export interface BookOption {
   bookNum: number;
-  name: string;
+  bookId: string;
   selected: boolean;
 }
 
 @Component({
   selector: 'app-book-multi-select',
   templateUrl: './book-multi-select.component.html',
-  styleUrls: ['./book-multi-select.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrls: ['./book-multi-select.component.scss']
 })
 export class BookMultiSelectComponent implements OnChanges {
   @Input() availableBooks: number[] = [];
@@ -21,17 +20,17 @@ export class BookMultiSelectComponent implements OnChanges {
 
   bookOptions: BookOption[] = [];
 
-  constructor(private i18n: I18nService) {}
-
-  ngOnChanges(): void {
-    // Update book list
-    this.initBookOptions();
+  ngOnChanges(changes: SimpleChanges): void {
+    // Ignore the first change, which is array initialization to empty array
+    if (!changes.availableBooks?.firstChange) {
+      this.initBookOptions();
+    }
   }
 
   initBookOptions(): void {
     this.bookOptions = this.availableBooks.map((bookNum: number) => ({
       bookNum,
-      name: this.i18n.localizeBook(bookNum),
+      bookId: Canon.bookNumberToId(bookNum),
       selected: this.selectedBooks?.includes(bookNum) ?? false
     }));
   }

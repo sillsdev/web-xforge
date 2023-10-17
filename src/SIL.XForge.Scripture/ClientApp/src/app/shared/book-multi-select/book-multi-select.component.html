@@ -1,6 +1,8 @@
-<mat-chip-list [multiple]="true" class="book-multi-select" [class.readonly]="readonly">
-  <mat-chip *ngFor="let book of bookOptions" [selected]="book.selected" (click)="!readonly && toggleSelection(book)">
-    <mat-icon *ngIf="book.selected && !readonly">check</mat-icon>
-    {{ book.name }}
-  </mat-chip>
-</mat-chip-list>
+<ng-container *transloco="let t">
+  <mat-chip-list [multiple]="true" class="book-multi-select" [class.readonly]="readonly">
+    <mat-chip *ngFor="let book of bookOptions" [selected]="book.selected" (click)="!readonly && toggleSelection(book)">
+      <mat-icon *ngIf="book.selected && !readonly">check</mat-icon>
+      {{ t("canon.book_names." + book.bookId) }}
+    </mat-chip>
+  </mat-chip-list>
+</ng-container>

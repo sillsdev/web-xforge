@@ -6,7 +6,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
 import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './draft-generation-steps.component';
@@ -31,7 +31,7 @@ describe('DraftGenerationStepsComponent', () => {
   } as SFProjectProfileDoc;
 
   configureTestingModule(() => ({
-    imports: [MatStepperModule, MatMenuModule, NoopAnimationsModule],
+    imports: [MatStepperModule, MatMenuModule, TestTranslocoModule, NoopAnimationsModule],
     declarations: [DraftGenerationStepsComponent],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
