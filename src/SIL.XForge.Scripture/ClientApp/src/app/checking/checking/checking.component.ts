@@ -18,7 +18,7 @@ import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/te
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { VerseRefData, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subscription, combineLatest, merge } from 'rxjs';
-import { filter, map, throttleTime } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, startWith, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -37,12 +37,12 @@ import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
+import { getVerseRefFromSegmentRef } from '../../shared/utils';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { BookChapter, CheckingAccessInfo, CheckingUtils, QuestionScope, isQuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { getVerseRefFromSegmentRef } from '../../shared/utils';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsService, PreCreationQuestionData, QuestionFilter } from './checking-questions.service';
@@ -515,9 +515,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               throw new Error('Project has no texts');
             }
 
-            if (this.hideChapterText) this.showScriptureAudioPlayer = true;
-            this.calculateScriptureSliderPosition();
-
             this.books = this.projectDoc.data.texts.map(t => t.bookNum) ?? [];
             this.initQuestionFilters();
 
@@ -528,7 +525,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
             // Subscribe to the projectDoc now that it is defined
             this.projectRemoteChangesSub?.unsubscribe();
-            this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, ops => {
+            this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, () => {
               if (this.projectDoc != null && this.projectDoc.data != null) {
                 if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
                   this.onRemovedFromProject();
@@ -551,15 +548,19 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                     this.onRemovedFromProject();
                   }
                 }
-
-                for (const op of ops) {
-                  if (op.p.length > 1 && op.p[0] === 'checkingConfig' && op.p[1] === 'hideCommunityCheckingText') {
-                    if (this.hideChapterText) this.showScriptureAudioPlayer = true;
-                    this.calculateScriptureSliderPosition();
-                  }
-                }
               }
             });
+
+            this.projectDoc.changes$
+              .pipe(
+                map(() => this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText),
+                startWith(this.projectDoc.data.checkingConfig.hideCommunityCheckingText),
+                distinctUntilChanged()
+              )
+              .subscribe(() => {
+                if (this.hideChapterText) this.showScriptureAudioPlayer = true;
+                this.calculateScriptureSliderPosition();
+              });
 
             this.projectDeleteSub?.unsubscribe();
             this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
