@@ -197,6 +197,18 @@ describe('CheckingComponent', () => {
       expect(nextQuestion).toEqual(1);
     }));
 
+    it('should re-calculate scripture slide position on resize', fakeAsync(() => {
+      const testProject: SFProject = TestEnvironment.generateTestProject();
+      testProject.checkingConfig.hideCommunityCheckingText = true;
+      const env = new TestEnvironment({ user: CHECKER_USER, testProject });
+      const spySliderPosition = spyOn<any>(env.component, 'calculateScriptureSliderPosition').and.callThrough();
+      window.dispatchEvent(new Event('resize'));
+      env.waitForSliderUpdate();
+      expect(spySliderPosition).toHaveBeenCalledTimes(1);
+      flush();
+      discardPeriodicTasks();
+    }));
+
     describe('Prev/Next question buttons', () => {
       it('prev/next disabled state based on existence of prev/next question', fakeAsync(() => {
         const env = new TestEnvironment({ user: ADMIN_USER, projectBookRoute: 'JHN', projectChapterRoute: 1 });

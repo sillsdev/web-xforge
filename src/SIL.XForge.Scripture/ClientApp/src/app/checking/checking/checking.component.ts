@@ -17,7 +17,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { combineLatest, merge, Subscription } from 'rxjs';
+import { combineLatest, fromEvent, merge, Subscription } from 'rxjs';
 import { filter, map, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -704,6 +704,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         });
       }
     );
+    this.subscribe(fromEvent(window, 'resize'), () => this.calculateScriptureSliderPosition());
   }
 
   ngOnDestroy(): void {
