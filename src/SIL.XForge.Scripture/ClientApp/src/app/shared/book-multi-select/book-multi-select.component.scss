@@ -6,6 +6,13 @@
   cursor: pointer;
 }
 
+mat-icon {
+  width: auto;
+  height: auto;
+  font-size: 17px;
+  margin-inline-end: 10px;
+}
+
 .mat-chip-list {
   .mat-chip-selected {
     background-color: #4a79c9;
