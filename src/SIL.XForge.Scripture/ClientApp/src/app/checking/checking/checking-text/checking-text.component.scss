@@ -1,8 +1,8 @@
 @import '../checking-global-vars';
 
 :host {
+  height: 100%;
   display: flex;
-  overflow-y: auto;
 }
 
 app-text {
