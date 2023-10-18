@@ -152,7 +152,7 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult<Build>(null));
 
         // SUT
-        BuildDto? actual = await env.Service.GetBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetBuildAsync(
             User01,
             Project01,
             Build01,
@@ -226,7 +226,7 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.TimeOut);
 
         // SUT
-        BuildDto? actual = await env.Service.GetBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetBuildAsync(
             User01,
             Project01,
             Build01,
@@ -348,7 +348,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
-        BuildDto? actual = await env.Service.GetBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetBuildAsync(
             User01,
             Project01,
             Build01,
@@ -397,7 +397,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        BuildDto? actual = await env.Service.GetBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetBuildAsync(
             User01,
             Project01,
             Build01,
@@ -477,7 +477,7 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult<Build>(null));
 
         // SUT
-        BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
             User01,
             Project01,
             minRevision: null,
@@ -548,7 +548,7 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.TimeOut);
 
         // SUT
-        BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
             User01,
             Project01,
             minRevision: null,
@@ -688,7 +688,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
-        BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
             User01,
             Project01,
             minRevision: null,
@@ -736,7 +736,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
             User01,
             Project01,
             minRevision: null,
@@ -791,7 +791,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
             User01,
             Project01,
             minRevision: null,
@@ -1150,7 +1150,7 @@ public class MachineApiServiceTests
             );
 
         // SUT
-        BuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
             User01,
             Project01,
             CancellationToken.None
@@ -1263,7 +1263,7 @@ public class MachineApiServiceTests
             );
 
         // SUT
-        BuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
             User01,
             Project01,
             CancellationToken.None
@@ -1599,7 +1599,7 @@ public class MachineApiServiceTests
         await env.QueuePreTranslationBuildAsync(DateTime.UtcNow.AddHours(-6), errorMessage);
 
         // SUT
-        BuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+        ServalBuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
             User01,
             Project01,
             CancellationToken.None
@@ -1616,7 +1616,7 @@ public class MachineApiServiceTests
         await env.QueuePreTranslationBuildAsync(DateTime.UtcNow.AddHours(-6));
 
         // SUT
-        BuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+        ServalBuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
             User01,
             Project01,
             CancellationToken.None
@@ -1632,7 +1632,7 @@ public class MachineApiServiceTests
         await env.QueuePreTranslationBuildAsync();
 
         // SUT
-        BuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+        ServalBuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
             User01,
             Project01,
             CancellationToken.None
@@ -1647,7 +1647,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        BuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+        ServalBuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
             User01,
             Project01,
             CancellationToken.None
@@ -1797,7 +1797,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
-        BuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+        ServalBuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
 
         Assert.AreEqual(message, actual.Message);
         Assert.AreEqual(percentCompleted, actual.PercentCompleted);
@@ -1838,7 +1838,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        BuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+        ServalBuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
 
         await env.MachineProjectService
             .Received(1)

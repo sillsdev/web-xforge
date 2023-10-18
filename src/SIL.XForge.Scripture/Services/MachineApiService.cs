@@ -168,7 +168,7 @@ public class MachineApiService : IMachineApiService
         }
     }
 
-    public async Task<BuildDto?> GetBuildAsync(
+    public async Task<ServalBuildDto?> GetBuildAsync(
         string curUserId,
         string sfProjectId,
         string buildId,
@@ -177,7 +177,7 @@ public class MachineApiService : IMachineApiService
         CancellationToken cancellationToken
     )
     {
-        BuildDto? buildDto = null;
+        ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId);
@@ -227,13 +227,13 @@ public class MachineApiService : IMachineApiService
         return buildDto;
     }
 
-    public async Task<BuildDto?> GetLastCompletedPreTranslationBuildAsync(
+    public async Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
         string curUserId,
         string sfProjectId,
         CancellationToken cancellationToken
     )
     {
-        BuildDto? buildDto = null;
+        ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId);
@@ -278,7 +278,7 @@ public class MachineApiService : IMachineApiService
         return buildDto;
     }
 
-    public async Task<BuildDto?> GetCurrentBuildAsync(
+    public async Task<ServalBuildDto?> GetCurrentBuildAsync(
         string curUserId,
         string sfProjectId,
         long? minRevision,
@@ -286,7 +286,7 @@ public class MachineApiService : IMachineApiService
         CancellationToken cancellationToken
     )
     {
-        BuildDto? buildDto = null;
+        ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId);
@@ -444,7 +444,7 @@ public class MachineApiService : IMachineApiService
         return preTranslation;
     }
 
-    public async Task<BuildDto?> GetPreTranslationQueuedStateAsync(
+    public async Task<ServalBuildDto?> GetPreTranslationQueuedStateAsync(
         string curUserId,
         string sfProjectId,
         CancellationToken cancellationToken
@@ -459,7 +459,7 @@ public class MachineApiService : IMachineApiService
             // If we have an error message, report that to the user
             if (!string.IsNullOrWhiteSpace(projectSecret.ServalData?.PreTranslationErrorMessage))
             {
-                return new BuildDto
+                return new ServalBuildDto
                 {
                     State = BuildStateFaulted,
                     Message = projectSecret.ServalData.PreTranslationErrorMessage,
@@ -475,7 +475,7 @@ public class MachineApiService : IMachineApiService
             // If the build was queued 6 hours or more ago, it will have failed to upload
             if (projectSecret.ServalData?.PreTranslationQueuedAt <= DateTime.UtcNow.AddHours(-6))
             {
-                return new BuildDto
+                return new ServalBuildDto
                 {
                     State = BuildStateFaulted,
                     Message = "The build failed to upload to the server.",
@@ -483,7 +483,11 @@ public class MachineApiService : IMachineApiService
             }
 
             // The build is queued and uploading is occurring in the background
-            return new BuildDto { State = BuildStateQueued, Message = "The build is being uploaded to the server." };
+            return new ServalBuildDto
+            {
+                State = BuildStateQueued,
+                Message = "The build is being uploaded to the server.",
+            };
         }
 
         return null;
@@ -547,13 +551,13 @@ public class MachineApiService : IMachineApiService
         return wordGraph;
     }
 
-    public async Task<BuildDto> StartBuildAsync(
+    public async Task<ServalBuildDto> StartBuildAsync(
         string curUserId,
         string sfProjectId,
         CancellationToken cancellationToken
     )
     {
-        BuildDto? buildDto = null;
+        ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId);
@@ -824,8 +828,8 @@ public class MachineApiService : IMachineApiService
         return translationResults.ToArray();
     }
 
-    private static BuildDto CreateDto(Build build) =>
-        new BuildDto
+    private static ServalBuildDto CreateDto(Build build) =>
+        new ServalBuildDto
         {
             Id = build.Id,
             Revision = build.Revision,
@@ -834,13 +838,14 @@ public class MachineApiService : IMachineApiService
             State = build.State,
         };
 
-    private static BuildDto CreateDto(TranslationBuild translationBuild) =>
-        new BuildDto
+    private static ServalBuildDto CreateDto(TranslationBuild translationBuild) =>
+        new ServalBuildDto
         {
             Id = translationBuild.Id,
             Revision = translationBuild.Revision,
             PercentCompleted = translationBuild.PercentCompleted ?? 0.0,
             Message = translationBuild.Message,
+            QueueDepth = translationBuild.QueueDepth ?? 0,
             State = translationBuild.State.ToString().ToUpperInvariant(),
         };
 
@@ -975,7 +980,7 @@ public class MachineApiService : IMachineApiService
         }
     }
 
-    private static BuildDto UpdateDto(BuildDto buildDto, string sfProjectId)
+    private static ServalBuildDto UpdateDto(ServalBuildDto buildDto, string sfProjectId)
     {
         buildDto.Href = MachineApi.GetBuildHref(sfProjectId, buildDto.Id);
         buildDto.Engine = new ResourceDto { Id = sfProjectId, Href = MachineApi.GetEngineHref(sfProjectId) };
@@ -1038,14 +1043,14 @@ public class MachineApiService : IMachineApiService
         return "The Serval and Machine Feature Flags are not configured";
     }
 
-    private async Task<BuildDto?> GetInProcessBuildAsync(
+    private async Task<ServalBuildDto?> GetInProcessBuildAsync(
         BuildLocatorType locatorType,
         string locator,
         long? minRevision,
         CancellationToken cancellationToken
     )
     {
-        BuildDto? buildDto = null;
+        ServalBuildDto? buildDto = null;
         Build? build;
         if (minRevision is not null)
         {
