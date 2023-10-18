@@ -448,6 +448,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       : 0;
   }
 
+  private get contentPanelHeight(): number {
+    return this.scripturePanelContainerElement?.nativeElement.offsetHeight;
+  }
+
   private get scriptureAudioPlayerAreaHeight(): number {
     const scriptureAudioPlayerArea: Element | null = document.querySelector('.scripture-audio-player-wrapper');
     return scriptureAudioPlayerArea == null ? 0 : scriptureAudioPlayerArea.getBoundingClientRect().height;
@@ -720,10 +724,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         });
       }
     );
-    this.subscribe(
-      fromEvent(window, 'resize'),
-      () => (this.scriptureAreaMaxSize = this.scriptureAudioPlayerHeightPercent)
-    );
+    this.subscribe(fromEvent(window, 'resize'), () => {
+      if (this.hideChapterText && this.contentPanelHeight > this.scriptureAudioPlayerAreaHeight) {
+        this.scriptureAreaMaxSize = this.scriptureAudioPlayerHeightPercent;
+        this.calculateScriptureSliderPosition();
+      }
+    });
   }
 
   ngOnDestroy(): void {
