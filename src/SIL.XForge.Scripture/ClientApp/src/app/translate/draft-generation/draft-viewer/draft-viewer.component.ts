@@ -62,7 +62,7 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
     this.targetProject = this.activatedProjectService.projectDoc?.data;
     this.sourceProjectId = this.targetProject?.translateConfig.source?.projectRef!;
     this.projectSettingsUrl = `/projects/${this.activatedProjectService.projectId}/settings`;
-    this.books = this.targetProject?.texts.map(t => t.bookNum) ?? [];
+    this.books = this.targetProject?.texts.map(t => t.bookNum).sort((a, b) => a - b) ?? [];
 
     if (this.sourceProjectId) {
       this.sourceProject = (await this.projectService.getProfile(this.sourceProjectId)).data;

@@ -513,7 +513,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             }
 
             this.showOrHideScriptureText();
-            this.books = this.projectDoc.data.texts.map(t => t.bookNum) ?? [];
+            this.books = this.projectDoc.data.texts.map(t => t.bookNum).sort((a, b) => a - b);
             this.initQuestionFilters();
 
             this.projectUserConfigDoc = await this.projectService.getUserConfig(

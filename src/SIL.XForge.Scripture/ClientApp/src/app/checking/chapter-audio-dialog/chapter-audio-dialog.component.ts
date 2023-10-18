@@ -93,7 +93,9 @@ export class ChapterAudioDialogComponent implements AfterViewInit {
   }
 
   get books(): number[] {
-    return Object.values(this.data.textsByBookId).map(t => t.bookNum);
+    return Object.values(this.data.textsByBookId)
+      .map(t => t.bookNum)
+      .sort((a, b) => a - b);
   }
 
   get chapter(): number {
