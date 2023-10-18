@@ -709,9 +709,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       }
     );
     this.subscribe(fromEvent(window, 'resize'), () => {
-      if (this.hideChapterText && this.contentPanelHeight > this.scriptureAudioPlayerAreaHeight) {
+      if (this.hideChapterText) {
         this.scriptureAreaMaxSize = this.scriptureAudioPlayerHeightPercent;
-        this.calculateScriptureSliderPosition();
+        if (this.contentPanelHeight > this.scriptureAudioPlayerAreaHeight) {
+          this.calculateScriptureSliderPosition();
+        }
       }
     });
   }
