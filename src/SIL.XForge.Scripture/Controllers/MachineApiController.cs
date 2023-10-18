@@ -97,7 +97,7 @@ public class MachineApiController : ControllerBase
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpGet(MachineApi.GetBuild)]
-    public async Task<ActionResult<BuildDto?>> GetBuildAsync(
+    public async Task<ActionResult<ServalBuildDto?>> GetBuildAsync(
         string sfProjectId,
         string? buildId,
         [FromQuery] int? minRevision,
@@ -107,7 +107,7 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            BuildDto? build = null;
+            ServalBuildDto? build = null;
             if (preTranslate && buildId is null)
             {
                 build = await _machineApiService.GetPreTranslationQueuedStateAsync(
@@ -205,14 +205,14 @@ public class MachineApiController : ControllerBase
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
     [HttpGet(MachineApi.GetLastCompletedPreTranslationBuild)]
-    public async Task<ActionResult<BuildDto?>> GetLastCompletedPreTranslationBuildAsync(
+    public async Task<ActionResult<ServalBuildDto?>> GetLastCompletedPreTranslationBuildAsync(
         string sfProjectId,
         CancellationToken cancellationToken
     )
     {
         try
         {
-            BuildDto? build = await _machineApiService.GetLastCompletedPreTranslationBuildAsync(
+            ServalBuildDto? build = await _machineApiService.GetLastCompletedPreTranslationBuildAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 cancellationToken
@@ -346,7 +346,7 @@ public class MachineApiController : ControllerBase
     {
         try
         {
-            BuildDto build = await _machineApiService.StartBuildAsync(
+            ServalBuildDto build = await _machineApiService.StartBuildAsync(
                 _userAccessor.UserId,
                 sfProjectId,
                 cancellationToken
