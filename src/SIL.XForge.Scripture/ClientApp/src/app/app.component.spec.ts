@@ -23,6 +23,7 @@ import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module'
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ErrorReportingService } from 'xforge-common/error-reporting.service';
+import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { FileService } from 'xforge-common/file.service';
 import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -43,7 +44,7 @@ import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
 import { SFProjectService } from './core/sf-project.service';
-import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
+import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 import { paratextUsersFromRoles } from './shared/test-utils';
 import { NavigationProjectSelectorComponent } from './navigation-project-selector/navigation-project-selector.component';
 
@@ -51,6 +52,7 @@ const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
 const mockedSettingsAuthGuard = mock(SettingsAuthGuard);
 const mockedSyncAuthGuard = mock(SyncAuthGuard);
+const mockedNmtDraftAuthGuard = mock(NmtDraftAuthGuard);
 const mockedUsersAuthGuard = mock(UsersAuthGuard);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedQuestionsService = mock(CheckingQuestionsService);
@@ -64,6 +66,7 @@ const mockedFileService = mock(FileService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedMdcDialog = mock(MdcDialog);
 const mockedDialogService = mock(DialogService);
+const mockedFeatureFlagService = mock(FeatureFlagService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -75,6 +78,7 @@ const ROUTES: Route[] = [
   { path: 'projects/:projectId', component: MockComponent },
   { path: 'projects/:projectId/translate/:bookId', component: MockComponent },
   { path: 'projects/:projectId/translate', component: MockComponent },
+  { path: 'projects/:projectId/draft-generation', component: MockComponent },
   { path: 'projects/:projectId/checking/:bookId', component: MockComponent },
   { path: 'projects/:projectId/checking', component: MockComponent },
   { path: 'projects', component: MockComponent },
@@ -100,6 +104,7 @@ describe('AppComponent', () => {
       { provide: UserService, useMock: mockedUserService },
       { provide: SettingsAuthGuard, useMock: mockedSettingsAuthGuard },
       { provide: SyncAuthGuard, useMock: mockedSyncAuthGuard },
+      { provide: NmtDraftAuthGuard, useMock: mockedNmtDraftAuthGuard },
       { provide: UsersAuthGuard, useMock: mockedUsersAuthGuard },
       { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: CheckingQuestionsService, useMock: mockedQuestionsService },
@@ -109,6 +114,7 @@ describe('AppComponent', () => {
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: PwaService, useMock: mockedPwaService },
       { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: FileService, useMock: mockedFileService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
       { provide: MdcDialog, useMock: mockedMdcDialog },
@@ -162,6 +168,24 @@ describe('AppComponent', () => {
     env.selectItem(0);
     // Expect: Community Checking | Overview | Synchronize | Settings | Users
     expect(env.menuLength).toEqual(5);
+  }));
+
+  it('hides generate draft when user does not have access', fakeAsync(() => {
+    const env = new TestEnvironment();
+    when(mockedFeatureFlagService.showNmtDrafting).thenReturn({ enabled: true } as ObservableFeatureFlag);
+    env.navigate(['/projects', 'project01']);
+    env.init();
+
+    expect(env.isDrawerVisible).toEqual(true);
+    expect(env.component.isTranslateEnabled).toBe(true);
+    // Expect: Translate | Community Checking | Synchronize | Settings | Users
+    expect(env.menuLength).toEqual(5);
+    env.selectItem(0);
+    // Expect: Translate | Overview | Generate | Matthew | Mark | Community Checking | Synchronize | Settings | Users
+    expect(env.menuLength).toEqual(9);
+    env.allowUserToSeeGenerateDraft(false);
+    // Expect: Translate | Overview | Matthew | Mark | Community Checking | Synchronize | Settings | Users
+    expect(env.menuLength).toEqual(8);
   }));
 
   it('hides community checking tool from commenters', fakeAsync(() => {
@@ -611,6 +635,7 @@ class TestEnvironment {
   readonly questions: Question[];
   readonly ngZone: NgZone;
   readonly canSync$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+  readonly canSeeGenerateDraft$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   readonly canSeeSettings$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   readonly canSeeUsers$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
   readonly hasUpdate$: Subject<any> = new Subject<any>();
@@ -682,6 +707,7 @@ class TestEnvironment {
     when(mockedUserService.currentProjectId(anything())).thenReturn('project01');
     when(mockedSettingsAuthGuard.allowTransition(anything())).thenReturn(this.canSeeSettings$);
     when(mockedSyncAuthGuard.allowTransition(anything())).thenReturn(this.canSync$);
+    when(mockedNmtDraftAuthGuard.allowTransition(anything())).thenReturn(this.canSeeGenerateDraft$);
     when(mockedUsersAuthGuard.allowTransition(anything())).thenReturn(this.canSeeUsers$);
     when(mockedCookieService.get(anything())).thenReturn('en');
     const comesOnline = new Promise<void>(resolve => {
@@ -701,6 +727,12 @@ class TestEnvironment {
       this.comesOnline$.next();
       this.goFullyOnline();
     }
+    when(mockedFeatureFlagService.showNmtDrafting).thenReturn({ enabled: false } as ObservableFeatureFlag);
+    when(mockedFeatureFlagService.showFeatureFlags).thenReturn({ enabled: false } as ObservableFeatureFlag);
+    when(mockedFeatureFlagService.stillness).thenReturn({ enabled: false } as ObservableFeatureFlag);
+    when(mockedFeatureFlagService.showNonPublishedLocalizations).thenReturn({
+      enabled: false
+    } as ObservableFeatureFlag);
     when(mockedFileService.notifyUserIfStorageQuotaBelow(anything())).thenResolve();
     when(mockedPwaService.hasUpdate$).thenReturn(this.hasUpdate$);
 
@@ -875,6 +907,12 @@ class TestEnvironment {
 
   allowUserToSync(canSync: boolean = true): void {
     this.canSync$.next(canSync);
+    this.fixture.detectChanges();
+    tick();
+  }
+
+  allowUserToSeeGenerateDraft(canSeeGenerateDraft: boolean = true): void {
+    this.canSeeGenerateDraft$.next(canSeeGenerateDraft);
     this.fixture.detectChanges();
     tick();
   }
