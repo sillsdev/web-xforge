@@ -116,6 +116,15 @@
     "please_type_project_name": "Please type in the name of the project to confirm.",
     "project_name": "Project Name"
   },
+  "draft_generation_steps": {
+    "back": "Back",
+    "choose_books_for_training": "Choose books for training",
+    "choose_books_for_training_info": "Choose books with the most polished translations, as these will be used to train the model.",
+    "confirm_books_and_generate": "Confirm books and generate",
+    "generate_draft": "Generate draft",
+    "next": "Next",
+    "no_books_selected": "Click \"Back\" to select books."
+  },
   "editor": {
     "add_comment": "Add Comment",
     "anonymous": "Anonymous",
