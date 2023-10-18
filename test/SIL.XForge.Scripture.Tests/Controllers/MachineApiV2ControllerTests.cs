@@ -9,6 +9,7 @@ using NUnit.Framework;
 using Polly.CircuitBreaker;
 using Serval.Client;
 using SIL.Machine.WebApi;
+using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
 
@@ -71,7 +72,7 @@ public class MachineApiV2ControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetBuildAsync(User01, Project01, Build01, null, false, CancellationToken.None)
-            .Returns(Task.FromResult<BuildDto>(null));
+            .Returns(Task.FromResult<ServalBuildDto>(null));
 
         // SUT
         ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
@@ -131,7 +132,7 @@ public class MachineApiV2ControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetBuildAsync(User01, Project01, Build01, null, false, CancellationToken.None)
-            .Returns(Task.FromResult(new BuildDto { Engine = new ResourceDto() }));
+            .Returns(Task.FromResult(new ServalBuildDto { Engine = new ResourceDto() }));
 
         // SUT
         ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
@@ -193,7 +194,7 @@ public class MachineApiV2ControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetCurrentBuildAsync(User01, Project01, null, false, CancellationToken.None)
-            .Returns(Task.FromResult<BuildDto>(null));
+            .Returns(Task.FromResult<ServalBuildDto>(null));
 
         // SUT
         ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
@@ -253,7 +254,7 @@ public class MachineApiV2ControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetCurrentBuildAsync(User01, Project01, null, false, CancellationToken.None)
-            .Returns(Task.FromResult(new BuildDto { Engine = new ResourceDto() }));
+            .Returns(Task.FromResult(new ServalBuildDto { Engine = new ResourceDto() }));
 
         // SUT
         ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
@@ -460,7 +461,7 @@ public class MachineApiV2ControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .StartBuildAsync(User01, Project01, CancellationToken.None)
-            .Returns(Task.FromResult(new BuildDto { Engine = new ResourceDto() }));
+            .Returns(Task.FromResult(new ServalBuildDto { Engine = new ResourceDto() }));
 
         // SUT
         ActionResult<BuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
