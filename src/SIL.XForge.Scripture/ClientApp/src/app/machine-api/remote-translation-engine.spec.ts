@@ -208,7 +208,8 @@ describe('RemoteTranslationEngine', () => {
           engine: { id: 'engine01', href: 'translation/engines/id:engine01' },
           percentCompleted: 0.1,
           message: 'broken',
-          state: BuildStates.Faulted
+          state: BuildStates.Faulted,
+          queueDepth: 0
         }
       })
     );
@@ -409,7 +410,8 @@ describe('RemoteTranslationEngine', () => {
           engine: { id: 'engine01', href: 'translation/engines/id:engine01' },
           percentCompleted: 0,
           message: '',
-          state: BuildStates.Pending
+          state: BuildStates.Pending,
+          queueDepth: 0
         }
       })
     );
@@ -494,7 +496,8 @@ class TestEnvironment {
           engine: { id: 'engine01', href: 'translation/engines/id:engine01' },
           percentCompleted: 0,
           message: '',
-          state: BuildStates.Pending
+          state: BuildStates.Pending,
+          queueDepth: 0
         }
       })
     );
@@ -512,7 +515,8 @@ class TestEnvironment {
             engine: { id: 'engine01', href: 'translation/engines/id:engine01' },
             percentCompleted: i / 10,
             message: '',
-            state: i === 10 ? BuildStates.Completed : BuildStates.Active
+            state: i === 10 ? BuildStates.Completed : BuildStates.Active,
+            queueDepth: 0
           }
         })
       );
