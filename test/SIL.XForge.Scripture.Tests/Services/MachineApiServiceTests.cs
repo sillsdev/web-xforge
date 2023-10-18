@@ -1808,7 +1808,12 @@ public class MachineApiServiceTests
 
         await env.MachineProjectService
             .Received(1)
-            .SyncProjectCorporaAsync(User01, Project01, preTranslate: false, CancellationToken.None);
+            .SyncProjectCorporaAsync(
+                User01,
+                Arg.Is<BuildConfig>(b => b.ProjectId == Project01),
+                preTranslate: false,
+                CancellationToken.None
+            );
         Assert.AreEqual(message, actual.Message);
         Assert.AreEqual(percentCompleted, actual.PercentCompleted);
         Assert.AreEqual(revision, actual.Revision);
@@ -1835,7 +1840,12 @@ public class MachineApiServiceTests
         await env.EngineService.Received(1).StartBuildAsync(TranslationEngine01);
         await env.MachineProjectService
             .Received(1)
-            .SyncProjectCorporaAsync(User01, Project01, preTranslate: false, CancellationToken.None);
+            .SyncProjectCorporaAsync(
+                User01,
+                Arg.Is<BuildConfig>(b => b.ProjectId == Project01),
+                preTranslate: false,
+                CancellationToken.None
+            );
         await env.TranslationEnginesClient
             .Received(1)
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
@@ -1850,7 +1860,12 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            () =>
+                env.Service.StartPreTranslationBuildAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    CancellationToken.None
+                )
         );
     }
 
@@ -1862,7 +1877,12 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.StartPreTranslationBuildAsync("invalid_user_id", Project01, CancellationToken.None)
+            () =>
+                env.Service.StartPreTranslationBuildAsync(
+                    "invalid_user_id",
+                    new BuildConfig { ProjectId = Project01 },
+                    CancellationToken.None
+                )
         );
     }
 
@@ -1874,7 +1894,12 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.StartPreTranslationBuildAsync(User01, "invalid_project_id", CancellationToken.None)
+            () =>
+                env.Service.StartPreTranslationBuildAsync(
+                    User01,
+                    new BuildConfig { ProjectId = "invalid_project_id" },
+                    CancellationToken.None
+                )
         );
     }
 
@@ -1885,7 +1910,11 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01 },
+            CancellationToken.None
+        );
 
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);

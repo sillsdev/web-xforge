@@ -829,12 +829,16 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService
-            .StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            .StartPreTranslationBuildAsync(
+                User01,
+                Arg.Is<BuildConfig>(p => p.ProjectId == Project01),
+                CancellationToken.None
+            )
             .Throws(new BrokenCircuitException());
 
         // SUT
         ActionResult<BuildDto> actual = await env.Controller.StartPreTranslationBuildAsync(
-            Project01,
+            new BuildConfig { ProjectId = Project01 },
             CancellationToken.None
         );
 
@@ -849,12 +853,16 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService
-            .StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            .StartPreTranslationBuildAsync(
+                User01,
+                Arg.Is<BuildConfig>(p => p.ProjectId == Project01),
+                CancellationToken.None
+            )
             .Throws(new ForbiddenException());
 
         // SUT
         ActionResult<BuildDto> actual = await env.Controller.StartPreTranslationBuildAsync(
-            Project01,
+            new BuildConfig { ProjectId = Project01 },
             CancellationToken.None
         );
 
@@ -867,12 +875,16 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService
-            .StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            .StartPreTranslationBuildAsync(
+                User01,
+                Arg.Is<BuildConfig>(p => p.ProjectId == Project01),
+                CancellationToken.None
+            )
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
         ActionResult<BuildDto> actual = await env.Controller.StartPreTranslationBuildAsync(
-            Project01,
+            new BuildConfig { ProjectId = Project01 },
             CancellationToken.None
         );
 
@@ -885,11 +897,14 @@ public class MachineApiControllerTests
         // Set up test environment
         var env = new TestEnvironment();
         env.MachineApiService
-            .StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            .StartPreTranslationBuildAsync(User01, new BuildConfig { ProjectId = Project01 }, CancellationToken.None)
             .Returns(Task.CompletedTask);
 
         // SUT
-        ActionResult actual = await env.Controller.StartPreTranslationBuildAsync(Project01, CancellationToken.None);
+        ActionResult actual = await env.Controller.StartPreTranslationBuildAsync(
+            new BuildConfig { ProjectId = Project01 },
+            CancellationToken.None
+        );
 
         Assert.IsInstanceOf<OkResult>(actual);
     }
