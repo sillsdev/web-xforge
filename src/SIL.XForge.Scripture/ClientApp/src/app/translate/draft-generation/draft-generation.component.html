@@ -185,7 +185,12 @@
               <section *ngIf="isDraftQueued(draftJob)">
                 <h3>Draft queued</h3>
 
-                <p>The back translation draft has been queued. Please check back later.</p>
+                <p *ngIf="draftJob?.queueDepth ?? 0 === 0">
+                  The back translation draft has been queued. Please check back later.
+                </p>
+                <p *ngIf="draftJob?.queueDepth ?? 0 > 0">
+                  The back translation draft is number {{ draftJob?.queueDepth }} in the queue. Please check back later.
+                </p>
                 <p *ngIf="hasAnyCompletedBuild">
                   While the new draft generation is in progress, you can continue working with the previously generated
                   draft.
