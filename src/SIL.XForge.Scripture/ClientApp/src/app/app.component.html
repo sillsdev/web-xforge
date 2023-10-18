@@ -146,7 +146,7 @@
             {{ t("overview") }}
           </a>
           <a
-            *ngIf="featureFlags.showNmtDrafting.enabled"
+            *ngIf="featureFlags.showNmtDrafting.enabled && (canSeeNmtDrafts$ | async)"
             mat-list-item
             [appRouterLink]="getRouterLink('draft-generation')"
             (click)="itemSelected()"
