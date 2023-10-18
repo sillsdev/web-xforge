@@ -6,4 +6,5 @@ export interface BuildDto extends ResourceDto {
   percentCompleted: number;
   message: string;
   state: string;
+  queueDepth: number;
 }

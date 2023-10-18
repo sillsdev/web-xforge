@@ -24,7 +24,8 @@ describe('DraftGenerationService', () => {
     },
     percentCompleted: 0,
     message: '',
-    state: BuildStates.Queued
+    state: BuildStates.Queued,
+    queueDepth: 0
   };
 
   beforeAll(() => {
