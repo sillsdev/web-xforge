@@ -11,7 +11,7 @@
     <!-- Set this to true if you enable server-side prerendering -->
     <BuildServerSideRenderer>false</BuildServerSideRenderer>
     <UserSecretsId>4d0606c3-0fc7-4d76-b43b-236485004e81</UserSecretsId>
-    <MachineVersion>2.5.14</MachineVersion>
+    <MachineVersion>2.5.15</MachineVersion>
     <RealtimeServerRoot>..\RealtimeServer\</RealtimeServerRoot>
     <AngularConfig>production</AngularConfig>
     <Nullable>annotations</Nullable>
@@ -34,7 +34,7 @@
     <!-- When using a new major or minor version of ParatextData, update where dependencies.yml copies the
          InternetSettings.xml file. Also update server config scriptureforge.org_v2.yml. -->
     <PackageReference Include="ParatextData" Version="9.3.0.9" />
-    <PackageReference Include="Serval.Client" Version="0.5.4" />
+    <PackageReference Include="Serval.Client" Version="0.6.0" />
     <PackageReference Include="SIL.Machine.WebApi" Version="$(MachineVersion)" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="6.0.0" />
