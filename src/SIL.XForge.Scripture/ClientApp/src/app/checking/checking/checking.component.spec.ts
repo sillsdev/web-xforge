@@ -2099,6 +2099,29 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
+    it('pauses audio when question is archived', fakeAsync(() => {
+      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      const audio = mock(CheckingScriptureAudioPlayerComponent);
+      env.component.scriptureAudioPlayer = instance(audio);
+
+      env.selectQuestion(1);
+      const question = env.component.answersPanel!.questionDoc!.data!;
+      expect(question.isArchived).toBe(false);
+
+      env.archiveQuestionButton.nativeElement.click();
+      env.waitForQuestionTimersToComplete();
+      discardPeriodicTasks();
+
+      expect(question.isArchived).toBe(true);
+
+      verify(audio.pause()).once();
+      expect(env.component).toBeDefined();
+      discardPeriodicTasks();
+    }));
+
     it('hides chapter audio if chapter audio is absent', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
       env.component.toggleAudio();

@@ -779,6 +779,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         this.triggerUpdate();
         break;
       case 'archive':
+        this._scriptureAudioPlayer?.pause();
         this.triggerUpdate();
         break;
       case 'like':
