@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { CommandService } from 'xforge-common/command.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-import { PROJECTS_URL } from 'xforge-common/url-constants';
+// import { PROJECTS_URL } from 'xforge-common/url-constants';
 
 export interface FeatureFlag {
   readonly key: string;
@@ -93,6 +93,7 @@ export class FeatureFlagStore extends SubscriptionDisposable {
   }
 
   private retrieveFeatureFlagsIfMissing(): void {
+    /* Temporarily disabled
     if (this.remoteFlagCacheExpiry <= new Date() && this.onlineStatusService.isOnline) {
       // Set to the next remote flag cache expiry timestamp for 1 hour so that the null check above returns false
       this.remoteFlagCacheExpiry = new Date(new Date().getTime() + 3_600_000);
@@ -120,6 +121,7 @@ export class FeatureFlagStore extends SubscriptionDisposable {
           this.remoteFlagCacheExpiry = new Date(new Date().getTime() + recheckInMinutes * 60_000);
         });
     }
+    */
   }
 }
 
