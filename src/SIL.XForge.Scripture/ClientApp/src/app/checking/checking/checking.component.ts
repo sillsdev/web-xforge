@@ -16,8 +16,8 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { combineLatest, fromEvent, merge, Subscription } from 'rxjs';
+import { VerseRefData, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { Subscription, combineLatest, fromEvent, merge } from 'rxjs';
 import { filter, map, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -37,12 +37,12 @@ import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
+import { getVerseRefFromSegmentRef } from '../../shared/utils';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
-import { BookChapter, CheckingAccessInfo, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
+import { BookChapter, CheckingAccessInfo, CheckingUtils, QuestionScope, isQuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { getVerseRefFromSegmentRef } from '../../shared/utils';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsService, PreCreationQuestionData, QuestionFilter } from './checking-questions.service';
@@ -446,6 +446,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       : 0;
   }
 
+  private get contentPanelHeight(): number {
+    return this.scripturePanelContainerElement?.nativeElement.offsetHeight;
+  }
+
   private get scriptureAudioPlayerAreaHeight(): number {
     const scriptureAudioPlayerArea: Element | null = document.querySelector('.scripture-audio-player-wrapper');
     return scriptureAudioPlayerArea == null ? 0 : scriptureAudioPlayerArea.getBoundingClientRect().height;
@@ -704,10 +708,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         });
       }
     );
-    this.subscribe(
-      fromEvent(window, 'resize'),
-      () => (this.scriptureAreaMaxSize = this.scriptureAudioPlayerHeightPercent)
-    );
+    this.subscribe(fromEvent(window, 'resize'), () => {
+      if (this.hideChapterText && this.contentPanelHeight > this.scriptureAudioPlayerAreaHeight) {
+        this.scriptureAreaMaxSize = this.scriptureAudioPlayerHeightPercent;
+        this.calculateScriptureSliderPosition();
+      }
+    });
   }
 
   ngOnDestroy(): void {
