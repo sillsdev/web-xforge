@@ -720,7 +720,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         });
       }
     );
-    this.subscribe(fromEvent(window, 'resize'), () => this.calculateScriptureSliderPosition());
+    this.subscribe(
+      fromEvent(window, 'resize'),
+      () => (this.scriptureAreaMaxSize = this.scriptureAudioPlayerHeightPercent)
+    );
   }
 
   ngOnDestroy(): void {
