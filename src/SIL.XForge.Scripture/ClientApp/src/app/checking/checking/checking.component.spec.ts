@@ -201,10 +201,11 @@ describe('CheckingComponent', () => {
       const testProject: SFProject = TestEnvironment.generateTestProject();
       testProject.checkingConfig.hideCommunityCheckingText = true;
       const env = new TestEnvironment({ user: CHECKER_USER, testProject });
-      const spySliderPosition = spyOn<any>(env.component, 'calculateScriptureSliderPosition').and.callThrough();
-      window.dispatchEvent(new Event('resize'));
       env.waitForSliderUpdate();
-      expect(spySliderPosition).toHaveBeenCalledTimes(1);
+      (env.component as any)._scriptureAreaMaxSize = 1;
+      expect(env.component.scriptureAreaMaxSize).toEqual(1);
+      window.dispatchEvent(new Event('resize'));
+      expect(env.component.scriptureAreaMaxSize).toBeGreaterThan(1);
       flush();
       discardPeriodicTasks();
     }));
