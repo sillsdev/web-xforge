@@ -6,10 +6,7 @@
           <h2>
             {{ t("questions") }} <span>({{ totalVisibleQuestionsString }})</span>
           </h2>
-          <button mat-icon-button [matMenuTriggerFor]="questionFilterMenu">
-            <mat-icon [ngClass]="{ 'material-icons-outlined': !isQuestionFilterApplied }">filter_alt</mat-icon>
-          </button>
-          <mat-menu #questionFilterMenu xPosition="before">
+          <mat-menu #questionFilterMenu>
             <mat-selection-list [multiple]="true" class="menu-list">
               <h2 matSubheader>{{ t("questions_range") }}</h2>
               <button
