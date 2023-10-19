@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { CommandService } from 'xforge-common/command.service';
+import { AnonymousService } from 'xforge-common/anonymous.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
-// import { PROJECTS_URL } from 'xforge-common/url-constants';
+import { PROJECTS_URL } from 'xforge-common/url-constants';
 
 export interface FeatureFlag {
   readonly key: string;
@@ -29,7 +29,7 @@ export class FeatureFlagStore extends SubscriptionDisposable {
   private remoteFlagCacheExpiry: Date = new Date();
 
   constructor(
-    private readonly commandService: CommandService,
+    private readonly anonymousService: AnonymousService,
     private readonly onlineStatusService: OnlineStatusService
   ) {
     super();
@@ -93,12 +93,11 @@ export class FeatureFlagStore extends SubscriptionDisposable {
   }
 
   private retrieveFeatureFlagsIfMissing(): void {
-    /* Temporarily disabled
     if (this.remoteFlagCacheExpiry <= new Date() && this.onlineStatusService.isOnline) {
       // Set to the next remote flag cache expiry timestamp for 1 hour so that the null check above returns false
       this.remoteFlagCacheExpiry = new Date(new Date().getTime() + 3_600_000);
-      this.commandService
-        .onlineInvoke<{ [key: string]: boolean }>(PROJECTS_URL, 'featureFlags')
+      this.anonymousService
+        .featureFlags()
         .then(flags => {
           this.remoteFlags = flags ?? {};
           // Set any feature flag values to local storage
@@ -121,7 +120,6 @@ export class FeatureFlagStore extends SubscriptionDisposable {
           this.remoteFlagCacheExpiry = new Date(new Date().getTime() + recheckInMinutes * 60_000);
         });
     }
-    */
   }
 }
 
