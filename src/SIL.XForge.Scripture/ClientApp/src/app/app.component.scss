@@ -24,22 +24,6 @@ $toolbar-height: 56px;
     z-index: 8;
   }
 
-  .project-select {
-    ::ng-deep .mdc-select__anchor {
-      width: 100%;
-    }
-
-    .mdc-list-item {
-      // Fix overflow in Firefox when a project name uses the Khmer script. As of 2022-11-11, the DBL resource
-      // KHSV05 is one example that will cause overflow, which looks particularly bad in RTL mode because it
-      // overflows to the left in a menu that is layed out in LTR.
-      overflow-wrap: anywhere;
-
-      height: unset;
-      min-height: 48px;
-    }
-  }
-
   > header {
     position: absolute;
 

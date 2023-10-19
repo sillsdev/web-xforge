@@ -108,25 +108,11 @@
       [opened]="isExpanded || isDrawerPermanent"
       (closed)="drawerCollapsed()"
     >
-      <mdc-select
-        *ngIf="projectDocs != null"
-        dir="auto"
-        class="project-select"
-        (valueChange)="projectChanged($event.value)"
-      >
-        <mdc-menu>
-          <mdc-list>
-            <mdc-list-item *ngFor="let projectDoc of projectDocs" [value]="projectDoc.id">{{
-              projectLabel(projectDoc.data)
-            }}</mdc-list-item>
-            <mdc-list-divider></mdc-list-divider>
-            <mdc-list-item [dir]="i18n.direction" value="*connect-project*" [class.list-item-disabled]="!isAppOnline">
-              <mdc-icon mdcListItemGraphic>add</mdc-icon>
-              {{ t("connect_project") }}
-            </mdc-list-item>
-          </mdc-list>
-        </mdc-menu>
-      </mdc-select>
+      <app-navigation-project-selector
+        [projectDocs]="projectDocs"
+        [selected]="selectedProjectDoc"
+        (changed)="projectChanged($event)"
+      ></app-navigation-project-selector>
       <mat-nav-list id="tools-menu-list">
         <a
           mat-list-item

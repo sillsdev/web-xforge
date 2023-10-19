@@ -1,10 +1,8 @@
 import { MdcIconRegistry } from '@angular-mdc/web';
-import { MdcSelect } from '@angular-mdc/web/select';
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
 import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
-import { DefaultFocusState } from '@material/menu/constants';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
@@ -44,7 +42,6 @@ import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { canAccessCommunityCheckingApp, canAccessTranslateApp } from './core/models/sf-project-role-info';
 import { SFProjectService } from './core/sf-project.service';
 import { SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
-import { projectLabel } from './shared/utils';
 
 declare function gtag(...args: any): void;
 
@@ -72,12 +69,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   canSeeAdminPages$?: Observable<boolean>;
   hasUpdate: boolean = false;
 
-  projectLabel = projectLabel;
-
   private currentUserDoc?: UserDoc;
   private isLoggedInUserAnonymous: boolean = false;
-  private _projectSelect?: MdcSelect;
-  private selectedProjectDoc?: SFProjectProfileDoc;
+  private _selectedProjectDoc?: SFProjectProfileDoc;
   private selectedProjectDeleteSub?: Subscription;
   private removedFromProjectSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
@@ -158,9 +152,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   get showCheckingDisabled(): boolean {
     return (
-      this.selectedProjectDoc != null &&
-      this.selectedProjectDoc.data != null &&
-      !this.selectedProjectDoc.data.checkingConfig.checkingEnabled &&
+      this._selectedProjectDoc != null &&
+      this._selectedProjectDoc.data != null &&
+      !this._selectedProjectDoc.data.checkingConfig.checkingEnabled &&
       !canAccessTranslateApp(this.selectedProjectRole)
     );
   }
@@ -172,22 +166,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   /** If is production server. */
   get isLive(): boolean {
     return environment.releaseStage === 'live';
-  }
-
-  get projectSelect(): MdcSelect | undefined {
-    return this._projectSelect;
-  }
-
-  @ViewChild(MdcSelect)
-  set projectSelect(value: MdcSelect | undefined) {
-    this._projectSelect = value;
-    if (this._projectSelect != null) {
-      setTimeout(() => {
-        if (this._projectSelect != null && this.selectedProjectDoc != null) {
-          this._projectSelect.value = this.selectedProjectDoc.id;
-        }
-      });
-    }
   }
 
   get isDrawerPermanent(): boolean {
@@ -221,7 +199,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
   get isCheckingEnabled(): boolean {
     return (
-      this.selectedProjectDoc?.data?.checkingConfig.checkingEnabled === true && this.hasCommunityCheckingPermission
+      this._selectedProjectDoc?.data?.checkingConfig.checkingEnabled === true && this.hasCommunityCheckingPermission
     );
   }
 
@@ -245,8 +223,12 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return getAuthType(this.currentUser.authId) === AuthType.Account;
   }
 
+  get selectedProjectDoc(): SFProjectProfileDoc | undefined {
+    return this._selectedProjectDoc;
+  }
+
   get selectedProjectId(): string | undefined {
-    return this.selectedProjectDoc == null ? undefined : this.selectedProjectDoc.id;
+    return this._selectedProjectDoc == null ? undefined : this._selectedProjectDoc.id;
   }
 
   get isProjectSelected(): boolean {
@@ -254,13 +236,13 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get selectedProjectRole(): SFProjectRole | undefined {
-    return this.selectedProjectDoc == null || this.selectedProjectDoc.data == null || this.currentUserDoc == null
+    return this._selectedProjectDoc == null || this._selectedProjectDoc.data == null || this.currentUserDoc == null
       ? undefined
-      : (this.selectedProjectDoc.data.userRoles[this.currentUserDoc.id] as SFProjectRole);
+      : (this._selectedProjectDoc.data.userRoles[this.currentUserDoc.id] as SFProjectRole);
   }
 
   get texts(): TextInfo[] {
-    return this.selectedProjectDoc?.data?.texts.slice().sort((a, b) => a.bookNum - b.bookNum) || [];
+    return this._selectedProjectDoc?.data?.texts.slice().sort((a, b) => a.bookNum - b.bookNum) || [];
   }
 
   get showAllQuestions(): boolean {
@@ -274,10 +256,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       }
     }
     return false;
-  }
-
-  get defaultFocusState(): DefaultFocusState {
-    return !this.isAppOnline ? DefaultFocusState.NONE : DefaultFocusState.LIST_ROOT;
   }
 
   async ngOnInit(): Promise<void> {
@@ -369,15 +347,15 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         return;
       }
 
-      this.selectedProjectDoc = selectedProjectDoc;
-      if (this.selectedProjectDoc == null || !this.selectedProjectDoc.isLoaded) {
+      this._selectedProjectDoc = selectedProjectDoc;
+      if (this._selectedProjectDoc == null || !this._selectedProjectDoc.isLoaded) {
         return;
       }
-      this.userService.setCurrentProjectId(this.currentUserDoc!, this.selectedProjectDoc.id);
-      this.refreshQuestionsQuery(this.selectedProjectDoc.id);
+      this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
+      this.refreshQuestionsQuery(this._selectedProjectDoc.id);
 
       // handle remotely deleted project
-      this.selectedProjectDeleteSub = this.selectedProjectDoc.delete$.subscribe(() => {
+      this.selectedProjectDeleteSub = this._selectedProjectDoc.delete$.subscribe(() => {
         if (this.userService.currentProjectId != null) {
           this.showProjectDeletedDialog();
         }
@@ -386,15 +364,15 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       if (this.removedFromProjectSub != null) {
         this.removedFromProjectSub.unsubscribe();
       }
-      this.removedFromProjectSub = this.selectedProjectDoc.remoteChanges$.subscribe(() => {
+      this.removedFromProjectSub = this._selectedProjectDoc.remoteChanges$.subscribe(() => {
         if (
-          this.selectedProjectDoc?.data != null &&
+          this._selectedProjectDoc?.data != null &&
           this.currentUserDoc != null &&
-          !(this.currentUserDoc.id in this.selectedProjectDoc.data.userRoles)
+          !(this.currentUserDoc.id in this._selectedProjectDoc.data.userRoles)
         ) {
           // The user has been removed from the project
           this.showProjectDeletedDialog();
-          this.projectService.localDelete(this.selectedProjectDoc.id);
+          this.projectService.localDelete(this._selectedProjectDoc.id);
         }
       });
 
@@ -403,9 +381,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       }
       if (!this.isCheckingEnabled) {
         this.checkingVisible = false;
-      }
-      if (this._projectSelect != null) {
-        this._projectSelect.value = this.selectedProjectDoc.id;
       }
 
       this.checkDeviceStorage();
@@ -472,7 +447,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         this.collapseDrawer();
       }
       this.router.navigateByUrl('/connect-project');
-    } else if (value !== '' && this.selectedProjectDoc != null && value !== this.selectedProjectDoc.id) {
+    } else if (value !== '' && this._selectedProjectDoc != null && value !== this._selectedProjectDoc.id) {
       this.router.navigate(['/projects', value]);
     }
   }
@@ -531,11 +506,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get lastSyncFailed(): boolean {
-    return this.selectedProjectDoc?.data?.sync.lastSyncSuccessful === false && !this.syncInProgress;
+    return this._selectedProjectDoc?.data?.sync.lastSyncSuccessful === false && !this.syncInProgress;
   }
 
   get syncInProgress(): boolean {
-    return this.selectedProjectDoc?.data != null && this.selectedProjectDoc.data.sync.queuedCount > 0;
+    return this._selectedProjectDoc?.data != null && this._selectedProjectDoc.data.sync.queuedCount > 0;
   }
 
   get appName(): string {
@@ -557,7 +532,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       // of the app component, but for now it is. There isn't an easy way to unsubscribe from a book that was removed,
       // and it's not extremely important to do so, so we won't bother doing that.
       for (const bookNum of books) {
-        if (!this.communityCheckingBooks.includes(bookNum)) this.selectedProjectDoc?.loadTextDocs(bookNum);
+        if (!this.communityCheckingBooks.includes(bookNum)) this._selectedProjectDoc?.loadTextDocs(bookNum);
       }
       this.communityCheckingBooks = Array.from(books).sort((a, b) => a - b);
     });
