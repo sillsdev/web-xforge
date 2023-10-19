@@ -88,7 +88,7 @@ export class RolesAndPermissionsDialogComponent implements OnInit {
     await this.projectService.onlineUpdateUserRole(this.data.projectId, this.data.userId, selectedRole);
     this.projectDoc = await this.projectService.get(this.data.projectId);
 
-    const permissions = new Set((this.projectDoc?.data?.userPermissions ?? {})[this.data.userId] || []);
+    const permissions = new Set((this.projectDoc?.data?.userPermissions ?? {})[this.data.userId] ?? []);
 
     [
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
