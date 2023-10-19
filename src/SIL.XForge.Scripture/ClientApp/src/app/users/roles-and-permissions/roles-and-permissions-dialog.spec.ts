@@ -20,8 +20,6 @@ import {
   getSFProjectUserConfigDocId
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { BehaviorSubject } from 'rxjs';
-import { NoticeComponent } from 'src/app/shared/notice/notice.component';
-import { paratextUsersFromRoles } from 'src/app/shared/test-utils';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -40,6 +38,8 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { SFProjectService } from '../../core/sf-project.service';
+import { NoticeComponent } from '../../shared/notice/notice.component';
+import { paratextUsersFromRoles } from '../../shared/test-utils';
 import { RolesAndPermissionsDialogComponent, UserData } from './roles-and-permissions-dialog.component';
 
 const mockedOnlineStatusService = mock(OnlineStatusService);
@@ -151,10 +151,10 @@ describe('RolesAndPermissionsComponent', () => {
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Delete)
     ];
     env.setupProjectData(rolesByUser, {
-      communityChecker: [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Delete)],
+      ptTranslator: [SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Delete)],
       observer: permissions
     });
-    env.openDialog('communityChecker');
+    env.openDialog('ptTranslator');
 
     //prep for role change
     when(mockedProjectService.onlineUpdateUserRole(anything(), anything(), anything())).thenCall((p, u, r) => {
@@ -163,7 +163,7 @@ describe('RolesAndPermissionsComponent', () => {
       projectDoc.submitJson0Op(op => {
         op.set(p => p.userRoles, rolesByUser);
         op.set(p => p.userPermissions, {
-          communityChecker: permissions
+          ptTranslator: permissions
         });
       });
     });
@@ -174,7 +174,7 @@ describe('RolesAndPermissionsComponent', () => {
     env.component?.save();
     tick();
 
-    verify(mockedProjectService.onlineUpdateUserRole('project01', 'communityChecker', SFProjectRole.Viewer)).once();
+    verify(mockedProjectService.onlineUpdateUserRole('project01', 'ptTranslator', SFProjectRole.Viewer)).once();
 
     permissions = permissions.concat([
       SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
@@ -185,7 +185,7 @@ describe('RolesAndPermissionsComponent', () => {
     ]);
 
     verify(
-      mockedProjectService.onlineSetUserProjectPermissions('project01', 'communityChecker', deepEqual(permissions))
+      mockedProjectService.onlineSetUserProjectPermissions('project01', 'ptTranslator', deepEqual(permissions))
     ).once();
   }));
 });
