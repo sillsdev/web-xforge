@@ -20,6 +20,11 @@ export class AnonymousService {
     return response.body!;
   }
 
+  async featureFlags(): Promise<{ [key: string]: boolean } | null> {
+    const response = await this.get<{ [key: string]: boolean }>('featureFlags');
+    return response.body;
+  }
+
   async generateAccount(shareKey: string, displayName: string, language: string): Promise<boolean> {
     const body: GenerateAccountRequest = {
       shareKey,
@@ -28,6 +33,17 @@ export class AnonymousService {
     };
     const response = await this.post<boolean>('generateAccount', body);
     return response.body!;
+  }
+
+  private get<T>(endPoint: string): Promise<HttpResponse<T>> {
+    const url: string = `${ANONYMOUS_URL}/${endPoint}`;
+    return this.http
+      .get<T>(url, {
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        responseType: 'json',
+        observe: 'response'
+      })
+      .toPromise();
   }
 
   private post<T>(endPoint: string, body?: any): Promise<HttpResponse<T>> {

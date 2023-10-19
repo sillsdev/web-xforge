@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.FeatureManagement;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
 using SIL.XForge.Services;
@@ -22,11 +25,17 @@ public class AnonymousController : ControllerBase
 {
     private readonly IAnonymousService _anonymousService;
     private readonly IExceptionHandler _exceptionHandler;
+    private readonly IFeatureManager _featureManager;
 
-    public AnonymousController(IAnonymousService anonymousService, IExceptionHandler exceptionHandler)
+    public AnonymousController(
+        IAnonymousService anonymousService,
+        IExceptionHandler exceptionHandler,
+        IFeatureManager featureManager
+    )
     {
         _anonymousService = anonymousService;
         _exceptionHandler = exceptionHandler;
+        _featureManager = featureManager;
     }
 
     /// <summary>
@@ -57,6 +66,33 @@ public class AnonymousController : ControllerBase
             );
             throw;
         }
+    }
+
+    /// <summary>
+    /// Gets the feature flags.
+    /// </summary>
+    /// <returns>The feature flags as a dictionary.</returns>
+    /// <response code="200">The feature flags were successfully retrieved.</response>
+    [HttpGet("featureFlags")]
+    public async Task<ActionResult<Dictionary<string, bool>>> FeatureFlags()
+    {
+        Dictionary<string, bool> features = new Dictionary<string, bool>();
+        await foreach (string feature in _featureManager.GetFeatureNamesAsync())
+        {
+            features.Add(feature, await _featureManager.IsEnabledAsync(feature));
+        }
+
+        // Stop JSON.NET overriding the dictionary key casing
+        return new JsonResult(
+            features,
+            new JsonSerializerSettings
+            {
+                ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new CamelCaseNamingStrategy { ProcessDictionaryKeys = false },
+                },
+            }
+        );
     }
 
     /// <summary>
