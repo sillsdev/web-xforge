@@ -45,13 +45,6 @@ import { RolesAndPermissionsDialogComponent, UserData } from './roles-and-permis
 const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedProjectService = mock(SFProjectService);
 
-const rolesByUser = {
-  communityChecker: SFProjectRole.CommunityChecker,
-  observer: SFProjectRole.Viewer,
-  ptAdmin: SFProjectRole.ParatextAdministrator,
-  ptTranslator: SFProjectRole.ParatextTranslator
-};
-
 describe('RolesAndPermissionsComponent', () => {
   configureTestingModule(() => ({
     imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
@@ -65,8 +58,15 @@ describe('RolesAndPermissionsComponent', () => {
     ]
   }));
 
+  let rolesByUser = {};
   let env: TestEnvironment;
   beforeEach(fakeAsync(() => {
+    rolesByUser = {
+      communityChecker: SFProjectRole.CommunityChecker,
+      observer: SFProjectRole.Viewer,
+      ptAdmin: SFProjectRole.ParatextAdministrator,
+      ptTranslator: SFProjectRole.ParatextTranslator
+    };
     env = new TestEnvironment();
   }));
   afterEach(fakeAsync(() => {
@@ -116,7 +116,7 @@ describe('RolesAndPermissionsComponent', () => {
     expect(env.component?.isParatextUser()).toBe(false);
   }));
 
-  it('reflects Paratext roles for Paratext users', fakeAsync(async () => {
+  it('reflects Paratext roles for Paratext users', fakeAsync(() => {
     env.setupProjectData(rolesByUser);
     env.openDialog();
 
