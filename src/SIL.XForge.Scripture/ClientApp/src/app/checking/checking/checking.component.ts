@@ -137,6 +137,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private questionsSub?: Subscription;
   private textAudioQuery?: RealtimeQuery<TextAudioDoc>;
   private projectDeleteSub?: Subscription;
+  private hideTextSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
   private questionFilterFunctions: Record<QuestionFilter, (answers: Answer[]) => boolean> = {
     [QuestionFilter.None]: () => true,
@@ -551,16 +552,18 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               }
             });
 
-            this.projectDoc.changes$
-              .pipe(
+            this.hideTextSub?.unsubscribe();
+            this.hideTextSub = this.subscribe(
+              this.projectDoc.changes$.pipe(
                 map(() => this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText),
                 startWith(this.projectDoc.data.checkingConfig.hideCommunityCheckingText),
                 distinctUntilChanged()
-              )
-              .subscribe(() => {
+              ),
+              () => {
                 if (this.hideChapterText) this.showScriptureAudioPlayer = true;
                 this.calculateScriptureSliderPosition();
-              });
+              }
+            );
 
             this.projectDeleteSub?.unsubscribe();
             this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
