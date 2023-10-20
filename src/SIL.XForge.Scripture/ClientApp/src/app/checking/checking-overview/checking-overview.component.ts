@@ -359,7 +359,6 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
       questionsSorted: this.allPublishedQuestions
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
-    // TODO: Update dashboard to show audio data
   }
 
   answerCountLabel(count?: number): string {
