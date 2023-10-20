@@ -653,7 +653,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
             this.questionsSub = this.subscribe(
               merge(
-                this.questionsQuery.ready$.pipe(filter(isReady => isReady)),
+                this.questionsQuery.ready$.pipe(
+                  // Query 'ready$' will not emit when offline (initial emission of false is due to BehaviorSubject),
+                  // but offline docs may be available.
+                  filter(isReady => isReady || !this.onlineStatusService.isOnline)
+                ),
                 this.questionsQuery.remoteChanges$.pipe(map(() => 'remote')),
                 this.questionsQuery.localChanges$.pipe(map(() => 'local')),
                 this.questionsQuery.remoteDocChanges$
