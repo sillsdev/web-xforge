@@ -3299,7 +3299,7 @@ class TestEnvironment {
     });
 
     questions = johnQuestions.concat(matthewQuestions);
-    this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, questions);
+    this.realtimeService.addSnapshots<Question>(QuestionDoc.COLLECTION, questions, true);
   }
 
   private createTextDataForChapter(chapter: number): TextData {

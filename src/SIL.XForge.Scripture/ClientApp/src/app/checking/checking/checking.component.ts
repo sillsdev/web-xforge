@@ -37,12 +37,12 @@ import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
+import { getVerseRefFromSegmentRef } from '../../shared/utils';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { BookChapter, CheckingAccessInfo, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { getVerseRefFromSegmentRef } from '../../shared/utils';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsService, PreCreationQuestionData, QuestionFilter } from './checking-questions.service';
@@ -639,7 +639,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
             this.questionsSub = this.subscribe(
               merge(
-                this.questionsQuery.ready$.pipe(filter(isReady => isReady)),
+                this.questionsQuery.ready$.pipe(
+                  // Query 'ready$' will not emit when offline (initial emission of false is due to BehaviorSubject),
+                  // but offline docs may be available.
+                  filter(isReady => isReady || !this.onlineStatusService.isOnline)
+                ),
                 this.questionsQuery.remoteChanges$.pipe(map(() => 'remote')),
                 this.questionsQuery.localChanges$.pipe(map(() => 'local')),
                 this.questionsQuery.remoteDocChanges$
