@@ -1,9 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { fakeAsync, flush } from '@angular/core/testing';
-import { instance, mock } from 'ts-mockito';
+import { instance, mock, when } from 'ts-mockito';
 import { OnlineStatusService } from './online-status.service';
 
 const mockedHttpClient = mock(HttpClient);
+const mockedNavigator = mock(Navigator);
 
 describe('OnlineStatusService', () => {
   it('offline when navigator is set to offline', fakeAsync(() => {
@@ -87,9 +88,8 @@ class TestEnvironment {
   private navigatorOnline: boolean = true;
 
   constructor() {
-    this.onlineStatusService = new OnlineStatusService(instance(mockedHttpClient));
-
-    spyOnProperty(window.navigator, 'onLine').and.returnValue(this.navigatorOnline);
+    when(mockedNavigator.onLine).thenCall(() => this.navigatorOnline);
+    this.onlineStatusService = new OnlineStatusService(instance(mockedHttpClient), instance(mockedNavigator));
   }
 
   set onlineStatus(status: boolean) {

@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -7,13 +6,15 @@ import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { anyString, anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -35,7 +36,6 @@ const mockedProjectService = mock(SFProjectService);
 const mockedProjectNotificationService = mock(ProjectNotificationService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 
 describe('SyncComponent', () => {
   configureTestingModule(() => ({
@@ -44,8 +44,8 @@ describe('SyncComponent', () => {
       CommonModule,
       UICommonModule,
       TestTranslocoModule,
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
-      HttpClientTestingModule
+      TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
@@ -57,7 +57,7 @@ describe('SyncComponent', () => {
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
@@ -235,10 +235,12 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<SyncComponent>;
   readonly component: SyncComponent;
   readonly projectId = 'testProject01';
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
   private isLoading: boolean = false;
-  private isOnline: BehaviorSubject<boolean>;
 
   constructor(args: SyncComponentTestConstructorArgs = {}) {
     const isParatextAccountConnected: boolean = args.isParatextAccountConnected ?? true;
@@ -256,8 +258,7 @@ class TestEnvironment {
     when(mockedNoticeService.loadingStarted()).thenCall(() => (this.isLoading = true));
     when(mockedNoticeService.loadingFinished()).thenCall(() => (this.isLoading = false));
     when(mockedNoticeService.isAppLoading).thenCall(() => this.isLoading);
-    this.isOnline = new BehaviorSubject(isOnline);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline.asObservable());
+    this.testOnlineStatusService.setIsOnline(isOnline);
 
     const date = new Date();
     date.setMonth(date.getMonth() - 2);
@@ -326,7 +327,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(hasConnection: boolean) {
-    this.isOnline.next(hasConnection);
+    this.testOnlineStatusService.setIsOnline(hasConnection);
     tick();
     this.fixture.detectChanges();
   }

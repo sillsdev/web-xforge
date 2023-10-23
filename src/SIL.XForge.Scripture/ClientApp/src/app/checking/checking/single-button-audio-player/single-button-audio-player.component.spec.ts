@@ -2,24 +2,25 @@ import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioPlayer, AudioStatus } from '../../../shared/audio/audio-player';
 import { AudioSegmentPlayer } from '../../../shared/audio/audio-segment-player';
 import { SingleButtonAudioPlayerComponent } from './single-button-audio-player.component';
 
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const audioMock = mock(AudioPlayer);
 when(audioMock.status$).thenReturn(new BehaviorSubject<AudioStatus>(AudioStatus.Available));
 
 describe('SingleButtonAudioPlayerComponent', () => {
   configureTestingModule(() => ({
-    imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
+    imports: [UICommonModule, TestTranslocoModule, TestOnlineStatusModule.forRoot(), NoopAnimationsModule],
     declarations: [TestComponent, MockComponent],
-    providers: [{ provide: OnlineStatusService, useMock: mockedOnlineStatusService }]
+    providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }]
   }));
 
   let env: TestEnvironment;
@@ -137,8 +138,6 @@ class TestEnvironment {
   readonly ngZone: NgZone;
 
   constructor() {
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
-
     this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(MockComponent);
     this.component = this.fixture.componentInstance;

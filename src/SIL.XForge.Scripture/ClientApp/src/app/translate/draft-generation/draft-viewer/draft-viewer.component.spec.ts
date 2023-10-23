@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, ActivationEnd, ParamMap, Router } from '@angular/router';
@@ -14,6 +13,8 @@ import { anything, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -31,7 +32,6 @@ import { DraftViewerComponent } from './draft-viewer.component';
 describe('DraftViewerComponent', () => {
   const mockDraftGenerationService = mock(DraftGenerationService);
   const mockProjectService = mock(SFProjectService);
-  const mockOnlineStatusService = mock(OnlineStatusService);
   const mockUserService = mock(UserService);
   const mockActivatedProjectService = mock(ActivatedProjectService);
   const mockActivatedRoute = mock(ActivatedRoute);
@@ -72,8 +72,6 @@ describe('DraftViewerComponent', () => {
       );
       when(mockProjectService.getProfile(anything())).thenResolve(cloneDeep(projectProfileDoc));
       when(mockProjectService.getProfile(anything())).thenResolve(cloneDeep(projectProfileDoc));
-      when(mockOnlineStatusService.isOnline).thenReturn(true);
-      when(mockOnlineStatusService.onlineStatus$).thenReturn(of(true));
       when(mockUserService.getCurrentUser()).thenCall(() =>
         this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
       );
@@ -115,8 +113,8 @@ describe('DraftViewerComponent', () => {
       RouterTestingModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
       TestTranslocoModule,
-      NoopAnimationsModule,
-      HttpClientTestingModule
+      TestOnlineStatusModule.forRoot(),
+      NoopAnimationsModule
     ],
     providers: [
       { provide: DraftGenerationService, useMock: mockDraftGenerationService },
@@ -124,7 +122,7 @@ describe('DraftViewerComponent', () => {
       { provide: SFProjectService, useMock: mockProjectService },
       { provide: ActivatedRoute, useMock: mockActivatedRoute },
       { provide: UserService, useMock: mockUserService },
-      { provide: OnlineStatusService, useMock: mockOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: Router, useMock: mockRouter }
     ]
   }));

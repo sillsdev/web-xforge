@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { AnonymousService } from 'xforge-common/anonymous.service';
 import { AuthService } from 'xforge-common/auth.service';
@@ -15,6 +15,8 @@ import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -30,7 +32,6 @@ const mockedAuthService = mock(AuthService);
 const mockedDialogService = mock(DialogService);
 const mockedI18nService = mock(I18nService);
 const mockedLocationService = mock(LocationService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedRouter = mock(Router);
 const mockErrorReportingService = mock(ErrorReportingService);
 const mockedSFProjectService = mock(SFProjectService);
@@ -43,6 +44,7 @@ describe('JoinComponent', () => {
       NoopAnimationsModule,
       TestTranslocoModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      TestOnlineStatusModule.forRoot(),
       UICommonModule
     ],
     providers: [
@@ -52,7 +54,7 @@ describe('JoinComponent', () => {
       { provide: DialogService, useMock: mockedDialogService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: LocationService, useMock: mockedLocationService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: Router, useMock: mockedRouter },
       { provide: ErrorReportingService, useMock: mockErrorReportingService },
       { provide: SFProjectService, useMock: mockedSFProjectService }
@@ -236,7 +238,9 @@ class TestEnvironment {
   readonly component: JoinComponent;
   readonly fixture: ComponentFixture<JoinComponent>;
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
-  private readonly isOnline$: BehaviorSubject<boolean>;
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   constructor({
     isOnline = true,
@@ -252,10 +256,7 @@ class TestEnvironment {
     }
     when(mockedSFProjectService.onlineJoinWithShareKey(anything())).thenResolve('project01');
     when(mockedDialogService.message(anything())).thenResolve();
-
-    this.isOnline$ = new BehaviorSubject<boolean>(isOnline);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline$.asObservable());
-    when(mockedOnlineStatusService.isOnline).thenCall(() => this.isOnline$.getValue());
+    this.testOnlineStatusService.setIsOnline(isOnline);
     when(mockedLocationService.origin).thenReturn('/');
     when(mockedAnonymousService.checkShareKey(anything())).thenResolve({
       shareKey,
@@ -312,7 +313,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(hasConnection: boolean) {
-    this.isOnline$.next(hasConnection);
+    this.testOnlineStatusService.setIsOnline(hasConnection);
     tick();
     this.fixture.detectChanges();
   }

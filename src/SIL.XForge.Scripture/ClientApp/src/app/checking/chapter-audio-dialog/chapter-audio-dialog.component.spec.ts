@@ -23,8 +23,9 @@ import {
   getAudioBlob
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { of } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
@@ -37,16 +38,15 @@ import {
 const mockedDialogService = mock(DialogService);
 const mockedCsvService = mock(CsvService);
 const mockedFileService = mock(FileService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 
 describe('ChapterAudioDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [DialogTestModule, TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: DialogService, useMock: mockedDialogService },
       { provide: CsvService, useMock: mockedCsvService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
@@ -366,8 +366,6 @@ class TestEnvironment {
       };
     }
 
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
-    when(mockedDialogService.confirm(anything(), anything())).thenResolve(true);
     when(mockedCsvService.parse(anything())).thenResolve([
       ['0.1', '0', 'v1'],
       ['1', '0', 'v2']

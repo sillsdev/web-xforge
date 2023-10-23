@@ -1,4 +1,3 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -11,9 +10,8 @@ import {
 } from '@auth0/auth0-spa-js';
 import { CookieService } from 'ngx-cookie-service';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { BehaviorSubject, of, Subject } from 'rxjs';
-import { filter, take } from 'rxjs/operators';
-import { anyString, anything, capture, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { Subject } from 'rxjs';
+import { anyString, anything, capture, instance, mock, resetCalls, spy, verify, when } from 'ts-mockito';
 import { MockConsole } from 'xforge-common/mock-console';
 import {
   AuthDetails,
@@ -38,6 +36,8 @@ import { MemoryRealtimeRemoteStore } from './memory-realtime-remote-store';
 import { OfflineStore } from './offline-store';
 import { OnlineStatusService } from './online-status.service';
 import { SharedbRealtimeRemoteStore } from './sharedb-realtime-remote-store';
+import { TestOnlineStatusModule } from './test-online-status.module';
+import { TestOnlineStatusService } from './test-online-status.service';
 import { configureTestingModule, TestTranslocoModule } from './test-utils';
 import { aspCultureCookieValue } from './utils';
 
@@ -48,7 +48,6 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedRouter = mock(Router);
 const mockedLocalSettingsService = mock(LocalSettingsService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedDialogService = mock(DialogService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedWebAuth = mock(Auth0Client);
@@ -56,7 +55,7 @@ const mockedConsole: MockConsole = MockConsole.install();
 
 describe('AuthService', () => {
   configureTestingModule(() => ({
-    imports: [RouterTestingModule, TestTranslocoModule, HttpClientTestingModule],
+    imports: [RouterTestingModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule],
     providers: [
       AuthService,
       { provide: Auth0Service, useMock: mockedAuth0Service },
@@ -68,7 +67,7 @@ describe('AuthService', () => {
       { provide: CookieService, useMock: mockedCookieService },
       { provide: Router, useMock: mockedRouter },
       { provide: LocalSettingsService, useMock: mockedLocalSettingsService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: DialogService, useMock: mockedDialogService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService }
     ]
@@ -95,19 +94,19 @@ describe('AuthService', () => {
   it('should not check online authentication if not logged in', fakeAsync(() => {
     const env = new TestEnvironment({ isOnline: true });
     expect(env.isLoggedIn).withContext('setup').toBe(false);
-    resetCalls(mockedOnlineStatusService);
+    resetCalls(env.testOnlineStatusServiceSpy);
 
     env.service.checkOnlineAuth();
 
     tick();
-    verify(mockedOnlineStatusService.checkOnline()).never();
+    verify(env.testOnlineStatusServiceSpy.checkOnline()).never();
   }));
 
   it('should check online authentication if newly logged in', fakeAsync(() => {
     const env = new TestEnvironment({ isOnline: true, isNewlyLoggedIn: true });
 
     expect(env.isLoggedIn).withContext('setup').toBe(true);
-    verify(mockedOnlineStatusService.checkOnline()).once();
+    verify(env.testOnlineStatusServiceSpy.checkOnline()).once();
     verify(mockedWebAuth.getTokenSilently(anything())).once();
     verify(mockedWebAuth.loginWithRedirect(anything())).never();
     env.discardTokenExpiryTimer();
@@ -417,7 +416,7 @@ describe('AuthService', () => {
     const env = new TestEnvironment({ isLoggedIn: true });
     expect(env.isAuthenticated).toBe(true);
     expect(env.service.currentUserId).toBe(TestEnvironment.userId);
-    verify(mockedOnlineStatusService.checkOnline()).never();
+    verify(env.testOnlineStatusServiceSpy.checkOnline()).never();
     env.discardTokenExpiryTimer();
   }));
 
@@ -545,7 +544,7 @@ describe('AuthService', () => {
     expect(env.service.idToken).toBe(env.auth0Response!.token.id_token);
     expect(env.accessToken).toBe(env.auth0Response!.token.access_token);
     expect(env.service.expiresAt).toBeGreaterThan(env.auth0Response!.token.expires_in!);
-    verify(mockedOnlineStatusService.checkOnline()).once();
+    verify(env.testOnlineStatusServiceSpy.checkOnline()).once();
     verify(mockedWebAuth.getTokenSilently(anything())).once();
     verify(mockedWebAuth.loginWithRedirect(anything())).never();
     env.discardTokenExpiryTimer();
@@ -554,7 +553,7 @@ describe('AuthService', () => {
   it('should schedule renewal when returning online', fakeAsync(() => {
     const env = new TestEnvironment({ isLoggedIn: true });
     expect(env.isLoggedIn).toBe(true);
-    verify(mockedOnlineStatusService.checkOnline()).never();
+    verify(env.testOnlineStatusServiceSpy.checkOnline()).never();
 
     spyOn<any>(env.service, 'scheduleRenewal');
     env.service.checkOnlineAuth();
@@ -573,7 +572,7 @@ describe('AuthService', () => {
       env.resetTokenExpireAt();
     };
     const env = new TestEnvironment({ isOnline: true, isLoggedIn: true, callback });
-    verify(mockedOnlineStatusService.checkOnline()).once();
+    verify(env.testOnlineStatusServiceSpy.checkOnline()).once();
     verify(mockedWebAuth.getTokenSilently(anything())).once();
     expect(env.isAuthenticated).toBe(true);
     expect(env.service.expiresAt).toBeGreaterThan(0);
@@ -640,12 +639,15 @@ class TestEnvironment {
   };
   readonly service: AuthService;
   readonly language = 'fr';
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
+  readonly testOnlineStatusServiceSpy: TestOnlineStatusService = spy(this.testOnlineStatusService);
   private tokenExpiryTimer = 720; // 2 hours
   private localSettings = new Map<string, string | number>();
   private _localeSettingsRemoveChanges = new Subject<StorageEvent>();
   private _loginLinkedAccountId: string | undefined;
   private readonly _authLoginState: string;
-  private onlineStatus$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   static encodeAccessToken(token: Auth0AccessToken): string {
     // The response from auth0 contains 3 parts separated by a dot
@@ -664,17 +666,6 @@ class TestEnvironment {
   }: TestEnvironmentConstructorArgs = {}) {
     resetCalls(mockedWebAuth);
     this._authLoginState = JSON.stringify(loginState);
-    when(mockedOnlineStatusService.online).thenReturn(
-      new Promise<void>(resolve => {
-        this.onlineStatus$
-          .pipe(
-            filter(isOnline => isOnline),
-            take(1)
-          )
-          .toPromise()
-          .then(() => resolve());
-      })
-    );
     this.setOnline(isOnline);
 
     if (isLoggedIn || isNewlyLoggedIn) {
@@ -841,10 +832,7 @@ class TestEnvironment {
   }
 
   setOnline(isOnline: boolean = true): void {
-    when(mockedOnlineStatusService.checkOnline()).thenResolve(isOnline);
-    when(mockedOnlineStatusService.isBrowserOnline).thenReturn(isOnline);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(isOnline));
-    this.onlineStatus$.next(isOnline);
+    this.testOnlineStatusService.setIsOnline(isOnline);
   }
 
   setTimeoutResponse(): void {
