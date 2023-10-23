@@ -800,7 +800,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     {
         IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
         return projectQuery.Any(
-            p => p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId
+            p =>
+                (p.TranslateConfig.Source != null && (p.TranslateConfig.Source.ProjectRef == projectId))
+                || (
+                    p.TranslateConfig.DraftConfig.AlternateSource != null
+                    && (p.TranslateConfig.DraftConfig.AlternateSource.ProjectRef == projectId)
+                )
         );
     }
 
