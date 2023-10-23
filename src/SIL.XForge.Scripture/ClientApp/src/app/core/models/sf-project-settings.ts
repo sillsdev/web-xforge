@@ -4,16 +4,16 @@ import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/mod
  * This interface represents the project settings that can be updated using "SFProjectService.onlineUpdateSettings()".
  */
 export interface SFProjectSettings {
-  translationSuggestionsEnabled?: boolean;
-  sourceParatextId?: string;
-  biblicalTermsEnabled?: boolean;
-  translateShareEnabled?: boolean;
+  translationSuggestionsEnabled?: boolean | null;
+  sourceParatextId?: string | null;
+  biblicalTermsEnabled?: boolean | null;
+  translateShareEnabled?: boolean | null;
 
-  alternateSourceParatextId?: string;
+  alternateSourceParatextId?: string | null;
 
-  checkingEnabled?: boolean;
-  usersSeeEachOthersResponses?: boolean;
-  checkingShareEnabled?: boolean;
-  checkingAnswerExport?: CheckingAnswerExport;
-  hideCommunityCheckingText?: boolean;
+  checkingEnabled?: boolean | null;
+  usersSeeEachOthersResponses?: boolean | null;
+  checkingShareEnabled?: boolean | null;
+  checkingAnswerExport?: CheckingAnswerExport | null;
+  hideCommunityCheckingText?: boolean | null;
 }
