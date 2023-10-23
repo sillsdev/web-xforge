@@ -856,6 +856,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           this.observeResize(this.target.editor);
           this.subscribeScroll(this.target.editor);
           this.targetEditorLoaded$.next();
+          this.checkForPreTranslations();
         }
         break;
     }
@@ -2176,6 +2177,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     // Ensure we have the target editor
     if (this.target?.editor == null) return;
 
+    // Check to see if the user has edit rights
+    if (!this.userHasGeneralEditRight) return;
+
+    // Check to see if chapter is complete
     const targetOps: DeltaOperation[] = this.target.editor.getContents().ops!;
     const isChapterComplete: boolean = targetOps.every(op => {
       // If segment is a verse, check if it has a translation
