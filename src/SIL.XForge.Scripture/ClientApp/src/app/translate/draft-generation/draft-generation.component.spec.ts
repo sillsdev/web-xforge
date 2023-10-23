@@ -11,6 +11,8 @@ import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature
 import { I18nService } from 'xforge-common/i18n.service';
 import { Locale } from 'xforge-common/models/i18n-locale';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../core/sf-project.service';
@@ -28,7 +30,6 @@ describe('DraftGenerationComponent', () => {
   let mockActivatedProjectService: jasmine.SpyObj<ActivatedProjectService>;
   let mockProjectService: jasmine.SpyObj<SFProjectService>;
   let mockI18nService: jasmine.SpyObj<I18nService>;
-  let mockOnlineStatusService: jasmine.SpyObj<OnlineStatusService>;
 
   const buildDto: BuildDto = {
     id: 'testId',
@@ -53,6 +54,7 @@ describe('DraftGenerationComponent', () => {
   };
 
   class TestEnvironment {
+    readonly testOnlineStatusService: TestOnlineStatusService;
     component!: DraftGenerationComponent;
     fixture!: ComponentFixture<DraftGenerationComponent>;
 
@@ -63,7 +65,29 @@ describe('DraftGenerationComponent', () => {
         preInit();
       }
 
-      this.init();
+      TestBed.configureTestingModule({
+        declarations: [DraftGenerationComponent, DraftGenerationStepsComponent],
+        imports: [
+          UICommonModule,
+          SharedModule,
+          TestOnlineStatusModule.forRoot(),
+          RouterTestingModule,
+          NoopAnimationsModule
+        ],
+        providers: [
+          { provide: FeatureFlagService, useValue: mockFeatureFlagService },
+          { provide: DraftGenerationService, useValue: mockDraftGenerationService },
+          { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
+          { provide: SFProjectService, useValue: mockProjectService },
+          { provide: DialogService, useValue: mockDialogService },
+          { provide: I18nService, useValue: mockI18nService },
+          { provide: OnlineStatusService, useClass: TestOnlineStatusService }
+        ]
+      });
+      this.testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
+      this.fixture = TestBed.createComponent(DraftGenerationComponent);
+      this.component = this.fixture.componentInstance;
+      this.fixture.detectChanges();
     }
 
     // Default setup
@@ -77,7 +101,6 @@ describe('DraftGenerationComponent', () => {
       );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
       mockI18nService = jasmine.createSpyObj<I18nService>(['getLanguageDisplayName'], { locale$: of(locale) });
-      mockOnlineStatusService = jasmine.createSpyObj<OnlineStatusService>([], { onlineStatus$: of(true) });
       mockDraftGenerationService = jasmine.createSpyObj<DraftGenerationService>([
         'startBuildOrGetActiveBuild',
         'cancelBuild',
@@ -112,26 +135,6 @@ describe('DraftGenerationComponent', () => {
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
-    }
-
-    init(): void {
-      TestBed.configureTestingModule({
-        declarations: [DraftGenerationComponent, DraftGenerationStepsComponent],
-        imports: [UICommonModule, SharedModule, RouterTestingModule, NoopAnimationsModule],
-        providers: [
-          { provide: FeatureFlagService, useValue: mockFeatureFlagService },
-          { provide: DraftGenerationService, useValue: mockDraftGenerationService },
-          { provide: ActivatedProjectService, useValue: mockActivatedProjectService },
-          { provide: SFProjectService, useValue: mockProjectService },
-          { provide: DialogService, useValue: mockDialogService },
-          { provide: I18nService, useValue: mockI18nService },
-          { provide: OnlineStatusService, useValue: mockOnlineStatusService }
-        ]
-      });
-
-      this.fixture = TestBed.createComponent(DraftGenerationComponent);
-      this.component = this.fixture.componentInstance;
-      this.fixture.detectChanges();
     }
 
     get offlineTextElement(): HTMLElement | null {
@@ -214,9 +217,8 @@ describe('DraftGenerationComponent', () => {
 
   describe('Online status', () => {
     it('should display offline message when offline', () => {
-      let env = new TestEnvironment(() => {
-        mockOnlineStatusService = jasmine.createSpyObj('OnlineStatusService', [''], { onlineStatus$: of(false) });
-      });
+      let env = new TestEnvironment();
+      env.testOnlineStatusService.setIsOnline(false);
 
       expect(env.offlineTextElement).toBeDefined();
     });

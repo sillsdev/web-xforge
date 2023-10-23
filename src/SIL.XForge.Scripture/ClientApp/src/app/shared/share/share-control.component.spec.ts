@@ -6,11 +6,12 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CheckingAnswerExport, CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { BehaviorSubject } from 'rxjs';
 import { anything, capture, mock, verify, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -25,18 +26,23 @@ import { ShareControlComponent } from './share-control.component';
 
 const mockedProjectService = mock(SFProjectService);
 const mockedNoticeService = mock(NoticeService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedI18nService = mock(I18nService);
 const mockedUserService = mock(UserService);
 
 describe('ShareControlComponent', () => {
   configureTestingModule(() => ({
     declarations: [TestHostComponent],
-    imports: [TestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), NoopAnimationsModule, SharedModule],
+    imports: [
+      TestModule,
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      NoopAnimationsModule,
+      TestOnlineStatusModule.forRoot(),
+      SharedModule
+    ],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: I18nService, useMock: mockedI18nService },
       { provide: UserService, useMock: mockedUserService }
     ]
@@ -304,8 +310,9 @@ class TestEnvironment {
   readonly hostComponent: TestHostComponent;
   readonly component: ShareControlComponent;
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
-
-  private _onlineStatus = new BehaviorSubject<boolean>(true);
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   constructor(args: Partial<TestEnvironmentArgs> = {}) {
     const defaultArgs: Partial<TestEnvironmentArgs> = {
@@ -329,8 +336,6 @@ class TestEnvironment {
     when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
-    when(mockedOnlineStatusService.isOnline).thenCall(() => this._onlineStatus.getValue());
     when(mockedUserService.currentUserId).thenReturn(args.userId!);
     when(mockedProjectService.onlineGetLinkSharingKey(args.projectId!, anything(), anything())).thenResolve(
       args.isLinkSharingEnabled ? 'linkSharing01' : ''
@@ -384,7 +389,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(value: boolean) {
-    this._onlineStatus.next(value);
+    this.testOnlineStatusService.setIsOnline(value);
     this.wait();
   }
 

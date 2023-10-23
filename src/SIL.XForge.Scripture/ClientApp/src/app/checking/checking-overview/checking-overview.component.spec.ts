@@ -26,7 +26,7 @@ import {
   SFProjectUserConfig
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
@@ -34,6 +34,8 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -61,7 +63,6 @@ const mockedAuthService = mock(AuthService);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 
 class MockComponent {}
@@ -73,7 +74,12 @@ const ROUTES: Route[] = [
 
 describe('CheckingOverviewComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, RouterTestingModule.withRoutes(ROUTES), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      DialogTestModule,
+      RouterTestingModule.withRoutes(ROUTES),
+      TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+    ],
     providers: [
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: DialogService, useMock: mockedDialogService },
@@ -85,7 +91,7 @@ describe('CheckingOverviewComponent', () => {
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ]
   }));
@@ -628,6 +634,9 @@ class TestEnvironment {
 
   readonly ngZone: NgZone = TestBed.inject(NgZone);
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   adminUser = this.createUser(1, SFProjectRole.ParatextAdministrator);
   checkerUser = this.createUser(2, SFProjectRole.CommunityChecker);
@@ -713,7 +722,6 @@ class TestEnvironment {
   });
 
   private readonly anotherUserId = 'anotherUserId';
-  private isOnline: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   constructor(withQuestionData: boolean = true, withChapterAudioData: boolean = false) {
     if (withQuestionData) {
@@ -966,8 +974,6 @@ class TestEnvironment {
     );
     this.setCurrentUser(this.adminUser);
 
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline.asObservable());
-    when(mockedOnlineStatusService.isOnline).thenReturn(this.isOnline.getValue());
     when(mockedFeatureFlagService.scriptureAudio).thenReturn({ enabled: true } as ObservableFeatureFlag);
 
     this.fixture = TestBed.createComponent(CheckingOverviewComponent);
@@ -1081,7 +1087,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(isOnline: boolean) {
-    this.isOnline.next(isOnline);
+    this.testOnlineStatusService.setIsOnline(isOnline);
     tick();
     this.fixture.detectChanges();
   }

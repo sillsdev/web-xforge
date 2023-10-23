@@ -1,27 +1,30 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { BehaviorSubject, fromEvent, merge, Observable, of } from 'rxjs';
 import { filter, mapTo, take } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { NAVIGATOR } from './browser-globals';
 
 @Injectable({
   providedIn: 'root'
 })
 export class OnlineStatusService extends SubscriptionDisposable {
-  private appOnlineStatus$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(navigator.onLine);
-  private windowOnLineStatus$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(navigator.onLine);
+  readonly onlineBrowserStatus$: Observable<boolean>;
+  readonly onlineStatus$: Observable<boolean>;
+  protected appOnlineStatus$: BehaviorSubject<boolean>;
+  protected windowOnLineStatus$: BehaviorSubject<boolean>;
   private webSocketStatus$: BehaviorSubject<boolean | null> = new BehaviorSubject<boolean | null>(null);
 
-  readonly onlineBrowserStatus$: Observable<boolean> = this.windowOnLineStatus$.asObservable();
-  readonly onlineStatus$: Observable<boolean> = this.appOnlineStatus$.asObservable();
-
-  constructor(private readonly http: HttpClient) {
+  constructor(protected readonly http: HttpClient, @Inject(NAVIGATOR) protected readonly navigator: Navigator) {
     super();
-
+    this.appOnlineStatus$ = new BehaviorSubject<boolean>(this.navigator.onLine);
+    this.windowOnLineStatus$ = new BehaviorSubject<boolean>(this.navigator.onLine);
+    this.onlineBrowserStatus$ = this.windowOnLineStatus$.asObservable();
+    this.onlineStatus$ = this.appOnlineStatus$.asObservable();
     // Check for any online changes from the browser window
     this.subscribe(
       merge(
-        of(navigator.onLine),
+        of(this.navigator.onLine),
         fromEvent(window, 'online').pipe(mapTo(true)),
         fromEvent(window, 'offline').pipe(mapTo(false))
       ),
@@ -71,7 +74,7 @@ export class OnlineStatusService extends SubscriptionDisposable {
   }
 
   async checkOnline(): Promise<boolean> {
-    if (!navigator.onLine) {
+    if (!this.navigator.onLine) {
       return false;
     }
     try {

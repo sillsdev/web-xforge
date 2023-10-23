@@ -15,9 +15,9 @@ import {
   SFProjectUserConfig,
   SF_PROJECT_USER_CONFIGS_COLLECTION
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
-import { BehaviorSubject } from 'rxjs';
-import { mock, when } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
@@ -36,12 +36,15 @@ import {
   SuggestionsSettingsDialogData
 } from './suggestions-settings-dialog.component';
 
-const mockedOnlineStatusService = mock(OnlineStatusService);
-
 describe('SuggestionsSettingsDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, NoopAnimationsModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
-    providers: [{ provide: OnlineStatusService, useMock: mockedOnlineStatusService }]
+    imports: [
+      DialogTestModule,
+      NoopAnimationsModule,
+      TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+    ],
+    providers: [{ provide: OnlineStatusService, useClass: TestOnlineStatusService }]
   }));
 
   it('update confidence threshold', fakeAsync(() => {
@@ -209,7 +212,9 @@ class DialogTestModule {}
 class TestEnvironment {
   readonly fixture: ComponentFixture<ChildViewContainerComponent>;
   component?: SuggestionsSettingsDialogComponent;
-  onlineStatus: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
@@ -223,9 +228,6 @@ class TestEnvironment {
     });
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
-
-    when(mockedOnlineStatusService.isOnline).thenCall(() => this.onlineStatus.getValue());
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.onlineStatus.asObservable());
   }
 
   get overlayContainerElement(): HTMLElement {
@@ -273,7 +275,7 @@ class TestEnvironment {
   }
 
   set isOnline(value: boolean) {
-    this.onlineStatus.next(value);
+    this.testOnlineStatusService.setIsOnline(value);
     this.fixture.detectChanges();
     tick();
   }

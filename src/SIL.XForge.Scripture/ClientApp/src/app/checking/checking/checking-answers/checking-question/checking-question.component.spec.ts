@@ -1,4 +1,3 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component, DebugElement, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -6,10 +5,12 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { of, Subject } from 'rxjs';
+import { Subject } from 'rxjs';
 import { anything, deepEqual, instance, mock, verify, when } from 'ts-mockito';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
@@ -22,7 +23,6 @@ import { SFProjectUserConfigDoc } from '../../../../core/models/sf-project-user-
 import { CheckingQuestionComponent } from './checking-question.component';
 
 const mockedSFProjectService = mock(SFProjectService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedQuestionDoc = mock(QuestionDoc);
 const mockedQuestion = mock<Question>();
 const mockedSFProjectUserConfig = mock<SFProjectUserConfig>();
@@ -59,11 +59,11 @@ class MockComponent {
 
 describe('CheckingQuestionComponent', () => {
   configureTestingModule(() => ({
-    imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule, HttpClientTestingModule],
+    imports: [UICommonModule, TestTranslocoModule, TestOnlineStatusModule.forRoot(), NoopAnimationsModule],
     declarations: [CheckingQuestionComponent, SingleButtonAudioPlayerComponent, MockComponent],
     providers: [
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: QuestionDoc, useMock: mockedQuestionDoc },
       { provide: SFProjectUserConfigDoc, useMock: mockedSFProjectUserConfigDoc }
     ]
@@ -275,7 +275,6 @@ class TestEnvironment {
     when(this.query.remoteChanges$).thenReturn(this.queryChanged$);
     when(this.query.docs).thenReturn([instance(audio1), instance(audio2)]);
 
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     when(mockedSFProjectService.onlineIsSourceProject('project01')).thenResolve(false);
     when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();

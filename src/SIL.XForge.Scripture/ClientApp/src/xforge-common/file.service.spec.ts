@@ -2,7 +2,6 @@ import { HttpClientTestingModule, HttpTestingController, RequestMatch } from '@a
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ProjectData } from 'realtime-server/lib/esm/common/models/project-data';
 import { obj, PathItem } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { BehaviorSubject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { environment } from '../environments/environment';
@@ -13,12 +12,13 @@ import { FileService, formatFileSource } from './file.service';
 import { createDeletionFileData, createStorageFileData, FileOfflineData, FileType } from './models/file-offline-data';
 import { ProjectDataDoc } from './models/project-data-doc';
 import { OnlineStatusService } from './online-status.service';
+import { TestOnlineStatusModule } from './test-online-status.module';
+import { TestOnlineStatusService } from './test-online-status.service';
 import { TestRealtimeModule } from './test-realtime.module';
 import { TestRealtimeService } from './test-realtime.service';
 import { TypeRegistry } from './type-registry';
 import { COMMAND_API_NAMESPACE, PROJECTS_URL } from './url-constants';
 
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedAuthService = mock(AuthService);
 const mockedCommandService = mock(CommandService);
 const mockedDialogService = mock(DialogService);
@@ -28,11 +28,12 @@ describe('FileService', () => {
     imports: [
       HttpClientTestingModule,
       TestTranslocoModule,
+      TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(new TypeRegistry([TestDataDoc], [FileType.Audio], []))
     ],
     providers: [
       FileService,
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: AuthService, useMock: mockedAuthService },
       { provide: CommandService, useMock: mockedCommandService },
       { provide: DialogService, useMock: mockedDialogService }
@@ -282,13 +283,12 @@ class TestEnvironment {
   readonly service: FileService;
   readonly realtimeService: TestRealtimeService;
   readonly httpMock: HttpTestingController;
-
-  private readonly isOnline: BehaviorSubject<boolean>;
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   constructor(isOnline: boolean = true) {
-    this.isOnline = new BehaviorSubject<boolean>(isOnline);
-    when(mockedOnlineStatusService.isOnline).thenReturn(isOnline);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline);
+    this.testOnlineStatusService.setIsOnline(isOnline);
     when(mockedAuthService.isLoggedIn).thenResolve(true);
 
     this.realtimeService = TestBed.inject(TestRealtimeService);
@@ -308,8 +308,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(hasConnection: boolean) {
-    when(mockedOnlineStatusService.isOnline).thenReturn(hasConnection);
-    this.isOnline.next(hasConnection);
+    this.testOnlineStatusService.setIsOnline(hasConnection);
     tick();
   }
 

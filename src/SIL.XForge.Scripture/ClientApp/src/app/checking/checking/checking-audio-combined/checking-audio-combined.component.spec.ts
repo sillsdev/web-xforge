@@ -2,7 +2,6 @@ import { DebugElement, NgZone } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ngfModule } from 'angular-file';
-import { of } from 'rxjs';
 import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -13,6 +12,8 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { SF_TYPE_REGISTRY } from '../../../core/models/sf-type-registry';
 import { AudioPlayerComponent } from '../../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../../shared/audio/audio-time-pipe';
@@ -22,7 +23,6 @@ import { CheckingAudioCombinedComponent } from './checking-audio-combined.compon
 
 const mockedUserService = mock(UserService);
 const mockedNoticeService = mock(NoticeService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedI18nService = mock(I18nService);
 
 describe('CheckingAudioCombinedComponent', () => {
@@ -34,11 +34,17 @@ describe('CheckingAudioCombinedComponent', () => {
       AudioTimePipe,
       AudioPlayerComponent
     ],
-    imports: [UICommonModule, ngfModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      UICommonModule,
+      ngfModule,
+      TestTranslocoModule,
+      TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+    ],
     providers: [
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: I18nService, useMock: mockedI18nService }
     ]
   }));
@@ -109,8 +115,6 @@ class TestEnvironment {
     when(mockedUserService.getCurrentUser()).thenCall(() =>
       this.realtimeService.subscribe(UserDoc.COLLECTION, 'user01')
     );
-    when(mockedOnlineStatusService.isOnline).thenReturn(true);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     this.fixture.detectChanges();
   }
 

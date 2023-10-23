@@ -1,11 +1,12 @@
 import { Component, NgZone, ViewChild } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { of } from 'rxjs';
 import { AudioPlayerStub } from 'src/app/checking/checking-test.utils';
 import { CheckingScriptureAudioPlayerComponent } from 'src/app/checking/checking/checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { SFProjectService } from 'src/app/core/sf-project.service';
-import { instance, mock, when } from 'ts-mockito';
+import { instance, mock } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { AudioPlayer, AudioStatus } from '../audio-player';
@@ -35,7 +36,7 @@ describe('AudioPlayerBaseComponent', () => {
   }));
 
   it('fires isAudioAvailable when audio becomes available', fakeAsync(() => {
-    env.component.baseComponent.setAudio(new AudioPlayerStub(audioFile, instance(env.mockOnlineStatusService)));
+    env.component.baseComponent.setAudio(new AudioPlayerStub(audioFile, env.testOnlineStatusService));
     const spy = jasmine.createSpy();
     env.component.baseComponent.isAudioAvailable$.subscribe(spy);
 
@@ -46,7 +47,7 @@ describe('AudioPlayerBaseComponent', () => {
   }));
 
   it('sets hasProblem when status changes from Init', fakeAsync(() => {
-    env.component.baseComponent.setAudio(new AudioPlayerStub(audioFile, instance(env.mockOnlineStatusService)));
+    env.component.baseComponent.setAudio(new AudioPlayerStub(audioFile, env.testOnlineStatusService));
     expect(env.component.baseComponent.hasProblem).toBe(false);
 
     env.component.baseComponent.fireStatusChange(AudioStatus.Unavailable);
@@ -55,7 +56,7 @@ describe('AudioPlayerBaseComponent', () => {
   }));
 
   it('resets seek when audio becomes available', fakeAsync(() => {
-    env.component.baseComponent.setAudio(new AudioPlayerStub(audioFile, instance(env.mockOnlineStatusService)));
+    env.component.baseComponent.setAudio(new AudioPlayerStub(audioFile, env.testOnlineStatusService));
     env.component.baseComponent.audio!.currentTime = 1;
     expect(env.component.baseComponent.audio!.currentTime).toBe(1);
     env.component.baseComponent.fireStatusChange(AudioStatus.Available);
@@ -64,7 +65,7 @@ describe('AudioPlayerBaseComponent', () => {
   }));
 
   it('reflects status if it exists', fakeAsync(() => {
-    env.component.baseComponent.setAudio(new AudioPlayerStub(audioFile, instance(env.mockOnlineStatusService)));
+    env.component.baseComponent.setAudio(new AudioPlayerStub(audioFile, env.testOnlineStatusService));
 
     env.component.baseComponent.fireStatusChange(AudioStatus.Available);
     expect(env.component.baseComponent.audioStatus).toBe(AudioStatus.Available);
@@ -77,7 +78,7 @@ describe('AudioPlayerBaseComponent', () => {
     env.component.baseComponent.source = '';
     env.wait();
 
-    expect(instance(env.mockOnlineStatusService).isOnline).toBe(true);
+    expect(env.testOnlineStatusService.isOnline).toBe(true);
     expect(env.component.baseComponent.audioStatus).toBe(AudioStatus.Unavailable);
   }));
 
@@ -85,7 +86,7 @@ describe('AudioPlayerBaseComponent', () => {
     env.component.baseComponent.source = '';
     env.wait();
 
-    when(env.mockOnlineStatusService.isOnline).thenReturn(false);
+    env.testOnlineStatusService.setIsOnline(false);
     expect(env.component.baseComponent.audioStatus).toBe(AudioStatus.Offline);
   }));
 
@@ -99,7 +100,7 @@ describe('AudioPlayerBaseComponent', () => {
 });
 
 class TestEnvironment {
-  readonly mockOnlineStatusService = mock(OnlineStatusService);
+  readonly testOnlineStatusService: TestOnlineStatusService;
   readonly mockedProjectService = mock(SFProjectService);
   fixture: ComponentFixture<HostComponent>;
   component: HostComponent;
@@ -109,14 +110,13 @@ class TestEnvironment {
     TestBed.configureTestingModule({
       declarations: [HostComponent, CheckingScriptureAudioPlayerComponent, AudioTimePipe, AudioTestComponent],
       providers: [
-        { provide: OnlineStatusService, useFactory: () => instance(this.mockOnlineStatusService) },
+        { provide: OnlineStatusService, useClass: TestOnlineStatusService },
         { provide: SFProjectService, useFactory: () => instance(this.mockedProjectService) }
       ],
-      imports: [UICommonModule, TestTranslocoModule]
+      imports: [UICommonModule, TestOnlineStatusModule.forRoot(), TestTranslocoModule]
     });
-    when(this.mockOnlineStatusService.onlineStatus$).thenReturn(of(true));
-    when(this.mockOnlineStatusService.isOnline).thenReturn(true);
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
+    this.testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
     this.ngZone = TestBed.inject(NgZone);
     this.fixture = TestBed.createComponent(HostComponent);
     this.component = this.fixture.componentInstance;

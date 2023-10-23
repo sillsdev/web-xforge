@@ -1,22 +1,21 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { fakeAsync, flush, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
 import { mock, verify, when } from 'ts-mockito';
 import { CommandError, CommandErrorCode, CommandService } from 'xforge-common/command.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
 import { PROJECTS_URL } from 'xforge-common/url-constants';
 import { FeatureFlagService } from './feature-flag.service';
 
 const mockedCommandService = mock(CommandService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 
 describe('FeatureFlagService', () => {
   configureTestingModule(() => ({
-    imports: [HttpClientTestingModule],
+    imports: [TestOnlineStatusModule.forRoot()],
     providers: [
       { provide: CommandService, useMock: mockedCommandService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
@@ -179,8 +178,6 @@ class TestEnvironment {
         featureFlags
       );
     }
-    when(mockedOnlineStatusService.isOnline).thenReturn(true);
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     this.service = TestBed.inject(FeatureFlagService);
   }
 }

@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -24,6 +23,8 @@ import { createStorageFileData, FileType } from 'xforge-common/models/file-offli
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import {
@@ -49,25 +50,28 @@ const mockedAuthService = mock(AuthService);
 const mockedNoticeService = mock(NoticeService);
 const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
-const mockedHttpClient = mock(HttpClient);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedFileService = mock(FileService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 
 describe('QuestionDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [ReactiveFormsModule, FormsModule, DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [
+      ReactiveFormsModule,
+      FormsModule,
+      DialogTestModule,
+      TestOnlineStatusModule.forRoot(),
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+    ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },
       { provide: UserService, useMock: mockedUserService },
       { provide: NoticeService, useMock: mockedNoticeService },
       { provide: SFProjectService, useMock: mockedProjectService },
-      { provide: HttpClient, useMock: mockedHttpClient },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
@@ -605,8 +609,6 @@ class TestEnvironment {
       id: 'user01',
       data: createTestUser()
     });
-
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
 
     this.dialogRef = TestBed.inject(MatDialog).open(QuestionDialogComponent, config);
     this.afterCloseCallback = jasmine.createSpy('afterClose callback');

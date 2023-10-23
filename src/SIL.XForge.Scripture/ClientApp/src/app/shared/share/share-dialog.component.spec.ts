@@ -6,7 +6,6 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
-import { BehaviorSubject } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { NAVIGATOR } from 'xforge-common/browser-globals';
 import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
@@ -14,6 +13,8 @@ import { LocationService } from 'xforge-common/location.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -28,7 +29,6 @@ import { ShareDialogComponent, ShareDialogData, ShareLinkType } from './share-di
 const mockedProjectService = mock(SFProjectService);
 const mockedNavigator = mock(Navigator);
 const mockedNoticeService = mock(NoticeService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedLocationService = mock(LocationService);
 const mockedUserService = mock(UserService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
@@ -41,12 +41,12 @@ enum TestUsers {
 
 describe('ShareDialogComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
+    imports: [DialogTestModule, TestOnlineStatusModule.forRoot(), TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: NAVIGATOR, useMock: mockedNavigator },
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: LocationService, useMock: mockedLocationService },
       { provide: UserService, useMock: mockedUserService },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
@@ -308,7 +308,9 @@ class TestEnvironment {
   readonly component: ShareDialogComponent;
   readonly dialogRef: MatDialogRef<ShareDialogComponent>;
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
-  private _onlineStatus = new BehaviorSubject<boolean>(true);
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
   private _clipboardText?: string;
   private _shareData?: ShareData;
   private share = (shareData?: ShareData | undefined): Promise<void> => {
@@ -354,8 +356,6 @@ class TestEnvironment {
     when(mockedProjectService.getProfile(anything())).thenCall(projectId =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, projectId)
     );
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this._onlineStatus.asObservable());
-    when(mockedOnlineStatusService.isOnline).thenCall(() => this._onlineStatus.getValue());
     when(mockedUserService.currentUserId).thenReturn(userId);
     when(mockedUserService.getCurrentUser()).thenResolve({ data: createTestUser() } as UserDoc);
     when(mockedProjectService.onlineGetLinkSharingKey(projectId, anything(), anything())).thenResolve(
@@ -434,7 +434,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(value: boolean) {
-    this._onlineStatus.next(value);
+    this.testOnlineStatusService.setIsOnline(value);
     this.wait();
   }
 

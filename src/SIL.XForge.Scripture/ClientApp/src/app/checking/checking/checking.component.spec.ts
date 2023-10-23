@@ -50,6 +50,8 @@ import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -100,7 +102,6 @@ const mockedTextChooserDialogComponent = mock(TextChooserDialogComponent);
 const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 const mockedFileService = mock(FileService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 
@@ -158,6 +159,7 @@ describe('CheckingComponent', () => {
       SharedModule,
       UICommonModule,
       TestTranslocoModule,
+      TestOnlineStatusModule.forRoot(),
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
     ],
     providers: [
@@ -173,7 +175,7 @@ describe('CheckingComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
     ]
   }));
@@ -2250,9 +2252,11 @@ class TestEnvironment {
   readonly mockedTextChooserDialogComponent = mock<MatDialogRef<TextChooserDialogComponent>>(MatDialogRef);
   readonly location: Location;
   readonly router: Router;
+  readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
+    OnlineStatusService
+  ) as TestOnlineStatusService;
 
   questionReadTimer: number = 2000;
-  isOnline: BehaviorSubject<boolean>;
   fileSyncComplete: Subject<void> = new Subject();
 
   private readonly params$: BehaviorSubject<Params>;
@@ -2346,7 +2350,6 @@ class TestEnvironment {
     scriptureAudio?: boolean;
     testProject?: SFProject;
   }) {
-    this.isOnline = new BehaviorSubject<boolean>(hasConnection);
     this.params$ = new BehaviorSubject<Params>({
       projectId: 'project01',
       bookId: projectBookRoute,
@@ -2363,9 +2366,7 @@ class TestEnvironment {
     }
 
     when(mockedUserService.editDisplayName(true)).thenResolve();
-    when(mockedOnlineStatusService.isOnline).thenReturn(this.isOnline.getValue());
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.isOnline.asObservable());
-    when(mockedOnlineStatusService.isOnline).thenReturn(hasConnection);
+    this.testOnlineStatusService.setIsOnline(hasConnection);
     when(
       mockedFileService.findOrUpdateCache(FileType.Audio, QuestionDoc.COLLECTION, anything(), anyString())
     ).thenResolve(createStorageFileData(QuestionDoc.COLLECTION, 'anyId', 'filename.mp3', getAudioBlob()));
@@ -2502,8 +2503,7 @@ class TestEnvironment {
   }
 
   set onlineStatus(hasConnection: boolean) {
-    when(mockedOnlineStatusService.isOnline).thenReturn(hasConnection);
-    this.isOnline.next(hasConnection);
+    this.testOnlineStatusService.setIsOnline(hasConnection);
     tick();
     this.fixture.detectChanges();
   }

@@ -3,24 +3,26 @@ import { Component, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { BehaviorSubject } from 'rxjs';
-import { mock, when } from 'ts-mockito';
+import { mock } from 'ts-mockito';
 import { DialogService } from 'xforge-common/dialog.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
+
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { EditNameDialogComponent, EditNameDialogResult } from './edit-name-dialog.component';
 
 const mockedI18nService = mock(I18nService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 
 describe('EditNameDialogComponent', () => {
   configureTestingModule(() => ({
+    imports: [TestOnlineStatusModule.forRoot()],
     providers: [
       DialogService,
       { provide: I18nService, useMock: mockedI18nService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
@@ -108,17 +110,16 @@ describe('EditNameDialogComponent', () => {
 });
 
 class TestEnvironment {
+  readonly testOnlineStatusService: TestOnlineStatusService;
   fixture: ComponentFixture<DialogOpenerComponent>;
   component: DialogOpenerComponent;
-
-  private onlineStatus$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   constructor() {
     TestBed.configureTestingModule({
       declarations: [DialogOpenerComponent],
       imports: [DialogTestModule, UICommonModule]
     });
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(this.onlineStatus$.asObservable());
+    this.testOnlineStatusService = TestBed.inject(OnlineStatusService) as TestOnlineStatusService;
     this.fixture = TestBed.createComponent(DialogOpenerComponent);
     this.component = this.fixture.componentInstance;
   }
@@ -152,7 +153,7 @@ class TestEnvironment {
   }
 
   set isOnline(value: boolean) {
-    this.onlineStatus$.next(value);
+    this.testOnlineStatusService.setIsOnline(value);
     this.wait();
   }
 

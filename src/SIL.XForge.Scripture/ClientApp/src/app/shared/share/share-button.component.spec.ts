@@ -6,6 +6,8 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -19,17 +21,22 @@ import { ShareButtonComponent } from './share-button.component';
 const mockedProjectService = mock(SFProjectService);
 const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedUserService = mock(UserService);
-const mockedOnlineStatusService = mock(OnlineStatusService);
 
 describe('ShareButtonComponent', () => {
   configureTestingModule(() => ({
-    imports: [DialogTestModule, TestTranslocoModule, TestRealtimeModule.forRoot(SF_TYPE_REGISTRY), UICommonModule],
+    imports: [
+      DialogTestModule,
+      TestTranslocoModule,
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      TestOnlineStatusModule.forRoot(),
+      UICommonModule
+    ],
     declarations: [ShareButtonComponent],
     providers: [
       { provide: SFProjectService, useMock: mockedProjectService },
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: UserService, useMock: mockedUserService },
-      { provide: OnlineStatusService, useMock: mockedOnlineStatusService }
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
 
@@ -56,7 +63,6 @@ class TestEnvironment {
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
-    when(mockedOnlineStatusService.onlineStatus$).thenReturn(of(true));
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project01' }));
     when(mockedProjectService.getProfile(anything())).thenCall(id =>
       this.realtimeService.subscribe(SFProjectProfileDoc.COLLECTION, id)
