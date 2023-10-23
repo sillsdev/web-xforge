@@ -252,7 +252,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     const sourceProjectChanged: boolean =
       (newValue.sourceParatextId ?? null) !== (this.previousFormValues.sourceParatextId ?? null);
     if (
-      newValue.translationSuggestionsEnabled !== this.previousFormValues.translationSuggestionsEnabled &&
+      (newValue.translationSuggestionsEnabled ?? null) !==
+        (this.previousFormValues.translationSuggestionsEnabled ?? null) &&
       this.translationSuggestionsEnabled.enabled
     ) {
       // Translation suggestions is set to false or is re-enabled
@@ -311,16 +312,18 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (this.projectDoc?.data == null) {
       return;
     }
-    if (newValue.checkingEnabled !== this.previousFormValues.checkingEnabled) {
+    if ((newValue.checkingEnabled ?? null) !== (this.previousFormValues.checkingEnabled ?? null)) {
       this.updateSetting(newValue, 'checkingEnabled');
     }
-    if (newValue.usersSeeEachOthersResponses !== this.previousFormValues.usersSeeEachOthersResponses) {
+    if (
+      (newValue.usersSeeEachOthersResponses ?? null) !== (this.previousFormValues.usersSeeEachOthersResponses ?? null)
+    ) {
       this.updateSetting(newValue, 'usersSeeEachOthersResponses');
     }
-    if (newValue.translateShareEnabled !== this.previousFormValues.translateShareEnabled) {
+    if ((newValue.translateShareEnabled ?? null) !== (this.previousFormValues.translateShareEnabled ?? null)) {
       this.updateSetting(newValue, 'translateShareEnabled');
     }
-    if (newValue.checkingShareEnabled !== this.previousFormValues.checkingShareEnabled) {
+    if ((newValue.checkingShareEnabled ?? null) !== (this.previousFormValues.checkingShareEnabled ?? null)) {
       this.updateSetting(newValue, 'checkingShareEnabled');
     }
     if (
