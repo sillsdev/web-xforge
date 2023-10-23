@@ -16,9 +16,9 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { combineLatest, merge, Subscription } from 'rxjs';
-import { filter, map, throttleTime } from 'rxjs/operators';
+import { VerseRefData, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { Subscription, combineLatest, merge } from 'rxjs';
+import { distinctUntilChanged, filter, map, startWith, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
@@ -37,12 +37,12 @@ import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
 import { SFProjectService } from '../../core/sf-project.service';
+import { getVerseRefFromSegmentRef } from '../../shared/utils';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
-import { BookChapter, CheckingAccessInfo, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
+import { BookChapter, CheckingAccessInfo, CheckingUtils, QuestionScope, isQuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { getVerseRefFromSegmentRef } from '../../shared/utils';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CommentAction } from './checking-answers/checking-comments/checking-comments.component';
 import { CheckingQuestionsService, PreCreationQuestionData, QuestionFilter } from './checking-questions.service';
@@ -111,7 +111,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   totalVisibleQuestionsString: string = '0';
   visibleQuestions?: QuestionDoc[];
   showScriptureAudioPlayer: boolean = false;
-  hideChapterText: boolean = false;
   isCreatingNewQuestion: boolean = false;
   questionToBeCreated: PreCreationQuestionData | undefined;
 
@@ -138,6 +137,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private questionsSub?: Subscription;
   private textAudioQuery?: RealtimeQuery<TextAudioDoc>;
   private projectDeleteSub?: Subscription;
+  private hideTextSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
   private questionFilterFunctions: Record<QuestionFilter, (answers: Answer[]) => boolean> = {
     [QuestionFilter.None]: () => true,
@@ -247,6 +247,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     const project: Readonly<SFProjectProfile | undefined> = this.projectDoc?.data;
     const userId: string = this.userService.currentUserId;
     return project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Create);
+  }
+
+  get hideChapterText(): boolean {
+    return this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText ?? false;
   }
 
   get isRightToLeft(): boolean {
@@ -512,8 +516,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               throw new Error('Project has no texts');
             }
 
-            this.showOrHideScriptureText();
-            this.books = this.projectDoc.data.texts.map(t => t.bookNum).sort((a, b) => a - b);
+            this.books = this.projectDoc.data.texts.map(t => t.bookNum) ?? [];
             this.initQuestionFilters();
 
             this.projectUserConfigDoc = await this.projectService.getUserConfig(
@@ -546,10 +549,21 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                     this.onRemovedFromProject();
                   }
                 }
-
-                this.showOrHideScriptureText();
               }
             });
+
+            this.hideTextSub?.unsubscribe();
+            this.hideTextSub = this.subscribe(
+              this.projectDoc.changes$.pipe(
+                map(() => this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText),
+                startWith(this.projectDoc.data.checkingConfig.hideCommunityCheckingText),
+                distinctUntilChanged()
+              ),
+              () => {
+                if (this.hideChapterText) this.showScriptureAudioPlayer = true;
+                this.calculateScriptureSliderPosition();
+              }
+            );
 
             this.projectDeleteSub?.unsubscribe();
             this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
@@ -1584,18 +1598,5 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.questionsRemoteChangesSub?.unsubscribe();
     this.questionsQuery?.dispose();
     this.textAudioQuery?.dispose();
-  }
-
-  private showOrHideScriptureText(): void {
-    const oldValue = this.hideChapterText;
-    const newVal = this.projectDoc?.data?.checkingConfig.hideCommunityCheckingText ?? false;
-    this.hideChapterText = newVal;
-    if (this.hideChapterText) {
-      this.showScriptureAudioPlayer = true;
-    }
-    // (Don't needlessly have setTimeout get called if the value hasn't changed.)
-    if (oldValue !== newVal) {
-      this.calculateScriptureSliderPosition();
-    }
   }
 }
