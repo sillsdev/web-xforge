@@ -184,7 +184,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   get appliedQuestionFilterKey(): string | undefined {
-    return this.questionFilters.get(this.activeQuestionFilter)!;
+    return this.questionFilters.get(this.activeQuestionFilter);
   }
 
   get bookName(): string {
