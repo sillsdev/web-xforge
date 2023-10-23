@@ -2097,6 +2097,23 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task IsSourceProject_TrueWhenProjectIsAnAlternateSource()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext_" + Project01;
+        Assert.That(env.Service.IsSourceProject(Project01), Is.False);
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project03,
+            new SFProjectSettings { AlternateSourceParatextId = paratextId }
+        );
+
+        // SUT
+        Assert.That(env.Service.IsSourceProject(Project01), Is.True);
+    }
+
+    [Test]
     public void IsSourceProject_TrueWhenProjectIsATranslationSource()
     {
         var env = new TestEnvironment();
