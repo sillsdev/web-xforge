@@ -260,7 +260,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         bool unsetSourceProject = settings.SourceParatextId == ProjectSettingValueUnset;
         bool unsetAlternateSourceProject = settings.AlternateSourceParatextId == ProjectSettingValueUnset;
 
-        // Get the list of projects of settings the source or alternate source
+        // Get the list of projects for setting the source or alternate source
         IReadOnlyList<ParatextProject> ptProjects = new List<ParatextProject>();
         if (
             (settings.SourceParatextId != null && !unsetSourceProject)
