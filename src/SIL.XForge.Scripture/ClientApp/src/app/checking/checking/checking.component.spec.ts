@@ -31,7 +31,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { getTextDocId, TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
-import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, of, Subject } from 'rxjs';
 import { first } from 'rxjs/operators';
@@ -56,7 +56,6 @@ import { configureTestingModule, getAudioBlob, TestTranslocoModule } from 'xforg
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
-import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -68,11 +67,11 @@ import { TranslationEngineService } from '../../core/translation-engine.service'
 import { AudioPlayerComponent } from '../../shared/audio/audio-player/audio-player.component';
 import { AudioTimePipe } from '../../shared/audio/audio-time-pipe';
 import { SharedModule } from '../../shared/shared.module';
+import { verseSlug } from '../../shared/utils';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
 import { QuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
-import { verseSlug } from '../../shared/utils';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
 import { CheckingCommentFormComponent } from './checking-answers/checking-comments/checking-comment-form/checking-comment-form.component';
 import { CheckingCommentsComponent } from './checking-answers/checking-comments/checking-comments.component';
@@ -82,7 +81,7 @@ import {
   AudioAttachment,
   CheckingAudioRecorderComponent
 } from './checking-audio-recorder/checking-audio-recorder.component';
-import { QuestionFilter } from './checking-questions.service';
+import { CheckingQuestionsService, QuestionFilter } from './checking-questions.service';
 import { CheckingQuestionsComponent } from './checking-questions/checking-questions.component';
 import { CheckingScriptureAudioPlayerComponent } from './checking-scripture-audio-player/checking-scripture-audio-player.component';
 import { CheckingTextComponent } from './checking-text/checking-text.component';
@@ -809,6 +808,16 @@ describe('CheckingComponent', () => {
       tick();
       expect(env.questions.length).toEqual(16);
       flush();
+      discardPeriodicTasks();
+    }));
+
+    it('questions display when offline', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: ADMIN_USER,
+        hasConnection: false
+      });
+
+      expect(env.questions.length).toBeGreaterThan(0);
       discardPeriodicTasks();
     }));
   });
@@ -2394,6 +2403,27 @@ class TestEnvironment {
 
     this.setRouteSnapshot(projectBookRoute, projectChapterRoute.toString(), questionScope);
     this.setupDefaultProjectData(user);
+
+    // 'ready$' from SharedbRealtimeQueryAdapter (not the MemoryRealtimeQueryAdapter used in tests)
+    // does not emit when offline, so simulate this behavior by causing the RealtimeQuery.ready$
+    // to emit 'false' once (due to it being a BehaviorSubject) and then complete
+    if (!hasConnection) {
+      const checkingQuestionsService = TestBed.inject(CheckingQuestionsService);
+
+      // Store original function to call inside callFake
+      const realQueryQuestions = checkingQuestionsService.queryQuestions;
+
+      spyOn(checkingQuestionsService, 'queryQuestions').and.callFake((...args: any[]) =>
+        // Call real function
+        realQueryQuestions.apply(checkingQuestionsService, args as [projectId: string, options?: any]).then(
+          // Then alter `query.ready$` to emit false and complete
+          (query: RealtimeQuery<QuestionDoc>) => {
+            Object.assign(query.ready$, of(false));
+            return query;
+          }
+        )
+      );
+    }
 
     // Need to wait for questions, text promises, and slider position calculations to finish
     this.fixture.detectChanges();
