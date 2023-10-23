@@ -5,15 +5,15 @@ import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/mod
  */
 export interface SFProjectSettings {
   translationSuggestionsEnabled?: boolean;
-  sourceParatextId?: string;
+  sourceParatextId?: string | null;
   biblicalTermsEnabled?: boolean;
   translateShareEnabled?: boolean;
 
-  alternateSourceParatextId?: string;
+  alternateSourceParatextId?: string | null;
 
   checkingEnabled?: boolean;
   usersSeeEachOthersResponses?: boolean;
   checkingShareEnabled?: boolean;
   checkingAnswerExport?: CheckingAnswerExport;
-  hideCommunityCheckingText?: boolean;
+  hideCommunityCheckingText?: boolean | null;
 }
