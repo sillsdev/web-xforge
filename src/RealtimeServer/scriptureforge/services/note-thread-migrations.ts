@@ -1,8 +1,8 @@
-import { Doc, Op, RawOp } from 'sharedb/lib/client';
+import { Doc, Op } from 'sharedb/lib/client';
 import { submitMigrationOp } from '../../common/realtime-server';
-import { Migration, MigrationConstructor } from '../../common/migration';
+import { DocMigration, MigrationConstructor } from '../../common/migration';
 
-class NoteThreadMigration1 implements Migration {
+class NoteThreadMigration1 extends DocMigration {
   static readonly VERSION = 1;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -16,13 +16,9 @@ class NoteThreadMigration1 implements Migration {
       await submitMigrationOp(NoteThreadMigration1.VERSION, doc, ops);
     }
   }
-
-  migrateOp(_op: RawOp): void {
-    // do nothing
-  }
 }
 
-class NoteThreadMigration2 implements Migration {
+class NoteThreadMigration2 extends DocMigration {
   static readonly VERSION = 2;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -43,13 +39,9 @@ class NoteThreadMigration2 implements Migration {
       await submitMigrationOp(NoteThreadMigration2.VERSION, doc, ops);
     }
   }
-
-  migrateOp(_op: RawOp): void {
-    // do nothing
-  }
 }
 
-class NoteThreadMigration3 implements Migration {
+class NoteThreadMigration3 extends DocMigration {
   static readonly VERSION = 3;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -59,13 +51,9 @@ class NoteThreadMigration3 implements Migration {
 
     await submitMigrationOp(NoteThreadMigration2.VERSION, doc, ops);
   }
-
-  migrateOp(_op: RawOp): void {
-    // do nothing
-  }
 }
 
-class NoteThreadMigration4 implements Migration {
+class NoteThreadMigration4 extends DocMigration {
   static readonly VERSION = 4;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -78,10 +66,6 @@ class NoteThreadMigration4 implements Migration {
     if (ops.length > 0) {
       await submitMigrationOp(NoteThreadMigration3.VERSION, doc, ops);
     }
-  }
-
-  migrateOp(_op: RawOp): void {
-    // do nothing
   }
 }
 

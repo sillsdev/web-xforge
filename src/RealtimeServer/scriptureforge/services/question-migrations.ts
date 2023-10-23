@@ -1,8 +1,8 @@
-import { Doc, Op, RawOp } from 'sharedb/lib/client';
+import { Doc, Op } from 'sharedb/lib/client';
 import { submitMigrationOp } from '../../common/realtime-server';
-import { Migration, MigrationConstructor } from '../../common/migration';
+import { DocMigration, MigrationConstructor } from '../../common/migration';
 
-class QuestionMigration1 implements Migration {
+class QuestionMigration1 extends DocMigration {
   static readonly VERSION = 1;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -21,10 +21,6 @@ class QuestionMigration1 implements Migration {
     if (ops.length > 0) {
       await submitMigrationOp(QuestionMigration1.VERSION, doc, ops);
     }
-  }
-
-  migrateOp(_op: RawOp): void {
-    // do nothing
   }
 }
 
