@@ -211,6 +211,11 @@
     "verse_too_long_for_suggestions": "This verse is too long to generate suggestions.",
     "your_comment": "Your comment"
   },
+  "history_chooser": {
+    "hide": "Hide history",
+    "loading": "History loading...",
+    "show": "Show history"
+  },
   "import_questions_confirmation_dialog": {
     "done": "Done",
     "edited_questions_explanation": "Some of the questions you have selected have been edited. Are you sure you want to update the questions? Select the questions you want to update.",
