@@ -45,7 +45,7 @@ import { ParatextUserProfile } from 'realtime-server/lib/esm/scriptureforge/mode
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextAnchor } from 'realtime-server/lib/esm/scriptureforge/models/text-anchor';
-import { TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
+import { TextData, TextType } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
@@ -60,6 +60,7 @@ import { ErrorReportingService } from 'xforge-common/error-reporting.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
+import { Snapshot } from 'xforge-common/models/snapshot';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -96,6 +97,7 @@ import {
 import { DraftSegmentMap } from '../draft-generation/draft-generation';
 import { DraftGenerationService } from '../draft-generation/draft-generation.service';
 import { DraftViewerService } from '../draft-generation/draft-viewer/draft-viewer.service';
+import { HistoryChooserComponent } from './history-chooser/history-chooser.component';
 import { MultiCursorViewer } from './multi-viewer/multi-viewer.component';
 import { NoteDialogComponent, NoteDialogData, NoteDialogResult } from './note-dialog/note-dialog.component';
 import {
@@ -145,18 +147,22 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   mobileNoteControl: UntypedFormControl = new UntypedFormControl('');
   sourceSplitHeight: string = '';
   targetSplitHeight: string = '';
+  snapshotSplitHeight: string = '';
   multiCursorViewers: MultiCursorViewer[] = [];
   insertNoteFabLeft: string = '0px';
   hasDraft = false;
 
   @ViewChild('sourceSplitContainer') sourceSplitContainer?: ElementRef;
   @ViewChild('targetSplitContainer') targetSplitContainer?: ElementRef;
+  @ViewChild('snapshotContainer') snapshotContainer?: ElementRef;
   @ViewChild('targetContainer') targetContainer?: ElementRef;
   @ViewChild('source') source?: TextComponent;
   @ViewChild('target') target?: TextComponent;
+  @ViewChild('snapshotText') snapshotText?: TextComponent;
   @ViewChild('fabButton') insertNoteFab?: ElementRef<HTMLElement>;
   @ViewChild('fabBottomSheet') TemplateBottomSheet?: TemplateRef<any>;
   @ViewChild('mobileNoteTextarea') mobileNoteTextarea?: ElementRef<HTMLTextAreaElement>;
+  @ViewChild('historyChooser') historyChooser?: HistoryChooserComponent;
 
   private interactiveTranslatorFactory?: InteractiveTranslatorFactory;
   private translationEngine?: RemoteTranslationEngine;
@@ -194,6 +200,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private toggleNoteThreadSub?: Subscription;
   private shouldNoteThreadsRespondToEdits: boolean = false;
   private commenterSelectedVerseRef?: VerseRef;
+  private snapshot?: Snapshot<TextData>;
+  private snapshotSub?: Subscription;
   private resizeObserver?: ResizeObserver;
   private scrollSubscription?: Subscription;
   private readonly fabDiameter = 40;
@@ -353,7 +361,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get showSource(): boolean {
-    return this.hasSource && this.hasSourceViewRight;
+    return this.hasSource && this.hasSourceViewRight && !this.showSnapshot;
   }
 
   get hasEditRight(): boolean {
@@ -508,6 +516,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
       SFProjectDomain.SFNoteThreads,
       Operation.Create
     );
+  }
+
+  get showSnapshot(): boolean {
+    return this.snapshot != null;
+  }
+
+  get snapshotLabel(): string {
+    // TODO: Format date string according to the locale
+    return this.historyChooser?.historyRevision?.key ?? '';
   }
 
   get projectId(): string | undefined {
@@ -685,6 +702,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             if (this.translationEngine == null || !this.translationSuggestionsProjectEnabled || !this.hasEditRight) {
               this.setupTranslationEngine();
             }
+          });
+
+          if (this.snapshotSub != null) {
+            this.snapshotSub.unsubscribe();
+          }
+          this.snapshot = undefined;
+          this.snapshotSub = this.historyChooser?.snapshot$?.subscribe(snapshot => {
+            this.snapshot = snapshot;
+            this.snapshotText?.editor?.setContents(new Delta(snapshot?.data.ops), 'api');
             setTimeout(() => this.setTextHeight());
           });
 
@@ -1367,6 +1393,15 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     bounds = elem.getBoundingClientRect();
     top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
     this.sourceSplitHeight = `calc(100vh - ${top}px)`;
+
+    // And again for the snapshot
+    if (this.snapshotContainer == null) {
+      return;
+    }
+    elem = this.snapshotContainer.nativeElement;
+    bounds = elem.getBoundingClientRect();
+    top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
+    this.snapshotSplitHeight = `calc(100vh - ${top}px)`;
   }
 
   private async changeText(): Promise<void> {

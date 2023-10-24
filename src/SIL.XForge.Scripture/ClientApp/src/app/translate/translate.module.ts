@@ -12,6 +12,7 @@ import { DraftGenerationStepsComponent } from './draft-generation/draft-generati
 import { DraftGenerationComponent } from './draft-generation/draft-generation.component';
 import { DraftViewerComponent } from './draft-generation/draft-viewer/draft-viewer.component';
 import { EditorComponent } from './editor/editor.component';
+import { HistoryChooserComponent } from './editor/history-chooser/history-chooser.component';
 import { MultiViewerComponent } from './editor/multi-viewer/multi-viewer.component';
 import { NoteDialogComponent } from './editor/note-dialog/note-dialog.component';
 import { SuggestionsSettingsDialogComponent } from './editor/suggestions-settings-dialog.component';
@@ -32,8 +33,9 @@ import { TranslateRoutingModule } from './translate-routing.module';
     TrainingProgressComponent,
     TranslateOverviewComponent,
     DraftGenerationComponent,
+    DraftGenerationStepsComponent,
     DraftViewerComponent,
-    DraftGenerationStepsComponent
+    HistoryChooserComponent
   ],
   imports: [
     AngularSplitModule,
