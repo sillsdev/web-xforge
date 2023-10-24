@@ -23,6 +23,7 @@ import {
   getAudioBlob
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { BehaviorSubject } from 'rxjs';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
@@ -300,6 +301,41 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
     expect(env.component.chapterAudio!.playing).toBe(false);
   }));
+
+  it('will not try to save dialog if offline', fakeAsync(async () => {
+    env.onlineStatus = false;
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+    // SUT
+    await env.component.save();
+    await env.wait();
+    expect(env.numberOfTimesDialogClosed)
+      .withContext('saving should not occur and close dialog while offline')
+      .toEqual(0);
+  }));
+
+  it('disables save button if offline, shows message', fakeAsync(async () => {
+    const config: MatDialogConfig<ChapterAudioDialogData> = {
+      data: {
+        projectId: 'project01',
+        textsByBookId: TestEnvironment.textsByBookId,
+        questionsSorted: env.questions
+      }
+    };
+
+    env = new TestEnvironment(config);
+
+    // SUT 1
+    expect(env.saveButton.disabled).withContext('save button should not be disabled; not offline').toBe(false);
+    expect(env.offlineError).withContext('bottom offline error should not be showing if online').toBeNull();
+    env.onlineStatus = false;
+
+    // SUT 2
+    expect(env.saveButton.disabled).withContext('save button should be disabled when offline').toBe(true);
+    expect(env.offlineError.textContent)
+      .withContext('should show message that user needs to connect to continue')
+      .toContain('offline');
+  }));
 });
 
 @NgModule({
@@ -354,6 +390,7 @@ class TestEnvironment {
   readonly dialogRef: MatDialogRef<ChapterAudioDialogComponent>;
   readonly audioFile: AudioAttachment;
   private numTimesClosedFired: number;
+  private isOnline: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
   constructor(config?: MatDialogConfig<ChapterAudioDialogData>) {
     if (!config) {
@@ -399,6 +436,12 @@ class TestEnvironment {
     });
   }
 
+  set onlineStatus(isOnline: boolean) {
+    this.isOnline.next(isOnline);
+    tick();
+    this.fixture.detectChanges();
+  }
+
   clickElement(element: HTMLElement | DebugElement): void {
     if (element instanceof DebugElement) {
       element = element.nativeElement as HTMLElement;
@@ -425,6 +468,14 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector('.wrapper-audio') as HTMLElement;
   }
 
+  get saveButton(): HTMLButtonElement {
+    return this.fetchElement('#audio-save-btn') as HTMLButtonElement;
+  }
+
+  get offlineError(): HTMLElement {
+    return this.fetchElement('#offline-error');
+  }
+
   get wrapperTiming(): HTMLElement {
     return this.overlayContainerElement.querySelector('.wrapper-timing') as HTMLElement;
   }
@@ -436,6 +487,10 @@ class TestEnvironment {
   playAudio(): void {
     this.component.chapterAudio?.play();
     this.fixture.detectChanges();
+  }
+
+  fetchElement(query: string): HTMLElement {
+    return this.overlayContainerElement.querySelector(query) as HTMLElement;
   }
 
   async wait(ms: number = 200): Promise<void> {

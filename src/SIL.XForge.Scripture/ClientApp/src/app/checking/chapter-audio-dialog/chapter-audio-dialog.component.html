@@ -59,6 +59,9 @@
         <mat-icon *ngIf="hasTimingBeenUploaded" (click)="deleteTimingData()" class="delete">delete</mat-icon>
       </div>
     </div>
+    <app-notice *ngIf="!isOnline" type="error" icon="cloud_off" id="offline-error">
+      {{ t("chapter_audio_dialog.not_upload_audio_offline") }}
+    </app-notice>
   </mat-dialog-content>
   <mat-dialog-actions>
     <div class="uploading" *ngIf="isLoadingAudio">
@@ -68,7 +71,7 @@
     <button mat-button [mat-dialog-close]="'close'" type="button" id="audio-cancel-btn">
       {{ t("chapter_audio_dialog.cancel") }}
     </button>
-    <button mat-flat-button color="primary" type="submit" (click)="save()" id="audio-save-btn">
+    <button mat-flat-button color="primary" type="submit" (click)="save()" id="audio-save-btn" [disabled]="!isOnline">
       {{ t("chapter_audio_dialog.save") }}
     </button>
   </mat-dialog-actions>
