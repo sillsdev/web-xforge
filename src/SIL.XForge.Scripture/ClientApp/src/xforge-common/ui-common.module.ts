@@ -1,22 +1,3 @@
-import { MDCDataTableModule } from '@angular-mdc/web';
-import { MdcButtonModule } from '@angular-mdc/web/button';
-import { MdcCheckboxModule } from '@angular-mdc/web/checkbox';
-import { MdcDialogModule } from '@angular-mdc/web/dialog';
-import { MdcDrawerModule } from '@angular-mdc/web/drawer';
-import { MdcElevationModule } from '@angular-mdc/web/elevation';
-import { MdcFormFieldModule } from '@angular-mdc/web/form-field';
-import { MdcIconModule } from '@angular-mdc/web/icon';
-import { MdcIconButtonModule } from '@angular-mdc/web/icon-button';
-import { MdcListModule } from '@angular-mdc/web/list';
-import { MdcMenuModule } from '@angular-mdc/web/menu';
-import { MdcMenuSurfaceModule } from '@angular-mdc/web/menu-surface';
-import { MdcSelectModule } from '@angular-mdc/web/select';
-import { MdcSnackbarModule } from '@angular-mdc/web/snackbar';
-import { MdcSwitchModule } from '@angular-mdc/web/switch';
-import { MdcTabBarModule } from '@angular-mdc/web/tab-bar';
-import { MdcTextFieldModule } from '@angular-mdc/web/textfield';
-import { MdcTopAppBarModule } from '@angular-mdc/web/top-app-bar';
-import { MdcTypographyModule } from '@angular-mdc/web/typography';
 import { BidiModule } from '@angular/cdk/bidi';
 import { ModuleWithProviders, NgModule } from '@angular/core';
 import { BREAKPOINT, FlexLayoutModule } from '@angular/flex-layout';
@@ -97,25 +78,6 @@ const modules = [
   MatToolbarModule,
   MatTooltipModule,
   MatExpansionModule,
-  MdcButtonModule,
-  MdcCheckboxModule,
-  MdcDialogModule,
-  MdcDrawerModule,
-  MdcElevationModule,
-  MdcFormFieldModule,
-  MdcIconModule,
-  MdcIconButtonModule,
-  MdcListModule,
-  MdcMenuModule,
-  MdcMenuSurfaceModule,
-  MdcSelectModule,
-  MdcSnackbarModule,
-  MdcSwitchModule,
-  MdcTabBarModule,
-  MdcTextFieldModule,
-  MdcTopAppBarModule,
-  MdcTypographyModule,
-  MDCDataTableModule,
   ReactiveFormsModule,
   NgCircleProgressModule
 ];

@@ -190,7 +190,7 @@ mat-nav-list .mat-list-item {
   font-size: 14px;
 
   mat-icon,
-  mdc-icon {
+  .translate-icon {
     color: variables.$purpleMedium;
     fill: variables.$purpleMedium;
     transition: color 0.15s;
@@ -199,7 +199,7 @@ mat-nav-list .mat-list-item {
   &.activated-nav-item,
   &:hover {
     mat-icon,
-    mdc-icon {
+    .translate-icon {
       color: variables.$purpleLight;
       fill: variables.$purpleLight;
     }

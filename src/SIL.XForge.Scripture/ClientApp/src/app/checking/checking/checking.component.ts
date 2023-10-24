@@ -1,4 +1,3 @@
-import { MdcList } from '@angular-mdc/web/list';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, NavigationBehaviorOptions, Router } from '@angular/router';
@@ -83,7 +82,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       Promise.resolve(null).then(() => this._scriptureAudioPlayer?.play());
     }
   }
-  @ViewChild('chapterMenuList') chapterMenuList?: MdcList;
   @ViewChild('questionsPanel') questionsPanel?: ElementRef;
 
   books: number[] = [];

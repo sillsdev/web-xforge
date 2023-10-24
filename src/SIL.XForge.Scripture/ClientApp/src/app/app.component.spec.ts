@@ -1,4 +1,3 @@
-import { MdcDialog } from '@angular-mdc/web';
 import { CommonModule, Location } from '@angular/common';
 import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
@@ -64,7 +63,6 @@ const mockedNoticeService = mock(NoticeService);
 const mockedPwaService = mock(PwaService);
 const mockedFileService = mock(FileService);
 const mockedErrorReportingService = mock(ErrorReportingService);
-const mockedMdcDialog = mock(MdcDialog);
 const mockedDialogService = mock(DialogService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
 
@@ -117,7 +115,6 @@ describe('AppComponent', () => {
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: FileService, useMock: mockedFileService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
-      { provide: MdcDialog, useMock: mockedMdcDialog },
       { provide: DialogService, useMock: mockedDialogService }
     ]
   }));
