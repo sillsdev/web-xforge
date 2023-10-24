@@ -4,6 +4,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, ActivatedRouteSnapshot, ActivationEnd, ParamMap, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { cloneDeep } from 'lodash-es';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
 import { User } from 'realtime-server/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import * as RichText from 'rich-text';
@@ -17,7 +18,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { configureTestingModule, MockTranslocoDirective, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectService } from '../../../core/sf-project.service';
@@ -105,13 +106,14 @@ describe('DraftViewerComponent', () => {
   }
 
   configureTestingModule(() => ({
-    declarations: [DraftViewerComponent],
+    declarations: [DraftViewerComponent, MockTranslocoDirective],
     imports: [
       UICommonModule,
       CommonModule,
       SharedModule,
       RouterTestingModule,
       TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      TranslocoMarkupModule,
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
       NoopAnimationsModule
