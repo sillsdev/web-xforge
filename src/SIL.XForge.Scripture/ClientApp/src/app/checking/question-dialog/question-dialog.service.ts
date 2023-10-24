@@ -37,7 +37,7 @@ export class QuestionDialogService {
       QuestionDialogResult | 'close'
     >;
     // ENHANCE: Put the audio upload logic into QuestionDialogComponent so we can detect if the upload
-    // fails and notify the user without discarding the question.
+    // fails and notify the user without discarding the question. For example, see chapter-audio-dialog.component.ts.
     const result: QuestionDialogResult | 'close' | undefined = await dialogRef.afterClosed().toPromise();
     if (result == null || result === 'close') {
       return questionDoc;

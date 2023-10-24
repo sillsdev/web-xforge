@@ -1,5 +1,9 @@
 @use 'src/variables';
 
+:host {
+  display: block;
+}
+
 div {
   display: flex;
   align-items: center;
