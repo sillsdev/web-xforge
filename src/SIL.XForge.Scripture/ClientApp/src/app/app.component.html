@@ -120,7 +120,18 @@
           *ngIf="isTranslateEnabled"
           (click)="translateVisible = !translateVisible"
         >
-          <mdc-icon svgIcon="translate" class="translate-icon"></mdc-icon>
+          <svg
+            class="translate-icon"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 348 360"
+            style="enable-background: new 0 0 348.3 360.1"
+            xml:space="preserve"
+          >
+            <path
+              d="M333 155h-25l-68-50v50h-42V16c0-9-7-16-15-16H16C7 0 0 7 0 16v173c0 9 7 16 16 16h26l68 50v-50h40v139c0 9 7 16 16 16h167c8 0 15-7 15-16V171c0-9-7-16-15-16zM158 71h-20c1 7-2 26-25 48l-2 2 1 1c11 9 24 16 37 21l-8 12c-18-8-31-16-42-24-11 8-25 16-42 24l-9-12c14-5 26-12 38-21l1-1-3-2a79 79 0 0 1-23-38h17c6 11 12 21 21 29 10-10 20-22 25-39H40V56h53V42h14v14h51v15zm131 240-12-34h-45l-14 34h-13l40-107h18l42 107h-16z"
+            />
+            <path class="st1" d="M236 265h35l-17-45z" />
+          </svg>
           {{ t("translate") }}
           <mat-icon *ngIf="!hasSingleAppEnabled" [class.fix-rtl-arrow-placement]="i18n.isRtl">
             keyboard_arrow_{{ translateVisible ? "down" : i18n.forwardDirectionWord }}

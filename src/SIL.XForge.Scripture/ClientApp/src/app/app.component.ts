@@ -1,7 +1,5 @@
-import { MdcIconRegistry } from '@angular-mdc/web';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
-import { DomSanitizer } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
@@ -101,9 +99,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     readonly urls: ExternalUrlService,
     readonly featureFlags: FeatureFlagService,
     private readonly pwaService: PwaService,
-    onlineStatusService: OnlineStatusService,
-    iconRegistry: MdcIconRegistry,
-    sanitizer: DomSanitizer
+    onlineStatusService: OnlineStatusService
   ) {
     super(noticeService);
     this.subscribe(
@@ -149,7 +145,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
         }
       });
     }
-    iconRegistry.addSvgIcon('translate', sanitizer.bypassSecurityTrustResourceUrl('/assets/icons/translate.svg'));
   }
 
   get showCheckingDisabled(): boolean {
