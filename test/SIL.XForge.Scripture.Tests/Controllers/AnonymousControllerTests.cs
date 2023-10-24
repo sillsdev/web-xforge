@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Security;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.FeatureManagement;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using NUnit.Framework;
@@ -19,6 +21,24 @@ namespace SIL.XForge.Scripture.Controllers;
 [TestFixture]
 public class AnonymousControllerTests
 {
+    [Test]
+    public async Task FeatureFlags_ReturnsFeatureFlags()
+    {
+        var env = new TestEnvironment();
+        env.FeatureManager.GetFeatureNamesAsync().Returns(TestEnvironment.GetFeatureFlags());
+        env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(true));
+
+        // SUT
+        var actual = await env.Controller.FeatureFlags();
+
+        // Verify result
+        Assert.IsInstanceOf<JsonResult>(actual.Result);
+        Dictionary<string, bool> featureFlags = (actual.Result as JsonResult)?.Value as Dictionary<string, bool>;
+        Assert.IsNotNull(featureFlags);
+        Assert.IsTrue(featureFlags[FeatureFlags.Serval]);
+        Assert.IsFalse(featureFlags[FeatureFlags.UseEchoForPreTranslation]);
+    }
+
     [Test]
     public async Task GenerateAccount_CreatesCookie()
     {
@@ -127,11 +147,12 @@ public class AnonymousControllerTests
     {
         public readonly IAnonymousService AnonymousService = Substitute.For<IAnonymousService>();
         public readonly IExceptionHandler ExceptionHandler = Substitute.For<IExceptionHandler>();
+        public readonly IFeatureManager FeatureManager = Substitute.For<IFeatureManager>();
         public AnonymousController Controller { get; }
 
         public TestEnvironment()
         {
-            Controller = new AnonymousController(AnonymousService, ExceptionHandler);
+            Controller = new AnonymousController(AnonymousService, ExceptionHandler, FeatureManager);
 
             // Setup a new context by which we can make queries against
             var response = new HttpResponseFeature();
@@ -139,6 +160,13 @@ public class AnonymousControllerTests
             features.Set<IHttpResponseFeature>(response);
             var context = new DefaultHttpContext(features);
             Controller.ControllerContext.HttpContext = context;
+        }
+
+        public static async IAsyncEnumerable<string> GetFeatureFlags()
+        {
+            yield return FeatureFlags.Serval;
+            yield return FeatureFlags.UseEchoForPreTranslation;
+            await Task.CompletedTask;
         }
     }
 }
