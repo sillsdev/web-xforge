@@ -15,6 +15,7 @@ import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
@@ -60,9 +61,14 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly questionDialogService: QuestionDialogService,
     private readonly router: Router,
     private readonly chapterAudioDialogService: ChapterAudioDialogService,
+    private readonly onlineStatusService: OnlineStatusService,
     readonly featureFlagsService: FeatureFlagService
   ) {
     super(noticeService);
+  }
+
+  protected get isOnline(): boolean {
+    return this.onlineStatusService.isOnline;
   }
 
   get showQuestionsLoadingMessage(): boolean {
@@ -264,6 +270,10 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         'checking_overview.delete'
       )
     ) {
+      if (!this.isOnline) {
+        this.noticeService.showError(translate('checking_overview.not_deleted_chapter_audio_offline'));
+        return;
+      }
       await this.projectService.onlineDeleteAudioTimingData(this.projectId, text.bookNum, chapter.number);
     }
   }
