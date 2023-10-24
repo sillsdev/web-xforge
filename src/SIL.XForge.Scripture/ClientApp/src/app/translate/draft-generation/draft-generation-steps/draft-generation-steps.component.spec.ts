@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatMenuModule } from '@angular/material/menu';
-import { MatStepperModule } from '@angular/material/stepper';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
 import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { UICommonModule } from '../../../../xforge-common/ui-common.module';
 import { SFProjectProfileDoc } from '../../../core/models/sf-project-profile-doc';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 import { DraftGenerationStepsComponent, DraftGenerationStepsResult } from './draft-generation-steps.component';
 
 describe('DraftGenerationStepsComponent', () => {
@@ -31,8 +31,8 @@ describe('DraftGenerationStepsComponent', () => {
   } as SFProjectProfileDoc;
 
   configureTestingModule(() => ({
-    imports: [MatStepperModule, MatMenuModule, TestTranslocoModule, NoopAnimationsModule],
-    declarations: [DraftGenerationStepsComponent],
+    imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
+    declarations: [DraftGenerationStepsComponent, BookMultiSelectComponent],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: SFProjectService, useMock: mockProjectService }

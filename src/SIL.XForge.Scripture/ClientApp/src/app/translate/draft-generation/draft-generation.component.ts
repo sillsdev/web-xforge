@@ -40,6 +40,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   projectSettingsUrl?: string;
 
   targetLanguage?: string;
+  targetLanguageDisplayName?: string;
 
   isTargetLanguageSupported = true;
   isBackTranslation = true;
@@ -67,6 +68,8 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   hasAnyCompletedBuild = false;
 
   cancelDialogRef?: MatDialogRef<any>;
+
+  readonly nllbUrl: string = 'https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion';
 
   get isGenerationSupported(): boolean {
     return (
@@ -124,21 +127,28 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
         this.pollBuild();
       }
     });
+
+    this.subscribe(this.i18n.locale$, () => {
+      this.targetLanguageDisplayName = this.getTargetLanguageDisplayName();
+    });
   }
 
   get isForwardTranslationEnabled(): boolean {
     return this.featureFlags.allowForwardTranslationNmtDrafting.enabled;
   }
 
-  // TODO: update i18n
   async generateDraft({ withConfirm = false } = {}): Promise<void> {
     if (withConfirm) {
       const isConfirmed: boolean | undefined = await this.dialogService.openGenericDialog({
-        title: of('Regenerate draft?'),
-        message: of('This will re-create any unapplied draft text.'),
+        title: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_title'),
+        message: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_message'),
         options: [
-          { value: false, label: of('No') },
-          { value: true, label: of('Yes, start generation'), highlight: true }
+          { value: false, label: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_no') },
+          {
+            value: true,
+            label: this.i18n.translate('draft_generation.dialog_confirm_draft_regeneration_yes'),
+            highlight: true
+          }
         ]
       }).result;
 
@@ -151,17 +161,18 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     this.navigateToTab('pre-generate-steps');
   }
 
-  // TODO: update i18n
   async cancel(): Promise<void> {
     if (this.draftJob?.state === BuildStates.Active) {
       const { dialogRef, result } = this.dialogService.openGenericDialog({
-        title: of('Cancel draft generation?'),
-        message: of(
-          'Canceling will reset progress for this draft request. You will still be able to use the last completed draft.'
-        ),
+        title: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_title'),
+        message: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_message'),
         options: [
-          { value: false, label: of('No') },
-          { value: true, label: of('Yes, cancel draft generation'), highlight: true }
+          { value: false, label: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_no') },
+          {
+            value: true,
+            label: this.i18n.translate('draft_generation.dialog_confirm_draft_cancellation_yes'),
+            highlight: true
+          }
         ]
       });
 
@@ -196,10 +207,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
     // TODO: Send selected books to the back-end
     this.startBuild();
-  }
-
-  getTargetLanguageDisplayName(): string | undefined {
-    return this.i18n.getLanguageDisplayName(this.targetLanguage);
   }
 
   /**
@@ -266,6 +273,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       ),
       (job?: BuildDto) => (this.draftJob = job)
     );
+  }
+
+  private getTargetLanguageDisplayName(): string | undefined {
+    return this.i18n.getLanguageDisplayName(this.targetLanguage);
   }
 
   private pollBuild(): void {
