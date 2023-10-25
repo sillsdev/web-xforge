@@ -1,4 +1,7 @@
-import { MatSnackBarConfig, MatSnackBar } from '@angular/material/snack-bar';
+import {
+  MatLegacySnackBarConfig as MatSnackBarConfig,
+  MatLegacySnackBar as MatSnackBar
+} from '@angular/material/legacy-snack-bar';
 import { Injectable } from '@angular/core';
 import { I18nService } from './i18n.service';
 
