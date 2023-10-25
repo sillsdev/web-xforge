@@ -873,7 +873,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             throw new DataNotFoundException("The project does not exist.");
         }
-        if (!IsProjectAdmin(projectDoc.Data, userId))
+        if (
+            !IsProjectAdmin(projectDoc.Data, userId)
+            && !projectDoc.Data.UserPermissions[userId].Contains("text_audio.create")
+        )
         {
             throw new ForbiddenException();
         }
@@ -926,7 +929,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         {
             throw new DataNotFoundException("The project does not exist.");
         }
-        if (!IsProjectAdmin(projectDoc.Data, userId))
+        if (
+            !IsProjectAdmin(projectDoc.Data, userId)
+            && !projectDoc.Data.UserPermissions[userId].Contains("text_audio.delete")
+        )
         {
             throw new ForbiddenException();
         }
