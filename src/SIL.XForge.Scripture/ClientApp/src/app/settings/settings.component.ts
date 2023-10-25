@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import { MatDialogConfig } from '@angular/material/dialog';
+import { MatLegacyDialogConfig as MatDialogConfig } from '@angular/material/legacy-dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { combineLatest } from 'rxjs';

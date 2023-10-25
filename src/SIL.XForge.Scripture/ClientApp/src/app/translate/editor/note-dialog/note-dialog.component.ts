@@ -1,5 +1,8 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import {
+  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA,
+  MatLegacyDialogRef as MatDialogRef
+} from '@angular/material/legacy-dialog';
 import { translate } from '@ngneat/transloco';
 import { sortBy } from 'lodash-es';
 import { toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';

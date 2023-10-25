@@ -1,7 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import {
+  MatLegacyDialog as MatDialog,
+  MatLegacyDialogConfig as MatDialogConfig
+} from '@angular/material/legacy-dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { VerseRef } from '@sillsdev/scripture';
 import cloneDeep from 'lodash-es/cloneDeep';

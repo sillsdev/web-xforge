@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { MatSliderChange } from '@angular/material/slider';
+import { MatLegacySliderChange as MatSliderChange } from '@angular/material/legacy-slider';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { AudioPlayerBaseComponent } from '../audio-player-base/audio-player-base.component';

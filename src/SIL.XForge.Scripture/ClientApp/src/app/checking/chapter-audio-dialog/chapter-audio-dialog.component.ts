@@ -1,5 +1,8 @@
 import { AfterViewInit, Component, ElementRef, Inject, ViewChild } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import {
+  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA,
+  MatLegacyDialogRef as MatDialogRef
+} from '@angular/material/legacy-dialog';
 import { Canon } from '@sillsdev/scripture';
 import { reject } from 'lodash-es';
 import { Chapter, TextInfo } from 'realtime-server//lib/esm/scriptureforge/models/text-info';

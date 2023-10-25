@@ -1,7 +1,7 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, getDebugNode } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatCheckbox } from '@angular/material/checkbox';
+import { MatLegacyCheckbox as MatCheckbox } from '@angular/material/legacy-checkbox';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';

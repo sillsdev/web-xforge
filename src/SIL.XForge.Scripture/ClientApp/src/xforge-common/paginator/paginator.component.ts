@@ -1,5 +1,5 @@
 import { Directive, OnDestroy } from '@angular/core';
-import { MatPaginatorIntl } from '@angular/material/paginator';
+import { MatLegacyPaginatorIntl as MatPaginatorIntl } from '@angular/material/legacy-paginator';
 import { translate, TranslocoService } from '@ngneat/transloco';
 import { Subscription } from 'rxjs';
 
