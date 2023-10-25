@@ -13,7 +13,7 @@
     "experimentalDecorators": true,
     "moduleResolution": "node",
     "importHelpers": true,
-    "target": "es2020",
+    "target": "ES2022",
     "module": "es2020",
     "lib": ["es2019", "dom"],
     "suppressImplicitAnyIndexErrors": true,
@@ -22,7 +22,8 @@
     "resolveJsonModule": true,
     "paths": {
       "xforge-common/*": ["./src/xforge-common/*"]
-    }
+    },
+    "useDefineForClassFields": false
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
