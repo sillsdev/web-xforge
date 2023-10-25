@@ -62,11 +62,14 @@ function pad(number: number): string {
   return number.toString().padStart(2, '0');
 }
 
+const locales = getI18nLocales().concat(PseudoLocalization.locale);
+const defaultLocale = locales.find(locale => locale.tags.some(canonicalTag => canonicalTag.toLowerCase() === 'en'))!;
+
 @Injectable({
   providedIn: 'root'
 })
 export class I18nService {
-  static readonly locales: Locale[] = getI18nLocales().concat(PseudoLocalization.locale);
+  static readonly locales: Locale[] = locales;
 
   static dateFormats: { [key: string]: DateFormat } = {
     en: { month: 'short' },
@@ -77,25 +80,23 @@ export class I18nService {
     [PseudoLocalization.locale.canonicalTag]: PseudoLocalization.dateFormat
   };
 
-  static readonly defaultLocale = I18nService.getLocale('en')!;
+  static readonly defaultLocale = defaultLocale;
 
   static readonly translocoConfig: TranslocoConfig = {
-    availableLangs: I18nService.locales.map(locale => locale.canonicalTag),
+    availableLangs: locales.map(locale => locale.canonicalTag),
     reRenderOnLangChange: true,
-    fallbackLang: I18nService.defaultLocale.canonicalTag,
-    defaultLang: I18nService.defaultLocale.canonicalTag,
+    fallbackLang: defaultLocale.canonicalTag,
+    defaultLang: defaultLocale.canonicalTag,
     missingHandler: {
       useFallbackTranslation: true
     }
   };
 
   static getLocale(tag: string): Locale | undefined {
-    return this.locales.find(locale =>
-      locale.tags.some(canonicalTag => canonicalTag.toLowerCase() === tag.toLowerCase())
-    );
+    return locales.find(locale => locale.tags.some(canonicalTag => canonicalTag.toLowerCase() === tag.toLowerCase()));
   }
 
-  private currentLocale$ = new BehaviorSubject<Locale>(I18nService.defaultLocale);
+  private currentLocale$ = new BehaviorSubject<Locale>(defaultLocale);
 
   private interpolationCache: { [key: string]: { text: string; id?: number }[] } = {};
 
