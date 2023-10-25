@@ -2970,9 +2970,7 @@ public class SFProjectServiceTests
         await env.Service.CreateAudioTimingData(User03, Project01, book, chapter, timingData, audioUrl);
 
         // SUT
-        Assert.DoesNotThrowAsync(
-            () => env.Service.DeleteAudioTimingData(User03, Project01, book, chapter)
-        );
+        Assert.DoesNotThrowAsync(() => env.Service.DeleteAudioTimingData(User03, Project01, book, chapter));
     }
 
     private class TestEnvironment
@@ -3114,8 +3112,8 @@ public class SFProjectServiceTests
                             },
                             UserPermissions = new Dictionary<string, string[]>
                             {
-                                { User03, ["text_audio.create", "text_audio.delete"]},
-                                { User05, []}
+                                { User03, new[] { "text_audio.create", "text_audio.delete" } },
+                                { User05, Array.Empty<string>() }
                             },
                             Texts =
                             {
