@@ -1,8 +1,11 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { MatButtonHarness } from '@angular/material/button/testing';
-import { MatMenuHarness, MatMenuItemHarness } from '@angular/material/menu/testing';
+import { MatLegacyButtonHarness as MatButtonHarness } from '@angular/material/legacy-button/testing';
+import {
+  MatLegacyMenuHarness as MatMenuHarness,
+  MatLegacyMenuItemHarness as MatMenuItemHarness
+} from '@angular/material/legacy-menu/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { FontSizeComponent } from './font-size.component';

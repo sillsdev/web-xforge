@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatLegacyDialogRef as MatDialogRef } from '@angular/material/legacy-dialog';
 import { translate } from '@ngneat/transloco';
 import { escapeRegExp } from 'lodash-es';
 import merge from 'lodash-es/merge';

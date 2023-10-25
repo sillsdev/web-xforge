@@ -1,9 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { DebugElement, NgModule } from '@angular/core';
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
-import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
-import { MatSelect } from '@angular/material/select';
-import { MatSlider } from '@angular/material/slider';
+import {
+  MatLegacyDialog as MatDialog,
+  MatLegacyDialogConfig as MatDialogConfig
+} from '@angular/material/legacy-dialog';
+import { MatLegacySelect as MatSelect } from '@angular/material/legacy-select';
+import { MatLegacySlider as MatSlider } from '@angular/material/legacy-slider';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import cloneDeep from 'lodash-es/cloneDeep';
