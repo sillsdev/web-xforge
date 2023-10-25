@@ -60,6 +60,10 @@ mat-tab-group {
   }
 }
 
+mat-divider.mat-divider-inset {
+  margin: 0;
+}
+
 .view-or-create-options {
   display: grid;
   grid-template-columns: minmax(0, 500px) 1px minmax(0, 500px);
