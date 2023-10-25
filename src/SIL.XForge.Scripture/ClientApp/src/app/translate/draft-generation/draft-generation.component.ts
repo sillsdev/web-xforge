@@ -269,6 +269,11 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
               this.cancelDialogRef.close();
             }
           }
+
+          // Ensure flag is set for case where first completed build happens while component is loaded
+          if (this.isDraftComplete(job)) {
+            this.hasAnyCompletedBuild = true;
+          }
         })
       ),
       (job?: BuildDto) => (this.draftJob = job)
@@ -297,6 +302,11 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       (job?: BuildDto) => {
         this.draftJob = job;
         this.isDraftJobFetched = true;
+
+        // Ensure flag is set for case where first completed build happens while component is loaded
+        if (this.isDraftComplete(job)) {
+          this.hasAnyCompletedBuild = true;
+        }
       }
     );
   }

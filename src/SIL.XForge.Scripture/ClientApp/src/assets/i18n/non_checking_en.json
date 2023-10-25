@@ -143,10 +143,10 @@
     "draft_queued_header": "Draft queued",
     "generate_back_translation_drafts": "Generate back translation drafts",
     "generate_draft_button": "Generate draft",
-    "generate_draft_detail": "Click [em]\"Generate draft\"[/em] to start the process of generating a back translation draft. This will take at least a few hours.",
+    "generate_draft_detail": "Click [em]\"{{ draft_generation.generate_draft_button }}\"[/em] to start the process of generating a back translation draft. This will take at least a few hours.",
     "generate_draft_header": "Generate draft",
     "generate_new_draft_button": "Generate new draft",
-    "generate_new_draft_detail": "Click [em]\"Generate draft\"[/em] to start the process of generating a new back translation draft. This will take at least a few hours and could take as long as 16 hours.",
+    "generate_new_draft_detail": "Click [em]\"{{ draft_generation.generate_new_draft_button }}\"[/em] to start the process of generating a new back translation draft. This will take at least a few hours and could take as long as 16 hours.",
     "generate_new_draft_header": "Generate new draft",
     "go_to_draft_viewer": "Go to [link:draftViewerUrl]draft viewer[/link] to preview and apply the generated draft to chapters of your choice.",
     "info_alert_project_type_not_supported_detail": "In order to generate a draft translation, the project must be a back translation project.",
@@ -171,7 +171,7 @@
     "preview_last_draft_while_active_build": "While the new draft generation is in progress, you can continue working with the previously generated draft.",
     "requirements": "Requirements",
     "suggested_workflow": "A suggested workflow is to complete at least a chapter before regenerating a draft.",
-    "warning_generation_faulted_header_detail": "Click [em]\"Generate draft\"[/em] below to try again.",
+    "warning_generation_faulted_detail": "Click [em]\"{{ generateButtonText }}\"[/em] below to try again.",
     "warning_generation_faulted_header": "Last generation attempt failed"
   },
   "draft_generation_steps": {
@@ -181,7 +181,7 @@
     "confirm_books_and_generate": "Confirm books and generate",
     "generate_draft": "Generate draft",
     "next": "Next",
-    "no_books_selected": "Click \"Back\" to select books."
+    "no_books_selected": "Click \"{{ draft_generation_steps.back }}\" to select books."
   },
   "draft_viewer": {
     "apply_to_project": "Apply to project",
@@ -191,8 +191,8 @@
     "edit": "Edit",
     "loading": "Loading...",
     "offline_message": "Draft preview is not available while offline.",
-    "select_apply_to_project": "Select [em]\"Apply to project\"[/em] for each chapter that you want to overwrite with the draft text.",
-    "select_edit": "Select [em]\"Edit\"[/em] to go to the editor page for this chapter.",
+    "select_apply_to_project": "Select [em]\"{{ draft_viewer.apply_to_project }}\"[/em] for each chapter that you want to overwrite with the draft text.",
+    "select_edit": "Select [em]\"{{ draft_viewer.edit }}\"[/em] to go to the editor page for this chapter.",
     "select_source_text": "A source text has not been selected for this project. You can select a source text in [link:projectSettingsUrl]project settings[/link].",
     "source_not_set": "Source not set"
   },
