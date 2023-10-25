@@ -1,6 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { MatDialogRef, MatDialogState } from '@angular/material/dialog';
-import { MatTabGroup } from '@angular/material/tabs';
+import {
+  MatLegacyDialogRef as MatDialogRef,
+  MatLegacyDialogState as MatDialogState
+} from '@angular/material/legacy-dialog';
+import { MatLegacyTabGroup as MatTabGroup } from '@angular/material/legacy-tabs';
 import { isEmpty } from 'lodash-es';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of, Subscription } from 'rxjs';

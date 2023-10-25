@@ -12,7 +12,7 @@ import {
   SimpleChanges,
   ViewChildren
 } from '@angular/core';
-import { MatListItem } from '@angular/material/list';
+import { MatLegacyListItem as MatListItem } from '@angular/material/legacy-list';
 import { translate } from '@ngneat/transloco';
 import sortBy from 'lodash-es/sortBy';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
