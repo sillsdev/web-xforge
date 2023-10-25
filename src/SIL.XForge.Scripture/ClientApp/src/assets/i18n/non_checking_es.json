@@ -12,7 +12,7 @@
     "description": "Descripción",
     "edit_renderings": "Editar traducciones",
     "renderings": "Traducciones",
-    "renderings_hint": "If there is more than one rendering, type each one on a separate line.",
+    "renderings_hint": "Si hay más de una traducción, escriba cada una en una línea distinta.",
     "save": "Guardar",
     "term": "Término/Definición",
     "view_renderings": "Ver traducciones"
@@ -34,25 +34,25 @@
   },
   "checking_answers": {
     "archive": "Archivar",
-    "no_permission_to_like": "You don't have permission to like answers."
+    "no_permission_to_like": "No tiene permiso para dar me gusta a las respuestas."
   },
   "checking_overview": {
-    "add_chapter_audio": "Add chapter audio",
+    "add_chapter_audio": "Añadir audio del capítulo",
     "add_question": "Agregar pregunta",
     "answer_count_label": "{{ count }} respuestas",
     "archive_multiple": "Archivar todas las preguntas en {{ location }}",
     "archive": "Archivar",
     "archived_questions": "Preguntas archivadas",
-    "chapter_audio_attached": "Chapter audio and timing data attached",
+    "chapter_audio_attached": "Se adjuntan los datos de audio y temporización del capítulo",
     "click_add_question": "Haga clic en {{ boldStart }}Agregar pregunta{{ boldEnd }}, arriba.",
     "confirm_bulk_archive": "¿Está seguro que desea archivar todas las preguntas en {{ scope }}?",
     "confirm_bulk_republish": "¿Está seguro de que quiere volver a publicar todas las preguntas en {{ scope }}?",
-    "confirm_delete_chapter_audio": "Are you sure you want to delete chapter audio and timing data for {{ book }} {{ chapter }}?",
+    "confirm_delete_chapter_audio": "¿Está seguro de que desea eliminar los datos de audio y temporización de los capítulos de {{ book }} {{ chapter }}?",
     "delete": "Eliminar",
-    "delete_chapter_audio": "Delete chapter audio",
-    "edit_chapter_audio": "Edit chapter audio",
+    "delete_chapter_audio": "Borrar el audio del capítulo",
+    "edit_chapter_audio": "Editar el audio del capítulo",
     "import_questions": "Importar",
-    "manage_audio_timing": "Manage chapter audio and timing data",
+    "manage_audio_timing": "Administrar los datos de audio y temporización de los capítulos",
     "no_archived_questions": "No hay preguntas archivadas.",
     "no_questions": "No hay preguntas publicadas. ",
     "question_count_label": "{{ count }} preguntas",
@@ -61,27 +61,27 @@
     "time_archived_stamp": "Archivado en {{ timeStamp }}"
   },
   "collaborators": {
-    "all": "All",
+    "all": "Todos",
     "allow_add_edit_questions": "Puede añadir y editar preguntas",
     "awaiting_response_from": "Esperando respuesta de{{ newLine }}{{ email }}",
     "cancel_invite": "Cancelar la invitación",
     "change_roles_and_permissions": "Los roles y permisos de los usuarios {{ boldStart }}sólo{{ boldEnd }} pueden ser cambiados en {{ boldStart }}Paratext{{ boldEnd }}. Abra el proyecto en {{ boldStart }}Paratext{{ boldEnd }}, en la ventana del proyecto haga clic en {{ templateTagBoundary }}{{ templateTagBoundary }}, luego {{ boldStart }}Configuración del proyecto{{ boldEnd }}, luego {{ boldStart }}Permisos de usuario{{ boldEnd }}. Después un {{ italicsStart }}Enviar/Recibir{{ italicsEnd }} en {{ boldStart }}Paratext{{ boldEnd }} y luego un {{ italicsStart }}Sincronizar{{ italicsEnd }} en {{ boldStart }}Scripture Forge{{ boldEnd }}, su rol entrará en vigor aquí, una vez que el usuario inicie la sesión con su cuenta de {{ boldStart }}Paratext{{ boldEnd }} .",
     "confirm_remove_user": "¿Está seguro que quiere eliminar a \"{{ user }}\" del proyecto?",
     "connect_network_to_manage_users": "La administración de usuarios está desactivada cuando está fuera de línea. Por favor, conéctese a Internet para gestionar los usuarios.",
-    "disable_add_edit_questions": "Disable add and edit questions",
-    "enable_add_edit_questions": "Enable add and edit questions",
+    "disable_add_edit_questions": "Desactivar añadir y editar preguntas",
+    "enable_add_edit_questions": "Permitir añadir y editar preguntas",
     "filter_users": "Filtrar usuarios...",
     "invitation_expired": "La invitación para este correo ha vencido:{{ newLine }}{{ email }}",
     "learn_more": "Aprender más",
     "me": "yo",
     "no_users_found": "Usuarios no encontrados",
-    "paratext_members": "Paratext Members",
+    "paratext_members": "Miembros de Paratext",
     "problem_loading_invited_users": "Hubo un problema al cargar la lista de usuarios invitados.",
-    "project_guests": "Project Guests",
+    "project_guests": "Invitados al proyecto",
     "remove_from_project": "Eliminar del proyecto",
     "remove_user": "Eliminar usuario",
     "share_with_others": "Compartir con otros",
-    "uses_roles_to_access_project": "Scripture Forge uses roles and permissions to access your project"
+    "uses_roles_to_access_project": "Scripture Forge utiliza roles y permisos para acceder a tu proyecto"
   },
   "connect_project": {
     "already_connected": "(ya conectado)",
@@ -117,14 +117,14 @@
     "project_name": "Nombre del proyecto"
   },
   "editor": {
-    "add_comment": "Add Comment",
+    "add_comment": "Añadir comentario",
     "anonymous": "Anónimo",
     "cancel": "Cancelar",
     "cannot_edit_chapter_formatting_invalid": "Este capítulo no puede ser editado porque el formato no es válido. Por favor, arregle el formato en Paratext.",
-    "cannot_edit_note_paratext": "You cannot edit this note as it has been edited in Paratext.",
+    "cannot_edit_note_paratext": "No puede editar esta nota ya que ha sido editada en Paratext.",
     "configure_translation_suggestions": "Configurar sugerencias de traducción",
     "more_notes": "--- {{ count }} nota(s) más ---",
-    "navigate_to_a_valid_text": "Navigate to a valid text to insert a note",
+    "navigate_to_a_valid_text": "Navegue hasta un texto válido para insertar una nota",
     "no_permission_edit_chapter": "Aunque tiene el rol de {{ userRole }}, usted no tiene permiso para editar este capítulo. Los permisos sólo se pueden cambiar en Paratext.",
     "project_data_out_of_sync": "Los datos de su proyecto no están sincronizados. Por favor, sincronice su proyecto para editar este texto.",
     "project_text_not_editable": "El texto de este proyecto no es editable. Esta configuración se puede cambiar en Paratext.",
@@ -164,7 +164,7 @@
     "invalid_csv_rows_will_be_skipped": "Estas filas del archivo CSV no eran válidas y se omitirán.",
     "learn_more": "Más información",
     "loading": "Cargando...",
-    "missing_header_row": "The file you imported needs to have a header row with columns titled {{ boldStart }}Reference{{ boldEnd }} and {{ boldStart }}Question{{ boldEnd }}.",
+    "missing_header_row": "El archivo que ha importado debe tener una fila de cabecera con columnas tituladas {{ boldStart }}Referencia{{ boldEnd }} y {{ boldStart }}Pregunta{{ boldEnd }}.",
     "must_be_valid_reference": "Debe ser una referencia válida",
     "network_error_transcelerator": "Error de red al obtener las preguntas de Transcelerator. Reintentando ({{ count }}).",
     "no_questions_available": "No hay preguntas para los libros de este proyecto.",
@@ -187,7 +187,7 @@
     "other_viewers": "{{ count }} otros observadores"
   },
   "note_dialog": {
-    "biblical_term": "Biblical Term",
+    "biblical_term": "Vocablos bíblicos",
     "close": "Cerrar",
     "delete": "Eliminar",
     "hide_changes": "Ocultar los cambios",
@@ -244,17 +244,17 @@
     "pt_translator": "Traductor",
     "sf_community_checker": "Revisor de la comunidad",
     "sf_commenter": "Commenter",
-    "sf_observer": "Viewer"
+    "sf_observer": "Observador"
   },
   "role_descriptions": {
     "sf_community_checker": "Responder a las preguntas, Comentar las respuestas",
-    "sf_commenter": "View translation, Add comments",
+    "sf_commenter": "Ver traducción, Añadir comentarios",
     "sf_observer": "Ver traducción"
   },
   "settings": {
     "anyone_with_a_link": "Cualquiera con un enlace",
-    "biblical_terms_will_be_enabled": "Biblical Terms will be displayed and can be updated in Scripture Forge",
-    "biblical_terms": "Enable Biblical Terms",
+    "biblical_terms_will_be_enabled": "Los Vocablos bíblicos se mostrarán y podrán actualizarse en Scripture Forge",
+    "biblical_terms": "Habilitar Vocablos bíblicos",
     "community_checking_settings": "Configuración de comprobación por la comunidad",
     "connect_network_to_change_settings": "La configuración del proyecto no puede cambiarse mientras está fuera de línea. Por favor, conéctese a Internet para hacer cambios.",
     "danger_zone": "Zona de Peligro",
@@ -272,36 +272,36 @@
     "export_marked_for_export": "Respuestas marcadas para exportar",
     "export_none": "Sin respuestas",
     "exporting_answers": "Exportando respuestas",
-    "invite_others": "Administrators can always invite people from the {{ templateTagBoundary }}Users{{ templateTagBoundary }} page.",
+    "invite_others": "Los administradores siempre pueden invitar a personas desde la página {{ templateTagBoundary }}Usuarios{{ templateTagBoundary }} .",
     "log_in_with_paratext": "Iniciar sesión en Paratext",
     "see_others_answers_and_comments": "Permitir que los revisores vean las respuestas de los demás",
     "select_project_or_resource": "Seleccione el proyecto Paratext o el recurso de la Biblioteca Bíblica Digital en el que se basa su proyecto. Si su proyecto se basa en un proyecto Paratext, lo mejor es configurarlo como un proyecto hijo en Paratext.",
     "settings": "Configuración",
     "shareTranslate": "Allow users of Translate to invite others",
-    "shareChecking": "Allow users of Community Checking to invite others",
-    "sharing": "User Invites",
+    "shareChecking": "Permitir que los usuarios de la Comprobación por la comunidad inviten a otros",
+    "sharing": "Invitaciones de usuarios",
     "source_projects_cannot_be_deleted": "Otro proyecto está basado en este proyecto y por lo tanto no puede ser eliminado.",
     "source_text_placeholder": "Texto original (opcional)",
     "translate": "Traducir",
     "translation_suggestions_require_source_text": "Nota: Las sugerencias de traducción sólo están disponibles si se selecciona un texto de origen.",
     "translation_suggestions": "Habilitar las sugerencias de traducción",
     "translations_will_be_suggested": "Las traducciones de las palabras y frases se sugerirán a medida que edite las Escrituras basadas en el proyecto o recurso seleccionado anteriormente.",
-    "users_can_share_the_project": "Allow users to invite people outside Paratext to the project. They will receive the same role as the user who invited them.",
-    "hide_community_checking_text": "Hide Scripture text",
-    "checkers_listen_to_scripture_audio": "Checkers will need to listen to Scripture audio.",
+    "users_can_share_the_project": "Permite que los usuarios inviten personas ajenas a Paratext al proyecto. Recibirán el mismo rol que el usuario que les invitó.",
+    "hide_community_checking_text": "Ocultar el texto de las Escrituras",
+    "checkers_listen_to_scripture_audio": "Los Revisores tendrán que escuchar el audio de las Escrituras.",
     "will_not_delete_paratext_project": "Esto {{ boldStart }}no{{ boldEnd }} borrará su proyecto de Paratext, pero borrará cualquier dato no sincronizado almacenado en Scripture Forge. Se recomienda {{ templateTagBoundary }}Sincronizar{{ templateTagBoundary }} primero antes de borrar."
   },
   "suggestions_settings_dialog": {
     "better": "Mejor",
-    "biblical_terms": "Show Biblical Terms",
+    "biblical_terms": "Mostrar Vocablos bíblicos",
     "close": "Cerrar",
     "more": "Más",
     "number_of_suggestions": "Número de sugerencias",
     "settings_not_available_offline": "Estos ajustes no están disponibles mientras está fuera de línea.",
     "suggestion_confidence": "Confianza en la sugerencia",
     "translation_suggestions": "Sugerencias de traducción",
-    "translator_settings": "Translator settings",
-    "transliterate_biblical_terms": "Transliterate Biblical Terms"
+    "translator_settings": "Configuración del traductor",
+    "transliterate_biblical_terms": "Transliterar Vocablos bíblicos"
   },
   "sync": {
     "cancel": "Cancelar",
@@ -329,13 +329,13 @@
     "footnote": "Nota al pie"
   },
   "training_progress": {
-    "completed_successfully": "Completed successfully",
-    "training_completed_successfully": "Training completed successfully",
-    "training": "Training"
+    "completed_successfully": "Completado con éxito",
+    "training_completed_successfully": "Entrenamiento completado con éxito",
+    "training": "Entrenamiento"
   },
   "translate_overview": {
     "cannot_train_suggestion_engine": "Las sugerencias de traducción no están disponibles. Por favor, seleccione un proyecto fuente que comparta libros en común con este proyecto para obtener sugerencias de traducción.",
-    "not_enough_verses_translated": "Translation suggestions are unavailable. Please ensure that there are at least 10 matching verses translated in the source and target projects.",
+    "not_enough_verses_translated": "Las sugerencias de traducción no están disponibles. Asegúrese de que hay al menos 10 versículos traducidos que coincidan en los proyectos de origen y destino.",
     "progress": "Progreso",
     "quality": "Calidad",
     "retrain": "Volver a entrenar",
@@ -351,7 +351,7 @@
   },
   "warnings": {
     "cancel": "Cancelar",
-    "login_cookie_deletion": "Logging out will remove your ability to log back into this account. Are you sure you want to logout?",
-    "logout": "Yes, logout"
+    "login_cookie_deletion": "Si cierra la sesión, no podrá volver a entrar en esta cuenta. ¿Está seguro de que quiere cerrar la sesión?",
+    "logout": "Sí, cerrar sesión"
   }
 }
