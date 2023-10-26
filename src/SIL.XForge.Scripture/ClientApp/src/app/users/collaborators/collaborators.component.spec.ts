@@ -390,6 +390,25 @@ describe('CollaboratorsComponent', () => {
 
     env.cleanup();
   }));
+
+  it('should disable editing roles and permissions for pending invitees', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
+      { email: 'alice@a.aa', role: 'sf_community_checker', expired: false },
+      { email: 'charles@c.cc', role: 'sf_community_checker', expired: true }
+    ]);
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+
+    env.clickElement(env.userRowMoreMenuElement(3));
+    expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(true);
+    env.clickElement(env.userRowMoreMenuElement(4));
+    expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(true);
+
+    env.cleanup();
+  }));
 });
 
 class TestEnvironment {
