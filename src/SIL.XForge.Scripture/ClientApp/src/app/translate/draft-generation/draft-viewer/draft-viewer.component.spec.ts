@@ -10,7 +10,7 @@ import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-
 import * as RichText from 'rich-text';
 import { of } from 'rxjs';
 import { SharedModule } from 'src/app/shared/shared.module';
-import { anything, mock, verify, when } from 'ts-mockito';
+import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -209,6 +209,29 @@ describe('DraftViewerComponent', () => {
     expect(mockRouter.navigateByUrl('/projects/123/translate/GEN/2')).toBeTruthy();
   }));
 
+  it('should navigate to first book in project if url book is not in project', fakeAsync(() => {
+    new TestEnvironment(() => {
+      when(mockActivatedRoute.paramMap).thenReturn(
+        of({
+          get: (p: string) => {
+            if (p === 'bookId') {
+              return 'LEV';
+            }
+            if (p === 'chapter') {
+              return '2';
+            }
+            return null;
+          }
+        } as ParamMap)
+      );
+    });
+
+    verify(
+      mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1', deepEqual({ replaceUrl: true }))
+    ).once();
+    expect(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1')).toBeTruthy();
+  }));
+
   it('should navigate to the correct URL for the given book and chapter', fakeAsync(() => {
     const env = new TestEnvironment();
     const book = 1;
@@ -217,7 +240,7 @@ describe('DraftViewerComponent', () => {
     env.component.currentChapter = 3;
     env.component.targetProjectId = '123';
     env.component.navigateBookChapter(book, chapter);
-    verify(mockRouter.navigateByUrl('/projects/123/draft-preview/GEN/2')).once();
+    verify(mockRouter.navigateByUrl('/projects/123/draft-preview/GEN/2', undefined)).once();
     expect(mockRouter.navigateByUrl('/projects/123/draft-preview/GEN/2')).toBeTruthy();
   }));
 
@@ -247,7 +270,9 @@ describe('DraftViewerComponent', () => {
       );
     });
 
-    verify(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1')).once();
+    verify(
+      mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1', deepEqual({ replaceUrl: true }))
+    ).once();
     expect(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1')).toBeTruthy();
   }));
 
@@ -256,7 +281,7 @@ describe('DraftViewerComponent', () => {
     env.component.currentBook = 2;
     env.component.currentChapter = 2;
     env.component.onBookChange(1);
-    verify(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1')).once();
+    verify(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1', undefined)).once();
     expect(mockRouter.navigateByUrl('/projects/targetProjectId/draft-preview/GEN/1')).toBeTruthy();
   }));
 

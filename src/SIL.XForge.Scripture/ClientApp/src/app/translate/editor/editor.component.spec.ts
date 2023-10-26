@@ -61,7 +61,7 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import * as RichText from 'rich-text';
 import { BehaviorSubject, defer, Observable, of, Subject } from 'rxjs';
-import { anything, capture, deepEqual, instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anything, capture, deepEqual, instance, mock, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { CONSOLE } from 'xforge-common/browser-globals';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
@@ -77,6 +77,7 @@ import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
+import { ActivatedProjectService } from '../../../xforge-common/activated-project.service';
 import { BiblicalTermDoc } from '../../core/models/biblical-term-doc';
 import { NoteThreadDoc } from '../../core/models/note-thread-doc';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -3519,6 +3520,21 @@ describe('EditorComponent', () => {
 
       env.dispose();
     }));
+
+    it('should navigate to first book in project if url book is not in project', fakeAsync(() => {
+      const navigationParams: Params = { projectId: 'project01', bookId: 'GEN', chapter: '2' };
+      const env = new TestEnvironment();
+      const spyRouterNavigate = spyOn(env.router, 'navigateByUrl');
+      const spyActivatedProjectService = spy(env.activatedProjectService);
+
+      when(spyActivatedProjectService.projectId).thenReturn('testProjectId');
+
+      env.updateParams(navigationParams);
+      env.wait();
+
+      // First book in project
+      expect(spyRouterNavigate).toHaveBeenCalledWith('/projects/testProjectId/translate/MAT/1', jasmine.any(Object));
+    }));
   });
 });
 
@@ -3535,6 +3551,7 @@ class TestEnvironment {
   readonly component: EditorComponent;
   readonly fixture: ComponentFixture<EditorComponent>;
   readonly mockedRemoteTranslationEngine = mock(RemoteTranslationEngine);
+  readonly activatedProjectService: ActivatedProjectService;
   readonly router: Router;
   readonly location: Location;
   readonly mockNoteDialogRef;
@@ -3820,6 +3837,7 @@ class TestEnvironment {
     });
     when(mockedDraftGenerationService.getGeneratedDraft(anything(), anything(), anything())).thenReturn(of({}));
 
+    this.activatedProjectService = TestBed.inject(ActivatedProjectService);
     this.router = TestBed.inject(Router);
     this.location = TestBed.inject(Location);
     this.ngZone = TestBed.inject(NgZone);

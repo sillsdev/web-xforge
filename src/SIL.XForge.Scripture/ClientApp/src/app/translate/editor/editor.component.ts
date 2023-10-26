@@ -622,14 +622,31 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.loadProjectUserConfig()
           );
         }
-        if (this.projectDoc == null || this.projectDoc.data == null) {
+
+        if (this.projectDoc?.data == null) {
           return;
         }
+
         this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
+
+        // If book is not in project, navigate to first book of project
+        if (this.text == null) {
+          const firstText = this.projectDoc.data.texts[0];
+          const newBookId = Canon.bookNumberToId(firstText.bookNum);
+          const chapter = firstText.chapters[0].number;
+
+          this.router.navigateByUrl(
+            `/projects/${this.activatedProjectService.projectId}/translate/${newBookId}/${chapter}`,
+            { replaceUrl: true }
+          );
+          return;
+        }
+
         if (this.sourceProjectDoc?.data != null) {
           this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
         }
-        this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
+
+        this.chapters = this.text.chapters.map(c => c.number);
 
         this.updateVerseNumber();
 
