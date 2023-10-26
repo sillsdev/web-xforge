@@ -198,6 +198,19 @@ describe('CheckingComponent', () => {
       expect(nextQuestion).toEqual(1);
     }));
 
+    it('should re-calculate scripture slide position on resize', fakeAsync(() => {
+      const testProject: SFProject = TestEnvironment.generateTestProject();
+      testProject.checkingConfig.hideCommunityCheckingText = true;
+      const env = new TestEnvironment({ user: CHECKER_USER, testProject });
+      env.waitForSliderUpdate();
+      (env.component as any)._scriptureAreaMaxSize = 1;
+      expect(env.component.scriptureAreaMaxSize).toEqual(1);
+      window.dispatchEvent(new Event('resize'));
+      expect(env.component.scriptureAreaMaxSize).toBeGreaterThan(1);
+      flush();
+      discardPeriodicTasks();
+    }));
+
     describe('Prev/Next question buttons', () => {
       it('prev/next disabled state based on existence of prev/next question', fakeAsync(() => {
         const env = new TestEnvironment({ user: ADMIN_USER, projectBookRoute: 'JHN', projectChapterRoute: 1 });
@@ -2389,7 +2402,7 @@ class TestEnvironment {
     when(query.remoteChanges$).thenReturn(new BehaviorSubject<void>(undefined));
     const doc = mock(TextAudioDoc);
     const textAudio = mock<TextAudio>();
-    when(textAudio.audioUrl).thenReturn('something');
+    when(textAudio.audioUrl).thenReturn('test-audio-short.webm');
     when(textAudio.timings).thenReturn([]);
     when(doc.id).thenReturn('project01:43:1:target');
     when(doc.data).thenReturn(instance(textAudio));

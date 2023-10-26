@@ -55,7 +55,10 @@ module.exports = function (config) {
     ],
     proxies: {
       '/assets/audio/audio.mp3': '',
-      '/assets/audio/': '/base/app/checking/checking/test-audio/'
+      '/assets/audio/': '/base/app/checking/checking/test-audio/',
+      '/assets/icons/TagIcons/defaultIcon.png': '',
+      '/assets/icons/TagIcons/flag01.png': '',
+      '/assets/icons/TagIcons/flag05.png': ''
     },
     reporters: karmaReporters,
 
