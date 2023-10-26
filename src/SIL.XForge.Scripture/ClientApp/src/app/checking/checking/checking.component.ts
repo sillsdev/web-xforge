@@ -16,7 +16,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { VerseRefData, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Subscription, combineLatest, merge } from 'rxjs';
+import { Subscription, combineLatest, fromEvent, merge } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -448,6 +448,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       : 0;
   }
 
+  private get contentPanelHeight(): number {
+    return this.scripturePanelContainerElement?.nativeElement.offsetHeight;
+  }
+
   private get scriptureAudioPlayerAreaHeight(): number {
     const scriptureAudioPlayerArea: Element | null = document.querySelector('.scripture-audio-player-wrapper');
     return scriptureAudioPlayerArea == null ? 0 : scriptureAudioPlayerArea.getBoundingClientRect().height;
@@ -720,6 +724,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         });
       }
     );
+    this.subscribe(fromEvent(window, 'resize'), () => {
+      if (this.hideChapterText) {
+        this.scriptureAreaMaxSize = this.scriptureAudioPlayerHeightPercent;
+        if (this.contentPanelHeight > this.scriptureAudioPlayerAreaHeight) {
+          this.calculateScriptureSliderPosition();
+        }
+      }
+    });
   }
 
   ngOnDestroy(): void {
