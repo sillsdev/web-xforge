@@ -42,7 +42,7 @@ class MockConsole {
         'Original error',
         'Http failure response for (unknown url): 400 Bad Request',
         'Http failure response for http://localhost:5000/command-api/some-end-point: 504 Gateway Timeout',
-        'Http failure response for http://localhost:5000/machine-api/v2/translation/engines/some-end-point: 504 Gateway Timeout'
+        'Http failure response for http://localhost:5000/machine-api/v3/translation/engines/some-end-point: 504 Gateway Timeout'
       ].includes(val.message) &&
       !val.message?.startsWith('Unknown error')
     ) {

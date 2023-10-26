@@ -11,6 +11,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { mock, when } from 'ts-mockito';
 import { ChildViewContainerComponent, configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
+import { NoticeComponent } from '../../app/shared/notice/notice.component';
 import { FeatureFlagService } from './feature-flag.service';
 import { FeatureFlagsDialogComponent } from './feature-flags-dialog.component';
 
@@ -68,7 +69,7 @@ describe('FeatureFlagsComponent', () => {
     NoopAnimationsModule,
     HttpClientTestingModule
   ],
-  declarations: [FeatureFlagsDialogComponent],
+  declarations: [FeatureFlagsDialogComponent, NoticeComponent],
   exports: [FeatureFlagsDialogComponent]
 })
 class DialogTestModule {}

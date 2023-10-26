@@ -1,27 +1,28 @@
+import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
+import { mock } from 'ts-mockito';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
+import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { Component, DebugElement } from '@angular/core';
-import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { By } from '@angular/platform-browser';
-import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { mock, when } from 'ts-mockito';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { NavigationProjectSelectorComponent } from './navigation-project-selector.component';
 
-const mockOnlineStatusService = mock(OnlineStatusService);
 const mockFeatureFlagService = mock(FeatureFlagService);
 
 describe('NavigationProjectSelectorComponent', () => {
   configureTestingModule(() => ({
     declarations: [NavigationProjectSelectorComponent],
     providers: [
-      { provide: OnlineStatusService, useMock: mockOnlineStatusService },
+      { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: FeatureFlagService, useMock: mockFeatureFlagService }
     ],
-    imports: [UICommonModule, NoopAnimationsModule, TestTranslocoModule]
+    imports: [UICommonModule, NoopAnimationsModule, TestTranslocoModule, TestOnlineStatusModule.forRoot()]
   }));
 
   it('emits event when project changes', fakeAsync(() => {
@@ -67,7 +68,6 @@ class TestEnvironment {
   readonly fixture: ComponentFixture<HostComponent>;
 
   constructor(template: string) {
-    when(mockOnlineStatusService.isOnline).thenReturn(true);
     TestBed.configureTestingModule({
       declarations: [NavigationProjectSelectorComponent, HostComponent],
       imports: [UICommonModule, NoopAnimationsModule, TestTranslocoModule]

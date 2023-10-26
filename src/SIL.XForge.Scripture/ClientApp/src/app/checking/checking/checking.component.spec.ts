@@ -2402,7 +2402,7 @@ class TestEnvironment {
     when(query.remoteChanges$).thenReturn(new BehaviorSubject<void>(undefined));
     const doc = mock(TextAudioDoc);
     const textAudio = mock<TextAudio>();
-    when(textAudio.audioUrl).thenReturn('something');
+    when(textAudio.audioUrl).thenReturn('test-audio-short.webm');
     when(textAudio.timings).thenReturn([]);
     when(doc.id).thenReturn('project01:43:1:target');
     when(doc.data).thenReturn(instance(textAudio));
