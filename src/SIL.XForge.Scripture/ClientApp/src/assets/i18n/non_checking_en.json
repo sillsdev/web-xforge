@@ -1,5 +1,7 @@
 {
   "app": {
+    "beta": "beta",
+    "generate_draft": "Generate draft",
     "settings": "Settings",
     "synchronize": "Synchronize",
     "system_administration": "System Administration",
