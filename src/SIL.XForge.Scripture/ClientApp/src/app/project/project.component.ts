@@ -8,7 +8,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
-import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
+import { canAccessCommunityCheckingApp, canAccessTranslateApp } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
 
 @Component({
@@ -73,11 +73,13 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     }
     const projectRole = project.userRoles[this.userService.currentUserId] as SFProjectRole;
     const selectedTask = projectUserConfig.selectedTask;
+    const isTranslateAccessible = canAccessTranslateApp(projectRole);
+    const isCheckingAccessible = canAccessCommunityCheckingApp(projectRole) && project.checkingConfig.checkingEnabled;
 
     // navigate to last location
     if (
-      (selectedTask === 'translate' && canAccessTranslateApp(projectRole)) ||
-      (selectedTask === 'checking' && project.checkingConfig.checkingEnabled)
+      (selectedTask === 'translate' && isTranslateAccessible) ||
+      (selectedTask === 'checking' && isCheckingAccessible)
     ) {
       const taskRoute = ['projects', projectId, selectedTask];
       // the user has previously navigated to a location in a task
@@ -91,9 +93,9 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     } else {
       // navigate to the default location in the first enabled task
       let task: string | undefined;
-      if (canAccessTranslateApp(projectRole)) {
+      if (isTranslateAccessible) {
         task = 'translate';
-      } else if (project.checkingConfig.checkingEnabled) {
+      } else if (isCheckingAccessible) {
         task = 'checking';
       }
       if (task != null) {
