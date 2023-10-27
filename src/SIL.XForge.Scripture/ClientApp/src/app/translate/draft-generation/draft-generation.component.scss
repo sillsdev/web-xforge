@@ -1,6 +1,15 @@
 @use 'src/variables';
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 
+:host {
+  // Needed to style inside <transloco> element
+  ::ng-deep {
+    em {
+      font-weight: 500;
+    }
+  }
+}
+
 // Manually center over cancel button
 app-working-animated-indicator {
   margin-inline-start: 24px;
@@ -11,10 +20,6 @@ h3 {
   font-weight: 500;
   display: flex;
   gap: 10px;
-}
-
-em {
-  font-weight: 500;
 }
 
 .requirements-header {
@@ -53,6 +58,10 @@ mat-tab-group {
   ::ng-deep .mat-tab-header {
     display: none;
   }
+}
+
+mat-divider.mat-divider-inset {
+  margin: 0;
 }
 
 .view-or-create-options {

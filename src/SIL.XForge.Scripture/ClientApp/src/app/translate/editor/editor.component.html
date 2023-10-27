@@ -34,9 +34,14 @@
         </ng-container>
         <ng-container *ngIf="showPreviewDraft">
           <div class="toolbar-separator"></div>
-          <button mat-stroked-button title="Preview draft" class="preview-draft-button" (click)="goToDraftPreview()">
+          <button
+            mat-stroked-button
+            [title]="t('preview_draft_button')"
+            class="preview-draft-button"
+            (click)="goToDraftPreview()"
+          >
             <mat-icon>edit_note</mat-icon>
-            Preview draft
+            {{ t("preview_draft_button") }}
           </button>
         </ng-container>
       </div>
