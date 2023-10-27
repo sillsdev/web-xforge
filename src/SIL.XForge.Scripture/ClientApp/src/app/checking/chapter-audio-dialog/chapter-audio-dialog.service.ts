@@ -1,5 +1,5 @@
 import { DialogService } from 'xforge-common/dialog.service';
-import { MatDialogConfig } from '@angular/material/dialog';
+import { MatLegacyDialogConfig as MatDialogConfig } from '@angular/material/legacy-dialog';
 import { Injectable } from '@angular/core';
 import { SFProjectService } from '../../core/sf-project.service';
 import {

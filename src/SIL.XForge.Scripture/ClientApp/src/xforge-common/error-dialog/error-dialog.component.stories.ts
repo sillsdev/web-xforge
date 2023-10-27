@@ -1,5 +1,10 @@
 import { Component, Inject, InjectionToken, OnInit } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import {
+  MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA,
+  MatLegacyDialog as MatDialog,
+  MatLegacyDialogConfig as MatDialogConfig
+} from '@angular/material/legacy-dialog';
+
 import { Meta, StoryFn } from '@storybook/angular';
 import { CommonModule } from '@angular/common';
 import { I18nStoryModule } from 'xforge-common/i18n-story.module';

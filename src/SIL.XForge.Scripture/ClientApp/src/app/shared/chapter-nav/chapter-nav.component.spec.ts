@@ -7,7 +7,7 @@ import { mock, when } from 'ts-mockito';
 import { I18nService } from 'xforge-common/i18n.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
-import { MatSelectHarness } from '@angular/material/select/testing';
+import { MatLegacySelectHarness as MatSelectHarness } from '@angular/material/legacy-select/testing';
 import { ChapterNavComponent } from './chapter-nav.component';
 
 const mockedI18nService = mock(I18nService);
