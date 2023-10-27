@@ -1006,6 +1006,47 @@ describe('TextComponent', () => {
     expect(isValidSpy).withContext('the test may have worked for the wrong reason').toHaveBeenCalled();
   }));
 
+  it('does not add blank embeds while offline', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.fixture.detectChanges();
+    env.component.id = new TextDocId('project01', 40, 1);
+    env.onlineStatus = false;
+    tick();
+    env.fixture.detectChanges();
+
+    let range: RangeStatic = env.component.getSegmentRange('verse_1_1')!;
+    let verse1Contents: DeltaStatic = env.component.getSegmentContents('verse_1_1')!;
+    expect(verse1Contents.ops!.length).toBe(1);
+    env.component.editor!.setSelection(range.index + range.length, 'user');
+    tick();
+    env.fixture.detectChanges();
+    // delete all the text in the verse
+    env.applyDelta(new Delta().retain(range.index).delete(range.length), 'user');
+    tick();
+    env.fixture.detectChanges();
+    verse1Contents = env.component.getSegmentContents('verse_1_1')!;
+    // no content exists, not even a blank
+    expect(verse1Contents.ops!.length).toBe(0);
+
+    env.onlineStatus = true;
+    tick();
+    env.fixture.detectChanges();
+    range = env.component.getSegmentRange('verse_1_3')!;
+    let verse3Contents: DeltaStatic = env.component.getSegmentContents('verse_1_3')!;
+    expect(verse3Contents.ops!.length).toBe(1);
+    // delete all the text in the verse
+    env.applyDelta(new Delta().retain(range.index).delete(range.length), 'user');
+    tick();
+    env.fixture.detectChanges();
+    verse3Contents = env.component.getSegmentContents('verse_1_3')!;
+    // blank exists
+    expect(verse3Contents.ops![0].insert).toEqual({ blank: true });
+    verse1Contents = env.component.getSegmentContents('verse_1_1')!;
+    // blank restored to verse 1
+    expect(verse1Contents.ops![0].insert).toEqual({ blank: true });
+    TestEnvironment.waitForPresenceTimer();
+  }));
+
   it('can display footnote dialog', fakeAsync(() => {
     const chapterNum = 2;
     const segmentRef: string = `verse_${chapterNum}_1`;
