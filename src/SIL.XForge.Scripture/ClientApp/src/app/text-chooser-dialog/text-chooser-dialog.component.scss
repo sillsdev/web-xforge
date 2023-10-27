@@ -46,7 +46,7 @@ app-text {
   font-size: 0.85em;
 }
 
-::ng-deep app-text quill-editor > .ql-container > .ql-editor {
+:host ::ng-deep app-text quill-editor > .ql-container > .ql-editor {
   padding: 0 1em 1em;
   min-height: 300px;
 }
