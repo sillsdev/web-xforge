@@ -929,6 +929,11 @@ public class MachineApiService : IMachineApiService
     {
         switch (e)
         {
+            case ServalApiException
+                when doNotThrowIfInProcessEnabled
+                    && await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess):
+                _exceptionHandler.ReportException(e);
+                return;
             case ServalApiException { StatusCode: StatusCodes.Status204NoContent }:
                 throw new DataNotFoundException("Entity Deleted");
             case ServalApiException { StatusCode: StatusCodes.Status403Forbidden }:
@@ -942,9 +947,6 @@ public class MachineApiService : IMachineApiService
             case ServalApiException { StatusCode: StatusCodes.Status409Conflict }:
                 throw new DataNotFoundException("Entity Deleted");
             case BrokenCircuitException
-                when doNotThrowIfInProcessEnabled
-                    && await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess):
-            case ServalApiException
                 when doNotThrowIfInProcessEnabled
                     && await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess):
                 _exceptionHandler.ReportException(e);
