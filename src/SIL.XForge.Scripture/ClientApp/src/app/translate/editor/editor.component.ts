@@ -629,16 +629,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
         this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
 
-        // If book is not in project, navigate to first book of project
+        // If book is not in project, navigate to 'projects' route, which should send the user
+        // to the book stored in SFProjectUserConfig.
         if (this.text == null) {
-          const firstText = this.projectDoc.data.texts[0];
-          const newBookId = Canon.bookNumberToId(firstText.bookNum);
-          const chapter = firstText.chapters[0].number;
-
-          this.router.navigateByUrl(
-            `/projects/${this.activatedProjectService.projectId}/translate/${newBookId}/${chapter}`,
-            { replaceUrl: true }
-          );
+          this.router.navigateByUrl('projects', { replaceUrl: true });
           return;
         }
 
