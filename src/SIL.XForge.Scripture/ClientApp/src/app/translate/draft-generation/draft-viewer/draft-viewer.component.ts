@@ -42,6 +42,8 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
   draftPopulated = false;
   isOnline = this.onlineStatusService.isOnline;
 
+  hasSource = false;
+
   projectSettingsUrl?: string;
   preDraftTargetDelta?: DeltaStatic;
 
@@ -121,6 +123,7 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
 
     if (this.sourceProjectId) {
       this.sourceTextDocId = new TextDocId(this.sourceProjectId, this.currentBook, this.currentChapter, 'target');
+      this.hasSource = this.targetProject?.texts.find(t => t.bookNum === this.currentBook)?.hasSource ?? false;
     }
   }
 
