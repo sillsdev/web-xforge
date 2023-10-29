@@ -183,9 +183,9 @@
               <section *ngIf="isDraftQueued(draftJob)">
                 <h3>{{ t("draft_queued_header") }}</h3>
 
-                <p *ngIf="draftJob?.queueDepth ?? 0 === 0">{{ t("draft_queued_detail") }}</p>
-                <p *ngIf="draftJob?.queueDepth ?? 0 > 0">
-                  The back translation draft is number {{ draftJob?.queueDepth }} in the queue. Please check back later.
+                <p *ngIf="(draftJob?.queueDepth ?? 0) === 0">{{ t("draft_queued_detail") }}</p>
+                <p *ngIf="(draftJob?.queueDepth ?? 0) > 0">
+                  {{ t("draft_queued_detail_multiple", { count: draftJob.queueDepth }) }}
                 </p>
                 <p *ngIf="hasAnyCompletedBuild">
                   {{ t("preview_last_draft_while_active_build") }}
