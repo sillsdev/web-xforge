@@ -1447,6 +1447,24 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task GetWordGraphAsync_ServalApiExceptionFailsToInProcess()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .GetWordGraphAsync(TranslationEngine01, Segment, CancellationToken.None)
+            .Throws(ServalApiExceptions.EngineNotBuilt);
+        env.EngineService
+            .GetWordGraphAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+            .Returns(Task.FromResult(new MachineWordGraph(Array.Empty<MachineWordGraphArc>(), Array.Empty<int>())));
+
+        // SUT
+        _ = await env.Service.GetWordGraphAsync(User01, Project01, Segment, CancellationToken.None);
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<ServalApiException>());
+    }
+
+    [Test]
     public async Task GetWordGraphAsync_ServalOutageFailsToInProcess()
     {
         // Set up test environment
@@ -1721,6 +1739,22 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task StartBuildAsync_ServalApiExceptionFailsToInProcess()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None)
+            .Throws(ServalApiExceptions.Forbidden);
+        env.EngineService.StartBuildAsync(TranslationEngine01).Returns(Task.FromResult(new Build()));
+
+        // SUT
+        _ = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<ServalApiException>());
+    }
+
+    [Test]
     public async Task StartBuildAsync_ServalOutageFailsToInProcess()
     {
         // Set up test environment
@@ -1979,6 +2013,35 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task TrainSegmentAsync_ServalApiExceptionFailsToInProcess()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        var segmentPair = new SegmentPair
+        {
+            SentenceStart = false,
+            SourceSegment = Segment,
+            TargetSegment = TargetSegment,
+        };
+        env.TranslationEnginesClient
+            .TrainSegmentAsync(TranslationEngine01, Arg.Any<SegmentPair>(), CancellationToken.None)
+            .Throws(ServalApiExceptions.InternalServerError);
+        env.EngineService
+            .TrainSegmentAsync(
+                TranslationEngine01,
+                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.SourceSegment),
+                Arg.Is<string[]>(s => s.Length == 1 && s.First() == segmentPair.TargetSegment),
+                segmentPair.SentenceStart
+            )
+            .Returns(Task.FromResult(true));
+
+        // SUT
+        await env.Service.TrainSegmentAsync(User01, Project01, segmentPair, CancellationToken.None);
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<ServalApiException>());
+    }
+
+    [Test]
     public async Task TrainSegmentAsync_ServalOutageFailsToInProcess()
     {
         // Set up test environment
@@ -2157,6 +2220,35 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<BrokenCircuitException>(
             () => env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None)
         );
+    }
+
+    [Test]
+    public async Task TranslateAsync_ServalApiExceptionFailsToInProcess()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .TranslateAsync(TranslationEngine01, Segment, CancellationToken.None)
+            .Throws(ServalApiExceptions.NoContent);
+        env.EngineService
+            .TranslateAsync(TranslationEngine01, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+            .Returns(
+                Task.FromResult(
+                    new MachineTranslationResult(
+                        Array.Empty<string>(),
+                        Array.Empty<string>(),
+                        Array.Empty<double>(),
+                        Array.Empty<TranslationSources>(),
+                        new WordAlignmentMatrix(0, 0),
+                        Array.Empty<MachinePhrase>()
+                    )
+                )
+            );
+
+        // SUT
+        _ = await env.Service.TranslateAsync(User01, Project01, Segment, CancellationToken.None);
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<ServalApiException>());
     }
 
     [Test]
@@ -2378,6 +2470,25 @@ public class MachineApiServiceTests
         Assert.ThrowsAsync<BrokenCircuitException>(
             () => env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None)
         );
+    }
+
+    [Test]
+    public async Task TranslateNAsync_ServalApiExceptionFailsToInProcess()
+    {
+        // Set up test environment
+        const int n = 1;
+        var env = new TestEnvironment();
+        env.TranslationEnginesClient
+            .TranslateNAsync(TranslationEngine01, n, Segment, CancellationToken.None)
+            .Throws(ServalApiExceptions.NotSupported);
+        env.EngineService
+            .TranslateAsync(TranslationEngine01, n, Arg.Is<string[]>(s => s.Length == 1 && s.First() == Segment))
+            .Returns(Task.FromResult(Array.Empty<MachineTranslationResult>().AsEnumerable()));
+
+        // SUT
+        _ = await env.Service.TranslateNAsync(User01, Project01, n, Segment, CancellationToken.None);
+
+        env.ExceptionHandler.Received(1).ReportException(Arg.Any<ServalApiException>());
     }
 
     [Test]
