@@ -30,7 +30,7 @@ import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { SF_DEFAULT_SHARE_ROLE } from '../../core/models/sf-project-role-info';
+import { SF_DEFAULT_SHARE_ROLE, canAccessCommunityCheckingApp } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextDocId } from '../../core/models/text-doc';
@@ -526,9 +526,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             this.projectRemoteChangesSub?.unsubscribe();
             this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, () => {
               if (this.projectDoc != null && this.projectDoc.data != null) {
-                if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
+                const roles = this.projectDoc.data.userRoles;
+                const userId = this.userService.currentUserId;
+                if (!(userId in roles)) {
                   this.onRemovedFromProject();
-                } else if (!this.projectDoc.data.checkingConfig.checkingEnabled) {
+                } else if (
+                  !this.projectDoc.data.checkingConfig.checkingEnabled ||
+                  !canAccessCommunityCheckingApp(roles[userId] as SFProjectRole)
+                ) {
                   const currentBookId =
                     this.questionsList == null || this.questionsList.activeQuestionBook == null
                       ? undefined
