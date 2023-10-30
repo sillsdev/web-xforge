@@ -31,6 +31,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   translationSuggestionsEnabled = new UntypedFormControl(false);
   sourceParatextId = new UntypedFormControl(undefined);
   biblicalTermsEnabled = new UntypedFormControl(false);
+  alternateSourceParatextId = new UntypedFormControl(undefined);
   translateShareEnabled = new UntypedFormControl(false);
   checkingEnabled = new UntypedFormControl(false);
   usersSeeEachOthersResponses = new UntypedFormControl(false);
@@ -44,6 +45,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     translationSuggestionsEnabled: this.translationSuggestionsEnabled,
     sourceParatextId: this.sourceParatextId,
     biblicalTermsEnabled: this.biblicalTermsEnabled,
+    alternateSourceParatextId: this.alternateSourceParatextId,
     translateShareEnabled: this.translateShareEnabled,
     checkingEnabled: this.checkingEnabled,
     usersSeeEachOthersResponses: this.usersSeeEachOthersResponses,
@@ -63,7 +65,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   private static readonly projectSettingValueUnset = 'unset';
   private projectDoc?: SFProjectDoc;
   /** Elements in this component and their states. */
-  private controlStates = new Map<Extract<keyof SFProjectSettings, string>, ElementState>();
+  private controlStates = new Map<keyof SFProjectSettings, ElementState>();
   private previousFormValues: SFProjectSettings = {};
   private _isAppOnline: boolean = false;
 
@@ -222,7 +224,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     });
   }
 
-  getControlState(setting: Extract<keyof SFProjectSettings, string>): ElementState | undefined {
+  getControlState(setting: keyof SFProjectSettings): ElementState | undefined {
     return this.controlStates.get(setting);
   }
 
@@ -247,12 +249,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     // Set status and include values for changed form items
     // Sometimes sourceParatextId is null | undefined for both new and previous values. A diff check needs to be made
     // but they also both need to be null when no value is set
-    const sourceProjectChanged: boolean =
-      (newValue.sourceParatextId ?? null) !== (this.previousFormValues.sourceParatextId ?? null);
-    if (
-      newValue.translationSuggestionsEnabled !== this.previousFormValues.translationSuggestionsEnabled &&
-      this.translationSuggestionsEnabled.enabled
-    ) {
+    const sourceProjectChanged: boolean = this.settingChanged(newValue, 'sourceParatextId');
+    if (this.settingChanged(newValue, 'translationSuggestionsEnabled') && this.translationSuggestionsEnabled.enabled) {
       // Translation suggestions is set to false or is re-enabled
       this.updateSetting(newValue, 'translationSuggestionsEnabled');
       return;
@@ -274,18 +272,30 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
-    if (
-      (newValue.biblicalTermsEnabled ?? false) !== (this.previousFormValues.biblicalTermsEnabled ?? false) &&
-      this.biblicalTermsMessage == null
-    ) {
+    if (this.settingChanged(newValue, 'biblicalTermsEnabled') && this.biblicalTermsMessage == null) {
       this.updateSetting(newValue, 'biblicalTermsEnabled');
+      return;
+    }
+
+    // Check if the pre-translation alternate source project needs to be updated
+    if (this.settingChanged(newValue, 'alternateSourceParatextId')) {
+      const settings: SFProjectSettings = {
+        alternateSourceParatextId: newValue.alternateSourceParatextId ?? SettingsComponent.projectSettingValueUnset
+      };
+      const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
+      this.checkUpdateStatus('alternateSourceParatextId', updateTaskPromise);
+      this.previousFormValues = newValue;
       return;
     }
 
     this.updateCheckingConfig(newValue);
   }
 
-  private updateSetting(newValue: SFProjectSettings, setting: Extract<keyof SFProjectSettings, string>): void {
+  private settingChanged(newValue: SFProjectSettings, setting: keyof SFProjectSettings): boolean {
+    return (newValue[setting] ?? null) !== (this.previousFormValues[setting] ?? null);
+  }
+
+  private updateSetting(newValue: SFProjectSettings, setting: keyof SFProjectSettings): void {
     if (this.projectDoc == null) {
       return;
     }
@@ -298,16 +308,16 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (this.projectDoc?.data == null) {
       return;
     }
-    if (newValue.checkingEnabled !== this.previousFormValues.checkingEnabled) {
+    if (this.settingChanged(newValue, 'checkingEnabled')) {
       this.updateSetting(newValue, 'checkingEnabled');
     }
-    if (newValue.usersSeeEachOthersResponses !== this.previousFormValues.usersSeeEachOthersResponses) {
+    if (this.settingChanged(newValue, 'usersSeeEachOthersResponses')) {
       this.updateSetting(newValue, 'usersSeeEachOthersResponses');
     }
-    if (newValue.translateShareEnabled !== this.previousFormValues.translateShareEnabled) {
+    if (this.settingChanged(newValue, 'translateShareEnabled')) {
       this.updateSetting(newValue, 'translateShareEnabled');
     }
-    if (newValue.checkingShareEnabled !== this.previousFormValues.checkingShareEnabled) {
+    if (this.settingChanged(newValue, 'checkingShareEnabled')) {
       this.updateSetting(newValue, 'checkingShareEnabled');
     }
     if (
@@ -316,12 +326,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     ) {
       this.updateSetting(newValue, 'checkingAnswerExport');
     }
-    if ((newValue.hideCommunityCheckingText ?? null) !== (this.previousFormValues.hideCommunityCheckingText ?? null)) {
+    if (this.settingChanged(newValue, 'hideCommunityCheckingText')) {
       this.updateSetting(newValue, 'hideCommunityCheckingText');
     }
   }
 
-  private checkUpdateStatus(setting: Extract<keyof SFProjectSettings, string>, updatePromise: Promise<void>): void {
+  private checkUpdateStatus(setting: keyof SFProjectSettings, updatePromise: Promise<void>): void {
     this.controlStates.set(setting, ElementState.Submitting);
     updatePromise
       .then(() => this.controlStates.set(setting, ElementState.Submitted))
@@ -332,12 +342,11 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     if (this.projectDoc == null || this.projectDoc.data == null) {
       return;
     }
-
-    const curSource = this.projectDoc.data.translateConfig.source;
     this.previousFormValues = {
       translationSuggestionsEnabled: this.projectDoc.data.translateConfig.translationSuggestionsEnabled,
-      sourceParatextId: curSource != null ? curSource.paratextId : undefined,
+      sourceParatextId: this.projectDoc.data.translateConfig.source?.paratextId,
       biblicalTermsEnabled: this.projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled,
+      alternateSourceParatextId: this.projectDoc.data.translateConfig.draftConfig?.alternateSource?.paratextId,
       translateShareEnabled: !!this.projectDoc.data.translateConfig.shareEnabled,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
@@ -366,6 +375,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('translationSuggestionsEnabled', ElementState.InSync);
     this.controlStates.set('sourceParatextId', ElementState.InSync);
     this.controlStates.set('biblicalTermsEnabled', ElementState.InSync);
+    this.controlStates.set('alternateSourceParatextId', ElementState.InSync);
     this.controlStates.set('translateShareEnabled', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);
     this.controlStates.set('usersSeeEachOthersResponses', ElementState.InSync);
@@ -375,15 +385,30 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   private updateNonSelectableProjects(): void {
+    this.nonSelectableProjects = [];
     const source = this.projectDoc?.data?.translateConfig?.source;
     if (
       source != null &&
       (this.projects?.find(p => p.paratextId === source.paratextId) ||
         this.resources?.find(r => r.paratextId === source.paratextId)) == null
     ) {
-      this.nonSelectableProjects = [{ paratextId: source.paratextId, shortName: source.shortName, name: source.name }];
-    } else {
-      this.nonSelectableProjects = [];
+      this.nonSelectableProjects.push({
+        paratextId: source.paratextId,
+        shortName: source.shortName,
+        name: source.name
+      });
+    }
+    const alternateSource = this.projectDoc?.data?.translateConfig?.draftConfig?.alternateSource;
+    if (
+      alternateSource != null &&
+      (this.projects?.find(p => p.paratextId === alternateSource.paratextId) ||
+        this.resources?.find(r => r.paratextId === alternateSource.paratextId)) == null
+    ) {
+      this.nonSelectableProjects.push({
+        paratextId: alternateSource.paratextId,
+        shortName: alternateSource.shortName,
+        name: alternateSource.name
+      });
     }
   }
 }

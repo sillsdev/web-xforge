@@ -82,7 +82,7 @@ public class ParatextServiceTests
             ParatextId = env.PTProjectIds[env.Project01].Id,
             Name = "Full Name " + env.Project01,
             ShortName = "P01",
-            LanguageTag = "writingsystem_tag",
+            LanguageTag = "en",
             ProjectId = "sf_id_" + env.Project01,
             // Not connectable since sf project exists and sf user is on sf project.
             IsConnectable = false,
@@ -4979,6 +4979,11 @@ public class ParatextServiceTests
             MockInternetSharedRepositorySourceProvider
                 .GetSource(Arg.Is<UserSecret>(s => s.Id == userSecret.Id), Arg.Any<string>(), Arg.Any<string>())
                 .Returns(mockSource);
+
+            // Ensure that the SLDR is initialized for LanguageID.Code to be retrieved correctly
+            if (!Sldr.IsInitialized)
+                Sldr.Initialize(true);
+
             return mockSource;
         }
 
@@ -4990,7 +4995,7 @@ public class ParatextServiceTests
                 ParatextId = PTProjectIds[Project01].Id,
                 Name = "Full Name " + Project01,
                 ShortName = "P01",
-                WritingSystem = new WritingSystem { Tag = "writingsystem_tag" },
+                WritingSystem = new WritingSystem { Tag = "en" },
                 TranslateConfig = new TranslateConfig
                 {
                     TranslationSuggestionsEnabled = true,

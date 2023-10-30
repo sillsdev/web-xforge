@@ -42,6 +42,11 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
   draftPopulated = false;
   isOnline = this.onlineStatusService.isOnline;
 
+  // This is so the source is hidden when it is missing (behavior consistent with the translate editor).
+  // Note: When an alternate source is specified, that is used for draft generation instead. When that occurs,
+  //       the source is only used for display, and may not include some books contained in the alternate source.
+  bookHasSource = false;
+
   projectSettingsUrl?: string;
   preDraftTargetDelta?: DeltaStatic;
 
@@ -121,6 +126,7 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
 
     if (this.sourceProjectId) {
       this.sourceTextDocId = new TextDocId(this.sourceProjectId, this.currentBook, this.currentChapter, 'target');
+      this.bookHasSource = this.targetProject?.texts.find(t => t.bookNum === this.currentBook)?.hasSource ?? false;
     }
   }
 

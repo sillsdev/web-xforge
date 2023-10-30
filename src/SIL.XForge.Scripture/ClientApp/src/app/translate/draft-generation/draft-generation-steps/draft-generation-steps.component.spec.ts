@@ -20,7 +20,8 @@ describe('DraftGenerationStepsComponent', () => {
   const mockTargetProjectDoc = {
     data: {
       translateConfig: {
-        source: { projectRef: 'test' }
+        source: { projectRef: 'test' },
+        draftConfig: {}
       }
     }
   } as SFProjectProfileDoc;

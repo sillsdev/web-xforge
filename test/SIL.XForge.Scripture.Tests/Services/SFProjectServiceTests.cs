@@ -2097,6 +2097,23 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task IsSourceProject_TrueWhenProjectIsAnAlternateSource()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext_" + Project01;
+        Assert.That(env.Service.IsSourceProject(Project01), Is.False);
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project03,
+            new SFProjectSettings { AlternateSourceParatextId = paratextId }
+        );
+
+        // SUT
+        Assert.That(env.Service.IsSourceProject(Project01), Is.True);
+    }
+
+    [Test]
     public void IsSourceProject_TrueWhenProjectIsATranslationSource()
     {
         var env = new TestEnvironment();
@@ -2104,6 +2121,64 @@ public class SFProjectServiceTests
         Assert.That(env.Service.IsSourceProject(Project01), Is.False);
         Assert.That(env.Service.IsSourceProject(SourceOnly), Is.True);
         Assert.That(env.Service.IsSourceProject("Bad project"), Is.False);
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_ChangeAlternateSource_CannotUseTargetProject()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext_" + Project01;
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { AlternateSourceParatextId = paratextId }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.ParatextId, Is.EqualTo(paratextId));
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef, Is.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ParatextId, Is.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.Name, Is.Null);
+
+        await env.MachineProjectService
+            .DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService
+            .DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_ChangeAlternateSource_CreatesProject()
+    {
+        var env = new TestEnvironment();
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { AlternateSourceParatextId = "changedId" }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef, Is.Not.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.ParatextId, Is.EqualTo("changedId"));
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateSource?.Name, Is.EqualTo("NewSource"));
+
+        SFProject alternateSourceProject = env.GetProject(
+            project.TranslateConfig.DraftConfig.AlternateSource!.ProjectRef
+        );
+        Assert.That(alternateSourceProject.ParatextId, Is.EqualTo("changedId"));
+        Assert.That(alternateSourceProject.Name, Is.EqualTo("NewSource"));
+
+        await env.MachineProjectService
+            .DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService
+            .DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
     }
 
     [Test]
@@ -3475,7 +3550,9 @@ public class SFProjectServiceTests
             );
             MachineProjectService = Substitute.For<IMachineProjectService>();
             SyncService = Substitute.For<ISyncService>();
-            SyncService.SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>()).Returns(Task.CompletedTask);
+            SyncService
+                .SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
+                .Returns(Task.FromResult("jobId"));
             ParatextService = Substitute.For<IParatextService>();
             IReadOnlyList<ParatextProject> ptProjects = new[]
             {

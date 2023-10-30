@@ -59,6 +59,18 @@ h2 {
       'controls'
       'draft';
   }
+
+  // Hide the source if no source is present
+  &.no-source {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'controls'
+      'draft';
+
+    > .source {
+      display: none;
+    }
+  }
 }
 
 .controls {

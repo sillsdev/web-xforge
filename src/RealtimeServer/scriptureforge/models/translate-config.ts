@@ -26,12 +26,17 @@ export interface BaseProject {
   shortName: string;
 }
 
+export interface DraftConfig {
+  alternateSource?: TranslateSource;
+}
+
 export interface TranslateConfig {
   translationSuggestionsEnabled: boolean;
   source?: TranslateSource;
   shareEnabled: boolean;
   defaultNoteTagId?: number;
   preTranslate: boolean;
+  draftConfig: DraftConfig;
   projectType?: ProjectType;
   baseProject?: BaseProject;
 }

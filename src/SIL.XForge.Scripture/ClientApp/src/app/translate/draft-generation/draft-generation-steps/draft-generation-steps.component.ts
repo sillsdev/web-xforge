@@ -28,7 +28,14 @@ export class DraftGenerationStepsComponent implements OnInit {
     this.availableBooks$ = this.activatedProject.projectDoc$.pipe(
       // Build available book list from source project
       switchMap(doc => {
-        const sourceProjectId: string | undefined = doc?.data?.translateConfig.source?.projectRef;
+        // See if there is an alternate project set
+        let sourceProjectId: string | undefined = doc?.data?.translateConfig.draftConfig.alternateSource?.projectRef;
+        if (sourceProjectId != null) {
+          return from(this.projectService.getProfile(sourceProjectId));
+        }
+
+        // Otherwise, use the source project
+        sourceProjectId = doc?.data?.translateConfig.source?.projectRef;
 
         if (sourceProjectId == null) {
           throw new Error('Source project is not set');

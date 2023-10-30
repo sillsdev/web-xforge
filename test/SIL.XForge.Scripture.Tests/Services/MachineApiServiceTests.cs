@@ -1085,7 +1085,7 @@ public class MachineApiServiceTests
                         Name = "my_translation_engine",
                         SourceLanguage = sourceLanguageTag,
                         TargetLanguage = targetLanguageTag,
-                        Type = "SmtTransfer",
+                        Type = MachineProjectService.SmtTransfer,
                     }
                 )
             );
@@ -1842,6 +1842,22 @@ public class MachineApiServiceTests
     }
 
     [Test]
+    public async Task StartPreTranslationBuildAsync_AlternateSource()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(User01, Project02, CancellationToken.None);
+
+        await env.SyncService.Received(1).SyncAsync(User01, Project03, trainEngine: false);
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationErrorMessage);
+    }
+
+    [Test]
     public void StartPreTranslationBuildAsync_NoFeatureFlagEnabled()
     {
         // Set up test environment
@@ -2539,7 +2555,11 @@ public class MachineApiServiceTests
                             PreTranslationEngineId = TranslationEngine01,
                         },
                     },
-                    new SFProjectSecret { Id = Project02 },
+                    new SFProjectSecret
+                    {
+                        Id = Project02,
+                        ServalData = new ServalData { PreTranslationEngineId = TranslationEngine01, },
+                    },
                 }
             );
 
@@ -2555,7 +2575,18 @@ public class MachineApiServiceTests
                             Id = Project01,
                             UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
                         },
-                        new SFProject { Id = Project02 },
+                        new SFProject
+                        {
+                            Id = Project02,
+                            TranslateConfig = new TranslateConfig
+                            {
+                                DraftConfig = new DraftConfig
+                                {
+                                    AlternateSource = new TranslateSource { ProjectRef = Project03 },
+                                },
+                            },
+                            UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
+                        },
                         new SFProject
                         {
                             Id = Project03,
@@ -2565,6 +2596,7 @@ public class MachineApiServiceTests
                 )
             );
 
+            SyncService = Substitute.For<ISyncService>();
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
 
             Service = new MachineApiService(
@@ -2579,6 +2611,7 @@ public class MachineApiServiceTests
                 PreTranslationService,
                 ProjectSecrets,
                 realtimeService,
+                SyncService,
                 TranslationEnginesClient
             );
         }
@@ -2593,6 +2626,7 @@ public class MachineApiServiceTests
         public IPreTranslationService PreTranslationService { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MachineApiService Service { get; }
+        public ISyncService SyncService { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
 
         public async Task QueuePreTranslationBuildAsync(DateTime? dateTime = null, string? errorMessage = null) =>

@@ -25,10 +25,10 @@ namespace SIL.XForge.Scripture.Services;
 /// </summary>
 public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFProjectService
 {
-    internal static readonly string ProjectSettingValueUnset = "unset";
+    public const string ErrorAlreadyConnectedKey = "error-already-connected";
+    internal const string ProjectSettingValueUnset = "unset";
     private static readonly IEqualityComparer<Dictionary<string, string>> _permissionDictionaryEqualityComparer =
         new DictionaryComparer<string, string>();
-    public static readonly string ErrorAlreadyConnectedKey = "error-already-connected";
     private readonly IMachineProjectService _machineProjectService;
     private readonly ISyncService _syncService;
     private readonly IParatextService _paratextService;
@@ -86,19 +86,20 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             ?? throw new DataNotFoundException("The paratext project does not exist.");
         var project = new SFProject
         {
+            IsRightToLeft = ptProject.IsRightToLeft,
             ParatextId = settings.ParatextId,
             Name = ptProject.Name,
             ShortName = ptProject.ShortName,
             WritingSystem = new WritingSystem { Tag = ptProject.LanguageTag },
             TranslateConfig = new TranslateConfig
             {
-                TranslationSuggestionsEnabled = settings.TranslationSuggestionsEnabled
+                TranslationSuggestionsEnabled = settings.TranslationSuggestionsEnabled,
             },
             CheckingConfig = new CheckingConfig
             {
                 CheckingEnabled = settings.CheckingEnabled,
                 AnswerExportMethod = settings.AnswerExportMethod
-            }
+            },
         };
         Attempt<string> attempt = await TryGetProjectRoleAsync(project, curUserId);
         if (!attempt.TryResult(out string projectRole) || projectRole != SFProjectRole.Administrator)
@@ -125,10 +126,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             // This will make the source project appear after the target, if it needs to be created
             if (settings.SourceParatextId != null && settings.SourceParatextId != settings.ParatextId)
             {
-                TranslateSource source = await this.GetTranslateSourceAsync(
+                TranslateSource source = await GetTranslateSourceAsync(
                     curUserId,
-                    userSecret,
                     settings.SourceParatextId,
+                    syncIfCreated: false,
                     ptProjects
                 );
 
@@ -256,21 +257,31 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (!IsProjectAdmin(projectDoc.Data, curUserId))
             throw new ForbiddenException();
 
-        // Get the source - any creation or permission updates are handled in GetTranslateSourceAsync
-        TranslateSource source = null;
         bool unsetSourceProject = settings.SourceParatextId == ProjectSettingValueUnset;
-        IReadOnlyList<ParatextProject>? ptProjects = null;
-        if (settings.SourceParatextId != null && !unsetSourceProject)
+        bool unsetAlternateSourceProject = settings.AlternateSourceParatextId == ProjectSettingValueUnset;
+
+        // Get the list of projects for setting the source or alternate source
+        IReadOnlyList<ParatextProject> ptProjects = new List<ParatextProject>();
+        if (
+            (settings.SourceParatextId != null && !unsetSourceProject)
+            || (settings.AlternateSourceParatextId != null && !unsetAlternateSourceProject)
+        )
         {
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
             if (!userSecretAttempt.TryResult(out UserSecret userSecret))
                 throw new DataNotFoundException("The user does not exist.");
 
             ptProjects = await _paratextService.GetProjectsAsync(userSecret);
+        }
+
+        // Get the source - any creation or permission updates are handled in GetTranslateSourceAsync
+        TranslateSource source = null;
+        if (settings.SourceParatextId != null && !unsetSourceProject)
+        {
             source = await GetTranslateSourceAsync(
                 curUserId,
-                userSecret,
                 settings.SourceParatextId,
+                syncIfCreated: false,
                 ptProjects,
                 projectDoc.Data.UserRoles
             );
@@ -278,6 +289,24 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             {
                 // A project cannot reference itself
                 source = null;
+            }
+        }
+
+        // Get the alternate source for pre-translation drafting
+        TranslateSource alternateSource = null;
+        if (settings.AlternateSourceParatextId != null && !unsetAlternateSourceProject)
+        {
+            alternateSource = await GetTranslateSourceAsync(
+                curUserId,
+                settings.AlternateSourceParatextId,
+                syncIfCreated: true,
+                ptProjects,
+                projectDoc.Data.UserRoles
+            );
+            if (alternateSource.ProjectRef == projectId)
+            {
+                // A project cannot reference itself
+                alternateSource = null;
             }
         }
 
@@ -292,6 +321,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             UpdateSetting(op, p => p.BiblicalTermsConfig.BiblicalTermsEnabled, settings.BiblicalTermsEnabled);
             UpdateSetting(op, p => p.TranslateConfig.Source, source, unsetSourceProject);
             UpdateSetting(op, p => p.TranslateConfig.ShareEnabled, settings.TranslateShareEnabled);
+            UpdateSetting(
+                op,
+                p => p.TranslateConfig.DraftConfig.AlternateSource,
+                alternateSource,
+                unsetAlternateSourceProject
+            );
 
             UpdateSetting(op, p => p.CheckingConfig.CheckingEnabled, settings.CheckingEnabled);
             UpdateSetting(op, p => p.CheckingConfig.UsersSeeEachOthersResponses, settings.UsersSeeEachOthersResponses);
@@ -765,7 +800,12 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     {
         IQueryable<SFProject> projectQuery = RealtimeService.QuerySnapshots<SFProject>();
         return projectQuery.Any(
-            p => p.TranslateConfig.Source != null && p.TranslateConfig.Source.ProjectRef == projectId
+            p =>
+                (p.TranslateConfig.Source != null && (p.TranslateConfig.Source.ProjectRef == projectId))
+                || (
+                    p.TranslateConfig.DraftConfig.AlternateSource != null
+                    && (p.TranslateConfig.DraftConfig.AlternateSource.ProjectRef == projectId)
+                )
         );
     }
 
@@ -1205,32 +1245,27 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     {
         var project = new SFProject
         {
+            IsRightToLeft = ptProject.IsRightToLeft,
             ParatextId = ptProject.ParatextId,
             Name = ptProject.Name,
             ShortName = ptProject.ShortName,
             WritingSystem = new WritingSystem { Tag = ptProject.LanguageTag },
             TranslateConfig = new TranslateConfig { TranslationSuggestionsEnabled = false, Source = null },
-            CheckingConfig = new CheckingConfig { CheckingEnabled = false }
+            CheckingConfig = new CheckingConfig { CheckingEnabled = false },
         };
 
         // Create the new project using the realtime service
         string projectId = ObjectId.GenerateNewId().ToString();
-        await using (IConnection conn = await RealtimeService.ConnectAsync(curUserId))
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        if (RealtimeService.QuerySnapshots<SFProject>().Any(sfProject => sfProject.ParatextId == project.ParatextId))
         {
-            if (
-                this.RealtimeService
-                    .QuerySnapshots<SFProject>()
-                    .Any((SFProject sfProject) => sfProject.ParatextId == project.ParatextId)
-            )
-            {
-                throw new InvalidOperationException(ErrorAlreadyConnectedKey);
-            }
-            IDocument<SFProject> projectDoc = await conn.CreateAsync(projectId, project);
-            await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
-
-            // Resource projects do not have administrators, so users are added as needed
+            throw new InvalidOperationException(ErrorAlreadyConnectedKey);
         }
 
+        IDocument<SFProject> projectDoc = await conn.CreateAsync(projectId, project);
+        await ProjectSecrets.InsertAsync(new SFProjectSecret { Id = projectDoc.Id });
+
+        // Resource projects do not have administrators, so users are added as needed
         return projectId;
     }
 
@@ -1238,22 +1273,22 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
     /// Gets the translate source asynchronously.
     /// </summary>
     /// <param name="curUserId">The current user identifier.</param>
-    /// <param name="userSecret">The user secret.</param>
     /// <param name="paratextId">The paratext identifier.</param>
+    /// <param name="syncIfCreated">If <c>true</c> sync the project if it is created.</param>
     /// <param name="ptProjects">The paratext projects.</param>
     /// <param name="userRoles">The ids and roles of the users who will need to access the source.</param>
     /// <returns>The <see cref="TranslateSource"/> object for the specified resource.</returns>
     /// <exception cref="DataNotFoundException">The source paratext project does not exist.</exception>
     private async Task<TranslateSource> GetTranslateSourceAsync(
         string curUserId,
-        UserSecret userSecret,
         string paratextId,
-        IReadOnlyList<ParatextProject> ptProjects,
-        IReadOnlyDictionary<string, string> userRoles = null
+        bool syncIfCreated,
+        IEnumerable<ParatextProject> ptProjects,
+        IReadOnlyDictionary<string, string>? userRoles = null
     )
     {
         ParatextProject sourcePTProject = ptProjects.SingleOrDefault(p => p.ParatextId == paratextId);
-        string sourceProjectRef = null;
+        string sourceProjectRef;
         if (sourcePTProject == null)
         {
             // If it is not a project, see if there is a matching resource
@@ -1272,13 +1307,16 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         SFProject sourceProject = RealtimeService
             .QuerySnapshots<SFProject>()
             .FirstOrDefault(p => p.ParatextId == paratextId);
+        bool projectCreated;
         if (sourceProject != null)
         {
             sourceProjectRef = sourceProject.Id;
+            projectCreated = false;
         }
         else
         {
-            sourceProjectRef = await this.CreateResourceProjectAsync(curUserId, paratextId);
+            sourceProjectRef = await CreateResourceProjectAsync(curUserId, paratextId);
+            projectCreated = true;
         }
 
         // Add each user in the target project to the source project so they can access it
@@ -1289,7 +1327,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 // Add the user to the project, if the user does not have a role in it
                 if (sourceProject == null || !sourceProject.UserRoles.ContainsKey(userId))
                 {
-                    await this.AddUserAsync(userId, sourceProjectRef, null);
+                    await AddUserAsync(userId, sourceProjectRef, null);
                 }
             }
             catch (ForbiddenException)
@@ -1298,13 +1336,21 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
+        // If the project is created, sync it only if we need to
+        // This is usually because this is an alternate source for drafting
+        if (projectCreated && syncIfCreated)
+        {
+            await _syncService.SyncAsync(curUserId, sourceProjectRef, trainEngine: false);
+        }
+
         return new TranslateSource
         {
+            IsRightToLeft = sourcePTProject.IsRightToLeft,
             ParatextId = paratextId,
             ProjectRef = sourceProjectRef,
             Name = sourcePTProject.Name,
             ShortName = sourcePTProject.ShortName,
-            WritingSystem = new WritingSystem { Tag = sourcePTProject.LanguageTag }
+            WritingSystem = new WritingSystem { Tag = sourcePTProject.LanguageTag },
         };
     }
 

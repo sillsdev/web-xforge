@@ -44,7 +44,16 @@ public class SyncService : ISyncService
         _logger = logger;
     }
 
-    public async Task SyncAsync(string curUserId, string projectId, bool trainEngine)
+    /// <summary>
+    /// Syncs a project and its source project (if applicable).
+    /// </summary>
+    /// <param name="curUserId">The current user identifier.</param>
+    /// <param name="projectId">The project identifier.</param>
+    /// <param name="trainEngine">If <c>true</c>, train the suggestion engine.</param>
+    /// <returns>The job id for the project.</returns>
+    /// <exception cref="ForbiddenException">Sync is disabled for this project.</exception>
+    /// <exception cref="ArgumentException">The source or target project cannot be found.</exception>
+    public async Task<string> SyncAsync(string curUserId, string projectId, bool trainEngine)
     {
         await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
         // Load the project document
@@ -167,7 +176,7 @@ public class SyncService : ISyncService
                 }
 
                 // Exit so we don't queue the target again, in the following block
-                return;
+                return targetJobId;
             }
         }
 
@@ -208,6 +217,7 @@ public class SyncService : ISyncService
             );
 
             _backgroundJobClient.ChangeState(jobId, new EnqueuedState());
+            return jobId;
         }
         catch (Exception)
         {
