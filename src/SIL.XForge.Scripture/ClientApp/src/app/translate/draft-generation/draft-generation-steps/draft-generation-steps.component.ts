@@ -29,7 +29,7 @@ export class DraftGenerationStepsComponent implements OnInit {
       // Build available book list from source project
       switchMap(doc => {
         // See if there is an alternate project set
-        let sourceProjectId: string | undefined = doc?.data?.translateConfig.draftConfig?.alternateSource?.projectRef;
+        let sourceProjectId: string | undefined = doc?.data?.translateConfig.draftConfig.alternateSource?.projectRef;
         if (sourceProjectId != null) {
           return from(this.projectService.getProfile(sourceProjectId));
         }

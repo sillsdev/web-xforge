@@ -9,7 +9,7 @@
     <p><transloco key="draft_viewer.select_apply_to_project"></transloco></p>
     <p><transloco key="draft_viewer.select_edit"></transloco></p>
 
-    <div class="draft-viewer-body" [ngClass]="{ 'no-source': !hasSource }">
+    <div class="draft-viewer-body" [ngClass]="{ 'no-source': !bookHasSource }">
       <div class="controls">
         <mat-card>
           <app-book-chapter-chooser
