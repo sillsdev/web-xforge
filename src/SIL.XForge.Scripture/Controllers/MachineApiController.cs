@@ -371,15 +371,19 @@ public class MachineApiController : ControllerBase
     /// <summary>
     /// Starts a pre-translation build job.
     /// </summary>
-    /// <param name="sfProjectId">The Scripture Forge project identifier.</param>
+    /// <param name="buildConfig">The build configuration.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <response code="200">The pre-translation build was successfully started.</response>
     /// <response code="403">You do not have permission to build this project.</response>
     /// <response code="404">The project does not exist or is not configured on the ML server.</response>
     /// <response code="503">The ML server is temporarily unavailable or unresponsive.</response>
+    /// <remarks>
+    /// If a JSON string is passed in the format "project_id", then a default build configuration will be created for
+    /// the project with the project id as the value of the string.
+    /// </remarks>
     [HttpPost(MachineApi.StartPreTranslationBuild)]
     public async Task<ActionResult> StartPreTranslationBuildAsync(
-        [FromBody] string sfProjectId,
+        [FromBody] BuildConfig buildConfig,
         CancellationToken cancellationToken
     )
     {
@@ -387,7 +391,7 @@ public class MachineApiController : ControllerBase
         {
             await _machineApiService.StartPreTranslationBuildAsync(
                 _userAccessor.UserId,
-                sfProjectId,
+                buildConfig,
                 cancellationToken
             );
             return Ok();

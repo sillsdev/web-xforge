@@ -99,7 +99,12 @@ public class ParatextSyncRunnerTests
 
         await env.MachineProjectService
             .DidNotReceive()
-            .BuildProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .BuildProjectAsync(
+                Arg.Any<string>(),
+                Arg.Any<BuildConfig>(),
+                Arg.Any<bool>(),
+                Arg.Any<CancellationToken>()
+            );
         env.VerifyProjectSync(true);
 
         // Verify the sync metrics
@@ -138,7 +143,12 @@ public class ParatextSyncRunnerTests
 
         await env.MachineProjectService
             .Received()
-            .BuildProjectAsync("user01", "project01", false, CancellationToken.None);
+            .BuildProjectAsync(
+                "user01",
+                Arg.Is<BuildConfig>(b => b.ProjectId == "project01"),
+                preTranslate: false,
+                CancellationToken.None
+            );
         env.VerifyProjectSync(true);
 
         // Verify the sync metrics
@@ -177,7 +187,12 @@ public class ParatextSyncRunnerTests
 
         await env.MachineProjectService
             .Received()
-            .BuildProjectAsync("user01", "project01", false, CancellationToken.None);
+            .BuildProjectAsync(
+                "user01",
+                Arg.Is<BuildConfig>(b => b.ProjectId == "project01"),
+                preTranslate: false,
+                CancellationToken.None
+            );
         env.VerifyProjectSync(true);
 
         // Verify the sync metrics
@@ -215,7 +230,12 @@ public class ParatextSyncRunnerTests
 
         await env.MachineProjectService
             .DidNotReceive()
-            .BuildProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .BuildProjectAsync(
+                Arg.Any<string>(),
+                Arg.Any<BuildConfig>(),
+                Arg.Any<bool>(),
+                Arg.Any<CancellationToken>()
+            );
         env.VerifyProjectSync(true);
 
         // Verify the sync metrics
@@ -244,7 +264,12 @@ public class ParatextSyncRunnerTests
 
         await env.MachineProjectService
             .DidNotReceive()
-            .BuildProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+            .BuildProjectAsync(
+                Arg.Any<string>(),
+                Arg.Any<BuildConfig>(),
+                Arg.Any<bool>(),
+                Arg.Any<CancellationToken>()
+            );
         env.VerifyProjectSync(true);
 
         // Verify the sync metrics
