@@ -1603,15 +1603,16 @@ public class ParatextSyncRunner : IParatextSyncRunner
         List<string> deletedNoteThreadDocIds = new List<string>(noteThreadDocIds);
 
         var tasks = new List<Task>();
-        foreach (string noteThreadDocId in noteThreadDocIds)
+        foreach (string noteThreadDocId in deletedNoteThreadDocIds)
         {
-            async Task deleteNoteThread()
+            async Task DeleteNoteThread()
             {
+                // Delete notes that are not Biblical Terms notes
                 IDocument<NoteThread> noteThreadDoc = await _conn.FetchAsync<NoteThread>(noteThreadDocId);
-                if (noteThreadDoc.IsLoaded)
+                if (noteThreadDoc.IsLoaded && noteThreadDoc.Data.BiblicalTermId is null)
                     await noteThreadDoc.DeleteAsync();
             }
-            tasks.Add(deleteNoteThread());
+            tasks.Add(DeleteNoteThread());
         }
 
         await Task.WhenAll(tasks);
