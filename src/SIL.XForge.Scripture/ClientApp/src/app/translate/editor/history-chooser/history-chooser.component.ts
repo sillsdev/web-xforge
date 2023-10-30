@@ -3,6 +3,7 @@ import { Canon } from '@sillsdev/scripture';
 import { TextData } from 'realtime-server/lib/esm/scriptureforge/models/text-data';
 import { BehaviorSubject, combineLatest, Observable } from 'rxjs';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { I18nService } from 'xforge-common/i18n.service';
 import { Snapshot } from 'xforge-common/models/snapshot';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -28,6 +29,7 @@ export class HistoryChooserComponent extends DataLoadingComponent implements OnI
   historyRevisions: Revision[] = [];
 
   constructor(
+    private readonly i18n: I18nService,
     noticeService: NoticeService,
     private readonly onlineStatusService: OnlineStatusService,
     private readonly paratextService: ParatextService
@@ -95,7 +97,13 @@ export class HistoryChooserComponent extends DataLoadingComponent implements OnI
 
   formatRevision(revision: Revision): string {
     var date = new Date(revision.key);
-    return date.toDateString();
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    };
+    return date.toLocaleString(this.i18n.locale.canonicalTag, options).replace(/,/g, '');
   }
 
   async loadHistory(): Promise<void> {
