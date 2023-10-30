@@ -3521,7 +3521,7 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
-    it('should navigate to first book in project if url book is not in project', fakeAsync(() => {
+    it('should navigate to "projects" route if url book is not in project', fakeAsync(() => {
       const navigationParams: Params = { projectId: 'project01', bookId: 'GEN', chapter: '2' };
       const env = new TestEnvironment();
       const spyRouterNavigate = spyOn(env.router, 'navigateByUrl');
@@ -3532,8 +3532,7 @@ describe('EditorComponent', () => {
       env.updateParams(navigationParams);
       env.wait();
 
-      // First book in project
-      expect(spyRouterNavigate).toHaveBeenCalledWith('/projects/testProjectId/translate/MAT/1', jasmine.any(Object));
+      expect(spyRouterNavigate).toHaveBeenCalledWith('projects', jasmine.any(Object));
     }));
   });
 });
