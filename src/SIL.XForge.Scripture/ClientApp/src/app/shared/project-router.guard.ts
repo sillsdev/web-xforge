@@ -8,7 +8,7 @@ import { map, switchMap } from 'rxjs/operators';
 import { AuthGuard } from 'xforge-common/auth.guard';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
-import { canAccessCommunityCheckingApp, canAccessTranslateApp } from '../core/models/sf-project-role-info';
+import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
 
 abstract class RouterGuard implements CanActivate {
@@ -119,7 +119,7 @@ export class CheckingAuthGuard extends RouterGuard {
   check(projectDoc: SFProjectProfileDoc): boolean {
     if (projectDoc.data != null) {
       const role = projectDoc.data.userRoles[this.userService.currentUserId] as SFProjectRole;
-      if (canAccessCommunityCheckingApp(role) && projectDoc.data.checkingConfig.checkingEnabled) {
+      if (roleCanAccessCommunityChecking(role) && projectDoc.data.checkingConfig.checkingEnabled) {
         return true;
       }
     }
@@ -144,7 +144,7 @@ export class TranslateAuthGuard extends RouterGuard {
   check(projectDoc: SFProjectProfileDoc): boolean {
     if (projectDoc.data != null) {
       const role = projectDoc.data.userRoles[this.userService.currentUserId] as SFProjectRole;
-      if (canAccessTranslateApp(role)) {
+      if (roleCanAccessTranslate(role)) {
         return true;
       }
     }
