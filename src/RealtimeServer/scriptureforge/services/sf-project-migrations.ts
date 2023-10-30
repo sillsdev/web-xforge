@@ -1,11 +1,11 @@
-import { Doc, Op, RawOp } from 'sharedb/lib/client';
-import { Migration, MigrationConstructor } from '../../common/migration';
+import { Doc, Op } from 'sharedb/lib/client';
+import { DocMigration, MigrationConstructor } from '../../common/migration';
 import { submitMigrationOp } from '../../common/realtime-server';
 import { SFProjectRole } from '../models/sf-project-role';
 import { TextInfoPermission } from '../models/text-info-permission';
 import { TranslateShareLevel } from '../models/translate-config';
 
-class SFProjectMigration1 implements Migration {
+class SFProjectMigration1 extends DocMigration {
   static readonly VERSION = 1;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -22,13 +22,9 @@ class SFProjectMigration1 implements Migration {
       await submitMigrationOp(SFProjectMigration1.VERSION, doc, ops);
     }
   }
-
-  migrateOp(_op: RawOp): void {
-    // do nothing
-  }
 }
 
-class SFProjectMigration2 implements Migration {
+class SFProjectMigration2 extends DocMigration {
   static readonly VERSION = 2;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -56,13 +52,9 @@ class SFProjectMigration2 implements Migration {
       await submitMigrationOp(SFProjectMigration2.VERSION, doc, ops);
     }
   }
-
-  migrateOp(_op: RawOp): void {
-    // do nothing
-  }
 }
 
-class SFProjectMigration3 implements Migration {
+class SFProjectMigration3 extends DocMigration {
   static readonly VERSION = 3;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -92,26 +84,18 @@ class SFProjectMigration3 implements Migration {
       await submitMigrationOp(SFProjectMigration3.VERSION, doc, ops);
     }
   }
-
-  migrateOp(_op: RawOp): void {
-    // do nothing
-  }
 }
 
-class SFProjectMigration4 implements Migration {
+class SFProjectMigration4 extends DocMigration {
   static readonly VERSION = 4;
 
   async migrateDoc(doc: Doc): Promise<void> {
     const ops: Op[] = [{ p: ['userPermissions'], oi: {} }];
     await submitMigrationOp(SFProjectMigration4.VERSION, doc, ops);
   }
-
-  migrateOp(_op: RawOp): void {
-    // do nothing
-  }
 }
 
-class SFProjectMigration5 implements Migration {
+class SFProjectMigration5 extends DocMigration {
   static readonly VERSION = 5;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -123,13 +107,9 @@ class SFProjectMigration5 implements Migration {
     ops.push({ p: ['translateConfig', 'shareLevel'], oi: TranslateShareLevel.Specific });
     await submitMigrationOp(SFProjectMigration5.VERSION, doc, ops);
   }
-
-  migrateOp(_op: RawOp): void {
-    // do nothing
-  }
 }
 
-class SFProjectMigration6 implements Migration {
+class SFProjectMigration6 extends DocMigration {
   static readonly VERSION = 6;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -139,13 +119,9 @@ class SFProjectMigration6 implements Migration {
     }
     await submitMigrationOp(SFProjectMigration6.VERSION, doc, ops);
   }
-
-  migrateOp(_op: RawOp): void {
-    //do nothing
-  }
 }
 
-class SFProjectMigration7 implements Migration {
+class SFProjectMigration7 extends DocMigration {
   static readonly VERSION = 7;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -156,13 +132,9 @@ class SFProjectMigration7 implements Migration {
     }
     await submitMigrationOp(SFProjectMigration7.VERSION, doc, ops);
   }
-
-  migrateOp(_op: RawOp): void {
-    //do nothing
-  }
 }
 
-class SFProjectMigration8 implements Migration {
+class SFProjectMigration8 extends DocMigration {
   static readonly VERSION = 8;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -175,10 +147,6 @@ class SFProjectMigration8 implements Migration {
       await submitMigrationOp(SFProjectMigration8.VERSION, doc, ops);
     }
   }
-
-  migrateOp(_op: RawOp): void {
-    //do nothing
-  }
 }
 
 /**
@@ -186,7 +154,7 @@ class SFProjectMigration8 implements Migration {
  * Project admins now select whether a share link can be used by only one person or by anyone at the time the
  * link is created (rather than configuring it on the project).
  */
-class SFProjectMigration9 implements Migration {
+class SFProjectMigration9 extends DocMigration {
   static readonly VERSION = 9;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -201,13 +169,9 @@ class SFProjectMigration9 implements Migration {
     }
     await submitMigrationOp(SFProjectMigration9.VERSION, doc, ops);
   }
-
-  migrateOp(_op: RawOp): void {
-    //do nothing
-  }
 }
 
-class SFProjectMigration10 implements Migration {
+class SFProjectMigration10 extends DocMigration {
   static readonly VERSION = 10;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -217,13 +181,9 @@ class SFProjectMigration10 implements Migration {
     }
     await submitMigrationOp(SFProjectMigration10.VERSION, doc, ops);
   }
-
-  migrateOp(_op: RawOp): void {
-    // do nothing
-  }
 }
 
-class SFProjectMigration11 implements Migration {
+class SFProjectMigration11 extends DocMigration {
   static readonly VERSION = 11;
 
   async migrateDoc(doc: Doc): Promise<void> {
@@ -238,10 +198,6 @@ class SFProjectMigration11 implements Migration {
       ops.push({ p: ['biblicalTermsConfig', 'hasRenderings'], oi: false });
     }
     await submitMigrationOp(SFProjectMigration11.VERSION, doc, ops);
-  }
-
-  migrateOp(_op: RawOp): void {
-    //do nothing
   }
 }
 

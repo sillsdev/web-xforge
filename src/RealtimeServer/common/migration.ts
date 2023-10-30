@@ -25,3 +25,11 @@ export interface Migration {
    */
   migrateOp(op: RawOp): void;
 }
+
+export abstract class DocMigration implements Migration {
+  abstract migrateDoc(doc: Doc): Promise<void>;
+
+  migrateOp(_op: RawOp): void {
+    // do nothing
+  }
+}
