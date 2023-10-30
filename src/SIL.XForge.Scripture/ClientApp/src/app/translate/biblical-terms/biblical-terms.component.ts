@@ -422,7 +422,12 @@ export class BiblicalTermsComponent extends DataLoadingComponent implements OnDe
     this.noteThreadQuery = await this.projectService.queryBiblicalTermNoteThreads(sfProjectId);
     this.noteThreadSub?.unsubscribe();
     this.noteThreadSub = this.subscribe(
-      merge(this.noteThreadQuery.ready$, this.noteThreadQuery.remoteChanges$, this.noteThreadQuery.remoteDocChanges$),
+      merge(
+        this.noteThreadQuery.localChanges$,
+        this.noteThreadQuery.ready$,
+        this.noteThreadQuery.remoteChanges$,
+        this.noteThreadQuery.remoteDocChanges$
+      ),
       () => {
         this.filterBiblicalTerms(this._bookNum ?? 0, this._chapter ?? 0, this._verse);
       }
