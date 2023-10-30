@@ -569,7 +569,7 @@ public class MachineApiService : IMachineApiService
                     // We do not need the success boolean result, as we will still rebuild if no files have changed
                     await _machineProjectService.SyncProjectCorporaAsync(
                         curUserId,
-                        sfProjectId,
+                        new BuildConfig { ProjectId = sfProjectId },
                         preTranslate: false,
                         cancellationToken
                     );
@@ -613,12 +613,12 @@ public class MachineApiService : IMachineApiService
 
     public async Task StartPreTranslationBuildAsync(
         string curUserId,
-        string sfProjectId,
+        BuildConfig buildConfig,
         CancellationToken cancellationToken
     )
     {
         // Ensure that the user has permission on the project
-        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        SFProject project = await EnsureProjectPermissionAsync(curUserId, buildConfig.ProjectId);
 
         // Execute on Serval, if it is enabled
         if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
@@ -636,20 +636,20 @@ public class MachineApiService : IMachineApiService
             // Run the training after the sync has completed
             jobId = _backgroundJobClient.ContinueJobWith<IMachineProjectService>(
                 sourceJobId,
-                r => r.BuildProjectForBackgroundJobAsync(curUserId, sfProjectId, true, CancellationToken.None)
+                r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
             );
         }
         else
         {
             // This will take a while, so we run it in the background
             jobId = _backgroundJobClient.Enqueue<IMachineProjectService>(
-                r => r.BuildProjectForBackgroundJobAsync(curUserId, sfProjectId, true, CancellationToken.None)
+                r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
             );
         }
 
         // Set the pre-translation queued date and time, and hang fire job id
         await _projectSecrets.UpdateAsync(
-            sfProjectId,
+            buildConfig.ProjectId,
             u =>
             {
                 u.Set(p => p.ServalData.PreTranslationJobId, jobId);
