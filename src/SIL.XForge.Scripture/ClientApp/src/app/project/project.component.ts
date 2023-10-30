@@ -8,7 +8,7 @@ import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
-import { canAccessCommunityCheckingApp, canAccessTranslateApp } from '../core/models/sf-project-role-info';
+import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
 
 @Component({
@@ -73,8 +73,8 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     }
     const projectRole = project.userRoles[this.userService.currentUserId] as SFProjectRole;
     const selectedTask = projectUserConfig.selectedTask;
-    const isTranslateAccessible = canAccessTranslateApp(projectRole);
-    const isCheckingAccessible = canAccessCommunityCheckingApp(projectRole) && project.checkingConfig.checkingEnabled;
+    const isTranslateAccessible = roleCanAccessTranslate(projectRole);
+    const isCheckingAccessible = roleCanAccessCommunityChecking(projectRole) && project.checkingConfig.checkingEnabled;
 
     // navigate to last location
     if (

@@ -7,7 +7,7 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { SFProjectUserConfig } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { NoticeService } from 'xforge-common/notice.service';
-import { canAccessTranslateApp } from '../core/models/sf-project-role-info';
+import { roleCanAccessTranslate } from '../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 
 /**
@@ -82,7 +82,7 @@ export class CheckingUtils {
       op.unset(puc => puc.selectedQuestionRef!);
     });
     let route = '/projects/' + info.projectId;
-    if (canAccessTranslateApp(info.project.userRoles[info.userId] as SFProjectRole)) {
+    if (roleCanAccessTranslate(info.project.userRoles[info.userId] as SFProjectRole)) {
       route = info.bookId == null ? route + '/translate' : route + '/translate/' + info.bookId;
       router.navigateByUrl(route, { replaceUrl: true });
       noticeService.show(translate('app.scripture_checking_not_available'));
