@@ -1,6 +1,14 @@
 import { InjectionToken } from '@angular/core';
 import { BuildStates } from 'src/app/machine-api/build-states';
 
+/*
+ * The build configuration for a pre-translation build.
+ */
+export interface BuildConfig {
+  projectId: string;
+  sourceBooks: number[];
+}
+
 /**
  * Dictionary of 'segmentRef -> segment text'.
  */

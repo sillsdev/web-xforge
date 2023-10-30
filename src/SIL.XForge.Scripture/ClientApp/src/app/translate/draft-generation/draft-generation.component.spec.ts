@@ -323,7 +323,10 @@ describe('DraftGenerationComponent', () => {
       });
 
       env.component.startBuild();
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
+        projectId: 'testProjectId',
+        sourceBooks: []
+      });
     });
 
     it('should not attempt "cancel dialog" close for queued build', () => {
@@ -337,7 +340,10 @@ describe('DraftGenerationComponent', () => {
       env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.startBuild();
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
+        projectId: 'testProjectId',
+        sourceBooks: []
+      });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
     });
@@ -353,7 +359,10 @@ describe('DraftGenerationComponent', () => {
       env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.startBuild();
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
+        projectId: 'testProjectId',
+        sourceBooks: []
+      });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
     });
@@ -369,7 +378,10 @@ describe('DraftGenerationComponent', () => {
       env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.startBuild();
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
+        projectId: 'testProjectId',
+        sourceBooks: []
+      });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
     });
@@ -386,7 +398,10 @@ describe('DraftGenerationComponent', () => {
       env.component.cancelDialogRef = instance(mockDialogRef);
 
       env.component.startBuild();
-      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith('testProjectId');
+      expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
+        projectId: 'testProjectId',
+        sourceBooks: []
+      });
       verify(mockDialogRef.close()).once();
     });
   });
