@@ -7,5 +7,10 @@ namespace SIL.XForge.Scripture.Services;
 
 public interface ISFTextCorpusFactory
 {
-    Task<ITextCorpus> CreateAsync(IEnumerable<string> projects, TextCorpusType type, bool preTranslate);
+    Task<ITextCorpus> CreateAsync(
+        IEnumerable<string> projects,
+        TextCorpusType type,
+        bool preTranslate,
+        ICollection<int> books
+    );
 }

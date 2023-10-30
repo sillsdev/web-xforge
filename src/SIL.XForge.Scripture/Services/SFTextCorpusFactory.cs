@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -46,15 +47,20 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
     }
 
     public async Task<ITextCorpus> CreateAsync(IEnumerable<string> projects, TextCorpusType type) =>
-        new DictionaryTextCorpus(await CreateTextsAsync(projects, type, preTranslate: false));
+        new DictionaryTextCorpus(await CreateTextsAsync(projects, type, preTranslate: false, Array.Empty<int>()));
 
-    public async Task<ITextCorpus> CreateAsync(IEnumerable<string> projects, TextCorpusType type, bool preTranslate) =>
-        new DictionaryTextCorpus(await CreateTextsAsync(projects, type, preTranslate));
+    public async Task<ITextCorpus> CreateAsync(
+        IEnumerable<string> projects,
+        TextCorpusType type,
+        bool preTranslate,
+        ICollection<int> books
+    ) => new DictionaryTextCorpus(await CreateTextsAsync(projects, type, preTranslate, books));
 
     private async Task<IReadOnlyList<IText>> CreateTextsAsync(
         IEnumerable<string> projects,
         TextCorpusType type,
-        bool preTranslate
+        bool preTranslate,
+        ICollection<int> books
     )
     {
         StringTokenizer wordTokenizer = new LatinWordTokenizer();
@@ -105,7 +111,7 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
                     throw new InvalidEnumArgumentException(nameof(type), (int)type, typeof(TextCorpusType));
             }
 
-            foreach (TextInfo text in projectTexts)
+            foreach (TextInfo text in projectTexts.Where(p => books.Count == 0 || books.Contains(p.BookNum)))
             {
                 foreach (Chapter chapter in text.Chapters)
                 {
