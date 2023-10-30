@@ -1,14 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Observable } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PermissionsService } from 'xforge-common/permissions.service';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
-import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
 
 @Component({
@@ -22,6 +21,7 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     private readonly projectService: SFProjectService,
     private readonly router: Router,
     private readonly userService: UserService,
+    private readonly permissions: PermissionsService,
     noticeService: NoticeService
   ) {
     super(noticeService);
@@ -71,10 +71,9 @@ export class ProjectComponent extends DataLoadingComponent implements OnInit {
     if (project == null || projectUserConfig == null) {
       return;
     }
-    const projectRole = project.userRoles[this.userService.currentUserId] as SFProjectRole;
     const selectedTask = projectUserConfig.selectedTask;
-    const isTranslateAccessible = roleCanAccessTranslate(projectRole);
-    const isCheckingAccessible = roleCanAccessCommunityChecking(projectRole) && project.checkingConfig.checkingEnabled;
+    const isTranslateAccessible = this.permissions.canAccessTranslate(projectDoc);
+    const isCheckingAccessible = this.permissions.canAccessCommunityChecking(projectDoc);
 
     // navigate to last location
     if (
