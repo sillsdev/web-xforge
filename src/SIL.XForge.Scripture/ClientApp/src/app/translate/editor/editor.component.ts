@@ -528,8 +528,22 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   get snapshotLabel(): string {
-    // TODO: Format date string according to the locale
-    return this.historyChooser?.historyRevision?.key ?? '';
+    if (this.historyChooser?.historyRevision?.key != null) {
+      var date = new Date(this.historyChooser?.historyRevision?.key);
+      const options: Intl.DateTimeFormatOptions = {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour12: true,
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric'
+      };
+      return date.toLocaleString(this.i18n.locale.canonicalTag, options).replace(/,/g, '');
+    } else {
+      return '';
+    }
   }
 
   get projectId(): string | undefined {
