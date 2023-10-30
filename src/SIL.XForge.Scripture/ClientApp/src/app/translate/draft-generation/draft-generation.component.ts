@@ -19,7 +19,10 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates } from './draft-generation';
-import { DraftGenerationStepsResult } from './draft-generation-steps/draft-generation-steps.component';
+import {
+  DraftGenerationStepsComponent,
+  DraftGenerationStepsResult
+} from './draft-generation-steps/draft-generation-steps.component';
 import { DraftGenerationService } from './draft-generation.service';
 
 export enum InfoAlert {
@@ -37,6 +40,7 @@ export enum InfoAlert {
 })
 export class DraftGenerationComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(MatTabGroup) tabGroup?: MatTabGroup;
+  @ViewChild(DraftGenerationStepsComponent) draftGenerationSteps?: DraftGenerationStepsComponent;
   draftJob?: BuildDto;
 
   draftViewerUrl?: string;
@@ -264,21 +268,26 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   startBuild(): void {
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.subscribe(
-      this.draftGenerationService.startBuildOrGetActiveBuild(this.activatedProject.projectId!).pipe(
-        tap((job?: BuildDto) => {
-          // Handle automatic closing of dialog if job finishes while cancel dialog is open
-          if (!this.canCancel(job)) {
-            if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
-              this.cancelDialogRef.close();
-            }
-          }
-
-          // Ensure flag is set for case where first completed build happens while component is loaded
-          if (this.isDraftComplete(job)) {
-            this.hasAnyCompletedBuild = true;
-          }
+      this.draftGenerationService
+        .startBuildOrGetActiveBuild({
+          projectId: this.activatedProject.projectId!,
+          sourceBooks: this.draftGenerationSteps?.selectedBooks ?? []
         })
-      ),
+        .pipe(
+          tap((job?: BuildDto) => {
+            // Handle automatic closing of dialog if job finishes while cancel dialog is open
+            if (!this.canCancel(job)) {
+              if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
+                this.cancelDialogRef.close();
+              }
+            }
+
+            // Ensure flag is set for case where first completed build happens while component is loaded
+            if (this.isDraftComplete(job)) {
+              this.hasAnyCompletedBuild = true;
+            }
+          })
+        ),
       (job?: BuildDto) => (this.draftJob = job)
     );
   }
