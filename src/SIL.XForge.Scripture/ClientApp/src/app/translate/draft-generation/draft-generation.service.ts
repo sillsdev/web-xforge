@@ -8,6 +8,7 @@ import { BuildStates } from '../../machine-api/build-states';
 import { HttpClient } from '../../machine-api/http-client';
 import {
   activeBuildStates,
+  BuildConfig,
   DraftGenerationServiceOptions,
   DraftSegmentMap,
   DRAFT_GENERATION_SERVICE_OPTIONS,
@@ -87,21 +88,21 @@ export class DraftGenerationService {
 
   /**
    * Starts a pretranslation build job if one is not already active.
-   * @param projectId The SF project id for the target translation.
+   * @param buildConfig The build configuration.
    * @returns An observable BuildDto describing the state and progress of a currently active or newly started build job.
    */
-  startBuildOrGetActiveBuild(projectId: string): Observable<BuildDto | undefined> {
-    return this.getBuildProgress(projectId).pipe(
+  startBuildOrGetActiveBuild(buildConfig: BuildConfig): Observable<BuildDto | undefined> {
+    return this.getBuildProgress(buildConfig.projectId).pipe(
       switchMap((job?: BuildDto) => {
         // If existing build is currently active, return polling observable
         if (activeBuildStates.includes(job?.state as BuildStates)) {
-          return this.pollBuildProgress(projectId);
+          return this.pollBuildProgress(buildConfig.projectId);
         }
 
         // Otherwise, start build and then poll
-        return this.startBuild(projectId).pipe(
+        return this.startBuild(buildConfig).pipe(
           // No errors means build successfully started, so start polling
-          switchMap(() => this.pollBuildProgress(projectId))
+          switchMap(() => this.pollBuildProgress(buildConfig.projectId))
         );
       })
     );
@@ -150,12 +151,10 @@ export class DraftGenerationService {
   /**
    * Calls the machine api to start a pretranslation build job.
    * This should only be called if no build is currently active.
-   * @param projectId The SF project id for the target translation.
+   * @param buildConfig The build configuration.
    */
-  private startBuild(projectId: string): Observable<void> {
-    return this.httpClient
-      .post<void>(`translation/pretranslations`, JSON.stringify(projectId))
-      .pipe(map(res => res.data));
+  private startBuild(buildConfig: BuildConfig): Observable<void> {
+    return this.httpClient.post<void>(`translation/pretranslations`, buildConfig).pipe(map(res => res.data));
   }
 
   /**
