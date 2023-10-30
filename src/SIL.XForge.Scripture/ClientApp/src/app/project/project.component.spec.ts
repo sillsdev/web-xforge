@@ -14,6 +14,7 @@ import {
 import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
+import { PermissionsService } from 'xforge-common/permissions.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -30,6 +31,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedRouter = mock(Router);
 const mockedSFProjectService = mock(SFProjectService);
 const mockedTranslocoService = mock(TranslocoService);
+const mockedPermissions = mock(PermissionsService);
 
 describe('ProjectComponent', () => {
   configureTestingModule(() => ({
@@ -40,7 +42,8 @@ describe('ProjectComponent', () => {
       { provide: ActivatedRoute, useMock: mockedActivatedRoute },
       { provide: Router, useMock: mockedRouter },
       { provide: SFProjectService, useMock: mockedSFProjectService },
-      { provide: TranslocoService, useMock: mockedTranslocoService }
+      { provide: TranslocoService, useMock: mockedTranslocoService },
+      { provide: PermissionsService, useMock: mockedPermissions }
     ]
   }));
 
@@ -66,6 +69,7 @@ describe('ProjectComponent', () => {
 
   it('navigate to checking tool if a checker and no last selected text', fakeAsync(() => {
     const env = new TestEnvironment();
+    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
     env.setProjectData({ role: SFProjectRole.CommunityChecker, memberProjectIdSuffixes: [1] });
     env.fixture.detectChanges();
     tick();
@@ -106,6 +110,7 @@ describe('ProjectComponent', () => {
 
   it('if checking is disabled, navigate to translate app, even if last location was in checking app', fakeAsync(() => {
     const env = new TestEnvironment();
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(false);
     env.setProjectData({
       selectedTask: 'checking',
       selectedBooknum: 41,
@@ -122,6 +127,7 @@ describe('ProjectComponent', () => {
 
   it('doesnt allow translators to navigate to community checking', fakeAsync(() => {
     const env = new TestEnvironment();
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(false);
     env.setProjectData({
       selectedTask: 'checking',
       memberProjectIdSuffixes: [1],
@@ -180,6 +186,8 @@ class TestEnvironment {
   readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor(enableSharing = false) {
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(true);
     when(mockedActivatedRoute.params).thenReturn(of({ projectId: 'project1' }));
     when(mockedUserService.currentUserId).thenReturn('user01');
     when(mockedUserService.currentProjectId(anything())).thenReturn('project1');

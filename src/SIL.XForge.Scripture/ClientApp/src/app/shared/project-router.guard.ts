@@ -6,9 +6,9 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { Observable, from, of } from 'rxjs';
 import { map, switchMap } from 'rxjs/operators';
 import { AuthGuard } from 'xforge-common/auth.guard';
+import { PermissionsService } from 'xforge-common/permissions.service';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
-import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from '../core/models/sf-project-role-info';
 import { SFProjectService } from '../core/sf-project.service';
 
 abstract class RouterGuard implements CanActivate {
@@ -110,18 +110,15 @@ export class CheckingAuthGuard extends RouterGuard {
   constructor(
     authGuard: AuthGuard,
     projectService: SFProjectService,
-    private userService: UserService,
-    private router: Router
+    private router: Router,
+    private readonly permissions: PermissionsService
   ) {
     super(authGuard, projectService);
   }
 
   check(projectDoc: SFProjectProfileDoc): boolean {
-    if (projectDoc.data != null) {
-      const role = projectDoc.data.userRoles[this.userService.currentUserId] as SFProjectRole;
-      if (roleCanAccessCommunityChecking(role) && projectDoc.data.checkingConfig.checkingEnabled) {
-        return true;
-      }
+    if (this.permissions.canAccessCommunityChecking(projectDoc)) {
+      return true;
     }
     this.router.navigate(['/projects', projectDoc.id], { replaceUrl: true });
     return false;
@@ -135,18 +132,15 @@ export class TranslateAuthGuard extends RouterGuard {
   constructor(
     authGuard: AuthGuard,
     projectService: SFProjectService,
-    private userService: UserService,
-    private router: Router
+    private router: Router,
+    private readonly permissions: PermissionsService
   ) {
     super(authGuard, projectService);
   }
 
   check(projectDoc: SFProjectProfileDoc): boolean {
-    if (projectDoc.data != null) {
-      const role = projectDoc.data.userRoles[this.userService.currentUserId] as SFProjectRole;
-      if (roleCanAccessTranslate(role)) {
-        return true;
-      }
+    if (this.permissions.canAccessTranslate(projectDoc)) {
+      return true;
     }
     this.router.navigate(['/projects', projectDoc.id], { replaceUrl: true });
     return false;
