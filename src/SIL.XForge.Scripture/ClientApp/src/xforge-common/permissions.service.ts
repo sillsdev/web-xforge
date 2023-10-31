@@ -17,9 +17,10 @@ export class PermissionsService {
       userId = this.userService.currentUserId;
     }
 
-    return (
-      project.data.checkingConfig.checkingEnabled && roleCanAccessCommunityChecking(roles[userId] as SFProjectRole)
-    );
+    const role = roles[userId] as SFProjectRole;
+    if (role === SFProjectRole.ParatextAdministrator) return true;
+
+    return project.data.checkingConfig.checkingEnabled && roleCanAccessCommunityChecking(role);
   }
 
   canAccessTranslate(project: SFProjectProfileDoc, userId: string = ''): boolean {
