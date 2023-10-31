@@ -1,8 +1,12 @@
+import { Injectable } from '@angular/core';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from 'src/app/core/models/sf-project-role-info';
 import { UserService } from './user.service';
 
+@Injectable({
+  providedIn: 'root'
+})
 export class PermissionsService {
   constructor(private readonly userService: UserService) {}
 
