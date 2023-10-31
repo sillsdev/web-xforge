@@ -50,6 +50,7 @@ import { UserProfileDoc } from 'xforge-common/models/user-profile-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { OwnerComponent } from 'xforge-common/owner/owner.component';
+import { PermissionsService } from 'xforge-common/permissions.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -103,6 +104,7 @@ const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedFileService = mock(FileService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
+const mockedPermissions = mock(PermissionsService);
 
 function createUser(idSuffix: number, role: string, nameConfirmed: boolean = true): UserInfo {
   return {
@@ -175,7 +177,8 @@ describe('CheckingComponent', () => {
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
+      { provide: PermissionsService, useMock: mockedPermissions }
     ]
   }));
 
@@ -2936,6 +2939,7 @@ class TestEnvironment {
   }
 
   setCheckingEnabled(isEnabled: boolean = true): void {
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(isEnabled);
     this.ngZone.run(() => {
       this.component.projectDoc!.submitJson0Op(
         op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled),
@@ -3188,6 +3192,8 @@ class TestEnvironment {
       this.realtimeService.subscribe(UserProfileDoc.COLLECTION, id)
     );
 
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
     when(mockedDialogService.openMatDialog(TextChooserDialogComponent, anything())).thenReturn(
       instance(this.mockedTextChooserDialogComponent)
     );
