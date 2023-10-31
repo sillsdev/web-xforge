@@ -246,5 +246,11 @@
         </div>
       </mat-nav-list>
     </mat-drawer>
+    <!-- The cdkScrollable attribute is needed so the CDK can listen to scroll events within this container -->
+    <div #appContent cdkScrollable class="app-content" [dir]="i18n.direction">
+      <div>
+        <router-outlet></router-outlet>
+      </div>
+    </div>
   </mat-drawer-container>
 </ng-container>
