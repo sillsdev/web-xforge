@@ -10,7 +10,7 @@ import { UserService } from './user.service';
 const mockedUserService = mock(UserService);
 const mockedProjectDoc = mock(SFProjectProfileDoc);
 
-fdescribe('PermissionsService', () => {
+describe('PermissionsService', () => {
   configureTestingModule(() => ({
     providers: [{ provide: UserService, useMock: mockedUserService }]
   }));

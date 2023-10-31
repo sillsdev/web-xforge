@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA } from '@angular/material/legacy-dialog';
 import { UserProfile } from 'realtime-server/common/models/user';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';

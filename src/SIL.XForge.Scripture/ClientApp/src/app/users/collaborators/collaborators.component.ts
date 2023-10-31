@@ -1,6 +1,5 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
-import { MatDialogConfig } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
@@ -17,10 +16,7 @@ import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
-import {
-  RolesAndPermissionsDialogComponent,
-  UserData
-} from '../roles-and-permissions/roles-and-permissions-dialog.component';
+import { RolesAndPermissionsDialogComponent } from '../roles-and-permissions/roles-and-permissions-dialog.component';
 
 interface UserInfo {
   displayName?: string;
@@ -214,7 +210,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   async openRolesDialog(row: Row): Promise<void> {
-    const dialogConfig: MatDialogConfig<UserData> = {
+    this.dialogService.openMatDialog(RolesAndPermissionsDialogComponent, {
       data: {
         projectId: this.projectId,
         userId: row.id,
@@ -224,8 +220,7 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
       maxWidth: '560px',
       width: '90%',
       autoFocus: false
-    };
-    this.dialogService.openMatDialog(RolesAndPermissionsDialogComponent, dialogConfig);
+    });
   }
 
   isAdmin(role: string): boolean {
