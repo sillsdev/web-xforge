@@ -3,25 +3,20 @@
   flex-direction: column;
 }
 
-.audio-action-buttons {
-  display: flex;
-  justify-content: center;
+.main-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.close-button {
+  justify-self: end;
 }
 
 .verse-label {
   padding: 8px;
   font-weight: 500;
   font-size: 0.9em;
-}
-
-div[dir='ltr'] .close-button {
-  position: absolute;
-  right: 8px;
-}
-
-div[dir='rtl'] .close-button {
-  position: absolute;
-  left: 8px;
 }
 
 .previous-ref-button,
@@ -31,8 +26,4 @@ div[dir='rtl'] .close-button {
 
 .play-pause-button mat-icon {
   transform: scale(1.9);
-}
-
-app-audio-player {
-  margin: -10px 0;
 }
