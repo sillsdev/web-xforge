@@ -5,17 +5,16 @@ import { Canon } from '@sillsdev/scripture';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { Subscription, asyncScheduler, merge } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
-import { roleCanAccessCommunityChecking } from 'src/app/core/models/sf-project-role-info';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
+import { PermissionsService } from 'xforge-common/permissions.service';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
@@ -61,6 +60,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly userService: UserService,
     private readonly questionDialogService: QuestionDialogService,
     private readonly router: Router,
+    private readonly permissions: PermissionsService,
     private readonly chapterAudioDialogService: ChapterAudioDialogService,
     readonly featureFlagsService: FeatureFlagService
   ) {
@@ -225,12 +225,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         .pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true }))
         .subscribe(() => {
           if (this.projectDoc != null && this.projectDoc.data != null) {
-            const roles = this.projectDoc.data.userRoles;
-            const userId = this.userService.currentUserId;
-            if (
-              this.projectDoc.data.checkingConfig.checkingEnabled &&
-              roleCanAccessCommunityChecking(roles[userId] as SFProjectRole)
-            ) {
+            if (this.permissions.canAccessCommunityChecking(this.projectDoc)) {
               this.initTextsWithLoadingIndicator();
             } else {
               if (this.projectUserConfigDoc != null) {

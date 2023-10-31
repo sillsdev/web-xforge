@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MatLegacyDialogModule as MatDialogModule } from '@angular/material/legacy-dialog';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { By } from '@angular/platform-browser';
@@ -13,17 +13,17 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import {
-  getQuestionDocId,
+  QUESTIONS_COLLECTION,
   Question,
-  QUESTIONS_COLLECTION
+  getQuestionDocId
 } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import {
-  getSFProjectUserConfigDocId,
-  SFProjectUserConfig
+  SFProjectUserConfig,
+  getSFProjectUserConfigDocId
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
 import { of } from 'rxjs';
@@ -34,11 +34,12 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { PermissionsService } from 'xforge-common/permissions.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { QuestionDoc } from '../../core/models/question-doc';
@@ -64,6 +65,7 @@ const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
+const mockedPermissions = mock(PermissionsService);
 
 class MockComponent {}
 
@@ -92,7 +94,8 @@ describe('CheckingOverviewComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
+      { provide: PermissionsService, useMock: mockedPermissions }
     ]
   }));
 
@@ -1128,6 +1131,7 @@ class TestEnvironment {
   }
 
   setCheckingEnabled(isEnabled: boolean): void {
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(isEnabled);
     this.ngZone.run(() => {
       const projectDoc = this.realtimeService.get<SFProjectProfileDoc>(SFProjectProfileDoc.COLLECTION, 'project01');
       projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, isEnabled), false);
@@ -1167,6 +1171,17 @@ class TestEnvironment {
 
   setCurrentUser(currentUser: UserInfo): void {
     when(mockedUserService.currentUserId).thenReturn(currentUser.id);
+    const role = currentUser.id as SFProjectRole;
+    if (role === SFProjectRole.CommunityChecker) {
+      when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+      when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
+    } else if (role === SFProjectRole.ParatextTranslator) {
+      when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(false);
+      when(mockedPermissions.canAccessTranslate(anything())).thenReturn(true);
+    } else {
+      when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+      when(mockedPermissions.canAccessTranslate(anything())).thenReturn(true);
+    }
   }
 
   addQuestion(question: Question): void {
