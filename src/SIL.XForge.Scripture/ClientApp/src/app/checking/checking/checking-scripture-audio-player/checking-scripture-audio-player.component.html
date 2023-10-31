@@ -1,18 +1,20 @@
 <div class="scripture-audio-player" [dir]="i18n.direction" *transloco="let t; read: 'checking_audio_player'">
-  <div class="audio-action-buttons">
-    <button mat-icon-button class="previous-ref-button" (click)="previousRef()">
-      <mat-icon class="mirror-rtl">skip_previous</mat-icon>
-    </button>
-    <button mat-icon-button class="play-pause-button" (click)="isPlaying ? pause() : play()">
-      <mat-icon>{{ isPlaying ? "pause" : "play_arrow" }}</mat-icon>
-    </button>
-    <button mat-icon-button class="next-ref-button" (click)="nextRef()">
-      <mat-icon class="mirror-rtl">skip_next</mat-icon>
+  <div class="main-row">
+    <span class="verse-label">{{ verseLabel }}</span>
+    <div class="audio-action-buttons" dir="ltr">
+      <button mat-icon-button class="previous-ref-button" (click)="previousRef()">
+        <mat-icon>skip_previous</mat-icon>
+      </button>
+      <button mat-icon-button class="play-pause-button" (click)="isPlaying ? pause() : play()">
+        <mat-icon>{{ isPlaying ? "pause" : "play_arrow" }}</mat-icon>
+      </button>
+      <button mat-icon-button class="next-ref-button" (click)="nextRef()">
+        <mat-icon>skip_next</mat-icon>
+      </button>
+    </div>
+    <button *ngIf="canClose" mat-icon-button class="close-button" (click)="close()">
+      <mat-icon>close</mat-icon>
     </button>
   </div>
-  <button *ngIf="canClose" mat-icon-button class="close-button" (click)="close()">
-    <mat-icon>close</mat-icon>
-  </button>
   <app-audio-player #audioPlayer [source]="audioSource"></app-audio-player>
-  <span class="verse-label">{{ verseLabel }}</span>
 </div>
