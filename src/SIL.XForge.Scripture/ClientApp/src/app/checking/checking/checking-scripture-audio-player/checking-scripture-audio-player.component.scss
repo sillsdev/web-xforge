@@ -4,8 +4,16 @@
 }
 
 .audio-action-buttons {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+
+  .playback-controls {
+    grid-column-start: 2;
+  }
+
+  .close-button {
+    justify-self: end;
+  }
 }
 
 .verse-label {
@@ -14,25 +22,13 @@
   font-size: 0.9em;
 }
 
-div[dir='ltr'] .close-button {
-  position: absolute;
-  right: 8px;
-}
-
-div[dir='rtl'] .close-button {
-  position: absolute;
-  left: 8px;
-}
-
 .previous-ref-button,
 .next-ref-button {
-  transform: scale(1.1);
+  mat-icon {
+    transform: scale(1.1);
+  }
 }
 
 .play-pause-button mat-icon {
   transform: scale(1.9);
-}
-
-app-audio-player {
-  margin: -10px 0;
 }
