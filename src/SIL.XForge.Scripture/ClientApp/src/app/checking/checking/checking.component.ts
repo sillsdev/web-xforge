@@ -26,11 +26,12 @@ import { FileType } from 'xforge-common/models/file-offline-data';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { PermissionsService } from 'xforge-common/permissions.service';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
 import { QuestionDoc } from '../../core/models/question-doc';
 import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
-import { SF_DEFAULT_SHARE_ROLE, roleCanAccessCommunityChecking } from '../../core/models/sf-project-role-info';
+import { SF_DEFAULT_SHARE_ROLE } from '../../core/models/sf-project-role-info';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextDocId } from '../../core/models/text-doc';
@@ -164,6 +165,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     private readonly mediaBreakpointService: MediaBreakpointService,
     noticeService: NoticeService,
     private readonly router: Router,
+    private readonly permissions: PermissionsService,
     private readonly questionDialogService: QuestionDialogService,
     readonly i18n: I18nService,
     readonly featureFlags: FeatureFlagService,
@@ -534,10 +536,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 const userId = this.userService.currentUserId;
                 if (!(userId in roles)) {
                   this.onRemovedFromProject();
-                } else if (
-                  !this.projectDoc.data.checkingConfig.checkingEnabled ||
-                  !roleCanAccessCommunityChecking(roles[userId] as SFProjectRole)
-                ) {
+                } else if (!this.permissions.canAccessCommunityChecking(this.projectDoc)) {
                   const currentBookId =
                     this.questionsList == null || this.questionsList.activeQuestionBook == null
                       ? undefined
