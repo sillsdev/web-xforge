@@ -10,7 +10,7 @@ import { UserService } from './user.service';
 const mockedUserService = mock(UserService);
 const mockedProjectDoc = mock(SFProjectProfileDoc);
 
-describe('PermissionsService', () => {
+fdescribe('PermissionsService', () => {
   configureTestingModule(() => ({
     providers: [{ provide: UserService, useMock: mockedUserService }]
   }));
@@ -55,6 +55,22 @@ describe('PermissionsService', () => {
 
     expect(env.service.canAccessCommunityChecking(env.projectDoc)).toBe(false);
     expect(env.service.canAccessCommunityChecking(env.projectDoc, 'commenter')).toBe(false);
+  }));
+
+  it('doesnt allow checkers to access Community Checking if not enabled', fakeAsync(() => {
+    const env = new TestEnvironment(false);
+    when(mockedUserService.currentUserId).thenReturn('checker');
+
+    expect(env.service.canAccessCommunityChecking(env.projectDoc)).toBe(false);
+    expect(env.service.canAccessCommunityChecking(env.projectDoc, 'checker')).toBe(false);
+  }));
+
+  it('allows admins to access Community Checking even if disabled', fakeAsync(() => {
+    const env = new TestEnvironment(false);
+    when(mockedUserService.currentUserId).thenReturn('projectAdmin');
+
+    expect(env.service.canAccessCommunityChecking(env.projectDoc)).toBe(true);
+    expect(env.service.canAccessCommunityChecking(env.projectDoc, 'projectAdmin')).toBe(true);
   }));
 });
 
