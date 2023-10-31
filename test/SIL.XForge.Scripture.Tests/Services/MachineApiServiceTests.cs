@@ -1958,7 +1958,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task StartPreTranslationBuildAsync_Success()
+    public async Task StartPreTranslationBuildAsync_SuccessNoSourceBooks()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1974,6 +1974,29 @@ public class MachineApiServiceTests
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
+        Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedBooks);
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_SuccessWithSourceBooks()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01, SourceBooks = { 1, 2 } },
+            CancellationToken.None
+        );
+
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
+        Assert.AreEqual(2, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedBooks.Count);
+        Assert.AreEqual(1, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedBooks.First());
+        Assert.AreEqual(2, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedBooks.Last());
     }
 
     [Test]
@@ -2706,39 +2729,35 @@ public class MachineApiServiceTests
                     },
                 }
             );
-
-            var realtimeService = new SFMemoryRealtimeService();
-            realtimeService.AddRepository(
-                "sf_projects",
-                OTType.Json0,
-                new MemoryRepository<SFProject>(
-                    new[]
+            Projects = new MemoryRepository<SFProject>(
+                new[]
+                {
+                    new SFProject
                     {
-                        new SFProject
+                        Id = Project01,
+                        UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
+                    },
+                    new SFProject
+                    {
+                        Id = Project02,
+                        TranslateConfig = new TranslateConfig
                         {
-                            Id = Project01,
-                            UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
-                        },
-                        new SFProject
-                        {
-                            Id = Project02,
-                            TranslateConfig = new TranslateConfig
+                            DraftConfig = new DraftConfig
                             {
-                                DraftConfig = new DraftConfig
-                                {
-                                    AlternateSource = new TranslateSource { ProjectRef = Project03 },
-                                },
+                                AlternateSource = new TranslateSource { ProjectRef = Project03 },
                             },
-                            UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
                         },
-                        new SFProject
-                        {
-                            Id = Project03,
-                            UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Translator } },
-                        },
-                    }
-                )
+                        UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
+                    },
+                    new SFProject
+                    {
+                        Id = Project03,
+                        UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Translator } },
+                    },
+                }
             );
+            var realtimeService = new SFMemoryRealtimeService();
+            realtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
 
             SyncService = Substitute.For<ISyncService>();
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
@@ -2768,6 +2787,7 @@ public class MachineApiServiceTests
         public IFeatureManager FeatureManager { get; }
         public IMachineProjectService MachineProjectService { get; }
         public IPreTranslationService PreTranslationService { get; }
+        public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MachineApiService Service { get; }
         public ISyncService SyncService { get; }
