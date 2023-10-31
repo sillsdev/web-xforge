@@ -185,13 +185,6 @@ export class FeatureFlagService {
     this.featureFlagStore
   );
 
-  readonly showNonPublishedLocalizations: ObservableFeatureFlag = new FeatureFlagFromStorage(
-    'SHOW_NON_PUBLISHED_LOCALIZATIONS',
-    'Show non-published localizations',
-    1,
-    this.featureFlagStore
-  );
-
   readonly showNmtDrafting: ObservableFeatureFlag = new FeatureFlagFromStorage(
     'SHOW_NMT_DRAFTING',
     'Show NMT drafting',

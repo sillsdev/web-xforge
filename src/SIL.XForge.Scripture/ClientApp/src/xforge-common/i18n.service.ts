@@ -19,6 +19,7 @@ import { LocationService } from './location.service';
 import { Locale } from './models/i18n-locale';
 import { PseudoLocalization } from './pseudo-localization';
 import { aspCultureCookieValue, ASP_CULTURE_COOKIE_NAME, getAspCultureCookieLanguage, getI18nLocales } from './utils';
+import { environment } from 'src/environments/environment';
 
 export type DateFormat = Intl.DateTimeFormatOptions | ((date: Date) => string);
 
@@ -152,9 +153,7 @@ export class I18nService {
   }
 
   get locales(): Locale[] {
-    return I18nService.locales.filter(
-      locale => locale.production || this.featureFlags.showNonPublishedLocalizations.enabled
-    );
+    return I18nService.locales.filter(locale => locale.production || !environment.production);
   }
 
   setLocale(tag: string, authService: AuthService): void {
