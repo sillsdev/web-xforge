@@ -40,51 +40,80 @@ describe('DraftGenerationStepsComponent', () => {
     ]
   }));
 
-  beforeEach(fakeAsync(() => {
-    when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
-    when(mockProjectService.getProfile(anything())).thenResolve(mockSourceProjectDoc);
+  describe('no previously selected books', () => {
+    beforeEach(fakeAsync(() => {
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
+      when(mockProjectService.getProfile(anything())).thenResolve(mockSourceProjectDoc);
 
-    fixture = TestBed.createComponent(DraftGenerationStepsComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-    tick();
-  }));
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+    }));
 
-  it('should set availableBooks$ correctly', () => {
-    component.availableBooks$?.subscribe(books => {
-      expect(books).toEqual([1, 2, 3]);
-    });
+    it('should set availableBooks$ correctly', () => {
+      component.availableBooks$?.subscribe(books => {
+        expect(books).toEqual([1, 2, 3]);
+      });
 
-    expect(component.selectedBooks).toEqual([1, 2, 3]);
-  });
-
-  it('should select all books initially', () => {
-    component.availableBooks$?.subscribe(() => {
       expect(component.selectedBooks).toEqual([1, 2, 3]);
     });
 
-    expect(component.selectedBooks).toEqual([1, 2, 3]);
+    it('should select all books initially', () => {
+      component.availableBooks$?.subscribe(() => {
+        expect(component.selectedBooks).toEqual([1, 2, 3]);
+      });
+
+      expect(component.selectedBooks).toEqual([1, 2, 3]);
+    });
+
+    it('should emit the correct selected books when onDone is called', () => {
+      const mockSelectedBooks = [1, 2, 3];
+      component.selectedBooks = mockSelectedBooks;
+
+      spyOn(component.done, 'emit');
+
+      component.onDone();
+
+      expect(component.done.emit).toHaveBeenCalledWith({ books: mockSelectedBooks } as DraftGenerationStepsResult);
+    });
+
+    it('should emit the correct selected books when onBookSelect is called', () => {
+      const mockSelectedBooks = [1, 2, 3];
+
+      spyOn(component, 'onBookSelect');
+
+      const bookMultiSelect = fixture.debugElement.query(By.css('app-book-multi-select'));
+      bookMultiSelect.triggerEventHandler('bookSelect', mockSelectedBooks);
+
+      expect(component.onBookSelect).toHaveBeenCalledWith(mockSelectedBooks);
+    });
   });
 
-  it('should emit the correct selected books when onDone is called', () => {
-    const mockSelectedBooks = [1, 2, 3];
-    component.selectedBooks = mockSelectedBooks;
+  describe('target contains previously selected books', () => {
+    const mockTargetProjectDoc = {
+      data: {
+        translateConfig: {
+          source: { projectRef: 'test' },
+          draftConfig: { lastSelectedBooks: [2, 3, 4] }
+        }
+      }
+    } as SFProjectProfileDoc;
 
-    spyOn(component.done, 'emit');
+    beforeEach(fakeAsync(() => {
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockTargetProjectDoc);
+      when(mockActivatedProjectService.projectDoc$).thenReturn(of(mockTargetProjectDoc));
+      when(mockProjectService.getProfile(anything())).thenResolve(mockSourceProjectDoc);
 
-    component.onDone();
+      fixture = TestBed.createComponent(DraftGenerationStepsComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      tick();
+    }));
 
-    expect(component.done.emit).toHaveBeenCalledWith({ books: mockSelectedBooks } as DraftGenerationStepsResult);
-  });
-
-  it('should emit the correct selected books when onBookSelect is called', () => {
-    const mockSelectedBooks = [1, 2, 3];
-
-    spyOn(component, 'onBookSelect');
-
-    const bookMultiSelect = fixture.debugElement.query(By.css('app-book-multi-select'));
-    bookMultiSelect.triggerEventHandler('bookSelect', mockSelectedBooks);
-
-    expect(component.onBookSelect).toHaveBeenCalledWith(mockSelectedBooks);
+    it('should restore previously selected books', () => {
+      expect(component.selectedBooks).toEqual([2, 3]);
+    });
   });
 });
