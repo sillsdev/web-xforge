@@ -44,11 +44,16 @@ export class DraftGenerationStepsComponent implements OnInit {
         return from(this.projectService.getProfile(sourceProjectId));
       }),
       map(doc => doc?.data?.texts.map(t => t.bookNum) ?? []),
-      tap((books: number[]) => {
-        // Initially select all books
-        // TODO: Initialize with selection from previous draft if available?
-        // TODO: ...otherwise, initialize with books from target project that contain any translation work?
-        this.selectedBooks = books;
+      tap((availableBooks: number[]) => {
+        // Get the previous books from the target project
+        const previousBooks: number[] =
+          this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedBooks ?? [];
+
+        // The intersection is all of the available books in the source project that match the target's previous books
+        const intersection = availableBooks.filter(bookNum => previousBooks.includes(bookNum));
+
+        // Set the selected books to the intersection, or if the intersection is empty, just return all available books
+        this.selectedBooks = intersection.length > 0 ? intersection : availableBooks;
       })
     );
   }
