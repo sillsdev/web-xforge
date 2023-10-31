@@ -15,8 +15,8 @@ import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scri
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { VerseRefData, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Subscription, combineLatest, fromEvent, merge } from 'rxjs';
+import { toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { asyncScheduler, combineLatest, fromEvent, merge, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -39,7 +39,7 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { getVerseRefFromSegmentRef } from '../../shared/utils';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
-import { BookChapter, CheckingAccessInfo, CheckingUtils, QuestionScope, isQuestionScope } from '../checking.utils';
+import { BookChapter, CheckingAccessInfo, CheckingUtils, isQuestionScope, QuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
 import { AnswerAction, CheckingAnswersComponent } from './checking-answers/checking-answers.component';
@@ -653,6 +653,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               }
             );
 
+            // Determine when to update visible questions
             this.questionsSub = this.subscribe(
               merge(
                 this.questionsQuery.ready$.pipe(
@@ -663,21 +664,30 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 this.questionsQuery.remoteChanges$.pipe(map(() => 'remote')),
                 this.questionsQuery.localChanges$.pipe(map(() => 'local')),
                 this.questionsQuery.remoteDocChanges$
-              ).pipe(throttleTime(3000)), // Prevent double-fire of 'ready' + 'xChanges'
-              (source?: string) => {
-                if (this.projectDoc == null || (this.onlineStatusService.isOnline && !this.questionsQuery!.ready)) {
-                  return;
-                }
+              ).pipe(
+                filter(source => {
+                  if (this.projectDoc == null || (this.onlineStatusService.isOnline && !this.questionsQuery!.ready)) {
+                    return false;
+                  }
 
-                // If newly created local question is out of scope, don't refresh questions list yet,
-                // as it will be done once the nav changes the book/chapter to match the new question verse ref.
-                if (
-                  source !== 'local' ||
-                  this.questionToBeCreated == null ||
-                  this.isInScope(this.questionToBeCreated?.question.verseRef)
-                ) {
-                  this.updateVisibleQuestions();
-                }
+                  // If newly created local question is out of scope, don't refresh questions list yet,
+                  // as it will be done once the nav changes the book/chapter to match the new question verse ref.
+                  if (
+                    source !== 'local' ||
+                    this.questionToBeCreated == null ||
+                    this.isInScope(this.questionToBeCreated?.question.verseRef)
+                  ) {
+                    return true;
+                  }
+
+                  return false;
+                }),
+                // Throttle burst of events, such as when local and remote change events are emitted
+                // at the same time when question is added within scope.
+                throttleTime(100, asyncScheduler, { leading: false, trailing: true })
+              ),
+              () => {
+                this.updateVisibleQuestions();
               }
             );
           } else {
@@ -804,11 +814,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         if (answerAction.questionDoc != null) {
           this.questionsList.activateQuestion(answerAction.questionDoc);
         }
-        this.triggerUpdate();
         break;
       case 'archive':
         this._scriptureAudioPlayer?.pause();
-        this.triggerUpdate();
         break;
       case 'like':
         if (answerAction.answer != null) {
@@ -1130,12 +1138,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       return query.docs[0];
     } finally {
       query?.dispose();
-    }
-  }
-
-  private triggerUpdate(): void {
-    if (this.questionsQuery != null) {
-      this.questionsQuery.localUpdate();
     }
   }
 
