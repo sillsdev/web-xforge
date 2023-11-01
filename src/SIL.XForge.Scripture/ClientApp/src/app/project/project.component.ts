@@ -5,10 +5,10 @@ import { Observable } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { NoticeService } from 'xforge-common/notice.service';
-import { PermissionsService } from 'xforge-common/permissions.service';
 import { UserService } from 'xforge-common/user.service';
 import { environment } from '../../environments/environment';
 import { SFProjectService } from '../core/sf-project.service';
+import { PermissionsService } from '../core/permissions.service';
 
 @Component({
   selector: 'app-projects',

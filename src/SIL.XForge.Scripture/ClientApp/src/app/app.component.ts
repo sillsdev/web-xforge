@@ -24,7 +24,6 @@ import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { PermissionsService } from 'xforge-common/permissions.service';
 import { PwaService } from 'xforge-common/pwa.service';
 import {
   BrowserIssue,
@@ -39,6 +38,7 @@ import { CheckingQuestionsService } from './checking/checking/checking-questions
 import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
+import { PermissionsService } from './core/permissions.service';
 import { SFProjectService } from './core/sf-project.service';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 
