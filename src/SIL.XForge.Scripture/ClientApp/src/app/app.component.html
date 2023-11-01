@@ -250,6 +250,7 @@
     <div #appContent cdkScrollable class="app-content" [dir]="i18n.direction">
       <div>
         <router-outlet></router-outlet>
+        <p *ngIf="showCheckingDisabled" class="checking-unavailable">{{ t("scripture_checking_not_available") }}</p>
       </div>
     </div>
   </mat-drawer-container>
