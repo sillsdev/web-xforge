@@ -217,8 +217,9 @@ export class TextViewModel {
    *
    * @param {DeltaStatic} delta The view model delta.
    * @param {Sources} source The source of the change.
+   * @param {boolean} isOnline Whether the user is online.
    */
-  update(delta: DeltaStatic, source: Sources): void {
+  update(delta: DeltaStatic, source: Sources, isOnline: boolean): void {
     const editor = this.checkEditor();
     if (this.textDoc == null) {
       return;
@@ -233,11 +234,11 @@ export class TextViewModel {
     }
 
     // Re-compute segment boundaries so the insertion point stays in the right place.
-    this.updateSegments(editor);
+    this.updateSegments(editor, isOnline);
 
     // Defer the update, since it might cause the segment ranges to be out-of-sync with the view model
     Promise.resolve().then(() => {
-      const updateDelta = this.updateSegments(editor);
+      const updateDelta = this.updateSegments(editor, isOnline);
       if (updateDelta.ops != null && updateDelta.ops.length > 0) {
         // Clean up blanks in quill editor. This may result in re-entering the update() method.
         editor.updateContents(updateDelta, source);
@@ -504,7 +505,7 @@ export class TextViewModel {
    * Re-generate segment boundaries from quill editor ops. Return ops to clean up where and whether blanks are
    * represented.
    */
-  private updateSegments(editor: Quill): DeltaStatic {
+  private updateSegments(editor: Quill, isOnline: boolean): DeltaStatic {
     const convertDelta = new Delta();
     let fixDelta = new Delta();
     let fixOffset = 0;
@@ -551,7 +552,7 @@ export class TextViewModel {
                 paraSegment.ref = getParagraphRef(nextIds, paraSegment.ref, paraSegment.ref + '/' + style);
               }
 
-              [fixDelta, fixOffset] = this.fixSegment(editor, paraSegment, fixDelta, fixOffset);
+              [fixDelta, fixOffset] = this.fixSegment(editor, paraSegment, fixDelta, fixOffset, isOnline);
               this._segments.set(paraSegment.ref, { index: paraSegment.index, length: paraSegment.length });
             }
             paraSegments = [];
@@ -574,7 +575,7 @@ export class TextViewModel {
             curSegment = new SegmentInfo('', curIndex);
           }
           curSegment.ref = getParagraphRef(nextIds, style, style);
-          [fixDelta, fixOffset] = this.fixSegment(editor, curSegment, fixDelta, fixOffset);
+          [fixDelta, fixOffset] = this.fixSegment(editor, curSegment, fixDelta, fixOffset, isOnline);
           this._segments.set(curSegment.ref, { index: curSegment.index, length: curSegment.length });
           paraSegments = [];
           curIndex += curSegment.length + len;
@@ -646,9 +647,12 @@ export class TextViewModel {
     editor: Quill,
     segment: SegmentInfo,
     fixDelta: DeltaStatic,
-    fixOffset: number
+    fixOffset: number,
+    isOnline: boolean
   ): [DeltaStatic, number] {
-    if (segment.length - segment.notesCount === 0) {
+    // inserting blank embeds onto text docs while offline creates a scenario where quill misinterprets
+    // the diff delta and can cause merge issues when returning online and duplicating verse segments
+    if (segment.length - segment.notesCount === 0 && isOnline) {
       // insert blank
       const delta = new Delta();
       // insert blank after any existing notes

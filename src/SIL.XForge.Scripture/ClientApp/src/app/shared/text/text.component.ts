@@ -729,7 +729,7 @@ export class TextComponent extends SubscriptionDisposable implements AfterViewIn
   onContentChanged(delta: DeltaStatic, source: string): void {
     const preDeltaSegmentCache: IterableIterator<[string, RangeStatic]> = this.viewModel.segmentsSnapshot;
     const preDeltaEmbedCache: Readonly<Map<string, number>> = this.viewModel.embeddedElementsSnapshot;
-    this.viewModel.update(delta, source as Sources);
+    this.viewModel.update(delta, source as Sources, this.onlineStatusService.isOnline);
     this.updatePlaceholderText();
     // skip updating when only formatting changes occurred
     if (delta.ops != null && delta.ops.some(op => op.insert != null || op.delete != null)) {
