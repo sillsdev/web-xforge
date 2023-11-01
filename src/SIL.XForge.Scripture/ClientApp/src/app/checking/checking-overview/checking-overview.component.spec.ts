@@ -1,8 +1,8 @@
 import { Location } from '@angular/common';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
-import { MatLegacyDialogModule as MatDialogModule } from '@angular/material/legacy-dialog';
 import { MatExpansionPanel } from '@angular/material/expansion';
+import { MatLegacyDialogModule as MatDialogModule } from '@angular/material/legacy-dialog';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Route } from '@angular/router';
@@ -34,7 +34,6 @@ import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature-flags/feature-flag.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
-import { PermissionsService } from 'xforge-common/permissions.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
@@ -47,6 +46,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { TextDocId } from '../../core/models/text-doc';
+import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { CheckingModule } from '../checking.module';
 import { CheckingQuestionsService } from '../checking/checking-questions.service';
@@ -1176,7 +1176,7 @@ class TestEnvironment {
       when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
       when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
     } else if (role === SFProjectRole.ParatextTranslator) {
-      when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(false);
+      when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
       when(mockedPermissions.canAccessTranslate(anything())).thenReturn(true);
     } else {
       when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
