@@ -1,21 +1,20 @@
 import { TestBed, fakeAsync } from '@angular/core/testing';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { instance, mock, when } from 'ts-mockito';
+import { configureTestingModule } from 'xforge-common/test-utils';
+import { UserService } from 'xforge-common/user.service';
+import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { PermissionsService } from './permissions.service';
-import { configureTestingModule } from './test-utils';
-import { UserService } from './user.service';
 
 const mockedUserService = mock(UserService);
 const mockedProjectDoc = mock(SFProjectProfileDoc);
-
 describe('PermissionsService', () => {
   configureTestingModule(() => ({
     providers: [{ provide: UserService, useMock: mockedUserService }]
   }));
 
-  it('allows translators to access Translate', fakeAsync(() => {
+  it('allows commenters to access Translate', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedUserService.currentUserId).thenReturn('commenter');
 
@@ -49,7 +48,7 @@ describe('PermissionsService', () => {
     expect(env.service.canAccessTranslate(env.projectDoc, 'checker')).toBe(false);
   }));
 
-  it('doesnt allow translators to access Community Checking', fakeAsync(() => {
+  it('doesnt allow commenters to access Community Checking', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedUserService.currentUserId).thenReturn('commenter');
 
@@ -65,15 +64,14 @@ describe('PermissionsService', () => {
     expect(env.service.canAccessCommunityChecking(env.projectDoc, 'checker')).toBe(false);
   }));
 
-  it('allows admins to access Community Checking even if disabled', fakeAsync(() => {
+  it('doesnt allow admins to access Community Checking if not enabled', fakeAsync(() => {
     const env = new TestEnvironment(false);
     when(mockedUserService.currentUserId).thenReturn('projectAdmin');
 
-    expect(env.service.canAccessCommunityChecking(env.projectDoc)).toBe(true);
-    expect(env.service.canAccessCommunityChecking(env.projectDoc, 'projectAdmin')).toBe(true);
+    expect(env.service.canAccessCommunityChecking(env.projectDoc)).toBe(false);
+    expect(env.service.canAccessCommunityChecking(env.projectDoc, 'projectAdmin')).toBe(false);
   }));
 });
-
 class TestEnvironment {
   readonly service: PermissionsService;
   readonly projectDoc: SFProjectProfileDoc = instance(mockedProjectDoc);

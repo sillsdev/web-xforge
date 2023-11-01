@@ -14,7 +14,6 @@ import {
 import { of } from 'rxjs';
 import { anything, deepEqual, mock, verify, when } from 'ts-mockito';
 import { UserDoc } from 'xforge-common/models/user-doc';
-import { PermissionsService } from 'xforge-common/permissions.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule } from 'xforge-common/test-utils';
@@ -23,6 +22,7 @@ import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../core/models/sf-project-user-config-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
+import { PermissionsService } from '../core/permissions.service';
 import { SFProjectService } from '../core/sf-project.service';
 import { ProjectComponent } from './project.component';
 
@@ -125,7 +125,7 @@ describe('ProjectComponent', () => {
     expect().nothing();
   }));
 
-  it('doesnt allow translators to navigate to community checking', fakeAsync(() => {
+  it('doesnt allow commenters to navigate to community checking', fakeAsync(() => {
     const env = new TestEnvironment();
     when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(false);
     env.setProjectData({
