@@ -1594,7 +1594,7 @@ public class ParatextSyncRunner : IParatextSyncRunner
         IEnumerable<int> chaptersToDelete = chapters.Select(c => c.Number);
         IEnumerable<NoteThread> threadDocs = _realtimeService
             .QuerySnapshots<NoteThread>()
-            .Where(n => n.ProjectRef == _projectDoc.Id && n.VerseRef.BookNum == bookNum);
+            .Where(n => n.ProjectRef == _projectDoc.Id && n.VerseRef.BookNum == bookNum && n.BiblicalTermId == null);
         IEnumerable<string> noteThreadDocIds = threadDocs
             .Where(nt => chaptersToDelete.Contains(nt.VerseRef.ChapterNum))
             .Select(n => n.Id);
@@ -1603,15 +1603,16 @@ public class ParatextSyncRunner : IParatextSyncRunner
         List<string> deletedNoteThreadDocIds = new List<string>(noteThreadDocIds);
 
         var tasks = new List<Task>();
-        foreach (string noteThreadDocId in noteThreadDocIds)
+        foreach (string noteThreadDocId in deletedNoteThreadDocIds)
         {
-            async Task deleteNoteThread()
+            async Task DeleteNoteThread()
             {
+                // Delete notes that are not Biblical Terms notes
                 IDocument<NoteThread> noteThreadDoc = await _conn.FetchAsync<NoteThread>(noteThreadDocId);
                 if (noteThreadDoc.IsLoaded)
                     await noteThreadDoc.DeleteAsync();
             }
-            tasks.Add(deleteNoteThread());
+            tasks.Add(DeleteNoteThread());
         }
 
         await Task.WhenAll(tasks);
