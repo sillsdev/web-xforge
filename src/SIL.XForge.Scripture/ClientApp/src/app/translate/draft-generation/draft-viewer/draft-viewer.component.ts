@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { ActivatedRoute, NavigationBehaviorOptions, ParamMap, Router } from '@angular/router';
 import { Canon } from '@sillsdev/scripture';
 import { DeltaOperation, DeltaStatic } from 'quill';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
@@ -102,12 +102,18 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
   }
 
   setBook(book: number, chapter?: number): void {
+    // If book is not in project, navigate to first book of project
+    if (!this.books.some(b => b === book)) {
+      this.navigateBookChapter(this.books[0], 1, { replaceUrl: true });
+      return;
+    }
+
     this.currentBook = book;
     this.chapters = this.targetProject?.texts?.find(t => t.bookNum === book)?.chapters.map(c => c.number) ?? [];
 
     // Navigate to first included chapter of book if specified chapter is not included in book
     if (chapter != null && !this.chapters.includes(chapter)) {
-      this.navigateBookChapter(book, this.chapters[0]);
+      this.navigateBookChapter(book, this.chapters[0], { replaceUrl: true });
       return;
     }
 
@@ -196,9 +202,10 @@ export class DraftViewerComponent extends SubscriptionDisposable implements OnIn
     );
   }
 
-  navigateBookChapter(book: number, chapter: number): void {
+  navigateBookChapter(book: number, chapter: number, options?: NavigationBehaviorOptions): void {
     this.router.navigateByUrl(
-      `/projects/${this.targetProjectId}/draft-preview/${Canon.bookNumberToId(book)}/${chapter}`
+      `/projects/${this.targetProjectId}/draft-preview/${Canon.bookNumberToId(book)}/${chapter}`,
+      options
     );
   }
 

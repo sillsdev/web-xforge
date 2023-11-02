@@ -622,14 +622,25 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.loadProjectUserConfig()
           );
         }
-        if (this.projectDoc == null || this.projectDoc.data == null) {
+
+        if (this.projectDoc?.data == null) {
           return;
         }
+
         this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
+
+        // If book is not in project, navigate to 'projects' route, which should send the user
+        // to the book stored in SFProjectUserConfig.
+        if (this.text == null) {
+          this.router.navigateByUrl('projects', { replaceUrl: true });
+          return;
+        }
+
         if (this.sourceProjectDoc?.data != null) {
           this.sourceText = this.sourceProjectDoc.data.texts.find(t => t.bookNum === bookNum);
         }
-        this.chapters = this.text == null ? [] : this.text.chapters.map(c => c.number);
+
+        this.chapters = this.text.chapters.map(c => c.number);
 
         this.updateVerseNumber();
 
