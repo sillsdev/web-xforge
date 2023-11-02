@@ -537,6 +537,35 @@ public class SFProjectsRpcController : RpcControllerBase
         }
     }
 
+    public async Task<IRpcMethodResult> SetPreTranslate(string projectId, bool preTranslate)
+    {
+        try
+        {
+            await _projectService.SetPreTranslateAsync(UserId, SystemRole, projectId, preTranslate);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "SetPreTranslate" },
+                    { "projectId", projectId },
+                    { "preTranslate", preTranslate.ToString() },
+                }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> SetSyncDisabled(string projectId, bool isDisabled)
     {
         try

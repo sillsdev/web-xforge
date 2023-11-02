@@ -2943,6 +2943,40 @@ public class SFProjectServiceTests
         );
     }
 
+    [Test]
+    public void SetPreTranslate_RequiresSysAdmin()
+    {
+        var env = new TestEnvironment();
+        // SUT 1
+        Assert.ThrowsAsync<ForbiddenException>(
+            async () => await env.Service.SetPreTranslateAsync(User03, SystemRole.User, Project01, false)
+        );
+        // SUT 2
+        Assert.ThrowsAsync<ForbiddenException>(
+            async () => await env.Service.SetPreTranslateAsync(User03, SystemRole.None, Project01, false)
+        );
+        // SUT 3
+        Assert.DoesNotThrowAsync(
+            async () => await env.Service.SetPreTranslateAsync(User03, SystemRole.SystemAdmin, Project01, false)
+        );
+    }
+
+    [Test]
+    public async Task SetPreTranslate_Success()
+    {
+        var env = new TestEnvironment();
+
+        Assert.That(env.GetProject(Project02).TranslateConfig.PreTranslate, Is.EqualTo(false));
+        // SUT 1
+        await env.Service.SetPreTranslateAsync(User01, SystemRole.SystemAdmin, Project02, true);
+        Assert.That(env.GetProject(Project02).TranslateConfig.PreTranslate, Is.EqualTo(true));
+
+        Assert.That(env.GetProject(Project01).TranslateConfig.PreTranslate, Is.EqualTo(true));
+        // SUT 2
+        await env.Service.SetPreTranslateAsync(User01, SystemRole.SystemAdmin, Project01, false);
+        Assert.That(env.GetProject(Project01).TranslateConfig.PreTranslate, Is.EqualTo(false));
+    }
+
     private class TestEnvironment
     {
         public TestEnvironment()
@@ -3061,6 +3095,7 @@ public class SFProjectServiceTests
                             ShortName = "P01",
                             TranslateConfig = new TranslateConfig
                             {
+                                PreTranslate = true,
                                 TranslationSuggestionsEnabled = true,
                                 ShareEnabled = true,
                                 Source = new TranslateSource

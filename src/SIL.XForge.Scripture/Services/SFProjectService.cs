@@ -948,6 +948,16 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         );
     }
 
+    public async Task SetPreTranslateAsync(string curUserId, string systemRole, string projectId, bool preTranslate)
+    {
+        if (systemRole != SystemRole.SystemAdmin)
+            throw new ForbiddenException();
+
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.TranslateConfig.PreTranslate, preTranslate));
+    }
+
     protected override async Task AddUserToProjectAsync(
         IConnection conn,
         IDocument<SFProject> projectDoc,

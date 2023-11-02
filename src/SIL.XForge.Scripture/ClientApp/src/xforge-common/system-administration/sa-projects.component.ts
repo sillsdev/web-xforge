@@ -4,18 +4,18 @@ import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { BehaviorSubject } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
+import { SFProjectDoc } from '../../app/core/models/sf-project-doc';
+import { SFProjectService } from '../../app/core/sf-project.service';
 import { DataLoadingComponent } from '../data-loading-component';
-import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { NoticeService } from '../notice.service';
-import { ProjectService } from '../project.service';
 import { QueryParameters } from '../query-parameters';
 import { UserService } from '../user.service';
 
 class Row {
   isUpdatingRole: boolean = false;
 
-  constructor(public readonly projectDoc: ProjectDoc, public projectRole: ProjectRoleInfo) {}
+  constructor(public readonly projectDoc: SFProjectDoc, public projectRole: ProjectRoleInfo) {}
 
   get id(): string {
     return this.projectDoc.id;
@@ -39,6 +39,13 @@ class Row {
     }
     return this.projectDoc.data.syncDisabled;
   }
+
+  get preTranslate(): boolean {
+    if (this.projectDoc.data == null) {
+      return false;
+    }
+    return this.projectDoc.data.translateConfig.preTranslate;
+  }
 }
 
 @Component({
@@ -55,7 +62,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
   pageIndex: number = 0;
   pageSize: number = 50;
 
-  private projectDocs?: Readonly<ProjectDoc[]>;
+  private projectDocs?: Readonly<SFProjectDoc[]>;
 
   private readonly searchTerm$: BehaviorSubject<string>;
   private readonly queryParameters$: BehaviorSubject<QueryParameters>;
@@ -63,7 +70,7 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
   constructor(
     noticeService: NoticeService,
     readonly i18n: I18nService,
-    private readonly projectService: ProjectService,
+    private readonly projectService: SFProjectService,
     private readonly userService: UserService
   ) {
     super(noticeService);
@@ -123,6 +130,10 @@ export class SaProjectsComponent extends DataLoadingComponent implements OnInit 
     }
     row.projectRole = projectRole;
     row.isUpdatingRole = false;
+  }
+
+  onUpdatePreTranslate(row: Row, newValue: boolean): Promise<void> {
+    return this.projectService.onlineSetPreTranslate(row.id, newValue);
   }
 
   onUpdateSyncDisabled(row: Row, newValue: boolean): Promise<void> {
