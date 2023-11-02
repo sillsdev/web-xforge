@@ -1057,6 +1057,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
     this.updateAudioMissingWarning();
+    this.textAudioQuery?.localUpdate();
     this.calculateScriptureSliderPosition();
   }
 
