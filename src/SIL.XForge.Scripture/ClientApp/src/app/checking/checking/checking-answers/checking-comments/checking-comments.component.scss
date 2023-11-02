@@ -35,8 +35,9 @@
     }
 
     .mat-button {
-      line-height: unset;
-      padding: 0 8px;
+      min-width: 32px;
+      line-height: 18px;
+      padding: 0px;
     }
   }
 }

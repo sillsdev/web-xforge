@@ -1,6 +1,11 @@
 <ng-container *transloco="let t; read: 'checking'">
   <div id="checking-app-container">
-    <div id="questions-panel" #questionsPanel [ngClass]="{ 'overlay-visible': isQuestionsOverlayVisible }">
+    <div
+      id="questions-panel"
+      #questionsPanel
+      [class.invisible]="!isQuestionsOverlayVisible"
+      [ngClass]="{ 'overlay-visible': isQuestionsOverlayVisible }"
+    >
       <header [ngClass]="{ 'filter-applied': isQuestionFilterApplied }">
         <div class="header-main">
           <h2>
@@ -59,43 +64,27 @@
       <div id="scripture-panel">
         <header>
           <div class="panel-nav">
-            <app-book-chapter-chooser
-              [books]="books"
-              [book]="book"
-              [chapters]="chapters"
-              [chapter]="chapter"
-              [bookSelectDisabled]="activeQuestionScope === 'all'"
-              [chapterSelectDisabled]="activeQuestionScope !== 'chapter'"
-              [prevNextHidden]="activeQuestionScope !== 'chapter'"
-              (bookChange)="onBookSelect($event)"
-              (chapterChange)="onChapterSelect($event)"
-            >
-            </app-book-chapter-chooser>
-
-            <div class="action-icons">
-              <ng-container *ngIf="canCreateQuestions">
-                <button
-                  mat-icon-button
-                  type="button"
-                  title="{{ t('add_question') }}"
-                  (click)="questionDialog()"
-                  class="add-question-button"
-                >
-                  <mat-icon class="mirror-rtl">post_add</mat-icon>
-                </button>
-                <button mat-button type="button" (click)="questionDialog()" class="add-question-button">
-                  <mat-icon class="mirror-rtl">post_add</mat-icon>
-                  <span>{{ t("add_question") }}</span>
-                </button>
-                <button
-                  *ngIf="canCreateScriptureAudio && !chapterHasAudio"
-                  type="button"
-                  mat-icon-button
-                  (click)="addAudioTimingData()"
-                >
-                  <mat-icon>audiotrack</mat-icon>
-                </button>
-              </ng-container>
+            <div>
+              <app-book-chapter-chooser
+                [books]="books"
+                [book]="book"
+                [chapters]="chapters"
+                [chapter]="chapter"
+                [bookSelectDisabled]="activeQuestionScope === 'all'"
+                [chapterSelectDisabled]="activeQuestionScope !== 'chapter'"
+                [prevNextHidden]="activeQuestionScope !== 'chapter'"
+                (bookChange)="onBookSelect($event)"
+                (chapterChange)="onChapterSelect($event)"
+              >
+              </app-book-chapter-chooser>
+              <button
+                *ngIf="canCreateScriptureAudio && !chapterHasAudio"
+                type="button"
+                mat-icon-button
+                (click)="addAudioTimingData()"
+              >
+                <mat-icon>audiotrack</mat-icon>
+              </button>
               <button
                 *ngIf="featureFlags.scriptureAudio.enabled && chapterHasAudio"
                 type="button"
@@ -104,32 +93,29 @@
               >
                 <mat-icon>{{ isAudioPlaying() ? "pause" : "play_arrow" }}</mat-icon>
               </button>
+            </div>
+
+            <div class="action-icons">
               <app-font-size [class.hidden]="hideChapterText" (apply)="applyFontChange($event)"></app-font-size>
               <app-share-button *ngIf="canShare" [defaultRole]="defaultShareRole"></app-share-button>
             </div>
           </div>
+          <div class="scripture-audio-player-wrapper" *ngIf="showScriptureAudioPlayer">
+            <app-checking-scripture-audio-player
+              [source]="chapterAudioSource"
+              [timing]="chapterTextAudioTiming"
+              [textDocId]="textDocId"
+              [canClose]="!hideChapterText"
+              (currentVerseChanged)="handleAudioTextRefChanged($event)"
+              (closed)="hideChapterAudio()"
+            ></app-checking-scripture-audio-player>
+          </div>
         </header>
         <div id="split-container" #splitContainer>
-          <as-split
-            direction="vertical"
-            [disabled]="!questionsList.activeQuestionDoc"
-            (dragEnd)="checkSliderPosition($event)"
-            [useTransition]="true"
-          >
+          <as-split direction="vertical" [disabled]="!questionsList.activeQuestionDoc" [useTransition]="true">
             <!-- Splitter area sizes are controlled programmatically. -->
-            <as-split-area [size]="100" [maxSize]="scriptureAreaMaxSize">
+            <as-split-area [size]="100">
               <div class="panel-content" #scripturePanelContainer>
-                <!-- TODO (scripture audio) Instead of covering scripture panel, move the audio player below it -->
-                <div class="scripture-audio-player-wrapper" *ngIf="showScriptureAudioPlayer">
-                  <app-checking-scripture-audio-player
-                    [source]="chapterAudioSource"
-                    [timing]="chapterTextAudioTiming"
-                    [textDocId]="textDocId"
-                    [canClose]="!hideChapterText"
-                    (currentVerseChanged)="handleAudioTextRefChanged($event)"
-                    (closed)="hideChapterAudio()"
-                  ></app-checking-scripture-audio-player>
-                </div>
                 <app-checking-text
                   #textPanel
                   [id]="textDocId"
@@ -160,14 +146,39 @@
         </div>
       </div>
       <div *ngIf="projectDoc" id="question-nav">
-        <button
-          mat-button
-          *ngIf="!this.isQuestionListPermanent"
-          type="button"
-          (click)="setQuestionsOverlayVisibility(true)"
-        >
-          {{ t("view_questions") }}
-        </button>
+        <div class="questions-nav-wrapper">
+          <a [appRouterLink]="routerLink" id="project-summary">
+            <app-donut-chart
+              [colors]="['#3a3a3a', '#fff', '#B8D332']"
+              [data]="[summary.unread, summary.read, summary.answered]"
+            ></app-donut-chart>
+          </a>
+          <button
+            mat-icon-button
+            *ngIf="!this.isQuestionListPermanent"
+            type="button"
+            (click)="setQuestionsOverlayVisibility(!isQuestionsOverlayVisible)"
+            [class.selected]="isQuestionsOverlayVisible"
+            class="noFocus"
+          >
+            <mat-icon>{{ isQuestionsOverlayVisible ? "expand_more" : "expand_less" }}</mat-icon>
+          </button>
+          <ng-container *ngIf="canCreateQuestions">
+            <button
+              mat-icon-button
+              type="button"
+              title="{{ t('add_question') }}"
+              (click)="questionDialog()"
+              class="add-question-button"
+            >
+              <mat-icon>add</mat-icon>
+            </button>
+            <button mat-button type="button" (click)="questionDialog()" class="add-question-button">
+              <mat-icon class="mirror-rtl">post_add</mat-icon>
+              <span>{{ t("add_question") }}</span>
+            </button>
+          </ng-container>
+        </div>
         <div class="question-nav-wrapper">
           <button
             mat-button
@@ -206,12 +217,26 @@
           >
             <mat-icon>chevron_{{ i18n.forwardDirectionWord }}</mat-icon>
           </button>
-          <a [appRouterLink]="routerLink" id="project-summary">
-            <app-donut-chart
-              [colors]="['#3a3a3a', '#fff', '#B8D332']"
-              [data]="[summary.unread, summary.read, summary.answered]"
-            ></app-donut-chart>
-          </a>
+          <button
+            mat-icon-button
+            class="always-shown"
+            [class.selected]="isQuestionPaneVisible && !isQuestionsOverlayVisible"
+            (click)="toggleQuestion()"
+          >
+            <mat-icon>question_answer</mat-icon>
+          </button>
+          <button
+            mat-icon-button
+            class="always-shown"
+            [class.selected]="isQuestionPaneVisible && !isQuestionsOverlayVisible"
+            [matMenuTriggerFor]="userOptions"
+          >
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #userOptions="matMenu" class="user-options">
+            <button mat-menu-item (click)="editQuestion()">{{ t("edit") }}</button>
+            <button mat-menu-item (click)="archiveQuestion()">{{ t("archive") }}</button>
+          </mat-menu>
         </div>
       </div>
     </div>

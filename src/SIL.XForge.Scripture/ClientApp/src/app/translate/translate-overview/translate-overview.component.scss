@@ -1,5 +1,9 @@
 @import 'src/variables';
 
+:host {
+  padding-block: 14px;
+}
+
 .title {
   margin-bottom: 20px;
 }

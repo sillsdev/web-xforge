@@ -1,6 +1,10 @@
 @use 'src/variables';
 @use 'bootstrap/scss/mixins/breakpoints';
 
+:host {
+  padding-block: 10px;
+}
+
 .header {
   display: flex;
   flex-wrap: wrap;

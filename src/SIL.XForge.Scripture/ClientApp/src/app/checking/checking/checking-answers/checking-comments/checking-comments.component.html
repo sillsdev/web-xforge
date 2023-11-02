@@ -18,7 +18,7 @@
           (click)="editComment(comment)"
           class="comment-edit"
         >
-          {{ t("edit") }}
+          <mat-icon>edit</mat-icon>
         </button>
         <button
           *ngIf="canDeleteComment(comment)"
@@ -27,7 +27,7 @@
           (click)="deleteCommentClicked(comment)"
           class="comment-delete"
         >
-          {{ t("delete") }}
+          <mat-icon>delete</mat-icon>
         </button>
       </div>
     </div>

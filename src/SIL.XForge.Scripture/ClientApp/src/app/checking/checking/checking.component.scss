@@ -10,11 +10,11 @@ $questionsHeaderInlineStartPadding: 8px;
 :host {
   flex: 1;
   display: flex;
+  margin-inline: -10px;
 }
 
 header {
-  display: flex;
-  padding: 8px 0;
+  padding-bottom: 12px;
 }
 
 .panel-content {
@@ -71,26 +71,23 @@ header {
     display: none;
   }
 
-  // Expand the side and bottom to fill space
-  @include media-breakpoint('<', md) {
-    margin-inline-start: -20px;
-    margin-bottom: -14px;
-  }
-
   // Override 'sm' breakpoint for this element (also adjusts BreakPointObserver 'SM' for this element)
   @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
     position: absolute;
-    top: 0;
-    left: -100%;
+    bottom: 58px;
+    left: 0;
+    right: 0;
     width: 100%;
-    height: 100%;
+    height: 0;
     margin: 0;
     z-index: 7;
+    overflow: hidden;
     background: #fff;
-    transition: transform 0.4s cubic-bezier(0.68, -0.6, 0.265, 1.6); // Snap back effect
+    transition: 0.4s cubic-bezier(0.68, -0.6, 0.265, 1.6); // Snap back effect
 
     &.overlay-visible {
-      transform: translateX(100%);
+      // Full height - bottom bar - top bar
+      height: calc(100vh - 58px - 56px);
 
       .questions-overlay-close {
         display: block;
@@ -125,13 +122,9 @@ header {
   }
 
   #split-container {
+    overflow: auto;
     display: flex;
     flex: 1;
-    max-height: calc(100vh - 200px);
-
-    @include media-breakpoint('<', md) {
-      max-height: calc(100vh - 180px);
-    }
 
     > as-split {
       height: auto; /* fix for SF-754 */
@@ -139,13 +132,15 @@ header {
   }
 
   #scripture-panel {
+    max-height: calc(100vh - 114px - 14px);
+    @include media-breakpoint('<=', sm) {
+      max-height: calc(100vh - 114px);
+    }
+
     display: flex;
     flex-direction: column;
     flex: 1;
-
-    header {
-      align-items: center;
-    }
+    padding: 10px 10px 0px 10px;
 
     .panel-content {
       height: 100%;
@@ -156,11 +151,10 @@ header {
     .panel-nav {
       display: flex;
       justify-content: space-between;
-      flex: 1;
 
       > div {
         display: flex;
-        align-items: center;
+        align-items: end;
         justify-content: flex-start;
 
         h2 {
@@ -188,33 +182,30 @@ header {
 
         &.action-icons {
           justify-content: flex-end;
-
-          .add-question-button.mat-icon-button {
-            display: none;
-          }
-
-          @include media-breakpoint('<', xl) {
-            .add-question-button.mat-button {
-              display: none;
-            }
-
-            .add-question-button.mat-icon-button {
-              display: block;
-            }
-          }
         }
       }
     }
   }
 
   #answer-panel {
-    padding-top: 12px;
-    padding-bottom: 12px;
     padding-inline-start: 15px;
 
     @include media-breakpoint('<', md) {
-      padding-left: 0;
-      padding-right: 0;
+      padding-inline: 0;
+    }
+  }
+
+  .add-question-button.mat-icon-button {
+    display: none;
+  }
+
+  @include media-breakpoint('<', xl) {
+    .add-question-button.mat-button {
+      display: none;
+    }
+
+    .add-question-button.mat-icon-button {
+      display: block;
     }
   }
 
@@ -222,8 +213,17 @@ header {
     background-color: lighten(vars.$sf_grey, 70%);
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 9px;
+
+    .questions-nav-wrapper {
+      display: flex;
+      align-items: center;
+    }
+
+    .selected {
+      background-color: white;
+    }
 
     .question-nav-wrapper {
       display: flex;
@@ -240,6 +240,10 @@ header {
         display: none;
       }
 
+      .always-shown {
+        display: block;
+      }
+
       // Switch to icon-only prev/next buttons on small screens
       @include media-breakpoint('<=', sm) {
         .mat-button {
@@ -252,29 +256,17 @@ header {
       }
     }
 
-    @include media-breakpoint('<', md) {
-      margin-bottom: -14px;
-      margin-inline: 0 -20px;
-    }
-
-    @include media-breakpoint('<=', sm, $questionsPanelBreakpoint) {
-      // Widen once the questions panel is hidden
-      margin-inline-start: -20px;
-      justify-content: space-between;
-    }
-
     .next-question {
-      margin-inline-end: 8px;
-    }
-
-    @include media-breakpoint('<', sm) {
-      margin: -10px;
+      margin-inline-end: 4px;
     }
   }
 
   #project-summary {
-    width: 36px;
-    height: 36px;
+    margin-inline-end: 6px;
+    app-donut-chart {
+      width: 36px;
+      height: 36px;
+    }
   }
 }
 
@@ -295,7 +287,6 @@ header {
 }
 
 .scripture-audio-player-wrapper {
-  background: #e8eae6;
   padding: 0.25rem;
 }
 

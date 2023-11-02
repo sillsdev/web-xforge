@@ -49,9 +49,11 @@ $toolbar-height: 56px;
 
     > div {
       flex: 1;
-      padding: 14px 20px;
+      padding-block-start: 14px;
+      padding-inline: 20px;
       @include media-breakpoint-only(xs, variables.$grid-breakpoints) {
-        padding: 10px;
+        padding-block-start: 0px;
+        padding-inline: 10px;
       }
       display: flex;
       flex-direction: column;

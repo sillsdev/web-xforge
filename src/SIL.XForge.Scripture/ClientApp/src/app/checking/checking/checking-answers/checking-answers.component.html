@@ -8,44 +8,19 @@
         (audioPlayed)="playAudio()"
       >
       </app-checking-question>
-      <div
-        class="answer-question"
-        [ngClass]="{
-          'question-read': hasUserRead,
-          'question-unread': !hasUserRead,
-          'question-answered': currentUserTotalAnswers
-        }"
-      >
-        <div class="question">
-          <ng-container *ngIf="!featureFlags.scriptureAudio.enabled">
-            <div class="question-text">{{ questionDoc?.data?.text }}</div>
-            <div *ngIf="questionDoc?.data?.audioUrl" class="question-audio">
-              <app-checking-audio-player [source]="getFileSource(questionDoc?.data?.audioUrl)">
-              </app-checking-audio-player>
-            </div>
-          </ng-container>
-          <div class="question-footer" *ngIf="canEditQuestion">
-            <div class="actions">
-              <button mat-button type="button" (click)="questionDialog()" class="edit-question-button short-button">
-                {{ t("edit") }}
-              </button>
-              <button mat-button type="button" (click)="archiveQuestion()" class="archive-question-button short-button">
-                {{ t("archive") }}
-              </button>
-            </div>
+      <div class="question" *ngIf="!featureFlags.scriptureAudio.enabled">
+        <ng-container>
+          <div class="question-text">{{ questionDoc?.data?.text }}</div>
+          <div *ngIf="questionDoc?.data?.audioUrl" class="question-audio">
+            <app-checking-audio-player [source]="getFileSource(questionDoc?.data?.audioUrl)">
+            </app-checking-audio-player>
           </div>
-        </div>
-        <div *ngIf="!answerFormVisible" class="actions">
-          <button
-            *ngIf="currentUserTotalAnswers === 0 && canAddAnswer"
-            mat-flat-button
-            color="primary"
-            (click)="showAnswerForm()"
-            id="add-answer"
-          >
-            {{ t("add_answer") }}
-          </button>
-        </div>
+        </ng-container>
+      </div>
+      <div *ngIf="!answerFormVisible && currentUserTotalAnswers === 0 && canAddAnswer" class="actions">
+        <button mat-flat-button color="primary" (click)="showAnswerForm()" id="add-answer">
+          {{ t("add_answer") }}
+        </button>
       </div>
       <div *ngIf="answerFormVisible">
         <form [formGroup]="answerForm" autocomplete="off" id="answer-form" appScrollIntoView>
@@ -138,7 +113,7 @@
           </div>
         </form>
       </div>
-      <div class="answers-container">
+      <div class="answers-container" *ngIf="totalAnswers > 0">
         <ng-container *ngIf="shouldShowAnswers">
           <h3 id="totalAnswersMessage">
             <div *ngIf="shouldSeeAnswersList; else noAnswerCountReport">
@@ -177,58 +152,56 @@
               <app-checking-audio-player *ngIf="answer.audioUrl" [source]="getFileSource(answer.audioUrl)">
               </app-checking-audio-player>
               <div class="answer-footer">
-                <app-owner
-                  [ownerRef]="answer.ownerRef"
-                  [includeAvatar]="true"
-                  [layoutStacked]="true"
-                  [dateTime]="answer.dateCreated"
-                ></app-owner>
                 <div class="actions">
                   <button
                     *ngIf="canChangeAnswerStatus(answer)"
                     mat-button
                     type="button"
                     (click)="markAnswerForExport(answer)"
-                    class="answer-status answer-export short-button"
+                    class="answer-status answer-export"
                     [class.status-exportable]="isMarkedForExport(answer)"
                     [matTooltip]="t('tooltip_status_export')"
                     matTooltipPosition="above"
                   >
-                    {{ t(isMarkedForExport(answer) ? "marked_for_export" : "mark_for_export") }}
+                    <mat-icon>sync</mat-icon>
                   </button>
                   <button
                     *ngIf="canChangeAnswerStatus(answer)"
                     mat-button
                     type="button"
                     (click)="markAnswerAsResolved(answer)"
-                    class="answer-status answer-resolve short-button"
+                    class="answer-status answer-resolve"
                     [class.status-resolved]="isAnswerResolved(answer)"
                     [matTooltip]="t('tooltip_status_resolve')"
                     matTooltipPosition="above"
                   >
-                    {{ t(isAnswerResolved(answer) ? "resolved" : "resolve") }}
+                    <mat-icon>check_box</mat-icon>
                   </button>
-
                   <button
                     *ngIf="canEditAnswer(answer)"
                     mat-button
                     type="button"
                     (click)="editAnswer(answer)"
-                    class="answer-edit short-button"
+                    class="answer-status answer-edit"
                   >
-                    {{ t("edit") }}
+                    <mat-icon>edit</mat-icon>
                   </button>
-                  <div *ngIf="canDeleteAnswer(answer)" class="delete-divider">|</div>
                   <button
                     *ngIf="canDeleteAnswer(answer)"
                     mat-button
                     type="button"
                     (click)="deleteAnswerClicked(answer)"
-                    class="answer-delete short-button"
+                    class="answer-status answer-delete"
                   >
-                    {{ t("delete") }}
+                    <mat-icon>delete</mat-icon>
                   </button>
                 </div>
+                <app-owner
+                  [ownerRef]="answer.ownerRef"
+                  [includeAvatar]="true"
+                  [layoutStacked]="true"
+                  [dateTime]="answer.dateCreated"
+                ></app-owner>
               </div>
               <app-checking-comments
                 [project]="project"

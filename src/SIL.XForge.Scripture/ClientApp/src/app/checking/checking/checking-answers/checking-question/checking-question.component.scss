@@ -4,6 +4,12 @@
   padding-inline: 12px;
 }
 
+.two-rows {
+  display: flex;
+  flex-direction: column;
+  row-gap: 4px;
+}
+
 .scripture-audio,
 .question-text {
   display: flex;

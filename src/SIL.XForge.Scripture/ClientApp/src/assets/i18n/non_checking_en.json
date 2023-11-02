@@ -35,7 +35,6 @@
     "add_question": "Add question"
   },
   "checking_answers": {
-    "archive": "Archive",
     "no_permission_to_like": "You don't have permission to like answers."
   },
   "checking_overview": {

@@ -3,25 +3,34 @@
   flex-direction: column;
 }
 
-.audio-action-buttons {
+.header {
   display: flex;
   justify-content: center;
 }
 
+.audio-action-buttons {
+  display: flex;
+}
+
 .verse-label {
-  padding: 8px;
+  padding: 12px;
   font-weight: 500;
   font-size: 0.9em;
 }
 
-div[dir='ltr'] .close-button {
+.close-button {
   position: absolute;
-  right: 8px;
+  width: 36px;
+  height: 36px;
+  line-height: 36px;
+}
+
+div[dir='ltr'] .close-button {
+  right: 12px;
 }
 
 div[dir='rtl'] .close-button {
-  position: absolute;
-  left: 8px;
+  left: 12px;
 }
 
 .previous-ref-button,
@@ -34,5 +43,6 @@ div[dir='rtl'] .close-button {
 }
 
 app-audio-player {
-  margin: -10px 0;
+  margin: -2px 0;
+  width: 100%;
 }

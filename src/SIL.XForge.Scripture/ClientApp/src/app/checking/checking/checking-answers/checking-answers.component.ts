@@ -8,7 +8,7 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { Answer, AnswerStatus } from 'realtime-server/lib/esm/scriptureforge/models/answer';
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { fromVerseRef, toVerseRef, VerseRefData } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
+import { VerseRefData, fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { Subscription } from 'rxjs';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
@@ -29,7 +29,6 @@ import {
   TextChooserDialogData,
   TextSelection
 } from '../../../text-chooser-dialog/text-chooser-dialog.component';
-import { QuestionDialogData } from '../../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../../question-dialog/question-dialog.service';
 import { CheckingAudioCombinedComponent } from '../checking-audio-combined/checking-audio-combined.component';
 import { AudioAttachment } from '../checking-audio-recorder/checking-audio-recorder.component';
@@ -37,18 +36,7 @@ import { CheckingTextComponent } from '../checking-text/checking-text.component'
 import { CommentAction } from './checking-comments/checking-comments.component';
 
 export interface AnswerAction {
-  action:
-    | 'delete'
-    | 'save'
-    | 'edit'
-    | 'archive'
-    | 'show-form'
-    | 'hide-form'
-    | 'like'
-    | 'recorder'
-    | 'show-unread'
-    | 'status'
-    | 'play-audio';
+  action: 'delete' | 'save' | 'show-form' | 'hide-form' | 'like' | 'recorder' | 'show-unread' | 'status' | 'play-audio';
   questionDoc?: QuestionDoc;
   answer?: Answer;
   text?: string;
@@ -261,15 +249,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       : false;
   }
 
-  get canEditQuestion(): boolean {
-    const userId = this.userService.currentUserId;
-    const data = this.questionDoc?.data;
-    return (
-      this.project != null &&
-      SF_PROJECT_RIGHTS.hasRight(this.project, userId, SFProjectDomain.Questions, Operation.Edit, data)
-    );
-  }
-
   get canAddAnswer(): boolean {
     const userId = this.userService.currentUserId;
     return (
@@ -306,14 +285,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.selectionEndClipped = undefined;
   }
 
-  async archiveQuestion(): Promise<void> {
-    await this._questionDoc!.submitJson0Op(op => {
-      op.set<boolean>(qd => qd.isArchived, true);
-      op.set(qd => qd.dateArchived!, new Date().toJSON());
-    });
-    this.action.emit({ action: 'archive' });
-  }
-
   async deleteAnswerClicked(answer: Answer): Promise<void> {
     const confirmation = await this.dialogService.confirm('checking_answers.confirm_delete', 'checking_answers.delete');
     if (!confirmation) return;
@@ -343,34 +314,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     this.selectionEndClipped = this.activeAnswer.selectionEndClipped;
     this.answerText.setValue(this.activeAnswer?.text || '');
     this.showAnswerForm();
-  }
-
-  async questionDialog(): Promise<void> {
-    if (this._questionDoc == null || this._questionDoc.data == null) {
-      return;
-    }
-    const projectId = this._questionDoc.data.projectRef;
-    if (this._questionDoc?.data != null && this._questionDoc.getAnswers().length > 0) {
-      const confirm = await this.dialogService.confirm(
-        'question_answered_dialog.question_has_answer',
-        'question_answered_dialog.edit_anyway'
-      );
-      if (!confirm) {
-        return;
-      }
-    }
-
-    const data: QuestionDialogData = {
-      questionDoc: this._questionDoc,
-      textsByBookId: this.textsByBookId!,
-      projectId,
-      isRightToLeft: this.project?.isRightToLeft
-    };
-    const dialogResponseDoc: QuestionDoc | undefined = await this.questionDialogService.questionDialog(data);
-    if (dialogResponseDoc?.data != null) {
-      this.updateQuestionDocAudioUrls();
-      this.action.emit({ action: 'edit', questionDoc: dialogResponseDoc });
-    }
   }
 
   getFileSource(url: string | undefined): string | undefined {
@@ -556,6 +499,17 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
     }
   }
 
+  async updateQuestionDocAudioUrls(): Promise<void> {
+    this.fileSources.clear();
+    if (this.questionDoc?.data == null) {
+      return;
+    }
+    this.cacheFileSource(this.questionDoc, this.questionDoc.data.dataId, this.questionDoc.data.audioUrl);
+    for (const answer of this.questionDoc.getAnswers()) {
+      this.cacheFileSource(this.questionDoc, answer.dataId, answer.audioUrl);
+    }
+  }
+
   private canLikeAnswer(answer: Answer): LikeAnswerResponse {
     const userId = this.userService.currentUserId;
     let result: LikeAnswerResponse = LikeAnswerResponse.Granted;
@@ -568,17 +522,6 @@ export class CheckingAnswersComponent extends SubscriptionDisposable implements 
       result = LikeAnswerResponse.DeniedNoPermission;
     }
     return result;
-  }
-
-  private async updateQuestionDocAudioUrls(): Promise<void> {
-    this.fileSources.clear();
-    if (this.questionDoc?.data == null) {
-      return;
-    }
-    this.cacheFileSource(this.questionDoc, this.questionDoc.data.dataId, this.questionDoc.data.audioUrl);
-    for (const answer of this.questionDoc.getAnswers()) {
-      this.cacheFileSource(this.questionDoc, answer.dataId, answer.audioUrl);
-    }
   }
 
   private async cacheFileSource(questionDoc: QuestionDoc, dataId: string, audioUrl: string | undefined): Promise<void> {

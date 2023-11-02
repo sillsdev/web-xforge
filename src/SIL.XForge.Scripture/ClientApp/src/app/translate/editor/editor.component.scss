@@ -6,12 +6,6 @@
   flex-direction: column;
 }
 
-.content {
-  @include media-breakpoint-only(xs) {
-    margin: -10px;
-  }
-}
-
 .avatar-padding {
   padding-bottom: 2px;
 }
@@ -31,7 +25,7 @@
   @include media-breakpoint-only(xs) {
     margin-top: 0;
     margin-bottom: 0;
-    border-bottom-width: 0;
+    border-width: 0;
   }
 }
 

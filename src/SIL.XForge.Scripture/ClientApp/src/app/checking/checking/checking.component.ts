@@ -16,9 +16,10 @@ import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-
 import { getTextAudioId } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
 import { VerseRefData, toVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
-import { Subscription, combineLatest, fromEvent, merge } from 'rxjs';
+import { Subscription, combineLatest, merge } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
+import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { Breakpoint, MediaBreakpointService } from 'xforge-common/media-breakpoints/media-breakpoint.service';
@@ -127,6 +128,10 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
    */
   nextQuestion?: QuestionDoc;
 
+  get isQuestionPaneVisible(): boolean {
+    return (this.splitComponent?.getVisibleAreaSizes()[1] as number) > 0;
+  }
+
   private _book?: number;
   private _isDrawerPermanent: boolean = true;
   private _chapter?: number;
@@ -164,6 +169,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     private readonly mediaBreakpointService: MediaBreakpointService,
     noticeService: NoticeService,
     private readonly router: Router,
+    private readonly dialogService: DialogService,
     private readonly questionDialogService: QuestionDialogService,
     readonly i18n: I18nService,
     readonly featureFlags: FeatureFlagService,
@@ -448,29 +454,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       : 0;
   }
 
-  private get contentPanelHeight(): number {
-    return this.scripturePanelContainerElement?.nativeElement.offsetHeight;
-  }
-
-  private get scriptureAudioPlayerAreaHeight(): number {
-    const scriptureAudioPlayerArea: Element | null = document.querySelector('.scripture-audio-player-wrapper');
-    return scriptureAudioPlayerArea == null ? 0 : scriptureAudioPlayerArea.getBoundingClientRect().height;
-  }
-
-  /** Percentage of the vertical space of the as-splitter, needed by just the Scripture audio player. */
-  private get scriptureAudioPlayerHeightPercent(): number {
-    return (this.scriptureAudioPlayerAreaHeight / this.splitContainerElementHeight) * 100;
-  }
-
-  /** maxSize for as-split-area for the Scripture+audio area. */
-  public get scriptureAreaMaxSize(): number | null {
-    return this._scriptureAreaMaxSize;
-  }
-
-  private set scriptureAreaMaxSize(value: number | null) {
-    this._scriptureAreaMaxSize = value;
-  }
-
   ngOnInit(): void {
     this.subscribe(
       combineLatest([this.activatedRoute.params, this.activatedRoute.queryParams]),
@@ -724,14 +707,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         });
       }
     );
-    this.subscribe(fromEvent(window, 'resize'), () => {
-      if (this.hideChapterText) {
-        this.scriptureAreaMaxSize = this.scriptureAudioPlayerHeightPercent;
-        if (this.contentPanelHeight > this.scriptureAudioPlayerAreaHeight) {
-          this.calculateScriptureSliderPosition();
-        }
-      }
-    });
   }
 
   ngOnDestroy(): void {
@@ -799,16 +774,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         if (answerAction.answer != null) {
           this.deleteAnswer(answerAction.answer);
         }
-        break;
-      case 'edit':
-        if (answerAction.questionDoc != null) {
-          this.questionsList.activateQuestion(answerAction.questionDoc);
-        }
-        this.triggerUpdate();
-        break;
-      case 'archive':
-        this._scriptureAudioPlayer?.pause();
-        this.triggerUpdate();
         break;
       case 'like':
         if (answerAction.answer != null) {
@@ -887,12 +852,58 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.calculateScriptureSliderPosition(true);
   }
 
-  checkSliderPosition(event: any): void {
-    if (event.hasOwnProperty('sizes')) {
-      if (event.sizes[1] < this.minAnswerPanelPercent) {
-        this.calculateScriptureSliderPosition();
+  get canEditQuestion(): boolean {
+    const questionDoc = this.questionsList?.activeQuestionDoc;
+    if (questionDoc == null) return false;
+    const userId = this.userService.currentUserId;
+    const data = questionDoc.data;
+    const project = this.projectDoc?.data;
+    return (
+      project != null && SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Edit, data)
+    );
+  }
+
+  async editQuestion(): Promise<void> {
+    const question = this.questionsList?.activeQuestionDoc;
+    if (question == null || question.data == null) {
+      return;
+    }
+    const projectId = question.data.projectRef;
+    if (question.data != null && question.getAnswers().length > 0) {
+      const confirm = await this.dialogService.confirm(
+        'question_answered_dialog.question_has_answer',
+        'question_answered_dialog.edit_anyway'
+      );
+      if (!confirm) {
+        return;
       }
     }
+
+    const data: QuestionDialogData = {
+      questionDoc: question,
+      textsByBookId: this.textsByBookId!,
+      projectId,
+      isRightToLeft: this.isRightToLeft
+    };
+    const dialogResponseDoc: QuestionDoc | undefined = await this.questionDialogService.questionDialog(data);
+    if (dialogResponseDoc?.data != null) {
+      this.answersPanel?.updateQuestionDocAudioUrls();
+      this.questionsList?.activateQuestion(question);
+      this.triggerUpdate();
+    }
+  }
+
+  //todo add question button on questions list
+  async archiveQuestion(): Promise<void> {
+    const _questionDoc = this.questionsList?.activeQuestionDoc;
+    if (_questionDoc == null) return;
+
+    await _questionDoc!.submitJson0Op(op => {
+      op.set<boolean>(qd => qd.isArchived, true);
+      op.set(qd => qd.dateArchived!, new Date().toJSON());
+    });
+    this._scriptureAudioPlayer?.pause();
+    this.triggerUpdate();
   }
 
   onBookSelect(book: number): void {
@@ -1346,9 +1357,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         return;
       }
       if (this.hideChapterText) {
-        const answerPanelHeight = 100 - this.scriptureAudioPlayerHeightPercent;
-        this.splitComponent?.setVisibleAreaSizes([this.scriptureAudioPlayerHeightPercent, answerPanelHeight]);
-        this.scriptureAreaMaxSize = this.scriptureAudioPlayerHeightPercent;
+        this.splitComponent?.setVisibleAreaSizes([0, 100]);
       } else {
         let answerPanelHeight: number;
         if (maximizeAnswerPanel) {
@@ -1356,14 +1365,31 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         } else {
           answerPanelHeight = this.minAnswerPanelPercent;
         }
-
         answerPanelHeight = Math.min(75, answerPanelHeight);
         const scripturePanelHeight = 100 - answerPanelHeight;
-
         this.splitComponent.setVisibleAreaSizes([scripturePanelHeight, answerPanelHeight]);
-        this.scriptureAreaMaxSize = null;
       }
     }, changeUpdateDelayMs);
+  }
+
+  toggleQuestion(): void {
+    if (this.splitComponent == null) {
+      return;
+    }
+
+    if (this.isQuestionsOverlayVisible) {
+      this.isQuestionsOverlayVisible = false;
+      if (!this.isQuestionPaneVisible) {
+        this.calculateScriptureSliderPosition();
+      }
+      return;
+    }
+
+    if (this.isQuestionPaneVisible) {
+      this.splitComponent.setVisibleAreaSizes([100, 0]);
+    } else {
+      this.calculateScriptureSliderPosition(true);
+    }
   }
 
   // Unbind this component from the data when a user is removed from the project, otherwise console
