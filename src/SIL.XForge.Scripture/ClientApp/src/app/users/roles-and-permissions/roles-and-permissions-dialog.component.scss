@@ -1,4 +1,4 @@
-@import 'src/variables';
+@use 'src/variables';
 
 .mat-dialog-title {
   display: flex;
@@ -22,7 +22,7 @@ span {
 }
 
 .userRole {
-  color: $greyLight;
+  color: variables.$greyLight;
   font-size: small;
   font-weight: normal;
 }
