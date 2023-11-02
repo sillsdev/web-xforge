@@ -4,31 +4,24 @@ import { UserService } from 'xforge-common/user.service';
 import { SFProjectProfileDoc } from './models/sf-project-profile-doc';
 import { roleCanAccessCommunityChecking, roleCanAccessTranslate } from './models/sf-project-role-info';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class PermissionsService {
   constructor(private readonly userService: UserService) {}
 
   canAccessCommunityChecking(project: SFProjectProfileDoc, userId?: string): boolean {
-    if (project == null || project.data == null) return false;
-    const roles = project.data.userRoles;
-    if (userId === undefined) {
-      userId = this.userService.currentUserId;
-    }
+    if (project.data == null) return false;
+    const role = project.data.userRoles[userId ?? this.userService.currentUserId];
 
     return (
-      project.data.checkingConfig.checkingEnabled && roleCanAccessCommunityChecking(roles[userId] as SFProjectRole)
+      role != null &&
+      project.data.checkingConfig.checkingEnabled &&
+      roleCanAccessCommunityChecking(role as SFProjectRole)
     );
   }
 
   canAccessTranslate(project: SFProjectProfileDoc, userId?: string): boolean {
-    if (project == null || project.data == null) return false;
-    const roles = project.data.userRoles;
-    if (userId === undefined) {
-      userId = this.userService.currentUserId;
-    }
-
-    return roleCanAccessTranslate(roles[userId] as SFProjectRole);
+    if (project.data == null) return false;
+    const role = project.data.userRoles[userId ?? this.userService.currentUserId];
+    return role != null && roleCanAccessTranslate(role as SFProjectRole);
   }
 }

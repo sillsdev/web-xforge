@@ -146,7 +146,7 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         string curUserId,
         string systemRole,
         string projectId,
-        string userId,
+        string idOfUserToUpdate,
         string projectRole
     )
     {
@@ -154,10 +154,10 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         if (systemRole != SystemRole.SystemAdmin && !IsProjectAdmin(project, curUserId))
             throw new ForbiddenException();
 
-        await using IConnection conn = await RealtimeService.ConnectAsync(userId);
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         IDocument<TModel> projectDoc = await GetProjectDocAsync(projectId, conn);
 
-        await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[userId], projectRole));
+        await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.UserRoles[idOfUserToUpdate], projectRole));
     }
 
     public async Task<Uri> SaveAudioAsync(string curUserId, string projectId, string dataId, string path)
