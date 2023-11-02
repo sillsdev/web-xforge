@@ -111,6 +111,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   showScriptureAudioPlayer: boolean = false;
   isCreatingNewQuestion: boolean = false;
   questionToBeCreated: PreCreationQuestionData | undefined;
+  isScreenSmall = false;
 
   /** The book/chapter from the route.  Stored question activation is constrained to this book/chapter. */
   routeBookChapter?: BookChapter;
@@ -160,7 +161,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     private readonly projectService: SFProjectService,
     private readonly checkingQuestionsService: CheckingQuestionsService,
     private readonly userService: UserService,
-    private readonly breakpointObserver: BreakpointObserver,
+    readonly breakpointObserver: BreakpointObserver,
     private readonly mediaBreakpointService: MediaBreakpointService,
     noticeService: NoticeService,
     private readonly router: Router,
@@ -722,11 +723,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   ngAfterViewInit(): void {
     // Allows scrolling to the active question in the question list once it becomes visible
     this.subscribe(
-      this.breakpointObserver.observe([
+      this.breakpointObserver.observe(
         this.mediaBreakpointService.width('>', Breakpoint.SM, this.questionsPanel?.nativeElement)
-      ]),
+      ),
       (state: BreakpointState) => {
         this.calculateScriptureSliderPosition();
+
         // `questionsPanel` is undefined until ngAfterViewInit, but setting `isQuestionListPermanent`
         // here causes `ExpressionChangedAfterItHasBeenCheckedError`, so wrap in setTimeout
         setTimeout(() => {
@@ -734,6 +736,15 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
         });
       }
     );
+
+    // Allows hiding the prev/next chapter buttons for small screens
+    this.subscribe(
+      this.breakpointObserver.observe(this.mediaBreakpointService.width('<', Breakpoint.MD)),
+      (state: BreakpointState) => {
+        this.isScreenSmall = state.matches;
+      }
+    );
+
     this.subscribe(fromEvent(window, 'resize'), () => {
       if (this.hideChapterText) {
         this.scriptureAreaMaxSize = this.scriptureAudioPlayerHeightPercent;
