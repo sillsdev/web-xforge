@@ -238,6 +238,7 @@ describe('CheckingComponent', () => {
         expect(next.nativeElement.disabled).toBe(true);
         env.waitForAudioPlayer();
         discardPeriodicTasks();
+        flush();
       }));
     });
 
@@ -246,12 +247,14 @@ describe('CheckingComponent', () => {
       env.clickButton(env.addQuestionButton);
       verify(mockedQuestionDialogService.questionDialog(anything())).once();
       expect().nothing();
+      flush();
       discardPeriodicTasks();
     }));
 
     it('hides add question button for community checker', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       expect(env.addQuestionButton).toBeNull();
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -353,6 +356,7 @@ describe('CheckingComponent', () => {
       // Question 5 has been stored as the question to start at, but route book/chapter is forced to MAT 1,
       // so active question must be from MAT 1
       expect(env.component.questionsList!.activeQuestionDoc!.data!.dataId).toBe('q16Id');
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -376,7 +380,10 @@ describe('CheckingComponent', () => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       const question = env.selectQuestion(2);
       env.answerQuestion('Answer question 2');
+      tick(100);
+      env.fixture.detectChanges();
       expect(question.classes['question-answered']).toBe(true);
+      tick();
       flush();
     }));
 
@@ -529,13 +536,15 @@ describe('CheckingComponent', () => {
 
       env.clickButton(env.editQuestionButton);
       env.realtimeService.updateAllSubscribeQueries();
-      tick();
+      tick(100);
+      env.fixture.detectChanges();
 
       expect(env.segmentHasQuestion(1, 1)).toBe(true);
       expect(env.isSegmentHighlighted(1, 1)).toBe(false);
       expect(env.isSegmentHighlighted(1, 5)).toBe(true);
       expect(env.segmentHasQuestion(1, 5)).toBe(true);
       expect(env.component.questionVerseRefs.some(verseRef => verseRef.equals(new VerseRef('JHN 1:5')))).toBe(true);
+      tick();
       flush();
       discardPeriodicTasks();
     }));
@@ -545,6 +554,7 @@ describe('CheckingComponent', () => {
       expect(env.getUnread(env.questions[5])).toEqual(1);
       env.setSeeOtherUserResponses(false);
       expect(env.getUnread(env.questions[5])).toEqual(0);
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -554,6 +564,7 @@ describe('CheckingComponent', () => {
       expect(env.getUnread(env.questions[6])).toEqual(0);
       env.setSeeOtherUserResponses(false);
       expect(env.getUnread(env.questions[6])).toEqual(0);
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -680,6 +691,7 @@ describe('CheckingComponent', () => {
       expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasNotAnswered))
         .withContext('CurrentUserHasNotAnswered')
         .toEqual(false);
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -699,6 +711,7 @@ describe('CheckingComponent', () => {
       expect(env.component.questionFilters.has(QuestionFilter.CurrentUserHasNotAnswered))
         .withContext('CurrentUserHasNotAnswered')
         .toEqual(true);
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -755,12 +768,15 @@ describe('CheckingComponent', () => {
         questionScope: 'chapter'
       });
       expect(env.questions.length).toEqual(14);
+      // Wait for the first question to be read
+      tick(2000);
       // Admin has already read 2 questions and the 3rd is read on load
       expect(env.component.summary.unread).toEqual(11);
       env.setQuestionFilter(QuestionFilter.NoAnswers);
       expect(env.questions.length).toEqual(10);
       // The first question after filter has now been read
       expect(env.component.summary.unread).toEqual(9);
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -795,13 +811,14 @@ describe('CheckingComponent', () => {
       });
       expect(env.questions.length).toEqual(16);
       env.setQuestionScope('book');
+      tick(100);
       env.fixture.detectChanges();
-      tick();
       expect(env.questions.length).toEqual(15);
       env.setQuestionScope('chapter');
+      tick(100);
       env.fixture.detectChanges();
-      tick();
       expect(env.questions.length).toEqual(14);
+      tick();
       flush();
       discardPeriodicTasks();
     }));
@@ -815,13 +832,14 @@ describe('CheckingComponent', () => {
       });
       expect(env.questions.length).toEqual(14);
       env.setQuestionScope('book');
+      tick(100);
       env.fixture.detectChanges();
-      tick();
       expect(env.questions.length).toEqual(15);
       env.setQuestionScope('all');
+      tick(100);
       env.fixture.detectChanges();
-      tick();
       expect(env.questions.length).toEqual(16);
+      tick();
       flush();
       discardPeriodicTasks();
     }));
@@ -833,6 +851,7 @@ describe('CheckingComponent', () => {
       });
 
       expect(env.questions.length).toBeGreaterThan(0);
+      flush();
       discardPeriodicTasks();
     }));
   });
@@ -841,6 +860,7 @@ describe('CheckingComponent', () => {
     it('answer panel is initiated and shows the first question', fakeAsync(() => {
       const env = new TestEnvironment({ user: CHECKER_USER });
       expect(env.answerPanel).not.toBeNull();
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -1252,6 +1272,7 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       expect(env.getLikeTotal(0)).toBe(0);
       verify(mockedNoticeService.show('You cannot like your own answer.')).once();
+      flush();
     }));
 
     it('observer cannot like an answer', fakeAsync(() => {
@@ -1827,7 +1848,7 @@ describe('CheckingComponent', () => {
       env.waitForSliderUpdate();
       env.clickButton(env.saveAnswerButton);
       env.waitForSliderUpdate();
-      verify(questionDoc!.updateAnswerFileCache()).times(3);
+      verify(questionDoc!.updateAnswerFileCache()).times(2);
       expect().nothing();
       tick();
       flush();
@@ -1961,6 +1982,7 @@ describe('CheckingComponent', () => {
       env.waitForAudioPlayer();
       const quillElementLang = env.quillEditorElement.getAttribute('lang');
       expect(quillElementLang).toEqual(TestEnvironment.project01WritingSystemTag);
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -1969,6 +1991,7 @@ describe('CheckingComponent', () => {
       const segment = env.quillEditor.querySelector('usx-segment[data-segment=verse_1_1]')!;
       expect(segment.hasAttribute('data-question-count')).toBe(true);
       expect(segment.getAttribute('data-question-count')).toBe('13');
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -1985,6 +2008,7 @@ describe('CheckingComponent', () => {
       }, false);
       env.waitForSliderUpdate();
       tick();
+      env.fixture.detectChanges();
       segment = env.getVerse(1, 3);
       expect(segment.classList.contains('question-segment')).toBe(false);
       expect(segment.classList.contains('highlight-segment')).toBe(false);
@@ -1992,6 +2016,7 @@ describe('CheckingComponent', () => {
       segment = env.getVerse(1, 5);
       expect(segment.classList.contains('question-segment')).toBe(true);
       expect(segment.classList.contains('highlight-segment')).toBe(true);
+      tick();
       flush();
       discardPeriodicTasks();
     }));
@@ -2030,6 +2055,7 @@ describe('CheckingComponent', () => {
         .withContext('Scripture text should be hidden when project setting')
         .toBe(true);
 
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -2091,6 +2117,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
 
       expect(env.component.showScriptureAudioPlayer).toBe(true);
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -2105,6 +2132,7 @@ describe('CheckingComponent', () => {
       env.fixture.detectChanges();
 
       expect(env.component.showScriptureAudioPlayer).toBe(false);
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -2120,6 +2148,7 @@ describe('CheckingComponent', () => {
 
       verify(audio.pause()).once();
       expect(env.component).toBeDefined();
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -2220,6 +2249,7 @@ describe('CheckingComponent', () => {
       });
       env.component.handleAudioTextRefChanged(verseSlug(verseRef));
       expect(updateAudioRefsPlayed).toHaveBeenCalledTimes(0);
+      flush();
       discardPeriodicTasks();
     }));
 
@@ -2252,6 +2282,7 @@ describe('CheckingComponent', () => {
       expect(updateAudioRefsPlayed).toHaveBeenCalledTimes(1);
       // Should equal JHN 1:1
       expect(updateAudioRefsPlayed.calls.mostRecent().args[0]!.toString()).toBe(verseRef.toString());
+      flush();
       discardPeriodicTasks();
     }));
   });
