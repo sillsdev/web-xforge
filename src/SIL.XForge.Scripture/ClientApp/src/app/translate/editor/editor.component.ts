@@ -197,7 +197,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   private resizeObserver?: ResizeObserver;
   private scrollSubscription?: Subscription;
   private readonly fabDiameter = 40;
-  private readonly fabHorizMargin = 20;
+  private readonly fabHorizMargin = 15;
 
   constructor(
     private readonly activatedRoute: ActivatedRoute,
@@ -569,7 +569,6 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   ngAfterViewInit(): void {
     this.subscribe(fromEvent(window, 'resize'), () => {
       this.setTextHeight();
-      this.resetInsertNoteFab(false);
       this.positionInsertNoteFab();
     });
     this.subscribe(
@@ -1809,6 +1808,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     if (selection != null) {
       this.insertNoteFab.nativeElement.style.top = `${this.target.selectionBoundsTop}px`;
       this.insertNoteFab.nativeElement.style.marginTop = `-${this.target.scrollPosition}px`;
+      this.resetInsertNoteFab(false);
     } else {
       // hide the insert note FAB when the user clicks outside of the editor
       // and move to the top left so scrollbars are note affected
