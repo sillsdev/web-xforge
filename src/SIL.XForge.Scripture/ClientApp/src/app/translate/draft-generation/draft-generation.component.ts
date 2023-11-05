@@ -19,10 +19,7 @@ import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates } from './draft-generation';
-import {
-  DraftGenerationStepsComponent,
-  DraftGenerationStepsResult
-} from './draft-generation-steps/draft-generation-steps.component';
+import { DraftGenerationStepsResult } from './draft-generation-steps/draft-generation-steps.component';
 import { DraftGenerationService } from './draft-generation.service';
 
 export enum InfoAlert {
@@ -40,7 +37,6 @@ export enum InfoAlert {
 })
 export class DraftGenerationComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(MatTabGroup) tabGroup?: MatTabGroup;
-  @ViewChild(DraftGenerationStepsComponent) draftGenerationSteps?: DraftGenerationStepsComponent;
   draftJob?: BuildDto;
 
   draftViewerUrl?: string;
@@ -211,9 +207,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   onPreGenerationStepsComplete(_result: DraftGenerationStepsResult): void {
     this.navigateToTab('initial');
-
-    // TODO: Send selected books to the back-end
-    this.startBuild();
+    this.startBuild(_result.books);
   }
 
   /**
@@ -265,13 +259,13 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     return job == null || this.isDraftInProgress(job);
   }
 
-  startBuild(): void {
+  startBuild(trainingBooks: number[]): void {
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.subscribe(
       this.draftGenerationService
         .startBuildOrGetActiveBuild({
           projectId: this.activatedProject.projectId!,
-          sourceBooks: this.draftGenerationSteps?.selectedBooks ?? []
+          trainingBooks
         })
         .pipe(
           tap((job?: BuildDto) => {

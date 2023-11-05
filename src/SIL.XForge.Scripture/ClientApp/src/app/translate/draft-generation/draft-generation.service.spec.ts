@@ -105,7 +105,7 @@ describe('DraftGenerationService', () => {
     it('should start a pretranslation build job and return an observable of BuildDto', done => {
       const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(undefined));
       const spyPollBuildProgress = spyOn(service, 'pollBuildProgress').and.returnValue(of(buildDto));
-      const buildConfig = { projectId, sourceBooks: [] };
+      const buildConfig = { projectId, trainingBooks: [] };
       httpClient.post = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
       service
         .startBuildOrGetActiveBuild(buildConfig)
@@ -123,7 +123,7 @@ describe('DraftGenerationService', () => {
       const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(buildDto));
       const spyPollBuildProgress = spyOn(service, 'pollBuildProgress').and.returnValue(of(buildDto));
       httpClient.post = jasmine.createSpy();
-      service.startBuildOrGetActiveBuild({ projectId, sourceBooks: [] }).subscribe(result => {
+      service.startBuildOrGetActiveBuild({ projectId, trainingBooks: [] }).subscribe(result => {
         expect(result).toEqual(buildDto);
         expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
         expect(spyPollBuildProgress).toHaveBeenCalledWith(projectId);

@@ -322,10 +322,10 @@ describe('DraftGenerationComponent', () => {
         mockDraftGenerationService.startBuildOrGetActiveBuild.and.returnValue(of(buildDto));
       });
 
-      env.component.startBuild();
+      env.component.startBuild([]);
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
-        sourceBooks: []
+        trainingBooks: []
       });
     });
 
@@ -339,10 +339,10 @@ describe('DraftGenerationComponent', () => {
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.startBuild();
+      env.component.startBuild([]);
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
-        sourceBooks: []
+        trainingBooks: []
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -358,10 +358,10 @@ describe('DraftGenerationComponent', () => {
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.startBuild();
+      env.component.startBuild([]);
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
-        sourceBooks: []
+        trainingBooks: []
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -377,10 +377,10 @@ describe('DraftGenerationComponent', () => {
       const mockDialogRef: MatDialogRef<any> = mock(MatDialogRef);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.startBuild();
+      env.component.startBuild([]);
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
-        sourceBooks: []
+        trainingBooks: []
       });
       verify(mockDialogRef.getState()).never();
       verify(mockDialogRef.close()).never();
@@ -397,10 +397,10 @@ describe('DraftGenerationComponent', () => {
       when(mockDialogRef.getState()).thenReturn(MatDialogState.OPEN);
       env.component.cancelDialogRef = instance(mockDialogRef);
 
-      env.component.startBuild();
+      env.component.startBuild([]);
       expect(mockDraftGenerationService.startBuildOrGetActiveBuild).toHaveBeenCalledWith({
         projectId: 'testProjectId',
-        sourceBooks: []
+        trainingBooks: []
       });
       verify(mockDialogRef.close()).once();
     });

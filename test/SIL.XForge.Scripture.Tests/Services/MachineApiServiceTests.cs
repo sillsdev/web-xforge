@@ -1958,7 +1958,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task StartPreTranslationBuildAsync_SuccessNoSourceBooks()
+    public async Task StartPreTranslationBuildAsync_SuccessNoTrainingBooks()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1978,7 +1978,7 @@ public class MachineApiServiceTests
     }
 
     [Test]
-    public async Task StartPreTranslationBuildAsync_SuccessWithSourceBooks()
+    public async Task StartPreTranslationBuildAsync_SuccessWithTrainingBooks()
     {
         // Set up test environment
         var env = new TestEnvironment();
@@ -1986,7 +1986,7 @@ public class MachineApiServiceTests
         // SUT
         await env.Service.StartPreTranslationBuildAsync(
             User01,
-            new BuildConfig { ProjectId = Project01, SourceBooks = { 1, 2 } },
+            new BuildConfig { ProjectId = Project01, TrainingBooks = { 1, 2 } },
             CancellationToken.None
         );
 

@@ -11,10 +11,10 @@ namespace SIL.XForge.Scripture.Models;
 public class BuildConfig
 {
     /// <summary>
-    /// Gets or sets the source books to use for the build.
+    /// Gets or sets the books to use for training the draft.
     /// </summary>
-    /// <value>The books numbers to use as the source texts.</value>
-    public HashSet<int> SourceBooks { get; set; } = new HashSet<int>();
+    /// <value>The books numbers to use as the source texts for training.</value>
+    public HashSet<int> TrainingBooks { get; set; } = new HashSet<int>();
 
     /// <summary>
     /// Gets or sets the project identifier.

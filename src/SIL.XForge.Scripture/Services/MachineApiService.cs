@@ -645,7 +645,7 @@ public class MachineApiService : IMachineApiService
             op =>
                 op.Set(
                     p => p.TranslateConfig.DraftConfig.LastSelectedBooks,
-                    buildConfig.SourceBooks.ToList(),
+                    buildConfig.TrainingBooks.ToList(),
                     _listIntComparer
                 )
         );
