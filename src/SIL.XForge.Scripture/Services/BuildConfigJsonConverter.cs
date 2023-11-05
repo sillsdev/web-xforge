@@ -24,13 +24,13 @@ public class BuildConfigJsonConverter : JsonConverter<BuildConfig>
 
         writer.WriteStartObject();
 
-        if (value.SourceBooks.Count > 0)
+        if (value.TrainingBooks.Count > 0)
         {
-            writer.WritePropertyName("SourceBooks");
-            serializer.Serialize(writer, value.SourceBooks);
+            writer.WritePropertyName(nameof(value.TrainingBooks));
+            serializer.Serialize(writer, value.TrainingBooks);
         }
 
-        writer.WritePropertyName("ProjectId");
+        writer.WritePropertyName(nameof(value.ProjectId));
         serializer.Serialize(writer, value.ProjectId);
 
         writer.WriteEndObject();

@@ -20,7 +20,7 @@ public class BuildConfigJsonConverterTests
         var serializer = Substitute.For<JsonSerializer>();
         var buildConfig = new BuildConfig
         {
-            SourceBooks = new HashSet<int> { 1, 2, 3 },
+            TrainingBooks = new HashSet<int> { 1, 2, 3 },
             ProjectId = Project01,
         };
 
@@ -28,15 +28,15 @@ public class BuildConfigJsonConverterTests
         converter.WriteJson(writer, buildConfig, serializer);
 
         writer.Received().WriteStartObject();
-        writer.Received().WritePropertyName("SourceBooks");
-        serializer.Received().Serialize(writer, buildConfig.SourceBooks);
-        writer.Received().WritePropertyName("ProjectId");
+        writer.Received().WritePropertyName(nameof(buildConfig.TrainingBooks));
+        serializer.Received().Serialize(writer, buildConfig.TrainingBooks);
+        writer.Received().WritePropertyName(nameof(buildConfig.ProjectId));
         serializer.Received().Serialize(writer, buildConfig.ProjectId);
         writer.Received().WriteEndObject();
     }
 
     [Test]
-    public void WriteJson_Serializes_BuildConfig_WithoutSourceBooks()
+    public void WriteJson_Serializes_BuildConfig_WithoutTrainingBooks()
     {
         var converter = new BuildConfigJsonConverter();
         var writer = Substitute.For<JsonWriter>();
@@ -47,8 +47,8 @@ public class BuildConfigJsonConverterTests
         converter.WriteJson(writer, buildConfig, serializer);
 
         writer.Received().WriteStartObject();
-        writer.DidNotReceive().WritePropertyName("SourceBooks");
-        writer.Received().WritePropertyName("ProjectId");
+        writer.DidNotReceive().WritePropertyName(nameof(buildConfig.TrainingBooks));
+        writer.Received().WritePropertyName(nameof(buildConfig.ProjectId));
         serializer.Received().Serialize(writer, buildConfig.ProjectId);
         writer.Received().WriteEndObject();
     }
@@ -87,7 +87,8 @@ public class BuildConfigJsonConverterTests
     public void ReadJson_Deserializes_JSON_Object()
     {
         var converter = new BuildConfigJsonConverter();
-        const string jsonString = $"{{\"ProjectId\":\"{Project01}\",\"SourceBooks\":[1,2,3]}}";
+        const string jsonString =
+            $"{{\"{nameof(BuildConfig.ProjectId)}\":\"{Project01}\",\"{nameof(BuildConfig.TrainingBooks)}\":[1,2,3]}}";
         using var stringReader = new StringReader(jsonString);
         using var reader = new JsonTextReader(stringReader);
         var serializer = new JsonSerializer();
@@ -97,7 +98,7 @@ public class BuildConfigJsonConverterTests
 
         Assert.IsNotNull(buildConfig);
         Assert.IsInstanceOf<BuildConfig>(buildConfig);
-        CollectionAssert.AreEqual(new List<int> { 1, 2, 3 }, buildConfig.SourceBooks);
+        CollectionAssert.AreEqual(new List<int> { 1, 2, 3 }, buildConfig.TrainingBooks);
         Assert.AreEqual(Project01, buildConfig.ProjectId);
     }
 }
