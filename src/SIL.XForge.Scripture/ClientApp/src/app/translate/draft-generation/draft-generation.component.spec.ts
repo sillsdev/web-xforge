@@ -27,6 +27,7 @@ import { SharedModule } from '../../shared/shared.module';
 import { DraftGenerationStepsComponent } from './draft-generation-steps/draft-generation-steps.component';
 import { DraftGenerationComponent, InfoAlert } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
+import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 
 describe('DraftGenerationComponent', () => {
   let mockFeatureFlagService: jasmine.SpyObj<FeatureFlagService>;
@@ -35,6 +36,7 @@ describe('DraftGenerationComponent', () => {
   let mockActivatedProjectService: jasmine.SpyObj<ActivatedProjectService>;
   let mockProjectService: jasmine.SpyObj<SFProjectService>;
   let mockI18nService: jasmine.SpyObj<I18nService>;
+  let mockPreTranslationSignupUrlService: jasmine.SpyObj<PreTranslationSignupUrlService>;
 
   const buildDto: BuildDto = {
     id: 'testId',
@@ -89,6 +91,7 @@ describe('DraftGenerationComponent', () => {
           { provide: SFProjectService, useValue: mockProjectService },
           { provide: DialogService, useValue: mockDialogService },
           { provide: I18nService, useValue: mockI18nService },
+          { provide: PreTranslationSignupUrlService, useValue: mockPreTranslationSignupUrlService },
           { provide: OnlineStatusService, useClass: TestOnlineStatusService }
         ]
       });
@@ -141,8 +144,10 @@ describe('DraftGenerationComponent', () => {
         } as SFProjectProfileDoc)
       });
       mockProjectService = jasmine.createSpyObj<SFProjectService>(['getProfile']);
+      mockPreTranslationSignupUrlService = jasmine.createSpyObj<PreTranslationSignupUrlService>(['generateSignupUrl']);
 
       mockI18nService.getLanguageDisplayName.and.returnValue('English');
+      mockPreTranslationSignupUrlService.generateSignupUrl.and.returnValue(of('').toPromise());
       mockDraftGenerationService.getBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.pollBuildProgress.and.returnValue(of(buildDto));
       mockDraftGenerationService.getLastCompletedBuild.and.returnValue(of(buildDto));
@@ -272,12 +277,23 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.getInfoAlert()).toBe(InfoAlert.SourceAndTargetLanguageIdentical);
     });
 
+    it('should return ApprovalNeeded when isPreTranslationApproved is false', () => {
+      let env = new TestEnvironment();
+      env.component.isBackTranslation = true;
+      env.component.isTargetLanguageSupported = true;
+      env.component.isSourceProjectSet = true;
+      env.component.isSourceAndTargetDifferent = true;
+      env.component.isPreTranslationApproved = false;
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.ApprovalNeeded);
+    });
+
     it('should return None when all back translation requirements are met', () => {
       let env = new TestEnvironment();
       env.component.isBackTranslation = true;
       env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = true;
       env.component.isSourceAndTargetDifferent = true;
+      env.component.isPreTranslationApproved = true;
       expect(env.component.getInfoAlert()).toBe(InfoAlert.None);
     });
 
@@ -295,8 +311,28 @@ describe('DraftGenerationComponent', () => {
       env.component.isTargetLanguageSupported = false;
       env.component.isSourceProjectSet = true;
       env.component.isSourceAndTargetDifferent = true;
+      env.component.isPreTranslationApproved = true;
       expect(env.component.isForwardTranslationEnabled).toBe(true);
       expect(env.component.getInfoAlert()).toBe(InfoAlert.None);
+    });
+
+    it('should enforce supported language for back translations even when forward translation feature flag is set', () => {
+      let env = new TestEnvironment(() => {
+        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
+          'FeatureFlagService',
+          {},
+          {
+            allowForwardTranslationNmtDrafting: { enabled: true } as ObservableFeatureFlag
+          }
+        );
+      });
+      env.component.isBackTranslation = true;
+      env.component.isTargetLanguageSupported = false;
+      env.component.isSourceProjectSet = true;
+      env.component.isSourceAndTargetDifferent = true;
+      env.component.isPreTranslationApproved = true;
+      expect(env.component.isForwardTranslationEnabled).toBe(true);
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.NotSupportedLanguage);
     });
   });
 
