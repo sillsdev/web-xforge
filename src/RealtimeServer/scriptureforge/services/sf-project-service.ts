@@ -146,6 +146,12 @@ export class SFProjectService extends ProjectService<SFProject> {
                   }
                 },
                 additionalProperties: false
+              },
+              lastSelectedBooks: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'int'
+                }
               }
             },
             additionalProperties: false
