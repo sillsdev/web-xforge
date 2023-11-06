@@ -6,7 +6,7 @@ import {
 import { MatLegacyTabGroup as MatTabGroup } from '@angular/material/legacy-tabs';
 import { isEmpty } from 'lodash-es';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { of, Subscription } from 'rxjs';
+import { combineLatest, of, Subscription } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -94,6 +94,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   get isGenerationSupported(): boolean {
     return (
+      (!this.isBackTranslationMode || this.isBackTranslation) &&
       (!this.isBackTranslationMode || this.isTargetLanguageSupported) &&
       this.isSourceProjectSet &&
       this.isSourceAndTargetDifferent &&
@@ -115,25 +116,34 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   ngOnInit(): void {
-    this.subscribe(this.activatedProject.projectDoc$.pipe(filterNullish()), async projectDoc => {
-      const translateConfig = projectDoc.data?.translateConfig;
+    this.subscribe(
+      combineLatest([
+        this.activatedProject.projectDoc$.pipe(
+          filterNullish(),
+          tap(async projectDoc => {
+            const translateConfig = projectDoc.data?.translateConfig;
 
-      this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
-      this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
-      this.targetLanguage = projectDoc.data?.writingSystem.tag;
-      this.isTargetLanguageSupported = this.nllbService.isNllbLanguage(this.targetLanguage);
-      this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
-      this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
+            this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
+            this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
+            this.targetLanguage = projectDoc.data?.writingSystem.tag;
+            this.isTargetLanguageSupported = this.nllbService.isNllbLanguage(this.targetLanguage);
+            this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
+            this.isPreTranslationApproved = false && (translateConfig?.preTranslate ?? false);
 
-      this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
-      this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
+            this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
+            this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
 
-      this.infoAlert = this.getInfoAlert();
-
-      if (!this.isPreTranslationApproved) {
-        this.signupFormUrl = await this.preTranslationSignupUrlService.generateSignupUrl();
+            if (!this.isPreTranslationApproved) {
+              this.signupFormUrl = await this.preTranslationSignupUrlService.generateSignupUrl();
+            }
+          })
+        ),
+        this.featureFlags.allowForwardTranslationNmtDrafting.enabled$
+      ]),
+      () => {
+        this.infoAlert = this.getInfoAlert();
       }
-    });
+    );
 
     this.subscribe(
       this.activatedProject.projectId$.pipe(
