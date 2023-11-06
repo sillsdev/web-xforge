@@ -79,7 +79,6 @@ app-text {
   overflow: hidden;
 }
 
-.copyright-banner,
 .formatting-invalid-warning,
 .out-of-sync-warning,
 .doc-corrupted-warning,
@@ -130,11 +129,14 @@ app-text {
   }
 }
 
+.copyright-banner {
+  margin-bottom: 10px;
+}
+
 .copyright-more-info {
   cursor: pointer;
   font-weight: bold;
-}
-
-.copyright-more-info:hover {
-  text-decoration: underline;
+  &:hover {
+    text-decoration: underline;
+  }
 }
