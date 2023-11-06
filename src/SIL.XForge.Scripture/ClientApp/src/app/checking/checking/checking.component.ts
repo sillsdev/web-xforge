@@ -139,6 +139,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private textAudioQuery?: RealtimeQuery<TextAudioDoc>;
   private projectDeleteSub?: Subscription;
   private hideTextSub?: Subscription;
+  private textAudioSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
   private questionFilterFunctions: Record<QuestionFilter, (answers: Answer[]) => boolean> = {
     [QuestionFilter.None]: () => true,
@@ -637,6 +638,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               sort: true,
               activeOnly: true
             });
+            this.textAudioSub = this.subscribe(this.questionsQuery.ready$, () => this.updateAudioMissingWarning());
 
             // TODO: check for remote changes to file data more generically
             this.questionsRemoteChangesSub = this.subscribe(
@@ -693,7 +695,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 throttleTime(100, asyncScheduler, { leading: false, trailing: true })
               ),
               () => {
-                this.updateAudioOnlyWarning();
+                this.updateAudioMissingWarning();
                 this.updateVisibleQuestions();
               }
             );
@@ -1049,6 +1051,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       currentChapter: this._chapter
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
+    this.updateAudioMissingWarning();
     this.calculateScriptureSliderPosition();
   }
 
@@ -1199,7 +1202,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.refreshSummary();
   }
 
-  private updateAudioOnlyWarning(): void {
+  private updateAudioMissingWarning(): void {
     const texts: TextInfo[] | undefined = this.projectDoc?.data?.texts;
     if (this.questionDocs.length === 0 || texts == null) {
       return;
@@ -1647,5 +1650,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.questionsRemoteChangesSub?.unsubscribe();
     this.questionsQuery?.dispose();
     this.textAudioQuery?.dispose();
+    this.hideTextSub?.unsubscribe();
+    this.textAudioSub?.unsubscribe();
   }
 }
