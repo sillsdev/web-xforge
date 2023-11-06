@@ -73,6 +73,7 @@ import { AudioTimePipe } from '../../shared/audio/audio-time-pipe';
 import { SharedModule } from '../../shared/shared.module';
 import { verseSlug } from '../../shared/utils';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
+import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { QuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
@@ -101,6 +102,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedDialogService = mock(DialogService);
 const mockedTextChooserDialogComponent = mock(TextChooserDialogComponent);
 const mockedQuestionDialogService = mock(QuestionDialogService);
+const mockedChapterAudioDialogService = mock(ChapterAudioDialogService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedFileService = mock(FileService);
@@ -174,6 +176,7 @@ describe('CheckingComponent', () => {
       { provide: DialogService, useMock: mockedDialogService },
       { provide: TextChooserDialogComponent, useMock: mockedTextChooserDialogComponent },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
+      { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
@@ -2225,6 +2228,20 @@ describe('CheckingComponent', () => {
 
       expect(env.audioCheckingWarning).not.toBeNull();
       expect(env.questionNoAudioWarning).not.toBeNull();
+
+      when(mockedChapterAudioDialogService.openDialog(anything())).thenCall(() => {
+        env.component.projectDoc!.submitJson0Op(op => {
+          const matTextIndex: number = env.component.projectDoc!.data!.texts.findIndex(t => t.bookNum === 40);
+          op.set(p => p.texts[matTextIndex].chapters[0].hasAudio, true);
+        });
+      });
+
+      env.component.addAudioTimingData();
+      env.waitForQuestionTimersToComplete();
+      env.fixture.detectChanges();
+
+      expect(env.audioCheckingWarning).toBeNull();
+      expect(env.questionNoAudioWarning).toBeNull();
     }));
 
     it('notifies community checker if chapter audio is absent and hide scripture text is enabled', fakeAsync(() => {
