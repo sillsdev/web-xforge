@@ -9,15 +9,17 @@ import { escapeRegExp } from 'lodash-es';
 import merge from 'lodash-es/merge';
 import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
+import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
+import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { combineLatest, from, Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { FileType } from 'xforge-common/models/file-offline-data';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
+import { SFProjectService } from '../../app/core/sf-project.service';
 import { ProjectDoc } from '../models/project-doc';
 import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { NoticeService } from '../notice.service';
-import { ProjectService } from '../project.service';
 import { QueryFilter, QueryParameters } from '../query-parameters';
 import { TestRealtimeService } from '../test-realtime.service';
 import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from '../test-utils';
@@ -27,7 +29,7 @@ import { UserService } from '../user.service';
 import { SaProjectsComponent } from './sa-projects.component';
 
 const mockedNoticeService = mock(NoticeService);
-const mockedProjectService: ProjectService = mock(ProjectService);
+const mockedProjectService = mock(SFProjectService);
 const mockedUserService = mock(UserService);
 
 describe('SaProjectsComponent', () => {
@@ -43,7 +45,7 @@ describe('SaProjectsComponent', () => {
     declarations: [SaProjectsComponent],
     providers: [
       { provide: NoticeService, useMock: mockedNoticeService },
-      { provide: ProjectService, useMock: mockedProjectService },
+      { provide: SFProjectService, useMock: mockedProjectService },
       { provide: UserService, useMock: mockedUserService },
       emptyHammerLoader
     ]
@@ -180,6 +182,38 @@ describe('SaProjectsComponent', () => {
 
     expect(env.rows.length).toEqual(1);
   }));
+
+  it('should show if pre-translate enabled', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    tick();
+
+    const projectRowWithPreTranslateEnabled: number = 0;
+    const projectRowWithPreTranslateDisabled: number = 1;
+    expect(env.isPreTranslateEnabled(projectRowWithPreTranslateEnabled)).toBe(true);
+    expect(env.isPreTranslateEnabled(projectRowWithPreTranslateDisabled)).toBe(false);
+    verify(mockedProjectService.onlineSetPreTranslate(anything(), anything())).never();
+  }));
+
+  it('should process change for pre-translate', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
+    tick();
+
+    const projectInRow: number = 0;
+    expect(env.isPreTranslateEnabled(projectInRow)).toBe(true);
+    // SUT
+    env.clickButton(env.preTranslateControl(projectInRow));
+    expect(env.isPreTranslateEnabled(projectInRow)).toBe(false);
+
+    verify(mockedProjectService.onlineSetPreTranslate('project01', false)).once();
+  }));
 });
 
 class TestProjectDoc extends ProjectDoc {
@@ -195,6 +229,7 @@ class TestEnvironment {
 
   private readonly roleColumn = 2;
   private readonly syncDisabledColumn = 3;
+  private readonly preTranslateColumn = 4;
   private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor() {
@@ -275,6 +310,15 @@ class TestEnvironment {
     return this.cell(row, this.syncDisabledColumn).query(By.css('mat-checkbox')).query(By.css('input'));
   }
 
+  isPreTranslateEnabled(row: number): boolean {
+    return (this.cell(row, this.preTranslateColumn).query(By.css('mat-checkbox')).componentInstance as MatCheckbox)
+      .checked;
+  }
+
+  preTranslateControl(row: number): DebugElement {
+    return this.cell(row, this.preTranslateColumn).query(By.css('mat-checkbox')).query(By.css('input'));
+  }
+
   changeSelectValue(select: DebugElement, option: number): void {
     select.nativeElement.click();
     this.fixture.detectChanges();
@@ -302,31 +346,34 @@ class TestEnvironment {
   }
 
   setupProjectData(): void {
-    this.realtimeService.addSnapshots<Project>(TestProjectDoc.COLLECTION, [
+    this.realtimeService.addSnapshots<SFProject>(TestProjectDoc.COLLECTION, [
       {
         id: 'project01',
-        data: {
+        data: createTestProject({
           name: 'Project 01',
+          translateConfig: {
+            preTranslate: true
+          },
           userRoles: { user01: 'pt_administrator' },
           userPermissions: {}
-        }
+        })
       },
       {
         id: 'project02',
-        data: {
+        data: createTestProject({
           name: 'Project 02',
           userRoles: {},
           userPermissions: {},
           syncDisabled: true
-        }
+        })
       },
       {
         id: 'project03',
-        data: {
+        data: createTestProject({
           name: 'Project 03',
           userRoles: { user01: 'pt_translator' },
           userPermissions: {}
-        }
+        })
       }
     ]);
   }

@@ -41,8 +41,15 @@
           </mat-checkbox>
         </td>
       </ng-container>
+      <ng-container matColumnDef="preTranslate">
+        <td mat-cell *matCellDef="let row">
+          <mat-checkbox [checked]="row.preTranslate" (change)="onUpdatePreTranslate(row, $event.checked)">
+            NMT Drafting
+          </mat-checkbox>
+        </td>
+      </ng-container>
 
-      <tr mat-row *matRowDef="let row; columns: ['name', 'tasks', 'role', 'syncDisabled']"></tr>
+      <tr mat-row *matRowDef="let row; columns: ['name', 'tasks', 'role', 'syncDisabled', 'preTranslate']"></tr>
     </table>
 
     <mat-paginator
