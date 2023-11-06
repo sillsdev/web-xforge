@@ -3977,7 +3977,7 @@ class TestEnvironment {
   }
 
   get copyrightMoreInfo(): DebugElement {
-    return this.fixture.debugElement.query(By.css('.copyright-banner > .copyright-more-info'));
+    return this.fixture.debugElement.query(By.css('.copyright-banner .copyright-more-info'));
   }
 
   get isSourceAreaHidden(): boolean {

@@ -1089,7 +1089,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   }
 
   showCopyrightNotice(textType: TextType): void {
-    let copyrightNotice =
+    let copyrightNotice: string =
       textType === 'source'
         ? this.sourceProjectDoc?.data?.copyrightNotice ?? ''
         : this.projectDoc?.data?.copyrightNotice ?? '';
