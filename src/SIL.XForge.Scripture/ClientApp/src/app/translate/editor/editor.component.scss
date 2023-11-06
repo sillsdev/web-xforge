@@ -79,6 +79,7 @@ app-text {
   overflow: hidden;
 }
 
+.copyright-banner,
 .formatting-invalid-warning,
 .out-of-sync-warning,
 .doc-corrupted-warning,
@@ -127,4 +128,13 @@ app-text {
     display: flex;
     justify-content: flex-end;
   }
+}
+
+.copyright-more-info {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.copyright-more-info:hover {
+  text-decoration: underline;
 }

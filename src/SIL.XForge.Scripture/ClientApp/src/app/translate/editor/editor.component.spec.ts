@@ -3424,6 +3424,34 @@ describe('EditorComponent', () => {
       expect(env.sourceBiblicalTerms).toBeFalsy();
       env.dispose();
     }));
+
+    it('shows the copyright banner', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({ translateConfig: defaultTranslateConfig, copyrightBanner: 'banner text' });
+      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
+      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.wait();
+      expect(env.copyrightBanner).not.toBeNull();
+      env.dispose();
+    }));
+
+    it('shows the copyright notice dialog', fakeAsync(() => {
+      const env = new TestEnvironment();
+      env.setupProject({ translateConfig: defaultTranslateConfig, copyrightBanner: 'banner text' });
+      env.setProjectUserConfig({ selectedBookNum: 42, selectedChapterNum: 3 });
+      env.updateParams({ projectId: 'project01', bookId: 'MAT' });
+      env.wait();
+
+      // SUT
+      const dialogMessage = spyOn((env.component as any).dialogService, 'openGenericDialog').and.callThrough();
+      expect(env.copyrightBanner).not.toBeNull();
+      env.copyrightMoreInfo.nativeElement.click();
+      tick();
+      env.fixture.detectChanges();
+      expect(dialogMessage).toHaveBeenCalledTimes(1);
+
+      env.dispose();
+    }));
   });
 
   describe('Back translation draft', () => {
@@ -3944,6 +3972,14 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('.no-edit-permission-message'));
   }
 
+  get copyrightBanner(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.copyright-banner'));
+  }
+
+  get copyrightMoreInfo(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.copyright-banner > .copyright-more-info'));
+  }
+
   get isSourceAreaHidden(): boolean {
     return this.sourceTextArea.nativeElement.style.display === 'none';
   }
@@ -4045,6 +4081,12 @@ class TestEnvironment {
     }
     if (data.defaultFontSize != null) {
       projectProfileData.defaultFontSize = data.defaultFontSize;
+    }
+    if (data.copyrightBanner != null) {
+      projectProfileData.copyrightBanner = data.copyrightBanner;
+    }
+    if (data.copyrightNotice != null) {
+      projectProfileData.copyrightNotice = data.copyrightNotice;
     }
     if (data.texts != null) {
       projectProfileData.texts = merge(projectProfileData.texts, data.texts);
