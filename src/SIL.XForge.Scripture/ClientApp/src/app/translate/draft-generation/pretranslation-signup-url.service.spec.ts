@@ -27,7 +27,7 @@ describe('PreTranslationSignupUrlService', () => {
     it('should generate the signup URL with the correct parameters', async () => {
       const mockUserDoc: UserDoc = { data: { name: 'John', email: 'john@example.com' } } as UserDoc;
       const mockProjectDoc: SFProjectProfileDoc = {
-        data: { shortName: 'project', writingSystem: { tag: 'en' } }
+        data: { shortName: 'project', writingSystem: { tag: 'eng' } }
       } as SFProjectProfileDoc;
 
       when(mockUserService.getCurrentUser()).thenResolve(mockUserDoc);
@@ -36,7 +36,7 @@ describe('PreTranslationSignupUrlService', () => {
       const url = await service.generateSignupUrl();
 
       expect(url).toBe(
-        'https://app.smartsheet.com/b/form/305798a45a664d8585ac74e72241d8cc?Name=John&Email=john%40example.com&Project%20Short%20Name=project&Language%20of%20Translation%20Project=en'
+        'https://app.smartsheet.com/b/form/305798a45a664d8585ac74e72241d8cc?Name=John&Email=john%40example.com&Project%20Short%20Name=project&Language%20of%20Translation%20Project=eng'
       );
     });
 
@@ -47,7 +47,23 @@ describe('PreTranslationSignupUrlService', () => {
       const url = await service.generateSignupUrl();
 
       expect(url).toBe(
-        'https://app.smartsheet.com/b/form/305798a45a664d8585ac74e72241d8cc?Name=&Email=&Project%20Short%20Name=&Language%20of%20Translation%20Project='
+        'https://app.smartsheet.com/b/form/305798a45a664d8585ac74e72241d8cc?Name=&Email=&Project%20Short%20Name=&'
+      );
+    });
+
+    it('should omit language code if it is not a 3-letter code', async () => {
+      const mockUserDoc: UserDoc = { data: { name: 'John', email: 'john@example.com' } } as UserDoc;
+      const mockProjectDoc: SFProjectProfileDoc = {
+        data: { shortName: 'project', writingSystem: { tag: 'en' } }
+      } as SFProjectProfileDoc;
+
+      when(mockUserService.getCurrentUser()).thenResolve(mockUserDoc);
+      when(mockActivatedProjectService.projectDoc).thenReturn(mockProjectDoc);
+
+      const url = await service.generateSignupUrl();
+
+      expect(url).toBe(
+        'https://app.smartsheet.com/b/form/305798a45a664d8585ac74e72241d8cc?Name=John&Email=john%40example.com&Project%20Short%20Name=project&'
       );
     });
   });
