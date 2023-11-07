@@ -13,16 +13,16 @@
       <div class="wrapper wrapper-book-chapter valid">
         <mat-icon *ngIf="!selectionHasAudioAlready">book</mat-icon>
         <app-info
-          *ngIf="selectionHasAudioAlready"
+          *ngIf="selectionHasAudioAlready && !inEditState"
           [text]="t('chapter_audio_dialog.audio_already_exists')"
           icon="warning"
           type="warning"
         ></app-info>
-        <mat-select [(value)]="book" class="book-select-menu">
+        <mat-select [(value)]="book" [disabled]="inEditState" class="book-select-menu">
           <mat-option *ngFor="let b of books" [value]="b">{{ bookName(b) }}</mat-option>
         </mat-select>
         <div class="divider"></div>
-        <mat-select [(value)]="chapter" class="chapter-select-menu">
+        <mat-select [(value)]="chapter" [disabled]="inEditState" class="chapter-select-menu">
           <mat-option *ngFor="let c of chapters" [value]="c">{{ c }}</mat-option>
         </mat-select>
       </div>
