@@ -49,7 +49,7 @@ export class MockPreTranslationHttpClient {
     engine: { id: '', href: '' },
     revision: 0,
     state: BuildStates.Completed,
-    percentCompleted: 100,
+    percentCompleted: 1.0,
     message: ''
   };
 
@@ -142,7 +142,7 @@ export class MockPreTranslationHttpClient {
     const stepOffset: number =
       isContinue && this.mostRecentJobState?.state === BuildStates.Active
         ? activeAfter / interval +
-          Math.floor((this.mostRecentJobState!.percentCompleted / 100) * ((duration - activeAfter) / interval))
+          Math.floor(this.mostRecentJobState!.percentCompleted * ((duration - activeAfter) / interval))
         : 0;
 
     const generationTimer$: Observable<number> = timer(0, interval).pipe(
@@ -182,12 +182,12 @@ export class MockPreTranslationHttpClient {
 
       if (elapsed >= duration) {
         this.mostRecentJobState.state = BuildStates.Completed;
-        this.mostRecentJobState.percentCompleted = 100;
+        this.mostRecentJobState.percentCompleted = 1.0;
         this.setHasCompletedBuild(true);
       }
 
       if (this.mostRecentJobState.state === BuildStates.Active) {
-        this.mostRecentJobState.percentCompleted = ((elapsed - activeAfter) / (duration - activeAfter)) * 100;
+        this.mostRecentJobState.percentCompleted = (elapsed - activeAfter) / (duration - activeAfter);
       }
 
       // Store most recent job state in browser session
