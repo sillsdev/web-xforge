@@ -2838,6 +2838,21 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public void CreateAudioTimingData_CanUploadWithPermission()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        var timingData = new List<AudioTiming>();
+        const string audioUrl = "http://example.com/audio.mp3";
+
+        // SUT
+        Assert.DoesNotThrowAsync(
+            () => env.Service.CreateAudioTimingData(User03, Project01, book, chapter, timingData, audioUrl)
+        );
+    }
+
+    [Test]
     public async Task CreateAudioTimingData_UpdatesTextAudioDoc()
     {
         var env = new TestEnvironment();
@@ -2977,6 +2992,21 @@ public class SFProjectServiceTests
         Assert.That(env.GetProject(Project01).TranslateConfig.PreTranslate, Is.EqualTo(false));
     }
 
+    [Test]
+    public async Task CreateAudioTimingData_CanDeleteWithPermission()
+    {
+        var env = new TestEnvironment();
+        const int book = 40;
+        const int chapter = 1;
+        var timingData = new List<AudioTiming>();
+        const string audioUrl = "http://example.com/audio.mp3";
+
+        await env.Service.CreateAudioTimingData(User03, Project01, book, chapter, timingData, audioUrl);
+
+        // SUT
+        Assert.DoesNotThrowAsync(() => env.Service.DeleteAudioTimingData(User03, Project01, book, chapter));
+    }
+
     private class TestEnvironment
     {
         public TestEnvironment()
@@ -3114,6 +3144,11 @@ public class SFProjectServiceTests
                                 { User02, SFProjectRole.CommunityChecker },
                                 { User05, SFProjectRole.Translator },
                                 { User06, SFProjectRole.Viewer }
+                            },
+                            UserPermissions = new Dictionary<string, string[]>
+                            {
+                                { User03, new[] { "text_audio.create", "text_audio.delete" } },
+                                { User05, Array.Empty<string>() }
                             },
                             Texts =
                             {

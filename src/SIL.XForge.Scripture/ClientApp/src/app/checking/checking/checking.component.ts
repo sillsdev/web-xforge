@@ -35,6 +35,7 @@ import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config
 import { TextAudioDoc } from '../../core/models/text-audio-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
+import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { getVerseRefFromSegmentRef } from '../../shared/utils';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
@@ -165,6 +166,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     private readonly mediaBreakpointService: MediaBreakpointService,
     noticeService: NoticeService,
     private readonly router: Router,
+    private readonly permissions: PermissionsService,
     private readonly questionDialogService: QuestionDialogService,
     readonly i18n: I18nService,
     readonly featureFlags: FeatureFlagService,
@@ -531,9 +533,11 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             this.projectRemoteChangesSub?.unsubscribe();
             this.projectRemoteChangesSub = this.subscribe(this.projectDoc.remoteChanges$, () => {
               if (this.projectDoc != null && this.projectDoc.data != null) {
-                if (!(this.userService.currentUserId in this.projectDoc.data.userRoles)) {
+                const roles = this.projectDoc.data.userRoles;
+                const userId = this.userService.currentUserId;
+                if (!(userId in roles)) {
                   this.onRemovedFromProject();
-                } else if (!this.projectDoc.data.checkingConfig.checkingEnabled) {
+                } else if (!this.permissions.canAccessCommunityChecking(this.projectDoc)) {
                   const currentBookId =
                     this.questionsList == null || this.questionsList.activeQuestionBook == null
                       ? undefined

@@ -24,18 +24,6 @@ h3 {
   height: 24px;
 }
 
-.helper-text {
-  color: variables.$text-hint-on-background;
-  line-height: 1.4em;
-  mat-icon {
-    font-size: inherit;
-    position: relative;
-    height: 1em;
-    width: unset;
-    top: 2px;
-  }
-}
-
 td.mat-cell:last-of-type {
   padding: 0;
 }
@@ -67,8 +55,13 @@ td.mat-cell:last-of-type {
 }
 
 // Allow the questions permission label to wrap on whitespace to prevent layout issues
-.mat-column-questions_permission .mat-checkbox ::ng-deep label {
+.mat-column-questions_permission .mat-column-audio_permission .mat-checkbox ::ng-deep label {
   white-space: initial;
+}
+
+// Necessary for spacing icons with narrow content
+.shift-left {
+  margin-left: -4px;
 }
 
 .current-user-label {

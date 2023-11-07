@@ -6,7 +6,7 @@ import { Operation } from 'realtime-server/lib/esm/common/models/project-rights'
 import { SFProjectProfile } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { Chapter, TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { asyncScheduler, merge, Subscription } from 'rxjs';
+import { Subscription, asyncScheduler, merge } from 'rxjs';
 import { map, tap, throttleTime } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -20,6 +20,7 @@ import { SFProjectProfileDoc } from '../../core/models/sf-project-profile-doc';
 import { SFProjectUserConfigDoc } from '../../core/models/sf-project-user-config-doc';
 import { TextDocId } from '../../core/models/text-doc';
 import { TextsByBookId } from '../../core/models/texts-by-book-id';
+import { PermissionsService } from '../../core/permissions.service';
 import { SFProjectService } from '../../core/sf-project.service';
 import { ChapterAudioDialogData } from '../chapter-audio-dialog/chapter-audio-dialog.component';
 import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
@@ -59,6 +60,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
     private readonly userService: UserService,
     private readonly questionDialogService: QuestionDialogService,
     private readonly router: Router,
+    private readonly permissions: PermissionsService,
     private readonly chapterAudioDialogService: ChapterAudioDialogService,
     readonly featureFlagsService: FeatureFlagService
   ) {
@@ -223,7 +225,7 @@ export class CheckingOverviewComponent extends DataLoadingComponent implements O
         .pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true }))
         .subscribe(() => {
           if (this.projectDoc != null && this.projectDoc.data != null) {
-            if (this.projectDoc.data.checkingConfig.checkingEnabled) {
+            if (this.permissions.canAccessCommunityChecking(this.projectDoc)) {
               this.initTextsWithLoadingIndicator();
             } else {
               if (this.projectUserConfigDoc != null) {

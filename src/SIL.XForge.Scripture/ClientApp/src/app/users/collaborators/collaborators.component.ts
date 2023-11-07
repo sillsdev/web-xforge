@@ -4,18 +4,19 @@ import { ActivatedRoute } from '@angular/router';
 import { translate } from '@ngneat/transloco';
 import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
-import { isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
+import { SFProjectRole, isParatextRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
 import { ExternalUrlService } from 'xforge-common/external-url.service';
-import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
+import { I18nService } from 'xforge-common/i18n.service';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { UserService } from 'xforge-common/user.service';
 import { XFValidators } from 'xforge-common/xfvalidators';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
 import { SFProjectService } from '../../core/sf-project.service';
+import { RolesAndPermissionsDialogComponent } from '../roles-and-permissions/roles-and-permissions-dialog.component';
 
 interface UserInfo {
   displayName?: string;
@@ -29,8 +30,8 @@ interface Row {
   readonly role: string;
   readonly inviteeStatus?: InviteeStatus;
   readonly allowCreatingQuestions: boolean;
+  readonly canManageAudio: boolean;
   readonly userEligibleForQuestionPermission: boolean;
-  readonly canHaveQuestionPermissionRevoked: boolean;
 }
 
 export interface InviteeStatus {
@@ -68,10 +69,6 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     readonly urls: ExternalUrlService
   ) {
     super(noticeService);
-  }
-
-  get rolesText(): TextAroundTemplate | undefined {
-    return this.i18n.translateTextAroundTemplateTags('collaborators.change_roles_and_permissions');
   }
 
   get hasEmailError(): boolean {
@@ -127,10 +124,10 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
   }
 
   get tableColumns(): string[] {
-    const columns: string[] = ['avatar', 'name', 'info', 'questions_permission', 'role', 'more'];
+    const columns: string[] = ['avatar', 'name', 'info', 'questions_permission', 'audio_permission', 'role', 'more'];
     return this.projectDoc?.data?.checkingConfig.checkingEnabled
       ? columns
-      : columns.filter(s => s !== 'questions_permission');
+      : columns.filter(s => s !== 'questions_permission' && s !== 'audio_permission');
   }
 
   ngOnInit(): void {
@@ -212,18 +209,22 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
     this.loadUsers();
   }
 
-  async toggleQuestionPermission(row: Row): Promise<void> {
-    if (!this.isAppOnline || !row.canHaveQuestionPermissionRevoked) {
-      return;
-    }
-    const permissions = new Set((this.projectDoc?.data?.userPermissions || {})[row.id] || []);
-    [
-      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
-      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit)
-    ].forEach(right => (row.allowCreatingQuestions ? permissions.delete(right) : permissions.add(right)));
+  async openRolesDialog(row: Row): Promise<void> {
+    this.dialogService.openMatDialog(RolesAndPermissionsDialogComponent, {
+      data: {
+        projectId: this.projectId,
+        userId: row.id,
+        userProfile: { avatarUrl: row.user.avatarUrl!, displayName: row.user.displayName! }
+      },
+      minWidth: '360px',
+      maxWidth: '560px',
+      width: '90%',
+      autoFocus: false
+    });
+  }
 
-    await this.projectService.onlineSetUserProjectPermissions(this.projectId, row.id, Array.from(permissions));
-    this.loadUsers();
+  isAdmin(role: string): boolean {
+    return role === SFProjectRole.ParatextAdministrator;
   }
 
   private async loadUsers(): Promise<void> {
@@ -243,17 +244,17 @@ export class CollaboratorsComponent extends DataLoadingComponent implements OnIn
         SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Create) &&
         SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.Questions, Operation.Edit);
 
-      const canHaveQuestionPermissionRevoked = !(
-        SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.Questions, Operation.Create) &&
-        SF_PROJECT_RIGHTS.roleHasRight(role, SFProjectDomain.Questions, Operation.Edit)
-      );
+      const canManageAudio =
+        SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Create) &&
+        SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Edit) &&
+        SF_PROJECT_RIGHTS.hasRight(project, userId, SFProjectDomain.TextAudio, Operation.Delete);
 
       userRows.push({
         id: userProfile.id,
         user: userProfile.data || {},
         role,
         allowCreatingQuestions,
-        canHaveQuestionPermissionRevoked,
+        canManageAudio,
         userEligibleForQuestionPermission: isParatextRole(role)
       });
     }

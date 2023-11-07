@@ -5,10 +5,10 @@ import { translate } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
-import { AuthType, getAuthType, User } from 'realtime-server/lib/esm/common/models/user';
+import { AuthType, User, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { BehaviorSubject, combineLatest, Observable, of, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subscription, combineLatest, of } from 'rxjs';
 import { distinctUntilChanged, filter, map, startWith, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -37,7 +37,8 @@ import { environment } from '../environments/environment';
 import { CheckingQuestionsService } from './checking/checking/checking-questions.service';
 import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
-import { canAccessCommunityCheckingApp, canAccessTranslateApp } from './core/models/sf-project-role-info';
+import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
+import { PermissionsService } from './core/permissions.service';
 import { SFProjectService } from './core/sf-project.service';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 
@@ -93,6 +94,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly fileService: FileService,
     private readonly reportingService: ErrorReportingService,
     private readonly userProjectsService: SFUserProjectsService,
+    private readonly permissions: PermissionsService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly media: MediaObserver,
@@ -152,7 +154,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
       this._selectedProjectDoc != null &&
       this._selectedProjectDoc.data != null &&
       !this._selectedProjectDoc.data.checkingConfig.checkingEnabled &&
-      !canAccessTranslateApp(this.selectedProjectRole)
+      !roleCanAccessTranslate(this.selectedProjectRole)
     );
   }
 
@@ -191,7 +193,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get isTranslateEnabled(): boolean {
-    return canAccessTranslateApp(this.selectedProjectRole);
+    return this.selectedProjectDoc != null && this.permissions.canAccessTranslate(this.selectedProjectDoc);
   }
 
   get isCheckingEnabled(): boolean {
@@ -201,7 +203,7 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get hasCommunityCheckingPermission(): boolean {
-    return this.selectedProjectRole != null && canAccessCommunityCheckingApp(this.selectedProjectRole);
+    return this.selectedProjectDoc != null && this.permissions.canAccessCommunityChecking(this.selectedProjectDoc);
   }
 
   get hasSingleAppEnabled(): boolean {
@@ -233,9 +235,9 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   }
 
   get selectedProjectRole(): SFProjectRole | undefined {
-    return this._selectedProjectDoc == null || this._selectedProjectDoc.data == null || this.currentUserDoc == null
+    return this.currentUserDoc == null
       ? undefined
-      : (this._selectedProjectDoc.data.userRoles[this.currentUserDoc.id] as SFProjectRole);
+      : (this._selectedProjectDoc?.data?.userRoles[this.currentUserDoc.id] as SFProjectRole);
   }
 
   get texts(): TextInfo[] {

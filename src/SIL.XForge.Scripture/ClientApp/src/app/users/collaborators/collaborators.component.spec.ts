@@ -8,16 +8,14 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
-import { Operation } from 'realtime-server/lib/esm/common/models/project-rights';
 import { UserProfile } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUserProfile } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { CheckingAnswerExport, CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
-import { SFProjectDomain, SF_PROJECT_RIGHTS } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-rights';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
 import { of } from 'rxjs';
-import { anything, deepEqual, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anything, mock, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
@@ -32,7 +30,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule, emptyHammerLoader } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { SFProjectDoc } from '../../core/models/sf-project-doc';
@@ -367,62 +365,48 @@ describe('CollaboratorsComponent', () => {
     env.cleanup();
   }));
 
-  it('should allow granting question permission to non admins', fakeAsync(() => {
+  it('should enable editing roles and permissions for non-admins', fakeAsync(() => {
     const env = new TestEnvironment();
     env.setupProjectData();
     env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
 
-    // With checking disabled, the checkboxes should not exist
-    expect(env.userPermissionIcon(0)).toBeUndefined();
+    env.clickElement(env.userRowMoreMenuElement(1));
+    expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(false);
 
-    // Enable checking
-    const checkingConfig: CheckingConfig = {
-      checkingEnabled: true,
-      shareEnabled: true,
-      usersSeeEachOthersResponses: false,
-      answerExportMethod: CheckingAnswerExport.MarkedForExport
-    };
-    env.updateCheckingProperties(checkingConfig);
+    env.cleanup();
+  }));
+
+  it('should disable editing roles and permissions for admins', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    env.fixture.detectChanges();
     tick();
     env.fixture.detectChanges();
 
-    // project admins always have permission, so the checkbox should be checked, disabled, and do nothing when clicked
-    expect(env.userPermissionIcon(0)).toBeTruthy();
     env.clickElement(env.userRowMoreMenuElement(0));
-    expect(env.questionPermissionItemOnRow(0).attributes['disabled']).toBeTruthy();
+    expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(true);
 
-    // translators can be given permission, or not have permission
-    expect(env.userPermissionIcon(1)).toBeUndefined();
-    env.clickElement(env.userRowMoreMenuElement(1));
-    let translatorPermissionMenuItem: DebugElement = env.questionPermissionItemOnRow(1);
-    expect(translatorPermissionMenuItem).toBeTruthy();
-    expect(translatorPermissionMenuItem.nativeElement.textContent).toContain('Enable add and edit questions');
-    env.clickElement(translatorPermissionMenuItem);
-    expect(env.userPermissionIcon(1)).toBeTruthy();
-    const permissions = [
-      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Create),
-      SF_PROJECT_RIGHTS.joinRight(SFProjectDomain.Questions, Operation.Edit)
-    ];
-    verify(
-      mockedProjectService.onlineSetUserProjectPermissions(env.project01Id, 'user02', deepEqual(permissions))
-    ).once();
+    env.cleanup();
+  }));
 
-    // community checkers cannot be given permission to manage questions
-    expect(env.userPermissionIcon(2)).toBeUndefined();
-    resetCalls(mockedProjectService);
+  it('should disable editing roles and permissions for pending invitees', fakeAsync(() => {
+    const env = new TestEnvironment();
+    env.setupProjectData();
+    when(mockedProjectService.onlineInvitedUsers(env.project01Id)).thenResolve([
+      { email: 'alice@a.aa', role: 'sf_community_checker', expired: false },
+      { email: 'charles@c.cc', role: 'sf_community_checker', expired: true }
+    ]);
+    env.fixture.detectChanges();
+    tick();
+    env.fixture.detectChanges();
 
-    // clicking a translator's checkbox should do nothing when offline
-    env.onlineStatus = false;
-    expect(env.userPermissionIcon(1)).toBeTruthy();
-    env.clickElement(env.userRowMoreMenuElement(1));
-    translatorPermissionMenuItem = env.questionPermissionItemOnRow(1);
-    expect(translatorPermissionMenuItem.attributes['disabled']).toBeTruthy();
-    expect(translatorPermissionMenuItem.nativeElement.textContent).toContain('Disable add and edit questions');
-    env.clickElement(translatorPermissionMenuItem);
-    expect(env.userPermissionIcon(1)).toBeTruthy();
-    verify(mockedProjectService.onlineSetUserProjectPermissions(anything(), anything(), anything())).never();
+    env.clickElement(env.userRowMoreMenuElement(3));
+    expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(true);
+    env.clickElement(env.userRowMoreMenuElement(4));
+    expect(env.rolesAndPermissionsItem().nativeElement.disabled).toBe(true);
+
     env.cleanup();
   }));
 });
@@ -563,8 +547,9 @@ class TestEnvironment {
     return this.userRows[row].query(By.css('.user-options button.cancel-invite'));
   }
 
-  questionPermissionItemOnRow(row: number): DebugElement {
-    return this.userRows[row].query(By.css('.user-options button.question-permission'));
+  rolesAndPermissionsItem(): DebugElement {
+    const buttons = this.fixture.debugElement.queryAll(By.css('button.mat-menu-item'));
+    return buttons.find(b => b.nativeElement.textContent.includes('roles and permissions'))!;
   }
 
   userPermissionIcon(row: number): HTMLElement {

@@ -1,6 +1,6 @@
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, getDebugNode } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MatLegacyCheckbox as MatCheckbox } from '@angular/material/legacy-checkbox';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -11,7 +11,7 @@ import { Project } from 'realtime-server/lib/esm/common/models/project';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { combineLatest, from, Observable } from 'rxjs';
+import { Observable, combineLatest, from } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { anything, mock, verify, when } from 'ts-mockito';
 import { FileType } from 'xforge-common/models/file-offline-data';
@@ -22,7 +22,7 @@ import { NONE_ROLE, ProjectRoleInfo } from '../models/project-role-info';
 import { NoticeService } from '../notice.service';
 import { QueryFilter, QueryParameters } from '../query-parameters';
 import { TestRealtimeService } from '../test-realtime.service';
-import { configureTestingModule, emptyHammerLoader, TestTranslocoModule } from '../test-utils';
+import { TestTranslocoModule, configureTestingModule, emptyHammerLoader } from '../test-utils';
 import { TypeRegistry } from '../type-registry';
 import { UICommonModule } from '../ui-common.module';
 import { UserService } from '../user.service';
@@ -90,7 +90,7 @@ describe('SaProjectsComponent', () => {
     env.changeSelectValue(roleSelect, 1);
     expect(env.selectValue(roleSelect)).toEqual('Translator');
 
-    verify(mockedProjectService.onlineUpdateCurrentUserRole('project01', 'pt_translator')).once();
+    verify(mockedProjectService.onlineUpdateUserRole('project01', 'user01', 'pt_translator')).once();
     expect(env.component.rows[0].projectRole.role).toEqual('pt_translator');
   }));
 
@@ -243,7 +243,7 @@ class TestEnvironment {
     );
     when(mockedProjectService.onlineAddCurrentUser(anything(), anything())).thenResolve();
     when(mockedProjectService.onlineRemoveUser(anything(), 'user01')).thenResolve();
-    when(mockedProjectService.onlineUpdateCurrentUserRole(anything(), anything())).thenResolve();
+    when(mockedProjectService.onlineUpdateUserRole(anything(), anything(), anything())).thenResolve();
     when(mockedProjectService.onlineQuery(anything(), anything(), anything())).thenCall(
       (term$: Observable<string>, parameters$: Observable<QueryParameters>) =>
         combineLatest([term$, parameters$]).pipe(

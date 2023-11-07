@@ -1,0 +1,40 @@
+<ng-container *transloco="let t; read: 'roles'">
+  <div mat-dialog-title>
+    <app-avatar [user]="data.userProfile" [size]="64" [round]="true"></app-avatar>
+    <div>
+      <div class="userName">
+        <span>{{ data.userProfile.displayName }}</span>
+        <img *ngIf="isParatextUser()" src="/assets/images/logo-pt9.png" alt="Paratext Logo" class="paratext-logo" />
+      </div>
+      <span class="userRole">{{ t(isParatextUser() ? "user_pt" : "user_sf") }}</span>
+    </div>
+  </div>
+  <mat-dialog-content [formGroup]="form">
+    <app-notice *ngIf="isParatextUser()" icon="live_help" [outline]="true">
+      <div class="help-message">
+        {{ t("roles_from_pt_cannot_be_changed") }}
+        <a mat-flat-button class="learn-more-btn" [href]="urls.rolesHelpPage" target="_blank">{{ t("learn_more") }}</a>
+      </div>
+    </app-notice>
+    <h3>{{ t("roles") }}</h3>
+    <mat-radio-group class="roleOptions" formControlName="roles">
+      <mat-radio-button class="roleButton" *ngFor="let role of roleOptions" [value]="role">
+        <span class="roleName">{{ i18n.localizeRole(role) }}</span>
+        <span class="roleDescription">{{ i18n.localizeRoleDescription(role) }}</span>
+      </mat-radio-button>
+    </mat-radio-group>
+    <div *ngIf="isParatextUser()" class="permissions">
+      <h3>{{ t("permissions") }}</h3>
+      <mat-checkbox formControlName="canAddEditQuestions">{{ t("allow_add_edit_questions") }}</mat-checkbox>
+      <mat-checkbox formControlName="canManageAudio">{{ t("allow_manage_audio") }}</mat-checkbox>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions [align]="'end'">
+    <button mat-button mat-dialog-close type="button">
+      {{ t("cancel") }}
+    </button>
+    <button mat-flat-button mat-dialog-close color="primary" type="submit" (click)="save()" [disabled]="form.disabled">
+      {{ t("save") }}
+    </button>
+  </mat-dialog-actions>
+</ng-container>

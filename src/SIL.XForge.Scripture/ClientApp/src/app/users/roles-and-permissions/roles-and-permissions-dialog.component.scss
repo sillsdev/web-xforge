@@ -1,0 +1,81 @@
+@use 'src/variables';
+
+.mat-dialog-title {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  column-gap: 16px;
+}
+
+span {
+  display: block;
+  line-height: normal;
+  white-space: normal;
+}
+
+.userName {
+  font-weight: bold;
+  display: flex;
+  flex-direction: row;
+  column-gap: 4px;
+  align-items: center;
+}
+
+.userRole {
+  color: variables.$greyLight;
+  font-size: small;
+  font-weight: normal;
+}
+
+.paratext-logo {
+  width: 18px;
+  height: 18px;
+}
+
+.mat-dialog-content {
+  margin: unset;
+  padding: unset;
+  max-height: unset;
+  overflow: unset;
+}
+
+h3 {
+  margin: 12px 0px;
+}
+
+.learn-more-btn {
+  background-color: var(--notice-color);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.help-message {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  column-gap: 16px;
+}
+
+.roleOptions {
+  display: flex;
+  flex-direction: column;
+  row-gap: 8px;
+}
+
+.roleButton {
+  white-space: normal;
+  word-break: normal;
+}
+
+.roleName {
+  font-weight: bold;
+}
+
+.roleDescription {
+  font-size: smaller;
+}
+
+.permissions {
+  display: flex;
+  flex-direction: column;
+}

@@ -1,6 +1,6 @@
 import { CommonModule, Location } from '@angular/common';
 import { Component, DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Route, Router } from '@angular/router';
@@ -9,7 +9,7 @@ import { CookieService } from 'ngx-cookie-service';
 import { User } from 'realtime-server/lib/esm/common/models/user';
 import { createTestUser } from 'realtime-server/lib/esm/common/models/user-test-data';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
-import { getQuestionDocId, Question } from 'realtime-server/lib/esm/scriptureforge/models/question';
+import { Question, getQuestionDocId } from 'realtime-server/lib/esm/scriptureforge/models/question';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
@@ -33,7 +33,7 @@ import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module'
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
-import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
+import { TestTranslocoModule, configureTestingModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { objectId } from 'xforge-common/utils';
@@ -43,10 +43,11 @@ import { CheckingQuestionsService } from './checking/checking/checking-questions
 import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { SF_TYPE_REGISTRY } from './core/models/sf-type-registry';
+import { PermissionsService } from './core/permissions.service';
 import { SFProjectService } from './core/sf-project.service';
+import { NavigationProjectSelectorComponent } from './navigation-project-selector/navigation-project-selector.component';
 import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 import { paratextUsersFromRoles } from './shared/test-utils';
-import { NavigationProjectSelectorComponent } from './navigation-project-selector/navigation-project-selector.component';
 
 const mockedAuthService = mock(AuthService);
 const mockedUserService = mock(UserService);
@@ -65,6 +66,7 @@ const mockedFileService = mock(FileService);
 const mockedErrorReportingService = mock(ErrorReportingService);
 const mockedDialogService = mock(DialogService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
+const mockedPermissions = mock(PermissionsService);
 
 @Component({
   template: `<div>Mock</div>`
@@ -115,7 +117,8 @@ describe('AppComponent', () => {
       { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
       { provide: FileService, useMock: mockedFileService },
       { provide: ErrorReportingService, useMock: mockedErrorReportingService },
-      { provide: DialogService, useMock: mockedDialogService }
+      { provide: DialogService, useMock: mockedDialogService },
+      { provide: PermissionsService, useMock: mockedPermissions }
     ]
   }));
 
@@ -125,6 +128,8 @@ describe('AppComponent', () => {
 
   it('navigate to last project', fakeAsync(() => {
     const env = new TestEnvironment();
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
     env.navigate(['/projects', 'project01']);
     env.init();
 
@@ -136,6 +141,8 @@ describe('AppComponent', () => {
 
   it('navigate to different project', fakeAsync(() => {
     const env = new TestEnvironment();
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
     env.navigate(['/projects', 'project02']);
     env.init();
 
@@ -150,6 +157,8 @@ describe('AppComponent', () => {
 
   it('hide translate tool for community checkers', fakeAsync(() => {
     const env = new TestEnvironment();
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
     env.navigate(['/projects', 'project03']);
     env.init();
 
@@ -169,6 +178,8 @@ describe('AppComponent', () => {
 
   it('hides generate draft when user does not have access', fakeAsync(() => {
     const env = new TestEnvironment();
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(true);
     when(mockedFeatureFlagService.showNmtDrafting).thenReturn({ enabled: true } as ObservableFeatureFlag);
     env.navigate(['/projects', 'project01']);
     env.init();
@@ -187,11 +198,12 @@ describe('AppComponent', () => {
 
   it('hides community checking tool from commenters', fakeAsync(() => {
     const env = new TestEnvironment();
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(false);
+    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(true);
     env.setCurrentUser('user04');
     env.navigate(['/projects', 'project01']);
     env.init();
 
-    expect(env.component.selectedProjectRole).toEqual(SFProjectRole.Commenter);
     expect(env.selectedProjectId).toEqual('project01');
     expect(env.isDrawerVisible).toEqual(true);
     expect(env.component.isTranslateEnabled).toEqual(true);
@@ -200,6 +212,8 @@ describe('AppComponent', () => {
 
   it('expand/collapse tool', fakeAsync(() => {
     const env = new TestEnvironment();
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(true);
     env.navigate(['/projects', 'project01']);
     env.init();
 
@@ -213,12 +227,15 @@ describe('AppComponent', () => {
 
   it('Translate item is never collapsed when Community Checking is disabled', fakeAsync(() => {
     const env = new TestEnvironment();
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+    when(mockedPermissions.canAccessTranslate(anything())).thenReturn(true);
     env.navigate(['/projects', 'project01']);
     env.init();
     // Expect: Translate | Community Checking | Synchronize | Settings | Users
     expect(env.menuLength).toEqual(5);
     const projectDoc = env.component.projectDocs![0];
     projectDoc.submitJson0Op(op => op.set<boolean>(p => p.checkingConfig.checkingEnabled, false));
+    when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(false);
     env.wait();
     // Expect: Translate | Overview | Matthew | Mark | Synchronize | Settings | Users
     expect(env.menuLength).toEqual(7);
@@ -495,6 +512,8 @@ describe('AppComponent', () => {
   describe('Community Checking', () => {
     it('no books showing in the menu', fakeAsync(() => {
       const env = new TestEnvironment();
+      when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+      when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
       env.navigate(['/projects', 'project02']);
       env.init();
 
@@ -508,6 +527,8 @@ describe('AppComponent', () => {
 
     it('only show one book in the menu', fakeAsync(() => {
       const env = new TestEnvironment();
+      when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+      when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
       env.navigate(['/projects', 'project02']);
       env.init();
 
@@ -524,6 +545,8 @@ describe('AppComponent', () => {
 
     it('All Questions displays in the menu', fakeAsync(() => {
       const env = new TestEnvironment();
+      when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+      when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
       env.navigate(['/projects', 'project02']);
       env.init();
 
@@ -542,6 +565,8 @@ describe('AppComponent', () => {
 
     it('books displayed in canonical order', fakeAsync(() => {
       const env = new TestEnvironment();
+      when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+      when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
       env.navigate(['/projects', 'project02']);
       env.init();
 
@@ -558,6 +583,8 @@ describe('AppComponent', () => {
 
     it('update books when question added/archived/unarchived locally', fakeAsync(() => {
       const env = new TestEnvironment();
+      when(mockedPermissions.canAccessCommunityChecking(anything())).thenReturn(true);
+      when(mockedPermissions.canAccessTranslate(anything())).thenReturn(false);
       env.navigate(['/projects', 'project02']);
       env.init();
 

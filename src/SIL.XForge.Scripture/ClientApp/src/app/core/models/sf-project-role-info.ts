@@ -13,11 +13,11 @@ export const SF_PROJECT_ROLES: ProjectRoleInfo[] = [
   { role: SFProjectRole.Viewer, canBeShared: true }
 ];
 
-export function canAccessTranslateApp(role?: SFProjectRole): boolean {
+export function roleCanAccessTranslate(role?: SFProjectRole): boolean {
   return isTranslateRole(role);
 }
 
-export function canAccessCommunityCheckingApp(role: SFProjectRole): boolean {
+export function roleCanAccessCommunityChecking(role: SFProjectRole): boolean {
   return SF_PROJECT_RIGHTS.roleHasRight(role, 'questions', Operation.View);
 }
 
