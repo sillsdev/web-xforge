@@ -384,7 +384,17 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(
+                        e,
+                        doNotThrowIfInProcessEnabled: true,
+                        metadata: new Dictionary<string, string>
+                        {
+                            { "method", "GetEngineAsync" },
+                            { "curUserId", curUserId },
+                            { "sfProjectId", sfProjectId },
+                            { "translationEngineId", translationEngineId },
+                        }
+                    );
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -524,7 +534,18 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(
+                        e,
+                        doNotThrowIfInProcessEnabled: true,
+                        metadata: new Dictionary<string, string>
+                        {
+                            { "method", "GetWordGraphAsync" },
+                            { "curUserId", curUserId },
+                            { "sfProjectId", sfProjectId },
+                            { "translationEngineId", translationEngineId },
+                            { "segment", segment },
+                        }
+                    );
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -589,7 +610,17 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(
+                        e,
+                        doNotThrowIfInProcessEnabled: true,
+                        metadata: new Dictionary<string, string>
+                        {
+                            { "method", "StartBuildAsync" },
+                            { "curUserId", curUserId },
+                            { "sfProjectId", sfProjectId },
+                            { "translationEngineId", translationEngineId },
+                        }
+                    );
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -710,7 +741,20 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(
+                        e,
+                        doNotThrowIfInProcessEnabled: true,
+                        metadata: new Dictionary<string, string>
+                        {
+                            { "method", "TrainSegmentAsync" },
+                            { "curUserId", curUserId },
+                            { "sfProjectId", sfProjectId },
+                            { "translationEngineId", translationEngineId },
+                            { "SourceSegment", segmentPair.SourceSegment },
+                            { "TargetSegment", segmentPair.TargetSegment },
+                            { "SentenceStart", segmentPair.SentenceStart.ToString() },
+                        }
+                    );
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -759,7 +803,18 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(
+                        e,
+                        doNotThrowIfInProcessEnabled: true,
+                        metadata: new Dictionary<string, string>
+                        {
+                            { "method", "TranslateAsync" },
+                            { "curUserId", curUserId },
+                            { "sfProjectId", sfProjectId },
+                            { "translationEngineId", translationEngineId },
+                            { "segment", segment },
+                        }
+                    );
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -822,7 +877,19 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(
+                        e,
+                        doNotThrowIfInProcessEnabled: true,
+                        metadata: new Dictionary<string, string>
+                        {
+                            { "method", "TranslateNAsync" },
+                            { "curUserId", curUserId },
+                            { "sfProjectId", sfProjectId },
+                            { "translationEngineId", translationEngineId },
+                            { "n", n.ToString() },
+                            { "segment", segment },
+                        }
+                    );
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -964,17 +1031,33 @@ public class MachineApiService : IMachineApiService
     /// This method maps Serval API exceptions to the exceptions that Machine.js understands.
     /// </summary>
     /// <param name="e">The Serval API Exception</param>
-    /// <param name="doNotThrowIfInProcessEnabled">Report but do not throw the exception if in-process machine is enabled</param>
+    /// <param name="doNotThrowIfInProcessEnabled">
+    /// Report but do not throw the exception if in-process machine is enabled
+    /// </param>
+    /// <param name="metadata">
+    /// Metadata to report to bugsnag if required.
+    /// Thi should only be set if <paramref name="doNotThrowIfInProcessEnabled"/> is <c>true</c>.
+    /// </param>
     /// <exception cref="DataNotFoundException">Entity Deleted.</exception>
     /// <exception cref="ForbiddenException">Access Denied.</exception>
+    /// <exception cref="NotSupportedException">Method not allowed.</exception>
     /// <remarks>If this method returns, it is expected that the DTO will be null.</remarks>
-    private async Task ProcessServalApiExceptionAsync(Exception e, bool doNotThrowIfInProcessEnabled = false)
+    private async Task ProcessServalApiExceptionAsync(
+        Exception e,
+        bool doNotThrowIfInProcessEnabled = false,
+        Dictionary<string, string>? metadata = null
+    )
     {
         switch (e)
         {
             case ServalApiException
                 when doNotThrowIfInProcessEnabled
                     && await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess):
+                if (metadata is not null)
+                {
+                    _exceptionHandler.RecordEndpointInfoForException(metadata);
+                }
+
                 _exceptionHandler.ReportException(e);
                 return;
             case ServalApiException { StatusCode: StatusCodes.Status204NoContent }:
@@ -992,6 +1075,11 @@ public class MachineApiService : IMachineApiService
             case BrokenCircuitException
                 when doNotThrowIfInProcessEnabled
                     && await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess):
+                if (metadata is not null)
+                {
+                    _exceptionHandler.RecordEndpointInfoForException(metadata);
+                }
+
                 _exceptionHandler.ReportException(e);
                 return;
             default:
