@@ -140,6 +140,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private projectDeleteSub?: Subscription;
   private hideTextSub?: Subscription;
   private textAudioSub?: Subscription;
+  private audioChangedSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
   private questionFilterFunctions: Record<QuestionFilter, (answers: Answer[]) => boolean> = {
     [QuestionFilter.None]: () => true,
@@ -577,16 +578,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             this.projectDeleteSub?.unsubscribe();
             this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
 
-            // TODO (scripture audio) Only fetch the timing data for the currently active chapter
-            this.projectService.queryAudioText(routeProjectId).then(query => {
-              this.textAudioQuery = query;
-              this.textAudioQuery.remoteChanges$.subscribe(() => {
-                if (this.chapterAudioSource === '') {
-                  this.hideChapterAudio();
-                }
-              });
-            });
-
             this.projectService
               .isProjectAdmin(routeProjectId, this.userService.currentUserId)
               .then(isAdmin => (this.isProjectAdmin = isAdmin));
@@ -644,6 +635,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 () => this.updateAudioMissingWarning()
               );
             }
+
+            // TODO (scripture audio) Only fetch the timing data for the currently active chapter
+            this.projectService.queryAudioText(routeProjectId).then(query => {
+              this.textAudioQuery = query;
+              this.audioChangedSub = this.textAudioQuery.remoteChanges$.subscribe(() => {
+                if (this.chapterAudioSource === '') {
+                  this.hideChapterAudio();
+                }
+              });
+            });
 
             // TODO: check for remote changes to file data more generically
             this.questionsRemoteChangesSub = this.subscribe(
@@ -1057,7 +1058,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
     this.updateAudioMissingWarning();
-    this.textAudioQuery?.localUpdate();
     this.calculateScriptureSliderPosition();
   }
 
@@ -1656,6 +1656,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
   private cleanup(): void {
     this.questionsSub?.unsubscribe();
+    this.audioChangedSub?.unsubscribe();
     this.questionsRemoteChangesSub?.unsubscribe();
     this.questionsQuery?.dispose();
     this.textAudioQuery?.dispose();
