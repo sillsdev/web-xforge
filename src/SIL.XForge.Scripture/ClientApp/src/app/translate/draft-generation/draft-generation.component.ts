@@ -128,7 +128,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
             this.targetLanguage = projectDoc.data?.writingSystem.tag;
             this.isTargetLanguageSupported = this.nllbService.isNllbLanguage(this.targetLanguage);
             this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
-            this.isPreTranslationApproved = false && (translateConfig?.preTranslate ?? false);
+            this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 
             this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
             this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
