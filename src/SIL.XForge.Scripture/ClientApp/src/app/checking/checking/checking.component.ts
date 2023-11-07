@@ -138,6 +138,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private textAudioQuery?: RealtimeQuery<TextAudioDoc>;
   private projectDeleteSub?: Subscription;
   private hideTextSub?: Subscription;
+  private audioChangedSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
   private questionFilterFunctions: Record<QuestionFilter, (answers: Answer[]) => boolean> = {
     [QuestionFilter.None]: () => true,
@@ -575,16 +576,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             this.projectDeleteSub?.unsubscribe();
             this.projectDeleteSub = this.subscribe(this.projectDoc.delete$, () => this.onRemovedFromProject());
 
-            // TODO (scripture audio) Only fetch the timing data for the currently active chapter
-            this.projectService.queryAudioText(routeProjectId).then(query => {
-              this.textAudioQuery = query;
-              this.textAudioQuery.remoteChanges$.subscribe(() => {
-                if (this.chapterAudioSource === '') {
-                  this.hideChapterAudio();
-                }
-              });
-            });
-
             this.projectService
               .isProjectAdmin(routeProjectId, this.userService.currentUserId)
               .then(isAdmin => (this.isProjectAdmin = isAdmin));
@@ -635,6 +626,16 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               chapterNum: routeScope === 'chapter' ? routeChapterNum : undefined,
               sort: true,
               activeOnly: true
+            });
+
+            // TODO (scripture audio) Only fetch the timing data for the currently active chapter
+            this.projectService.queryAudioText(routeProjectId).then(query => {
+              this.textAudioQuery = query;
+              this.audioChangedSub = this.textAudioQuery.remoteChanges$.subscribe(() => {
+                if (this.chapterAudioSource === '') {
+                  this.hideChapterAudio();
+                }
+              });
             });
 
             // TODO: check for remote changes to file data more generically
@@ -1047,7 +1048,6 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       currentChapter: this._chapter
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
-    this.textAudioQuery?.localUpdate();
     this.calculateScriptureSliderPosition();
   }
 
@@ -1627,6 +1627,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
   private cleanup(): void {
     this.questionsSub?.unsubscribe();
+    this.audioChangedSub?.unsubscribe();
     this.questionsRemoteChangesSub?.unsubscribe();
     this.questionsQuery?.dispose();
     this.textAudioQuery?.dispose();
