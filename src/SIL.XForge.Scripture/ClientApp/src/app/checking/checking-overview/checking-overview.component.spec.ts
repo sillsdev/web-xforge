@@ -27,7 +27,7 @@ import {
 } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-user-config';
 import { TextInfo } from 'realtime-server/scriptureforge/models/text-info';
 import { of } from 'rxjs';
-import { anything, mock, resetCalls, verify, when } from 'ts-mockito';
+import { anything, capture, mock, resetCalls, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { BugsnagService } from 'xforge-common/bugsnag.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -51,6 +51,7 @@ import { CheckingModule } from '../checking.module';
 import { CheckingQuestionsService } from '../checking/checking-questions.service';
 import { ImportQuestionsDialogComponent } from '../import-questions-dialog/import-questions-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
+import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { CheckingOverviewComponent } from './checking-overview.component';
 
 const mockedActivatedRoute = mock(ActivatedRoute);
@@ -64,6 +65,7 @@ const mockedQuestionDialogService = mock(QuestionDialogService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedFeatureFlagService = mock(FeatureFlagService);
+const mockedChapterAudioDialogService = mock(ChapterAudioDialogService);
 
 class MockComponent {}
 
@@ -92,7 +94,8 @@ describe('CheckingOverviewComponent', () => {
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
-      { provide: FeatureFlagService, useMock: mockedFeatureFlagService }
+      { provide: FeatureFlagService, useMock: mockedFeatureFlagService },
+      { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService }
     ]
   }));
 
@@ -589,8 +592,21 @@ describe('CheckingOverviewComponent', () => {
       expect(env.textRows.length).toBe(2);
     }));
 
-    xit('can open chapter audio ', fakeAsync(() => {
-      // TODO: Write this test when the dialog service is merged in
+    it('can open chapter audio to edit ', fakeAsync(() => {
+      const env = new TestEnvironment(true, true);
+      env.waitForQuestions();
+      const johnIndex = 2;
+      const johnChapter1Index = 3;
+
+      env.clickExpanderAtRow(johnIndex);
+      env.clickElement(env.questionButtonsMenu[johnChapter1Index]);
+      env.clickElement(env.audioEditButtons[johnChapter1Index]);
+
+      verify(mockedChapterAudioDialogService.openDialog(anything())).once();
+      const [config] = capture(mockedChapterAudioDialogService.openDialog).last();
+      expect(config.projectId).toEqual('project01');
+      expect(config.currentBook).toEqual(43);
+      expect(config.currentChapter).toEqual(1);
     }));
   });
 
@@ -992,6 +1008,12 @@ class TestEnvironment {
   get audioDeleteButtons(): DebugElement[] {
     const ret: DebugElement[] = [];
     this.textRows.forEach(e => ret.push(e.query(By.css('.delete-audio-btn'))));
+    return ret;
+  }
+
+  get audioEditButtons(): DebugElement[] {
+    const ret: DebugElement[] = [];
+    this.textRows.forEach(e => ret.push(e.query(By.css('.edit-audio-btn'))));
     return ret;
   }
 
