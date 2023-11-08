@@ -631,11 +631,14 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
             // TODO (scripture audio) Only fetch the timing data for the currently active chapter
             this.projectService.queryAudioText(routeProjectId).then(query => {
               this.textAudioQuery = query;
-              this.audioChangedSub = this.textAudioQuery.remoteChanges$.subscribe(() => {
-                if (this.chapterAudioSource === '') {
-                  this.hideChapterAudio();
+              this.audioChangedSub = this.subscribe(
+                merge(this.textAudioQuery.remoteChanges$, this.textAudioQuery.localChanges$),
+                () => {
+                  if (this.chapterAudioSource === '') {
+                    this.hideChapterAudio();
+                  }
                 }
-              });
+              );
             });
 
             // TODO: check for remote changes to file data more generically
