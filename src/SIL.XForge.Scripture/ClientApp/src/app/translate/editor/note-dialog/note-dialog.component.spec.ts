@@ -483,6 +483,54 @@ describe('NoteDialogComponent', () => {
     expect(env.dialogResult).toEqual({ deleted: true });
   }));
 
+  it('resolves a thread', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    env.selectResolveOption();
+    env.submit();
+    expect(env.dialogResult).toEqual({ status: NoteStatus.Resolved });
+  }));
+
+  it('resolves a thread with content', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    const content = 'This thread is resolved.';
+    env.enterNoteContent(content);
+    env.selectResolveOption();
+    env.submit();
+    expect(env.dialogResult).toEqual({ status: NoteStatus.Resolved, noteContent: content });
+  }));
+
+  it('allows changing save option', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread() });
+    expect(env.saveButton.nativeElement.textContent).toEqual('Save');
+    // open the save option menu trigger
+    env.saveOptionsButton.nativeElement.click();
+    tick();
+    env.fixture.detectChanges();
+    expect(env.saveOptionsMenu).not.toBeNull();
+    // select resolve from the menu
+    const resolveMenuItem: DebugElement = env.saveOptionsMenu.query(By.css('button'));
+    expect(resolveMenuItem.nativeElement.textContent).toEqual('Save and resolve');
+    resolveMenuItem.nativeElement.click();
+    tick(10);
+    env.fixture.detectChanges();
+    expect(env.component.saveOption).toEqual('resolve');
+    expect(env.saveButton.nativeElement.textContent).toEqual('Save and resolve');
+  }));
+
+  it('hides save options trigger when user is a commenter', fakeAsync(() => {
+    env = new TestEnvironment({ noteThread: TestEnvironment.getNoteThread(), currentUserId: 'user03' });
+    expect(env.saveButton.nativeElement.textContent).toEqual('Save');
+    expect(env.saveOptionsButton).toBeNull();
+  }));
+
+  it('hides save options trigger when starting a new thread', fakeAsync(() => {
+    env = new TestEnvironment({ verseRef: new VerseRef('MAT 1:1') });
+    expect(env.component.currentNoteContent).toEqual('');
+    expect(env.saveOptionsButton).toBeNull();
+    env.submit();
+    expect(env.dialogResult).toEqual(undefined);
+  }));
+
   it('show notes in correct date order', fakeAsync(() => {
     const noteThread = TestEnvironment.getNoteThread();
     const currentTime = new Date('2023-03-14T23:00:00Z').getTime();
@@ -575,7 +623,8 @@ class TestEnvironment {
   };
   static userRoles: { [userId: string]: string } = {
     user01: SFProjectRole.ParatextAdministrator,
-    user02: SFProjectRole.Viewer
+    user02: SFProjectRole.Viewer,
+    user03: SFProjectRole.Commenter
   };
   static testProjectProfile: SFProjectProfile = createTestProjectProfile({
     texts: [TestEnvironment.matthewText],
@@ -947,7 +996,15 @@ class TestEnvironment {
   }
 
   get saveButton(): DebugElement {
-    return this.overlayContainerElement.query(By.css('button.save-button'));
+    return this.overlayContainerElement.query(By.css('.save-button'));
+  }
+
+  get saveOptionsButton(): DebugElement {
+    return this.overlayContainerElement.query(By.css('.save-options-trigger'));
+  }
+
+  get saveOptionsMenu(): DebugElement {
+    return this.overlayContainerElement.query(By.css('.save-options-menu'));
   }
 
   get textMenuButton(): DebugElement {
@@ -959,7 +1016,7 @@ class TestEnvironment {
   }
 
   closeDialog(): void {
-    this.overlayContainerElement.query(By.css('button.close-button')).nativeElement.click();
+    this.overlayContainerElement.query(By.css('.close-button')).nativeElement.click();
     tick(matDialogCloseDelay);
   }
 
@@ -972,6 +1029,12 @@ class TestEnvironment {
   clickDeleteNote(): void {
     this.overlayContainerElement.query(By.css('.delete-button')).nativeElement.click();
     flush();
+    this.fixture.detectChanges();
+  }
+
+  selectResolveOption(): void {
+    this.component.saveOption = 'resolve';
+    tick();
     this.fixture.detectChanges();
   }
 

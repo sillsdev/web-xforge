@@ -42,6 +42,7 @@ export interface NoteDialogResult {
   deleted?: boolean;
   noteContent?: string;
   noteDataId?: string;
+  status?: NoteStatus;
 }
 
 interface NoteDisplayInfo {
@@ -66,6 +67,7 @@ export class NoteDialogComponent implements OnInit {
   showSegmentText: boolean = false;
   currentNoteContent: string = '';
   notesToDisplay: NoteDisplayInfo[] = [];
+  saveOption: 'save' | 'resolve' = 'save';
 
   private biblicalTermDoc?: BiblicalTermDoc;
   private isAssignedToOtherUser: boolean = false;
@@ -183,6 +185,11 @@ export class NoteDialogComponent implements OnInit {
     return canInsertNote(this.projectProfileDoc.data, this.userService.currentUserId);
   }
 
+  get canResolve(): boolean {
+    // a note thread can be resolved only by paratext users who have edit rights and when the thread has existing notes
+    return this.canInsertNote && isParatextRole(this.userRole) && this.threadDataId != null;
+  }
+
   private get defaultNoteTagId(): number | undefined {
     return this.projectProfileDoc?.data?.translateConfig.defaultNoteTagId;
   }
@@ -292,10 +299,17 @@ export class NoteDialogComponent implements OnInit {
     return paratextUser?.username ?? translate('note_dialog.paratext_user');
   }
 
+  close(): void {
+    this.dialogRef.close();
+  }
+
   submit(): void {
-    if (this.currentNoteContent == null || this.currentNoteContent.trim().length === 0) {
-      this.dialogRef.close();
-      return;
+    if (this.saveOption === 'resolve') {
+      return this.resolve();
+    }
+
+    if (this.currentNoteContent.trim().length === 0) {
+      return this.close();
     }
 
     this.dialogRef.close({
@@ -306,6 +320,18 @@ export class NoteDialogComponent implements OnInit {
 
   toggleSegmentText(): void {
     this.showSegmentText = !this.showSegmentText;
+  }
+
+  private resolve(): void {
+    if (this.currentNoteContent.trim().length === 0 && this.threadDataId == null) {
+      // close the dialog without saving if resolving an empty thread
+      return this.close();
+    }
+    const content: NoteDialogResult = { status: NoteStatus.Resolved };
+    if (this.currentNoteContent.trim().length > 0) {
+      content.noteContent = XmlUtils.encodeForXml(this.currentNoteContent);
+    }
+    this.dialogRef.close(content);
   }
 
   private updateNotesToDisplay(): void {

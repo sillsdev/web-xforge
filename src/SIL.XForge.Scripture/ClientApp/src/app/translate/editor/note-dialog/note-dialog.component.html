@@ -55,9 +55,22 @@
     </mat-form-field>
   </mat-dialog-content>
   <mat-dialog-actions fxLayoutAlign="end">
-    <button mat-button class="close-button" [mat-dialog-close]="undefined">{{ t("close") }}</button>
-    <button *ngIf="canInsertNote" mat-flat-button class="save-button" color="primary" (click)="submit()">
-      {{ t("save") }}
-    </button>
+    <mat-button-toggle-group>
+      <mat-button-toggle class="close-button" (click)="close()">{{ t("close") }}</mat-button-toggle>
+      <mat-button-toggle *ngIf="canInsertNote" class="save-button save-options" (click)="submit()">{{
+        t(saveOption === "save" ? "save" : "save_and_resolve")
+      }}</mat-button-toggle>
+      <mat-button-toggle *ngIf="canResolve" class="save-options-trigger save-options" [matMenuTriggerFor]="saveMenu">
+        <mat-icon>expand_less</mat-icon>
+      </mat-button-toggle>
+      <mat-menu #saveMenu="matMenu" class="save-options-menu" yPosition="above" xPosition="before">
+        <button *ngIf="saveOption === 'resolve'" mat-menu-item (click)="saveOption = 'save'">
+          <span>{{ t("save") }}</span>
+        </button>
+        <button *ngIf="saveOption === 'save'" mat-menu-item (click)="saveOption = 'resolve'">
+          <span>{{ t("save_and_resolve") }}</span>
+        </button>
+      </mat-menu>
+    </mat-button-toggle-group>
   </mat-dialog-actions>
 </ng-container>
