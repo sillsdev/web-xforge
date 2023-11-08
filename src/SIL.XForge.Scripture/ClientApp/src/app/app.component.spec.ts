@@ -88,7 +88,7 @@ const ROUTES: Route[] = [
 
 describe('AppComponent', () => {
   configureTestingModule(() => ({
-    declarations: [AppComponent, NavigationProjectSelectorComponent, MockComponent],
+    declarations: [AppComponent, MockComponent],
     imports: [
       AvatarTestingModule,
       DialogTestModule,
@@ -97,7 +97,8 @@ describe('AppComponent', () => {
       RouterTestingModule.withRoutes(ROUTES),
       TestTranslocoModule,
       TestOnlineStatusModule.forRoot(),
-      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY)
+      TestRealtimeModule.forRoot(SF_TYPE_REGISTRY),
+      NavigationProjectSelectorComponent
     ],
     providers: [
       { provide: AuthService, useMock: mockedAuthService },

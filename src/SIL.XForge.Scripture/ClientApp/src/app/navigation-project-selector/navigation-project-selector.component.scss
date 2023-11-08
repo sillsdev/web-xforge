@@ -1,40 +1,34 @@
-:host ::ng-deep mat-form-field {
-  .mat-form-field-flex {
-    padding-top: 0;
-    min-height: 48px;
+@use '@angular/material' as mat;
+
+// All mat-styles @include can be removed once the legacy versions are replaced in material-styles.scss
+@use 'src/material-styles' as mat-styles;
+
+// The select overlay container is positioned outside of the component
+::ng-deep {
+  @include mat.select-theme(mat-styles.$material-app-theme);
+  @include mat.option-theme(mat-styles.$material-app-theme);
+  .project-option {
+    .mdc-list-item__primary-text {
+      // Fix overflow in Firefox when a project name uses the Khmer script. As of 2022-11-11, the DBL resource
+      // KHSV05 is one example that will cause overflow, which looks particularly bad in RTL mode because it
+      // overflows to the left in a menu that is laid out in LTR.
+      overflow-wrap: anywhere;
+    }
+  }
+}
+
+:host ::ng-deep {
+  @include mat.form-field-theme(mat-styles.$material-theme-accent-error);
+  .mat-mdc-text-field-wrapper {
+    border-radius: 0;
   }
 
-  .mat-form-field-wrapper {
-    padding-bottom: 0;
-  }
-
-  .mat-form-field-underline {
-    bottom: 0;
-  }
-
-  .mat-select-arrow-wrapper {
-    transform: unset;
+  // Hide the hint/error spacing as it isn't required
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
   }
 }
 
 mat-form-field {
-  width: 100%;
-}
-
-// A lot of these styles can be removed once we upgrade to Material v15+
-.project-option {
-  height: unset !important;
-  ::ng-deep .mat-option-text {
-    // Fix overflow in Firefox when a project name uses the Khmer script. As of 2022-11-11, the DBL resource
-    // KHSV05 is one example that will cause overflow, which looks particularly bad in RTL mode because it
-    // overflows to the left in a menu that is laid out in LTR.
-    overflow-wrap: anywhere;
-    min-height: 48px;
-    white-space: normal;
-    overflow: visible;
-    max-width: 255px;
-    line-height: 1.5rem;
-    display: flex;
-    align-items: center;
-  }
+  display: block;
 }
