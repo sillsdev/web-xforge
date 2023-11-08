@@ -110,6 +110,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   totalVisibleQuestionsString: string = '0';
   visibleQuestions?: QuestionDoc[];
   showScriptureAudioPlayer: boolean = false;
+  hasQuestionWithoutAudio: boolean = false;
   isCreatingNewQuestion: boolean = false;
   questionToBeCreated: PreCreationQuestionData | undefined;
   isScreenSmall = false;
@@ -138,6 +139,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   private textAudioQuery?: RealtimeQuery<TextAudioDoc>;
   private projectDeleteSub?: Subscription;
   private hideTextSub?: Subscription;
+  private textAudioSub?: Subscription;
   private projectRemoteChangesSub?: Subscription;
   private questionFilterFunctions: Record<QuestionFilter, (answers: Answer[]) => boolean> = {
     [QuestionFilter.None]: () => true,
@@ -636,6 +638,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               sort: true,
               activeOnly: true
             });
+            if (this.projectDoc != null) {
+              this.textAudioSub = this.subscribe(
+                merge(this.questionsQuery.ready$, this.projectDoc.remoteChanges$),
+                () => this.updateAudioMissingWarning()
+              );
+            }
 
             // TODO: check for remote changes to file data more generically
             this.questionsRemoteChangesSub = this.subscribe(
@@ -692,6 +700,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
                 throttleTime(100, asyncScheduler, { leading: false, trailing: true })
               ),
               () => {
+                this.updateAudioMissingWarning();
                 this.updateVisibleQuestions();
               }
             );
@@ -1047,6 +1056,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
       currentChapter: this._chapter
     };
     await this.chapterAudioDialogService.openDialog(dialogConfig);
+    this.updateAudioMissingWarning();
     this.calculateScriptureSliderPosition();
   }
 
@@ -1195,6 +1205,22 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
     this.updateQuestionRefs();
     this.refreshSummary();
+  }
+
+  private updateAudioMissingWarning(): void {
+    const texts: TextInfo[] | undefined = this.projectDoc?.data?.texts;
+    if (this.questionDocs.length === 0 || texts == null) {
+      return;
+    }
+    this.hasQuestionWithoutAudio = this.questionDocs.some(
+      q =>
+        q.data != null &&
+        texts.find(
+          t =>
+            t.bookNum === q.data!.verseRef.bookNum &&
+            t.chapters.find(c => c.number === q.data!.verseRef.chapterNum && c.hasAudio !== true) != null
+        ) != null
+    );
   }
 
   private getAnswerIndex(answer: Answer): number {
@@ -1629,5 +1655,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
     this.questionsRemoteChangesSub?.unsubscribe();
     this.questionsQuery?.dispose();
     this.textAudioQuery?.dispose();
+    this.hideTextSub?.unsubscribe();
+    this.textAudioSub?.unsubscribe();
   }
 }
