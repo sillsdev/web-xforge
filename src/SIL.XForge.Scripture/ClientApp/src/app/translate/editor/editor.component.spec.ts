@@ -2827,6 +2827,32 @@ describe('EditorComponent', () => {
       env.dispose();
     }));
 
+    it('allows resolving a note', fakeAsync(() => {
+      const projectId: string = 'project01';
+      const threadDataId: string = 'dataid01';
+      const content: string = 'This thread is resolved.';
+      const env = new TestEnvironment();
+      let noteThread: NoteThreadDoc = env.getNoteThreadDoc(projectId, threadDataId);
+      expect(noteThread.data!.notes.length).toEqual(3);
+
+      env.setProjectUserConfig();
+      env.wait();
+      let noteThreadIconElem: HTMLElement | null = env.getNoteThreadIconElement('verse_1_1', threadDataId);
+      noteThreadIconElem!.click();
+      verify(mockedMatDialog.open(NoteDialogComponent, anything())).once();
+      env.mockNoteDialogRef.close({ noteContent: content, status: NoteStatus.Resolved });
+      env.wait();
+      noteThread = env.getNoteThreadDoc(projectId, threadDataId);
+      expect(noteThread.data!.notes.length).toEqual(4);
+      expect(noteThread.data!.notes[3].content).toEqual(content);
+      expect(noteThread.data!.notes[3].status).toEqual(NoteStatus.Resolved);
+
+      // the icon should be hidden from the editor
+      noteThreadIconElem = env.getNoteThreadIconElement('verse_1_1', threadDataId);
+      expect(noteThreadIconElem).toBeNull();
+      env.dispose();
+    }));
+
     it('can open dialog of the second note on the verse', fakeAsync(() => {
       const env = new TestEnvironment();
       env.setProjectUserConfig();
