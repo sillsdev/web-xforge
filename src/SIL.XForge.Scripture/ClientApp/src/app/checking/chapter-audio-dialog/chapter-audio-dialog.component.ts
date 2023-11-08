@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Inject, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Inject, OnDestroy, ViewChild } from '@angular/core';
 import {
   MAT_LEGACY_DIALOG_DATA as MAT_DIALOG_DATA,
   MatLegacyDialogRef as MatDialogRef
@@ -49,7 +49,7 @@ export interface ChapterAudioDialogResult {
   templateUrl: './chapter-audio-dialog.component.html',
   styleUrls: ['./chapter-audio-dialog.component.scss']
 })
-export class ChapterAudioDialogComponent extends SubscriptionDisposable implements AfterViewInit {
+export class ChapterAudioDialogComponent extends SubscriptionDisposable implements AfterViewInit, OnDestroy {
   @ViewChild('dropzone') dropzone?: ElementRef<HTMLDivElement>;
   @ViewChild('fileDropzone') fileDropzone?: ElementRef<HTMLInputElement>;
   @ViewChild('chapterAudio') chapterAudio?: SingleButtonAudioPlayerComponent;
@@ -217,6 +217,12 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
       this.textAudioQuery = query;
       this.populateExistingData();
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.textAudioQuery != null) {
+      this.textAudioQuery.dispose();
+    }
   }
 
   async prepareTimingFileUpload(file: File): Promise<void> {
