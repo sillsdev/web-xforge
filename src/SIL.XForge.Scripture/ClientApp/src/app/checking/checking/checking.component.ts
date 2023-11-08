@@ -638,9 +638,12 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
               sort: true,
               activeOnly: true
             });
-            this.textAudioSub = this.subscribe(merge(this.questionsQuery.ready$, this.projectDoc!.remoteChanges$), () =>
-              this.updateAudioMissingWarning()
-            );
+            if (this.projectDoc != null) {
+              this.textAudioSub = this.subscribe(
+                merge(this.questionsQuery.ready$, this.projectDoc.remoteChanges$),
+                () => this.updateAudioMissingWarning()
+              );
+            }
 
             // TODO: check for remote changes to file data more generically
             this.questionsRemoteChangesSub = this.subscribe(
