@@ -1,14 +1,33 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
+import { TranslocoModule } from '@ngneat/transloco';
+import { CommonModule } from '@angular/common';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatIconModule } from '@angular/material/icon';
+import { MatOptionModule } from '@angular/material/core';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatSelectModule } from '@angular/material/select';
 import { projectLabel } from '../shared/utils';
 import { SFProjectProfileDoc } from '../core/models/sf-project-profile-doc';
 import { SelectableProject } from '../core/paratext.service';
 
 @Component({
+  standalone: true,
   selector: 'app-navigation-project-selector',
   templateUrl: './navigation-project-selector.component.html',
-  styleUrls: ['./navigation-project-selector.component.scss']
+  styleUrls: ['./navigation-project-selector.component.scss'],
+  imports: [
+    TranslocoModule,
+    CommonModule,
+    MatFormFieldModule,
+    MatAutocompleteModule,
+    MatDividerModule,
+    MatIconModule,
+    MatSelectModule,
+    MatOptionModule
+  ]
 })
 export class NavigationProjectSelectorComponent {
   @Output() changed: EventEmitter<string> = new EventEmitter<string>();
