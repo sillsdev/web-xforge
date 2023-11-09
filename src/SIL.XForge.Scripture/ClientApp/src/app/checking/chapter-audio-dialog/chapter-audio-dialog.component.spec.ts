@@ -441,14 +441,12 @@ class TestEnvironment {
           projectId: 'project01',
           textsByBookId: TestEnvironment.textsByBookId,
           questionsSorted: this.questions
-          // currentBook: 1,
-          // currentChapter: 3
         }
       };
     }
 
     if (config.data?.currentBook) {
-      this.makeProjectHaveTextAudio(config.data);
+      this.addTextAudioData(config.data);
     }
 
     when(mockedCsvService.parse(anything())).thenResolve([
@@ -562,7 +560,7 @@ class TestEnvironment {
     return this.overlayContainerElement.querySelector(query) as HTMLElement;
   }
 
-  makeProjectHaveTextAudio(data: ChapterAudioDialogData): void {
+  addTextAudioData(data: ChapterAudioDialogData): void {
     const dataId = getTextAudioId(data.projectId, data.currentBook ?? 1, data.currentChapter ?? 1);
     this.realtimeService.addSnapshot<TextAudio>(TextAudioDoc.COLLECTION, {
       id: dataId,
