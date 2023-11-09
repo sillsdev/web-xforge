@@ -1,15 +1,15 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MediaChange, MediaObserver } from '@angular/flex-layout';
-import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import { translate } from '@ngneat/transloco';
-import { Canon } from '@sillsdev/scripture';
 import { cloneDeep } from 'lodash-es';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { AuthType, User, getAuthType } from 'realtime-server/lib/esm/common/models/user';
 import { SFProjectRole } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-role';
 import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-info';
-import { BehaviorSubject, Observable, Subscription, combineLatest, of } from 'rxjs';
-import { distinctUntilChanged, filter, map, startWith, tap } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
+import { ActivatedProjectService } from 'xforge-common/activated-project.service';
+import { Subscription, combineLatest } from 'rxjs';
 import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -20,7 +20,6 @@ import { FeatureFlagsDialogComponent } from 'xforge-common/feature-flags/feature
 import { FileService } from 'xforge-common/file.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { LocationService } from 'xforge-common/location.service';
-import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { UserDoc } from 'xforge-common/models/user-doc';
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -34,13 +33,9 @@ import { UserService } from 'xforge-common/user.service';
 import { issuesEmailTemplate, supportedBrowser } from 'xforge-common/utils';
 import versionData from '../../../version.json';
 import { environment } from '../environments/environment';
-import { CheckingQuestionsService } from './checking/checking/checking-questions.service';
-import { QuestionDoc } from './core/models/question-doc';
 import { SFProjectProfileDoc } from './core/models/sf-project-profile-doc';
 import { roleCanAccessTranslate } from './core/models/sf-project-role-info';
-import { PermissionsService } from './core/permissions.service';
 import { SFProjectService } from './core/sf-project.service';
-import { NmtDraftAuthGuard, SettingsAuthGuard, SyncAuthGuard, UsersAuthGuard } from './shared/project-router.guard';
 
 declare function gtag(...args: any): void;
 
@@ -57,16 +52,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   isAppOnline: boolean = false;
   isExpanded: boolean = false;
   versionNumberClickCount = 0;
-  translateVisible: boolean = false;
-  checkingVisible: boolean = false;
 
   projectDocs?: SFProjectProfileDoc[];
-  canSeeSettings$?: Observable<boolean>;
-  canSeeUsers$?: Observable<boolean>;
-  canSync$?: Observable<boolean>;
-  /** Whether the user can see at least one of settings, users, or sync page */
-  canSeeAdminPages$?: Observable<boolean>;
-  canSeeNmtDrafts$?: Observable<boolean> = new BehaviorSubject<boolean>(true);
   hasUpdate: boolean = false;
 
   private currentUserDoc?: UserDoc;
@@ -75,8 +62,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
   private selectedProjectDeleteSub?: Subscription;
   private removedFromProjectSub?: Subscription;
   private _isDrawerPermanent: boolean = true;
-  private communityCheckingBooks: number[] = [];
-  private questionsQuery?: RealtimeQuery<QuestionDoc>;
 
   constructor(
     private readonly router: Router,
@@ -84,17 +69,11 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     private readonly locationService: LocationService,
     private readonly userService: UserService,
     private readonly projectService: SFProjectService,
-    private readonly checkingQuestionsService: CheckingQuestionsService,
-    private readonly route: ActivatedRoute,
-    private readonly settingsAuthGuard: SettingsAuthGuard,
-    private readonly syncAuthGuard: SyncAuthGuard,
-    private readonly generateDraftGuard: NmtDraftAuthGuard,
-    private readonly usersAuthGuard: UsersAuthGuard,
     private readonly dialogService: DialogService,
     private readonly fileService: FileService,
     private readonly reportingService: ErrorReportingService,
     private readonly userProjectsService: SFUserProjectsService,
-    private readonly permissions: PermissionsService,
+    private readonly activatedProjectService: ActivatedProjectService,
     readonly noticeService: NoticeService,
     readonly i18n: I18nService,
     readonly media: MediaObserver,
@@ -192,25 +171,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this.authService.currentUserRole === SystemRole.SystemAdmin;
   }
 
-  get isTranslateEnabled(): boolean {
-    return this.selectedProjectDoc != null && this.permissions.canAccessTranslate(this.selectedProjectDoc);
-  }
-
-  get isCheckingEnabled(): boolean {
-    return (
-      this._selectedProjectDoc?.data?.checkingConfig.checkingEnabled === true && this.hasCommunityCheckingPermission
-    );
-  }
-
-  get hasCommunityCheckingPermission(): boolean {
-    return this.selectedProjectDoc != null && this.permissions.canAccessCommunityChecking(this.selectedProjectDoc);
-  }
-
-  get hasSingleAppEnabled(): boolean {
-    const appStatus: boolean[] = [this.isTranslateEnabled, this.isCheckingEnabled];
-    return appStatus.filter(enabled => enabled).length === 1;
-  }
-
   get currentUser(): User | undefined {
     return this.currentUserDoc == null ? undefined : this.currentUserDoc.data;
   }
@@ -244,19 +204,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     return this._selectedProjectDoc?.data?.texts.slice().sort((a, b) => a.bookNum - b.bookNum) || [];
   }
 
-  get showAllQuestions(): boolean {
-    let count = 0;
-    for (const text of this.texts) {
-      if (this.hasQuestions(text)) {
-        count++;
-      }
-      if (count > 1) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   async ngOnInit(): Promise<void> {
     await this.authService.loggedIn;
     this.loadingStarted();
@@ -284,107 +231,61 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
 
     const projectDocs$ = this.userProjectsService.projectDocs$;
 
-    // retrieve the projectId from the current route. Since the nav menu is outside of the router outlet, it cannot
-    // use ActivatedRoute to get the params. Instead the nav menu, listens to router events and traverses the route
-    // tree to find the currently activated route
-    // TODO: Consider making AppComponent template into an empty router-outlet
-    // TODO: ... and moving corresponding component logic into a different component?
-    const projectId$: Observable<string | undefined> = this.router.events.pipe(
-      filter(e => e instanceof NavigationEnd),
-      startWith(null),
-      map(() => {
-        let route = this.route.snapshot;
-        while (route.firstChild != null) {
-          route = route.firstChild;
-        }
-        return route;
-      }),
-      filter(r => r.outlet === 'primary'),
-      tap(r => {
-        // ensure that the task of the current view has been expanded
-        for (const segment of r.url) {
-          if (segment.path === 'translate') {
-            this.translateVisible = true;
-            break;
-          } else if (segment.path === 'checking') {
-            this.checkingVisible = true;
-            break;
-          }
-        }
-      }),
-      map(r => r.params['projectId'] as string | undefined),
-      distinctUntilChanged(),
-      tap(projectId => {
-        this.canSeeSettings$ = projectId == null ? of(false) : this.settingsAuthGuard.allowTransition(projectId);
-        this.canSeeUsers$ = projectId == null ? of(false) : this.usersAuthGuard.allowTransition(projectId);
-        this.canSync$ = projectId == null ? of(false) : this.syncAuthGuard.allowTransition(projectId);
-        this.canSeeAdminPages$ = combineLatest([this.canSeeSettings$, this.canSeeUsers$, this.canSync$]).pipe(
-          map(([settings, users, sync]) => settings || users || sync)
-        );
-        this.canSeeNmtDrafts$ = projectId == null ? of(false) : this.generateDraftGuard.allowTransition(projectId);
-      })
-    );
-
     // select the current project
-    this.subscribe(combineLatest([projectDocs$, projectId$]), async ([projectDocs, projectId]) => {
-      this.projectDocs = projectDocs;
-      const selectedProjectDoc = projectId == null ? undefined : this.projectDocs.find(p => p.id === projectId);
+    this.subscribe(
+      combineLatest([projectDocs$, this.activatedProjectService.projectId$]),
+      async ([projectDocs, projectId]) => {
+        this.projectDocs = projectDocs;
+        const selectedProjectDoc = projectId == null ? undefined : this.projectDocs.find(p => p.id === projectId);
 
-      if (this.selectedProjectDeleteSub != null) {
-        this.selectedProjectDeleteSub.unsubscribe();
-        this.selectedProjectDeleteSub = undefined;
-      }
-
-      // check if the currently selected project has been deleted
-      if (
-        projectId != null &&
-        this.currentUserDoc != null &&
-        projectId === this.userService.currentProjectId(this.currentUserDoc) &&
-        (selectedProjectDoc == null || !selectedProjectDoc.isLoaded)
-      ) {
-        await this.userService.setCurrentProjectId(this.currentUserDoc, undefined);
-        this.navigateToStart();
-        return;
-      }
-
-      this._selectedProjectDoc = selectedProjectDoc;
-      if (this._selectedProjectDoc == null || !this._selectedProjectDoc.isLoaded) {
-        return;
-      }
-      this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
-      this.refreshQuestionsQuery(this._selectedProjectDoc.id);
-
-      // handle remotely deleted project
-      this.selectedProjectDeleteSub = this._selectedProjectDoc.delete$.subscribe(() => {
-        if (this.userService.currentProjectId != null) {
-          this.showProjectDeletedDialog();
+        if (this.selectedProjectDeleteSub != null) {
+          this.selectedProjectDeleteSub.unsubscribe();
+          this.selectedProjectDeleteSub = undefined;
         }
-      });
 
-      if (this.removedFromProjectSub != null) {
-        this.removedFromProjectSub.unsubscribe();
-      }
-      this.removedFromProjectSub = this._selectedProjectDoc.remoteChanges$.subscribe(() => {
+        // check if the currently selected project has been deleted
         if (
-          this._selectedProjectDoc?.data != null &&
+          projectId != null &&
           this.currentUserDoc != null &&
-          !(this.currentUserDoc.id in this._selectedProjectDoc.data.userRoles)
+          projectId === this.userService.currentProjectId(this.currentUserDoc) &&
+          (selectedProjectDoc == null || !selectedProjectDoc.isLoaded)
         ) {
-          // The user has been removed from the project
-          this.showProjectDeletedDialog();
-          this.projectService.localDelete(this._selectedProjectDoc.id);
+          await this.userService.setCurrentProjectId(this.currentUserDoc, undefined);
+          this.navigateToStart();
+          return;
         }
-      });
 
-      if (!this.isTranslateEnabled) {
-        this.translateVisible = false;
-      }
-      if (!this.isCheckingEnabled) {
-        this.checkingVisible = false;
-      }
+        this._selectedProjectDoc = selectedProjectDoc;
+        if (this._selectedProjectDoc == null || !this._selectedProjectDoc.isLoaded) {
+          return;
+        }
+        this.userService.setCurrentProjectId(this.currentUserDoc!, this._selectedProjectDoc.id);
 
-      this.checkDeviceStorage();
-    });
+        // handle remotely deleted project
+        this.selectedProjectDeleteSub = this._selectedProjectDoc.delete$.subscribe(() => {
+          if (this.userService.currentProjectId != null) {
+            this.showProjectDeletedDialog();
+          }
+        });
+
+        if (this.removedFromProjectSub != null) {
+          this.removedFromProjectSub.unsubscribe();
+        }
+        this.removedFromProjectSub = this._selectedProjectDoc.remoteChanges$.subscribe(() => {
+          if (
+            this._selectedProjectDoc?.data != null &&
+            this.currentUserDoc != null &&
+            !(this.currentUserDoc.id in this._selectedProjectDoc.data.userRoles)
+          ) {
+            // The user has been removed from the project
+            this.showProjectDeletedDialog();
+            this.projectService.localDelete(this._selectedProjectDoc.id);
+          }
+        });
+
+        this.checkDeviceStorage();
+      }
+    );
 
     this.loadingFinished();
   }
@@ -397,7 +298,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     if (this.removedFromProjectSub != null) {
       this.removedFromProjectSub.unsubscribe();
     }
-    this.questionsQuery?.dispose();
   }
 
   setLocale(locale: string): void {
@@ -474,29 +374,6 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.isExpanded = false;
   }
 
-  getBookName(text: TextInfo): string {
-    return this.i18n.localizeBook(text.bookNum);
-  }
-
-  getBookId(text: TextInfo): string {
-    return Canon.bookNumberToId(text.bookNum);
-  }
-
-  getRouterLink(tool: string, extension?: string): string[] {
-    if (this.selectedProjectId == null) {
-      return [];
-    }
-    const link = ['/projects', this.selectedProjectId, tool];
-    if (extension != null && extension !== '') {
-      link.push(extension);
-    }
-    return link;
-  }
-
-  hasQuestions(text: TextInfo): boolean {
-    return this.communityCheckingBooks.includes(text.bookNum);
-  }
-
   reloadWithUpdates(): void {
     this.pwaService.activateUpdates();
   }
@@ -505,37 +382,8 @@ export class AppComponent extends DataLoadingComponent implements OnInit, OnDest
     this.dialogService.openMatDialog(FeatureFlagsDialogComponent);
   }
 
-  get lastSyncFailed(): boolean {
-    return this._selectedProjectDoc?.data?.sync.lastSyncSuccessful === false && !this.syncInProgress;
-  }
-
-  get syncInProgress(): boolean {
-    return this._selectedProjectDoc?.data != null && this._selectedProjectDoc.data.sync.queuedCount > 0;
-  }
-
   get appName(): string {
     return environment.siteName;
-  }
-
-  private async refreshQuestionsQuery(projectId: string): Promise<void> {
-    this.questionsQuery?.dispose();
-    if (!this.hasCommunityCheckingPermission) return;
-
-    this.questionsQuery = await this.checkingQuestionsService.queryQuestions(projectId, { activeOnly: true });
-    this.questionsQuery.docs$.subscribe(docs => {
-      const books = new Set<number>();
-      for (const question of docs) {
-        const bookNum = question.data?.verseRef.bookNum;
-        if (bookNum != null) books.add(bookNum);
-      }
-      // Subscribe to the texts of any added book, so it will be available offline. This really shouldn't be the concern
-      // of the app component, but for now it is. There isn't an easy way to unsubscribe from a book that was removed,
-      // and it's not extremely important to do so, so we won't bother doing that.
-      for (const bookNum of books) {
-        if (!this.communityCheckingBooks.includes(bookNum)) this._selectedProjectDoc?.loadTextDocs(bookNum);
-      }
-      this.communityCheckingBooks = Array.from(books).sort((a, b) => a - b);
-    });
   }
 
   private async showProjectDeletedDialog(): Promise<void> {
