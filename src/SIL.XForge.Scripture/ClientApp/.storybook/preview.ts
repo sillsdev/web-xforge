@@ -1,5 +1,6 @@
-import { DOCUMENT } from '@angular/common';
-import { APP_INITIALIZER, importProvidersFrom } from '@angular/core';
+import { getTestBed } from '@angular/core/testing';
+import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from '@angular/platform-browser-dynamic/testing';
+import { importProvidersFrom } from '@angular/core';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { setCompodocJson } from '@storybook/addon-docs/angular';
 import { applicationConfig } from '@storybook/angular';
@@ -48,3 +49,5 @@ export const decorators = [
     ]
   })
 ];
+
+getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
