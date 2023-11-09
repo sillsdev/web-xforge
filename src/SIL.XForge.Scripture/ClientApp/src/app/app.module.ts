@@ -38,10 +38,12 @@ import { SyncProgressComponent } from './sync/sync-progress/sync-progress.compon
 import { SyncComponent } from './sync/sync.component';
 import { TranslateModule } from './translate/translate.module';
 import { UsersModule } from './users/users.module';
+import { NavigationComponent } from './navigation/navigation.component';
 
 @NgModule({
   declarations: [
     AppComponent,
+    NavigationComponent,
     ConnectProjectComponent,
     DeleteProjectDialogComponent,
     ProjectComponent,
