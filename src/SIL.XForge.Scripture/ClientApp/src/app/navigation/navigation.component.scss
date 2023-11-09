@@ -1,0 +1,95 @@
+@use 'src/variables';
+
+mat-nav-list .mat-list-item {
+  height: 48px;
+  font-weight: 500;
+  font-size: 14px;
+
+  mat-icon {
+    color: variables.$purpleMedium;
+    fill: variables.$purpleMedium;
+    transition: color 0.15s;
+    padding: 0;
+  }
+  &:hover {
+    mat-icon {
+      color: variables.$purpleLight;
+      fill: variables.$purpleLight;
+    }
+  }
+
+  mat-icon:last-child {
+    margin-left: auto;
+  }
+
+  ::ng-deep .mat-list-item-content {
+    column-gap: 16px;
+  }
+
+  &.activated-nav-item,
+  &.active {
+    background-color: #e7e8e7;
+  }
+}
+
+:host {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+#tools-menu-list,
+#admin-pages-menu-list {
+  padding-top: 0;
+}
+
+#tools-menu-list {
+  overflow-y: auto;
+}
+
+.sync-in-progress {
+  animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(-360deg);
+  }
+}
+
+::ng-deep #sync-icon .mat-badge-content {
+  font-family: 'Material Icons';
+  background: transparent;
+  color: variables.$errorColor;
+  font-weight: normal;
+  font-size: 1.4rem;
+}
+
+.navigation-header:hover {
+  background-color: initial;
+  cursor: initial;
+}
+.navigation-header ::ng-deep .mat-list-item-content {
+  font-size: small;
+  text-align: center;
+  justify-content: space-around;
+  color: #777;
+  padding: 0;
+}
+
+.mat-nav-list.disabled-offline .mat-list-item {
+  &,
+  mat-icon {
+    color: variables.$disabled-text-color;
+  }
+}
+
+.nav-label {
+  color: white;
+  padding: 2px 6px;
+  border-radius: 100px;
+  font-size: small;
+  background: #4678d6;
+  margin-inline-start: auto;
+}

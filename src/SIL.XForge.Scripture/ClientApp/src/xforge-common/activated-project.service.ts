@@ -1,9 +1,35 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { ActivationEnd, Router } from '@angular/router';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { SFProjectService } from 'src/app/core/sf-project.service';
+import ObjectID from 'bson-objectid';
+import { filter, map, startWith, switchMap } from 'rxjs/operators';
+import { TestBed } from '@angular/core/testing';
 import { SubscriptionDisposable } from './subscription-disposable';
+
+interface IActiveProjectIdService {
+  projectId$: Observable<string | undefined>;
+}
+
+@Injectable({ providedIn: 'root' })
+export class ActiveProjectIdService implements IActiveProjectIdService {
+  projectId$: Observable<string | undefined> = this.router.events.pipe(
+    filter(event => event instanceof ActivationEnd),
+    map(event => (event as ActivationEnd).snapshot.params.projectId),
+    startWith(this.getProjectIdFromUrl(this.router.routerState.snapshot.url))
+  );
+
+  constructor(private readonly router: Router) {}
+
+  private getProjectIdFromUrl(url: string): string | undefined {
+    const urlPortions = url.split('/').filter(portion => portion !== '');
+    if (urlPortions.length >= 2 && urlPortions[0] === 'projects' && ObjectID.isValid(urlPortions[1])) {
+      return urlPortions[1];
+    }
+    return undefined;
+  }
+}
 
 /**
  * Provides a copy of the project document for the currently activated project.
@@ -18,21 +44,17 @@ import { SubscriptionDisposable } from './subscription-disposable';
  * - The same project ID will not be emitted twice in a row, and the same project document will not be emitted twice in
  * a row.
  */
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ActivatedProjectService extends SubscriptionDisposable {
   private _projectId$ = new BehaviorSubject<string | undefined>(undefined);
   private _projectDoc$ = new BehaviorSubject<SFProjectProfileDoc | undefined>(undefined);
 
-  constructor(private readonly router: Router, private readonly projectService: SFProjectService) {
+  constructor(
+    private readonly projectService: SFProjectService,
+    @Inject(ActiveProjectIdService) activeProjectIdService: IActiveProjectIdService
+  ) {
     super();
-
-    this.subscribe(this.router.events.pipe(), event => {
-      if (event instanceof ActivationEnd) {
-        this.selectProject(event.snapshot.params.projectId);
-      }
-    });
+    this.subscribe(activeProjectIdService.projectId$, projectId => this.selectProject(projectId));
   }
 
   get projectId(): string | undefined {
@@ -63,6 +85,14 @@ export class ActivatedProjectService extends SubscriptionDisposable {
     return this._projectDoc$;
   }
 
+  /** Gives the current project document every time the project changes or a different project is activated. */
+  get changes$(): Observable<SFProjectProfileDoc | undefined> {
+    return this.projectDoc$.pipe(
+      switchMap(projectDoc => projectDoc?.changes$.pipe(startWith(projectDoc)) ?? of(undefined)),
+      map(() => this.projectDoc)
+    );
+  }
+
   private async selectProject(projectId: string | undefined): Promise<void> {
     if (projectId == null) {
       this.projectId = undefined;
@@ -75,5 +105,25 @@ export class ActivatedProjectService extends SubscriptionDisposable {
     if (this.projectId === projectId) {
       this.projectDoc = projectDoc;
     }
+  }
+}
+
+export class TestActiveProjectIdService implements IActiveProjectIdService {
+  projectId$ = new BehaviorSubject<string | undefined>(this.projectId);
+  constructor(private readonly projectId?: string) {}
+}
+
+@Injectable()
+export class TestActivatedProjectService extends ActivatedProjectService {
+  constructor(
+    projectService: SFProjectService,
+    @Inject(ActiveProjectIdService) activeProjectIdService: IActiveProjectIdService
+  ) {
+    super(projectService, activeProjectIdService);
+  }
+
+  static withProjectId(projectId: string): TestActivatedProjectService {
+    const projectService = TestBed.inject(SFProjectService);
+    return new TestActivatedProjectService(projectService, new TestActiveProjectIdService(projectId));
   }
 }
