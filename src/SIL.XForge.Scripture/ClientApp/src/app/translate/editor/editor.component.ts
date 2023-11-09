@@ -139,6 +139,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
   addingMobileNote: boolean = false;
   suggestions: Suggestion[] = [];
   showSuggestions: boolean = false;
+  books: number[] = [];
   chapters: number[] = [];
   isProjectAdmin: boolean = false;
   metricsSession?: TranslateMetricsSession;
@@ -334,6 +335,10 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         `/projects/${this.projectId}/translate/${Canon.bookNumberToId(this.bookNum!)}/${value}`
       );
     }
+  }
+
+  setBook(book: number): void {
+    this.router.navigate(['projects', this.projectId, 'translate', Canon.bookNumberToId(book)]);
   }
 
   get bookNum(): number | undefined {
@@ -643,6 +648,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
           return;
         }
 
+        this.books = this.projectDoc.data.texts.map(t => t.bookNum);
         this.text = this.projectDoc.data.texts.find(t => t.bookNum === bookNum);
 
         // If book is not in project, navigate to 'projects' route, which should send the user
