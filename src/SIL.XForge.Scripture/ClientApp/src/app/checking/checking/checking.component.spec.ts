@@ -2161,6 +2161,23 @@ describe('CheckingComponent', () => {
       discardPeriodicTasks();
     }));
 
+    it('stops audio when changing question', fakeAsync(() => {
+      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      const audio = mock(CheckingScriptureAudioPlayerComponent);
+      when(audio.isPlaying).thenReturn(true);
+      env.component.scriptureAudioPlayer = instance(audio);
+
+      env.selectQuestion(4);
+
+      verify(audio.stop()).once();
+      expect(env.component).toBeDefined();
+      flush();
+      discardPeriodicTasks();
+    }));
+
     it('pauses audio when question is archived', fakeAsync(() => {
       const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
       env.component.toggleAudio();

@@ -167,6 +167,18 @@ describe('ScriptureAudioComponent', () => {
     expect(env.closedEventCount).toBe(1);
     expect(env.audioPauseSpy).toHaveBeenCalledTimes(1);
   }));
+
+  it('disable player controls when audio is unavailable', fakeAsync(() => {
+    const env = new TestEnvironment();
+
+    env.component.audioPlayer.audioPlayer?.isAudioAvailable$.next(false);
+    env.component.audioPlayer.source = undefined;
+    env.wait();
+
+    expect(env.playButton.classes['mat-button-disabled']).toBe(true);
+    expect(env.previousRefButton.classes['mat-button-disabled']).toBe(true);
+    expect(env.nextRefButton.classes['mat-button-disabled']).toBe(true);
+  }));
 });
 
 @Component({ selector: 'app-host', template: '' })
