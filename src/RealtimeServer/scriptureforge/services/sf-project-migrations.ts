@@ -213,6 +213,18 @@ class SFProjectMigration12 extends DocMigration {
   }
 }
 
+class SFProjectMigration13 extends DocMigration {
+  static readonly VERSION = 13;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    if (doc.data.translateConfig.draftConfig.lastSelectedBooks == null) {
+      ops.push({ p: ['translateConfig', 'draftConfig', 'lastSelectedBooks'], oi: [] });
+    }
+    await submitMigrationOp(SFProjectMigration13.VERSION, doc, ops);
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
@@ -225,5 +237,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration9,
   SFProjectMigration10,
   SFProjectMigration11,
-  SFProjectMigration12
+  SFProjectMigration12,
+  SFProjectMigration13
 ];

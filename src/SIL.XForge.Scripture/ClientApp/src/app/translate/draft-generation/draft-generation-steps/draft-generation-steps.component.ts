@@ -28,14 +28,10 @@ export class DraftGenerationStepsComponent implements OnInit {
     this.availableBooks$ = this.activatedProject.projectDoc$.pipe(
       // Build available book list from source project
       switchMap(doc => {
-        // See if there is an alternate project set
-        let sourceProjectId: string | undefined = doc?.data?.translateConfig.draftConfig.alternateSource?.projectRef;
-        if (sourceProjectId != null) {
-          return from(this.projectService.getProfile(sourceProjectId));
-        }
-
-        // Otherwise, use the source project
-        sourceProjectId = doc?.data?.translateConfig.source?.projectRef;
+        // See if there is an alternate source project set, otherwise use the source project
+        let sourceProjectId: string | undefined =
+          doc?.data?.translateConfig.draftConfig.alternateSource?.projectRef ??
+          doc?.data?.translateConfig.source?.projectRef;
 
         if (sourceProjectId == null) {
           throw new Error('Source project is not set');
@@ -44,11 +40,17 @@ export class DraftGenerationStepsComponent implements OnInit {
         return from(this.projectService.getProfile(sourceProjectId));
       }),
       map(doc => doc?.data?.texts.map(t => t.bookNum) ?? []),
-      tap((books: number[]) => {
-        // Initially select all books
-        // TODO: Initialize with selection from previous draft if available?
-        // TODO: ...otherwise, initialize with books from target project that contain any translation work?
-        this.selectedBooks = books;
+      tap((availableBooks: number[]) => {
+        // Get the previously selected training books from the target project
+        const previousBooks: Set<number> = new Set<number>(
+          this.activatedProject.projectDoc?.data?.translateConfig.draftConfig.lastSelectedBooks ?? []
+        );
+
+        // The intersection is all of the available books in the source project that match the target's previous books
+        const intersection = availableBooks.filter(bookNum => previousBooks.has(bookNum));
+
+        // Set the selected books to the intersection, or if the intersection is empty, just return all available books
+        this.selectedBooks = intersection.length > 0 ? intersection : availableBooks;
       })
     );
   }

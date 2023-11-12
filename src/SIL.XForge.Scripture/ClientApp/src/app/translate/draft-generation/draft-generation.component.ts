@@ -205,11 +205,9 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     }
   }
 
-  onPreGenerationStepsComplete(_result: DraftGenerationStepsResult): void {
+  onPreGenerationStepsComplete(result: DraftGenerationStepsResult): void {
     this.navigateToTab('initial');
-
-    // TODO: Send selected books to the back-end
-    this.startBuild();
+    this.startBuild(result.books);
   }
 
   /**
@@ -261,24 +259,29 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     return job == null || this.isDraftInProgress(job);
   }
 
-  startBuild(): void {
+  startBuild(trainingBooks: number[]): void {
     this.jobSubscription?.unsubscribe();
     this.jobSubscription = this.subscribe(
-      this.draftGenerationService.startBuildOrGetActiveBuild(this.activatedProject.projectId!).pipe(
-        tap((job?: BuildDto) => {
-          // Handle automatic closing of dialog if job finishes while cancel dialog is open
-          if (!this.canCancel(job)) {
-            if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
-              this.cancelDialogRef.close();
-            }
-          }
-
-          // Ensure flag is set for case where first completed build happens while component is loaded
-          if (this.isDraftComplete(job)) {
-            this.hasAnyCompletedBuild = true;
-          }
+      this.draftGenerationService
+        .startBuildOrGetActiveBuild({
+          projectId: this.activatedProject.projectId!,
+          trainingBooks
         })
-      ),
+        .pipe(
+          tap((job?: BuildDto) => {
+            // Handle automatic closing of dialog if job finishes while cancel dialog is open
+            if (!this.canCancel(job)) {
+              if (this.cancelDialogRef?.getState() === MatDialogState.OPEN) {
+                this.cancelDialogRef.close();
+              }
+            }
+
+            // Ensure flag is set for case where first completed build happens while component is loaded
+            if (this.isDraftComplete(job)) {
+              this.hasAnyCompletedBuild = true;
+            }
+          })
+        ),
       (job?: BuildDto) => (this.draftJob = job)
     );
   }

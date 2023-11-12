@@ -17,8 +17,10 @@ using SIL.Machine.WebApi.Configuration;
 using SIL.Machine.WebApi.DataAccess;
 using SIL.Machine.WebApi.Models;
 using SIL.Machine.WebApi.Services;
+using SIL.ObjectModel;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Realtime;
+using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Services;
 using SIL.XForge.Utils;
@@ -28,6 +30,7 @@ using MachineWordGraph = SIL.Machine.Translation.WordGraph;
 using MachineWordGraphArc = SIL.Machine.Translation.WordGraphArc;
 // Until the In-Process Machine distinguishes its objects from Serval
 using Phrase = Serval.Client.Phrase;
+using Project = SIL.XForge.Models.Project;
 using TranslationResult = Serval.Client.TranslationResult;
 using WordGraph = Serval.Client.WordGraph;
 using WordGraphArc = Serval.Client.WordGraphArc;
@@ -54,6 +57,9 @@ public class MachineApiService : IMachineApiService
     /// SF returns this state while the files are being uploaded to Serval.
     /// </remarks>
     internal const string BuildStateQueued = "QUEUED";
+    private static readonly IEqualityComparer<IList<int>> _listIntComparer = SequenceEqualityComparer.Create(
+        EqualityComparer<int>.Default
+    );
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IBuildRepository _builds;
     private readonly IEngineRepository _engines;
@@ -569,7 +575,7 @@ public class MachineApiService : IMachineApiService
                     // We do not need the success boolean result, as we will still rebuild if no files have changed
                     await _machineProjectService.SyncProjectCorporaAsync(
                         curUserId,
-                        sfProjectId,
+                        new BuildConfig { ProjectId = sfProjectId },
                         preTranslate: false,
                         cancellationToken
                     );
@@ -613,12 +619,20 @@ public class MachineApiService : IMachineApiService
 
     public async Task StartPreTranslationBuildAsync(
         string curUserId,
-        string sfProjectId,
+        BuildConfig buildConfig,
         CancellationToken cancellationToken
     )
     {
+        // Load the project from the realtime service
+        await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(buildConfig.ProjectId);
+        if (!projectDoc.IsLoaded)
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
         // Ensure that the user has permission on the project
-        SFProject project = await EnsureProjectPermissionAsync(curUserId, sfProjectId);
+        EnsureProjectPermission(curUserId, projectDoc.Data);
 
         // Execute on Serval, if it is enabled
         if (!await _featureManager.IsEnabledAsync(FeatureFlags.Serval))
@@ -626,9 +640,19 @@ public class MachineApiService : IMachineApiService
             throw new DataNotFoundException("The translation engine does not support pre-translations");
         }
 
+        // Save the selected books
+        await projectDoc.SubmitJson0OpAsync(
+            op =>
+                op.Set(
+                    p => p.TranslateConfig.DraftConfig.LastSelectedBooks,
+                    buildConfig.TrainingBooks.ToList(),
+                    _listIntComparer
+                )
+        );
+
         // If we have an alternate source, sync that first
         string jobId;
-        string alternateSourceProjectId = project.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef;
+        string alternateSourceProjectId = projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef;
         if (!string.IsNullOrWhiteSpace(alternateSourceProjectId))
         {
             string sourceJobId = await _syncService.SyncAsync(curUserId, alternateSourceProjectId, trainEngine: false);
@@ -636,20 +660,20 @@ public class MachineApiService : IMachineApiService
             // Run the training after the sync has completed
             jobId = _backgroundJobClient.ContinueJobWith<IMachineProjectService>(
                 sourceJobId,
-                r => r.BuildProjectForBackgroundJobAsync(curUserId, sfProjectId, true, CancellationToken.None)
+                r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
             );
         }
         else
         {
             // This will take a while, so we run it in the background
             jobId = _backgroundJobClient.Enqueue<IMachineProjectService>(
-                r => r.BuildProjectForBackgroundJobAsync(curUserId, sfProjectId, true, CancellationToken.None)
+                r => r.BuildProjectForBackgroundJobAsync(curUserId, buildConfig, true, CancellationToken.None)
             );
         }
 
         // Set the pre-translation queued date and time, and hang fire job id
         await _projectSecrets.UpdateAsync(
-            sfProjectId,
+            buildConfig.ProjectId,
             u =>
             {
                 u.Set(p => p.ServalData.PreTranslationJobId, jobId);
@@ -996,15 +1020,8 @@ public class MachineApiService : IMachineApiService
         return engineDto;
     }
 
-    private async Task<SFProject> EnsureProjectPermissionAsync(string curUserId, string sfProjectId)
+    private static void EnsureProjectPermission(string curUserId, Project project)
     {
-        // Load the project from the realtime service
-        Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
-        if (!attempt.TryResult(out SFProject project))
-        {
-            throw new DataNotFoundException("The project does not exist.");
-        }
-
         // Check for permission
         if (
             !(
@@ -1015,8 +1032,19 @@ public class MachineApiService : IMachineApiService
         {
             throw new ForbiddenException();
         }
+    }
 
-        return project;
+    private async Task EnsureProjectPermissionAsync(string curUserId, string sfProjectId)
+    {
+        // Load the project from the realtime service
+        Attempt<SFProject> attempt = await _realtimeService.TryGetSnapshotAsync<SFProject>(sfProjectId);
+        if (!attempt.TryResult(out SFProject project))
+        {
+            throw new DataNotFoundException("The project does not exist.");
+        }
+
+        // Check for permission
+        EnsureProjectPermission(curUserId, project);
     }
 
     /// <summary>

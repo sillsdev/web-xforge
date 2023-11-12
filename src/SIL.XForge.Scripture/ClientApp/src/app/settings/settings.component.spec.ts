@@ -219,7 +219,8 @@ describe('SettingsComponent', () => {
               writingSystem: {
                 tag: 'qaa'
               }
-            }
+            },
+            lastSelectedBooks: []
           }
         });
         when(mockedParatextService.getProjects()).thenResolve([
@@ -845,7 +846,7 @@ class TestEnvironment {
           tag: 'qaa'
         }
       },
-      draftConfig: {}
+      draftConfig: { lastSelectedBooks: [] }
     },
     checkingConfig: Partial<CheckingConfig> = {
       checkingEnabled: false,
