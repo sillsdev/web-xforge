@@ -37,7 +37,7 @@ export class DraftGenerationService {
     return timer(0, this.options.pollRate).pipe(
       switchMap(() => this.getBuildProgress(projectId)),
       takeWhile(job => activeBuildStates.includes(job?.state as BuildStates), true),
-      distinct(job => `${job?.state}${job?.percentCompleted}`),
+      distinct(job => `${job?.state}${job?.queueDepth}${job?.percentCompleted}`),
       shareReplay({ bufferSize: 1, refCount: true })
     );
   }

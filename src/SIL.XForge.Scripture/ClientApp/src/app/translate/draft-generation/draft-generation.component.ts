@@ -235,6 +235,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     return InfoAlert.None;
   }
 
+  hasDraftQueueDepth(job?: BuildDto): boolean {
+    return (job?.queueDepth ?? 0) > 0;
+  }
+
   isDraftInProgress(job?: BuildDto): boolean {
     return activeBuildStates.includes(job?.state as BuildStates);
   }

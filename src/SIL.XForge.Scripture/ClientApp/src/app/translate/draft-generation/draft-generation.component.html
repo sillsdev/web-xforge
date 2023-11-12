@@ -183,8 +183,8 @@
               <section *ngIf="isDraftQueued(draftJob)">
                 <h3>{{ t("draft_queued_header") }}</h3>
 
-                <p *ngIf="(draftJob?.queueDepth ?? 0) === 0">{{ t("draft_queued_detail") }}</p>
-                <p *ngIf="(draftJob?.queueDepth ?? 0) > 0">
+                <p *ngIf="!hasDraftQueueDepth(draftJob)">{{ t("draft_queued_detail") }}</p>
+                <p *ngIf="hasDraftQueueDepth(draftJob)">
                   {{ t("draft_queued_detail_multiple", { count: draftJob.queueDepth }) }}
                 </p>
                 <p *ngIf="hasAnyCompletedBuild">
@@ -213,7 +213,7 @@
                     {{ t("preview_last_draft_while_active_build") }}
                   </p>
                 </div>
-                <circle-progress [percent]="draftJob!.percentCompleted * 100"></circle-progress>
+                <circle-progress [percent]="draftJob.percentCompleted * 100"></circle-progress>
 
                 <div class="button-strip">
                   <button *ngIf="canCancel(draftJob)" mat-flat-button color="primary" (click)="cancel()">
