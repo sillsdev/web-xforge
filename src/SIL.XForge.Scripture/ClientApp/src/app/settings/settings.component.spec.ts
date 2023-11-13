@@ -8,12 +8,13 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Route } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CookieService } from 'ngx-cookie-service';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { obj } from 'realtime-server/lib/esm/common/utils/obj-path';
 import { CheckingConfig } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { SFProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project';
 import { createTestProject } from 'realtime-server/lib/esm/scriptureforge/models/sf-project-test-data';
-import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-test-data';
 import { TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-test-data';
 import { TranslateConfig } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { of } from 'rxjs';
 import { anything, capture, deepEqual, instance, mock, verify, when } from 'ts-mockito';
@@ -23,14 +24,14 @@ import { FeatureFlagService, ObservableFeatureFlag } from 'xforge-common/feature
 import { NoticeService } from 'xforge-common/notice.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { QueryParameters } from 'xforge-common/query-parameters';
+import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import { TestRealtimeService } from 'xforge-common/test-realtime.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { UserService } from 'xforge-common/user.service';
 import { WriteStatusComponent } from 'xforge-common/write-status/write-status.component';
-import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
-import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
 import { SFProjectDoc } from '../core/models/sf-project-doc';
 import { SF_TYPE_REGISTRY } from '../core/models/sf-type-registry';
 import { TextAudioDoc } from '../core/models/text-audio-doc';
@@ -253,6 +254,38 @@ describe('SettingsComponent', () => {
         expect(env.alternateSourceSelectProjectsResources.length).toEqual(5);
         expect(env.alternateSourceSelectProjectsResources[1].name).toBe('ParatextP2');
         expect(env.alternateSourceSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
+      }));
+    });
+
+    describe('Serval Config TextArea', () => {
+      it('should not display for non-system administrators', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        env.wait();
+        expect(env.servalConfigTextArea).toBeNull();
+      }));
+
+      it('should change serval config value', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        when(mockedAuthService.currentUserRole).thenReturn(SystemRole.SystemAdmin);
+        env.wait();
+        env.wait();
+        expect(env.servalConfigTextArea).not.toBeNull();
+        expect(env.servalConfigTextAreaElement.value).toBe('');
+        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
+
+        env.setServalConfigValue('{}');
+
+        expect(env.servalConfigTextAreaElement.value).toContain('{}');
+
+        // Trigger the onblur, which will save the value
+        env.servalConfigTextAreaElement.dispatchEvent(new InputEvent('blur'));
+        env.wait();
+
+        verify(mockedSFProjectService.onlineSetServalConfig('project01', anything())).once();
+        expect(env.statusDone(env.servalConfigStatus)).not.toBeNull();
       }));
     });
 
@@ -592,6 +625,7 @@ class TestEnvironment {
     when(mockedSFProjectService.onlineIsSourceProject('project01')).thenResolve(isSource);
     when(mockedSFProjectService.onlineDelete(anything())).thenResolve();
     when(mockedSFProjectService.onlineUpdateSettings('project01', anything())).thenResolve();
+    when(mockedSFProjectService.onlineSetServalConfig('project01', anything())).thenResolve();
     when(mockedSFProjectService.get('project01')).thenCall(() =>
       this.realtimeService.subscribe(SFProjectDoc.COLLECTION, 'project01')
     );
@@ -653,6 +687,14 @@ class TestEnvironment {
 
   get alternateSourceStatus(): DebugElement {
     return this.fixture.debugElement.query(By.css('#alternate-source-status'));
+  }
+
+  get servalConfigTextArea(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#serval-config'));
+  }
+
+  get servalConfigStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#serval-config-status'));
   }
 
   get translationSuggestionsStatus(): DebugElement {
@@ -763,6 +805,10 @@ class TestEnvironment {
     );
   }
 
+  get servalConfigTextAreaElement(): HTMLTextAreaElement {
+    return this.servalConfigTextArea?.nativeElement as HTMLTextAreaElement;
+  }
+
   get basedOnSelectValue(): string {
     return this.basedOnSelectComponent.paratextIdControl.value?.name || '';
   }
@@ -819,6 +865,11 @@ class TestEnvironment {
 
   setAlternateSourceValue(value: string): void {
     this.alternateSourceSelectComponent.value = value;
+    this.wait();
+  }
+
+  setServalConfigValue(value: string): void {
+    this.servalConfigTextAreaElement.value = value;
     this.wait();
   }
 
