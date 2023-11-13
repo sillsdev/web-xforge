@@ -596,6 +596,35 @@ public class SFProjectsRpcController : RpcControllerBase
         }
     }
 
+    public async Task<IRpcMethodResult> SetServalConfig(string projectId, string? servalConfig)
+    {
+        try
+        {
+            await _projectService.SetServalConfigAsync(UserId, SystemRole, projectId, servalConfig);
+            return Ok();
+        }
+        catch (ForbiddenException)
+        {
+            return ForbiddenError();
+        }
+        catch (DataNotFoundException dnfe)
+        {
+            return NotFoundError(dnfe.Message);
+        }
+        catch (Exception)
+        {
+            _exceptionHandler.RecordEndpointInfoForException(
+                new Dictionary<string, string>
+                {
+                    { "method", "SetServalConfig" },
+                    { "projectId", projectId },
+                    { "servalConfig", servalConfig },
+                }
+            );
+            throw;
+        }
+    }
+
     public async Task<IRpcMethodResult> TransceleratorQuestions(string projectId)
     {
         try
