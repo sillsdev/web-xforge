@@ -228,4 +228,8 @@ export class SFProjectService extends ProjectService<SFProject, SFProjectDoc> {
   async onlineDeleteAudioTimingData(projectId: string, book: number, chapter: number): Promise<void> {
     return await this.onlineInvoke('deleteAudioTimingData', { projectId, book, chapter });
   }
+
+  async onlineSetServalConfig(projectId: string, servalConfig: string | null | undefined): Promise<void> {
+    return await this.onlineInvoke<void>('setServalConfig', { projectId, servalConfig });
+  }
 }
