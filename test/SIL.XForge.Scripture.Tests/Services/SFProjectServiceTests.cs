@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
 using SIL.XForge.Configuration;
@@ -3025,15 +3026,37 @@ public class SFProjectServiceTests
     {
         var env = new TestEnvironment();
 
-        // Verify project document
-        SFProject project = env.GetProject(Project01);
-        Assert.IsNotNull(project.TranslateConfig.DraftConfig);
-
         // SUT
         await env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig: null);
 
         // Verify project document
-        project = env.GetProject(Project01);
+        SFProject project = env.GetProject(Project01);
+        Assert.IsNull(project.TranslateConfig.DraftConfig!.ServalConfig);
+    }
+
+    [Test]
+    public void SetServalConfigAsync_BlocksInvalidJson()
+    {
+        var env = new TestEnvironment();
+        const string servalConfig = "this_is_not_json";
+
+        // SUT
+        Assert.ThrowsAsync<JsonReaderException>(
+            () => env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig)
+        );
+    }
+
+    [Test]
+    public async Task SetServalConfigAsync_ChangesWhiteSpaceToNull()
+    {
+        var env = new TestEnvironment();
+        const string servalConfig = "  ";
+
+        // SUT
+        await env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig);
+
+        // Verify project document
+        SFProject project = env.GetProject(Project01);
         Assert.IsNull(project.TranslateConfig.DraftConfig!.ServalConfig);
     }
 
