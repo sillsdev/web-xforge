@@ -49,14 +49,16 @@
         [ngClass]="{ valid: hasTimingBeenUploaded, invalid: timingErrorMessage !== '' }"
       >
         <mat-icon class="material-icons-outlined">timer</mat-icon>
-        <span *ngIf="hasTimingBeenUploaded">{{
+        <span *ngIf="hasTimingBeenUploaded && !hasTimingDataError">{{
           t("chapter_audio_dialog.segments_found", { segments: numberOfTimingSegments })
         }}</span>
-        <span *ngIf="!hasTimingBeenUploaded && timingErrorMessage === ''">{{
+        <span *ngIf="!hasTimingBeenUploaded && !hasTimingDataError">{{
           t("chapter_audio_dialog.no_timing_data_uploaded")
         }}</span>
-        <span *ngIf="!hasTimingBeenUploaded && timingErrorMessage !== ''">{{ t(timingErrorMessage) }}</span>
-        <mat-icon *ngIf="hasTimingBeenUploaded" (click)="deleteTimingData()" class="delete">delete</mat-icon>
+        <span *ngIf="hasTimingDataError">{{ t(timingErrorMessage) }}</span>
+        <mat-icon *ngIf="hasTimingBeenUploaded && !hasTimingDataError" (click)="deleteTimingData()" class="delete"
+          >delete</mat-icon
+        >
       </div>
     </div>
     <app-notice id="offline-error" *ngIf="!isOnline" [type]="'error'" [outline]="true" [icon]="'cloud_off'">
