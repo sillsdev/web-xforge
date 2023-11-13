@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
+using Newtonsoft.Json.Linq;
 using Serval.Client;
 using SIL.Machine.Corpora;
 using SIL.Machine.WebApi.Services;
@@ -295,7 +296,10 @@ public class MachineProjectService : IMachineProjectService
                 translationEngineId = projectSecret.ServalData!.PreTranslationEngineId!;
 
                 // Execute a complete pre-translation
-                translationBuildConfig = GetTranslationBuildConfig(projectSecret.ServalData);
+                translationBuildConfig = GetTranslationBuildConfig(
+                    projectSecret.ServalData,
+                    projectDoc.Data.TranslateConfig.DraftConfig
+                );
             }
             else
             {
@@ -739,12 +743,16 @@ public class MachineProjectService : IMachineProjectService
     /// <summary>
     /// Gets the TranslationBuildConfig for the specified ServalData object.
     /// </summary>
-    /// <param name="servalData">The Serval data.</param>
+    /// <param name="servalData">The Serval data from <see cref="SFProjectSecret"/>.</param>
+    /// <param name="draftConfig">
+    /// The Draft configuration from <see cref="SFProject"/>.<see cref="TranslateConfig"/>.
+    /// </param>
     /// <returns>The TranslationBuildConfig for a Pre-Translate build.</returns>
     /// <remarks>Do not use with SMT builds.</remarks>
-    private static TranslationBuildConfig GetTranslationBuildConfig(ServalData servalData) =>
+    private static TranslationBuildConfig GetTranslationBuildConfig(ServalData servalData, DraftConfig draftConfig) =>
         new TranslationBuildConfig
         {
+            Options = draftConfig.ServalConfig is null ? null : JObject.Parse(draftConfig.ServalConfig),
             Pretranslate = servalData.Corpora
                 .Where(s => s.Value.PreTranslate)
                 .Select(c => new PretranslateCorpusConfig { CorpusId = c.Key })
