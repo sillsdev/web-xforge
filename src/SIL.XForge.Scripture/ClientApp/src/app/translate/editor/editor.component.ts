@@ -50,7 +50,7 @@ import { TextInfo } from 'realtime-server/lib/esm/scriptureforge/models/text-inf
 import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/models/text-info-permission';
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DeltaOperation } from 'rich-text';
-import { BehaviorSubject, combineLatest, fromEvent, merge, Subject, Subscription, timer } from 'rxjs';
+import { BehaviorSubject, combineLatest, fromEvent, merge, of, Subject, Subscription, timer } from 'rxjs';
 import { debounceTime, delayWhen, filter, first, repeat, retryWhen, switchMap, take, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
@@ -541,6 +541,22 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
 
   private get canShowInsertNoteFab(): boolean {
     return this.targetLoaded && this.dialogService.openDialogCount < 1;
+  }
+
+  get hasSourceCopyrightBanner(): boolean {
+    return this.sourceProjectDoc?.data?.copyrightBanner != null;
+  }
+
+  get sourceCopyrightBanner(): string {
+    return this.sourceProjectDoc?.data?.copyrightBanner ?? '';
+  }
+
+  get hasTargetCopyrightBanner(): boolean {
+    return this.projectDoc?.data?.copyrightBanner != null;
+  }
+
+  get targetCopyrightBanner(): string {
+    return this.projectDoc?.data?.copyrightBanner ?? '';
   }
 
   /**
@@ -1070,6 +1086,34 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     this.router.navigateByUrl(
       `/projects/${this.activatedProjectService.projectId}/draft-preview/${book}/${this.chapter}`
     );
+  }
+
+  showCopyrightNotice(textType: TextType): void {
+    let copyrightNotice: string =
+      textType === 'source'
+        ? this.sourceProjectDoc?.data?.copyrightNotice ?? ''
+        : this.projectDoc?.data?.copyrightNotice ?? '';
+
+    // If we do not have a copyright notice, just use the copyright banner
+    if (copyrightNotice === '') {
+      copyrightNotice = textType === 'source' ? this.sourceCopyrightBanner : this.targetCopyrightBanner;
+    }
+
+    copyrightNotice = copyrightNotice.trim();
+    if (copyrightNotice[0] !== '<') {
+      // If copyright is plain text, remove the first line and add paragraph markers.
+      const lines: string[] = copyrightNotice.split('\n');
+      copyrightNotice = '<p>' + lines.slice(1).join('</p><p>') + '</p>';
+    } else {
+      // Just remove the first paragraph that contains the notification.
+      copyrightNotice = copyrightNotice.replace(/^<p>.*?<\/p>/, '');
+    }
+
+    // Show the copyright notice
+    this.dialogService.openGenericDialog({
+      message: of(this.stripXml(copyrightNotice)),
+      options: [{ value: undefined, label: this.i18n.translate('dialog.close'), highlight: true }]
+    });
   }
 
   private async saveNote(params: SaveNoteParameters): Promise<void> {

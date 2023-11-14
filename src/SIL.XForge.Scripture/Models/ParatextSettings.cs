@@ -21,4 +21,6 @@ public class ParatextSettings
     public string ProjectType { get; set; } = string.Empty;
     public string BaseProjectShortName { get; set; } = string.Empty;
     public string? BaseProjectParatextId { get; set; }
+    public string? CopyrightBanner { get; set; }
+    public string? CopyrightNotice { get; set; }
 }

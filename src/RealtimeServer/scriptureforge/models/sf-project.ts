@@ -30,6 +30,8 @@ export interface SFProjectProfile extends Project {
   defaultFont?: string;
   maxGeneratedUsersPerShareKey?: number;
   biblicalTermsConfig: BiblicalTermsConfig;
+  copyrightBanner?: string;
+  copyrightNotice?: string;
 }
 
 export interface SFProject extends SFProjectProfile {
