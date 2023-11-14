@@ -22,7 +22,10 @@ export class HistoryChooserComponent extends DataLoadingComponent implements OnI
   private _historyRevision: Revision | undefined;
   private _projectId?: string;
   private projectId$: BehaviorSubject<string> = new BehaviorSubject<string>('');
+  private _snapshot?: Snapshot<TextData>;
   private _snapshot$ = new BehaviorSubject<Snapshot<TextData> | undefined>(undefined);
+  private _showDiff: boolean = false;
+  private _showDiff$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   appOnline: boolean = false;
   showHistory: boolean = false;
@@ -75,12 +78,30 @@ export class HistoryChooserComponent extends DataLoadingComponent implements OnI
     this.paratextService
       .getSnapshot(this._projectId, Canon.bookNumberToId(this._bookNum, ''), this._chapter, value.key)
       .then(snapshot => {
+        this._snapshot = snapshot;
         this._snapshot$.next(snapshot);
       });
   }
 
   get snapshot$(): Observable<Snapshot<TextData> | undefined> {
     return this._snapshot$;
+  }
+
+  get snapshot(): Snapshot<TextData> | undefined {
+    return this._snapshot;
+  }
+
+  get showDiff$(): Observable<boolean> {
+    return this._showDiff$;
+  }
+
+  get showDiff(): boolean {
+    return this._showDiff;
+  }
+
+  set showDiff(value: boolean) {
+    this._showDiff = value;
+    this._showDiff$.next(value);
   }
 
   ngOnInit(): void {

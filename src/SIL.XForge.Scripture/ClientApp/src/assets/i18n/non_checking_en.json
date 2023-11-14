@@ -222,8 +222,10 @@
   },
   "history_chooser": {
     "hide": "Hide history",
+    "hide_diff": "Hide differences with previous version",
     "loading": "History loading...",
-    "show": "Show history"
+    "show": "Show history",
+    "show_diff": "Show differences with previous version"
   },
   "import_questions_confirmation_dialog": {
     "done": "Done",

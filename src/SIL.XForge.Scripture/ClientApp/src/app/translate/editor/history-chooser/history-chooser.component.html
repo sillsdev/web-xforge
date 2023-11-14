@@ -13,6 +13,16 @@
         <mat-option *ngFor="let r of historyRevisions" [value]="r">{{ formatRevision(r) }}</mat-option>
       </mat-select>
     </mat-form-field>
+    <button
+      mat-icon-button
+      appBlurOnClick
+      type="button"
+      (click)="showDiff = !showDiff"
+      title="{{ !showDiff ? t('show_diff') : t('hide_diff') }}"
+      fxHide.xs
+    >
+      <mat-icon [ngClass]="{ 'material-icons-outlined': !showDiff }">difference</mat-icon>
+    </button>
     <button mat-icon-button (click)="showHideHistory()" title="{{ t('hide') }}">
       <mat-icon>close</mat-icon>
     </button>
