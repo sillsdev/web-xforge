@@ -9,10 +9,10 @@
           [(chapter)]="chapter"
           [chapters]="chapters"
         ></app-book-chapter-chooser>
-        <ng-container *ngIf="showSource || suggestionsSettingsEnabled">
+        <ng-container *ngIf="showSnapshot || showSource || suggestionsSettingsEnabled">
           <div class="toolbar-separator" [fxHide.xs]="!suggestionsSettingsEnabled">&nbsp;</div>
           <button
-            *ngIf="showSource"
+            *ngIf="showSnapshot || showSource"
             mat-icon-button
             appBlurOnClick
             type="button"
@@ -40,6 +40,7 @@
         </ng-container>
         <div class="toolbar-separator" fxHide.lt-md>&nbsp;</div>
         <app-history-chooser
+          *ngIf="showHistoryChooser"
           #historyChooser
           [projectId]="projectId"
           [bookNum]="bookNum"
@@ -121,7 +122,7 @@
         [ngClass.gt-xs]="{ 'text-area-full-width': !showSource && !showSnapshot }"
         ngClass.xs="text-area-full-width"
       >
-        <div class="language-label" [fxShow.gt-xs]="showSource" fxHide.xs>{{ targetLabel }}</div>
+        <div class="language-label" [fxShow.gt-xs]="showSource || showSnapshot" fxHide.xs>{{ targetLabel }}</div>
         <app-notice *ngIf="hasTargetCopyrightBanner" icon="copyright" type="warning" class="copyright-banner">
           <div>
             {{ targetCopyrightBanner }}
