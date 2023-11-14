@@ -51,7 +51,19 @@ import { TextInfoPermission } from 'realtime-server/lib/esm/scriptureforge/model
 import { fromVerseRef } from 'realtime-server/lib/esm/scriptureforge/models/verse-ref-data';
 import { DeltaOperation } from 'rich-text';
 import { BehaviorSubject, combineLatest, fromEvent, merge, of, Subject, Subscription, timer } from 'rxjs';
-import { debounceTime, delayWhen, filter, first, repeat, retryWhen, switchMap, take, tap } from 'rxjs/operators';
+import {
+  debounceTime,
+  delay,
+  delayWhen,
+  filter,
+  first,
+  repeat,
+  retryWhen,
+  startWith,
+  switchMap,
+  take,
+  tap
+} from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { CONSOLE, ConsoleInterface } from 'xforge-common/browser-globals';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
@@ -293,7 +305,7 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
         ? this.projectDoc?.data?.userRoles[this.projectUserConfigDoc?.data?.ownerRef]
         : undefined;
     return (
-      (this.showSource && this.translationSuggestionsProjectEnabled) ||
+      (this.hasSource && this.hasSourceViewRight && this.translationSuggestionsProjectEnabled) ||
       (this.projectDoc?.data?.biblicalTermsConfig?.biblicalTermsEnabled === true &&
         userRole != null &&
         SF_PROJECT_RIGHTS.roleHasRight(userRole, SFProjectDomain.BiblicalTerms, Operation.View))
@@ -518,6 +530,11 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     );
   }
 
+  get showHistoryChooser(): boolean {
+    // The user must be an administrator or translator. No specific edit permission for the chapter is required
+    return this.userHasGeneralEditRight;
+  }
+
   get showSnapshot(): boolean {
     return this.snapshot != null;
   }
@@ -722,11 +739,17 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.snapshotSub.unsubscribe();
           }
           this.snapshot = undefined;
-          this.snapshotSub = this.historyChooser?.snapshot$?.subscribe(snapshot => {
-            this.snapshot = snapshot;
-            this.snapshotText?.editor?.setContents(new Delta(snapshot?.data.ops), 'api');
-            setTimeout(() => this.setTextHeight());
-          });
+          this.snapshotSub = this.historyChooser?.snapshot$
+            ?.pipe(
+              startWith(undefined),
+              delay(0),
+              tap(snapshot => {
+                this.snapshot = snapshot;
+                this.snapshotText?.editor?.setContents(new Delta(snapshot?.data.ops), 'api');
+                setTimeout(() => this.setTextHeight());
+              })
+            )
+            .subscribe();
 
           if (this.metricsSession != null) {
             this.metricsSession.dispose();
@@ -1405,6 +1428,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     elem = this.sourceSplitContainer.nativeElement;
     bounds = elem.getBoundingClientRect();
+    if (bounds.top === 0 && this.snapshotContainer != null)
+      bounds = this.snapshotContainer.nativeElement.getBoundingClientRect();
     top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
     this.sourceSplitHeight = `calc(100vh - ${top}px)`;
 
@@ -1414,6 +1439,8 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
     }
     elem = this.snapshotContainer.nativeElement;
     bounds = elem.getBoundingClientRect();
+    if (bounds.top === 0 && this.sourceSplitContainer != null)
+      bounds = this.sourceSplitContainer.nativeElement.getBoundingClientRect();
     top = bounds.top + (this.mediaObserver.isActive('xs') ? 0 : 14);
     this.snapshotSplitHeight = `calc(100vh - ${top}px)`;
   }
