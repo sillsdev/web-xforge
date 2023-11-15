@@ -50,6 +50,10 @@ quill-editor {
       background-color: #e8cccc;
       padding: 0;
       text-decoration: line-through;
+
+      usx-note[data-caller='+']:not([data-style='x']) > span::before {
+        counter-increment: none;
+      }
     }
 
     .question-segment,
