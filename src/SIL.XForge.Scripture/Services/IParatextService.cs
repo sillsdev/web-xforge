@@ -82,7 +82,7 @@ public interface IParatextService
     bool RestoreRepository(UserSecret userSecret, string paratextId);
     bool LocalProjectDirExists(string paratextId);
     string GetLanguageId(UserSecret userSecret, string paratextId);
-    void FreeCommentManager(UserSecret userSecret, string paratextId);
+    void ClearParatextDataCaches(UserSecret userSecret, string paratextId);
     void InitializeCommentManager(UserSecret userSecret, string paratextId);
 
     Task<Snapshot<TextData>> GetSnapshotAsync(

@@ -1891,7 +1891,7 @@ public class ParatextService : DisposableBase, IParatextService
         return scrText.Language.Id;
     }
 
-    public void FreeCommentManager(UserSecret userSecret, string paratextId)
+    public void ClearParatextDataCaches(UserSecret userSecret, string paratextId)
     {
         ScrText scrText = ScrTextCollection.FindById(GetParatextUsername(userSecret), paratextId);
         if (scrText is not null)
@@ -1899,6 +1899,9 @@ public class ParatextService : DisposableBase, IParatextService
             // The comment manager is kept in a MRU cache
             CommentManager.RemoveCommentManager(scrText);
         }
+
+        // Clear the versioning manager cache
+        VersioningManager.Reset();
     }
 
     public void InitializeCommentManager(UserSecret userSecret, string paratextId)
@@ -1951,9 +1954,6 @@ public class ParatextService : DisposableBase, IParatextService
             // Load the Paratext project
             string ptProjectId = projectDoc.Data.ParatextId;
             using ScrText scrText = GetScrText(userSecret, ptProjectId);
-
-            // Clear the versioning manager cache
-            VersioningManager.Reset();
 
             // Retrieve the first revision before or at the timestamp
             VersionedText versionedText = VersioningManager.Get(scrText);
