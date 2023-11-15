@@ -41,6 +41,17 @@ quill-editor {
       background-color: #ffeb3b;
     }
 
+    .insert-segment {
+      background-color: #cce8cc;
+      padding: 0;
+    }
+
+    .delete-segment {
+      background-color: #e8cccc;
+      padding: 0;
+      text-decoration: line-through;
+    }
+
     .question-segment,
     usx-segment.commenter-selection {
       background-image: linear-gradient(to right, gray 75%, transparent 75%);
