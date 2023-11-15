@@ -223,6 +223,7 @@
     "hide": "Hide history",
     "hide_diff": "Hide differences with previous version",
     "loading": "History loading...",
+    "not_available_offline": "History is not available offline",
     "show": "Show history",
     "show_diff": "Show differences with previous version"
   },
