@@ -134,6 +134,9 @@
 
     &.invalid {
       @include wrapperState(variables.$errorColor, variables.$errorColor);
+      span {
+        white-space: unset;
+      }
     }
   }
 }
