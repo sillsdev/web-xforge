@@ -18,6 +18,10 @@ export class AudioPlayerComponent extends AudioPlayerBaseComponent {
     return this.audio?.duration ?? 0;
   }
 
+  get isAudioAvailable(): boolean {
+    return this.audio?.isAudioAvailable === true;
+  }
+
   get seek(): number {
     return this.audio?.seek ?? 0;
   }

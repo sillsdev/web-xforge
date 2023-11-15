@@ -42,6 +42,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
   verseLabel: string = this.emptyVerseLabel;
   audioSource?: string;
 
+  private _audioIsAvailable: boolean = false;
   private _timing: AudioTiming[] = [];
   private _textDocId?: TextDocId;
   private finishedSubscription?: Subscription;
@@ -54,6 +55,10 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
 
   ngAfterViewInit(): void {
     this.doAudioSubscriptions();
+  }
+
+  get isAudioAvailable(): boolean {
+    return this._audioIsAvailable;
   }
 
   get isPlaying(): boolean {
@@ -138,6 +143,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
 
   private doAudioSubscriptions(): void {
     if (this.audioPlayer == null) return;
+    this._audioIsAvailable = false;
     // wait until the next microtask cycle to get the audio player with the updated source
     Promise.resolve(this.audioPlayer).then(audioPlayer => {
       this.audioSubscription?.unsubscribe();
@@ -152,6 +158,7 @@ export class CheckingScriptureAudioPlayerComponent extends SubscriptionDisposabl
             return;
           }
           const audio: AudioPlayer = audioPlayer.audio;
+          this._audioIsAvailable = true;
           this.subscribeToAudioFinished(audio);
           this.subscribeToVerseChange(audio);
         }

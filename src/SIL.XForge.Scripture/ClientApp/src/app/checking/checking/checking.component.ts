@@ -1074,7 +1074,7 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
   }
 
   hideChapterAudio(): void {
-    this.showScriptureAudioPlayer = false;
+    this.showScriptureAudioPlayer = this.hideChapterText;
   }
 
   toggleAudio(): void {
@@ -1375,6 +1375,9 @@ export class CheckingComponent extends DataLoadingComponent implements OnInit, A
 
   private updateActiveQuestionVerseRef(questionDoc: QuestionDoc | undefined): void {
     this._activeQuestionVerseRef = questionDoc?.data == null ? undefined : toVerseRef(questionDoc.data.verseRef);
+    if (this.isAudioPlaying()) {
+      this._scriptureAudioPlayer?.stop();
+    }
   }
 
   /** Adjust the position of the splitter between Scripture text and answers. */
