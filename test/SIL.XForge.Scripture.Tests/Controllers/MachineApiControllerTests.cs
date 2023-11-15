@@ -111,7 +111,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException("Entity Deleted"));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             Build01,
             minRevision: null,
@@ -132,7 +132,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             Build01,
             minRevision: null,
@@ -152,10 +152,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetBuildAsync(User01, Project01, Build01, null, false, CancellationToken.None)
-            .Returns(Task.FromResult<BuildDto>(null));
+            .Returns(Task.FromResult<ServalBuildDto>(null));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             Build01,
             minRevision: null,
@@ -176,7 +176,7 @@ public class MachineApiControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             Build01,
             minRevision: null,
@@ -197,7 +197,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             Build01,
             minRevision: null,
@@ -215,10 +215,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetPreTranslationQueuedStateAsync(User01, Project01, CancellationToken.None)
-            .Returns(Task.FromResult(new BuildDto()));
+            .Returns(Task.FromResult(new ServalBuildDto()));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             buildId: null,
             minRevision: null,
@@ -245,10 +245,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetCurrentBuildAsync(User01, Project01, null, true, CancellationToken.None)
-            .Returns(Task.FromResult(new BuildDto()));
+            .Returns(Task.FromResult(new ServalBuildDto()));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             buildId: null,
             minRevision: null,
@@ -275,10 +275,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetBuildAsync(User01, Project01, Build01, null, true, CancellationToken.None)
-            .Returns(Task.FromResult(new BuildDto()));
+            .Returns(Task.FromResult(new ServalBuildDto()));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             Build01,
             minRevision: null,
@@ -305,10 +305,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetBuildAsync(User01, Project01, Build01, null, false, CancellationToken.None)
-            .Returns(Task.FromResult(new BuildDto()));
+            .Returns(Task.FromResult(new ServalBuildDto()));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             Build01,
             minRevision: null,
@@ -329,7 +329,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException("Entity Deleted"));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             buildId: null,
             minRevision: null,
@@ -350,7 +350,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             buildId: null,
             minRevision: null,
@@ -370,10 +370,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetCurrentBuildAsync(User01, Project01, null, false, CancellationToken.None)
-            .Returns(Task.FromResult<BuildDto>(null));
+            .Returns(Task.FromResult<ServalBuildDto>(null));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             buildId: null,
             minRevision: null,
@@ -394,7 +394,7 @@ public class MachineApiControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             buildId: null,
             minRevision: null,
@@ -415,7 +415,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             buildId: null,
             minRevision: null,
@@ -433,10 +433,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetCurrentBuildAsync(User01, Project01, null, false, CancellationToken.None)
-            .Returns(Task.FromResult(new BuildDto()));
+            .Returns(Task.FromResult(new ServalBuildDto()));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetBuildAsync(
             Project01,
             buildId: null,
             minRevision: null,
@@ -519,7 +519,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
             Project01,
             CancellationToken.None
         );
@@ -536,10 +536,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
-            .Returns(Task.FromResult<BuildDto>(null));
+            .Returns(Task.FromResult<ServalBuildDto>(null));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
             Project01,
             CancellationToken.None
         );
@@ -557,7 +557,7 @@ public class MachineApiControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
             Project01,
             CancellationToken.None
         );
@@ -575,7 +575,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
             Project01,
             CancellationToken.None
         );
@@ -590,10 +590,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .GetLastCompletedPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
-            .Returns(Task.FromResult(new BuildDto()));
+            .Returns(Task.FromResult(new ServalBuildDto()));
 
         // SUT
-        ActionResult<BuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
+        ActionResult<ServalBuildDto?> actual = await env.Controller.GetLastCompletedPreTranslationBuildAsync(
             Project01,
             CancellationToken.None
         );
@@ -771,7 +771,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<BuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+        ActionResult<ServalBuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
 
         env.ExceptionHandler.Received(1).ReportException(Arg.Any<BrokenCircuitException>());
         Assert.IsInstanceOf<ObjectResult>(actual.Result);
@@ -788,7 +788,7 @@ public class MachineApiControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<BuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+        ActionResult<ServalBuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
 
         Assert.IsInstanceOf<ForbidResult>(actual.Result);
     }
@@ -803,7 +803,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<BuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+        ActionResult<ServalBuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
 
         Assert.IsInstanceOf<NotFoundResult>(actual.Result);
     }
@@ -815,10 +815,10 @@ public class MachineApiControllerTests
         var env = new TestEnvironment();
         env.MachineApiService
             .StartBuildAsync(User01, Project01, CancellationToken.None)
-            .Returns(Task.FromResult(new BuildDto()));
+            .Returns(Task.FromResult(new ServalBuildDto()));
 
         // SUT
-        ActionResult<BuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
+        ActionResult<ServalBuildDto> actual = await env.Controller.StartBuildAsync(Project01, CancellationToken.None);
 
         Assert.IsInstanceOf<OkObjectResult>(actual.Result);
     }
@@ -837,7 +837,7 @@ public class MachineApiControllerTests
             .Throws(new BrokenCircuitException());
 
         // SUT
-        ActionResult<BuildDto> actual = await env.Controller.StartPreTranslationBuildAsync(
+        ActionResult<ServalBuildDto> actual = await env.Controller.StartPreTranslationBuildAsync(
             new BuildConfig { ProjectId = Project01 },
             CancellationToken.None
         );
@@ -861,7 +861,7 @@ public class MachineApiControllerTests
             .Throws(new ForbiddenException());
 
         // SUT
-        ActionResult<BuildDto> actual = await env.Controller.StartPreTranslationBuildAsync(
+        ActionResult<ServalBuildDto> actual = await env.Controller.StartPreTranslationBuildAsync(
             new BuildConfig { ProjectId = Project01 },
             CancellationToken.None
         );
@@ -883,7 +883,7 @@ public class MachineApiControllerTests
             .Throws(new DataNotFoundException(string.Empty));
 
         // SUT
-        ActionResult<BuildDto> actual = await env.Controller.StartPreTranslationBuildAsync(
+        ActionResult<ServalBuildDto> actual = await env.Controller.StartPreTranslationBuildAsync(
             new BuildConfig { ProjectId = Project01 },
             CancellationToken.None
         );

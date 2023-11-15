@@ -128,3 +128,15 @@ app-text {
     justify-content: flex-end;
   }
 }
+
+.copyright-banner {
+  margin-bottom: 10px;
+}
+
+.copyright-more-info {
+  cursor: pointer;
+  font-weight: bold;
+  &:hover {
+    text-decoration: underline;
+  }
+}
