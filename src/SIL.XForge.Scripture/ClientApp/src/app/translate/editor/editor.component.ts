@@ -739,17 +739,46 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
             this.snapshotSub.unsubscribe();
           }
           this.snapshot = undefined;
-          this.snapshotSub = this.historyChooser?.snapshot$
-            ?.pipe(
-              startWith(undefined),
-              delay(0),
-              tap(snapshot => {
-                this.snapshot = snapshot;
-                this.snapshotText?.editor?.setContents(new Delta(snapshot?.data.ops), 'api');
-                setTimeout(() => this.setTextHeight());
-              })
-            )
-            .subscribe();
+          if (this.historyChooser != null) {
+            this.snapshotSub = merge(this.historyChooser.snapshot$, this.historyChooser.showDiff$)
+              ?.pipe(
+                startWith(undefined),
+                delay(0),
+                tap(async () => {
+                  this.snapshot = this.historyChooser?.snapshot;
+                  let snapshotContents = new Delta(this.snapshot?.data.ops);
+                  this.snapshotText?.editor?.setContents(snapshotContents, 'api');
+
+                  // Show the diff, if requested
+                  if (this.historyChooser?.showDiff && this.target?.id != null) {
+                    const textDoc = await this.projectService.getText(this.target.id);
+                    let targetContents = new Delta(textDoc.data?.ops);
+                    let diff = snapshotContents.diff(targetContents);
+
+                    // Process each op in the diff
+                    for (const op of diff.ops ?? []) {
+                      if (op.hasOwnProperty('insert')) {
+                        // Color insertions as green
+                        op.attributes = {
+                          'insert-segment': true
+                        };
+                      } else if (op.hasOwnProperty('delete')) {
+                        // Color deletions red and strikethrough
+                        op.retain = op.delete;
+                        delete op.delete;
+                        op.attributes = {
+                          'delete-segment': true
+                        };
+                      }
+                    }
+
+                    this.snapshotText?.editor?.updateContents(diff, 'api');
+                  }
+                  setTimeout(() => this.setTextHeight());
+                })
+              )
+              .subscribe();
+          }
 
           if (this.metricsSession != null) {
             this.metricsSession.dispose();

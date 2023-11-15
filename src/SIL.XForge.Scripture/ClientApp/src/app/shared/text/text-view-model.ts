@@ -477,6 +477,8 @@ export class TextViewModel {
       for (const op of delta.ops) {
         const modelOp: DeltaOperation = cloneDeep(op);
         for (const attr of [
+          'insert-segment',
+          'delete-segment',
           'highlight-segment',
           'highlight-para',
           'para-contents',

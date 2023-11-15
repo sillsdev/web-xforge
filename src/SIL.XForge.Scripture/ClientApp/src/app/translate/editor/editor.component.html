@@ -34,7 +34,7 @@
         </ng-container>
         <div class="toolbar-separator" fxHide.lt-md>&nbsp;</div>
         <app-history-chooser
-          *ngIf="showHistoryChooser"
+          [fxHide]="!showHistoryChooser"
           #historyChooser
           [projectId]="projectId"
           [bookNum]="bookNum"
