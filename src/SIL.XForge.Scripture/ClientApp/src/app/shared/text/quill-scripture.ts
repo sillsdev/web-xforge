@@ -605,6 +605,16 @@ export function registerScripture(): string[] {
     }
   }
 
+  const InsertSegmentClass = new ClassAttributor('insert-segment', 'insert-segment', {
+    scope: Parchment.Scope.INLINE
+  });
+  formats.push(InsertSegmentClass);
+
+  const DeleteSegmentClass = new ClassAttributor('delete-segment', 'delete-segment', {
+    scope: Parchment.Scope.INLINE
+  });
+  formats.push(DeleteSegmentClass);
+
   const HighlightSegmentClass = new ClassAttributor('highlight-segment', 'highlight-segment', {
     scope: Parchment.Scope.INLINE
   });
