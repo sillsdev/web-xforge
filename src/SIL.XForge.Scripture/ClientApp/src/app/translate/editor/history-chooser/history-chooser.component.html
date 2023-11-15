@@ -3,7 +3,7 @@
     mat-icon-button
     (click)="showHideHistory()"
     [disabled]="!appOnline"
-    title="{{ t(showHistory ? 'hide' : 'show') }}"
+    title="{{ t(appOnline ? (showHistory ? 'hide' : 'show') : 'not_available_offline') }}"
   >
     <mat-icon>history</mat-icon>
   </button>
