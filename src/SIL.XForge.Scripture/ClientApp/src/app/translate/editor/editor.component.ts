@@ -758,6 +758,18 @@ export class EditorComponent extends DataLoadingComponent implements OnDestroy, 
                   if (this.historyChooser?.showDiff && this.target?.id != null) {
                     const textDoc = await this.projectService.getText(this.target.id);
                     let targetContents = new Delta(textDoc.data?.ops);
+
+                    // Remove the cid whenever it is found, as this is confusing the diff
+                    function removeCid(obj: any): void {
+                      if (obj.cid != null) delete obj.cid;
+                      for (let subObj in obj) {
+                        if (typeof obj[subObj] === 'object') removeCid(obj[subObj]);
+                      }
+                    }
+
+                    snapshotContents.forEach(obj => removeCid(obj));
+                    targetContents.forEach(obj => removeCid(obj));
+
                     let diff = snapshotContents.diff(targetContents);
 
                     // Process each op in the diff
