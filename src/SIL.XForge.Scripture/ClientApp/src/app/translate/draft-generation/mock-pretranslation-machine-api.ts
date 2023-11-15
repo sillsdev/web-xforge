@@ -40,7 +40,8 @@ export class MockPreTranslationHttpClient {
     revision: 0,
     state: BuildStates.Queued,
     percentCompleted: 0,
-    message: ''
+    message: '',
+    queueDepth: 0
   };
 
   private readonly completedJobState: BuildDto = {
@@ -50,7 +51,8 @@ export class MockPreTranslationHttpClient {
     revision: 0,
     state: BuildStates.Completed,
     percentCompleted: 1.0,
-    message: ''
+    message: '',
+    queueDepth: 0
   };
 
   // When true, build will fault when 3/4 finished

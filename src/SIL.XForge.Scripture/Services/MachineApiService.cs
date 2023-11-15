@@ -174,7 +174,7 @@ public class MachineApiService : IMachineApiService
         }
     }
 
-    public async Task<BuildDto?> GetBuildAsync(
+    public async Task<ServalBuildDto?> GetBuildAsync(
         string curUserId,
         string sfProjectId,
         string buildId,
@@ -183,7 +183,7 @@ public class MachineApiService : IMachineApiService
         CancellationToken cancellationToken
     )
     {
-        BuildDto? buildDto = null;
+        ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId);
@@ -233,13 +233,13 @@ public class MachineApiService : IMachineApiService
         return buildDto;
     }
 
-    public async Task<BuildDto?> GetLastCompletedPreTranslationBuildAsync(
+    public async Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
         string curUserId,
         string sfProjectId,
         CancellationToken cancellationToken
     )
     {
-        BuildDto? buildDto = null;
+        ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId);
@@ -284,7 +284,7 @@ public class MachineApiService : IMachineApiService
         return buildDto;
     }
 
-    public async Task<BuildDto?> GetCurrentBuildAsync(
+    public async Task<ServalBuildDto?> GetCurrentBuildAsync(
         string curUserId,
         string sfProjectId,
         long? minRevision,
@@ -292,7 +292,7 @@ public class MachineApiService : IMachineApiService
         CancellationToken cancellationToken
     )
     {
-        BuildDto? buildDto = null;
+        ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId);
@@ -384,7 +384,17 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(
+                        e,
+                        doNotThrowIfInProcessEnabled: true,
+                        metadata: new Dictionary<string, string>
+                        {
+                            { "method", "GetEngineAsync" },
+                            { "curUserId", curUserId },
+                            { "sfProjectId", sfProjectId },
+                            { "translationEngineId", translationEngineId },
+                        }
+                    );
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -450,7 +460,7 @@ public class MachineApiService : IMachineApiService
         return preTranslation;
     }
 
-    public async Task<BuildDto?> GetPreTranslationQueuedStateAsync(
+    public async Task<ServalBuildDto?> GetPreTranslationQueuedStateAsync(
         string curUserId,
         string sfProjectId,
         CancellationToken cancellationToken
@@ -465,7 +475,7 @@ public class MachineApiService : IMachineApiService
             // If we have an error message, report that to the user
             if (!string.IsNullOrWhiteSpace(projectSecret.ServalData?.PreTranslationErrorMessage))
             {
-                return new BuildDto
+                return new ServalBuildDto
                 {
                     State = BuildStateFaulted,
                     Message = projectSecret.ServalData.PreTranslationErrorMessage,
@@ -481,7 +491,7 @@ public class MachineApiService : IMachineApiService
             // If the build was queued 6 hours or more ago, it will have failed to upload
             if (projectSecret.ServalData?.PreTranslationQueuedAt <= DateTime.UtcNow.AddHours(-6))
             {
-                return new BuildDto
+                return new ServalBuildDto
                 {
                     State = BuildStateFaulted,
                     Message = "The build failed to upload to the server.",
@@ -489,7 +499,11 @@ public class MachineApiService : IMachineApiService
             }
 
             // The build is queued and uploading is occurring in the background
-            return new BuildDto { State = BuildStateQueued, Message = "The build is being uploaded to the server." };
+            return new ServalBuildDto
+            {
+                State = BuildStateQueued,
+                Message = "The build is being uploaded to the server.",
+            };
         }
 
         return null;
@@ -524,7 +538,18 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(
+                        e,
+                        doNotThrowIfInProcessEnabled: true,
+                        metadata: new Dictionary<string, string>
+                        {
+                            { "method", "GetWordGraphAsync" },
+                            { "curUserId", curUserId },
+                            { "sfProjectId", sfProjectId },
+                            { "translationEngineId", translationEngineId },
+                            { "segment", segment },
+                        }
+                    );
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -553,13 +578,13 @@ public class MachineApiService : IMachineApiService
         return wordGraph;
     }
 
-    public async Task<BuildDto> StartBuildAsync(
+    public async Task<ServalBuildDto> StartBuildAsync(
         string curUserId,
         string sfProjectId,
         CancellationToken cancellationToken
     )
     {
-        BuildDto? buildDto = null;
+        ServalBuildDto? buildDto = null;
 
         // Ensure that the user has permission
         await EnsureProjectPermissionAsync(curUserId, sfProjectId);
@@ -589,7 +614,17 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(
+                        e,
+                        doNotThrowIfInProcessEnabled: true,
+                        metadata: new Dictionary<string, string>
+                        {
+                            { "method", "StartBuildAsync" },
+                            { "curUserId", curUserId },
+                            { "sfProjectId", sfProjectId },
+                            { "translationEngineId", translationEngineId },
+                        }
+                    );
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -710,7 +745,20 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(
+                        e,
+                        doNotThrowIfInProcessEnabled: true,
+                        metadata: new Dictionary<string, string>
+                        {
+                            { "method", "TrainSegmentAsync" },
+                            { "curUserId", curUserId },
+                            { "sfProjectId", sfProjectId },
+                            { "translationEngineId", translationEngineId },
+                            { "SourceSegment", segmentPair.SourceSegment },
+                            { "TargetSegment", segmentPair.TargetSegment },
+                            { "SentenceStart", segmentPair.SentenceStart.ToString() },
+                        }
+                    );
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -759,7 +807,18 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(
+                        e,
+                        doNotThrowIfInProcessEnabled: true,
+                        metadata: new Dictionary<string, string>
+                        {
+                            { "method", "TranslateAsync" },
+                            { "curUserId", curUserId },
+                            { "sfProjectId", sfProjectId },
+                            { "translationEngineId", translationEngineId },
+                            { "segment", segment },
+                        }
+                    );
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -822,7 +881,19 @@ public class MachineApiService : IMachineApiService
                 catch (Exception e)
                 {
                     // We do not want to throw the error if we are returning from In Process API below
-                    await ProcessServalApiExceptionAsync(e, doNotThrowIfInProcessEnabled: true);
+                    await ProcessServalApiExceptionAsync(
+                        e,
+                        doNotThrowIfInProcessEnabled: true,
+                        metadata: new Dictionary<string, string>
+                        {
+                            { "method", "TranslateNAsync" },
+                            { "curUserId", curUserId },
+                            { "sfProjectId", sfProjectId },
+                            { "translationEngineId", translationEngineId },
+                            { "n", n.ToString() },
+                            { "segment", segment },
+                        }
+                    );
                 }
             }
             else if (!await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess))
@@ -848,8 +919,8 @@ public class MachineApiService : IMachineApiService
         return translationResults.ToArray();
     }
 
-    private static BuildDto CreateDto(Build build) =>
-        new BuildDto
+    private static ServalBuildDto CreateDto(Build build) =>
+        new ServalBuildDto
         {
             Id = build.Id,
             Revision = build.Revision,
@@ -858,13 +929,14 @@ public class MachineApiService : IMachineApiService
             State = build.State,
         };
 
-    private static BuildDto CreateDto(TranslationBuild translationBuild) =>
-        new BuildDto
+    private static ServalBuildDto CreateDto(TranslationBuild translationBuild) =>
+        new ServalBuildDto
         {
             Id = translationBuild.Id,
             Revision = translationBuild.Revision,
             PercentCompleted = translationBuild.PercentCompleted ?? 0.0,
             Message = translationBuild.Message,
+            QueueDepth = translationBuild.QueueDepth ?? 0,
             State = translationBuild.State.ToString().ToUpperInvariant(),
         };
 
@@ -964,17 +1036,33 @@ public class MachineApiService : IMachineApiService
     /// This method maps Serval API exceptions to the exceptions that Machine.js understands.
     /// </summary>
     /// <param name="e">The Serval API Exception</param>
-    /// <param name="doNotThrowIfInProcessEnabled">Report but do not throw the exception if in-process machine is enabled</param>
+    /// <param name="doNotThrowIfInProcessEnabled">
+    /// Report but do not throw the exception if in-process machine is enabled
+    /// </param>
+    /// <param name="metadata">
+    /// Metadata to report to bugsnag if required.
+    /// Thi should only be set if <paramref name="doNotThrowIfInProcessEnabled"/> is <c>true</c>.
+    /// </param>
     /// <exception cref="DataNotFoundException">Entity Deleted.</exception>
     /// <exception cref="ForbiddenException">Access Denied.</exception>
+    /// <exception cref="NotSupportedException">Method not allowed.</exception>
     /// <remarks>If this method returns, it is expected that the DTO will be null.</remarks>
-    private async Task ProcessServalApiExceptionAsync(Exception e, bool doNotThrowIfInProcessEnabled = false)
+    private async Task ProcessServalApiExceptionAsync(
+        Exception e,
+        bool doNotThrowIfInProcessEnabled = false,
+        Dictionary<string, string>? metadata = null
+    )
     {
         switch (e)
         {
             case ServalApiException
                 when doNotThrowIfInProcessEnabled
                     && await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess):
+                if (metadata is not null)
+                {
+                    _exceptionHandler.RecordEndpointInfoForException(metadata);
+                }
+
                 _exceptionHandler.ReportException(e);
                 return;
             case ServalApiException { StatusCode: StatusCodes.Status204NoContent }:
@@ -992,6 +1080,11 @@ public class MachineApiService : IMachineApiService
             case BrokenCircuitException
                 when doNotThrowIfInProcessEnabled
                     && await _featureManager.IsEnabledAsync(FeatureFlags.MachineInProcess):
+                if (metadata is not null)
+                {
+                    _exceptionHandler.RecordEndpointInfoForException(metadata);
+                }
+
                 _exceptionHandler.ReportException(e);
                 return;
             default:
@@ -999,7 +1092,7 @@ public class MachineApiService : IMachineApiService
         }
     }
 
-    private static BuildDto UpdateDto(BuildDto buildDto, string sfProjectId)
+    private static ServalBuildDto UpdateDto(ServalBuildDto buildDto, string sfProjectId)
     {
         buildDto.Href = MachineApi.GetBuildHref(sfProjectId, buildDto.Id);
         buildDto.Engine = new ResourceDto { Id = sfProjectId, Href = MachineApi.GetEngineHref(sfProjectId) };
@@ -1066,14 +1159,14 @@ public class MachineApiService : IMachineApiService
         return "The Serval and Machine Feature Flags are not configured";
     }
 
-    private async Task<BuildDto?> GetInProcessBuildAsync(
+    private async Task<ServalBuildDto?> GetInProcessBuildAsync(
         BuildLocatorType locatorType,
         string locator,
         long? minRevision,
         CancellationToken cancellationToken
     )
     {
-        BuildDto? buildDto = null;
+        ServalBuildDto? buildDto = null;
         Build? build;
         if (minRevision is not null)
         {

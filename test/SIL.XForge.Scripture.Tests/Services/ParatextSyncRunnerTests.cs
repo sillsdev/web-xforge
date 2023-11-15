@@ -800,6 +800,8 @@ public class ParatextSyncRunnerTests
         Assert.That(project.DefaultFontSize, Is.EqualTo(fontSize));
         Assert.That(project.DefaultFont, Is.EqualTo(font));
         Assert.IsNull(project.WritingSystem.Tag);
+        Assert.IsNull(project.CopyrightBanner);
+        Assert.IsNull(project.CopyrightNotice);
         Assert.That(project.TranslateConfig.Source.WritingSystem.Tag, Is.EqualTo(sourceWritingSystemTag));
         int newFontSize = 16;
         string newFont = "Doulos SIL";
@@ -817,6 +819,8 @@ public class ParatextSyncRunnerTests
         string newProjectType = ProjectType.BackTranslation.ToString();
         string? newBaseProjectParatextId = "base_pt";
         string newBaseProjectShortName = "BPT";
+        const string newCopyrightBanner = "Copyright Banner Goes Here";
+        const string newCopyrightNotice = $"<p>Notification: {newCopyrightBanner}</p><p>Copyright Notice Goes Here</p>";
         env.ParatextService
             .GetParatextSettings(Arg.Any<UserSecret>(), Arg.Any<string>())
             .Returns(
@@ -829,6 +833,8 @@ public class ParatextSyncRunnerTests
                     ProjectType = newProjectType,
                     BaseProjectParatextId = newBaseProjectParatextId,
                     BaseProjectShortName = newBaseProjectShortName,
+                    CopyrightBanner = newCopyrightBanner,
+                    CopyrightNotice = newCopyrightNotice,
                 }
             );
 
@@ -843,8 +849,10 @@ public class ParatextSyncRunnerTests
         Assert.That(project.TranslateConfig.ProjectType, Is.EqualTo(newProjectType));
         Assert.That(project.TranslateConfig.BaseProject.ParatextId, Is.EqualTo(newBaseProjectParatextId));
         Assert.That(project.TranslateConfig.BaseProject.ShortName, Is.EqualTo(newBaseProjectShortName));
+        Assert.That(project.CopyrightBanner, Is.EqualTo(newCopyrightBanner));
+        Assert.That(project.CopyrightNotice, Is.EqualTo(newCopyrightNotice));
 
-        // Change the base project configuration
+        // Change the base project configuration and remove copyright banner & message
         newProjectType = ProjectType.Daughter.ToString();
         newBaseProjectParatextId = "daughter_pt";
         newBaseProjectShortName = "DPT";
@@ -856,6 +864,8 @@ public class ParatextSyncRunnerTests
                     ProjectType = newProjectType,
                     BaseProjectParatextId = newBaseProjectParatextId,
                     BaseProjectShortName = newBaseProjectShortName,
+                    CopyrightBanner = null,
+                    CopyrightNotice = null,
                 }
             );
         await env.Runner.RunAsync("project01", "user01", "project01", false, CancellationToken.None);
@@ -863,6 +873,8 @@ public class ParatextSyncRunnerTests
         Assert.That(project.TranslateConfig.ProjectType, Is.EqualTo(newProjectType));
         Assert.That(project.TranslateConfig.BaseProject.ParatextId, Is.EqualTo(newBaseProjectParatextId));
         Assert.That(project.TranslateConfig.BaseProject.ShortName, Is.EqualTo(newBaseProjectShortName));
+        Assert.That(project.CopyrightBanner, Is.Null);
+        Assert.That(project.CopyrightNotice, Is.Null);
 
         // Remove the base project configuration
         newProjectType = ProjectType.Standard.ToString();
