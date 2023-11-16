@@ -79,7 +79,6 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   ) {
     super();
     this.getStartingLocation();
-    this.checkForPreexistingAudio();
   }
 
   get audioErrorMessage(): string {
@@ -366,11 +365,12 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     this.subscribe(this.textAudioQuery.ready$.pipe(filter(ready => ready)), () => {
       const textAudioId: string = getTextAudioId(this.data.projectId, this.book, this.chapter);
       const doc = this.textAudioQuery?.docs.find(t => t.id === textAudioId)?.data;
+      this.checkForPreexistingAudio();
       if (doc == null) {
         return;
       }
       this._editState = true;
-      this.timing = doc.timings;
+      this.timing = this.timing_processed = doc.timings;
       this.fileService
         .findOrUpdateCache(FileType.Audio, TextAudioDoc.COLLECTION, textAudioId, doc.audioUrl)
         .then(data => {

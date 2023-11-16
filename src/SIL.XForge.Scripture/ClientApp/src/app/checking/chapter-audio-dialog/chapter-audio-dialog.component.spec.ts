@@ -163,6 +163,7 @@ describe('ChapterAudioDialogComponent', () => {
     };
 
     env = new TestEnvironment(config);
+    tick();
 
     // Ensure that the UI shows that hte chapter has audio
     expect(env.component.book).toEqual(containingBook.bookNum);

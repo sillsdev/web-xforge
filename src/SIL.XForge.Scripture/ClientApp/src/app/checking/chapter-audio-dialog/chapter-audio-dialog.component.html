@@ -11,7 +11,7 @@
     </div>
     <div class="data-blocks">
       <div class="wrapper wrapper-book-chapter valid">
-        <mat-icon *ngIf="!selectionHasAudioAlready">book</mat-icon>
+        <mat-icon *ngIf="!selectionHasAudioAlready || inEditState">book</mat-icon>
         <app-info
           *ngIf="selectionHasAudioAlready && !inEditState"
           [text]="t('chapter_audio_dialog.audio_already_exists')"
