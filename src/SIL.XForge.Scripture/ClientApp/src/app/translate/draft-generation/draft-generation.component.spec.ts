@@ -277,14 +277,34 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.getInfoAlert()).toBe(InfoAlert.SourceAndTargetLanguageIdentical);
     });
 
-    it('should return ApprovalNeeded when isPreTranslationApproved is false', () => {
+    it('should return ApprovalNeeded when isPreTranslationApproved is false and project is not in back translation mode', () => {
+      let env = new TestEnvironment(() => {
+        mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
+          'FeatureFlagService',
+          {},
+          {
+            allowForwardTranslationNmtDrafting: { enabled: true } as ObservableFeatureFlag
+          }
+        );
+      });
+      env.component.isBackTranslation = false;
+      env.component.isTargetLanguageSupported = true;
+      env.component.isSourceProjectSet = true;
+      env.component.isSourceAndTargetDifferent = true;
+      env.component.isPreTranslationApproved = false;
+      expect(env.component.isBackTranslationMode).toBe(false);
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.ApprovalNeeded);
+    });
+
+    it('should return None when isPreTranslationApproved is false and project is in back translation mode', () => {
       let env = new TestEnvironment();
       env.component.isBackTranslation = true;
       env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = true;
       env.component.isSourceAndTargetDifferent = true;
       env.component.isPreTranslationApproved = false;
-      expect(env.component.getInfoAlert()).toBe(InfoAlert.ApprovalNeeded);
+      expect(env.component.isBackTranslationMode).toBe(true);
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.None);
     });
 
     it('should return None when all back translation requirements are met', () => {

@@ -55,7 +55,7 @@
         <mat-icon class="criteria-met">check</mat-icon>
         <p>{{ t("criteria_forward_translation_drafting_enabled") }}</p>
       </li>
-      <li>
+      <li *ngIf="!isBackTranslationMode">
         <mat-icon *ngIf="isPreTranslationApproved" class="criteria-met">check</mat-icon>
         <mat-icon *ngIf="!isPreTranslationApproved" class="criteria-not-met">clear</mat-icon>
         <p *ngIf="isPreTranslationApproved">{{ t("criteria_pretranslation_approved") }}</p>
@@ -80,7 +80,7 @@
           <p>
             <transloco
               [key]="'draft_generation.info_alert_approval_needed_detail'"
-              [params]="{signupFormUrl}"
+              [params]="{ signupFormUrl }"
             ></transloco>
           </p>
         </section>
@@ -97,7 +97,7 @@
               <transloco
                 *ngIf="targetLanguageDisplayName"
                 [key]="'draft_generation.criteria_project_language_not_in_nllb_with_language'"
-                [params]="{targetLanguageDisplayName}"
+                [params]="{ targetLanguageDisplayName }"
               ></transloco>
               <transloco *ngIf="!targetLanguageDisplayName" [key]="'criteria_project_language_not_in_nllb'"></transloco>
             </p>

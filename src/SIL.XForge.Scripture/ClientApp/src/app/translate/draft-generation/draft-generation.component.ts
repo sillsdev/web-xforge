@@ -98,7 +98,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       (!this.isBackTranslationMode || this.isTargetLanguageSupported) &&
       this.isSourceProjectSet &&
       this.isSourceAndTargetDifferent &&
-      this.isPreTranslationApproved
+      (this.isBackTranslationMode || this.isPreTranslationApproved)
     );
   }
 
@@ -133,7 +133,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
             this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
             this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
 
-            if (!this.isPreTranslationApproved) {
+            if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {
               this.signupFormUrl = await this.preTranslationSignupUrlService.generateSignupUrl();
             }
           })
@@ -263,7 +263,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       return InfoAlert.SourceAndTargetLanguageIdentical;
     }
 
-    if (!this.isPreTranslationApproved) {
+    if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {
       return InfoAlert.ApprovalNeeded;
     }
 
