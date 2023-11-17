@@ -56,8 +56,7 @@ import { UsersModule } from './users/users.module';
     ProjectSelectComponent,
     SyncProgressComponent,
     TextNoteDialogComponent,
-    JoinComponent,
-    NavigationProjectSelectorComponent
+    JoinComponent
   ],
   imports: [
     BrowserModule.withServerTransition({ appId: 'ng-cli-universal' }),
@@ -75,7 +74,8 @@ import { UsersModule } from './users/users.module';
     XForgeCommonModule,
     TranslocoModule,
     AppRoutingModule,
-    SharedModule
+    SharedModule,
+    NavigationProjectSelectorComponent
   ],
   providers: [
     CookieService,

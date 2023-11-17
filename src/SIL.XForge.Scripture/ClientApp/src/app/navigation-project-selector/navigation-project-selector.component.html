@@ -1,6 +1,11 @@
 <ng-container *transloco="let t; read: 'navigation-project_selector'">
   <mat-form-field appearance="fill" *ngIf="hasProjects">
-    <mat-select dir="auto" [value]="selectedProjectId" (valueChange)="changed.emit($event)">
+    <mat-select
+      dir="auto"
+      [value]="selectedProjectId"
+      (valueChange)="changed.emit($event)"
+      [hideSingleSelectionIndicator]="true"
+    >
       <mat-option class="project-option" *ngFor="let projectDoc of projectDocs" [value]="projectDoc.id">{{
         projectLabel(projectDoc)
       }}</mat-option>
