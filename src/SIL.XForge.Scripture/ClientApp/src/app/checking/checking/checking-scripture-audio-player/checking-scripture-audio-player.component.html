@@ -1,12 +1,17 @@
 <div class="scripture-audio-player" [dir]="i18n.direction" *transloco="let t; read: 'checking_audio_player'">
   <div class="audio-action-buttons">
-    <button mat-icon-button class="previous-ref-button" (click)="previousRef()">
+    <button mat-icon-button class="previous-ref-button" (click)="previousRef()" [disabled]="!isAudioAvailable">
       <mat-icon class="mirror-rtl">skip_previous</mat-icon>
     </button>
-    <button mat-icon-button class="play-pause-button" (click)="isPlaying ? pause() : play()">
+    <button
+      mat-icon-button
+      class="play-pause-button"
+      (click)="isPlaying ? pause() : play()"
+      [disabled]="!isAudioAvailable"
+    >
       <mat-icon>{{ isPlaying ? "pause" : "play_arrow" }}</mat-icon>
     </button>
-    <button mat-icon-button class="next-ref-button" (click)="nextRef()">
+    <button mat-icon-button class="next-ref-button" (click)="nextRef()" [disabled]="!isAudioAvailable">
       <mat-icon class="mirror-rtl">skip_next</mat-icon>
     </button>
   </div>

@@ -1,5 +1,6 @@
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 @use 'src/variables' as vars;
+@use './checking-global-vars' as checkingVars;
 
 // Width chosen based on when the book/chapter chooser runs into the action icon buttons at the top of the text viewer
 $questionsPanelBreakpoint: 700px;
@@ -35,6 +36,11 @@ header {
   width: 300px;
   box-sizing: border-box;
   flex-shrink: 0;
+
+  .audio-checking-warning {
+    padding: 8px;
+    color: checkingVars.$notifyUser;
+  }
 
   header {
     flex-direction: column;
@@ -144,6 +150,11 @@ header {
 
     header {
       align-items: center;
+    }
+
+    .no-audio-message {
+      color: checkingVars.$notifyUser;
+      padding: 8px;
     }
 
     .panel-content {

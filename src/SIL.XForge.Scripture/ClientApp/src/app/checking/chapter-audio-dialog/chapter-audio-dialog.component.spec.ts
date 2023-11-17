@@ -205,6 +205,7 @@ describe('ChapterAudioDialogComponent', () => {
     await env.wait();
 
     expect(env.component.timingErrorMessage).toContain('timing_past_audio_length');
+    expect(env.wrapperTiming.innerText).not.toContain('segments found');
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 

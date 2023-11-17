@@ -24,7 +24,8 @@ describe('DraftGenerationService', () => {
     },
     percentCompleted: 0,
     message: '',
-    state: BuildStates.Queued
+    state: BuildStates.Queued,
+    queueDepth: 0
   };
 
   beforeAll(() => {
@@ -105,15 +106,16 @@ describe('DraftGenerationService', () => {
     it('should start a pretranslation build job and return an observable of BuildDto', done => {
       const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(undefined));
       const spyPollBuildProgress = spyOn(service, 'pollBuildProgress').and.returnValue(of(buildDto));
+      const buildConfig = { projectId, trainingBooks: [] };
       httpClient.post = jasmine.createSpy().and.returnValue(of({ data: buildDto }));
       service
-        .startBuildOrGetActiveBuild(projectId)
+        .startBuildOrGetActiveBuild(buildConfig)
         .pipe(first())
         .subscribe(result => {
           expect(result).toEqual(buildDto);
           expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
           expect(spyPollBuildProgress).toHaveBeenCalledWith(projectId);
-          expect(httpClient.post).toHaveBeenCalledWith(`translation/pretranslations`, JSON.stringify(projectId));
+          expect(httpClient.post).toHaveBeenCalledWith(`translation/pretranslations`, buildConfig);
           done();
         });
     });
@@ -122,7 +124,7 @@ describe('DraftGenerationService', () => {
       const spyGetBuildProgress = spyOn(service, 'getBuildProgress').and.returnValue(of(buildDto));
       const spyPollBuildProgress = spyOn(service, 'pollBuildProgress').and.returnValue(of(buildDto));
       httpClient.post = jasmine.createSpy();
-      service.startBuildOrGetActiveBuild(projectId).subscribe(result => {
+      service.startBuildOrGetActiveBuild({ projectId, trainingBooks: [] }).subscribe(result => {
         expect(result).toEqual(buildDto);
         expect(spyGetBuildProgress).toHaveBeenCalledWith(projectId);
         expect(spyPollBuildProgress).toHaveBeenCalledWith(projectId);

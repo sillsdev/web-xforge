@@ -1808,7 +1808,30 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     // There is no longer a base project, so remove the base project record
                     op.Unset(pd => pd.TranslateConfig.BaseProject);
                 }
+
+                // Update the copyright banner
+                if (settings.CopyrightBanner is not null)
+                {
+                    op.Set(pd => pd.CopyrightBanner, settings.CopyrightBanner);
+                }
+                else if (_projectDoc.Data.CopyrightBanner is not null)
+                {
+                    // There is no longer a copyright banner, so remove it
+                    op.Unset(pd => pd.CopyrightBanner);
+                }
+
+                // Update the copyright notice
+                if (settings.CopyrightNotice is not null)
+                {
+                    op.Set(pd => pd.CopyrightNotice, settings.CopyrightNotice);
+                }
+                else if (_projectDoc.Data.CopyrightNotice is not null)
+                {
+                    // There is no longer a copyright notice, so remove it
+                    op.Unset(pd => pd.CopyrightNotice);
+                }
             }
+
             // The source can be null if there was an error getting a resource from the DBL
             if (TranslationSuggestionsEnabled && _projectDoc.Data.TranslateConfig.Source != null)
             {
@@ -1891,7 +1914,12 @@ public class ParatextSyncRunner : IParatextSyncRunner
             if (TranslationSuggestionsEnabled && trainEngine && hasSourceTextDocs)
             {
                 // Start training Machine engine
-                await _machineProjectService.BuildProjectAsync(_userSecret.Id, _projectDoc.Id, false, token);
+                await _machineProjectService.BuildProjectAsync(
+                    _userSecret.Id,
+                    new BuildConfig { ProjectId = _projectDoc.Id },
+                    preTranslate: false,
+                    token
+                );
             }
 
             // Backup the repository

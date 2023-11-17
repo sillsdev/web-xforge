@@ -986,6 +986,20 @@ public class ParatextService : DisposableBase, IParatextService
                     }
             );
 
+        // If the copyright banner is blank or empty, make it null so it will not be displayed
+        string? copyrightBanner = scrText.CopyrightBannerText;
+        if (string.IsNullOrWhiteSpace(copyrightBanner))
+        {
+            copyrightBanner = null;
+        }
+
+        // Get the copyright notice in the same way
+        string? copyrightNotice = scrText.Settings.Copyright;
+        if (string.IsNullOrWhiteSpace(copyrightNotice))
+        {
+            copyrightNotice = null;
+        }
+
         return new ParatextSettings
         {
             FullName = scrText.FullName,
@@ -998,6 +1012,8 @@ public class ParatextService : DisposableBase, IParatextService
             ProjectType = scrText.Settings.TranslationInfo.Type.ToString(),
             BaseProjectParatextId = scrText.Settings.TranslationInfo.BaseProjectGuid?.Id,
             BaseProjectShortName = scrText.Settings.TranslationInfo.BaseProjectName,
+            CopyrightBanner = copyrightBanner,
+            CopyrightNotice = copyrightNotice,
         };
     }
 

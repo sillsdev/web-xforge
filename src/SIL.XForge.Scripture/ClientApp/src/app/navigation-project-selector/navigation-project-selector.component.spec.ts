@@ -17,12 +17,17 @@ const mockFeatureFlagService = mock(FeatureFlagService);
 
 describe('NavigationProjectSelectorComponent', () => {
   configureTestingModule(() => ({
-    declarations: [NavigationProjectSelectorComponent],
     providers: [
       { provide: OnlineStatusService, useClass: TestOnlineStatusService },
       { provide: FeatureFlagService, useMock: mockFeatureFlagService }
     ],
-    imports: [UICommonModule, NoopAnimationsModule, TestTranslocoModule, TestOnlineStatusModule.forRoot()]
+    imports: [
+      NavigationProjectSelectorComponent,
+      UICommonModule,
+      NoopAnimationsModule,
+      TestTranslocoModule,
+      TestOnlineStatusModule.forRoot()
+    ]
   }));
 
   it('emits event when project changes', fakeAsync(() => {
@@ -69,8 +74,8 @@ class TestEnvironment {
 
   constructor(template: string) {
     TestBed.configureTestingModule({
-      declarations: [NavigationProjectSelectorComponent, HostComponent],
-      imports: [UICommonModule, NoopAnimationsModule, TestTranslocoModule]
+      declarations: [HostComponent],
+      imports: [NavigationProjectSelectorComponent, UICommonModule, NoopAnimationsModule, TestTranslocoModule]
     });
     TestBed.overrideComponent(HostComponent, { set: { template: template } });
     this.fixture = TestBed.createComponent(HostComponent);

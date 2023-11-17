@@ -3,6 +3,7 @@
     <div class="current-time">{{ audio?.currentTime ?? 0 | audioTime }}</div>
     <mat-slider
       class="slider"
+      [disabled]="!isAudioAvailable"
       [min]="0"
       [max]="100"
       [step]="1"

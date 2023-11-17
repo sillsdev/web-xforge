@@ -152,7 +152,7 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult<Build>(null));
 
         // SUT
-        BuildDto? actual = await env.Service.GetBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetBuildAsync(
             User01,
             Project01,
             Build01,
@@ -226,7 +226,7 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.TimeOut);
 
         // SUT
-        BuildDto? actual = await env.Service.GetBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetBuildAsync(
             User01,
             Project01,
             Build01,
@@ -348,7 +348,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
-        BuildDto? actual = await env.Service.GetBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetBuildAsync(
             User01,
             Project01,
             Build01,
@@ -397,7 +397,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        BuildDto? actual = await env.Service.GetBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetBuildAsync(
             User01,
             Project01,
             Build01,
@@ -477,7 +477,7 @@ public class MachineApiServiceTests
             .Returns(Task.FromResult<Build>(null));
 
         // SUT
-        BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
             User01,
             Project01,
             minRevision: null,
@@ -548,7 +548,7 @@ public class MachineApiServiceTests
             .Throws(ServalApiExceptions.TimeOut);
 
         // SUT
-        BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
             User01,
             Project01,
             minRevision: null,
@@ -688,7 +688,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
-        BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
             User01,
             Project01,
             minRevision: null,
@@ -736,7 +736,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
             User01,
             Project01,
             minRevision: null,
@@ -791,7 +791,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        BuildDto? actual = await env.Service.GetCurrentBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetCurrentBuildAsync(
             User01,
             Project01,
             minRevision: null,
@@ -1150,7 +1150,7 @@ public class MachineApiServiceTests
             );
 
         // SUT
-        BuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
             User01,
             Project01,
             CancellationToken.None
@@ -1263,7 +1263,7 @@ public class MachineApiServiceTests
             );
 
         // SUT
-        BuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
+        ServalBuildDto? actual = await env.Service.GetLastCompletedPreTranslationBuildAsync(
             User01,
             Project01,
             CancellationToken.None
@@ -1599,7 +1599,7 @@ public class MachineApiServiceTests
         await env.QueuePreTranslationBuildAsync(DateTime.UtcNow.AddHours(-6), errorMessage);
 
         // SUT
-        BuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+        ServalBuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
             User01,
             Project01,
             CancellationToken.None
@@ -1616,7 +1616,7 @@ public class MachineApiServiceTests
         await env.QueuePreTranslationBuildAsync(DateTime.UtcNow.AddHours(-6));
 
         // SUT
-        BuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+        ServalBuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
             User01,
             Project01,
             CancellationToken.None
@@ -1632,7 +1632,7 @@ public class MachineApiServiceTests
         await env.QueuePreTranslationBuildAsync();
 
         // SUT
-        BuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+        ServalBuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
             User01,
             Project01,
             CancellationToken.None
@@ -1647,7 +1647,7 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        BuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
+        ServalBuildDto? build = await env.Service.GetPreTranslationQueuedStateAsync(
             User01,
             Project01,
             CancellationToken.None
@@ -1797,7 +1797,7 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.Serval).Returns(Task.FromResult(false));
 
         // SUT
-        BuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+        ServalBuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
 
         Assert.AreEqual(message, actual.Message);
         Assert.AreEqual(percentCompleted, actual.PercentCompleted);
@@ -1838,11 +1838,16 @@ public class MachineApiServiceTests
         env.FeatureManager.IsEnabledAsync(FeatureFlags.MachineInProcess).Returns(Task.FromResult(false));
 
         // SUT
-        BuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
+        ServalBuildDto actual = await env.Service.StartBuildAsync(User01, Project01, CancellationToken.None);
 
         await env.MachineProjectService
             .Received(1)
-            .SyncProjectCorporaAsync(User01, Project01, preTranslate: false, CancellationToken.None);
+            .SyncProjectCorporaAsync(
+                User01,
+                Arg.Is<BuildConfig>(b => b.ProjectId == Project01),
+                preTranslate: false,
+                CancellationToken.None
+            );
         Assert.AreEqual(message, actual.Message);
         Assert.AreEqual(percentCompleted, actual.PercentCompleted);
         Assert.AreEqual(revision, actual.Revision);
@@ -1869,7 +1874,12 @@ public class MachineApiServiceTests
         await env.EngineService.Received(1).StartBuildAsync(TranslationEngine01);
         await env.MachineProjectService
             .Received(1)
-            .SyncProjectCorporaAsync(User01, Project01, preTranslate: false, CancellationToken.None);
+            .SyncProjectCorporaAsync(
+                User01,
+                Arg.Is<BuildConfig>(b => b.ProjectId == Project01),
+                preTranslate: false,
+                CancellationToken.None
+            );
         await env.TranslationEnginesClient
             .Received(1)
             .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
@@ -1882,7 +1892,11 @@ public class MachineApiServiceTests
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.StartPreTranslationBuildAsync(User01, Project02, CancellationToken.None);
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            CancellationToken.None
+        );
 
         await env.SyncService.Received(1).SyncAsync(User01, Project03, trainEngine: false);
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
@@ -1900,7 +1914,12 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None)
+            () =>
+                env.Service.StartPreTranslationBuildAsync(
+                    User01,
+                    new BuildConfig { ProjectId = Project01 },
+                    CancellationToken.None
+                )
         );
     }
 
@@ -1912,7 +1931,12 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<ForbiddenException>(
-            () => env.Service.StartPreTranslationBuildAsync("invalid_user_id", Project01, CancellationToken.None)
+            () =>
+                env.Service.StartPreTranslationBuildAsync(
+                    "invalid_user_id",
+                    new BuildConfig { ProjectId = Project01 },
+                    CancellationToken.None
+                )
         );
     }
 
@@ -1924,23 +1948,55 @@ public class MachineApiServiceTests
 
         // SUT
         Assert.ThrowsAsync<DataNotFoundException>(
-            () => env.Service.StartPreTranslationBuildAsync(User01, "invalid_project_id", CancellationToken.None)
+            () =>
+                env.Service.StartPreTranslationBuildAsync(
+                    User01,
+                    new BuildConfig { ProjectId = "invalid_project_id" },
+                    CancellationToken.None
+                )
         );
     }
 
     [Test]
-    public async Task StartPreTranslationBuildAsync_Success()
+    public async Task StartPreTranslationBuildAsync_SuccessNoTrainingBooks()
     {
         // Set up test environment
         var env = new TestEnvironment();
 
         // SUT
-        await env.Service.StartPreTranslationBuildAsync(User01, Project01, CancellationToken.None);
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01 },
+            CancellationToken.None
+        );
 
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
         Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
+        Assert.IsEmpty(env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedBooks);
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_SuccessWithTrainingBooks()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project01, TrainingBooks = { 1, 2 } },
+            CancellationToken.None
+        );
+
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project01).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project01).ServalData?.PreTranslationErrorMessage);
+        Assert.AreEqual(2, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedBooks.Count);
+        Assert.AreEqual(1, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedBooks.First());
+        Assert.AreEqual(2, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedBooks.Last());
     }
 
     [Test]
@@ -2673,39 +2729,35 @@ public class MachineApiServiceTests
                     },
                 }
             );
-
-            var realtimeService = new SFMemoryRealtimeService();
-            realtimeService.AddRepository(
-                "sf_projects",
-                OTType.Json0,
-                new MemoryRepository<SFProject>(
-                    new[]
+            Projects = new MemoryRepository<SFProject>(
+                new[]
+                {
+                    new SFProject
                     {
-                        new SFProject
+                        Id = Project01,
+                        UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
+                    },
+                    new SFProject
+                    {
+                        Id = Project02,
+                        TranslateConfig = new TranslateConfig
                         {
-                            Id = Project01,
-                            UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
-                        },
-                        new SFProject
-                        {
-                            Id = Project02,
-                            TranslateConfig = new TranslateConfig
+                            DraftConfig = new DraftConfig
                             {
-                                DraftConfig = new DraftConfig
-                                {
-                                    AlternateSource = new TranslateSource { ProjectRef = Project03 },
-                                },
+                                AlternateSource = new TranslateSource { ProjectRef = Project03 },
                             },
-                            UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
                         },
-                        new SFProject
-                        {
-                            Id = Project03,
-                            UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Translator } },
-                        },
-                    }
-                )
+                        UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Administrator } },
+                    },
+                    new SFProject
+                    {
+                        Id = Project03,
+                        UserRoles = new Dictionary<string, string> { { User01, SFProjectRole.Translator } },
+                    },
+                }
             );
+            var realtimeService = new SFMemoryRealtimeService();
+            realtimeService.AddRepository("sf_projects", OTType.Json0, Projects);
 
             SyncService = Substitute.For<ISyncService>();
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
@@ -2735,6 +2787,7 @@ public class MachineApiServiceTests
         public IFeatureManager FeatureManager { get; }
         public IMachineProjectService MachineProjectService { get; }
         public IPreTranslationService PreTranslationService { get; }
+        public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
         public MachineApiService Service { get; }
         public ISyncService SyncService { get; }

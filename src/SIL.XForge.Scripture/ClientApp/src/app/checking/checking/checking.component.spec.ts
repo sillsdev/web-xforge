@@ -35,6 +35,7 @@ import { fromVerseRef, toVerseRef } from 'realtime-server/lib/esm/scriptureforge
 import * as RichText from 'rich-text';
 import { BehaviorSubject, Subject, of } from 'rxjs';
 import { first } from 'rxjs/operators';
+import { SFProjectProfileDoc } from 'src/app/core/models/sf-project-profile-doc';
 import { anyString, anything, instance, mock, reset, resetCalls, spy, verify, when } from 'ts-mockito';
 import { AuthService } from 'xforge-common/auth.service';
 import { AvatarTestingModule } from 'xforge-common/avatar/avatar-testing.module';
@@ -72,6 +73,7 @@ import { AudioTimePipe } from '../../shared/audio/audio-time-pipe';
 import { SharedModule } from '../../shared/shared.module';
 import { verseSlug } from '../../shared/utils';
 import { TextChooserDialogComponent, TextSelection } from '../../text-chooser-dialog/text-chooser-dialog.component';
+import { ChapterAudioDialogService } from '../chapter-audio-dialog/chapter-audio-dialog.service';
 import { QuestionScope } from '../checking.utils';
 import { QuestionDialogData } from '../question-dialog/question-dialog.component';
 import { QuestionDialogService } from '../question-dialog/question-dialog.service';
@@ -100,6 +102,7 @@ const mockedActivatedRoute = mock(ActivatedRoute);
 const mockedDialogService = mock(DialogService);
 const mockedTextChooserDialogComponent = mock(TextChooserDialogComponent);
 const mockedQuestionDialogService = mock(QuestionDialogService);
+const mockedChapterAudioDialogService = mock(ChapterAudioDialogService);
 const mockedBugsnagService = mock(BugsnagService);
 const mockedCookieService = mock(CookieService);
 const mockedFileService = mock(FileService);
@@ -173,6 +176,7 @@ describe('CheckingComponent', () => {
       { provide: DialogService, useMock: mockedDialogService },
       { provide: TextChooserDialogComponent, useMock: mockedTextChooserDialogComponent },
       { provide: QuestionDialogService, useMock: mockedQuestionDialogService },
+      { provide: ChapterAudioDialogService, useMock: mockedChapterAudioDialogService },
       { provide: BugsnagService, useMock: mockedBugsnagService },
       { provide: CookieService, useMock: mockedCookieService },
       { provide: FileService, useMock: mockedFileService },
@@ -2121,6 +2125,8 @@ describe('CheckingComponent', () => {
 
       expect(env.component.showScriptureAudioPlayer).toBe(true);
       flush();
+      expect(env.audioCheckingWarning).toBeNull();
+      expect(env.questionNoAudioWarning).toBeNull();
       discardPeriodicTasks();
     }));
 
@@ -2150,6 +2156,23 @@ describe('CheckingComponent', () => {
       env.component.chapter = 2;
 
       verify(audio.pause()).once();
+      expect(env.component).toBeDefined();
+      flush();
+      discardPeriodicTasks();
+    }));
+
+    it('stops audio when changing question', fakeAsync(() => {
+      const env = new TestEnvironment({ user: ADMIN_USER, scriptureAudio: true });
+      env.component.toggleAudio();
+      env.fixture.detectChanges();
+
+      const audio = mock(CheckingScriptureAudioPlayerComponent);
+      when(audio.isPlaying).thenReturn(true);
+      env.component.scriptureAudioPlayer = instance(audio);
+
+      env.selectQuestion(4);
+
+      verify(audio.stop()).once();
       expect(env.component).toBeDefined();
       flush();
       discardPeriodicTasks();
@@ -2206,6 +2229,53 @@ describe('CheckingComponent', () => {
 
       expect(env.component.showScriptureAudioPlayer).toBe(true);
       discardPeriodicTasks();
+    }));
+
+    it('notifies admin if chapter audio is absent and hide scripture text is enabled', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: ADMIN_USER,
+        scriptureAudio: true,
+        projectBookRoute: 'MAT',
+        questionScope: 'book'
+      });
+      env.setHideScriptureText(true);
+      expect(env.component.hideChapterText).toBe(true);
+      env.waitForQuestionTimersToComplete();
+      env.fixture.detectChanges();
+
+      expect(env.audioCheckingWarning).not.toBeNull();
+      expect(env.questionNoAudioWarning).not.toBeNull();
+
+      when(mockedChapterAudioDialogService.openDialog(anything())).thenCall(() => {
+        env.component.projectDoc!.submitJson0Op(op => {
+          const matTextIndex: number = env.component.projectDoc!.data!.texts.findIndex(t => t.bookNum === 40);
+          op.set(p => p.texts[matTextIndex].chapters[0].hasAudio, true);
+        });
+      });
+
+      env.component.addAudioTimingData();
+      env.waitForQuestionTimersToComplete();
+      env.fixture.detectChanges();
+
+      expect(env.audioCheckingWarning).toBeNull();
+      expect(env.questionNoAudioWarning).toBeNull();
+    }));
+
+    it('notifies community checker if chapter audio is absent and hide scripture text is enabled', fakeAsync(() => {
+      const env = new TestEnvironment({
+        user: CHECKER_USER,
+        scriptureAudio: true,
+        projectBookRoute: 'MAT',
+        questionScope: 'book'
+      });
+      env.setHideScriptureText(true);
+      expect(env.component.hideChapterText).toBe(true);
+      env.waitForQuestionTimersToComplete();
+      env.fixture.detectChanges();
+
+      // do not show the project level warning to users without permission to upload audio
+      expect(env.audioCheckingWarning).toBeNull();
+      expect(env.questionNoAudioWarning).not.toBeNull();
     }));
 
     // TODO: Get this test working
@@ -2678,6 +2748,14 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('app-checking-text'));
   }
 
+  get audioCheckingWarning(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.audio-checking-warning'));
+  }
+
+  get questionNoAudioWarning(): DebugElement {
+    return this.fixture.debugElement.query(By.css('.no-audio-message'));
+  }
+
   static generateTestProject(): SFProject {
     return createTestProject({
       writingSystem: {
@@ -3099,6 +3177,13 @@ class TestEnvironment {
     tick(this.questionReadTimer);
     this.fixture.detectChanges();
     tick();
+  }
+
+  setHideScriptureText(hideScriptureText: boolean): void {
+    const projectDoc: SFProjectProfileDoc = this.component.projectDoc!;
+    projectDoc.submitJson0Op(op => op.set(p => p.checkingConfig.hideCommunityCheckingText, hideScriptureText));
+    tick();
+    this.fixture.detectChanges();
   }
 
   private setRouteSnapshot(bookId: string, chapter: string, scope: QuestionScope): void {

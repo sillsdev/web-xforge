@@ -31,4 +31,18 @@ public class SFProject : Project
     /// There may be some projects that will want this increased which can be done manually in the database
     /// </summary>
     public int? MaxGeneratedUsersPerShareKey { get; set; } = 250;
+
+    /// <summary>
+    /// Gets or sets the copyright banner that must be displayed when the text is displayed.
+    /// </summary>
+    /// <value>The copyright banner.</value>
+    /// <remarks>This is plain text.</remarks>
+    public string? CopyrightBanner { get; set; }
+
+    /// <summary>
+    /// Gets or sets the full copyright notice.
+    /// </summary>
+    /// <value>The copyright notice.</value>
+    /// <remarks>This is may be plain text or HTML formatted.</remarks>
+    public string? CopyrightNotice { get; set; }
 }

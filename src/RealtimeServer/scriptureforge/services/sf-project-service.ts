@@ -33,7 +33,9 @@ const SF_PROJECT_PROFILE_FIELDS: ShareDB.ProjectionFields = {
   texts: true,
   syncDisabled: true,
   sync: true,
-  noteTags: true
+  noteTags: true,
+  copyrightBanner: true,
+  copyrightNotice: true
 };
 
 /**
@@ -146,6 +148,12 @@ export class SFProjectService extends ProjectService<SFProject> {
                   }
                 },
                 additionalProperties: false
+              },
+              lastSelectedBooks: {
+                bsonType: 'array',
+                items: {
+                  bsonType: 'int'
+                }
               }
             },
             additionalProperties: false
@@ -350,6 +358,12 @@ export class SFProjectService extends ProjectService<SFProject> {
         },
         additionalProperties: false
       },
+      copyrightBanner: {
+        bsonType: 'string'
+      },
+      copyrightNotice: {
+        bsonType: 'string'
+      },
       paratextUsers: {
         bsonType: 'array',
         items: {
@@ -384,7 +398,9 @@ export class SFProjectService extends ProjectService<SFProject> {
       this.pathTemplate(p => p.translateConfig),
       this.pathTemplate(p => p.checkingConfig),
       this.pathTemplate(p => p.shortName),
-      this.pathTemplate(p => p.writingSystem)
+      this.pathTemplate(p => p.writingSystem),
+      this.pathTemplate(p => p.copyrightBanner),
+      this.pathTemplate(p => p.copyrightNotice)
     ];
     this.immutableProps.push(...immutableProps);
   }

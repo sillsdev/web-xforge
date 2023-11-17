@@ -9,7 +9,7 @@ namespace SIL.XForge.Scripture.Services;
 public interface IMachineApiService
 {
     Task CancelPreTranslationBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
-    Task<BuildDto?> GetBuildAsync(
+    Task<ServalBuildDto?> GetBuildAsync(
         string curUserId,
         string sfProjectId,
         string buildId,
@@ -17,7 +17,7 @@ public interface IMachineApiService
         bool preTranslate,
         CancellationToken cancellationToken
     );
-    Task<BuildDto?> GetCurrentBuildAsync(
+    Task<ServalBuildDto?> GetCurrentBuildAsync(
         string curUserId,
         string sfProjectId,
         long? minRevision,
@@ -25,7 +25,7 @@ public interface IMachineApiService
         CancellationToken cancellationToken
     );
     Task<EngineDto> GetEngineAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
-    Task<BuildDto?> GetLastCompletedPreTranslationBuildAsync(
+    Task<ServalBuildDto?> GetLastCompletedPreTranslationBuildAsync(
         string curUserId,
         string sfProjectId,
         CancellationToken cancellationToken
@@ -37,7 +37,7 @@ public interface IMachineApiService
         int chapterNum,
         CancellationToken cancellationToken
     );
-    Task<BuildDto?> GetPreTranslationQueuedStateAsync(
+    Task<ServalBuildDto?> GetPreTranslationQueuedStateAsync(
         string curUserId,
         string sfProjectId,
         CancellationToken cancellationToken
@@ -48,8 +48,8 @@ public interface IMachineApiService
         string segment,
         CancellationToken cancellationToken
     );
-    Task<BuildDto> StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
-    Task StartPreTranslationBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
+    Task<ServalBuildDto> StartBuildAsync(string curUserId, string sfProjectId, CancellationToken cancellationToken);
+    Task StartPreTranslationBuildAsync(string curUserId, BuildConfig buildConfig, CancellationToken cancellationToken);
     Task TrainSegmentAsync(
         string curUserId,
         string sfProjectId,
