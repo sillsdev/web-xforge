@@ -539,6 +539,53 @@ public class ConnectionTests
             .SubmitOpAsync<TestProject>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
     }
 
+    [Test]
+    public async Task FetchSnapshotAsync_Success()
+    {
+        var env = new TestEnvironment();
+        string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
+        const string id = "project01";
+        var snapshot = new Snapshot<Project>
+        {
+            Data = new TestProject(),
+            Id = id,
+            Version = 1,
+        };
+        DateTime timestamp = DateTime.UtcNow;
+        env.RealtimeService.Server
+            .FetchSnapshotAsync<Project>(Arg.Any<int>(), collection, id, timestamp)
+            .Returns(Task.FromResult(snapshot));
+
+        // SUT
+        Snapshot<Project> actual = await env.Service.FetchSnapshotAsync<Project>(id, timestamp);
+        Assert.AreEqual(snapshot.Data, actual.Data);
+        Assert.AreEqual(snapshot.Id, actual.Id);
+        Assert.AreEqual(snapshot.Version, actual.Version);
+    }
+
+    [Test]
+    public async Task GetOps_Success()
+    {
+        var env = new TestEnvironment();
+        string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
+        const string id = "project01";
+        var ops = new Op[]
+        {
+            new Op
+            {
+                Metadata = new OpMetadata { Timestamp = DateTime.UtcNow },
+                Version = 1,
+            },
+        };
+        env.RealtimeService.Server.GetOpsAsync(collection, id).Returns(Task.FromResult(ops));
+
+        // SUT
+        Op[] actual = await env.Service.GetOpsAsync<Project>(id);
+        Assert.AreEqual(ops.Length, 1);
+        Assert.AreEqual(ops[0].Metadata.Timestamp, actual[0].Metadata.Timestamp);
+        Assert.AreEqual(ops[0].Version, actual[0].Version);
+    }
+
     private class TestEnvironment
     {
         public readonly Connection Service;

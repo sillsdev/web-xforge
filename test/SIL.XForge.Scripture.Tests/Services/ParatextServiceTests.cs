@@ -4600,6 +4600,85 @@ public class ParatextServiceTests
         Assert.AreEqual(LanguageId.English.Id, languageId);
     }
 
+    [Test]
+    public void ClearParatextDataCaches_InvalidProjectSuccess()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // SUT
+        env.Service.ClearParatextDataCaches(userSecret, "invalid_project_id");
+    }
+
+    [Test]
+    public void ClearParatextDataCaches_Success()
+    {
+        var env = new TestEnvironment();
+        var associatedPtUser = new SFParatextUser(env.Username01);
+        string ptProjectId = env.SetupProject(env.Project01, associatedPtUser);
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // SUT
+        env.Service.ClearParatextDataCaches(userSecret, ptProjectId);
+    }
+
+    [Test]
+    public void GetRevisionHistoryAsync_InsufficientPermissions()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
+        env.AddProjectRepository(project);
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(async () =>
+        {
+            await foreach (var item in env.Service.GetRevisionHistoryAsync(userSecret, project.Id, "MAT", 1)) { }
+        });
+    }
+
+    [Test]
+    public void GetRevisionHistoryAsync_MissingProject()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(async () =>
+        {
+            await foreach (var item in env.Service.GetRevisionHistoryAsync(userSecret, "invalid_project_id", "MAT", 1))
+            { }
+        });
+    }
+
+    [Test]
+    public void GetSnapshotAsync_InsufficientPermissions()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+        SFProject project = env.NewSFProject();
+        project.UserRoles = new Dictionary<string, string> { { env.User01, SFProjectRole.PTObserver } };
+        env.AddProjectRepository(project);
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.GetSnapshotAsync(userSecret, project.Id, "MAT", 1, DateTime.UtcNow)
+        );
+    }
+
+    [Test]
+    public void GetSnapshotAsync_MissingProject()
+    {
+        var env = new TestEnvironment();
+        UserSecret userSecret = TestEnvironment.MakeUserSecret(env.User01, env.Username01, env.ParatextUserId01);
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.GetSnapshotAsync(userSecret, "invalid_project_id", "MAT", 1, DateTime.UtcNow)
+        );
+    }
+
     private class TestEnvironment : IDisposable
     {
         public readonly string ParatextUserId01 = "paratext01";
