@@ -224,6 +224,8 @@
     "segments_found": "{{ segments }} segments found",
     "timing": "Timing",
     "timing_past_audio_length": "One or more timing values extend past the end of the audio file.",
+    "unrecognized_time_format": "Unrecognized time format",
+    "unrecognized_timing_file_format": "Unrecognized timing file format",
     "upload": "Upload",
     "upload_failed": "The audio file could not be uploaded. Please try again or use a different file.",
     "upload_timing_file": "Upload Timing File",
