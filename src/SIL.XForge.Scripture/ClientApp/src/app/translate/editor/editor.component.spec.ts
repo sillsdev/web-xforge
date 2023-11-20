@@ -3462,6 +3462,40 @@ describe('EditorComponent', () => {
 
       env.dispose();
     }));
+
+    it('shows the history diff when selected', fakeAsync(() => {
+      const projectConfig = {
+        translateConfig: { ...defaultTranslateConfig, translationSuggestionsEnabled: false }
+      };
+      const navigationParams: Params = { projectId: 'project01', bookId: 'MRK' };
+
+      when(mockedParatextService.getRevisions(anything(), anything(), anything())).thenResolve([
+        { key: 'date_here', value: 'description_here' }
+      ]);
+      when(mockedParatextService.getSnapshot(anything(), anything(), anything(), anything())).thenResolve({
+        data: {},
+        id: 'id',
+        type: '',
+        v: 1
+      });
+
+      const env = new TestEnvironment();
+      env.setupProject(projectConfig);
+      env.setProjectUserConfig();
+      env.updateParams(navigationParams);
+      env.wait();
+      env.component.historyChooser!.historyRevision = { key: 'date_here', value: 'description_here' };
+      env.component.historyChooser!.showDiff = true;
+      env.wait();
+
+      expect(env.component.historyChooser!.snapshot).not.toBeNull();
+
+      // "date_here" is not a valid date
+      expect(env.fixture.nativeElement.querySelectorAll('#snapshot-text-area .language-label')[0].innerHTML).toEqual(
+        'Invalid Date'
+      );
+      env.dispose();
+    }));
   });
 
   describe('Back translation draft', () => {
