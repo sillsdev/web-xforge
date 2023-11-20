@@ -1946,6 +1946,7 @@ public class ParatextService : DisposableBase, IParatextService
         Snapshot<TextData> snapshot = await connection.FetchSnapshotAsync<TextData>(id, timestamp);
 
         // We do not have a snapshot, so retrieve the data from Paratext
+        // Note: The following code is not testable due to ParatextData limitations
         if (snapshot.Data is null)
         {
             // Load the Paratext project
@@ -2016,7 +2017,7 @@ public class ParatextService : DisposableBase, IParatextService
         const int interval = 15;
         const string status = "Updated in Scripture Forge";
         DateTime milestonePeriod = DateTime.MaxValue;
-        DateTime milestoneTimestamp = DateTime.Now;
+        DateTime milestoneTimestamp = DateTime.UtcNow;
         int milestoneOps = 0;
         for (int i = ops.Length - 1; i >= 0; i--)
         {
@@ -2057,6 +2058,7 @@ public class ParatextService : DisposableBase, IParatextService
         string ptProjectId = projectDoc.Data.ParatextId;
         using ScrText scrText = GetScrText(userSecret, ptProjectId);
 
+        // Note: The following code is not testable due to ParatextData limitations
         // Iterate over the Paratext commits earlier than the earliest MongoOp
         DateTimeOffset timeStampOffset = new DateTimeOffset(milestonePeriod, TimeSpan.Zero);
         HgRevisionCollection revisionCollection = HgRevisionCollection.Get(scrText);
