@@ -8,7 +8,8 @@ import { Snapshot } from 'xforge-common/models/snapshot';
 import { ParatextProject } from './models/paratext-project';
 
 export interface Revision {
-  [date: string]: string;
+  key: string;
+  value: string;
 }
 
 export interface SelectableProject {
