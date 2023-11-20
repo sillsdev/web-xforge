@@ -178,12 +178,23 @@ describe('ChapterAudioDialogComponent', () => {
     }
   }));
 
-  it('shows warning if zero timing entries are found', fakeAsync(async () => {
+  it('shows warning if zero valid timing entries are found', fakeAsync(async () => {
     when(mockedCsvService.parse(anything())).thenResolve([
       ['error here', '0', 'v1'],
       ['1', 'error there', 'v2'],
       ['1.1', '0']
     ]);
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+    await env.wait();
+
+    expect(env.component.timingErrorMessage).toContain('zero_segments');
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
+  }));
+
+  it('shows warning if zero timing entries are found', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([]);
 
     await env.component.audioUpdate(env.audioFile);
     await env.component.prepareTimingFileUpload(anything());
@@ -209,7 +220,48 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
-  it('can also parse mm:ss', fakeAsync(() => {
+  it('shows warning if timing data file format is not recognized', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['Range', 'Name'],
+      ['100:101', 'v1']
+    ]);
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+    await env.wait();
+
+    expect(env.component.timingErrorMessage).toContain('unrecognized_timing_file_format');
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
+  }));
+
+  it('shows warning when parsing adobe audition timing data with unknown time format', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['Name', 'Start', 'Duration', 'Time Format', 'Type', 'Description'],
+      ['v1', '0:02.179', '0:00.000', 'unknown', 'Cue', '']
+    ]);
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+    await env.wait();
+
+    expect(env.component.timingErrorMessage).toContain('unrecognized_time_format');
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
+  }));
+
+  it('shows warning when parsing adobe audition timing data with no entries', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['Name', 'Start', 'Duration', 'Time Format', 'Type', 'Description']
+    ]);
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+    await env.wait();
+
+    expect(env.component.timingErrorMessage).toContain('zero_segments');
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
+  }));
+
+  it('can also parse audacity style timing data with mm:ss', fakeAsync(() => {
     when(mockedCsvService.parse(anything())).thenResolve([
       ['00:00', '0', 'v1'],
       ['00:01', '0', 'v2']
@@ -221,7 +273,7 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.component.timingErrorMessage).toEqual('');
   }));
 
-  it('can also parse hh:mm:ss', fakeAsync(() => {
+  it('can also parse audacity style timing data with hh:mm:ss', fakeAsync(() => {
     when(mockedCsvService.parse(anything())).thenResolve([
       ['00:00:00', '0', 'v1'],
       ['00:00:01', '0', 'v2']
@@ -229,6 +281,30 @@ describe('ChapterAudioDialogComponent', () => {
 
     env.component.audioUpdate(env.audioFile);
     env.component.prepareTimingFileUpload(anything());
+
+    expect(env.component.timingErrorMessage).toEqual('');
+  }));
+
+  it('can also parse adobe audition style timing data with decimal time format', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['Name', 'Start', 'Duration', 'Time Format', 'Type', 'Description'],
+      ['s', '0:01.01', '0:00.000', 'decimal', 'Cue', '']
+    ]);
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+
+    expect(env.component.timingErrorMessage).toEqual('');
+  }));
+
+  it('can also parse adobe audition style timing data with fps time format', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['Name', 'Start', 'Duration', 'Time Format', 'Type', 'Description'],
+      ['s', '00:00:01:01', '0:00.000', '75 fps', 'Cue', '']
+    ]);
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
 
     expect(env.component.timingErrorMessage).toEqual('');
   }));
