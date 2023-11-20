@@ -11,6 +11,9 @@ export const PWA_CHECK_FOR_UPDATES = 30_000;
   providedIn: 'root'
 })
 export class PwaService extends SubscriptionDisposable {
+  private readonly _canInstall: Promise<true>;
+  private promptEvent?: any;
+
   constructor(private readonly updates: SwUpdate, private readonly locationService: LocationService) {
     super();
 
@@ -26,12 +29,29 @@ export class PwaService extends SubscriptionDisposable {
           })
         );
     }
+    // TODO: Set correct event type
+    this._canInstall = new Promise(resolve => {
+      window.addEventListener('beforeinstallprompt', (event: any) => {
+        event.preventDefault();
+        this.promptEvent = event;
+        console.log(this.isInstalled);
+        resolve(true);
+      });
+    });
+  }
+
+  get canInstall(): Promise<true> {
+    return this._canInstall;
   }
 
   get hasUpdate$(): Observable<VersionReadyEvent> {
     // Note that this isn't consistent on localhost unless port forwarding to another device
     // An event is triggered but VersionInstallationFailedEvent is emitted instead - refreshing loads the latest version
     return this.updates.versionUpdates.pipe(filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'));
+  }
+
+  get isInstalled(): boolean {
+    return window.matchMedia('(display-mode: standalone)').matches;
   }
 
   activateUpdates(): void {
