@@ -359,7 +359,8 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   }
 
   private populateExistingData(): void {
-    if (this.textAudioQuery == null) {
+    if (this.textAudioQuery == null || this.data.currentBook == null || this.data.currentChapter == null) {
+      this.checkForPreexistingAudio();
       return;
     }
     this.subscribe(this.textAudioQuery.ready$.pipe(filter(ready => ready)), () => {
