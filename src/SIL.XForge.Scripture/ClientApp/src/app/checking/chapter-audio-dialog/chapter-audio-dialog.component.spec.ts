@@ -1,7 +1,7 @@
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DebugElement, NgModule, NgZone } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import {
   MatLegacyDialog as MatDialog,
   MatLegacyDialogConfig as MatDialogConfig,
@@ -19,21 +19,25 @@ import { anything, mock, when } from 'ts-mockito';
 import { CsvService } from 'xforge-common/csv-service.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FileService } from 'xforge-common/file.service';
-import { FileType } from 'xforge-common/models/file-offline-data';
+import { FileOfflineData, FileType } from 'xforge-common/models/file-offline-data';
 import { TestRealtimeModule } from 'xforge-common/test-realtime.module';
 import {
   ChildViewContainerComponent,
-  TestTranslocoModule,
   configureTestingModule,
-  getAudioBlob
+  getAudioBlob,
+  TestTranslocoModule
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { TestOnlineStatusService } from 'xforge-common/test-online-status.service';
 import { TestOnlineStatusModule } from 'xforge-common/test-online-status.module';
+import { getTextAudioId, TextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio';
+import { TestRealtimeService } from 'xforge-common/test-realtime.service';
+import { createTestTextAudio } from 'realtime-server/lib/esm/scriptureforge/models/text-audio-test-data';
 import { SF_TYPE_REGISTRY } from '../../core/models/sf-type-registry';
 import { CheckingModule } from '../checking.module';
 import { AudioAttachment } from '../checking/checking-audio-recorder/checking-audio-recorder.component';
+import { SFProjectService } from '../../core/sf-project.service';
 import {
   ChapterAudioDialogComponent,
   ChapterAudioDialogData,
@@ -43,6 +47,7 @@ import {
 const mockedDialogService = mock(DialogService);
 const mockedCsvService = mock(CsvService);
 const mockedFileService = mock(FileService);
+const mockedSFProjectService = mock(SFProjectService);
 
 describe('ChapterAudioDialogComponent', () => {
   configureTestingModule(() => ({
@@ -51,6 +56,7 @@ describe('ChapterAudioDialogComponent', () => {
       { provide: DialogService, useMock: mockedDialogService },
       { provide: CsvService, useMock: mockedCsvService },
       { provide: FileService, useMock: mockedFileService },
+      { provide: SFProjectService, useMock: mockedSFProjectService },
       { provide: OnlineStatusService, useClass: TestOnlineStatusService }
     ]
   }));
@@ -157,6 +163,7 @@ describe('ChapterAudioDialogComponent', () => {
     };
 
     env = new TestEnvironment(config);
+    tick();
 
     // Ensure that the UI shows that hte chapter has audio
     expect(env.component.book).toEqual(containingBook.bookNum);
@@ -341,6 +348,35 @@ describe('ChapterAudioDialogComponent', () => {
       .withContext('should show message that user needs to connect to continue')
       .toContain('internet');
   }));
+
+  it('populate with existing data if available', fakeAsync(() => {
+    const expectedBook = 1;
+    const expectedChapter = 3;
+    const config: MatDialogConfig<ChapterAudioDialogData> = {
+      data: {
+        projectId: 'project02',
+        textsByBookId: TestEnvironment.textsByBookId,
+        questionsSorted: env.questions,
+        currentBook: expectedBook,
+        currentChapter: expectedChapter
+      }
+    };
+
+    // Close the dialog opened from beforeEach
+    env.closeDialog();
+
+    env = new TestEnvironment(config);
+    tick();
+    env.fixture.detectChanges();
+
+    expect(env.component.book).toEqual(expectedBook);
+    expect(env.component.chapter).toEqual(expectedChapter);
+    expect(env.component.audioFilename).toEqual('Genesis 3');
+    expect(env.bookSelect.classList.contains('mat-select-disabled')).toBe(true);
+    expect(env.chapterSelect.classList.contains('mat-select-disabled')).toBe(true);
+    expect(env.wrapperAudio.classList.contains('valid')).toBe(true);
+    expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
+  }));
 });
 
 @NgModule({
@@ -398,6 +434,7 @@ class TestEnvironment {
     OnlineStatusService
   ) as TestOnlineStatusService;
   private numTimesClosedFired: number;
+  private readonly realtimeService: TestRealtimeService = TestBed.inject<TestRealtimeService>(TestRealtimeService);
 
   constructor(config?: MatDialogConfig<ChapterAudioDialogData>) {
     if (!config) {
@@ -408,6 +445,10 @@ class TestEnvironment {
           questionsSorted: this.questions
         }
       };
+    }
+
+    if (config.data?.currentBook) {
+      this.addTextAudioData(config.data);
     }
 
     when(mockedCsvService.parse(anything())).thenResolve([
@@ -426,12 +467,26 @@ class TestEnvironment {
         true
       )
     ).thenResolve('audio url');
+    when(mockedSFProjectService.queryAudioText(anything())).thenReturn(
+      this.realtimeService.subscribeQuery(TextAudioDoc.COLLECTION, {})
+    );
+
     this.audioFile = {
       status: 'uploaded',
       blob: getAudioBlob(),
       fileName: 'test-audio-player.webm',
       url: URL.createObjectURL(new File([getAudioBlob()], 'test.wav'))
     };
+
+    when(
+      mockedFileService.findOrUpdateCache(FileType.Audio, TextAudioDoc.COLLECTION, anything(), anything())
+    ).thenResolve({
+      id: 'audio01',
+      dataCollection: TextAudioDoc.COLLECTION,
+      filename: this.audioFile.fileName,
+      blob: this.audioFile.blob,
+      url: this.audioFile.url
+    } as FileOfflineData);
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     this.dialogRef = TestBed.inject(MatDialog).open(ChapterAudioDialogComponent, config);
@@ -443,19 +498,17 @@ class TestEnvironment {
     });
   }
 
+  get bookSelect(): HTMLInputElement {
+    return this.overlayContainerElement.querySelector('.book-select-menu') as HTMLInputElement;
+  }
+
+  get chapterSelect(): HTMLInputElement {
+    return this.overlayContainerElement.querySelector('.chapter-select-menu') as HTMLInputElement;
+  }
+
   set onlineStatus(isOnline: boolean) {
     this.testOnlineStatusService.setIsOnline(isOnline);
     tick();
-    this.fixture.detectChanges();
-  }
-
-  clickElement(element: HTMLElement | DebugElement): void {
-    if (element instanceof DebugElement) {
-      element = element.nativeElement as HTMLElement;
-    }
-    element.click();
-    this.fixture.detectChanges();
-    flush();
     this.fixture.detectChanges();
   }
 
@@ -491,13 +544,39 @@ class TestEnvironment {
     return this.fixture.nativeElement.parentElement.querySelector('.cdk-overlay-container');
   }
 
-  playAudio(): void {
-    this.component.chapterAudio?.play();
+  clickElement(element: HTMLElement | DebugElement): void {
+    if (element instanceof DebugElement) {
+      element = element.nativeElement as HTMLElement;
+    }
+    element.click();
     this.fixture.detectChanges();
+    flush();
+    this.fixture.detectChanges();
+  }
+
+  closeDialog(): void {
+    this.dialogRef.close();
   }
 
   fetchElement(query: string): HTMLElement {
     return this.overlayContainerElement.querySelector(query) as HTMLElement;
+  }
+
+  addTextAudioData(data: ChapterAudioDialogData): void {
+    const dataId = getTextAudioId(data.projectId, data.currentBook ?? 1, data.currentChapter ?? 1);
+    this.realtimeService.addSnapshot<TextAudio>(TextAudioDoc.COLLECTION, {
+      id: dataId,
+      data: createTestTextAudio({
+        dataId,
+        projectRef: data.projectId,
+        timings: [{ textRef: 'v1', from: 0, to: 1 }]
+      })
+    });
+  }
+
+  playAudio(): void {
+    this.component.chapterAudio?.play();
+    this.fixture.detectChanges();
   }
 
   async wait(ms: number = 200): Promise<void> {
