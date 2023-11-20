@@ -17,6 +17,7 @@ $toolbar-height: 56px;
 
 :host {
   display: flex;
+  flex-direction: column;
   position: relative;
 
   > mat-progress-bar {
@@ -187,6 +188,7 @@ header {
 .mat-drawer-container {
   width: 100%;
   background: initial;
+  flex: 1;
 }
 
 .app-content {
