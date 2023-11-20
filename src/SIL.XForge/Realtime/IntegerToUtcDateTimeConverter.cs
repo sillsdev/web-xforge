@@ -10,7 +10,7 @@ public class IntegerToUtcDateTimeConverter : JsonConverter
     public override object ReadJson(
         JsonReader reader,
         Type objectType,
-        object existingValue,
+        object? existingValue,
         JsonSerializer serializer
     ) =>
         long.TryParse(reader.Value?.ToString(), out long milliseconds)
