@@ -13,7 +13,6 @@
       [matTooltip]="questionTooltip(questionDoc)"
     >
       <div class="question-title">
-        <mat-icon *ngIf="questionDoc.data?.audioUrl">headset</mat-icon>
         <span class="question-text">{{ questionText(questionDoc) }}</span>
       </div>
       <a *ngIf="getUnreadAnswers(questionDoc) > 0" class="view-answers" title="{{ t('view_answers') }}">
