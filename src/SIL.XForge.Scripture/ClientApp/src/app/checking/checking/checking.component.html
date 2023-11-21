@@ -122,6 +122,7 @@
           >{{ t("question_does_not_have_audio") }}</span
         >
         <div id="split-container" #splitContainer>
+          <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
           <as-split
             direction="vertical"
             [disabled]="!questionsList.activeQuestionDoc"
@@ -129,7 +130,7 @@
             [useTransition]="true"
           >
             <!-- Splitter area sizes are controlled programmatically. -->
-            <as-split-area [size]="100" [maxSize]="scriptureAreaMaxSize">
+            <as-split-area [size]="100" [maxSize]="scriptureAreaMaxSize" [dir]="i18n.direction">
               <div class="panel-content" #scripturePanelContainer>
                 <!-- TODO (scripture audio) Instead of covering scripture panel, move the audio player below it -->
                 <div class="scripture-audio-player-wrapper" *ngIf="showScriptureAudioPlayer">
@@ -154,7 +155,7 @@
                 ></app-checking-text>
               </div>
             </as-split-area>
-            <as-split-area [size]="0">
+            <as-split-area [size]="0" [dir]="i18n.direction">
               <div *ngIf="questionsList.activeQuestionDoc" id="answer-panel" #answerPanelContainer>
                 <app-checking-answers
                   #answersPanel
