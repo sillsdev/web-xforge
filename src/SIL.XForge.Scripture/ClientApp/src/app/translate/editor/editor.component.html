@@ -67,7 +67,8 @@
           </div>
         </app-notice>
         <div #sourceSplitContainer>
-          <as-split direction="vertical" [style.height]="sourceSplitHeight">
+          <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
+          <as-split direction="vertical" [style.height]="sourceSplitHeight" [dir]="i18n.direction">
             <as-split-area [size]="75" [minSize]="20">
               <div #sourceContainer class="text-container">
                 <app-text
@@ -81,7 +82,7 @@
                 ></app-text>
               </div>
             </as-split-area>
-            <as-split-area [size]="25" *ngIf="biblicalTermsEnabledForSource">
+            <as-split-area [size]="25" *ngIf="biblicalTermsEnabledForSource" [dir]="i18n.direction">
               <app-biblical-terms
                 id="source-biblical-terms"
                 [bookNum]="bookNum"
@@ -130,8 +131,9 @@
           <mat-icon>info</mat-icon> {{ t("no_permission_edit_chapter", { userRole: userRoleStr }) }}
         </div>
         <div #targetSplitContainer>
+          <!-- dir must be set on as-split-area because as-split is always set with dir=ltr -->
           <as-split direction="vertical" [style.height]="targetSplitHeight">
-            <as-split-area [size]="75" [minSize]="20">
+            <as-split-area [size]="75" [minSize]="20" [dir]="i18n.direction">
               <div
                 #targetContainer
                 class="text-container"
@@ -204,7 +206,7 @@
                 </div>
               </div>
             </as-split-area>
-            <as-split-area [size]="25" *ngIf="biblicalTermsEnabledForTarget">
+            <as-split-area [size]="25" *ngIf="biblicalTermsEnabledForTarget" [dir]="i18n.direction">
               <app-biblical-terms
                 id="target-biblical-terms"
                 [bookNum]="bookNum"
