@@ -1,16 +1,9 @@
 <ng-container *transloco="let t; read: 'checking_audio_player'">
   <div *ngIf="!hasProblem" class="content" dir="ltr">
     <div class="current-time">{{ audio?.currentTime ?? 0 | audioTime }}</div>
-    <mat-slider
-      class="slider"
-      [disabled]="!isAudioAvailable"
-      [min]="0"
-      [max]="100"
-      [step]="1"
-      [value]="seek"
-      (input)="onSeek($event)"
-      [dir]="i18n.direction"
-    ></mat-slider>
+    <mat-slider class="slider" [disabled]="!isAudioAvailable" [min]="0" [max]="100">
+      <input matSliderThumb [value]="seek" (dragEnd)="onSeek($event)" />
+    </mat-slider>
     <div class="duration">{{ duration | audioTime }}</div>
   </div>
   <div *ngIf="hasProblem" class="audio-not-available">

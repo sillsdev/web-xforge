@@ -6,7 +6,7 @@ import {
   MatLegacyDialogConfig as MatDialogConfig
 } from '@angular/material/legacy-dialog';
 import { MatLegacySelect as MatSelect } from '@angular/material/legacy-select';
-import { MatLegacySlider as MatSlider } from '@angular/material/legacy-slider';
+import { MatSlider } from '@angular/material/slider';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -89,7 +89,7 @@ describe('SuggestionsSettingsDialogComponent', () => {
   it('shows correct confidence threshold even when suggestions disabled', fakeAsync(() => {
     const env = new TestEnvironment(false);
     env.openDialog();
-    expect(env.confidenceThresholdSlider.value).toEqual(50);
+    expect(env.component?.confidenceThreshold).toEqual(50);
     env.closeDialog();
   }));
 
