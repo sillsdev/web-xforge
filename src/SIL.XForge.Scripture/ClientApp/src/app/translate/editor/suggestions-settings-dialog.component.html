@@ -33,14 +33,9 @@
           <span>{{ confidenceThreshold }}%</span>
           <span>{{ t("better") }}</span>
         </div>
-        <mat-slider
-          id="confidence-threshold-slider"
-          [disabled]="translationSuggestionsDisabled"
-          [min]="0"
-          [max]="100"
-          [(ngModel)]="confidenceThreshold"
-          (input)="confidenceThreshold = $event.value ?? 0"
-        ></mat-slider>
+        <mat-slider id="confidence-threshold-slider" [disabled]="translationSuggestionsDisabled" [min]="0" [max]="100">
+          <input matSliderThumb [(ngModel)]="confidenceThreshold" (dragEnd)="confidenceThreshold = $event.value" />
+        </mat-slider>
       </div>
     </div>
     <div class="row">
