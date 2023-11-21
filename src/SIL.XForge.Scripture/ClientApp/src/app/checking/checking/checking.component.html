@@ -100,7 +100,7 @@
                   mat-icon-button
                   (click)="addAudioTimingData()"
                 >
-                  <mat-icon>audiotrack</mat-icon>
+                  <mat-icon class="material-icons-outlined">audio_file</mat-icon>
                 </button>
               </ng-container>
               <button
@@ -109,7 +109,7 @@
                 mat-icon-button
                 (click)="toggleAudio()"
               >
-                <mat-icon>{{ isAudioPlaying() ? "pause" : "play_arrow" }}</mat-icon>
+                <mat-icon>{{ isAudioPlaying() ? "pause" : "play_circle_outline" }}</mat-icon>
               </button>
               <app-font-size [class.hidden]="hideChapterText" (apply)="applyFontChange($event)"></app-font-size>
               <app-share-button *ngIf="canShare" [defaultRole]="defaultShareRole"></app-share-button>
