@@ -8,17 +8,7 @@
     font-size: 0.8em;
   }
   .slider {
-    flex: 1;
-    width: 100%;
-    ::ng-deep .mat-slider-track-background {
-      background-color: #e0e0e0;
-    }
-    ::ng-deep .mat-slider-thumb {
-      background-color: #000;
-    }
-    &[dir='rtl'] {
-      transform: rotateY(180deg);
-    }
+    flex-grow: 1;
   }
 }
 
