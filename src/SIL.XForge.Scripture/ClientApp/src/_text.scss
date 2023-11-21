@@ -97,6 +97,21 @@ quill-editor {
   }
 }
 
+.comment-enabled-editor {
+  quill-editor:not(.read-only-editor) .ql-editor {
+    padding-inline-start: 10px;
+    padding-inline-end: 40px;
+  }
+
+  // only commenter users on devices with screens larger than large need to account for the add comment FAB
+  quill-editor.read-only-editor .ql-editor {
+    @include media-breakpoint-up(lg) {
+      padding-inline-start: 10px;
+      padding-inline-end: 40px;
+    }
+  }
+}
+
 quill-editor.ltr {
   .question-segment[data-question-count] {
     margin-left: 1.75em;
