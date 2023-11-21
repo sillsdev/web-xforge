@@ -21,6 +21,58 @@ public class PreTranslationServiceTests
     private const string TranslationEngine01 = "translationEngine01";
 
     [Test]
+    public async Task GetPreTranslationsAsync_CombinesSegmentedVerses()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        const int bookNum = 64;
+        const int chapterNum = 1;
+        string textId = PreTranslationService.GetTextId(bookNum, chapterNum);
+        env.TranslationEnginesClient
+            .GetAllPretranslationsAsync(TranslationEngine01, Corpus01, textId, CancellationToken.None)
+            .Returns(
+                Task.FromResult<IList<Pretranslation>>(
+                    new List<Pretranslation>
+                    {
+                        new Pretranslation
+                        {
+                            TextId = "64_1",
+                            Refs = { "64_1:h_001" },
+                            Translation = "3 John",
+                        },
+                        new Pretranslation
+                        {
+                            TextId = "64_1",
+                            Refs = { "64_1:verse_001_001" },
+                            Translation = "By the old man,",
+                        },
+                        new Pretranslation
+                        {
+                            TextId = "64_1",
+                            Refs = { "64_1:verse_001_001_001" },
+                            Translation = "To my dear friend Gaius, whom I love in the truth:",
+                        },
+                    }
+                )
+            );
+
+        // SUT
+        PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
+            User01,
+            Project01,
+            bookNum,
+            chapterNum,
+            CancellationToken.None
+        );
+        Assert.AreEqual(1, actual.Length);
+        Assert.AreEqual("3JN 1:1", actual.First().Reference);
+        Assert.AreEqual(
+            "By the old man, To my dear friend Gaius, whom I love in the truth:",
+            actual.First().Translation
+        );
+    }
+
+    [Test]
     public void GetPreTranslationsAsync_ThrowsExceptionWhenProjectSecretMissing()
     {
         // Set up test environment
@@ -60,8 +112,8 @@ public class PreTranslationServiceTests
         PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
             User01,
             Project01,
-            40,
-            1,
+            bookNum,
+            chapterNum,
             CancellationToken.None
         );
         Assert.Zero(actual.Length);
@@ -81,7 +133,7 @@ public class PreTranslationServiceTests
                 Task.FromResult<IList<Pretranslation>>(
                     new List<Pretranslation>
                     {
-                        new Pretranslation { TextId = "40_1", Translation = "Matthew", },
+                        new Pretranslation { TextId = "40_1", Translation = "Matthew" },
                         new Pretranslation
                         {
                             TextId = "40_1",
@@ -104,8 +156,8 @@ public class PreTranslationServiceTests
         PreTranslation[] actual = await env.Service.GetPreTranslationsAsync(
             User01,
             Project01,
-            40,
-            1,
+            bookNum,
+            chapterNum,
             CancellationToken.None
         );
         Assert.AreEqual(2, actual.Length);
