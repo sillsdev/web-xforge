@@ -74,7 +74,7 @@
           <ng-container matColumnDef="audio_permission">
             <td mat-cell *matCellDef="let userRow">
               <div [matTooltip]="t('allow_manage_audio')" *ngIf="userRow.canManageAudio">
-                <mat-icon class="shift-left">audiotrack</mat-icon>
+                <mat-icon class="shift-left material-icons-outlined">audio_file</mat-icon>
               </div>
             </td>
           </ng-container>

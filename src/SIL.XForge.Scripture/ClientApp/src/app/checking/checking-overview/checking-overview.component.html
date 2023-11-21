@@ -24,7 +24,8 @@
         (click)="chapterAudioDialog()"
         id="add-chapter-audio-button"
       >
-        <mat-icon class="mirror-rtl">audiotrack</mat-icon> <span fxHide.xs>{{ t("add_chapter_audio") }}</span>
+        <mat-icon class="material-icons-outlined">audio_file</mat-icon>
+        <span fxHide.xs>{{ t("add_chapter_audio") }}</span>
       </button>
     </ng-container>
     <ng-template #overallProgressChart>
@@ -97,7 +98,8 @@
                       <mat-icon
                         *ngIf="featureFlagsService.scriptureAudio.enabled && chapter.hasAudio"
                         title="{{ t('chapter_audio_attached') }}"
-                        >headset</mat-icon
+                        class="material-icons-outlined"
+                        >audio_file</mat-icon
                       ></span
                     >
                     <span fxFlex="110px" fxShow fxHide.xs fxLayoutAlign="end center" class="questions-count">
@@ -161,7 +163,9 @@
                           <mat-icon>edit</mat-icon>
                         </button>
                         v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
-                        <mat-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mat-icon>
+                        <mat-icon class="audio-icon material-icons-outlined" *ngIf="questionDoc.data?.audioUrl">
+                          audio_file
+                        </mat-icon>
                         <span fxFlex class="no-overflow-ellipsis">
                           <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
                         </span>
@@ -332,7 +336,9 @@
                   >
                     <div fxFlex="grow" fxLayout="row" fxLayoutAlign="start center">
                       v{{ questionDoc.data?.verseRef?.verseNum }} -&nbsp;
-                      <mat-icon class="audio-icon" *ngIf="questionDoc.data?.audioUrl">headset</mat-icon>
+                      <mat-icon *ngIf="questionDoc.data?.audioUrl" class="audio-icon material-icons-outlined">
+                        audio_file
+                      </mat-icon>
                       <span fxFlex class="no-overflow-ellipsis">
                         <span *ngIf="questionDoc.data?.text">{{ questionDoc.data?.text }}</span>
                       </span>
