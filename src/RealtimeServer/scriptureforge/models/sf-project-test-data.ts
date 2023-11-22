@@ -18,7 +18,7 @@ function testProjectProfile(ordinal: number): SFProjectProfile {
       shareEnabled: false,
       preTranslate: false,
       defaultNoteTagId: 1,
-      draftConfig: { lastSelectedBooks: [] }
+      draftConfig: { lastSelectedBooks: [], trainOnEnabled: false }
     },
     checkingConfig: {
       checkingEnabled: true,

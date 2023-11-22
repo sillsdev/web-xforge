@@ -266,6 +266,23 @@ describe('version 12', () => {
       expect(projectDoc.data.translateConfig.draftConfig.lastSelectedBooks).toBeDefined();
     });
   });
+
+  describe('version 14', () => {
+    it('adds trainOnEnabled to draftConfig', async () => {
+      const env = new TestEnvironment(13);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: { lastSelectedBooks: [] } }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.trainOnEnabled).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.trainOnEnabled).toBe(false);
+    });
+  });
 });
 
 class TestEnvironment {

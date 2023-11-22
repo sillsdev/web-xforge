@@ -225,6 +225,18 @@ class SFProjectMigration13 extends DocMigration {
   }
 }
 
+class SFProjectMigration14 extends DocMigration {
+  static readonly VERSION = 14;
+
+  async migrateDoc(doc: Doc): Promise<void> {
+    const ops: Op[] = [];
+    if (doc.data.translateConfig.draftConfig.trainOnEnabled == null) {
+      ops.push({ p: ['translateConfig', 'draftConfig', 'trainOnEnabled'], oi: false });
+    }
+    await submitMigrationOp(SFProjectMigration14.VERSION, doc, ops);
+  }
+}
+
 export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration1,
   SFProjectMigration2,
@@ -238,5 +250,6 @@ export const SF_PROJECT_MIGRATIONS: MigrationConstructor[] = [
   SFProjectMigration10,
   SFProjectMigration11,
   SFProjectMigration12,
-  SFProjectMigration13
+  SFProjectMigration13,
+  SFProjectMigration14
 ];
