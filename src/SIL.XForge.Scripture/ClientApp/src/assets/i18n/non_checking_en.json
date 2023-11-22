@@ -184,13 +184,9 @@
     "warning_generation_faulted_header": "Last generation attempt failed"
   },
   "draft_generation_steps": {
-    "back": "Back",
     "choose_books_for_training": "Choose books for training",
-    "choose_books_for_training_info": "Choose books with the most polished translations, as these will be used to train the model.",
-    "confirm_books_and_generate": "Confirm books and generate",
-    "generate_draft": "Generate draft",
-    "next": "Next",
-    "no_books_selected": "Click \"{{ draft_generation_steps.back }}\" to select books."
+    "choose_books_for_training_subheader": "Select books that have been proofed.",
+    "generate_draft": "Generate draft"
   },
   "draft_viewer": {
     "apply_to_project": "Apply to project",

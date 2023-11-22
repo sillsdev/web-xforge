@@ -1,8 +1,13 @@
 <ng-container *transloco="let t">
-  <mat-chip-list [multiple]="true" class="book-multi-select" [class.readonly]="readonly">
-    <mat-chip *ngFor="let book of bookOptions" [selected]="book.selected" (click)="!readonly && toggleSelection(book)">
-      <mat-icon *ngIf="book.selected && !readonly">check</mat-icon>
+  <mat-chip-listbox
+    [multiple]="true"
+    [selectable]="!readonly"
+    class="book-multi-select"
+    [class.readonly]="readonly"
+    (change)="onChipListChange($event)"
+  >
+    <mat-chip-option *ngFor="let book of bookOptions" [value]="book" [selected]="book.selected">
       {{ t("canon.book_names." + book.bookId) }}
-    </mat-chip>
-  </mat-chip-list>
+    </mat-chip-option>
+  </mat-chip-listbox>
 </ng-container>

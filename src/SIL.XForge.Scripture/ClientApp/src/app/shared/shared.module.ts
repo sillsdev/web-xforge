@@ -6,7 +6,6 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { CheckingQuestionComponent } from '../checking/checking/checking-answers/checking-question/checking-question.component';
 import { SingleButtonAudioPlayerComponent } from '../checking/checking/single-button-audio-player/single-button-audio-player.component';
 import { BookChapterChooserComponent } from './book-chapter-chooser/book-chapter-chooser.component';
-import { BookMultiSelectComponent } from './book-multi-select/book-multi-select.component';
 import { ChapterNavComponent } from './chapter-nav/chapter-nav.component';
 import { InfoComponent } from './info/info.component';
 import { NoticeComponent } from './notice/notice.component';
@@ -27,8 +26,7 @@ const componentExports = [
   TextComponent,
   CheckingQuestionComponent,
   SingleButtonAudioPlayerComponent,
-  WorkingAnimatedIndicatorComponent,
-  BookMultiSelectComponent
+  WorkingAnimatedIndicatorComponent
 ];
 
 @NgModule({

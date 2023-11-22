@@ -1,46 +1,14 @@
 <ng-container *transloco="let t; read: 'draft_generation_steps'">
-  <mat-stepper orientation="vertical" [linear]="true">
-    <mat-step>
-      <ng-template matStepLabel>
-        {{ t("choose_books_for_training") }}
-        <mat-icon class="material-icons-outlined" [matMenuTriggerFor]="trainingInfo">info</mat-icon>
-      </ng-template>
-      <app-book-multi-select
-        [availableBooks]="(availableBooks$ | async) ?? []"
-        [selectedBooks]="selectedBooks"
-        (bookSelect)="onBookSelect($event)"
-      ></app-book-multi-select>
-      <div class="stepper-nav">
-        <button mat-flat-button [disabled]="!selectedBooks.length" matStepperNext color="primary">
-          {{ t("next") }}
-        </button>
-      </div>
-    </mat-step>
+  <h2>{{ t("choose_books_for_training") }}</h2>
+  <h3>{{ t("choose_books_for_training_subheader") }}</h3>
 
-    <mat-step>
-      <ng-template matStepLabel>
-        {{ t("confirm_books_and_generate") }}
-      </ng-template>
-      <app-book-multi-select
-        [availableBooks]="selectedBooks"
-        [selectedBooks]="selectedBooks"
-        [readonly]="true"
-      ></app-book-multi-select>
-      <p *ngIf="!selectedBooks.length">{{ t("no_books_selected") }}</p>
-      <div class="stepper-nav">
-        <button *ngIf="!selectedBooks.length" mat-flat-button matStepperPrevious color="primary">
-          {{ t("back") }}
-        </button>
-        <button *ngIf="selectedBooks.length" mat-stroked-button matStepperPrevious>{{ t("back") }}</button>
-        <button mat-flat-button [disabled]="!selectedBooks.length" matStepperNext (click)="onDone()" color="primary">
-          {{ t("generate_draft") }}
-        </button>
-      </div>
-    </mat-step>
-  </mat-stepper>
+  <app-book-multi-select
+    [availableBooks]="(availableBooks$ | async) ?? []"
+    [selectedBooks]="initialSelectedBooks"
+    (bookSelect)="onBookSelect($event)"
+  ></app-book-multi-select>
 
-  <mat-menu #trainingInfo="matMenu" class="draft-generation-steps-info-menu">
-    <mat-icon class="material-icons-outlined">info</mat-icon>
-    {{ t("choose_books_for_training_info") }}
-  </mat-menu>
+  <button mat-flat-button [disabled]="!finalSelectedBooks.length" (click)="onDone()" color="primary">
+    {{ t("generate_draft") }}
+  </button>
 </ng-container>
