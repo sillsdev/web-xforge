@@ -29,6 +29,8 @@ export interface BaseProject {
 export interface DraftConfig {
   alternateSource?: TranslateSource;
   lastSelectedBooks: number[];
+  trainOnEnabled: boolean;
+  trainOnSource?: TranslateSource;
 }
 
 export interface TranslateConfig {
