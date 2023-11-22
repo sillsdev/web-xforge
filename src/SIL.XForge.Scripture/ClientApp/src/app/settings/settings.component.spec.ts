@@ -220,7 +220,8 @@ describe('SettingsComponent', () => {
                 tag: 'qaa'
               }
             },
-            lastSelectedBooks: []
+            lastSelectedBooks: [],
+            trainOnEnabled: false
           }
         });
         when(mockedParatextService.getProjects()).thenResolve([
@@ -253,6 +254,112 @@ describe('SettingsComponent', () => {
         expect(env.alternateSourceSelectProjectsResources.length).toEqual(5);
         expect(env.alternateSourceSelectProjectsResources[1].name).toBe('ParatextP2');
         expect(env.alternateSourceSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
+      }));
+    });
+
+    describe('Train On', () => {
+      it('should change train on source select value', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({ draftConfig: { trainOnEnabled: true, lastSelectedBooks: [] } });
+        env.wait();
+        env.wait();
+        expect(env.trainOnSourceSelect).not.toBeNull();
+        expect(env.trainOnSourceSelectValue).toBe('');
+        expect(env.statusDone(env.trainOnSourceStatus)).toBeNull();
+
+        env.setTrainOnSourceValue('paratextId02');
+
+        expect(env.trainOnSourceSelectValue).toContain('ParatextP2');
+        expect(env.statusDone(env.trainOnSourceStatus)).not.toBeNull();
+      }));
+
+      it('should unset train on source select value', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            trainOnSource: {
+              paratextId: 'paratextId01',
+              projectRef: 'paratext01',
+              name: 'ParatextP1',
+              shortName: 'PT1',
+              writingSystem: {
+                tag: 'qaa'
+              }
+            },
+            lastSelectedBooks: [],
+            trainOnEnabled: true
+          }
+        });
+        env.wait();
+        env.wait();
+        expect(env.trainOnSourceSelect).not.toBeNull();
+        expect(env.trainOnSourceSelectValue).toContain('ParatextP1');
+        expect(env.statusDone(env.trainOnSourceStatus)).toBeNull();
+
+        env.resetTrainOnSourceProject();
+
+        expect(env.trainOnSourceSelectValue).toBe('');
+        expect(env.statusDone(env.trainOnSourceStatus)).not.toBeNull();
+      }));
+
+      it('should hide train on source dropdown when train on is disabled', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        env.wait();
+        expect(env.inputElement(env.trainOnCheckbox).checked).toBe(false);
+        expect(env.trainOnSourceSelect).toBeNull();
+        env.clickElement(env.inputElement(env.trainOnCheckbox));
+        expect(env.inputElement(env.trainOnCheckbox).checked).toBe(true);
+        expect(env.trainOnSourceSelect).not.toBeNull();
+      }));
+
+      it('should display projects then resources', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({ draftConfig: { trainOnEnabled: true, lastSelectedBooks: [] } });
+        env.wait();
+        env.wait();
+        expect(env.inputElement(env.trainOnCheckbox).checked).toBe(true);
+        expect(env.trainOnSourceSelect).not.toBeNull();
+        expect(env.trainOnSourceSelectProjectsResources.length).toEqual(5);
+        expect(env.trainOnSourceSelectProjectsResources[1].name).toBe('ParatextP2');
+        expect(env.trainOnSourceSelectProjectsResources[2].name).toBe('Sob Jonah and Luke');
+      }));
+
+      it('should display train on source project even if user is not a member', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({
+          draftConfig: {
+            trainOnSource: {
+              paratextId: 'paratextId01',
+              projectRef: 'paratext01',
+              name: 'ParatextP1',
+              shortName: 'PT1',
+              writingSystem: {
+                tag: 'qaa'
+              }
+            },
+            lastSelectedBooks: [],
+            trainOnEnabled: true
+          }
+        });
+        when(mockedParatextService.getProjects()).thenResolve([
+          {
+            paratextId: 'paratextId02',
+            name: 'ParatextP2',
+            shortName: 'PT2',
+            languageTag: 'qaa',
+            isConnectable: true,
+            isConnected: false
+          }
+        ]);
+        when(mockedParatextService.getResources()).thenResolve([]);
+
+        env.wait();
+        env.wait();
+        expect(env.trainOnSourceSelect).not.toBeNull();
+        expect(env.trainOnSourceSelectValue).toBe('ParatextP1');
+        expect(env.trainOnSourceSelectProjectsResources.length).toEqual(1);
+        expect(env.trainOnSourceSelectProjectsResources[0].name).toBe('ParatextP2');
       }));
     });
 
@@ -655,6 +762,14 @@ class TestEnvironment {
     return this.fixture.debugElement.query(By.css('#alternate-source-status'));
   }
 
+  get trainOnSourceSelect(): DebugElement {
+    return this.fixture.debugElement.query(By.css('app-project-select#trainOnSourceParatextId'));
+  }
+
+  get trainOnSourceStatus(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#train-on-source-status'));
+  }
+
   get translationSuggestionsStatus(): DebugElement {
     return this.fixture.debugElement.query(By.css('#translation-suggestions-status'));
   }
@@ -775,6 +890,22 @@ class TestEnvironment {
     return (this.basedOnSelectComponent.projects || []).concat(this.basedOnSelectComponent.resources || []);
   }
 
+  get trainOnCheckbox(): DebugElement {
+    return this.fixture.debugElement.query(By.css('#checkbox-train-on-enabled'));
+  }
+
+  get trainOnSourceSelectValue(): string {
+    return this.trainOnSourceSelectComponent.paratextIdControl.value?.name || '';
+  }
+
+  get trainOnSourceSelectComponent(): ProjectSelectComponent {
+    return this.trainOnSourceSelect.componentInstance as ProjectSelectComponent;
+  }
+
+  get trainOnSourceSelectProjectsResources(): SelectableProject[] {
+    return (this.trainOnSourceSelectComponent.projects || []).concat(this.trainOnSourceSelectComponent.resources || []);
+  }
+
   makeProjectHaveTextAudio(): void {
     this.realtimeService.addSnapshot<TextAudio>(TextAudioDoc.COLLECTION, {
       id: 'sAudio1',
@@ -805,6 +936,11 @@ class TestEnvironment {
     this.wait();
   }
 
+  resetTrainOnSourceProject(): void {
+    this.trainOnSourceSelectComponent.paratextIdControl.setValue('');
+    this.wait();
+  }
+
   statusNone(element: DebugElement): boolean {
     return element.children.length === 0;
   }
@@ -827,6 +963,11 @@ class TestEnvironment {
     this.wait();
   }
 
+  setTrainOnSourceValue(value: string): void {
+    this.trainOnSourceSelectComponent.value = value;
+    this.wait();
+  }
+
   wait(): void {
     this.fixture.detectChanges();
     tick();
@@ -846,7 +987,7 @@ class TestEnvironment {
           tag: 'qaa'
         }
       },
-      draftConfig: { lastSelectedBooks: [] }
+      draftConfig: { lastSelectedBooks: [], trainOnEnabled: false }
     },
     checkingConfig: Partial<CheckingConfig> = {
       checkingEnabled: false,
