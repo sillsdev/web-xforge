@@ -16,6 +16,7 @@
         <a mat-flat-button class="learn-more-btn" [href]="urls.rolesHelpPage" target="_blank">{{ t("learn_more") }}</a>
       </div>
     </app-notice>
+    <span class="offline-text" *ngIf="form.disabled">{{ t("offline") }}</span>
     <h3>{{ t("roles") }}</h3>
     <mat-radio-group class="roleOptions" formControlName="roles">
       <mat-radio-button class="roleButton" *ngFor="let role of roleOptions" [value]="role">
