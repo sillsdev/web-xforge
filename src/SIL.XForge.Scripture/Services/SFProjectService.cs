@@ -259,12 +259,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         bool unsetSourceProject = settings.SourceParatextId == ProjectSettingValueUnset;
         bool unsetAlternateSourceProject = settings.AlternateSourceParatextId == ProjectSettingValueUnset;
+        bool unsetTrainOnSourceProject = settings.TrainOnSourceParatextId == ProjectSettingValueUnset;
 
         // Get the list of projects for setting the source or alternate source
         IReadOnlyList<ParatextProject> ptProjects = new List<ParatextProject>();
         if (
             (settings.SourceParatextId != null && !unsetSourceProject)
             || (settings.AlternateSourceParatextId != null && !unsetAlternateSourceProject)
+            || (settings.TrainOnSourceParatextId != null && !unsetTrainOnSourceProject)
         )
         {
             Attempt<UserSecret> userSecretAttempt = await _userSecrets.TryGetAsync(curUserId);
@@ -310,6 +312,24 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
+        // Get the train on source for pre-translation drafting
+        TranslateSource trainOnSource = null;
+        if (settings.TrainOnSourceParatextId != null && !unsetTrainOnSourceProject)
+        {
+            trainOnSource = await GetTranslateSourceAsync(
+                curUserId,
+                settings.TrainOnSourceParatextId,
+                syncIfCreated: true,
+                ptProjects,
+                projectDoc.Data.UserRoles
+            );
+            if (trainOnSource.ProjectRef == projectId)
+            {
+                // A project cannot reference itself
+                trainOnSource = null;
+            }
+        }
+
         bool hasExistingMachineProject = projectDoc.Data.TranslateConfig.TranslationSuggestionsEnabled;
         await projectDoc.SubmitJson0OpAsync(op =>
         {
@@ -326,6 +346,13 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 p => p.TranslateConfig.DraftConfig.AlternateSource,
                 alternateSource,
                 unsetAlternateSourceProject
+            );
+            UpdateSetting(op, p => p.TranslateConfig.DraftConfig.TrainOnEnabled, settings.TrainOnEnabled);
+            UpdateSetting(
+                op,
+                p => p.TranslateConfig.DraftConfig.TrainOnSource,
+                trainOnSource,
+                unsetTrainOnSourceProject
             );
 
             UpdateSetting(op, p => p.CheckingConfig.CheckingEnabled, settings.CheckingEnabled);
@@ -807,6 +834,10 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 || (
                     p.TranslateConfig.DraftConfig.AlternateSource != null
                     && (p.TranslateConfig.DraftConfig.AlternateSource.ProjectRef == projectId)
+                )
+                || (
+                    p.TranslateConfig.DraftConfig.TrainOnSource != null
+                    && (p.TranslateConfig.DraftConfig.TrainOnSource.ProjectRef == projectId)
                 )
         );
     }
