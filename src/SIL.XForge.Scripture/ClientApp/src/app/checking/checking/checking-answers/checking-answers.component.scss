@@ -18,31 +18,7 @@
 }
 
 .answer-question {
-  padding-inline-start: 15px;
-  position: relative;
-  &:before {
-    position: absolute;
-    content: '';
-    background-color: transparent;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 5px;
-  }
-  &.question-unread {
-    &:before {
-      background-color: checking-vars.$questionUnread;
-    }
-  }
-  &.question-answered {
-    &:before {
-      background-color: checking-vars.$questionAnswered;
-    }
-  }
   .question {
-    > * {
-      margin-bottom: 10px;
-    }
     .question-text {
       font-weight: bold;
     }

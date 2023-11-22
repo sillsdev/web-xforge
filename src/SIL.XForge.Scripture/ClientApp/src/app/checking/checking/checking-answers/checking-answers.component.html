@@ -8,14 +8,7 @@
         (audioPlayed)="playAudio()"
       >
       </app-checking-question>
-      <div
-        class="answer-question"
-        [ngClass]="{
-          'question-read': hasUserRead,
-          'question-unread': !hasUserRead,
-          'question-answered': currentUserTotalAnswers
-        }"
-      >
+      <div class="answer-question">
         <div class="question">
           <ng-container *ngIf="!featureFlags.scriptureAudio.enabled">
             <div class="question-text">{{ questionDoc?.data?.text }}</div>
