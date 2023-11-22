@@ -120,6 +120,8 @@ public class SFProjectsRpcController : RpcControllerBase
                     { "SourceParatextId", settings?.SourceParatextId },
                     { "BiblicalTermsEnabled", settings?.BiblicalTermsEnabled?.ToString() },
                     { "AlternateSourceParatextId", settings?.AlternateSourceParatextId },
+                    { "TrainOnEnabled", settings?.TrainOnEnabled?.ToString() },
+                    { "TrainOnSourceParatextId", settings?.TrainOnSourceParatextId },
                     { "CheckingEnabled", settings?.CheckingEnabled?.ToString() },
                     { "CheckingShareEnabled", settings?.CheckingShareEnabled?.ToString() },
                     { "TranslateShareEnabled", settings?.TranslateShareEnabled?.ToString() },
