@@ -1,37 +1,19 @@
-@use 'src/variables' as vars;
-
-// TODO: Mat chips get significant changes in material 15+, so these styles need to be revisited after upgrade
-
-.mat-chip {
-  cursor: pointer;
-}
-
-mat-icon {
-  width: auto;
-  height: auto;
-  font-size: 17px;
-  margin-inline-end: 10px;
-}
-
-.mat-chip-list {
-  .mat-chip-selected {
-    background-color: #4a79c9;
+.book-multi-select {
+  .mat-mdc-standard-chip.mat-primary.mat-mdc-chip-selected,
+  .mat-mdc-standard-chip.mat-primary.mat-mdc-chip-highlighted {
+    --mdc-chip-elevated-container-color: #4a79c9;
   }
 
   &.readonly {
-    .mat-chip {
-      cursor: unset;
+    .mat-mdc-standard-chip.mat-primary.mat-mdc-chip-selected,
+    .mat-mdc-standard-chip.mat-primary.mat-mdc-chip-highlighted {
+      --mdc-chip-elevated-container-color: #627186;
     }
 
-    .mat-chip-selected {
-      background-color: #627186;
+    ::ng-deep {
+      .mat-mdc-chip-action {
+        cursor: unset;
+      }
     }
-  }
-}
-
-// .material-icons class has 'direction: ltr' even when ancestor is rtl
-:host-context([dir='rtl']) {
-  mat-icon {
-    direction: rtl;
   }
 }

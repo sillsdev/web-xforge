@@ -1,4 +1,7 @@
+import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { MatChipListboxChange, MatChipsModule } from '@angular/material/chips';
+import { TranslocoModule } from '@ngneat/transloco';
 import { Canon } from '@sillsdev/scripture';
 
 export interface BookOption {
@@ -10,6 +13,8 @@ export interface BookOption {
 @Component({
   selector: 'app-book-multi-select',
   templateUrl: './book-multi-select.component.html',
+  standalone: true,
+  imports: [CommonModule, MatChipsModule, TranslocoModule],
   styleUrls: ['./book-multi-select.component.scss']
 })
 export class BookMultiSelectComponent implements OnChanges {
@@ -28,17 +33,17 @@ export class BookMultiSelectComponent implements OnChanges {
   }
 
   initBookOptions(): void {
+    const selectedSet = new Set<number>(this.selectedBooks);
+
     this.bookOptions = this.availableBooks.map((bookNum: number) => ({
       bookNum,
       bookId: Canon.bookNumberToId(bookNum),
-      selected: this.selectedBooks?.includes(bookNum) ?? false
+      selected: selectedSet.has(bookNum)
     }));
   }
 
-  toggleSelection(book: BookOption): void {
-    book.selected = !book.selected;
-    this.bookSelect.emit(
-      this.bookOptions.filter((opt: BookOption) => opt.selected).map((opt: BookOption) => opt.bookNum)
-    );
+  onChipListChange(event: MatChipListboxChange): void {
+    this.selectedBooks = event.value.map((item: BookOption) => item.bookNum);
+    this.bookSelect.emit(this.selectedBooks);
   }
 }

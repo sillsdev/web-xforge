@@ -1,8 +1,12 @@
+import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { MatLegacyButtonModule as MatButtonModule } from '@angular/material/legacy-button';
+import { TranslocoModule } from '@ngneat/transloco';
 import { from, Observable } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { SFProjectService } from '../../../core/sf-project.service';
+import { BookMultiSelectComponent } from '../../../shared/book-multi-select/book-multi-select.component';
 
 export interface DraftGenerationStepsResult {
   books: number[];
@@ -11,13 +15,16 @@ export interface DraftGenerationStepsResult {
 @Component({
   selector: 'app-draft-generation-steps',
   templateUrl: './draft-generation-steps.component.html',
+  standalone: true,
+  imports: [CommonModule, MatButtonModule, TranslocoModule, BookMultiSelectComponent],
   styleUrls: ['./draft-generation-steps.component.scss']
 })
 export class DraftGenerationStepsComponent implements OnInit {
   @Output() done = new EventEmitter<DraftGenerationStepsResult>();
 
   availableBooks$?: Observable<number[]>;
-  selectedBooks: number[] = [];
+  initialSelectedBooks: number[] = [];
+  finalSelectedBooks: number[] = [];
 
   constructor(
     private readonly activatedProject: ActivatedProjectService,
@@ -50,16 +57,17 @@ export class DraftGenerationStepsComponent implements OnInit {
         const intersection = availableBooks.filter(bookNum => previousBooks.has(bookNum));
 
         // Set the selected books to the intersection, or if the intersection is empty, just return all available books
-        this.selectedBooks = intersection.length > 0 ? intersection : availableBooks;
+        this.initialSelectedBooks = intersection.length > 0 ? intersection : availableBooks;
+        this.finalSelectedBooks = this.initialSelectedBooks;
       })
     );
   }
 
   onBookSelect(selectedBooks: number[]): void {
-    this.selectedBooks = selectedBooks;
+    this.finalSelectedBooks = selectedBooks;
   }
 
   onDone(): void {
-    this.done.emit({ books: this.selectedBooks });
+    this.done.emit({ books: this.finalSelectedBooks });
   }
 }

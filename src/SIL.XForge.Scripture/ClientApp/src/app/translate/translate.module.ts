@@ -32,8 +32,7 @@ import { TranslateRoutingModule } from './translate-routing.module';
     TrainingProgressComponent,
     TranslateOverviewComponent,
     DraftGenerationComponent,
-    DraftViewerComponent,
-    DraftGenerationStepsComponent
+    DraftViewerComponent
   ],
   imports: [
     AngularSplitModule,
@@ -43,7 +42,8 @@ import { TranslateRoutingModule } from './translate-routing.module';
     UICommonModule,
     XForgeCommonModule,
     TranslocoModule,
-    TranslocoMarkupModule
+    TranslocoMarkupModule,
+    DraftGenerationStepsComponent
   ]
 })
 export class TranslateModule {}
