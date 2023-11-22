@@ -63,9 +63,16 @@
           </div>
         </mat-menu>
 
-        <button mat-icon-button title="{{ currentUser?.displayName }}" [matMenuTriggerFor]="userMenu">
+        <button
+          mat-icon-button
+          title="{{ currentUser?.displayName }}"
+          [matMenuTriggerFor]="userMenu"
+          (click)="hideInstallIcon()"
+          class="user-menu-btn"
+        >
+          <mat-icon *ngIf="canShowInstallIconOnAvatar$ | async" class="install-badge">install_mobile</mat-icon>
           <app-avatar id="avatarId" [user]="currentUser"></app-avatar>
-          <mat-icon class="offline-indicator" *ngIf="!isAppOnline"> cloud_off </mat-icon>
+          <mat-icon class="offline-indicator" *ngIf="!isAppOnline"> cloud_off</mat-icon>
         </button>
         <mat-menu #userMenu="matMenu" class="user-menu">
           <div class="pseudo-menu-item user-info">
@@ -88,8 +95,14 @@
           <button mat-menu-item (click)="logOut()" id="log-out-link">{{ t("log_out") }}</button>
           <mat-divider></mat-divider>
           <div class="pseudo-menu-item online-status">
-            <ng-container *ngIf="isAppOnline"><mat-icon>cloud</mat-icon> {{ t("online") }}</ng-container>
-            <ng-container *ngIf="!isAppOnline"><mat-icon>cloud_off</mat-icon> {{ t("offline") }}</ng-container>
+            <ng-container *ngIf="isAppOnline">
+              <mat-icon>cloud</mat-icon>
+              {{ t("online") }}
+            </ng-container>
+            <ng-container *ngIf="!isAppOnline">
+              <mat-icon>cloud_off</mat-icon>
+              {{ t("offline") }}
+            </ng-container>
           </div>
         </mat-menu>
       </mat-toolbar-row>
@@ -113,6 +126,10 @@
         [projectDocs]="projectDocs"
         [selected]="selectedProjectDoc"
         (changed)="projectChanged($event)"
+          <button *ngIf="canInstallOnDevice$ | async" mat-menu-item (click)="installOnDevice()" class="install-button">
+            Install on device
+            <mat-icon>install_mobile</mat-icon>
+          </button>
       ></app-navigation-project-selector>
       <app-navigation (menuItemClicked)="itemSelected()"></app-navigation>
     </mat-drawer>
@@ -124,5 +141,4 @@
       </div>
     </div>
   </mat-drawer-container>
-  <app-pwa-install></app-pwa-install>
 </ng-container>

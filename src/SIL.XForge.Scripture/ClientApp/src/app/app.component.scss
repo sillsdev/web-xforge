@@ -167,6 +167,21 @@ header {
   width: 50px;
   height: 50px;
 
+  &.user-menu-btn {
+    mat-icon {
+      position: absolute;
+      left: 3px;
+      bottom: 3px;
+      font-size: 12px;
+      color: variables.$purpleLight;
+      background: #fff;
+      border-radius: 50%;
+      height: 18px;
+      width: 16px;
+      line-height: 1.5;
+    }
+  }
+
   app-avatar {
     display: flex;
     justify-content: center;
