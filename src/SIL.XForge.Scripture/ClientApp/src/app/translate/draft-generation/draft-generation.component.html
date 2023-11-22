@@ -1,44 +1,46 @@
 <mat-card *transloco="let t; read: 'draft_generation'">
-  <h1 mat-card-title>{{ t("generate_back_translation_drafts") }}</h1>
+  <h1 *ngIf="isBackTranslationMode" mat-card-title>{{ t("generate_back_translation_drafts_header") }}</h1>
+  <h1 *ngIf="!isBackTranslationMode" mat-card-title>{{ t("generate_forward_translation_drafts_header") }}</h1>
 
   <mat-divider inset></mat-divider>
 
   <section>
-    <p>{{ t("instructions_scripture_forge_assist") }}</p>
+    <p *ngIf="isBackTranslationMode">{{ t("instructions_scripture_forge_assist_back_translation") }}</p>
+    <p *ngIf="!isBackTranslationMode">{{ t("instructions_scripture_forge_assist_forward_translation") }}</p>
     <p><transloco key="draft_generation.instructions_keep_in_mind"></transloco></p>
-    <p>{{ t("instructions_back_translation_process") }}</p>
+    <p>{{ t("instructions_draft_process") }}</p>
 
     <!-- TODO Find better link to languages or include in-app table with link to "learn more" -->
     <h3 class="requirements-header">{{ t("requirements") }}</h3>
     <ul class="requirements">
-      <li *ngIf="!isForwardTranslationEnabled || isBackTranslation">
+      <li *ngIf="isBackTranslationMode">
         <mat-icon *ngIf="isBackTranslation" class="criteria-met">check</mat-icon>
         <mat-icon *ngIf="!isBackTranslation" class="criteria-not-met">clear</mat-icon>
         <p *ngIf="isBackTranslation">{{ t("criteria_project_type_back_translation") }}</p>
         <p *ngIf="!isBackTranslation">{{ t("criteria_project_type_not_back_translation") }}</p>
       </li>
-      <li *ngIf="!isForwardTranslationEnabled || isTargetLanguageSupported">
+      <li *ngIf="isBackTranslationMode">
         <mat-icon *ngIf="isTargetLanguageSupported" class="criteria-met">check</mat-icon>
         <mat-icon *ngIf="!isTargetLanguageSupported" class="criteria-not-met">clear</mat-icon>
         <p>
           <transloco
             *ngIf="!isTargetLanguageSupported && targetLanguageDisplayName"
-            key="draft_generation.criteria_project_language_in_nllb_with_language"
-            [params]="{ targetLanguageDisplayName, nllbUrl }"
-          ></transloco>
-          <transloco
-            *ngIf="!isTargetLanguageSupported && !targetLanguageDisplayName"
-            key="draft_generation.criteria_project_language_in_nllb"
-            [params]="{ nllbUrl }"
-          ></transloco>
-          <transloco
-            *ngIf="isTargetLanguageSupported && targetLanguageDisplayName"
             key="draft_generation.criteria_project_language_not_in_nllb_with_language"
             [params]="{ targetLanguageDisplayName, nllbUrl }"
           ></transloco>
           <transloco
-            *ngIf="isTargetLanguageSupported && !targetLanguageDisplayName"
+            *ngIf="!isTargetLanguageSupported && !targetLanguageDisplayName"
             key="draft_generation.criteria_project_language_not_in_nllb"
+            [params]="{ nllbUrl }"
+          ></transloco>
+          <transloco
+            *ngIf="isTargetLanguageSupported && targetLanguageDisplayName"
+            key="draft_generation.criteria_project_language_in_nllb_with_language"
+            [params]="{ targetLanguageDisplayName, nllbUrl }"
+          ></transloco>
+          <transloco
+            *ngIf="isTargetLanguageSupported && !targetLanguageDisplayName"
+            key="draft_generation.criteria_project_language_in_nllb"
             [params]="{ nllbUrl }"
           ></transloco>
         </p>
@@ -49,9 +51,15 @@
         <p *ngIf="isSourceProjectSet">{{ t("criteria_project_type_has_source_text") }}</p>
         <p *ngIf="!isSourceProjectSet">{{ t("criteria_project_type_has_no_source_text") }}</p>
       </li>
-      <li *ngIf="isForwardTranslationEnabled">
+      <li *ngIf="!isBackTranslationMode">
         <mat-icon class="criteria-met">check</mat-icon>
         <p>{{ t("criteria_forward_translation_drafting_enabled") }}</p>
+      </li>
+      <li *ngIf="!isBackTranslationMode">
+        <mat-icon *ngIf="isPreTranslationApproved" class="criteria-met">check</mat-icon>
+        <mat-icon *ngIf="!isPreTranslationApproved" class="criteria-not-met">clear</mat-icon>
+        <p *ngIf="isPreTranslationApproved">{{ t("criteria_pretranslation_approved") }}</p>
+        <p *ngIf="!isPreTranslationApproved">{{ t("criteria_pretranslation_not_approved") }}</p>
       </li>
     </ul>
   </section>
@@ -67,6 +75,16 @@
   <ng-container *ngIf="isOnline">
     <mat-tab-group>
       <mat-tab>
+        <section *ngIf="infoAlert === InfoAlert.ApprovalNeeded">
+          <h3>{{ t("info_alert_approval_needed_header") }}</h3>
+          <p>
+            <transloco
+              [key]="'draft_generation.info_alert_approval_needed_detail'"
+              [params]="{ signupFormUrl }"
+            ></transloco>
+          </p>
+        </section>
+
         <div *ngIf="isDraftJobFetched">
           <section *ngIf="infoAlert === InfoAlert.NotBackTranslation">
             <h3>{{ t("info_alert_project_type_not_supported") }}</h3>
@@ -79,7 +97,7 @@
               <transloco
                 *ngIf="targetLanguageDisplayName"
                 [key]="'draft_generation.criteria_project_language_not_in_nllb_with_language'"
-                [params]="{targetLanguageDisplayName}"
+                [params]="{ targetLanguageDisplayName }"
               ></transloco>
               <transloco *ngIf="!targetLanguageDisplayName" [key]="'criteria_project_language_not_in_nllb'"></transloco>
             </p>

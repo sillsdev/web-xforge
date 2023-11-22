@@ -6,7 +6,7 @@ import {
 import { MatLegacyTabGroup as MatTabGroup } from '@angular/material/legacy-tabs';
 import { isEmpty } from 'lodash-es';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
-import { of, Subscription } from 'rxjs';
+import { combineLatest, of, Subscription } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
@@ -21,13 +21,15 @@ import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates } from './draft-generation';
 import { DraftGenerationStepsResult } from './draft-generation-steps/draft-generation-steps.component';
 import { DraftGenerationService } from './draft-generation.service';
+import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
 
 export enum InfoAlert {
   None,
   NotBackTranslation,
   NotSupportedLanguage,
   NoSourceProjectSet,
-  SourceAndTargetLanguageIdentical
+  SourceAndTargetLanguageIdentical,
+  ApprovalNeeded
 }
 
 @Component({
@@ -70,17 +72,12 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
    */
   hasAnyCompletedBuild = false;
 
+  isPreTranslationApproved = false;
+  signupFormUrl?: string;
+
   cancelDialogRef?: MatDialogRef<any>;
 
   readonly nllbUrl: string = 'https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion';
-
-  get isGenerationSupported(): boolean {
-    return (
-      ((this.isBackTranslation && this.isTargetLanguageSupported) || this.isForwardTranslationEnabled) &&
-      this.isSourceProjectSet &&
-      this.isSourceAndTargetDifferent
-    );
-  }
 
   constructor(
     private readonly dialogService: DialogService,
@@ -89,26 +86,64 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     private readonly featureFlags: FeatureFlagService,
     private readonly nllbService: NllbLanguageService,
     private readonly i18n: I18nService,
-    private readonly onlineStatusService: OnlineStatusService
+    private readonly onlineStatusService: OnlineStatusService,
+    private readonly preTranslationSignupUrlService: PreTranslationSignupUrlService
   ) {
     super();
   }
 
+  get isGenerationSupported(): boolean {
+    return (
+      (!this.isBackTranslationMode || this.isBackTranslation) &&
+      (!this.isBackTranslationMode || this.isTargetLanguageSupported) &&
+      this.isSourceProjectSet &&
+      this.isSourceAndTargetDifferent &&
+      (this.isBackTranslationMode || this.isPreTranslationApproved)
+    );
+  }
+
+  /**
+   * True if project is a back translation OR if forward translation drafting feature flag is not set.
+   * If the forward translation feature flag is not set, forward translation projects are treated as invalid
+   * due to failing the back translation project requirement.
+   */
+  get isBackTranslationMode(): boolean {
+    return this.isBackTranslation || !this.isForwardTranslationEnabled;
+  }
+
+  get isForwardTranslationEnabled(): boolean {
+    return this.featureFlags.allowForwardTranslationNmtDrafting.enabled;
+  }
+
   ngOnInit(): void {
-    this.subscribe(this.activatedProject.projectDoc$.pipe(filterNullish()), projectDoc => {
-      const translateConfig = projectDoc.data?.translateConfig;
+    this.subscribe(
+      combineLatest([
+        this.activatedProject.projectDoc$.pipe(
+          filterNullish(),
+          tap(async projectDoc => {
+            const translateConfig = projectDoc.data?.translateConfig;
 
-      this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
-      this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
-      this.targetLanguage = projectDoc.data?.writingSystem.tag;
-      this.isTargetLanguageSupported = this.nllbService.isNllbLanguage(this.targetLanguage);
-      this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
+            this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
+            this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
+            this.targetLanguage = projectDoc.data?.writingSystem.tag;
+            this.isTargetLanguageSupported = this.nllbService.isNllbLanguage(this.targetLanguage);
+            this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
+            this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 
-      this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
-      this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
+            this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
+            this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
 
-      this.infoAlert = this.getInfoAlert();
-    });
+            if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {
+              this.signupFormUrl = await this.preTranslationSignupUrlService.generateSignupUrl();
+            }
+          })
+        ),
+        this.featureFlags.allowForwardTranslationNmtDrafting.enabled$
+      ]),
+      () => {
+        this.infoAlert = this.getInfoAlert();
+      }
+    );
 
     this.subscribe(
       this.activatedProject.projectId$.pipe(
@@ -134,10 +169,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
     this.subscribe(this.i18n.locale$, () => {
       this.targetLanguageDisplayName = this.getTargetLanguageDisplayName();
     });
-  }
-
-  get isForwardTranslationEnabled(): boolean {
-    return this.featureFlags.allowForwardTranslationNmtDrafting.enabled;
   }
 
   async generateDraft({ withConfirm = false } = {}): Promise<void> {
@@ -220,7 +251,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       return InfoAlert.NotBackTranslation;
     }
 
-    if (!this.isTargetLanguageSupported && !this.isForwardTranslationEnabled) {
+    if (this.isBackTranslationMode && !this.isTargetLanguageSupported) {
       return InfoAlert.NotSupportedLanguage;
     }
 
@@ -230,6 +261,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
     if (!this.isSourceAndTargetDifferent) {
       return InfoAlert.SourceAndTargetLanguageIdentical;
+    }
+
+    if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {
+      return InfoAlert.ApprovalNeeded;
     }
 
     return InfoAlert.None;
