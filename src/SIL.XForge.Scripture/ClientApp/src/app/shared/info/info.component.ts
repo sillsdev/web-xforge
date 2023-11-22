@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { ICONS_TO_MIRROR_RTL } from '../utils';
 
 @Component({
   selector: 'app-info',
@@ -11,4 +12,8 @@ export class InfoComponent {
   @Input() text: string = '';
 
   constructor() {}
+
+  get mirrorRTL(): boolean {
+    return ICONS_TO_MIRROR_RTL.includes(this.icon ?? '');
+  }
 }

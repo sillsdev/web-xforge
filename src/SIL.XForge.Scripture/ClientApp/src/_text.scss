@@ -97,6 +97,10 @@ quill-editor {
   }
 }
 
+.read-only-editor[dir='rtl'] > .ql-container > .ql-editor .question-segment[data-question-count]:before {
+  content: '؟';
+}
+
 .comment-enabled-editor {
   quill-editor:not(.read-only-editor) .ql-editor {
     padding-inline-start: 10px;

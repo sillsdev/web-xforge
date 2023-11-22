@@ -33,7 +33,7 @@
         </mat-menu>
 
         <button mat-icon-button title="{{ t('help') }}" [matMenuTriggerFor]="helpMenu">
-          <mat-icon>help</mat-icon>
+          <mat-icon class="mirror-rtl">help</mat-icon>
         </button>
         <mat-menu #helpMenu="matMenu" class="help-menu">
           <a mat-menu-item target="_blank" [href]="urls.helps">{{ t("help") }}</a>

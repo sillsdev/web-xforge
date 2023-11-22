@@ -268,3 +268,22 @@ export class XmlUtils {
     }
   }
 }
+
+/**
+ * A non-exhaustive list of icons that should be mirrored in RTL languages.
+ * Some icons (as as arrows) should be mirrored in certain contexts and not others, or require more attention to detail
+ * than merely mirroring. This list is ONLY for those icons that can be mirrored in all contexts.
+ */
+export const ICONS_TO_MIRROR_RTL = [
+  'book',
+  'bookmarks',
+  'comment',
+  'forum',
+  'help',
+  'library_books',
+  'live_help',
+  'people',
+  'person_add',
+  'post_add',
+  'question_answer'
+];
