@@ -1,20 +1,33 @@
 import { Injectable } from '@angular/core';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
-import { interval, Observable } from 'rxjs';
+import { BehaviorSubject, interval, Observable } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { LocationService } from './location.service';
 
 export const PWA_CHECK_FOR_UPDATES = 30_000;
+export const PWA_LAST_PROMPT_SEEN = 'last_pwa_prompt_seen';
+export interface BeforeInstallPromptEvent {
+  prompt: () => Promise<InstallPromptOutcome>;
+}
+export interface InstallPromptOutcome {
+  outcome: 'dismissed' | 'accepted';
+  platform: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class PwaService extends SubscriptionDisposable {
-  private readonly _canInstall: Promise<true>;
-  private promptEvent?: any;
+  private readonly _canInstall$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  private promptEvent?: BeforeInstallPromptEvent;
 
-  constructor(private readonly updates: SwUpdate, private readonly locationService: LocationService) {
+  constructor(
+    private readonly updates: SwUpdate,
+    private readonly locationService: LocationService,
+    private readonly localSettings: LocalSettingsService
+  ) {
     super();
 
     // Check for updates periodically if enabled and the browser supports it
@@ -29,19 +42,23 @@ export class PwaService extends SubscriptionDisposable {
           })
         );
     }
-    // TODO: Set correct event type
-    this._canInstall = new Promise(resolve => {
+
+    if (this.updates.isEnabled && !this.isRunningInstalledApp) {
+      // Currently beforeinstallprompt is only supported by Chromium browsers
       window.addEventListener('beforeinstallprompt', (event: any) => {
         event.preventDefault();
         this.promptEvent = event;
-        console.log(this.isInstalled);
-        resolve(true);
+        this._canInstall$.next(true);
       });
-    });
+    }
   }
 
-  get canInstall(): Promise<true> {
-    return this._canInstall;
+  get canInstall$(): BehaviorSubject<boolean> {
+    return this._canInstall$;
+  }
+
+  get getLastPromptSeen(): number {
+    return this.localSettings.get(PWA_LAST_PROMPT_SEEN) ?? 0;
   }
 
   get hasUpdate$(): Observable<VersionReadyEvent> {
@@ -50,12 +67,22 @@ export class PwaService extends SubscriptionDisposable {
     return this.updates.versionUpdates.pipe(filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'));
   }
 
-  get isInstalled(): boolean {
+  get isRunningInstalledApp(): boolean {
     return window.matchMedia('(display-mode: standalone)').matches;
   }
 
   activateUpdates(): void {
     this.updates.activateUpdate();
     this.locationService.reload();
+  }
+
+  install(): void {
+    if (this.promptEvent != null) {
+      this.promptEvent?.prompt().then((result: InstallPromptOutcome) => {
+        if (result.outcome === 'accepted') {
+          this.canInstall$.next(!this.isRunningInstalledApp);
+        }
+      });
+    }
   }
 }
