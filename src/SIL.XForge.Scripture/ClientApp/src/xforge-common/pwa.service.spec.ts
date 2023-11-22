@@ -2,11 +2,13 @@ import { fakeAsync, tick } from '@angular/core/testing';
 import { SwUpdate, VersionEvent, VersionReadyEvent } from '@angular/service-worker';
 import { Subject } from 'rxjs';
 import { instance, mock, resetCalls, verify, when } from 'ts-mockito';
+import { LocalSettingsService } from 'xforge-common/local-settings.service';
 import { LocationService } from './location.service';
-import { PwaService, PWA_CHECK_FOR_UPDATES } from './pwa.service';
+import { PwaService, PWA_CHECK_FOR_UPDATES, BeforeInstallPromptEvent, InstallPromptOutcome } from './pwa.service';
 
 const mockedSwUpdate = mock(SwUpdate);
 const mockedLocationService = mock(LocationService);
+const mockedLocalSettingsService = mock(LocalSettingsService);
 
 describe('PwaService', () => {
   it('checks for updates', fakeAsync(() => {
@@ -34,6 +36,39 @@ describe('PwaService', () => {
     expect(isVersionReady).toEqual(true);
     env.dispose();
   }));
+
+  it('before install prompt should trigger the app as available to install', fakeAsync(() => {
+    const env = new TestEnvironment();
+    let canInstall = false;
+    env.pwaService.canInstall$.subscribe((_install: boolean) => {
+      canInstall = _install;
+    });
+    expect(canInstall).toEqual(false);
+    window.dispatchEvent(new Event('beforeinstallprompt'));
+    expect(canInstall).toEqual(true);
+    env.dispose();
+  }));
+
+  it('can install', fakeAsync(() => {
+    const env = new TestEnvironment();
+    let canInstall = false;
+    env.pwaService.canInstall$.subscribe((_install: boolean) => {
+      canInstall = _install;
+    });
+    const beforeInstallPromptEvent: BeforeInstallPromptEvent = {
+      prompt: () => new Promise(r => r({ outcome: 'accepted' } as InstallPromptOutcome))
+    };
+    window.dispatchEvent(new Event('beforeinstallprompt'));
+    (env.pwaService as any).promptEvent = beforeInstallPromptEvent;
+    spyOn(window, 'matchMedia').and.returnValue({
+      matches: true
+    } as any);
+    expect(canInstall).toEqual(true);
+    env.pwaService.install();
+    tick();
+    expect(canInstall).toEqual(false);
+    env.dispose();
+  }));
 });
 
 class TestEnvironment {
@@ -42,7 +77,11 @@ class TestEnvironment {
 
   constructor() {
     when(mockedSwUpdate.isEnabled).thenReturn(true);
-    this.pwaService = new PwaService(instance(mockedSwUpdate), instance(mockedLocationService));
+    this.pwaService = new PwaService(
+      instance(mockedSwUpdate),
+      instance(mockedLocationService),
+      instance(mockedLocalSettingsService)
+    );
     when(mockedSwUpdate.versionUpdates).thenReturn(this.versionUpdates$);
     when(mockedSwUpdate.checkForUpdate()).thenResolve(true);
     resetCalls(mockedSwUpdate);
