@@ -123,6 +123,38 @@
                   ></app-write-status>
                 </div>
               </ng-container>
+              <ng-container *ngIf="mainSettingsLoaded">
+                <div class="tool-setting">
+                  <div class="tool-setting-field checkbox-field">
+                    <mat-checkbox formControlName="trainOnEnabled" id="checkbox-train-on-enabled">{{
+                      t("enable_train_on_source")
+                    }}</mat-checkbox>
+                    <app-info [text]="t('pre_translation_train_on_info')"></app-info>
+                    <app-write-status
+                      [state]="getControlState('trainOnEnabled')"
+                      [formGroup]="form"
+                      id="train-on-enabled-status"
+                    ></app-write-status>
+                  </div>
+                </div>
+                <div *ngIf="isTrainOnEnabled" class="tool-setting-field">
+                  <app-project-select
+                    id="trainOnSourceParatextId"
+                    formControlName="trainOnSourceParatextId"
+                    [placeholder]="t('pre_translation_train_on_text_placeholder')"
+                    [projects]="projects"
+                    [resources]="resources"
+                    [nonSelectableProjects]="nonSelectableProjects"
+                    [hideProjectId]="projectParatextId"
+                    [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
+                  ></app-project-select>
+                  <app-write-status
+                    [state]="getControlState('trainOnSourceParatextId')"
+                    [formGroup]="form"
+                    id="train-on-source-status"
+                  ></app-write-status>
+                </div>
+              </ng-container>
             </div>
           </mat-card-content>
           <mat-divider></mat-divider>

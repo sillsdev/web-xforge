@@ -10,6 +10,8 @@ export interface SFProjectSettings {
   translateShareEnabled?: boolean | null;
 
   alternateSourceParatextId?: string | null;
+  trainOnEnabled?: boolean | null;
+  trainOnSourceParatextId?: string | null;
 
   checkingEnabled?: boolean | null;
   usersSeeEachOthersResponses?: boolean | null;
