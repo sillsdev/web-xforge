@@ -2114,6 +2114,23 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task IsSourceProject_TrueWhenProjectIsATrainOnSource()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext_" + Project01;
+        Assert.That(env.Service.IsSourceProject(Project01), Is.False);
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project03,
+            new SFProjectSettings { TrainOnSourceParatextId = paratextId }
+        );
+
+        // SUT
+        Assert.That(env.Service.IsSourceProject(Project01), Is.True);
+    }
+
+    [Test]
     public void IsSourceProject_TrueWhenProjectIsATranslationSource()
     {
         var env = new TestEnvironment();
@@ -2179,6 +2196,81 @@ public class SFProjectServiceTests
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
         await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_ChangeTrainOnSource_CannotUseTargetProject()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext_" + Project01;
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { TrainOnSourceParatextId = paratextId }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.ParatextId, Is.EqualTo(paratextId));
+        Assert.That(project.TranslateConfig.DraftConfig.TrainOnSource?.ProjectRef, Is.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.TrainOnSource?.ParatextId, Is.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.TrainOnSource?.Name, Is.Null);
+
+        await env.MachineProjectService
+            .DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService
+            .DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_ChangeTrainOnSource_CreatesProject()
+    {
+        var env = new TestEnvironment();
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { TrainOnSourceParatextId = "changedId" }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.TrainOnSource?.ProjectRef, Is.Not.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.TrainOnSource?.ParatextId, Is.EqualTo("changedId"));
+        Assert.That(project.TranslateConfig.DraftConfig.TrainOnSource?.Name, Is.EqualTo("NewSource"));
+
+        SFProject trainOnSourceProject = env.GetProject(project.TranslateConfig.DraftConfig.TrainOnSource!.ProjectRef);
+        Assert.That(trainOnSourceProject.ParatextId, Is.EqualTo("changedId"));
+        Assert.That(trainOnSourceProject.Name, Is.EqualTo("NewSource"));
+
+        await env.MachineProjectService
+            .DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService
+            .DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_EnableTrainOn_NoSync()
+    {
+        var env = new TestEnvironment();
+
+        await env.Service.UpdateSettingsAsync(User01, Project01, new SFProjectSettings { TrainOnEnabled = true });
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.TrainOnEnabled, Is.True);
+
+        await env.MachineProjectService
+            .DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService
+            .DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
     }
 
     [Test]
