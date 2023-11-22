@@ -11,6 +11,7 @@ a {
 
   mat-icon {
     font-size: 18px;
+    // Work around weird pixelation that happens when icons are scaled down
     // https://github.com/google/material-design-icons/issues/648
     transform: rotate(0.03deg);
     width: unset;
@@ -27,4 +28,10 @@ a {
       color: variables.$orange;
     }
   }
+}
+
+::ng-deep body[dir='rtl'] app-info mat-icon.mirror-rtl {
+  // There's a global mirror-rtl class, but it is overridden by the transform workaround above, so we need to
+  // re-apply the mirroring here.
+  transform: scaleX(-1) rotate(0.03deg);
 }

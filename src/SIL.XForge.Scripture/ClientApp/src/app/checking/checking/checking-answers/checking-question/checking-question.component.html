@@ -21,7 +21,7 @@
     <div class="question-text" [class]="focusedText">
       <span class="spacer"></span>
       <div *ngIf="!questionAudioUrl" id="noQuestionAudio" [class]="focusedText">
-        <mat-icon class="mirror-rtl" fontIcon="question_answer"></mat-icon>
+        <mat-icon class="mirror-rtl">question_answer</mat-icon>
       </div>
       <app-single-button-audio-player
         #questionAudio

@@ -1,6 +1,8 @@
 <ng-container *transloco="let t; read: 'question_dialog'">
   <div class="dialog-container">
-    <h1 mat-dialog-title fxLayoutAlign="start center"><i class="material-icons">live_help</i> {{ modeLabel }}</h1>
+    <h1 mat-dialog-title fxLayoutAlign="start center">
+      <mat-icon class="mirror-rtl">live_help</mat-icon> {{ modeLabel }}
+    </h1>
     <mat-dialog-content [formGroup]="questionForm" (ngSubmit)="submit()" class="content-padding" #dialogForm="ngForm">
       <div fxLayout="row wrap" fxLayoutAlign="space-around start" fxLayoutGap.gt-xs="1em">
         <mat-form-field class="scripture-reference" id="scripture-start" appearance="outline">
