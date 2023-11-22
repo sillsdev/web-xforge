@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatLegacyDialogConfig as MatDialogConfig } from '@angular/material/legacy-dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -32,6 +33,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   sourceParatextId = new UntypedFormControl(undefined);
   biblicalTermsEnabled = new UntypedFormControl(false);
   alternateSourceParatextId = new UntypedFormControl(undefined);
+  trainOnEnabled = new UntypedFormControl(false);
+  trainOnSourceParatextId = new UntypedFormControl(undefined);
   translateShareEnabled = new UntypedFormControl(false);
   checkingEnabled = new UntypedFormControl(false);
   usersSeeEachOthersResponses = new UntypedFormControl(false);
@@ -46,6 +49,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     sourceParatextId: this.sourceParatextId,
     biblicalTermsEnabled: this.biblicalTermsEnabled,
     alternateSourceParatextId: this.alternateSourceParatextId,
+    trainOnEnabled: this.trainOnEnabled,
+    trainOnSourceParatextId: this.trainOnSourceParatextId,
     translateShareEnabled: this.translateShareEnabled,
     checkingEnabled: this.checkingEnabled,
     usersSeeEachOthersResponses: this.usersSeeEachOthersResponses,
@@ -107,6 +112,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get isCheckingEnabled(): boolean {
     return this.checkingEnabled.value;
+  }
+
+  get isTrainOnEnabled(): boolean {
+    return this.trainOnEnabled.value;
   }
 
   get projectId(): string {
@@ -288,6 +297,21 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
+    if (this.settingChanged(newValue, 'trainOnEnabled')) {
+      this.updateSetting(newValue, 'trainOnEnabled');
+    }
+
+    // Check if the pre-translation train on source project needs to be updated
+    if (this.settingChanged(newValue, 'trainOnSourceParatextId')) {
+      const settings: SFProjectSettings = {
+        trainOnSourceParatextId: newValue.trainOnSourceParatextId ?? SettingsComponent.projectSettingValueUnset
+      };
+      const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
+      this.checkUpdateStatus('trainOnSourceParatextId', updateTaskPromise);
+      this.previousFormValues = newValue;
+      return;
+    }
+
     this.updateCheckingConfig(newValue);
   }
 
@@ -347,6 +371,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       sourceParatextId: this.projectDoc.data.translateConfig.source?.paratextId,
       biblicalTermsEnabled: this.projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled,
       alternateSourceParatextId: this.projectDoc.data.translateConfig.draftConfig?.alternateSource?.paratextId,
+      trainOnEnabled: this.projectDoc.data.translateConfig.draftConfig.trainOnEnabled,
+      trainOnSourceParatextId: this.projectDoc.data.translateConfig.draftConfig?.trainOnSource?.paratextId,
       translateShareEnabled: !!this.projectDoc.data.translateConfig.shareEnabled,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
@@ -376,6 +402,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('sourceParatextId', ElementState.InSync);
     this.controlStates.set('biblicalTermsEnabled', ElementState.InSync);
     this.controlStates.set('alternateSourceParatextId', ElementState.InSync);
+    this.controlStates.set('trainOnEnabled', ElementState.InSync);
+    this.controlStates.set('trainOnSourceParatextId', ElementState.InSync);
     this.controlStates.set('translateShareEnabled', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);
     this.controlStates.set('usersSeeEachOthersResponses', ElementState.InSync);
@@ -386,28 +414,21 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   private updateNonSelectableProjects(): void {
     this.nonSelectableProjects = [];
-    const source = this.projectDoc?.data?.translateConfig?.source;
+    this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.source);
+    this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.draftConfig?.alternateSource);
+    this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.draftConfig?.trainOnSource);
+  }
+
+  private addNonSelectableProject(project?: TranslateSource): void {
     if (
-      source != null &&
-      (this.projects?.find(p => p.paratextId === source.paratextId) ||
-        this.resources?.find(r => r.paratextId === source.paratextId)) == null
+      project != null &&
+      (this.projects?.find(p => p.paratextId === project.paratextId) ||
+        this.resources?.find(r => r.paratextId === project.paratextId)) == null
     ) {
-      this.nonSelectableProjects.push({
-        paratextId: source.paratextId,
-        shortName: source.shortName,
-        name: source.name
-      });
-    }
-    const alternateSource = this.projectDoc?.data?.translateConfig?.draftConfig?.alternateSource;
-    if (
-      alternateSource != null &&
-      (this.projects?.find(p => p.paratextId === alternateSource.paratextId) ||
-        this.resources?.find(r => r.paratextId === alternateSource.paratextId)) == null
-    ) {
-      this.nonSelectableProjects.push({
-        paratextId: alternateSource.paratextId,
-        shortName: alternateSource.shortName,
-        name: alternateSource.name
+      this.nonSelectableProjects?.push({
+        paratextId: project.paratextId,
+        shortName: project.shortName,
+        name: project.name
       });
     }
   }
