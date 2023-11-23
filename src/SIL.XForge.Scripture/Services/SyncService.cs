@@ -47,38 +47,32 @@ public class SyncService : ISyncService
     /// <summary>
     /// Syncs a project and its source project (if applicable).
     /// </summary>
-    /// <param name="curUserId">The current user identifier.</param>
-    /// <param name="projectId">The project identifier.</param>
-    /// <param name="trainEngine">If <c>true</c>, train the suggestion engine.</param>
+    /// <param name="syncConfig">The sync configuration.</param>
     /// <returns>The job id for the project.</returns>
     /// <exception cref="ForbiddenException">Sync is disabled for this project.</exception>
     /// <exception cref="ArgumentException">The source or target project cannot be found.</exception>
-    public async Task<string> SyncAsync(string curUserId, string projectId, bool trainEngine)
+    public async Task<string> SyncAsync(SyncConfig syncConfig)
     {
-        await using IConnection conn = await _realtimeService.ConnectAsync(curUserId);
+        await using IConnection conn = await _realtimeService.ConnectAsync(syncConfig.UserId);
         // Load the project document
-        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(projectId);
+        IDocument<SFProject> projectDoc = await conn.FetchAsync<SFProject>(syncConfig.ProjectId);
         if (projectDoc.Data.SyncDisabled)
         {
             throw new ForbiddenException();
         }
 
         // Load the target project secrets, so we can store the job id
-        if (!(await _projectSecrets.TryGetAsync(projectId)).TryResult(out SFProjectSecret projectSecret))
+        if (!(await _projectSecrets.TryGetAsync(syncConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret))
         {
             throw new ArgumentException("The target project secret cannot be found.");
         }
 
         // See if we can sync the source project
         string sourceProjectId = projectDoc.Data.TranslateConfig.Source?.ProjectRef;
-        if (!string.IsNullOrWhiteSpace(sourceProjectId))
+        if (!string.IsNullOrWhiteSpace(sourceProjectId) && !syncConfig.TargetOnly)
         {
             IDocument<SFProject> sourceProjectDoc = await conn.FetchAsync<SFProject>(sourceProjectId);
-            if (!sourceProjectDoc.IsLoaded || sourceProjectDoc.Data.SyncDisabled)
-            {
-                sourceProjectId = null;
-            }
-            else
+            if (sourceProjectDoc.IsLoaded && !sourceProjectDoc.Data.SyncDisabled)
             {
                 // Load the source project secrets, so we can store the job id
                 if (
@@ -94,20 +88,20 @@ public class SyncService : ISyncService
                 var sourceSyncMetrics = new SyncMetrics
                 {
                     DateQueued = DateTime.UtcNow,
-                    Id = ObjectId.GenerateNewId().ToString(),
+                    Id = ObjectId.GenerateNewId().ToString()!,
                     ProjectRef = sourceProjectId,
                     Status = SyncStatus.Queued,
-                    UserRef = curUserId,
+                    UserRef = syncConfig.UserId,
                 };
                 await _syncMetrics.InsertAsync(sourceSyncMetrics);
                 var targetSyncMetrics = new SyncMetrics
                 {
                     DateQueued = DateTime.UtcNow,
-                    Id = ObjectId.GenerateNewId().ToString(),
-                    ProjectRef = projectId,
+                    Id = ObjectId.GenerateNewId().ToString()!,
+                    ProjectRef = syncConfig.ProjectId,
                     RequiresId = sourceSyncMetrics.Id,
                     Status = SyncStatus.Queued,
-                    UserRef = curUserId,
+                    UserRef = syncConfig.UserId,
                 };
                 await _syncMetrics.InsertAsync(targetSyncMetrics);
 
@@ -117,12 +111,26 @@ public class SyncService : ISyncService
                 // the job unless the queued count and job ids have been incremented appropriately.
                 // We need to sync the source first so that we can link the source texts and train the engine.
                 string sourceJobId = _backgroundJobClient.Schedule<ParatextSyncRunner>(
-                    r => r.RunAsync(sourceProjectId, curUserId, sourceSyncMetrics.Id, false, CancellationToken.None),
+                    r =>
+                        r.RunAsync(
+                            sourceProjectId,
+                            syncConfig.UserId,
+                            sourceSyncMetrics.Id,
+                            false,
+                            CancellationToken.None
+                        ),
                     TimeSpan.FromMinutes(5)
                 );
                 string targetJobId = _backgroundJobClient.ContinueJobWith<ParatextSyncRunner>(
                     sourceJobId,
-                    r => r.RunAsync(projectId, curUserId, targetSyncMetrics.Id, trainEngine, CancellationToken.None),
+                    r =>
+                        r.RunAsync(
+                            syncConfig.ProjectId,
+                            syncConfig.UserId,
+                            targetSyncMetrics.Id,
+                            syncConfig.TrainEngine,
+                            CancellationToken.None
+                        ),
                     null,
                     JobContinuationOptions.OnAnyFinishedState
                 );
@@ -130,7 +138,7 @@ public class SyncService : ISyncService
                     $"Queueing sync for source project {sourceProjectId} with sync metrics id {sourceSyncMetrics.Id}"
                 );
                 _logger.LogInformation(
-                    $"Queueing sync for target project {projectId} with sync metrics id {targetSyncMetrics.Id}"
+                    $"Queueing sync for target project {syncConfig.ProjectId} with sync metrics id {targetSyncMetrics.Id}"
                 );
                 try
                 {
@@ -184,20 +192,29 @@ public class SyncService : ISyncService
         var syncMetrics = new SyncMetrics
         {
             DateQueued = DateTime.UtcNow,
-            Id = ObjectId.GenerateNewId().ToString(),
-            ProjectRef = projectId,
+            Id = ObjectId.GenerateNewId().ToString()!,
+            ProjectRef = syncConfig.ProjectId,
             Status = SyncStatus.Queued,
-            UserRef = curUserId,
+            UserRef = syncConfig.UserId,
         };
         await _syncMetrics.InsertAsync(syncMetrics);
 
         // Sync the target project only, as it does not have a source, or the source cannot be synced
         // See the comments in the block above regarding scheduling for rationale on the process
         string jobId = _backgroundJobClient.Schedule<ParatextSyncRunner>(
-            r => r.RunAsync(projectId, curUserId, syncMetrics.Id, trainEngine, CancellationToken.None),
+            r =>
+                r.RunAsync(
+                    syncConfig.ProjectId,
+                    syncConfig.UserId,
+                    syncMetrics.Id,
+                    syncConfig.TrainEngine,
+                    CancellationToken.None
+                ),
             TimeSpan.FromMinutes(5)
         );
-        _logger.LogInformation($"Queueing sync for project {projectId} with sync metrics id {syncMetrics.Id}");
+        _logger.LogInformation(
+            $"Queueing sync for project {syncConfig.ProjectId} with sync metrics id {syncMetrics.Id}"
+        );
         try
         {
             await projectDoc.SubmitJson0OpAsync(op => op.Inc(pd => pd.Sync.QueuedCount));

@@ -690,7 +690,14 @@ public class MachineApiService : IMachineApiService
         string alternateSourceProjectId = projectDoc.Data.TranslateConfig.DraftConfig.AlternateSource?.ProjectRef;
         if (!string.IsNullOrWhiteSpace(alternateSourceProjectId))
         {
-            string sourceJobId = await _syncService.SyncAsync(curUserId, alternateSourceProjectId, trainEngine: false);
+            string sourceJobId = await _syncService.SyncAsync(
+                new SyncConfig
+                {
+                    ProjectId = alternateSourceProjectId,
+                    TargetOnly = true,
+                    UserId = curUserId,
+                }
+            );
 
             // Run the training after the sync has completed
             jobId = _backgroundJobClient.ContinueJobWith<IMachineProjectService>(

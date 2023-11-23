@@ -1898,7 +1898,16 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.SyncService.Received(1).SyncAsync(User01, Project03, trainEngine: false);
+        await env.SyncService
+            .Received(1)
+            .SyncAsync(
+                new SyncConfig
+                {
+                    ProjectId = Project03,
+                    TargetOnly = true,
+                    UserId = User01,
+                }
+            );
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);

@@ -143,7 +143,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
             }
         }
 
-        await _syncService.SyncAsync(curUserId, projectId, true);
+        await _syncService.SyncAsync(
+            new SyncConfig
+            {
+                ProjectId = projectId,
+                TrainEngine = true,
+                UserId = curUserId,
+            }
+        );
         return projectId;
     }
 
@@ -411,7 +418,14 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
                 }
             }
 
-            await _syncService.SyncAsync(curUserId, projectId, trainEngine);
+            await _syncService.SyncAsync(
+                new SyncConfig
+                {
+                    ProjectId = projectId,
+                    TrainEngine = trainEngine,
+                    UserId = curUserId,
+                }
+            );
         }
     }
 
@@ -439,7 +453,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         if (!(IsProjectAdmin(project, curUserId) || IsProjectTranslator(project, curUserId)))
             throw new ForbiddenException();
 
-        await _syncService.SyncAsync(curUserId, projectId, false);
+        await _syncService.SyncAsync(new SyncConfig { ProjectId = projectId, UserId = curUserId });
     }
 
     public async Task CancelSyncAsync(string curUserId, string projectId)
@@ -1387,7 +1401,7 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         // This is usually because this is an alternate source for drafting
         if (projectCreated && syncIfCreated)
         {
-            await _syncService.SyncAsync(curUserId, sourceProjectRef, trainEngine: false);
+            await _syncService.SyncAsync(new SyncConfig { ProjectId = sourceProjectRef, UserId = curUserId });
         }
 
         return new TranslateSource
