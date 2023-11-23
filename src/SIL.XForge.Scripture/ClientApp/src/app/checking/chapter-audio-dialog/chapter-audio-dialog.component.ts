@@ -65,6 +65,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   private _audioBlob?: string;
   private _audioErrorText?: I18nKey;
   private _timingErrorText?: I18nKey;
+  private _timingParseErrorText?: I18nKey;
   private _loadingAudio: boolean = false;
 
   constructor(
@@ -195,6 +196,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
     this.timing = [];
     this.timing_processed = [];
     this._timingErrorText = undefined;
+    this._timingParseErrorText = undefined;
 
     if (this.fileDropzone) {
       this.fileDropzone.nativeElement.value = '';
@@ -242,7 +244,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
         // Audacity style timing files have 3 columns
         timing = this.parseAudacityStyleTimingFile(result);
       } else {
-        this._timingErrorText = 'chapter_audio_dialog.unrecognized_timing_file_format';
+        this._timingParseErrorText = 'chapter_audio_dialog.unrecognized_timing_file_format';
       }
     }
 
@@ -321,7 +323,7 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
 
       if (timeFormat !== 'decimal' && !timeFormat.endsWith('fps')) {
         // TODO: There is also a time format based on number of audio samples rather than time stamps directly.
-        this._timingErrorText = 'chapter_audio_dialog.unrecognized_time_format';
+        this._timingParseErrorText = 'chapter_audio_dialog.unrecognized_time_format';
         return [];
       }
 
@@ -526,10 +528,12 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   }
 
   private validateTimingEntries(audioLength: number): void {
-    // This will not be undefined if we threw errors within the parse process and we want to avoid overriding those
-    if (this._timingErrorText !== undefined) {
+    if (this._timingParseErrorText !== undefined) {
+      this._timingErrorText = this._timingParseErrorText;
       return;
     }
+
+    this._timingErrorText = undefined;
 
     this.timing_processed = cloneDeep(this.timing);
 
