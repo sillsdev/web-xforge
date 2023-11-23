@@ -1,24 +1,19 @@
-@use '@angular/material' as mat;
-
-// All mat-styles @include can be removed once the legacy versions are replaced in material-styles.scss
-@use 'src/material-styles' as mat-styles;
-
 // The select overlay container is positioned outside of the component
-::ng-deep {
-  @include mat.select-theme(mat-styles.$material-app-theme);
-  @include mat.option-theme(mat-styles.$material-app-theme);
-  .project-option {
+::ng-deep .app-navigation-project-selector-panel {
+  // .project-option added to increase CSS rule specificity
+  mat-option.project-option {
     .mdc-list-item__primary-text {
       // Fix overflow in Firefox when a project name uses the Khmer script. As of 2022-11-11, the DBL resource
       // KHSV05 is one example that will cause overflow, which looks particularly bad in RTL mode because it
       // overflows to the left in a menu that is laid out in LTR.
       overflow-wrap: anywhere;
+      // Material wants to right-align everything when any parent element has dir="rtl". Prevent that.
+      margin-left: 0;
     }
   }
 }
 
 :host ::ng-deep {
-  @include mat.form-field-theme(mat-styles.$material-theme-accent-error);
   .mat-mdc-text-field-wrapper {
     border-radius: 0;
   }
@@ -29,6 +24,8 @@
   }
 }
 
-mat-form-field {
+// :host is here only to increase CSS rule specificity
+:host mat-form-field {
   display: block;
+  text-align: left;
 }
