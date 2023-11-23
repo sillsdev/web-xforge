@@ -25,7 +25,8 @@ import {
   ChildViewContainerComponent,
   configureTestingModule,
   getAudioBlob,
-  TestTranslocoModule
+  TestTranslocoModule,
+  getShortAudioBlob
 } from 'xforge-common/test-utils';
 import { UICommonModule } from 'xforge-common/ui-common.module';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
@@ -268,6 +269,34 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
   }));
 
+  it('shows warning when parsing adobe audition timing data with no valid entries', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['Name', 'Start', 'Duration', 'Time Format', 'Type', 'Description'],
+      ['Error Here']
+    ]);
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+    await env.wait();
+
+    expect(env.component.timingErrorMessage).toContain('zero_segments');
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
+  }));
+
+  it('shows warning when parsing adobe audition timing with invalid times', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['Name', 'Start', 'Duration', 'Time Format', 'Type', 'Description'],
+      ['v1', '1:2:3:4:5', '1:2:3:4:5', 'decimal', 'Cue', '']
+    ]);
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+    await env.wait();
+
+    expect(env.component.timingErrorMessage).toContain('zero_segments');
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
+  }));
+
   it('can also parse audacity style timing data with mm:ss', fakeAsync(() => {
     when(mockedCsvService.parse(anything())).thenResolve([
       ['00:00', '0', 'v1'],
@@ -390,6 +419,44 @@ describe('ChapterAudioDialogComponent', () => {
     expect(env.component.chapterAudio!.playing).toBe(false);
   }));
 
+  it('will maintain timing data parse errors across audio file uploads', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['Name', 'Start', 'Duration', 'Time Format', 'Type', 'Description'],
+      ['s', '00:00:01:01', '0:00.000', 'parse error here', 'Cue', '']
+    ]);
+
+    await env.component.audioUpdate(env.audioFile);
+    await env.component.prepareTimingFileUpload(anything());
+    await env.wait();
+
+    expect(env.component.timingErrorMessage).toContain('unrecognized_time_format');
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
+
+    await env.component.audioUpdate(env.audioFile);
+
+    expect(env.component.timingErrorMessage).toContain('unrecognized_time_format');
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
+  }));
+
+  it('will not maintain timing data length errors across audio file uploads if no longer valid', fakeAsync(async () => {
+    when(mockedCsvService.parse(anything())).thenResolve([
+      ['Name', 'Start', 'Duration', 'Time Format', 'Type', 'Description'],
+      ['s', '00:00:01', '00:00:00', 'decimal', 'Cue', '']
+    ]);
+
+    await env.component.audioUpdate(env.shortAudioFile);
+    await env.component.prepareTimingFileUpload(anything());
+    await env.wait();
+
+    expect(env.component.timingErrorMessage).toContain('chapter_audio_dialog.timing_past_audio_length');
+    expect(env.wrapperTiming.classList.contains('invalid')).toBe(true);
+
+    await env.component.audioUpdate(env.audioFile);
+
+    expect(env.component.timingErrorMessage).toEqual('');
+    expect(env.wrapperTiming.classList.contains('valid')).toBe(true);
+  }));
+
   it('will not try to save dialog if offline', fakeAsync(async () => {
     env.onlineStatus = false;
     await env.component.audioUpdate(env.audioFile);
@@ -506,6 +573,7 @@ class TestEnvironment {
   readonly component: ChapterAudioDialogComponent;
   readonly dialogRef: MatDialogRef<ChapterAudioDialogComponent>;
   readonly audioFile: AudioAttachment;
+  readonly shortAudioFile: AudioAttachment;
   readonly testOnlineStatusService: TestOnlineStatusService = TestBed.inject(
     OnlineStatusService
   ) as TestOnlineStatusService;
@@ -563,6 +631,13 @@ class TestEnvironment {
       blob: this.audioFile.blob,
       url: this.audioFile.url
     } as FileOfflineData);
+
+    this.shortAudioFile = {
+      status: 'uploaded',
+      blob: getShortAudioBlob(),
+      fileName: 'short-test-audio-player.webm',
+      url: URL.createObjectURL(new File([getShortAudioBlob()], 'short-test.wav'))
+    };
 
     this.fixture = TestBed.createComponent(ChildViewContainerComponent);
     this.dialogRef = TestBed.inject(MatDialog).open(ChapterAudioDialogComponent, config);
