@@ -449,13 +449,9 @@ export class ChapterAudioDialogComponent extends SubscriptionDisposable implemen
   private parseTimeToSecondsWithCentiseconds(time: string): number {
     const a: string[] = time?.split(':');
 
-    if (a.length !== 0) {
-      let centiseconds = parseFloat(a.pop() as string) / 100;
+    let centiseconds = parseFloat(a.pop() as string) / 100;
 
-      return this.parseTimeToSeconds(a.join(':')) + centiseconds;
-    }
-
-    return NaN;
+    return this.parseTimeToSeconds(a.join(':')) + centiseconds;
   }
 
   private populateExistingData(): void {
