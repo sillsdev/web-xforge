@@ -77,12 +77,10 @@
       <mat-tab>
         <section *ngIf="infoAlert === InfoAlert.ApprovalNeeded">
           <h3>{{ t("info_alert_approval_needed_header") }}</h3>
-          <p>
-            <transloco
-              [key]="'draft_generation.info_alert_approval_needed_detail'"
-              [params]="{ signupFormUrl }"
-            ></transloco>
-          </p>
+          <p>{{ t("info_alert_approval_needed_detail") }}</p>
+          <a [href]="signupFormUrl" mat-flat-button color="primary" target="_blank" rel="noopener noreferrer">
+            {{ t("sign_up_for_drafting") }}
+          </a>
         </section>
 
         <div *ngIf="isDraftJobFetched">
