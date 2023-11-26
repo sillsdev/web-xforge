@@ -287,6 +287,50 @@ describe('SettingsComponent', () => {
         verify(mockedSFProjectService.onlineSetServalConfig('project01', anything())).once();
         expect(env.statusDone(env.servalConfigStatus)).not.toBeNull();
       }));
+
+      it('should clear the serval config value', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject({ draftConfig: { servalConfig: '{}', lastSelectedBooks: [] } });
+        when(mockedAuthService.currentUserRole).thenReturn(SystemRole.SystemAdmin);
+        env.wait();
+        env.wait();
+        expect(env.servalConfigTextArea).not.toBeNull();
+        expect(env.servalConfigTextAreaElement.value).toBe('{}');
+        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
+
+        env.setServalConfigValue('');
+
+        expect(env.servalConfigTextAreaElement.value).toBe('');
+
+        // Trigger the onblur, which will save the value
+        env.servalConfigTextAreaElement.dispatchEvent(new InputEvent('blur'));
+        env.wait();
+
+        verify(mockedSFProjectService.onlineSetServalConfig('project01', anything())).once();
+        expect(env.statusDone(env.servalConfigStatus)).not.toBeNull();
+      }));
+
+      it('should not update an unchanged serval config value', fakeAsync(() => {
+        const env = new TestEnvironment();
+        env.setupProject();
+        when(mockedAuthService.currentUserRole).thenReturn(SystemRole.SystemAdmin);
+        env.wait();
+        env.wait();
+        expect(env.servalConfigTextArea).not.toBeNull();
+        expect(env.servalConfigTextAreaElement.value).toBe('');
+        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
+
+        env.setServalConfigValue('');
+
+        expect(env.servalConfigTextAreaElement.value).toBe('');
+
+        // Trigger the onblur, which will trigger the save
+        env.servalConfigTextAreaElement.dispatchEvent(new InputEvent('blur'));
+        env.wait();
+
+        verify(mockedSFProjectService.onlineSetServalConfig('project01', anything())).never();
+        expect(env.statusDone(env.servalConfigStatus)).toBeNull();
+      }));
     });
 
     describe('Translation Suggestions options', () => {
@@ -870,6 +914,7 @@ class TestEnvironment {
 
   setServalConfigValue(value: string): void {
     this.servalConfigTextAreaElement.value = value;
+    this.servalConfigTextAreaElement.dispatchEvent(new Event('input'));
     this.wait();
   }
 

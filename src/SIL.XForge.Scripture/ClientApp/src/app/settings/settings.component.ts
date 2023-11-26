@@ -247,7 +247,12 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   }
 
   updateServalConfig(): void {
-    if (this.projectDoc == null || this.projectDoc.data == null) {
+    if (
+      this.projectDoc == null ||
+      this.projectDoc.data == null ||
+      (this.form.value.servalConfig ?? '') === (this.projectDoc.data.translateConfig.draftConfig.servalConfig ?? '')
+    ) {
+      // Do not save if we do not have the project doc or if the configuration has not changed
       return;
     }
 
