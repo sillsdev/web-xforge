@@ -77,7 +77,8 @@ namespace PtdaSyncAll
                     $"{Program.Bullet1} PT project {sfProject.ShortName}, "
                         + $"PT project id {sfProject.ParatextId}, SF project id {sfProject.Id}."
                 );
-                List<string> projectSfAdminUserIds = sfProject.UserRoles
+                List<string> projectSfAdminUserIds = sfProject
+                    .UserRoles
                     .Where(ur => ur.Value == SFProjectRole.Administrator)
                     .Select(ur => ur.Key)
                     .ToList<string>();

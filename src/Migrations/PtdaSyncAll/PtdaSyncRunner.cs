@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,9 +21,8 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
-using SIL.XForge.Services;
 using SIL.XForge.Scripture.Services;
-using System.Text;
+using SIL.XForge.Services;
 
 namespace PtdaSyncAll
 {

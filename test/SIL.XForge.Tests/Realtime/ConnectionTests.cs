@@ -41,7 +41,8 @@ public class ConnectionTests
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
         // Verify that the call was passed to the underlying realtime server
-        await env.RealtimeService.Server
+        await env.RealtimeService
+            .Server
             .Received(1)
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
     }
@@ -74,7 +75,8 @@ public class ConnectionTests
         List<Json0Op> op = builder.Op;
         var updatedData = new TestProject() { Id = id, SyncDisabled = true, };
 
-        env.RealtimeService.Server
+        env.RealtimeService
+            .Server
             .FetchDocAsync<TestProject>(Arg.Any<int>(), collection, id)
             .Returns(Task.FromResult(snapshot));
         env.RealtimeService.Server.ApplyOpAsync(otTypeName, snapshot.Data, op).Returns(Task.FromResult(updatedData));
@@ -94,13 +96,16 @@ public class ConnectionTests
         await env.Service.CommitTransactionAsync();
 
         // Verify Submit Operations
-        await env.RealtimeService.Server
+        await env.RealtimeService
+            .Server
             .Received(1)
             .CreateDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>(), Arg.Any<string>());
-        await env.RealtimeService.Server
+        await env.RealtimeService
+            .Server
             .Received(1)
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
-        await env.RealtimeService.Server
+        await env.RealtimeService
+            .Server
             .Received(1)
             .SubmitOpAsync<object>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
     }
@@ -133,7 +138,8 @@ public class ConnectionTests
         Assert.AreEqual(queuedOperation.OtTypeName, otTypeName);
 
         // Verify that the call was not passed to the underlying realtime server
-        await env.RealtimeService.Server
+        await env.RealtimeService
+            .Server
             .Received(0)
             .CreateDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>(), Arg.Any<string>());
     }
@@ -155,7 +161,8 @@ public class ConnectionTests
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
         // Verify that the call was not passed to the underlying realtime server
-        await env.RealtimeService.Server
+        await env.RealtimeService
+            .Server
             .Received(1)
             .CreateDocAsync(
                 Arg.Any<int>(),
@@ -186,7 +193,8 @@ public class ConnectionTests
         Assert.AreEqual(queuedOperation.Id, id);
 
         // Verify that the call was not passed to the underlying realtime server
-        await env.RealtimeService.Server
+        await env.RealtimeService
+            .Server
             .Received(0)
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
     }
@@ -206,7 +214,8 @@ public class ConnectionTests
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
         // Verify that the call was not passed to the underlying realtime server
-        await env.RealtimeService.Server
+        await env.RealtimeService
+            .Server
             .Received(1)
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
     }
@@ -260,7 +269,8 @@ public class ConnectionTests
         var env = new TestEnvironment();
         string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
         const string id = "id1";
-        env.RealtimeService.Server
+        env.RealtimeService
+            .Server
             .FetchDocAsync<Project>(Arg.Any<int>(), collection, id)
             .Returns(
                 new Snapshot<Project>
@@ -294,7 +304,8 @@ public class ConnectionTests
         var env = new TestEnvironment(documentCacheDisabled: true);
         string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
         const string id = "id1";
-        env.RealtimeService.Server
+        env.RealtimeService
+            .Server
             .FetchDocAsync<Project>(Arg.Any<int>(), collection, id)
             .Returns(
                 new Snapshot<Project>
@@ -328,7 +339,8 @@ public class ConnectionTests
         var env = new TestEnvironment();
         string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
         string[] ids = { "id1", "id2" };
-        env.RealtimeService.Server
+        env.RealtimeService
+            .Server
             .FetchDocsAsync<Project>(Arg.Any<int>(), collection, ids)
             .Returns(
                 new Snapshot<Project>[]
@@ -365,7 +377,8 @@ public class ConnectionTests
         var env = new TestEnvironment(documentCacheDisabled: true);
         string collection = env.RealtimeService.GetDocConfig<Project>().CollectionName;
         string[] ids = { "id1" };
-        env.RealtimeService.Server
+        env.RealtimeService
+            .Server
             .FetchDocsAsync<Project>(Arg.Any<int>(), collection, ids)
             .Returns(
                 new Snapshot<Project>[]
@@ -414,7 +427,8 @@ public class ConnectionTests
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
         // Verify that the call was not passed to the underlying realtime server
-        await env.RealtimeService.Server
+        await env.RealtimeService
+            .Server
             .Received(0)
             .DeleteDocAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>());
     }
@@ -446,7 +460,8 @@ public class ConnectionTests
         var builder = new Json0OpBuilder<TestProject>(data);
         builder.Set(p => p.SyncDisabled, true);
         List<Json0Op> op = builder.Op;
-        env.RealtimeService.Server
+        env.RealtimeService
+            .Server
             .ApplyOpAsync(Arg.Any<string>(), Arg.Any<TestProject>(), Arg.Any<object>())
             .Returns(Task.FromResult(snapshot.Data));
 
@@ -462,7 +477,8 @@ public class ConnectionTests
         Assert.Zero(env.Service.QueuedOperations.Count);
 
         // Verify that the call was passed to the underlying realtime server
-        await env.RealtimeService.Server
+        await env.RealtimeService
+            .Server
             .Received(1)
             .SubmitOpAsync<TestProject>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
     }
@@ -485,7 +501,8 @@ public class ConnectionTests
         List<Json0Op> op = builder.Op;
         var updatedData = new TestProject() { Id = id, SyncDisabled = true, };
 
-        env.RealtimeService.Server
+        env.RealtimeService
+            .Server
             .FetchDocAsync<TestProject>(Arg.Any<int>(), collection, id)
             .Returns(Task.FromResult(snapshot));
         env.RealtimeService.Server.ApplyOpAsync(otTypeName, snapshot.Data, op).Returns(Task.FromResult(updatedData));
@@ -506,7 +523,8 @@ public class ConnectionTests
         Assert.AreEqual(queuedOperation.Op, op);
 
         // Verify that the call was not passed to the underlying realtime server
-        await env.RealtimeService.Server
+        await env.RealtimeService
+            .Server
             .Received(0)
             .SubmitOpAsync<TestProject>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
     }
@@ -534,7 +552,8 @@ public class ConnectionTests
         Assert.AreEqual(env.Service.QueuedOperations.Count, 0);
 
         // Verify that the call was not passed to the underlying realtime server
-        await env.RealtimeService.Server
+        await env.RealtimeService
+            .Server
             .Received(1)
             .SubmitOpAsync<TestProject>(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<object>());
     }

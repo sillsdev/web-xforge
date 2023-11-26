@@ -206,23 +206,28 @@ public class RealtimeServiceTests
         {
             IRealtimeServer realtimeServer = Substitute.For<IRealtimeServer>();
             IOptions<SiteOptions> siteOptions = Substitute.For<IOptions<SiteOptions>>();
-            IOptions<DataAccessOptions> dataAccessOptions =
-                Microsoft.Extensions.Options.Options.Create<DataAccessOptions>(
-                    new DataAccessOptions() { MongoDatabaseName = "mongoDatabaseName" }
-                );
-            IOptions<RealtimeOptions> realtimeOptions = Microsoft.Extensions.Options.Options.Create<RealtimeOptions>(
-                new RealtimeOptions()
-                {
-                    ProjectDoc = new DocConfig("some_projects", typeof(Project)),
-                    ProjectDataDocs = new List<DocConfig>
+            IOptions<DataAccessOptions> dataAccessOptions = Microsoft
+                .Extensions
+                .Options
+                .Options
+                .Create<DataAccessOptions>(new DataAccessOptions() { MongoDatabaseName = "mongoDatabaseName" });
+            IOptions<RealtimeOptions> realtimeOptions = Microsoft
+                .Extensions
+                .Options
+                .Options
+                .Create<RealtimeOptions>(
+                    new RealtimeOptions()
                     {
-                        new DocConfig("favorite_numbers", typeof(int)),
-                        new DocConfig("favorite_things", typeof(object)),
-                        new DocConfig("favorite_verses", typeof(string))
-                    },
-                    UserDataDocs = new List<DocConfig> { new DocConfig("favorite_animals", typeof(object)), }
-                }
-            );
+                        ProjectDoc = new DocConfig("some_projects", typeof(Project)),
+                        ProjectDataDocs = new List<DocConfig>
+                        {
+                            new DocConfig("favorite_numbers", typeof(int)),
+                            new DocConfig("favorite_things", typeof(object)),
+                            new DocConfig("favorite_verses", typeof(string))
+                        },
+                        UserDataDocs = new List<DocConfig> { new DocConfig("favorite_animals", typeof(object)), }
+                    }
+                );
             IOptions<AuthOptions> authOptions = Substitute.For<IOptions<AuthOptions>>();
 
             IMongoClient mongoClient = Substitute.For<IMongoClient>();

@@ -548,7 +548,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
 
         SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
         // Link sharing keys have Email set to null and ExpirationTime set to null.
-        string key = projectSecret.ShareKeys
+        string key = projectSecret
+            .ShareKeys
             .FirstOrDefault(
                 sk =>
                     sk.Email == null
@@ -664,7 +665,8 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         SFProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectId);
 
         DateTime now = DateTime.UtcNow;
-        return projectSecret.ShareKeys
+        return projectSecret
+            .ShareKeys
             .Where(s => s.Email != null)
             .Select(
                 sk =>

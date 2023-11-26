@@ -429,14 +429,16 @@ public class UserServiceTests
             );
 
             var options = Substitute.For<IOptions<SiteOptions>>();
-            options.Value.Returns(
-                new SiteOptions
-                {
-                    Id = "xf",
-                    Name = "xForge",
-                    Origin = new Uri("http://localhost")
-                }
-            );
+            options
+                .Value
+                .Returns(
+                    new SiteOptions
+                    {
+                        Id = "xf",
+                        Name = "xForge",
+                        Origin = new Uri("http://localhost")
+                    }
+                );
 
             Service = new UserService(RealtimeService, options, UserSecrets, AuthService, ProjectService, Logger);
         }

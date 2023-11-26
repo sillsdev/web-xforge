@@ -461,15 +461,17 @@ public class ProjectServiceTests
             );
 
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();
-            siteOptions.Value.Returns(
-                new SiteOptions
-                {
-                    Id = SiteId,
-                    Name = "xForge",
-                    Origin = new Uri("http://localhost"),
-                    SiteDir = "site"
-                }
-            );
+            siteOptions
+                .Value
+                .Returns(
+                    new SiteOptions
+                    {
+                        Id = SiteId,
+                        Name = "xForge",
+                        Origin = new Uri("http://localhost"),
+                        SiteDir = "site"
+                    }
+                );
             AudioService = Substitute.For<IAudioService>();
 
             ProjectSecrets = new MemoryRepository<TestProjectSecret>(

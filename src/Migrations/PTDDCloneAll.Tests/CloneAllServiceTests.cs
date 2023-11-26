@@ -10,10 +10,10 @@ using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
-using SIL.XForge.Services;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
 using SIL.XForge.Scripture.Services;
+using SIL.XForge.Services;
 
 namespace PTDDCloneAll
 {

@@ -573,7 +573,7 @@ public class DeltaUsxMapper : IDeltaUsxMapper
         }
     }
 
-    private IEnumerable<XNode> ProcessDelta(Delta delta)
+    private static IEnumerable<XNode> ProcessDelta(Delta delta)
     {
         var content = new List<XNode>();
         var curCharAttrs = new List<JObject>();

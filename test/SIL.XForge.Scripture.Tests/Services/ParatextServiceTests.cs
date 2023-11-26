@@ -229,7 +229,8 @@ public class ParatextServiceTests
                 Assert.That(
                     (await env.RealtimeService.GetRepository<SFProject>().GetAllAsync())
                         .Single(sfProject => sfProject.ParatextId == testCase.paratextProjectId)
-                        .UserRoles.ContainsKey(testCase.sfUserId),
+                        .UserRoles
+                        .ContainsKey(testCase.sfUserId),
                     Is.EqualTo(testCase.sfUserIsOnSfProject),
                     "not set up - whether user is on existing sf project or not"
                 );
@@ -239,7 +240,8 @@ public class ParatextServiceTests
                     .GetSource(testCase.userSecret, string.Empty, string.Empty)
                     .GetRepositories()
                     .FirstOrDefault(sharedRepository => sharedRepository.SendReceiveId.Id == testCase.paratextProjectId)
-                    .SourceUsers.GetRole(testCase.ptUsername) == UserRoles.Administrator,
+                    .SourceUsers
+                    .GetRole(testCase.ptUsername) == UserRoles.Administrator,
                 Is.EqualTo(testCase.ptUserIsAdminOnPtProject),
                 "not set up - whether pt user is an admin on pt project"
             );

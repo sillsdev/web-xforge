@@ -496,7 +496,9 @@ public class ParatextService : DisposableBase, IParatextService
             string role = ConvertFromUserRole(
                 remotePtProjects
                     .SingleOrDefault(p => p.SendReceiveId.Id == paratextId)
-                    ?.SourceUsers.Users.FirstOrDefault(u => u.UserName == username)
+                    ?.SourceUsers
+                    .Users
+                    .FirstOrDefault(u => u.UserName == username)
                     ?.Role
             );
             if (string.IsNullOrEmpty(role))
@@ -762,10 +764,9 @@ public class ParatextService : DisposableBase, IParatextService
                     else if (chapter == 0)
                     {
                         // Book level
-                        IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
-                            PermissionSet.Merged,
-                            userName
-                        );
+                        IEnumerable<int> editable = scrText
+                            .Permissions
+                            .GetEditableBooks(PermissionSet.Merged, userName);
                         if (editable == null || !editable.Any())
                         {
                             // If there are no editable book permissions, check if they can edit all books
@@ -782,12 +783,9 @@ public class ParatextService : DisposableBase, IParatextService
                     else
                     {
                         // Chapter level
-                        IEnumerable<int> editable = scrText.Permissions.GetEditableChapters(
-                            book,
-                            scrText.Settings.Versification,
-                            userName,
-                            PermissionSet.Merged
-                        );
+                        IEnumerable<int> editable = scrText
+                            .Permissions
+                            .GetEditableChapters(book, scrText.Settings.Versification, userName, PermissionSet.Merged);
                         if (editable?.Contains(chapter) ?? false)
                         {
                             textInfoPermission = TextInfoPermission.Write;
@@ -935,7 +933,9 @@ public class ParatextService : DisposableBase, IParatextService
                     );
                 }
                 string role = ConvertFromUserRole(
-                    remotePtProject.SourceUsers.Users
+                    remotePtProject
+                        .SourceUsers
+                        .Users
                         .SingleOrDefault(u =>
                         {
                             if (u is null)
@@ -1271,7 +1271,9 @@ public class ParatextService : DisposableBase, IParatextService
             if (existingThread == null)
             {
                 // The thread has been removed
-                threadChange.NoteIdsRemoved = threadDoc.Data.Notes
+                threadChange.NoteIdsRemoved = threadDoc
+                    .Data
+                    .Notes
                     .Where(n => !n.Deleted)
                     .Select(n => n.DataId)
                     .ToList();
@@ -1547,15 +1549,16 @@ public class ParatextService : DisposableBase, IParatextService
             BiblicalTerms projectSettingsBiblicalTerms = BiblicalTerms.GetBiblicalTerms(biblicalTermsInfo);
 
             // Get the term localizations
-            Dictionary<string, TermLocalizations> allTermLocalizations = TermLocalizations.LanguagesAvailable
+            Dictionary<string, TermLocalizations> allTermLocalizations = TermLocalizations
+                .LanguagesAvailable
                 .Select(language => (language, termLocalizations: TermLocalizations.GetTermLocalizations(language)))
                 .ToDictionary(l => l.language, l => l.termLocalizations);
 
             // Create the collection of Biblical Terms with Renderings
             foreach (
-                Term term in projectSettingsBiblicalTerms.Terms.Where(
-                    t => t.VerseRefs().Any(v => books.Contains(v.BookNum))
-                )
+                Term term in projectSettingsBiblicalTerms
+                    .Terms
+                    .Where(t => t.VerseRefs().Any(v => books.Contains(v.BookNum)))
             )
             {
                 TermRendering termRendering = termRenderings.GetRendering(term.Id);
@@ -2295,9 +2298,9 @@ public class ParatextService : DisposableBase, IParatextService
             CommentThread existingThread = manager.FindThread(thread[0].Thread);
             foreach (Paratext.Data.ProjectComments.Comment comment in thread)
             {
-                Paratext.Data.ProjectComments.Comment existingComment = existingThread?.Comments.FirstOrDefault(
-                    c => c.Id == comment.Id
-                );
+                Paratext.Data.ProjectComments.Comment existingComment = existingThread
+                    ?.Comments
+                    .FirstOrDefault(c => c.Id == comment.Id);
                 if (existingComment == null)
                 {
                     manager.AddComment(comment);
@@ -2497,7 +2500,8 @@ public class ParatextService : DisposableBase, IParatextService
 
         // Try another method to find the comment
         DateTime noteTime = note.DateCreated.ToUniversalTime();
-        return thread.Comments
+        return thread
+            .Comments
             .Where(c => DateTime.Equals(noteTime, DateTime.Parse(c.Date, null, DateTimeStyles.AdjustToUniversal)))
             .LastOrDefault(c => c.User == ptUser.Username);
     }
@@ -2977,15 +2981,17 @@ public class ParatextService : DisposableBase, IParatextService
 
         string verseText = GetVerseText(chapterDelta.Delta, verseRef);
         verseText = verseText.Replace("\n", "\0");
-        PtxUtils.StringUtils.MatchContexts(
-            verseText,
-            contextBefore,
-            selectedText,
-            contextAfter,
-            null,
-            ref startPos,
-            out int posJustPastLastCharacter
-        );
+        PtxUtils
+            .StringUtils
+            .MatchContexts(
+                verseText,
+                contextBefore,
+                selectedText,
+                contextAfter,
+                null,
+                ref startPos,
+                out int posJustPastLastCharacter
+            );
         // The text anchor is relative to the text in the verse
         return new TextAnchor { Start = startPos, Length = posJustPastLastCharacter - startPos };
     }
@@ -3099,10 +3105,9 @@ public class ParatextService : DisposableBase, IParatextService
         {
             // if the current user is an administrator, then always allow editing the book text even if the user
             // doesn't have permission. This will ensure that a sync by an administrator never fails.
-            scrText.Permissions.RunWithEditPermision(
-                bookNum,
-                () => scrText.PutText(bookNum, chapterNum, false, usfm, null)
-            );
+            scrText
+                .Permissions
+                .RunWithEditPermision(bookNum, () => scrText.PutText(bookNum, chapterNum, false, usfm, null));
         }
         else
         {

@@ -11,11 +11,11 @@ using SIL.ObjectModel;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
 using SIL.XForge.Realtime;
-using SIL.XForge.Services;
 using SIL.XForge.Realtime.Json0;
 using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
+using SIL.XForge.Services;
 
 namespace PTDDCloneAll
 {
@@ -195,7 +195,10 @@ namespace PTDDCloneAll
                     if (sourceProject.IsLoaded)
                     {
                         // Add new users who are in the target project, but not the source project
-                        List<string> usersToAdd = _projectDoc.Data.UserRoles.Keys
+                        List<string> usersToAdd = _projectDoc
+                            .Data
+                            .UserRoles
+                            .Keys
                             .Except(sourceProject.Data.UserRoles.Keys)
                             .ToList();
                         foreach (string uid in usersToAdd)

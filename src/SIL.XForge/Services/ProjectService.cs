@@ -116,9 +116,11 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         }
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         IDocument<User> userDoc = await GetUserDocAsync(projectUserId, conn);
-        IEnumerable<Task> removalTasks = userDoc.Data.Sites[SiteOptions.Value.Id].Projects.Select(
-            (string projectId) => RemoveUserCoreAsync(conn, curUserId, projectId, projectUserId)
-        );
+        IEnumerable<Task> removalTasks = userDoc
+            .Data
+            .Sites[SiteOptions.Value.Id]
+            .Projects
+            .Select((string projectId) => RemoveUserCoreAsync(conn, curUserId, projectId, projectUserId));
         // The removals can be processed in parallel in production, but for unit tests, MemoryRealtimeService
         // does not fully implement concurrent editing of docs, so run them in a sequence.
         foreach (Task task in removalTasks)
@@ -276,9 +278,12 @@ public abstract class ProjectService<TModel, TSecret> : IProjectService
         ProjectSecret projectSecret = await ProjectSecrets.GetAsync(projectDoc.Id);
         if (!string.IsNullOrWhiteSpace(shareKey) && projectSecret != null)
         {
-            int index = projectSecret.ShareKeys.FindIndex(
-                sk => sk.RecipientUserId == null && sk.ShareLinkType == ShareLinkType.Recipient && sk.Key == shareKey
-            );
+            int index = projectSecret
+                .ShareKeys
+                .FindIndex(
+                    sk =>
+                        sk.RecipientUserId == null && sk.ShareLinkType == ShareLinkType.Recipient && sk.Key == shareKey
+                );
             if (index > -1)
             {
                 await ProjectSecrets.UpdateAsync(

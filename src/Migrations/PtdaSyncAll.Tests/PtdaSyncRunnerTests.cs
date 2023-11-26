@@ -20,8 +20,8 @@ using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.RichText;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Realtime;
-using SIL.XForge.Services;
 using SIL.XForge.Scripture.Services;
+using SIL.XForge.Services;
 
 namespace PtdaSyncAll
 {
@@ -837,9 +837,11 @@ namespace PtdaSyncAll
 
             public TestEnvironment()
             {
-                IOptions<SiteOptions> siteOptions = Microsoft.Extensions.Options.Options.Create(
-                    new SiteOptions() { SiteDir = "scriptureforge" }
-                );
+                IOptions<SiteOptions> siteOptions = Microsoft
+                    .Extensions
+                    .Options
+                    .Options
+                    .Create(new SiteOptions() { SiteDir = "scriptureforge" });
                 var userSecrets = new MemoryRepository<UserSecret>(new[] { new UserSecret { Id = "user01" } });
                 _projectSecrets = new MemoryRepository<SFProjectSecret>(
                     new[] { new SFProjectSecret { Id = "project01" } }
