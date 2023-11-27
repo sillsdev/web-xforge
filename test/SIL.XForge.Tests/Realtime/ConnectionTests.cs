@@ -571,7 +571,8 @@ public class ConnectionTests
             Version = 1,
         };
         DateTime timestamp = DateTime.UtcNow;
-        env.RealtimeService.Server
+        env.RealtimeService
+            .Server
             .FetchSnapshotAsync<Project>(Arg.Any<int>(), collection, id, timestamp)
             .Returns(Task.FromResult(snapshot));
 
