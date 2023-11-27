@@ -30,11 +30,9 @@ public class LanguageController : ControllerBase
 
         var cookieName = CookieRequestCultureProvider.DefaultCookieName;
         var cookieValue = CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture));
-        Response.Cookies.Append(
-            cookieName,
-            cookieValue,
-            new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
-        );
+        Response
+            .Cookies
+            .Append(cookieName, cookieValue, new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) });
 
         return LocalRedirect(returnUrl);
     }

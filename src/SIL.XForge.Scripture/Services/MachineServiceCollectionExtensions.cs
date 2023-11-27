@@ -48,16 +48,19 @@ public static class MachineServiceCollectionExtensions
         var servalOptions = configuration.GetOptions<ServalOptions>();
         services.AddAccessTokenManagement(options =>
         {
-            options.Client.Clients.Add(
-                MachineApi.HttpClientName,
-                new ClientCredentialsTokenRequest
-                {
-                    Address = servalOptions.TokenUrl,
-                    ClientId = servalOptions.ClientId,
-                    ClientSecret = servalOptions.ClientSecret,
-                    Parameters = new Parameters { { "audience", servalOptions.Audience } },
-                }
-            );
+            options
+                .Client
+                .Clients
+                .Add(
+                    MachineApi.HttpClientName,
+                    new ClientCredentialsTokenRequest
+                    {
+                        Address = servalOptions.TokenUrl,
+                        ClientId = servalOptions.ClientId,
+                        ClientSecret = servalOptions.ClientSecret,
+                        Parameters = new Parameters { { "audience", servalOptions.Audience } },
+                    }
+                );
         });
         services
             .AddClientAccessTokenHttpClient(

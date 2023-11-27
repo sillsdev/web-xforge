@@ -5,15 +5,15 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using SIL.XForge;
+using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
-using SIL.XForge.Configuration;
 using SIL.XForge.Realtime;
 using SIL.XForge.Realtime.Json0;
-using SIL.XForge.Services;
 using SIL.XForge.Scripture;
 using SIL.XForge.Scripture.Models;
 using SIL.XForge.Scripture.Services;
+using SIL.XForge.Services;
 
 namespace PTDDCloneAll
 {

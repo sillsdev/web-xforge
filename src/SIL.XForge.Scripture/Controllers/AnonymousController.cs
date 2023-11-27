@@ -122,11 +122,13 @@ public class AnonymousController : ControllerBase
                 request.Language
             );
             // Store credentials in a cookie as a fallback to the auth0 tokens expiring so the user can log in again
-            Response.Cookies.Append(
-                CookieConstants.TransparentAuthentication,
-                Newtonsoft.Json.JsonConvert.SerializeObject(credentials),
-                new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(2) }
-            );
+            Response
+                .Cookies
+                .Append(
+                    CookieConstants.TransparentAuthentication,
+                    Newtonsoft.Json.JsonConvert.SerializeObject(credentials),
+                    new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(2) }
+                );
             return Ok(true);
         }
         catch (DataNotFoundException e)

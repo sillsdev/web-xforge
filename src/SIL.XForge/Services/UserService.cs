@@ -124,14 +124,13 @@ public class UserService : IUserService
             }
             else if (newPTTokens.IssuedAt < userSecret.ParatextTokens.IssuedAt)
             {
-                string incomingIAt = newPTTokens.IssuedAt.ToString(
-                    "o",
-                    System.Globalization.CultureInfo.InvariantCulture
-                );
-                string currentIAt = userSecret.ParatextTokens.IssuedAt.ToString(
-                    "o",
-                    System.Globalization.CultureInfo.InvariantCulture
-                );
+                string incomingIAt = newPTTokens
+                    .IssuedAt
+                    .ToString("o", System.Globalization.CultureInfo.InvariantCulture);
+                string currentIAt = userSecret
+                    .ParatextTokens
+                    .IssuedAt
+                    .ToString("o", System.Globalization.CultureInfo.InvariantCulture);
                 _logger.LogWarning(
                     $"When updating user with SF id {curUserId} from auth0 profile, ignoring incoming tokens which were issued at {incomingIAt}, which is earlier than the current tokens {currentIAt}."
                 );
@@ -196,7 +195,9 @@ public class UserService : IUserService
         }
 
         string initials = string.Concat(
-            userDoc.Data.DisplayName
+            userDoc
+                .Data
+                .DisplayName
                 .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
                 .Where(x => x.Length > 1 && char.IsLetter(x[0]))
                 .Select(x => char.ToLower(x[0]))

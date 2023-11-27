@@ -415,7 +415,10 @@ public class MachineProjectService : IMachineProjectService
         )
         {
             foreach (
-                string fileId in projectSecret.ServalData.Corpora[corpusId].SourceFiles
+                string fileId in projectSecret
+                    .ServalData
+                    .Corpora[corpusId]
+                    .SourceFiles
                     .Concat(projectSecret.ServalData.Corpora[corpusId].TargetFiles)
                     .Select(f => f.FileId)
             )
@@ -549,7 +552,9 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // See if there is a corpus
-        string corpusId = projectSecret.ServalData.Corpora
+        string corpusId = projectSecret
+            .ServalData
+            .Corpora
             .FirstOrDefault(c => c.Value.PreTranslate == preTranslate)
             .Key;
 
@@ -745,7 +750,8 @@ public class MachineProjectService : IMachineProjectService
     private static TranslationBuildConfig GetTranslationBuildConfig(ServalData servalData) =>
         new TranslationBuildConfig
         {
-            Pretranslate = servalData.Corpora
+            Pretranslate = servalData
+                .Corpora
                 .Where(s => s.Value.PreTranslate)
                 .Select(c => new PretranslateCorpusConfig { CorpusId = c.Key })
                 .ToList(),

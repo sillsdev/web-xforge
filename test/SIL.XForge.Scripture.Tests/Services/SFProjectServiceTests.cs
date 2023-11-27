@@ -103,9 +103,9 @@ public class SFProjectServiceTests
         await env.Service.InviteAsync(User02, Project04, observerEmail, "en", SFProjectRole.Viewer);
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project04);
         Assert.That(
-            projectSecret.ShareKeys.Any(
-                s => s.Email == observerEmail && s.Key == observerKey && s.ProjectRole == SFProjectRole.Viewer
-            ),
+            projectSecret
+                .ShareKeys
+                .Any(s => s.Email == observerEmail && s.Key == observerKey && s.ProjectRole == SFProjectRole.Viewer),
             Is.True
         );
         await env.EmailService
@@ -124,9 +124,9 @@ public class SFProjectServiceTests
         await env.Service.InviteAsync(User02, Project04, reviewerEmail, "en", SFProjectRole.Commenter);
         projectSecret = env.ProjectSecrets.Get(Project04);
         Assert.That(
-            projectSecret.ShareKeys.Any(
-                s => s.Email == reviewerEmail && s.Key == reviewerKey && s.ProjectRole == SFProjectRole.Commenter
-            ),
+            projectSecret
+                .ShareKeys
+                .Any(s => s.Email == reviewerEmail && s.Key == reviewerKey && s.ProjectRole == SFProjectRole.Commenter),
             Is.True
         );
         await env.EmailService
@@ -309,13 +309,15 @@ public class SFProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
 
         Assert.That(
-            projectSecret.ShareKeys.Any(
-                sk =>
-                    sk.Key == "maxUsersReached"
-                    && sk.ShareLinkType == ShareLinkType.Recipient
-                    && sk.ProjectRole == SFProjectRole.Viewer
-                    && sk.UsersGenerated == 250
-            ),
+            projectSecret
+                .ShareKeys
+                .Any(
+                    sk =>
+                        sk.Key == "maxUsersReached"
+                        && sk.ShareLinkType == ShareLinkType.Recipient
+                        && sk.ProjectRole == SFProjectRole.Viewer
+                        && sk.UsersGenerated == 250
+                ),
             Is.True,
             "setup"
         );
@@ -330,14 +332,16 @@ public class SFProjectServiceTests
         Assert.That(shareLink, Is.EqualTo("newKey"));
         projectSecret = env.ProjectSecrets.Get(Project06);
         Assert.That(
-            projectSecret.ShareKeys.Any(
-                sk =>
-                    sk.Key == "newKey"
-                    && sk.ShareLinkType == ShareLinkType.Recipient
-                    && sk.ProjectRole == SFProjectRole.Viewer
-                    && sk.Reserved == null
-                    && sk.UsersGenerated == 0
-            ),
+            projectSecret
+                .ShareKeys
+                .Any(
+                    sk =>
+                        sk.Key == "newKey"
+                        && sk.ShareLinkType == ShareLinkType.Recipient
+                        && sk.ProjectRole == SFProjectRole.Viewer
+                        && sk.Reserved == null
+                        && sk.UsersGenerated == 0
+                ),
             Is.True
         );
     }
@@ -349,12 +353,14 @@ public class SFProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
 
         Assert.That(
-            projectSecret.ShareKeys.Any(
-                sk =>
-                    sk.Key == "reservedKey"
-                    && sk.ShareLinkType == ShareLinkType.Recipient
-                    && sk.ProjectRole == SFProjectRole.Viewer
-            ),
+            projectSecret
+                .ShareKeys
+                .Any(
+                    sk =>
+                        sk.Key == "reservedKey"
+                        && sk.ShareLinkType == ShareLinkType.Recipient
+                        && sk.ProjectRole == SFProjectRole.Viewer
+                ),
             Is.True,
             "setup"
         );
@@ -369,13 +375,15 @@ public class SFProjectServiceTests
         Assert.That(shareLink, Is.EqualTo("newKey"));
         projectSecret = env.ProjectSecrets.Get(Project06);
         Assert.That(
-            projectSecret.ShareKeys.Any(
-                sk =>
-                    sk.Key == "newKey"
-                    && sk.ShareLinkType == ShareLinkType.Recipient
-                    && sk.ProjectRole == SFProjectRole.Viewer
-                    && sk.Reserved == null
-            ),
+            projectSecret
+                .ShareKeys
+                .Any(
+                    sk =>
+                        sk.Key == "newKey"
+                        && sk.ShareLinkType == ShareLinkType.Recipient
+                        && sk.ProjectRole == SFProjectRole.Viewer
+                        && sk.Reserved == null
+                ),
             Is.True
         );
     }
@@ -750,7 +758,8 @@ public class SFProjectServiceTests
         string shareKeyCode = "key12345";
         ShareKey shareKeyForUserInvitation = env.ProjectSecrets
             .Get(project.Id)
-            .ShareKeys.First((ShareKey shareKey) => shareKey.Key == shareKeyCode);
+            .ShareKeys
+            .First((ShareKey shareKey) => shareKey.Key == shareKeyCode);
         Assert.That(
             shareKeyForUserInvitation.ProjectRole,
             Is.EqualTo(SFProjectRole.CommunityChecker),
@@ -1781,14 +1790,16 @@ public class SFProjectServiceTests
         SFProjectSecret projectSecret = env.ProjectSecrets.Get(Project06);
 
         Assert.That(
-            projectSecret.ShareKeys.Any(
-                sk =>
-                    sk.Key == "toBeReservedKey"
-                    && sk.ShareLinkType == ShareLinkType.Recipient
-                    && sk.ProjectRole == SFProjectRole.Commenter
-                    && sk.ExpirationTime == null
-                    && sk.Reserved == null
-            ),
+            projectSecret
+                .ShareKeys
+                .Any(
+                    sk =>
+                        sk.Key == "toBeReservedKey"
+                        && sk.ShareLinkType == ShareLinkType.Recipient
+                        && sk.ProjectRole == SFProjectRole.Commenter
+                        && sk.ExpirationTime == null
+                        && sk.Reserved == null
+                ),
             Is.True,
             "setup"
         );
@@ -1798,14 +1809,16 @@ public class SFProjectServiceTests
         projectSecret = env.ProjectSecrets.Get(Project06);
 
         Assert.That(
-            projectSecret.ShareKeys.Any(
-                sk =>
-                    sk.Key == "toBeReservedKey"
-                    && sk.ShareLinkType == ShareLinkType.Recipient
-                    && sk.ProjectRole == SFProjectRole.Commenter
-                    && sk.ExpirationTime > DateTime.Now
-                    && sk.Reserved == true
-            ),
+            projectSecret
+                .ShareKeys
+                .Any(
+                    sk =>
+                        sk.Key == "toBeReservedKey"
+                        && sk.ShareLinkType == ShareLinkType.Recipient
+                        && sk.ProjectRole == SFProjectRole.Commenter
+                        && sk.ExpirationTime > DateTime.Now
+                        && sk.Reserved == true
+                ),
             Is.True
         );
     }
@@ -3458,15 +3471,17 @@ public class SFProjectServiceTests
                 )
             );
             var siteOptions = Substitute.For<IOptions<SiteOptions>>();
-            siteOptions.Value.Returns(
-                new SiteOptions
-                {
-                    Id = SiteId,
-                    Name = "xForge",
-                    Origin = new Uri("http://localhost"),
-                    SiteDir = "xforge"
-                }
-            );
+            siteOptions
+                .Value
+                .Returns(
+                    new SiteOptions
+                    {
+                        Id = SiteId,
+                        Name = "xForge",
+                        Origin = new Uri("http://localhost"),
+                        SiteDir = "xforge"
+                    }
+                );
             var audioService = Substitute.For<IAudioService>();
             EmailService = Substitute.For<IEmailService>();
             var currentTime = DateTime.Now;

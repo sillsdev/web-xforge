@@ -1,21 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.FeatureManagement;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Autofac;
-using Autofac.Extensions.DependencyInjection;
+using Microsoft.FeatureManagement;
 using SIL.XForge;
 using SIL.XForge.Configuration;
 using SIL.XForge.Scripture;
 using SIL.XForge.Scripture.Services;
-using System.Diagnostics;
 
 namespace BackoutCommits;
 

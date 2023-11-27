@@ -345,7 +345,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     // NOTE: The following additions/removals not included in the transaction
 
                     // Add new PT users who are in the target project, but not the source project
-                    List<string> usersToAdd = _projectDoc.Data.UserRoles
+                    List<string> usersToAdd = _projectDoc
+                        .Data
+                        .UserRoles
                         .Where(u => SFProjectRole.IsParatextRole(u.Value))
                         .Select(u => u.Key)
                         .Except(sourceProject.Data.UserRoles.Keys)
@@ -366,7 +368,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     }
 
                     // Remove PT users who are in the target project, and no longer have access to the resource
-                    List<string> usersToCheck = _projectDoc.Data.UserRoles
+                    List<string> usersToCheck = _projectDoc
+                        .Data
+                        .UserRoles
                         .Where(u => SFProjectRole.IsParatextRole(u.Value))
                         .Select(u => u.Key)
                         .Except(usersToAdd)
@@ -506,7 +510,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
     )
     {
         // Get the Text Data
-        List<string> textIds = _projectDoc.Data.Texts
+        List<string> textIds = _projectDoc
+            .Data
+            .Texts
             .SelectMany(t => t.Chapters.Select(c => TextData.GetTextDocId(_projectDoc.Id, t.BookNum, c.Number)))
             .ToList();
         IReadOnlyCollection<IDocument<TextData>> textDocs = await _conn.GetAndFetchDocsAsync<TextData>(textIds);
@@ -653,9 +659,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
         {
             i++;
             await NotifySyncProgress(syncPhase, 50 + (i / biblicalTermDocs.Count / 3));
-            BiblicalTerm? biblicalTerm = biblicalTermsChanges.BiblicalTerms.FirstOrDefault(
-                b => b.TermId == biblicalTermDoc.Data.TermId
-            );
+            BiblicalTerm? biblicalTerm = biblicalTermsChanges
+                .BiblicalTerms
+                .FirstOrDefault(b => b.TermId == biblicalTermDoc.Data.TermId);
             if (
                 biblicalTerm is not null
                 && (
@@ -758,10 +764,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
                         foreach ((string language, BiblicalTermDefinition definition) in biblicalTerm.Definitions)
                         {
                             if (
-                                biblicalTermDoc.Data.Definitions.TryGetValue(
-                                    language,
-                                    out BiblicalTermDefinition existingDefinition
-                                )
+                                biblicalTermDoc
+                                    .Data
+                                    .Definitions
+                                    .TryGetValue(language, out BiblicalTermDefinition existingDefinition)
                             )
                             {
                                 if (!_listStringComparer.Equals(existingDefinition.Categories, definition.Categories))
@@ -792,9 +798,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
 
                         // Remove missing definitions
                         foreach (
-                            (string language, _) in biblicalTermDoc.Data.Definitions.Where(
-                                d => !biblicalTerm.Definitions.ContainsKey(d.Key)
-                            )
+                            (string language, _) in biblicalTermDoc
+                                .Data
+                                .Definitions
+                                .Where(d => !biblicalTerm.Definitions.ContainsKey(d.Key))
                         )
                         {
                             op.Unset(b => b.Definitions[language]);
@@ -1121,7 +1128,9 @@ public class ParatextSyncRunner : IParatextSyncRunner
                     // If the userId is still null, find a project administrator, as they can escalate privilege
                     if (string.IsNullOrEmpty(userSFId))
                     {
-                        userSFId = _projectDoc.Data.UserRoles
+                        userSFId = _projectDoc
+                            .Data
+                            .UserRoles
                             .FirstOrDefault(p => p.Value == SFProjectRole.Administrator)
                             .Key;
                     }
@@ -1503,7 +1512,8 @@ public class ParatextSyncRunner : IParatextSyncRunner
                 _syncMetrics.Notes.Added++;
             }
 
-            List<int> removedIndices = change.NoteIdsRemoved
+            List<int> removedIndices = change
+                .NoteIdsRemoved
                 .Select(id => threadDoc.Data.Notes.FindIndex(n => n.DataId == id))
                 .Where(index => index >= 0)
                 .ToList();
@@ -1864,16 +1874,18 @@ public class ParatextSyncRunner : IParatextSyncRunner
             {
                 foreach (ParatextUserProfile activePtSyncUser in _currentPtSyncUsers.Values)
                 {
-                    ParatextUserProfile existingUser = _projectDoc.Data.ParatextUsers.SingleOrDefault(
-                        u => u.Username == activePtSyncUser.Username
-                    );
+                    ParatextUserProfile existingUser = _projectDoc
+                        .Data
+                        .ParatextUsers
+                        .SingleOrDefault(u => u.Username == activePtSyncUser.Username);
                     if (existingUser == null)
                         op.Add(pd => pd.ParatextUsers, activePtSyncUser);
                     else if (existingUser.SFUserId == null)
                     {
-                        int index = _projectDoc.Data.ParatextUsers.FindIndex(
-                            u => u.Username == activePtSyncUser.Username
-                        );
+                        int index = _projectDoc
+                            .Data
+                            .ParatextUsers
+                            .FindIndex(u => u.Username == activePtSyncUser.Username);
                         string userId = _currentPtSyncUsers[existingUser.Username].SFUserId;
                         if (!string.IsNullOrEmpty(userId))
                             op.Set(pd => pd.ParatextUsers[index].SFUserId, userId);
@@ -2006,9 +2018,10 @@ public class ParatextSyncRunner : IParatextSyncRunner
     {
         IReadOnlyDictionary<string, string> sfUserIdsToUsernames =
             await _paratextService.GetParatextUsernameMappingAsync(_userSecret, _projectDoc.Data, token);
-        Dictionary<string, ParatextUserProfile> paratextUsers = _projectDoc.Data.ParatextUsers.ToDictionary(
-            p => p.Username
-        );
+        Dictionary<string, ParatextUserProfile> paratextUsers = _projectDoc
+            .Data
+            .ParatextUsers
+            .ToDictionary(p => p.Username);
         foreach (var (sfUserId, username) in sfUserIdsToUsernames)
         {
             if (!paratextUsers.TryGetValue(username, out ParatextUserProfile profile))

@@ -1413,9 +1413,9 @@ public class ParatextSyncRunnerTests
 
         // The TaskCancelledException was not logged
         Assert.That(
-            env.MockLogger.LogEvents.Count(
-                (LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null
-            ),
+            env.MockLogger
+                .LogEvents
+                .Count((LogEvent logEvent) => logEvent.LogLevel == LogLevel.Error || logEvent.Exception != null),
             Is.EqualTo(0)
         );
 

@@ -52,9 +52,11 @@ public class TransceleratorServiceTests
         public TestEnvironment()
         {
             FileSystemService = Substitute.For<IFileSystemService>();
-            IOptions<SiteOptions> siteOptions = Microsoft.Extensions.Options.Options.Create(
-                new SiteOptions() { SiteDir = "scriptureforge" }
-            );
+            IOptions<SiteOptions> siteOptions = Microsoft
+                .Extensions
+                .Options
+                .Options
+                .Create(new SiteOptions() { SiteDir = "scriptureforge" });
             Service = new TransceleratorService(FileSystemService, siteOptions);
         }
 

@@ -133,7 +133,8 @@ namespace SourceTargetSplitting
             }
 
             // Get the highest ranked for this project, that probably has source access
-            string[] userIds = targetProject.UserRoles
+            string[] userIds = targetProject
+                .UserRoles
                 .Where(ur => ur.Value == SFProjectRole.Administrator || ur.Value == SFProjectRole.Translator)
                 .OrderBy(ur => ur.Value)
                 .Select(ur => ur.Key)
@@ -481,10 +482,9 @@ namespace SourceTargetSplitting
                             else
                             {
                                 string textInfoPermission = TextInfoPermission.Read;
-                                IEnumerable<int> editable = scrText.Permissions.GetEditableBooks(
-                                    Paratext.Data.Users.PermissionSet.Merged,
-                                    userName
-                                );
+                                IEnumerable<int> editable = scrText
+                                    .Permissions
+                                    .GetEditableBooks(Paratext.Data.Users.PermissionSet.Merged, userName);
                                 if (editable == null || !editable.Any())
                                 {
                                     // If there are no editable book permissions, check if they can edit all books
@@ -526,12 +526,14 @@ namespace SourceTargetSplitting
                                 else
                                 {
                                     string textInfoPermission = TextInfoPermission.Read;
-                                    IEnumerable<int>? editable = scrText.Permissions.GetEditableChapters(
-                                        project.Texts[i].BookNum,
-                                        scrText.Settings.Versification,
-                                        userName,
-                                        Paratext.Data.Users.PermissionSet.Merged
-                                    );
+                                    IEnumerable<int>? editable = scrText
+                                        .Permissions
+                                        .GetEditableChapters(
+                                            project.Texts[i].BookNum,
+                                            scrText.Settings.Versification,
+                                            userName,
+                                            Paratext.Data.Users.PermissionSet.Merged
+                                        );
                                     if (editable?.Contains(project.Texts[i].Chapters[j].Number) ?? false)
                                     {
                                         textInfoPermission = TextInfoPermission.Write;
@@ -610,7 +612,8 @@ namespace SourceTargetSplitting
             }
 
             // Get the highest ranked for this project, that probably has source access
-            string[] userIds = targetProject.UserRoles
+            string[] userIds = targetProject
+                .UserRoles
                 .Select(ur => ur.Key)
                 .Where(u => !sourceProject.UserRoles.Keys.Contains(u))
                 .ToArray();
@@ -692,7 +695,8 @@ namespace SourceTargetSplitting
                 }
 
                 // Get the highest ranked users for this project, that probably have source access
-                string[] userIds = targetProject.UserRoles
+                string[] userIds = targetProject
+                    .UserRoles
                     .Where(ur => ur.Value == SFProjectRole.Administrator || ur.Value == SFProjectRole.Translator)
                     .OrderBy(ur => ur.Value)
                     .Select(ur => ur.Key)

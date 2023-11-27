@@ -556,7 +556,8 @@ public class SFInstallableDblResource : InstallableResource
                             && entry.FileName.StartsWith(revisionSearchPath, StringComparison.OrdinalIgnoreCase)
                         )
                         {
-                            string revisionFilename = entry.FileName
+                            string revisionFilename = entry
+                                .FileName
                                 .Split('/', StringSplitOptions.RemoveEmptyEntries)
                                 .Last();
                             if (!int.TryParse(revisionFilename, out revision))

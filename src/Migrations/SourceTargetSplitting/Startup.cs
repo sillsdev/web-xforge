@@ -3,6 +3,8 @@ namespace SourceTargetSplitting
     using System;
     using System.Collections.Generic;
     using System.Globalization;
+    using Autofac;
+    using Autofac.Extensions.DependencyInjection;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.Localization;
@@ -10,8 +12,6 @@ namespace SourceTargetSplitting
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
-    using Autofac;
-    using Autofac.Extensions.DependencyInjection;
     using SIL.XForge.Configuration;
     using SIL.XForge.Scripture;
 
