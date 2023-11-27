@@ -1898,7 +1898,47 @@ public class MachineApiServiceTests
             CancellationToken.None
         );
 
-        await env.SyncService.Received(1).SyncAsync(User01, Project03, trainEngine: false);
+        await env.SyncService
+            .Received(1)
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project03 && s.TargetOnly && s.UserId == User01));
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationErrorMessage);
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_AlternateSourceAndTrainOnSource()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.UpdateAsync(
+            p => p.Id == Project02,
+            u =>
+                u.Set(
+                    s => s.TranslateConfig.DraftConfig,
+                    new DraftConfig
+                    {
+                        AlternateSource = new TranslateSource { ProjectRef = Project03, },
+                        TrainOnEnabled = true,
+                        TrainOnSource = new TranslateSource { ProjectRef = Project01 },
+                    }
+                )
+        );
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            CancellationToken.None
+        );
+
+        await env.SyncService
+            .Received(1)
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project03 && s.TargetOnly && s.UserId == User01));
+        await env.SyncService
+            .Received(1)
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserId == User01));
         env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
         Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
         Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
@@ -1997,6 +2037,40 @@ public class MachineApiServiceTests
         Assert.AreEqual(2, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedBooks.Count);
         Assert.AreEqual(1, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedBooks.First());
         Assert.AreEqual(2, env.Projects.Get(Project01).TranslateConfig.DraftConfig.LastSelectedBooks.Last());
+    }
+
+    [Test]
+    public async Task StartPreTranslationBuildAsync_TrainOnSource()
+    {
+        // Set up test environment
+        var env = new TestEnvironment();
+        await env.Projects.UpdateAsync(
+            p => p.Id == Project02,
+            u =>
+                u.Set(
+                    s => s.TranslateConfig.DraftConfig,
+                    new DraftConfig
+                    {
+                        TrainOnEnabled = true,
+                        TrainOnSource = new TranslateSource { ProjectRef = Project01 },
+                    }
+                )
+        );
+
+        // SUT
+        await env.Service.StartPreTranslationBuildAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            CancellationToken.None
+        );
+
+        await env.SyncService
+            .Received(1)
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == Project01 && s.TargetOnly && s.UserId == User01));
+        env.BackgroundJobClient.Received(1).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        Assert.AreEqual(JobId, env.ProjectSecrets.Get(Project02).ServalData!.PreTranslationJobId);
+        Assert.IsNotNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationQueuedAt);
+        Assert.IsNull(env.ProjectSecrets.Get(Project02).ServalData?.PreTranslationErrorMessage);
     }
 
     [Test]

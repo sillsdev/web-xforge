@@ -2177,7 +2177,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2208,7 +2208,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2235,7 +2235,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2264,7 +2264,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2283,7 +2283,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2307,7 +2307,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .Received()
             .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
-        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2331,7 +2331,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2354,7 +2354,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .Received()
             .AddProjectAsync(User01, Project03, preTranslate: false, CancellationToken.None);
-        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2381,7 +2381,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2400,7 +2400,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2419,7 +2419,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2663,7 +2663,9 @@ public class SFProjectServiceTests
 
         // Initially connecting a project should have called Sync, or SF is not going to fetch books and set
         // permissions on them.
-        await env.SyncService.Received().SyncAsync(User03, sfProjectId, Arg.Any<bool>());
+        await env.SyncService
+            .Received()
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == sfProjectId && s.TrainEngine && s.UserId == User03));
 
         // Don't check that permissions were added to the target project, because we mock the Sync functionality.
         // But we can show that source resource permissions were set:
@@ -3727,9 +3729,7 @@ public class SFProjectServiceTests
             );
             MachineProjectService = Substitute.For<IMachineProjectService>();
             SyncService = Substitute.For<ISyncService>();
-            SyncService
-                .SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
-                .Returns(Task.FromResult("jobId"));
+            SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult("jobId"));
             ParatextService = Substitute.For<IParatextService>();
             IReadOnlyList<ParatextProject> ptProjects = new[]
             {
