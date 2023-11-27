@@ -1,43 +1,18 @@
-@use 'src/xforge-common/media-breakpoints/breakpoints' as *;
+h2 {
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 0;
+}
 
-.stepper-nav {
+h3 {
+  font-size: 15px;
+  font-weight: 400;
+  margin-top: 4px;
+  color: #777;
+}
+
+button {
   margin-top: 20px;
-  display: flex;
-  justify-content: flex-start;
-  gap: 8px;
-}
-
-mat-stepper {
-  ::ng-deep {
-    // Space and vertically center the 'info' icon
-    .mat-step-text-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-  }
-}
-
-// Menu exists in overlay, so ::ng-deep cannot be nested under :host
-::ng-deep {
-  .draft-generation-steps-info-menu {
-    .mat-menu-content {
-      padding: 16px;
-      background-color: #f7faff;
-      color: #002546;
-      font-style: italic;
-
-      mat-icon {
-        vertical-align: text-bottom;
-        margin-inline-end: 2px;
-      }
-    }
-
-    // Allow wider info popup on larger screens (default is 280px)
-    @include media-breakpoint('>', sm) {
-      max-width: 460px;
-    }
-  }
 }
 
 app-book-multi-select {

@@ -1,6 +1,6 @@
 <ng-container *transloco="let t; read: 'settings'">
   <div fxLayout="column" fxLayoutGap="2rem" class="container">
-    <div class="mat-display-1">{{ t("settings") }}</div>
+    <div class="mat-headline-4">{{ t("settings") }}</div>
     <span *ngIf="!isAppOnline" class="offline-text"> {{ t("connect_network_to_change_settings") }} </span>
     <div>
       <mat-card class="card card-outline">
@@ -243,7 +243,7 @@
     </div>
 
     <div id="danger-zone">
-      <div class="mat-title">{{ t("danger_zone") }}</div>
+      <div class="mat-headline-6">{{ t("danger_zone") }}</div>
       <mat-card class="card-content" id="delete-project">
         <h4>{{ t("delete_this_project") }}</h4>
         <p *ngIf="isActiveSourceProject; else deleteMessage" class="source-project-msg">

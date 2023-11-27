@@ -24,7 +24,6 @@ import { SFProjectService } from '../../core/sf-project.service';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
 import { SharedModule } from '../../shared/shared.module';
-import { DraftGenerationStepsComponent } from './draft-generation-steps/draft-generation-steps.component';
 import { DraftGenerationComponent, InfoAlert } from './draft-generation.component';
 import { DraftGenerationService } from './draft-generation.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
@@ -74,7 +73,6 @@ describe('DraftGenerationComponent', () => {
       }
 
       TestBed.configureTestingModule({
-        declarations: [DraftGenerationComponent, DraftGenerationStepsComponent],
         imports: [
           UICommonModule,
           SharedModule,
@@ -108,7 +106,10 @@ describe('DraftGenerationComponent', () => {
         'FeatureFlagService',
         {},
         {
-          allowForwardTranslationNmtDrafting: { enabled: false } as ObservableFeatureFlag
+          allowForwardTranslationNmtDrafting: {
+            enabled: false,
+            enabled$: of(false)
+          } as ObservableFeatureFlag
         }
       );
       mockDialogService = jasmine.createSpyObj<DialogService>(['openGenericDialog']);
@@ -283,7 +284,10 @@ describe('DraftGenerationComponent', () => {
           'FeatureFlagService',
           {},
           {
-            allowForwardTranslationNmtDrafting: { enabled: true } as ObservableFeatureFlag
+            allowForwardTranslationNmtDrafting: {
+              enabled: true,
+              enabled$: of(true)
+            } as ObservableFeatureFlag
           }
         );
       });
@@ -323,7 +327,10 @@ describe('DraftGenerationComponent', () => {
           'FeatureFlagService',
           {},
           {
-            allowForwardTranslationNmtDrafting: { enabled: true } as ObservableFeatureFlag
+            allowForwardTranslationNmtDrafting: {
+              enabled: true,
+              enabled$: of(true)
+            } as ObservableFeatureFlag
           }
         );
       });
@@ -342,7 +349,10 @@ describe('DraftGenerationComponent', () => {
           'FeatureFlagService',
           {},
           {
-            allowForwardTranslationNmtDrafting: { enabled: true } as ObservableFeatureFlag
+            allowForwardTranslationNmtDrafting: {
+              enabled: true,
+              enabled$: of(true)
+            } as ObservableFeatureFlag
           }
         );
       });

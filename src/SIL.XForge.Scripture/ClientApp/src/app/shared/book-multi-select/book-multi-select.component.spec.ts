@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatLegacyChipsModule as MatChipsModule } from '@angular/material/legacy-chips';
-
-import { configureTestingModule } from 'xforge-common/test-utils';
+import { MatChipsModule } from '@angular/material/chips';
+import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
 import { BookMultiSelectComponent, BookOption } from './book-multi-select.component';
 
 describe('BookMultiSelectComponent', () => {
@@ -12,8 +11,7 @@ describe('BookMultiSelectComponent', () => {
   const mockSelectedBooks: number[] = [1, 3];
 
   configureTestingModule(() => ({
-    imports: [MatChipsModule],
-    declarations: [BookMultiSelectComponent]
+    imports: [MatChipsModule, TestTranslocoModule]
   }));
 
   beforeEach(() => {

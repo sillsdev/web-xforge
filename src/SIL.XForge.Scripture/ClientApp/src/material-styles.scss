@@ -10,7 +10,9 @@
 //  you can delete this line and instead use:
 //    `@include mat.legacy-typography-hierarchy(mat.define-legacy-typography-config());`
 @include mat.all-legacy-component-typographies();
+@include mat.all-component-typographies();
 @include mat.legacy-core();
+@include mat.core();
 
 $mat-sf-purple: (
   200: $purpleLight,
@@ -105,7 +107,7 @@ $material-theme-accent-error: mat.define-light-theme(
 @include mat.legacy-button-theme($material-app-theme);
 @include mat.legacy-card-theme($material-app-theme);
 @include mat.legacy-checkbox-theme($material-app-theme);
-@include mat.legacy-chips-theme($material-app-theme);
+@include mat.chips-theme($material-app-theme);
 @include mat.legacy-dialog-theme($material-app-theme);
 @include mat.divider-theme($material-app-theme);
 @include mat.expansion-theme($material-app-theme);

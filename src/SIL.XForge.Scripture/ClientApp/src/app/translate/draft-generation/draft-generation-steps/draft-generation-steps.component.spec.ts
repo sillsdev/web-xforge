@@ -2,7 +2,6 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
-import { BookMultiSelectComponent } from 'src/app/shared/book-multi-select/book-multi-select.component';
 import { anything, mock, when } from 'ts-mockito';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { configureTestingModule, TestTranslocoModule } from 'xforge-common/test-utils';
@@ -33,7 +32,6 @@ describe('DraftGenerationStepsComponent', () => {
 
   configureTestingModule(() => ({
     imports: [UICommonModule, TestTranslocoModule, NoopAnimationsModule],
-    declarations: [DraftGenerationStepsComponent, BookMultiSelectComponent],
     providers: [
       { provide: ActivatedProjectService, useMock: mockActivatedProjectService },
       { provide: SFProjectService, useMock: mockProjectService }
@@ -52,25 +50,20 @@ describe('DraftGenerationStepsComponent', () => {
       tick();
     }));
 
-    it('should set availableBooks$ correctly', () => {
+    it('should set availableBooks$ correctly', fakeAsync(() => {
       component.availableBooks$?.subscribe(books => {
         expect(books).toEqual([1, 2, 3]);
       });
-
-      expect(component.selectedBooks).toEqual([1, 2, 3]);
-    });
+    }));
 
     it('should select all books initially', () => {
-      component.availableBooks$?.subscribe(() => {
-        expect(component.selectedBooks).toEqual([1, 2, 3]);
-      });
-
-      expect(component.selectedBooks).toEqual([1, 2, 3]);
+      expect(component.initialSelectedBooks).toEqual([1, 2, 3]);
+      expect(component.finalSelectedBooks).toEqual([1, 2, 3]);
     });
 
     it('should emit the correct selected books when onDone is called', () => {
       const mockSelectedBooks = [1, 2, 3];
-      component.selectedBooks = mockSelectedBooks;
+      component.finalSelectedBooks = mockSelectedBooks;
 
       spyOn(component.done, 'emit');
 
@@ -113,7 +106,7 @@ describe('DraftGenerationStepsComponent', () => {
     }));
 
     it('should restore previously selected books', () => {
-      expect(component.selectedBooks).toEqual([2, 3]);
+      expect(component.initialSelectedBooks).toEqual([2, 3]);
     });
   });
 });
