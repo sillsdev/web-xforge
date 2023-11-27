@@ -342,8 +342,11 @@ public class MachineProjectServiceTests
         );
 
         await env.TranslationEnginesClient
-            .DidNotReceiveWithAnyArgs()
-            .StartBuildAsync(TranslationEngine02, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+            .Received()
+            .StartBuildAsync(TranslationEngine01, Arg.Any<TranslationBuildConfig>(), CancellationToken.None);
+        await env.TranslationEnginesClient
+            .Received()
+            .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None);
     }
 
     [Test]
@@ -358,6 +361,22 @@ public class MachineProjectServiceTests
         env.TranslationEnginesClient
             .GetAsync(TranslationEngine02, CancellationToken.None)
             .Throws(ServalApiExceptions.NotFound);
+
+        // Return the correctly created corpus
+        env.TranslationEnginesClient
+            .GetCorpusAsync(TranslationEngine01, Arg.Any<string>(), CancellationToken.None)
+            .Returns(
+                args =>
+                    Task.FromResult(
+                        new TranslationCorpus
+                        {
+                            Id = args.ArgAt<string>(1),
+                            SourceLanguage = "en",
+                            TargetLanguage = "en_US"
+                        }
+                    )
+            );
+        ;
 
         // SUT
         await env.Service.BuildProjectAsync(
@@ -1044,6 +1063,92 @@ public class MachineProjectServiceTests
             );
     }
 
+    [Test]
+    public async Task SyncProjectCorporaAsync_RecreatesDeletedCorpora()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true, }
+        );
+        await env.SetDataInSync(Project02);
+
+        // Make the Serval API return the error code for a missing translation engine
+        env.TranslationEnginesClient
+            .GetCorpusAsync(TranslationEngine02, Arg.Any<string>(), CancellationToken.None)
+            .Throws(ServalApiExceptions.NotFound);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+        await env.TranslationEnginesClient
+            .Received(1)
+            .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
+        await env.TranslationEnginesClient
+            .DidNotReceiveWithAnyArgs()
+            .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
+        await env.TranslationEnginesClient
+            .DidNotReceiveWithAnyArgs()
+            .UpdateCorpusAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<TranslationCorpusUpdateConfig>(),
+                CancellationToken.None
+            );
+    }
+
+    [Test]
+    public async Task SyncProjectCorporaAsync_RecreatesCorporaWhenLanguageChanges()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions { LocalSourceTextHasData = true, LocalTargetTextHasData = true, }
+        );
+        await env.SetDataInSync(Project02);
+
+        // Make the Serval API return the error code for a missing translation engine
+        env.TranslationEnginesClient
+            .GetCorpusAsync(TranslationEngine02, Arg.Any<string>(), CancellationToken.None)
+            .Returns(
+                args =>
+                    Task.FromResult(
+                        new TranslationCorpus
+                        {
+                            Id = args.ArgAt<string>(1),
+                            SourceLanguage = "fr",
+                            TargetLanguage = "de"
+                        }
+                    )
+            );
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: false,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+        await env.TranslationEnginesClient
+            .Received(1)
+            .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None);
+        await env.TranslationEnginesClient
+            .Received(1)
+            .DeleteCorpusAsync(Arg.Any<string>(), Arg.Any<string>(), CancellationToken.None);
+        await env.TranslationEnginesClient
+            .DidNotReceiveWithAnyArgs()
+            .UpdateCorpusAsync(
+                Arg.Any<string>(),
+                Arg.Any<string>(),
+                Arg.Any<TranslationCorpusUpdateConfig>(),
+                CancellationToken.None
+            );
+    }
+
     private class TestEnvironmentOptions
     {
         public bool BuildIsPending { get; init; }
@@ -1073,7 +1178,7 @@ public class MachineProjectServiceTests
                 .Returns(args => Task.FromResult(new DataFile { Id = args.ArgAt<string>(0) }));
             TranslationEnginesClient = Substitute.For<ITranslationEnginesClient>();
             TranslationEnginesClient
-                .AddCorpusAsync(TranslationEngine01, Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
+                .AddCorpusAsync(Arg.Any<string>(), Arg.Any<TranslationCorpusConfig>(), CancellationToken.None)
                 .Returns(Task.FromResult(new TranslationCorpus { Id = Corpus01 }));
             TranslationEnginesClient
                 .CreateAsync(Arg.Any<TranslationEngineConfig>(), CancellationToken.None)
@@ -1085,8 +1190,8 @@ public class MachineProjectServiceTests
                         new TranslationEngine
                         {
                             Id = TranslationEngine01,
-                            TargetLanguage = "en_GB",
                             SourceLanguage = "en_US",
+                            TargetLanguage = "en_GB",
                         }
                     )
                 );
@@ -1097,10 +1202,36 @@ public class MachineProjectServiceTests
                         new TranslationEngine
                         {
                             Id = TranslationEngine02,
-                            TargetLanguage = "en_US",
                             SourceLanguage = "en",
+                            TargetLanguage = "en_US",
                         }
                     )
+                );
+            TranslationEnginesClient
+                .GetCorpusAsync(TranslationEngine01, Arg.Any<string>(), CancellationToken.None)
+                .Returns(
+                    args =>
+                        Task.FromResult(
+                            new TranslationCorpus
+                            {
+                                Id = args.ArgAt<string>(1),
+                                SourceLanguage = "en_US",
+                                TargetLanguage = "en_GB"
+                            }
+                        )
+                );
+            TranslationEnginesClient
+                .GetCorpusAsync(TranslationEngine02, Arg.Any<string>(), CancellationToken.None)
+                .Returns(
+                    args =>
+                        Task.FromResult(
+                            new TranslationCorpus
+                            {
+                                Id = args.ArgAt<string>(1),
+                                SourceLanguage = "en",
+                                TargetLanguage = "en_US"
+                            }
+                        )
                 );
             TranslationEnginesClient
                 .GetAsync(TranslationEngine03, CancellationToken.None)
@@ -1109,8 +1240,8 @@ public class MachineProjectServiceTests
                         new TranslationEngine
                         {
                             Id = TranslationEngine03,
-                            TargetLanguage = "en",
                             SourceLanguage = "en",
+                            TargetLanguage = "en",
                         }
                     )
                 );
