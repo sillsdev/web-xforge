@@ -29,6 +29,7 @@ export enum InfoAlert {
   NotSupportedLanguage,
   NoSourceProjectSet,
   SourceAndTargetLanguageIdentical,
+  TrainOnTargetLanguageDoesNotMatch,
   ApprovalNeeded
 }
 
@@ -51,6 +52,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   isBackTranslation = true;
   isSourceProjectSet = true;
   isSourceAndTargetDifferent = true;
+  isTrainOnAndTargetDifferent = true;
 
   InfoAlert = InfoAlert;
   infoAlert?: InfoAlert;
@@ -98,6 +100,7 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
       (!this.isBackTranslationMode || this.isTargetLanguageSupported) &&
       this.isSourceProjectSet &&
       this.isSourceAndTargetDifferent &&
+      !this.isTrainOnAndTargetDifferent &&
       (this.isBackTranslationMode || this.isPreTranslationApproved)
     );
   }
@@ -128,6 +131,9 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
             this.targetLanguage = projectDoc.data?.writingSystem.tag;
             this.isTargetLanguageSupported = this.nllbService.isNllbLanguage(this.targetLanguage);
             this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
+            this.isTrainOnAndTargetDifferent =
+              (translateConfig?.draftConfig.trainOnEnabled ?? false) &&
+              translateConfig?.draftConfig.trainOnSource?.writingSystem.tag !== this.targetLanguage;
             this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 
             this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
@@ -261,6 +267,10 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
     if (!this.isSourceAndTargetDifferent) {
       return InfoAlert.SourceAndTargetLanguageIdentical;
+    }
+
+    if (this.isTrainOnAndTargetDifferent) {
+      return InfoAlert.TrainOnTargetLanguageDoesNotMatch;
     }
 
     if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {

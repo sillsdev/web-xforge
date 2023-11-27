@@ -116,6 +116,11 @@
             <p>{{ t("info_alert_same_source_and_target_language_detail") }}</p>
           </section>
 
+          <section *ngIf="infoAlert === InfoAlert.TrainOnTargetLanguageDoesNotMatch">
+            <h3>{{ t("info_alert_different_train_on_and_target_language") }}</h3>
+            <p>{{ t("info_alert_different_train_on_and_target_language_detail") }}</p>
+          </section>
+
           <ng-container *ngIf="isGenerationSupported">
             <ng-container *ngIf="isDraftFaulted(draftJob)">
               <section>

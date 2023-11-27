@@ -133,6 +133,9 @@ describe('DraftGenerationComponent', () => {
               tag: 'en'
             },
             translateConfig: {
+              draftConfig: {
+                trainOnEnabled: false
+              },
               projectType: ProjectType.BackTranslation,
               source: {
                 projectRef: 'testSourceProjectId',
@@ -175,6 +178,7 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isTargetLanguageSupported).toBe(true);
       expect(env.component.isSourceProjectSet).toBe(true);
       expect(env.component.isSourceAndTargetDifferent).toBe(true);
+      expect(env.component.isTrainOnAndTargetDifferent).toBe(false);
       expect(env.component.targetLanguage).toBe('en');
     });
 
@@ -212,6 +216,9 @@ describe('DraftGenerationComponent', () => {
                 tag: 'xyz'
               },
               translateConfig: {
+                draftConfig: {
+                  trainOnEnabled: false
+                },
                 projectType: ProjectType.BackTranslation,
                 source: {
                   projectRef: 'testSourceProjectId',
@@ -229,6 +236,47 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.isTargetLanguageSupported).toBe(false);
       expect(env.component.isSourceProjectSet).toBe(true);
       expect(env.component.isSourceAndTargetDifferent).toBe(false);
+      expect(env.component.isTrainOnAndTargetDifferent).toBe(false);
+    });
+
+    it('should detect train on language when different to target language', () => {
+      let env = new TestEnvironment(() => {
+        mockActivatedProjectService = jasmine.createSpyObj('ActivatedProjectService', [''], {
+          projectId: 'testProjectId',
+          projectId$: of('testProjectId'),
+          projectDoc$: of({
+            data: {
+              writingSystem: {
+                tag: 'abc'
+              },
+              translateConfig: {
+                draftConfig: {
+                  trainOnEnabled: true,
+                  trainOnSource: {
+                    projectRef: 'trainOnSourceProjectId',
+                    writingSystem: {
+                      tag: 'def'
+                    }
+                  }
+                },
+                projectType: ProjectType.BackTranslation,
+                source: {
+                  projectRef: 'testSourceProjectId',
+                  writingSystem: {
+                    tag: 'xyz'
+                  }
+                }
+              }
+            }
+          })
+        });
+      });
+
+      expect(env.component.isBackTranslation).toBe(true);
+      expect(env.component.isTargetLanguageSupported).toBe(false);
+      expect(env.component.isSourceProjectSet).toBe(true);
+      expect(env.component.isSourceAndTargetDifferent).toBe(true);
+      expect(env.component.isTrainOnAndTargetDifferent).toBe(true);
     });
   });
 
@@ -278,6 +326,16 @@ describe('DraftGenerationComponent', () => {
       expect(env.component.getInfoAlert()).toBe(InfoAlert.SourceAndTargetLanguageIdentical);
     });
 
+    it('should return TrainOnTargetLanguageDoesNotMatch when isTrainOnAndTargetDifferent is true', () => {
+      let env = new TestEnvironment();
+      env.component.isBackTranslation = true;
+      env.component.isTargetLanguageSupported = true;
+      env.component.isSourceProjectSet = true;
+      env.component.isSourceAndTargetDifferent = true;
+      env.component.isTrainOnAndTargetDifferent = true;
+      expect(env.component.getInfoAlert()).toBe(InfoAlert.TrainOnTargetLanguageDoesNotMatch);
+    });
+
     it('should return ApprovalNeeded when isPreTranslationApproved is false and project is not in back translation mode', () => {
       let env = new TestEnvironment(() => {
         mockFeatureFlagService = jasmine.createSpyObj<FeatureFlagService>(
@@ -295,6 +353,7 @@ describe('DraftGenerationComponent', () => {
       env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = true;
       env.component.isSourceAndTargetDifferent = true;
+      env.component.isTrainOnAndTargetDifferent = false;
       env.component.isPreTranslationApproved = false;
       expect(env.component.isBackTranslationMode).toBe(false);
       expect(env.component.getInfoAlert()).toBe(InfoAlert.ApprovalNeeded);
@@ -306,6 +365,7 @@ describe('DraftGenerationComponent', () => {
       env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = true;
       env.component.isSourceAndTargetDifferent = true;
+      env.component.isTrainOnAndTargetDifferent = false;
       env.component.isPreTranslationApproved = false;
       expect(env.component.isBackTranslationMode).toBe(true);
       expect(env.component.getInfoAlert()).toBe(InfoAlert.None);
@@ -317,6 +377,7 @@ describe('DraftGenerationComponent', () => {
       env.component.isTargetLanguageSupported = true;
       env.component.isSourceProjectSet = true;
       env.component.isSourceAndTargetDifferent = true;
+      env.component.isTrainOnAndTargetDifferent = false;
       env.component.isPreTranslationApproved = true;
       expect(env.component.getInfoAlert()).toBe(InfoAlert.None);
     });
@@ -338,7 +399,9 @@ describe('DraftGenerationComponent', () => {
       env.component.isTargetLanguageSupported = false;
       env.component.isSourceProjectSet = true;
       env.component.isSourceAndTargetDifferent = true;
+      env.component.isTrainOnAndTargetDifferent = false;
       env.component.isPreTranslationApproved = true;
+      env.component.isTrainOnAndTargetDifferent = false;
       expect(env.component.isForwardTranslationEnabled).toBe(true);
       expect(env.component.getInfoAlert()).toBe(InfoAlert.None);
     });
@@ -360,6 +423,7 @@ describe('DraftGenerationComponent', () => {
       env.component.isTargetLanguageSupported = false;
       env.component.isSourceProjectSet = true;
       env.component.isSourceAndTargetDifferent = true;
+      env.component.isTrainOnAndTargetDifferent = false;
       env.component.isPreTranslationApproved = true;
       expect(env.component.isForwardTranslationEnabled).toBe(true);
       expect(env.component.getInfoAlert()).toBe(InfoAlert.NotSupportedLanguage);

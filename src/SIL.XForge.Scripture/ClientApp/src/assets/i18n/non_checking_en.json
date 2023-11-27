@@ -156,6 +156,8 @@
     "go_to_draft_viewer": "Go to [link:draftViewerUrl]draft viewer[/link] to preview and apply the generated draft to chapters of your choice.",
     "info_alert_approval_needed_detail": "Generating a translation draft requires contacting the Scripture Forge team with information about your project, so that we can determine whether your project can work well with our system. The team will work with you to determine how to produce the highest quality draft possible. Click \"Sign up\" below to fill out the form and a team member will get in touch with you.",
     "info_alert_approval_needed_header": "Sign up for translation drafting",
+    "info_alert_different_train_on_and_target_language_detail": "The language for your training text must be the same as the target language.",
+    "info_alert_different_train_on_and_target_language": "Different training and target languages",
     "info_alert_project_type_not_supported_detail": "In order to generate a draft translation, the project must be a back translation project.",
     "info_alert_project_type_not_supported": "Project type is not supported for draft generation",
     "info_alert_same_source_and_target_language_detail": "The language for your source text must be different than the target language.",
