@@ -47,19 +47,23 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
     }
 
     public async Task<ITextCorpus> CreateAsync(IEnumerable<string> projects, TextCorpusType type) =>
-        new DictionaryTextCorpus(await CreateTextsAsync(projects, type, preTranslate: false, Array.Empty<int>()));
+        new DictionaryTextCorpus(
+            await CreateTextsAsync(projects, type, preTranslate: false, trainOn: false, Array.Empty<int>())
+        );
 
     public async Task<ITextCorpus> CreateAsync(
         IEnumerable<string> projects,
         TextCorpusType type,
         bool preTranslate,
+        bool trainOn,
         ICollection<int> books
-    ) => new DictionaryTextCorpus(await CreateTextsAsync(projects, type, preTranslate, books));
+    ) => new DictionaryTextCorpus(await CreateTextsAsync(projects, type, preTranslate, trainOn, books));
 
     private async Task<IReadOnlyList<IText>> CreateTextsAsync(
         IEnumerable<string> projects,
         TextCorpusType type,
         bool preTranslate,
+        bool trainOn,
         ICollection<int> books
     )
     {
@@ -103,8 +107,26 @@ public class SFTextCorpusFactory : ISFTextCorpusFactory, ITextCorpusFactory
                     break;
 
                 case TextCorpusType.Target:
-                    textCorpusProjectId = projectId;
-                    paratextId = project.ParatextId;
+
+                    // Retrieve the training corpus, if requested
+                    if (trainOn && project.TranslateConfig.DraftConfig.TrainOnSource is not null)
+                    {
+                        textCorpusProjectId = project.TranslateConfig.DraftConfig.TrainOnSource.ProjectRef;
+                        paratextId = project.TranslateConfig.DraftConfig.TrainOnSource.ParatextId;
+                    }
+                    else
+                    {
+                        textCorpusProjectId = projectId;
+                        paratextId = project.ParatextId;
+                    }
+
+                    // If we are training with a different target, get all training texts
+                    if (preTranslate)
+                    {
+                        var trainOnProject = await _realtimeService.GetSnapshotAsync<SFProject>(textCorpusProjectId);
+                        projectTexts = trainOnProject.Texts;
+                    }
+
                     break;
 
                 default:

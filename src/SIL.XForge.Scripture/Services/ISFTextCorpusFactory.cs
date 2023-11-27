@@ -11,6 +11,7 @@ public interface ISFTextCorpusFactory
         IEnumerable<string> projects,
         TextCorpusType type,
         bool preTranslate,
+        bool trainOn,
         ICollection<int> books
     );
 }

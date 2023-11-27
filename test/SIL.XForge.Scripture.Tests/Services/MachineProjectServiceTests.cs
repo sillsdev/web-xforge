@@ -31,6 +31,7 @@ public class MachineProjectServiceTests
     private const string User01 = "user01";
     private const string Corpus01 = "corpus01";
     private const string Corpus02 = "corpus02";
+    private const string Corpus03 = "corpus03";
     private const string File01 = "file01";
     private const string File02 = "file02";
     private const string TranslationEngine01 = "translationEngine01";
@@ -992,6 +993,57 @@ public class MachineProjectServiceTests
         );
     }
 
+    [Test]
+    public async Task SyncProjectCorporaAsync_SynchronizesTheTranslationAndTrainOnCorpora()
+    {
+        // Set up test environment
+        var env = new TestEnvironment(
+            new TestEnvironmentOptions
+            {
+                LocalSourceTextHasData = true,
+                LocalTargetTextHasData = true,
+                TrainOnEnabled = true,
+            }
+        );
+        await env.SetDataInSync(Project02, true);
+
+        // SUT
+        bool actual = await env.Service.SyncProjectCorporaAsync(
+            User01,
+            new BuildConfig { ProjectId = Project02 },
+            preTranslate: true,
+            CancellationToken.None
+        );
+        Assert.IsTrue(actual);
+        await env.TextCorpusFactory
+            .Received(1)
+            .CreateAsync(
+                Arg.Any<IEnumerable<string>>(),
+                TextCorpusType.Source,
+                preTranslate: true,
+                trainOn: false,
+                Arg.Any<ICollection<int>>()
+            );
+        await env.TextCorpusFactory
+            .Received(1)
+            .CreateAsync(
+                Arg.Any<IEnumerable<string>>(),
+                TextCorpusType.Target,
+                preTranslate: true,
+                trainOn: false,
+                Arg.Any<ICollection<int>>()
+            );
+        await env.TextCorpusFactory
+            .Received(1)
+            .CreateAsync(
+                Arg.Any<IEnumerable<string>>(),
+                TextCorpusType.Target,
+                preTranslate: true,
+                trainOn: true,
+                Arg.Any<ICollection<int>>()
+            );
+    }
+
     private class TestEnvironmentOptions
     {
         public bool BuildIsPending { get; init; }
@@ -1001,6 +1053,7 @@ public class MachineProjectServiceTests
         public bool ServalSupport { get; init; } = true;
         public bool LocalSourceTextHasData { get; init; }
         public bool LocalTargetTextHasData { get; init; }
+        public bool TrainOnEnabled { get; init; }
     }
 
     private class TestEnvironment
@@ -1077,7 +1130,7 @@ public class MachineProjectServiceTests
                         Task.FromResult(
                             new TranslationBuild
                             {
-                                Pretranslate = new List<PretranslateCorpus> { new PretranslateCorpus() }
+                                Pretranslate = new List<PretranslateCorpus> { new PretranslateCorpus() },
                             }
                         )
                     );
@@ -1091,13 +1144,14 @@ public class MachineProjectServiceTests
 
             var paratextService = Substitute.For<IParatextService>();
             paratextService.GetLanguageId(Arg.Any<UserSecret>(), Arg.Any<string>()).Returns("en");
-            var textCorpusFactory = Substitute.For<ISFTextCorpusFactory>();
+            TextCorpusFactory = Substitute.For<ISFTextCorpusFactory>();
             if (options.LocalSourceTextHasData && options.LocalTargetTextHasData)
             {
-                textCorpusFactory
+                TextCorpusFactory
                     .CreateAsync(
                         Arg.Any<IEnumerable<string>>(),
                         Arg.Any<TextCorpusType>(),
+                        Arg.Any<bool>(),
                         Arg.Any<bool>(),
                         Arg.Any<ICollection<int>>()
                     )
@@ -1105,10 +1159,11 @@ public class MachineProjectServiceTests
             }
             else if (options.LocalSourceTextHasData)
             {
-                textCorpusFactory
+                TextCorpusFactory
                     .CreateAsync(
                         Arg.Any<IEnumerable<string>>(),
                         TextCorpusType.Source,
+                        Arg.Any<bool>(),
                         Arg.Any<bool>(),
                         Arg.Any<ICollection<int>>()
                     )
@@ -1116,10 +1171,11 @@ public class MachineProjectServiceTests
             }
             else if (options.LocalTargetTextHasData)
             {
-                textCorpusFactory
+                TextCorpusFactory
                     .CreateAsync(
                         Arg.Any<IEnumerable<string>>(),
                         TextCorpusType.Target,
+                        Arg.Any<bool>(),
                         Arg.Any<bool>(),
                         Arg.Any<ICollection<int>>()
                     )
@@ -1154,6 +1210,7 @@ public class MachineProjectServiceTests
                                     new ServalCorpus
                                     {
                                         PreTranslate = false,
+                                        TrainOn = false,
                                         SourceFiles = new List<ServalCorpusFile>
                                         {
                                             new ServalCorpusFile { FileId = File01 },
@@ -1169,6 +1226,23 @@ public class MachineProjectServiceTests
                                     new ServalCorpus
                                     {
                                         PreTranslate = true,
+                                        TrainOn = false,
+                                        SourceFiles = new List<ServalCorpusFile>
+                                        {
+                                            new ServalCorpusFile { FileId = File01 },
+                                        },
+                                        TargetFiles = new List<ServalCorpusFile>
+                                        {
+                                            new ServalCorpusFile { FileId = File02 },
+                                        },
+                                    }
+                                },
+                                {
+                                    Corpus03,
+                                    new ServalCorpus
+                                    {
+                                        PreTranslate = true,
+                                        TrainOn = true,
                                         SourceFiles = new List<ServalCorpusFile>
                                         {
                                             new ServalCorpusFile { FileId = File01 },
@@ -1224,6 +1298,11 @@ public class MachineProjectServiceTests
                                 ProjectRef = Project03,
                                 WritingSystem = new WritingSystem { Tag = "en" },
                             },
+                            DraftConfig = new DraftConfig
+                            {
+                                TrainOnEnabled = options.TrainOnEnabled,
+                                TrainOnSource = new TranslateSource { ProjectRef = Project01 },
+                            },
                         },
                         WritingSystem = new WritingSystem { Tag = "en_US" },
                     },
@@ -1255,7 +1334,7 @@ public class MachineProjectServiceTests
                 paratextService,
                 ProjectSecrets,
                 realtimeService,
-                textCorpusFactory,
+                TextCorpusFactory,
                 TranslationEnginesClient,
                 userSecrets
             );
@@ -1292,6 +1371,7 @@ public class MachineProjectServiceTests
         public MachineProjectService Service { get; }
         public IEngineService EngineService { get; }
         public IDataFilesClient DataFilesClient { get; }
+        public ISFTextCorpusFactory TextCorpusFactory { get; }
         public ITranslationEnginesClient TranslationEnginesClient { get; }
         public MemoryRepository<SFProject> Projects { get; }
         public MemoryRepository<SFProjectSecret> ProjectSecrets { get; }
