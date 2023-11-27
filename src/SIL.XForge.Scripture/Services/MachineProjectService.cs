@@ -561,7 +561,10 @@ public class MachineProjectService : IMachineProjectService
 
         // See if there is a training corpus
         string? trainOnCorpusId = null;
-        bool trainOn = project.TranslateConfig.DraftConfig.TrainOnEnabled && preTranslate;
+        bool trainOn =
+            project.TranslateConfig.DraftConfig.TrainOnEnabled
+            && project.TranslateConfig.DraftConfig.TrainOnSource is not null
+            && preTranslate;
         if (trainOn)
         {
             trainOnCorpusId = projectSecret.ServalData.Corpora
@@ -634,7 +637,7 @@ public class MachineProjectService : IMachineProjectService
                 TextCorpusType.Target,
                 preTranslate: true,
                 trainOn: true,
-                Array.Empty<int>()
+                buildConfig.TrainingBooks
             );
             corpusUpdated |= await UploadNewCorpusFilesAsync(
                 project.Id,
@@ -671,7 +674,7 @@ public class MachineProjectService : IMachineProjectService
                     preTranslate: true,
                     trainOn: true,
                     newSourceCorpusFiles,
-                    newTargetCorpusFiles,
+                    targetCorpusFiles: newTrainOnCorpusFiles,
                     cancellationToken
                 );
             }
