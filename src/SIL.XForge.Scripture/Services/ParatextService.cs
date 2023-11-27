@@ -1960,7 +1960,8 @@ public class ParatextService : DisposableBase, IParatextService
             VersionedText versionedText = VersioningManager.Get(scrText);
             HgRevisionCollection revisionCollection = HgRevisionCollection.Get(scrText);
             DateTimeOffset timeStampOffset = new DateTimeOffset(timestamp, TimeSpan.Zero);
-            HgRevision? revision = revisionCollection.MutableCollection
+            HgRevision? revision = revisionCollection
+                .MutableCollection
                 .Where(r => r.CommitTimeStamp <= timeStampOffset)
                 .MaxBy(r => r.CommitTimeStamp);
 
@@ -2035,9 +2036,9 @@ public class ParatextService : DisposableBase, IParatextService
                 }
 
                 // Get the next interval by rounding up to the nearest interval
-                milestonePeriod = op.Metadata.Timestamp.AddMinutes(
-                    interval - (op.Metadata.Timestamp.Minute % interval)
-                );
+                milestonePeriod = op.Metadata
+                    .Timestamp
+                    .AddMinutes(interval - (op.Metadata.Timestamp.Minute % interval));
                 milestonePeriod = milestonePeriod.AddSeconds(-milestonePeriod.Second);
                 milestonePeriod = milestonePeriod.AddMilliseconds(-milestonePeriod.Millisecond);
 
