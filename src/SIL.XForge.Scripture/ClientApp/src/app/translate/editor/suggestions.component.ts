@@ -234,9 +234,8 @@ export class SuggestionsComponent extends SubscriptionDisposable implements OnDe
     const bodyBounds = document.body.getBoundingClientRect();
     const clientLeft = reference.left + editorBounds.left;
     const clientTop = reference.bottom + editorBounds.top + 5;
-    if (clientLeft + rootBounds.width > bodyBounds.right) {
-      const shift = bodyBounds.right - (clientLeft + rootBounds.width);
-      this.root.style.left = left + shift + 'px';
+    if (left + rootBounds.width > editorBounds.width) {
+      this.root.style.left = editorBounds.width - rootBounds.width + 'px'; //right align
     } else if (clientLeft < bodyBounds.left) {
       const shift = bodyBounds.left - clientLeft;
       this.root.style.left = left + shift + 'px';
