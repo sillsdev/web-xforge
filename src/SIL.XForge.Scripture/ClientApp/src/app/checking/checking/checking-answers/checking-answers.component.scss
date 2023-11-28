@@ -18,7 +18,12 @@
 }
 
 .answer-question {
+  padding-inline: 8px;
   .question {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
+
     .question-text {
       font-weight: bold;
     }
