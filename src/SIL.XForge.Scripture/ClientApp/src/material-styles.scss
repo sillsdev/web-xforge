@@ -131,7 +131,7 @@ $material-theme-accent-error: mat.define-light-theme(
 @include mat.legacy-table-theme($material-app-theme);
 @include mat.legacy-tabs-theme($material-app-theme);
 @include mat.toolbar-theme($material-app-theme);
-@include mat.legacy-tooltip-theme($material-app-theme);
+@include mat.tooltip-theme($material-app-theme);
 @include mat.option-theme($material-app-theme);
 
 // Other components that appear to not be used at this time
