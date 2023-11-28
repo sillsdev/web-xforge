@@ -99,7 +99,7 @@ public class PreTranslationService : IPreTranslationService
 
             referenceParts = reference.Split('_', StringSplitOptions.RemoveEmptyEntries);
             if (
-                referenceParts.Length != 3
+                referenceParts.Length < 3
                 || !int.TryParse(referenceParts[1], out int refChapterNum)
                 || refChapterNum != chapterNum
             )
@@ -108,7 +108,7 @@ public class PreTranslationService : IPreTranslationService
             }
 
             // Get the reference in the form MAT 1:2
-            string verse = referenceParts.Last();
+            string verse = referenceParts[2];
             VerseRef verseRef = new VerseRefData(bookNum, chapterNum, verse).ToVerseRef();
             reference = verseRef.Text;
 
@@ -132,8 +132,15 @@ public class PreTranslationService : IPreTranslationService
             sb.TrimEnd();
             string translation = sb.ToString();
 
-            // Add the pre-translation
-            preTranslations.Add(new PreTranslation { Reference = reference, Translation = translation, });
+            // Add the pre-translation, or update if this is a segment of it
+            if (preTranslations.Any(p => p.Reference == reference))
+            {
+                preTranslations.First(p => p.Reference == reference).Translation += " " + translation;
+            }
+            else
+            {
+                preTranslations.Add(new PreTranslation { Reference = reference, Translation = translation });
+            }
         }
 
         return preTranslations.ToArray();
