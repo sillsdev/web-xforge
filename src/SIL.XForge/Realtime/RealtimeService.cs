@@ -127,6 +127,11 @@ public class RealtimeService : DisposableBase, IRealtimeService
         );
         FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Eq("d", projectId);
         await opsCollection.DeleteManyAsync(dFilter);
+
+        IMongoCollection<BsonDocument> milestonesCollection = _database.GetCollection<BsonDocument>(
+            $"m_{options.ProjectDoc.CollectionName}"
+        );
+        await milestonesCollection.DeleteManyAsync(dFilter);
     }
 
     /// <summary>
@@ -154,6 +159,11 @@ public class RealtimeService : DisposableBase, IRealtimeService
                 $"o_{collection.CollectionName}"
             );
             await opsCollection.DeleteManyAsync(dFilter);
+
+            IMongoCollection<BsonDocument> milestonesCollection = _database.GetCollection<BsonDocument>(
+                $"m_{collection.CollectionName}"
+            );
+            await milestonesCollection.DeleteManyAsync(dFilter);
         }
     }
 
@@ -231,6 +241,11 @@ public class RealtimeService : DisposableBase, IRealtimeService
         IMongoCollection<BsonDocument> opsCollection = _database.GetCollection<BsonDocument>($"o_{collectionName}");
         FilterDefinition<BsonDocument> dFilter = Builders<BsonDocument>.Filter.Regex("d", $"^{projectId}");
         await opsCollection.DeleteManyAsync(dFilter);
+
+        IMongoCollection<BsonDocument> milestonesCollection = _database.GetCollection<BsonDocument>(
+            $"m_{collectionName}"
+        );
+        await milestonesCollection.DeleteManyAsync(dFilter);
     }
 
     private object CreateOptions()
