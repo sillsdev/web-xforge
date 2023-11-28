@@ -1,0 +1,12 @@
+// This query finds the document with the greatest version number in each collection managed by ShareDB.
+
+use('xforge')
+
+const collectionNames = db.getCollectionNames();
+
+const shareDBCollections = collectionNames.filter(collection => collectionNames.includes(`o_${collection}`));
+
+for (const collection of shareDBCollections) {
+  const greatestVersion = db.getCollection(collection).find().sort({ _v: -1 }).limit(1).next()._v;
+  console.log(`Collection ${collection} has ${greatestVersion} versions`);
+}
