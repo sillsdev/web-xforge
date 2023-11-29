@@ -170,7 +170,8 @@ export class UICommonModule {
           titleFontSize: '48',
           unitsFontSize: '20',
           showSubtitle: false,
-          responsive: true
+          responsive: true,
+          renderOnClick: false
         }).providers ?? [])
       ]
     };
