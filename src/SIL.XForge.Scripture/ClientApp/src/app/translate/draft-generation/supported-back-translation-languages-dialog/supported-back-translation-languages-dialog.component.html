@@ -1,0 +1,13 @@
+<ng-container *transloco="let t; read: 'supported_back_translation_languages_dialog'">
+  <h1>
+    {{ t("supported_back_translation_languages_dialog_header") }}
+    <a mat-dialog-close class="close-dialog-link"><mat-icon>close</mat-icon></a>
+  </h1>
+
+  <ul>
+    <li *ngFor="let language of supportedLanguages">
+      <span class="code">{{ language.iso639_2t }}</span>
+      <span class="name">{{ getLanguageDisplayName(language) }}</span>
+    </li>
+  </ul>
+</ng-container>

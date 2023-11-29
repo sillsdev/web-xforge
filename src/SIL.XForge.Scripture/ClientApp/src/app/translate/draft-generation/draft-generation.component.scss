@@ -1,6 +1,12 @@
 @use 'src/variables';
 @use 'src/xforge-common/media-breakpoints/breakpoints' as *;
 
+$requirementsBackgroundColor: #f0f8ff;
+$requirementsBorderColor: darken($requirementsBackgroundColor, 20%);
+$warningBackgroundColor: #fff4ec;
+$warningBorderColor: #fe8f42;
+$warningTextColor: #a64400;
+
 :host {
   // Needed to style inside <transloco> element
   ::ng-deep {
@@ -22,13 +28,20 @@ h3 {
   gap: 10px;
 }
 
-.requirements-header {
-  margin-bottom: 8px;
-}
-
 .requirements {
-  padding-inline-start: 10px;
-  margin-top: 0;
+  background-color: $requirementsBackgroundColor;
+  padding: 0 20px;
+  border-radius: 4px;
+  border: 2px solid $requirementsBorderColor;
+
+  p {
+    margin-bottom: 8px;
+  }
+
+  ul {
+    padding-inline-start: 10px;
+    margin-top: 0;
+  }
 
   li {
     display: flex;
@@ -50,6 +63,23 @@ h3 {
     &.criteria-not-met {
       color: variables.$errorColor;
     }
+  }
+}
+
+.warning {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: $warningBackgroundColor;
+  color: $warningTextColor;
+  border: 2px solid $warningBorderColor;
+  border-radius: 4px;
+  padding: 0 16px;
+  margin: 20px 0 0;
+
+  mat-icon {
+    flex-shrink: 0;
+    color: $warningBorderColor;
   }
 }
 
