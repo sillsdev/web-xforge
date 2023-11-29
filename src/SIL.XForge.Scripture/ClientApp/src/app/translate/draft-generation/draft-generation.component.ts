@@ -1,41 +1,54 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import {
   MatLegacyDialogRef as MatDialogRef,
   MatLegacyDialogState as MatDialogState
 } from '@angular/material/legacy-dialog';
 import { MatLegacyTabGroup as MatTabGroup } from '@angular/material/legacy-tabs';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { TranslocoModule } from '@ngneat/transloco';
 import { isEmpty } from 'lodash-es';
+import { TranslocoMarkupModule } from 'ngx-transloco-markup';
+import { RouterLink } from 'ngx-transloco-markup-router-link';
 import { ProjectType } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest, of, Subscription } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { filter, map, switchMap, tap } from 'rxjs/operators';
 import { ActivatedProjectService } from 'xforge-common/activated-project.service';
 import { DialogService } from 'xforge-common/dialog.service';
 import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService } from 'xforge-common/i18n.service';
 import { OnlineStatusService } from 'xforge-common/online-status.service';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
+import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates } from './draft-generation';
-import { DraftGenerationStepsResult } from './draft-generation-steps/draft-generation-steps.component';
+import {
+  DraftGenerationStepsComponent,
+  DraftGenerationStepsResult
+} from './draft-generation-steps/draft-generation-steps.component';
 import { DraftGenerationService } from './draft-generation.service';
 import { PreTranslationSignupUrlService } from './pretranslation-signup-url.service';
-
-export enum InfoAlert {
-  None,
-  NotBackTranslation,
-  NotSupportedLanguage,
-  NoSourceProjectSet,
-  SourceAndTargetLanguageIdentical,
-  ApprovalNeeded
-}
+import { SupportedBackTranslationLanguagesDialogComponent } from './supported-back-translation-languages-dialog/supported-back-translation-languages-dialog.component';
 
 @Component({
   selector: 'app-draft-generation',
   templateUrl: './draft-generation.component.html',
-  styleUrls: ['./draft-generation.component.scss']
+  styleUrls: ['./draft-generation.component.scss'],
+  standalone: true,
+  imports: [
+    CommonModule,
+    UICommonModule,
+    RouterModule,
+    TranslocoModule,
+    TranslocoMarkupModule,
+    WorkingAnimatedIndicatorComponent,
+    DraftGenerationStepsComponent,
+    SupportedBackTranslationLanguagesDialogComponent
+  ]
 })
 export class DraftGenerationComponent extends SubscriptionDisposable implements OnInit {
   @ViewChild(MatTabGroup) tabGroup?: MatTabGroup;
@@ -43,6 +56,8 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   draftViewerUrl?: string;
   projectSettingsUrl?: string;
+  // This component url, but with a hash for opening a dialog
+  supportedLanguagesUrl: RouterLink = { route: [], fragment: 'supported-languages' };
 
   targetLanguage?: string;
   targetLanguageDisplayName?: string;
@@ -51,9 +66,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   isBackTranslation = true;
   isSourceProjectSet = true;
   isSourceAndTargetDifferent = true;
-
-  InfoAlert = InfoAlert;
-  infoAlert?: InfoAlert;
 
   jobSubscription?: Subscription;
   isOnline = true;
@@ -77,9 +89,9 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
 
   cancelDialogRef?: MatDialogRef<any>;
 
-  readonly nllbUrl: string = 'https://ai.facebook.com/research/no-language-left-behind/#200-languages-accordion';
-
   constructor(
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
     private readonly dialogService: DialogService,
     public readonly activatedProject: ActivatedProjectService,
     private readonly draftGenerationService: DraftGenerationService,
@@ -95,10 +107,16 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   get isGenerationSupported(): boolean {
     return (
       (!this.isBackTranslationMode || this.isBackTranslation) &&
-      (!this.isBackTranslationMode || this.isTargetLanguageSupported) &&
+      this.isTargetLanguageSupported &&
       this.isSourceProjectSet &&
       this.isSourceAndTargetDifferent &&
       (this.isBackTranslationMode || this.isPreTranslationApproved)
+    );
+  }
+
+  get hasBottomContent(): boolean {
+    return (
+      !this.isOnline || this.isGenerationSupported || (!this.isBackTranslationMode && !this.isPreTranslationApproved)
     );
   }
 
@@ -116,32 +134,44 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   }
 
   ngOnInit(): void {
+    // Display dialog for supported languages when route fragment is 'supported-languages'
+    this.subscribe(
+      this.route.fragment.pipe(filter(fragment => fragment === this.supportedLanguagesUrl.fragment)),
+      () => {
+        const dialogRef = this.dialogService.openMatDialog(SupportedBackTranslationLanguagesDialogComponent);
+
+        dialogRef.afterClosed().subscribe(() => {
+          this.router.navigate([], { fragment: undefined });
+        });
+      }
+    );
+
     this.subscribe(
       combineLatest([
         this.activatedProject.projectDoc$.pipe(
           filterNullish(),
-          tap(async projectDoc => {
+          tap(projectDoc => {
             const translateConfig = projectDoc.data?.translateConfig;
 
             this.isBackTranslation = translateConfig?.projectType === ProjectType.BackTranslation;
             this.isSourceProjectSet = translateConfig?.source?.projectRef !== undefined;
             this.targetLanguage = projectDoc.data?.writingSystem.tag;
-            this.isTargetLanguageSupported = this.nllbService.isNllbLanguage(this.targetLanguage);
             this.isSourceAndTargetDifferent = translateConfig?.source?.writingSystem.tag !== this.targetLanguage;
             this.isPreTranslationApproved = translateConfig?.preTranslate ?? false;
 
             this.draftViewerUrl = `/projects/${projectDoc.id}/draft-preview`;
             this.projectSettingsUrl = `/projects/${projectDoc.id}/settings`;
-
-            if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {
-              this.signupFormUrl = await this.preTranslationSignupUrlService.generateSignupUrl();
-            }
           })
         ),
         this.featureFlags.allowForwardTranslationNmtDrafting.enabled$
       ]),
-      () => {
-        this.infoAlert = this.getInfoAlert();
+      async () => {
+        this.isTargetLanguageSupported =
+          !this.isBackTranslationMode || this.nllbService.isNllbLanguage(this.targetLanguage);
+
+        if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {
+          this.signupFormUrl = await this.preTranslationSignupUrlService.generateSignupUrl();
+        }
       }
     );
 
@@ -239,35 +269,6 @@ export class DraftGenerationComponent extends SubscriptionDisposable implements 
   onPreGenerationStepsComplete(result: DraftGenerationStepsResult): void {
     this.navigateToTab('initial');
     this.startBuild(result.books);
-  }
-
-  /**
-   * Gets the highest priority info alert to be displayed.
-   */
-  getInfoAlert(): InfoAlert {
-    // In order of priority...
-
-    if (!this.isBackTranslation && !this.isForwardTranslationEnabled) {
-      return InfoAlert.NotBackTranslation;
-    }
-
-    if (this.isBackTranslationMode && !this.isTargetLanguageSupported) {
-      return InfoAlert.NotSupportedLanguage;
-    }
-
-    if (!this.isSourceProjectSet) {
-      return InfoAlert.NoSourceProjectSet;
-    }
-
-    if (!this.isSourceAndTargetDifferent) {
-      return InfoAlert.SourceAndTargetLanguageIdentical;
-    }
-
-    if (!this.isBackTranslationMode && !this.isPreTranslationApproved) {
-      return InfoAlert.ApprovalNeeded;
-    }
-
-    return InfoAlert.None;
   }
 
   hasDraftQueueDepth(job?: BuildDto): boolean {

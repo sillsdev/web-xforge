@@ -8,8 +8,6 @@ import { XForgeCommonModule } from 'xforge-common/xforge-common.module';
 import { SharedModule } from '../shared/shared.module';
 import { BiblicalTermDialogComponent } from './biblical-terms/biblical-term-dialog.component';
 import { BiblicalTermsComponent } from './biblical-terms/biblical-terms.component';
-import { DraftGenerationStepsComponent } from './draft-generation/draft-generation-steps/draft-generation-steps.component';
-import { DraftGenerationComponent } from './draft-generation/draft-generation.component';
 import { DraftViewerComponent } from './draft-generation/draft-viewer/draft-viewer.component';
 import { EditorComponent } from './editor/editor.component';
 import { MultiViewerComponent } from './editor/multi-viewer/multi-viewer.component';
@@ -31,7 +29,6 @@ import { TranslateRoutingModule } from './translate-routing.module';
     SuggestionsSettingsDialogComponent,
     TrainingProgressComponent,
     TranslateOverviewComponent,
-    DraftGenerationComponent,
     DraftViewerComponent
   ],
   imports: [
@@ -42,8 +39,7 @@ import { TranslateRoutingModule } from './translate-routing.module';
     UICommonModule,
     XForgeCommonModule,
     TranslocoModule,
-    TranslocoMarkupModule,
-    DraftGenerationStepsComponent
+    TranslocoMarkupModule
   ]
 })
 export class TranslateModule {}
