@@ -10,7 +10,6 @@
         'question-has-answers': getUnreadAnswers(questionDoc),
         selected: activeQuestionDoc?.id === questionDoc.id
       }"
-      [matTooltip]="questionTooltip(questionDoc)"
     >
       <div class="question-title">
         <span class="question-text">{{ questionText(questionDoc) }}</span>
