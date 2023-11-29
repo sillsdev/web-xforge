@@ -3,9 +3,6 @@
 
 $requirementsBackgroundColor: #f0f8ff;
 $requirementsBorderColor: darken($requirementsBackgroundColor, 20%);
-$warningBackgroundColor: #fff4ec;
-$warningBorderColor: #fe8f42;
-$warningTextColor: #a64400;
 
 :host {
   // Needed to style inside <transloco> element
@@ -66,21 +63,8 @@ h3 {
   }
 }
 
-.warning {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  background-color: $warningBackgroundColor;
-  color: $warningTextColor;
-  border: 2px solid $warningBorderColor;
-  border-radius: 4px;
-  padding: 0 16px;
-  margin: 20px 0 0;
-
-  mat-icon {
-    flex-shrink: 0;
-    color: $warningBorderColor;
-  }
+app-notice {
+  margin-top: 20px;
 }
 
 // Hide the tab headers
