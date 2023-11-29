@@ -11,6 +11,7 @@ import { Subscription } from 'rxjs';
 import { I18nService } from 'xforge-common/i18n.service';
 import { RealtimeQuery } from 'xforge-common/models/realtime-query';
 import { SubscriptionDisposable } from 'xforge-common/subscription-disposable';
+import { AudioTiming } from 'realtime-server/lib/esm/scriptureforge/models/audio-timing';
 import { TextAudioDoc } from '../../../../core/models/text-audio-doc';
 import { QuestionDoc } from '../../../../core/models/question-doc';
 import { SFProjectService } from '../../../../core/sf-project.service';
@@ -86,9 +87,12 @@ export class CheckingQuestionComponent extends SubscriptionDisposable implements
   }
 
   get scriptureAudioEnd(): number | undefined {
-    return this._scriptureTextAudioData?.timings.find(
+    // Get the last record of a timing that matches the last verse
+    const verseTimings: AudioTiming[] | undefined = this._scriptureTextAudioData?.timings.filter(
       t => CheckingUtils.parseAudioRef(t.textRef)?.verseStr === this.endVerse.toString()
-    )?.to;
+    );
+    if (verseTimings == null || verseTimings.length === 0) return;
+    return verseTimings.sort((a, b) => b.to - a.to)[0].to;
   }
 
   get questionText(): string {
