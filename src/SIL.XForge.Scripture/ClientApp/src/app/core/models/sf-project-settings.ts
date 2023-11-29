@@ -10,6 +10,7 @@ export interface SFProjectSettings {
   translateShareEnabled?: boolean | null;
 
   alternateSourceParatextId?: string | null;
+  servalConfig?: string | null;
 
   checkingEnabled?: boolean | null;
   usersSeeEachOthersResponses?: boolean | null;

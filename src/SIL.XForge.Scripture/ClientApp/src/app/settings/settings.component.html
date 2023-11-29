@@ -123,6 +123,27 @@
                   ></app-write-status>
                 </div>
               </ng-container>
+              <ng-container *ngIf="canUpdateServalConfig">
+                <p
+                  class="helper-text"
+                  [innerHTML]="i18n.translateAndInsertTags('settings.serval_config_description')"
+                ></p>
+                <mat-form-field [formGroup]="form" appearance="outline">
+                  <mat-label>{{ t("serval_config") }}</mat-label>
+                  <textarea
+                    matInput
+                    cdkTextareaAutosize
+                    id="serval-config"
+                    formControlName="servalConfig"
+                    (blur)="updateServalConfig()"
+                  ></textarea>
+                  <app-write-status
+                    [state]="getControlState('servalConfig')"
+                    [formGroup]="form"
+                    id="serval-config-status"
+                  ></app-write-status>
+                </mat-form-field>
+              </ng-container>
             </div>
           </mat-card-content>
           <mat-divider></mat-divider>

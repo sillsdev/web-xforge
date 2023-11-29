@@ -154,6 +154,9 @@ export class SFProjectService extends ProjectService<SFProject> {
                 items: {
                   bsonType: 'int'
                 }
+              },
+              servalConfig: {
+                bsonType: 'string'
               }
             },
             additionalProperties: false

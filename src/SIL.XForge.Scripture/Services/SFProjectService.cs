@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
+using Newtonsoft.Json.Linq;
 using SIL.XForge.Configuration;
 using SIL.XForge.DataAccess;
 using SIL.XForge.Models;
@@ -964,6 +965,26 @@ public class SFProjectService : ProjectService<SFProject, SFProjectSecret>, ISFP
         await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
         IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
         await projectDoc.SubmitJson0OpAsync(op => op.Set(p => p.TranslateConfig.PreTranslate, preTranslate));
+    }
+
+    public async Task SetServalConfigAsync(string curUserId, string systemRole, string projectId, string? servalConfig)
+    {
+        if (systemRole != SystemRole.SystemAdmin)
+            throw new ForbiddenException();
+
+        // Normalize whitespace and empty values to null
+        if (string.IsNullOrWhiteSpace(servalConfig))
+            servalConfig = null;
+
+        // Ensure that the config is valid JSON
+        if (servalConfig is not null)
+            JObject.Parse(servalConfig);
+
+        await using IConnection conn = await RealtimeService.ConnectAsync(curUserId);
+        IDocument<SFProject> projectDoc = await GetProjectDocAsync(projectId, conn);
+        await projectDoc.SubmitJson0OpAsync(
+            op => op.Set(p => p.TranslateConfig.DraftConfig.ServalConfig, servalConfig)
+        );
     }
 
     protected override async Task AddUserToProjectAsync(

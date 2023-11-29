@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
-import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { MatLegacyDialogConfig as MatDialogConfig } from '@angular/material/legacy-dialog';
 import { ActivatedRoute, Router } from '@angular/router';
+import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
 import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
+import { AuthService } from 'xforge-common/auth.service';
 import { DataLoadingComponent } from 'xforge-common/data-loading-component';
 import { DialogService } from 'xforge-common/dialog.service';
+import { FeatureFlagService } from 'xforge-common/feature-flags/feature-flag.service';
 import { I18nService, TextAroundTemplate } from 'xforge-common/i18n.service';
 import { ElementState } from 'xforge-common/models/element-state';
 import { UserDoc } from 'xforge-common/models/user-doc';
@@ -32,6 +34,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   sourceParatextId = new UntypedFormControl(undefined);
   biblicalTermsEnabled = new UntypedFormControl(false);
   alternateSourceParatextId = new UntypedFormControl(undefined);
+  servalConfig = new UntypedFormControl(undefined);
   translateShareEnabled = new UntypedFormControl(false);
   checkingEnabled = new UntypedFormControl(false);
   usersSeeEachOthersResponses = new UntypedFormControl(false);
@@ -46,6 +49,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     sourceParatextId: this.sourceParatextId,
     biblicalTermsEnabled: this.biblicalTermsEnabled,
     alternateSourceParatextId: this.alternateSourceParatextId,
+    servalConfig: this.servalConfig,
     translateShareEnabled: this.translateShareEnabled,
     checkingEnabled: this.checkingEnabled,
     usersSeeEachOthersResponses: this.usersSeeEachOthersResponses,
@@ -79,6 +83,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     private readonly router: Router,
     private readonly onlineStatusService: OnlineStatusService,
     readonly i18n: I18nService,
+    readonly authService: AuthService,
     readonly featureFlags: FeatureFlagService
   ) {
     super(noticeService);
@@ -132,6 +137,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get deleteButtonDisabled(): boolean {
     return !this.isAppOnline || !this.mainSettingsLoaded || this.isActiveSourceProject;
+  }
+
+  get canUpdateServalConfig(): boolean {
+    return this.authService.currentUserRole === SystemRole.SystemAdmin;
   }
 
   ngOnInit(): void {
@@ -237,6 +246,24 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     }
   }
 
+  updateServalConfig(): void {
+    if (
+      this.projectDoc?.data == null ||
+      (this.form.value.servalConfig ?? '') === (this.projectDoc.data.translateConfig.draftConfig.servalConfig ?? '')
+    ) {
+      // Do not save if we do not have the project doc or if the configuration has not changed
+      return;
+    }
+
+    // Update Serval Configuration
+    const updateTaskPromise = this.projectService.onlineSetServalConfig(
+      this.projectDoc.id,
+      this.form.value.servalConfig
+    );
+    this.checkUpdateStatus('servalConfig', updateTaskPromise);
+    this.previousFormValues = this.form.value;
+  }
+
   set loading(loading: boolean) {
     loading ? this.loadingStarted() : this.loadingFinished();
     this.updateFormEnabled();
@@ -274,6 +301,11 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
     if (this.settingChanged(newValue, 'biblicalTermsEnabled') && this.biblicalTermsMessage == null) {
       this.updateSetting(newValue, 'biblicalTermsEnabled');
+      return;
+    }
+
+    // We only update the Serval config on blur
+    if (this.settingChanged(newValue, 'servalConfig')) {
       return;
     }
 
@@ -347,6 +379,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       sourceParatextId: this.projectDoc.data.translateConfig.source?.paratextId,
       biblicalTermsEnabled: this.projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled,
       alternateSourceParatextId: this.projectDoc.data.translateConfig.draftConfig?.alternateSource?.paratextId,
+      servalConfig: this.projectDoc.data.translateConfig.draftConfig.servalConfig,
       translateShareEnabled: !!this.projectDoc.data.translateConfig.shareEnabled,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
       usersSeeEachOthersResponses: this.projectDoc.data.checkingConfig.usersSeeEachOthersResponses,
@@ -376,6 +409,7 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('sourceParatextId', ElementState.InSync);
     this.controlStates.set('biblicalTermsEnabled', ElementState.InSync);
     this.controlStates.set('alternateSourceParatextId', ElementState.InSync);
+    this.controlStates.set('servalConfig', ElementState.InSync);
     this.controlStates.set('translateShareEnabled', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);
     this.controlStates.set('usersSeeEachOthersResponses', ElementState.InSync);

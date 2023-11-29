@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using NSubstitute;
 using NUnit.Framework;
 using SIL.XForge.Configuration;
@@ -3020,6 +3021,87 @@ public class SFProjectServiceTests
         Assert.DoesNotThrowAsync(() => env.Service.DeleteAudioTimingData(User03, Project01, book, chapter));
     }
 
+    [Test]
+    public async Task SetServalConfigAsync_AllowsNull()
+    {
+        var env = new TestEnvironment();
+
+        // SUT
+        await env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig: null);
+
+        // Verify project document
+        SFProject project = env.GetProject(Project01);
+        Assert.IsNull(project.TranslateConfig.DraftConfig!.ServalConfig);
+    }
+
+    [Test]
+    public void SetServalConfigAsync_BlocksInvalidJson()
+    {
+        var env = new TestEnvironment();
+        const string servalConfig = "this_is_not_json";
+
+        // SUT
+        Assert.ThrowsAsync<JsonReaderException>(
+            () => env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig)
+        );
+    }
+
+    [Test]
+    public async Task SetServalConfigAsync_ChangesWhiteSpaceToNull()
+    {
+        var env = new TestEnvironment();
+        const string servalConfig = "  ";
+
+        // SUT
+        await env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig);
+
+        // Verify project document
+        SFProject project = env.GetProject(Project01);
+        Assert.IsNull(project.TranslateConfig.DraftConfig!.ServalConfig);
+    }
+
+    [Test]
+    public void SetServalConfigAsync_ProjectMustExist()
+    {
+        var env = new TestEnvironment();
+        const string servalConfig = "{ config: true }";
+
+        // SUT
+        Assert.ThrowsAsync<DataNotFoundException>(
+            () => env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, "invalid_project", servalConfig)
+        );
+    }
+
+    [Test]
+    public async Task SetServalConfigAsync_UpdatesProjectDocument()
+    {
+        var env = new TestEnvironment();
+        const string servalConfig = "{ updatedConfig: true }";
+
+        // Verify project document
+        SFProject project = env.GetProject(Project01);
+        Assert.IsNotNull(project.TranslateConfig.DraftConfig);
+
+        // SUT
+        await env.Service.SetServalConfigAsync(User01, SystemRole.SystemAdmin, Project01, servalConfig);
+
+        // Verify project document
+        project = env.GetProject(Project01);
+        Assert.AreEqual(project.TranslateConfig.DraftConfig!.ServalConfig, servalConfig);
+    }
+
+    [Test]
+    public void SetServalConfigAsync_UserMustBeSystemAdmin()
+    {
+        var env = new TestEnvironment();
+        const string servalConfig = "{ config: true }";
+
+        // SUT
+        Assert.ThrowsAsync<ForbiddenException>(
+            () => env.Service.SetServalConfigAsync(User01, SystemRole.User, Project01, servalConfig)
+        );
+    }
+
     private class TestEnvironment
     {
         public TestEnvironment()
@@ -3148,7 +3230,8 @@ public class SFProjectServiceTests
                                     Name = "resource project",
                                     ShortName = "RES",
                                     WritingSystem = new WritingSystem { Tag = "qaa" }
-                                }
+                                },
+                                DraftConfig = new DraftConfig { ServalConfig = "{ existingConfig: true }", },
                             },
                             CheckingConfig = new CheckingConfig { CheckingEnabled = true, ShareEnabled = false },
                             UserRoles = new Dictionary<string, string>

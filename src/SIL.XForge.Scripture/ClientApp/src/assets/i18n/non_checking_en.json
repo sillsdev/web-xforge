@@ -380,6 +380,8 @@
     "pre_translation_source_text_placeholder": "Alternate Drafting Source Text (optional)",
     "see_others_answers_and_comments": "Allow checkers to see each other's answers and comments",
     "select_project_or_resource": "Select the Paratext project or Digital Bible Library resource that your project is based on. If your project is based on a Paratext project, it's best to set it up as a daughter project in Paratext.",
+    "serval_config": "Serval Configuration (JSON)",
+    "serval_config_description": "{{ boldStart }}Warning:{{ boldEnd }} The following configuration is for Serval Technicians only:",
     "settings": "Settings",
     "shareTranslate": "Allow users of Translate to invite others",
     "shareChecking": "Allow users of Community Checking to invite others",
