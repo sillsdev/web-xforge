@@ -23,6 +23,7 @@ import { UICommonModule } from 'xforge-common/ui-common.module';
 import { filterNullish } from 'xforge-common/util/rxjs-util';
 import { BuildDto } from '../../machine-api/build-dto';
 import { BuildStates } from '../../machine-api/build-states';
+import { SharedModule } from '../../shared/shared.module';
 import { WorkingAnimatedIndicatorComponent } from '../../shared/working-animated-indicator/working-animated-indicator.component';
 import { NllbLanguageService } from '../nllb-language.service';
 import { activeBuildStates } from './draft-generation';
@@ -45,6 +46,7 @@ import { SupportedBackTranslationLanguagesDialogComponent } from './supported-ba
     RouterModule,
     TranslocoModule,
     TranslocoMarkupModule,
+    SharedModule,
     WorkingAnimatedIndicatorComponent,
     DraftGenerationStepsComponent,
     SupportedBackTranslationLanguagesDialogComponent
