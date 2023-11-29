@@ -235,7 +235,7 @@ public class MachineProjectService : IMachineProjectService
             }
 
             // See if the source language has changed
-            string projectSourceLanguage = GetSourceLanguage(projectDoc.Data);
+            string projectSourceLanguage = GetSourceLanguage(projectDoc.Data, useAlternateTrainingSource: false);
             if (translationEngine.SourceLanguage != projectSourceLanguage)
             {
                 string message =
@@ -535,7 +535,7 @@ public class MachineProjectService : IMachineProjectService
         }
 
         // Load the project secrets, so we can get the corpus files
-        if (!(await _projectSecrets.TryGetAsync(buildConfig.ProjectId)).TryResult(out SFProjectSecret projectSecret))
+        if (!(await _projectSecrets.TryGetAsync(project.Id)).TryResult(out SFProjectSecret projectSecret))
         {
             throw new DataNotFoundException("The project secret cannot be found.");
         }
@@ -555,12 +555,27 @@ public class MachineProjectService : IMachineProjectService
             throw new DataNotFoundException("The translation engine ID cannot be found.");
         }
 
-        // See if there is a corpus
-        string corpusId = projectSecret
+        // See if there is a translation corpus
+        string? corpusId = projectSecret
             .ServalData
             .Corpora
-            .FirstOrDefault(c => c.Value.PreTranslate == preTranslate)
+            .FirstOrDefault(c => c.Value.PreTranslate == preTranslate && !c.Value.AlternateTrainingSource)
             .Key;
+
+        // See if there is a training corpus
+        string? alternateTrainingSourceCorpusId = null;
+        bool useAlternateTrainingSource =
+            project.TranslateConfig.DraftConfig.AlternateTrainingSourceEnabled
+            && project.TranslateConfig.DraftConfig.AlternateTrainingSource is not null
+            && preTranslate;
+        if (useAlternateTrainingSource)
+        {
+            alternateTrainingSourceCorpusId = projectSecret
+                .ServalData
+                .Corpora
+                .FirstOrDefault(c => c.Value.PreTranslate && c.Value.AlternateTrainingSource)
+                .Key;
+        }
 
         // Get the files we have already synced
         var oldSourceCorpusFiles = new List<ServalCorpusFile>();
@@ -571,10 +586,11 @@ public class MachineProjectService : IMachineProjectService
 
         // Reuse the SFTextCorpusFactory implementation
         ITextCorpus? textCorpus = await _textCorpusFactory.CreateAsync(
-            new[] { buildConfig.ProjectId },
+            new[] { project.Id },
             TextCorpusType.Source,
             preTranslate,
-            buildConfig.TrainingBooks
+            useAlternateTrainingSource: false,
+            buildConfig.TranslationBooks
         );
         var newSourceCorpusFiles = new List<ServalCorpusFile>();
         corpusUpdated |= await UploadNewCorpusFilesAsync(
@@ -594,9 +610,10 @@ public class MachineProjectService : IMachineProjectService
         }
 
         textCorpus = await _textCorpusFactory.CreateAsync(
-            new[] { buildConfig.ProjectId },
+            new[] { project.Id },
             TextCorpusType.Target,
             preTranslate,
+            useAlternateTrainingSource: false,
             Array.Empty<int>()
         );
         List<ServalCorpusFile> newTargetCorpusFiles = new List<ServalCorpusFile>();
@@ -609,62 +626,63 @@ public class MachineProjectService : IMachineProjectService
             cancellationToken
         );
 
-        // If the corpus should be updated
-        if (corpusUpdated)
+        // Upload the alternate training corpus
+        List<ServalCorpusFile> newAlternateTrainingSourceCorpusFiles = new List<ServalCorpusFile>();
+        if (useAlternateTrainingSource)
         {
-            // Echo requires the target and source language to be the same, as it outputs your source texts
-            bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
-
-            // Create or update the corpus
-            TranslationCorpus corpus;
-            TranslationCorpusConfig corpusConfig = new TranslationCorpusConfig
+            // Get the files we have already synced
+            var oldAlternateTrainingSourceCorpusFiles = new List<ServalCorpusFile>();
+            if (!string.IsNullOrWhiteSpace(alternateTrainingSourceCorpusId))
             {
-                Name = buildConfig.ProjectId,
-                SourceFiles = newSourceCorpusFiles
-                    .Select(f => new TranslationCorpusFileConfig { FileId = f.FileId, TextId = f.TextId })
-                    .ToList(),
-                SourceLanguage = GetSourceLanguage(project),
-                TargetFiles = newTargetCorpusFiles
-                    .Select(f => new TranslationCorpusFileConfig { FileId = f.FileId, TextId = f.TextId })
-                    .ToList(),
-                TargetLanguage = GetTargetLanguage(project, useEcho),
-            };
-            if (string.IsNullOrEmpty(corpusId))
-            {
-                corpus = await _translationEnginesClient.AddCorpusAsync(
-                    translationEngineId,
-                    corpusConfig,
-                    cancellationToken
-                );
-            }
-            else
-            {
-                TranslationCorpusUpdateConfig corpusUpdateConfig = new TranslationCorpusUpdateConfig
-                {
-                    SourceFiles = corpusConfig.SourceFiles,
-                    TargetFiles = corpusConfig.TargetFiles,
-                };
-                corpus = await _translationEnginesClient.UpdateCorpusAsync(
-                    translationEngineId,
-                    corpusId,
-                    corpusUpdateConfig,
-                    cancellationToken
-                );
+                oldAlternateTrainingSourceCorpusFiles = projectSecret
+                    .ServalData
+                    .Corpora[alternateTrainingSourceCorpusId]
+                    .SourceFiles;
             }
 
-            // Update the project secret with the new corpus information
-            await _projectSecrets.UpdateAsync(
-                buildConfig.ProjectId,
-                u =>
-                    u.Set(
-                        p => p.ServalData.Corpora[corpus.Id],
-                        new ServalCorpus
-                        {
-                            SourceFiles = newSourceCorpusFiles,
-                            TargetFiles = newTargetCorpusFiles,
-                            PreTranslate = preTranslate,
-                        }
-                    )
+            textCorpus = await _textCorpusFactory.CreateAsync(
+                new[] { project.Id },
+                TextCorpusType.Source,
+                preTranslate: true,
+                useAlternateTrainingSource: true,
+                buildConfig.TrainingBooks
+            );
+            corpusUpdated |= await UploadNewCorpusFilesAsync(
+                project.Id,
+                includeBlankSegments: true,
+                textCorpus,
+                oldAlternateTrainingSourceCorpusFiles,
+                newAlternateTrainingSourceCorpusFiles,
+                cancellationToken
+            );
+        }
+
+        // Update the translation corpus
+        corpusUpdated |= await UpdateCorpusConfigAsync(
+            project,
+            translationEngineId,
+            corpusId,
+            preTranslate,
+            useAlternateTrainingSource: false,
+            corpusUpdated,
+            newSourceCorpusFiles,
+            newTargetCorpusFiles,
+            cancellationToken
+        );
+
+        // If we have a training corpus, update that (pre-translation only)
+        if (useAlternateTrainingSource)
+        {
+            corpusUpdated |= await UpdateCorpusConfigAsync(
+                project,
+                translationEngineId,
+                corpusId: alternateTrainingSourceCorpusId,
+                preTranslate: true,
+                useAlternateTrainingSource: true,
+                corpusUpdated,
+                sourceCorpusFiles: newAlternateTrainingSourceCorpusFiles,
+                newTargetCorpusFiles,
+                cancellationToken
             );
         }
 
@@ -675,12 +693,21 @@ public class MachineProjectService : IMachineProjectService
     /// Gets the source language for the project.
     /// </summary>
     /// <param name="project">The project.</param>
+    /// <param name="useAlternateTrainingSource">If <c>true</c>, use the alternate training source.</param>
     /// <returns>The source language.</returns>
     /// <exception cref="ArgumentNullException"></exception>
-    private static string GetSourceLanguage(SFProject project) =>
-        project.TranslateConfig.DraftConfig.AlternateSource?.WritingSystem.Tag
-        ?? project.TranslateConfig.Source?.WritingSystem.Tag
-        ?? throw new ArgumentNullException(nameof(project));
+    private static string GetSourceLanguage(SFProject project, bool useAlternateTrainingSource)
+    {
+        if (useAlternateTrainingSource)
+        {
+            return project.TranslateConfig.DraftConfig.AlternateTrainingSource?.WritingSystem.Tag
+                ?? project.WritingSystem.Tag;
+        }
+
+        return project.TranslateConfig.DraftConfig.AlternateSource?.WritingSystem.Tag
+            ?? project.TranslateConfig.Source?.WritingSystem.Tag
+            ?? throw new ArgumentNullException(nameof(project));
+    }
 
     /// <summary>
     /// Gets the target language for the project
@@ -690,7 +717,7 @@ public class MachineProjectService : IMachineProjectService
     /// <returns>The target language.</returns>
     /// <exception cref="ArgumentNullException"></exception>
     private static string GetTargetLanguage(SFProject project, bool useEcho) =>
-        useEcho ? GetSourceLanguage(project) : project.WritingSystem.Tag;
+        useEcho ? GetSourceLanguage(project, useAlternateTrainingSource: false) : project.WritingSystem.Tag;
 
     /// <summary>
     /// Gets the segments from the text with Unix/Linux line endings.
@@ -760,9 +787,16 @@ public class MachineProjectService : IMachineProjectService
             Options = draftConfig.ServalConfig is null ? null : JObject.Parse(draftConfig.ServalConfig),
             Pretranslate = servalData
                 .Corpora
-                .Where(s => s.Value.PreTranslate)
+                .Where(s => s.Value.PreTranslate && !s.Value.AlternateTrainingSource)
                 .Select(c => new PretranslateCorpusConfig { CorpusId = c.Key })
                 .ToList(),
+            TrainOn = draftConfig.AlternateTrainingSourceEnabled
+                ? servalData
+                    .Corpora
+                    .Where(s => s.Value.PreTranslate && s.Value.AlternateTrainingSource)
+                    .Select(c => new TrainingCorpusConfig { CorpusId = c.Key })
+                    .ToList()
+                : null,
         };
 
     /// <summary>
@@ -796,7 +830,7 @@ public class MachineProjectService : IMachineProjectService
             TranslationEngineConfig engineConfig = new TranslationEngineConfig
             {
                 Name = sfProject.Id,
-                SourceLanguage = GetSourceLanguage(sfProject),
+                SourceLanguage = GetSourceLanguage(sfProject, useAlternateTrainingSource: false),
                 TargetLanguage = GetTargetLanguage(sfProject, useEcho),
                 Type = type,
             };
@@ -849,6 +883,142 @@ public class MachineProjectService : IMachineProjectService
         }
 
         return translationEngineId;
+    }
+
+    /// <summary>
+    /// Updates the corpus configuration in the project secrets.
+    /// </summary>
+    /// <param name="project">The project.</param>
+    /// <param name="translationEngineId">The translation engine identifier.</param>
+    /// <param name="corpusId">The corpus identifier. If <c>null</c>, a new corpus is created.</param>
+    /// <param name="preTranslate">The project is for pre-translation.</param>
+    /// <param name="useAlternateTrainingSource">If <c>true</c>, use the alternate training source.</param>
+    /// <param name="corpusUpdated">The files in the corpus have been updated.</param>
+    /// <param name="sourceCorpusFiles">The source corpus files.</param>
+    /// <param name="targetCorpusFiles">The target corpus files.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns><c>true</c> if the corpus was updated; otherwise, <c>false</c>.</returns>
+    private async Task<bool> UpdateCorpusConfigAsync(
+        SFProject project,
+        string translationEngineId,
+        string? corpusId,
+        bool preTranslate,
+        bool useAlternateTrainingSource,
+        bool corpusUpdated,
+        List<ServalCorpusFile> sourceCorpusFiles,
+        List<ServalCorpusFile> targetCorpusFiles,
+        CancellationToken cancellationToken
+    )
+    {
+        // Echo requires the target and source language to be the same, as it outputs your source texts
+        bool useEcho = await _featureManager.IsEnabledAsync(FeatureFlags.UseEchoForPreTranslation);
+
+        // Create or update the corpus
+        TranslationCorpus corpus;
+        TranslationCorpusConfig corpusConfig = new TranslationCorpusConfig
+        {
+            Name = project.Id,
+            SourceFiles = sourceCorpusFiles
+                .Select(f => new TranslationCorpusFileConfig { FileId = f.FileId, TextId = f.TextId })
+                .ToList(),
+            SourceLanguage = GetSourceLanguage(project, useAlternateTrainingSource),
+            TargetFiles = targetCorpusFiles
+                .Select(f => new TranslationCorpusFileConfig { FileId = f.FileId, TextId = f.TextId })
+                .ToList(),
+            TargetLanguage = GetTargetLanguage(project, useEcho),
+        };
+
+        // See if we need to create or update the corpus
+        if (string.IsNullOrEmpty(corpusId))
+        {
+            corpus = await _translationEnginesClient.AddCorpusAsync(
+                translationEngineId,
+                corpusConfig,
+                cancellationToken
+            );
+        }
+        else
+        {
+            // Get the corpus to see if the language has changed
+            bool createCorpus;
+            bool deleteCorpus;
+            try
+            {
+                corpus = await _translationEnginesClient.GetCorpusAsync(
+                    translationEngineId,
+                    corpusId,
+                    cancellationToken
+                );
+                createCorpus =
+                    corpus.SourceLanguage != corpusConfig.SourceLanguage
+                    || corpus.TargetLanguage != corpusConfig.TargetLanguage;
+                deleteCorpus = createCorpus;
+            }
+            catch (ServalApiException e) when (e.StatusCode == StatusCodes.Status404NotFound)
+            {
+                // A 404 means that the translation engine does not exist
+                _logger.LogInformation(
+                    $"Corpus {corpusId} in Translation Engine {translationEngineId} does not exist."
+                );
+                createCorpus = true;
+                deleteCorpus = false;
+            }
+
+            // The language has changed, or the corpus is missing
+            if (createCorpus)
+            {
+                // Delete the old corpus
+                if (deleteCorpus)
+                {
+                    await _translationEnginesClient.DeleteCorpusAsync(translationEngineId, corpusId, cancellationToken);
+                }
+
+                // Recreate the corpus
+                corpus = await _translationEnginesClient.AddCorpusAsync(
+                    translationEngineId,
+                    corpusConfig,
+                    cancellationToken
+                );
+            }
+            else if (corpusUpdated)
+            {
+                // Update the corpus
+                TranslationCorpusUpdateConfig corpusUpdateConfig = new TranslationCorpusUpdateConfig
+                {
+                    SourceFiles = corpusConfig.SourceFiles,
+                    TargetFiles = corpusConfig.TargetFiles,
+                };
+                corpus = await _translationEnginesClient.UpdateCorpusAsync(
+                    translationEngineId,
+                    corpusId,
+                    corpusUpdateConfig,
+                    cancellationToken
+                );
+            }
+            else
+            {
+                // The corpus was not updated
+                return false;
+            }
+        }
+
+        // Update the project secret with the new corpus information
+        await _projectSecrets.UpdateAsync(
+            project.Id,
+            u =>
+                u.Set(
+                    p => p.ServalData.Corpora[corpus.Id],
+                    new ServalCorpus
+                    {
+                        SourceFiles = sourceCorpusFiles,
+                        TargetFiles = targetCorpusFiles,
+                        PreTranslate = preTranslate,
+                        AlternateTrainingSource = useAlternateTrainingSource,
+                    }
+                )
+        );
+
+        return true;
     }
 
     /// <summary>

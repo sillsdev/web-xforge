@@ -123,6 +123,40 @@
                   ></app-write-status>
                 </div>
               </ng-container>
+              <ng-container *ngIf="mainSettingsLoaded">
+                <div class="tool-setting">
+                  <div class="tool-setting-field checkbox-field">
+                    <mat-checkbox
+                      formControlName="alternateTrainingSourceEnabled"
+                      id="checkbox-alternate-training-source-enabled"
+                      >{{ t("enable_alternate_training_source") }}</mat-checkbox
+                    >
+                    <app-info [text]="t('pre_translation_alternate_training_source_info')"></app-info>
+                    <app-write-status
+                      [state]="getControlState('alternateTrainingSourceEnabled')"
+                      [formGroup]="form"
+                      id="alternate-training-source-enabled-status"
+                    ></app-write-status>
+                  </div>
+                </div>
+                <div *ngIf="isAlternateTrainingSourceEnabled" class="tool-setting-field">
+                  <app-project-select
+                    id="alternateTrainingSourceParatextId"
+                    formControlName="alternateTrainingSourceParatextId"
+                    [placeholder]="t('pre_translation_alternate_training_source_text_placeholder')"
+                    [projects]="projects"
+                    [resources]="resources"
+                    [nonSelectableProjects]="nonSelectableProjects"
+                    [hideProjectId]="projectParatextId"
+                    [isDisabled]="!isAppOnline || isLoading || (projectLoadingFailed && resourceLoadingFailed)"
+                  ></app-project-select>
+                  <app-write-status
+                    [state]="getControlState('alternateTrainingSourceParatextId')"
+                    [formGroup]="form"
+                    id="alternate-training-source-status"
+                  ></app-write-status>
+                </div>
+              </ng-container>
               <ng-container *ngIf="canUpdateServalConfig">
                 <p
                   class="helper-text"

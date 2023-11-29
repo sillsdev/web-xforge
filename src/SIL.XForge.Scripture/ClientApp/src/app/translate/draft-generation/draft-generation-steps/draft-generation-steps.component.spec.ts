@@ -56,9 +56,9 @@ describe('DraftGenerationStepsComponent', () => {
       });
     }));
 
-    it('should select all books initially', () => {
-      expect(component.initialSelectedBooks).toEqual([1, 2, 3]);
-      expect(component.finalSelectedBooks).toEqual([1, 2, 3]);
+    it('should select no books initially', () => {
+      expect(component.initialSelectedBooks).toEqual([]);
+      expect(component.finalSelectedBooks).toEqual([]);
     });
 
     it('should emit the correct selected books when onDone is called', () => {
@@ -89,7 +89,7 @@ describe('DraftGenerationStepsComponent', () => {
       data: {
         translateConfig: {
           source: { projectRef: 'test' },
-          draftConfig: { lastSelectedBooks: [2, 3, 4] }
+          draftConfig: { lastSelectedTranslationBooks: [2, 3, 4] }
         }
       }
     } as SFProjectProfileDoc;

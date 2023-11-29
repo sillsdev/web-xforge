@@ -28,7 +28,10 @@ export interface BaseProject {
 
 export interface DraftConfig {
   alternateSource?: TranslateSource;
-  lastSelectedBooks: number[];
+  alternateTrainingSourceEnabled: boolean;
+  alternateTrainingSource?: TranslateSource;
+  lastSelectedTrainingBooks: number[];
+  lastSelectedTranslationBooks: number[];
   servalConfig?: string;
 }
 

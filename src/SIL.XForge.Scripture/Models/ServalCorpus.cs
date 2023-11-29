@@ -16,6 +16,15 @@ public class ServalCorpus
     public bool PreTranslate { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether or not this corpus is to be used for Serval to train on.
+    /// </summary>
+    /// <value>
+    /// <c>true</c> if this corpus is for training; otherwise, <c>false</c> if this corpus is for translation.
+    /// </value>
+    /// <remarks>If this is set to <c>true</c>, there should be another corpus with this set to <c>false</c>.</remarks>
+    public bool AlternateTrainingSource { get; set; }
+
+    /// <summary>
     /// Gets or sets the source files uploaded to Serval.
     /// </summary>
     /// <value>

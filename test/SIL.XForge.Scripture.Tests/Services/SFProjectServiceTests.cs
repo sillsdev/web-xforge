@@ -2128,6 +2128,23 @@ public class SFProjectServiceTests
     }
 
     [Test]
+    public async Task IsSourceProject_TrueWhenProjectIsAAlternateTrainingSource()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext_" + Project01;
+        Assert.That(env.Service.IsSourceProject(Project01), Is.False);
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project03,
+            new SFProjectSettings { AlternateTrainingSourceParatextId = paratextId }
+        );
+
+        // SUT
+        Assert.That(env.Service.IsSourceProject(Project01), Is.True);
+    }
+
+    [Test]
     public void IsSourceProject_TrueWhenProjectIsATranslationSource()
     {
         var env = new TestEnvironment();
@@ -2161,7 +2178,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2192,7 +2209,88 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_ChangeAlternateTrainingSource_CannotUseTargetProject()
+    {
+        var env = new TestEnvironment();
+        const string paratextId = "paratext_" + Project01;
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { AlternateTrainingSourceParatextId = paratextId }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.ParatextId, Is.EqualTo(paratextId));
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSource?.ProjectRef, Is.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSource?.ParatextId, Is.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSource?.Name, Is.Null);
+
+        await env.MachineProjectService
+            .DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService
+            .DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_ChangeAlternateTrainingSource_CreatesProject()
+    {
+        var env = new TestEnvironment();
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { AlternateTrainingSourceParatextId = "changedId" }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSource?.ProjectRef, Is.Not.Null);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSource?.ParatextId, Is.EqualTo("changedId"));
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSource?.Name, Is.EqualTo("NewSource"));
+
+        SFProject alternateTrainingSourceProject = env.GetProject(
+            project.TranslateConfig.DraftConfig.AlternateTrainingSource!.ProjectRef
+        );
+        Assert.That(alternateTrainingSourceProject.ParatextId, Is.EqualTo("changedId"));
+        Assert.That(alternateTrainingSourceProject.Name, Is.EqualTo("NewSource"));
+
+        await env.MachineProjectService
+            .DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService
+            .DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
+    }
+
+    [Test]
+    public async Task UpdateSettingsAsync_EnableAlternateTrainingSource_NoSync()
+    {
+        var env = new TestEnvironment();
+
+        await env.Service.UpdateSettingsAsync(
+            User01,
+            Project01,
+            new SFProjectSettings { AlternateTrainingSourceEnabled = true }
+        );
+
+        SFProject project = env.GetProject(Project01);
+        Assert.That(project.TranslateConfig.DraftConfig.AlternateTrainingSourceEnabled, Is.True);
+
+        await env.MachineProjectService
+            .DidNotReceive()
+            .RemoveProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.MachineProjectService
+            .DidNotReceive()
+            .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2216,7 +2314,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .Received()
             .AddProjectAsync(User01, Project01, preTranslate: false, CancellationToken.None);
-        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2240,7 +2338,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2263,7 +2361,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .Received()
             .AddProjectAsync(User01, Project03, preTranslate: false, CancellationToken.None);
-        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2290,7 +2388,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2309,7 +2407,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.Received().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.Received().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2328,7 +2426,7 @@ public class SFProjectServiceTests
         await env.MachineProjectService
             .DidNotReceive()
             .AddProjectAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>());
-        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>());
+        await env.SyncService.DidNotReceive().SyncAsync(Arg.Any<SyncConfig>());
     }
 
     [Test]
@@ -2572,7 +2670,9 @@ public class SFProjectServiceTests
 
         // Initially connecting a project should have called Sync, or SF is not going to fetch books and set
         // permissions on them.
-        await env.SyncService.Received().SyncAsync(User03, sfProjectId, Arg.Any<bool>());
+        await env.SyncService
+            .Received()
+            .SyncAsync(Arg.Is<SyncConfig>(s => s.ProjectId == sfProjectId && s.TrainEngine && s.UserId == User03));
 
         // Don't check that permissions were added to the target project, because we mock the Sync functionality.
         // But we can show that source resource permissions were set:
@@ -3718,9 +3818,7 @@ public class SFProjectServiceTests
             );
             MachineProjectService = Substitute.For<IMachineProjectService>();
             SyncService = Substitute.For<ISyncService>();
-            SyncService
-                .SyncAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<bool>())
-                .Returns(Task.FromResult("jobId"));
+            SyncService.SyncAsync(Arg.Any<SyncConfig>()).Returns(Task.FromResult("jobId"));
             ParatextService = Substitute.For<IParatextService>();
             IReadOnlyList<ParatextProject> ptProjects = new[]
             {

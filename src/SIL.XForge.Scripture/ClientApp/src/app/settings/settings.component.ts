@@ -4,6 +4,7 @@ import { MatLegacyDialogConfig as MatDialogConfig } from '@angular/material/lega
 import { ActivatedRoute, Router } from '@angular/router';
 import { SystemRole } from 'realtime-server/lib/esm/common/models/system-role';
 import { CheckingAnswerExport } from 'realtime-server/lib/esm/scriptureforge/models/checking-config';
+import { TranslateSource } from 'realtime-server/lib/esm/scriptureforge/models/translate-config';
 import { combineLatest } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { AuthService } from 'xforge-common/auth.service';
@@ -34,6 +35,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
   sourceParatextId = new UntypedFormControl(undefined);
   biblicalTermsEnabled = new UntypedFormControl(false);
   alternateSourceParatextId = new UntypedFormControl(undefined);
+  alternateTrainingSourceEnabled = new UntypedFormControl(false);
+  alternateTrainingSourceParatextId = new UntypedFormControl(undefined);
   servalConfig = new UntypedFormControl(undefined);
   translateShareEnabled = new UntypedFormControl(false);
   checkingEnabled = new UntypedFormControl(false);
@@ -49,6 +52,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     sourceParatextId: this.sourceParatextId,
     biblicalTermsEnabled: this.biblicalTermsEnabled,
     alternateSourceParatextId: this.alternateSourceParatextId,
+    alternateTrainingSourceEnabled: this.alternateTrainingSourceEnabled,
+    alternateTrainingSourceParatextId: this.alternateTrainingSourceParatextId,
     servalConfig: this.servalConfig,
     translateShareEnabled: this.translateShareEnabled,
     checkingEnabled: this.checkingEnabled,
@@ -112,6 +117,10 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   get isCheckingEnabled(): boolean {
     return this.checkingEnabled.value;
+  }
+
+  get isAlternateTrainingSourceEnabled(): boolean {
+    return this.alternateTrainingSourceEnabled.value;
   }
 
   get projectId(): string {
@@ -320,6 +329,22 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       return;
     }
 
+    if (this.settingChanged(newValue, 'alternateTrainingSourceEnabled')) {
+      this.updateSetting(newValue, 'alternateTrainingSourceEnabled');
+    }
+
+    // Check if the pre-translation alternate training source project needs to be updated
+    if (this.settingChanged(newValue, 'alternateTrainingSourceParatextId')) {
+      const settings: SFProjectSettings = {
+        alternateTrainingSourceParatextId:
+          newValue.alternateTrainingSourceParatextId ?? SettingsComponent.projectSettingValueUnset
+      };
+      const updateTaskPromise = this.projectService.onlineUpdateSettings(this.projectDoc.id, settings);
+      this.checkUpdateStatus('alternateTrainingSourceParatextId', updateTaskPromise);
+      this.previousFormValues = newValue;
+      return;
+    }
+
     this.updateCheckingConfig(newValue);
   }
 
@@ -379,6 +404,9 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
       sourceParatextId: this.projectDoc.data.translateConfig.source?.paratextId,
       biblicalTermsEnabled: this.projectDoc.data.biblicalTermsConfig.biblicalTermsEnabled,
       alternateSourceParatextId: this.projectDoc.data.translateConfig.draftConfig?.alternateSource?.paratextId,
+      alternateTrainingSourceEnabled: this.projectDoc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled,
+      alternateTrainingSourceParatextId:
+        this.projectDoc.data.translateConfig.draftConfig?.alternateTrainingSource?.paratextId,
       servalConfig: this.projectDoc.data.translateConfig.draftConfig.servalConfig,
       translateShareEnabled: !!this.projectDoc.data.translateConfig.shareEnabled,
       checkingEnabled: this.projectDoc.data.checkingConfig.checkingEnabled,
@@ -409,6 +437,8 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
     this.controlStates.set('sourceParatextId', ElementState.InSync);
     this.controlStates.set('biblicalTermsEnabled', ElementState.InSync);
     this.controlStates.set('alternateSourceParatextId', ElementState.InSync);
+    this.controlStates.set('alternateTrainingSourceEnabled', ElementState.InSync);
+    this.controlStates.set('alternateTrainingSourceParatextId', ElementState.InSync);
     this.controlStates.set('servalConfig', ElementState.InSync);
     this.controlStates.set('translateShareEnabled', ElementState.InSync);
     this.controlStates.set('checkingEnabled', ElementState.InSync);
@@ -420,28 +450,21 @@ export class SettingsComponent extends DataLoadingComponent implements OnInit {
 
   private updateNonSelectableProjects(): void {
     this.nonSelectableProjects = [];
-    const source = this.projectDoc?.data?.translateConfig?.source;
+    this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.source);
+    this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.draftConfig?.alternateSource);
+    this.addNonSelectableProject(this.projectDoc?.data?.translateConfig?.draftConfig?.alternateTrainingSource);
+  }
+
+  private addNonSelectableProject(project?: TranslateSource): void {
     if (
-      source != null &&
-      (this.projects?.find(p => p.paratextId === source.paratextId) ||
-        this.resources?.find(r => r.paratextId === source.paratextId)) == null
+      project != null &&
+      (this.projects?.find(p => p.paratextId === project.paratextId) ||
+        this.resources?.find(r => r.paratextId === project.paratextId)) == null
     ) {
-      this.nonSelectableProjects.push({
-        paratextId: source.paratextId,
-        shortName: source.shortName,
-        name: source.name
-      });
-    }
-    const alternateSource = this.projectDoc?.data?.translateConfig?.draftConfig?.alternateSource;
-    if (
-      alternateSource != null &&
-      (this.projects?.find(p => p.paratextId === alternateSource.paratextId) ||
-        this.resources?.find(r => r.paratextId === alternateSource.paratextId)) == null
-    ) {
-      this.nonSelectableProjects.push({
-        paratextId: alternateSource.paratextId,
-        shortName: alternateSource.shortName,
-        name: alternateSource.name
+      this.nonSelectableProjects?.push({
+        paratextId: project.paratextId,
+        shortName: project.shortName,
+        name: project.name
       });
     }
   }

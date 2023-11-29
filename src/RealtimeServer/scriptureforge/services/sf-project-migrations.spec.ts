@@ -266,6 +266,66 @@ describe('version 12', () => {
       expect(projectDoc.data.translateConfig.draftConfig.lastSelectedBooks).toBeDefined();
     });
   });
+
+  describe('version 14', () => {
+    it('adds alternateTrainingSourceEnabled to draftConfig', async () => {
+      const env = new TestEnvironment(13);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: { lastSelectedBooks: [] } }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.alternateTrainingSourceEnabled).toBe(false);
+    });
+
+    it('adds lastSelectedTrainingBooks to draftConfig', async () => {
+      const env = new TestEnvironment(13);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', { translateConfig: { draftConfig: {} } });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingBooks).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTrainingBooks).toBeDefined();
+    });
+
+    it('adds lastSelectedTranslationBooks to draftConfig', async () => {
+      const env = new TestEnvironment(13);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', { translateConfig: { draftConfig: {} } });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationBooks).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationBooks).toBeDefined();
+    });
+
+    it('migrates lastSelectedBooks to lastSelectedTranslationBooks', async () => {
+      const env = new TestEnvironment(13);
+      const conn = env.server.connect();
+      await createDoc(conn, SF_PROJECTS_COLLECTION, 'project01', {
+        translateConfig: { draftConfig: { lastSelectedBooks: [1, 2, 3] } }
+      });
+      let projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationBooks).not.toBeDefined();
+
+      await env.server.migrateIfNecessary();
+
+      projectDoc = await fetchDoc(conn, SF_PROJECTS_COLLECTION, 'project01');
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedBooks).not.toBeDefined();
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationBooks).toBeDefined();
+      expect(projectDoc.data.translateConfig.draftConfig.lastSelectedTranslationBooks).toEqual([1, 2, 3]);
+    });
+  });
 });
 
 class TestEnvironment {
