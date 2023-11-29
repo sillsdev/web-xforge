@@ -11,31 +11,23 @@
     <p>{{ t("instructions_draft_process") }}</p>
 
     <div *ngIf="isBackTranslationMode" class="requirements">
-      <p>{{ t("back_translation_requirement") }}</p>
+      <p>
+        <transloco key="draft_generation.back_translation_requirement" [params]="{ supportedLanguagesUrl }"></transloco>
+      </p>
       <ul>
         <li>
           <mat-icon *ngIf="isTargetLanguageSupported" class="criteria-met">check</mat-icon>
           <mat-icon *ngIf="!isTargetLanguageSupported" class="criteria-not-met">clear</mat-icon>
           <p>
             <transloco
-              *ngIf="!isTargetLanguageSupported && targetLanguageDisplayName"
+              *ngIf="!isTargetLanguageSupported"
               key="draft_generation.criteria_project_language_not_in_nllb_with_language"
-              [params]="{ targetLanguageDisplayName, supportedLanguagesUrl }"
+              [params]="{ targetLanguageDisplayName }"
             ></transloco>
             <transloco
-              *ngIf="!isTargetLanguageSupported && !targetLanguageDisplayName"
-              key="draft_generation.criteria_project_language_not_in_nllb"
-              [params]="{ supportedLanguagesUrl }"
-            ></transloco>
-            <transloco
-              *ngIf="isTargetLanguageSupported && targetLanguageDisplayName"
+              *ngIf="isTargetLanguageSupported"
               key="draft_generation.criteria_project_language_in_nllb_with_language"
-              [params]="{ targetLanguageDisplayName, supportedLanguagesUrl }"
-            ></transloco>
-            <transloco
-              *ngIf="isTargetLanguageSupported && !targetLanguageDisplayName"
-              key="draft_generation.criteria_project_language_in_nllb"
-              [params]="{ supportedLanguagesUrl }"
+              [params]="{ targetLanguageDisplayName }"
             ></transloco>
           </p>
         </li>
@@ -44,29 +36,31 @@
 
     <!-- Only show warnings if target language is supported -->
     <ng-container *ngIf="isTargetLanguageSupported">
-      <section *ngIf="!isSourceProjectSet" class="warning" data-test-id="warning-source-text-missing">
-        <mat-icon>warning</mat-icon>
-        <p>
-          <transloco
-            key="draft_generation.info_alert_source_text_not_selected"
-            [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
-          ></transloco>
-        </p>
-      </section>
+      <app-notice
+        *ngIf="!isSourceProjectSet"
+        type="warning"
+        icon="warning"
+        [outline]="true"
+        data-test-id="warning-source-text-missing"
+      >
+        <transloco
+          key="draft_generation.info_alert_source_text_not_selected"
+          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+        ></transloco>
+      </app-notice>
 
-      <section
+      <app-notice
         *ngIf="isSourceProjectSet && !isSourceAndTargetDifferent"
-        class="warning"
+        type="warning"
+        icon="warning"
+        [outline]="true"
         data-test-id="warning-source-target-same"
       >
-        <mat-icon>warning</mat-icon>
-        <p>
-          <transloco
-            key="draft_generation.info_alert_same_source_and_target_language"
-            [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
-          ></transloco>
-        </p>
-      </section>
+        <transloco
+          key="draft_generation.info_alert_same_source_and_target_language"
+          [params]="{ projectSettingsUrl: { route: projectSettingsUrl } }"
+        ></transloco>
+      </app-notice>
     </ng-container>
   </section>
 
