@@ -13,7 +13,6 @@ import { ShareButtonComponent } from './share/share-button.component';
 import { ShareControlComponent } from './share/share-control.component';
 import { ShareDialogComponent } from './share/share-dialog.component';
 import { TextComponent } from './text/text.component';
-import { WorkingAnimatedIndicatorComponent } from './working-animated-indicator/working-animated-indicator.component';
 
 const componentExports = [
   BookChapterChooserComponent,
@@ -25,8 +24,7 @@ const componentExports = [
   ShareDialogComponent,
   TextComponent,
   CheckingQuestionComponent,
-  SingleButtonAudioPlayerComponent,
-  WorkingAnimatedIndicatorComponent
+  SingleButtonAudioPlayerComponent
 ];
 
 @NgModule({
